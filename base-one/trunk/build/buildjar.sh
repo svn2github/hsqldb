@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.10 2002/12/06 16:59:13 unsaved Exp $
+# $Id: buildjar.sh,v 1.11 2002/12/06 17:43:14 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -90,9 +90,9 @@ rm -f $LISTFILE
 touch $LISTFILE || Failout "Failed to create temporary list file '$LISTFILE'"
 find * -name '*.java' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
-    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
-    org/hsqldb/util/*Swing.java) [ "$NOSWING" ] || echo $file; continue;;
+    org/hsqldb/util/*Swing.java) [ -n "$NOSWING" ] || echo $file; continue;;
     org/hsqldb/util/*) echo $file; continue;;
+    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
     org/hsqldb/jdbcStubs.java) continue;;  # Why unnecessary??
     org/hsqldb/jdbcDataSource*.java)
         [ "$JDKVER" = 1.4 ] && echo $file; continue;;
@@ -137,9 +137,9 @@ HSQLDB_GIF=
 echo 'Generating jar content file list...'
 find * -name '*.class' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
-    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
-    org/hsqldb/util/*Swing.class) [ "$NOSWING" ] || echo $file; continue;;
+    org/hsqldb/util/*Swing.class) [ -n "$NOSWING" ] || echo $file; continue;;
     org/hsqldb/util/*) echo $file; continue;;
+    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
     org/hsqldb/jdbcStubs*.class) continue;;  # Why unnecessary??
     org/hsqldb/jdbcDataSource*.class)
         [ "$JDKVER" = 1.4 ] && echo $file; continue;;
