@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.13 2004/01/21 15:49:40 unsaved Exp $
+ * $Id: SqlFile.java,v 1.14 2004/01/21 16:23:24 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -83,20 +83,22 @@ public class SqlFile {
       + "you can comment scripts like \"/* This is a comment */; \"\n";
     final private static String HELP_TEXT =
 "**********    SPECIAL COMMANDS MARKED !!! DO NOT WORK YET!!!  *******\n" +
-          "SPECIAL Commands:  (* commands only available for interactive use)\n"
+          "SPECIAL Commands.\n"
+        + "* commands only available for interactive use.\n"
+        + "In place of \"3\" below, you can use nothing for the previous command, or\n"
+        + "another integer \"X\" to indicate the Xth previous command.\n"
         + "    \\?                   Help\n"
         + " !!!\\! [command to run]  * Shell out\n"
-        + "    \\e                   * Open last command in external editor\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands\n"
-        + "    \\-                   * reload last command\n"
-        + "    \\-2;                 * reload and run 2nd-to-last command, etc.\n"
+        + "    \\-[3]                * reload a previous command for appending\n"
+        + "    \\-[3];               * reload and execute a previous command\n"
+        + " !!!\\e[3]                * Edit a previous command in external editor\n"
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
-        + "EXAMPLE:  To show previous commands then edit then execute the 3rd-to-last:\n"
+        + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n"
-        + "    \\-3\n"
-        + "    \\e\n"
+        + "    \\e 3\n"
         + "    ;\n";
 
     /**
