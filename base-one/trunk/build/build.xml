@@ -911,20 +911,23 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
          </style>
     </target>
 
-    <target name='clean-doc' description='Remove derived documentation files'>
+    <target name='clean-doc' description='Remove derived documentation files'
+            depends='clean-docwork'>
         <!-- The target files here are hard-coded.
              If there are no objections, I'd like to move all CVS-controlled
              files to the docsrc directory.
              At that point, doc will contain only derived files, and this
              target can just wipe out the docwork and doc directories. -->
         <delete quiet='true' includeEmptyDirs='true'>
-            <fileset dir='doc'
-                includes='*.gif, *.css, guide/**'/>
+            <fileset dir='doc' includes='*.gif, *.css, guide/**'/>
         </delete>
         <delete dir='docwork' quiet='true' includeEmptyDirs='true'/>
     </target>
 
     <target name='clean-docwork' description='Remove temporary documentation files'>
         <delete dir='docwork' quiet='true' includeEmptyDirs='true'/>
+        <delete quiet='true' includeEmptyDirs='true'>
+            <fileset dir='doc' includes='**/*.xml'/>
+        </delete>
     </target>
 </project>
