@@ -91,10 +91,13 @@ import org.hsqldb.jdbc.jdbcUtil;
  *  then for any given connection request, it will ask each driver in turn
  *  to try to connect to the target URL. <p>
  *
- *  <font color="#009900"> The application developer will normally not need
+ *  The application developer will normally not need
  *  to call any function of the Driver directly. All required calls are made
  *  by the DriverManager. <p>
  *
+ * <!-- start release-specific documentation -->
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3> <p>
  *  When the HSQL Database Engine Driver class is loaded, it creates an
  *  instance of itself and register it with the DriverManager. This means
  *  that a user can load and register the HSQL Database Engine driver by
@@ -103,15 +106,16 @@ import org.hsqldb.jdbc.jdbcUtil;
  *  information about how to connect to a HSQL Database Engine database,
  *  please see jdbcConnection. </font><p>
  *
- * <font color="#009900"> As of version 1.7.0 all JDBC 2 methods can be
+ *  As of version 1.7.0 all JDBC 2 methods can be
  *  called with jdk 1.1.x. Some of these method calls require int values
  *  that are defined in JDBC 2 version of ResultSet. These values are
  *  defined in the jdbcResultSet class when it is compiled with jdk 1.1.x.
  *  When using the JDBC 2 methods that require those values as parameters or
  *  return one of those values, refer to them as follows: (The code will not
  *  be compatible with other JDBC 2 driver, which require ResultSet to be
- *  used instead of jdbcResultSet) (fredt@users)</font> <p>
- * <font color="#009900">
+ *  used instead of jdbcResultSet) (fredt@users)<p>
+ * </div> <!-- end release-specific documentation -->
+ *
  *  jdbcResultSet.FETCH_FORWARD<br>
  *  jdbcResultSet.TYPE_FORWARD_ONLY<br>
  *  jdbcResultSet TYPE_SCROLL_INSENSITIVE<br>
@@ -136,7 +140,10 @@ public class jdbcDriver implements Driver {
      *  The java.util.Properties argument can be used to passed arbitrary
      *  string tag/value pairs as connection arguments.<p>
      *
-     *  <font color="#009900"> For HSQL Database Engine, at least "user" and
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *  For HSQL Database Engine, at least "user" and
      *  "password" properties must be included in the Properties. From
      *  version 1.7.1 two optional properties are supported:<p>
      *  <code>get_column_name</code> if set to false, a
@@ -144,11 +151,7 @@ public class jdbcDriver implements Driver {
      *  label instead of the column name.
      *  <code>strict_md</code> if set to true, some ResultSetMetaData methods
      *  return more strict values for compatibility reasons.
-     *
-     *  </font>
-     *  <p>
-     *
-     *
+     * </div> <!-- end release-specific documentation -->
      *
      * @param  url the URL of the database to which to connect
      * @param  info a list of arbitrary string tag/value pairs as connection
@@ -163,7 +166,6 @@ public class jdbcDriver implements Driver {
         return getConnection(url, info);
     }
 
-/** @todo  error message*/
     public static Connection getConnection(String url,
                                            Properties info)
                                            throws SQLException {
@@ -205,16 +207,15 @@ public class jdbcDriver implements Driver {
      *  get enough information to connect to a database. Note that depending
      *  on the values the human has supplied so far, additional values may
      *  become necessary, so it may be necessary to iterate though several
-     *  calls to getPropertyInfo.
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     *  calls to getPropertyInfo.<p>
      *
-     * HSQLDB 1.7.1 uses the values submitted in info to set the value for
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     * HSQLDB 1.7.2 uses the values submitted in info to set the value for
      * each DriverPropertyInfo object returned. It does not use the default
      * value that it would use for the property if the value is null.
-     *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param  url the URL of the database to which to connect
      * @param  info a proposed list of tag/value pairs that will be sent on
@@ -280,11 +281,14 @@ public class jdbcDriver implements Driver {
      *  compliant drivers will be available for all the major commercial
      *  databases. <p>
      *
-     *  <font color="#009900"> HSQL Database Engine currently does not yet
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *  HSQL Database Engine currently does not yet
      *  support all required SQL 92 Entry Level functionality and thus
-     *  returns false. The features that are missing are currently 'HAVING'
-     *  and views. It looks like other drivers return true but do not
-     *  support all features. </font> <p>
+     *  returns false. It looks like other drivers return true but do not
+     *  support all features.<p>
+     * </div> <!-- end release-specific documentation -->
      *
      *  This method is not intended to encourage the development of non-JDBC
      *  compliant drivers, but is a recognition of the fact that some

@@ -1158,7 +1158,8 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "IGNORECASE";
-        row[ivalue] = Boolean.toString(database.isIgnoreCase());
+        row[ivalue] = database.isIgnoreCase() ? "true"
+                                              : "false";
         row[iclass] = "boolean";
 
         t.insert(row);
@@ -1168,7 +1169,8 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "REFERENTIAL_INTEGRITY";
-        row[ivalue] = Boolean.toString(database.isReferentialIntegrity());
+        row[ivalue] = database.isReferentialIntegrity() ? "true"
+                                                        : "false";
         row[iclass] = "boolean";
 
         t.insert(row);

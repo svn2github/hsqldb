@@ -6,8 +6,8 @@
    <!-- This loads properties in the same exact way as if you ran
         "ant -Dprop1name=val1 -Dprop2name=val2...", etc.  To use all
         defaults, you should have no 'build.properties' file.
-        If you don't understand this or want to know about precedence or 
-        how to use an Ant properties file, look up an Ant manual or an 
+        If you don't understand this or want to know about precedence or
+        how to use an Ant properties file, look up an Ant manual or an
         Ant expert.
         If you want to know, "Can I set property 'x' in 'build.properties'",
         rephrase the question to yourself as "Can I run 'ant -Dx=...?"
@@ -20,7 +20,7 @@
 
    <target name="init">
    </target>
-   
+
    <target name='explainjars'
            description="List description of jars that you can build">
      <echo>
@@ -62,7 +62,7 @@ examples:
       <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
    </target>
 
-   <target name="javaversion2" depends="-javaversion4" 
+   <target name="javaversion2" depends="-javaversion4"
            unless="ant.java.iscjava14">
       <available classname="java.util.Set" property="ant.java.iscjava12"/>
       <available classname="java.util.Set" property="ant.java.iscjavamodern"/>
@@ -76,12 +76,12 @@ examples:
        <mkdir dir="doc/src" />
    </target>
 
-   <target name="clean" depends='clean-doc'
+   <target name="clean" depends="clean-docwork"
            description="Delete the /classes directory created by ant tasks">
         <delete dir="classes"/>
    </target>
 
-   <target name="cleanall" depends="clean"
+   <target name="cleanall" depends="clean,clean-doc"
            description="Same as clean but delete the jar files as well">
       <delete>
          <fileset dir="lib" includes="hsql*.jar"/>
@@ -106,7 +106,7 @@ examples:
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="codeswitcher" 
+    <target name="switchtojdk12" depends="codeswitcher"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -120,7 +120,7 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk14" depends="codeswitcher" 
+    <target name="switchtojdk14" depends="codeswitcher"
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -458,6 +458,27 @@ examples:
 
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
+      <javadoc
+		   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
+		   				${src}/org/hsqldb/Server.java,
+		   				${src}/org/hsqldb/WebServer.java,
+		   				${src}/org/hsqldb/jdbc/*.java"
+           destdir="${basedir}/doc/src"
+           classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
+           author="true"
+           version="false"
+           use="true"
+           public="true"
+           stylesheetfile="${basedir}/doc/src/hsqldbstylesheet.css"
+           windowtitle="HSQLDB 1.7.2 API"
+           doctitle="HSQLDB 1.7.2"
+           bottom="&lt;i&gt;Copyright &#169; 2001 - 2004 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+
+     </javadoc>
+   </target>
+
+    <target name="javadocdev" depends="-preparedoc"
+            description="Create javadoc for the distribution package">
       <javadoc packagenames="org.hsqldb.*,org.hsqldb.lib.*,org.hsqldb.util.*"
            sourcepath="${src}"
            destdir="${basedir}/doc/src"
@@ -558,7 +579,7 @@ examples:
         </uptodate></not><then>
             <!-- This copies files matching the fileset below to the docwork
                  dir w/ data so that DocBook may entity include them.
-                 For the time being, these files must reside in the main 
+                 For the time being, these files must reside in the main
                  directory  for this specific book. -->
             <pathconvert property='_virginfiles' targetos='unix' pathsep='|'
                          setonempty='false'> <path>
@@ -761,12 +782,11 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
     </target>
 
     <target name='-initContrib' unless='_contrib_initted'>
-        <!-- We use ant-contrib-X.jar (where X is a version).  Make sure 
+        <!-- We use ant-contrib-X.jar (where X is a version).  Make sure
              that this jar is located at path-to-ant-bin/../lib -->
         <available property='_contrib_there'
                    classname='net.sf.antcontrib.logic.For'/>
-        <fail unless='_contrib_there'
- message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/'"/>
+        <fail unless='_contrib_there' message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/'"/>
         <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
         <property name='_contrib_initted' value='true'/>
     </target>
@@ -783,8 +803,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
         <!-- This does not check dependencies.  Do that before calling. -->
         <!-- Required properties:  _stylesheet, book -->
         <fail if='_css' message="Internal property '_css' set externally"/>
-        <fail unless='docbook.xsl.home'
-message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
+        <fail unless='docbook.xsl.home' message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
         <if><not><available type='file' file='${_stylesheet}'/></not><then>
             <fail message="DocBook style sheet '${_stylesheet}' not found."/>
         </then></if>
@@ -810,8 +829,7 @@ message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
     <target name='-foXslt' depends='-checkXslt'>
         <!-- This does not check dependencies.  Do that before calling. -->
         <!-- Required props:  book -->
-        <fail unless='docbook.xsl.home'
-message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
+        <fail unless='docbook.xsl.home' message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
         <if><not><available type='file' file='${style.fo}'/></not><then>
             <fail message="DocBook style sheet '${style.fo}' not found."/>
         </then></if>
@@ -840,6 +858,10 @@ message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
             <fileset dir='doc'
                 includes='*.gif, *.css, guide/**'/>
         </delete>
+        <delete dir='docwork' quiet='true' includeEmptyDirs='true'/>
+    </target>
+
+    <target name='clean-docwork' description='Remove temporary documentation files'>
         <delete dir='docwork' quiet='true' includeEmptyDirs='true'/>
     </target>
 </project>
