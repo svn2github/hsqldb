@@ -51,7 +51,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.15 $
+$Revision: 1.19 $
 
 <p>Note that these links are actually to a copy of the doc at the same
 location where you are viewing this from. 
@@ -396,6 +396,17 @@ SQL statements like this.
      </pre>
 If you don't give the <code>--noinput</code> switch, then after executing the
 given statements, an interactive session will be started.
+
+<p>The <em>--sql</em> switch is very useful for setting shell variables to
+the output of SQL Statements, like this.
+<pre class="example">         # A shell script
+         USERCOUNT=`java org.hsqldb.util.SqlTool --noinput --sql 'select count(*) from usertbl;' urlid` || {
+             # Handle the SqlTool error
+         }
+         echo "There are $USERCOUNT users registered in the database."
+         [ "$USECOUNT" -gt 3 ] &amp;&amp; {   # If there are more than 3 users registered
+             # Some conditional shell scripting
+     </pre>
 
 <h4 class="unnumberedsubsec">SQL Files</h4>
 
