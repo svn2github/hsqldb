@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.13 2004/04/26 15:52:28 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.14 2004/05/13 22:50:38 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.13 $</edition>
-        <pubdate>$Date: 2004/04/26 15:52:28 $</pubdate>
+        <edition>$Revision: 1.14 $</edition>
+        <pubdate>$Date: 2004/05/13 22:50:38 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -414,9 +414,10 @@
         </para> <para>
             The main purpose of the init script is to start up a Server with
             the database instances specified in your
-            <filename>server.properties</filename> file; and to shut down
-            all of the database instances listed in your init script config
-            file (the latter must all have entries in a sqltool.rc file).
+            <filename>server.properties</filename> file; and to shut down all
+            of those instances <emphasis>plus</emphasis> additional urlids
+            which you may (optionally) list in your init script config file.
+            These urlids must all have entries in a sqltool.rc file.
             If, due to firewall issues, you want to run a WebServer instead
             of a Server, then make sure you have a healthy WebServer with
             a webserver.properties set up, adjust your URLs in
@@ -474,14 +475,20 @@
                 If you copy the file, make sure to use <literal>chmod</literal>
                 to restrict permissions on the new copy.
             </para></step> <step><para>
+                Edit your <filename>server.properties</filename> file.
+                For every <literal>server.database.X</literal> that you have
+                defined, set a property of name 
+                <literal>server.urlid.X</literal> to the urlid for an 
+                Administrative user for that database instance.
+            </para></step> <step><para>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
                 If using a BSD variant, you must set "enable_hsqldb" to "YES" 
                 in <filename>/etc/rc.conf</filename>.
                 For good UNIXes that use System V style init, you must set up 
                 hard links or soft links either manually or with management 
-                tools or Gui's, or with <literal>chkconfig</literal>.
-                (I recommend using <literal>chkconfig</literal> if you have it).
+                tools (such as <literal>chkconfig</literal> or
+                <literal>insserver</literal>) or Gui's (like run level editors).
             </para></step>
         </procedure>
         </section>
