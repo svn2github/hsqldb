@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.51 2004/07/09 13:50:01 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.52 2004/07/09 15:30:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.51 $</edition>
-        <pubdate>$Date: 2004/07/09 13:50:01 $</pubdate>
+        <edition>$Revision: 1.52 $</edition>
+        <pubdate>$Date: 2004/07/09 15:30:23 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -494,6 +494,19 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 append mode.
                 (Unless the text ends with ';', in which case the resultant
                 statement will be executed immediately).
+                Note that if you do put text after the "a",
+                <emphasis>exactly</emphasis> what you type immediately after
+                "a" will be appended.
+                If your buffer contains
+                <literal>SELECT x FROM mytab</literal> and you run
+                <literal>a:le</literal>, the resultant command will be
+                <literal>SELECT x FROM mytable</literal>.
+                If your buffer contains
+                <literal>SELECT x FROM mytab</literal> and you run
+                <literal>a: ORDER BY y</literal>, the resultant command will be
+                <literal>SELECT x FROM mytab ORDER BY y</literal>.
+                Notice that in the latter case the append text begins with a
+                space character.
             </simpara></listitem></varlistentry>
             <varlistentry>
                 <term>:s/from string/to string/switches</term>
