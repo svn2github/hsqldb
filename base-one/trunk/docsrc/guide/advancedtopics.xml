@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.13 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.14 2004/06/18 13:04:04 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.13 $</edition>
-        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+        <edition>$Revision: 1.14 $</edition>
+        <pubdate>$Date: 2004/06/18 13:04:04 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -1024,42 +1024,14 @@
             The instructions under the
             <link linkend='upgrade_via_script-section'
                   endterm='upgrade_via_script-title'/> section
-            should be followed when possible.
-            The <link linkend='upgrade_direct-section'
-                      endterm='upgrade_direct-title'/> instructions may
-            or may not work depending on the structure of the database.
+            should be followed in all cases.
         </para>
-        <section id='upgrade_direct-section'>
-            <title id='upgrade_direct-title'>Direct Upgrade</title>
-            <para>
-                Databases created with Hypersonic version 1.43 and HSQLDB 1.6x
-                can sometimes be seamlessly upgraded to the new version.
-                However, in many cases the upgrade is not so simple.
-                The following procedure MAY work.
-                If it doesn't, try the alternative upgrade procedure using the
-                SCRIPT command.
-            </para>
-            <procedure>
-                <title>Direct upgrade procedure</title>
-                <step><para>Make a backup of your database.</para></step>
-                <step><para>
-                    Open the database using the old version of the Database
-                    Manager software.  Use the SHUTDOWN COMPACT command.
-                </para></step>
-                <step><para>
-                    Open the database with the new version 1.7.2 of Database
-                    Manager.
-                    Check the data is consistent.
-                </para></step>
-                <step><para>Issue the SHUTDOWN COMPACT command.</para></step>
-                <step><para>Start using the database.</para></step>
-            </procedure>
-        </section>
         <para>
             Once a database is upgraded to 1.7.2, it can no longer be used with
             Hypersonic or HSQLDB 1.6.x, 1.7.0 or 1.7.1.
         </para><para>
-            There may be some potential problems:
+            There may be some potential problems in the upgrade which should
+			be resolved by editing the .script file:
         </para><itemizedlist>
             <listitem><para>
                 Version 1.7.2 does not accept duplicate names for indexes.
@@ -1079,8 +1051,7 @@
                 query) allows you to save a full record of your database,
                 including database object definitions and data, to a file of
                 your choice.
-                If you encounter any problems upgrading your database with the
-                direct method, you can export a script file using the old
+                You can export a script file using the old
                 version of the database engine and open the script as a
                 database with 1.7.2.
             </para>
