@@ -356,7 +356,9 @@ class Table {
 
     /**
      *  Get the index supporting a constraint that can be used as an index
-     *  of the given type and index column signature.
+     *  of the given type and index column signature. Only Unique constraints
+     *  are considered (FK constraints' main index is actually on a different
+     *  table - one time bug)
      *
      * @param  col column list array
      * @param  unique for the index
@@ -373,6 +375,10 @@ class Table {
 
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
+
+            if( c.getType() != Constraint.UNIQUE ) {
+                continue;
+            }
 
             currentIndex = c.getMainIndex();
 
