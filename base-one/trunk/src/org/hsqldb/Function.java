@@ -104,7 +104,8 @@ class Function {
     private boolean        bConnection;
     private static HashMap methodCache = new HashMap();
     private int            fID;
-    String                 name;    // name used to call function
+    String                 name;        // name used to call function
+    boolean                isSimple;    //CURRENT_TIME, NOW etc.
     boolean                hasAggregate;
 
     /**
@@ -147,12 +148,14 @@ class Function {
      *      construction does not have the right to evaluate
      *      this Function.
      */
-    Function(String name, String fqn, Session session) throws HsqlException {
+    Function(String name, String fqn, boolean isSimple,
+             Session session) throws HsqlException {
 
-        this.name = name;
-        cSession  = session;
-        sFunction = fqn;
-        fID       = Library.functionID(fqn);
+        this.name     = name;
+        this.isSimple = isSimple;
+        cSession      = session;
+        sFunction     = fqn;
+        fID           = Library.functionID(fqn);
 
         int i = fqn.lastIndexOf('.');
 
@@ -610,8 +613,11 @@ class Function {
         // get the name as used by the CHECK statement
         String ddlName = name;
 
-        // special case for TRIM
-        if (Token.T_TRIM.equals(name)) {
+        if (isSimple) {
+            return name;
+        } else if (Token.T_TRIM.equals(name)) {
+
+            // special case for TRIM
             sb.append(name).append('(');
 
             boolean leading  = eArg[2].test();

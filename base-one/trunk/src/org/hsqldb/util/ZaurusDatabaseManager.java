@@ -85,7 +85,7 @@ implements ActionListener, WindowListener, KeyListener {
      *
      * @param c
      */
-    void connect(Connection c) {
+    public void connect(Connection c) {
 
         if (c == null) {
             return;
@@ -269,7 +269,7 @@ implements ActionListener, WindowListener, KeyListener {
      * Method declaration
      *
      */
-    void main() {
+    public void main() {
 
         fMain = new Frame("HSQLDB Database Manager for Zaurus");
         imgEmpty = createImage(new MemoryImageSource(2, 2, new int[4 * 4], 2,

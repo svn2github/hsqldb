@@ -67,14 +67,15 @@
 
 package org.hsqldb;
 
-import java.io.DataInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.NoSuchElementException;
 
+import org.hsqldb.lib.InOutUtil;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.rowio.RowInputInterface;
-import org.hsqldb.rowio.RowOutputInterface;
+import org.hsqldb.rowio.RowInputBinary;
+import org.hsqldb.rowio.RowOutputBinary;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
@@ -192,7 +193,7 @@ public class Result {
             isWritable[i]  = (in & 0x00000020) != 0;
         }
 
-        private void writeTableColumnAttrs(RowOutputInterface out,
+        private void writeTableColumnAttrs(RowOutputBinary out,
                                            int i)
                                            throws IOException, HsqlException {
 
@@ -257,7 +258,7 @@ public class Result {
             return out;
         }
 
-        private void readTableColumnAttrs(RowInputInterface in,
+        private void readTableColumnAttrs(RowInputBinary in,
                                           int i)
                                           throws IOException, HsqlException {
 
@@ -272,7 +273,7 @@ public class Result {
             sSchema[i]  = in.readString();
         }
 
-        void read(RowInputInterface in) throws HsqlException, IOException {
+        void read(RowInputBinary in) throws HsqlException, IOException {
 
             int l = in.readIntData();
 
@@ -299,7 +300,7 @@ public class Result {
             }
         }
 
-        void write(RowOutputInterface out,
+        void write(RowOutputBinary out,
                    int colCount) throws HsqlException, IOException {
 
             out.writeIntData(colCount);
@@ -419,7 +420,7 @@ public class Result {
      * @param  in
      * @exception  HsqlException  Description of the Exception
      */
-    Result(RowInputInterface in) throws HsqlException {
+    Result(RowInputBinary in) throws HsqlException {
 
         try {
             iMode = in.readIntData();
@@ -1115,7 +1116,7 @@ public class Result {
         return 0;
     }
 
-    void write(RowOutputInterface out) throws IOException, HsqlException {
+    void write(RowOutputBinary out) throws IOException, HsqlException {
 
 //        if (isMulti) {
         if (iMode == ResultConstants.MULTI) {
@@ -1257,7 +1258,7 @@ public class Result {
         out.writeIntData(out.size(), startPos);
     }
 
-    void readMultiResult(RowInputInterface in)
+    void readMultiResult(RowInputBinary in)
     throws HsqlException, IOException {
 
         iMode      = ResultConstants.MULTI;
@@ -1275,7 +1276,7 @@ public class Result {
         }
     }
 
-    private void writeMulti(RowOutputInterface out)
+    private void writeMulti(RowOutputBinary out)
     throws IOException, HsqlException {
 
         int startPos = out.size();
@@ -1300,7 +1301,7 @@ public class Result {
     /**
      * Convenience method for writing, shared by Server side.
      */
-    public static void write(Result r, RowOutputInterface rowout,
+    public static void write(Result r, RowOutputBinary rowout,
                              OutputStream dataout)
                              throws IOException, HsqlException {
 
@@ -1314,11 +1315,11 @@ public class Result {
     /**
      * Convenience method for reading, shared by Server side.
      */
-    public static Result read(RowInputInterface rowin,
-                              DataInputStream datain)
+    public static Result read(RowInputBinary rowin,
+                              InputStream datain)
                               throws IOException, HsqlException {
 
-        int length = datain.readInt();
+        int length = InOutUtil.readInt(datain);
 
         rowin.resetRow(0, length);
 

@@ -1,11 +1,19 @@
 Readme File
 
-
 Leading to final Release Candidate
 
 More tests are required to verify the improvements. Please perform tests and report any 
 issues. Testers are needed for build scripts with different JVM's using both ANT and batch 
 builds.
+
+2004.05.01
+
+Small improvemnts in different areas
+
+CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP and their aliases can now
+be used in views and prepared statements.
+
+Some bug fixes and updates to utility prpgrams. 
 
 Improvements to cascading update operations, allowing full capability with
 FK's referencing the same table.

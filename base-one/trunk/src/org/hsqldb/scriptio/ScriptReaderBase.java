@@ -31,13 +31,14 @@
 
 package org.hsqldb.scriptio;
 
-import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Session;
+
+import java.io.BufferedInputStream;
 
 abstract public class ScriptReaderBase {
 
@@ -53,10 +54,10 @@ abstract public class ScriptReaderBase {
         }
     }
 
-    DataInputStream dataStreamIn;
-    Database        db;
-    int             lineCount;
-    String          lastLine;
+    BufferedInputStream dataStreamIn;
+    Database            db;
+    int                 lineCount;
+    String              lastLine;
 
 //    int         byteCount;
     String fileName;
@@ -77,10 +78,11 @@ abstract public class ScriptReaderBase {
         // or anywhere else.
         // In fact, getClass().getResourceAsStream() is preferred, as
         // it is not subject to the same security restrictions
-        dataStreamIn =
-            db.isFilesInJar()
-            ? new DataInputStream(getClass().getResourceAsStream(fileName))
-            : new DataInputStream(new FileInputStream(fileName));
+        dataStreamIn = db.isFilesInJar()
+                       ? new BufferedInputStream(
+                           getClass().getResourceAsStream(fileName), 2 << 12)
+                       : new BufferedInputStream(
+                           new FileInputStream(fileName), 2 << 12);
     }
 
     public void readAll(Session session) throws IOException, HsqlException {

@@ -418,6 +418,7 @@ public class TestSql extends TestBase {
 
                 stmnt.executeUpdate(
                     "INSERT INTO cdType VALUES (10,'Test String');");
+                stmnt.executeQuery("CALL IDENTITY();");
 
                 try {
                     stmnt.executeUpdate(

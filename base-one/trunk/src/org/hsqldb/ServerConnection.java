@@ -99,21 +99,21 @@ import org.hsqldb.rowio.RowOutputBinary;
  */
 class ServerConnection implements Runnable {
 
-    boolean                 keepAlive;
-    private String          user;
-    int                     dbID;
-    private Session         session;
-    private Socket          socket;
-    private Server          server;
-    private DataInputStream dataInput;
-    private OutputStream    dataOutput;
-    private static int      mCurrentThread = 0;
-    private int             mThread;
-    static final int        BUFFER_SIZE = 0x1000;
-    final byte[]            mainBuffer  = new byte[BUFFER_SIZE];
-    RowOutputBinary         rowOut      = new RowOutputBinary(BUFFER_SIZE);
-    RowInputBinary          rowIn       = new RowInputBinary(rowOut);
-    Thread                  runnerThread;
+    boolean                      keepAlive;
+    private String               user;
+    int                          dbID;
+    private Session              session;
+    private Socket               socket;
+    private Server               server;
+    private BufferedInputStream  dataInput;
+    private BufferedOutputStream dataOutput;
+    private static int           mCurrentThread = 0;
+    private int                  mThread;
+    static final int             BUFFER_SIZE = 0x1000;
+    final byte[]                 mainBuffer  = new byte[BUFFER_SIZE];
+    RowOutputBinary              rowOut = new RowOutputBinary(BUFFER_SIZE);
+    RowInputBinary               rowIn       = new RowInputBinary(rowOut);
+    Thread                       runnerThread;
 
     /**
      * Creates a new ServerConnection to the specified Server on the
@@ -183,8 +183,7 @@ class ServerConnection implements Runnable {
         try {
             socket.setTcpNoDelay(true);
 
-            dataInput = new DataInputStream(
-                new BufferedInputStream(socket.getInputStream()));
+            dataInput  = new BufferedInputStream(socket.getInputStream());
             dataOutput = new BufferedOutputStream(socket.getOutputStream());
 
             Result resultIn = Result.read(rowIn, dataInput);

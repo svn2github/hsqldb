@@ -46,8 +46,10 @@ import org.hsqldb.Token;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.StopWatch;
-import org.hsqldb.rowio.RowOutputBase;
+
+import java.io.BufferedOutputStream;
+
+//import org.hsqldb.lib.StopWatch;
 
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
@@ -75,7 +77,6 @@ import org.hsqldb.rowio.RowOutputBase;
  * @version 1.7.2
  * @since 1.7.2
  */
-
 // todo - can lock the database engine as readonly in a wrapper for this when
 // used at checkpoint
 public abstract class ScriptWriterBase {
@@ -85,7 +86,6 @@ public abstract class ScriptWriterBase {
     OutputStream   fileStreamOut;
     FileDescriptor outDescriptor;
     int            tableRowCount;
-    StopWatch      sw = new StopWatch();
 
     /**
      * this determines if the script is the normal script (false) used
@@ -166,9 +166,6 @@ public abstract class ScriptWriterBase {
                 return;
             }
 
-            Trace.printSystemOut("file sync interval: ", sw.elapsedTime());
-            sw.zero();
-
             try {
                 fileStreamOut.flush();
                 outDescriptor.sync();
@@ -176,9 +173,6 @@ public abstract class ScriptWriterBase {
                 Trace.printSystemOut("flush() or sync() error: "
                                      + e.getMessage());
             }
-
-            Trace.printSystemOut("file sync: ", sw.elapsedTime());
-            sw.zero();
 
             needsSync = false;
             forceSync = false;
@@ -220,7 +214,7 @@ public abstract class ScriptWriterBase {
             FileOutputStream fos = new FileOutputStream(outFile, true);
 
             outDescriptor = fos.getFD();
-            fileStreamOut = fos;
+            fileStreamOut = new BufferedOutputStream(fos, 2 << 12);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, outFile);
         }

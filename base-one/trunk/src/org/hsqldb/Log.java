@@ -666,8 +666,6 @@ class Log {
      */
     private void writeScript(boolean full) throws HsqlException {
 
-        Trace.printSystemOut("writeScript");
-
         try {
             FileUtil.delete(sFileScript + ".new");
         } catch (IOException e) {}

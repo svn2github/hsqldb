@@ -37,6 +37,7 @@ import java.awt.image.*;
 import java.applet.*;
 import java.sql.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import org.hsqldb.lib.java.javaSystem;
@@ -100,7 +101,7 @@ implements ActionListener, WindowListener, KeyListener {
      *
      * @param c
      */
-    void connect(Connection c) {
+    public void connect(Connection c) {
 
         if (c == null) {
             return;
@@ -164,6 +165,12 @@ implements ActionListener, WindowListener, KeyListener {
             lowerArg = arg[i].toLowerCase();
 
             i++;
+
+            if (i == arg.length) {
+                showUsage();
+
+                return;
+            }
 
             if (lowerArg.equals("-driver")) {
                 defDriver   = arg[i];
@@ -258,7 +265,7 @@ implements ActionListener, WindowListener, KeyListener {
      * Method declaration
      *
      */
-    void main() {
+    public void main() {
 
         fMain = new Frame("HSQL Database Manager");
         imgEmpty = createImage(new MemoryImageSource(2, 2, new int[4 * 4], 2,
@@ -272,7 +279,7 @@ implements ActionListener, WindowListener, KeyListener {
         // used shortcuts: CERGTSIUDOLM
         String fitems[] = {
             "-Connect...", "--", "-Open Script...", "-Save Script...",
-            "-Save Result...", "--", "-Exit"
+            "-Save Result...", "-Save Result csv...", "--", "-Exit"
         };
 
         addMenu(bar, "File", fitems);
@@ -506,6 +513,28 @@ implements ActionListener, WindowListener, KeyListener {
             if (file != null) {
                 DatabaseManagerCommon.writeFile(f.getDirectory() + file,
                                                 txtCommand.getText());
+            }
+        } else if (s.equals("Save Result csv...")) {
+            FileDialog f = new FileDialog(fMain, "Save Result CSV",
+                                          FileDialog.SAVE);
+
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
+
+            f.show();
+
+            String dir  = f.getDirectory();
+            String file = f.getFile();
+
+            if (dir != null) {
+                file = dir + "/" + file;
+            }
+
+            if (file != null) {
+                showResultInText();
+                saveAsCsv(file);
             }
         } else if (s.equals("Save Result...")) {
             FileDialog f = new FileDialog(fMain, "Save Result",
@@ -932,6 +961,45 @@ implements ActionListener, WindowListener, KeyListener {
         lTime = System.currentTimeMillis() - lTime;
 
         updateResult();
+    }
+
+    void saveAsCsv(String filename) {
+
+        try {
+            File      file   = new File(filename);
+            CSVWriter writer = new CSVWriter(file, null);
+            String    col[]  = gResult.getHead();
+            int       width  = col.length;
+            Vector    data   = gResult.getData();
+            String    row[];
+            int       height = data.size();
+
+            writer.writeHeader(col);
+
+            for (int i = 0; i < height; i++) {
+                row = (String[]) data.elementAt(i);
+
+                String myRow[] = new String[row.length];
+
+                for (int j = 0; j < row.length; j++) {
+                    String r = row[j];
+
+                    if (r.equals("(null)")) {
+
+                        // null is formatted as (null)
+                        r = "";
+                    }
+
+                    myRow[j] = r;
+                }
+
+                writer.writeData(myRow);
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException("IOError: " + e.getMessage());
+        }
     }
 
     /**

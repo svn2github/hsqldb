@@ -83,8 +83,9 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT}
-    String tableType  = "CACHED";
-    int    cacheScale = 12;
+    String tableType      = "MEMORY";
+    int    cacheScale     = 12;
+    int    cacheSizeScale = 8;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,7 +103,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 120000;
+    int bigrows   = 200000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -141,6 +142,8 @@ public class TestCacheSize {
                 cConnection.close();
                 props.load();
                 props.setProperty("hsqldb.cache_scale", "" + cacheScale);
+                props.setProperty("hsqldb.cache_size_scale",
+                                  "" + cacheSizeScale);
                 props.save();
             }
 
@@ -160,8 +163,7 @@ public class TestCacheSize {
      */
     public void testFillUp() {
 
-        StopWatch sw    = new StopWatch();
-        double    value = 0;
+        StopWatch sw = new StopWatch();
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";

@@ -67,6 +67,7 @@
 
 package org.hsqldb.util;
 
+import java.io.*;
 import java.util.Vector;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
@@ -81,7 +82,7 @@ class ConnectionDialogCommon {
     private final static String sJDBCTypes[][] = {
         {
             "HSQL Database Engine In-Memory", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:mem:dbname"
+            "jdbc:hsqldb:mem:\u00ABdbname?\u00BB"
         }, {
             "HSQL Database Engine Standalone", "org.hsqldb.jdbcDriver",
             "jdbc:hsqldb:file:\u00ABdatabase/path?\u00BB"
@@ -170,5 +171,128 @@ class ConnectionDialogCommon {
         return (connTypes);
     }
 
-    private ConnectionDialogCommon() {}
+    private final static String fileName       = "hsqlprefs.dat";
+    private static File         recentSettings = null;
+
+    static ConnectionSetting[] loadRecentConnectionSettings()
+    throws IOException {
+
+        if (recentSettings == null) {
+            recentSettings = new File(getTempDir() + fileName);
+
+            if (!recentSettings.exists()) {
+                recentSettings.createNewFile();
+
+                return new ConnectionSetting[]{ emptySetting };
+            }
+        }
+
+        FileInputStream   in        = new FileInputStream(recentSettings);
+        ObjectInputStream objStream = null;
+        Vector            v         = new Vector();
+
+        try {
+            objStream = new ObjectInputStream(in);
+
+            while (true) {
+                v.addElement(objStream.readObject());
+            }
+        } catch (EOFException eof) {
+
+            // reached end of file -- this is not clean but it works
+        } catch (ClassNotFoundException cnfe) {
+            throw (IOException) new IOException(
+                "Unrecognized class type.").initCause(cnfe);
+        } finally {
+            if (objStream != null) {
+                objStream.close();
+            }
+
+            in.close();
+        }
+
+        if (v.size() == 0) {
+            return new ConnectionSetting[]{ emptySetting };
+        }
+
+        ConnectionSetting[] newSettings = new ConnectionSetting[v.size()];
+
+        for (int i = 0; i < v.size(); i++) {
+            newSettings[i] = (ConnectionSetting) v.elementAt(i);
+        }
+
+        return newSettings;
+    }
+
+    static ConnectionSetting emptySetting =
+        new ConnectionSetting("Recent settings...", null, null, null, null);
+
+    /**
+     * Here's a non-secure method of storing recent connection settings.
+     *
+     * @param settings ConnectionSetting[]
+     * @throw IOException if something goes wrong while writing
+     */
+    static void storeRecentConnectionSettings(ConnectionSetting[] settings)
+    throws IOException {
+
+        if (recentSettings == null) {
+            recentSettings = new File(getTempDir() + fileName);
+
+            if (!recentSettings.exists()) {
+                recentSettings.createNewFile();
+            }
+        }
+
+        if (settings == null || settings.length == 0) {
+            return;
+        }
+
+        // setup a stream to a physical file on the filesystem
+        FileOutputStream   out       = new FileOutputStream(recentSettings);
+        ObjectOutputStream objStream = new ObjectOutputStream(out);
+
+        for (int i = 0; i < settings.length; i++) {
+            objStream.writeObject(settings[i]);
+        }
+
+        objStream.flush();
+        objStream.close();
+        out.close();
+    }
+
+    /**
+     * Removes the recent connection settings file store.
+     */
+    static void deleteRecentConnectionSettings() {
+
+        if (recentSettings == null) {
+            recentSettings = new File(getTempDir() + fileName);
+        }
+
+        if (!recentSettings.exists()) {
+            recentSettings = null;
+
+            return;
+        }
+
+        recentSettings.delete();
+
+        recentSettings = null;
+    }
+
+    private static String tmpdir = null;
+
+    private static String getTempDir() {
+
+        if (tmpdir == null) {
+            sun.security.action.GetPropertyAction a =
+                new sun.security.action.GetPropertyAction("java.io.tmpdir");
+
+            tmpdir =
+                ((String) java.security.AccessController.doPrivileged(a));
+        }
+
+        return tmpdir;
+    }
 }

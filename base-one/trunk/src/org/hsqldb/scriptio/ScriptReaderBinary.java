@@ -40,6 +40,7 @@ import org.hsqldb.Result;
 import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
+import org.hsqldb.lib.InOutUtil;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.rowio.RowInputBase;
 import org.hsqldb.rowio.RowInputBinary;
@@ -72,11 +73,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
     protected void readSingleColumnResult(Session session)
     throws IOException, HsqlException {
 
-        Result r = Result.read(rowIn, dataStreamIn);
-/*
-        readRow(rowIn, 0, dataStreamIn);
-        Result r = new Result(rowIn);
-*/
+        Result   r  = Result.read(rowIn, dataStreamIn);
         Iterator it = r.iterator();
 
         while (it.hasNext()) {
@@ -145,18 +142,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     // int : rowcount
     protected int readTableTerm() throws IOException, HsqlException {
-
-        rowIn.reset();
-
-        int count  = 0;
-        int length = 4;
-
-        while (dataStreamIn.available() > 0 && count < length) {
-            count += dataStreamIn.read(rowIn.getBuffer(), count,
-                                       length - count);
-        }
-
-        return rowIn.readInt();
+        return InOutUtil.readInt(dataStreamIn);
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
@@ -184,17 +170,8 @@ class ScriptReaderBinary extends ScriptReaderBase {
     boolean readRow(RowInputBase rowin, int pos,
                     InputStream streamIn) throws IOException {
 
-        rowin.reset();
-
-        int count  = 0;
-        int length = 4;
-
-        while (streamIn.available() > 0 && count < length) {
-            count += dataStreamIn.read(rowin.getBuffer(), count,
-                                       length - count);
-        }
-
-        length = rowin.readInt();
+        int length = InOutUtil.readInt(streamIn);
+        int count  = 4;
 
         if (length == 0) {
             return false;
@@ -202,12 +179,17 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
         rowin.resetRow(pos, length);
 
-        while (streamIn.available() > 0 && count < length) {
-            count += dataStreamIn.read(rowin.getBuffer(), count,
-                                       length - count);
+        while (count < length) {
+            int read = dataStreamIn.read(rowin.getBuffer(), count,
+                                         length - count);
+
+            if (read == -1) {
+                throw new IOException();
+            }
+
+            count += read;
         }
 
-        // problem if count != length
         return true;
     }
 }

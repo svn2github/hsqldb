@@ -77,15 +77,17 @@ import java.sql.*;
 /**
  * Opens a connection to a database
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
-    protected Connection mConnection;
-    protected TextField  mDriver, mURL, mUser, mPassword;
-    protected Label      mError;
-    private String       connTypes[][];
+    protected Connection      mConnection;
+    protected TextField       mName, mDriver, mURL, mUser, mPassword;
+    protected Label           mError;
+    private String            connTypes[][];
+    private ConnectionSetting settings[];
+    private Choice            types, recent;
 
     /**
      * Method declaration
@@ -133,31 +135,103 @@ implements ActionListener, ItemListener {
         Panel pLabel;
         Panel pText;
         Panel pButton;
+        Panel pClearButton;
 
         // (ulrivo): full size on screen with less than 640 width
         if (d.width >= 640) {
-            pLabel  = new Panel(new GridLayout(6, 1, 10, 10));
-            pText   = new Panel(new GridLayout(6, 1, 10, 10));
-            pButton = new Panel(new GridLayout(1, 2, 10, 10));
+            pLabel       = new Panel(new GridLayout(8, 1, 10, 10));
+            pText        = new Panel(new GridLayout(8, 1, 10, 10));
+            pButton      = new Panel(new GridLayout(1, 2, 10, 10));
+            pClearButton = new Panel(new GridLayout(8, 1, 10, 10));
         } else {
-            pLabel  = new Panel(new GridLayout(6, 1));
-            pText   = new Panel(new GridLayout(6, 1));
-            pButton = new Panel(new GridLayout(1, 2));
+            pLabel       = new Panel(new GridLayout(8, 1));
+            pText        = new Panel(new GridLayout(8, 1));
+            pButton      = new Panel(new GridLayout(1, 2));
+            pClearButton = new Panel(new GridLayout(8, 1));
         }
 
         p.add("West", pLabel);
         p.add("Center", pText);
         p.add("South", pButton);
         p.add("North", createLabel(""));
-        p.add("East", createLabel(""));
+        p.add("East", pClearButton);
         p.setBackground(SystemColor.control);
         pText.setBackground(SystemColor.control);
         pLabel.setBackground(SystemColor.control);
         pButton.setBackground(SystemColor.control);
+        pLabel.add(createLabel("Recent:"));
+
+        recent = new Choice();
+
+        try {
+            settings = ConnectionDialogCommon.loadRecentConnectionSettings();
+        } catch (java.io.IOException ioe) {
+            ioe.printStackTrace();
+        }
+
+        if (settings == null) {
+            settings = new ConnectionSetting[]{
+                ConnectionDialogCommon.emptySetting };
+        }
+
+        for (int i = 0; i < settings.length; i++) {
+            recent.add(settings[i].getName());
+        }
+
+        recent.addItemListener(new ItemListener() {
+
+            public void itemStateChanged(ItemEvent e) {
+
+                String s = (String) e.getItem();
+
+                for (int i = 0; i < settings.length; i++) {
+                    if (s.equals(
+                            ConnectionDialogCommon.emptySetting.getName())) {
+                        continue;
+                    }
+
+                    if (s.equals(settings[i].getName())) {
+                        mName.setText(settings[i].getName());
+                        mDriver.setText(settings[i].getDriver());
+                        mURL.setText(settings[i].getUrl());
+                        mUser.setText(settings[i].getUser());
+                        mPassword.setText(settings[i].getPassword());
+
+                        break;
+                    }
+                }
+            }
+        });
+        pText.add(recent);
+
+        Button b;
+
+        b = new Button("Clr");
+
+        b.setActionCommand("Clear");
+        b.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+
+                ConnectionDialogCommon.deleteRecentConnectionSettings();
+
+                settings = new ConnectionSetting[]{
+                    ConnectionDialogCommon.emptySetting };
+
+                recent.removeAll();
+                recent.add(ConnectionDialogCommon.emptySetting.getName());
+                mName.setText(null);
+            }
+        });
+        pClearButton.add(b);
+        pLabel.add(createLabel("Setting Name:"));
+
+        mName = new TextField(null);
+
+        pText.add(mName);
         pLabel.add(createLabel("Type:"));
 
-        Choice types = new Choice();
-
+        types     = new Choice();
         connTypes = ConnectionDialogCommon.getTypes();
 
         for (int i = 0; i < connTypes.length; i++) {
@@ -190,8 +264,6 @@ implements ActionListener, ItemListener {
         mPassword.addActionListener(this);
         mPassword.setEchoChar('*');
         pText.add(mPassword);
-
-        Button b;
 
         b = new Button("Ok");
 
@@ -307,6 +379,25 @@ implements ActionListener, ItemListener {
                                                mUser.getText(),
                                                mPassword.getText());
 
+                if (mName.getText() != null
+                        && mName.getText().trim().length() != 0) {
+                    ConnectionSetting[] newSettings =
+                        (ConnectionSetting[]) org.hsqldb.lib.ArrayUtil
+                            .resizeArray(settings, settings.length + 1);
+
+                    newSettings[settings.length] =
+                        new ConnectionSetting(mName.getText(),
+                                              mDriver.getText(),
+                                              mURL.getText(),
+                                              mUser.getText(),
+                                              mPassword.getText());
+
+                    ConnectionDialogCommon.storeRecentConnectionSettings(
+                        newSettings);
+                }
+
+                dispose();
+            } catch (java.io.IOException ioe) {
                 dispose();
             } catch (Exception e) {
                 e.printStackTrace();

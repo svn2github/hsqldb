@@ -205,10 +205,14 @@ class WebServerConnection implements Runnable {
             int    method = REQUEST_TYPE_BAD;
             int    len    = -1;
 
-            // read any blank lines
+            // read line, ignoring any leading blank lines
             do {
                 count = InOutUtil.readLine(inStream, rowOut);
-            } while (inStream.available() > 0 && count < 2);
+
+                if (count == 0) {
+                    throw new Exception();
+                }
+            } while (count < 2);
 
             byte[] byteArray = rowOut.getBuffer();
             int    offset    = rowOut.size() - count;
@@ -317,7 +321,7 @@ class WebServerConnection implements Runnable {
 
         try {
             Result resultIn = Result.read(rowIn,
-                                          new DataInputStream(inStream));
+                                          new BufferedInputStream(inStream));
 
             //
             Result resultOut;
@@ -405,10 +409,11 @@ class WebServerConnection implements Runnable {
             server.printWithThread("GET " + name);
 
             try {
-                is = new BufferedInputStream(
-                    new FileInputStream(new File(name)));
+                File file = new File(name);
+
+                is = new BufferedInputStream(new FileInputStream(file));
                 hdr = getHead(HEADER_OK, true, getMimeTypeString(name),
-                              is.available());
+                              (int) file.length());
             } catch (IOException e) {
                 processError(HttpURLConnection.HTTP_NOT_FOUND);
 

@@ -83,6 +83,7 @@ import org.hsqldb.lib.java.javaSystem;
 // sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering and enhancements
 // nickferguson@users 20021005 - patch 1.7.1 - enhancements
+// deccles@users 20040412 - patch 933671 - bug fixes
 
 /**
  * Swing Tool for manageing a JDBC database.<p>
@@ -223,7 +224,7 @@ implements ActionListener, WindowListener, KeyListener {
         m.connect(c);
     }
 
-    private void connect(Connection c) {
+    public void connect(Connection c) {
 
         if (c == null) {
             return;
@@ -281,7 +282,7 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    void main() {
+    public void main() {
 
         CommonSwing.setDefaultColor();
 
@@ -309,7 +310,7 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "View", vitems);
 
         String sitems[] = {
-            "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "---",
+            "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "EEXECUTE", "---",
             "-CREATE TABLE", "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX",
             "--", "-CHECKPOINT", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
             "-Test Script"
@@ -405,7 +406,10 @@ implements ActionListener, WindowListener, KeyListener {
                 char      c    = m[i].charAt(0);
 
                 if (c != '-') {
-                    item.setMnemonic(c);
+                    KeyStroke key =
+                        KeyStroke.getKeyStroke(c, Event.CTRL_MASK);
+
+                    item.setAccelerator(key);
                 }
 
                 item.addActionListener(this);
@@ -586,6 +590,8 @@ implements ActionListener, WindowListener, KeyListener {
             showHelp(DatabaseManagerCommon.updateHelp);
         } else if (s.equals("DELETE")) {
             showHelp(DatabaseManagerCommon.deleteHelp);
+        } else if (s.equals("EXECUTE")) {
+            execute();
         } else if (s.equals("CREATE TABLE")) {
             showHelp(DatabaseManagerCommon.createTableHelp);
         } else if (s.equals("DROP TABLE")) {
@@ -996,6 +1002,9 @@ implements ActionListener, WindowListener, KeyListener {
         gResult      = new GridSwing();
         gResultTable = new JTable(gResult);
         gScrollPane  = new JScrollPane(gResultTable);
+
+        gResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        gResult.setJTable(gResultTable);
 
         //getContentPane().setLayout(new BorderLayout());
         pResult.add(gScrollPane, BorderLayout.CENTER);

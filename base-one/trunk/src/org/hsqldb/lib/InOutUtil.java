@@ -45,6 +45,26 @@ import java.io.OutputStream;
 public class InOutUtil {
 
 /**
+ * reads an int from an InputStream
+ */
+    public static int readInt(InputStream datain) throws IOException {
+
+        int value = 0;
+
+        for (int scale = 24; scale >= 0; scale -= 8) {
+            int b = datain.read();
+
+            if (b == -1) {
+                throw new IOException();
+            }
+
+            value += b << scale;
+        }
+
+        return value;
+    }
+
+/**
  * Implementation only supports unix line-end format and is suitable for
  * processing HTTP and other network protocol communications. Reads and writes
  * a line of data. Returns the number of bytes read/written.

@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.10 2004/04/22 03:06:26 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.11 2004/04/23 17:10:15 unsaved Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2004/04/23 17:10:15 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -76,8 +76,9 @@
                     <member>2,</member>  <member>2</member>
                     <member>NULL,</member>  <member>1</member>
                     <member>NULL,</member>  <member>1</member>
-                    <member>NULL,</member>  <member>NULL</member>
                     <member>1,</member>  <member>NULL</member>
+                    <member>NULL,</member>  <member>NULL</member>
+                    <member>NULL,</member>  <member>NULL</member>
                 </simplelist>
             </example><para>
                 In version 1.7.2 the behaviour of UNIQUE constraints and 
@@ -153,7 +154,7 @@
                 <literal>SELECT ... FROM t1 JOIN t2 ON t1.c1 = t2.c2 WHERE 
                 t1.c3 = 4</literal> then an index on t1.c3 would eliminate the 
                 need for checking all the rows of t1 one by one, and will 
-                reduced  query time to less than a millisecond per returned row.
+                reduce query time to less than a millisecond per returned row.
                 So if t1 and t2 each contain 10,000 rows, the query without 
                 indexes involves checking 100,000,000 row combinations.
                 With an index on t2.c2, this is reduced to 10,000 row checks 
@@ -405,7 +406,7 @@
                 The distinction between DOUBLE and DECIMAL is important when a 
                 division takes place.
                 When the terms are DECIMAL, the result is a value with a scale 
-                (number of digits to the right of the decimal pint) equal to 
+                (number of digits to the right of the decimal point) equal to 
                 the larger of the scales of the two terms.
                 With a DOUBLE term, the scale will reflect the actual result 
                 of the operation.

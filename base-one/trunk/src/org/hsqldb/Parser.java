@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.ArrayUtil;
@@ -1244,6 +1245,20 @@ class Parser {
         return r;
     }
 
+    static HashMap datetimeTokens = new HashMap();
+
+    static {
+        datetimeTokens.put(Token.T_CURRENT_DATE,
+                           "org.hsqldb.Library.curdate");
+        datetimeTokens.put(Token.T_CURRENT_TIME,
+                           "org.hsqldb.Library.curtime");
+        datetimeTokens.put(Token.T_CURRENT_TIMESTAMP,
+                           "org.hsqldb.Library.now");
+        datetimeTokens.put(Token.T_SYSDATE, "org.hsqldb.Library.curdate");
+        datetimeTokens.put(Token.T_NOW, "org.hsqldb.Library.now");
+        datetimeTokens.put(Token.T_TODAY, "org.hsqldb.Library.curdate");
+    }
+
     /**
      *  Method declaration
      *
@@ -1318,7 +1333,7 @@ class Parser {
 
                 if (iToken == Expression.OPEN) {
                     String   javaName = database.getAlias(name);
-                    Function f        = new Function(name, javaName, session);
+                    Function f = new Function(name, javaName, false, session);
 
                     session.check(javaName, UserManager.ALL);
 
@@ -1343,6 +1358,15 @@ class Parser {
 
                     // TODO: Maybe allow AS <alias> here
                     r = new Expression(f);
+                } else {
+                    String javaName = (String) datetimeTokens.get(name);
+
+                    if (javaName != null) {
+                        Function f = new Function(name, javaName, true,
+                                                  session);
+
+                        r = new Expression(f);
+                    }
                 }
 
                 break;
@@ -1674,7 +1698,7 @@ class Parser {
 
                 // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
                 Function f = new Function(name, database.getAlias(name),
-                                          session);
+                                          false, session);
 
                 f.setArgument(0, readOr());
                 readThis(Expression.CLOSE);
@@ -1723,7 +1747,8 @@ class Parser {
 
                 // name argument is OK for now for CHECK constraints
                 Function f = new Function(Token.T_TRIM,
-                                          "org.hsqldb.Library.trim", session);
+                                          "org.hsqldb.Library.trim", false,
+                                          session);
 
                 f.setArgument(0, readOr());
                 f.setArgument(1, trim);
@@ -1741,7 +1766,7 @@ class Parser {
 
                 Function f = new Function(Token.T_POSITION,
                                           "org.hsqldb.Library.position",
-                                          session);
+                                          false, session);
 
                 f.setArgument(0, readTerm());
                 readThis(Expression.IN);
@@ -1761,7 +1786,7 @@ class Parser {
                 // OK for now for CHECK search conditions
                 Function f = new Function(Token.T_SUBSTRING,
                                           "org.hsqldb.Library.substring",
-                                          session);
+                                          false, session);
 
                 f.setArgument(0, readTerm());
 

@@ -179,12 +179,6 @@ public class Tokenizer {
         valueTokens.put(Token.T_NULL, NULL);
         valueTokens.put(Token.T_TRUE, BOOLEAN);
         valueTokens.put(Token.T_FALSE, BOOLEAN);
-        valueTokens.put(Token.T_CURRENT_DATE, DATE);
-        valueTokens.put(Token.T_CURRENT_TIME, TIME);
-        valueTokens.put(Token.T_CURRENT_TIMESTAMP, TIMESTAMP);
-        valueTokens.put(Token.T_SYSDATE, DATE);
-        valueTokens.put(Token.T_NOW, TIMESTAMP);
-        valueTokens.put(Token.T_TODAY, DATE);
     }
 
     Tokenizer() {}
@@ -332,9 +326,6 @@ public class Tokenizer {
             case FLOAT :
             case DECIMAL :
             case BOOLEAN :
-            case DATE :
-            case TIME :
-            case TIMESTAMP :
             case NULL :
                 return true;
 
@@ -825,10 +816,7 @@ public class Tokenizer {
 
                         getToken();    // todo: eliminate recursion
 
-//                        sLongNameLast = sToken;
                         iType = LONG_NAME;
-
-//                        sToken        = sLongNameFirst + "." + sLongNameLast;
                     } else if (c == '(') {
 
                         // it is a function call

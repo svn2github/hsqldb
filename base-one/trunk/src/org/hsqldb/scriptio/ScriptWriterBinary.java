@@ -37,7 +37,6 @@ import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.Table;
-import org.hsqldb.rowio.RowOutputBase;
 import org.hsqldb.rowio.RowOutputBinary;
 
 /**
@@ -47,7 +46,7 @@ import org.hsqldb.rowio.RowOutputBinary;
  */
 class ScriptWriterBinary extends ScriptWriterBase {
 
-    RowOutputBase rowOut;
+    RowOutputBinary rowOut;
 
     ScriptWriterBinary(Database db, String file, boolean includeCached,
                        boolean newFile) throws HsqlException {

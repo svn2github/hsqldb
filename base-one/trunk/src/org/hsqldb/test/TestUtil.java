@@ -54,14 +54,14 @@ public class TestUtil {
      * returned by the query.  Within each row, fields should be delimited
      * using either comma (the default), or a user defined delimiter
      * which should be specified in the System property TestUtilFieldDelimiter
-     * @param cConnection Connection object for the database
-     * @param path Path of the script file to be tested
+     * @param aConnection Connection object for the database
+     * @param aPath Path of the script file to be tested
      */
-    static void testScript(Connection connection, String path) {
+    static void testScript(Connection aConnection, String aPath) {
 
         try {
-            Statement statement = connection.createStatement();
-            File      testfile  = new File(path);
+            Statement statement = aConnection.createStatement();
+            File      testfile  = new File(aPath);
             LineNumberReader reader =
                 new LineNumberReader(new FileReader(testfile));
             Vector section = null;
@@ -86,9 +86,10 @@ public class TestUtil {
                 }
 
                 line = line.substring(
-                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));;
+                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));
 
-                if (line.length() == 0) {
+                //if the line is blank or a comment, then ignore it
+                if ((line.length() == 0) || line.startsWith("--")) {
                     continue;
                 }
 
@@ -124,6 +125,7 @@ public class TestUtil {
             statement.close();
             print("Processed lines: " + reader.getLineNumber());
         } catch (Exception e) {
+            e.printStackTrace();
             print("test script file error: " + e.getMessage());
         }
     }
@@ -160,7 +162,7 @@ public class TestUtil {
      * If the actual result differs from that expected, or an
      * exception is thrown, then the appropriate message is printed.
      * @param stat Statement object used to access the database
-     * @param aSection Vector of script lines containing a discrete
+     * @param section Vector of script lines containing a discrete
      * section of script (i.e. test type, expected results,
      * SQL for the statement).
      * @param line line of the script file where this section started
@@ -168,70 +170,139 @@ public class TestUtil {
     private static void testSection(Statement stat, Vector section,
                                     int line) {
 
-        String[] rows = new String[section.size()];
+        //create an appropriate instance of ParsedSection
+        ParsedSection pSection = parsedSectionFactory(section);
 
-        //loop over the Vector, and pull all the rows out as Strings
-        for (int i = 0; i < section.size(); i++) {
-            rows[i] = (String) section.get(i);
+        if (!pSection.test(stat)) {
+            print("section starting at line " + line);
+            print("returned an unexpected result:");
+            print(pSection.toString());
         }
+    }
 
-        //get the type of the test query from row[0]...
+    /**
+     * Factory method to create appropriate parsed section class for the section
+     * @param aSection Vector containing the section of script
+     */
+    private static ParsedSection parsedSectionFactory(Vector aSection) {
+
+        //type of the section
         char type = ' ';
 
-        if (rows[0].startsWith("/*")) {
-            type = rows[0].charAt(2);
+        //section represented as an array of Strings, one for each significant
+        //line in the section
+        String[] rows = null;
+
+        //read the first line of the Vector...
+        String topLine = (String) aSection.get(0);
+
+        //...and check it for the type...
+        if (topLine.startsWith("/*")) {
+            type = topLine.charAt(2);
+
+            //...strip out the type declaration...
+            topLine = topLine.substring(3);
         }
 
+        //if, after stripping out the declaration from topLine, the length of topLine
+        //is greater than 0, then keep the rest of the line, as the first row.
+        //Otherwise it will be discarded, and the offset (between the array and the vector)
+        //set to 1.
+        int offset = 0;
+
+        if (topLine.trim().length() > 0) {
+            rows    = new String[aSection.size()];
+            rows[0] = topLine;
+        } else {
+            rows   = new String[aSection.size() - 1];
+            offset = 1;
+        }
+
+        //pull the rest of aSection into the rows array.
+        for (int i = (1 - offset); i < rows.length; i++) {
+            rows[i] = (String) aSection.get(i + offset);
+        }
+
+        //then pass this to the constructor for the ParsedSection class that
+        //corresponds to the value of type
         switch (type) {
 
-            case ' ' :
-
-            //section is not a test -- it should not throw any exception though
-            case 'e' :
-
-                //section must throw an exception
-                break;
+            case 'u' :
+                return new UpdateParsedSection(rows);
 
             case 'r' :
-            case 'u' :
+                return new ResultSetParsedSection(rows);
 
-            //section should return an update count that matches
             case 'c' :
+                return new CountParsedSection(rows);
 
-                //section should return a result set that matches
-                rows[0] = rows[0].substring(3);
-                break;
+            case 'e' :
+                return new ExceptionParsedSection(rows);
 
-            //section should return a result set with row count that matches
+            case ' ' :
+                return new BlankParsedSection(rows);
+
+            default :
+                return null;
         }
+    }
+}
 
-        int resStartRow = 0;
+/**
+ * Abstract inner class representing a parsed section of script.
+ * The specific ParsedSections for each type of test should inherit from this.
+ */
+abstract class ParsedSection {
 
-        //if the rest of row[0] is empty then the result set starts at rows[1]
-        if (rows[0].trim().length() == 0) {
-            resStartRow = 1;
+    /**
+     * Type of this test.  Allowed values are:
+     * 'u' (update)
+     * 'c' (count)
+     * 'e' (exception)
+     * 'r' (results)
+     * ' ' (not a test)
+     */
+    protected char type = ' ';
 
-            //then loop over rows[], array, starting from the back, first pulling out the
-            //statement to be run aginst the database, and then the result set
-            //which can go into a new String array (for which we will know the dimensions).
-        }
+    /** error message for this section */
+    String message = null;
 
-        StringBuffer sqlBuff = new StringBuffer();
-        int          endIndex;
-        int          resEndRow = 0;
-        int          k         = rows.length - 1;
+    /** contents of the section as an array of Strings, one for each line in the section. */
+    protected String[] lines = null;
+
+    /** number of the last row containing results in sectionLines */
+    protected int resEndRow = 0;
+
+    /** SQL query to be submitted to the database. */
+    protected String sqlString = null;
+
+    /**
+     * Common constructor functions for this family.
+     * @param aLines Array of the script lines containing the section of script.
+     * @param aStatement Statement for this section to use to execute against the
+     * database
+     */
+    protected ParsedSection(String[] aLines) {
+
+        lines = aLines;
+
+        //read the lines array backwards to get out the SQL String
+        //using a StringBuffer for efficency until we've got the whole String
+        StringBuffer sqlBuff  = new StringBuffer();
+        int          endIndex = 0;
+        int          k        = lines.length - 1;
 
         do {
 
             //check to see if the row contains the end of the result set
-            if ((endIndex = rows[k].indexOf("*/")) != -1) {
+            if ((endIndex = lines[k].indexOf("*/")) != -1) {
 
                 //then this is the end of the result set
-                sqlBuff.insert(0, rows[k].substring(endIndex + 2));
+                sqlBuff.insert(0, lines[k].substring(endIndex + 2));
 
-                rows[k] = rows[k].substring(0, endIndex);
+                lines[k] = lines[k].substring(0, endIndex);
 
-                if (rows[k].length() == 0) {
+                if (lines[k].length() == 0) {
                     resEndRow = k - 1;
                 } else {
                     resEndRow = k;
@@ -239,186 +310,354 @@ public class TestUtil {
 
                 break;
             } else {
-                sqlBuff.insert(0, rows[k]);
+                sqlBuff.insert(0, lines[k]);
             }
 
             k--;
         } while (k >= 0);
 
-        //now we'll put the result rows into their own array
-        String[] resRows = new String[((resEndRow - resStartRow) + 1)];
+        //set sqlString value
+        sqlString = sqlBuff.toString();
+    }
 
-        for (int i = 0; i <= (resEndRow - resStartRow); i++) {
-            resRows[i] = rows[(resStartRow + i)];
+    /**
+     * String representation of this ParsedSection
+     * @return String representation of this ParsedSection
+     */
+    public String toString() {
+
+        StringBuffer b = new StringBuffer();
+
+        b.append("\n******\n");
+        b.append("contents of lines array:\n");
+
+        for (int i = 0; i < lines.length; i++) {
+            b.append("line ").append(i).append(": ").append(lines[i]).append(
+                "\n");
         }
 
-        String sqlStr = sqlBuff.toString();    //since we shouldn't manipulate it from here on
+        b.append("Type: ");
+        b.append(getType()).append("\n");
+        b.append("SQL: ").append(getSql()).append("\n");
+        b.append("results:\n");
+        b.append(getResultString());
 
-        /**
-         * now we have the SQL statement and the expected results
-         * and the type of the transaction, it's time to call the database
-         */
+        //check to see if the message field has been populated
+        if (getMessage() != null) {
+            b.append("\nmessage:\n");
+            b.append(getMessage());
+        }
 
-        //let's get the delimiter for results
-        String delim = System.getProperty("TestUtilFieldDelimiter", ",");
-        StringBuffer errMsg =
-            new StringBuffer("Section starting at Line: ").append(line);
+        b.append("\n******\n");
 
-        errMsg.append("\nSQL: ").append(sqlStr).append("\nExpected ");
+        return b.toString();
+    }
+
+    /**
+     * returns a String representation of the expected result for the test
+     * @return The expected result(s) for the test
+     */
+    abstract protected String getResultString();
+
+    /** returns the error message for the section */
+    protected String getMessage() {
+        return message;
+    }
+
+    /**
+     * returns the type of this section
+     * @return type of this section
+     */
+    protected char getType() {
+        return type;
+    }
+
+    /**
+     * returns the SQL statement for this section
+     * @return SQL statement for this section
+     */
+    protected String getSql() {
+        return sqlString;
+    }
+
+    /**
+     * performs the test contained in the section against the database.
+     * @return true if the result(s) are as expected, otherwise false
+     */
+    protected boolean test(Statement aStatement) {
+
+        try {
+            aStatement.execute(getSql());
+        } catch (Exception x) {
+            message = x.getMessage();
+
+            return false;
+        }
+
+        return true;
+    }
+}
+
+/** Represents a ParsedSection for a ResultSet test */
+class ResultSetParsedSection extends ParsedSection {
+
+    private String delim = System.getProperty("TestUtilFieldDelimiter", ",");
+    private String[] expectedRows = null;
+
+    /**
+     * constructs a new instance of ResultSetParsedSection, interpreting
+     * the supplied results as one or more lines of delimited field values
+     */
+    protected ResultSetParsedSection(String[] lines) {
+
+        super(lines);
+
+        type = 'r';
+
+        //now we'll populate the expectedResults array
+        expectedRows = new String[(resEndRow + 1)];
+
+        for (int i = 0; i <= resEndRow; i++) {
+            expectedRows[i] = lines[i];
+        }
+    }
+
+    protected String getResultString() {
+
+        StringBuffer printVal = new StringBuffer();
+
+        for (int i = 0; i < getExpectedRows().length; i++) {
+            printVal.append(getExpectedRows()[i]).append("\n");
+        }
+
+        return printVal.toString();
+    }
+
+    protected boolean test(Statement aStatement) {
 
         try {
 
-            //make the call
-            stat.execute(sqlStr);
+            //execute the SQL
+            aStatement.execute(getSql());
 
-            int       updateCount = stat.getUpdateCount();
-            ResultSet resultSet   = stat.getResultSet();
-
-            //check we wanted an update count if we got one, and if it was correct
-            if (updateCount != -1) {
-                if (type == 'u') {
-                    if (updateCount != Integer.parseInt(resRows[0])) {
-                        errMsg.append("update count = ").append(resRows[0]);
-                        errMsg.append(" but update count was ").append(
-                            updateCount);
-
-                        throw new Exception(errMsg.toString());
-                    }
-                } else if (type == ' ') {
-
-                    // section is to be executed only
-                } else if (type == 'e') {
-
-                    // should have returned an error
-                    errMsg.append(
-                        "error was expected but update count was ").append(
-                        updateCount);
-                } else {
-
-                    //then we expected a resultSet, but got an update
-                    errMsg.append("ResultSet, but update count was ");
-                    errMsg.append(updateCount);
-
-                    throw new Exception(errMsg.toString());
-                }
-            } else {
-
-                //from here on in we're expecting a ResultSet so prefix error message accordingly
-                errMsg.append("ResultSet ");
-
-                //...and if type r, the correct content...
-                int count = 0;
-
-                while (resultSet.next()) {
-                    if ((type == 'r') && (count < resRows.length)) {
-
-                        //split the result row into individual fields
-                        String[] expected = resRows[count].split(delim);
-
-                        //check that we've got the number of columns expected...
-                        if (resultSet.getMetaData().getColumnCount()
-                                == expected.length) {
-
-                            //...if so, load column values into a new String array...
-                            String[] columns = new String[expected.length];
-
-                            for (int i = 0; i < expected.length; i++) {
-                                columns[i] = resultSet.getString(i + 1);
-
-                                //...check that the contents of the two arrays are the same...
-                            }
-
-                            for (int j = 0; j < columns.length; j++) {
-                                if (columns[j] == null) {
-                                    columns[j] = "NULL";
-                                }
-
-                                if (!columns[j].equals(expected[j].trim())) {
-
-                                    //...if not, better build errMsg and throw an exception...
-                                    StringBuffer partR = new StringBuffer(
-                                        "containing value(s):\n");
-                                    StringBuffer partC = new StringBuffer(
-                                        "but got value(s):\n");
-
-                                    for (int i = 0; i < columns.length; i++) {
-                                        partR.append(expected[i]);
-                                        partC.append(columns[i]);
-
-                                        if (i < columns.length - 1) {
-                                            partR.append(delim);
-                                            partC.append(delim);
-                                            partR.append(" ");
-                                            partC.append(" ");
-                                        } else {
-                                            partR.append("\n");
-                                            partC.append("\n");
-                                        }
-                                    }
-
-                                    errMsg.append(partR);
-                                    errMsg.append(partC);
-
-                                    throw new Exception(errMsg.toString());
-                                }
-                            }
-                        } else {
-
-                            //...otherwise throw an exception...
-                            errMsg.append("with ");
-                            errMsg.append(expected.length);
-                            errMsg.append(" columns ");
-                            errMsg.append("but got ResultSet with ");
-                            errMsg.append(
-                                resultSet.getMetaData().getColumnCount());
-                            errMsg.append(" columns.");
-
-                            throw new Exception(errMsg.toString());
-                        }
-                    }
-
-                    count++;
-                }
-
-                //check to see if our result set had the expected number of rows
-                if (((type == 'c') && (count != Integer.parseInt(resRows[0])))
-                        || ((type == 'r') && (count != resRows.length))) {
-                    errMsg.append("containing ");
-
-                    if (type == 'c') {
-                        errMsg.append(Integer.parseInt(resRows[0]));
-                    } else {
-                        errMsg.append(resRows.length);
-                    }
-
-                    errMsg.append(" rows but got a ResultSet containing ");
-                    errMsg.append(count);
-                    errMsg.append(" rows.");
-
-                    throw new Exception(errMsg.toString());
-                }
+            //check that update count != -1
+            if (aStatement.getUpdateCount() != -1) {
+                throw new Exception(
+                    "Expected a ResultSet, but got an update count of "
+                    + aStatement.getUpdateCount());
             }
-        } catch (SQLException sqlX) {
-            if (type != 'e') {
-                errMsg.append(type);
-                errMsg.append(" with result");
 
-                if (type == 'r') {
-                    errMsg.append("s: \n");
+            //iterate over the ResultSet
+            ResultSet results = aStatement.getResultSet();
+            int       count   = 0;
 
-                    for (int j = 0; j < resRows.length; j++) {
-                        errMsg.append(resRows[j]).append("\n");
+            while (results.next()) {
+                if (count < getExpectedRows().length) {
+                    String[] expectedFields =
+                        getExpectedRows()[count].split(delim);
+
+                    //check that we have the number of columns expected...
+                    if (results.getMetaData().getColumnCount()
+                            == expectedFields.length) {
+
+                        //...and if so, check that the column values are as expected...
+                        int j = 0;
+
+                        for (int i = 0; i < expectedFields.length; i++) {
+                            j = i + 1;
+
+                            //...including null values...
+                            if (results.getString(j) == null) {    //..then we have a null
+
+                                //...check to see if we were expecting it...
+                                if (!expectedFields[i].trim()
+                                        .equalsIgnoreCase("NULL")) {
+                                    throw new Exception(
+                                        "Expected row " + count
+                                        + " of the ResultSet to contain:\n"
+                                        + getExpectedRows()[count]
+                                        + "\nbut field " + j
+                                        + " contained NULL");
+                                }
+                            } else if (!results.getString(j).equals(
+                                    expectedFields[i].trim())) {
+
+                                //then the results are different
+                                throw new Exception(
+                                    "Expected row " + count
+                                    + " of the ResultSet to contain:\n"
+                                    + getExpectedRows()[count]
+                                    + "\nbut field " + j + " contained "
+                                    + results.getString(j));
+                            }
+                        }
+                    } else {
+
+                        //we have the wrong number of columns
+                        throw new Exception(
+                            "Expected the ResultSet to contain "
+                            + expectedFields.length
+                            + " fields, but it contained "
+                            + results.getMetaData().getColumnCount()
+                            + " fields.");
                     }
-                } else {
-                    errMsg.append(": ").append(resRows[0]);
                 }
 
-                errMsg.append("but got SQLException ").append(
-                    sqlX.getMessage());
-                print("error " + errMsg.toString());
+                count++;
+            }
+
+            //check that we got as many rows as expected
+            if (count != getExpectedRows().length) {
+
+                //we don't have the expected number of rows
+                throw new Exception("Expected the ResultSet to contain "
+                                    + getExpectedRows().length
+                                    + " rows, but it contained " + count
+                                    + " rows.");
             }
         } catch (Exception x) {
-            print(x.getMessage());
+            message = x.getMessage();
+
+            x.printStackTrace();
+
+            return false;
         }
+
+        return true;
+    }
+
+    private String[] getExpectedRows() {
+        return expectedRows;
+    }
+}
+
+/** Represents a ParsedSection for an update test */
+class UpdateParsedSection extends ParsedSection {
+
+    //expected update count
+    int countWeWant;
+
+    protected UpdateParsedSection(String[] lines) {
+
+        super(lines);
+
+        type        = 'u';
+        countWeWant = Integer.parseInt(lines[0]);
+    }
+
+    protected String getResultString() {
+        return Integer.toString(getCountWeWant());
+    }
+
+    private int getCountWeWant() {
+        return countWeWant;
+    }
+}
+
+/** Represents a ParsedSection for a count test */
+class CountParsedSection extends ParsedSection {
+
+    //expected row count
+    private int countWeWant;
+
+    protected CountParsedSection(String[] lines) {
+
+        super(lines);
+
+        type        = 'c';
+        countWeWant = Integer.parseInt(lines[0]);
+    }
+
+    protected String getResultString() {
+        return Integer.toString(getCountWeWant());
+    }
+
+    private int getCountWeWant() {
+        return countWeWant;
+    }
+
+    protected boolean test(java.sql.Statement aStatement) {
+
+        try {
+
+            //execute the SQL
+            aStatement.execute(getSql());
+
+            //check that update count != -1
+            if (aStatement.getUpdateCount() != -1) {
+                throw new Exception(
+                    "Expected a ResultSet, but got an update count of "
+                    + aStatement.getUpdateCount());
+            }
+
+            //iterate over the ResultSet
+            ResultSet results = aStatement.getResultSet();
+            int       count   = 0;
+
+            while (results.next()) {
+                count++;
+            }
+
+            //check that we got as many rows as expected
+            if (count != getCountWeWant()) {
+
+                //we don't have the expected number of rows
+                throw new Exception("Expected the ResultSet to contain "
+                                    + getCountWeWant()
+                                    + " rows, but it contained " + count
+                                    + " rows.");
+            }
+        } catch (Exception x) {
+            message = x.getMessage();
+
+            return false;
+        }
+
+        return true;
+    }
+}
+
+/** Represents a ParsedSection for an Exception test */
+class ExceptionParsedSection extends ParsedSection {
+
+    protected ExceptionParsedSection(String[] lines) {
+
+        super(lines);
+
+        type = 'e';
+    }
+
+    protected String getResultString() {
+        return "SQLException";
+    }
+
+    protected boolean test(java.sql.Statement aStatement) {
+
+        try {
+            aStatement.execute(getSql());
+        } catch (SQLException sqlX) {
+            return true;
+        } catch (Exception x) {
+            message = x.getMessage();
+
+            return false;
+        }
+
+        return false;
+    }
+}
+
+/** Represents a ParsedSection for a section with blank type */
+class BlankParsedSection extends ParsedSection {
+
+    protected BlankParsedSection(String[] lines) {
+
+        super(lines);
+
+        type = ' ';
+    }
+
+    protected String getResultString() {
+        return "No result specified for this section";
     }
 }

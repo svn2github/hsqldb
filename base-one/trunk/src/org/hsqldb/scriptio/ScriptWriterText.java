@@ -41,6 +41,8 @@ import org.hsqldb.NumberSequence;
 import org.hsqldb.Trace;
 import org.hsqldb.rowio.RowOutputTextLog;
 
+import java.io.BufferedOutputStream;
+
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
  *
@@ -101,7 +103,7 @@ public class ScriptWriterText extends ScriptWriterBase {
             FileOutputStream fos = new FileOutputStream(outFile, true);
 
             outDescriptor = fos.getFD();
-            fileStreamOut = fos;
+            fileStreamOut = new BufferedOutputStream(fos, 2 << 12);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
                               new Object[] {

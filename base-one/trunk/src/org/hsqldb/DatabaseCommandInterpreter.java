@@ -920,11 +920,19 @@ class DatabaseCommandInterpreter {
             defString += tokenizer.getString();
         }
 
-        if (type == Types.OTHER ||!tokenizer.wasValue()) {
+        if (type == Types.OTHER) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
         }
 
-        defValue = tokenizer.getAsValue();
+        if (tokenizer.wasValue()) {
+            defValue = tokenizer.getAsValue();
+        } else {
+            if (Parser.datetimeTokens.containsKey(defString)) {
+                defValue = defString;
+            } else {
+                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
+            }
+        }
 
         if (wasminus) {
             defValue = Column.negate(defValue, type);

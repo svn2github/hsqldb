@@ -82,6 +82,7 @@ import java.sql.*;
 // sqlbob@users 20020401 - patch 1.7.0 - reengineering
 // nicolas BAZIN 20020430 - add Catalog selection, correct a bug preventing table
 //    edition, change double quotes to simple quotes for default values of CHAR type
+// lonbinder@users 20030426 - correct bug in prefs load/save
 
 /**
  *  Utility program (or applet) for transferring tables between different
@@ -818,7 +819,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
 
             f.show();
 
-            String file = f.getFile();
+            String file = f.getDirectory() + f.getFile();
 
             if (file != null) {
                 LoadPrefs(file);
@@ -830,7 +831,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
 
             f.show();
 
-            String file = f.getFile();
+            String file = f.getDirectory() + f.getFile();
 
             if (file != null) {
                 SavePrefs(file);
