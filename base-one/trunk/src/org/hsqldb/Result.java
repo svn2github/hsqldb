@@ -81,7 +81,7 @@ import java.util.NoSuchElementException;
 /**
  *  Class declaration
  *
- * @version    1.7.0
+ * @version    1.7.2
  */
 class Result {
 
@@ -115,8 +115,9 @@ class Result {
     int statementID;
 
     // max rows (out) or update count (in)
-    int     iUpdateCount;    
-    
+    int     iUpdateCount;
+
+/** @todo fredt - move the next three blocks into a static inner class */
     // always resolved
     String  sLabel[];
     String  sTable[];
@@ -125,7 +126,7 @@ class Result {
     int     colType[];
     int     colSize[];
     int     colScale[];
-        
+
     // extra attrs, sometimes resolved
     String  sCatalog[];
     String  sSchema[];
@@ -133,16 +134,16 @@ class Result {
     boolean isIdentity[];
     boolean[] isWritable;
     int     paramMode[];
-    
+
     // It's possible to do better than java.lang.Object
     // for type OTHER if the expression generating the value
     // is of type FUNCTION.  This applies to result set columns
     // whose value is the result of a SQL function call and
     // especially to the arguments and return value of a CALL
     String  sClassName[];
-    
+
     boolean isParameterDescription;
-    
+
     /**
      *  Constructor declaration
      */
@@ -211,7 +212,7 @@ class Result {
             databaseID = in.readIntData();
             sessionID  = in.readIntData();
 
-            switch (iMode) {                
+            switch (iMode) {
 
                 case ResultConstants.SQLGETSESSIONINFO :
                 case ResultConstants.SQLDISCONNECT :
@@ -222,11 +223,11 @@ class Result {
                     setStatementType(in.readIntData());
                     mainString = in.readString();
                     break;
-                    
-                case ResultConstants.PREPARE_ACK :                   
+
+                case ResultConstants.PREPARE_ACK :
                 case ResultConstants.SQLFREESTMT :
                     statementID  = in.readIntData();
-                    break;                   
+                    break;
 
                 case ResultConstants.SQLEXECDIRECT :
                     statementID  = in.readIntData();
@@ -251,15 +252,15 @@ class Result {
                     mainString   = in.readString();
                     break;
 
-                case ResultConstants.SQLEXECUTE :                    
+                case ResultConstants.SQLEXECUTE :
                 case ResultConstants.SQLSETENVATTR : {
-                    
+
                     if (iMode == ResultConstants.SQLEXECUTE) {
                         statementID  = in.readIntData();
                     } else {
                         iUpdateCount = in.readIntData();
                     }
-                    
+
                     int l = in.readIntData();
 
                     prepareData(l);
@@ -269,7 +270,7 @@ class Result {
                     for (int i = 0; i < l; i++) {
                         colType[i] = in.readType();
                     }
-                    
+
                     int count = in.readIntData();
 
                     while (count-- > 0) {
@@ -277,18 +278,18 @@ class Result {
                     }
 
                     break;
-                }                
+                }
                 case ResultConstants.DATA : {
-                    
+
                     isParameterDescription = (1 == in.readIntData());
-                    
+
                     int l = in.readIntData();
 
                     prepareData(l);
 
                     if (isParameterDescription) {
                         paramMode = new int[l];
-                    }                    
+                    }
 
                     significantColumns = l;
 
@@ -307,7 +308,7 @@ class Result {
                             paramMode[i] = in.readIntData();
                         }
                     }
-                    
+
                     int count = in.readIntData();
 
                     while (count-- > 0) {
@@ -337,32 +338,32 @@ class Result {
 
         return result;
     }
-    
+
     static Result newPrepareResult(int csid, Result rsmd, Result pmd) {
-        
+
         Result out;
         Result pack;
-        
+
         out         = new Result(ResultConstants.MULTI);
         out.isMulti = true;
-        
+
         pack = new Result(ResultConstants.PREPARE_ACK);
         pack.statementID = csid;
-         
-        out.add( new Object[] { pack } );        
+
+        out.add( new Object[] { pack } );
         out.add( new Object[] { rsmd } );
         out.add( new Object[] { pmd } );
-        
-        return out;        
+
+        return out;
     }
-    
+
     static Result newParameterDescriptionResult(int len) {
         Result r = new Result(ResultConstants.DATA, len);
         r.isParameterDescription = true;
         r.paramMode = new int[len];
         return r;
     }
-    
+
     static Result newFreeStmtResult(int statementID) {
         Result r = new Result(ResultConstants.SQLFREESTMT);
         r.statementID = statementID;
@@ -885,7 +886,7 @@ class Result {
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
 
-        switch (iMode) {            
+        switch (iMode) {
 
             case ResultConstants.SQLGETSESSIONINFO :
             case ResultConstants.SQLDISCONNECT :
@@ -899,10 +900,10 @@ class Result {
                 // object.  May be useful in the future
                 // for other things
                 out.writeIntData(getStatementType());
-                out.writeString(mainString);            
+                out.writeString(mainString);
                 break;
             case ResultConstants.PREPARE_ACK :
-            case ResultConstants.SQLFREESTMT : 
+            case ResultConstants.SQLFREESTMT :
                 out.writeIntData(statementID);
                 break;
 
@@ -928,9 +929,9 @@ class Result {
                 break;
 
             case ResultConstants.SQLEXECUTE :
-            case ResultConstants.SQLSETENVATTR : {              
+            case ResultConstants.SQLSETENVATTR : {
                 out.writeIntData(
-                    iMode == ResultConstants.SQLEXECUTE ? statementID 
+                    iMode == ResultConstants.SQLEXECUTE ? statementID
                                                         : iUpdateCount);
 
                 int l = significantColumns;
@@ -940,7 +941,7 @@ class Result {
                 for (int i = 0; i < l; i++) {
                     out.writeType(colType[i]);
                 }
-                
+
                 out.writeIntData(iSize);
 
                 Record n = rRoot;
@@ -957,10 +958,10 @@ class Result {
                 int l = significantColumns;
 
                 out.writeIntData(isParameterDescription ? 1 : 0);
-                
+
                 out.writeIntData(l);
 
-                for (int i = 0; i < l; i++) {                    
+                for (int i = 0; i < l; i++) {
                     out.writeType(colType[i]);
                     // CAREFUL: writeString will throw NPE if passed NULL
                     // There is no guarantee that these will all be non-null
@@ -971,7 +972,7 @@ class Result {
                     // end will simply turn it into a zero-length string
                     // anyway, as nulls are only handled "properly" by
                     // readData(...), not by the individual readXXX methods.
-                    out.writeString(sLabel[i] == null ? "" : sLabel[i]);                    
+                    out.writeString(sLabel[i] == null ? "" : sLabel[i]);
                     out.writeString(sTable[i] == null ? "" : sTable[i]);
                     out.writeString(sName[i] == null ? "" : sName[i]);
                     out.writeString(sClassName[i] == null ? "" : sClassName[i]);
@@ -982,7 +983,7 @@ class Result {
                         out.writeIntData(paramMode[i]);
                     }
                 }
-                
+
                 out.writeIntData(iSize);
 
                 Record n = rRoot;
@@ -1003,8 +1004,8 @@ class Result {
 
         out.writeIntData(out.size(), startPos);
     }
-    
-    private void writeTableColumnAttrs(DatabaseRowOutputInterface out, int i) 
+
+    private void writeTableColumnAttrs(DatabaseRowOutputInterface out, int i)
     throws IOException, HsqlException {
         // Currently, HSQLDB accepts and logs (precision, scale)
         // for all types, which is not to the spec.
@@ -1014,10 +1015,10 @@ class Result {
         // transmit and report the values, as the data typically will
         // not be constrained accordingly.
 //        switch(colType[i]) {
-//            // As early as SQL 92, these are allowed to have a scale. 
+//            // As early as SQL 92, these are allowed to have a scale.
 //            // However, DatabaseCommandInterpreter.processCreateColumn
 //            // does not currently handle this correctly and will assign
-//            // a precision instead of a scale if TIME(s) or TIMESTAMP(s) 
+//            // a precision instead of a scale if TIME(s) or TIMESTAMP(s)
 //            // is specified
 //            case Types.TIME :
 //            case Types.TIMESTAMP :
@@ -1027,7 +1028,7 @@ class Result {
 //            case Types.NUMERIC : {
 //                out.writeIntData(colScale[i]);
 //            } // fall through
-//            // Apparently, SQL 92 specifies that FLOAT can have 
+//            // Apparently, SQL 92 specifies that FLOAT can have
 //            // a declared precision, which is typically the number of
 //            // bits (not binary digits).  In any case, this is somewhat
 //            // meaningless under HSQLDB/Java, in that we use java.lang.Double
@@ -1049,38 +1050,38 @@ class Result {
         out.writeString(sCatalog[i] == null ? "" : sCatalog[i]);
         out.writeString(sSchema[i] == null ? "" : sSchema[i]);
     }
-    
-    private void readTableColumnAttrs(DatabaseRowInputInterface in, int i) 
+
+    private void readTableColumnAttrs(DatabaseRowInputInterface in, int i)
     throws IOException, HsqlException {
 // no point in transmitting these yet
 // if ever implemented, must follow logic of switch as outlined in comments
-// for corresponding write method        
+// for corresponding write method
 //        colScale[i] = in.readIntData();
-//        colSize[i] = in.readIntData();        
+//        colSize[i] = in.readIntData();
         decodeTableColumnAttrs(in.readIntData(), i);
         sCatalog[i] = in.readString();
-        sSchema[i]  = in.readString();        
+        sSchema[i]  = in.readString();
     }
 
     void readMultiResult(DatabaseRowInputInterface in)
     throws HsqlException, IOException {
 
         isMulti    = true;
-        
+
         // Why do we need both?  Currently, the iMode of a MUTLI result
         // is useless. Why not just use the iMode to indicate a MUTLI?
         iMode      = in.readIntData();
         databaseID = in.readIntData();
         sessionID  = in.readIntData();
-        int count  = in.readIntData(); 
-        
+        int count  = in.readIntData();
+
         for (int i = 0; i < count; i++) {
 
-            // Currently required for the outer result, but can simply 
+            // Currently required for the outer result, but can simply
             // be ignored for sub-results
             in.readIntData();
-            
-            add(new Object[]{ new Result(in) });         
+
+            add(new Object[]{ new Result(in) });
         }
     }
 
@@ -1090,9 +1091,9 @@ class Result {
         int startPos = out.size();
 
         out.writeSize(0);
-        
+
         // Why do we need both?  Currently, the iMode of a MUTLI result
-        // is useless. Why not just use the iMode to indicate a MUTLI?        
+        // is useless. Why not just use the iMode to indicate a MUTLI?
         out.writeIntData(ResultConstants.MULTI);
         out.writeIntData(iMode);
         out.writeIntData(databaseID);
@@ -1160,7 +1161,7 @@ class Result {
 
             statementID = Trace.GENERAL_ERROR;
         } else if (t instanceof OutOfMemoryError) {
-            
+
             // At this point, we've nothing to loose by doing this
             System.gc();
 
@@ -1201,7 +1202,7 @@ class Result {
     int getUpdateCount() {
         return iUpdateCount;
     }
-    
+
     int getEndTranType() {
         return iUpdateCount;
     }
@@ -1253,16 +1254,16 @@ class Result {
     }
 
     boolean isTableColumn(int i) {
-        return sTable[i] != null 
+        return sTable[i] != null
             && sTable[i].length() > 0
             && sName[i] != null
             && sName[i].length() > 0;
-    }  
-    
+    }
+
     void setStatementType(int type) {
         iUpdateCount = type;
     }
-    
+
     int getStatementType() {
         return iUpdateCount;
     }

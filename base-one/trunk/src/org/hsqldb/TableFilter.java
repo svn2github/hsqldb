@@ -145,7 +145,7 @@ class TableFilter {
      * Retrieves a CONDITION_XXX code indicating the possible use for an
      * expression of the given type, relative to a TableFilter.
      *
-     * @param an expression type code
+     * @param exprType an expression type code
      * @return
      */
     static final int toConditionType(int exprType) {
@@ -386,6 +386,7 @@ class TableFilter {
      * an index if there is one) and checks it against the eEnd (range) and
      * eAnd (other conditions) Expression objects. (fredt)
      *
+     * @return true if row was found
      */
     boolean findFirst() throws HsqlException {
 

@@ -207,16 +207,21 @@ class Select {
 
         Object o = r.rRoot.data[0];
 
-        return r.colType[0] == type ? o 
+        return r.colType[0] == type ? o
                                     : Column.convertObject(o, type);
     }
+
+/** @todo fredt - having moved the Result metadata into it's own class,
+     * rewrite the next method so that only metadata is retained by Select
+     * and each time this is reused a new new Result object is created with
+     * the persistent metadata class. */
 
     /**
      * Prepares rResult having structure compatible with
      * internally building the set of rows returned from getResult().
      */
     private void prepareResult() throws HsqlException {
-       
+
         resolveAll();
 
         if (iGroupLen > 0) {    // has been set in Parser
@@ -226,7 +231,7 @@ class Select {
             for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
                 eColumn[i].collectColumnName(groupColumnNames);
             }
-        }                 
+        }
 
         int    len = eColumn.length;
         Result r   = new Result(ResultConstants.DATA, len);
@@ -259,7 +264,7 @@ class Select {
                 (i < orderByStart) || (i >= orderByEnd)
                 || eColumn[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
                                                 eColumn[i]);
-            
+
             if (i < iResultLen) {
                 r.sLabel[i]        = e.getAlias();
                 r.isLabelQuoted[i] = e.isAliasQuoted();
@@ -289,7 +294,7 @@ class Select {
                             eColumn[i]);
             }
         }
-        
+
         rResult = r;
     }
 
@@ -340,10 +345,10 @@ class Select {
 
 
         Result r;
-            
-        prepareResult();           
+
+        prepareResult();
         buildResult(getLimitCount(maxrows));
-        
+
         r = rResult;
 
         // the result is perhaps wider (due to group and order by)
@@ -373,7 +378,7 @@ class Select {
 
 // fredt@users 20020130 - patch 471710 - LIMIT rewritten
 // CHECKME:
-// boucherb@users - 20030811 - shouldn't this go _after_ the set operations?        
+// boucherb@users - 20030811 - shouldn't this go _after_ the set operations?
         r.trimResult(limitStart, limitCount);
 
         if (sUnion != null) {
@@ -625,14 +630,14 @@ class Select {
 
         resolve();
         checkResolved();
-       
-        
+
+
         if (sUnion != null) {
             if(sUnion.iResultLen != iResultLen) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
             sUnion.resolveAll();
-        }        
+        }
 
         isResolved = true;
     }
@@ -739,9 +744,9 @@ class Select {
 
         Result     r;
         Expression e;
-        
+
         r = new Result(ResultConstants.DATA, iResultLen);
-        
+
         for (int i = 0; i < iResultLen; i++) {
 
             e = eColumn[i];
@@ -763,7 +768,7 @@ class Select {
 
         return r;
     }
-    
+
     void resetResult() {
         if (rResult != null) {
             rResult.trimResult(0,0);
