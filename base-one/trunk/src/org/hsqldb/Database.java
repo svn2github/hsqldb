@@ -328,8 +328,6 @@ class Database {
             logger.openLog(this, sName);
         }
 
-        setVariablesFromProperties();
-
         if (newdatabase) {
             execute("CREATE USER SA PASSWORD \"\" ADMIN",
                     sessionManager.getSysSession());
@@ -338,14 +336,6 @@ class Database {
         isOpening = false;
 
         dInfo.setWithContent(true);
-    }
-
-    void setVariablesFromProperties() {
-
-        sqlEnforceSize =
-            databaseProperties.isPropertyTrue("sql.enforce_size");
-        firstIdentity =
-            databaseProperties.getIntegerProperty("hsqldb.first_identity", 0);
     }
 
     /**
@@ -2394,8 +2384,9 @@ class Database {
 
                 sToken = c.getString().toLowerCase();
 
+                Trace.check(!databaseProperties.isProtected(sToken),
+                            Trace.ACCESS_IS_DENIED, sToken);
                 databaseProperties.setProperty(sToken, c.getString());
-                setVariablesFromProperties();
 
                 sToken = c.getString();
                 break;

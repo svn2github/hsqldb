@@ -58,12 +58,6 @@ import org.hsqldb.lib.ValuePool;
  */
 final class DatabaseInformationFull extends DatabaseInformationMain {
 
-    /**
-     * A <code>Result</code> object that holds the unchanging rows of
-     * the SYSTEM_PROPERTIES table.
-     */
-    protected Result rsp;
-
     /** Provides SQL function/procedure reporting support. */
     protected DIProcedureInfo pi;
 
@@ -810,133 +804,147 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         final int ivalue = 3;
         final int iclass = 4;
 
-        // Do it:
-        if (rsp == null) {
+        // First, we want the names and values for
+        // all JDBC capabilities constants
+        scope      = "SESSION";
+        nameSpace  = "java.sql.DatabaseMetaData";
+        md         = session.getInternalConnection().getMetaData();
+        methods    = DatabaseMetaData.class.getMethods();
+        emptyParms = new Object[]{};
 
-            // First, we want the names and values for
-            // all JDBC capabilities constants
-            scope      = "SESSION";
-            nameSpace  = "java.sql.DatabaseMetaData";
-            md         = session.getInternalConnection().getMetaData();
-            methods    = DatabaseMetaData.class.getMethods();
-            emptyParms = new Object[]{};
-            rsp        = DITableInfo.createResultProto(t);
+        for (int i = 0; i < methods.length; i++) {
+            method     = methods[i];
+            returnType = method.getReturnType();
 
-            for (int i = 0; i < methods.length; i++) {
-                method     = methods[i];
-                returnType = method.getReturnType();
+            if (method.getParameterTypes().length > 0
+                    ||!(returnType.isPrimitive() || String.class
+                        .isAssignableFrom(returnType)) ||
 
-                if (method.getParameterTypes().length > 0
-                        ||!(returnType.isPrimitive() || String.class
-                            .isAssignableFrom(returnType)) ||
+            // not really a "property" of the database
+            "getUserName".equals(method.getName())) {}
+            else {
+                try {
+                    name        = method.getName();
+                    value       = method.invoke(md, emptyParms);
+                    row         = t.getNewRow();
+                    row[iscope] = scope;
+                    row[ins]    = nameSpace;
+                    row[iname]  = name;
+                    row[ivalue] = String.valueOf(value);
+                    row[iclass] = returnType.getName();
 
-                // not really a "property" of the database
-                "getUserName".equals(method.getName())) {}
-                else {
-                    try {
-                        name        = method.getName();
-                        value       = method.invoke(md, emptyParms);
-                        row         = t.getNewRow();
-                        row[iscope] = scope;
-                        row[ins]    = nameSpace;
-                        row[iname]  = name;
-                        row[ivalue] = String.valueOf(value);
-                        row[iclass] = returnType.getName();
-
-                        rsp.add(row);
-                    } catch (Exception e) {}
-                }
+                    t.insert(row, session);
+                } catch (Exception e) {}
             }
-
-            props     = database.getProperties();
-            nameSpace = "database.properties";
-
-            // hsqldb.catalogs
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "hsqldb.catalogs";
-            row[ivalue] = props.getProperty("hsqldb.catalogs","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // hsqldb.schemas
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "hsqldb.schemas";
-            row[ivalue] = props.getProperty("hsqldb.schemas","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // sql.month
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "sql.month";
-            row[ivalue] = props.getProperty("sql.month","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // sql.enforce_size
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "sql.enforce_size";
-            row[ivalue] = props.getProperty("sql.enforce_size","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // sql.compare_in_locale
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "sql.compare_in_locale";
-            row[ivalue] = props.getProperty("sql.compare_in_locale","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // hsqldb.first_identity
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "hsqldb.first_identity";
-            row[ivalue] = props.getProperty("hsqldb.first_identity","0");
-            row[iclass] = "int";
-
-            rsp.add(row);
-
-            // hsqldb.cache_scale
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "hsqldb.cache_scale";
-            row[ivalue] = props.getProperty("hsqldb.cache_scale");
-            row[iclass] = "int";
-
-            rsp.add(row);
-
-            // hsqldb.gc_interval
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "hsqldb.gc_interval";
-            row[ivalue] = props.getProperty("hsqldb.gc_interval","0");
-            row[iclass] = "int";
-
-            rsp.add(row);
         }
+
+        props     = database.getProperties();
+        nameSpace = "database.properties";
+
+        // hsqldb.catalogs
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.catalogs";
+        row[ivalue] = props.getProperty("hsqldb.catalogs", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // hsqldb.schemas
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.schemas";
+        row[ivalue] = props.getProperty("hsqldb.schemas", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // sql.month
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "sql.month";
+        row[ivalue] = props.getProperty("sql.month", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // sql.enforce_size
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "sql.enforce_size";
+        row[ivalue] = props.getProperty("sql.enforce_size", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // sql.compare_in_locale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "sql.compare_in_locale";
+        row[ivalue] = props.getProperty("sql.compare_in_locale", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // hsqldb.files_readonly
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.files_readonly";
+        row[ivalue] = props.getProperty("hsqldb.files_readonly", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // hsqldb.files_in_jar
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.files_in_jar";
+        row[ivalue] = props.getProperty("hsqldb.files_in_jar", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // hsqldb.first_identity
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.first_identity";
+        row[ivalue] = props.getProperty("hsqldb.first_identity", "0");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.cache_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.cache_scale";
+        row[ivalue] = props.getProperty("hsqldb.cache_scale");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.gc_interval
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.gc_interval";
+        row[ivalue] = props.getProperty("hsqldb.gc_interval", "0");
+        row[iclass] = "int";
+
+        t.insert(row, session);
 
         // Now get a snapshot of the properties that may change over
         // the lifetime of the session
         scope     = "TRANSACTION";
         nameSpace = "org.hsqldb.Database";
-        r         = DITableInfo.createResultProto(t);
 
         // log size
         Log log     = database.logger.lLog;
@@ -950,7 +958,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         row[ivalue] = String.valueOf(logSize);
         row[iclass] = "int";
 
-        r.add(row);
+        t.insert(row, session);
 
         Integer logType = (log == null) ? null
                                         : ValuePool.getInt(log.logType);
@@ -963,7 +971,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                       : String.valueOf(logType);
         row[iclass] = "int";
 
-        r.add(row);
+        t.insert(row, session);
 
         // write delay
         row = t.getNewRow();
@@ -978,7 +986,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                            : String.valueOf(writeDelay);
         row[iclass] = "int";
 
-        r.add(row);
+        t.insert(row, session);
 
         // ignore case
         row         = t.getNewRow();
@@ -988,7 +996,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         row[ivalue] = String.valueOf(database.isIgnoreCase());
         row[iclass] = "boolean";
 
-        r.add(row);
+        t.insert(row, session);
 
         // referential integrity
         row         = t.getNewRow();
@@ -998,9 +1006,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         row[ivalue] = String.valueOf(database.isReferentialIntegrity());
         row[iclass] = "boolean";
 
-        r.add(row);
-        t.insert(rsp, session);
-        t.insert(r, session);
+        t.insert(row, session);
         t.setDataReadOnly(true);
 
         return t;
@@ -1195,20 +1201,20 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * FILE_PATH                 VARCHAR   absolute file path.
      * FILE_ENCODING             VARCHAR   endcoding of table's text file
      * FIELD_SEPARATOR           VARCHAR   default field separator
-     * VARCHAR_SEPARATOR         VARCAHR   varchar field separator 
+     * VARCHAR_SEPARATOR         VARCAHR   varchar field separator
      * LONGVARCHAR_SEPARATOR     VARCHAR   longvarchar field separator
      * IS_IGNORE_FIRST           BIT       ignores first line of file?
      * IS_ALL_QUOTED             BIT       every field is quoted?
-     * IS_DESC                   BIT       read rows starting at end of file?     
+     * IS_DESC                   BIT       read rows starting at end of file?
      * </pre> <p>
      *
-     * @return a <code>Table</code> object describing the text attributes 
+     * @return a <code>Table</code> object describing the text attributes
      * of the accessible text tables defined within this database
      * @throws SQLException if an error occurs while producing the table
      *
      */
     final Table SYSTEM_TEXTTABLES() throws SQLException {
-        
+
         Table t = sysTables[SYSTEM_TEXTTABLES];
 
         if (t == null) {
@@ -1225,11 +1231,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "LONGVARCHAR_SEPARATOR", VARCHAR);
             addColumn(t, "IS_IGNORE_FIRST", BIT);
             addColumn(t, "IS_ALL_QUOTED", BIT);
-            addColumn(t, "IS_DESC" , BIT);
+            addColumn(t, "IS_DESC", BIT);
 
             // ------------------------------------------------------------
             t.createPrimaryKey();
-            
+
             return t;
         }
 
@@ -1280,8 +1286,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                 row[ilvfs]      = tc.lvs;
                 row[iif]        = ValuePool.getBoolean(tc.ignoreFirst);
                 row[iiaq]       = ValuePool.getBoolean(tc.rowIn.allQuoted);
-                row[iid]        = 
-                    ValuePool.getBoolean(table.isDescDataSource());
+                row[iid] = ValuePool.getBoolean(table.isDescDataSource());
             }
 
             t.insert(row, session);

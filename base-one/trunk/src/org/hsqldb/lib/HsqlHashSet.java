@@ -61,17 +61,20 @@ import java.util.NoSuchElementException;
  */
 public final class HsqlHashSet implements HsqlSet {
 
-    /** the <code>Hashtable</code> that backs this <code>HashSet</code>
+    /**
+     * the <code>Hashtable</code> that backs this <code>HashSet</code>
      * implementation.
      */
     private Hashtable map;
 
-    /** Dummy value to associate with a set element Object key in the
+    /**
+     * Dummy value to associate with a set element Object key in the
      * backing Map.
      */
     private static final Object PRESENT = new Object();
-    
-    /** hash code calculation in progress? 
+
+    /**
+     * hash code calculation in progress?
      * - guards against cycles of containment
      */
     private boolean hcip = false;
@@ -81,16 +84,19 @@ public final class HsqlHashSet implements HsqlSet {
         map = new Hashtable();
     }
 
-    /** Adds the specified element to this set, if it is not already present.
+    /**
+     * Adds the specified element to this set, if it is not already present.
      * @param o element to be added to this set.
      * @return <tt>true</tt> if the set did not already contain
      *        the specified element.
      */
     public boolean add(Object o) {
-        return null == map.put(((o == null) ? PRESENT : o), PRESENT);
+        return null == map.put(((o == null) ? PRESENT
+                                            : o), PRESENT);
     }
 
-    /** Adds all of the elements in the specified <code>HsqlSet</code> object
+    /**
+     * Adds all of the elements in the specified <code>HsqlSet</code> object
      * to this set if they're not already present. This operation effectively
      * modifies this set so that its value is the union of the two sets. The
      * behavior of this operation is unspecified if either set is modified
@@ -101,23 +107,43 @@ public final class HsqlHashSet implements HsqlSet {
      *        result of the call.
      */
     public boolean addAll(HsqlSet hs) {
+
         boolean changed = false;
-        for (Enumeration e = hs.elements(); e.hasMoreElements();) {
-            if (add(e.nextElement()))  {
+
+        for (Enumeration e = hs.elements(); e.hasMoreElements(); ) {
+            if (add(e.nextElement())) {
                 changed = true;
             }
         }
+
         return changed;
     }
 
-    /** Removes the specified element from this set, if it is present.
+// fredt
+    public boolean addAll(Object[] array) {
+
+        boolean     changed = false;
+        Enumeration e       = new HsqlEnumeration(array, true);
+
+        for (; e.hasMoreElements(); ) {
+            if (add(e.nextElement())) {
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+
+    /**
+     * Removes the specified element from this set, if it is present.
      * @param o object to be removed from this set,
      *        if present.
      * @return <tt>true</tt> if the set contained
      *        the specified element.
      */
     public boolean remove(Object o) {
-        return PRESENT == map.remove(((o == null) ? PRESENT : o));
+        return PRESENT == map.remove(((o == null) ? PRESENT
+                                                  : o));
     }
 
     /**
@@ -127,15 +153,18 @@ public final class HsqlHashSet implements HsqlSet {
         map.clear();
     }
 
-    /** Retrieves whether this set contains the specified object
+    /**
+     * Retrieves whether this set contains the specified object
      * @param o the object to test for containment.
      * @return true if this HashSet contains o, else false.
      */
     public boolean contains(Object o) {
-        return map.containsKey(((o == null) ? PRESENT : o));
+        return map.containsKey(((o == null) ? PRESENT
+                                            : o));
     }
 
-    /** Retrieves whether this object is the empty set.  That is
+    /**
+     * Retrieves whether this object is the empty set.  That is
      * it returns <code>true</code> iff <code>size() == 0</code>.
      * @return true if this HashSet object contains no elements,
      *        else false.
@@ -144,14 +173,16 @@ public final class HsqlHashSet implements HsqlSet {
         return map.isEmpty();
     }
 
-    /** Retrieve the number of elements this set contains.
+    /**
+     * Retrieve the number of elements this set contains.
      * @return the number of elements this HashSet contains
      */
     public int size() {
         return map.size();
     }
 
-    /** Retreives an Enumeration of the elements in this set.
+    /**
+     * Retreives an Enumeration of the elements in this set.
      * @return an Enumeration of the elements in this set.
      */
     public Enumeration elements() {
@@ -164,29 +195,35 @@ public final class HsqlHashSet implements HsqlSet {
                 return e.hasMoreElements();
             }
 
-            public Object nextElement() throws NoSuchElementException{
+            public Object nextElement() throws NoSuchElementException {
+
                 Object o = e.nextElement();
-                return (o == PRESENT)
-                       ? null
-                       : o;
+
+                return (o == PRESENT) ? null
+                                      : o;
             }
         };
     }
 
-    /** Retrieves an array containing all of the elements in this set.
+    /**
+     * Retrieves an array containing all of the elements in this set.
      * @return an array containing all of the elements in this set.
      */
     public Object[] toArray() {
-        int count = 0;
-        Object[] out = new Object[size()];
-        Enumeration e = elements();
+
+        int         count = 0;
+        Object[]    out   = new Object[size()];
+        Enumeration e     = elements();
+
         while (e.hasMoreElements()) {
             out[count++] = e.nextElement();
         }
+
         return out;
     }
 
-    /** Retreives an array containing all of the elements in this set; the
+    /**
+     * Retreives an array containing all of the elements in this set; the
      * runtime type of the returned array is that of the specified array.
      * @param obj the array into which the elements of this set are to be
      *        stored, if it is big enough; otherwise, a new
@@ -195,23 +232,31 @@ public final class HsqlHashSet implements HsqlSet {
      * @return an array containing the elements of this set.
      */
     public Object[] toArray(Object[] obj) {
+
         int size = size();
+
         if (obj.length < size) {
             Class c = obj.getClass().getComponentType();
+
             obj = (Object[]) Array.newInstance(c, size);
         }
-        int count = 0;
-        Enumeration e = elements();
+
+        int         count = 0;
+        Enumeration e     = elements();
+
         while (e.hasMoreElements()) {
             obj[count++] = e.nextElement();
         }
+
         while (count < size) {
             obj[count++] = null;
         }
+
         return obj;
     }
 
-    /** Returns the hash code value for this set. The hash code of a set is
+    /**
+     * Returns the hash code value for this set. The hash code of a set is
      * defined to be the sum of the hash codes of the elements in the set.
      * This ensures that s1.equals(s2) implies that
      * s1.hashCode()==s2.hashCode() for any two sets s1 and s2, as required
@@ -219,36 +264,35 @@ public final class HsqlHashSet implements HsqlSet {
      * @return the hash code value for this set.
      */
     public int hashCode() {
-        
-// boucherb@users 20030225 - patch to comply with JDK 1.1 
+
+// boucherb@users 20030225 - patch to comply with JDK 1.1
 // Oops.  Can't use java.util.Hashtable equals/hashCode...
-// They are 1.2+ features.        
+// They are 1.2+ features.
 // Double Oops!  What if we are contained in our own map somehow?
-// Hopefully, this prevents cycles.       
-            
-        int             hc;
-        Enumeration     e;
-        
-        hc = 0;       
-        
+// Hopefully, this prevents cycles.
+        int         hc;
+        Enumeration e;
+
+        hc = 0;
+
         if (hcip) {
             return 0;
         }
-        
-        hcip  = true;
-        e     = map.keys();
-        
+
+        hcip = true;
+        e    = map.keys();
+
         while (e.hasMoreElements()) {
             hc += e.nextElement().hashCode();
         }
-        
-        hcip = false;
-        
-        return hc;
 
+        hcip = false;
+
+        return hc;
     }
 
-    /** Compares the specified object with this set for equality. <p>
+    /**
+     * Compares the specified object with this set for equality. <p>
      *
      * Returns <code>true</code> if the given object is also a set, the
      * two sets have the same size, and every member of the given set is
@@ -261,29 +305,29 @@ public final class HsqlHashSet implements HsqlSet {
      *        equal to this set.
      */
     public boolean equals(Object obj) {
-        
+
 // boucherb@users 20030225 - patch to comply with JDK 1.1
 // Oops.  Can't use java.util.Hashtable equals/hashCode...
 // They are 1.2+ features.
-        
         if (this == obj) {
             return true;
         }
-        
+
         if (!(obj instanceof HsqlHashSet)) {
             return false;
         }
 
         HsqlHashSet that = (HsqlHashSet) obj;
-        
+
         if (this.size() != that.size()) {
             return false;
         }
-        
+
         return this.containsAll(that);
     }
 
-    /** Returns true if this set contains all of the elements of
+    /**
+     * Returns true if this set contains all of the elements of
      * the specified set. <p>
      * @param hs the set to be checked for containment
      *    in this set.
@@ -292,15 +336,18 @@ public final class HsqlHashSet implements HsqlSet {
      *        specified set
      */
     public boolean containsAll(HsqlSet hs) {
-        for (Enumeration e = hs.elements(); e.hasMoreElements();) {
-            if (!this.contains(e.nextElement()))  {
+
+        for (Enumeration e = hs.elements(); e.hasMoreElements(); ) {
+            if (!this.contains(e.nextElement())) {
                 return false;
             }
         }
+
         return true;
     }
 
-    /** Removes from this set all of its elements that are contained
+    /**
+     * Removes from this set all of its elements that are contained
      * in the specified set.
      * @param hs the set that defines which elements will
      * be removed from this set
@@ -318,8 +365,10 @@ public final class HsqlHashSet implements HsqlSet {
         } else {
             for (Enumeration e = this.elements(); e.hasMoreElements(); ) {
                 Object o = e.nextElement();
+
                 if (hs.contains(o)) {
                     this.remove(o);
+
                     changed = true;
                 }
             }
@@ -328,7 +377,8 @@ public final class HsqlHashSet implements HsqlSet {
         return changed;
     }
 
-    /** Retains only the elements in this set that are contained in
+    /**
+     * Retains only the elements in this set that are contained in
      * the specified set.
      * @param hs the set that defines which elements
      *        this set will retain.
@@ -336,16 +386,20 @@ public final class HsqlHashSet implements HsqlSet {
      *        result of the call.
      */
     public boolean retainAll(HsqlSet hs) {
+
         boolean changed = false;
-        for (Enumeration e = this.elements(); e.hasMoreElements();) {
+
+        for (Enumeration e = this.elements(); e.hasMoreElements(); ) {
             Object o = e.nextElement();
-            if (hs.contains(o))  {
-            } else {
+
+            if (hs.contains(o)) {}
+            else {
                 this.remove(o);
+
                 changed = true;
             }
         }
+
         return changed;
     }
-
 }

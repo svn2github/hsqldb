@@ -46,8 +46,11 @@ import org.hsqldb.lib.ArrayUtil;
  * Wrapper for java.util.Properties to limit values to String objects and
  * allow saving and loading.<p>
  *
+ * Is public because it is used in the org.hsqldb.test package.
+ *
  * @author fredt@users
  * @verison 1.7.2
+ * @since 1.7.0
  */
 public class HsqlProperties {
 
@@ -90,11 +93,11 @@ public class HsqlProperties {
     }
 
     public String setProperty(String key, int value) {
-        return (String) stringProps.put(key, Integer.toString(value));
+        return setProperty(key, Integer.toString(value));
     }
 
     public String setProperty(String key, boolean value) {
-        return (String) stringProps.put(key, String.valueOf(value));
+        return setProperty(key, String.valueOf(value));
     }
 
     public String setProperty(String key, String value) {
@@ -103,9 +106,9 @@ public class HsqlProperties {
 
     public String setPropertyIfNotExists(String key, String value) {
 
-        value = stringProps.getProperty(key, value);
+        value = getProperty(key, value);
 
-        return (String) stringProps.put(key, value);
+        return setProperty(key, value);
     }
 
     public String getProperty(String key) {

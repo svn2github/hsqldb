@@ -334,7 +334,7 @@ class Log implements Runnable {
 
     Cache getCache() throws SQLException {
 
-        if (this.dDatabase.filesInJar) {
+        if (dDatabase.filesInJar) {
             return null;
         }
 

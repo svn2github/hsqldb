@@ -67,10 +67,8 @@
 
 package org.hsqldb;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.FileInputStream;
 import java.sql.SQLException;
+import org.hsqldb.lib.HsqlHashSet;
 
 /**
  * Manages a .properties file for a database.
@@ -79,9 +77,21 @@ import java.sql.SQLException;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
+    private static HsqlHashSet protectedProperties      = new HsqlHashSet();
+    private static String[]    protectedPropertiesNames = {
+        "version", "hsqldb.compatible_version", "hsqldb.cache_version",
+        "hsqldb.original_version", "hsqldb.log_type","hsqldb.files_readonly",
+        "hsqldb.files_in_jar", "readonly", "modified",
+        "sql.compare_in_locale"
+    };
+
+    static {
+        protectedProperties.addAll(protectedPropertiesNames);
+    }
+
     private Database database;
 
-    public HsqlDatabaseProperties(Database db) {
+    HsqlDatabaseProperties(Database db) {
 
         super(db.getName());
 
@@ -169,6 +179,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("modified", "no");
 
         if (JARFILE) {
+            setProperty("hsqldb.files_in_jar", true);
             setProperty("hsqldb.files_readonly", true);
         }
 
@@ -186,6 +197,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // "textdb.cache_scale", 10  -- allowed range 8-16
         // "textdb.cache_size_scale", 12  -- allowed range 8-20
         setSystemVariables();
+        setDatabaseVariables();
     }
 
     private void setSystemVariables() {
@@ -220,8 +232,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             return false;
         }
 
-        // overwrite properties if wrongly set in
+        // overwrite properties if wrongly set in props file
         if (JARFILE) {
+            setProperty("hsqldb.files_readonly", true);
             database.setFilesInJar();
         }
 
@@ -243,15 +256,17 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // change to the current version
         setProperty("hsqldb.version", jdbcDriver.VERSION);
         setSystemVariables();
-
+        setDatabaseVariables();
         return true;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
+    private void setDatabaseVariables() {
+
+        database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
+        database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
+                0);
+    }
+
     public void save() throws SQLException {
 
         try {
@@ -260,5 +275,18 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               fileName + ".properties " + e);
         }
+    }
+
+    boolean isProtected(String property) {
+        return protectedProperties.contains(property);
+    }
+
+    public String setProperty(String key, String value) {
+
+        value = super.setProperty(key, value);
+
+        setDatabaseVariables();
+
+        return value;
     }
 }

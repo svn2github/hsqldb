@@ -73,11 +73,6 @@ import org.hsqldb.lib.StopWatch;
 
 // todo - can lock the database engine as readonly in a wrapper for this when
 // used at checkpoint
-// todo - rework the semantics of SET READONLY TRUE encountered in the script
-// or log files. It should be possible
-// to treat this in the DDL block as a delayed setting that comes into effect
-// after processing the DATA block and before the LOG block
-// at the moment READLONLY is not supported for binary logging
 class DatabaseScriptWriter {
 
     Database          db;
