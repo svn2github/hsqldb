@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.FileInputStream;
 import java.sql.SQLException;
 
@@ -78,8 +79,7 @@ import java.sql.SQLException;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private Database        database;
-    private FileInputStream propsFileStream;    // kept open until closed
+    private Database database;
 
     public HsqlDatabaseProperties(Database db) {
 
@@ -114,7 +114,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
-        setProperty("hsqldb.cache_version", "1.6.0");
+        setProperty("hsqldb.cache_version", "1.7.0");
 
         // the version that created this database
         // once created, this won't change if db is used with a future version
@@ -168,11 +168,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("readonly", false);
         setProperty("modified", "no");
 
-// ----------------------------------------------------------------------------
-// akede@users - 1.7.2 patch Files readonly
-        setProperty("hsqldb.files_readonly", false);
+        if (JARFILE) {
+            setProperty("hsqldb.files_readonly", true);
+        }
 
-// ----------------------------------------------------------------------------
         // the property "version" is also set to the current version
         //
         // the following properties can be set by the user as defaults for
@@ -187,7 +186,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // "textdb.cache_scale", 10  -- allowed range 8-16
         // "textdb.cache_size_scale", 12  -- allowed range 8-20
         setSystemVariables();
-        setDatabaseVariables();
     }
 
     private void setSystemVariables() {
@@ -198,53 +196,55 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         Record.gcFrequency = getIntegerProperty("hsqldb.gc_interval", 0);
     }
 
-    void setDatabaseVariables() {
+    /**
+     * Creates file with defaults if it didn't exist.
+     * Returns false if file already existed.
+     */
+    public boolean load() throws SQLException {
 
-        database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
-        database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
-                0);
-    }
-
-    public void close() throws SQLException {
-
-        try {
-            if (propsFileStream != null) {
-                if (Trace.TRACE) {
-                    Trace.trace();
-                }
-
-                propsFileStream.close();
-
-                propsFileStream = null;
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              fileName + ".properties " + e);
-        }
-    }
-
-    public void load() throws SQLException {
-
-        close();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        boolean exists;
 
         try {
-            File f = new File(fileName + ".properties");
-
-            // the file is closed only when the database is closed
-            propsFileStream = new FileInputStream(f);
-
-            stringProps.load(propsFileStream);
+            exists = super.load();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               fileName + ".properties " + e);
         }
 
+        if (!exists) {
+            setProperty("version", jdbcDriver.VERSION);
+            setProperty("hsqldb.cache_version", "1.7.0");
+            setProperty("hsqldb.compatible_version", "1.7.2");
+            save();
+
+            return false;
+        }
+
+        // overwrite properties if wrongly set in
+        if (JARFILE) {
+            database.setFilesInJar();
+        }
+
+        if (isPropertyTrue("readonly")) {
+            database.setReadOnly();
+        }
+
+        if (isPropertyTrue("hsqldb.files_readonly")) {
+            database.setFilesReadOnly();
+        }
+
+        String version = getProperty("hsqldb.compatible_version");
+
+        // do not open if the database belongs to a later (future) version
+        int check = version.substring(0, 5).compareTo(jdbcDriver.VERSION);
+
+        Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
+
+        // change to the current version
+        setProperty("hsqldb.version", jdbcDriver.VERSION);
         setSystemVariables();
-        setDatabaseVariables();
+
+        return true;
     }
 
     /**
@@ -254,73 +254,11 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
      */
     public void save() throws SQLException {
 
-        close();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         try {
             super.save();
-
-            // after saving, open the file again
-            load();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               fileName + ".properties " + e);
         }
-    }
-
-    /**
-     * Creates file with defaults if it didn't exist.
-     * Returns false if file already existed.
-     */
-    public boolean createFile() throws SQLException {
-
-        if (checkFileExists()) {
-            return false;
-        }
-
-        setProperty("version", jdbcDriver.VERSION);
-        setProperty("hsqldb.cache_version", "1.7.0");
-        setProperty("hsqldb.compatible_version", "1.7.2");
-        save();
-
-        return true;
-    }
-
-// fredt@users - patch suggested by Ian Roberts clarry@users
-
-    /**
-     *  check by trying to delete the properties file this will not work if
-     *  some application has the file open this is why the properties file
-     *  is kept open when running ;-) todo: check if this works in all
-     *  operating systems
-     *
-     * @return true if file is open
-     * @exception  java.sql.SQLException
-     */
-    protected boolean isFileOpen() throws java.sql.SQLException {
-
-        close();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        File f = new File(fileName + ".properties");
-
-        if (f.delete() == false) {
-            f = null;
-
-            return true;
-        }
-
-        f = null;
-
-        // the file was deleted, so recreate it now
-        save();
-
-        return false;
     }
 }

@@ -95,7 +95,8 @@ class DatabaseScriptReader {
 
             if (result != null && result.iMode == Result.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  " line: " + lineCount + " "+ result.sError);
+                                  " line: " + lineCount + " "
+                                  + result.sError);
             }
         }
     }
@@ -119,7 +120,8 @@ class DatabaseScriptReader {
 
             if (result != null && result.iMode == Result.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  " line: " + lineCount + " " + result.sError);
+                                  " line: " + lineCount + " "
+                                  + result.sError);
             }
 
             lastLine = readLoggedStatement();
@@ -133,7 +135,15 @@ class DatabaseScriptReader {
     }
 
     protected void openFile() throws IOException {
-        dataStreamIn = new DataInputStream(new FileInputStream(fileName));
+
+        if (db.filesInJar) {
+            dataStreamIn =
+                DatabaseScriptReader.class.getClassLoader()
+                    .getResourceAsStream(fileName);
+        } else {
+            dataStreamIn = new DataInputStream(new FileInputStream(fileName));
+        }
+
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }
 

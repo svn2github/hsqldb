@@ -1,5 +1,25 @@
 Readme File
 
+
+leading to HSQLDB 1.7.2 ALPHA_N
+
+2003.03.10
+
+-system table support and DatabaseMetadate results have been overhauled
+by Campbell.
+
+-strict treatment of foreign key index requirements is now enforeced.
+A foreign key declaration _requires_ a unique constraint or index to exist
+on the columns of the referenced table. This applies both to old and
+new databases. Duplicate foreign keys (with exactly the same column sets)
+are now disallowed.
+
+-further improvements to TEXT table support. Smaller cache sizes are
+now the default and the default properties can be specified in the 
+*.properties file.
+
+
+
 HSQLDB 1.7.2 ALPHA_M
 
 2003.01.23

@@ -223,45 +223,20 @@ class Log implements Runnable {
      * @return
      * @throws  SQLException
      */
-    boolean open() throws SQLException {
+    void open() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        // create properties file if not exits and report if new file
-        boolean newdb = pProperties.createFile();
-
-        // todo: some parts are not necessary for ready-only access
-        pProperties.load();
-
-        sFileScript = sName + ".script";
-        sFileLog    = sName + ".log";
-        sFileCache  = sName + ".data";
-        sFileBackup = sName + ".backup";
-
-        // tony_lai@users 20020820
-        // Allows the user to modify log size from the properties file.
+        // Allows the user to set log size in the properties file.
         maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
         maxLogSize = maxLogSize * 1024 * 1024;
         logType = pProperties.getIntegerProperty("hsqldb.log_type",
                 DatabaseScriptWriter.SCRIPT_TEXT_170);
+        filesReadOnly = dDatabase.filesReadOnly;;
+        sFileScript   = sName + ".script";
+        sFileLog      = sName + ".log";
+        sFileCache    = sName + ".data";
+        sFileBackup   = sName + ".backup";
 
-        String version = pProperties.getProperty("hsqldb.compatible_version");
-
-// fredt@users 20020428 - patch 1.7.0 by fredt
-        int check = version.substring(0, 5).compareTo(jdbcDriver.VERSION);
-
-        Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
-
-        // save the current version
-        pProperties.setProperty("hsqldb.version", jdbcDriver.VERSION);
-
-        if (pProperties.isPropertyTrue("readonly")) {
-            filesReadOnly = true;
-
-            dDatabase.setReadOnly();
-
+        if (filesReadOnly) {
             if (cCache != null) {
                 cCache.open(true);
             }
@@ -284,35 +259,9 @@ class Log implements Runnable {
 
             bRestoring = false;
 
-            return false;
+            return;
         }
 
-// ----------------------------------------------------------------------------
-// akede@users - 1.7.2 patch Files readonly
-        if (pProperties.isPropertyTrue("hsqldb.files_readonly")) {
-            filesReadOnly = true;    // The log should be read only
-
-            // The database kept in read/write mode
-            //dDatabase.setReadOnly();
-            // Sets all file based tables automaticlly to read-only
-            dDatabase.setFilesReadOnly();
-
-            if (cCache != null) {
-                cCache.open(true);
-            }
-
-            reopenAllTextCaches();
-
-            bRestoring = true;
-
-            ScriptRunner.runScript(dDatabase, sFileScript, logType);
-
-            bRestoring = false;
-
-            return false;
-        }
-
-// ----------------------------------------------------------------------------
         boolean needbackup = false;
         String  state      = pProperties.getProperty("modified");
 
@@ -321,9 +270,11 @@ class Log implements Runnable {
             FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
             FileUtil.delete(sFileLog);
         } else if (state.equals("yes")) {
+/*
             if (pProperties.isFileOpen()) {
                 throw Trace.error(Trace.DATABASE_ALREADY_IN_USE);
             }
+*/
 
             // recovering after a crash (or forgot to close correctly)
             restoreBackup();
@@ -372,15 +323,20 @@ class Log implements Runnable {
         }
 
         openLog();
-
-        if (newdb == true) {
+/*
+        if (newdb) {
             dbScriptWriter.writeAll();
         }
 
         return newdb;
+*/
     }
 
     Cache getCache() throws SQLException {
+
+        if (this.dDatabase.filesInJar) {
+            return null;
+        }
 
         if (cCache == null) {
             cCache = new Cache(sFileCache, this.dDatabase);
@@ -416,8 +372,8 @@ class Log implements Runnable {
             return;
         }
 
-        // no more scripting
-        closeScript();
+        // no more logging
+        closeLog();
 
         // create '.script.new' (for this the cache may be still required)
         writeScript(compact);
@@ -453,7 +409,6 @@ class Log implements Runnable {
         pProperties.setProperty("version", jdbcDriver.VERSION);
         pProperties.setProperty("hsqldb.compatible_version", "1.7.2");
         pProperties.save();
-        pProperties.close();
 
         if (compact) {
 
@@ -582,8 +537,7 @@ class Log implements Runnable {
         }
 
         shutdownAllTextCaches();
-        closeScript();
-        pProperties.close();
+        closeLog();
     }
 
     /**
@@ -682,20 +636,12 @@ class Log implements Runnable {
      *
      * @throws  SQLException
      */
-    private void closeScript() throws SQLException {
+    private void closeLog() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        if (dbScriptWriter != null) {
+            dbScriptWriter.close();
 
-        try {
-            if (dbScriptWriter != null) {
-                dbScriptWriter.close();
-
-                dbScriptWriter = null;
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+            dbScriptWriter = null;
         }
     }
 
@@ -715,16 +661,12 @@ class Log implements Runnable {
 
         // script; but only positions of cached tables, not full
         //fredt - to do - flag for chache set index
-        try {
-            DatabaseScriptWriter scw =
-                DatabaseScriptWriter.newDatabaseScriptWriter(dDatabase,
-                    sFileScript + ".new", full, true, logType);
+        DatabaseScriptWriter scw =
+            DatabaseScriptWriter.newDatabaseScriptWriter(dDatabase,
+                sFileScript + ".new", full, true, logType);
 
-            scw.writeAll();
-            scw.close();
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR);
-        }
+        scw.writeAll();
+        scw.close();
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables

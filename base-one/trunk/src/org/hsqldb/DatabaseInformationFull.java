@@ -140,6 +140,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             case SYSTEM_VIEWS :
                 return SYSTEM_VIEWS();
 
+            case SYSTEM_TEXTTABLES :
+                return SYSTEM_TEXTTABLES();
+
             default :
                 return super.generateTable(tableIndex);
         }
@@ -1168,6 +1171,120 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             t.createPrimaryKey(null);
 
             return t;
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;
+    }
+
+    /**
+     * Retrieves a <code>Table</code> object describing the TEXT TABLE objects
+     * defined within this database. The table contains one row for each row
+     * in the SYSTEM_TABLES table with a HSQLDB_TYPE of ’TEXT’. <p>
+     *
+     * Each row is a description of the attributes that defines its TEXT TABLE,
+     * with the following columns:
+     *
+     * <pre>
+     * TABLE_CAT                 VARCHAR   table's catalog name
+     * TABLE_SCHEM               VARCHAR   table's simple schema name
+     * TABLE_NAME                VARCHAR   table's simple name
+     * DATA_SOURCE_DEFINITION    VARCHAR   the "spec" proption of the table's
+     *                                     SET TABLE ... SOURCE DDL declaration
+     * FILE_PATH                 VARCHAR   absolute file path.
+     * FILE_ENCODING             VARCHAR   endcoding of table's text file
+     * FIELD_SEPARATOR           VARCHAR   default field separator
+     * VARCHAR_SEPARATOR         VARCAHR   varchar field separator 
+     * LONGVARCHAR_SEPARATOR     VARCHAR   longvarchar field separator
+     * IS_IGNORE_FIRST           BIT       ignores first line of file?
+     * IS_ALL_QUOTED             BIT       every field is quoted?
+     * IS_DESC                   BIT       read rows starting at end of file?     
+     * </pre> <p>
+     *
+     * @return a <code>Table</code> object describing the text attributes 
+     * of the accessible text tables defined within this database
+     * @throws SQLException if an error occurs while producing the table
+     *
+     */
+    final Table SYSTEM_TEXTTABLES() throws SQLException {
+        
+        Table t = sysTables[SYSTEM_TEXTTABLES];
+
+        if (t == null) {
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_TEXTTABLES]);
+
+            addColumn(t, "TABLE_CAT", VARCHAR);
+            addColumn(t, "TABLE_SCHEM", VARCHAR);
+            addColumn(t, "TABLE_NAME", VARCHAR, false);    // not null
+            addColumn(t, "DATA_SOURCE_DEFINTION", VARCHAR);
+            addColumn(t, "FILE_PATH", VARCHAR);
+            addColumn(t, "FILE_ENCODING", VARCHAR);
+            addColumn(t, "FIELD_SEPARATOR", VARCHAR);
+            addColumn(t, "VARCHAR_SEPARATOR", VARCHAR);
+            addColumn(t, "LONGVARCHAR_SEPARATOR", VARCHAR);
+            addColumn(t, "IS_IGNORE_FIRST", BIT);
+            addColumn(t, "IS_ALL_QUOTED", BIT);
+            addColumn(t, "IS_DESC" , BIT);
+
+            // ------------------------------------------------------------
+            t.createPrimaryKey();
+            
+            return t;
+        }
+
+        // intermediate holders
+        Enumeration tables;
+        Table       table;
+        Object      row[];
+        DITableInfo ti;
+        TextCache   tc;
+
+        // column number mappings
+        final int itable_cat   = 0;
+        final int itable_schem = 1;
+        final int itable_name  = 2;
+        final int idsd         = 3;
+        final int ifile_path   = 4;
+        final int ifile_enc    = 5;
+        final int ifs          = 6;
+        final int ivfs         = 7;
+        final int ilvfs        = 8;
+        final int iif          = 9;
+        final int iiaq         = 10;
+        final int iid          = 11;
+
+        // Initialization
+        tables = database.getTables().elements();
+
+        // Do it.
+        while (tables.hasMoreElements()) {
+            table = (Table) tables.nextElement();
+
+            if (!table.isText() ||!isAccessibleTable(table)) {
+                continue;
+            }
+
+            row               = t.getNewRow();
+            row[itable_cat]   = ns.getCatalogName(table);
+            row[itable_schem] = ns.getSchemaName(table);
+            row[itable_name]  = table.getName().name;
+
+            if (table.cCache != null && table.cCache instanceof TextCache) {
+                tc              = (TextCache) table.cCache;
+                row[idsd]       = table.getDataSource();
+                row[ifile_path] = new File(tc.sName).getAbsolutePath();
+                row[ifile_enc]  = tc.stringEncoding;
+                row[ifs]        = tc.fs;
+                row[ivfs]       = tc.vs;
+                row[ilvfs]      = tc.lvs;
+                row[iif]        = ValuePool.getBoolean(tc.ignoreFirst);
+                row[iiaq]       = ValuePool.getBoolean(tc.rowIn.allQuoted);
+                row[iid]        = 
+                    ValuePool.getBoolean(table.isDescDataSource());
+            }
+
+            t.insert(row, session);
         }
 
         t.setDataReadOnly(true);

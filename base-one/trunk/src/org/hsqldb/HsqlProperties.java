@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
@@ -50,6 +51,8 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
+    protected static boolean JARFILE =
+        Boolean.getBoolean("hsqldb.files_in_jar");
     private static Method savePropsMethod = null;
 
     static {
@@ -178,22 +181,36 @@ public class HsqlProperties {
             return false;
         }
 
+        if (JARFILE) {
+            return (this.getClass().getClassLoader().getResource(fileName
+                    + ".properties") != null);
+        }
+
         return FileUtil.exists(fileName + ".properties");
     }
 
-    public void load() throws Exception {
+    public boolean load() throws Exception {
+
+        if (!checkFileExists()) {
+            return false;
+        }
 
         if (fileName == null || fileName.length() == 0) {
             throw new java.io.FileNotFoundException(
                 "properties name is null or empty");
         }
 
-        FileInputStream fis = null;
+        InputStream fis = null;
 
         try {
-            File f = new File(fileName + ".properties");
+            if (JARFILE) {
+                fis = this.getClass().getClassLoader().getResourceAsStream(
+                    fileName + ".properties");
+            } else {
+                File f = new File(fileName + ".properties");
 
-            fis = new FileInputStream(f);
+                fis = new FileInputStream(f);
+            }
 
             stringProps.load(fis);
             fis.close();
@@ -202,6 +219,8 @@ public class HsqlProperties {
                 fis.close();
             }
         }
+
+        return true;
     }
 
     /**
@@ -354,7 +373,7 @@ public class HsqlProperties {
         return props;
     }
 
-// boucher@users  20021128 - metadata 1.7.2 
+// boucher@users  20021128 - metadata 1.7.2
     public Enumeration propertyNames() {
         return stringProps.propertyNames();
     }

@@ -75,17 +75,6 @@ import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlObjectToIntMap;
 import org.hsqldb.lib.StopWatch;
 
-/**
- *  Database is the root class for HSQL Database Engine database. <p>
- *
- *  Although it either directly or indirectly provides all or most of the
- *  services required for DBMS functionality, this class should not be used
- *  directly by an application. Instead, to achieve portability and
- *  generality, the jdbc* classes should be used.
- *
- * @version  1.7.0
- */
-
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions to different parts to support savepoint transactions
 // fredt@users 20020215 - patch 1.7.0 - new HsqlProperties class
@@ -114,6 +103,19 @@ import org.hsqldb.lib.StopWatch;
 // boucherb@users 20020310 - class loader update for JDK 1.1 compliance
 // boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
 // fredt@users 20020314 - patch 1.7.2 by gilead@users - drop table syntax
+// fredt@users 20020401 - patch 1.7.2 by akede@users - data files readonly
+// fredt@users 20020401 - patch 1.7.2 by Brendan Ryan - data files in Jar
+
+/**
+ *  Database is the root class for HSQL Database Engine database. <p>
+ *
+ *  Although it either directly or indirectly provides all or most of the
+ *  services required for DBMS functionality, this class should not be used
+ *  directly by an application. Instead, to achieve portability and
+ *  generality, the jdbc* classes should be used.
+ *
+ * @version  1.7.0
+ */
 class Database {
 
     private String        sName;
@@ -139,6 +141,7 @@ class Database {
     boolean filesReadOnly;       // cached tables are readonly
 
 // ----------------------------------------------------------------------------
+    boolean                        filesInJar;
     boolean                        sqlEnforceSize;
     int                            firstIdentity;
     private boolean                bShutdown;
@@ -295,11 +298,9 @@ class Database {
     // tony_lai@users 20020820
     private void open() throws SQLException {
 
-        tTable  = new HsqlArrayList();
-        aAccess = new UserManager();
-        hAlias  = Library.getAliasMap();
-
-//        logger                = new Logger();
+        tTable                = new HsqlArrayList();
+        aAccess               = new UserManager();
+        hAlias                = Library.getAliasMap();
         tokenizer             = new Tokenizer();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
@@ -307,34 +308,44 @@ class Database {
 
         boolean newdatabase = false;
 
-// boucherb@users 20021128 - metadata/classloader 1.7.2 sys user
+        if (sName.length() == 0) {
+            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
+        }
+
         User sysUser = aAccess.createSysUser(this);
 
-        sessionManager = new SessionManager(this, sysUser);
-
-// -------------------------------------------------------------------
+        sessionManager     = new SessionManager(this, sysUser);
         databaseProperties = new HsqlDatabaseProperties(this);
         dInfo              = DatabaseInformation.newDatabaseInformation(this);
 
-        if (sName.length() == 0) {
-            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
-        } else if (sName.equals(".")) {
+        if (sName.equals(".")) {
             newdatabase = true;
         } else {
-            newdatabase = logger.openLog(this, sName);
+
+            // create properties file if not exits and report if new file
+            newdatabase = !databaseProperties.load();
+
+            logger.openLog(this, sName);
         }
+
+        setVariablesFromProperties();
 
         if (newdatabase) {
             execute("CREATE USER SA PASSWORD \"\" ADMIN",
                     sessionManager.getSysSession());
         }
 
-// boucherb@users 20021128 - metadata 1.7.2 system tables
         isOpening = false;
 
         dInfo.setWithContent(true);
+    }
 
-// -------------------------------------------------------
+    void setVariablesFromProperties() {
+
+        sqlEnforceSize =
+            databaseProperties.isPropertyTrue("sql.enforce_size");
+        firstIdentity =
+            databaseProperties.getIntegerProperty("hsqldb.first_identity", 0);
     }
 
     /**
@@ -674,11 +685,10 @@ class Database {
         filesReadOnly = true;
     }
 
-    boolean isFilesReadOnly() {
-        return filesReadOnly;
-    }
-
 // ----------------------------------------------------------------------------
+    void setFilesInJar() {
+        filesInJar = true;
+    }
 
     /**
      *  Retrieves a HsqlArrayList containing references to all non-system
@@ -2385,7 +2395,8 @@ class Database {
                 sToken = c.getString().toLowerCase();
 
                 databaseProperties.setProperty(sToken, c.getString());
-                databaseProperties.setDatabaseVariables();
+                setVariablesFromProperties();
+
                 sToken = c.getString();
                 break;
 
@@ -2676,7 +2687,7 @@ class Database {
         bShutdown = true;
 
         jdbcConnection.removeDatabase(this);
-        logger.tryRelease();
+        logger.releaseLock();
 
         classLoader = null;
     }

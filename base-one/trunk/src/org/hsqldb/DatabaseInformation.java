@@ -90,6 +90,9 @@ class DatabaseInformation {
 
 // boucherb@users 20030305 - brought in line with SQL 200n
     protected static final int SYSTEM_VIEWS = 30;
+    
+// boucherb@users 20030403 - isolated and improved text table reporting    
+    protected static final int SYSTEM_TEXTTABLES = 31;
 
     /** system table names strictly in order of their ids */
     protected static final String sysTableNames[] = {
@@ -127,7 +130,10 @@ class DatabaseInformation {
         "SYSTEM_ALLTYPEINFO",          //
 
 // boucherb@users 20030305 - brought in line with SQL 200n
-        "SYSTEM_VIEWS"
+        "SYSTEM_VIEWS",
+
+// boucherb@users 20030403 - isolated and improved text table reporting         
+        "SYSTEM_TEXTTABLES"
 
         // Future use
 //        "SYSTEM_ASSERTIONS",
@@ -227,11 +233,6 @@ class DatabaseInformation {
     /** Database for which to produce tables */
     protected final Database database;
     
-    /** Simple object-wide flag indicating that some table's next identity
-     * value has changed.  Currently, SYSTEM_TABLES is the only table affected
-     * by this condition. */
-    protected boolean isDirtyNextIdentity = false;
-
     /**
      * Simple object-wide flag indicating that all of this object's cached
      * data is dirty.
@@ -346,29 +347,6 @@ class DatabaseInformation {
         isDirty = true;
     }
     
-    /**
-     * Controls caching of tables produced by this object, specifically
-     * those that may be dependent upon the result of invoking 
-     * DITableInfo.getNextIdentity() changing for any table.  Currently,
-     * this is only the SYSTEM_TABLES system table. <p>
-     *
-     * Subclasses are free to ignore this, since they may choose an
-     * implementation that does not dynamically generate and/or cache
-     * table content on an as-needed basis. <p>
-     *
-     * If not ignored, this call indicates to this object that cached 
-     * system table data based on TableInfo.getNextIdentity may be dirty, 
-     * requiring at least a partial cache clear at some point.<p>
-     *
-     * Subclasses are free to delay cache clear until next getSystemTable().
-     * However, subclasses may have to be aware of additional methods with
-     * semantics similar to getSystemTable() and act accordingly (e.g.
-     * clearing earlier than next invocation of getSystemTable()).
-     */
-    protected final void setDirtyNextIdentity() {
-        isDirtyNextIdentity = true;
-    }     
-
     /**
      * Switches this table producer between producing empty (surrogate)
      * or contentful tables. <p>

@@ -187,9 +187,13 @@ class DatabaseScriptWriter {
         }
     }
 
-    void close() throws IOException {
-        fileStreamOut.flush();
-        fileStreamOut.close();
+    void close() throws SQLException {
+        try {
+            fileStreamOut.flush();
+            fileStreamOut.close();
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR);
+        }
     }
 
     long size() {

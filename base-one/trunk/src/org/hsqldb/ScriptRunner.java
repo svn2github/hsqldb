@@ -82,22 +82,27 @@ class ScriptRunner {
      *
      * @throws  SQLException
      */
-    static void runScript(Database dDatabase, String sFileScript,
+    static void runScript(Database database, String scriptFilename,
                           int logType) throws SQLException {
 
-        if (!FileUtil.exists(sFileScript)) {
+        if (database.filesInJar) {
+            if (ScriptRunner.class.getClassLoader().getResource(
+                    scriptFilename) == null) {
+                return;
+            }
+        } else if (!FileUtil.exists(scriptFilename)) {
             return;
         }
 
         HsqlHashMap sessionMap = new HsqlHashMap();
-        Session     sysSession = dDatabase.sessionManager.getSysSession();
+        Session     sysSession = database.sessionManager.getSysSession();
         Session     current    = sysSession;
 
         try {
             StopWatch sw = new StopWatch();
             DatabaseScriptReader scr =
-                DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                    sFileScript, logType);
+                DatabaseScriptReader.newDatabaseScriptReader(database,
+                    scriptFilename, logType);
 
             while (true) {
                 String s = scr.readLoggedStatement();
@@ -113,8 +118,7 @@ class ScriptRunner {
                     current = (Session) sessionMap.get(id);
 
                     if (current == null) {
-                        current =
-                            dDatabase.sessionManager.newSession(dDatabase,
+                        current = database.sessionManager.newSession(database,
                                 sysSession.getUser(), false);
 
                         sessionMap.put(id, current);
@@ -124,10 +128,10 @@ class ScriptRunner {
                 }
 
                 if (s.length() != 0) {
-                    Result result = dDatabase.execute(s, current);
+                    Result result = database.execute(s, current);
 
                     if (result != null && result.iMode == Result.ERROR) {
-                        Trace.printSystemOut("error in " + sFileScript
+                        Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());
                         Trace.printSystemOut(result.sError);
@@ -136,13 +140,13 @@ class ScriptRunner {
             }
 
             scr.close();
-            dDatabase.sessionManager.closeAllSessions();
+            database.sessionManager.closeAllSessions();
 
             if (Trace.TRACE) {
                 Trace.trace("restore time: " + sw.elapsedTime());
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);
+            throw Trace.error(Trace.FILE_IO_ERROR, scriptFilename + " " + e);
         }
     }
 }

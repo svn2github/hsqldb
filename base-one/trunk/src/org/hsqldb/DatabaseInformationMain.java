@@ -314,28 +314,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         }
 
         isDirty = false;
-        isDirtyNextIdentity = false;
     }
     
-    /** 
-     * Clears the contents of the cached system tables that are dependent on the
-     * next identity value of any user table and resets the corresponding user
-     * slots to null. <p>
-     *
-     * @throws SQLException if a database access error occurs
-     */    
-    protected final void cacheClearNextIdentityDependent() throws SQLException {
-
-            Table t = sysTables[SYSTEM_TABLES];
-            
-            if (t != null) {
-                t.clearAllRows();
-            }
-            
-            sysTableSessions[SYSTEM_TABLES] = -1;
-            isDirtyNextIdentity = false;              
-    }
-
     /**
      * Retrieves the system table corresponding to the specified
      * tableIndex value. <p>
@@ -469,7 +449,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             sysTableSessionDependent[SYSTEM_TABLES] =
             sysTableSessionDependent[SYSTEM_TRIGGERCOLUMNS] =
             sysTableSessionDependent[SYSTEM_TRIGGERS] =
-            sysTableSessionDependent[SYSTEM_VIEWS] = true;
+            sysTableSessionDependent[SYSTEM_VIEWS] = 
+            sysTableSessionDependent[SYSTEM_TEXTTABLES] = true;
 
         Table   t;
         Session oldSession = session;
@@ -614,14 +595,6 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             
             if (Trace.TRACE) {
                 Trace.trace("System table cache cleared.");
-            }
-        }
-
-        if (isDirtyNextIdentity) {
-            cacheClearNextIdentityDependent();                        
-            
-            if (Trace.TRACE) {
-                Trace.trace("cleared next identity dependent cache items.");
             }
         }
 
@@ -2203,17 +2176,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *                                     typed table (not implemented).
      * REF_GENERATION            VARCHAR   {"SYSTEM" | "USER" |
      *                                      "DERIVED" | NULL } (not implemented)
-     * NEXT_IDENTITY             INTEGER   next value for identity column.
-     *                                     NULL if no visible identity column.
+     * HSQLDB_TYPE               VARCHAR   HSQLDB-specific type:
+     *                                     {"MEMORY" | "CACHED" | "TEXT" | ...}     
      * READ_ONLY                 BIT       TRUE if table is read-only,
      *                                     else FALSE.
-     * HSQLDB_TYPE               VARCHAR   HSQLDB-specific type:
-     *                                     {"MEMORY" | "CACHED" | "TEXT" | ...}
-     * CACHE_FILE                VARCHAR   CACHED: absolute Cache file path.
-     *                                     TEXT: absolute TextCache file path.
-     * DATA_SOURCE               VARCHAR   TEXT: "spec" part of:
-     *                                     SET TABLE ident SOURCE "spec" [DESC].
-     * IS_DESC                   BIT       TEXT: TRUE if [DESC] set, else FALSE.
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing the accessible
@@ -2247,14 +2213,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
             // -------------------------------------------------------------
             // extended
-            // ------------------------------------------------------------
-            addColumn(t, "NEXT_IDENTITY", INTEGER);
-            addColumn(t, "READ_ONLY", BIT);
-            addColumn(t, "HSQLDB_TYPE", VARCHAR);
-            addColumn(t, "CACHE_HASH", INTEGER);
-            addColumn(t, "CACHE_FILE", VARCHAR);
-            addColumn(t, "DATA_SOURCE", VARCHAR);
-            addColumn(t, "IS_DESC", BIT);
+            // ------------------------------------------------------------           
+            addColumn(t, "HSQLDB_TYPE", VARCHAR, false);    // not null
+            addColumn(t, "READ_ONLY", BIT, false);          // not null
+
 
             // ------------------------------------------------------------
             // order TABLE_TYPE, TABLE_SCHEM and TABLE_NAME
@@ -2281,24 +2243,22 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         DITableInfo ti;
 
         // column number mappings
+        // jdbc 1
         final int itable_cat   = 0;
         final int itable_schem = 1;
         final int itable_name  = 2;
         final int itable_type  = 3;
         final int iremark      = 4;
+        // jdbc 3
         final int itype_cat    = 5;
         final int itype_schem  = 6;
         final int itype_name   = 7;
         final int isref_cname  = 8;
         final int iref_gen     = 9;
-        final int inext_id     = 10;
+        // hsqldb ext 
+        final int ihsqldb_type = 10;
         final int iread_only   = 11;
-        final int ihsqldb_type = 12;
-        final int icache_hash  = 13;
-        final int icache_file  = 14;
-        final int idata_source = 15;
-        final int iis_desc     = 16;
-
+        
         // Initialization
         tables = allTables();
         ti     = new DITableInfo();
@@ -2318,14 +2278,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             row[itable_schem] = ns.getSchemaName(table);
             row[itable_name]  = ti.getName();
             row[itable_type]  = ti.getStandardType();
-            row[iremark]      = ti.getRemark();
-            row[inext_id]     = ti.getNextIdentity();
-            row[iread_only]   = ti.isReadOnly();
+            row[iremark]      = ti.getRemark();            
             row[ihsqldb_type] = ti.getHsqlType();
-            row[icache_hash]  = ti.getCacheHash();
-            row[icache_file]  = ti.getCachePath();
-            row[idata_source] = ti.getDataSource();
-            row[iis_desc]     = ti.isDataSourceDescending();
+            row[iread_only]   = ti.isReadOnly();
 
             t.insert(row, session);
         }

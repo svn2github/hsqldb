@@ -172,7 +172,7 @@ class Table {
 
         dDatabase      = db;
         sqlEnforceSize = db.sqlEnforceSize;
-        iIdentityId= db.firstIdentity;
+        iIdentityId    = db.firstIdentity;
 
         switch (type) {
 
@@ -244,7 +244,7 @@ class Table {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
-        if (db.isFilesReadOnly() && checkTableFileBased()) {
+        if (db.filesReadOnly && checkTableFileBased()) {
             this.isReadOnly = true;
         }
 
@@ -300,7 +300,7 @@ class Table {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (!value && dDatabase.isFilesReadOnly() && checkTableFileBased()) {
+        if (!value && dDatabase.filesReadOnly && checkTableFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
@@ -308,7 +308,7 @@ class Table {
     }
 
     /**
-     * Text or Chached Tables are normally file based
+     * Text or Cached Tables are normally file based
      */
     boolean checkTableFileBased() {
         return isCached | isText;
@@ -1665,23 +1665,6 @@ class Table {
 
         if (iIdentityId >= nextId) {
             iIdentityId++;
-
-// boucherb@users - patch 1.7.2 - more efficient SYSTEM_TABLE production
-            // only do this if id is for a visible column
-            // - represents a very small hit compared
-            // to all of the code above and saves quite a bit over
-            // the technique of regenerating SYSTEM_TABLES at every
-            // request by including it in the set of non-cached
-            // system tables
-            if (c != null) {
-                DatabaseInformation di = dDatabase.dInfo;
-
-                if (di != null) {
-                    di.setDirtyNextIdentity();
-                }
-            }
-
-// --
         }
     }
 

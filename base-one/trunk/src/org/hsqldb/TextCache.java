@@ -53,10 +53,10 @@ class TextCache extends Cache {
     //state of Cache
     private boolean                isIndexingSource;
     public static final String     NL = System.getProperty("line.separator");
-    private String                 fs;
-    private String                 vs;
-    private String                 lvs;
-    private String                 stringEncoding;
+    String                         fs;
+    String                         vs;
+    String                         lvs;
+    String                         stringEncoding;
     protected boolean              readOnly;
     protected TextDatabaseRowInput rowIn;
     protected boolean              ignoreFirst;
