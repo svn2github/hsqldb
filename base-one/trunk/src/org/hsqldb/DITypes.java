@@ -48,8 +48,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>ARRAY</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int ARRAY = 2003;
 
@@ -57,7 +57,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIGINT</code>.
-     *
      */
     int BIGINT = -5;
 
@@ -65,7 +64,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BINARY</code>.
-     *
      */
     int BINARY = -2;
 
@@ -73,7 +71,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIT</code>.
-     *
      */
     int BIT = -7;
 
@@ -81,8 +78,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>BLOB</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int BLOB = 2004;
 
@@ -91,6 +88,7 @@ public interface DITypes {
      * as a type code, that identifies the generic SQL type
      * <code>BOOLEAN</code>.
      *
+     * @since JDK 1.4
      */
     int BOOLEAN = 16;
 
@@ -98,16 +96,15 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>CHAR</code>.
-     *
      */
     int CHAR = 1;
 
     /**
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
-     * <code>CLOB</code>.
-     * @since 1.2
+     * <code>CLOB</code>
      *
+     * @since JDK 1.2
      */
     int CLOB = 2005;
 
@@ -115,8 +112,7 @@ public interface DITypes {
      * The constant in the Java programming language, somtimes referred to
      * as a type code, that identifies the generic SQL type <code>DATALINK</code>.
      *
-     * @since 1.4
-     *
+     * @since JDK 1.4
      */
     int DATALINK = 70;
 
@@ -124,7 +120,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DATE</code>.
-     *
      */
     int DATE = 91;
 
@@ -132,7 +127,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DECIMAL</code>.
-     *
      */
     int DECIMAL = 3;
 
@@ -140,8 +134,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>DISTINCT</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int DISTINCT = 2001;
 
@@ -149,7 +143,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DOUBLE</code>.
-     *
      */
     int DOUBLE = 8;
 
@@ -157,7 +150,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>FLOAT</code>.
-     *
      */
     int FLOAT = 6;
 
@@ -165,7 +157,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>INTEGER</code>.
-     *
      */
     int INTEGER = 4;
 
@@ -173,8 +164,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>JAVA_OBJECT</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int JAVA_OBJECT = 2000;
 
@@ -182,7 +173,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARBINARY</code>.
-     *
      */
     int LONGVARBINARY = -4;
 
@@ -190,7 +180,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARCHAR</code>.
-     *
      */
     int LONGVARCHAR = -1;
 
@@ -198,7 +187,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NULL</code>.
-     *
      */
     int NULL = 0;
 
@@ -206,7 +194,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NUMERIC</code>.
-     *
      */
     int NUMERIC = 2;
 
@@ -215,7 +202,6 @@ public interface DITypes {
      * that the SQL type is database-specific and
      * gets mapped to a Java object that can be accessed via
      * the methods <code>getObject</code> and <code>setObject</code>.
-     *
      */
     int OTHER = 1111;
 
@@ -223,7 +209,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>REAL</code>.
-     *
      */
     int REAL = 7;
 
@@ -231,8 +216,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>REF</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int REF = 2006;
 
@@ -240,7 +225,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>SMALLINT</code>.
-     *
      */
     int SMALLINT = 5;
 
@@ -248,8 +232,8 @@ public interface DITypes {
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>STRUCT</code>.
-     * @since 1.2
      *
+     * @since JDK 1.2
      */
     int STRUCT = 2002;
 
@@ -257,7 +241,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIME</code>.
-     *
      */
     int TIME = 92;
 
@@ -265,7 +248,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIMESTAMP</code>.
-     *
      */
     int TIMESTAMP = 93;
 
@@ -273,7 +255,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TINYINT</code>.
-     *
      */
     int TINYINT = -6;
 
@@ -281,7 +262,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARBINARY</code>.
-     *
      */
     int VARBINARY = -3;
 
@@ -289,7 +269,6 @@ public interface DITypes {
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARCHAR</code>.
-     *
      */
     int VARCHAR = 12;
 

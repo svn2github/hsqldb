@@ -146,8 +146,7 @@ import java.sql.SQLException;
 // boucherb@users 200302-200303 - first and second review of new material with
 //                corresponding updates
 
-/**
- * Comprehensive information about the database as a whole.
+/** Comprehensive information about the database as a whole.
  * <P>
  * This interface is implemented by driver vendors to let users know the
  * capabilities of a Database Management System (DBMS) in combination with
@@ -755,7 +754,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * Retrieves the name of this database product.
+     * Retrieves the name of this database product. <p>
      *
      * Starting with HSQLDB 1.7.2, this value is retrieved through an
      * SQL call to the new {@link Library#getDatabaseProductName} method
@@ -779,7 +778,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * Retrieves the version number of this database product.
+     * Retrieves the version number of this database product. <p>
      *
      * Starting with HSQLDB 1.7.2, this value is retrieved through an
      * SQL call to the new {@link Library#getDatabaseProductVersion} method
@@ -1320,7 +1319,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * From 1.7.0, HSQLDB support this type of
+     * From 1.7.0, HSQLDB supports this type of
      * <code>ALTER TABLE</code> statement; this method always
      * returns <code>true</code>.
      * </span>
@@ -1919,13 +1918,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.1, HSQLDB does not support the ANSI92
+     * Up to and including 1.7.2, HSQLDB does not support the ANSI92
      * full SQL grammar; this method always returns
      * <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
      */
@@ -1946,13 +1943,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.1, HSQLDB does not support the SQL
+     * Up to and including 1.7.2, HSQLDB does not support the SQL
      * Integrity Enhancement Facility; this method always returns
      * <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
      */
@@ -1998,14 +1993,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB  does not support full nested outer
+     * Up to and including 1.7.2, HSQLDB  does not support full nested outer
      * joins; this method always returns <code>false</code>. <p>
      *
      * This behaviour may change in a future release.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
      */
@@ -2027,12 +2020,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB support the LEFT OUTER join syntax;
+     * Up to and including 1.7.2, HSQLDB support the LEFT OUTER join syntax;
      * this method always returns <code>true</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
      */
@@ -2055,16 +2046,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns the empty String. <p>
      *
-     * Starting with 1.7.2, HSQLDB provides an option to
-     * plug in support for different meta-data implementations.  Using
-     * the <code>DatabaseInformationFull</code> plugin, the engine supports
-     * SQL92-like schema reporting (system objects such as system tables and
-     * built-in routines are reported in a schema named "DEFINITION_SCHEMA"
-     * while user objects such as regular tables and views are reported
-     * in a schema named "PUBLIC."  However, there is still no support
-     * for creating or dropping schemas or choosing which schema in which to create
-     * other database objects.  As such, this method still returns the
-     * empty String.
+     * Starting with 1.7.2, HSQLDB provides an option to plug in support for
+     * different metadata implementations.  Using the default
+     * <code>DatabaseInformationFull</code> plugin, schema support is turned
+     * off by default, but there is an option to turn on support for
+     * SQL92-like schema reporting (system objects such as
+     * system tables and built-in routines are reported in a schema named
+     * "DEFINITION_SCHEMA" while user objects such as regular tables and views are
+     * reported in a schema named "PUBLIC").  However, this feature is
+     * experimental and there is still no support for creating or dropping schemas,
+     * choosing the schema in which to create other database objects or really
+     * any other support beyond schema qualification for table ALTER/DROP DDL and
+     * SELECT tables lists.  As such, this method still returns the empty String.
      * </span>
      * <!-- end release-specific documentation -->
      * @return the vendor term for "schema"
@@ -2088,12 +2081,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Up to and including 1.7.2, HSQLDB does not support declaration of
      * functions or procedures directly in SQL but instead relies on the
-     * HSQLDB-specific class grant mechanism to make public static
+     * HSQLDB-specific CLASS grant mechanism to make public static
      * Java methods available as SQL routines; this method always returns
      * an empty <code>String</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @return the vendor term for "procedure"
      * @exception SQLException if a database access error occurs
      */
@@ -2139,12 +2131,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs in DDL or DML;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return <code>true</code> if the catalog name appears at the beginning
      *        of a fully qualified table name; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -2195,16 +2185,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      *
-     * Starting with 1.7.2, HSQLDB provides an option to
-     * plug in support for different meta-data implementations.  Using
-     * the <code>DatabaseInformationFull</code> plugin, the engine supports
-     * SQL92-like schema reporting (system objects such as system tables and
-     * built-in routines are reported in a schema named "DEFINITION_SCHEMA"
-     * while user objects such as regular tables and views are reported
-     * in a schema named "PUBLIC."  Also in this implementation, support is
-     * provided for schema-qualified table indentifiers. However, there is
-     * no support for schema-qualified table column identifiers.  As such,
-     * this method still returns <code>false</code>. <p>
+     * Starting with 1.7.2, HSQLDB provides an option to plug in support for
+     * different metadata implementations.  Using the default
+     * <code>DatabaseInformationFull</code> plugin, schema support is turned off by
+     * default, but there is an option to turn on SQL92-like schema reporting
+     * (system objects such as system tables and built-in routines are reported in
+     * a schema named "DEFINITION_SCHEMA" while user objects such as regular tables
+     * and views are reported in a schema named "PUBLIC."  However, this feature is
+     * experimental and there is still no support for creating or dropping schemas,
+     * choosing the schema in which to create other database objects or really
+     * any other support beyond schema qualification for table ALTER/DROP DDL and
+     * SELECT tables lists.  As such, this method still returns
+     * <code>false</code>. <p>
      *
      * In the a future release, it is intended to provide core support for
      * schema-qualified table and column identifiers, at which point this method
@@ -2303,7 +2295,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support schema-qualified
+     * Up to and including 1.7.2, HSQLDB does not support schema-qualified
      * privilege definitions; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2352,7 +2344,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support catalog-quaulified
+     * Up to and including 1.7.2, HSQLDB does not support catalog-qualified
      * procedure calls; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2376,7 +2368,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support catalog-qualified;
+     * Up to and including 1.7.2, HSQLDB does not support catalog-qualified
      * table definitions; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2400,7 +2392,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support catalog-qualified
+     * Up to and including 1.7.2, HSQLDB does not support catalog-qualified
      * index definitions; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2424,7 +2416,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support catalog-qualified
+     * Up to and including 1.7.2, HSQLDB does not support catalog-qualified
      * privilege definitions; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -3164,13 +3156,13 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support schema names at all.
-     * Starting with 1.7.2, schem names are not supported in DDL but there
-     * is an option to support limited use of schema names in DML; in any case,
-     * no known limit is imposed, so this method always returns <code>0</code>.
+     * Up to and including 1.7.1, HSQLDB does not support schema names at all. <p>
+     *
+     * Starting with 1.7.2, there is a switchable option to support experimental,
+     * limited use of schema names; in any case, no known limit is imposed,
+     * so this method always returns <code>0</code>.
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @return the maximum number of characters allowed in a schema name;
      *    a result of zero means that there is no limit or the limit
      *    is not known
@@ -3454,10 +3446,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * Up to and including 1.7.2, HSQLDB supports only TRANSACTION_READ_COMMITED
+     * and always returns this value here.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return the default isolation level
      * @exception SQLException if a database access error occurs
      * @see jdbcConnection
@@ -3676,11 +3668,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation.  The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *      is stored in the database; "" retrieves those without a catalog;
      *      <code>null</code> means that the catalog name should not be used to narrow
@@ -3768,11 +3759,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -3854,11 +3844,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -3923,11 +3912,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return a <code>ResultSet</code> object in which each row is a
      *        schema decription
      * @exception SQLException if a database access error occurs
@@ -3956,11 +3944,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return a <code>ResultSet</code> object in which each row has a
      *        single <code>String</code> column that is a catalog name
      * @exception SQLException if a database access error occurs
@@ -3988,11 +3975,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return a <code>ResultSet</code> object in which each row has a
      *        single <code>String</code> column that is a table type
      * @exception SQLException if a database access error occurs
@@ -4064,13 +4050,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * of JDBC3 compliant tools.  However, these columns are never filled in,
      * since HSQLDB does not yet support the related features. <p>
      *
-     * Starting with 1.7.2, there is an option to support this feature
+     * Starting with 1.7.2, there is an option to support this method
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *      is stored in the database; "" retrieves those without a catalog;
      *      <code>null</code> means that the catalog name should not be used to narrow
@@ -4139,12 +4124,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4214,15 +4198,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * grantor, rather than the grantee, and lists IS_GRANTABLE as YES for
      * each row.  It does not list rights for any other users.  Since the
      * "sa" user can be dropped from the database and recreated as a non-admin
-     * user, this result is not only incomplete, it is wrong. <p>
+     * user, this result is not only incomplete, it is potentially wrong. <p>
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4291,6 +4274,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * unique index if one exists. Otherwise it returns an empty result.<br>
      * <code>scope</code> and <code>nullable</code> parameters are not
      * taken into account.<p>
+     *
      * If the name of a column is defined in the database without double
      * quotes, an all-uppercase name must be specified when calling this
      * method. Otherwise, the name must be specified in the exact case of
@@ -4298,12 +4282,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4358,7 +4341,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             and("NULLABLE", "=", Nullable)).append(
             " AND SCOPE IN " + scopeIn);
 
-        // by default, query already returns rows in contract order.
+        // By default, query already returns rows in contract order.
         // However, the way things are set up, there should never be
         // a result where there is > 1 distinct scope value:  most requests
         // will want only one table and the system table producer (for
@@ -4394,12 +4377,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB produces an empty result as no
-     * columns are automatically updated when any value in a row changes.
+     * Up to and including 1.7.1, HSQLDB produces an empty result as no
+     * columns are automatically updated when any value in a row changes. <p>
+     *
+     * Starting with 1.7.2, there is an option to support this feature
+     * to greater or lesser degrees.  See the documentation specific to the
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
+     *
+     *
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4452,11 +4440,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * If the name of a column is defined in the database without double
      * quotes, an all-uppercase name must be specified when calling this
      * method. Otherwise, the name must be specified in the exact case of
-     * the column definition in the database.
+     * the column definition in the database. <p>
+     *
+     * Starting with 1.7.2, there is an option to support this feature
+     * to greater or lesser degrees.  See the documentation specific to the
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *        is stored in the database; "" retrieves those without a catalog;
      *        <code>null</code> means that the catalog name should not be used to narrow
@@ -4469,6 +4460,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *        in the database
      * @return <code>ResultSet</code> - each row is a primary key column description
      * @exception SQLException if a database access error occurs
+     * @see #supportsMixedCaseQuotedIdentifiers
+     * @see #storesUpperCaseIdentifiers
      */
 
 // fredt@users 20020226 - comment - changed query to exact name
@@ -4559,10 +4552,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4576,6 +4568,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return <code>ResultSet</code> - each row is a primary key column description
      * @exception SQLException if a database access error occurs
      * @see #getExportedKeys
+     * @see #supportsMixedCaseQuotedIdentifiers
+     * @see #storesUpperCaseIdentifiers
      */
     public ResultSet getImportedKeys(String catalog, String schema,
                                      String table) throws SQLException {
@@ -4662,10 +4656,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *      is stored in this database; "" retrieves those without a catalog;
      *      <code>null</code> means that the catalog name should not be used to narrow
@@ -4680,6 +4673,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *       foreign key column description
      * @exception SQLException if a database access error occurs
      * @see #getImportedKeys
+     * @see #supportsMixedCaseQuotedIdentifiers
+     * @see #storesUpperCaseIdentifiers
      */
 
 // fredt@users 20030000 - campbell, we should not use LIKE in the query
@@ -4773,11 +4768,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param primaryCatalog a catalog name; must match the catalog name
      * as it is stored in the database; "" retrieves those without a
      * catalog; <code>null</code> means drop catalog name from the selection criteria
@@ -4797,6 +4791,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return <code>ResultSet</code> - each row is a foreign key column description
      * @exception SQLException if a database access error occurs
      * @see #getImportedKeys
+     * @see #supportsMixedCaseQuotedIdentifiers
+     * @see #storesUpperCaseIdentifiers
      */
 
 // fredt@users 20030000 - campbell, we should not use LIKE in the query
@@ -4877,11 +4873,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return a <code>ResultSet</code> object in which each row is an SQL
      *        type description
      * @exception SQLException if a database access error occurs
@@ -4947,11 +4942,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in this database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -4969,6 +4963,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *    accurate
      * @return <code>ResultSet</code> - each row is an index column description
      * @exception SQLException if a database access error occurs
+     * @see #supportsMixedCaseQuotedIdentifiers
+     * @see #storesUpperCaseIdentifiers
      */
 
 // fredt@users 20020526 - comment - changed to exact table name
@@ -5403,12 +5399,15 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not support UDTs and
-     * thus produces an empty result.
+     * Up to and including 1.7.1, HSQLDB does not support UDTs and
+     * thus produces an empty result. <p>
+     *
+     * Starting with 1.7.2, there is an option to support this feature
+     * to greater or lesser degrees.  See the documentation specific to the
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -5660,11 +5659,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; "" retrieves those without a catalog;
      *       <code>null</code> means drop catalog name from the selection criteria
      * @param schemaPattern a schema name pattern; "" retrieves those
@@ -5682,15 +5680,15 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                    String typeNamePattern)
                                    throws SQLException {
 
-        if ( wantsIsNull(typeNamePattern)) {
-            return executeSelect("SYSTEM_SUPERTYPES","0=1");
+        if (wantsIsNull(typeNamePattern)) {
+            return executeSelect("SYSTEM_SUPERTYPES", "0=1");
         }
 
         StringBuffer select =
-        toQueryPrefix("SYSTEM_SUPERTYPES")
-        .append(and("TYPE_CAT","=",catalog))
-        .append(and("TYPE_SCHEM","LIKE",schemaPattern))
-        .append(and("TYPE_NAME","LIKE",typeNamePattern));
+            toQueryPrefix("SYSTEM_SUPERTYPES").append(and("TYPE_CAT", "=",
+                catalog)).append(and("TYPE_SCHEM", "LIKE",
+                                     schemaPattern)).append(and("TYPE_NAME",
+                                         "LIKE", typeNamePattern));
 
         return execute(select.toString());
     }
@@ -5731,11 +5729,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; "" retrieves those without a catalog;
      *       <code>null</code> means drop catalog name from the selection criteria
      * @param schemaPattern a schema name pattern; "" retrieves those
@@ -5753,14 +5750,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                     throws SQLException {
 
         if (wantsIsNull(tableNamePattern)) {
-            return executeSelect("SYSTEM_SUPERTABLES","0=1");
+            return executeSelect("SYSTEM_SUPERTABLES", "0=1");
         }
 
         StringBuffer select =
-        toQueryPrefix("SYSTEM_SUPERTABLES")
-        .append(and("TABLE_CAT","=",catalog))
-        .append(and("TABLE_SCHEM","LIKE",schemaPattern))
-        .append(and("TABLE_NAME","LIKE",tableNamePattern));
+            toQueryPrefix("SYSTEM_SUPERTABLES").append(and("TABLE_CAT", "=",
+                catalog)).append(and("TABLE_SCHEM", "LIKE",
+                                     schemaPattern)).append(and("TABLE_NAME",
+                                         "LIKE", tableNamePattern));
 
         return execute(select.toString());
     }
@@ -5832,11 +5829,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
-     * selected system table provider implementation.
+     * selected system table provider implementation. The default implementation
+     * is org.hsqldb.DatabaseInformationFull.
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param catalog a catalog name; must match the catalog name as it
      *       is stored in the database; "" retrieves those without a catalog;
      *       <code>null</code> means that the catalog name should not be used to narrow
@@ -5860,19 +5856,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                    String typeNamePattern,
                                    String attributeNamePattern)
                                    throws SQLException {
-        if (
-            wantsIsNull(typeNamePattern) ||
-            wantsIsNull(attributeNamePattern)
-        ) {
-            return executeSelect("SYSTEM_UDTATTRIBUTES","0=1");
+
+        if (wantsIsNull(typeNamePattern)
+                || wantsIsNull(attributeNamePattern)) {
+            return executeSelect("SYSTEM_UDTATTRIBUTES", "0=1");
         }
 
-        StringBuffer select =
-        toQueryPrefix("SYSTEM_UDTATTRIBUTES")
-        .append(and("TYPE_CAT","=",catalog))
-        .append(and("TYPE_SCHEM","LIKE",schemaPattern))
-        .append(and("TYPE_NAME","LIKE",typeNamePattern))
-        .append(and("ATTR_NAME","LIKE",attributeNamePattern));
+        StringBuffer select = toQueryPrefix("SYSTEM_UDTATTRIBUTES").append(
+            and("TYPE_CAT", "=", catalog)).append(
+            and("TYPE_SCHEM", "LIKE", schemaPattern)).append(
+            and("TYPE_NAME", "LIKE", typeNamePattern)).append(
+            and("ATTR_NAME", "LIKE", attributeNamePattern));
 
         return execute(select.toString());
     }
@@ -5888,12 +5882,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * 1.7.1 always returns false. <p>
+     * Up to and including 1.7.2, HSQLDB always returns false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @param holdability one of the following constants:
      *         <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code> or
      *         <code>ResultSet.CLOSE_CURSORS_AT_COMMIT</code>
@@ -5966,9 +5958,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * this method throws a SQLException stating that the function
      * is not supported. <p>
      *
-     * Starting with 1.7.2, the feature is supported under JDK14 builds.
+     * Starting with 1.7.2, the feature is supported under JDK14 builds. <p>
      *
-     * This value is retrieved through a SQL call to the new
+     * This value is retrieved through an SQL call to the new
      * {@link Library#getDatabaseMajorVersion} method which allows
      * correct determination of the database major version for both local
      * and remote database instances.
@@ -5987,7 +5979,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        execute("call \"org.hsqldb.Library.getDatabaseMajorVersion\"()");
+            execute("call \"org.hsqldb.Library.getDatabaseMajorVersion\"()");
 
         rs.next();
 
@@ -6008,9 +6000,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * this method throws a SQLException stating that the function
      * is not supported. <p>
      *
-     * Starting with 1.7.2, the feature is supported under JDK14 builds.
+     * Starting with 1.7.2, the feature is supported under JDK14 builds. <p>
      *
-     * This value is retrieved through a SQL call to the new
+     * This value is retrieved through an SQL call to the new
      * {@link Library#getDatabaseMinorVersion} method which allows
      * correct determination of the database minor version for both local
      * and remote database instances.
@@ -6029,7 +6021,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        execute("call \"org.hsqldb.Library.getDatabaseMinorVersion\"()");
+            execute("call \"org.hsqldb.Library.getDatabaseMinorVersion\"()");
 
         rs.next();
 
@@ -6081,11 +6073,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * is not supported. <p>
      *
      * Starting with 1.7.2, the feature is supported under JDK14 builds.
-     *
      * </span>
      * <!-- end release-specific documentation -->
-     *
-     *
      * @return JDBC version minor number
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7
@@ -6108,7 +6097,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.2, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -6141,12 +6130,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB updates the LOB directly. This
+     * Up to and including 1.7.2, HSQLDB updates the LOB directly. This
      * method return false.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @return <code>true</code> if updates are made to a copy of the LOB;
      *        <code>false</code> if updates are made directly to the LOB
      * @throws SQLException if a database access error occurs
@@ -6174,7 +6162,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support statement pooling.
+     * Up to and including 1.7.2, HSQLDB does not support statement pooling.
      * This method returns false. <p>
      *
      * </span>
@@ -6203,7 +6191,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Constructs a new <code>jdbcDatabaseMetaData</code> object using the
      * specified connection.  This contructor is used by <code>jdbcConnection</code>
-     * when producing a DatabaseMetaData object from a call to
+     * when producing a <code>DatabaseMetaData</code> object from a call to
      * {@link jdbcConnection#getMetaData() getMetaData}.
      * @param c the connection this object will use to retrieve
      *         instance-specific metadata
@@ -6215,44 +6203,43 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Retreives an "AND" predicate based on the (column) <code>id</code>,
      * <code>op</code>(erator) and<code>val</code>(ue) arguments to be
-     * included in a SQL "WHERE" clause. <p>
+     * included in a SQL "WHERE" clause, using the conventions laid out for
+     * JDBC DatabaseMetaData filter parameter values. <p>
      * @return an "AND" predicate built from the arguments
      * @param id the simple, non-quoted identifier of a system table column to filter on <p>
      *
-     *      No checking is done for column name validity (how could there be?
-     *      (No table names are provided) <p>
+     *      No checking is done for column name validity. <br>
+     *      (How could there be? No table names are provided)<p>
      *
-     *      Setting this to <code>null</code> or <code>""</code> causes the
-     *      entire expression to be set to <code>""</code>
-     * @param op the operation to perform between the sytem table column value and
-     *      the <code>val</code> argument <P>
+     *      Setting this to <code>null</code> or the empty string causes the
+     *      entire expression to be set to the empty string
+     * @param op the operation to perform between the system table column name value and
+     *      the <code>val</code> argument <p>
      *
-     *      <code>null</code> or <code>""</code> causes the entire expression
-     *      to be set to <code>""</code>
-     * @param val ab <code>Object</code> representing a value to use in some
-     *      conditional
-     *      operation between the column identified by the <code>id</code>
-     *      argument and the value spullied by the <code>val</code> agument<p>
+     *      <code>null</code> or the empty string causes the entire expression
+     *      to be set to the empty string
+     * @param val an object representing the value to use in some conditional
+     *      operation, op, between the column identified by the id argument
+     *      and this argument
      *
      *      <UL>
-     *          <LI>null causes the returend expression to be ""
-     *          <LI>val.toString() == "" causes the IS NULL operator to be
-     *              used against the requested column, rather than
-     *              the operator specified by the <code>op</code> argument.
-     *          <LI>non-null argument of class java.lang.String (length > 0)
-     *              causes the returned expression to perform the specified
-     *              operation between the column and the argument converted
-     *              to a SQL string (single quoted, with internal single
-     *              quotes escaped by doubling). If <code>op</code> is "LIKE"
-     *              and <code>val</code> does not contain the <code>"%"</code>
-     *              wild card, then <code>op</code> is converted to
-     *              <code>"="</code>.
-     *          <LI>non-null argument of any other class causes the expression
-     *              to perform the specified operation between the column and
-     *              <code>String.valueOf(val)</code>
+     *          <LI>null causes the empty string to be returned.
+     *          <LI>toString().length() == 0 causes the returned expression
+     *              to be built so that the IS NULL operation will occur
+     *              against the specified column.
+     *          <LI>instanceof String causes the returned expression to be
+     *              built so that the specified operation will occur between the
+     *              specified column and the specified value, converted to a SQL
+     *              string (single quoted, with internal single quotes escaped by
+     *              doubling). If <code>op</code> is "LIKE" and <code>val</code>
+     *              does not contain any unescaped "%" or "_" wild card characters,
+     *              then <code>op</code> is silently converted to "=".
+     *          <LI>!instanceof String causes an expression to
+     *              built so that the specified operation will occur
+     *              between the specified column and <code>String.valueOf(val)</code>
      *      </UL>
      */
-    private static StringBuffer and(String id, String op, Object val) {
+    private static String and(String id, String op, Object val) {
 
         StringBuffer sb = new StringBuffer();
 
@@ -6264,13 +6251,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
          - pass "''" to mean filter on <columnName> = '' (empty SQL string)
          */
         if (val == null) {
-            return sb;
+            return sb.toString();
         }
 
         boolean isStr = (val instanceof String);
 
         if (isStr && ((String) val).length() == 0) {
-            return sb.append(" AND ").append(id).append(" IS NULL");
+            return sb.append(" AND ").append(id).append(
+                " IS NULL").toString();
         }
 
         String v = isStr ? Column.createSQLString((String) val)
@@ -6282,9 +6270,19 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         return sb.append(" AND ").append(id).append(' ').append(op).append(
-            ' ').append(v);
+            ' ').append(v).toString();
     }
 
+    /**
+     * Retrieves whether the specified string, s, contains the character, ch,
+     * without being escaped by the value returned by
+     * {@link #getSearchStringEscape() getSearchStringEscape()}.
+     * @param s The string to test
+     * @param ch The character to test for
+     * @return true if there is at least one occurence of ch in s not
+     *        directly preceded by the search string escape
+     *        character, "\"
+     */
     private static boolean containsUnescaped(String s, char ch) {
 
         int start = s.indexOf(ch);
@@ -6347,8 +6345,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * Retrieves "SELECT * FROM &lt;table&gt; WHERE 1=1" in string buffer form.
-     * This is a convenience method provided because for most
-     * <code>DatabaseMetaData</code> queries this is the most suitable
+     *
+     * This is a convenience method provided because, for most
+     * <code>DatabaseMetaData</code> queries, this is the most suitable
      * thing to start building on. <p>
      * @return an StringBuffer whose content is:
      *      "SELECT * FROM &lt;table&gt; WHERE 1=1"
@@ -6362,12 +6361,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * Retrieves whether the JDBC <code>DatabaseMetaData</code> contract
-     * specifies that the argument <code>s</code>code> is filter parameter
-     * value that requies a corresponding IS NULL preidicate.
+     * Retrieves whether the JDBC <code>DatabaseMetaData</code> contract specifies
+     * that the argument <code>s</code>code> is filter parameter value that
+     * requires a corresponding IS NULL predicate.
      * @param s the filter parameter to test
-     * @return true if the argument <code>s</code>code> is filter paramter
-     * value that requies a corresponding IS NULL preidicate
+     * @return true if the argument, s, is filter paramter value that
+     *        requires a corresponding IS NULL predicate
      */
     private static boolean wantsIsNull(String s) {
         return (s != null && s.length() == 0);
