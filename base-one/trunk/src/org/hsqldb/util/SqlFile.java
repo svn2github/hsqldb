@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.18 2004/01/21 23:16:12 unsaved Exp $
+ * $Id: SqlFile.java,v 1.19 2004/01/22 00:06:48 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -45,6 +45,7 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
  * Definitions.
@@ -101,7 +102,7 @@ public class SqlFile {
         + "    \\s                   * Show previous commands\n"
         + "    \\-[3]                * reload a previous command for appending\n"
         + "    \\-[3];               * reload and execute a previous command\n"
-        + " !!!\\e[3]                * Edit a previous command in external editor\n"
+        + " !!!\\e [3]               * Edit a previous command in external editor\n"
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n"
@@ -164,11 +165,10 @@ public class SqlFile {
         continueOnError = interactive;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(
-                (file == null) ? System.in : new FileInputStream(file)));
-        // psErr.println("Executing '" + file + "'");
+        br = new BufferedReader(new InputStreamReader(
+            (file == null) ? System.in : new FileInputStream(file)));
         curLinenum = 0;
-        if (interactive) psStd.println(BANNER);
+        if (interactive) stdprint(BANNER);
         while (true) {
             if (interactive) psStd.print(
                     (curBuffer.length() == 0) ? primaryPrompt : contPrompt);
@@ -191,7 +191,7 @@ public class SqlFile {
                         } catch (QuitNow qn) {
                             return;
                         } catch (BadSpecial bs) {
-                            psErr.println("Error at '"
+                            errprint("Error at '"
                                 + ((file == null) ? "stdin" : file.toString())
                                 + "' line " + curLinenum
                                 + ":\n\"" + inputLine + "\"\n" + bs.getMessage());
@@ -204,8 +204,7 @@ public class SqlFile {
                     if (interactive) {
                         setHist(curBuffer.toString());
                         curBuffer.setLength(0);
-                        psStd.println(
-                                "Buffer stored into history then cleared");
+                        stdprint("Buffer stored into history then cleared");
                     }
                     continue;
                 }
@@ -233,7 +232,7 @@ public class SqlFile {
                     processStatement();
                 }
             } catch (SQLException se) {
-                psErr.println("SQL Error at '"
+                errprint("SQL Error at '"
                     + ((file == null) ? "stdin" : file.toString())
                     + "' line " + curLinenum
                     + ":\n\"" + curCommand + "\"\n" + se.getMessage());
@@ -242,7 +241,7 @@ public class SqlFile {
             curBuffer.setLength(0);
         }
         if (curBuffer.length() != 0)
-            psErr.println("Unterminated input:  [" + curBuffer + ']');
+            errprint("Unterminated input:  [" + curBuffer + ']');
         } finally {
             if (br != null) br.close();
         }
@@ -276,39 +275,41 @@ public class SqlFile {
         throws BadSpecial, QuitNow, SQLException {
         int index = 0;
         int special;
-        String other = null;
+        String arg1, other = null;
 
-        // Put an assertion here to verify that inString[0] == '\\'
         if (inString.length() < 1)
             throw new BadSpecial("Null special command");
-        if (inString.length() > 1) {
-            other = inString.substring(1).trim();
-            if (other.length() < 1) other = null;
-        }
-        switch (inString.charAt(0)) {
+        StringTokenizer toker = new StringTokenizer(inString);
+        arg1 = toker.nextToken();
+        if (toker.hasMoreTokens()) other = toker.nextToken().trim();
+
+        switch (arg1.charAt(0)) {
             case 'q':
                 throw new QuitNow();
             case 'H':
                 htmlMode = !htmlMode;
-                lonePrintln("htmlMode is set to: " + htmlMode);
+                stdprint(htmlMode ? "<HTML>" : "</HTML>");
                 return;
             case 'd':
-                if (other.equals("t")) {
+                if (arg1.length() > 1 && arg1.charAt(1) == 't') {
                     listTables();
+                    return;
+                }
+                if (arg1.length() == 1 && other != null) {
+                    describe(other);
                     return;
                 }
                 break;
             case 'p':
-                if (other == null) psStd.println();
-                else psStd.println(other);
+                if (other == null) stdprint();
+                else stdprint(other);
                 return;
             case '*':
                 if (other != null) {
                     // But remember that we have to abort on some I/O errors.
                     continueOnError = Boolean.valueOf(other).booleanValue();
                 }
-                psStd.println("Continue-on-error is set to: "
-                        + continueOnError);
+                stdprint("Continue-on-error is set to: " + continueOnError);
                 return;
             case 's':
                 showHistory();
@@ -316,16 +317,21 @@ public class SqlFile {
             case '-':
                 boolean execute = false;
                 int commandsAgo = 0;
-                if (other != null && other.charAt(other.length() - 1) == ';') {
+                String numStr;
+                if (arg1.charAt(arg1.length() - 1) == ';') {
                     execute = true;
-                    other = (other.length() == 1)
+                    numStr = (arg1.length() == 2)
                             ? null
-                            : other.substring(0, other.length() - 1);
+                            : arg1.substring(1, arg1.length() - 1);
+                } else {
+                    numStr = (arg1.length() == 1)
+                            ? null
+                            : arg1.substring(1, arg1.length());
                 }
-                if (other == null) {
+                if (numStr == null) {
                     commandsAgo = 0;
                 } else try {
-                    commandsAgo = Integer.parseInt(other) - 1;
+                    commandsAgo = Integer.parseInt(numStr) - 1;
                 } catch (NumberFormatException nfe) {
                     throw new BadSpecial("Malformatted command number");
                 }
@@ -335,7 +341,7 @@ public class SqlFile {
                     curBuffer.setLength(0);
                     curBuffer.append(replacement);
                 }
-                psStd.println("RESTORED.  "
+                stdprint("RESTORED.  "
                         + (execute ? "Executing the following command:"
                                    : ("You are now appending.  "
                                         + "Just enter ; to re-execute."))
@@ -346,7 +352,7 @@ public class SqlFile {
                 }
                 return;
             case '?':
-                System.out.println(HELP_TEXT);
+                stdprint(HELP_TEXT);
                 return;
             case '!':
                 System.err.println("Run '"
@@ -356,7 +362,19 @@ public class SqlFile {
         throw new BadSpecial("Unknown Special Command");
     }
 
-    private void lonePrintln(String s) {
+    private void stdprint() {
+        if (htmlMode) psStd.println("<BR>"); else psStd.println();
+    }
+
+    private void errprint(String s) {
+        psErr.println(htmlMode
+                ? ("<DIV style='color:white; background: red; "
+                    + "font-weight: bold'>" + s
+                    + "</DIV>") : s
+        );
+    }
+
+    private void stdprint(String s) {
         psStd.println(htmlMode
                 ? ("<P>" + s + "</P>")
                 : s
@@ -383,11 +401,11 @@ public class SqlFile {
         switch (updateCount) {
             case -1:
                 if (r == null) {
-                    lonePrintln("No result");
+                    stdprint("No result");
                     break;
                 }
-                ResultSetMetaData m      = r.getMetaData();
-                int cols    = m.getColumnCount();
+                ResultSetMetaData m = r.getMetaData();
+                int cols = m.getColumnCount();
                 int incCount = (incCols == null) ? cols : incCols.length;
                 String val;
                 ArrayList rows = new ArrayList();
@@ -477,10 +495,10 @@ public class SqlFile {
                     psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
                 }
                 if (htmlMode) psStd.println("</TABLE>");
-                lonePrintln("\n" + rows.size() + " rows");
+                stdprint("\n" + rows.size() + " rows");
                 break;
             default:
-                lonePrintln(((updateCount == 0) ? "no" 
+                stdprint(((updateCount == 0) ? "no" 
                             : Integer.toString(updateCount))
                         + "row" + ((updateCount == 1) ? "" : "s") + "updated");
                 break;
@@ -540,7 +558,7 @@ public class SqlFile {
             }
         } finally {
             if (ctr < 0) {
-                psStd.println("<<<    No history yet    >>>");
+                stdprint("<<<    No history yet    >>>");
                 return;
             }
             for (int i = ctr; i >= 0; i--) {
@@ -548,7 +566,7 @@ public class SqlFile {
                         + "  **********************************************\n"
                         + reversedList[i]);
             }
-            psStd.println("<<<    Restore for append like \"\\-3\"       "
+            psStd.println("\n<<<    Restore for append like \"\\-3\"       "
                     + "Re-execute like \"\\-4;\"    >>>");
         }
     }
@@ -570,5 +588,70 @@ public class SqlFile {
         curHist++;
         if (curHist == statementHistory.length) curHist = 0;
         statementHistory[curHist] = inString;
+    }
+
+    private void describe(String tableName) throws SQLException {
+        Statement statement = curConn.createStatement();
+        statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
+        ResultSet r = statement.getResultSet();
+        ResultSetMetaData m = r.getMetaData();
+        int cols = m.getColumnCount();
+        String val;
+        ArrayList rows = new ArrayList();
+        String[] headerArray = { "name", "datatype", "width", "no-nulls" };
+        String[] fieldArray;
+        int[] maxWidth = { 0, 0, 0, 0 };
+
+        // STEP 1: GATHER DATA
+        for (int i = 0; i < headerArray.length; i++) {
+            if (htmlMode) continue;
+            if (headerArray[i].length() > maxWidth[i])
+                maxWidth[i] = headerArray[i].length();
+        }
+        for (int i = 0; i < cols; i++) {
+            fieldArray = new String[4];
+            fieldArray[0] = m.getColumnName(i + 1);
+            fieldArray[1] = m.getColumnTypeName(i + 1);
+            fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
+            fieldArray[3] = ((m.isNullable(i + 1) ==
+                                    java.sql.ResultSetMetaData.columnNullable)
+                                    ? "&nbsp;" : "*");
+            rows.add(fieldArray);
+            for (int j = 0; j < fieldArray.length; j++)
+                if (fieldArray[j].length() > maxWidth[j])
+                    maxWidth[j] = fieldArray[j].length();
+        }
+        // STEP 2: DISPLAY DATA
+        if (htmlMode) psStd.println("<TABLE border='1'>");
+        if (htmlMode) psStd.print(htmlRow(COL_HEAD) + '\n' + PRE_TD);
+        for (int i = 0; i < headerArray.length; i++) {
+            psStd.print(htmlMode
+                    ? ("<TD>" + headerArray[i] + "</TD>")
+                    : (((i > 0) ? spaces(2) : "")
+                        + pad(headerArray[i], maxWidth[i], false))
+            );
+        }
+        psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+        if (!htmlMode) {
+            for (int i = 0; i < headerArray.length; i++) {
+                psStd.print(((i > 0) ? spaces(2) : "")
+                        + divider(maxWidth[i]));
+            }
+            psStd.println();
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            if (htmlMode) psStd.print(htmlRow(
+                    ((i % 2) == 0) ? COL_EVEN : COL_ODD) + '\n' + PRE_TD);
+            fieldArray = (String[]) rows.get(i);
+            for (int j = 0; j < fieldArray.length; j++) {
+                psStd.print(htmlMode
+                    ? ("<TD>" + fieldArray[j] + "</TD>")
+                    : (((j > 0) ? spaces(2) : "")
+                            + pad(fieldArray[j], maxWidth[j], false))
+                );
+            };
+            psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+        }
+        if (htmlMode) stdprint("\n</TABLE>");
     }
 }
