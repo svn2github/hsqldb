@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.9 2004/02/07 14:32:02 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.10 2004/02/16 21:32:09 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.StringTokenizer;
  *
  * @see @main()
  *
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -60,7 +60,7 @@ public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
     static private Connection   conn;
     final static private String DEFAULT_RCFILE =
-        System.getProperty("user.home") + "/hsqldb.rc";
+        System.getProperty("user.home") + "/sqltool.rc";
 
     /**
      * All the info we need to connect up to a database.
@@ -95,7 +95,8 @@ public class SqlTool {
                                                   : inFile);
 
             if (!file.canRead()) {
-                throw new IOException("Please set up rc file '" + file + "'");
+                throw new IOException("Please set up authentication file '"
+                        + file + "'");
             }
 
             // System.err.println("Using RC file '" + file + "'");
@@ -191,7 +192,7 @@ public class SqlTool {
         + "    --help                   Prints this message\n"
         + "    --list                   List urlids in the rcfile\n"
         + "    --debug                  print Debug info to stderr\n"
-        + "    --rcfile /file/path.rc   Connect Info File [$HOME/hsqldb.rc]\n"
+        + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
         + "    --driver a.b.c.Driver    JDBC driver class ["
         + DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
