@@ -140,12 +140,12 @@ import org.hsqldb.lib.StringConverter;
  * The {@link Server Server} database <B>url</B> is <B>
  * 'jdbc:hsqldb:hsql://host[:port]'</B> <BR>
  * OR<BR>
- * <B>'jdbc:hsqldb:hsqls://host[:port]'</B> (with SSL). <p>
+ * <B>'jdbc:hsqldb:hsqls://host[:port]'</B> (with TLS). <p>
  *
  * The {@link WebServer WebServer} database <B>url</B> is <B>
  * 'jdbc:hsqldb:http://host[:port]'</B> <BR>
  * OR<BR>
- * <B>'jdbc:hsqldb:http://host[:port]'</B> (with SSL). <p>
+ * <B>'jdbc:hsqldb:http://host[:port]'</B> (with TLS). <p>
  *
  * The In-Memory (diskless, in-process) database <B>url</B> is <B>
  * 'jdbc:hsqldb:.'</B> . <p>
@@ -259,22 +259,22 @@ public class jdbcConnection implements Connection {
     private boolean bClosed;
 
     /**
-     *  Whether to use SSL authentication and encryption for the a
+     *  Whether to use TLS authentication and encryption for the a
      *  Server connection.  (Intention was for this to apply to both
      *  Server and WebServer connections, but at this time we are
      *  using JRE-supplied ProtocolHandlers for WebServer.  Unfortunately
      *  the https ProtocolHandler is only available for 1.4.0 JRE, so
      *  we may end up generalizing the Server work to WebServer, and
-     *  bSsl will then apply to both connection types).
+     *  bTls will then apply to both connection types).
      *
-     *  (Currently only 1-way SSL is implemented)
+     *  (Currently only 1-way TLS is implemented)
      */
-    private boolean bSsl = false;
+    private boolean bTls = false;
 
     /**
-     *  Whether we have attempted to add an SSL provider for this JVM
+     *  Whether we have attempted to add an TLS provider for this JVM
      */
-    static private boolean bSslProvided = false;
+    static private boolean bTlsProvided = false;
 
     /**
      *  JVM-shared SSL Socket Factory
@@ -361,61 +361,61 @@ public class jdbcConnection implements Connection {
     final static private Class clsInt = IARRAY.getClass().getComponentType();
 
     /**
-     * Classloader for dynamic SSL setup.
+     * Classloader for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private ClassLoader loader = null;
 
     /**
-     * Class reference for dynamic SSL setup.
+     * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Class clsFactory = null;
 
     /**
-     * Class reference for dynamic SSL setup.
+     * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Class clsSSLSocket = null;
 
     /**
-     * Class reference for dynamic SSL setup.
+     * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Class clsX509 = null;
 
     /**
-     * Class reference for dynamic SSL setup.
+     * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Class clsSession = null;
 
     /**
-     * Method reference for dynamic SSL setup.
+     * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Method methCreateSocket = null;
 
     /**
-     * Method reference for dynamic SSL setup.
+     * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Method methShake = null;
 
     /**
-     * Method reference for dynamic SSL setup.
+     * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Method methGetSes = null;
 
     /**
-     * Method reference for dynamic SSL setup.
+     * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Method methChain = null;
 
     /**
-     * Method reference for dynamic SSL setup.
+     * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
     static private Method methGetSubjDN = null;
@@ -494,10 +494,10 @@ public class jdbcConnection implements Connection {
 
     /**
      *  Used when no port is explicitly specified in the url for a
-     *  non-SSL network <code>Connection</code> of type {@link #HSQLDB
+     *  non-TLS network <code>Connection</code> of type {@link #HSQLDB
      *  HSQLDB}. <p>
      *
-     *  This value is used as the port number for non-SSL network connections
+     *  This value is used as the port number for non-TLS network connections
      *  to {@link Server Server} mode databases, when no port number
      *  is explictly specified in the connection url. <p>
      *
@@ -507,11 +507,11 @@ public class jdbcConnection implements Connection {
     public final static int DEFAULT_HSQLDB_PORT = 9001;
 
     /**
-     *  Used when no port is explicitly specified in the url for a SSL
+     *  Used when no port is explicitly specified in the url for a TLS
      *  network <code>Connection</code> of type {@link #HSQLDB
      *  HSQLDB}. <p>
      *
-     *  This value is used as the port number for SSL network connections
+     *  This value is used as the port number for TLS network connections
      *  to {@link Server Server} mode databases, when no port number
      *  is explictly specified in the connection url. <p>
      *
@@ -2881,7 +2881,7 @@ public class jdbcConnection implements Connection {
      * @param  password the user's password
      * @throws  SQLException when the supplied user/password
      *      combination is invalid or the network or database are
-     *      unavailable, or (if SSL mode was requested) if there are
+     *      unavailable, or (if TLS mode was requested) if there are
      *      SSL resource, authentication, or handshaking problems.
      */
     private void openHSQL(String user, String password) throws SQLException {
@@ -2897,19 +2897,19 @@ public class jdbcConnection implements Connection {
      *
      * @param  user the user's name, as known to the database
      * @param  password the user's password
-     * @param  ssl SSL mode
+     * @param  tls TLS mode
      * @throws  SQLException when the supplied user/password
      *      combination is invalid or the network or database are
-     *      unavailable, or (if SSL mode was requested) if there are
-     *      SSL resource, authentication, or handshaking problems.
+     *      unavailable, or (if TLS mode was requested) if there are
+     *      TLS resource, authentication, or handshaking problems.
      */
-    private void openHSQL(String user, String password, boolean bSslIn)
+    private void openHSQL(String user, String password, boolean bTlsIn)
      throws SQLException {
 
         sConnect  = sDatabaseName.substring(sDatabaseName.indexOf("://") + 3);
         sUser     = user;
         sPassword = password;
-	bSsl = bSslIn;
+	bTls = bTlsIn;
 
         reconnectHSQL();
     }
@@ -2930,10 +2930,10 @@ public class jdbcConnection implements Connection {
                                                       : "";
             int             port = st.hasMoreTokens()
                                    ? Integer.parseInt(st.nextToken())
-                                   : (bSsl ? DEFAULT_HSQLSDB_PORT :
+                                   : (bTls ? DEFAULT_HSQLSDB_PORT :
 				     DEFAULT_HSQLDB_PORT);
 
-	    sSocket = (bSsl ? newSslSocket(host, port) : 
+	    sSocket = (bTls ? newSslSocket(host, port) : 
 	     (new Socket(host, port)));
 
             sSocket.setTcpNoDelay(true);
@@ -3179,15 +3179,15 @@ public class jdbcConnection implements Connection {
      *  Static method that returns a new SSL Socket.
      *
      *  Input parameters should be validated BEFORE calling this method.
-     *  <P> This is done statically so that we can safely reuse the SSL
-     *  resources (note that the method is sychronized).  The SSL
+     *  <P> This is done statically so that we can safely reuse the TLS
+     *  resources (note that the method is sychronized).  The TLS
      *  resources can take a LOT of system resources and can be very slow,
      *  especially with older JSSE implementations.
      *
      * @param  strHost A validated node name
      * @param  intPort A port number
      * @return  the new Socket
-     * @throws  SQLException for any SSL/resource/network error
+     * @throws  SQLException for any TLS/resource/network error
      *
      */
     static synchronized private Socket newSslSocket(String strHost, int intPort)
@@ -3197,11 +3197,11 @@ public class jdbcConnection implements Connection {
 	if (loader == null)
 	 throw new SQLException(
 	  "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
-	if (!bSslProvided) try {
+	if (!bTlsProvided) try {
 	    // Providers may be added to the JSSE config file too
 	    // http://java.sun.com/j2se/1.4/docs/guide/security/ +
 	    //  jsse/JSSERefGuide.html#ProviderCust
-	    bSslProvided = true;
+	    bTlsProvided = true;
    	    Security.addProvider((Provider)
 	     loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
 	      newInstance());  // Throws nothing
@@ -3227,6 +3227,7 @@ public class jdbcConnection implements Connection {
 	} catch (NoSuchMethodException nsme) {
 	    throw new SQLException(
 	     "Failed to find method SSLSocketFactory.getDefault()");
+	// Need to unwrap the following exceptions
 	} catch (InvocationTargetException ite) {
 	    // JSSE classes are available, but the JSSE methods threw Excepts
 	    // I don't think that getDefault() throws any.  Should not get here.
@@ -3271,12 +3272,13 @@ public class jdbcConnection implements Connection {
 	    ssls = (Socket) methCreateSocket.invoke(sslFactory, csObjectArray);
 	    /* N.b.  BEWARE:  The following handshake will hang for a long
 	     * time if you try to connect to a valid TCP socket
-	     * that is not running SSL.  In that case, this thread
-	     * is WAITING for the other side to send SSL info.
+	     * that is not running TLS.  In that case, this thread
+	     * is WAITING for the other side to send TLS info.
 	     * TODO:  Start up another thread to interrupt this thread if
 	     * a MAX_HANDSHAKE_TIME is exceeded
 	     */
 	    methShake.invoke(ssls, null);
+	// Need to unwrap the following exceptions
 	} catch (InvocationTargetException ite) {
 	    condClose(ssls);
 	    /* JSSE classes are available, but the JSSE methods threw Excepts
@@ -3304,7 +3306,7 @@ public class jdbcConnection implements Connection {
 	    if (ses == null) {
 	    	condClose(ssls);
 	    	throw new SQLException(
-	    	 "Failed to obtain session data from SSL connection");
+	    	 "Failed to obtain session data from TLS connection");
 	    }
 	    // throws javax.net.ssl.SSLPeerUnverifiedException
 	    Object captr = methChain.invoke(ses, null);
@@ -3312,16 +3314,17 @@ public class jdbcConnection implements Connection {
 	    !(captr.getClass().getComponentType().isAssignableFrom(clsX509))){
 	    	condClose(ssls);
 		throw new SQLException(
-	    	 "Failed to obtain session data from SSL connection");
+	    	 "Failed to obtain session data from TLS connection");
 	    }
 	    Object caarray[] = (Object[]) captr;
 	    if (caarray.length < 0) {
 	    	condClose(ssls);
 		throw new SQLException(
-	    	 "Failed to obtain session data from SSL connection");
+	    	 "Failed to obtain session data from TLS connection");
 	    }
 	    p =
 	     (Principal) methGetSubjDN.invoke(caarray[0], null);
+	// Need to unwrap the following exceptions
 	} catch (InvocationTargetException ite) {
 	    condClose(ssls);
 	    /* JSSE classes are available, but the JSSE methods threw Excepts
@@ -3332,7 +3335,7 @@ public class jdbcConnection implements Connection {
 	} catch (IllegalAccessException iae) {
 	    condClose(ssls);
 	    throw new SQLException(
-	     "You don't have permissions for an SSL socket operation");
+	     "You don't have permissions for a TLS socket operation");
 	} catch (Exception e) {
 	    // Include IllegalArgumentException
 	    condClose(ssls);
@@ -3368,18 +3371,15 @@ public class jdbcConnection implements Connection {
 	// DEBUG Code.
 	// System.err.println("Hostname vs. CommonName: (" +
 	//  strHost + ") vs (" + CN + ')');
-	/*
-	 * I'm commenting this Common Name validation right until we put
-	 * in a means to disable it with command-line and/or Property setting.
-	 * N.b.  THIS SHOULD EVENTUALLY BE THE DEFAULT BEHAVIOR.
-	 * I just verified that this is what Sun's https protocol handler does,
-	 * so it's probably a good idea to emulate that.
+	// For https protocol, the protocol handler should do this verification
+	// (Sun's implementation does), but if we change this class to not
+	// use the Protocol handler (only available in Java >= 1.4), and
+	// for hsqls now, we need to do the validation: hostname == cert CN
 	if (!CN.equalsIgnoreCase(strHost)) {
 	 throw new SQLException(
-	  "Server cert Common Name '" + CN + " does not match given " +
+	  "Server cert Common Name '" + CN + "' does not match given " +
 	  "network node name '" + strHost + "'");
 	}
-	*/
 	return ssls;
     }
 }
