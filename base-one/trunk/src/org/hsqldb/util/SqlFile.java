@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.77 2004/06/10 01:59:42 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.78 2004/06/10 16:02:27 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.77 $
+ * @version $Revision: 1.78 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -130,8 +130,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.77 $".substring("$Revision: ".length(),
-                "$Revision: 1.77 $".length() - 2);
+        revnum = "$Revision: 1.78 $".substring("$Revision: ".length(),
+                "$Revision: 1.78 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -153,7 +153,7 @@ public class SqlFile {
         "BUFFER Commands (only available for interactive use).\n\n"
         + "    :?                Help\n"
         + "    :;                Execute current buffer as an SQL Statement\n"
-        + "    :a [text]         Enter append mode with a copy of the buffer\n"
+        + "    :a[text]          Enter append mode with a copy of the buffer\n"
         + "    :l                List current contents of buffer\n"
         + "    :s/from/to        Substitute \"to\" for first occurrence of \"from\"\n"
         + "    :s/from/to/[i;g2] Substitute \"to\" for occurrence(s) of \"from\"\n"
@@ -648,6 +648,9 @@ public class SqlFile {
     /**
      * Process a Buffer/Edit Command.
      *
+     * Due to the nature of the goal here, we don't trim() "other" like
+     * we do for other kinds of commands.
+     *
      * @param inString Complete command, less the leading ':' character.
      * @throws SQLException Passed through from processSQL()
      * @throws BadSpecial Runtime error()
@@ -661,8 +664,8 @@ public class SqlFile {
 
         if (inString.length() > 0) {
             commandChar = inString.charAt(0);
-            other       = inString.substring(1).trim();
-            if (other.length() == 0) {
+            other       = inString.substring(1);
+            if (other.trim().length() == 0) {
                 other = null;
             }
         }
@@ -679,8 +682,9 @@ public class SqlFile {
                 if (other != null) {
                     String deTerminated = deTerminated(other);
                     if (!other.equals(";")) {
-                        stringBuffer.append("\n"
-                        + ((deTerminated == null) ? other : deTerminated));
+                        stringBuffer.append(((deTerminated == null)
+                                    ? other
+                                    : deTerminated));
                     }
                     if (deTerminated != null) {
                         // If we reach here, then stringBuffer contains a 
