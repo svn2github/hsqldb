@@ -1,15 +1,16 @@
 Readme File
 
+2002.11.04
+CVS hsqldb-dev module tag: HEAD data: 2002.10.04
+
+Bug fixes to User.java and UserManager.java
+
 2002.10.30
 
 HSQLDB 1.7.2 ALPHA_G
 
 CVS hsqldb-dev module tag: HEAD data: 2002.10.30
 
-Strictly for developers. This is alpha software featuring developments
-leading to version 1.7.2.
-
-The codebase is based on 1.7.1 Release code plus new experimental code.
 New features include:
 
 Tony Lai's enhancements to aggratates and support for HAVING.

@@ -53,6 +53,7 @@ class DatabaseScriptWriter {
     boolean           includeCachedData;
     long              count;
     boolean           noWriteDelay = true;
+    boolean           needsFlush   = false;
     static final int  INSERT       = 0;
     static byte[]     lineSep;
 
@@ -67,7 +68,7 @@ class DatabaseScriptWriter {
     }
 
     DatabaseScriptWriter(Database db, String file, boolean includeCachedData,
-                         boolean newFile) throws SQLException, IOException {
+                         boolean newFile) throws SQLException {
 
         File newFileFile = new File(file);
 
@@ -79,18 +80,31 @@ class DatabaseScriptWriter {
             }
         }
 
-        this.db            = db;
+        this.db                = db;
         this.includeCachedData = includeCachedData;
-        outFile            = file;
-        fileStreamOut      = new FileOutputStream(outFile, true);
+        outFile                = file;
+
+        try {
+            fileStreamOut = new FileOutputStream(file, true);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, file);
+        }
     }
 
     void setWriteDelay(boolean delay) {
         noWriteDelay = !delay;
     }
 
+/**
+ *  Only use externally.
+ */
     void flush() throws IOException {
-        fileStreamOut.flush();
+
+        if (needsFlush) {
+            fileStreamOut.flush();
+        }
+
+        needsFlush = false;
     }
 
     void close() throws IOException {
@@ -107,6 +121,7 @@ class DatabaseScriptWriter {
         try {
             writeDDL();
             writeExistingData();
+            fileStreamOut.flush();
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR);
         }
@@ -127,12 +142,14 @@ class DatabaseScriptWriter {
 
         for (int i = 0; i < tables.size(); i++) {
             Table t = (Table) tables.get(i);
+
             // write all memory table data
             // write cached table data unless index roots have been written
             // write all text table data apart from readonly text tables
-            if ( t.tableType == Table.MEMORY_TABLE ||
-                 (t.tableType == Table.CACHED_TABLE && includeCachedData) ||
-                 (t.tableType== Table.TEXT_TABLE && !t.isReadOnly)) {
+            if (t.tableType == Table
+                    .MEMORY_TABLE || (t.tableType == Table
+                        .CACHED_TABLE && includeCachedData) || (t
+                        .tableType == Table.TEXT_TABLE &&!t.isReadOnly)) {
                 writeTableInit(t);
 
                 Index primary = t.getPrimaryIndex();
@@ -160,7 +177,7 @@ class DatabaseScriptWriter {
 
             a.append(t.getName().statementName);
             a.append(" READONLY TRUE");
-            writeAsciiLine(a.toString());
+            writeLogStatement(a.toString());
         }
     }
 
@@ -170,7 +187,7 @@ class DatabaseScriptWriter {
         Record n = r.rRoot;
 
         while (n != null) {
-            writeAsciiLine((String) n.data[0]);
+            writeLogStatement((String) n.data[0]);
 
             n = n.next;
         }
@@ -178,12 +195,12 @@ class DatabaseScriptWriter {
 
     protected void writeRow(Object[] data,
                             Table t) throws SQLException, IOException {
-        writeAsciiLine(t.getInsertStatement(data));
+        writeLogStatement(t.getInsertStatement(data));
     }
 
     protected void writeDataTerm() throws IOException {}
 
-    void writeAsciiLine(String s) throws IOException, SQLException {
+    void writeLogStatement(String s) throws IOException, SQLException {
 
         binaryOut.reset();
         StringConverter.unicodeToAscii(binaryOut, s);
@@ -194,6 +211,8 @@ class DatabaseScriptWriter {
 
         if (noWriteDelay) {
             fileStreamOut.flush();
+        } else {
+            needsFlush = true;
         }
     }
 }

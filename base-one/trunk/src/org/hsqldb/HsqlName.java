@@ -78,6 +78,10 @@ import org.hsqldb.lib.HsqlStringBuffer;
  * This class does not deal with the type of the SQL object for which it
  * is used.<p>
  *
+ * Some names beginning with SYS_ are reserved for system generated names.
+ * These are defined in isReserveName(String name) and created by the
+ * makeAutoName(String type) factory method<p>
+ *
  * sysNumber is used to generate system generated names. It is
  * set to the largest integer encountered in names that use the
  * SYS_xxxxxxx_INTEGER format. As the DDL is processed before any ALTER
@@ -85,24 +89,26 @@ import org.hsqldb.lib.HsqlStringBuffer;
  * than all the existing names.
  *
  * @author fredt@users
- * @version 1.7.0
+ * @version 1.7.2
  */
 class HsqlName {
 
-    String     name;
-    boolean    isNameQuoted;
-    String     statementName;
-    static int sysNumber = 0;
+    String             name;
+    boolean            isNameQuoted;
+    String             statementName;
+    private final int  hashCode     = serialNumber++;
+    private static int sysNumber    = 0;
+    private static int serialNumber = 0;
 
-    public HsqlName(String name, boolean isquoted) {
+    HsqlName(String name, boolean isquoted) {
         rename(name, isquoted);
     }
 
-    public HsqlName(String prefix, String name, boolean isquoted) {
+    HsqlName(String prefix, String name, boolean isquoted) {
         rename(prefix, name, isquoted);
     }
 
-    public static HsqlName makeAutoName(String type) {
+    static HsqlName makeAutoName(String type) {
 
         HsqlStringBuffer sbname = new HsqlStringBuffer();
 
@@ -114,7 +120,7 @@ class HsqlName {
         return new HsqlName(sbname.toString(), false);
     }
 
-    public static HsqlName makeAutoName(String type, String namepart) {
+    static HsqlName makeAutoName(String type, String namepart) {
 
         HsqlStringBuffer sbname = new HsqlStringBuffer();
 
@@ -128,7 +134,7 @@ class HsqlName {
         return new HsqlName(sbname.toString(), false);
     }
 
-    public void rename(String name, boolean isquoted) {
+    void rename(String name, boolean isquoted) {
 
         this.name          = name;
         this.statementName = name;
@@ -155,7 +161,7 @@ class HsqlName {
         }
     }
 
-    public void rename(String prefix, String name, boolean isquoted) {
+    void rename(String prefix, String name, boolean isquoted) {
 
         HsqlStringBuffer sbname = new HsqlStringBuffer(prefix);
 
@@ -169,13 +175,20 @@ class HsqlName {
     }
 
     /**
+     * hash code for this object is its unique serial number.
+     */
+    public int hashCode() {
+        return hashCode;
+    }
+
+    /**
      * "SYS_IDX_" is used for auto-indexes on referring FK columns or
      * unique constraints.
      * "SYS_PK_" is for the primary key indexes.
      * "SYS_REF_" is for FK constraints in referenced tables
      *
      */
-    public static boolean isReservedName(String name) {
+    static boolean isReservedName(String name) {
 
         if (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
                 || name.startsWith("SYS_REF_")) {
@@ -185,7 +198,12 @@ class HsqlName {
         }
     }
 
-    public boolean isReservedName() {
+    boolean isReservedName() {
         return isReservedName(name);
+    }
+
+    static void resetNumbering() {
+        sysNumber    = 0;
+        serialNumber = 0;
     }
 }

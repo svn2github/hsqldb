@@ -236,18 +236,17 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     *  Check for a class name
      *
      * @param  object
      * @param  right
      * @throws  SQLException
      */
-    void check(String object, int right) throws SQLException {
+    void check(Object object, int right) throws SQLException {
         uUser.check(object, right);
     }
 
     /**
-     *  Method declaration
      *
      * @throws  SQLException
      */

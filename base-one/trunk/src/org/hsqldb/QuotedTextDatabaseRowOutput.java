@@ -92,7 +92,7 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
         HsqlStringBuffer quoted = new HsqlStringBuffer(b.length + 2);
         char             ch;
 
-        //-- Always quote (just in case its needed for unprintable chars).
+        //-- Always quote (just in case it's needed for unprintable chars).
         quoted.append('\"');
 
         for (int i = 0; i < b.length; i++) {

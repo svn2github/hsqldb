@@ -322,7 +322,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         writeBytes(TextCache.NL);
 
-        byte ret[] = toByteArray();
+        byte ret[] = super.toByteArray();
 
         reset();
 

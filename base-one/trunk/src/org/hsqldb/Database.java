@@ -227,8 +227,7 @@ class Database {
             newdatabase = logger.openLog(this, sysSession, sName);
         }
 
-        HsqlName.sysNumber = 0;
-
+        HsqlName.resetNumbering();
         Library.setSqlMonth(databaseProperties.isPropertyTrue("sql.month"));
         Parser.setEnforceSize(
             databaseProperties.isPropertyTrue("sql.enforce_size"));
@@ -242,9 +241,8 @@ class Database {
             execute("CREATE USER SA PASSWORD \"\" ADMIN", sysSession);
         }
 
-        aAccess.grant("PUBLIC", "CLASS \"java.lang.Math\"", UserManager.ALL);
-        aAccess.grant("PUBLIC", "CLASS \"org.hsqldb.Library\"",
-                      UserManager.ALL);
+        aAccess.grant("PUBLIC", "java.lang.Math", UserManager.ALL);
+        aAccess.grant("PUBLIC", "org.hsqldb.Library", UserManager.ALL);
     }
 
     /**
@@ -568,7 +566,7 @@ class Database {
     }
 
     /**
-     *  Retrieves a HsqlArrayList containing references to all registered non-system
+     *  Retrieves a HsqlArrayList containing references to all non-system
      *  tables and views. This includes all tables and views registered with
      *  this Database object via a call to {@link #linkTable linkTable}.
      *
@@ -799,7 +797,11 @@ class Database {
 
 /*
             stopw.zero();
-            BinaryDatabaseScriptWriter bsw = new BinaryDatabaseScriptWriter(this, sToken + ".bin" ,true, true);
+
+            BinaryDatabaseScriptWriter bsw =
+                new BinaryDatabaseScriptWriter(this, sToken + ".bin", true,
+                                               true);
+
             bsw.writeAll();
             bsw.close();
             System.out.println("binary script" + stopw.elapsedTime());
@@ -1075,8 +1077,8 @@ class Database {
     }
 
     /**
-     *  Retrieves the index of a table or view in the HsqlArrayList that contains
-     *  these objects for a Database.
+     *  Retrieves the index of a table or view in the HsqlArrayList that
+     *  contains these objects for a Database.
      *
      * @param  table the Table object
      * @return  the index of the specified table or view, or -1 if not found
@@ -1758,7 +1760,7 @@ class Database {
     }
 
     /**
-     * 'RENAME' declaration.
+     * ALSTER TABLE statements.
      * ALTER TABLE <name> RENAME TO <newname>
      * ALTER INDEX <name> RENAME TO <newname>
      *
@@ -2030,18 +2032,21 @@ class Database {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
-        String table = c.getString();
+        String namestring = c.getString();
+        Object objectname = null;
 
-        if (table.equals("CLASS")) {
+        if (namestring.equals("CLASS")) {
 
             // object is saved as 'CLASS "java.lang.Math"'
             // tables like 'CLASS "xy"' should not be created
-            table += " \"" + c.getString() + "\"";
+            objectname = c.getString();
         } else {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // to make sure the table exists
-            Table t = getTable(table, session);
+            Table t = getTable(namestring, session);
+
+            objectname = t.getName();
 
             session.setScripting(!t.isTemp());
         }
@@ -2049,16 +2054,11 @@ class Database {
         c.getThis("TO");
 
         String user = c.getStringToken();
-        String command;
 
         if (grant) {
-            aAccess.grant(user, table, right);
-
-            command = "GRANT";
+            aAccess.grant(user, objectname, right);
         } else {
-            aAccess.revoke(user, table, right);
-
-            command = "REVOKE";
+            aAccess.revoke(user, objectname, right);
         }
 
         return new Result();
@@ -2556,6 +2556,7 @@ class Database {
 
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
+        aAccess.removeDbObject(toDrop.getName());
     }
 
     /**

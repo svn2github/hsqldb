@@ -31,12 +31,14 @@
 
 package org.hsqldb.test;
 
+// nbazin@users - enhancements to the original code
 /*
  *  This is a sample implementation of the Transaction Processing Performance
  *  Council Benchmark B coded in Java and ANSI SQL2.
  *
  *  This version is using one connection per thread to parallellize
  *  server operations.
+ * @author Mark Matthews (mark@mysql.com)
  */
 import java.sql.*;
 import java.util.*;

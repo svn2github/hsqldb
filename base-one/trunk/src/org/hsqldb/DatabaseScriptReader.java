@@ -58,8 +58,10 @@ class DatabaseScriptReader {
     protected String readLoggedStatement() {
 
         try {
+
             //fredt temporary solution - should read bytes directly from buffer
-            String s      = d.readLine();
+            String s = d.readLine();
+
             return StringConverter.asciiToUnicode(s);
         } catch (IOException e) {
             return null;

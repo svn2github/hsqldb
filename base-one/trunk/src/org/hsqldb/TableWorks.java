@@ -72,7 +72,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
-// tony_lai@users 20020820 - patch 595172 by - drop constraint fix
+// tony_lai@users 20020820 - patch 595172 - drop constraint fix
 
 /**
  * The methods in this class perform alterations to the structure of an

@@ -268,13 +268,12 @@ class Parser {
      */
     Result processUpdate() throws SQLException {
 
-        String token = tTokenizer.getString();
-
         cSession.checkReadWrite();
-        cSession.check(token, UserManager.UPDATE);
-
+        String token = tTokenizer.getString();
         Table       table  = dDatabase.getTable(token, cSession);
+        cSession.check(table.getName(), UserManager.UPDATE);
         TableFilter filter = new TableFilter(table, null, false);
+
 
         if (table.isView()) {
             throw Trace.error(Trace.NOT_A_TABLE, token);
@@ -462,15 +461,15 @@ class Parser {
      */
     Result processDelete() throws SQLException {
 
+        cSession.checkReadWrite();
         tTokenizer.getThis("FROM");
 
         String token = tTokenizer.getString();
 
-        cSession.checkReadWrite();
-        cSession.check(token, UserManager.DELETE);
-
         Table       table  = dDatabase.getTable(token, cSession);
+        cSession.check(table.getName(), UserManager.DELETE);
         TableFilter filter = new TableFilter(table, null, false);
+
 
         if (table.isView()) {
             throw Trace.error(Trace.NOT_A_TABLE, token);
@@ -532,14 +531,14 @@ class Parser {
      */
     Result processInsert() throws SQLException {
 
+        cSession.checkReadWrite();
         tTokenizer.getThis("INTO");
 
         String token = tTokenizer.getString();
 
-        cSession.checkReadWrite();
-        cSession.check(token, UserManager.INSERT);
 
         Table t = dDatabase.getTable(token, cSession);
+        cSession.check(t.getName(), UserManager.INSERT);
 
         if (t.isView()) {
             throw Trace.error(Trace.NOT_A_TABLE, token);
@@ -1186,9 +1185,9 @@ class Parser {
             // subquery creation can't fail because constraint violation
             t.insert(r, cSession);
         } else {
-            cSession.check(token, UserManager.SELECT);
 
             t = dDatabase.getTable(token, cSession);
+            cSession.check(t.getName(), UserManager.SELECT);
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
             if (t.isView()) {

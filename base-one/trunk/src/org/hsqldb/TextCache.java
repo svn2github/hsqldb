@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
-import java.util.*;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle

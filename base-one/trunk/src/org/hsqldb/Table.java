@@ -407,7 +407,9 @@ class Table {
     }
 
     /**
-     * Changes table name. Used by 'alter table rename to'
+     * Changes table name. Used by 'alter table rename to'.
+     * Essential to use the existing HsqlName as this is is referenced by
+     * intances of Constraint etc.
      *
      * @param name
      * @param isquoted

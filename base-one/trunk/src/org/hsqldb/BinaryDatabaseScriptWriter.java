@@ -37,12 +37,11 @@ import java.sql.SQLException;
 /**
  * @version 1.7.2
  */
-public class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
+class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
 
-    public BinaryDatabaseScriptWriter(Database db, String file,
-                                      boolean includeCached,
-                                      boolean newFile)
-                                      throws SQLException, IOException {
+    BinaryDatabaseScriptWriter(Database db, String file,
+                               boolean includeCached,
+                               boolean newFile) throws SQLException {
         super(db, file, includeCached, newFile);
     }
 

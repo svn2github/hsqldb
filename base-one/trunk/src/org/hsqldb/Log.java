@@ -147,7 +147,6 @@ class Log implements Runnable {
     private int              iLogCount;
     private int              logType;
     private Thread           tRunner;
-    private volatile boolean bNeedFlush;
     private volatile boolean bWriteDelay;
     private int              mLastId;
     private Cache            cCache;
@@ -211,11 +210,7 @@ class Log implements Runnable {
             try {
                 tRunner.sleep(1000);
 
-                if (bNeedFlush) {
-                    dbScriptWriter.flush();
-
-                    bNeedFlush = false;
-                }
+                dbScriptWriter.flush();
 
                 // todo: try to do Cache.cleanUp() here, too
             } catch (Exception e) {
@@ -245,7 +240,7 @@ class Log implements Runnable {
      */
     boolean open() throws SQLException {
 
-        // at first this assumed to be an existing database
+        // at first this is assumed to be an existing database
         boolean retValue = false;
 
         if (Trace.TRACE) {
@@ -528,13 +523,8 @@ class Log implements Runnable {
         }
 
         try {
-            dbScriptWriter.writeAsciiLine(s);
+            dbScriptWriter.writeLogStatement(s);
 
-            if (bWriteDelay) {
-                bNeedFlush = true;
-            } else {
-                dbScriptWriter.flush();
-            }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
@@ -747,8 +737,6 @@ class Log implements Runnable {
         }
 
         try {
-
-            // todo: use a compressed stream
             if (logType == 0) {
                 dbScriptWriter = new DatabaseScriptWriter(this.dDatabase,
                         sFileScript, false, false);
@@ -757,6 +745,7 @@ class Log implements Runnable {
                     new BinaryDatabaseScriptWriter(this.dDatabase,
                                                    sFileScript, false, false);
             }
+            dbScriptWriter.setWriteDelay(bWriteDelay);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
@@ -926,7 +915,6 @@ class Log implements Runnable {
                                                      full, true);
             }
 
-            scw.setWriteDelay(true);
             scw.writeAll();
             scw.close();
         } catch (IOException e) {

@@ -403,7 +403,8 @@ implements DataInput {
     }
 
     /**
-     *  Used to reset the row, ready for a new row to be read into the byte[]
+     *  Used to reset the row, ready for a new row to be written into the
+     *  byte[] buffer by an external routine.
      *
      */
     public void resetRow(int filepos, int rowsize) throws IOException {

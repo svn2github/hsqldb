@@ -246,7 +246,7 @@ class DatabaseScript {
             Enumeration e = rights.keys();
 
             while (e.hasMoreElements()) {
-                String object = (String) e.nextElement();
+                Object object = e.nextElement();
                 int    right  = ((Integer) (rights.get(object))).intValue();
 
                 if (right == 0) {
@@ -258,7 +258,13 @@ class DatabaseScript {
                 a.append("GRANT ");
                 a.append(UserManager.getRight(right));
                 a.append(" ON ");
-                a.append(object);
+
+                if (object instanceof String) {
+                    a.append("CLASS \"" + object + "\"");
+                } else {
+                    a.append(((HsqlName) object).statementName);
+                }
+
                 a.append(" TO ");
                 a.append(u.getName());
                 addRow(r, a.toString());

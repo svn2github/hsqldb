@@ -147,7 +147,7 @@ class Function {
 
         String classname = function.substring(0, i);
 
-        session.check("CLASS \"" + classname + "\"", UserManager.ALL);
+        session.check(classname, UserManager.ALL);
 
         mMethod = (Method) methodCache.get(function);
 

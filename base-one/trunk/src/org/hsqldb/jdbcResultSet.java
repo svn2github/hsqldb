@@ -97,7 +97,7 @@ import org.hsqldb.lib.StringInputStream;
 // JDK 1.4, and added JDBC3 methods and docs
 // boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
-// tony_lai@users 20020820 - patch 595073 by - duplicated exception msg
+// tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 
 /**
  * Implements both the <CODE>java.sql.ResultSet</CODE> and

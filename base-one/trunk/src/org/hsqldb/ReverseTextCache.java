@@ -34,7 +34,6 @@ package org.hsqldb;
 import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
 
 /**
  *  Cache class declaration <P>

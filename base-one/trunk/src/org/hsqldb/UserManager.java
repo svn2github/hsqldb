@@ -71,7 +71,9 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import java.sql.SQLException;
 
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
+// fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
 
 /**
  *  The collection (HsqlArrayList) of User object instances within a specific
@@ -79,7 +81,7 @@ import java.sql.SQLException;
  *  users, as well as manipulating their access rights to the database
  *  objects.
  *
- * @version  1.7.0
+ * @version  1.7.2
  * @see  User
  */
 class UserManager {
@@ -93,8 +95,8 @@ class UserManager {
     private User          uPublic;
 
     /**
-     *  Creates a new HsqlArrayList to contain the User object instances, as well
-     *  as creating an initial PUBLIC user, with no password.
+     *  Creates a new HsqlArrayList to contain the User object instances,
+     *  as well as creating an initial PUBLIC user, with no password.
      *
      * @throws  SQLException
      */
@@ -107,7 +109,7 @@ class UserManager {
      *  Returns int value for the string argument
      *
      * @param  right one of ALL SELECT UPDATE DELETE INSERT
-     * @return  A static int representing the String right passed in.
+     * @return int value representing tthe right passed in.
      * @throws  SQLException
      */
     static int getRight(String right) throws SQLException {
@@ -129,9 +131,8 @@ class UserManager {
 
     /**
      * Returns comma separated list of String arguments based on int mask
-     * @param  right Description of the Parameter
-     * @return  A String representation of the right or rights associated
-     *      with the argument.
+     * @param  right with each bit representing a distinct right
+     * @return  csv list of rights
      */
     static String getRight(int right) {
 
@@ -172,14 +173,12 @@ class UserManager {
      * @param  name (User login)
      * @param  password (Plaintext password)
      * @param  admin (Is this a database admin user?)
-     * @return  An instance of the newly created User object
+     * @return a newly created User object
      * @throws  SQLException
      */
     User createUser(String name, String password,
                     boolean admin) throws SQLException {
 
-// fredt@users 20020130 - patch 497872 by Nitin Chauhan
-// changes to loops for speed, also applied to similar loops below
         for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
             User u = (User) uUser.get(i);
 
@@ -196,10 +195,8 @@ class UserManager {
     }
 
     /**
-     *  This method is used to drop a user. Since we are using a vector to
-     *  hold the User objects, we must iterate through the HsqlArrayList looking
-     *  for the name. The user object is currently set to null, and all
-     *  access rights revoked. <P>
+     *  This method is used to drop a user. The user object is set to null,
+     *  and all access rights revoked. <P>
      *
      *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
      *  attempt is made to drop the PUBLIC user.
@@ -235,10 +232,10 @@ class UserManager {
      *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
      *  attempt is made to get the PUBLIC user.
      *
-     * @param  name Description of the Parameter
-     * @param  password Description of the Parameter
-     * @return  The requested User object
-     * @throws  SQLException
+     * @param  name user name
+     * @param  password user password
+     * @return  the User object associated with name
+     * @throws  SQLException thrown if name or password are not correct
      */
     User getUser(String name, String password) throws SQLException {
 
@@ -260,10 +257,10 @@ class UserManager {
     }
 
     /**
-     *  This method is used to access the entire HsqlArrayList of User objects for
-     *  this database.
+     *  This method is used to access the entire HsqlArrayList of User objects
+     *  for this database.
      *
-     * @return  The HsqlArrayList of our User objects
+     * @return  The HsqlArrayList of User objects
      */
     HsqlArrayList getUsers() {
         return uUser;
@@ -273,24 +270,24 @@ class UserManager {
      *  This method is used to grant a user rights to database objects.
      *
      * @param  name of the user
-     * @param  object in the database
+     * @param  dbobject Table in the database or Java class name
      * @param  right to grant to the user
-     * @throws  SQLException
+     * @throws  SQLException thrown if user does not exist
      */
-    void grant(String name, String object, int right) throws SQLException {
-        get(name).grant(object, right);
+    void grant(String name, Object dbobject, int right) throws SQLException {
+        get(name).grant(dbobject, right);
     }
 
     /**
      *  This method is used to revoke a user's rights to database objects.
      *
      * @param  name of the user
-     * @param  object in the database
+     * @param  dbobject Table in the database or Java class name
      * @param  right to grant to the user
-     * @throws  SQLException
+     * @throws  SQLException thrown if user does not exist
      */
-    void revoke(String name, String object, int right) throws SQLException {
-        get(name).revoke(object, right);
+    void revoke(String name, Object dbobject, int right) throws SQLException {
+        get(name).revoke(dbobject, right);
     }
 
     /**
@@ -312,5 +309,20 @@ class UserManager {
         }
 
         throw Trace.error(Trace.USER_NOT_FOUND, name);
+    }
+
+/**
+ * Removes all references to a db object for all users. Used when
+ * dropping a table.
+ */
+    void removeDbObject(Object dbobject) {
+
+        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
+            User u = (User) uUser.get(i);
+
+            if (u != null) {
+                u.revokeDbObject(dbobject);
+            }
+        }
     }
 }
