@@ -65,6 +65,7 @@ dbhome=`cd ${dbhome}; pwd`
 
 SWITCHERVERBOSE=
 [ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
+echo 'Running CodeSwitcher...'
 $dbhome/build/switchjdk.sh $SWITCHERVERBOSE $JDKVER || exit $?
 
 # Generic initialization for $CLASSPATH, etc.
