@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.5 2004/04/22 03:06:27 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.6 2004/04/22 18:51:58 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/22 18:51:58 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -50,10 +50,23 @@
             </para></listitem> <listitem><para>
                 A <link linkend='privatekey-section'>JKS keystore containing a 
                 private key</link>, in order to run a server.
+            </para></listitem> <listitem><para>
+                If you are running the server side, then you'll need to run a
+                HSQLDB Server or WebServer.
+                It doesn't matter if the underlying database instances are
+                new, and it doesn't matter if you are making a new Server 
+                configuration or encrypting an existing Server configuration.
+                (You can turn encryption on and off at will).
+            </para></listitem> <listitem><para>
+                You need a HSQLDB jar file that was built with JSSE present.
+                If you got your HSQLDB 1.7.2 distribution from us, you are
+                all set, because we with Java 1.4 (which contains JSSE).
+                If you build your own jar file with Java 1.3, make sure to
+                install JSSE first.
             </para></listitem>
         </itemizedlist>
     </section>
-    <section>
+        <section>
         <title>Encrypting your JDBC connection</title>
         <para>
             At this time, only 1-way, server-cert encryption is tested.
@@ -124,7 +137,7 @@
             </para><example>
         <title>Running a Hsqldb JDBC client with your own trust store</title>
                 <screen>
-    java -cp /path/to/hsqldb.jar -Djavax.net.ssl.trustStore=/home/blaine/trust.store org.hsqldb.util.DatabaseManager</screen>
+    java -cp /path/to/hsqldb.jar -Djavax.net.ssl.trustStore=/home/blaine/trust.store org.hsqldb.util.SqlTool dest-urlid</screen>
             </example>
             <para>
                 N.b.  The hostname in your database URL must match the 
@@ -158,13 +171,17 @@
             <example>
                 <title>Running an Hsqldb server with TLS encryption</title>
                 <screen>
-    java -Djavax.net.ssl.keyStorePassword=secret -Djavax.net.ssl.keyStore=/usr/hsqldb/db/db3/server.store -cp /path/to/hsqldb.jar org.hsqldb.Server -port 9005 -database /usr/hsqldb/db/db3/db3</screen>
+    java -Djavax.net.ssl.keyStorePassword=secret -Djavax.net.ssl.keyStore=/usr/hsqldb/db/db3/server.store  \
+        -cp /path/to/hsqldb.jar org.hsqldb.Server</screen>
             </example>
-            <note><para>
-                Sorry to say that I don't have time to check whether this
-                URL is valid with HSQLDB 1.7.2. -- Blaine 2004/04/15
-            </para></note>
-            <caution><para>
+            <para>
+                (This is a single command that I have broken into 2 lines using
+                my shell's \ line-continuation feature.
+                In this example, I'm using a server.properties file so that I
+                don't need to give arguments to specify database instances or
+                the server endpoint).
+            </para>
+            <caution id='tlspassword-caution'><para>
                 Specifying a password on the command-line is definitely
                 <emphasis role='bold'>not secure</emphasis>.
                 It's really only appropriate when untrusted users do not have 
@@ -251,5 +268,28 @@
                 the Creating a Keystore section of JSSERefGuide.html</ulink>.
             </para>
         </section>
+    </section>
+    <section>
+        <title>Automatic Server or WebServer startup on UNIX</title>
+        <para>
+            If you are on UNIX and want to automatically start and stop a
+            Server or WebServer running with encryption, follow the 
+            instructions in the
+            <link linkend='unix-chapter' endterm='unix-title'/> chapter, and
+            remember to make the init script configuration file readable only
+            to root and to set the variables
+            <literal>TLS_PASSWORD</literal> and <literal>TLS_KEYSTORE</literal>.
+        </para>
+        <para>
+            If you are using a private server certificate, make sure to also
+            set the trust store filepath as shown in the sample init script 
+            configuration file.
+        </para>
+        <para>
+            The <link linkend='tlspassword-caution'>cautionary warning
+            above</link> still applies.
+            The password will be visible to any minimally competent local
+            UNIX user who wants to see it.
+        </para>
     </section>
 </chapter>
