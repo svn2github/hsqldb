@@ -282,11 +282,13 @@ class Function {
                 // null argument for primitive datatype: don't call
                 return null;
             }
-            if ( o instanceof JavaObject ){
-                o = ((JavaObject)o).getObject();
-            } else if (o instanceof Binary){
-                o = ((Binary)o).getBytes();
+
+            if (o instanceof JavaObject) {
+                o = ((JavaObject) o).getObject();
+            } else if (o instanceof Binary) {
+                o = ((Binary) o).getBytes();
             }
+
             oArg[i] = o;
         }
 
@@ -298,12 +300,14 @@ class Function {
             }
 
             Object ret = (fID >= 0) ? Library.invoke(fID, oArg)
-                              : mMethod.invoke(null, oArg);
+                                    : mMethod.invoke(null, oArg);
 
-            if ( ret instanceof byte[] || ret instanceof Object ){
-                ret = Column.convertObject(ret,iReturnType);
+            if (ret instanceof byte[] || ret instanceof Object) {
+                ret = Column.convertObject(ret, iReturnType);
             }
+
             return ret;
+
 // boucherb@users - patch 1.7.2 - better function invocation error reporting
         } catch (Throwable t) {
             String s = sFunction;

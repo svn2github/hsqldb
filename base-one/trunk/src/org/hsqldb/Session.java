@@ -778,8 +778,12 @@ class Session implements SessionInterface {
                         return sqlExecute(cmd);
                     }
                 case ResultConstants.SQLEXECDIRECT :
-                    return dbCommandInterpreter.execute(cmd.getMainString());
-
+                    if (cmd.getSize() > 1) {
+                        return sqlExecuteBatchDirect(cmd);
+                    } else {
+                        return dbCommandInterpreter.execute(
+                            cmd.getMainString());
+                    }
                 case ResultConstants.SQLPREPARE :
                     return sqlPrepare(cmd.getMainString());
 
@@ -862,10 +866,6 @@ class Session implements SessionInterface {
         // ...compile or (re)validate
         try {
             cs = sqlCompileStatement(sql);
-
-            Trace.doAssert(
-                cs.parameters.length == 0 || cs.subqueries.length == 0,
-                "subqueries in parametric statements not yet supported");
         } catch (Throwable t) {
             return new Result(t, sql);
         }
@@ -884,13 +884,11 @@ class Session implements SessionInterface {
 
         int               csid;
         Object[]          pvals;
-        int[]             ptypes;
         Record            record;
         Result            in;
         Result            out;
         Result            err;
         CompiledStatement cs;
-        int               batchStatus;
         Expression[]      parameters;
         int[]             updateCounts;
         int               count;
@@ -913,11 +911,10 @@ class Session implements SessionInterface {
         }
 
         parameters   = cs.parameters;
-        ptypes       = cmd.getParameterTypes();
         count        = 0;
         updateCounts = new int[cmd.getSize()];
         record       = cmd.rRoot;
-        out          = Result.newSingleColumnResult("", Types.INTEGER);
+        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
         err          = new Result(ResultConstants.ERROR);
 
         while (record != null) {
@@ -926,12 +923,14 @@ class Session implements SessionInterface {
 
             try {
                 for (int i = 0; i < parameters.length; i++) {
-                    parameters[i].bind(pvals[i], ptypes[i]);
+                    parameters[i].bind(pvals[i]);
                 }
 
-                in = sqlExecuteCompiled(cs);
+                in = compiledStatementExecutor.execute(cs);
             } catch (Throwable t) {
+                t.printStackTrace();
 
+                //System.out.println(t.toString());
                 // if (t instanceof OutOfMemoryError) {
                 // System.gc();
                 // }
@@ -942,11 +941,11 @@ class Session implements SessionInterface {
 
             // On the client side, iterate over the vals and throw
             // a BatchUpdateException if a batch status value of
-            // -3 is encountered in the result
+            // esultConstants.EXECUTE_FAILED is encountered in the result
             switch (in.iMode) {
 
                 case ResultConstants.UPDATECOUNT : {
-                    batchStatus = in.iUpdateCount;
+                    updateCounts[count] = in.iUpdateCount;
 
                     break;
                 }
@@ -957,23 +956,89 @@ class Session implements SessionInterface {
                     // stored procedure calls to methods with
                     // void return type and select statements with
                     // a single row/column containg null
-                    batchStatus = -2;
+                    updateCounts[count] = ResultConstants.SUCCESS_NO_INFO;
 
                     break;
                 }
                 case ResultConstants.ERROR :
                 default : {
-                    batchStatus = -3;
+                    updateCounts[count] = ResultConstants.EXECUTE_FAILED;
 
                     break;
                 }
             }
 
-            updateCounts[count] = batchStatus;
-            record              = record.next;
+            count++;
+
+            record = record.next;
         }
 
-        out.add(new Object[]{ updateCounts });
+        return out;
+    }
+
+    Result sqlExecuteBatchDirect(Result cmd) {
+
+        Record record;
+        Result in;
+        Result out;
+        Result err;
+        int[]  updateCounts;
+        int    count;
+        String sql;
+
+        count        = 0;
+        updateCounts = new int[cmd.getSize()];
+        record       = cmd.rRoot;
+        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
+        err          = new Result(ResultConstants.ERROR);
+
+        while (record != null) {
+            sql = (String) record.data[0];
+            in  = err;
+
+            try {
+                in = dbCommandInterpreter.execute(sql);
+            } catch (Throwable t) {
+
+                // if (t instanceof OutOfMemoryError) {
+                // System.gc();
+                // }
+                // "in" alread equals "err"
+                // maybe test for OOME and do a gc() ?
+                // t.printStackTrace();
+            }
+
+            // On the client side, iterate over the colType vals and throw
+            // a BatchUpdateException if a batch status value of
+            // ResultConstants.EXECUTE_FAILED is encountered
+            switch (in.iMode) {
+
+                case ResultConstants.UPDATECOUNT : {
+                    updateCounts[count++] = in.iUpdateCount;
+
+                    break;
+                }
+                case ResultConstants.DATA : {
+
+                    // FIXME:  we don't have what it takes yet
+                    // to differentiate between things like
+                    // stored procedure calls to methods with
+                    // void return type and select statements with
+                    // a single row/column containg null
+                    updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
+
+                    break;
+                }
+                case ResultConstants.ERROR :
+                default : {
+                    updateCounts[count++] = ResultConstants.EXECUTE_FAILED;
+
+                    break;
+                }
+            }
+
+            record = record.next;
+        }
 
         return out;
     }
@@ -988,15 +1053,12 @@ class Session implements SessionInterface {
 
         int               csid;
         Object[]          pvals;
-        int[]             ptypes;
         CompiledStatement cs;
         Expression[]      parameters;
 
         csid  = cmd.getStatementID();
         pvals = cmd.getParameterData();
-
-//        ptypes = cmd.getParameterTypes();
-        cs = compiledStatementManager.getStatement(csid);
+        cs    = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
@@ -1014,14 +1076,13 @@ class Session implements SessionInterface {
 
         parameters = cs.parameters;
 
-        // don't bother with array length checks...trust the client
-        // to send pvals and ptyptes with length at least as long
-        // as parameters array
+        // Don't bother with array length or type checks...trust the client
+        // to send pvals with length at least as long
+        // as parameters array and with each pval already converted to the
+        // correct type
         try {
             for (int i = 0; i < parameters.length; i++) {
                 parameters[i].bind(pvals[i]);
-
-//                parameters[i].bind(pvals[i], ptypes[i]);
             }
         } catch (Throwable t) {
             return new Result(t, cs.sql);

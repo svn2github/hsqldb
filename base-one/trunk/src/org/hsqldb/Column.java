@@ -1040,7 +1040,10 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
-                        double d = Double.parseDouble((String) o);
+
+                        // jdk 1.1 compat
+                        // double d = Double.parseDouble((String) o);
+                        double d = new Double((String) o).doubleValue();
                         long   l = Double.doubleToLongBits(d);
 
                         return ValuePool.getDouble(l);
@@ -1129,14 +1132,16 @@ class Column {
                         return new Binary((byte[]) o);
                     } else if (o instanceof JavaObject) {
                         o = ((JavaObject) o).getObject();
-                        if ( o instanceof byte[] ){
-                            return new Binary((byte[])o);
+
+                        if (o instanceof byte[]) {
+                            return new Binary((byte[]) o);
                         }
                     } else if (o instanceof String) {
-                        return new Binary(StringConverter.hexToByte((String) o));
+                        return new Binary(
+                            StringConverter.hexToByte((String) o));
                     }
-                    throw Trace.error(Trace.INVALID_CONVERSION, type);
 
+                    throw Trace.error(Trace.INVALID_CONVERSION, type);
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
@@ -1144,17 +1149,19 @@ class Column {
                     if (o instanceof JavaObject) {
                         return o;
                     } else if (o instanceof String) {
-                        return new JavaObject(StringConverter.hexToByte((String) o),true);
+                        return new JavaObject(
+                            StringConverter.hexToByte((String) o), true);
                     }
 
                     return new JavaObject(o);
 
                 default :
             }
-            if ( o instanceof JavaObject ) {
 
-                o = ((JavaObject)o).getObject();
-                return convertObject(o,type);
+            if (o instanceof JavaObject) {
+                o = ((JavaObject) o).getObject();
+
+                return convertObject(o, type);
             }
 
             return convertString(o.toString(), type);
@@ -1196,7 +1203,10 @@ class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                double d = Double.parseDouble(s);
+
+                // jdk 1.1 compat
+                // double d = Double.parseDouble((s);
+                double d = new Double(s).doubleValue();
                 long   l = Double.doubleToLongBits(d);
 
                 return ValuePool.getDouble(l);

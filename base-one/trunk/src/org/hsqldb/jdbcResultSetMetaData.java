@@ -444,7 +444,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     jdbcResultSetMetaData(jdbcResultSet rs,
                           HsqlProperties props) throws SQLException {
 
-        Statement          stmnt;
+        jdbcStatement      stmnt;
         jdbcColumnMetaData cmd;
 
         if (rs == null) {
@@ -500,7 +500,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             rResult.sName != null && rResult.sName.length >= columnCount,
             "rResult.sName array is null or too small");
 */
-        stmnt = rs.getStatement();
+        stmnt = (jdbcStatement) rs.getStatement();
 /*
         Trace.doAssert(stmnt != null, "statement is null");
 */

@@ -380,12 +380,9 @@ class Expression {
                     buf.append("PARAM ");
                 }
 
-                buf.append("VALUE = ");
-                buf.append(oData);
-
-                if (isParam) {
-                    buf.append(", TYPE = " + Types.getTypeString(iDataType));
-                }
+                buf.append("VALUE = ").append(oData);
+                buf.append(", TYPE = ").append(
+                    Types.getTypeString(iDataType));
 
                 return buf.toString();
 
@@ -1084,6 +1081,14 @@ class Expression {
                             + " the operand of a unary negation operation");
 
                 iDataType = eArg.iDataType;
+
+                //  BEGIN: initial stubs to compress tree, calculating fixed
+                // expressions where possible
+                // if (eArg.iType = VALUE && !eArg.isParam) {
+                //      oData = getValue(iDataType)
+                //      eArg = null;  
+                //      iType = VALUE; 
+                // }
                 break;
 
             case ADD :
@@ -1104,6 +1109,14 @@ class Expression {
 // fredt@users 20011010 - patch 442993 by fredt
                 iDataType = Column.getCombinedNumberType(eArg.iDataType,
                         eArg2.iDataType, iType);
+                /*
+                 if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
+                    oData = getValue(iDataType);
+                    eArg = null;
+                    eArg2 = null;
+                    iType = VALUE;
+                 *}
+                 */
                 break;
 
             case CONCAT :
@@ -1116,6 +1129,14 @@ class Expression {
                 if (eArg2.isParam) {
                     eArg2.iDataType = Types.VARCHAR;
                 }
+                /*
+                 if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
+                    oData = getValue(iDataType);
+                    eArg = null;
+                    eArg2 = null;
+                    iType = VALUE;
+                 *}
+                 */
                 break;
 
             case EQUAL :
@@ -1136,6 +1157,18 @@ class Expression {
                 }
 
                 iDataType = Types.BIT;
+
+                // Actually, we need a FALSE type expression as well to allow
+                // maximum compression in the resolve stage.  Then we can
+                // also calculate whether TRUE == TRUE, FALSE == TRUE, etc.
+                /*
+                 if (eArg.iType == VALUE  && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
+                    oData = test();
+                    eArg = null;
+                    eArg2 = null;
+                    iType = Boolean.TRUE == oData ? TRUE : VALUE;
+                 *}
+                 */
                 break;
 
             case LIKE :
@@ -1151,6 +1184,17 @@ class Expression {
                 }
 
                 iDataType = Types.BIT;
+                /*
+                 if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
+                    oData = test();
+                    eArg = null;
+                    eArg2 = null;
+                    iType = VALUE;
+                 *}
+                 */
+
+                // ETC.  Won't make comments for following compressions until
+                // further ground work is laid
                 break;
 
             case AND :
@@ -1334,7 +1378,7 @@ class Expression {
 
                          in normal statements, there is no need to require both
                          arguments to CASEWHEN to have the same type, but in
-                         parameterized statemnents they should
+                         parameterized statements they should
                     */
 
                     //
@@ -1879,7 +1923,8 @@ class Expression {
                 return Column.negate(eArg.getValue(iDataType), iDataType);
 
             case EXISTS :
-                return new Boolean(test());
+                return test() ? Boolean.TRUE
+                              : Boolean.FALSE;
 
             case CONVERT :
                 return eArg.getValue(iDataType);

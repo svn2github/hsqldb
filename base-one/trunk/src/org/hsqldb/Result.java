@@ -951,6 +951,10 @@ private    String getMode() {
         return iUpdateCount;
     }
 
+    int[] getUpdateCounts() {
+        return colType;
+    }
+
     Object[] getParameterData() {
         return (rRoot == null) ? null
                                : rRoot.data;
@@ -959,10 +963,13 @@ private    String getMode() {
     void setParameterData(Object[] data) {
 
         if (rRoot == null) {
-            this.add(data);
-        } else {
-            rRoot.data = data;
+            rRoot = new Record();
         }
+
+        rRoot.data = data;
+        rRoot.next = null;
+        rTail      = rRoot;
+        iSize      = 1;
     }
 
     int[] getParameterTypes() {

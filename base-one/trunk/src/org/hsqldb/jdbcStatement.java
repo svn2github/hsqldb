@@ -176,7 +176,8 @@ public class jdbcStatement implements java.sql.Statement {
     /**
      * The result type used by this statement.
      */
-    Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
+    Result           resultOut = new Result(ResultConstants.SQLEXECDIRECT);
+    protected Result batch     = new Result(ResultConstants.DATA);
 
     /**
      * <!-- start generic documentation -->
@@ -1024,7 +1025,14 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public void addBatch(String sql) throws SQLException {
-        throw jdbcDriver.notSupported;
+
+        checkClosed();
+
+        if (isEscapeProcessing) {
+            sql = connection.nativeSQL(sql);
+        }
+
+        batch.add(new Object[]{ sql });
     }
 
     /**
@@ -1054,7 +1062,7 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public void clearBatch() throws SQLException {
-        throw jdbcDriver.notSupported;
+        batch.trimResult(0, 0);
     }
 
     /**
@@ -1124,9 +1132,43 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public int[] executeBatch() throws SQLException {
 
+        int[]         updateCounts;
+        HsqlException he;
+
         checkClosed();
 
-        throw jdbcDriver.notSupported;
+        if (batch.getSize() == 0) {
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                          "empty batch");
+        }
+
+        resultOut.setRows(batch);
+
+        he = null;
+
+        try {
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            he = e;
+        }
+
+        resultOut.trimResult(0, 0);
+
+        if (he != null) {
+            throw jdbcDriver.sqlException(he);
+        }
+
+        updateCounts = resultIn.getUpdateCounts();
+
+//#ifdef JAVA2
+        for (int i = 0; i < updateCounts.length; i++) {
+            if (updateCounts[i] == ResultConstants.EXECUTE_FAILED) {
+                throw new java.sql.BatchUpdateException(updateCounts);
+            }
+        }
+
+//#endif JAVA2
+        return updateCounts;
     }
 
     /**

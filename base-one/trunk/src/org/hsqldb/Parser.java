@@ -76,6 +76,7 @@ import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
+import java.util.Stack;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
 // support for sql standard quoted identifiers for column and table names
@@ -205,18 +206,28 @@ class Parser {
         }
     }
 
-    Select parseSubquery() throws HsqlException {
+    SubQuery parseSubquery() throws HsqlException {
 
         HsqlException se;
         Select        s;
-        int           parameterCount;
+        SubQuery      sq;
 
-        se                = null;
-        s                 = null;
-        isParsingSubquery = true;
-        parameterCount    = parameters.size();
+        if (subQueryHeap == null) {
+            subQueryHeap = new HsqlArrayHeap(8, new SubQuery());
+        }
+
+        if (subQueryStack == null) {
+            subQueryStack = new Stack();
+        }
 
         subQueryLevel++;
+
+        se       = null;
+        s        = null;
+        sq       = new SubQuery();
+        sq.level = subQueryLevel;
+
+        subQueryStack.push(sq);
 
         try {
             s = parseSelect();
@@ -224,25 +235,19 @@ class Parser {
             se = e;
         }
 
-        isParsingSubquery = false;
-
         if (se != null) {
             throw se;
         }
 
-        Trace.doAssert(parameterCount == parameters.size(),
-                       "subqueries with parameters not yet supported");
+        subQueryStack.pop();
 
-        SubQuery sq = new SubQuery();
-
-        sq.level  = subQueryLevel;
         sq.select = s;
 
         subQueryHeap.add(sq);
 
         subQueryLevel--;
 
-        return s;
+        return sq;
     }
 
     /**
@@ -630,24 +635,26 @@ class Parser {
         String      token = tTokenizer.getString();
         Table       t     = null;
         Select      s     = null;
+        SubQuery    sq;
         TableFilter tf;
 
-        // TODO: - delay s.getResult until CompiledStatement is evaulated
-        //       - subquery might have parameters
         if (token.equals(Token.T_OPENBRACKET)) {
             tTokenizer.getThis(Token.T_SELECT);
 
-            s = parseSubquery();
+            sq = parseSubquery();
 
-            // Result r = s.describeResult();
-            Result r = s.getResult(0);
+            tTokenizer.getThis(Token.T_CLOSEBRACKET);
+
+            s = sq.select;
+
+            s.resolveAll();
 
             // it's not a problem that this table has not a unique name
             t = new Table(dDatabase, new HsqlName("SYSTEM_SUBQUERY", false),
                           Table.SYSTEM_TABLE, 0);
+            sq.table = t;
 
-            tTokenizer.getThis(Token.T_CLOSEBRACKET);
-            t.addColumns(r);
+            t.addColumns(s);
 
             // TODO:
             // We lose / do not exploit index info here.
@@ -655,10 +662,6 @@ class Parser {
             // and create or carry them across here if it might speed up
             // subsequent access.
             t.createPrimaryKey();
-
-            // TODO:  this should be delayed until CompiledStatement is evaulated
-            // NOTE: subquery creation can't fail because constraint violation
-            t.insertNoCheck(r, cSession);
         } else {
             tTokenizer.checkUnexpectedParam("parametric table identifier");
 
@@ -703,18 +706,21 @@ class Parser {
                                      CurrentPos - TokenLength + 1);
                 tTokenizer.getThis(Token.T_SELECT);
 
-                s = parseSubquery();
+                sq = parseSubquery();
 
-                // Result r = s.describeResult();
-                Result r = s.getResult(0);
+                tTokenizer.getThis(Token.T_CLOSEBRACKET);
+
+                s = sq.select;
+
+                s.resolveAll();
 
                 // it's not a problem that this table has not a unique name
                 t = new Table(dDatabase,
                               new HsqlName("SYSTEM_SUBQUERY", false),
                               Table.SYSTEM_TABLE, 0);
+                sq.table = t;
 
-                tTokenizer.getThis(Token.T_CLOSEBRACKET);
-                t.addColumns(r);
+                t.addColumns(s);
 
                 // TODO:
                 // We lose / do not exploit index info here.
@@ -722,10 +728,6 @@ class Parser {
                 // and create or carry them across here if it might speed up
                 // subsequent access.
                 t.createPrimaryKey();
-
-                // TODO:  this should be delayed until CompiledStatement is evaulated
-                // subquery creation can't fail because constraint violation
-                t.insertNoCheck(r, cSession);
             }
         }
 
@@ -1226,6 +1228,19 @@ class Parser {
                 r = new Expression(Types.NULL, null, true);
 
                 parameters.add(r);
+
+                // NOTE: 
+                // Currently unused, but may be required for future work.
+                // Eventually, we may also wish to build a list of the
+                // parameters that apply only to a particular subquery               
+                if (subQueryStack != null &&!subQueryStack.isEmpty()) {
+                    SubQuery sq = (SubQuery) subQueryStack.peek();
+
+                    sq.hasParams = true;
+
+                    // or maybe eventually sq.addParameter(r);
+                }
+
                 read();
 
                 break;
@@ -1511,6 +1526,10 @@ class Parser {
         SubQuery[] subqueries;
         int        size;
 
+        if (subQueryHeap == null) {
+            return noSubqueries;
+        }
+
         size = subQueryHeap.size();
 
         if (size == 0) {
@@ -1527,8 +1546,7 @@ class Parser {
             subqueries[i] = (SubQuery) subQueryHeap.remove();
         }
 
-        subQueryLevel     = 0;
-        isParsingSubquery = false;
+        subQueryLevel = 0;
 
         return subqueries;
     }
@@ -1861,23 +1879,9 @@ class Parser {
         return cs;
     }
 
-    private boolean isParsingSubquery = false;
-    private int     subQueryLevel     = 0;
-    private HsqlArrayHeap subQueryHeap = new HsqlArrayHeap(16,
-        new SubQueryLevelComparator());
-
-    static class SubQuery {
-        int    level;
-        Select select;
-    }
-
-    static class SubQueryLevelComparator implements ObjectComparator {
-
-        public int compare(Object a, Object b) {
-            return ((SubQuery) b).level - ((SubQuery) a).level;
-        }
-    }
-
+    private int           subQueryLevel = 0;
+    private Stack         subQueryStack;
+    private HsqlArrayHeap subQueryHeap;
     private static final String pamsg =
         "It is ambiguous to specify a parameter marker ";
 

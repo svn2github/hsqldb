@@ -34,8 +34,8 @@ package org.hsqldb.test;
 import org.hsqldb.HsqlProperties;
 import java.io.*;
 import java.sql.*;
-import java.util.Hashtable;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.FileUtil;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -56,23 +56,23 @@ import org.hsqldb.lib.StopWatch;
  */
 public class TestCacheSize {
 
-    protected boolean filedb = false;
-    protected String  url    = "jdbc:hsqldb:";
+    protected boolean filedb   = true;
+    protected boolean shutdown = true;
+    protected String  url      = "jdbc:hsqldb:";
 
 //    protected String  filepath = "hsql://localhost";
-    protected String filepath = "mem:test";
-
-//    protected String filepath = "/hsql/testcache/test";
-    String     user;
-    String     password;
-    Statement  sStatement;
-    Connection cConnection;
+//    protected String filepath = "mem:test";
+    protected String filepath = "/hsql/testcache/test";
+    String           user;
+    String           password;
+    Statement        sStatement;
+    Connection       cConnection;
 
     // prameters
     boolean reportProgress  = false;
     boolean cachedTable     = false;
     int     cacheScale      = 12;
-    int     logType         = 3;
+    String  logType         = "TEXT";
     int     writeDelay      = 60;
     boolean indexZip        = true;
     boolean indexLastName   = false;
@@ -85,7 +85,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows   = 150000;
+    int bigrows   = 100000;
     int smallrows = 0xfff;
 
     protected void setUp() {
@@ -102,12 +102,14 @@ public class TestCacheSize {
 
             Class.forName("org.hsqldb.jdbcDriver");
 
-            if (filedb && fileexists == false) {
+            if (filedb) {
+                deleteDatabase(filepath);
+
                 cConnection = DriverManager.getConnection(url + filepath,
                         user, password);
                 sStatement = cConnection.createStatement();
 
-                sStatement.execute("SET LOGTYPE " + logType);
+                sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 400);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
@@ -268,11 +270,12 @@ public class TestCacheSize {
                                + (i * 1000 / (sw.elapsedTime() + 1)));
             sw.zero();
 
-            if (filedb) {
+            if (shutdown) {
                 sStatement.execute("SHUTDOWN");
-                cConnection.close();
                 System.out.println("Shutdown Time: " + sw.elapsedTime());
             }
+
+            cConnection.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -318,6 +321,12 @@ public class TestCacheSize {
             checkSelects();
             checkUpdates();
             sw.zero();
+
+            if (shutdown) {
+                sStatement.execute("SHUTDOWN");
+                System.out.println("Shutdown Time: " + sw.elapsedTime());
+            }
+
             cConnection.close();
             System.out.println("Closed database: " + sw.elapsedTime());
         } catch (SQLException e) {
@@ -433,6 +442,15 @@ public class TestCacheSize {
         System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
+    }
+
+    static void deleteDatabase(String path) {
+
+        FileUtil.delete(path + ".backup");
+        FileUtil.delete(path + ".properties");
+        FileUtil.delete(path + ".script");
+        FileUtil.delete(path + ".data");
+        FileUtil.delete(path + ".log");
     }
 
     public static void main(String argv[]) {

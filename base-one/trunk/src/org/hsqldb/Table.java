@@ -495,6 +495,27 @@ class Table {
     /**
      *  Method declaration
      *
+     * @param  result
+     * @throws  HsqlException
+     */
+    void addColumns(Select select) throws HsqlException {
+
+        int colCount = select.iResultLen;
+
+        for (int i = 0; i < colCount; i++) {
+            Expression e = select.eColumn[i];
+            Column column =
+                new Column(new HsqlName(e.getAlias(), e.isAliasQuoted()),
+                           true, e.getDataType(), e.getColumnSize(),
+                           e.getColumnScale(), false, false, null);
+
+            addColumn(column);
+        }
+    }
+
+    /**
+     *  Method declaration
+     *
      * @return
      */
     HsqlName getName() {

@@ -403,6 +403,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
         try {
             convertParameterTypes();
+            resultOut.setParameterData(parameters);
 
             resultIn = connection.sessionProxy.execute(resultOut);
         } catch (HsqlException e) {
@@ -442,6 +443,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
         try {
             convertParameterTypes();
+            resultOut.setParameterData(parameters);
 
             resultIn = connection.sessionProxy.execute(resultOut);
         } catch (HsqlException e) {
@@ -478,6 +480,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
         try {
             convertParameterTypes();
+            resultOut.setParameterData(parameters);
 
             resultIn = connection.sessionProxy.execute(resultOut);
         } catch (HsqlException e) {
@@ -1279,7 +1282,21 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * jdbcPreparedStatement)
      */
     public void addBatch() throws SQLException {
-        throw jdbcDriver.notSupported;
+
+        Object[] bparms;
+        int      len;
+
+        try {
+            convertParameterTypes();
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
+
+        len    = parameters.length;
+        bparms = new Object[len];
+
+        System.arraycopy(parameters, 0, bparms, 0, len);
+        batch.add(bparms);
     }
 
     /**
@@ -4743,7 +4760,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         types      = resultOut.getParameterTypes();
         parameters = new Object[types.length];
 
-        resultOut.setParameterData(parameters);
+        //resultOut.setParameterData(parameters);
     }
 
     /**

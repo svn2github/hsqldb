@@ -6333,8 +6333,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // Also, cannot use single, shared jdbcStatement object, as each
         // fetchResult() closes any old jdbcResultSet before fetching the
         // next, causing the jdbcResultSet's Result object to be nullified
-        final int scroll = ResultSet.TYPE_SCROLL_INSENSITIVE;
-        final int concur = ResultSet.CONCUR_READ_ONLY;
+        final int scroll = jdbcResultSet.TYPE_SCROLL_INSENSITIVE;
+        final int concur = jdbcResultSet.CONCUR_READ_ONLY;
 
         return connection.createStatement(scroll, concur).executeQuery(sql);
     }

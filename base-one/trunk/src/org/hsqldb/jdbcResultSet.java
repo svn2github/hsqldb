@@ -1763,7 +1763,8 @@ public class jdbcResultSet implements ResultSet {
             try {
                 return ((JavaObject) o).getObject();
             } catch (HsqlException e) {
-                throw jdbcDriver.sqlException(Trace.error(Trace.SERIALIZATION_FAILURE));
+                throw jdbcDriver.sqlException(
+                    Trace.error(Trace.SERIALIZATION_FAILURE));
             }
         } else if (o instanceof Binary) {
             return ((Binary) o).getBytes();

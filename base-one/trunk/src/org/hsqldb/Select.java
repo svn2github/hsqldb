@@ -236,6 +236,8 @@ class Select {
         if (!isResolved) {
             resolve();
             checkResolved();
+
+            isResolved = true;
         }
 
 // -------------------------------Start Prefix ---------------------------------
@@ -246,7 +248,7 @@ class Select {
         }
 
         int    len          = eColumn.length;
-        Result r            = new Result(ResultConstants.DATA,len);
+        Result r            = new Result(ResultConstants.DATA, len);
         int    groupByStart = iResultLen;
         int    groupByEnd   = groupByStart + iGroupLen;
 
@@ -708,7 +710,7 @@ class Select {
         isPreProcess  = true;
 
         try {
-            getResult(-1);
+            getResult(1);
         } catch (HsqlException e) {}
 
         isPreProcess = oldPreProcess;
@@ -722,7 +724,7 @@ class Select {
 
         oldPreProcess = isPreProcess;
         isPreProcess  = true;
-        r             = getResult(-1);
+        r             = getResult(1);
         isPreProcess  = oldPreProcess;
 
         return r;

@@ -909,7 +909,8 @@ class Cache {
             sw = new StopWatch();
         }
 
-        System.out.println(sw.elapsedTimeToMessage("total cleanup time"));
+        System.out.println(
+            sw.elapsedTimeToMessage("Cache.saveAll() total cleanup time"));
 
         if (rFirst == null) {
             return;
@@ -954,7 +955,8 @@ class Cache {
             sw = new StopWatch();
         }
 
-        System.out.println(sw.elapsedTimeToMessage("total cleanup time"));
+        System.out.println(
+            sw.elapsedTimeToMessage("Cache.saveAll total cleanup time"));
 
         if (rFirst == null) {
             return;

@@ -195,7 +195,7 @@ public class HsqlSocketFactory {
             Throwable t = e.getTargetException();
 
             throw (t instanceof Exception) ? ((Exception) t)
-                                           : new UnsupportedOperationException(
+                                           : new RuntimeException(
                                                t.toString());
         }
 

@@ -78,17 +78,23 @@ public class CompiledStatementExecutor {
      */
     Result execute(CompiledStatement cs) {
 
-        Result result;
+        Result   result;
+        SubQuery sq;
 
         DatabaseManager.gc();
 
         result = null;
 
         try {
+            cs.buildSubQueryResults();
+
             result = executeImpl(cs);
         } catch (Throwable t) {
             result = new Result(t, cs.sql);
         }
+
+        // keep memory consuption down
+        cs.clearSubQueryResults();
 
         if (result == null) {
             result = emptyResult;
@@ -104,7 +110,7 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeImpl(CompiledStatement cs) throws HsqlException {
+    private Result executeImpl(CompiledStatement cs) throws HsqlException {
 
         switch (cs.type) {
 
@@ -139,7 +145,8 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeCallStatement(CompiledStatement cs) throws HsqlException {
+    private Result executeCallStatement(CompiledStatement cs)
+    throws HsqlException {
 
         Expression e;    // representing CALL
         Object     o;    // expression return value
@@ -148,8 +155,7 @@ public class CompiledStatementExecutor {
 
         e = cs.expression;
 
-        e.resolve(null);
-
+        //e.resolve(null);
         o = e.getValue();
 
         if (o instanceof Result) {
@@ -185,7 +191,8 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeDeleteStatement(CompiledStatement cs) throws HsqlException {
+    private Result executeDeleteStatement(CompiledStatement cs)
+    throws HsqlException {
 
         Table          t;
         TableFilter    f;
@@ -231,7 +238,8 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeInsertStatement(CompiledStatement cs) throws HsqlException {
+    private Result executeInsertStatement(CompiledStatement cs)
+    throws HsqlException {
 
         switch (cs.type) {
 
@@ -254,7 +262,7 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeInsertSelectStatement(CompiledStatement cs)
+    private Result executeInsertSelectStatement(CompiledStatement cs)
     throws HsqlException {
 
         Table     t;
@@ -321,7 +329,7 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeInsertValuesStatement(CompiledStatement cs)
+    private Result executeInsertValuesStatement(CompiledStatement cs)
     throws HsqlException {
 
         Object[]     row;
@@ -362,7 +370,8 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeSelectStatement(CompiledStatement cs) throws HsqlException {
+    private Result executeSelectStatement(CompiledStatement cs)
+    throws HsqlException {
         return cs.select.getResult(session.getMaxRows());
     }
 
@@ -374,7 +383,8 @@ public class CompiledStatementExecutor {
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeUpdateStatement(CompiledStatement cs) throws HsqlException {
+    private Result executeUpdateStatement(CompiledStatement cs)
+    throws HsqlException {
 
         Table          t;
         TableFilter    f;
@@ -392,25 +402,12 @@ public class CompiledStatementExecutor {
         Row            row;
         Object[]       ni;
 
-        t    = cs.targetTable;
-        cm   = cs.columnMap;
-        acve = cs.columnValues;
-        c    = cs.condition;
-        len  = acve.length;
-
-        // new TableFilter(t, null, false);
-        f = cs.tf;
-
-//        for (int i = 0; i < len; i++) {
-//            cve = acve[i];
-//            cve.resolve(f);
-//        }
-//
-//        if (c != null) {
-//            c.resetTrue();
-//            c.resolve(f);
-//            f.setCondition(c);
-//        }
+        t     = cs.targetTable;
+        cm    = cs.columnMap;
+        acve  = cs.columnValues;
+        c     = cs.condition;
+        len   = acve.length;
+        f     = cs.tf;
         count = 0;
 
         if (f.findFirst()) {
@@ -477,19 +474,4 @@ public class CompiledStatementExecutor {
 
         return updateResult;
     }
-
-// Test Results 2003-04-18
-// 500 MHz Athlon, NT4 Workstation, 500 MB PC133 DRAM, using MEMORY Table
-// java -server -Xms128m -Xmx128m -XX:NewRatio=2
-// ----------------------------------
-// parsed   : 4996 ms (4003 rows/sec)
-// compiled : 942 ms (21231 rows/sec)
-// ratio    : 5.3036093418259025
-// ----------------------------------
-// java -client -Xms128m -Xmx128m -XX:NewRatio=2
-// ----------------------------------
-// parsed   : 7771 ms (2573 rows/sec)
-// compiled : 2093 ms (9555 rows/sec)
-// ratio    : 3.712852365026278
-// ----------------------------------
 }

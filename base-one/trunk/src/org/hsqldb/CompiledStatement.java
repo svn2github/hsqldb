@@ -93,7 +93,7 @@ public class CompiledStatement {
     /**
      * Subqueries in heaped inverse parse depth order
      */
-    Parser.SubQuery[] subqueries;
+    SubQuery[] subqueries;
 
     /**
      * The type of this CompiledStatement. <p>
@@ -346,6 +346,29 @@ public class CompiledStatement {
         this.paramTypes = types;
     }
 
+    void buildSubQueryResults() throws HsqlException {
+
+        SubQuery sq;
+
+        for (int i = 0; i < subqueries.length; i++) {
+            sq = subqueries[i];
+
+            Table  t  = sq.table;
+            Select s  = sq.select;
+            Result r  = s.getResult(0);
+            Record rc = r.rRoot;
+
+            t.insertNoCheck(r, null);
+        }
+    }
+
+    void clearSubQueryResults() {
+
+        for (int i = 0; i < subqueries.length; i++) {
+            subqueries[i].table.setIndexRootsNull();
+        }
+    }
+
     /**
      * Retrieves a String representation of this object.
      *
@@ -450,7 +473,9 @@ public class CompiledStatement {
 
         for (int i = 0; i < subqueries.length; i++) {
             sb.append("\n[level=").append(subqueries[i].level).append(
-                '\n').append("org.hsqldb.Select@").append(
+                '\n').append("hasParams=").append(
+                subqueries[i].hasParams).append('\n').append(
+                "org.hsqldb.Select@").append(
                 Integer.toHexString(subqueries[i].select.hashCode())).append(
                 "]");
         }

@@ -98,6 +98,7 @@ public class JavaObject {
 
     private byte[] data;
     private Object object;
+
     /**
      * This constructor is from classes implementing the JDBC interfaces.<b>
      * Inside the engine, it is used to convert a value into an object
@@ -114,22 +115,25 @@ public class JavaObject {
      * fromfile is a marker argument to fully distinguish this from the other
      * constructor
      */
-    JavaObject(byte[] data,
-               boolean fromfile) {
+    JavaObject(byte[] data, boolean fromfile) {
         this.data = data;
     }
 
     byte[] getBytes() throws HsqlException {
-        if ( data == null ) {
+
+        if (data == null) {
             data = Column.serialize(object);
         }
+
         return data;
     }
 
     int getBytesLength() throws HsqlException {
-        if ( data == null ) {
+
+        if (data == null) {
             data = Column.serialize(object);
         }
+
         return data.length;
     }
 
@@ -140,9 +144,11 @@ public class JavaObject {
      * of a classe that is not available.
      */
     Object getObject() throws HsqlException {
-        if ( object == null ) {
+
+        if (object == null) {
             object = Column.deserialize(data);
         }
+
         return object;
     }
 }

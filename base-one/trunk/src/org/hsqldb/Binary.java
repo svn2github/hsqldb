@@ -96,8 +96,7 @@ public class Binary {
      * fromfile is a marker argument to fully distinguish this from the other
      * constructor
      */
-    Binary(byte[] data,
-               boolean fromfile) throws IOException {
+    Binary(byte[] data, boolean fromfile) throws IOException {
         this.data = data;
     }
 

@@ -48,8 +48,7 @@ public class TestAllTypes {
 //    protected String filepath = ".";
 //    protected String filepath = "/hsql/testalltypes/test";
     protected String filepath = "hsql://localhost/yourtest";
-
-    boolean network = true;
+    boolean          network  = true;
     String           user;
     String           password;
     Statement        sStatement;
@@ -88,7 +87,7 @@ public class TestAllTypes {
 
             Class.forName("org.hsqldb.jdbcDriver");
 
-            if (!network && !fileexists == false) {
+            if (!network &&!fileexists == false) {
                 cConnection = DriverManager.getConnection(url + filepath,
                         user, password);
                 sStatement = cConnection.createStatement();
@@ -247,9 +246,11 @@ public class TestAllTypes {
             System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
                                + (i * 1000 / sw.elapsedTime()));
             sw.zero();
-            if (!network ){
+
+            if (!network) {
                 sStatement.execute("SHUTDOWN");
             }
+
             cConnection.close();
             System.out.println("Shutdown Time: " + sw.elapsedTime());
         } catch (SQLException e) {

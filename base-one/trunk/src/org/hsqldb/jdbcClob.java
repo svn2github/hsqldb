@@ -41,7 +41,7 @@ import org.hsqldb.lib.AsciiStringInputStream;
  * @version 1.7.2
  * @since 1.7.2
  */
-public class jdbcClob implements java.sql.Clob {
+public class jdbcClob implements Clob {
 
     private String data;
 

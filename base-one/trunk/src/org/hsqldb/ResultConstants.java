@@ -45,7 +45,9 @@ package org.hsqldb;
 public interface ResultConstants {
 
     /** The offset at which HSQLDB API Result mode values start. */
-    int HSQL_API_BASE = 0;
+    int HSQL_API_BASE   = 0;
+    int EXECUTE_FAILED  = -3;
+    int SUCCESS_NO_INFO = -2;
 
     /**
      * Indicates that the Result object encapsulates an update

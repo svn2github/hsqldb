@@ -107,7 +107,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
         if (type == Types.REAL) {
 
 //            return Double.valueOf(readNumericString());
-            double d = Double.parseDouble(readNumericString());
+//            double d = Double.parseDouble(readNumericString());
+            double d = new Double(readNumericString()).doubleValue();
             long   l = Double.doubleToLongBits(d);
 
             return ValuePool.getDouble(l);

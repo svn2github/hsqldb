@@ -478,7 +478,10 @@ class Tokenizer {
                 return new BigDecimal(sToken);
 
             case FLOAT :
-                double d = Double.parseDouble(sToken);
+
+                // jdk 1.1 compat
+                // double d = Double.parseDouble(sToken);
+                double d = new Double(sToken).doubleValue();
                 long   l = Double.doubleToLongBits(d);
 
                 return ValuePool.getDouble(l);

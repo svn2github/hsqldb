@@ -327,7 +327,7 @@ class TestSelf {
             readTabProfileTest(sStatement);
 
             byte[]  b2n;
-            byte[] b1n;
+            byte[]  b1n;
             boolean mismatch;
 
             s = "select \"org.hsqldb.lib.ArrayUtil.startsWith\"(licence,0, ?) "
@@ -463,42 +463,44 @@ class TestSelf {
         }
     }
 
-    static void readTabProfileTest (Statement sStatement) throws Exception{
-            String s = "select * from TabProfile where id=-2";
-            ResultSet r = sStatement.executeQuery(s);
+    static void readTabProfileTest(Statement sStatement) throws Exception {
 
-            r.next();
+        String    s = "select * from TabProfile where id=-2";
+        ResultSet r = sStatement.executeQuery(s);
 
-            if (!r.getString(2).equals("\"Birdie\"'s car ?")) {
-                throw new Exception("Unicode error.");
+        r.next();
+
+        if (!r.getString(2).equals("\"Birdie\"'s car ?")) {
+            throw new Exception("Unicode error.");
+        }
+
+        boolean mismatch = false;
+        byte[]  b2n      = r.getBytes(4);
+
+        for (int i = 0; i < b2n.length; i++) {
+            if (b2[i] != b2n[i]) {
+                mismatch = true;
             }
+        }
 
-            boolean mismatch = false;
-            byte[]  b2n      = r.getBytes(4);
+        r.close();
 
-            for (int i = 0; i < b2n.length; i++) {
-                if (b2[i] != b2n[i]) {
-                    mismatch = true;
-                }
+        s = "select * from TabProfile where id=10";
+        r = sStatement.executeQuery(s);
+
+        r.next();
+
+        byte[] b1n = r.getBytes(4);
+
+        for (int i = 0; i < b1n.length; i++) {
+            if (b1[i] != b1n[i]) {
+                mismatch = true;
             }
+        }
 
-            r.close();
-
-            s = "select * from TabProfile where id=10";
-            r = sStatement.executeQuery(s);
-
-            r.next();
-
-            byte[] b1n = r.getBytes(4);
-
-            for (int i = 0; i < b1n.length; i++) {
-                if (b1[i] != b1n[i]) {
-                    mismatch = true;
-                }
-            }
-
-            r.close();
+        r.close();
     }
+
     static void testMarotest(Connection cConnection, boolean persistent) {
 
         Statement sStatement = null;
@@ -740,8 +742,8 @@ class TestSelf {
                 cConnection = DriverManager.getConnection(url, user,
                         password);
                 sStatement = cConnection.createStatement();
-                readTabProfileTest(sStatement);
 
+                readTabProfileTest(sStatement);
             }
 
             start = System.currentTimeMillis();
