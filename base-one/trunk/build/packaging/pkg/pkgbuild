@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id$
+# $Id: pkgbuild,v 1.1 2002/10/12 01:15:45 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
@@ -79,17 +79,18 @@ VERPRE=`sed -n '/^BASE=/ {
  Failout 'Failed to retrieve version from info preremove script'
 
 [ "$VERPRE" = "$VERPOST" ] || Failout  \
- "version specs (BASE) don't agreein preremove script and postinstall script"
+ "Version specs (BASE) don't agreein preremove script and postinstall script"
 [ "$VERPRE" = "$VERINFO" ] || 
- Failout "version specs (BASE and VERDIR) don't agreein preremove script and 
+ Failout "Version specs (BASE and VERDIR) don't agreein preremove script and 
 info script"
 
-case "$VERPRE" in hsqldb*);; *)
-    Failout "Sorry, but this script can't handle version names that dont start
-with 'hsqldb'.  (Yours is '$VERPRE')";;
+case "$VERPRE" in hsqldb-*);; *)
+    Failout  \
+"Sorry, but this script requires BASE/VERDIR to be of the form 'hsqldb-VERSION'
+  (Yours is '$VERPRE')";;
 esac
 
-VER=`echo $VERPRE | sed s:hsqldb::`
+VER=`echo $VERPRE | sed s:hsqldb-::`
 
 PWD=`pwd`   # Bourne doesn't necessarily set $PWD
 SRCBASE=`dirname $PWD`
@@ -112,14 +113,13 @@ esac
 echo "Building version $VER with source base $SRCBASE"
 pkgmk -o -b $SRCBASE -d . -f cfg/H*.proto || exit 1
 
-echo 'ENTER to quit, Y to build stream package ${PKGNAME}${VER}.pkg.Z:  '
+echo 'ENTER to quit, Y to build stream package ${PKGNAME}-${VER}.pkg.Z:  '
 read REPLY
 case "$REPLY" in [Yy]*)
-    rm -f "${PKGNAME}${VER}.pkg" "${PKGNAME}${VER}.pkg.Z"
-    pkgtrans -os . "$PWD/${PKGNAME}${VER}.pkg" $PKGNAME &&
+    rm -f "${PKGNAME}-${VER}.pkg" "${PKGNAME}-${VER}.pkg.Z"
+    pkgtrans -os . "$PWD/${PKGNAME}-${VER}.pkg" $PKGNAME &&
     echonoterm 'Now compressing... '
-    compress "${PKGNAME}${VER}.pkg"
+    compress "${PKGNAME}-${VER}.pkg"
     echo Done;;
     [Qq]*) exit 0;;
-esac
 esac
