@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.1 2004/04/17 20:48:56 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.2 2004/04/17 22:52:46 unsaved Exp $ -->
 
 <chapter>
 <title>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.1 $</edition>
-    <pubdate>$Date: 2004/04/17 20:48:56 $</pubdate>
+    <edition>$Revision: 1.2 $</edition>
+    <pubdate>$Date: 2004/04/17 22:52:46 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -211,7 +211,8 @@ CHECKPOINT [DEFRAG<footnoteref linkend="posthyper"/>];</programlisting>
             If DEFRAG is specified, this command also shrinks the .data file to 
             its minimal size.
         </para> <para>
-            In the current version DEFRAG is not allowed if java.nio is used.
+            In the current version DEFRAG is not allowed if 
+            <literal>java.nio</literal> is used.
         </para> <para>
             See also:
             <link linkend='shutdown-section' endterm='shutdown-title'/>,
@@ -1931,7 +1932,7 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
                 is yyyy-mm-dd (see <literal>java.sql.Date</literal>.
                 </para></listitem><listitem><para>
                 A 'time' value starts and ends with ' (singlequote), the format 
-                is hh:mm:ss (see java.sql.Time).
+                is hh:mm:ss (see <literal>java.sql.Time</literal>).
                 </para></listitem><listitem><para>
                 A 'timestamp' or 'datetime' value starts and ends with '
                 (singlequote), the format is yyyy-mm-dd hh:mm:ss.SSSSSSSSS (see 

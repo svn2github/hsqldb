@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: openoffice.xml,v 1.1 2004/04/20 05:34:34 unsaved Exp $ -->
 
 <!--  TODO.
       This should really be rewritten with DocBook procedure elements.
@@ -17,8 +17,8 @@
                 <orgname>EDV - Systeme Kienlein</orgname>
             </affiliation>
         </author>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/20 05:34:34 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>OpenOffice</keyword>
@@ -74,8 +74,8 @@
         </para> <para>
             As connection-type choose JDBC and then switch to the JDBC-tab.
         </para> <para>
-            As Driver-Class insert org.hsqldb.jdbcDriver and as URL choose the 
-            following:
+            As Driver-Class insert <literal>org.hsqldb.jdbcDriver</literal> and 
+            as URL choose the following:
         </para>
         <section>
             <title>On Windows</title>
@@ -108,7 +108,7 @@
             </para>
         </section>
         <para>
-            Now OOo has to find your hsqldb.jar file.
+            Now OOo has to find your <filename>hsqldb.jar</filename> file.
             So go to options =&gt; security and insert the path to the .jar 
             file.
             If you have problems, search the Online-help for JDBC.

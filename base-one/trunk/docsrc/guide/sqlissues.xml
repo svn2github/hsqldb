@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.6 2004/04/15 21:49:19 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.7 2004/04/16 00:37:00 unsaved Exp $ -->
 
 <chapter>
     <title>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/15 21:49:19 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/04/16 00:37:00 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -306,7 +306,8 @@
             The SQL type dictates the maximum and minimum values that can be 
             held in a field of each type.
             For example the value range for TINYINT is -128 to +127, although 
-            the actual Java type used for handling TINYINT is java.lang.Integer.
+            the actual Java type used for handling TINYINT is
+            <literal>java.lang.Integer</literal>.
         </para> <para>
             REAL, FLOAT, DOUBLE are all mapped to double in Java.
         </para> <para>
@@ -413,7 +414,7 @@
                 the two terms when multiplication is performed.
             </para> <para>
                 REAL, FLOAT and DOUBLE values are all stored in the database as 
-                java.lang.Double objects.
+                <literal>java.lang.Double</literal> objects.
                 Special values such as NaN and +-Infinity are also stored and 
                 supported.
                 These values can be submitted to the database via JDBC 

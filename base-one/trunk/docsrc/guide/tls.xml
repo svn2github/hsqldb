@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: tls.xml,v 1.1 2004/04/16 03:58:25 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/16 03:58:25 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -99,8 +99,8 @@
                 see where your system trust keystores are.
                 You can put private keystores anywhere you want to.
                 The following command will add the cert to an existing 
-                keystore, or create a new keystore if "client.store" doesn't 
-                exist.
+                keystore, or create a new keystore if 
+                <filename>client.store</filename> doesn't exist.
             </para><example>
                 <title>Adding a certificate to the client keystore</title>
                 <screen>
@@ -228,10 +228,11 @@
     java DERImport new.keystore NEWALIAS Xpvk.pk8 Xcert.der</screen>
             </example>
             <para>
-                You need the program DERImport.class of course.
+                You need the program <filename>DERImport.class</filename> of 
+                course.
                 Do some internet searches to find
-                <literal>DERImport.java</literal> or
-                <literal>DERImport.class</literal> and download it.
+                <filename>DERImport.java</filename> or
+                <filename>DERImport.class</filename> and download it.
             </para> <para>
                 If DERImport has become difficult to obtain, I can write a 
                 program to do the same thing-- just let me know.

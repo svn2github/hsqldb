@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.1 2004/04/19 20:27:37 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.2 2004/04/19 21:26:55 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='buiding-title'>Building Hsqldb version 1.7.2</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/19 20:27:37 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/19 21:26:55 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -30,8 +30,8 @@
         <title>Purpose</title>
         <para>
             From 1.7.2, in most cases you do not need to build hsqldb at all,
-            since the supplied hsqldb.jar file was built with Java 1.3.1 and 
-            will run with any JRE.
+            since the supplied <filename>hsqldb.jar</filename> file was built 
+            with Java 1.3.1 and will run with any JRE.
             If you want to run the engine under JDK1.4 and use the new JDBC 
             features supported with this JDK, you should rebuild the jar with 
             Ant (or with the supplied batch files if you are on Window).
@@ -71,8 +71,9 @@
                 <filename>/hsqldb</filename> folder, in
                 <filename>/build</filename> there is a
                 <filename>build.xml</filename> file that builds the 
-                hsqldb.jar with Ant (Ant must be already installed).
-                To use it, change to <filename>/build</filename> then type:
+                <filename>hsqldb.jar</filename> with Ant (Ant must be already 
+                installed).  To use it, change to <filename>/build</filename>
+                then type:
             </para>
             <informalexample><screen>
     ant -projecthelp</screen>
@@ -83,7 +84,7 @@
             </para>
             <variablelist>
                 <varlistentry><term>jar</term> <listitem><para>
-                    to make the hsqldb.jar
+                    to make the <filename>hsqldb.jar</filename>
                     </para></listitem>
                 </varlistentry>
                 <varlistentry><term>clean</term> <listitem><para>
@@ -125,15 +126,15 @@
             <para>
                 HSQLDB can be built in any combination of five different sizes 
                 and three JRE (Java Runtime Environment) versions.
-                The smallest jar size (hsqljdbc.jar) contains only the HSQLDB 
-                JDBC Driver client.
-                The next smallest jar size (hsqldbmin.jar) contains only the 
-                standalone database (no servers) and JDBC support and is 
-                suitable for embedded applications.
-                The default size (hsqldb.jar) also contains server mode support 
-                and the utilities.
-                The largest size (hsqldbtest.jar) includes some test classes as 
-                well.
+                The smallest jar size (<filename>hsqljdbc.jar</filename>) 
+                contains only the HSQLDB JDBC Driver client.
+                The next smallest jar size (<filename>hsqldbmin.jar</filename>)
+                contains only the standalone database (no servers) and JDBC 
+                support and is suitable for embedded applications.
+                The default size (<filename>hsqldb.jar</filename>) also 
+                contains server mode support and the utilities.
+                The largest size (<filename>hsqldbtest.jar</filename>) includes 
+                some test classes as well.
             </para> <para>
                 In order to build and run the test classes, you need the JUnit 
                 jar in the <filename>/lib</filename> directory.
@@ -167,9 +168,10 @@
                 Building with JDK 1.4.x will result in a jar that is not 
                 backward compatible.
             </para> <para>
-                Before building the hsqldbtest.jar package, you should download 
-                the junit jar from <ulink url="http://www.junit.org"/>  and put 
-                it in the <filename>/lib</filename> directory, alongside 
+                Before building the <filename>hsqldbtest.jar</filename> 
+                package, you should download the junit jar from 
+                <ulink url="http://www.junit.org"/>  and put it in the 
+                <filename>/lib</filename> directory, alongside 
                 <filename>servlet.jar</filename>, which is included in the 
                 .zip package.
             </para>
@@ -188,17 +190,19 @@
             set before running any of the batch files.
         </para> <para>
             If you are compiling for JDK's other than 1.2.x or 1.3.x, you 
-            should use the appropriate switchToJDK11.bat or switchToJDK14.bat 
-            to adapt the source files to the target JDK before running the 
-            appropriate buildJDK11.bat or buildJDK14.bat JDK and JRE versions.
+            should use the appropriate <filename>switchToJDK11.bat</filename>
+            or <filename>switchToJDK14.bat</filename> to adapt the source files 
+            to the target JDK before running the appropriate 
+            <filename>buildJDK11.bat</filename> or
+            <filename>buildJDK14.bat</filename> JDK and JRE versions.
         </para> <para>
             From version 1.7.2, Use of JDK 1.1.x is not recommended for 
             building the JAR, even for running under JDK 1.1.x.
             For earlier versions, the JDK used for building the jar should 
             generally be the same series as the target.
-            This is because the java.sql package in each version
-            (1.1.x 1.2.x 1.3.x 1.4.x) has a different set of methods in its 
-            public interfaces.
+            This is because the <literal>java.sql</literal> package in each 
+            version (1.1.x 1.2.x 1.3.x 1.4.x) has a different set of methods in 
+            its public interfaces.
             Javadoc can be built with Ant and batch files.
         </para>
     </section>

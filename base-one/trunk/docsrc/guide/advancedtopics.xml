@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.2 2004/04/16 03:01:17 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.3 2004/04/17 20:46:56 unsaved Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/16 03:01:17 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/17 20:46:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -160,11 +160,11 @@
                     the server and an optional port number.
                     The database to connect to is specified by an alias.
                     This alias is defined in the
-                    <literal>server.properties</literal> to refer to an actual 
-                    database on the file system of the  server or a transient,
-                    in-memory database on the server.
-                    The following example lines in <literal>server.properties
-                    </literal> or <literal>webserver.properties</literal>
+                    <filename>server.properties</filename> to refer to an 
+                    actual database on the file system of the  server or a 
+                    transient, in-memory database on the server.
+                    The following example lines in <filename>server.properties
+                    </filename> or <filename>webserver.properties</filename>
                     define the database aliases listed above and accessible to 
                     clients to refer to different file and in-memory databases.
                     </para>
@@ -354,9 +354,9 @@
         <section>
             <title>Server and Web Server Properties</title>
             <para>
-                In both <literal>server.properties</literal> and 
-                <literal>webserver.properties</literal> files, supported values 
-                and their defaults are as follows:
+                In both <filename>server.properties</filename> and 
+                <filename>webserver.properties</filename> files, supported 
+                values and their defaults are as follows:
             </para>
             <table frame='all' tocentry='1' pgwide='1'>
                 <title>Property File Properties</title>
@@ -407,7 +407,7 @@
                 <literal>file:</literal> or <literal>res:</literal> prefixes as 
                 discussed above under CONNECTIONS.
             </para> <para>
-                Values specific to <literal>server.properties</literal> are:
+                Values specific to <filename>server.properties</filename> are:
             </para>
             <table frame='all' tocentry='1' pgwide='1'>
                 <title>Server Property File Properties</title>
@@ -438,7 +438,7 @@
                 </tgroup>
             </table>
             <para>
-                Values specific to <literal>webserver.properties</literal> are:
+              Values specific to <filename>webserver.properties</filename> are:
             </para>
             <table frame='all' tocentry='1' pgwide='1'>
                 <title>WebServer Property File Properties</title>
@@ -471,8 +471,8 @@
                             multiple entries such as
                             <literal>.html=text/html</literal> define the mime 
                             types of the static files served by the web server.
-                            See the source for <literal>WebServer.java</literal>
-                            for a list. 
+                            See the source for 
+                            <filename>WebServer.java</filename> for a list. 
                         </entry>
                     </row>
                     </tbody>
@@ -504,10 +504,10 @@
         <section>
             <title>Individual Database Properties</title>
             <para>
-                Each database has its own <literal>&lt;dbname&gt;.properties
-                </literal> file as part of a small group of files which also 
-                includes <literal>&lt;dbname&gt;.script</literal> and 
-                <literal>&lt;dbname&gt;.data</literal>.
+                Each database has its own <filename>&lt;dbname&gt;.properties
+                </filename> file as part of a small group of files which also 
+                includes <filename>&lt;dbname&gt;.script</filename> and 
+                <filename>&lt;dbname&gt;.data</filename>.
                 The properties files contain key/value pairs for some important 
                 settings.
             </para> <para>
@@ -1065,7 +1065,7 @@
                     <literal>SCRIPT 'newversion.script'</literal> to create a 
                     script file containing a copy of the database.
                 </para></step> <step><para>
-                    You can now edit the <literal>newversion.script</literal>
+                    You can now edit the <filename>newversion.script</filename>
                     file to change any table and index definition so long as it 
                     is consistent with the data.
                     Use the guidelines in the next section (Manual Changes to 
@@ -1079,7 +1079,7 @@
                 </para></step> <step><para>
                     SHUTDOWN this database.
                 </para></step> <step><para>
-                    Copy  the <literal>newversion.script</literal> file from 
+                    Copy  the <filename>newversion.script</filename> file from 
                     step 2 over the file of the same name for the new database 
                     created in 4.
                 </para></step> <step><para>
@@ -1089,7 +1089,7 @@
                     number is reported on the console and the opening process 
                     is aborted.
                     Edit and correct any problems in the
-                    <literal>newversion.script</literal> before attempting to 
+                    <filename>newversion.script</filename> before attempting to 
                     open again.
                 </para></step>
             </procedure>

@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.4 2004/04/17 22:52:26 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.5 2004/04/19 21:26:55 unsaved Exp $ -->
 
 <chapter>
     <title>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/17 22:52:26 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/19 21:26:55 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -62,14 +62,16 @@
                     <link linkend='auth-section' endterm='auth-title'/> section.
                 </para></step><step><para>
                     Set up your CLASSPATH to include the classes
-                    org.hsqldb.util.SqlTool, org.hsqldb.util.SqlFile, and the 
+                    <literal>org.hsqldb.util.SqlTool</literal>,
+                    <literal>org.hsqldb.util.SqlFile</literal>, and the 
                     JDBC driver that you want to use.  If you are using a 
                     hsqldb database, this is most easily accomplished by
-                    setting (and exporting) CLASSPATH to the path to hsqldb.jar 
-                    (which lives in the <literal>lib</literal> subdirectory of 
-                    the hsqldb distribution).  (You can, of course, use a 
-                    classpath argument to java instead of setting your 
-                    CLASSPATH variable).
+                    setting (and exporting) CLASSPATH to the path to 
+                    <filename>hsqldb.jar </filename> (which lives in the 
+                    <filename>lib</filename> subdirectory of the hsqldb 
+                    distribution).  (You can, of course, use a classpath 
+                    argument to java instead of setting your CLASSPATH 
+                    variable).
                 </para></step><step><para>
                     Run 
                 </para><informalexample><screen>

@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.1 2004/04/15 04:26:11 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.2 2004/04/15 16:07:28 fredt Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/15 04:26:11 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/15 16:07:28 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -61,14 +61,15 @@
         <para>
             All tools can be run in the standard way for archived Java classes.
             In the following example the AWT version of the Database Manager,
-            the hsqldb.jar is located in the directory ../lib relative to the 
-            current directory.
+            the <filename>hsqldb.jar</filename> is located in the 
+            directory <filename>../lib</filename> relative to the current 
+            directory.
         </para>
         <screen>
     java -cp ../lib/hsqldb.jar org.hsqldb.util.DatabaseManager</screen>
         <para>
-            If hsqldb.jar is in the current directory, the command would 
-            change to:
+            If <filename>hsqldb.jar</filename> is in the current directory, 
+            the command would change to:
         </para>
         <screen>
     java -cp hsqldb.jar org.hsqldb.util.DatabaseManager</screen>
@@ -132,7 +133,7 @@
             data file.
             All these files are essential and should never be deleted.
             If the database has no cached tables, the 
-            <literal>test.data</literal> and <literal>test.backup</literal>
+            <filename>test.data</filename> and <filename>test.backup</filename>
             files will not be present. 
             In addition to those files, HSQLDB database may link to any 
             formatted text files, such as CSV lists, anywhere on the disk.
@@ -143,7 +144,7 @@
             This file is removed at a normal SHUDOWN.
             Otherwise (with abnormal shutdown) this file is used at the next 
             startup to redo the changes.
-            A <literal>test.lck </literal>file is also used to record the fact 
+            A <filename>test.lck </filename>file is also used to record the fact 
             that the database is open.
             This is deleted at a normal SHUTDOWN.
             In some circumstances, a <filename>test.data.old</filename> is 
@@ -239,12 +240,12 @@
                 <para>
                     Once an HSQLDB server is running, client programs can 
                     connect to it using the HSQLDB JDBC Driver contained in 
-                    <literal>hsqldb.jar</literal>.
+                    <filename>hsqldb.jar</filename>.
                     Full information on how to connect to a server is provided 
                     in the Java Documentation for 
                     <ulink url='src/org/hsqldb/jdbcConnection.html'>
                     <literal>jdbcConnection</literal></ulink> (located in the
-                    <literal>/doc/src</literal> directory of HSQLDB 
+                    <filename>/doc/src</filename> directory of HSQLDB 
                     distribution.
                     A common example is connection to the default port (9001)
                     used for the hsql protocol on the same machine:
@@ -471,7 +472,7 @@
                 command is used.
                 Their data is held entirely in memory but any change to their 
                 structure or contents is written to the 
-                <literal>&lt;dbname&gt;.script</literal> file.
+                <filename>&lt;dbname&gt;.script</filename> file.
                 The script file is read the next time the database is opened, 
                 and the MEMORY tables are recreated with all their contents. 
                 So unlike TEMP table, the default, MEMORY tables are persistent.
