@@ -124,5 +124,6 @@ NewerThan util/CodeSwitcher.java $hclsdir/util/CodeSwitcher.class && {
 # may consist of multiple argument tokens.
 # This script set those values above, so you don't have to worry about
 # spaces inside the individual tokens (there aren't any).
+echo 'Invoking CodeSwitcher...'
 exec "$jdkhome/bin/java" -classpath "$dbhome/classes:$cp"  \
  org.hsqldb.util.CodeSwitcher $TARGET_SRCFILES $CS_LABELS
