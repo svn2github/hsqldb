@@ -1,45 +1,5 @@
-<html><head><META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>SqlTool Manual and HOWTO</title>
-<STYLE>
-span.guimenu     { font-family: monospace; font-style: italic; }
-span.guimenuitem { font-family: monospace; font-style: italic; }
-span.guilabel    { font-family: monospace; font-style: italic; }
-span.guibutton   { font-family: monospace; font-style: italic; }
-span.guiicon     { font-family: monospace; font-style: italic; }
-span.guisubmenu  { font-family: monospace; font-style: italic; }
-span.term        {
-    font-family: monospace;
-    font-weight: bold;
-    background: black;
-    color: white;
-    padding: 1px;
-}
-
-div.caption      { font-size: 80%; }
-div.important    { background: yellow; }
-div.warning      { background: red; }
-
-pre.programlisting { background-color: silver; padding: 5px; }
-
-h1.title { font-size: 300%; }
-div.chapter h2.title {
-    font-size: 200%;
-    font-weight: bold;
-    color: white;
-    background: #083194;
-    border: 4px groove black;
-    padding: 5px;
-}
-div.section h2.title {
-    font-size: 150%;
-    font-weight: bold;
-    color: black;
-    background: white;
-    padding: 2px;
-    border: 2px solid #083194;
-}
-</STYLE>
-<meta content="DocBook XSL Stylesheets V1.61.3" name="generator"><meta name="keywords" content="HSQLDB, HOWTO, SQL, JDBC"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="N10002"></a>SqlTool Manual and HOWTO</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Blaine</span> <span class="surname">Simpson</span></h3><div class="affiliation"><span class="orgname">HSQLDB Development Group<br></span></div></div></div><div><p class="pubdate">$Date: 2004/04/02 04:58:50 $</p></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt>1. <a href="#N10020">Introduction</a></dt><dd><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></dd><dt>2. <a href="#N10073">The Bare Minimum You Need to Know to Run SqlTool</a></dt><dt>3. <a href="#auth-chapter">Authentication Setup</a></dt><dt>4. <a href="#N10119">Interactive</a></dt><dd><dl><dt><a href="#N101A3">Raw mode</a></dt></dl></dd><dt>5. <a href="#nonint-chapter">Non-Interactive</a></dt><dd><dl><dt><a href="#N101B8">Giving SQL on the Command Line</a></dt><dt><a href="#N101D6">SQL Files</a></dt><dt><a href="#N101EE">Comments</a></dt><dt><a href="#N10207">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N10229">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
-            Character Encoding</a></dt></dl></dd><dt>6. <a href="#N1024D">Web Application</a></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>1.1. <a href="#N1003E">Alternate formats of this document</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N10020"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></div><p>
+<html><head><META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>SqlTool Manual and HOWTO</title><link href="shared.css" rel="stylesheet" type="text/css"><meta content="DocBook XSL Stylesheets V1.61.3" name="generator"><meta name="keywords" content="HSQLDB, HOWTO, SQL, JDBC"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="N10002"></a>SqlTool Manual and HOWTO</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Blaine</span> <span class="surname">Simpson</span></h3><div class="affiliation"><span class="orgname">HSQLDB Development Group<br></span></div></div></div><div><p class="pubdate">$Date: 2004/04/03 22:35:47 $</p></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt>1. <a href="#N10020">Introduction</a></dt><dd><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></dd><dt>2. <a href="#N10073">The Bare Minimum You Need to Know to Run SqlTool</a></dt><dt>3. <a href="#auth-chapter">Authentication Setup</a></dt><dt>4. <a href="#N1012A">Interactive</a></dt><dd><dl><dt><a href="#N101B4">Raw mode</a></dt></dl></dd><dt>5. <a href="#nonint-chapter">Non-Interactive</a></dt><dd><dl><dt><a href="#N101C9">Giving SQL on the Command Line</a></dt><dt><a href="#N101E7">SQL Files</a></dt><dt><a href="#N101FF">Comments</a></dt><dt><a href="#N10218">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N1023A">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
+            Character Encoding</a></dt></dl></dd><dt>6. <a href="#N1025E">Web Application</a></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>1.1. <a href="#N1003E">Alternate formats of this document</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N10020"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></div><p>
             If you notice any mistakes in this document, please email me at
             <a href="mailto:blaine.simpson@admc.com?subject=sqltool" target="_top">blaine.simpson@admc.com</a> so that I can correct them.
             I've just converted this from Texinfo to Docbook, so there are
@@ -88,9 +48,18 @@ div.section h2.title {
         </p><p>
             To run SQLTool...
         </p><div class="procedure"><ol type="1"><li><p>
-                    Set up an SqlTool  configuration file, as documented in the 
-                    <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a>
-                    chapter of this document.
+                    Copy <a href="sqltool.rc" target="_top">sqltool.rc</a> to your home directory and
+                    secure access to it if your home directory is accessible
+                    to anybody else.
+                    This file will work as-is if your target hsqldb Server is
+                    running on your local computer with default settings,
+                    and the password for the "sa" account is blank
+                    (the sa password is blank when new hsqldb database 
+                    instances are created).
+                    Edit the file if you need to change the target Server URL, 
+                    username, password, character set, or JDBD driver,
+                    as documented in the 
+                    <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a> chapter.
                 </p></li><li><p>
                     Set up your CLASSPATH to include the classes
                     org.hsqldb.util.SqlTool, org.hsqldb.util.SqlFile, and the 
@@ -111,33 +80,33 @@ div.section h2.title {
                     at the default location and you want to use the hsqldb 
                     JDBC driver, you will want to run either
                 </p><div class="informalexample"><pre class="screen">
-    java org.hsqldb.util.SqlTool urlid
+    java org.hsqldb.util.SqlTool localhost-sa
                 </pre></div><p>
                     for interactive use, or
                 </p><div class="informalexample"><pre class="screen">
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
+    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' localhost-sa
                     </pre></div><p>
                     or
                     </p><div class="informalexample"><pre class="screen">
-    java org.hsqldb.util.SqlTool urlid filepath1.sql...
+    java org.hsqldb.util.SqlTool localhost-sa filepath1.sql...
                     </pre></div><p>
-                    where the arguments following the <span class="emphasis"><em>urlid
-                    </em></span> are paths to text SQL files.  For the 
-                    filepaths, you can use whatever wildcards your operating 
-                    system shell supports.
+                    where <tt class="literal">localhost-sa</tt> is an
+                    <span class="emphasis"><em>urlid</em></span>,
+                    and the following arguments are paths to text SQL files.
+                    For the filepaths, you can use whatever wildcards your 
+                    operating system shell supports.
                     </p><p>
-                    The <span class="emphasis"><em>urlid</em></span> in these commands is a key 
-                    into your SqlTol configuration file, as explained in the 
-                    <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a>
-                    chapter of this document.
+                    The <span class="emphasis"><em>urlid</em></span> <tt class="literal">localhost-sa
+                    </tt>in these commands is a key 
+                    into your SqlTool configuration file, as explained in the 
+                    <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a> chapter.
                 </p></li></ol></div><p>
             To use a JDBC Driver other than the hsqldb driver, you must put 
             the jar/zip file in the classpath (as explained in number 2 above), 
             and you must tell SqlTool what the JDBC driver class name is.
             The latter can be accomplished by either using the "--driver" 
             switch, or setting "driver" in your config file.
-            The <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a>
-            chapter of this document
+            The <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a> chapter.
             explains the second method.  Here's an example of the first method.
         </p><div class="informalexample"><pre class="screen">
     java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid
@@ -147,6 +116,8 @@ div.section h2.title {
             In this section, when I say <span class="emphasis"><em>configuration</em></span>
             or <span class="emphasis"><em>config</em></span> file, I mean an SqlTool 
             configuration file (aka SqlTool RC file).
+        </p><p>
+            Here is a <a href="sqltool.rc" target="_top">sample sqltool.rc file</a>.
         </p><p>
             You can put this file anywhere you want to, and specify the 
             location to SqlTool by using the "--rcfile" argument.
@@ -199,7 +170,7 @@ div.section h2.title {
             Character Encoding">
             Character Encoding</a> section of the
                 <a href="#nonint-chapter" title="Chapter&nbsp;5.&nbsp;Non-Interactive">Non-Interactive</a>
-                chapter of this document.
+                chapter.
                 You can, alternatively, set this for one SqlTool invocation 
                 by setting the system property <tt class="literal">sqltool.charset
                 </tt>.
@@ -212,7 +183,7 @@ div.section h2.title {
             </p></dd></dl></div><p>
             Property and SqlTool command-line switches override settings made 
             in the configuration file.
-        </p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N10119"></a>Chapter&nbsp;4.&nbsp;Interactive</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N101A3">Raw mode</a></dt></dl></div><p>
+        </p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N1012A"></a>Chapter&nbsp;4.&nbsp;Interactive</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N101B4">Raw mode</a></dt></dl></div><p>
             You run SqlTool interactively by specifying no SQL filepaths on 
             the SqlTool command line.  Like this.
         </p><div class="informalexample"><pre class="screen">
@@ -220,8 +191,8 @@ div.section h2.title {
         </pre></div><p>
             If it starts up and connects to the database (as specified in your
             SqlTool configuration file as explained in the
-            <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a> chapter
-            of this document), you will be shown a banner describing the 
+            <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a> chapter),
+            you will be shown a banner describing the 
             different command types that you can give, as well as commands to 
             list all of the specific commands available to you.
         </p><p>
@@ -347,7 +318,7 @@ div.section h2.title {
     :s/this//
                 </pre></div><p>
                 would remove all occurrences of "this".
-            </p></dd></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101A3"></a>Raw mode</h2></div></div><div></div></div><p>
+            </p></dd></dl></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101B4"></a>Raw mode</h2></div></div><div></div></div><p>
             If for some reason you want SqlTool to process your commands as 
             if it were reading an SQL file, i.e., without giving a login 
             banner or command prompts, and aborting upon failure by default, 
@@ -358,7 +329,7 @@ div.section h2.title {
             You may want to do this if you are redirecting or tee-ing output 
             to a log file, and you don't want the user-interaction messages 
             ending up in the log file.
-        </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="nonint-chapter"></a>Chapter&nbsp;5.&nbsp;Non-Interactive</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N101B8">Giving SQL on the Command Line</a></dt><dt><a href="#N101D6">SQL Files</a></dt><dt><a href="#N101EE">Comments</a></dt><dt><a href="#N10207">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N10229">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
+        </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="nonint-chapter"></a>Chapter&nbsp;5.&nbsp;Non-Interactive</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N101C9">Giving SQL on the Command Line</a></dt><dt><a href="#N101E7">SQL Files</a></dt><dt><a href="#N101FF">Comments</a></dt><dt><a href="#N10218">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N1023A">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
             Character Encoding</a></dt></dl></div><p>
             Read the <span class="emphasis"><em>Interactive</em></span> section if you have not 
             already, 
@@ -367,7 +338,7 @@ div.section h2.title {
             should really learn to run it interactively because it's such a 
             powerful debugging tool, and you can use it to prototype sql 
             scripts.
-        </p><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101B8"></a>Giving SQL on the Command Line</h2></div></div><div></div></div><p>
+        </p><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101C9"></a>Giving SQL on the Command Line</h2></div></div><div></div></div><p>
             If you just have a couple SQL commands to run, you can run them 
             directly from the comand-line or from a shell script without an 
             SQL file, like this.
@@ -401,7 +372,7 @@ div.section h2.title {
     }
     echo "There are $USERCOUNT users registered in the database."
     [ "$USECOUNT" -gt 3 ] &amp;&amp; {   # If there are more than 3 users registered
-        # Some conditional shell scripting</pre></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101D6"></a>SQL Files</h2></div></div><div></div></div><p>
+        # Some conditional shell scripting</pre></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101E7"></a>SQL Files</h2></div></div><div></div></div><p>
             Just give paths to sql text file(s) on the command line after 
             the <span class="emphasis"><em>urlid</em></span>.
         </p><p>
@@ -424,7 +395,7 @@ div.section h2.title {
             (If you do this, you will probably want a command-line option to
             turn on continue-upon-error behavior.
             As I say below, email me if you need this).
-        </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101EE"></a>Comments</h2></div></div><div></div></div><p>
+        </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101FF"></a>Comments</h2></div></div><div></div></div><p>
             You can use comments of the form
             <tt class="literal">/* An sql comment */</tt>
             inside or outside of SQL Statements.
@@ -435,7 +406,7 @@ div.section h2.title {
             Stand-alone <tt class="literal">/*...*/</tt> comments are just dropped, 
             to avoid unnecessary network traffic and cluttering of command 
             history.
-        </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N10207"></a>Special Commands and Buffer Commands in SQL Files</h2></div></div><div></div></div><p>
+        </p></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N10218"></a>Special Commands and Buffer Commands in SQL Files</h2></div></div><div></div></div><p>
             Don't use Buffer Commands in your sql files, because they won't 
             work.
             Buffer Commands are for interactive use only.
@@ -467,7 +438,7 @@ div.section h2.title {
                 assume continue-on-error since most databases don't give you 
                 any ability to abort upon error.  Let me know if you need this 
                 ability.)
-            </p></dd></dl></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N10229"></a>Getting Interactive Functionality with SQL Files</h2></div></div><div></div></div><p>
+            </p></dd></dl></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N1023A"></a>Getting Interactive Functionality with SQL Files</h2></div></div><div></div></div><p>
             Some script developers may run into cases where they want to run
             with sql files but they want SqlTool's interactive behavior.  For
             example, they may want to do command recall in the sql file, or 
@@ -492,8 +463,8 @@ div.section h2.title {
         </pre></div><p>
             You can also set this per urlid in the SqlTool configuration file.
             See the <a href="#auth-chapter" title="Chapter&nbsp;3.&nbsp;Authentication Setup">Authentication Setup</a>
-            chapter of this document about that.
-        </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N1024D"></a>Chapter&nbsp;6.&nbsp;Web Application</h2></div></div><div></div></div><p>
+            chapter about that.
+        </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N1025E"></a>Chapter&nbsp;6.&nbsp;Web Application</h2></div></div><div></div></div><p>
             It wouldn't bee much trouble for me to make a web application 
             that uses SqlTool so that users can use a HTML text area field 
             to execute SQL Statements.
