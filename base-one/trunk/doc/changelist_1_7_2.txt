@@ -6,6 +6,12 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.07.20
+
+Fixed bug where a foreign key with ON DELETE CASCADE action on a table masked
+other foreign keys on the table and resulted in completion of the 
+cascading action when referential integrity was violated.
+
 2004.07.15 RC_6e
 
 Enhancements to ALTER TABLE ADD COLUMN and DROP COLUMN.
