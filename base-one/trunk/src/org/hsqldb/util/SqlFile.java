@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.20 2004/01/22 05:26:19 unsaved Exp $
+ * $Id: SqlFile.java,v 1.21 2004/01/25 04:51:49 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -504,9 +504,9 @@ public class SqlFile {
                 if (rows.size() != 1) stdprint("\n" + rows.size() + " rows");
                 break;
             default:
-                stdprint(((updateCount == 0) ? "no" 
-                            : Integer.toString(updateCount))
-                        + " row" + ((updateCount == 1) ? "" : "s") + " updated");
+                if (updateCount != 0)
+                stdprint(Integer.toString(updateCount) + " row"
+                        + ((updateCount == 1) ? "" : "s") + " updated");
                 break;
         }
     }
