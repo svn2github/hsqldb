@@ -63,6 +63,9 @@ dbhome="$progdir/.."
 
 dbhome=`cd ${dbhome}; pwd`
 
+AWK=awk
+[ "`uname`" = SunOS ] && AWK=nawk
+
 SWITCHERVERBOSE=
 [ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
 echo 'Running CodeSwitcher...'
@@ -96,7 +99,7 @@ find * -name '*.java' -print | while read file; do case "$file" in
     */*) Failout "File '$file' is at an unexpected location";;
     *) echo $file; continue;;  # This is at top level: src/X.java
 esac; done |
-awk '{
+$AWK '{
     x = $0; sub(/\.java$/, ".class", x); printf ("%s ../classes/%s\n", $0, x);
 }' | while read src cls; do
     # cls = The primary class file for each java file
@@ -104,7 +107,7 @@ awk '{
      Failout "Choked on file '$src' from source file list file '$LISTFILE'"
     NewerThan "$src" "$cls" && echo "$src"
 done > $LISTFILE
-NUMFILES=`awk 'END { print NR;}' $LISTFILE`
+NUMFILES=`$AWK 'END { print NR;}' $LISTFILE`
 
 # TODO:  Use NewerThan() on the $LISTFILE records to exclude the java
 #        files that are not newer than the main corresponding class file.
@@ -148,7 +151,7 @@ find * -name '*.class' -print | while read file; do case "$file" in
     */*) Failout "File '$file' is at an unexpected location";;
     *) echo $file; continue;;  # This is at top level: src/X.java
 esac; done > $LISTFILE
-NUMFILES=`awk 'END { print NR;}' $LISTFILE`
+NUMFILES=`$AWK 'END { print NR;}' $LISTFILE`
 
 echo "Assembling $NUMFILES class files into jar file..."
 "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
