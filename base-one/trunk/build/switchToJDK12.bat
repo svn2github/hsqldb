@@ -11,3 +11,4 @@ java -classpath "%classpath%;../classes org.hsqldb.util.CodeSwitcher" ../src/org
 java -classpath "%classpath%;../classes org.hsqldb.util.CodeSwitcher" ../src/org/hsqldb/jdbcPreparedStatement.java +JAVA2 -JDBC3
 java -classpath "%classpath%;../classes org.hsqldb.util.CodeSwitcher" ../src/org/hsqldb/jdbcResultSet.java +JAVA2 -JDBC3
 java -classpath "%classpath%;../classes org.hsqldb.util.CodeSwitcher" ../src/org/hsqldb/jdbcStatement.java +JAVA2 -JDBC3
+java -classpath "%classpath%;../classes org.hsqldb.util.CodeSwitcher" ../src/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3
