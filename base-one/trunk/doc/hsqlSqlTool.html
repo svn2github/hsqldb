@@ -51,7 +51,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.19 $
+$Revision: 1.20 $
 
 <p>Note that these links are actually to a copy of the doc at the same
 location where you are viewing this from. 
@@ -151,8 +151,13 @@ as explained in the <em>Auth</em> section of this document.
      </ol>
 
 <p>To use a JDBC Driver other than the hsqldb driver, you must put the jar/zip
-file in the classpath (as explained in number 2 above), and you must use
-the "--driver" switch to SqlTool to specify the JDBC Driver class to use.
+file in the classpath (as explained in number 2 above), and you must tell
+SqlTool what the JDBC driver class name is. 
+The latter can be accomplished by either using the "--driver" switch, or
+setting "driver" in your authentication file. 
+The <em>Authentication</em> section of this document explains the second
+method. 
+Here's an example of the first method.
 <pre class="example">         java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid
      </pre>
 
@@ -169,6 +174,11 @@ Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <p>Authentication setup is accomplished by creating a text "authentication
 file".
+
+<p>(NOTE:  the authentication file has evolved so that it now contains
+some SqlTool settings which have nothing to do with authentication. 
+I see little reward, however, to undertake the work to rename it
+appropriately and change all the documentation).
 
 <p>You can put this file anywhere you want to, and specify the location
 to SqlTool by using the "--rcfile" argument. 
@@ -188,6 +198,9 @@ file to be.
          username web
          password webspassword
      </pre>
+These four settings are required for every urlid. 
+(There are optional settings also, which are described a couple paragraphs
+down). 
 You can have as many blank lines and comments like
 <pre class="example">         # This comment
      </pre>
@@ -203,6 +216,25 @@ to use the records in it to run SqlTool.
 On UNIX, this is easily accomplished by using <code>chmod/chown</code> commands
 and making sure that it is protected from anonymous remote access (like
 via NFS, FTP or Samba).
+
+<p>You can also put the following optional settings into a urlid stanze. 
+The setting will, of course, only apply to that urlid.
+     <dl>
+<dt><strong>charset</strong>
+     <dd>Sets encoding character set for input. 
+See <em>Character Encoding</em> in the <em>Non-Interactive</em> section of this
+document. 
+You can, alternatively, set this for one SqlTool invocation by setting the
+system property <em>sqltool.charset</em>. 
+Defaults to <code>US-ASCII</code>. 
+<br><dt><strong>driver</strong>
+     <dd>Sets the JDBC driver class name. 
+You can, alternatively, set this for one SqlTool invocation by using the
+SqlTool switch <em>--driver</em>. 
+Defaults to <code>org.hsqldb.jdbcDriver</code>. 
+</dl>
+Property and SqlTool command-line switches override settings made in
+the authentication file.
 
 <div class="node">
 <p><hr>
@@ -484,6 +516,8 @@ You can use another character set by setting the system property
 <code>sqltool.charset</code>, like
 <pre class="example">         java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...
      </pre>
+You can also set this per urlid in the authentication file. 
+See the <em>Authentication</em> section of this document about that.
 
 <div class="node">
 <p><hr>
