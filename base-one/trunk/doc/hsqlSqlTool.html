@@ -3,7 +3,7 @@
 <title>SqlTool HOWTO</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="SqlTool HOWTO">
-<meta name="generator" content="makeinfo 4.3">
+<meta name="generator" content="makeinfo 4.5">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
 </head>
 <body>
@@ -24,8 +24,14 @@
 </li></ul>
 </li></ul>
 <li><a name="toc_SQLFiles" href="#SQLFiles">SQL Files</a>
+<ul>
+<ul>
+<li><a href="#SQLFiles">Special Commands and Buffer Commands in SQL Files</a>
+<li><a href="#SQLFiles">Getting Interactive Functionality with SQL Files</a>
+<li><a href="#SQLFiles">Character Encoding</a>
+</li></ul>
+</li></ul>
 <li><a name="toc_Webapp" href="#Webapp">Web Application</a>
-<li><a name="toc_Encoding" href="#Encoding">Character Encoding</a>
 </li></ul>
 </div>
 
@@ -42,7 +48,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.13 $
+$Revision: 1.14 $
 
 <p>Note that these links are actually to a copy of the doc at the same
 location where you are viewing this from. 
@@ -69,7 +75,6 @@ of with a web browser, and without losing the linking features).
 <li><a accesskey="4" href="#Interactive">Interactive</a>:  Interactive
 <li><a accesskey="5" href="#SQLFiles">SQLFiles</a>:  SQL Files
 <li><a accesskey="6" href="#Webapp">Webapp</a>:  Web Application
-<li><a accesskey="7" href="#Encoding">Encoding</a>:  Character Encoding
 </ul>
 
 <div class="node">
@@ -346,19 +351,34 @@ Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="unnumbered">SQL Files</h2>
 
-<p>Read the <em>Interactive</em> section if you have not already. 
-Just give paths to sql text file(s) on the command line after the <em>urlid</em>.
+<p>Just give paths to sql text file(s) on the command line after the <em>urlid</em>.
+
+<p>Read the <em>Interactive</em> section if you have not already.
 
 <p>Often, you will want to redirect output to a file, like
 <pre class="example">         java org.hsqldb.util.SqlTool urlid filepath1.sql... &gt; /tmp/log.sql 2&gt;&amp;1
      </pre>
 (Skip the "2&gt;&amp;1" if you're on Windows).
 
+<p>If you are viewing this document as an HTML document, then you can
+right click on <a href="sample.sql">this link</a> to download a sample
+sql file. 
+The sample contains SQL as well as Special Commands making good
+use of the Special Commands documented below.
+
+<p>If you want your SQL scripts optimally compatible among multiple
+databases, then don't use any Special Commands. 
+(If you do this, you will probably want a command-line option to
+turn on continue-upon-error behavior. 
+As I say below, email me if you need this).
+
+<h4 class="unnumberedsubsec">Special Commands and Buffer Commands in SQL Files</h4>
+
 <p>Don't use Buffer Commands in your sql files, because they won't work. 
 Buffer Commands are for interactive use only.
 
-<p>Most Special Commands won't work in sql files, but the following will
-work and are especially useful for use in sql files.
+<p>Most Special Commands won't work in sql files, but the following not only
+work, but were designed for use in sql files.
 
      <dl>
 <dt><em>\p [line to print]</em>
@@ -384,9 +404,7 @@ give you any ability to abort upon error.
 Let me know if you need this ability.) 
 </dl>
 
-<p>If you are viewing this document as an HTML document, then you can
-right click on <a href="sample.sql">this link</a> to download a sample
-sql file.
+<h4 class="unnumberedsubsec">Getting Interactive Functionality with SQL Files</h4>
 
 <p>Some script developers may run into cases where they want to run
 with sql files but they want SqlTool's interactive behavior.  For
@@ -402,10 +420,17 @@ or
          java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1
      </pre>
 
+<h4 class="unnumberedsubsec">Character Encoding</h4>
+
+<p>SqlTool defaults to the US-ASCII character set (for reading). 
+You can use another character set by setting the system property
+<code>sqltool.charset</code>, like
+<pre class="example">         java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...
+     </pre>
+
 <div class="node">
 <p><hr>
 Node:<a name="Webapp">Webapp</a>,
-Next:<a rel="next" accesskey="n" href="#Encoding">Encoding</a>,
 Previous:<a rel="previous" accesskey="p" href="#SQLFiles">SQLFiles</a>,
 Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
@@ -420,39 +445,6 @@ I already have a war that does a similar thing with a different technology.
 So, email me at
 <a href="mailto:blaine.simpson@admc.com?subject=sqltool-war">blaine.simpson@admc.com</a>
 if you would like me to assemble a war like this.
-
-<div class="node">
-<p><hr>
-Node:<a name="Encoding">Encoding</a>,
-Previous:<a rel="previous" accesskey="p" href="#Webapp">Webapp</a>,
-Up:<a rel="up" accesskey="u" href="#Top">Top</a>
-<br>
-</div>
-
-<h2 class="unnumbered">Character Encoding</h2>
-
-<p>Stdin or sql files are read in in the method
-org.hsqldb.util.SqlFile.execute(). 
-The lines are read in, specifically, by doing BufferedReader.readLine()'s
-on a BufferedReader created with either
-<pre class="example">         new BufferedReader(new InputStreamReader(System.in))
-     </pre>
-or
-<pre class="example">         new BufferedReader(new InputStreamReader(new FileInputStream(file)))
-     </pre>
-My understanding is that a BufferedReader reads bytes from the source and
-converts them to characters using the local character encoding.
-
-<p>I don't use sql files to work with non-ASCII data, so I don't know
-what would happen if the SQL file were to contain characters that your
-local encoding does not understand. 
-I would think that it would just pass them through as-is, but since
-the hsqldb ScriptTool also uses BufferedReaders and some users have
-problems with this, they are not just passed through. 
-Many people understand character encoding far better than I do. 
-If somebody can explain this better than me, or can suggest a way to
-read which avoids these encoding problems, please email me at
-<a href="mailto:blaine.simpson@admc.com?subject=sqltool-encoding">blaine.simpson@admc.com</a>.
 
 </body></html>
 
