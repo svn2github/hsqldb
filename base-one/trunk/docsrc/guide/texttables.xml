@@ -1,4 +1,4 @@
-<!-- $Id: texttables.xml,v 1.6 2004/05/19 14:51:44 unsaved Exp $ -->
+<!-- $Id: texttables.xml,v 1.7 2004/06/09 13:00:41 fredt Exp $ -->
 
 <chapter id='texttables-chapter'>
     <title id='texttables-title'>Text Tables</title>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/05/19 14:51:44 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/06/09 13:00:41 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
@@ -272,12 +272,19 @@
     SET TABLE mytable SOURCE "myfile;ignore_first=true;all_quoted=true;cache_scale=12"</programlisting>
         </section>
     </section>
+
+    <!-- Blaine adding section here because otherwise the resultant documents
+         looke exactly like the following is all part of the Implementation
+         section. -->
+    <section><title>Text File Issues</title>
     <itemizedlist>
         <title>Text File Issues</title>
         <listitem><para>
             File locations are restricted to below the directory that 
             contains the database, unless the textdb.allow_full_path property
 			is set true in the database properties file.
+        </para></listitem> <listitem><para>
+            Blank lines are allowed anywhere in the text file, and are ignored.
         </para></listitem> <listitem><para>
             The file location for a text table created with
             </para><programlisting>
@@ -314,6 +321,10 @@
             character.
         </para></listitem>
     </itemizedlist>
+    </section>
+
+    <!-- See my comment for the previous section. -->
+    <section><title>Text File Global Properties</title>
     <itemizedlist>
         <title>
             Complete list of supported global properties in *.properties files
@@ -327,4 +338,29 @@
         <listitem><para><literal>textdb.cache_scale</literal></para></listitem>
         <listitem><para><literal>textdb.allow_full_path</literal></para></listitem>
     </itemizedlist>
+    </section>
+
+    <section>
+        <title>
+         Importing a Text Table file in to a Traditional (non-Text Table) Table
+        </title>
+        <titleabbrev>Importing from a Text Table file</titleabbrev>
+        <simpara>
+            The directory <filename>src/org/hsqldb/sample</filename> in your
+            HSQLDB distibution contains a file named
+            <filename>load_binding_lu.sql</filename>.
+            This is a working SQL file which imports a pipe-delimited text file
+            from the database's file directory into an existing normal table.
+            You can edit a copy of this file and use it directly with
+            <link linkend='sqltool-chapter'>SqlTool</link>, or you can use the
+            SQL therein as a model (using any SQL client at all).
+        </simpara>
+        <!--
+        <example><title>
+                SQL File which imports a text file into a traditional table
+            </title>
+            <programlisting>&load_binding_lu.sql-cdata;</programlisting>
+        </example>
+        -->
+    </section>
 </chapter>
