@@ -1,4 +1,7 @@
 #!/bin/sh +u
+
+# $Id$
+
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
 # Post questions to the appropriate hsqldb forum at sourceforge.net
@@ -35,15 +38,17 @@ while [ $# -gt 0 ]; do
 	;;
 	*)	# Version
 	    case "$1" in
-	    	1.4|1.2|1.1) NEWVER="$1";;
-		1.3) NEWVER=1.2;;
+	    	1.4|pre1.4|1.1) NEWVER="$1";;
+		1.3|1.2) NEWVER=pre1.4
+		    echo "WARNING:  Target is '$JDKVER'" 1>&2
+		;;
 	    esac
 	;;
     esac
     shift
 done
 [ -n "$NEWVER" ] || {
-    echo "SYNTAX:  $progname [-v] {1.1|1.2|1.3|1.4}" 1>&2
+    echo "SYNTAX:  $progname [-v] {1.1|pre1.4|1.4}" 1>&2
     exit 2
 }
 
@@ -72,7 +77,7 @@ case "$NEWVER" in
     # resides elsewhere, then just change this script to use paths
     # relative to $dbhome instead of to $dbhome/src/org/hsqldb.
     1.1) CS_LABELS='-JAVA2 -JDBC3' ;;
-    1.2) CS_LABELS='+JAVA2 -JDBC3' ;;
+    pre1.4) CS_LABELS='+JAVA2 -JDBC3' ;;
     1.4) CS_LABELS='+JAVA2 +JDBC3' ;;
 esac
 [ -n "$CS_LABELS" ] || Failout "Internal error.  "'$CS_LABELS is not set.'

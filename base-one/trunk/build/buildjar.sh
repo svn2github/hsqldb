@@ -1,9 +1,6 @@
 #!/bin/sh
 
-#  N.b.:   NOT FUNCTIONAL YET!!!!!
-
-NOSWING=   # I don't know when we want this set
-
+# $Id$
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -38,17 +35,21 @@ while [ $# -gt 0 ]; do
 	;;
 	*)	# Version
 	    case "$1" in
-	    	1.4|1.2|1.1) JDKVER="$1";;
-		1.3) JDKVER=1.2;;
+	    	1.4|pre1.4|1.1) JDKVER="$1";;
+		1.2|1.3) JDKVER=pre1.4
+		    echo "WARNING:  Target is '$JDKVER'" 1>&2
+		;;
 	    esac
 	;;
     esac
     shift
 done
 [ -n "$JDKVER" ] || {
-    echo "SYNTAX:  $progname [-v] {1.1|1.2|1.3|1.4}" 1>&2
+    echo "SYNTAX:  $progname [-v] {1.1|pre1.4|1.4}" 1>&2
     exit 2
 }
+NOSWING=
+[ "$JDKVER" = 1.1 ] && NOSWING=1
 
 Failout() {
     [ "$#" -gt 0 ] || Failout "There is a bad Failout invocation in $progname"
@@ -69,7 +70,7 @@ AWK=awk
 SWITCHERVERBOSE=
 [ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
 echo 'Running CodeSwitcher...'
-$dbhome/build/switchjdk.sh $SWITCHERVERBOSE $JDKVER || exit $?
+$dbhome/build/settargetjre.sh $SWITCHERVERBOSE $JDKVER || exit $?
 
 # Generic initialization for $CLASSPATH, etc.
 . ${dbhome}/lib/functions
