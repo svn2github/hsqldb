@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.25 2004/01/26 19:57:51 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.27 2004/02/07 14:32:02 fredt Exp $ */
 
 /**
  * Definitions.
@@ -61,7 +61,7 @@ import java.util.StringTokenizer;
  * special commands until we really need more.
  *
  * For now, using Sql*plus's method of only keeping SQL statements
- * in history.
+ * in history (as opposed to Special commands and comments).
  */
 public class SqlFile {
 
@@ -96,6 +96,7 @@ public class SqlFile {
         + " !!!\\! [command to run]  * Shell out\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\dt                  List tables\n"
+        + "    \\d TABLENAME         Describe table\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands\n"
@@ -499,9 +500,12 @@ public class SqlFile {
     private void listTables() throws SQLException {
 
         int[] listTableCols = { 3 };
+        java.sql.DatabaseMetaData md = curConn.getMetaData();
+
+//System.err.println("DB NAME = (" + md.getDatabaseProductName() + ')');
 
         displayResultSet(
-            null, curConn.getMetaData().getTables(null, null, null, null),
+            null, md.getTables(null, null, null, null),
             listTableCols, "SYSTEM_");
     }
 
