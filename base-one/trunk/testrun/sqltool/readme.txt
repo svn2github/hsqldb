@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.7 2004/06/16 18:30:04 unsaved Exp $
+$Id: readme.txt,v 1.8 2004/06/16 18:50:59 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -83,7 +83,10 @@ To make a new SQL test file.
     zillion files (what if we need to update an explanation!), plus,
     I like the real test files to be nice and concise.
 
-    In general, try to use a Memory-only urlid named "mem".
+    In general, try to use a Memory-only urlid named "mem".  This is
+    just simpler because the url is easy to set up, you don't have to
+    worry about the state of the database when you connect, and you
+    don't need to worry about cleanup.
 
 
 Regexes
