@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.31 2004/02/16 21:20:13 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.32 2004/02/16 21:32:09 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision$
+ * @version $Revision: 1.32 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -240,6 +240,16 @@ public class SqlFile {
                 inputLine = br.readLine();
 
                 if (inputLine == null) {
+
+                    /*
+                     * This is because interactive EOD on some OSes doesn't
+                     * send a line-break, resulting in no linebreak at all
+                     * after the SqlFile prompt or whatever happens to be 
+                     * on their screen.
+                     */
+                    if (interactive) {
+                        psStd.println();
+                    }
                     break;
                 }
 
