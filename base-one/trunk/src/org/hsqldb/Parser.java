@@ -79,6 +79,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // support for sql standard quoted identifiers for column and table names
 // fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
 // support for default values for table columns
+// fredt@users 20020221 - patch 513005 by sqlbob@users - SELECT INTO types
 // fredt@users 20020425 - patch 548182 by skitt@users - DEFAULT enhancement
 // thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
 // fredt@users 20021229 - patch 473613 by fredt - new solution for above
@@ -108,9 +109,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 /** @todo fredt - implement numeric value functions (SQL92 6.6)
  *
  * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
- *
- *
- *  */
+ */
 class Parser {
 
     private Database  database;
@@ -342,26 +341,40 @@ class Parser {
         } while (token.equals(Token.T_COMMA));
 
         if (token.equals(Token.T_INTO)) {
+            boolean getname = true;
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             token = tokenizer.getString();
 
-            if (token.equals(Token.T_CACHED)) {
-                select.intoType = Table.CACHED_TABLE;
-                select.sIntoTable = database.nameManager.newHsqlName(
-                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
-            } else if (token.equals(Token.T_TEMP)) {
-                select.intoType = Table.TEMP_TABLE;
-                select.sIntoTable = database.nameManager.newHsqlName(
-                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
-            } else if (token.equals(Token.T_TEXT)) {
-                select.intoType = Table.TEXT_TABLE;
-                select.sIntoTable = database.nameManager.newHsqlName(
-                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
-            } else {
-                select.sIntoTable = database.nameManager.newHsqlName(token,
-                        tokenizer.wasQuotedIdentifier());
+            switch (Token.get(token)) {
+
+                case Token.CACHED :
+                    select.intoType = Table.CACHED_TABLE;
+                    break;
+
+                case Token.TEMP :
+                    select.intoType = Table.TEMP_TABLE;
+                    break;
+
+                case Token.TEXT :
+                    select.intoType = Table.TEXT_TABLE;
+                    break;
+
+                case Token.MEMORY :
+                    select.intoType = Table.MEMORY_TABLE;
+                    break;
+
+                default :
+                    select.intoType = Table.MEMORY_TABLE;
+                    getname         = false;
+                    break;
             }
+
+            if (getname) {
+                token = tokenizer.getString();
+            }
+
+            select.sIntoTable = database.nameManager.newHsqlName(token,
+                    tokenizer.wasQuotedIdentifier());
 
             tokenizer.checkUnexpectedParam("parametric table identifier");
 
@@ -394,18 +407,21 @@ class Parser {
                 vfilter.add(parseTableFilter(true));
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addConditionOuter(condition, parseExpression());
+                condition = addJoinCondition(condition, parseExpression(),
+                                             true);
             } else if (token.equals(Token.T_INNER)) {
                 tokenizer.getThis(Token.T_JOIN);
                 vfilter.add(parseTableFilter(false));
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addCondition(condition, parseExpression());
+                condition = addJoinCondition(condition, parseExpression(),
+                                             false);
             } else if (token.equals(Token.T_JOIN)) {
                 vfilter.add(parseTableFilter(false));
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addCondition(condition, parseExpression());
+                condition = addJoinCondition(condition, parseExpression(),
+                                             false);
             } else if (token.equals(Token.T_COMMA)) {
                 vfilter.add(parseTableFilter(false));
             } else {
@@ -414,73 +430,7 @@ class Parser {
         }
 
         tokenizer.back();
-
-        int         len      = vfilter.size();
-        TableFilter filter[] = new TableFilter[len];
-
-        vfilter.toArray(filter);
-
-        select.tFilter = filter;
-
-        // expand [table.]* columns
-        len = vcolumn.size();
-
-        for (int i = 0; i < len; i++) {
-            Expression e = (Expression) (vcolumn.get(i));
-
-            if (e.getType() == Expression.ASTERIX) {
-                int    current = i;
-                Table  table   = null;
-                String n       = e.getTableName();
-
-                for (int t = 0; t < filter.length; t++) {
-                    TableFilter f = filter[t];
-
-                    e.resolve(f);
-
-                    if (n != null &&!n.equals(f.getName())) {
-                        continue;
-                    }
-
-                    table = f.getTable();
-
-                    int col = table.getColumnCount();
-
-                    for (int c = 0; c < col; c++) {
-
-//
-/*
-                        Expression ins = new Expression(
-                            f.getName(), table.getColumn(c).columnName.name,
-                            table.getColumn(c).columnName.isNameQuoted);
-*/
-                        Expression ins = new Expression(f.getName(),
-                                                        table.getColumn(c));
-
-                        vcolumn.add(current++, ins);
-
-                        // now there is one element more to parse
-                        len++;
-                    }
-                }
-
-                Trace.check(table != null, Trace.TABLE_NOT_FOUND, n);
-
-                // minus the asterix element
-                len--;
-
-                vcolumn.remove(current);
-            } else if (e.getType() == Expression.COLUMN) {
-                if (e.getTableName() == null) {
-                    for (int filterIndex = 0; filterIndex < filter.length;
-                            filterIndex++) {
-                        e.resolve(filter[filterIndex]);
-                    }
-                }
-            }
-        }
-
-        select.iResultLen = len;
+        resolveTableFilter(select, vcolumn, vfilter);
 
         // where
         token = tokenizer.getString();
@@ -497,7 +447,7 @@ class Parser {
         if (token.equals(Token.T_GROUP)) {
             tokenizer.getThis(Token.T_BY);
 
-            len = 0;
+            int len = 0;
 
             do {
                 Expression e = parseExpression();
@@ -526,70 +476,160 @@ class Parser {
             vcolumn.add(select.havingCondition);
         }
 
-        if (token.equals(Token.T_ORDER)) {
-            tokenizer.getThis(Token.T_BY);
+        switch (Token.get(token)) {
 
-            len = 0;
-
-            do {
-                Expression e = parseExpression();
-
-                checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
-
-                e     = checkOrderByColumns(e, vcolumn);
+            case Token.UNION :
                 token = tokenizer.getString();
 
-                if (token.equals(Token.T_DESC)) {
-                    e.setDescending();
+                if (token.equals(Token.T_ALL)) {
+                    select.iUnionType = Select.UNIONALL;
+                } else {
+                    select.iUnionType = Select.UNION;
 
-                    token = tokenizer.getString();
-                } else if (token.equals(Token.T_ASC)) {
-                    token = tokenizer.getString();
+                    tokenizer.back();
                 }
 
-                vcolumn.add(e);
+                tokenizer.getThis(Token.T_SELECT);
 
-                len++;
-            } while (token.equals(Token.T_COMMA));
+                select.sUnion = parseSelect();
+                break;
 
-            select.iOrderLen = len;
+            case Token.INTERSECT :
+                tokenizer.getThis(Token.T_SELECT);
+
+                select.iUnionType = Select.INTERSECT;
+                select.sUnion     = parseSelect();
+                break;
+
+            case Token.EXCEPT :
+            case Token.MINUS :
+                tokenizer.getThis(Token.T_SELECT);
+
+                select.iUnionType = Select.EXCEPT;
+                select.sUnion     = parseSelect();
+                break;
+
+            default :
+                tokenizer.back();
+                break;
         }
 
-        len            = vcolumn.size();
-        select.eColumn = new Expression[len];
+        if (select.sUnion != null && select.sUnion.iOrderLen != 0) {
+            throw Trace.error(Trace.ORDER_BY_POSITION);
+        }
 
-        vcolumn.toArray(select.eColumn);
+        token = tokenizer.getString();
 
-        if (token.equals(Token.T_UNION)) {
-            token = tokenizer.getString();
-
-            if (token.equals(Token.T_ALL)) {
-                select.iUnionType = Select.UNIONALL;
-            } else {
-                select.iUnionType = Select.UNION;
-
-                tokenizer.back();
-            }
-
-            tokenizer.getThis(Token.T_SELECT);
-
-            select.sUnion = parseSelect();
-        } else if (token.equals(Token.T_INTERSECT)) {
-            tokenizer.getThis(Token.T_SELECT);
-
-            select.iUnionType = Select.INTERSECT;
-            select.sUnion     = parseSelect();
-        } else if (token.equals(Token.T_EXCEPT)
-                   || token.equals(Token.T_MINUS)) {
-            tokenizer.getThis(Token.T_SELECT);
-
-            select.iUnionType = Select.EXCEPT;
-            select.sUnion     = parseSelect();
+        if (token.equals(Token.T_ORDER)) {
+            tokenizer.getThis(Token.T_BY);
+            parseOrderBy(select, vcolumn);
         } else {
             tokenizer.back();
         }
 
+        int len = vcolumn.size();
+
+        select.eColumn = new Expression[len];
+
+        vcolumn.toArray(select.eColumn);
+
         return select;
+    }
+
+    private void parseOrderBy(Select select,
+                              HsqlArrayList vcolumn) throws HsqlException {
+
+        String token;
+        int    len = 0;
+
+        do {
+            Expression e = parseExpression();
+
+            checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
+
+            e     = checkOrderByColumns(e, vcolumn);
+            token = tokenizer.getString();
+
+            if (token.equals(Token.T_DESC)) {
+                e.setDescending();
+
+                token = tokenizer.getString();
+            } else if (token.equals(Token.T_ASC)) {
+                token = tokenizer.getString();
+            }
+
+            vcolumn.add(e);
+
+            len++;
+        } while (token.equals(Token.T_COMMA));
+
+        select.iOrderLen = len;
+    }
+
+    private void resolveTableFilter(Select select, HsqlArrayList vcolumn,
+                                    HsqlArrayList vfilter)
+                                    throws HsqlException {
+
+        int         len       = vfilter.size();
+        TableFilter filters[] = new TableFilter[len];
+
+        vfilter.toArray(filters);
+
+//
+        select.tFilter = filters;
+
+        // expand [table.]* columns
+        len = vcolumn.size();
+
+        for (int i = 0; i < len; i++) {
+            Expression e = (Expression) (vcolumn.get(i));
+
+            if (e.getType() == Expression.ASTERIX) {
+                int    current = i;
+                Table  table   = null;
+                String n       = e.getTableName();
+
+                for (int t = 0; t < filters.length; t++) {
+                    TableFilter f = filters[t];
+
+                    e.resolve(f);
+
+                    if (n != null &&!n.equals(f.getName())) {
+                        continue;
+                    }
+
+                    table = f.getTable();
+
+                    int col = table.getColumnCount();
+
+                    for (int c = 0; c < col; c++) {
+                        Expression ins = new Expression(f.getName(),
+                                                        table.getColumn(c));
+
+                        vcolumn.add(current++, ins);
+
+                        // now there is one element more to parse
+                        len++;
+                    }
+                }
+
+                Trace.check(table != null, Trace.TABLE_NOT_FOUND, n);
+
+                // minus the asterix element
+                len--;
+
+                vcolumn.remove(current);
+            } else if (e.getType() == Expression.COLUMN) {
+                if (e.getTableName() == null) {
+                    for (int filterIndex = 0; filterIndex < filters.length;
+                            filterIndex++) {
+                        e.resolve(filters[filterIndex]);
+                    }
+                }
+            }
+        }
+
+        select.iResultLen = len;
     }
 
     /**
@@ -672,11 +712,12 @@ class Parser {
 
             t.addColumns(s);
 
-            // TODO:  (fredt - you often can't as the subquery column involved in join does not have unique values)
+            // TODO:
             // We lose / do not exploit index info here.
             // Look at what, if any, indexes the query might benefit from
             // and create or carry them across here if it might speed up
             // subsequent access.
+            // fredt - you often can't as the subquery column involved in join does not have unique values
             t.createPrimaryKey();
         } else {
             tokenizer.checkUnexpectedParam("parametric table identifier");
@@ -796,10 +837,10 @@ class Parser {
         }
     }
 
-    private Expression addConditionOuter(Expression e1,
-                                         Expression e2) throws HsqlException {
+    private Expression addJoinCondition(Expression e1, Expression e2,
+                                        boolean outer) throws HsqlException {
 
-        if (!e2.setForOuterJoin()) {
+        if (!e2.setForJoin(outer)) {
             throw Trace.error(Trace.OUTER_JOIN_CONDITION);
         }
 
@@ -957,102 +998,17 @@ class Parser {
                 switch (iToken) {
 
                     case Expression.LIKE : {
-                        read();
-
-                        Expression b      = readConcat();
-                        char       escape = 0;
-
-                        if (sToken.equals(Token.T_ESCAPE)) {
-                            read();
-
-                            Expression c = readTerm();
-
-                            Trace.check(c.getType() == Expression.VALUE,
-                                        Trace.INVALID_ESCAPE);
-
-                            String s = (String) c.getValue(Types.VARCHAR);
-
-                            if (s == null || s.length() < 1) {
-                                throw Trace.error(Trace.INVALID_ESCAPE, s);
-                            }
-
-                            escape = s.charAt(0);
-                        }
-
-                        a = new Expression(Expression.LIKE, a, b);
-
-                        a.setLikeEscape(escape);
+                        a = parseLikePredicate(a);
 
                         break;
                     }
                     case Expression.BETWEEN : {
-                        read();
-
-                        Expression l = new Expression(Expression.BIGGER_EQUAL,
-                                                      a, readConcat());
-
-                        readThis(Expression.AND);
-
-                        Expression h =
-                            new Expression(Expression.SMALLER_EQUAL, a,
-                                           readConcat());
-
-                        checkParamAmbiguity(
-                            !(l.getArg().isParam() && l.getArg2().isParam()),
-                            "for both the first and second operands of a BETWEEN comparison predicate");
-                        checkParamAmbiguity(
-                            !(h.getArg().isParam() && h.getArg2().isParam()),
-                            "for both the first and third operands of a BETWEEN comparison predicate");
-
-                        a = new Expression(Expression.AND, l, h);
+                        a = parseBetweenPredicate(a);
 
                         break;
                     }
                     case Expression.IN : {
-                        int type = iToken;
-
-                        read();
-                        readThis(Expression.OPEN);
-
-                        Expression b = null;
-
-                        if (iToken == Expression.SELECT) {
-                            b = new Expression(parseSelect());
-
-                            read();
-                        } else {
-                            tokenizer.back();
-
-                            HsqlArrayList v = new HsqlArrayList();
-
-                            while (true) {
-
-                                // part of bigger IN list TODO:
-                                // allow parametric list items
-                                tokenizer.checkUnexpectedParam(
-                                    "parametric IN list item");
-
-                                Object value = getValue(Types.VARCHAR);
-
-                                if (value == null) {
-                                    throw Trace.error(
-                                        Trace.NULL_IN_VALUE_LIST);
-                                }
-
-                                v.add(value);
-                                read();
-
-                                if (iToken != Expression.COMMA) {
-                                    break;
-                                }
-                            }
-
-                            b = new Expression(v);
-                        }
-
-                        readThis(Expression.CLOSE);
-
-                        a = new Expression(type, a, b);
+                        a = this.parseInPredicate(a);
 
                         break;
                     }
@@ -1078,6 +1034,117 @@ class Parser {
                 return a;
             }
         }
+    }
+
+    Expression parseLikePredicate(Expression a) throws HsqlException {
+
+        read();
+
+        Expression b = readConcat();
+
+        // boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
+        // correct default like escape characters (i.e. the one
+        // we report from jdbcDatabaseMetaData)
+        char escape = '\\';    // was 0
+
+        if (sToken.equals(Token.T_ESCAPE)) {
+            read();
+
+            Expression c = readTerm();
+
+            Trace.check(c.getType() == Expression.VALUE,
+                        Trace.INVALID_ESCAPE);
+
+            String s = (String) c.getValue(Types.VARCHAR);
+
+            // boucherb@users 2003-09-25
+            // CHECKME:
+            // Assert s.length() == 1 for xxxchar comparisons?
+            // TODO:
+            // SQL200n says binary escape can be 1 or more octets.
+            // Maybe we need to retain s and check this in
+            // Expression.resolve()?
+            if (s == null || s.length() < 1) {
+                throw Trace.error(Trace.INVALID_ESCAPE, s);
+            }
+
+            escape = s.charAt(0);
+        }
+
+        a = new Expression(Expression.LIKE, a, b, escape);
+
+        return a;
+    }
+
+    Expression parseBetweenPredicate(Expression a) throws HsqlException {
+
+        read();
+
+        Expression l = new Expression(Expression.BIGGER_EQUAL, a,
+                                      readConcat());
+
+        readThis(Expression.AND);
+
+        Expression h = new Expression(Expression.SMALLER_EQUAL, a,
+                                      readConcat());
+
+        checkParamAmbiguity(
+            !(l.getArg().isParam() && l.getArg2().isParam()),
+            "for both the first and second operands of a BETWEEN comparison predicate");
+        checkParamAmbiguity(
+            !(h.getArg().isParam() && h.getArg2().isParam()),
+            "for both the first and third operands of a BETWEEN comparison predicate");
+
+        return new Expression(Expression.AND, l, h);
+    }
+
+    Expression parseInPredicate(Expression a) throws HsqlException {
+
+        int type = iToken;
+
+        read();
+        readThis(Expression.OPEN);
+
+        Expression b = null;
+
+        if (iToken == Expression.SELECT) {
+            Select select = parseSelect();
+
+            select.resolve();
+
+            b = new Expression(select);
+
+            read();
+        } else {
+            tokenizer.back();
+
+            HsqlArrayList v = new HsqlArrayList();
+
+            while (true) {
+                Expression value = parseExpression();
+
+                if (value.exprType == Expression.VALUE
+                        && value.valueData == null &&!value.isParam()) {
+                    throw Trace.error(Trace.NULL_IN_VALUE_LIST);
+                }
+
+                v.add(value);
+                read();
+
+                if (iToken != Expression.COMMA) {
+                    break;
+                }
+            }
+
+            Expression[] valueList;
+
+            valueList = (Expression[]) v.toArray(new Expression[v.size()]);
+            b         = new Expression(valueList);
+        }
+
+        readThis(Expression.CLOSE);
+
+        return new Expression(type, a, b);
     }
 
     /**
@@ -1324,7 +1391,7 @@ class Parser {
                 // thenelse part is never evaluated; only init
                 thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
                                           readOr());
-                r        = new Expression(type, r, thenelse);
+                r = new Expression(type, r, thenelse);
 
                 readThis(Expression.CLOSE);
 
@@ -1364,7 +1431,7 @@ class Parser {
 
                 thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
                                           exprelse);
-                r        = new Expression(type, r, thenelse);
+                r = new Expression(type, r, thenelse);
 
                 break;
             }
@@ -1400,7 +1467,7 @@ class Parser {
                 Expression left = readOr();
 
                 while (true) {
-                readThis(Expression.COMMA);
+                    readThis(Expression.COMMA);
 
                     Expression right = readOr();
                     Expression thenelse =
@@ -1421,7 +1488,7 @@ class Parser {
                     left = right;
 
                     if (iToken == Expression.CLOSE) {
-                readThis(Expression.CLOSE);
+                        readThis(Expression.CLOSE);
 
                         break;
                     }

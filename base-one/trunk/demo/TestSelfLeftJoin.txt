@@ -58,6 +58,11 @@ insert into credits values(2,1,2000);
 insert into credits values(3,2,100);
 insert into credits values(4,2,200);
 
+--outer join
+/*c7*/select own.*, ac.*, cred.* from owners own
+ left outer join accounts ac on own.id = ac.ownerid
+ left outer join credits cred on cred.accountid = ac.id
+
 --ACCOUNTS are outer joined with credits to show account balance
 /*c4*/select ac.accountname,ac.accountnr,sum(cred.amount) from accounts ac
  left outer join credits cred on cred.accountid=ac.id
@@ -132,3 +137,33 @@ insert into CHILD values (1,1)
 /*c1*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
 /*rISNULL*/select COALESCE(CAST(CHILD.ID AS VARCHAR),'ISNULL'),BASE.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
 
+--bug #736327
+create table emp(company_id varchar(10),id varchar(20),supervisor_id varchar(20), primary key (company_id,id));
+insert into emp values ('01','1000',null);
+insert into emp values ('01','1001','1000');
+/*c2*/select id,supervisor_id from emp e left join emp s on
+ e.company_id = s.company_id and e.supervisor_id = s.id;
+--
+--bug #676083
+--
+DROP TABLE T_BOSS IF EXISTS;
+DROP TABLE T_EMPLOYEE IF EXISTS;
+CREATE TABLE T_BOSS (FIRST VARCHAR,LAST VARCHAR);
+CREATE TABLE T_EMPLOYEE (FIRST VARCHAR,LAST VARCHAR);
+INSERT INTO T_BOSS VALUES ('Ludovic','ANCIAUX');
+INSERT INTO T_EMPLOYEE VALUES ('Ludovic','ANCIAUX');
+INSERT INTO T_EMPLOYEE VALUES ('Bill','GATES');
+/*c1*/SELECT * FROM T_EMPLOYEE LEFT JOIN T_BOSS
+ ON T_EMPLOYEE.FIRST = T_BOSS.FIRST WHERE T_BOSS.FIRST IS Null;
+--
+--bug #674025
+--
+CREATE TABLE boss (id INTEGER PRIMARY KEY, name VARCHAR, UNIQUE(name));
+CREATE TABLE employee (id INTEGER PRIMARY KEY, name VARCHAR, bossid INTEGER,
+ FOREIGN KEY(bossid) REFERENCES boss (id), UNIQUE(name));
+INSERT INTO boss (id, name) VALUES (1, 'phb');
+INSERT INTO employee (id, name, bossid) VALUES (2,'dilbert', 1);
+INSERT INTO employee (id, name, bossid) VALUES (3, 'wally', null);
+/*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid);
+/*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid AND e.name='dilbert');
+/*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid AND b.name='dilbert');

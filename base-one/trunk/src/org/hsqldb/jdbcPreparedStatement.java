@@ -1356,7 +1356,9 @@ implements java.sql.PreparedStatement {
             chread = reader.read(buffer);
 
             if (chread == -1) {
-                throw new IOException("End of stream with no data read");
+                throw new IOException(
+                    Trace.getMessage(
+                        Trace.jdbcPreparedStatement_setCharacterStream));
             }
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED,
@@ -1571,7 +1573,8 @@ implements java.sql.PreparedStatement {
             chread = x.getCharacterStream().read(buffer);
 
             if (chread == -1) {
-                throw new IOException("End of stream with no data read");
+                throw new IOException(
+                    Trace.getMessage(Trace.jdbcPreparedStatement_setClob));
             }
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED,

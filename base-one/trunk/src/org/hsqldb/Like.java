@@ -79,6 +79,8 @@ class Like {
     private int[]   iType;
     private int     iLen;
     private boolean bIgnoreCase;
+    private int     iFirstWildCard = -1;
+    private boolean isNull;
 
     /**
      * Constructor declaration
@@ -90,7 +92,9 @@ class Like {
      */
     Like(String s, char escape, boolean ignorecase) {
 
-        if (ignorecase) {
+        isNull = s == null;
+
+        if (!isNull && ignorecase) {
             s = s.toUpperCase();
         }
 
@@ -209,11 +213,8 @@ class Like {
 
         iLen = 0;
 
-        if (s == null) {
-            return;
-        }
-
-        int l = s.length();
+        int l = s == null ? 0
+                          : s.length();
 
         cLike = new char[l];
         iType = new int[l];
@@ -231,6 +232,10 @@ class Like {
                     continue;
                 } else if (c == '_') {
                     iType[iLen] = 1;
+
+                    if (iFirstWildCard == -1) {
+                        iFirstWildCard = iLen;
+                    }
                 } else if (c == '%') {
                     if (bPercent) {
                         continue;
@@ -238,6 +243,10 @@ class Like {
 
                     bPercent    = true;
                     iType[iLen] = 2;
+
+                    if (iFirstWildCard == -1) {
+                        iFirstWildCard = iLen;
+                    }
                 } else {
                     bPercent = false;
                 }
@@ -255,5 +264,89 @@ class Like {
                 iType[i + 1] = 2;
             }
         }
+    }
+
+    boolean hasWildcards() {
+        return iFirstWildCard != -1;
+    }
+
+    boolean isEquivalentToFalsePredicate() {
+        return isNull;
+    }
+
+    boolean isEquivalentToEqualsPredicate() {
+        return iFirstWildCard == -1;
+    }
+
+    boolean isEquivalentToNotNullPredicate() {
+
+        if (cLike.length == 1 && iType[0] == 2) {
+            return true;
+        }
+
+        for (int i = 0; i < iType.length; i++) {
+            if (iType[i] == 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    boolean isEquivalentToBetweenPredicate() {
+        return iFirstWildCard > 0 && iFirstWildCard == iType.length - 1
+               && cLike[iFirstWildCard] == '%';
+    }
+
+    boolean isEquivalentToBetweenPredicateAugmentedWithLike() {
+        return iFirstWildCard > 0 && cLike[iFirstWildCard] == '%';
+    }
+
+    String getRangeLow() {
+        return getStartsWith();
+    }
+
+    String getRangeHigh() {
+
+        String s = getStartsWith();
+
+        return s == null ? null
+                         : s.concat("\uffff'");
+    }
+
+    public String toString() {
+
+        return super.toString() + "[\n" + "bIgnoreCase=" + bIgnoreCase + '\n'
+               + "iLen=" + iLen + '\n' + "cLike="
+               + org.hsqldb.lib.StringUtil.arrayToString(cLike) + '\n'
+               + "iType=" + org.hsqldb.lib.StringUtil.arrayToString(iType)
+               + ']';
+    }
+
+    static int indexOf(String s, int start, char search, String escape) {
+
+        // PRE:
+        // s != null
+        // s.length() > 0
+        // start >= 0 and start < s.length()
+        int pos = s.indexOf(search, start);
+
+        while (pos > -1 && s.regionMatches(pos - 1, escape, 0, 1)) {
+            pos = s.indexOf(search, pos + 1);
+        }
+
+        return pos;
+    }
+
+    public static void main(String[] args) {
+
+        String s    = "name444%_";
+        Like   like = new Like(s, '\\', false);
+
+        System.out.println(like);
+
+        boolean b = like.isEquivalentToBetweenPredicateAugmentedWithLike();
+
+        System.out.println(b);
     }
 }

@@ -103,7 +103,7 @@ public class Trace extends PrintWriter {
     private static int          iStop = 0;
 
     //
-    public static final int                                             //
+    public static final int    //
          DATABASE_ALREADY_IN_USE             = 1,
      CONNECTION_IS_CLOSED                = 2,
      CONNECTION_IS_BROKEN                = 3,
@@ -234,67 +234,86 @@ public class Trace extends PrintWriter {
      jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
 
     // new one
-    TableFilter_findFirst                = 122,
-     Table_moveDefinition                = 123,
-     STRING_DATA_TRUNCATION              = 124,
-     QUOTED_IDENTIFIER_REQUIRED          = 125,
-     STATEMENT_IS_CLOSED                 = 126,
-     DatabaseRowInput_skipBytes          = 127,
-     DatabaseRowInput_readLine           = 128,
-     DataFileDefrag_writeTableToDataFile = 129,
-     DiskNode_writeTranslatePointer      = 130,
-     HsqlDateTime_null_string            = 131,
-     HsqlDateTime_invalid_timestamp      = 132,
-     HsqlDateTime_null_date              = 133,
-     HsqlDateTime_invalid_date           = 134,
-     HsqlProperties_load                 = 135
-    ;
+    TableFilter_findFirst                                        = 122,
+                  Table_moveDefinition                           = 123,
+                  STRING_DATA_TRUNCATION                         = 124,
+                  QUOTED_IDENTIFIER_REQUIRED                     = 125,
+                  STATEMENT_IS_CLOSED                            = 126,
+                  DatabaseRowInput_skipBytes                     = 127,
+                  DatabaseRowInput_readLine                      = 128,
+                  DataFileDefrag_writeTableToDataFile            = 129,
+                  DiskNode_writeTranslatePointer                 = 130,
+                  HsqlDateTime_null_string                       = 131,
+                  HsqlDateTime_invalid_timestamp                 = 132,
+                  HsqlDateTime_null_date                         = 133,
+                  HsqlDateTime_invalid_date                      = 134,
+                  HsqlProperties_load                            = 135,
+                  HsqlSocketFactorySecure_verify                 = 136,
+                  HsqlSocketFactorySecure_verify2                = 137,
+                  jdbcConnection_nativeSQL                       = 138,
+                  HsqlSocketFactorySecure_verify3                = 139,
+                  jdbcPreparedStatement_setCharacterStream       = 140,
+                  jdbcPreparedStatement_setClob                  = 141,
+                  jdbcStatement_executeUpdate                    = 142,
+                  LockFile_checkHeartbeat                        = 143,
+                  LockFile_checkHeartbeat2                       = 144,
+                  QuotedTextDatabaseRowOutput_checkConvertString = 145,
+                  Result_Result                                  = 146,
+                  Server_checkRunning                            = 147,
+                  Server_openServerSocket                        = 148,
+                  Server_openServerSocket2                       = 149,
+                  TextDatabaseRowOutput_checkConvertString       = 150,
+                  TextDatabaseRowOutput_checkConvertString2      = 151,
+                  TextDatabaseRowOutput_writeIntData             = 152,
+                  ORDER_BY_POSITION                              = 153;
+    static String MESSAGE_TAG                                    = "$$";
 
     //
     private static final String[] sDescription = {
-        "NOT USED",                                                     //
+        "NOT USED",                                                           //
         "08001 The database is already in use by another process",
-        "08003 Connection is closed", "08003 Connection is broken",
-        "08003 The database is shutdown",                               //
-        "21000 Column count does not match",                            //
-        "22012 Division by zero",                                       //
+        "08003 Connection is closed",                                         //
+        "08003 Connection is broken", "08003 The database is shutdown",       //
+        "21000 Column count does not match",                                  //
+        "22012 Division by zero",                                             //
         "22019 Invalid escape character",
         "23000 Integrity constraint violation",
         "23000 Violation of unique index",
         "23000 Try to insert null into a non-nullable column",
-        "37000 Unexpected token",                                       //
-        "37000 Unexpected end of command",                              //
-        "37000 Unknown function",                                       //
+        "37000 Unexpected token",                                             //
+        "37000 Unexpected end of command",                                    //
+        "37000 Unknown function",                                             //
         "37000 Need aggregate function or group by",
-        "37000 Sum on non-numeric data not allowed",                    //
-        "37000 Wrong data type",                                        //
-        "37000 Single value expected",                                  //
-        "40001 Serialization failure",                                  //
-        "40001 Transfer corrupted",                                     //
-        "IM001 This function is not supported",                         //
-        "S0001 Table already exists",                                   //
-        "S0002 Table not found",                                        //
-        "S0011 Index already exists",
+        "37000 Sum on non-numeric data not allowed",                          //
+        "37000 Wrong data type",                                              //
+        "37000 Single value expected",                                        //
+        "40001 Serialization failure",                                        //
+        "40001 Transfer corrupted",                                           //
+        "IM001 This function is not supported",                               //
+        "S0001 Table already exists",                                         //
+        "S0002 Table not found",                                              //
+        "S0011 Index already exists",                                         //
         "S0011 Attempt to define a second primary key",
-        "S0011 Attempt to drop the primary key",                        //
-        "S0012 Index not found", "S0021 Column already exists",
-        "S0022 Column not found",                                       //
-        "S1000 File input/output error",                                //
+        "S0011 Attempt to drop the primary key",                              //
+        "S0012 Index not found",                                              //
+        "S0021 Column already exists",                                        //
+        "S0022 Column not found",                                             //
+        "S1000 File input/output error",                                      //
         "S1000 Wrong database file version",
         "S1000 The database is in read only mode",
-        "S1000 The table data is read only",                            //
-        "S1000 Access is denied",                                       //
-        "S1000 InputStream error",                                      //
-        "S1000 No data is available",                                   //
-        "S1000 User already exists",                                    //
-        "S1000 User not found",                                         //
-        "S1000 Assert failed",                                          //
-        "S1000 External stop request",                                  //
-        "S1000 General error",                                          //
-        "S1009 Wrong OUT parameter",                                    //
-        "S1010 Error in function",                                      //
-        "S0002 Trigger not found",                                      //
-        "S1011 Savepoint not found",                                    //
+        "S1000 The table data is read only",                                  //
+        "S1000 Access is denied",                                             //
+        "S1000 InputStream error",                                            //
+        "S1000 No data is available",                                         //
+        "S1000 User already exists",                                          //
+        "S1000 User not found",                                               //
+        "S1000 Assert failed",                                                //
+        "S1000 External stop request",                                        //
+        "S1000 General error",                                                //
+        "S1009 Wrong OUT parameter",                                          //
+        "S1010 Error in function",                                            //
+        "S0002 Trigger not found",                                            //
+        "S1011 Savepoint not found",                                          //
         "37000 Label required for value list",
         "37000 Wrong data type or data too long in DEFAULT clause",
         "S0011 Foreign key not allowed",
@@ -302,14 +321,16 @@ public class Trace extends PrintWriter {
         "S0000 User-defined index or constraint name cannot begin with SYS_",
         "S0011 Attempt to drop a foreign key index",
         "S1000 ResultSet was set to forward only",
-        "S0003 View already exists",                                    //
-        "S0004 View not found", "S0005 Not a View", "S0005 Not a Table",
+        "S0003 View already exists",                                          //
+        "S0004 View not found",                                               //
+        "S0005 Not a View", "S0005 Not a Table",
         "S0011 Attempt to drop or rename a system index",
         "S0021 Column types do not match",
         "s0021 Column constraints are not acceptable",
         "S0011 Attempt to drop a system constraint",
-        "S0011 Constraint already exists", "S0011 Constraint not found",
-        "SOO10 Invalid argument in JDBC call",
+        "S0011 Constraint already exists",                                    //
+        "S0011 Constraint not found",                                         //
+        "SOO10 Invalid argument in JDBC call",                                //
         "S1000 Database is memory only",
         "37000 only AND allowed in OUTER JOIN conditions",
         "22003 Numeric value out of range",
@@ -319,14 +340,14 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in HAVING clause",
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
-        "S1000 Out of Memory",                                          //
+        "S1000 Out of Memory",                                                //
         "S1000 This operation is not supported", "22019 Invalid identifier",
         "22019 Invalid TEXT table source string",
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
-        "S1000 error in script file",                                   //
-        "37000 NULL in value list",                                     //
-        "08000 socket creation error",                                  //
+        "S1000 error in script file",                                         //
+        "37000 NULL in value list",                                           //
+        "08000 socket creation error",                                        //
         "37000 invalid character encoding",
         "08000 reserved for NO_CLASSLOADER_FOR_TLS",
         "08000 reserved for NO_JSSE",
@@ -335,57 +356,78 @@ public class Trace extends PrintWriter {
         "08000 reserved for TLS_ERROR",
         "08000 reserved for MISSING_TLS_METHOD",
         "08000 reserved for TLS_SECURITY_ERROR",
-        "08000 reserved for NO_TLS_DATA",                               //
+        "08000 reserved for NO_TLS_DATA",                                     //
         "08000 reserved for NO_PRINCIPAL",
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
         "08000 reserved for KEYSTORE_PROBLEM",
 
         //
-        "08003 Database does not exists",                               //
+        "08003 Database does not exists",                                     //
         "22003 Type Conversion not supported",
 
         //--- wsonic
-        "table $$ row count error : $$ read, needed $$",                // BinaryDatabaseScriptReader_readExistingData
-        "wrong data for insert operation",                              // BinaryDatabaseScriptReader_readTableInit
-        "SaveRow $$",                                                   // Cache_cleanUp
-        "SaveRow $$",                                                   // Cache_saveAll
-        "$$ table: $$",                                                 // Constraint_checkInsert
-        "$$ table: $$",                                                 // Database_dropTable
-        "duplicate column in list",                                     // DatabaseCommandInterpreter_processColumnList
-        "table has no primary key",                                     // DatabaseCommandInterpreter_processCreateConstraints
-        "$$ has no primary key",                                        // DatabaseCommandInterpreter_processCreateFK
-        "missing DEFAULT value on column '$$'",                         // DatabaseCommandInterpreter_checkFKColumnDefaults
-        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible",      // DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint
-        "attempt to connect while db opening /closing",                 // DatabaseManager_getDatabase
-        "problem in db access count",                                   // DatabaseManager_getDatabaseObject
-        "problem in db access count",                                   // DatabaseManager_releaseSession
-        "problem in db access count",                                   // DatabaseManager_releaseDatabase
-        "legacy db support",                                            // DatabaseRowInput_newDatabaseRowInput
-        "legacy db support",                                            // DatabaseRowOutput_newDatabaseRowOutput
-        " line: $$ $$",                                                 // DatabaseScriptReader_readDDL
-        " line: $$ $$",                                                 // DatabaseScriptReader_readExistingData
-        "$$ $$",                                                        // Function_Function
-        "$$.properties $$",                                             // HsqlDatabaseProperties_load
-        "$$.properties $$",                                             // HsqlDatabaseProperties_save
-        "invalid scope value",                                          // jdbcDatabaseMetaData_getBestRowIdentifier
-        "result set is null",                                           // jdbcResultSetMetaData_jdbcResultSetMetaData
-        "result set is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_2
-        "connection is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_3
-        "37000 an index is required on table $$, column $$",            // TableFilter_findFirst
-        "37000 there is an index on the column to be removed",          // Table_moveDefinition
-        "22001 string too long", "00000 quoted identifier required",    // SET PROPERTY "name" "value"
-        "00000 statement is closed",                                    // SET PROPERTY "name" "value"
-        "Method skipBytes() not yet implemented.",                      // DatabaseRowInput_skipBytes
-        "Method readLine() not yet implemented.",                       // DatabaseRowInput_readLine
-        "",                                                             // DataFileDefrag_writeTableToDataFile
-        "",                                                             // DiskNode_writeTranslatePointer
-        "null string",                                                  // HsqlDateTime_null_string
-        "invalid timestamp",                                            // HsqlDateTime_invalid_timestamp
-        "null date",                                                    // HsqlDateTime_null_date
-        "invalid date",                                                 // HsqlDateTime_invalid_date
-        "properties name is null or empty"                              // HsqlProperties_load
+        "table $$ row count error : $$ read, needed $$",                      // BinaryDatabaseScriptReader_readExistingData
+        "wrong data for insert operation",                                    // BinaryDatabaseScriptReader_readTableInit
+        "SaveRow $$",                                                         // Cache_cleanUp
+        "SaveRow $$",                                                         // Cache_saveAll
+        "$$ table: $$",                                                       // Constraint_checkInsert
+        "$$ table: $$",                                                       // Database_dropTable
+        "duplicate column in list",                                           // DatabaseCommandInterpreter_processColumnList
+        "table has no primary key",                                           // DatabaseCommandInterpreter_processCreateConstraints
+        "$$ has no primary key",                                              // DatabaseCommandInterpreter_processCreateFK
+        "missing DEFAULT value on column '$$'",                               // DatabaseCommandInterpreter_checkFKColumnDefaults
+        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible",            // DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint
+        "attempt to connect while db opening /closing",                       // DatabaseManager_getDatabase
+        "problem in db access count",                                         // DatabaseManager_getDatabaseObject
+        "problem in db access count",                                         // DatabaseManager_releaseSession
+        "problem in db access count",                                         // DatabaseManager_releaseDatabase
+        "legacy db support",                                                  // DatabaseRowInput_newDatabaseRowInput
+        "legacy db support",                                                  // DatabaseRowOutput_newDatabaseRowOutput
+        " line: $$ $$",                                                       // DatabaseScriptReader_readDDL
+        " line: $$ $$",                                                       // DatabaseScriptReader_readExistingData
+        "$$ $$",                                                              // Function_Function
+        "$$.properties $$",                                                   // HsqlDatabaseProperties_load
+        "$$.properties $$",                                                   // HsqlDatabaseProperties_save
+        "invalid scope value",                                                // jdbcDatabaseMetaData_getBestRowIdentifier
+        "result set is null",                                                 // jdbcResultSetMetaData_jdbcResultSetMetaData
+        "result set is closed",                                               // jdbcResultSetMetaData_jdbcResultSetMetaData_2
+        "connection is closed",                                               // jdbcResultSetMetaData_jdbcResultSetMetaData_3
+        "37000 an index is required on table $$, column $$",                  // TableFilter_findFirst
+        "37000 there is an index on the column to be removed",                // Table_moveDefinition
+        "22001 string too long", "00000 quoted identifier required",          // SET PROPERTY "name" "value"
+        "00000 statement is closed",                                          // SET PROPERTY "name" "value"
+        "Method skipBytes() not yet implemented.",                            // DatabaseRowInput_skipBytes
+        "Method readLine() not yet implemented.",                             // DatabaseRowInput_readLine
+        "",                                                                   // DataFileDefrag_writeTableToDataFile
+        "",                                                                   // DiskNode_writeTranslatePointer
+        "null string",                                                        // HsqlDateTime_null_string
+        "invalid timestamp",                                                  // HsqlDateTime_invalid_timestamp
+        "null date",                                                          // HsqlDateTime_null_date
+        "invalid date",                                                       // HsqlDateTime_invalid_date
+        "properties name is null or empty",                                   // HsqlProperties_load
+        "Server certificate has no Common Name",                              // HsqlSocketFactorySecure_verify
+        "Server certificate has empty Common Name",                           // HsqlSocketFactorySecure_verify2
+        "Unknown JDBC escape sequence: {",                                    // jdbcConnection_nativeSQL
+        "Server certificate Common Name[$$] does not match host name[$$]",    // HsqlSocketFactorySecure_verify3
+        "End of stream with no data read",                                    // jdbcPreparedStatement_setCharacterStream
+        "End of stream with no data read",                                    // jdbcPreparedStatement_setClob
+        "executeUpdate() cannot be used with this statement",                 // jdbcStatement_executeUpdate
+        "$$ : $$",                                                            // LockFile_checkHeartbeat
+        "$$$$ is presumably locked by another process.",                      // LockFile_checkHeartbeat2
+        "end of line characters not allowed",                                 // QuotedTextDatabaseRowOutput_checkConvertString
+        "trying to use unsupported result mode: $$",                          // Result_Result
+        "server is $$running",                                                // Server_checkRunning
+        "Invalid address : $$\nTry one of: $$",                               // Server_openServerSocket
+        "Invalid address : $$",                                               // Server_openServerSocket2
+        "end of line characters not allowed",                                 // TextDatabaseRowOutput_checkConvertString
+        "separator not allowed in unquoted string",                           // TextDatabaseRowOutput_checkConvertString2
+        "Method writeIntData(int, int) not yet implemented.",                 // TextDatabaseRowOutput_writeIntData
+        "ORDER BY must be at the end of the statement"
     };
+
+    /** Used during tests. */
+    public static final int NUMBER_OF_ERROR_MESSAGES = sDescription.length;
 
     static {
         try {
@@ -393,8 +435,6 @@ public class Trace extends PrintWriter {
             TRACESYSTEMOUT = Boolean.getBoolean("hsqldb.tracesystemout");
         } catch (Exception e) {}
     }
-
-    static String MESSAGE_TAG = "$$";
 
     /**
      * Compose error message by inserting the strings in the add parameters
@@ -514,11 +554,64 @@ public class Trace extends PrintWriter {
      * @see #sDescription
      */
     public static String getMessage(final int errorCode) {
+        return getMessage(errorCode, false, null);
+    }
+
+    /**
+     * Returns the error message given the error code.<br/>
+     * Note: this method must be used when throwing exception other
+     * than <code>HsqlException</code>.
+     *
+     * @param errorCode    the error code associated to the error message
+     * @param substitute    substitute the $$ tokens using data in the values
+     * @param values       value(s) to use to replace the token(s)
+     * @return the error message associated with the error code
+     * @see #sDescription
+     */
+    public static String getMessage(final int errorCode,
+                                    final boolean substitute,
+                                    final Object[] values) {
 
         if (errorCode < 0 || errorCode >= sDescription.length) {
             return "";
         } else {
-            return sDescription[errorCode];
+            if (!substitute) {
+                return sDescription[errorCode];
+            } else {
+                final String mainErrorMessage = sDescription[errorCode];
+                final StringBuffer sb =
+                    new StringBuffer(mainErrorMessage.length() + 32);
+                int lastIndex = 0;
+                int escIndex  = mainErrorMessage.length();
+
+                if (values != null) {
+
+                    // removed test: i < add.length
+                    // because if mainErrorMessage is equal to "blabla $$"
+                    // then the statement escIndex = mainErrorMessage.length();
+                    // is never reached!  ???
+                    for (int i = 0; i < values.length; i++) {
+                        escIndex = mainErrorMessage.indexOf(MESSAGE_TAG,
+                                                            lastIndex);
+
+                        if (escIndex == -1) {
+                            break;
+                        }
+
+                        sb.append(mainErrorMessage.substring(lastIndex,
+                                                             escIndex));
+                        sb.append(values[i].toString());
+
+                        lastIndex = escIndex + MESSAGE_TAG.length();
+                    }
+                }
+
+                escIndex = mainErrorMessage.length();
+
+                sb.append(mainErrorMessage.substring(lastIndex, escIndex));
+
+                return sb.toString();
+            }
         }
     }
 

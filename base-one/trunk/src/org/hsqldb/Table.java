@@ -2512,6 +2512,7 @@ class Table {
             Row row = (Row) del.get(i);
 
             enforceFieldValueLimits(ni.data, col);
+            checkNullColumns(ni.data);
 
             // this means the identity column can be set to null to force
             // creation of a new identity value

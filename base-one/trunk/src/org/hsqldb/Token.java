@@ -230,15 +230,19 @@ class Token {
     static final int SHUTDOWN              = 42;
     static final int SOURCE                = 43;
     static final int TABLE                 = 44;
-    static final int TEXT                  = 45;
-    static final int TRIGGER               = 46;
-    static final int UNIQUE                = 47;
-    static final int UPDATE                = 48;
-    static final int USER                  = 49;
-    static final int VIEW                  = 50;
-    static final int WRITE_DELAY           = 51;
+    static final int TEMP                  = 45;
+    static final int TEXT                  = 46;
+    static final int TRIGGER               = 47;
+    static final int UNIQUE                = 48;
+    static final int UPDATE                = 49;
+    static final int USER                  = 50;
+    static final int VIEW                  = 51;
+    static final int WRITE_DELAY           = 52;
+    static final int UNION                 = 100;
+    static final int INTERSECT             = 101;
+    static final int EXCEPT                = 102;
+    static final int MINUS                 = 103;    //
 
-    //
     static {
         commandSet = newCommandSet();
     }
@@ -271,15 +275,18 @@ class Token {
         commandSet.put(T_DELETE, DELETE);
         commandSet.put(T_DISCONNECT, DISCONNECT);
         commandSet.put(T_DROP, DROP);
+        commandSet.put(T_EXCEPT, EXCEPT);
         commandSet.put(T_EXPLAIN, EXPLAIN);
         commandSet.put(T_FOREIGN, FOREIGN);
         commandSet.put(T_GRANT, GRANT);
         commandSet.put(T_IGNORECASE, IGNORECASE);
         commandSet.put(T_INDEX, INDEX);
         commandSet.put(T_INSERT, INSERT);
+        commandSet.put(T_INTERSECT, INTERSECT);
         commandSet.put(T_LOGSIZE, LOGSIZE);
         commandSet.put(T_MAXROWS, MAXROWS);
         commandSet.put(T_MEMORY, MEMORY);
+        commandSet.put(T_MINUS, MINUS);
         commandSet.put(T_PASSWORD, PASSWORD);
         commandSet.put(T_PLAN, PLAN);
         commandSet.put(T_PRIMARY, PRIMARY);
@@ -298,10 +305,12 @@ class Token {
         commandSet.put(T_SHUTDOWN, SHUTDOWN);
         commandSet.put(T_SOURCE, SOURCE);
         commandSet.put(T_TABLE, TABLE);
+        commandSet.put(T_TEMP, TEMP);
         commandSet.put(T_TEXT, TEXT);
         commandSet.put(T_TRIGGER, TRIGGER);
         commandSet.put(T_UNIQUE, UNIQUE);
         commandSet.put(T_UPDATE, UPDATE);
+        commandSet.put(T_UNION, UNION);
         commandSet.put(T_USER, USER);
         commandSet.put(T_VIEW, VIEW);
         commandSet.put(T_WRITE_DELAY, WRITE_DELAY);

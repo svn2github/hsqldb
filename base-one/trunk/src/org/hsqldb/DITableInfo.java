@@ -418,6 +418,8 @@ final class DITableInfo {
      * number of digits to the right of the decimal point for exact numeric
      * types.
      *
+     * If the column's type precludes scale declaration, null is returned.
+     *
      * @param i zero-based column index
      * @return the fixed number of digits to the right of the decimal point
      * for exact numeric types.
@@ -430,17 +432,9 @@ final class DITableInfo {
         column = table.getColumn(i);
         type   = column.getDIType();
 
-        switch (type) {
-
-            case Types.DECIMAL :
-            case Types.NUMERIC : {
-                return ValuePool.getInt(column.getScale());
-            }
-            default :
-                ti.setTypeCode(type);
-
-                return ti.getDefaultScale();
-        }
+        return Types.acceptsScaleCreateParam(type)
+               ? ValuePool.getInt(column.getScale())
+               : null;
     }
 
     /**
@@ -475,7 +469,8 @@ final class DITableInfo {
 
     /**
      * Retrieves either the declared or maximum length/precision for
-     * the specified column. <p>
+     * the specified column, if its type allows a precision/length
+     * declaration, else null. <p>
      *
      * @param i zero-based column index
      * @return the declared or maximum length/precision for
@@ -490,37 +485,19 @@ final class DITableInfo {
         column = table.getColumn(i);
         type   = column.getDIType();
 
-        switch (type) {
-
-            // sized or decimal types
-            case Types.BINARY :
-            case Types.BLOB :
-            case Types.CHAR :
-            case Types.CLOB :
-            case Types.DECIMAL :
-            case Types.LONGVARBINARY :
-            case Types.LONGVARCHAR :
-            case Types.NUMERIC :
-            case Types.VARBINARY :
-            case Types.VARCHAR : {
-                size = column.getSize();
-
-                break;
-            }
-            default : {
-                size = 0;
-
-                break;
-            }
+        if (!Types.acceptsPrecisionCreateParam(type)) {
+            return null;
         }
 
-        if (size == 0) {
+        size = column.getSize();
+
+        if (size > 0) {
+            return ValuePool.getInt(size);
+        } else {
             ti.setTypeCode(type);
 
             return ti.getPrecision();
         }
-
-        return ValuePool.getInt(size);
     }
 
     /**

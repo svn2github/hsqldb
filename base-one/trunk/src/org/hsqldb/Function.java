@@ -70,9 +70,9 @@ package org.hsqldb;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Hashtable;
 import java.util.Date;
 import java.util.Calendar;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
@@ -89,22 +89,22 @@ import org.hsqldb.store.ValuePool;
  */
 class Function {
 
-    private Session          cSession;
-    private String           sFunction;
-    private Method           mMethod;
-    private Class            cReturnClass;
-    private Class[]          aArgClasses;
-    private int              iReturnType;
-    private int              iArgCount;
-    private int              iSqlArgCount;
-    private int              iSqlArgStart;
-    private int              iArgType[];
-    private boolean          bArgNullable[];
-    private Object           oArg[];
-    private Expression       eArg[];
-    private boolean          bConnection;
-    private static Hashtable methodCache = new Hashtable();
-    private int              fID;
+    private Session        cSession;
+    private String         sFunction;
+    private Method         mMethod;
+    private Class          cReturnClass;
+    private Class[]        aArgClasses;
+    private int            iReturnType;
+    private int            iArgCount;
+    private int            iSqlArgCount;
+    private int            iSqlArgStart;
+    private int            iArgType[];
+    private boolean        bArgNullable[];
+    private Object         oArg[];
+    private Expression     eArg[];
+    private boolean        bConnection;
+    private static HashMap methodCache = new HashMap();
+    private int            fID;
 
     /**
      * Constructs a new Function object with the given function call name
@@ -203,7 +203,7 @@ class Function {
 
             // For now, people can write stored procedures with
             // descriptor having above return types to indicate
-            // result of arbitrary arity.  Later, this must be 
+            // result of arbitrary arity.  Later, this must be
             // replaced with a better system.
             iReturnType = Types.OTHER;
         } else {
@@ -212,7 +212,7 @@ class Function {
             // as long as it's a primitive array, directly
             // implements java.io.Serializable directly or is a
             // non-primitive array whose base component implements
-            // java.io.Serializable           
+            // java.io.Serializable
             iReturnType = Types.getParameterTypeNr(cReturnClass);
         }
 
@@ -227,10 +227,10 @@ class Function {
 
             if ((i == 0) && a.equals(java.sql.Connection.class)) {
 
-                // TODO: make this obsolete, providing 
+                // TODO: make this obsolete, providing
                 // jdbc:default:connection url functionality
                 // instead
-                // only the first parameter can be a Connection                
+                // only the first parameter can be a Connection
                 bConnection = true;
             } else {
 
@@ -347,7 +347,7 @@ class Function {
 
             //if (ret instanceof byte[] || ret instanceof Object) {
             // it's always an instanceof Object
-            //ret = 
+            //ret =
             return Column.convertObject(ret, iReturnType);
 
             //}
@@ -426,11 +426,11 @@ class Function {
      *
      * @throws HsqlException if any arguments have not yet been resolved
      */
-    void checkResolved() throws HsqlException {
+    void checkResolved(HashMap aliases) throws HsqlException {
 
         for (int i = iSqlArgStart; i < iArgCount; i++) {
             if (eArg[i] != null) {
-                eArg[i].checkResolved();
+                eArg[i].checkResolved(aliases);
             }
         }
     }

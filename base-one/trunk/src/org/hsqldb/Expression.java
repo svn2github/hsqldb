@@ -134,18 +134,19 @@ class Expression {
                      MAX   = 43,
                      AVG   = 44;
 
-// TODO: Standard Deviation and maybe some other statistical aggregate functions
-//                   STDDEV  = 45;
+// TODO: Variance, std. deviation and maybe other stat. aggregate functions
+//                   VARIANCE = 45;
+//                   STDDEV   = 46;
     // system functions
-    static final int IFNULL    = 60,
-                     CONVERT   = 61,
-                     CASEWHEN  = 62,
-                     EXTRACT   = 63,
-                     POSITION  = 64,
-                     TRIM      = 65,
-                     SUBSTRING = 66,
-                     NULLIF    = 67,
-                     CASE      = 68,
+    static final int IFNULL      = 60,
+                     CONVERT     = 61,
+                     CASEWHEN    = 62,
+                     EXTRACT     = 63,
+                     POSITION    = 64,
+                     TRIM        = 65,
+                     SUBSTRING   = 66,
+                     NULLIF      = 67,
+                     CASE        = 68,
                      COALESCE    = 69,
                      ALTERNATIVE = 70;
 
@@ -209,9 +210,14 @@ class Expression {
 
     // VALUE, VALUELIST
     Object          valueData;
-    private HashMap hList;
-    private boolean hListIsUpper;
+    private HashSet hList;
+    private boolean hListIsUpper;       // no longer used
     private int     dataType;
+
+    // VALUE LIST NEW
+    private Expression[] valueList;
+    private boolean      isFixedConstantValueList;
+    private boolean      isFixedConstantValueListChecked;
 
     // QUERY (correlated subquery)
     Select subSelect;
@@ -220,7 +226,8 @@ class Expression {
     private Function function;
 
     // LIKE
-    private char likeEscapeChar;
+    private char    likeEscapeChar;
+    private boolean likeOptimized;
 
     // COLUMN
     private String      catalog;
@@ -247,8 +254,10 @@ class Expression {
     // PARAM
     private boolean isParam;
 
-    // does Expression stem from a JOIN <table> ON <expression> (only set for OUTER joins)
-    private boolean      isInJoin;
+    // does Expression stem from a JOIN <table> ON <expression>
+    private boolean isInJoin;
+
+    //
     static final Integer INTEGER_0 = ValuePool.getInt(0);
     static final Integer INTEGER_1 = ValuePool.getInt(1);
 
@@ -269,11 +278,12 @@ class Expression {
 
         exprType       = e.exprType;
         dataType       = e.dataType;
-        eArg        = e.eArg;
-        eArg2       = e.eArg2;
+        eArg           = e.eArg;
+        eArg2          = e.eArg2;
         likeEscapeChar = e.likeEscapeChar;
         subSelect      = e.subSelect;
         function       = e.function;
+        isInJoin       = e.isInJoin;
 
         checkAggregate();
     }
@@ -291,20 +301,9 @@ class Expression {
      * Creates a new VALUELIST expression
      * @param v
      */
-    Expression(HsqlArrayList v) {
-
-        exprType = VALUELIST;
-        dataType = Types.VARCHAR;
-
-        int size = v.size();
-
-        hList = new HashMap(size);
-
-        for (int i = 0; i < size; i++) {
-            Object o = v.get(i);
-
-            hList.put(o, Expression.INTEGER_1);
-        }
+    Expression(Expression[] valueList) {
+        exprType       = VALUELIST;
+        this.valueList = valueList;
     }
 
     /**
@@ -317,8 +316,25 @@ class Expression {
     Expression(int type, Expression e, Expression e2) {
 
         exprType = type;
-        eArg  = e;
-        eArg2 = e2;
+        eArg     = e;
+        eArg2    = e2;
+
+        checkAggregate();
+    }
+
+    /**
+     * Creates a new LIKE expression
+     *
+     * @param type operator type
+     * @param e operand 1
+     * @param e2 operand 2
+     */
+    Expression(int type, Expression e, Expression e2, char escape) {
+
+        exprType       = type;
+        eArg           = e;
+        eArg2          = e2;
+        likeEscapeChar = escape;
 
         checkAggregate();
     }
@@ -488,10 +504,13 @@ class Expression {
 
             case VALUELIST :
                 buf.append("VALUELIST ");
+                buf.append(" TYPE = ").append(Types.getTypeString(dataType));
 
-                if (hList != null) {
-                    buf.append(hList);
-                    buf.append(' ');
+                if (valueList != null) {
+                    for (int i = 0; i < valueList.length; i++) {
+                        buf.append(valueList[i].toString(blanks + blanks));
+                        buf.append(' ');
+                    }
                 }
                 break;
 
@@ -591,11 +610,6 @@ class Expression {
                 buf.append("AVG ");
                 break;
 
-/*
-            case IFNULL :
-                buf.append("IFNULL ");
-                break;
-*/
             case CONVERT :
                 buf.append("CONVERT ");
                 buf.append(Types.getTypeString(dataType));
@@ -624,16 +638,6 @@ class Expression {
         }
 
         return buf.toString();
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param c
-     */
-    void setLikeEscape(char c) {
-        likeEscapeChar = c;
     }
 
     /**
@@ -670,17 +674,6 @@ class Expression {
     }
 
     /**
-     * Method declaration
-     *
-     */
-    void unsetTrue() {
-
-        if (oldIType != -1) {
-            exprType = oldIType;
-        }
-    }
-
-    /**
      * Check if the given expression defines similar operation as this
      * expression.
      */
@@ -697,7 +690,8 @@ class Expression {
         return (exprType == exp.exprType) && similarTo(eArg, exp.eArg)
                && similarTo(eArg2, exp.eArg2)
                && equals(valueData, exp.valueData)
-               && equals(hList, exp.hList) && dataType == exp.dataType
+               && equals(valueList, exp.valueList)
+               && dataType == exp.dataType
                && equals(subSelect, exp.subSelect)
                && equals(function, exp.function)
                && likeEscapeChar == exp.likeEscapeChar
@@ -709,6 +703,30 @@ class Expression {
     static boolean equals(Object o1, Object o2) {
         return (o1 == null) ? o2 == null
                             : o1.equals(o2);
+    }
+
+    static boolean equals(Expression[] ae1, Expression[] ae2) {
+
+        if (ae1 == ae2) {
+            return true;
+        }
+
+        if (ae1.length != ae2.length) {
+            return false;
+        }
+
+        int     len    = ae1.length;
+        boolean equals = true;
+
+        for (int i = 0; i < len; i++) {
+            Expression e1 = ae1[i];
+            Expression e2 = ae2[i];
+
+            equals = (e1 == null) ? e2 == null
+                                  : e1.equals(e2);
+        }
+
+        return equals;
     }
 
     static boolean similarTo(Expression e1, Expression e2) {
@@ -1077,17 +1095,34 @@ class Expression {
      *
      * @throws HsqlException
      */
-    void checkResolved() throws HsqlException {
+    Expression checkResolved(HashMap aliases) throws HsqlException {
 
-        Trace.check((exprType != COLUMN) || (tableFilter != null),
-                    Trace.COLUMN_NOT_FOUND, columnName);
+        if (exprType == COLUMN && tableFilter == null) {
+            if (aliases != null) {
+                Expression expr = (Expression) aliases.get(columnName);
+
+                if (expr != null) {
+                    return expr;
+                }
+            }
+
+            Trace.throwerror(Trace.COLUMN_NOT_FOUND, columnName);
+        }
 
         if (eArg != null) {
-            eArg.checkResolved();
+            Expression result = eArg.checkResolved(aliases);
+
+            if (result != null) {
+                eArg = result;
+            }
         }
 
         if (eArg2 != null) {
-            eArg2.checkResolved();
+            Expression result = eArg2.checkResolved(aliases);
+
+            if (result != null) {
+                eArg2 = result;
+            }
         }
 
         if (subSelect != null) {
@@ -1095,8 +1130,16 @@ class Expression {
         }
 
         if (function != null) {
-            function.checkResolved();
+            function.checkResolved(aliases);
         }
+
+        if (valueList != null) {
+            for (int i = 0; i < valueList.length; i++) {
+                valueList[i].checkResolved(aliases);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1113,6 +1156,18 @@ class Expression {
             return;
         }
 
+// boucherb@users 20030718 - patch 1.7.2
+// initial refinements to compress tree, calculating
+// fixed vaue expressions where possible
+        if (eArg != null) {
+            eArg.resolve(f);
+        }
+
+        if (eArg2 != null) {
+            eArg2.resolve(f);
+        }
+
+// fredt - moved
         if ((f != null) && (exprType == COLUMN)) {
             String filterName = f.getName();
 
@@ -1141,17 +1196,6 @@ class Expression {
             }
         }
 
-// boucherb@users 20030718 - patch 1.7.2
-// initial refinements to compress tree, calculating
-// fixed vaue expressions where possible
-        if (eArg != null) {
-            eArg.resolve(f);
-        }
-
-        if (eArg2 != null) {
-            eArg2.resolve(f);
-        }
-
         if (subSelect != null) {
             subSelect.resolve(f, false);
             subSelect.resolve();
@@ -1163,7 +1207,7 @@ class Expression {
 
 // temp fix to allow leaf Expression objects to be resolved
 //
-//        if (iDataType != Types.NULL) {
+//        if (dataType != Types.NULL) {
 //            return;
 //        }
         switch (exprType) {
@@ -1186,7 +1230,7 @@ class Expression {
 
                 if (isFixedConstant()) {
                     valueData = getValue(dataType);
-                    eArg  = null;
+                    eArg      = null;
                     exprType  = VALUE;
                 }
                 break;
@@ -1204,8 +1248,8 @@ class Expression {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
                             eArg2.dataType, exprType);
                     valueData = getValue(dataType);
-                    eArg  = null;
-                    eArg2 = null;
+                    eArg      = null;
+                    eArg2     = null;
                     exprType  = VALUE;
                 } else {
                     if (eArg.isParam) {
@@ -1225,8 +1269,8 @@ class Expression {
 
                 if (isFixedConstant()) {
                     valueData = getValue(dataType);
-                    eArg  = null;
-                    eArg2 = null;
+                    eArg      = null;
+                    eArg2     = null;
                     exprType  = VALUE;
                 } else {
                     if (eArg.isParam) {
@@ -1252,9 +1296,9 @@ class Expression {
 
                 if (isFixedConditional()) {
                     exprType = test() ? TRUE
-                                   : FALSE;
-                    eArg  = null;
-                    eArg2 = null;
+                                      : FALSE;
+                    eArg     = null;
+                    eArg2    = null;
                 } else if (eArg.isParam) {
                     eArg.dataType = eArg2.dataType;
 
@@ -1280,25 +1324,122 @@ class Expression {
 
                 if (isFixedConditional()) {
                     exprType = test() ? TRUE
-                                   : FALSE;
-                    eArg  = null;
-                    eArg2 = null;
+                                      : FALSE;
+                    eArg     = null;
+                    eArg2    = null;
                 } else if (eArg.isParam) {
                     eArg.dataType = Types.VARCHAR;
                 } else if (eArg2.isParam) {
                     eArg2.dataType = Types.VARCHAR;
                 }
 
+// boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
+//
+// Some optimizations for LIKE
+//
+// TODO: 
+//
+// See if the same optimizations can be done dynamically at execute time when
+// eArg2 is PARAM.  Unfortunately, this currently requires re-resolving from
+// the root any expression containing at least one parameterized LIKE in the
+// compiled statement and reseting conditions on any involved table filters, 
+// so the answer is: probably not, at least not under the current code.
+//
+// CHECKME:
+//
+// Test for correct results under all XXXCHAR types (padding, etc.?) 
+//
+// NOTE:
+//                
+// For the old behaviour, simply comment out the block below                
+                if (exprType == LIKE &&!likeOptimized
+                        && eArg2.isFixedConstant()) {
+                    String likeStr = (String) eArg2.getValue(Types.VARCHAR);
+                    boolean ignoreCase = eArg.dataType
+                                         == Types.VARCHAR_IGNORECASE;
+                    Like like = new Like(likeStr, likeEscapeChar, ignoreCase);
+
+                    if (like.isEquivalentToFalsePredicate()) {
+                        exprType = FALSE;
+                        eArg     = null;
+                        eArg2    = null;
+                    } else if (like.isEquivalentToEqualsPredicate()) {
+                        exprType      = EQUAL;
+                        likeOptimized = true;
+                        eArg2 = new Expression(Types.VARCHAR,
+                                               like.getStartsWith());
+                    } else if (like.isEquivalentToNotNullPredicate()) {
+
+                        // X LIKE '%' <=>  X IS NOT NULL
+                        exprType = NOT_EQUAL;
+                        eArg2    = new Expression(Types.NULL, null);
+                    } else if (like.isEquivalentToBetweenPredicate()) {
+
+                        // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abd'
+                        Expression eArgOld = eArg;
+                        Expression eFirst =
+                            new Expression(Types.VARCHAR, like.getRangeLow());
+                        Expression eLast =
+                            new Expression(Types.VARCHAR,
+                                           like.getRangeHigh());
+
+                        eArg = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
+                        eArg2 = new Expression(SMALLER_EQUAL, eArgOld, eLast);
+                        exprType = AND;
+
+                        //
+                        eFirst.likeOptimized = true;
+                        eLast.likeOptimized  = true;
+                        eArg.likeOptimized   = true;
+                        eArg2.likeOptimized  = true;
+                        likeOptimized        = true;
+                    } else if (like
+                            .isEquivalentToBetweenPredicateAugmentedWithLike()) {
+
+                        // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abd' AND X LIKE 'abc%...'
+                        eArg.likeOptimized = true;
+
+                        Expression eFirst =
+                            new Expression(Types.VARCHAR, like.getRangeLow());
+                        Expression eLast =
+                            new Expression(Types.VARCHAR,
+                                           like.getRangeHigh());
+                        Expression gte = new Expression(BIGGER_EQUAL, eArg,
+                                                        eFirst);
+                        Expression lte = new Expression(SMALLER_EQUAL, eArg,
+                                                        eLast);
+
+                        eArg2    = new Expression(LIKE, eArg, eArg2);
+                        eArg     = new Expression(AND, gte, lte);
+                        exprType = AND;
+
+                        //
+                        eFirst.likeOptimized = true;
+                        eLast.likeOptimized  = true;
+                        lte.likeOptimized    = true;
+                        eArg.likeOptimized   = true;
+                        eArg2.likeOptimized  = true;
+                        likeOptimized        = true;
+                    }
+                }
+
                 dataType = Types.BIT;
                 break;
 
-            case AND :
-            case OR :
-                if (isFixedConditional()) {
+            case AND : {
+                boolean eArgFixed  = eArg.isFixedConditional();
+                boolean eArg2Fixed = eArg2.isFixedConditional();
+
+                if (eArgFixed && eArg2Fixed) {
                     exprType = test() ? TRUE
-                                   : FALSE;
-                    eArg  = null;
-                    eArg2 = null;
+                                      : FALSE;
+                    eArg     = null;
+                    eArg2    = null;
+                } else if ((eArgFixed &&!eArg.test())
+                           || (eArg2Fixed &&!eArg2.test())) {
+                    exprType = FALSE;
+                    eArg     = null;
+                    eArg2    = null;
                 } else {
                     if (eArg.isParam) {
                         eArg.dataType = Types.BIT;
@@ -1310,13 +1451,42 @@ class Expression {
                 }
 
                 dataType = Types.BIT;
-                break;
 
+                break;
+            }
+            case OR : {
+                boolean eArgFixed  = eArg.isFixedConditional();
+                boolean eArg2Fixed = eArg2.isFixedConditional();
+
+                if (eArgFixed && eArg2Fixed) {
+                    exprType = test() ? TRUE
+                                      : FALSE;
+                    eArg     = null;
+                    eArg2    = null;
+                } else if ((eArgFixed && eArg.test())
+                           || (eArg2Fixed && eArg2.test())) {
+                    exprType = TRUE;
+                    eArg     = null;
+                    eArg2    = null;
+                } else {
+                    if (eArg.isParam) {
+                        eArg.dataType = Types.BIT;
+                    }
+
+                    if (eArg2.isParam) {
+                        eArg2.dataType = Types.BIT;
+                    }
+                }
+
+                dataType = Types.BIT;
+
+                break;
+            }
             case NOT :
                 if (isFixedConditional()) {
                     exprType = test() ? TRUE
-                                   : FALSE;
-                    eArg  = null;
+                                      : FALSE;
+                    eArg     = null;
                 } else if (eArg.isParam) {
                     eArg.dataType = Types.BIT;
                 }
@@ -1326,11 +1496,88 @@ class Expression {
 
             case IN :
 
-                // TODO: maybe isFixedConditional() test for IN?
-                // depends on how IN list evaluation plan is
-                // refactored
-                if (eArg.isParam) {
-                    eArg.dataType = eArg2.dataType;
+// PARAM Resolution rules:
+//                
+// Expression used with IN:    Same as the first value or the result column 
+//                             of the subquery
+//                
+// A value used with IN:       Same as the expression or the first value if
+//                             there is a parameter marker in the expression 
+// Implies ambiguity if:       A parameter marker is both the expression and
+//                             the first value of an IN operation, from which
+//                             follows that it is ambiguous for the expression
+//                             to be a parameter marker if the list is empty.
+// CHECKME: 
+// Is an empty IN list legal?  Why would anyone ever use it?
+                if (eArg2.exprType == QUERY) {
+                    if (eArg.isParam) {
+                        eArg.dataType = eArg2.dataType;
+                    }
+                } else {    // eArg2.exprType == VALUELIST
+                    Expression[] vl = eArg2.valueList;
+
+                    if (eArg.isParam) {
+                        Trace.check(
+                            vl.length > 0, Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for the expression of an IN operation to be a parameter marker when the value list is empty");
+                        Trace.check(
+                            !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both the expression and the first value list entry of an IN operation to be parameter markers");
+
+                        Expression e = vl[0];
+
+                        e.resolve(f);
+
+                        int dt = e.dataType;
+
+                        // PARAM datatype same as first value list expression
+                        // should never be Types.NULL when all is said and done
+                        if (dt == Types.NULL) {
+
+                            // do nothing...
+                        } else {
+                            if (eArg.dataType == Types.NULL) {
+                                eArg.dataType = dt;
+                            }
+
+                            if (eArg2.dataType == Types.NULL) {
+                                eArg2.dataType = dt;
+                            }
+                        }
+
+                        for (int i = 1; i < vl.length; i++) {
+                            e = vl[i];
+
+                            if (e.isParam) {
+                                if (e.dataType == Types.NULL
+                                        && dt != Types.NULL) {
+                                    e.dataType = dt;
+                                }
+                            } else {
+                                e.resolve(f);
+                            }
+                        }
+                    } else {
+                        int dt = eArg.dataType;
+
+                        if (eArg2.dataType == Types.NULL
+                                && dt != Types.NULL) {
+                            eArg2.dataType = dt;
+                        }
+
+                        for (int i = 0; i < vl.length; i++) {
+                            Expression e = vl[i];
+
+                            if (e.isParam) {
+                                if (e.dataType == Types.NULL
+                                        && dt != Types.NULL) {
+                                    e.dataType = dt;
+                                }
+                            } else {
+                                e.resolve(f);
+                            }
+                        }
+                    }
                 }
 
                 dataType = Types.BIT;
@@ -1370,7 +1617,7 @@ class Expression {
                 if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
                     valueData = getValue(dataType);
                     exprType  = VALUE;
-                    eArg  = null;
+                    eArg      = null;
                 }
                 break;
 
@@ -1432,8 +1679,8 @@ class Expression {
                 }
 
                 break;
+            }
         }
-    }
     }
 
     /**
@@ -1567,7 +1814,7 @@ class Expression {
 
         if (exprType == COUNT) {
             dataType = type ? dataType
-                             : Types.INTEGER;
+                            : Types.INTEGER;
         }
     }
 
@@ -1841,11 +2088,10 @@ class Expression {
             }
 
             Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
-                                                    : eArg.getValue();
+                                                       : eArg.getValue();
 
             ((SetFunction) currValue).add(newValue);
 
-//            return getSelfAggregatingValue((AggregatingValue) currValue);
             return currValue;
         }
 
@@ -1919,15 +2165,9 @@ class Expression {
 
             case CASEWHEN :
                 if (eArg.test()) {
-
-                    // CHECKME:
-                    // Shouldn't this be
-                    // eArg2.eArg.getValue(iDataType);
-                    return eArg2.eArg.getValue();
+                    return eArg2.eArg.getValue(dataType);
                 } else {
-
-                    // eArg2.eArg2.getValue(iDataType);
-                    return eArg2.eArg2.getValue();
+                    return eArg2.eArg2.getValue(dataType);
                 }
         }
 
@@ -1960,11 +2200,6 @@ class Expression {
             case CONCAT :
                 return Column.concat(a, b);
 
-/*
-            case IFNULL :
-                return (a == null) ? b
-                                   : a;
-*/
             default :
 
                 // must be comparion
@@ -2025,8 +2260,9 @@ class Expression {
 
         Trace.check(eArg != null, Trace.GENERAL_ERROR);
 
-        Object o    = eArg.getValue();
-        int    type = eArg.dataType;
+        int    type = eArg2.likeOptimized ? Types.VARCHAR
+                                          : eArg.dataType;
+        Object o    = eArg.getValue(type);
 
         Trace.check(eArg2 != null, Trace.GENERAL_ERROR);
 
@@ -2034,22 +2270,25 @@ class Expression {
 
         if (o == null || o2 == null) {
 
+// TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the column expression for the table on the right hand side
 // fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
             if (exprType == EQUAL && eArg.tableFilter != null
                     && eArg2.tableFilter != null
-                    &&!eArg.tableFilter.isOuterJoin
-                    &&!eArg2.tableFilter.isOuterJoin) {
+                    &&!eArg.tableFilter.isOuterJoin) {
 
                 // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
                 return false;
             }
 
-            if (eArg.tableFilter != null) {
+            if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
                 if (eArg.tableFilter.isCurrentOuter) {
-                    if (eArg.isInJoin || eArg2.isInJoin) {
+                    if (isInJoin) {
                         return true;
                     }
                 } else {
+                    if (isInJoin && o == null) {
+                        return true;
+                    }
 
                     // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
                     eArg.tableFilter.nonJoinIsNull =
@@ -2148,37 +2387,60 @@ class Expression {
      */
 
 // fredt - in the future testValueList can be turned into a join query
+// boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
+//                  and correlated IN list expressions
     private boolean testValueList(Object o,
                                   int datatype) throws HsqlException {
 
         if (exprType == VALUELIST) {
-            if (datatype != dataType) {
-                o = Column.convertObject(o, dataType);
+            if (datatype != this.dataType) {
+                o = Column.convertObject(o, this.dataType);
             }
 
-            if (o != null && datatype == Types.VARCHAR_IGNORECASE) {
-                if (!hListIsUpper) {
-                    HashMap  newMap = new HashMap(hList.size(), 1);
-                    Iterator it     = hList.keySet().iterator();
+            if (!isFixedConstantValueListChecked) {
+                int len = valueList.length;
 
-                    while (it.hasNext()) {
-                        Object key = it.next();
+                if (!isFixedConstantValueList) {
+                    isFixedConstantValueList = true;
 
-                        newMap.put(key.toString().toUpperCase(),
-                                   this.INTEGER_1);
+                    for (int i = 0; i < len; i++) {
+                        if (!valueList[i].isFixedConstant()) {
+                            isFixedConstantValueList = false;
+
+                            break;
+                        }
                     }
-
-                    hList        = newMap;
-                    hListIsUpper = true;
                 }
 
-                return hList.containsKey(o.toString().toUpperCase());
+                if (isFixedConstantValueList) {
+                    hList = new HashSet();
+
+                    for (int i = 0; i < len; i++) {
+                        hList.add(valueList[i].getValue(datatype));
+                    }
+                }
+
+                isFixedConstantValueListChecked = true;
             }
 
-            return hList.containsKey(o);
+            if (isFixedConstantValueList) {
+                return hList.contains(o);
+            }
+
+            final int len = valueList.length;
+
+            for (int i = 0; i < len; i++) {
+                Object o2 = valueList[i].getValue(datatype);
+
+                if (Column.compare(o, o2, datatype) == 0) {
+                    return true;
+                }
+            }
+
+            return false;
         } else if (exprType == QUERY) {
 
-            // todo: convert to valuelist before if everything is resolvable
+            /** @todo fredt - convert to join */
             Result r = subSelect.getResult(0);
 
             // fredt - reduce the size if possible
@@ -2208,29 +2470,31 @@ class Expression {
     }
 
     /**
-     * Tests the join condition Expression (that has been built by parsing
+     * Mark all the expressions in the tree for a search condition that is part
+     * of a JONI .. ON ... clause.
+     * Also tests the expression tree (that has been built by parsing
      * the query) for the existence of any OR clause which is not permitted
      * in OUTER joins in HSQLDB.<p>
      *
      * Sets isInJoin for all expressions in the tree.(fredt@users)
      */
-    boolean setForOuterJoin() {
+    boolean setForJoin(boolean outer) {
 
-        isInJoin = true;
+        isInJoin = outer;
 
         if (eArg != null) {
-            if (eArg.setForOuterJoin() == false) {
+            if (eArg.setForJoin(outer) == false) {
                 return false;
             }
         }
 
         if (eArg2 != null) {
-            if (eArg2.setForOuterJoin() == false) {
+            if (eArg2.setForJoin(outer) == false) {
                 return false;
             }
         }
 
-        return exprType != Expression.OR;
+        return !outer || exprType != Expression.OR;
     }
 
     /**
@@ -2317,19 +2581,13 @@ class Expression {
         }
     }
 
-    boolean isProcedureCall() {
-
-        // valid only after expression has been resolved
-        return exprType == FUNCTION && dataType == Types.NULL;
-    }
-
     void setTableColumnAttributes(Expression e) {
 
         columnSize  = e.columnSize;
         columnScale = e.columnScale;
-        isIdentity   = e.isIdentity;
-        nullability  = e.nullability;
-        isWritable   = e.isWritable;
+        isIdentity  = e.isIdentity;
+        nullability = e.nullability;
+        isWritable  = e.isWritable;
         catalog     = e.catalog;
         schema      = e.schema;
     }
@@ -2338,11 +2596,11 @@ class Expression {
 
         Column c;
 
-        c            = t.getColumn(i);
+        c           = t.getColumn(i);
         dataType    = c.getType();
         columnSize  = c.getSize();
         columnScale = c.getScale();
-        isIdentity   = c.isIdentity();
+        isIdentity  = c.isIdentity();
 
         // IDENTITY columns are not nullable;
         // NULLs are converted into the next identity value for the table

@@ -51,18 +51,24 @@ public class TestUtil {
             print("Opened test script file: " + testfile.getAbsolutePath());
 
             int startlineno = 1;
+            int lineno      = 1;
 
-            for (int lineno = 1; ; lineno++) {
+            for (; ; lineno++) {
                 String line = read.readLine();
 
-                if (line == null) {
+                if (line == null && s == null) {
                     break;
                 }
 
-                if (line.startsWith(" ")) {
+                if (line != null && line.startsWith(" ")) {
                     s += line;
                 } else {
-                    test(sStatement, s, startlineno);
+                    try {
+                        test(sStatement, s, startlineno);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        print("test script file error: " + e.getMessage());
+                    }
 
                     startlineno = lineno;
                     s           = line;
@@ -70,6 +76,7 @@ public class TestUtil {
             }
 
             sStatement.close();
+            print("Processed lines: " + --lineno);
         } catch (Exception e) {
             e.printStackTrace();
             print("test script file error: " + e.getMessage());

@@ -5593,7 +5593,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
          - pass null to mean ignore (do not include in query),
          - pass "" to mean filter on <columnName> IS NULL,
-         - pass "''" to mean filter on <columnName> = '' (empty SQL string)
+         - pass "%" to filter on <columnName> IS NOT NULL.
+         - pass combination of "%" and "_" wildcard matches
+           possibly with some escaped by whatever the driver
+           reports is the default wildcard escape pattern
          */
         if (val == null) {
             return sb.toString();
@@ -5609,11 +5612,13 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         String v = isStr ? Column.createSQLString((String) val)
                          : String.valueOf(val);
 
-        if (isStr && "LIKE".equalsIgnoreCase(op)
-                &&!(containsUnescaped(v, '%') || containsUnescaped(v, '_'))) {
-            op = "=";
-        }
-
+// Obsolete: this is now optimized away at the engine for all
+//           non-parametric LIKE statements.
+//                         
+//        if (isStr && "LIKE".equalsIgnoreCase(op)
+//            && !(new Like(v, '\\', false)).hasWildcards()) {
+//            op = "=";
+//        }
         return sb.append(" AND ").append(id).append(' ').append(op).append(
             ' ').append(v).toString();
     }

@@ -299,7 +299,8 @@ final class CompiledStatement {
         this.checkColumns = checkColumns;
         this.select       = select;
 
-        select.resolveAll();
+//        select.resolveAll();
+        select.prepareResult();
         setParameters(parameters);
 
         type = INSERT_SELECT;
@@ -316,7 +317,8 @@ final class CompiledStatement {
 
         this.select = select;
 
-        select.resolveAll();
+//        select.resolveAll();
+        select.prepareResult();
         setParameters(parameters);
 
         type = SELECT;

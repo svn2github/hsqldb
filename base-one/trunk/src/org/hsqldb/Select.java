@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
@@ -89,33 +90,33 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class Select {
 
-    boolean          isPreProcess;
-    boolean          isDistinctSelect;
-    boolean          isAggregated;
-    private boolean  isGrouped;
-    private HashSet  groupColumnNames;
-    private int      aggregateCount;
-    TableFilter      tFilter[];
-    Expression       eCondition;           // null means no condition
-    Expression       havingCondition;      // null means none
-    Expression       eColumn[];            // 'result', 'group' and 'order' columns
-    int              iResultLen;           // number of columns that are 'result'
-    int              iGroupLen;            // number of columns that are 'group'
-    int              iHavingIndex = -1;    // -1 means no having
-    int              iOrderLen;            // number of columns that are 'order'
-    Select           sUnion;               // null means no union select
-    HsqlName         sIntoTable;           // null means not select..into
-    int              intoType = Table.MEMORY_TABLE;
-    boolean          isIntoTableQuoted;
-    int              iUnionType;
-    static final int NOUNION    = 0,
-                     UNION      = 1,
-                     UNIONALL   = 2,
-                     INTERSECT  = 3,
-                     EXCEPT     = 4;
-    int              limitStart = 0;       // set only by the LIMIT keyword
-    int              limitCount = 0;       // set only by the LIMIT keyword
-    private Result   rResult;
+    boolean                       isPreProcess;
+    boolean                       isDistinctSelect;
+    boolean                       isAggregated;
+    private boolean               isGrouped;
+    private HashSet               groupColumnNames;
+    private int                   aggregateCount;
+    TableFilter                   tFilter[];
+    Expression                    eCondition;           // null means no condition
+    Expression                    havingCondition;      // null means none
+    Expression                    eColumn[];            // 'result', 'group' and 'order' columns
+    int                           iResultLen;           // number of columns that are 'result'
+    int                           iGroupLen;            // number of columns that are 'group'
+    int                           iHavingIndex = -1;    // -1 means no having
+    int                           iOrderLen;            // number of columns that are 'order'
+    Select                        sUnion;               // null means no union select
+    HsqlName                      sIntoTable;           // null means not select..into
+    int                           intoType = Table.MEMORY_TABLE;
+    boolean                       isIntoTableQuoted;
+    int                           iUnionType;
+    static final int              NOUNION    = 0,
+                                  UNION      = 1,
+                                  UNIONALL   = 2,
+                                  INTERSECT  = 3,
+                                  EXCEPT     = 4;
+    int                           limitStart = 0;       // set only by the LIMIT keyword
+    int                           limitCount = 0;       // set only by the LIMIT keyword
+    private Result.ResultMetaData resultMetaData;
 
     /**
      * Set to preprocess mode
@@ -123,6 +124,22 @@ class Select {
      */
     void setPreProcess() {
         isPreProcess = true;
+    }
+
+    HashMap getColumnAliases() {
+
+        HashMap aliasMap = new HashMap();
+        int     len      = eColumn.length;
+
+        for (int i = 0; i < len; i++) {
+            String alias = eColumn[i].getAlias();
+
+            if (alias != null) {
+                aliasMap.put(alias, eColumn[i]);
+            }
+        }
+
+        return aliasMap;
     }
 
     /**
@@ -151,6 +168,7 @@ class Select {
      */
     void resolve(TableFilter f, boolean ownfilter) throws HsqlException {
 
+/*
         if (eCondition != null) {
 
             // first set the table filter in the condition
@@ -163,11 +181,25 @@ class Select {
                 f.setCondition(eCondition);
             }
         }
-
+*/
         int len = eColumn.length;
 
         for (int i = 0; i < len; i++) {
             eColumn[i].resolve(f);
+        }
+
+// fredt - moved
+        if (eCondition != null) {
+
+            // first set the table filter in the condition
+            eCondition.resolve(f);
+
+            if (f != null && ownfilter) {
+
+                // the table filter tries to get as many conditions as
+                // possible but only if it belongs to this query
+                f.setCondition(eCondition);
+            }
         }
     }
 
@@ -178,14 +210,14 @@ class Select {
      */
     void checkResolved() throws HsqlException {
 
-        if (eCondition != null) {
-            eCondition.checkResolved();
-        }
-
         int len = eColumn.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].checkResolved();
+            eColumn[i].checkResolved(null);
+        }
+
+        if (eCondition != null) {
+            eCondition.checkResolved(getColumnAliases());
         }
     }
 
@@ -211,16 +243,11 @@ class Select {
                                              : Column.convertObject(o, type);
     }
 
-/** @todo fredt - having moved the Result metadata into it's own class,
-     * rewrite the next method so that only metadata is retained by Select
-     * and each time this is reused a new new Result object is created with
-     * the persistent metadata class. */
-
     /**
      * Prepares rResult having structure compatible with
      * internally building the set of rows returned from getResult().
      */
-    private void prepareResult() throws HsqlException {
+    void prepareResult() throws HsqlException {
 
         resolveAll();
 
@@ -233,9 +260,11 @@ class Select {
             }
         }
 
-        int                   len = eColumn.length;
-        Result                r   = new Result(ResultConstants.DATA, len);
-        Result.ResultMetaData rmd = r.metaData;
+        int len = eColumn.length;
+
+        resultMetaData = new Result.ResultMetaData(len);
+
+        Result.ResultMetaData rmd = resultMetaData;
 
         // tony_lai@users having
         int groupByStart = iResultLen;
@@ -297,8 +326,6 @@ class Select {
                             eColumn[i]);
             }
         }
-
-        rResult = r;
     }
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
@@ -347,13 +374,11 @@ class Select {
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
     Result getResult(int maxrows) throws HsqlException {
 
-        Result r;
-
-        if (rResult == null) {
+        if (resultMetaData == null) {
             prepareResult();
         }
 
-        r = Result.newSelectResult(rResult);
+        Result r = new Result(resultMetaData);
 
         buildResult(r, getLimitCount(maxrows));
 
@@ -361,6 +386,30 @@ class Select {
         // so use the visible columns to remove duplicates
         if (isDistinctSelect) {
             r.removeDuplicates(iResultLen);
+        }
+
+        if (sUnion != null) {
+            Result x = sUnion.getResult(0);
+
+            switch (iUnionType) {
+
+                case UNION :
+                    r.append(x);
+                    r.removeDuplicates(iResultLen);
+                    break;
+
+                case UNIONALL :
+                    r.append(x);
+                    break;
+
+                case INTERSECT :
+                    r.removeDifferent(x, iResultLen);
+                    break;
+
+                case EXCEPT :
+                    r.removeSecond(x, iResultLen);
+                    break;
+            }
         }
 
         if (iOrderLen != 0) {
@@ -381,35 +430,7 @@ class Select {
 
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
-
-// fredt@users 20020130 - patch 471710 - LIMIT rewritten
-// CHECKME:
-// boucherb@users - 20030811 - shouldn't this go _after_ the set operations?
         r.trimResult(limitStart, limitCount);
-
-        if (sUnion != null) {
-            Result x = sUnion.getResult(0);
-
-            switch (iUnionType) {
-
-                case UNION :
-                    r.append(x);
-                    r.removeDuplicates();
-                    break;
-
-                case UNIONALL :
-                    r.append(x);
-                    break;
-
-                case INTERSECT :
-                    r.removeDifferent(x);
-                    break;
-
-                case EXCEPT :
-                    r.removeSecond(x);
-                    break;
-            }
-        }
 
         return r;
     }
@@ -481,7 +502,7 @@ class Select {
     }
 
     /**
-     * Check if all the column names used in the given expression is defined
+     * Check if all the column names used in the given expression are defined
      * in the given defined column names.
      */
     boolean allColumnsAreDefinedIn(Expression exp, HashSet definedColumns) {

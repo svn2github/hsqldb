@@ -1,0 +1,28 @@
+--
+-- TestSelfQueries.txt
+--
+-- Tests for Query results, especially the nutrality of constraints and indexes
+-- bug #722443
+CREATE TABLE CONFIGUSER(USR_USERID NUMERIC NOT NULL PRIMARY KEY,USR_USERNAME VARCHAR NOT NULL,USR_PASSWORD VARCHAR NOT NULL);
+INSERT INTO CONFIGUSER VALUES(-5,'guest','guest');
+INSERT INTO CONFIGUSER VALUES(-4,'user','user');
+INSERT INTO CONFIGUSER VALUES(-3,'owner','owner');
+INSERT INTO CONFIGUSER VALUES(-2,'admin','xxx');
+INSERT INTO CONFIGUSER VALUES(-1,'sadmin','xxx');
+-- select all users with their username as password
+/*c3*/select * from configuser where usr_username = usr_password;
+-- create a unique index on one column
+CREATE UNIQUE INDEX IDX_USERNAME ON CONFIGUSER(USR_USERNAME);
+-- select all users with their username as password
+/*c3*/select * from configuser where usr_username = usr_password;
+--
+-- COUNT(DISTINCT ) when there are no records
+-- bug #718866
+CREATE TABLE IBANX_PERMIT(ID INT, A1 VARCHAR);
+/*r0*/SELECT count(distinct A0.ID) FROM IBANX_PERMIT A0;
+--
+-- use of column aliases in the where clause
+--bug #696595
+CREATE TABLE "liste"("kosten" INT, "preis" INT);
+SELECT ("kosten"+"preis") AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;
+SELECT "kosten" AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;

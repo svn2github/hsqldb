@@ -251,7 +251,7 @@ public class jdbcStatement implements java.sql.Statement {
 
             /** doto - fredt@users - check for type of statement _must_ be done in the engine and error returnd _without_ executing */
             throw new SQLException(
-                "executeUpdate() cannot be used with this statement");
+                Trace.getMessage(Trace.jdbcStatement_executeUpdate));
         } else if (resultIn.iMode == ResultConstants.ERROR) {
             jdbcDriver.throwError(resultIn);
         }

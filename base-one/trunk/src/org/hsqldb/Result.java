@@ -146,6 +146,12 @@ class Result {
         String  sClassName[];
         boolean isParameterDescription;
 
+        ResultMetaData() {}
+
+        ResultMetaData(int n) {
+            prepareData(n);
+        }
+
         /**
          *  Method declaration
          *
@@ -349,6 +355,13 @@ class Result {
         }
     }
 
+    Result(ResultMetaData md) {
+
+        iMode              = ResultConstants.DATA;
+        significantColumns = md.colType.length;
+        metaData           = md;
+    }
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
@@ -485,10 +498,7 @@ class Result {
 
                     int l = in.readIntData();
 
-                    metaData = new ResultMetaData();
-
-                    metaData.prepareData(l);
-
+                    metaData           = new ResultMetaData(l);
                     significantColumns = l;
 
                     for (int i = 0; i < l; i++) {
@@ -540,8 +550,9 @@ class Result {
                 }
                 default :
                     throw new HsqlException(
-                        "trying to use unsupported result mode: " + iMode,
-                        null, 0);
+                        Trace.getMessage(
+                            Trace.Result_Result, true, new Object[]{
+                                new Integer(iMode) }), null, 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
@@ -640,17 +651,6 @@ class Result {
 
         out.setConnectionAttrType(ResultConstants.SQL_ATTR_SAVEPOINT_NAME);
         out.setMainString(name);
-
-        return out;
-    }
-
-    static Result newSelectResult(Result in) {
-
-        Result out;
-
-        out                    = new Result(ResultConstants.DATA);
-        out.significantColumns = in.significantColumns;
-        out.metaData           = in.metaData;
 
         return out;
     }
@@ -874,10 +874,6 @@ class Result {
                        iSize);
     }
 
-    void removeSecond(Result minus) throws HsqlException {
-        removeSecond(minus, significantColumns);
-    }
-
     /**
      *  Removes duplicates then removes the contents of the second result
      *  from this one base on first columnCount of the rows in each result.
@@ -928,10 +924,6 @@ class Result {
         Trace.doAssert(
             (rRoot == null && rTail == null) || rTail.next == null,
             "rTail not correct in Result.removeSecond iSize =", iSize);
-    }
-
-    void removeDifferent(Result r2) throws HsqlException {
-        removeDifferent(r2, significantColumns);
     }
 
     /**
@@ -1294,8 +1286,9 @@ class Result {
             }
             default :
                 throw new HsqlException(
-                    "trying to use unsupported result mode: " + iMode, null,
-                    0);
+                    Trace.getMessage(
+                        Trace.Result_Result, true, new Object[]{
+                            new Integer(iMode) }), null, 0);
         }
 
         out.writeIntData(out.size(), startPos);

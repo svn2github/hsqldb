@@ -762,11 +762,11 @@ public class jdbcConnection implements Connection {
                         } else {
                             i--;
 
-                            msg = "Unknown JDBC escape sequence: {"
-                                  + sql.substring(i);
-
-                            throw new SQLException(
-                                msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
+                            throw new SQLException(Trace
+                                .getMessage(Trace
+                                    .jdbcConnection_nativeSQL, true, new Object[]{ sql
+                                        .substring(i) }), "S0010", Trace
+                                            .INVALID_JDBC_ARGUMENT);
                         }
 
                         // changed = true;
@@ -830,11 +830,11 @@ public class jdbcConnection implements Connection {
                         } else {
                             i--;
 
-                            msg = "Unknown JDBC escape sequence: {"
-                                  + sql.substring(i);
-
-                            throw new SQLException(
-                                msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
+                            throw new SQLException(Trace
+                                .getMessage(Trace
+                                    .jdbcConnection_nativeSQL, true, new Object[]{ sql
+                                        .substring(i) }), "S0010", Trace
+                                            .INVALID_JDBC_ARGUMENT);
                         }
 
                         // changed = true;

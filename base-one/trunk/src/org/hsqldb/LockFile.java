@@ -241,14 +241,21 @@ public class LockFile {
         } catch (Exception e) {
 
             // e.printStackTrace();
-            throw new Exception(e.getMessage() + " : " + getAbsolutePath());
+            throw new Exception(
+                Trace.getMessage(
+                    Trace.LockFile_checkHeartbeat, true, new Object[] {
+                e.getMessage(), getAbsolutePath()
+            }));
         }
 
         trace(mn + path + " last heartbeat " + lastHeartbeat + " ms ago.");
 
         if (lastHeartbeat < HEARTBEAT_INTERVAL) {
             throw new Exception(
-                mn + path + " is presumably locked by another process.");
+                Trace.getMessage(
+                    Trace.LockFile_checkHeartbeat2, true, new Object[] {
+                mn, path
+            }));
         }
     }
 

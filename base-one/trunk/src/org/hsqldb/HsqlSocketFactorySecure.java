@@ -342,9 +342,8 @@ implements HandshakeCompletedListener {
         start       = DN.indexOf("CN=");
 
         if (start < 0) {
-            emsg = "Server certificate has no Common Name";
-
-            throw new UnknownHostException(emsg);
+            throw new UnknownHostException(
+                Trace.getMessage(Trace.HsqlSocketFactorySecure_verify));
         }
 
         start += 3;
@@ -353,18 +352,19 @@ implements HandshakeCompletedListener {
                                                : DN.length());
 
         if (CN.length() < 1) {
-            emsg = "Server certificate has empty Common Name";
-
-            throw new UnknownHostException(emsg);
+            throw new UnknownHostException(
+                Trace.getMessage(Trace.HsqlSocketFactorySecure_verify2));
         }
 
         if (!CN.equalsIgnoreCase(host)) {
 
             // TLS_HOSTNAME_MISMATCH
-            emsg = "Server certificate Common Name[" + CN
-                   + "] does not match host name[" + host + "]";
-
-            throw new UnknownHostException(emsg);
+            throw new UnknownHostException(
+                Trace.getMessage(
+                    Trace.HsqlSocketFactorySecure_verify3, true,
+                    new Object[] {
+                CN, host
+            }));
         }
     }
 

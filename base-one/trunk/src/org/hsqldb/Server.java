@@ -1700,13 +1700,22 @@ public class Server implements HsqlSocketRequestHandler {
                 socket = socketFactory.createServerSocket(port, address);
             } catch (UnknownHostException e) {
                 candidateAddrs = listLocalInetAddressNames();
-                emsg           = "Invalid address : " + address;
+
+                int      messageID;
+                Object[] messageParameters;
 
                 if (candidateAddrs.size() > 0) {
-                    emsg += "\nTry one of: " + candidateAddrs;
+                    messageID         = Trace.Server_openServerSocket;
+                    messageParameters = new Object[] {
+                        address, candidateAddrs
+                    };
+                } else {
+                    messageID         = Trace.Server_openServerSocket2;
+                    messageParameters = new Object[]{ address };
                 }
 
-                throw new UnknownHostException(emsg);
+                throw new UnknownHostException(Trace.getMessage(messageID,
+                        true, messageParameters));
             }
         }
 

@@ -390,6 +390,9 @@ class TableFilter {
      */
     boolean findFirst() throws HsqlException {
 
+        nonJoinIsNull  = false;
+        isCurrentOuter = false;
+
         if (iIndex == null) {
             iIndex = tTable.getPrimaryIndex();
         }
@@ -410,9 +413,6 @@ class TableFilter {
             if (!(eEnd == null || eEnd.test())) {
                 break;
             }
-
-            nonJoinIsNull  = false;
-            isCurrentOuter = false;
 
             if (eAnd == null || eAnd.test()) {
                 return true;
@@ -437,7 +437,9 @@ class TableFilter {
      */
     boolean next() throws HsqlException {
 
-        nCurrent = iIndex.next(nCurrent);
+        nonJoinIsNull  = false;
+        isCurrentOuter = false;
+        nCurrent       = iIndex.next(nCurrent);
 
         while (nCurrent != null) {
             oCurrentData = nCurrent.getData();
@@ -446,9 +448,6 @@ class TableFilter {
             if (!(eEnd == null || eEnd.test())) {
                 break;
             }
-
-            nonJoinIsNull  = false;
-            isCurrentOuter = false;
 
             if (eAnd == null || eAnd.test()) {
                 return true;

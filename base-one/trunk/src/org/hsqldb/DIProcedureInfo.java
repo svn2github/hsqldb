@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
+import java.sql.Connection;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
@@ -201,11 +202,27 @@ final class DIProcedureInfo {
 
     Integer getColUsage(int i) {
 
-        i += colOffset();
+// boucherb@users 2003-09-22 - patch 1.7.2 Alpha P - external tools cannot
+//                             pass Connection in arg position 1 and should
+//                             use setXXX(String paramName, ValueClass x)
+//                             instead, or we must stop reporting this
+//                             column (at least in this position)
+        int idx = i + colOffset();
 
-        return i == 0
-               ? ValuePool.getInt(DatabaseMetaData.procedureColumnReturn)
-               : ValuePool.getInt(DatabaseMetaData.procedureColumnIn);
+        switch (i) {
+
+            case 0 :
+                return ValuePool.getInt(
+                    DatabaseMetaData.procedureColumnReturn);
+
+            case 1 :
+                return java.sql.Connection.class.isAssignableFrom(getColClass(i))
+                       ? ValuePool.getInt(DatabaseMetaData.procedureColumnUnknown)
+                       : ValuePool.getInt(DatabaseMetaData.procedureColumnIn);
+
+            default :
+                return ValuePool.getInt(DatabaseMetaData.procedureColumnIn);
+        }
     }
 
     Class getDeclaringClass() {
@@ -484,33 +501,34 @@ final class DIProcedureInfo {
 
     private void resolveCols() {
 
-        Class   returnType;
-        Class[] parmTypes;
-        Class   c;
-        int     len;
+        Class   rType;
+        Class[] pTypes;
+        Class   clazz;
+        int     ptlen;
+        int     pclen;
+        boolean isFPCON;
 
-        returnType    = method.getReturnType();
-        parmTypes     = method.getParameterTypes();
-        len           = parmTypes.length + 1;
-        colClasses    = new Class[len];
-        colTypes      = new int[len];
-        colClasses[0] = returnType;
-        colTypes[0]   = typeForClass(returnType);
+        rType         = method.getReturnType();
+        pTypes        = method.getParameterTypes();
+        ptlen         = pTypes.length;
+        isFPCON = ptlen > 0 && java.sql.Connection.class.equals(pTypes[0]);
+        pclen         = 1 + ptlen - (isFPCON ? 1
+                                             : 0);
+        colClasses    = new Class[pclen];
+        colTypes      = new int[pclen];
+        colClasses[0] = rType;
+        colTypes[0]   = typeForClass(rType);
 
-        for (int i = 1; i < len; i++) {
-            c             = parmTypes[i - 1];
-            colClasses[i] = c;
-            colTypes[i]   = typeForClass(c);
+        for (int i = isFPCON ? 1
+                             : 0, idx = 1; i < ptlen; i++, idx++) {
+            clazz           = pTypes[i];
+            colClasses[idx] = clazz;
+            colTypes[idx]   = typeForClass(clazz);
         }
 
-        colOffset = 0;
-        colCount  = method.getParameterTypes().length;
-
-        if (returnType == Void.TYPE) {
-            colOffset++;
-        } else {
-            colCount++;
-        }
+        colOffset = rType == Void.TYPE ? 1
+                                       : 0;
+        colCount  = pclen - colOffset;
     }
 
     void setMethod(Method m) {

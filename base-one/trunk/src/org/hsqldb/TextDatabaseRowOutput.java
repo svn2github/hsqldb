@@ -170,9 +170,13 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                                         String sep) throws IOException {
 
         if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            throw new IOException("end of line characters not allowed");
+            throw new IOException(
+                Trace.getMessage(
+                    Trace.TextDatabaseRowOutput_checkConvertString));
         } else if (s.indexOf(sep) != -1) {
-            throw new IOException("separator not allowed in unquoted string");
+            throw new IOException(
+                Trace.getMessage(
+                    Trace.TextDatabaseRowOutput_checkConvertString2));
         }
 
         return s;
@@ -208,7 +212,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void writeIntData(int i, int position) throws IOException {
         throw new java.lang.RuntimeException(
-            "Method writeIntData(int, int) not yet implemented.");
+            Trace.getMessage(Trace.TextDatabaseRowOutput_writeIntData));
     }
 
 // fredt@users - comment - methods used for writing each SQL type

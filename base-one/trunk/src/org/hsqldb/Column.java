@@ -805,6 +805,16 @@ class Column {
                 }
                 break;
 
+// boucherb@users 2003-09-25
+// TODO:  Maybe use //#ifdef tag or reflective static method attribute
+// instantiation to take advantage of String.compareToIgnoreCase when
+// available (JDK 1.2 and greater) during ANT build. That or perhaps
+// consider using either local character-wise comparison or first converting
+// to lower case and then to upper case. Sun states that the JDK 1.2 introduced
+// String.compareToIngnorCase() comparison involves calling
+// Character.toLowerCase(Character.toUpperCase()) on compared characters,
+// to correctly handle some caveats concering using only the one operation or
+// the other outside the ascii character range.                
             case Types.VARCHAR_IGNORECASE :
                 if (sql_compare_in_locale) {
                     i = i18nCollator.compare(((String) a).toUpperCase(),
@@ -1506,15 +1516,15 @@ class Column {
                 int sum = typeWidth1 + typeWidth2;
 
                 if (sum <= 4) {
-                return Types.INTEGER;
-            }
+                    return Types.INTEGER;
+                }
 
                 if (sum <= 8) {
-                return Types.BIGINT;
-            }
+                    return Types.BIGINT;
+                }
 
                 return Types.NUMERIC;
-            }
+        }
     }
 
     /**

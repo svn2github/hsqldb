@@ -31,8 +31,7 @@
 
 package org.hsqldb.lib;
 
-import java.util.Vector;
-import java.util.StringTokenizer;
+import java.lang.reflect.Array;
 
 /** Provides a collection of convenience methods for processing and
  * creating objects with <code>String</code> value components.
@@ -71,6 +70,27 @@ public class StringUtil {
         }
 
         return src.toString();
+    }
+
+    public static String arrayToString(Object array) {
+
+        int          len  = Array.getLength(array);
+        int          last = len - 1;
+        StringBuffer sb   = new StringBuffer(2 * (len + 1));
+
+        sb.append('{');
+
+        for (int i = 0; i < len; i++) {
+            sb.append(Array.get(array, i));
+
+            if (i != last) {
+                sb.append(',');
+            }
+        }
+
+        sb.append('}');
+
+        return sb.toString();
     }
 
     /**

@@ -58,7 +58,9 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
                                         String sep) throws IOException {
 
         if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            throw new IOException("end of line characters not allowed");
+            throw new IOException(
+                Trace.getMessage(
+                    Trace.QuotedTextDatabaseRowOutput_checkConvertString));
         }
 
         if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1
