@@ -1,23 +1,23 @@
 /* Copyrights and Licenses
  *
  * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
+ * Originally developed by Thomas Mueller and the Hypersonic SQL Group.
  *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
+ * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
+ * provided that the following conditions are met:
  *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
+ *         and the following disclaimer.
  *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
  *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
+ *         provided with the distribution.
  *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
+ *        following acknowledgment: "This product includes Hypersonic SQL."
  *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
  *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
+ *         Hypersonic SQL Group.
  *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
+ *          product includes Hypersonic SQL."
  * This software is provided "as is" and any expressed or implied warranties, including, but
  * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
  * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
@@ -25,7 +25,7 @@
  * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
  * or business interruption). However caused any on any theory of liability, whether in contract,
  * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
+ * software, even if advised of the possibility of such damage.
  * This software consists of voluntary contributions made by many individuals on behalf of the
  * Hypersonic SQL Group.
  *
@@ -54,9 +54,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -82,9 +82,9 @@ import org.hsqldb.lib.ValuePool;
 // additions in different parts to support savepoint transactions
 // fredt@users 20020910 - patch 1.7.1 by fredt - database readonly enforcement
 // fredt@users 20020912 - patch 1.7.1 by fredt - permanent internal connection
-// boucherb@users 20030512 - patch 1.7.2 - compiled statements 
+// boucherb@users 20030512 - patch 1.7.2 - compiled statements
 //                                       - session becomes execution hub
-// boucherb@users 20050510 - patch 1.7.2 - generalized Result packet passing 
+// boucherb@users 20050510 - patch 1.7.2 - generalized Result packet passing
 //                                         based command execution
 //                                       - batch execution handling
 
@@ -706,7 +706,7 @@ public class Session {
         }
 
         // In addition to requiring that the compilation was successful,
-        // we also require that the submitted sql represents a _single_ 
+        // we also require that the submitted sql represents a _single_
         // valid DML statement.
         if (!cmdok || tokenizer.getPosition() != tokenizer.getLength()) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -917,14 +917,18 @@ public class Session {
 
                     // FIXME:  we don't have what it takes yet
                     // to differentiate between things like
-                    // stored procedure calls to methods with 
-                    // void return type and select statements with 
+                    // stored procedure calls to methods with
+                    // void return type and select statements with
                     // a single row/column containg null
                     batchStatus = -2;
+
+                    break;
                 }
                 case Result.ERROR :
                 default : {
                     batchStatus = -3;
+
+                    break;
                 }
             }
 
@@ -973,7 +977,7 @@ public class Session {
         parameters = cs.parameters;
 
         // don't bother with array length checks...trust the client
-        // to send pvals and ptyptes with length at least as long 
+        // to send pvals and ptyptes with length at least as long
         // as parameters array
         try {
             for (int i = 0; i < parameters.length; i++) {
