@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.21 2004/05/15 00:50:21 unsaved Exp $
+# $Id: hsqldb,v 1.22 2004/05/16 21:28:30 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -312,6 +312,7 @@ running with pid $HSQLDB_PID."
             export PIDFILE
             export TLS_SWITCHES
             export SERVER_JVMARGS
+            export TARGET_CLASS
             nohup sh -c '
                 echo $$ > "$PIDFILE" || {
                     echo "Failed to write pid to pid file" 1>&2
