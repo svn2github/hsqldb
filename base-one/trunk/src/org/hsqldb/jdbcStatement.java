@@ -178,7 +178,7 @@ public class jdbcStatement implements java.sql.Statement {
         new Result(ResultConstants.BATCHEXECDIRECT);
 
     /** Whether the parent connection is to a network server instance. */
-    protected final boolean isNetConn;
+    protected boolean isNetConn;
 
     // boucherb@users
     // NOTE:

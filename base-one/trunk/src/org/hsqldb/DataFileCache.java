@@ -71,6 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.ZipUnzipFile;
 
 public class DataFileCache extends Cache {
 
@@ -401,7 +402,7 @@ public class DataFileCache extends Cache {
         try {
 
             // create a '.new' file; rename later
-            FileUtil.compressFile(sName, newName);
+            ZipUnzipFile.compressFile(sName, newName);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.DataFileCache_backup + newName);

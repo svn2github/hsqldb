@@ -37,7 +37,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * Maintains a sequence of numbers.
  *
  * @author  fredt@users
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  * @version 1.7.2
  */
 public class NumberSequence {

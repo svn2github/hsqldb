@@ -296,7 +296,7 @@ class DatabaseCommandInterpreter {
             case Token.CONNECT :
                 processConnect();
                 database.setMetaDirty(null);
-                session.setScripting(true);
+                session.setScripting(false);
                 break;
 
             case Token.DISCONNECT :
@@ -1839,6 +1839,7 @@ class DatabaseCommandInterpreter {
 
             session.commit();
             session.setUser(user);
+            database.logger.logConnectUser(session);
         } else if (session == database.sessionManager.getSysSession()) {
 
             // log statement
@@ -1846,6 +1847,7 @@ class DatabaseCommandInterpreter {
 
             session.commit();
             session.setUser(user);
+            database.logger.logConnectUser(session);
         } else {
 
             // force throw if not log statement
@@ -3058,5 +3060,6 @@ class DatabaseCommandInterpreter {
 
         userObject.setPassword(password);
         database.logger.writeToLog(session, userObject.getAlterUserDDL());
+        session.setScripting(false);
     }
 }

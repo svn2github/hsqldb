@@ -34,6 +34,11 @@ package org.hsqldb;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
+/**
+ * @author fredt@user
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 class SequenceManager {
 
     HashMappedList sequenceMap;

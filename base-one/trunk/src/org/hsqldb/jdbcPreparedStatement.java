@@ -322,6 +322,7 @@ implements java.sql.PreparedStatement {
         resultIn = null;
 
         try {
+            resultOut.setMaxRows(iMaxRows);
             resultOut.setParameterData(parameterValues);
 
             resultIn = connection.sessionProxy.execute(resultOut);
@@ -361,6 +362,7 @@ implements java.sql.PreparedStatement {
         resultIn = null;
 
         try {
+            resultOut.setMaxRows(iMaxRows);
             resultOut.setParameterData(parameterValues);
 
             resultIn = connection.sessionProxy.execute(resultOut);
@@ -1487,25 +1489,13 @@ implements java.sql.PreparedStatement {
     public void setDate(int parameterIndex, java.sql.Date x,
                         Calendar cal) throws SQLException {
 
-// CHECKME:  What happens if the client specifies a null Calendar object?
-//           If this happens, do we properly use the default
-//           timezone, which is that of the virtual machine running the
-//           application?
-//
-//        if (cal == null) {
-//            cal = ??? java.util.Calendar.getInstance();
-//        }
         String s;
 
-        if (x == null) {
-            s = null;
-        } else {
-            try {
-                s = HsqlDateTime.getDateString(x, cal);
-            } catch (Exception e) {
-                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                              e.getMessage());
-            }
+        try {
+            s = HsqlDateTime.getDateString(x, cal);
+        } catch (Exception e) {
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
 
         setParameter(parameterIndex, s);
@@ -1543,25 +1533,13 @@ implements java.sql.PreparedStatement {
     public void setTime(int parameterIndex, java.sql.Time x,
                         Calendar cal) throws SQLException {
 
-// CHECKME:  What happens if the client specifies a null Calendar object?
-//           If this happens, do we properly use the default
-//           timezone, which is that of the virtual machine running the
-//           application?
-//
-//        if (cal == null) {
-//            cal = ??? java.util.Calendar.getInstance();
-//        }
         String s;
 
-        if (x == null) {
-            s = null;
-        } else {
-            try {
-                s = HsqlDateTime.getTimeString(x, cal);
-            } catch (Exception e) {
-                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                              e.getMessage());
-            }
+        try {
+            s = HsqlDateTime.getTimeString(x, cal);
+        } catch (Exception e) {
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
 
         setParameter(parameterIndex, s);
@@ -1599,25 +1577,13 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
 
-// CHECKME:  What happens if the client specifies a null Calendar object?
-//           If this happens, do we properly use the default
-//           timezone, which is that of the virtual machine running the
-//           application?
-//
-//        if (cal == null) {
-//            cal = ??? java.util.Calendar.getInstance();
-//        }
         String s;
 
-        if (x == null) {
-            s = null;
-        } else {
-            try {
-                s = HsqlDateTime.getTimestampString(x, cal);
-            } catch (Exception e) {
-                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                              e.getMessage());
-            }
+        try {
+            s = HsqlDateTime.getTimestampString(x, cal);
+        } catch (Exception e) {
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
 
         setParameter(parameterIndex, s);
@@ -1757,6 +1723,7 @@ implements java.sql.PreparedStatement {
         Result   modesResult;
         Object[] row;
 
+        isNetConn             = !(c.sessionProxy instanceof Session);
         sql                   = c.nativeSQL(sql);
         compiledStatementType = guessCompiledStatementType(sql);
 
@@ -1936,7 +1903,7 @@ implements java.sql.PreparedStatement {
 
         try {
             if (outType == Types.OTHER) {
-                o = new JavaObject(o);
+                o = new JavaObject(o, !isNetConn);
             } else if (outType == Types.BINARY) {
                 if (!(o instanceof byte[])) {
                     throw jdbcDriver.sqlException(

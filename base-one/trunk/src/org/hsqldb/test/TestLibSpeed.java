@@ -40,6 +40,9 @@ import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.StopWatch;
 import java.util.NoSuchElementException;
 
+/**
+ * @author fredt@users
+ */
 public class TestLibSpeed {
 
     static final String sNumeric[][] = {

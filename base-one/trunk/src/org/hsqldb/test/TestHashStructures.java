@@ -35,6 +35,9 @@ import junit.framework.*;
 import java.util.*;
 import org.hsqldb.lib.DoubleIntTable;
 
+/**
+ * @author fredt@users
+ */
 public class TestHashStructures extends TestCase {
 
     public TestHashStructures(String s) {

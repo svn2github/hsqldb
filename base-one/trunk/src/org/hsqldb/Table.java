@@ -93,12 +93,15 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
 // kloska@users 20021112 - patch 1.7.2 - ON DELETE SET NULL | SET DEFAULT
 // fredt@users 20021210 - patch 1.7.2 - better ADD / DROP INDEX for non-CACHED tables
+// fredt@users 20030901 - patch 1.7.2 - allow multiple nulls for UNIQUE columns
+// fredt@users 20030901 - patch 1.7.2 - reworked IDENTITY support
+// achnettest@users 20040130 - patch 878288 - bug fix for new indexes in memory tables by Arne Christensen
 
 /**
  *  Holds the data structures and methods for creation of a database table.
  *
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 
 /** @todo fredt - move error and assert string literals to Trace */
@@ -1267,19 +1270,21 @@ class Table {
                       boolean constraint,
                       boolean forward) throws HsqlException {
 
-        Index newindex = createIndexStructure(column, name, false, unique,
-                                              constraint, forward);
+        int newindexNo = createIndexStructureGetNo(column, name, false,
+            unique, constraint, forward);
+        Index newindex     = (Index) vIndex.get(newindexNo);
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
 
         try {
             while (n != null) {
-                Row  row     = n.getRow();
-                Node newnode = Node.newNode(row, iIndexCount - 1, this);
-                Node endnode = row.getNode(iIndexCount - 2);
+                Row  row      = n.getRow();
+                Node newnode  = Node.newNode(row, newindexNo, this);
+                Node backnode = row.getNode(newindexNo - 1);
 
-                endnode.nNext = newnode;
+                newnode.nNext  = backnode.nNext;
+                backnode.nNext = newnode;
 
                 newindex.insert(newnode);
 
@@ -1294,19 +1299,20 @@ class Table {
         }
 
         // backtrack on error
+        // lastnode is where the exception was thrown
         Node lastnode = n;
 
         n = primaryindex.first();
 
         while (n != lastnode) {
-            int  i        = iIndexCount - 2;
+            int  i        = newindexNo;
             Node backnode = n;
 
-            while (i-- > 0) {
+            while (--i > 0) {
                 backnode = backnode.nNext;
             }
 
-            backnode.nNext = null;
+            backnode.nNext = backnode.nNext.nNext;
             n              = primaryindex.next(n);
         }
 
@@ -1331,6 +1337,13 @@ class Table {
     Index createIndexStructure(int column[], HsqlName name, boolean pk,
                                boolean unique, boolean constraint,
                                boolean forward) throws HsqlException {
+        return (Index) vIndex.get(createIndexStructureGetNo(column, name, pk,
+                unique, constraint, forward));
+    }
+
+    int createIndexStructureGetNo(int column[], HsqlName name, boolean pk,
+                                  boolean unique, boolean constraint,
+                                  boolean forward) throws HsqlException {
 
         Trace.doAssert(iPrimaryKey != null, "createIndex");
 
@@ -1362,14 +1375,13 @@ class Table {
 
         Index newindex = new Index(name, this, col, type, unique, constraint,
                                    forward, s);
-
-        addIndex(newindex);
+        int indexNo = addIndex(newindex);
 
         iIndexCount = vIndex.size();
 
         setBestRowIdentifiers();
 
-        return newindex;
+        return indexNo;
     }
 
     private int addIndex(Index index) {

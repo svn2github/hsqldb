@@ -1806,13 +1806,17 @@ class Expression {
                     eArg     = null;
                     eArg2    = null;
                 } else if (eArg.isParam) {
-                    eArg.dataType = eArg2.dataType;
+                    eArg.dataType = eArg2.dataType == Types.NULL
+                                    ? Types.VARCHAR
+                                    : eArg2.dataType;
 
                     if (eArg2.exprType == COLUMN) {
                         eArg.setTableColumnAttributes(eArg2);
                     }
                 } else if (eArg2.isParam) {
-                    eArg2.dataType = eArg.dataType;
+                    eArg2.dataType = eArg.dataType == Types.NULL
+                                     ? Types.VARCHAR
+                                     : eArg.dataType;
 
                     if (eArg.exprType == COLUMN) {
                         eArg2.setTableColumnAttributes(eArg);
@@ -3334,7 +3338,7 @@ class Expression {
     String  valueClassName;    // = null
 
 // boucherb@users 20040111 - patch 1.7.2 RC1 - metadata xxxusage support
-//-------------------------------------------------------------------    
+//-------------------------------------------------------------------
     // TODO:  Maybe provide an interface or abstract class + a default
     // implementation instead?  This would allow a more powerful system
     // of collectors to be created, for example to assist in the optimization

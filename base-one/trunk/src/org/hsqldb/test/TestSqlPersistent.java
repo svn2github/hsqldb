@@ -42,8 +42,9 @@ import junit.framework.*;
 public class TestSqlPersistent extends TestCase {
 
     // change the url to reflect your preferred db location and name
-//    String url = "jdbc:hsqldb:hsql://localhost/yourtest";
-    String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
+    String url = "jdbc:hsqldb:hsql://localhost/yourtest";
+
+//    String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
     String     user;
     String     password;
     Statement  sStatement;
@@ -263,11 +264,12 @@ public class TestSqlPersistent extends TestCase {
         assertEquals(true, success);
     }
 
-    public void testSelectObject() {
+    public void testSelectObject() throws IOException {
 
         String   stringValue        = null;
         Integer  integerValue       = null;
         Double[] arrayValue         = null;
+        byte[]   byteArrayValue     = null;
         String   stringValueResult  = null;
         Integer  integerValueResult = null;
         Double[] arrayValueResult   = null;
@@ -282,8 +284,8 @@ public class TestSqlPersistent extends TestCase {
 
             sStatement.execute(sqlString);
 
-            sqlString = "INSERT INTO TESTOBJECT " + "(STOREDOBJECT) "
-                        + "VALUES (?)";
+            sqlString = "INSERT INTO TESTOBJECT "
+                        + "(STOREDOBJECT, STOREDBIN) " + "VALUES (?,?)";
 
             PreparedStatement ps = cConnection.prepareStatement(sqlString);
 
@@ -295,19 +297,31 @@ public class TestSqlPersistent extends TestCase {
                 new Double(Double.NEGATIVE_INFINITY),
                 new Double(Double.POSITIVE_INFINITY)
             };
+            byteArrayValue = new byte[] {
+                1, 2, 3
+            };
 
             // String as Object
 // fredt - in order to store Strings in OBJECT columns setObject should
 // explicitly be called with a Types.OTHER type
             ps.setObject(1, stringValue, Types.OTHER);
+            ps.setBytes(2, byteArrayValue);
             ps.execute();
 
             // Integer as Object
             ps.setObject(1, integerValue, Types.OTHER);
+            ps.setBinaryStream(2, new ByteArrayInputStream(byteArrayValue),
+                               byteArrayValue.length);
             ps.execute();
 
             // Array as object
             ps.setObject(1, arrayValue, Types.OTHER);
+/*
+            // file as binary - works fine but file path and name has to be modified for test environment
+            int length = (int) new File("c://ft/Rel.bmp").length();
+            FileInputStream fis = new FileInputStream("c://ft/Rel.bmp");
+            ps.setBinaryStream(2,fis,length);
+*/
             ps.execute();
 
             ResultSet rs =
@@ -339,8 +353,8 @@ public class TestSqlPersistent extends TestCase {
 
             rs.close();
             ps.close();
-/*
-            sqlString = "SELECT * FROM TESTOBJECT WHERE STOREDOBJECT IN(?)";
+
+            sqlString = "SELECT * FROM TESTOBJECT WHERE STOREDOBJECT = ?";
             ps        = cConnection.prepareStatement(sqlString);
 
             ps.setObject(1, new Integer(1000));
@@ -349,10 +363,9 @@ public class TestSqlPersistent extends TestCase {
 
             rs.next();
 
-            integerValueResult = rs.getObject(2);
+            Object returnVal = rs.getObject(2);
 
             rs.next();
-*/
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }

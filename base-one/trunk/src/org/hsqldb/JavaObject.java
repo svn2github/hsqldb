@@ -83,6 +83,20 @@ public class JavaObject {
         this.data = data;
     }
 
+    /**
+     * This constructor is from classes implementing the JDBC interfaces.<b>
+     * Inside the engine, it is used to convert a value into an object
+     * of type OTHER.
+     */
+    JavaObject(Object o, boolean serialise) throws HsqlException {
+
+        if (serialise) {
+            data = Column.serialize(o);
+        } else {
+            object = o;
+        }
+    }
+
     byte[] getBytes() throws HsqlException {
 
         if (data == null) {

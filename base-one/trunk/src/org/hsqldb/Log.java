@@ -77,6 +77,7 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.ZipUnzipFile;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -590,7 +591,7 @@ class Log {
                 defaultTimer.zero();
             }
 
-            FileUtil.decompressFile(sFileBackup, sFileCache);
+            ZipUnzipFile.decompressFile(sFileBackup, sFileCache);
 
             if (Trace.TRACE) {
                 Trace.trace(defaultTimer.elapsedTime());

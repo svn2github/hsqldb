@@ -37,6 +37,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users
@@ -246,17 +247,18 @@ class HsqlDateTime {
                                      Calendar cal) throws Exception {
 
         synchronized (sdfts) {
-            sdfts.setCalendar(cal);
+            sdfts.setCalendar(cal == null ? tempCal
+                                          : cal);
 
-            return sdfts.format(new java.util.Date(x.getTime()
-                                                   + x.getNanos() / 1000000));
+            return sdfts.format(new java.util.Date(x.getTime()));
         }
     }
 
     static String getTimeString(Time x, Calendar cal) throws Exception {
 
         synchronized (sdft) {
-            sdft.setCalendar(cal);
+            sdft.setCalendar(cal == null ? tempCal
+                                         : cal);
 
             return sdft.format(x);
         }
@@ -265,7 +267,8 @@ class HsqlDateTime {
     static String getDateString(Date x, Calendar cal) throws Exception {
 
         synchronized (sdfd) {
-            sdfd.setCalendar(cal);
+            sdfd.setCalendar(cal == null ? tempCal
+                                         : cal);
 
             return sdfd.format(x);
         }
