@@ -102,6 +102,10 @@ class DatabaseManager {
         return db.connect(user, password);
     }
 
+    /**
+     * Used by in-process connections and by Servlet
+     */
+
     static Session newSession(String type, String path, String user,
                               String password,
                               boolean ifexists) throws HsqlException {
@@ -124,14 +128,14 @@ class DatabaseManager {
     }
 
     /**
-     * unused alternative.
+     * Unused alternative to above.
      */
     static Session getSession(String type, String path,
-                              int id) throws HsqlException {
+                              int sessionId) throws HsqlException {
 
         Database db = lookupDatabaseObject(type, path);
 
-        return db.sessionManager.getSession(id);
+        return db.sessionManager.getSession(sessionId);
     }
 
     /**
@@ -164,12 +168,11 @@ class DatabaseManager {
     static Database getDatabase(String type, String path,
                                 boolean ifexists) throws HsqlException {
 
-        // If the (type, path) pair does not correspond to a registed
-        // instance and ifexists is false, then getDatabaseObject() guarantees
-        // that, upon return, the db variable is a freshly constructed
-        // Database instance and that it has been registed.  However,
-        // this means that the database state will be DATABASE_SHUTDOWN,
-        // which in turn means that the switch below will attempt to
+        // If the (type, path) pair does not correspond to a registered
+        // instance, then getDatabaseObject() returns a newly constructed
+        // and registered Database instance.
+        // The database state will be DATABASE_SHUTDOWN,
+        // which means that the switch below will attempt to
         // open the database instance.
         Database db = getDatabaseObject(type, path, ifexists);
 
@@ -190,28 +193,16 @@ class DatabaseManager {
                     db.open();
                     break;
 
-                // Database.close is invoked external to Database only from
-                // DatabaseCommandInterpreter.processShutdown(), which is
-                // private.  In turn, processShutdown() can only be invoked
-                // indirectly from Session.execute() (which is synchronized on
-                // the database instance) or from Session.sqlExecuteDirectXXX.
-                // The sqlExecuteDirect() form is also synchronized on
-                // the database, while the sqlExecuteDirectNoPreChecks is not
-                // but is reserved for use only internal to Session and by the
-                // Log when executing REDO statements.  Since execution of REDO
-                // takes place only inside Database.open() (which is
-                // synchronized) or Database.close() (which is what we're
-                // talking about anyway). Finally, Database.getState() is
-                // also synchronized.  Hence, it is currently impossible for
-                // a thread executing outside a database instance to the
-                // Database.DATABASE_CLOSING state.
+                // This state will be reached if a database is being shutdown
+                // by a thread and in the meantime another thread attempt
+                // to connect to the db. The threads could belong to different
+                // server instances or be in-process.
                 case Database.DATABASE_CLOSING :
 
-                // Database.open is synchronized and so is Database.getState()
-                // so unless Database.open throws without cleaning up and
-                // switching out of DATABASE_OPENING state, this case simply
-                // cannot happen here, inside a block synchronized on db and
-                // a switch on db.getState().
+                // this case will not be reached as the state is set and
+                // cleared within the db.open() call above, which is called
+                // from this synchronized block
+                // it is here simply as a placeholder for future development
                 case Database.DATABASE_OPENING :
                     throw Trace.error(Trace.DATABASE_ALREADY_IN_USE,
                                       Trace.DatabaseManager_getDatabase,
@@ -293,7 +284,7 @@ class DatabaseManager {
     }
 
     /**
-     * Reduces the accessCount of a database
+     * Not used. Reduces the accessCount of a database
      */
     static synchronized void releaseAccessCount(Database database)
     throws HsqlException {
@@ -309,7 +300,7 @@ class DatabaseManager {
     }
 
     /**
-     * Decrements the access count for the database.
+     * Not used. Different signature for the above method.
      */
     static synchronized void releaseDatabase(String type,
             String path) throws HsqlException {
@@ -320,14 +311,7 @@ class DatabaseManager {
             return;
         }
 
-        int accessCount = databaseAccessMap.get(database, Integer.MIN_VALUE);
-
-        if (accessCount == Integer.MIN_VALUE || accessCount == 0) {
-            throw Trace.error(Trace.GENERAL_ERROR,
-                              Trace.DatabaseManager_releaseDatabase, null);
-        }
-
-        databaseAccessMap.put(database, --accessCount);
+        releaseAccessCount(database);
     }
 
     /**

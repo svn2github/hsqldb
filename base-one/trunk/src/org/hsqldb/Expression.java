@@ -1881,7 +1881,7 @@ class Expression {
 
         if (aggregateSpec == AGGREGATE_SELF) {
             if (currValue == null) {
-                currValue = new SetFunction(iType, iDataType,
+                currValue = new SetFunction(iType, eArg.iDataType,
                                             isDistinctAggregate);
             }
 
@@ -1910,7 +1910,7 @@ class Expression {
             leftCurrValue = eArg.getAggregatingValue(leftCurrValue);
         }
 
-        if (eArg2.isAggregate()) {
+        if (eArg2 != null && eArg2.isAggregate()) {
             rightCurrValue = eArg2.getAggregatingValue(rightCurrValue);
         }
 
