@@ -1,0 +1,391 @@
+<html lang="en">
+<head>
+<title>SQLTOOL HOWTO</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="SQLTOOL HOWTO">
+<meta name="generator" content="makeinfo 4.5">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
+</head>
+<body>
+<h1 class="settitle">SQLTOOL HOWTO</h1>
+
+<div class="contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a name="toc_Top" href="#Top">SQLTOOL HOWTO</a>
+<li><a name="toc_Intro" href="#Intro">Introduction</a>
+<li><a name="toc_BareBones" href="#BareBones">The Bare Minimum You Need to Know to Run SqlTool</a>
+<li><a name="toc_Auth" href="#Auth">Authentication</a>
+<li><a name="toc_Interactive" href="#Interactive">Interactive</a>
+<ul>
+<ul>
+<li><a href="#Interactive">Essential Special Commands</a>
+<li><a href="#Interactive">Buffer Commands</a>
+</li></ul>
+</li></ul>
+<li><a name="toc_SQLFiles" href="#SQLFiles">SQL Files</a>
+<li><a name="toc_Webapp" href="#Webapp">Web Application</a>
+</li></ul>
+</div>
+
+
+<div class="node">
+<p><hr>
+Node:<a name="Top">Top</a>,
+Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
+<br>
+</div>
+
+<h2 class="unnumbered">SQLTOOL HOWTO</h2>
+
+<p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
+<br>
+$Revision: 1.3 $
+
+<p>The software which is referred to in this document and which is hosted
+on the admc.com web site, is distributed for free according to the Gnu
+Public License.
+
+     <dl>
+<dt><strong>Split-up HTML</strong>
+     <dd><a href="index.html">http://admc.com/blaine/howtos/sqltool/index.html</a>
+<br><p>
+     <br><dt><strong>PDF</strong>
+     <dd><a href="sqltool.pdf">http://admc.com/blaine/howtos/sqltool/sqltool.pdf</a>
+<br><p>
+     <br><dt><strong>Info</strong>
+     <dd><a href="sqltool.info">http://admc.com/blaine/howtos/sqltool/sqltool.info</a>
+(useful if you are on UNIX and want to view this in a terminal window instead
+of with a web browser, and without losing the linking features). 
+</dl>
+
+<ul class="menu">
+<li><a accesskey="1" href="#Intro">Intro</a>:  Introduction
+<li><a accesskey="2" href="#BareBones">BareBones</a>:  The Bare Minimum You Need to Know to Run SqlTool
+<li><a accesskey="3" href="#Auth">Auth</a>:  Authentication
+<li><a accesskey="4" href="#Interactive">Interactive</a>:  Interactive
+<li><a accesskey="5" href="#SQLFiles">SQLFiles</a>:  SQL Files
+<li><a accesskey="6" href="#Webapp">Webapp</a>:  Web Application
+</ul>
+
+<div class="node">
+<p><hr>
+Node:<a name="Intro">Intro</a>,
+Next:<a rel="next" accesskey="n" href="#BareBones">BareBones</a>,
+Previous:<a rel="previous" accesskey="p" href="#Top">Top</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Introduction</h2>
+
+<p>This document explains how to use SqlTool, a program which reads your
+SQL text file or stdin, and executes the SQL commands therein against
+a JDBC database.
+
+<p>If this document comes from a hsqldb distribution, then it covers the
+version of SqlTool bundled in this distribution. 
+Otherwise, this document applies to the version of SqlTool which ships
+with hsqldb version 1.7.2.
+
+<div class="node">
+<p><hr>
+Node:<a name="BareBones">BareBones</a>,
+Next:<a rel="next" accesskey="n" href="#Auth">Auth</a>,
+Previous:<a rel="previous" accesskey="p" href="#Intro">Intro</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">The Bare Minimum You Need to Know to Run SqlTool</h2>
+
+<p>If you want to use SqlTool, then you either have an SQL text file, or
+you want to interactively type in SQL commands. 
+If neither case applies to you, then you are looking at the wrong program.
+
+<p>To run SQLTool...
+     <ol type=1 start=1>
+<li>Set up an authentication file, as documented in the
+<em>Auth</em> section of this document.
+<br><p>
+     <li>Set up your CLASSPATH to include the classes org.hsqldb.util.SqlTool,
+org.hsqldb.util.SqlFile, and the JDBC driver that you want to use. 
+If you are using a hsqldb database, this is most easily accomplished by
+setting (and exporting) CLASSPATH to the path to hsqldb.jar (which lives
+in the <em>lib</em> subdirectory of the hsqldb distribution). 
+(You can, of course, use a classpath argument to java instead of setting
+your CLASSPATH variable).
+<br><p>
+     <li>Run
+     <pre class="example">              java org.hsqldb.util.SqlTool --help
+          </pre>
+     to see what command-line arguments are available. 
+Assuming that you set up your authentication file at the default location
+and you want to use the hsqldb JDBC driver, you will want to run either
+     <pre class="example">              java org.hsqldb.util.SqlTool urlid
+          </pre>
+     for interactive use, or
+     <pre class="example">              java org.hsqldb.util.SqlTool urlid filepath1.sql...
+          </pre>
+     where the arguments following the <em>urlid</em> are paths to text SQL files. 
+For the filepaths, you can use whatever wildcards your operating system shell
+supports.
+
+     <p>The <em>urlid</em> in these commands is a key into your authentication file,
+as explained in the <em>Auth</em> section of this document.
+     </ol>
+
+<div class="node">
+<p><hr>
+Node:<a name="Auth">Auth</a>,
+Next:<a rel="next" accesskey="n" href="#Interactive">Interactive</a>,
+Previous:<a rel="previous" accesskey="p" href="#BareBones">BareBones</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Authentication</h2>
+
+<p>Authentication setup is accomplished by creating a text "authentication
+file".
+
+<p>You can put this file anywhere you want to, and specify the location
+to SqlTool by using the "-rcfile" argument. 
+If there is no reason to not use the default location (and there are
+situations where you would not want to), then use the default
+location and you won't have to give "-rcfile" arguments to SQLTool. 
+The default location is <em>sqltool.rc</em> in your home directory. 
+If you have any doubt about where that is, then just run SqlTool with
+a phoney urlid and it will tell you where it expects the authentication
+file to be.
+<pre class="example">         java org.hsqldb.util.SqlTool x
+     </pre>
+
+<p>The authentication file consists of stanza(s) like this:
+<pre class="example">         urlid web
+         url jdbc:hsqldb:hsql://localhost
+         username web
+         password webspassword
+     </pre>
+You can have as many blank lines and comments like
+<pre class="example">         # This comment
+     </pre>
+in the file as you like. 
+The whole point is that the <em>urlid</em> that you give in your SqlTool
+command must match a <em>urlid</em> in your authentication file.
+
+<div class="node">
+<p><hr>
+Node:<a name="Interactive">Interactive</a>,
+Next:<a rel="next" accesskey="n" href="#SQLFiles">SQLFiles</a>,
+Previous:<a rel="previous" accesskey="p" href="#Auth">Auth</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Interactive</h2>
+
+<p>You run SqlTool interactively by specifying no SQL filepaths on the
+SqlTool command line.  Like this.
+<pre class="example">         java org.hsqldb.util.SqlTool urlid
+     </pre>
+If it starts up and connects to the database (as specified in your
+authentication file as explained in the <em>Auth</em> section of this
+document), you will be shown a banner describing the different command
+types that you can give, as well as commands to list all of the specific
+commands available to you.
+
+<p>You exit your session by using the "\q" special command or ending input
+(like with Ctrl-D or Ctrl-Z).
+
+<p>Command types.
+     <dl>
+<dt><strong>SQL Statement</strong>
+     <dd>Any command that you enter that does not begin with "\" or ":" is a SQL
+Statement. 
+The command is not terminated when you hit enter, like most OS shells. 
+You terminate SQL Statements with either ";" at the end of a line, or
+with a blank line. 
+In the former case, the SQL Statement will be executed against the SQL
+database and the command will go into the command buffer and
+command history for editing or viewing later on. 
+In the latter case (you end an SQL Statement with a blank line), the
+command will go to the buffer and history, but will not be executed
+(unless you later execute it from the buffer).
+
+     <p>As a result of these termination rules, whenever you are entering text
+that is not a Special Command or Buffer Command, you are always
+<em>appending</em> lines to an SQL Statement. 
+(If it's the first line, then you will be starting an SQL Statement, or
+appending to an empty SQL Statement).
+<br><p>
+     <br><dt><strong>Special Command</strong>
+     <dd>Run the command "\?" to list the Special Commands. 
+All of the Special Commands begin with "\". 
+You can't enter a Special Command if you have already typed some line(s)
+of a SQL Statement, because the new line containing the Special Command
+would just be interpreted as another line in the SQL Statement. 
+In this case, you just hit enter to clear the current SQL Statement and
+send it off to the buffer (where you can ignore it forever if you wish to). 
+I'll describe some of the most useful Special Commands below.
+<br><p>
+     <br><dt><strong>Buffer Command</strong>
+     <dd>Run the command ":?" to list the Special Commands. 
+All of the Special Commands begin with ":". 
+The text above about entering Special Commands if you have already typed some
+line(s) of a SQL Statement applies equally to Buffer Commands. 
+Buffer commands operate upon the command "buffer", so that you can edit
+and/or (re-)execute previously entered commands. 
+</dl>
+
+<h4 class="unnumberedsubsec">Essential Special Commands</h4>
+
+     <dl>
+<dt><em>\?</em>
+     <dd>help
+<br><dt><em>\dt</em>
+     <dd>Lists available database tables. 
+I'm still working on how to properly filter out system tables from the
+listing. 
+For the moment, it works great for Hsqldb, and is better than nothing
+for other database. 
+<br><dt><em>\s</em>
+     <dd>Shows the command history. 
+The command history will show a number (a negative number) for each
+SQL Statement that has made it into the buffer so fare (by either
+executing or entering a blank line). 
+You can then use "\-" command (which is described next) to retrieve
+commands from the history to work with. 
+To list just the very last command, you would use the ":l" buffer command
+to list the buffer contents, instead of this command. 
+<br><dt><em></em>
+     <dd><br><dt><em>\-[3]</em>
+     <dd>Enter "\" followed by the command number from history, like "\-3". 
+That command will be written to the buffer so that you can execute it
+or edit it using buffer commands. 
+</dl>
+
+<h4 class="unnumberedsubsec">Buffer Commands</h4>
+
+     <dl>
+<dt><em>:?</em>
+     <dd>help
+<br><dt><em>:a</em>
+     <dd>Enter append mode with the contents of the buffer as the current SQL Statement. 
+Things will be exacly like you typed in the command that is in the buffer. 
+Whatever line you type next will be appended to the SQL Statement. 
+You can, of course, execute the command by terminating a line with ";", or
+send it back to the buffer by entering a blank line. 
+<br><dt><em>:l</em>
+     <dd>List the current contents of the buffer. 
+<br><dt><em>:;</em>
+     <dd>Executes the current buffer against the database. 
+<br><dt><em>:s/from string/to string/</em>
+     <dd>Edits the current buffer.
+
+     <p>All occurrences of the "from string" are substituted with "to string". 
+If the SQL Statement is multi-line, the substitution will happen to all
+lines. 
+(This easily be changed to accommondate editing only specific lines of
+the buffer-- let me know if that would be useful to you).
+
+     <p>All occurrences of "$" in the "from string" will be treated as line breaks. 
+For example, "from string" of "*$FROM mytable" would actually look for
+occurrences of
+     <pre class="example">              "*
+              FROM mytable"
+          </pre>
+
+     <p>The "to string" may be empty, in which case, occurrences of the "from string"
+are just deleted.  For example
+     <pre class="example">              :s/this//
+          </pre>
+     would remove all occurrences of "this". 
+</dl>
+
+<div class="node">
+<p><hr>
+Node:<a name="SQLFiles">SQLFiles</a>,
+Next:<a rel="next" accesskey="n" href="#Webapp">Webapp</a>,
+Previous:<a rel="previous" accesskey="p" href="#Interactive">Interactive</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">SQL Files</h2>
+
+<p>Read the <em>Interactive</em> section if you have not already. 
+Just give paths to sql text file(s) on the command line after the <em>urlid</em>.
+
+<p>Often, you will want to redirect output to a file, like
+<pre class="example">         java org.hsqldb.util.SqlTool urlid filepath1.sql... &gt; /tmp/log.sql 2&gt;&amp;1
+     </pre>
+(Skip the "2&gt;&amp;1" if you're on Windows).
+
+<p>Don't use Buffer Commands in your sql files, because they won't work. 
+Buffer Commands are for interactive use only.
+
+<p>Most Special Commands won't work in sql files, but the following will
+work and are especially useful for use in sql files.
+
+     <dl>
+<dt><em>\p [line to print]</em>
+     <dd>Print the given string to stdout
+<br><dt><em>\H</em>
+     <dd>Toggle HTML output mode. 
+If you redirect output to a file, this can make query output much easier
+to view.  For example,
+     <pre class="example">              java org.hsqldb.util.SqlTool urlid filepath1.sql... &gt; /tmp/log.html 2&gt;&amp;1
+          </pre>
+     <br><dt><em>\* [true|false]</em>
+     <dd>A "true" setting tells SqlTool to continue when errors are encountered. 
+The default for interactive use is to continue upon error, but the default
+for non-interactive use is to abort upon error. 
+With database setup scripts, I usually find it convenient to set "true"
+before deleting tables (so that things will continue if the tables aren't
+there), then set it back to false so that real errors are caught. 
+</dl>
+
+<p>Some script developers may run into cases where they want to run
+with sql files but they want SqlTool's interactive behavior.  For
+example, they may want to do command recall in the sql file, or they may
+want to log SqlTool's command-line prompts (which are not printed in
+non-interactive mode). 
+In this case, do not give the sql file(s) as an argument to SqlTool, but
+pipe them in instead, like
+<pre class="example">         java org.hsqldb.util.SqlTool urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1
+     </pre>
+or
+<pre class="example">         cat filepath1.sql... |
+         java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1
+     </pre>
+
+<div class="node">
+<p><hr>
+Node:<a name="Webapp">Webapp</a>,
+Previous:<a rel="previous" accesskey="p" href="#SQLFiles">SQLFiles</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Web Application</h2>
+
+<p>It wouldn't bee much trouble for me to make a web application that uses
+SqlTool so that users can use a HTML text area field to execute SQL
+Statements. 
+I already have a war that does a similar thing with a different technology. 
+So, email me at
+<a href="mailto:blaine.simpson@admc.com?subject=sqltool-war">blaine.simpson@admc.com</a>
+if you would like me to assemble a war like this.
+
+<p><strong>IMPORTANT:
+Use whatever facilities are at  your disposal to protect your authentication
+file.</strong>
+It should be readable, both locally and remotely, only to users who need
+to use the records in it to run SqlTool. 
+On UNIX, this is easily accomplished by using <code>chmod/chown</code> commands
+and making sure that it is protected from anonymous remote access (like
+via NFS, FTP or Samba).
+
+</body></html>
+
