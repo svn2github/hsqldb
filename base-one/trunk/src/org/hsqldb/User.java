@@ -396,6 +396,6 @@ class User {
      *
      */
     String[] listTablePrivileges(HsqlName name) {
-        return UserManager.getRightsArray(rightsMap.get(name,0));
+        return UserManager.getRightsArray(rightsMap.get(name, 0));
     }
 }

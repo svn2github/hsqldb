@@ -228,7 +228,7 @@ class UserManager {
                 continue;
             }
 
-            int i = rightsStringLookup.get(rightString,0);
+            int i = rightsStringLookup.get(rightString, 0);
 
             if ((right & i) != 0) {
                 a.add(rightString);

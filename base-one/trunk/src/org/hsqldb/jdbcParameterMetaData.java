@@ -90,18 +90,21 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     jdbcParameterMetaData(Result r) throws SQLException {
         
         String   msg;
+        Result.ResultMetaData rmd;
         
         if (r == null) {
             msg = "r is null";
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        types          = r.colType;
+        rmd = r.metaData;
+
+        types          = rmd.colType;
         parameterCount = types.length;
-        nullability    = r.nullability;
-        isIdentity     = r.isIdentity;
-        classNames     = r.sClassName;
-        modes          = r.paramMode;                
+        nullability    = rmd.nullability;
+        isIdentity     = rmd.isIdentity;
+        classNames     = rmd.sClassName;
+        modes          = rmd.paramMode;                
     }
 
     /**
