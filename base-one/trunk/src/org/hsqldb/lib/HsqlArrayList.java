@@ -331,12 +331,12 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         Sort.sort(elementData, c, 0, elementCount - 1);
     }
 
-// fredt@users - temp - won't need this when we have the hybrid map / list
+// fredt@users - temp - won't need this when start using HashedMappedList for Table
     public void remove(Object obj) {
 
         for (int i = 0; i < elementCount; i++) {
-            if ((obj == null && elementData[i] == null)
-                    || obj.equals(elementData[i])) {
+            if (obj == elementData[i]
+                    || (obj != null && obj.equals(elementData[i]))) {
                 remove(i);
 
                 return;

@@ -40,15 +40,15 @@ import java.sql.Timestamp;
 
 public class TestBatchBug {
 
-    final static int    DATASET_COUNT              = 2;
-    final static int    DECIMAL_FIELDS_PER_DATASET = 2;
-    final static String TABLE_ATTR_CACHED          = "CACHED";
-    final static String IN_PROCESS_FILE_URL =
+    static final int    DATASET_COUNT              = 2;
+    static final int    DECIMAL_FIELDS_PER_DATASET = 2;
+    static final String TABLE_ATTR_CACHED          = "CACHED";
+    static final String IN_PROCESS_FILE_URL =
         "jdbc:hsqldb:/temp/hsqldb/perftest";
-    final static String HSQLDB_LOCALHOST_URL =
+    static final String HSQLDB_LOCALHOST_URL =
         "jdbc:hsqldb:hsql://localhost/yourtest";
     ;
-    final static String TEST_TABLE_NAME       = "CSBug";
+    static final String TEST_TABLE_NAME       = "CSBug";
     static String       FIELD_LIST_WITHOUT_ID = "Kennung, Last_Update ";
 
 // wird in static {} erweitert:

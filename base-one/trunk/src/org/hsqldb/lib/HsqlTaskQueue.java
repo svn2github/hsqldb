@@ -46,7 +46,7 @@ public class HsqlTaskQueue {
     protected Thread taskRunnerThread;
 
     /** Special queue element to signal termination */
-    protected static Runnable SHUTDOWNTASK = new Runnable() {
+    protected static final Runnable SHUTDOWNTASK = new Runnable() {
         public void run() {}
     };
 

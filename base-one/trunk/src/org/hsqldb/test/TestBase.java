@@ -35,6 +35,7 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 
 import org.hsqldb.Server;
+import org.hsqldb.WebServer;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

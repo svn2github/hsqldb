@@ -345,7 +345,7 @@ import org.hsqldb.Column;
 public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /** Used by getBestRowIdentifier to avoid extra object construction */
-    final static Integer INT_COLUMNS_NO_NULLS = new Integer(columnNoNulls);
+    static final Integer INT_COLUMNS_NO_NULLS = new Integer(columnNoNulls);
 
     // -----------------------------------------------------------------------
     // private attributes
@@ -509,11 +509,15 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getUserName() throws SQLException {
 
-        ResultSet r = execute("CALL USER()");
+        ResultSet rs = execute("CALL USER()");
 
-        r.next();
+        rs.next();
 
-        return r.getString(1);
+        String result = rs.getString(1);
+
+        rs.close();
+
+        return result;
     }
 
     /**
@@ -538,12 +542,16 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean isReadOnly() throws SQLException {
 
-        ResultSet r =
+        ResultSet rs =
             execute("CALL \"org.hsqldb.Library.isReadOnlyDatabase\"()");
 
-        r.next();
+        rs.next();
 
-        return r.getBoolean(1);
+        boolean result = rs.getBoolean(1);
+
+        rs.close();
+
+        return result;
     }
 
     /**
@@ -658,7 +666,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         rs.next();
 
-        return rs.getString(1);
+        String result = rs.getString(1);
+
+        rs.close();
+
+        return result;
     }
 
     /**
@@ -683,7 +695,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         rs.next();
 
-        return rs.getString(1);
+        String result = rs.getString(1);
+
+        rs.close();
+
+        return result;
     }
 
     /**
@@ -5371,7 +5387,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         rs.next();
 
-        return rs.getInt(1);
+        int result = rs.getInt(1);
+
+        rs.close();
+
+        return result;
     }
 
 //#endif JDBC3
@@ -5407,7 +5427,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         rs.next();
 
-        return rs.getInt(1);
+        int result = rs.getInt(1);
+
+        rs.close();
+
+        return result;
     }
 
 //#endif JDBC3
@@ -5700,6 +5724,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         ResultSet r = connection.createStatement(scroll,
             concur).executeQuery(sql);
 
+        ((jdbcResultSet) r).autoClose    = true;
         ((jdbcResultSet) r).sqlStatement = null;
 
         return r;

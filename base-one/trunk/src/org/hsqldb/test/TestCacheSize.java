@@ -83,8 +83,8 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT}
-    String tableType      = "CACHED";
-    int    cacheScale     = 17;
+    String tableType      = "MEMORY";
+    int    cacheScale     = 15;
     int    cacheSizeScale = 8;
 
     // script format {TEXT, BINARY, COMPRESSED}
@@ -103,7 +103,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 200000;
+    int bigrows   = 256000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -413,26 +413,7 @@ public class TestCacheSize {
             sStatement = cConnection.createStatement();
 
             sStatement.execute("SET WRITE_DELAY " + writeDelay);
-
-            // the tests use different indexes
-            // use primary index
-            sStatement.execute("SELECT count(*) from TEST");
-
-            rs = sStatement.getResultSet();
-
-            rs.next();
-            System.out.println("Row Count: " + rs.getInt(1));
-            System.out.println("Time to count: " + sw.elapsedTime());
-
-            // use index on zip
-            sw.zero();
-            sStatement.execute("SELECT count(*) from TEST where zip > -1");
-
-            rs = sStatement.getResultSet();
-
-            rs.next();
-            System.out.println("Row Count: " + rs.getInt(1));
-            System.out.println("Time to count: " + sw.elapsedTime());
+            countRows();
             checkSelects();
             checkUpdates();
             checkSelects();
@@ -539,6 +520,34 @@ public class TestCacheSize {
                            + (i * 1000 / (sw.elapsedTime() + 1)));
     }
 
+    private void countRows() {
+
+        try {
+            StopWatch sw = new StopWatch();
+
+            // the tests use different indexes
+            // use primary index
+            sStatement.execute("SELECT count(*) from TEST");
+
+            ResultSet rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+
+            // use index on zip
+            sw.zero();
+            sStatement.execute("SELECT count(*) from TEST where zip > -1");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+            sw.stop();
+        } catch (SQLException e) {}
+    }
+
     private void checkUpdates() {
 
         StopWatch        sw        = new StopWatch();
@@ -546,13 +555,14 @@ public class TestCacheSize {
         int              i         = 0;
         boolean          slow      = false;
         int              count     = 0;
+        int              random    = 0;
 
         try {
             PreparedStatement ps = cConnection.prepareStatement(
                 "UPDATE test SET filler = filler || zip WHERE zip = ?");
 
             for (; i < smallrows; i++) {
-                int random = randomgen.nextInt(smallrows - 1);
+                random = randomgen.nextInt(smallrows - 1);
 
                 ps.setInt(1, random);
 
@@ -564,6 +574,7 @@ public class TestCacheSize {
                 }
             }
         } catch (SQLException e) {
+            System.out.println("error : " + random);
             e.printStackTrace();
         }
 
@@ -571,6 +582,7 @@ public class TestCacheSize {
                            + " UPDATE commands, " + count + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (count * 1000 / (sw.elapsedTime() + 1)));
+        countRows();
         sw.zero();
 
         try {
@@ -578,7 +590,7 @@ public class TestCacheSize {
                 "UPDATE test SET zip = zip + 1 WHERE id = ?");
 
             for (i = 0; i < bigrows; i++) {
-                int random = randomgen.nextInt(bigrows - 1);
+                random = randomgen.nextInt(bigrows - 1);
 
                 ps.setInt(1, random);
                 ps.execute();
@@ -591,12 +603,14 @@ public class TestCacheSize {
                 }
             }
         } catch (SQLException e) {
+            System.out.println("error : " + random);
             e.printStackTrace();
         }
 
         System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
+        countRows();
     }
 
     static void deleteDatabase(String path) {

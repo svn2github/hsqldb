@@ -121,7 +121,7 @@ public class Session implements SessionInterface {
     private Tokenizer      tokenizer;
     private Parser         parser;
     private long           sessionSCN;
-    final static Result emptyUpdateCount =
+    static final Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
     /** @todo fredt - clarify in which circumstances Session has to disconnect */

@@ -81,7 +81,7 @@ import org.hsqldb.lib.HashMappedList;
 class ConnectionDialogCommon {
 
     private static String       connTypes[][];
-    private final static String sJDBCTypes[][] = {
+    private static final String sJDBCTypes[][] = {
         {
             "HSQL Database Engine In-Memory", "org.hsqldb.jdbcDriver",
             "jdbc:hsqldb:mem:."
@@ -173,7 +173,7 @@ class ConnectionDialogCommon {
         return (connTypes);
     }
 
-    private final static String fileName       = "hsqlprefs.dat";
+    private static final String fileName       = "hsqlprefs.dat";
     private static File         recentSettings = null;
 
     static HashMappedList loadRecentConnectionSettings() throws IOException {

@@ -77,32 +77,25 @@ public class ConnectionSetting implements java.io.Serializable {
 
     public boolean equals(Object obj) {
 
-        if (obj == null ||!(obj instanceof ConnectionSetting)) {
+        if (!(obj instanceof ConnectionSetting)) {
             return false;
         }
 
         ConnectionSetting other = (ConnectionSetting) obj;
 
-        if (getName() == null && other.getName() == null) {
+        if (getName() == other.getName()) {
             return true;
         }
 
-        if (getName() == null || other.getName() == null) {
+        if (getName() == null) {
             return false;
         }
 
-        if (getName().trim().length() == 0) {
-            if (other.getName().trim().length() == 0) {
-                return true;
-            }
+        return getName().trim().equals(other.getName().trim());
+    }
 
-            return false;
-        } else {
-            if (other.getName().trim().length() == 0) {
-                return false;
-            }
-
-            return getName().trim().equals(other.getName().trim());
-        }
+    public int hashCode() {
+        return getName() == null ? 0
+                                 : getName().trim().hashCode();
     }
 }

@@ -68,12 +68,12 @@ public class HsqlProperties {
         catch (SecurityException e) {}
     }
 
-    public static int    NO_VALUE_FOR_KEY = 1;
-    protected String     fileName;
-    protected Properties stringProps;
-    protected int[]      errorCodes = new int[0];
-    protected String[]   errorKeys  = new String[0];
-    protected boolean    resource   = false;
+    public static final int NO_VALUE_FOR_KEY = 1;
+    protected String        fileName;
+    protected Properties    stringProps;
+    protected int[]         errorCodes = new int[0];
+    protected String[]      errorKeys  = new String[0];
+    protected boolean       resource   = false;
 
     public HsqlProperties() {
         stringProps = new Properties();

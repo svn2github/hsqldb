@@ -46,7 +46,7 @@ import java.util.NoSuchElementException;
  */
 public class WrapperIterator implements Iterator {
 
-    private final static Object[] emptyelements = new Object[0];
+    private static final Object[] emptyelements = new Object[0];
     private Object[]              elements;
     private int                   i;
 

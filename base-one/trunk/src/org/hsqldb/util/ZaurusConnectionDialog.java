@@ -50,7 +50,7 @@ import java.util.*;
 public class ZaurusConnectionDialog extends ConnectionDialog
 implements ActionListener, ItemListener, KeyListener {
 
-    final static String sJDBCTypes[][] = {
+    static final String sJDBCTypes[][] = {
         {
             "HSQL In-Memory", "org.hsqldb.jdbcDriver", "jdbc:hsqldb:."
         }, {

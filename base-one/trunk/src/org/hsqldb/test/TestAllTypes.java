@@ -58,7 +58,7 @@ public class TestAllTypes {
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = false;
+    boolean cachedTable     = true;
     int     cacheScale      = 12;
     int     logType         = 3;
     int     writeDelay      = 60;
@@ -205,7 +205,9 @@ public class TestAllTypes {
 
                 ps.setLong(4, randomgen.nextLong());
                 ps.setDouble(5, randomgen.nextDouble());
-                ps.setDouble(6, randomgen.nextDouble());
+                ps.setBigDecimal(6, null);
+
+//                ps.setDouble(6, randomgen.nextDouble());
                 ps.setDate(7, new java.sql.Date(randomgen.nextInt(1000) * 24
                                                 * 3600 * 1000));
 

@@ -117,8 +117,8 @@ public class Servlet extends javax.servlet.http.HttpServlet {
     String           dbType;
     String           dbPath;
     String           errorStr;
-    RowOutputBinary  rowOut = new RowOutputBinary(BUFFER_SIZE);
-    RowInputBinary   rowIn  = new RowInputBinary(rowOut);
+    RowOutputBinary  rowOut;
+    RowInputBinary   rowIn;
 
     /**
      * Method declaration
@@ -130,6 +130,9 @@ public class Servlet extends javax.servlet.http.HttpServlet {
 
         try {
             super.init(config);
+
+            rowOut = new RowOutputBinary(BUFFER_SIZE);
+            rowIn  = new RowInputBinary(rowOut);
         } catch (ServletException exp) {
             log(exp.getMessage());
         }
@@ -239,49 +242,51 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                        throws IOException, ServletException {
 
         try {
-            DataInputStream inStream =
-                new DataInputStream(request.getInputStream());
 
             // fredt@users - the servlet container, Resin does not return all
             // the bytes with one call to input.read(b,0,len) when len > 8192
-            // bytes, the loop in the next method handles this
-            Result resultIn = Result.read(rowIn, inStream);
-            Result resultOut;
+            // bytes, the loop in the Result.read() method handles this
+            synchronized (this) {
+                DataInputStream inStream =
+                    new DataInputStream(request.getInputStream());
+                Result resultIn = Result.read(rowIn, inStream);
+                Result resultOut;
 
-            if (resultIn.iMode == ResultConstants.SQLCONNECT) {
-                try {
-                    Session session = DatabaseManager.newSession(dbType,
-                        dbPath, resultIn.getMainString(),
-                        resultIn.getSubString(), true, null);
+                if (resultIn.iMode == ResultConstants.SQLCONNECT) {
+                    try {
+                        Session session = DatabaseManager.newSession(dbType,
+                            dbPath, resultIn.getMainString(),
+                            resultIn.getSubString(), true, null);
 
-                    resultOut = new Result(ResultConstants.UPDATECOUNT);
-                    resultOut.sessionID = session.getId();
-                } catch (HsqlException e) {
-                    resultOut = new Result(e, null);
+                        resultOut = new Result(ResultConstants.UPDATECOUNT);
+                        resultOut.sessionID = session.getId();
+                    } catch (HsqlException e) {
+                        resultOut = new Result(e, null);
+                    }
+                } else {
+                    Session session = DatabaseManager.getSession(dbType,
+                        dbPath, resultIn.sessionID);
+
+                    resultOut = session.execute(resultIn);
                 }
-            } else {
-                Session session = DatabaseManager.getSession(dbType, dbPath,
-                    resultIn.sessionID);
 
-                resultOut = session.execute(resultIn);
+                rowOut.reset();
+                resultOut.write(rowOut);
+
+                //
+                response.setContentType("application/octet-stream");
+                response.setContentLength(rowOut.size());
+
+                //
+                ServletOutputStream outStream = response.getOutputStream();
+
+                outStream.write(rowOut.getOutputStream().getBuffer(), 0,
+                                rowOut.getOutputStream().size());
+                outStream.flush();
+                outStream.close();
+
+                iQueries++;
             }
-
-            rowOut.reset();
-            resultOut.write(rowOut);
-
-            //
-            response.setContentType("application/octet-stream");
-            response.setContentLength(rowOut.size());
-
-            //
-            ServletOutputStream outStream = response.getOutputStream();
-
-            outStream.write(rowOut.getOutputStream().getBuffer(), 0,
-                            rowOut.getOutputStream().size());
-            outStream.flush();
-            outStream.close();
-
-            iQueries++;
         } catch (HsqlException e) {}
 
         // Trace.printSystemOut("Queries processed: "+iQueries+"  \n");

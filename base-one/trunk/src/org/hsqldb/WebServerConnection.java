@@ -419,6 +419,10 @@ class WebServerConnection implements Runnable {
             } catch (IOException e) {
                 processError(HttpURLConnection.HTTP_NOT_FOUND);
 
+                if (is != null) {
+                    is.close();
+                }
+
                 return;
             }
 
@@ -434,6 +438,7 @@ class WebServerConnection implements Runnable {
 
             os.flush();
             os.close();
+            is.close();
         } catch (Exception e) {
             server.printError("processGet: " + e.getMessage());
             server.printStackTrace(e);
@@ -491,20 +496,18 @@ class WebServerConnection implements Runnable {
                                                "BAD_REQUEST");
                 break;
 
-            case HttpURLConnection.HTTP_NOT_FOUND :
-                msg = getHead(HEADER_NOT_FOUND, false, null, 0);
-                msg += BundleHandler.getString(WebServer.webBundleHandle,
-                                               "NOT_FOUND");
-                break;
-
             case HttpURLConnection.HTTP_FORBIDDEN :
                 msg = getHead(HEADER_FORBIDDEN, false, null, 0);
                 msg += BundleHandler.getString(WebServer.webBundleHandle,
                                                "FORBIDDEN");
                 break;
 
+            case HttpURLConnection.HTTP_NOT_FOUND :
             default :
-                msg = null;
+                msg = getHead(HEADER_NOT_FOUND, false, null, 0);
+                msg += BundleHandler.getString(WebServer.webBundleHandle,
+                                               "NOT_FOUND");
+                break;
         }
 
         try {

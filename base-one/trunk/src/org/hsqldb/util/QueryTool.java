@@ -356,12 +356,14 @@ implements WindowListener, ActionListener {
      */
     String getImport() {
 
-        StringBuffer a        = new StringBuffer();
-        String       filename = "import.sql";
+        StringBuffer   a        = new StringBuffer();
+        String         filename = "import.sql";
+        BufferedReader in       = null;
 
         try {
-            BufferedReader in = new BufferedReader(new FileReader(filename));
-            String         line;
+            in = new BufferedReader(new FileReader(filename));
+
+            String line;
 
             while ((line = in.readLine()) != null) {
                 a.append(line);
@@ -369,9 +371,16 @@ implements WindowListener, ActionListener {
             }
 
             a.append('\n');
+            in.close();
 
             return a.toString();
         } catch (Exception e) {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e1) {}
+            }
+
             return "";
         }
     }

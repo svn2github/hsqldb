@@ -53,7 +53,7 @@ public class HsqlDeque extends BaseList implements HsqlList {
 
     // can grow to fill list
     // if elementCount == 0 then firstindex == endindex
-    private final int DEFAULT_INITIAL_CAPACITY = 10;
+    private static final int DEFAULT_INITIAL_CAPACITY = 10;
 
     public HsqlDeque() {
         list = new Object[DEFAULT_INITIAL_CAPACITY];

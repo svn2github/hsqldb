@@ -84,7 +84,7 @@ import java.io.UTFDataFormatException;
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 public class StringConverter {
 
-    private static final char HEXCHAR[] = {
+    private static final byte HEXCHAR[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
         'e', 'f'
     };
@@ -166,11 +166,31 @@ public class StringConverter {
         for (int i = 0, j = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
 
-            s[j++] = HEXCHAR[c >> 4 & 0xf];
-            s[j++] = HEXCHAR[c & 0xf];
+            s[j++] = (char) HEXCHAR[c >> 4 & 0xf];
+            s[j++] = (char) HEXCHAR[c & 0xf];
         }
 
         return new String(s);
+    }
+
+    /**
+     * Converts a byte array into hexadecimal characters
+     * which are written as ASCII to the given output stream.
+     *
+     * @param o output stream
+     * @param b byte array
+     */
+    public static void writeHex(byte[] o, int from,
+                                byte b[]) throws IOException {
+
+        int len = b.length;
+
+        for (int i = 0; i < len; i++) {
+            int c = ((int) b[i]) & 0xff;
+
+            o[from++] = HEXCHAR[c >> 4 & 0xf];
+            o[from++] = HEXCHAR[c & 0xf];
+        }
     }
 
     public static String byteToString(byte[] b, String charset) {

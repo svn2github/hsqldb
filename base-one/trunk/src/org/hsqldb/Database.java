@@ -143,7 +143,6 @@ public class Database {
     private boolean                filesInJar;
     boolean                        sqlEnforceSize;
     boolean                        sqlEnforceStrictSize;
-    int                            sqlMonth;
     int                            firstIdentity;
     private HashMap                hAlias;
     private boolean                bIgnoreCase;
@@ -158,14 +157,14 @@ public class Database {
     CompiledStatementManager       compiledStatementManager;
 
     //
-    final static int DATABASE_ONLINE       = 1;
-    final static int DATABASE_OPENING      = 4;
-    final static int DATABASE_CLOSING      = 8;
-    final static int DATABASE_SHUTDOWN     = 16;
-    final static int CLOSEMODE_IMMEDIATELY = -1;
-    final static int CLOSEMODE_NORMAL      = 0;
-    final static int CLOSEMODE_COMPACT     = 1;
-    final static int CLOSEMODE_SCRIPT      = 2;
+    static final int DATABASE_ONLINE       = 1;
+    static final int DATABASE_OPENING      = 4;
+    static final int DATABASE_CLOSING      = 8;
+    static final int DATABASE_SHUTDOWN     = 16;
+    static final int CLOSEMODE_IMMEDIATELY = -1;
+    static final int CLOSEMODE_NORMAL      = 0;
+    static final int CLOSEMODE_COMPACT     = 1;
+    static final int CLOSEMODE_SCRIPT      = 2;
 
     /**
      *  Constructs a new Database object.
@@ -640,7 +639,7 @@ public class Database {
      *  Called by the garbage collector on this Databases object when garbage
      *  collection determines that there are no more references to it.
      */
-    public void finalize() {
+    protected void finalize() {
 
         if (getState() != DATABASE_ONLINE) {
             return;

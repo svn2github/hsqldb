@@ -77,13 +77,13 @@ import java.util.*;
  */
 class JDBCTypes {
 
-    public final static int JAVA_OBJECT = 2000;
-    public final static int DISTINCT    = 2001;
-    public final static int STRUCT      = 2002;
-    public final static int ARRAY       = 2003;
-    public final static int BLOB        = 2004;
-    public final static int CLOB        = 2005;
-    public final static int REF         = 2006;
+    public static final int JAVA_OBJECT = 2000;
+    public static final int DISTINCT    = 2001;
+    public static final int STRUCT      = 2002;
+    public static final int ARRAY       = 2003;
+    public static final int BLOB        = 2004;
+    public static final int CLOB        = 2005;
+    public static final int REF         = 2006;
     private Hashtable       hStringJDBCtypes;
     private Hashtable       hIntJDBCtypes;
 

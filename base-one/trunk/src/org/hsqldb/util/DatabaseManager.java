@@ -64,8 +64,8 @@ import org.hsqldb.lib.java.javaSystem;
 public class DatabaseManager extends Applet
 implements ActionListener, WindowListener, KeyListener {
 
-    final static String NL         = System.getProperty("line.separator");
-    final static int    iMaxRecent = 24;
+    static final String NL         = System.getProperty("line.separator");
+    static final int    iMaxRecent = 24;
     Connection          cConn;
     DatabaseMetaData    dMeta;
     Statement           sStatement;
@@ -439,7 +439,8 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
-        if (s.equals("Execute")) {
+        if (s == null) {}
+        else if (s.equals("Execute")) {
             execute();
         } else if (s.equals("Clear")) {
             clear();

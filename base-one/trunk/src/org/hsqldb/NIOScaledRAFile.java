@@ -64,7 +64,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
-        if (super.length() > (1L << 30)) {
+        if (super.length() > (1L << 29)) {
             Trace.printSystemOut("Initiatiated without nio");
 
             return;

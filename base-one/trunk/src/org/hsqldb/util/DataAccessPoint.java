@@ -33,13 +33,14 @@ package org.hsqldb.util;
 
 import java.sql.*;
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * Database Transfer Tool
  * @author Nicolas BAZIN, INGENICO
  * @version 1.7.0
  */
-class DataAccessPoint {
+class DataAccessPoint implements Serializable {
 
     Traceable      tracer;
     TransferHelper helper;

@@ -314,8 +314,6 @@ class UserManager {
      */
     User getUser(String name, String password) throws HsqlException {
 
-        Trace.check(!name.equals(PUBLIC_USER_NAME), Trace.ACCESS_IS_DENIED);
-
         if (name == null) {
             name = "";
         }
@@ -324,12 +322,13 @@ class UserManager {
             password = "";
         }
 
+        Trace.check(!name.equals(PUBLIC_USER_NAME), Trace.ACCESS_IS_DENIED);
+
         name     = name.toUpperCase();
         password = password.toUpperCase();
 
         User u = get(name);
 
-        Trace.check(u != null, Trace.USER_NOT_FOUND, name);
         u.checkPassword(password);
 
         return u;

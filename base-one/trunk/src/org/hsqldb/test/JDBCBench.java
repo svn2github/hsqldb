@@ -52,9 +52,9 @@ class JDBCBench {
     public static int ntellers  = 10;        /* number of tellers in  1 tps db       */
     public static int naccounts = 100000;    /* number of accounts in 1 tps db       */
     public static int nhistory = 864000;     /* number of history recs in 1 tps db   */
-    public final static int TELLER              = 0;
-    public final static int BRANCH              = 1;
-    public final static int ACCOUNT             = 2;
+    public static final int TELLER              = 0;
+    public static final int BRANCH              = 1;
+    public static final int ACCOUNT             = 2;
     int                     failed_transactions = 0;
     int                     transaction_count   = 0;
     static int              n_clients           = 10;
@@ -350,7 +350,7 @@ class JDBCBench {
                 }
             } catch (Exception E1) {}
 
-            System.exit(0);
+//            System.exit(0);
         }
     }
 

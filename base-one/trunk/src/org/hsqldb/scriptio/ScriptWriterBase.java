@@ -100,13 +100,13 @@ public abstract class ScriptWriterBase {
     static final int INSERT = 0;
 
     /** the ID of the last session that wrote to log */
-    int                     sessionId;
-    public static String[]  LIST_SCRIPT_FORMATS      = new String[] {
+    int                          sessionId;
+    public static final String[] LIST_SCRIPT_FORMATS      = new String[] {
         Token.T_TEXT, Token.T_BINARY, null, Token.T_COMPRESSED
     };
-    public final static int SCRIPT_TEXT_170          = 0;
-    public final static int SCRIPT_BINARY_172        = 1;
-    public final static int SCRIPT_ZIPPED_BINARY_172 = 3;
+    public static final int      SCRIPT_TEXT_170          = 0;
+    public static final int      SCRIPT_BINARY_172        = 1;
+    public static final int      SCRIPT_ZIPPED_BINARY_172 = 3;
 
     public static ScriptWriterBase newScriptWriter(Database db, String file,
             boolean includeCachedData, boolean newFile,

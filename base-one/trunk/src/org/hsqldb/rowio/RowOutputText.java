@@ -205,9 +205,10 @@ public class RowOutputText extends RowOutputBase {
 
     protected void writeByteArray(byte b[]) throws IOException {
 
-        String s = StringConverter.byteToHex(b);
+        ensureRoom(b.length * 2);
+        StringConverter.writeHex(this.getBuffer(), count, b);
 
-        writeString(s);
+        count += b.length * 2;
     }
 
     public void writeIntData(int i) throws IOException {

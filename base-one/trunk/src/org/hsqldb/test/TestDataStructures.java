@@ -45,18 +45,18 @@ import junit.framework.*;
  */
 public class TestDataStructures extends TestCase {
 
-    private final static int NUMBER_OF_TEST_RUNS          = 100000;
-    private final static int NUMBER_OF_ITERATIONS_PER_RUN = 80;
+    private static final int NUMBER_OF_TEST_RUNS          = 100000;
+    private static final int NUMBER_OF_ITERATIONS_PER_RUN = 80;
     private Random           randomGenerator;
 
     //Commands
-    private final static int ADD        = 1;
-    private final static int ADD_AT     = 2;
-    private final static int GET        = 3;
-    private final static int REMOVE     = 4;
-    private final static int SET        = 5;
-    private final static int OPTIMIZE   = 6;
-    private final static int REMOVE_ALL = 7;
+    private static final int ADD        = 1;
+    private static final int ADD_AT     = 2;
+    private static final int GET        = 3;
+    private static final int REMOVE     = 4;
+    private static final int SET        = 5;
+    private static final int OPTIMIZE   = 6;
+    private static final int REMOVE_ALL = 7;
     private Vector           listCommandsCalled;
 
     /** Creates a new instance of TestDataStructures */

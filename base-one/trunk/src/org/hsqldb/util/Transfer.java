@@ -114,14 +114,14 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
     int              iTransferMode;
     static boolean   bMustExit;
     int              CurrentTransfer, CurrentAlter;
-    final static int SELECT_SOURCE_CATALOG = 1;
-    final static int SELECT_SOURCE_SCHEMA  = 2;
-    final static int SELECT_DEST_CATALOG   = 3;
-    final static int SELECT_DEST_SCHEMA    = 4;
-    final static int SELECT_SOURCE_TABLES  = 5;
-    final static int TRFM_TRANSFER         = 1;
-    final static int TRFM_DUMP             = 2;
-    final static int TRFM_RESTORE          = 3;
+    static final int SELECT_SOURCE_CATALOG = 1;
+    static final int SELECT_SOURCE_SCHEMA  = 2;
+    static final int SELECT_DEST_CATALOG   = 3;
+    static final int SELECT_DEST_SCHEMA    = 4;
+    static final int SELECT_SOURCE_TABLES  = 5;
+    static final int TRFM_TRANSFER         = 1;
+    static final int TRFM_DUMP             = 2;
+    static final int TRFM_RESTORE          = 3;
 
     /**
      * Method declaration
@@ -750,6 +750,8 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 s = i.getLabel();
             }
         }
+
+        if (s == null) {}
 
         if (s.equals("Start Transfer") || s.equals("ReStart Transfer")) {
             bStart.setLabel("ReStart Transfer");

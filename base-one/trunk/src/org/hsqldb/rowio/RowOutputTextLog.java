@@ -51,12 +51,12 @@ import org.hsqldb.lib.StringConverter;
  */
 public class RowOutputTextLog extends RowOutputBase {
 
-    final static byte[]     BYTES_NULL  = "NULL".getBytes();
-    final static byte[]     BYTES_TRUE  = "TRUE".getBytes();
-    final static byte[]     BYTES_FALSE = "FALSE".getBytes();
-    final static byte[]     BYTES_AND   = " AND ".getBytes();
-    public final static int MODE_DELETE = 1;
-    public final static int MODE_INSERT = 0;
+    static final byte[]     BYTES_NULL  = "NULL".getBytes();
+    static final byte[]     BYTES_TRUE  = "TRUE".getBytes();
+    static final byte[]     BYTES_FALSE = "FALSE".getBytes();
+    static final byte[]     BYTES_AND   = " AND ".getBytes();
+    public static final int MODE_DELETE = 1;
+    public static final int MODE_INSERT = 0;
     private boolean         isWritten;
     private int             logMode;
 
@@ -99,8 +99,12 @@ public class RowOutputTextLog extends RowOutputBase {
     protected void writeBinary(Binary o,
                                int t) throws IOException, HsqlException {
 
+        ensureRoom(o.getBytesLength() * 2 + 2);
         write('\'');
-        writeBytes(StringConverter.byteToHex(o.getBytes()));
+        StringConverter.writeHex(getBuffer(), count, o.getBytes());
+
+        count += o.getBytesLength() * 2;
+
         write('\'');
     }
 
@@ -143,8 +147,12 @@ public class RowOutputTextLog extends RowOutputBase {
     protected void writeOther(JavaObject o)
     throws IOException, HsqlException {
 
+        ensureRoom(o.getBytesLength() * 2 + 2);
         write('\'');
-        writeBytes(StringConverter.byteToHex(o.getBytes()));
+        StringConverter.writeHex(getBuffer(), count, o.getBytes());
+
+        count += o.getBytesLength() * 2;
+
         write('\'');
     }
 

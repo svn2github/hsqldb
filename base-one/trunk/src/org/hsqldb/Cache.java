@@ -145,9 +145,9 @@ import org.hsqldb.rowio.RowOutputInterface;
  */
 abstract class Cache {
 
-    final static int CACHE_TYPE_DATA         = 0;
-    final static int CACHE_TYPE_TEXT         = 1;
-    final static int CACHE_TYPE_REVERSE_TEXT = 2;
+    static final int CACHE_TYPE_DATA         = 0;
+    static final int CACHE_TYPE_TEXT         = 1;
+    static final int CACHE_TYPE_REVERSE_TEXT = 2;
 
     // cached row access counter
     int currentAccessCount;
@@ -673,12 +673,12 @@ abstract class Cache {
         return iFreePos;
     }
 
-    class CachedRowComparator implements ObjectComparator {
+    static class CachedRowComparator implements ObjectComparator {
 
-        final int   COMPARE_LAST_ACCESS = 0;
-        final int   COMPARE_POSITION    = 1;
-        final int   COMPARE_SIZE        = 2;
-        private int compareType;
+        static final int COMPARE_LAST_ACCESS = 0;
+        static final int COMPARE_POSITION    = 1;
+        static final int COMPARE_SIZE        = 2;
+        private int      compareType;
 
         CachedRowComparator() {}
 

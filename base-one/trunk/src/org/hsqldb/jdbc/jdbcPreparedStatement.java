@@ -979,11 +979,19 @@ implements java.sql.PreparedStatement {
                 left -= read;
             }
         } catch (IOException e) {
+            try {
+                out.close();
+            } catch (IOException e1) {}
+
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
         }
 
         setParameter(parameterIndex, out.toByteArray());
+
+        try {
+            out.close();
+        } catch (IOException e1) {}
     }
 
     /**
@@ -1351,11 +1359,19 @@ implements java.sql.PreparedStatement {
                 left -= read;
             }
         } catch (IOException e) {
+            try {
+                out.close();
+            } catch (IOException e1) {}
+
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
         }
 
         setParameter(i, out.toByteArray());
+
+        try {
+            out.close();
+        } catch (IOException e1) {}
     }
 
     /**

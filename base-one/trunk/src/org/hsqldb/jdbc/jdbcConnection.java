@@ -2479,7 +2479,7 @@ public class jdbcConnection implements Connection {
      *  The default implementation simply attempts to silently {@link
      *  #close() close()} this <code>Connection</code>
      */
-    public void finalize() {
+    protected void finalize() {
 
         try {
             close();

@@ -39,7 +39,7 @@ package org.hsqldb.util;
  */
 interface Traceable {
 
-    final static boolean TRACE = Boolean.getBoolean("hsqldb.util.trace");
+    static final boolean TRACE = Boolean.getBoolean("hsqldb.util.trace");
 
     public void trace(String s);
 }

@@ -51,7 +51,7 @@ import java.util.Vector;
 // getContent() answers the value !!
 public class ZaurusChoice extends Choice implements ZaurusComponent {
 
-    final static private int MaxLenInZChoice = 15;
+    static final private int MaxLenInZChoice = 15;
     Vector                   values;
     int                      countChanges;
 

@@ -197,8 +197,13 @@ class HsqlNameManager {
             rename(sbname.toString(), isquoted);
         }
 
-        public boolean equals(HsqlName other) {
-            return hashCode == other.hashCode;
+        public boolean equals(Object other) {
+
+            if (other instanceof HsqlName) {
+                return hashCode == ((HsqlName) other).hashCode;
+            }
+
+            return false;
         }
 
         /**

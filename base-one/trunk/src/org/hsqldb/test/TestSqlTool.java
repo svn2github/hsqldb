@@ -39,19 +39,26 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 
 public class TestSqlTool extends junit.framework.TestCase {
+
     /**
      * Trivial utility class (for use like x.a dna x.b.
-     * Does not have getters/setters.  No purpose would be served by 
+     * Does not have getters/setters.  No purpose would be served by
      * getters and setters, other than over-engineering.
-     */ 
+     */
     private class TestSqlFile {
-        public File file;
+
+        public File   file;
         public String description;
-        public TestSqlFile(String filename, String inDescript)
-        throws IOException {
+
+        public TestSqlFile(String filename,
+                           String inDescript) throws IOException {
+
             file = new File(filename);
-            if (!file.isFile()) throw new IOException("'" + file
-                    + "' is not a file");
+
+            if (!file.isFile()) {
+                throw new IOException("'" + file + "' is not a file");
+            }
+
             description = inDescript;
         }
     }
@@ -60,31 +67,41 @@ public class TestSqlTool extends junit.framework.TestCase {
      * List of SQL files, with a description of the purpose.
      */
     private class SqlFileList extends ArrayList {
+
         /**
-         * Loads a list of SQL files and descriptions for the specified 
+         * Loads a list of SQL files and descriptions for the specified
          * test * method.
          */
         public SqlFileList(String filename) throws IOException {
-            BufferedReader br = new BufferedReader(
-                new FileReader(filename));
-            String s, trimmed;
+
+            BufferedReader  br = new BufferedReader(new FileReader(filename));
+            String          s, trimmed;
             StringTokenizer st;
-            int ctr = 0;
+            int             ctr = 0;
+
             while ((s = br.readLine()) != null) {
                 ctr++;
-                trimmed = s.replaceFirst("#.*", "").trim(); // Remove comments.
+
+                trimmed = s.replaceFirst("#.*", "").trim();    // Remove comments.
+
                 if (trimmed.length() < 1) {
-                    continue;  // Skip blank and comment lines
+                    continue;                                  // Skip blank and comment lines
                 }
+
                 st = new StringTokenizer(trimmed);
+
                 if (st.countTokens() < 2) {
-                    throw new IOException ("Bad line no. " + ctr 
-                            + " in list file '" + filename + "'");
+                    throw new IOException("Bad line no. " + ctr
+                                          + " in list file '" + filename
+                                          + "'");
                 }
+
                 add(new TestSqlFile(st.nextToken(), st.nextToken("")));
             }
+
             br.close();
         }
+
         public TestSqlFile getSqlFile(int i) {
             return (TestSqlFile) get(i);
         }
@@ -93,12 +110,15 @@ public class TestSqlTool extends junit.framework.TestCase {
     SqlToolHarness harness = new SqlToolHarness();
 
     private void runTestsInList(String testList) throws Exception {
+
         SqlFileList fileList = new SqlFileList(testList);
         TestSqlFile sqlFile;
+
         for (int i = 0; i < fileList.size(); i++) {
             sqlFile = fileList.getSqlFile(i);
+
             assertTrue(sqlFile.description + " (" + sqlFile.file + ')',
-                    harness.execute(sqlFile.file));
+                       harness.execute(sqlFile.file));
         }
     }
 

@@ -85,7 +85,7 @@ public class HsqlDateTime {
         resetToday(System.currentTimeMillis());
     }
 
-    final static String zerodatetime = "1970-01-01 00:00:00.000000000";
+    static final String zerodatetime = "1970-01-01 00:00:00.000000000";
 
     /**
      *  Converts a string in JDBC timestamp escape format to a

@@ -106,7 +106,7 @@ import javax.swing.table.TableModel;
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
 
-    final static String    NL         = System.getProperty("line.separator");
+    static final String    NL         = System.getProperty("line.separator");
     static int             iMaxRecent = 24;
     Connection             cConn;
     DatabaseMetaData       dMeta;
@@ -467,7 +467,8 @@ implements ActionListener, WindowListener, KeyListener {
             execute();
         } else
 */
-        if (s.equals("Exit")) {
+        if (s == null) {}
+        else if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Transfer")) {
             Transfer.work(null);

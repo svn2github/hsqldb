@@ -42,7 +42,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.36 2004/06/08 22:31:08 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.37 2004/06/10 16:16:17 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,20 +53,23 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.36 $
+ * @version $Revision: 1.37 $
  * @author Blaine Simpson
  */
 public class SqlTool {
+
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
     static private Connection   conn;
+
     // N.b. the following is static!
-    static private boolean noexit;   // Whether System.exit() may be called.
+    static private boolean noexit;    // Whether System.exit() may be called.
     final static private String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.36 $".substring("$Revision: ".length(),
-                "$Revision: 1.36 $".length() - 2);
+        revnum = "$Revision: 1.37 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.37 $".length()
+                                               - 2);
     }
 
     /**
@@ -78,12 +81,15 @@ public class SqlTool {
      * anything in this class.
      */
     private static class ConnectData {
+
         /**
          * Just for testing and debugging.
          */
         public void report() {
+
             System.err.println("urlid: " + id + ", url: " + url
-                    + ", username: " + username + ", password: " + password);
+                               + ", username: " + username + ", password: "
+                               + password);
         }
 
         /**
@@ -94,11 +100,14 @@ public class SqlTool {
          * @param inFile File containing the authentication information.
          */
         public ConnectData(String inFile, String dbKey) throws Exception {
-            File file = new File((inFile == null) ? DEFAULT_RCFILE : inFile);
+
+            File file = new File((inFile == null) ? DEFAULT_RCFILE
+                                                  : inFile);
             if (!file.canRead()) {
                 throw new IOException("Please set up authentication file '"
                                       + file + "'");
             }
+
             // System.err.println("Using RC file '" + file + "'");
             StringTokenizer tokenizer = null;
             boolean         thisone   = false;
@@ -123,6 +132,9 @@ public class SqlTool {
                     keyword = tokenizer.nextToken();
                     value   = tokenizer.nextToken("").trim();
                 } else {
+                    try {
+                        br.close();
+                    } catch (IOException e) {}
                     throw new Exception("Corrupt line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
@@ -138,9 +150,12 @@ public class SqlTool {
                             id      = dbKey;
                             thisone = true;
                         } else {
+                            try {
+                                br.close();
+                            } catch (IOException e) {}
                             throw new Exception("Key '" + dbKey
-                                    + " redefined at" + " line "
-                                    + linenum + " in '" + file);
+                                                + " redefined at" + " line "
+                                                + linenum + " in '" + file);
                         }
                     } else {
                         thisone = false;
@@ -161,19 +176,27 @@ public class SqlTool {
                     } else if (keyword.equals("password")) {
                         password = value;
                     } else {
+                        try {
+                            br.close();
+                        } catch (IOException e) {}
                         throw new Exception("Bad line " + linenum + " in '"
                                             + file + "':  " + s);
                     }
                 }
             }
+            try {
+                br.close();
+            } catch (IOException e) {}
             if (dbKey == null) {
                 return;
             }
             if (url == null || username == null || password == null) {
                 throw new Exception("url or username or password not set "
-                        + "for '" + dbKey + "' in file '" + file + "'");
+                                    + "for '" + dbKey + "' in file '" + file
+                                    + "'");
             }
         }
+
         String id         = null;
         String url        = null;
         String username   = null;
@@ -211,15 +234,22 @@ public class SqlTool {
         + "SqlTool v. " + revnum + ".";
 
     /** Utility nested class for internal use. */
-    private static class BadCmdline extends Exception {};
+    private static class BadCmdline extends Exception {}
+    ;
 
     /** Utility object for internal use. */
     private static BadCmdline bcl = new BadCmdline();
 
     /** Nested class for external callers of SqlTool.main() */
     public static class SqlToolException extends Exception {
-        public SqlToolException() { super(); }
-        public SqlToolException(String s) { super(s); }
+
+        public SqlToolException() {
+            super();
+        }
+
+        public SqlToolException(String s) {
+            super(s);
+        }
     }
 
     /**
@@ -238,8 +268,9 @@ public class SqlTool {
      * Call return() right after you call this method, because this method
      * will not exit if (noexit is true && retval == 0).
      */
-    static private void exitMain(int retval, String msg)
-    throws SqlToolException {
+    static private void exitMain(int retval,
+                                 String msg) throws SqlToolException {
+
         if (noexit) {
             if (retval == 0) {
                 return;
@@ -250,7 +281,8 @@ public class SqlTool {
             }
         } else {
             if (msg != null) {
-                ((retval == 0) ? System.out : System.err).println(msg);
+                ((retval == 0) ? System.out
+                               : System.err).println(msg);
             }
             System.exit(retval);
         }
@@ -266,6 +298,7 @@ public class SqlTool {
      *                          'sqltool.noexit' is set (to anything).
      */
     public static void main(String arg[]) throws SqlToolException {
+
         /*
          * The big picture is, we parse input args; load a ConnectData;
          * get a JDBC Connection with the ConnectData; instantiate and
@@ -286,7 +319,6 @@ public class SqlTool {
         boolean noautoFile  = false;
         boolean autoCommit  = false;
         Boolean coeOverride = null;
-
         noexit = System.getProperty("sqltool.noexit") != null;
         try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
@@ -300,8 +332,9 @@ public class SqlTool {
                 }
                 if (arg[i].substring(2).equals("abortOnErr")) {
                     if (coeOverride != null) {
-                        exitMain(0, "Switches '--abortOnErr' and "
-                                + "'--continueOnErr' are mutually exclusive");
+                        exitMain(
+                            0, "Switches '--abortOnErr' and "
+                            + "'--continueOnErr' are mutually exclusive");
                         return;
                     }
                     coeOverride = Boolean.FALSE;
@@ -309,8 +342,9 @@ public class SqlTool {
                 }
                 if (arg[i].substring(2).equals("continueOnErr")) {
                     if (coeOverride != null) {
-                        exitMain(0, "Switches '--abortOnErr' and "
-                                + "'--continueOnErr' are mutually exclusive");
+                        exitMain(
+                            0, "Switches '--abortOnErr' and "
+                            + "'--continueOnErr' are mutually exclusive");
                         return;
                     }
                     coeOverride = Boolean.TRUE;
@@ -376,23 +410,25 @@ public class SqlTool {
             if (sqlText != null) {
                 try {
                     tmpFile = File.createTempFile("sqltool-", ".sql");
+
                     //(new java.io.FileWriter(tmpFile)).write(sqlText);
                     java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
-                    fw.write("/* " + (new java.util.Date())
-                            + ".  " + SqlTool.class.getName()
-                            + " command-line SQL. */\n\n");
+                    fw.write("/* " + (new java.util.Date()) + ".  "
+                             + SqlTool.class.getName()
+                             + " command-line SQL. */\n\n");
                     fw.write(sqlText + '\n');
                     fw.flush();
                     fw.close();
                 } catch (IOException ioe) {
-                    exitMain(4, 
-                        "Failed to write given sql to temp file: " + ioe);
+                    exitMain(4, "Failed to write given sql to temp file: "
+                             + ioe);
                     return;
                 }
             }
             interactive = (!noinput) && (arg.length <= i + 1);
             if ((arg.length > i + 1)
                     && (arg.length != i + 2 ||!arg[i + 1].equals("-"))) {
+
                 // I.e., if there are any SQL files specified.
                 noinput     = true;
                 scriptFiles = new File[arg.length - i - 1];
@@ -413,7 +449,7 @@ public class SqlTool {
             conData = new ConnectData(rcFile, targetDb);
         } catch (Exception e) {
             exitMain(1, "Failed to retrieve connection info for database '"
-                + targetDb + "': " + e.getMessage());
+                     + targetDb + "': " + e.getMessage());
             return;
         }
         if (listMode) {
@@ -424,6 +460,7 @@ public class SqlTool {
             conData.report();
         }
         if (driver == null) {
+
             // If user didn't set driver on command-line.
             driver = ((conData.driver == null) ? DEFAULT_JDBC_DRIVER
                                                : conData.driver);
@@ -433,10 +470,10 @@ public class SqlTool {
             System.setProperty("sqlfile.charset", conData.charset);
         }
         if (conData.truststore != null) {
-            System.setProperty("javax.net.ssl.trustStore", conData.truststore);
+            System.setProperty("javax.net.ssl.trustStore",
+                               conData.truststore);
         }
         try {
-
             // As described in the JDBC FAQ:
             // http://java.sun.com/products/jdbc/jdbc-frequent.html;
             // Why doesn't calling class.forName() load my JDBC driver?
@@ -448,45 +485,49 @@ public class SqlTool {
             conn.setAutoCommit(autoCommit);
             DatabaseMetaData md = null;
             if (interactive && (md = conn.getMetaData()) != null) {
-                System.out.println(
-                        "JDBC Connection established to a "
-                        + md.getDatabaseProductName() + " v. "
-                        + md.getDatabaseProductVersion() + " database as '"
-                        + md.getUserName() + "'.");
+                System.out.println("JDBC Connection established to a "
+                                   + md.getDatabaseProductName() + " v. "
+                                   + md.getDatabaseProductVersion()
+                                   + " database as '" + md.getUserName()
+                                   + "'.");
             }
         } catch (Exception e) {
             //e.printStackTrace();
             // Let's not continue as if nothing is wrong.
-            exitMain(10, "Failed to get a connection to " + conData.url
-                   + " as " + conData.username + ".  " + e.getMessage());
+            exitMain(10,
+                     "Failed to get a connection to " + conData.url + " as "
+                     + conData.username + ".  " + e.getMessage());
             return;
         }
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
-        File autoFile = null;
-        if (interactive && !noautoFile) {
-            autoFile = new File(System.getProperty("user.home") + "/auto.sql");
-            if ((!autoFile.isFile()) || !autoFile.canRead()) {
+        File   autoFile            = null;
+        if (interactive &&!noautoFile) {
+            autoFile = new File(System.getProperty("user.home")
+                                + "/auto.sql");
+            if ((!autoFile.isFile()) ||!autoFile.canRead()) {
                 autoFile = null;
             }
         }
         if (scriptFiles == null) {
+
             // I.e., if no SQL files given on command-line.
             // Input file list is either nothing or {null} to read stdin.
             scriptFiles = (noinput ? emptyFileArray
                                    : singleNullFileArray);
         }
-        SqlFile[] sqlFiles = new SqlFile[scriptFiles.length
-                + ((tmpFile == null) ? 0 : 1)
-                + ((autoFile == null) ? 0 : 1)];
+        SqlFile[] sqlFiles =
+            new SqlFile[scriptFiles.length + ((tmpFile == null) ? 0
+                                                                : 1) + ((autoFile == null) ? 0
+                                                                                           : 1)];
         HashMap userVars = new HashMap();
         if (varSettings != null) {
-            int equals;
-            String curSetting, var, val;
+            int             equals;
+            String          curSetting, var, val;
             StringTokenizer allvars = new StringTokenizer(varSettings, ",");
             while (allvars.hasMoreTokens()) {
                 curSetting = allvars.nextToken().trim();
-                equals = curSetting.indexOf('=');
+                equals     = curSetting.indexOf('=');
                 if (equals < 1) {
                     exitMain(24, "Var settings not of format NAME=var[,...]");
                     return;
@@ -500,12 +541,14 @@ public class SqlTool {
                 userVars.put(var, val);
             }
         }
+
         // We print version before execing this one.
         int interactiveFileIndex = -1;
         try {
             int fileIndex = 0;
             if (autoFile != null) {
-                sqlFiles[fileIndex++] = new SqlFile(autoFile, false, userVars);
+                sqlFiles[fileIndex++] = new SqlFile(autoFile, false,
+                                                    userVars);
             }
             if (tmpFile != null) {
                 sqlFiles[fileIndex++] = new SqlFile(tmpFile, false, userVars);
@@ -529,19 +572,21 @@ public class SqlTool {
             for (int j = 0; j < sqlFiles.length; j++) {
                 if (j == interactiveFileIndex) {
                     System.out.print("SqlTool v. " + revnum
-                            + ".                        ");
+                                     + ".                        ");
                 }
                 sqlFiles[j].execute(conn, coeOverride);
             }
         } catch (IOException ioe) {
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
             retval = 3;
+
             // These two Exception types are handled properly inside of SqlFile.
             // We just need to return an appropriate error status.
         } catch (SqlToolError ste) {
             retval = 2;
-        // Should not be handling SQLExceptions here!  SqlFile should handle
-        // them.
+
+            // Should not be handling SQLExceptions here!  SqlFile should handle
+            // them.
         } catch (SQLException se) {
             retval = 1;
         } finally {
@@ -549,12 +594,13 @@ public class SqlTool {
                 conn.close();
             } catch (Exception e) {}
         }
+
         // Taking file removal out of final block because this is good debug
         // info to keep around if the program aborts.
-        if (tmpFile != null && !tmpFile.delete()) {
+        if (tmpFile != null &&!tmpFile.delete()) {
             System.err.println(
-                "Error occurred while trying to remove temp file '" 
-                + tmpFile + "'");
+                "Error occurred while trying to remove temp file '" + tmpFile
+                + "'");
         }
         exitMain(retval);
         return;

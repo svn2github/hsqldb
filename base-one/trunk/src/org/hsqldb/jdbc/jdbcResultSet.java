@@ -382,6 +382,9 @@ public class jdbcResultSet implements ResultSet {
 // - rResult access changed to allow getting internal result object
 // from Parser.processCall()
 
+    /** Statement is closed when its result set is closed */
+    boolean autoClose;
+
     /** The internal representation. */
     public Result rResult;
 
@@ -507,8 +510,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      */
     public void close() throws SQLException {
+
         iUpdateCount = -1;
         rResult      = null;
+
+        if (autoClose) {
+            this.sqlStatement.close();
+        }
     }
 
     /**
@@ -724,7 +732,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (bd != null) {
-            bd.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
+            bd = bd.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
         }
 
         return bd;

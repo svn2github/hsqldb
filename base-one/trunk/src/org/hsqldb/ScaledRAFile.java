@@ -52,8 +52,8 @@ import java.lang.reflect.Constructor;
  */
 class ScaledRAFile {
 
-    final static int       DATA_FILE_RAF = 0;
-    final static int       DATA_FILE_NIO = 1;
+    static final int       DATA_FILE_RAF = 0;
+    static final int       DATA_FILE_NIO = 1;
     final RandomAccessFile file;
     final int              scale;
     final boolean          readOnly;

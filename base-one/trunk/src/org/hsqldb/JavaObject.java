@@ -85,7 +85,7 @@ public class JavaObject {
         return data;
     }
 
-    public int getBytesLength() throws HsqlException {
+    public int getBytesLength() {
         return data.length;
     }
 
