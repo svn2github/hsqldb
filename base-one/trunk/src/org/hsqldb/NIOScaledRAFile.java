@@ -124,8 +124,9 @@ class NIOScaledRAFile extends ScaledRAFile {
                                           : FileChannel.MapMode.READ_WRITE, 0,
                                           newSize);
         } catch (Exception e) {
-            isNio  = false;
-            buffer = null;
+            isNio   = false;
+            buffer  = null;
+            channel = null;
 
             return;
         }
@@ -252,12 +253,7 @@ class NIOScaledRAFile extends ScaledRAFile {
             buffer.force();
         }
 
-        buffer = null;
-
-        Trace.printSystemOut("NIO next channel.close()");
-        channel.force(true);
-        channel.close();
-
+        buffer  = null;
         channel = null;
 
         Trace.printSystemOut("NIO next file.close()");

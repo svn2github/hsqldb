@@ -229,6 +229,8 @@ public class Library {
         }, {
             "CURTIME", "org.hsqldb.Library.curtime"
         }, {
+            "DATEDIFF", "org.hsqldb.Library.datediff"
+        }, {
             "DAYNAME", "org.hsqldb.Library.dayname"
         }, {
             "DAY", "org.hsqldb.Library.dayofmonth"
@@ -1394,6 +1396,139 @@ public class Library {
         return HsqlDateTime.getDateTimePart(d, Calendar.YEAR);
     }
 
+    // date calculations.
+
+    /**
+     * Method that calculates the number of units elapsed between two dates.
+     * contributed by Michael Landon
+     *
+     * @param datepart Specifies the unit in which the interval is to be measured.
+     * @param d1 The starting date for the interval. This value is
+     *           subtracted from d2 to return the number of
+     *           date-parts between the two arguments.
+     * @param d2 The ending date for the interval. d1 is subtracted
+     *           from this value to return the number of date-parts
+     *           between the two arguments.
+     */
+    public static long datediff(String datepart, Timestamp d1,
+                                Timestamp d2) throws Exception {
+
+        // make sure we've got valid data
+        if (datepart == null || d1 == null || d2 == null) {
+            throw new Exception("Invalid argument");
+        }
+
+        if ("yy".equalsIgnoreCase(datepart)
+                || "year".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.YEAR, d1, d2);
+        } else if ("mm".equalsIgnoreCase(datepart)
+                   || "month".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.MONTH, d1, d2);
+        } else if ("dd".equalsIgnoreCase(datepart)
+                   || "day".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.DATE, d1, d2);
+        } else if ("hh".equalsIgnoreCase(datepart)
+                   || "hour".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.HOUR, d1, d2);
+        } else if ("mi".equalsIgnoreCase(datepart)
+                   || "minute".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.MINUTE, d1, d2);
+        } else if ("ss".equalsIgnoreCase(datepart)
+                   || "second".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.SECOND, d1, d2);
+        } else if ("ms".equalsIgnoreCase(datepart)
+                   || "millisecond".equalsIgnoreCase(datepart)) {
+            return getElapsed(Calendar.MILLISECOND, d1, d2);
+        } else {
+            throw new Exception("Unrecognized date-part [" + datepart + "]");
+        }
+    }
+
+    /**
+     * Private method used to do actual calculation units elapsed between
+     * two given dates.
+     *
+     * @param field Calendar field to use to calculate elapsed time
+     * @param d1 The starting date for the interval. This value is
+     *           subtracted from d2 to return the number of
+     *           date-parts between the two arguments.
+     * @param d2 The ending date for the interval. d1 is subtracted
+     *           from this value to return the number of date-parts
+     *           between the two arguments.
+     */
+    private static long getElapsed(int field, java.util.Date d1,
+                                   java.util.Date d2) {
+
+        // can we do this very simply?
+        if (field == Calendar.MILLISECOND) {
+            return d2.getTime() - d1.getTime();
+        }
+
+        // ok, let's work a little harder:
+        Calendar g1 = Calendar.getInstance(),
+                 g2 = Calendar.getInstance();
+
+        g1.setTime(d1);
+        g2.setTime(d2);
+        g1.set(Calendar.MILLISECOND, 0);
+        g2.set(Calendar.MILLISECOND, 0);
+
+        if (field == Calendar.SECOND) {
+            return (g2.getTime().getTime() - g1.getTime().getTime()) / 1000;
+        }
+
+        g1.set(Calendar.SECOND, 0);
+        g2.set(Calendar.SECOND, 0);
+
+        if (field == Calendar.MINUTE) {
+            return (g2.getTime().getTime() - g1.getTime().getTime())
+                   / (1000 * 60);
+        }
+
+        g1.set(Calendar.MINUTE, 0);
+        g2.set(Calendar.MINUTE, 0);
+
+        if (field == Calendar.HOUR) {
+            return (g2.getTime().getTime() - g1.getTime().getTime())
+                   / (1000 * 60 * 60);
+        }    // end if-else
+
+        // if we got here, then we really need to work:
+        long  elapsed = 0;
+        short sign    = 1;
+
+        if (g2.before(g1)) {
+            sign = -1;
+
+            Calendar tmp = g1;
+
+            g1 = g2;
+            g2 = tmp;
+        }    // end if
+
+        g1.set(Calendar.HOUR_OF_DAY, 0);
+        g2.set(Calendar.HOUR_OF_DAY, 0);
+
+        if (field == Calendar.MONTH || field == Calendar.YEAR) {
+            g1.set(Calendar.DATE, 1);
+            g2.set(Calendar.DATE, 1);
+        }
+
+        if (field == Calendar.YEAR) {
+            g1.set(Calendar.MONTH, 1);
+            g2.set(Calendar.MONTH, 1);
+        }    // end if-else
+
+        // then calculate elapsed units
+        while (g1.before(g2)) {
+            g1.add(field, 1);
+
+            elapsed++;
+        }
+
+        return sign * elapsed;
+    }    // end getElapsed
+
     // SYSTEM
     /*
      * All system functions that return Session dependent information are
@@ -1588,6 +1723,7 @@ public class Library {
     static final int user                      = 60;
     static final int week                      = 61;
     static final int year                      = 62;
+    static final int datediff                  = 63;
 
     //
     private static final IntValueHashMap functionMap =
@@ -1606,6 +1742,7 @@ public class Library {
         functionMap.put("curdate", curdate);
         functionMap.put("curtime", curtime);
         functionMap.put("database", database);
+        functionMap.put("datediff", datediff);
         functionMap.put("dayname", dayname);
         functionMap.put("day", day);
         functionMap.put("dayofmonth", dayofmonth);
@@ -1624,6 +1761,7 @@ public class Library {
         functionMap.put("insert", insert);
         functionMap.put("isReadOnlyConnection", isReadOnlyConnection);
         functionMap.put("isReadOnlyDatabase", isReadOnlyDatabase);
+        functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
         functionMap.put("lcase", lcase);
         functionMap.put("left", left);
         functionMap.put("length", length);
@@ -1658,7 +1796,6 @@ public class Library {
         functionMap.put("user", user);
         functionMap.put("week", week);
         functionMap.put("year", year);
-        functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
     }
 
     static Object invoke(int fID, Object[] params) throws HsqlException {
@@ -1704,6 +1841,11 @@ public class Library {
                 }
                 case database : {
                     return null;
+                }
+                case datediff : {
+                    return ValuePool.getLong(datediff((String) params[0],
+                                                      (Timestamp) params[1],
+                                                      (Timestamp) params[2]));
                 }
                 case dayname : {
                     return dayname((Date) params[0]);
@@ -1893,7 +2035,7 @@ public class Library {
                 }
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.FUNCTION_CALL_ERROR);
+            throw Trace.error(Trace.FUNCTION_CALL_ERROR, e.getMessage());
         }
     }
 

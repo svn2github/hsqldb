@@ -248,7 +248,6 @@ class Function {
         } else {
             iSqlArgStart = 0;
         }
-        ;
 
         eArg = new Expression[iArgCount];
     }

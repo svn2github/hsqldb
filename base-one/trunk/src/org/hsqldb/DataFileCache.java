@@ -177,10 +177,6 @@ public class DataFileCache extends Cache {
      */
     void defrag() throws HsqlException {
 
-        if (rFile.isNio) {
-            throw Trace.error(Trace.ACCESS_IS_DENIED);
-        }
-
         close();
 
         try {
@@ -202,12 +198,23 @@ public class DataFileCache extends Cache {
             // open as readonly
             open(true);
 
-            DataFileDefrag dfd = new DataFileDefrag();
+            boolean        isNio = rFile.isNio;
+            DataFileDefrag dfd   = new DataFileDefrag();
 
             indexRoots = dfd.defrag(dDatabase, sName);
 
             closeFile();
             Trace.printSystemOut("closed old cache");
+
+            if (isNio) {
+                FileUtil.renameOverwrite(sName, sName + ".old");
+
+                File oldfile = new File(sName + ".old");
+
+                oldfile.delete();
+                oldfile.deleteOnExit();
+            }
+
             FileUtil.renameOverwrite(sName + ".new", sName);
 
             String backupName = dDatabase.getPath() + ".backup";
