@@ -6,6 +6,12 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.12.24 UPDATED RELEASE 1.7.2.11
+
+Fixed NPE error when functions in subqueries.
+Added support for STDDEV_POP, STDDEV_SAMP, VAR_POP, VAR_SAMP, EVERY and SOME set functions.
+Fixed potential issues with logging DELETE statements for tables with multi-key primary keys.
+
 2004.12.05 UPDATED RELEASE 1.7.2.10
 
 Fixed minor type conversion bugs.
