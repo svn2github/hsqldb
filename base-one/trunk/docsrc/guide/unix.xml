@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.10 2004/04/23 12:46:43 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.11 2004/04/23 14:44:31 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2004/04/23 12:46:43 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2004/04/23 14:44:31 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -267,7 +267,7 @@
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory, run</para>
                 <informalexample><screen>
-    java org.hsqldb.Server &</screen>
+    java org.hsqldb.Server &amp;</screen>
                 </informalexample><para>
                     This will start the Server process in the background, and 
                     will create your new database instance "db0".
@@ -283,6 +283,8 @@
         <para>
             Download this sample <ulink url='sqltool.rc'/> file to the
             <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
+            Use <literal>chmod</literal> to make the file readable and
+            writable only to <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
         </para>
         <programlisting>&sqltool.rc-cdata;</programlisting>
         <para>
@@ -404,10 +406,70 @@
 
     <section>
         <title>Running Hsqldb as a System Daemon</title>
-        <para><remark>
-            TODO:
-            Move instructions from the init script itself to here, then
-            put a reference in the init script pointing to this chapter.
-        </remark></para>
+        <para>
+            You can, of course, run HSQLDB through inittab on System V
+            UNIXes, but usually an init script is more convenient and
+            manageable.
+            This section explains how to set up and use our UNIX init script.
+            Our init script is only for use by root.
+        </para> <para>
+            The main purpose of the init script is to start up a Server with
+            the database instances specified in your
+            <filename>server.properties</filename> file; and to shut down
+            all of the database instances listed in your init script config
+            file (the latter must all have entries in a sqltool.rc file).
+        </para>
+        <procedure>
+            <step><para>
+                Copy the init script <filename>hsqldb</filename> from
+                <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/bin</filename>
+                into the directory where init scripts live on your variety of 
+                UNIX.
+                The most common locations are <filename>/etc/init.d</filename>,
+                <filename>/etc/rc.d/init.d</filename>,
+                <filename>/usr/local/etc/rc.d</filename>.
+            </para></step> <step><para>
+                Look at the init script and see what the value of CFGFILE is
+                for your UNIX platform.
+                You need to copy this
+                <ulink url='sample-hsqldb.cfg'>sample config file</ulink> to
+                that location.
+                Edit the config file according to the instructions in it.
+                </para>
+                <programlisting>&sample-hsqldb.cfg-cdata;</programlisting>
+            </step> <step><para>
+                Either copy <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s
+                <filename>sqltool.rc</filename> file into root's home 
+                directory, or set the value of AUTH_FILE to the absolute path
+                of <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s
+                <filename>sqltool.rc</filename> file.
+                This file is read (for stops) directly by root, even if you run 
+                hsqldb as non-root (by setting HSQLDB_OWNER in the config file).
+                If you copy the file, make sure to use <literal>chmod</literal>
+                to restrict permissions on the new copy.
+            </para></step> <step><para>
+                Tell your OS to run the init script upon system startup and 
+                shutdown.
+                If using a BSD variant, you must set "enable_hsqldb" to "YES" 
+                in <filename>/etc/rc.conf</filename>.
+                For good UNIXes that use System V style init, you must set up 
+                hard links or soft links either manually or with management 
+                tools or Gui's, or with <literal>chkconfig</literal>.
+                (I recommend using <literal>chkconfig</literal> if you have it).
+            </para></step>
+        </procedure>
+        <para>
+            Just run
+        </para><informalexample><screen>
+        /path/to/hsqldb</screen>
+        </informalexample><para>
+            as root to see the arguments you may use.
+            Notice that you can run
+        </para><informalexample><screen>
+        /path/to/hsqldb status</screen>
+        </informalexample><para>
+            at any time to see whether your HSQLDB
+            <classname>Server</classname> is running.
+        </para>
     </section>
 </chapter>
