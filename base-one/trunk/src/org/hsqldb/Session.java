@@ -480,8 +480,6 @@ class Session implements SessionInterface {
         } catch (HsqlException e) {}
     }
 
-// fredt - spec doesn't say invalidate later savepoints
-
     /**
      * Implements release of named SAVEPOINT. Other SAVEPOINTs remain intact.
      *
@@ -495,7 +493,10 @@ class Session implements SessionInterface {
         int index = savepoints.getIndex(name);
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
-        savepoints.remove(index);
+
+        while (savepoints.size() > index){
+            savepoints.remove(savepoints.size() - 1);
+        }
     }
 
     /**

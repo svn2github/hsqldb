@@ -886,7 +886,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not use a file for each table.
+     * Up to and including 1.7.2, HSQLDB does not use a file for each table.
      * This method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -5487,9 +5487,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Beginning with 1.7.1, this SQL feature is supported. However,
-     * this method always returns false, as savepoint access is not
-     * through JDBC.<p>
+     * Beginning with 1.7.2, this SQL feature is supported
+     * through JDBC as well as SQL.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5502,17 +5501,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 /*
     public boolean supportsSavepoints() throws SQLException {
 
-        // TODO: fredt@users, I will incorporate the patch but this one should
-        // simply return true regardless because an SQL feature is
-        // concerned not a JDBC one
-        // we need to decide if the new HSQLDB savepoint feature will be
-        // supported directly in JDBC and modify this accordingly, based
-        // on build variables.  The patch is available on Patch 546431.
-        // boucherb@users 20020426
-        // return true; // if built with jdbcSavepoint, else false?.
-        // fredt - until we use the savepoint JDBC patch return false as
-        // JDBC specs say so (contrary to the impression given in JavaDoc)
-        return false;
+        return true;
     }
 */
 

@@ -1,7 +1,27 @@
 Readme File
 
 
-leading to HSQLDB 1.7.2 ALPHA_N
+HSQLDB 1.7.2 ALPHA_N
+
+
+ALPHA_N is the ultimate ALPHA version for the 1.7.2 release cycle. Known
+deficiencies and reported bugs will be addressed for the first Release Candidate
+to be issued in the next few weeks.
+
+Please report any bugs or suggestions through the normal channels. Bugs with test
+cases should be posted to the bug tracker on the HSQLDB Sourceforge site.
+
+The included documentation has been updated. The JavaDoc for the jdbcXXX classes
+covers the JDBC interface. You can make the JavaDoc via the build scripts.
+
+The jar has been compiled with JDK 1.4. To run under earlier JDK's recompile using
+JDK 1.3.x.
+
+Changes since 1.7.2 are lised here in the reverse chronological order.
+
+2003.09.02
+
+ADDED JDBC SUPPORT FOR SAVPOINTS
 
 2003.08.22
 
@@ -18,7 +38,7 @@ SUBSTRING(.. FROM .. FOR ..)
 POSITION(.. IN ..)
 TRIM( {LEADING | TRAILING .. } FROM ..)
 EXTRACT({DAY | TIME |..} FROM ..)
-COALESCE(.. , .. , ..)
+COALESCE(.. , ..)
 
 
 2003.08.17
@@ -112,8 +132,8 @@ tables are treated as read-only.
 
 FILES IN JAR
 
-This option allows database files to be distributed
-in the application jar. We have changed the original contribution so
+This option allows database files to be distributed in the 
+application jar. We have changed the original contribution so
 that a special URL is used for this mode in the form of:
 
 jdbc:hsqldb:res:<path in jar>

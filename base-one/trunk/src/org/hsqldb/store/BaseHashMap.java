@@ -781,7 +781,7 @@ public class BaseHashMap {
      * Clear approximately count elements from the map, starting with
      * those with low accessTable ranking.
      */
-    public void clear(int count) {
+    protected void clear(int count) {
 
         int margin = threshold >> 8;
 
@@ -889,7 +889,7 @@ public class BaseHashMap {
         return false;
     }
 
-    public class BaseHashIterator implements org.hsqldb.lib.Iterator {
+    protected class BaseHashIterator implements org.hsqldb.lib.Iterator {
 
         boolean keys;
         int     lookup = -1;
