@@ -103,7 +103,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 256000;
+    int bigrows   = 32000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -137,7 +137,7 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 0);
+                sStatement.execute("SET LOGSIZE " + 1);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
                 props.load();

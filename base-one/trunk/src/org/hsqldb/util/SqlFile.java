@@ -94,7 +94,7 @@ import java.io.FileOutputStream;
  */
 public class SqlFile {
 
-    static private final int DEFAULT_HISTORY_SIZE = 20;
+    private static final int DEFAULT_HISTORY_SIZE = 20;
     private File             file;
     private boolean          interactive;
     private String           primaryPrompt    = "sql> ";
@@ -108,7 +108,7 @@ public class SqlFile {
      * Private class to "share" a variable among a family of SqlFile
      * instances.
      */
-    static private class BooleanBucket {
+    private static class BooleanBucket {
 
         private boolean bPriv = false;
         public void set(boolean bIn) {
@@ -126,11 +126,11 @@ public class SqlFile {
     BooleanBucket possiblyUncommitteds = new BooleanBucket();
 
     // Ascii field separator blanks
-    final private static int SEP_LEN = 2;
-    final private static String DIVIDER =
+    private final static int SEP_LEN = 2;
+    private final static String DIVIDER =
         "-----------------------------------------------------------------"
         + "-----------------------------------------------------------------";
-    final private static String SPACES =
+    private final static String SPACES =
         "                                                                 "
         + "                                                                 ";
     private static String revnum = null;
@@ -154,7 +154,7 @@ public class SqlFile {
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n";
-    final private static String BUFFER_HELP_TEXT =
+    private final static String BUFFER_HELP_TEXT =
         "BUFFER Commands (only available for interactive use).\n\n"
         + "    :?                Help\n"
         + "    :;                Execute current buffer as an SQL Statement\n"
@@ -176,7 +176,7 @@ public class SqlFile {
         + "                       2:  Narrows substitution to specified buffer line number\n"
         + "                           (Use any line number in place of '2').\n"
     ;
-    final private static String HELP_TEXT = "SPECIAL Commands.\n"
+    private final static String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
@@ -196,7 +196,7 @@ public class SqlFile {
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
         + "    \\q [abort message]   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
     ;
-    final private static String PL_HELP_TEXT =
+    private final static String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
         + "    *                             Expand PL variables from now on.\n"
@@ -304,7 +304,7 @@ public class SqlFile {
      * false otherwise).
      */
     private boolean             continueOnError = false;
-    static private final String DEFAULT_CHARSET = "US-ASCII";
+    private static final String DEFAULT_CHARSET = "US-ASCII";
     private BufferedReader      br              = null;
     private String              charset         = null;
 
@@ -601,7 +601,7 @@ public class SqlFile {
      * @param inString Base String, which will not be modified (because
      *                 a "copy" will be returned).
      */
-    static private String deTerminated(String inString) {
+    private static String deTerminated(String inString) {
 
         int index = inString.lastIndexOf(';');
         if (index < 0) {
@@ -1627,13 +1627,13 @@ public class SqlFile {
         }
     }
 
-    static private final int DEFAULT_ELEMENT = 0,
+    private static final int DEFAULT_ELEMENT = 0,
                              HSQLDB_ELEMENT  = 1,
                              ORACLE_ELEMENT  = 2
     ;
 
     /** Column numbering starting at 1. */
-    static private final int[][] listMDTableCols = {
+    private static final int[][] listMDTableCols = {
         {
             2, 3
         },        // Default
@@ -1901,12 +1901,12 @@ public class SqlFile {
         }
     }
 
-    final static private int    COL_HEAD = 0,
+    private final static int    COL_HEAD = 0,
                                 COL_ODD  = 1,
                                 COL_EVEN = 2
     ;
-    static private final String PRE_TR   = spaces(4);
-    static private final String PRE_TD   = spaces(8);
+    private static final String PRE_TR   = spaces(4);
+    private static final String PRE_TD   = spaces(8);
 
     /**
      * Print a properly formatted HTML &lt;TR&gt; command for the given
@@ -1914,7 +1914,7 @@ public class SqlFile {
      *
      * @param colType Column type:  COL_HEAD, COL_ODD or COL_EVEN.
      */
-    static private String htmlRow(int colType) {
+    private static String htmlRow(int colType) {
 
         switch (colType) {
 
@@ -1939,7 +1939,7 @@ public class SqlFile {
      *
      * @param len Length of output String.
      */
-    static private String divider(int len) {
+    private static String divider(int len) {
         return (len > DIVIDER.length()) ? DIVIDER
                                         : DIVIDER.substring(0, len);
     }
@@ -1949,7 +1949,7 @@ public class SqlFile {
      *
      * @param len Length of output String.
      */
-    static private String spaces(int len) {
+    private static String spaces(int len) {
         return (len > SPACES.length()) ? SPACES
                                        : SPACES.substring(0, len);
     }
@@ -1962,7 +1962,7 @@ public class SqlFile {
      * @param fulllen  Output String length.
      * @param rightJustify  True to right justify, false to left justify.
      */
-    static private String pad(String inString, int fulllen,
+    private static String pad(String inString, int fulllen,
                               boolean rightJustify, boolean doPad) {
 
         if (!doPad) {

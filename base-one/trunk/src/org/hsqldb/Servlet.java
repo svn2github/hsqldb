@@ -113,12 +113,13 @@ import org.hsqldb.rowio.RowOutputBinary;
  */
 public class Servlet extends javax.servlet.http.HttpServlet {
 
-    static final int BUFFER_SIZE = 256;
-    String           dbType;
-    String           dbPath;
-    String           errorStr;
-    RowOutputBinary  rowOut;
-    RowInputBinary   rowIn;
+    private static final int BUFFER_SIZE = 256;
+    private String           dbType;
+    private String           dbPath;
+    private String           errorStr;
+    private RowOutputBinary  rowOut;
+    private RowInputBinary   rowIn;
+    private int              iQueries;
 
     /**
      * Method declaration
@@ -291,6 +292,4 @@ public class Servlet extends javax.servlet.http.HttpServlet {
 
         // Trace.printSystemOut("Queries processed: "+iQueries+"  \n");
     }
-
-    static private int iQueries;
 }

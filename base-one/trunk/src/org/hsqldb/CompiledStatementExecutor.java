@@ -234,7 +234,7 @@ final class CompiledStatementExecutor {
         Table     t   = cs.targetTable;
         Select    s   = cs.select;
         int[]     ct  = t.getColumnTypes();    // column types
-        Result    r   = s.getResult(session, session.getMaxRows());
+        Result    r   = s.getResult(session, Integer.MAX_VALUE);
         Record    rc  = r.rRoot;
         int[]     cm  = cs.columnMap;          // column map
         boolean[] ccl = cs.checkColumns;       // column check list
@@ -335,7 +335,7 @@ final class CompiledStatementExecutor {
                                   select.sIntoTable.name);
             }
 
-            result = select.getResult(session, session.getMaxRows());
+            result = select.getResult(session, Integer.MAX_VALUE);
             result = session.dbCommandInterpreter.processSelectInto(result,
                     select.sIntoTable, select.intoType);
 

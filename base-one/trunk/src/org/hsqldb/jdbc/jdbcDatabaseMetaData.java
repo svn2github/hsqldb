@@ -5724,8 +5724,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         ResultSet r = connection.createStatement(scroll,
             concur).executeQuery(sql);
 
-        ((jdbcResultSet) r).autoClose    = true;
-        ((jdbcResultSet) r).sqlStatement = null;
+        ((jdbcResultSet) r).autoClose = true;
 
         return r;
     }

@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.19 2004/08/09 17:10:11 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.20 2004/08/12 20:43:20 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.19 $</edition>
-    <pubdate>$Date: 2004/08/09 17:10:11 $</pubdate>
+    <edition>$Revision: 1.20 $</edition>
+    <pubdate>$Date: 2004/08/12 20:43:20 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -840,6 +840,7 @@ SELECT [{LIMIT n m | TOP m}<footnoteref linkend="posthyper"/>][ALL | DISTINCT]
 FROM tableList
 [WHERE <link linkend='expression-section'>Expression</link>]
 [GROUP BY Expression [, ...]]
+[HAVING Expression]
 [{ UNION [ALL | DISTINCT] | {MINUS [DISTINCT] | EXCEPT [DISTINCT] } | INTERSECT [DISTINCT] } selectStatement]
 [ORDER BY orderExpression [, ...]];</programlisting>
 

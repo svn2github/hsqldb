@@ -207,7 +207,7 @@ class Logger {
     void writeToLog(Session session, String statement) throws HsqlException {
 
         if (lLog != null) {
-            lLog.write(session, statement);
+            lLog.writeStatement(session, statement);
         }
     }
 

@@ -71,7 +71,6 @@ import java.io.IOException;
 
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.ZipUnzipFile;
@@ -136,7 +135,7 @@ class Log {
     private HsqlDatabaseProperties pProperties;
     private String                 sName;
     private Database               dDatabase;
-    private ScriptWriterText       dbScriptWriter;
+    private ScriptWriterText       dbLogWriter;
     private String                 sFileScript;
     private String                 sFileCache;
     private String                 sFileBackup;
@@ -184,10 +183,8 @@ class Log {
         public void run() {
 
             try {
-                if (++ticks >= writeDelay && dbScriptWriter != null) {
-                    synchronized (dbScriptWriter) {
-                        dbScriptWriter.sync();
-                    }
+                if (++ticks >= writeDelay && dbLogWriter != null) {
+                    dbLogWriter.sync();
 
                     ticks = 0;
                 }
@@ -213,8 +210,8 @@ class Log {
 
         writeDelay = delay;
 
-        if (dbScriptWriter != null) {
-            dbScriptWriter.setWriteDelay(delay);
+        if (dbLogWriter != null) {
+            dbLogWriter.setWriteDelay(delay);
         }
     }
 
@@ -482,9 +479,13 @@ class Log {
      * @param  s
      * @throws  HsqlException
      */
-    void write(Session c, String s) throws HsqlException {
+    void writeStatement(Session c, String s) throws HsqlException {
 
-        if (filesReadOnly || bRestoring || s == null || s.length() == 0) {
+        if (s == null || s.length() == 0) {
+            return;
+        }
+
+        if (filesReadOnly || bRestoring) {
             return;
         }
 
@@ -492,12 +493,12 @@ class Log {
                              : c.getId();
 
         try {
-            dbScriptWriter.writeLogStatement(s, id);
+            dbLogWriter.writeLogStatement(s, id);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }
 
-        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
             checkpoint(false);
         }
     }
@@ -513,12 +514,12 @@ class Log {
                              : c.getId();
 
         try {
-            dbScriptWriter.writeRow(id, t, row);
+            dbLogWriter.writeRow(id, t, row);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }
 
-        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
             checkpoint(false);
         }
     }
@@ -534,12 +535,12 @@ class Log {
                              : c.getId();
 
         try {
-            dbScriptWriter.writeDeleteStatement(id, t, row);
+            dbLogWriter.writeDeleteStatement(id, t, row);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }
 
-        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
             checkpoint(false);
         }
     }
@@ -555,12 +556,12 @@ class Log {
                              : c.getId();
 
         try {
-            dbScriptWriter.writeSequenceStatement(id, s);
+            dbLogWriter.writeSequenceStatement(id, s);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }
 
-        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
             checkpoint(false);
         }
     }
@@ -617,10 +618,10 @@ class Log {
     private void openLog() throws HsqlException {
 
         try {
-            dbScriptWriter = new ScriptWriterText(dDatabase, sFileLog, false,
-                                                  false);
+            dbLogWriter = new ScriptWriterText(dDatabase, sFileLog, false,
+                                               false);
 
-            dbScriptWriter.setWriteDelay(writeDelay);
+            dbLogWriter.setWriteDelay(writeDelay);
 
             Session[] sessions = dDatabase.sessionManager.getAllSessions();
 
@@ -628,7 +629,7 @@ class Log {
                 Session session = sessions[i];
 
                 if (session.isAutoCommit() == false) {
-                    dbScriptWriter.writeLogStatement(
+                    dbLogWriter.writeLogStatement(
                         session.getAutoCommitStatement(), session.getId());
                 }
             }
@@ -642,12 +643,12 @@ class Log {
      *
      * @throws  HsqlException
      */
-    private void closeLog() throws HsqlException {
+    private synchronized void closeLog() throws HsqlException {
 
-        if (dbScriptWriter != null) {
-            dbScriptWriter.close();
+        if (dbLogWriter != null) {
+            dbLogWriter.close();
 
-            dbScriptWriter = null;
+            dbLogWriter = null;
         }
     }
 

@@ -59,7 +59,7 @@ import java.io.File;
  */
 public class SqlToolSprayer {
 
-    static private final String SYNTAX_MSG =
+    private static final String SYNTAX_MSG =
         "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]\n"
         + "System properties you may use [default values]:\n"
         + "    sqltoolsprayer.period (in ms.) [500]\n"
@@ -67,7 +67,7 @@ public class SqlToolSprayer {
         + "    sqltoolsprayer.monfile (filepath) [none]\n"
         + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]\n"
         + "    sqltoolsprayer.propfile (filepath) [none]";
-    static public void main(String[] sa) {
+    public static void main(String[] sa) {
 
         if (sa.length < 1) {
             System.err.println(SYNTAX_MSG);
@@ -163,7 +163,7 @@ public class SqlToolSprayer {
         System.exit(0);
     }
 
-    static private void getUrlsFromPropFile(String fileName,
+    private static void getUrlsFromPropFile(String fileName,
             ArrayList al) throws Exception {
 
         Properties p = new Properties();

@@ -158,7 +158,7 @@ public class ExecHarness {
     private byte[]              ba = new byte[MAX_PROG_OUTPUT + 1];
     private String              stdout          = null;
     private String              errout          = null;
-    static private final String DEFAULT_CHARSET = "US-ASCII";
+    private static final String DEFAULT_CHARSET = "US-ASCII";
 
     /*
      * Execute associated program synchronously, but in a separate process.

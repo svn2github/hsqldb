@@ -78,7 +78,7 @@ import org.hsqldb.lib.AsciiStringInputStream;
  * @version 1.7.2
  * @since JDK 1.2, HSQLDB 1.7.2
  */
-final public class jdbcClob implements Clob {
+public final class jdbcClob implements Clob {
 
     volatile String data;
 

@@ -515,7 +515,7 @@ public class jdbcResultSet implements ResultSet {
         rResult      = null;
 
         if (autoClose) {
-            this.sqlStatement.close();
+            sqlStatement.close();
         }
     }
 

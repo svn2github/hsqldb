@@ -696,7 +696,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  access="read-only"
      *  description="1:ONLINE 4:OPENING 8:CLOSING, 16:SHUTDOWN"
      */
-    public int getState() {
+    public synchronized int getState() {
         return serverState;
     }
 
@@ -1257,7 +1257,7 @@ public class Server implements HsqlSocketRequestHandler {
         while (serverState == ServerConstants.SERVER_STATE_OPENING) {
             try {
                 wait(100);
-            } catch (Exception e) {}
+            } catch (InterruptedException e) {}
         }
 
         printWithThread("start() exiting");

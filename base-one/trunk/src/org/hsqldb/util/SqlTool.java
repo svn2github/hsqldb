@@ -58,12 +58,12 @@ import java.util.HashMap;
  */
 public class SqlTool {
 
-    final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
-    static private Connection   conn;
+    private static final String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
+    private static Connection   conn;
 
     // N.b. the following is static!
-    static private boolean noexit;    // Whether System.exit() may be called.
-    final static private String DEFAULT_RCFILE =
+    private static boolean noexit;    // Whether System.exit() may be called.
+    private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
@@ -206,7 +206,7 @@ public class SqlTool {
         String truststore = null;
     }
 
-    static final private String SYNTAX_MESSAGE =
+    private static final String SYNTAX_MESSAGE =
         "Usage: java [-Dsqlfile.X=Y...] org.hsqldb.util.SqlTool \\\n"
         + "    [--optname [optval...]] urlid [file1.sql...]\n"
         + "where arguments are:\n"
@@ -258,7 +258,7 @@ public class SqlTool {
      * Call return() right after you call this method, because this method
      * will not exit if (noexit is true && retval == 0).
      */
-    static private void exitMain(int retval) throws SqlToolException {
+    private static void exitMain(int retval) throws SqlToolException {
         exitMain(retval, null);
     }
 
@@ -268,7 +268,7 @@ public class SqlTool {
      * Call return() right after you call this method, because this method
      * will not exit if (noexit is true && retval == 0).
      */
-    static private void exitMain(int retval,
+    private static void exitMain(int retval,
                                  String msg) throws SqlToolException {
 
         if (noexit) {

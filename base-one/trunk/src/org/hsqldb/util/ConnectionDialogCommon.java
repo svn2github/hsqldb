@@ -178,15 +178,15 @@ class ConnectionDialogCommon {
 
     static HashMappedList loadRecentConnectionSettings() throws IOException {
 
+        HashMappedList list = new HashMappedList();
+
+        list.add(emptySetting.getName(), emptySetting);
+
         try {
             if (recentSettings == null) {
                 String dir = getTempDir();
 
                 if (dir == null) {
-                    HashMappedList list = new HashMappedList();
-
-                    list.add(emptySetting.getName(), emptySetting);
-
                     return list;
                 }
 
@@ -195,27 +195,20 @@ class ConnectionDialogCommon {
                 if (!recentSettings.exists()) {
                     recentSettings.createNewFile();
 
-                    HashMappedList list = new HashMappedList();
-
-                    list.add(emptySetting.getName(), emptySetting);
-
                     return list;
                 }
             }
         } catch (Throwable e) {
-            HashMappedList list = new HashMappedList();
-
-            list.add(emptySetting.getName(), emptySetting);
-
             return list;
         }
 
         FileInputStream   in        = new FileInputStream(recentSettings);
         ObjectInputStream objStream = null;
-        HashMappedList    list      = new HashMappedList();
 
         try {
             objStream = new ObjectInputStream(in);
+
+            list.clear();
 
             while (true) {
                 ConnectionSetting setting =
@@ -232,7 +225,8 @@ class ConnectionDialogCommon {
         } catch (ClassCastException cce) {
             throw (IOException) new IOException("Unrecognized class type "
                                                 + cce.getMessage());
-        } finally {
+        } catch (Throwable t) {}
+        finally {
             if (objStream != null) {
                 objStream.close();
             }
