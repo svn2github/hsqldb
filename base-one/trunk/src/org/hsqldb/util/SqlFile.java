@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.32 2004/02/16 21:32:09 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.33 2004/02/16 22:36:41 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.32 $
+ * @version $Revision: 1.33 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -136,7 +136,7 @@ public class SqlFile {
         + "    \\-[3]                * reload a command to buffer (for / commands)\n"
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
-        + "    \\s\n" + "    \\-3\n" + "    /;\n";
+        + "    \\s\n" + "    \\-3\n" + "    :;\n";
 
     /**
      * Interpret lines of input file as SQL Statements, Comments, 
@@ -1037,7 +1037,7 @@ public class SqlFile {
             }
 
             psStd.println("\n<<<  Copy a command to buffer like \"\\-3\"       "
-                          + "Re-execute buffer like \"/;\"  >>>");
+                          + "Re-execute buffer like \":;\"  >>>");
         }
     }
 
