@@ -355,10 +355,8 @@ public class Column {
      */
     static Object concat(Object a, Object b) throws HsqlException {
 
-        if (a == null) {
-            return b;
-        } else if (b == null) {
-            return a;
+        if (a == null || b == null) {
+            return null;
         }
 
         return convertObject(a) + convertObject(b);

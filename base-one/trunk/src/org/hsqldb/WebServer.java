@@ -155,9 +155,10 @@ public class WebServer extends Server {
     public static void main(String args[]) {
 
         String propsPath = FileUtil.canonicalOrAbsolutePath("webserver");
-        HsqlProperties fileProps = getPropertiesFromFile(propsPath);
-        HsqlProperties props     = fileProps == null ? new HsqlProperties()
-                                                     : fileProps;
+        HsqlProperties fileProps =
+            ServerConfiguration.getPropertiesFromFile(propsPath);
+        HsqlProperties props = fileProps == null ? new HsqlProperties()
+                                                 : fileProps;
         HsqlProperties stringProps = HsqlProperties.argArrayToProps(args,
             ServerConstants.SC_KEY_PREFIX);
 
@@ -171,19 +172,13 @@ public class WebServer extends Server {
             props.addProperties(stringProps);
         }
 
-        String defaultdb = props.getProperty(ServerConstants.SC_KEY_DATABASE);
-
-        if (defaultdb != null) {
-            props.setProperty(ServerConstants.SC_KEY_DATABASE + ".0",
-                              defaultdb);
-        }
+        ServerConfiguration.translateDefaultDatabaseProperty(props);
 
         // Standard behaviour when started from the command line
         // is to halt the VM when the server shuts down.  This may, of
         // course, be overridden by whatever, if any, security policy
         // is in place.
-        props.setPropertyIfNotExists(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
-                                     "false");
+        ServerConfiguration.translateDefaultNoSystemExitProperty(props);
 
         // finished setting up properties;
         Server server = new WebServer();
@@ -202,25 +197,6 @@ public class WebServer extends Server {
         }
 
         server.start();
-    }
-
-    /**
-     * Retrieves the path that will be used by default if a null or zero-length
-     * path is specified to putPropertiesFromFile().  This path does not
-     * include the '.properties' file extention, which is implicit.
-     *
-     * NB Campbell - this method is misleading and should be removed -
-     * default properties path is for the main() method only.
-     *
-     * @return The path that will be used by default if null is specified to
-     *      putPropertiesFromFile()
-     *
-     * @jmx.managed-attribute
-     *  access="read-only"
-     *  description="Read by putPropertiesFromFile()"
-     */
-    public String getDefaultPropertiesPath() {
-        return FileUtil.canonicalOrAbsolutePath("webserver");
     }
 
     /**

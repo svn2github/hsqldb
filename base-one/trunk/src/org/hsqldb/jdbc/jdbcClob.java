@@ -40,37 +40,144 @@ import org.hsqldb.Result;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.AsciiStringInputStream;
 
+// boucherb@users 2004-03/04-xx - doc 1.7.2 - javadocs updated; methods put in
+//                                            correct (historical, interface
+//                                            declared) order
+// boucherb@users 2004-03/04-xx - patch 1.7.2 - null check for constructor (a 
+//                                              null CLOB value is Java null,
+//                                              not a Clob object with null
+//                                              data);moderate thread safety;
+//                                              simplification; optimization
+//                                              of operations between jdbcClob
+//                                              instances
+
 /**
+ * The mapping in the Java<sup><font size=-2>TM</font></sup> programming
+ * language for the SQL CLOB type. <p>
+ *
  * Provides methods for getting the length of an SQL CLOB (Character Large
  * Object) value, for materializing a CLOB value on the client, and for
- * searching for a substring or CLOB object within a CLOB value.
+ * searching for a substring or CLOB object within a CLOB value. <p>
+ *
+ * <!-- start Release-specific documentation -->
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3> <p>
+ *
+ * Including 1.7.2, the HSQLDB driver does not implement Clob using an SQL
+ * locator(CLOB).  That is, an HSQLDB Clob object does not contain a logical
+ * pointer to SQL CLOB data; rather it directly contains an immutable
+ * representation of the data (a String object). As a result, an HSQLDB
+ * Clob object itself is valid beyond the duration of the transaction in which
+ * is was created, although it does not necessarily represent a corresponding
+ * value on the database. <p>
+ *
+ * Currently, the interface methods for updating a CLOB value are
+ * unsupported. However, the truncate method is supported for local use.
+ * </div>
+ * <!-- start Release-specific documentation -->
  *
  * @author  boucherb@users
  * @version 1.7.2
- * @since 1.7.2
+ * @since JDK 1.2, HSQLDB 1.7.2
  */
-public class jdbcClob implements Clob {
+final public class jdbcClob implements Clob {
 
-    private String data;
+    volatile String data;
 
-    public jdbcClob(String datum) throws SQLException {
-        this.data = datum;
+    /**
+     * Constructs a new jdbcClob object wrapping the given character
+     * sequence. <p>
+     *
+     * This constructor is used internally to retrieve result set values as
+     * Clob objects, yet it must be public to allow access from other packages.
+     * As such (in the interest of efficiency) this object maintains a reference
+     * to the given String object rather than making a copy and so it is
+     * gently suggested (in the interest of effective memory management) that
+     * extenal clients using this constructor either take pause to consider
+     * the implications or at least take care to provide a String object whose
+     * internal character buffer is not much larger than required to represent
+     * the value.
+     *
+     * @param data the character sequence representing the Clob value
+     * @throws SQLException if the argument is null
+     */
+    public jdbcClob(final String data) throws SQLException {
+
+        if (data == null) {
+            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, "null");
+        }
+
+        this.data = data;
     }
 
     /**
-     * Retrieves the <code>CLOB</code> value designated by this
-     * <code>Clob</code> object as an ascii stream.
+     * Retrieves the number of characters in the <code>CLOB</code> value
+     * designated by this <code>Clob</code> object.
      *
-     * @return a <code>java.io.InputStream</code> object containing the
-     *         <code>CLOB</code> data
+     * @return length of the <code>CLOB</code> in characters
+     * @exception SQLException if there is an error accessing the
+     *            length of the <code>CLOB</code> value
+     *
+     * @since JDK 1.2, HSQLDB 1.7.2
+     */
+    public long length() throws SQLException {
+
+        final String ldata = data;
+
+        return ldata.length();
+    }
+
+    /**
+     * Retrieves a copy of the specified substring in the <code>CLOB</code>
+     * value designated by this <code>Clob</code> object. The substring begins
+     * at position <code>pos</code> and has up to <code>length</code>
+     * consecutive characters. <p>
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * The official specification above is ambiguous in that it does not
+     * precisely indicate the policy to be observed when
+     * pos > this.length() - length.  One policy would be to retrieve the
+     * characters from pos to this.length().  Another would be to throw
+     * an exception.  HSQLDB observes the later policy.
+     * </div>
+     *
+     * @param pos the first character of the substring to be extracted.
+     *            The first character is at position 1.
+     * @param length the number of consecutive characters to be copied
+     * @return a <code>String</code> that is the specified substring in
+     *         the <code>CLOB</code> value designated by this
+     *         <code>Clob</code> object
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
-     * @see #setAsciiStream
-     * @since 1.2
      *
+     * @since JDK 1.2, HSQLDB 1.7.2
      */
-    public java.io.InputStream getAsciiStream() throws SQLException {
-        return new AsciiStringInputStream(data);
+    public String getSubString(long pos,
+                               final int length) throws SQLException {
+
+        final String ldata = data;
+        final int    dlen  = ldata.length();
+
+        pos--;
+
+        if (pos < 0 || pos >= dlen) {
+            jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                  "pos: " + (pos + 1L));
+        }
+
+        if (length < 0 || pos > dlen - length) {
+            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                        "length: " + length);
+        }
+
+        if (pos == 0 && length == dlen) {
+            return ldata;
+        }
+
+        return ldata.substring((int) pos, (int) pos + length);
     }
 
     /**
@@ -83,54 +190,33 @@ public class jdbcClob implements Clob {
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
      * @see #setCharacterStream
-     * @since 1.2
      *
+     * @since JDK 1.2, HSQLDB 1.7.2
      */
     public java.io.Reader getCharacterStream() throws SQLException {
-        return new StringReader(data);
+
+        final String ldata = data;
+
+        return new StringReader(ldata);
     }
 
     /**
-     * Retrieves a copy of the specified substring
-     * in the <code>CLOB</code> value
-     * designated by this <code>Clob</code> object.
-     * The substring begins at position
-     * <code>pos</code> and has up to <code>length</code> consecutive
-     * characters.
+     * Retrieves the <code>CLOB</code> value designated by this
+     * <code>Clob</code> object as an ascii stream.
      *
-     * @param pos the first character of the substring to be extracted.
-     *            The first character is at position 1.
-     * @param length the number of consecutive characters to be copied
-     * @return a <code>String</code> that is the specified substring in
-     *         the <code>CLOB</code> value designated by this
-     *         <code>Clob</code> object
+     * @return a <code>java.io.InputStream</code> object containing the
+     *         <code>CLOB</code> data
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
-     * @since 1.2
+     * @see #setAsciiStream
      *
+     * @since JDK 1.2, HSQLDB 1.7.2
      */
-    public String getSubString(long pos, int length) throws SQLException {
+    public java.io.InputStream getAsciiStream() throws SQLException {
 
-        pos--;
+        final String ldata = data;
 
-        try {
-            Trace.check(pos >= 0 && pos <= data.length(),
-                        Trace.INVALID_JDBC_ARGUMENT, "pos: " + (pos + 1L));
-            Trace.check(length >= 0 && length <= Integer.MAX_VALUE,
-                        Trace.INVALID_JDBC_ARGUMENT, "length: " + length);
-
-            int end = (int) pos + length;
-
-            Trace.check(end <= data.length(), Trace.INVALID_JDBC_ARGUMENT,
-                        "length: " + length);
-
-            return data.substring((int) pos, end);
-        } catch (HsqlException he) {
-            throw jdbcUtil.sqlException(he);
-        } catch (Throwable t) {
-            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
-                    null)));
-        }
+        return new AsciiStringInputStream(ldata);
     }
 
     /**
@@ -146,28 +232,21 @@ public class jdbcClob implements Clob {
      *          present; the first position is 1
      * @exception SQLException if there is an error accessing the
      *          <code>CLOB</code> value
-     * @since 1.2
      *
+     * @since JDK 1.2, HSQLDB 1.7.2
      */
-    public long position(String searchstr, long start) throws SQLException {
+    public long position(final String searchstr,
+                         long start) throws SQLException {
 
-        start--;
-
-        try {
-            Trace.check(start >= 0 && start <= data.length(),
-                        Trace.INVALID_JDBC_ARGUMENT,
-                        "start: " + (start + 1L));
-
-            int pos = data.indexOf(searchstr, (int) start);
-
-            return pos >= 0 ? pos + 1
-                            : -1;
-        } catch (HsqlException he) {
-            throw jdbcUtil.sqlException(he);
-        } catch (Throwable t) {
-            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
-                    null)));
+        if (searchstr == null || start > Integer.MAX_VALUE) {
+            return -1;
         }
+
+        final String ldata = data;
+        final int    pos   = ldata.indexOf(searchstr, (int) --start);
+
+        return (pos < 0) ? -1
+                         : pos + 1;
     }
 
     /**
@@ -183,92 +262,59 @@ public class jdbcClob implements Clob {
      *              or -1 if it is not present; the first position is 1
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
-     * @since 1.2
      *
+     * @since JDK 1.2, HSQLDB 1.7.2
      */
-    public long position(Clob searchstr, long start) throws SQLException {
+    public long position(final Clob searchstr,
+                         long start) throws SQLException {
 
-        start--;
+        if (searchstr == null) {
+            return -1;
+        }
 
-        try {
-            Trace.check(start >= 0 && start <= Integer.MAX_VALUE,
-                        Trace.INVALID_JDBC_ARGUMENT, "start: " + start);
-
-            long sslen = searchstr.length();
-            long dslen = data.length();
+        final String ldata = data;
+        final long   dlen  = ldata.length();
+        final long   sslen = searchstr.length();
 
 // This is potentially much less expensive than materializing a large
 // substring from some other vendor's CLOB.  Indeed, we should probably
-// do the comparison piecewise, using in-memory lists (or temp-files
+// do the comparison piecewise, using an in-memory buffer (or temp-files
 // when available), if it is detected that the input CLOB is very long.
-            if ((start + sslen) > dslen) {
-                return -1;
-            }
-
-            // Avoid wrap-around and potential aioobe on cast to int
-            Trace.check(sslen <= Integer.MAX_VALUE,
-                        Trace.INVALID_JDBC_ARGUMENT,
-                        "searchstr.length(): " + sslen + " > "
-                        + Integer.MAX_VALUE);
-
-            String s   = searchstr.getSubString(1L, (int) sslen);
-            int    pos = data.indexOf(s, (int) start);
-
-            return pos >= 0 ? pos + 1
-                            : -1;
-        } catch (SQLException e) {
-            throw e;
-        } catch (HsqlException he) {
-            throw jdbcUtil.sqlException(he);
-        } catch (Throwable t) {
-            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
-                    null)));
+        if (start > dlen - sslen) {
+            return -1;
         }
+
+        // by now, we know sslen and start are both < Integer.MAX_VALUE
+        String s;
+
+        if (searchstr instanceof jdbcClob) {
+            s = ((jdbcClob) searchstr).data;
+        } else {
+            s = searchstr.getSubString(1L, (int) sslen);
+        }
+
+        final int pos = ldata.indexOf(s, (int) start);
+
+        return (pos < 0) ? -1
+                         : pos + 1;
     }
 
-    /**
-     * Retrieves a stream to be used to write Ascii characters to the
-     * <code>CLOB</code> value that this <code>Clob</code> object represents,
-     * starting at position <code>pos</code>.
-     *
-     * @param pos the position at which to start writing to this
-     *        <code>CLOB</code> object
-     * @return the stream to which ASCII encoded characters can be written
-     * @exception SQLException if there is an error accessing the
-     *            <code>CLOB</code> value
-     * @see #getAsciiStream
-     *
-     * @since 1.4
-     *
-     */
-    public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        throw jdbcUtil.notSupported;
-    }
-
-    /**
-     * Retrieves a stream to be used to write a stream of Unicode characters
-     * to the <code>CLOB</code> value that this <code>Clob</code> object
-     * represents, at position <code>pos</code>.
-     *
-     * @param  pos the position at which to start writing to the
-     *        <code>CLOB</code> value
-     *
-     * @return a stream to which Unicode encoded characters can be written
-     * @exception SQLException if there is an error accessing the
-     *            <code>CLOB</code> value
-     * @see #getCharacterStream
-     *
-     * @since 1.4
-     *
-     */
-    public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        throw jdbcUtil.notSupported;
-    }
+    //---------------------------- jdbc 3.0 -----------------------------------
 
     /**
      * Writes the given Java <code>String</code> to the <code>CLOB</code>
      * value that this <code>Clob</code> object designates at the position
-     * <code>pos</code>.
+     * <code>pos</code>. <p>
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * HSLQDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
      * @param pos the position at which to start writing to the
      *          <code>CLOB</code> value that this <code>Clob</code> object
@@ -279,8 +325,7 @@ public class jdbcClob implements Clob {
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
      *
-     * @since 1.4
-     *
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setString(long pos, String str) throws SQLException {
         throw jdbcUtil.notSupported;
@@ -289,7 +334,17 @@ public class jdbcClob implements Clob {
     /**
      * Writes <code>len</code> characters of <code>str</code>, starting
      * at character <code>offset</code>, to the <code>CLOB</code> value
-     * that this <code>Clob</code> represents.
+     * that this <code>Clob</code> represents. <p>
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * HSLQDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
      * @param pos the position at which to start writing to this
      *          <code>CLOB</code> object
@@ -302,8 +357,7 @@ public class jdbcClob implements Clob {
      * @exception SQLException if there is an error accessing the
      *          <code>CLOB</code> value
      *
-     * @since 1.4
-     *
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setString(long pos, String str, int offset,
                          int len) throws SQLException {
@@ -311,54 +365,99 @@ public class jdbcClob implements Clob {
     }
 
     /**
-     * Retrieves the number of characters
-     * in the <code>CLOB</code> value
-     * designated by this <code>Clob</code> object.
+     * Retrieves a stream to be used to write Ascii characters to the
+     * <code>CLOB</code> value that this <code>Clob</code> object represents,
+     * starting at position <code>pos</code>. <p>
      *
-     * @return length of the <code>CLOB</code> in characters
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * HSLQDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
+     * <!-- end release-specific documentation -->
+     *
+     * @param pos the position at which to start writing to this
+     *        <code>CLOB</code> object
+     * @return the stream to which ASCII encoded characters can be written
      * @exception SQLException if there is an error accessing the
-     *            length of the <code>CLOB</code> value
-     * @since 1.2
+     *            <code>CLOB</code> value
+     * @see #getAsciiStream
      *
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
-    public long length() throws SQLException {
-        return data.length();
+    public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
+        throw jdbcUtil.notSupported;
+    }
+
+    /**
+     * Retrieves a stream to be used to write a stream of Unicode characters
+     * to the <code>CLOB</code> value that this <code>Clob</code> object
+     * represents, at position <code>pos</code>. <p>
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * HSLQDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
+     * <!-- end release-specific documentation -->
+     *
+     * @param  pos the position at which to start writing to the
+     *        <code>CLOB</code> value
+     *
+     * @return a stream to which Unicode encoded characters can be written
+     * @exception SQLException if there is an error accessing the
+     *            <code>CLOB</code> value
+     * @see #getCharacterStream
+     *
+     * @since JDK 1.4, HSQLDB 1.7.2
+     */
+    public java.io.Writer setCharacterStream(long pos) throws SQLException {
+        throw jdbcUtil.notSupported;
     }
 
     /**
      * Truncates the <code>CLOB</code> value that this <code>Clob</code>
      * designates to have a length of <code>len</code>
-     * characters.
+     * characters. <p>
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * This operation affects only the client-side value; it has no effect upon
+     * the value as it is stored in the database.
+     * </div>
+     * <!-- end release-specific documentation -->
+     *
      * @param len the length, in bytes, to which the <code>CLOB</code> value
      *        should be truncated
      * @exception SQLException if there is an error accessing the
      *            <code>CLOB</code> value
      *
-     * @since 1.4
-     *
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
-    public void truncate(long len) throws SQLException {
+    public void truncate(final long len) throws SQLException {
 
-        try {
-            Trace.check(len >= 0, Trace.INVALID_JDBC_ARGUMENT, "len: " + len);
+        final String ldata = data;
+        final long   dlen  = ldata.length();
+        final long   chars = len >> 1;
 
-            len = len >> 1;
+        if (chars == dlen) {
 
-            Trace.check(len <= data.length(), Trace.INVALID_JDBC_ARGUMENT,
-                        "len: " + len);
+            // nothing has changed, so there's nothing to be done
+        } else if (len < 0 || chars > dlen) {
+            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                        Long.toString(len));
+        } else {
 
-            if (len == data.length()) {
-
-                // nothing has changed, so there's no point
-                // in making a copy
-            } else {
-                data = data.substring(0, (int) len);
-            }
-        } catch (HsqlException he) {
-            throw jdbcUtil.sqlException(he);
-        } catch (Throwable t) {
-            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
-                    null)));
+            // use new String() to ensure we get rid of slack
+            data = new String(ldata.substring(0, (int) chars));
         }
     }
 }

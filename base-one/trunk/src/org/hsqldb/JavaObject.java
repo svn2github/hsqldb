@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.StringUtil;
-
 /**
  * Represents of an instance of an OTHER field value. <p>
  *
@@ -73,8 +71,8 @@ public class JavaObject {
     }
 
     /**
-     * This constructor is from classes implementing the JDBC interfaces.<b>
-     * Inside the engine, it is used to convert an object into an object
+     * This constructor is used in classes implementing the JDBC interfaces.
+     * It is also used inside the engine to convert an object into an object
      * of type OTHER.
      */
     public JavaObject(Object o, boolean serialise) throws HsqlException {
@@ -119,27 +117,22 @@ public class JavaObject {
         return object;
     }
 
+/** @todo fredt - use instead an explicit internal data type for this purpose */
+
     /**
-     * Retrieves the deserialized (Object) form of the OTHER value this
-     * object represents, or null if the OTHER value is not already available
-     * for retrieval in deserialized form.
-     *
-     * The primary client of this method is
-     * CompiledStatementExecutor.executeCallStatement, wherein an attempt is
-     * made to determine if this object wraps a Result, in which case the
+     * Returns the deserialized (Object) form of the OTHER value without
+     * performing any deserialization. This is a workaround for
+     * CompiledStatementExecutor.executeCallStatement which makes an attemp
+     * to determine if a returned JavaObject wraps a Result, in which case the
      * Result is unwrapped and and used directly to present results through
-     * the JDBC client interfaces. <p>
-     *
-     * @return the deserialized form of the OTHER value this object represents,
-     *      or null if the OTHER value is not already available
-     *      for retrieval in deserialized form
+     * the JDBC client interfaces. (added by boucherb@user) <p>
      */
     Object getObjectNoDeserialize() {
         return object;
     }
 
     /**
-     * Retrieves a String repsentation of this object.
+     * Returns String repsentation of this object.
      *
      * @return a String represntation of this object.
      */

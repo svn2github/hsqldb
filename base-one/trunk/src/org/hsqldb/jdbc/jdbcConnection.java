@@ -81,7 +81,7 @@ import org.hsqldb.lib.StringUtil;
  *
  * <!-- end generic documentation -->
  * <!-- start release-specific documentation -->
- * <span class="ReleaseSpecificDocumentation">
+ * <div class="ReleaseSpecificDocumentation">
  *
  * <hr>
  *
@@ -91,73 +91,79 @@ import org.hsqldb.lib.StringUtil;
  * following code may be used (updated to reflect the most recent
  * recommendations): <p>
  *
- * <code class="JavaCodeExample">
- * Class c = Class.<b>forName</b> (<span class="JavaStringLiteral">
- * "org.hsqldb.jdbcDriver"</span> );<br>
- * Driver d = (Driver) c.newInstance();<br>
- * DriverManager.registerDriver(d);<br>
- * Connection c = DriverManager.<b>getConnection</b>
- * (url,user,password); </code><p>
+ * <hr>
  *
- * Under HSQLDB, the database connection <b>&lt;url&gt;</b> must start with
+ * When using HSQLDB, the database connection <b>&lt;url&gt;</b> must start with
  * <b>'jdbc:hsqldb:'</b><p>
  *
- * Starting with 1.7.2, HSQLDB connection properties (&lt;key-value-pairs&gt;)
- * may be appended to the database connection <b>&lt;url&gt;</b>, using
- * the form: <p>
+ * Since 1.7.2, connection properties (&lt;key-value-pairs&gt;) may be appended
+ * to the database connection <b>&lt;url&gt;</b>, using the form: <p>
  *
- * <b>'&lt;url&gt;[;key=value]*'</b> <p>
+ * <blockquote>
+ *      <b>'&lt;url&gt;[;key=value]*'</b>
+ * </blockquote> <p>
  *
- * Starting with 1.7.2, the allowable forms of the HSQLDB database connection
+ * Also since 1.7.2, the allowable forms of the HSQLDB database connection
  * <b>&lt;url&gt;</b> have been extended.  However, all legacy forms continue
  * to work, with unchanged semantics.  The extensions are as described in the
- * following material: <p>
+ * following material. <p>
+ *
+ * <hr>
  *
  * <b>Network Server Database Connections:</b> <p>
  *
  * The 1.7.2 {@link Server Server} database connection <b>&lt;url&gt;</b> has
  * changed to take one of the two following forms: <p>
  *
+ * <div class="GeneralExample">
  * <ol>
  * <li> <b>'jdbc:hsqldb:hsql://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
  *
  * <li> <b>'jdbc:hsqldb:hsqls://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
  *         (with TLS).
- * </ol> <p>
+ * </ol>
+ * </div> <p>
  *
  * The 1.7.2 {@link WebServer WebServer} database connection <b>&lt;url&gt;</b>
  * also changes to take one of two following forms: <p>
  *
+ * <div class="GeneralExample">
  * <ol>
  * <li> <b>'jdbc:hsqldb:http://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
  *
  * <li> <b>'jdbc:hsqldb:https://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
-        (with TLS).
- * </ol> <p>
+ *      (with TLS).
+ * </ol>
+ * </div><p>
  *
  * In both network server database connection <b>&lt;url&gt;</b> forms, the
  * optional <b>&lt;alias&gt;</b> component is used to identify one of possibly
  * several database instances available at the indicated host and port.  If the
  * <b>&lt;alias&gt;</b> component is omitted, then a connection is made to the
- * network server's default database instance (instance 0). <p>
+ * network server's default database instance. <p>
  *
  * For more information on server configuration regarding mounting multiple
  * databases and assigning them <b>&lt;alias&gt;</b> values, please read the
- * Java API documentation for {@link Server Server} and related chapters in
- * the general documentation, especially the Advanced Users Guide. <p>
+ * Java API documentation for {@link org.hsqldb.Server Server} and related
+ * chapters in the general documentation, especially the Advanced Users
+ * Guide. <p>
+ *
+ * <hr>
  *
  * <b>Transient, In-Process Database Connections:</b> <p>
  *
  * The 1.7.2 100% in-memory (transient, in-process) database connection
  * <b>&lt;url&gt;</b> takes one of the two following forms: <p>
  *
+ * <div class="GeneralExample">
  * <ol>
  * <li> <b>'jdbc:hsqldb:.[&lt;key-value-pairs&gt;]'</b>
-        (the legacy form, extended)
+ *     (the legacy form, extended)
  *
  * <li> <b>'jdbc:hsqldb:mem:&lt;alias&gt;[&lt;key-value-pairs&gt;]'</b>
-        (the new form)
- * </ol> <p>
+ *      (the new form)
+ * </ol>
+ * </div> <p>
  *
  * With the 1.7.2 transient, in-process database connection <b>&lt;url&gt;</b>,
  * the <b>&lt;alias&gt;</b> component is the key used to look up a transient,
@@ -167,21 +173,25 @@ import org.hsqldb.lib.StringUtil;
  * created and mapped to the <b>&lt;alias&gt;</b>, as governed by the
  * <b>'ifexists=true|false'</b> connection property. <p>
  *
+ * <hr>
+ *
  * <b>Persistent, In-Process Database Connections:</b> <p>
  *
  * The 1.7.2 standalone (persistent, in-process) database connection
  * <b>&lt;url&gt;</b> takes one of the three following forms: <p>
  *
+ * <div class="GeneralExample">
  * <ol>
  * <li> <b>'jdbc:hsqldb:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
-        (the legacy form, extended)
+ *      (the legacy form, extended)
  *
  * <li> <b>'jdbc:hsqldb:file:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
-        (same semantics as the legacy form)
+ *      (same semantics as the legacy form)
  *
  * <li> <b>'jdbc:hsqldb:res:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
-        (new form with 'files_in_jar' semantics)
+ *      (new form with 'files_in_jar' semantics)
  * </ol>
+ * </div> <p>
  *
  * For the persistent, in-process database connection <b>&lt;url&gt;</b>,
  * the <b>&lt;path&gt;</b> component is the path prefix common to all of
@@ -191,6 +201,7 @@ import org.hsqldb.lib.StringUtil;
  * files and/or TEXT table CSV data source files), the essential set that may,
  * at any particular point in time, compose an HSQLDB database are: <p>
  *
+ * <div class="GeneralExample">
  * <ul>
  * <li>&lt;path&gt;.properties
  * <li>&lt;path&gt;.script
@@ -198,7 +209,8 @@ import org.hsqldb.lib.StringUtil;
  * <li>&lt;path&gt;.data
  * <li>&lt;path&gt;.backup
  * <li>&lt;path&gt;.lck
- * </ul> <p>
+ * </ul>
+ * </div> <p>
  *
  * For example: <b>'jdbc:hsqldb:file:test'</b> connects to a database
  * composed of some subset of the files listed above, where the expansion
@@ -206,11 +218,11 @@ import org.hsqldb.lib.StringUtil;
  * working directory fixed at the time the JVM is started. <p>
  *
  * Under <em>Windows</em> <sup><font size="-2">TM</font> </sup>, <b>
- * 'jdbc:hsqldb:file:c:\databases\test'</b> connects a database located
+ * 'jdbc:hsqldb:file:c:\databases\test'</b> connects to a database located
  * on drive <b>'C:'</b> in the directory <b>'databases'</b>, composed
  * of some subset of the files: <p>
  *
- * <pre>
+ * <pre class="GeneralExample">
  * C:\
  * +--databases\
  *    +--test.properties
@@ -225,9 +237,9 @@ import org.hsqldb.lib.StringUtil;
  * connects to a database located in the directory <b>'databases'</b> directly
  * under root, once again composed of some subset of the files: <p>
  *
- * <pre>
- * \
- * +--databases\
+ * <pre class="GeneralExample">
+ * /
+ * +--databases/
  *    +--test.properties
  *    +--test.script
  *    +--test.log
@@ -239,20 +251,21 @@ import org.hsqldb.lib.StringUtil;
 * <b>Some Guidelines:</b> <p>
  *
  * <ol>
- * <li> Both relative and absolute database file paths are supported.
+ * <li> Both relative and absolute database file paths are supported. <p>
  *
  * <li> Relative database file paths can be specified in a platform independent
- *      manner as: <b>'[dir1/dir2/.../dirn/]&lt;file-name-prefix&gt;'</b>.
+ *      manner as: <b>'[dir1/dir2/.../dirn/]&lt;file-name-prefix&gt;'</b>. <p>
  *
  * <li> Specification of absolute file paths is operating-system specific.<br>
- *      Please read your OS file system documentation.
+ *      Please read your OS file system documentation. <p>
  *
  * <li> Specification of network mounts may be operating-system specific.<br>
- *      Please read your OS file system documentation.
+ *      Please read your OS file system documentation. <p>
  *
  * <li> Special care may be needed w.r.t. file path specifications
-        containing whitespace and/or mixed-case.<br>
- *      Please read your OS file system documentation.
+ *      containing whitespace, mixed-case, special characters and/or
+ *      reserved file names.<br>
+ *      Please read your OS file system documentation. <p>
  * </ol> <p>
  *
  * <b>Note:</b> Versions of HSQLDB previous to 1.7.0 did not support creating
@@ -262,35 +275,52 @@ import org.hsqldb.lib.StringUtil;
  * be created if they do not already exist., but only if HSQLDB is built under
  * a version of the compiler greater than JDK 1.1.x. <p>
  *
+ * <b>res: Connections</b><p>
+ *
  * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
  * <b>&lt;url&gt;</b> has different semantics than the
  * <b>'jdbc:hsqldb:file:&lt;path&gt;'</b> form. The semantics are similar to
  * those of a <b>'files_read_only'</b> database, but with some additional
  * points to consider. <p>
  *
- * Specifically, the <b>'&lt;path&gt;</b> component of a <b>res:</b> type
+ * Specifically, the <b>'&lt;path&gt;'</b> component of a <b>res:</b> type
  * database connection <b>&lt;url&gt;</b> is used to obtain resource URL
- * objects and therby read the database files as resources on the class path.
+ * objects and thereby read the database files as resources on the class path.
  * Moreover, the URL objects <i>must</i> point only to resources contained
  * in one or more jars on the class path (must be jar protocol). <p>
  *
+ * This restriction is enforced to avoid the unfortunate situation in which,
+ * because <b>res:</b> database instances do not create a &lt;path&gt;.lck file
+ * (they are strictly files-read-only) and because the <b>&lt;path&gt;</b>
+ * components of <b>res:</b> and <b>file:</b> database URIs are not checked
+ * for file system equivalence, it is possible for the same database files to
+ * be accessed concurrently by both <b>file:</b> and <b>res:</b> database
+ * instances. That is, without this restriction, it is possible that
+ * &lt;path&gt;.data and &lt;path&gt;.properties file content may be written
+ * by a <b>file:</b> database instance without the knowlege or cooperation
+ * of a <b>res:</b> database instance open on the same files, potentially
+ * resulting in unexpected database errors, inconsistent operation
+ * and/or data corruption. <p>
+ *
  * In short, a <b>res:</b> type database connection <b>&lt;url&gt;</b> is
  * designed specifically to connect to a <b>'files_in_jar'</b> mode database
- * instance, which in turn is designed specifically to operate under a
- * <em>Java WebStart</em><sup><font size="-2">TM</font></sup> configuration,
+ * instance, which in turn is designed specifically to operate under
+ * <em>Java WebStart</em><sup><font size="-2">TM</font></sup> and
+ * <em>Java Applet</em><sup><font size="-2">TM</font></sup>configurations,
  * where co-locating the database files in the jars that make up the
- * <em>WebStart</em> application avoids the need for special security
+ * <em>WebStart</em> application or Applet avoids the need for special security
  * configuration or code signing. <p>
  *
- * <b>Note:</b> Since it is difficult or impossible to determine or control
- * from where classes are being loaded or which class loader is doing the
- * loading under <b>'files_in_jar'</b> semantics, the <b>&lt;path&gt;</b>
- * component of the database connection <b>&lt;url&gt;</b> is always taken
- * to be relative to the default package.  That is, if the <b>&lt;path&gt;</b>
- * component does not start with '/', then '/' is prepended when obtaining
- * the resource URLs used to read the database files. <p>
+ * <b>Note:</b> Since it is difficult and often nearly impossible to determine
+ * or control at runtime from where all classes are being loaded or which class
+ * loader is doing the loading under <b>'files_in_jar'</b> semantics, the
+ * <b>&lt;path&gt;</b> component of the res: database connection
+ * <b>&lt;url&gt;</b> is always taken to be relative to the default package.
+ * That is, if the <b>&lt;path&gt;</b> component does not start with '/', then
+ * '/' is prepended when obtaining the resource URLs used to read the database
+ * files. <p>
  *
- * -- <p>
+ * <hr>
  *
  * For more information about HSQLDB file structure, various database modes
  * and other attributes such as those controlled through the HSQLDB properties
@@ -316,20 +346,20 @@ import org.hsqldb.lib.StringUtil;
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
  * <code>ResultSet</code></a> interface.  For this reason, when the
  * product is compiled under JDK 1.1.x, these values are defined
- * in {@link org.hsqldb.jdbcResultSet jdbcResultSet}. <p>
+ * in {@link org.hsqldb.jdbc.jdbcResultSet jdbcResultSet}. <p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
  * JDBC2-only <code>ResultSet</code> values can be achieved by referring
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
- * <CODE class="JavaCodeExample">
- * jdbcResultSet.FETCH_FORWARD<br>
- * jdbcResultSet.TYPE_FORWARD_ONLY<br>
- * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
- * jdbcResultSet.CONCUR_READ_ONLY<br>
+ * <pre class="JavaCodeExample">
+ * jdbcResultSet.FETCH_FORWARD
+ * jdbcResultSet.TYPE_FORWARD_ONLY
+ * jdbcResultSet.TYPE_SCROLL_INSENSITIVE
+ * jdbcResultSet.CONCUR_READ_ONLY
  * // etc.
- * </code> <p>
+ * </pre>
  *
  * However, please note that code written to use HSQLDB JDBC 2 features under
  * JDK 1.1.x will not be compatible for use with other JDBC 2 drivers. Please
@@ -343,11 +373,11 @@ import org.hsqldb.lib.StringUtil;
  * (fredt@users)<br>
  * (boucherb@users)<p>
  *
- * </span> <!-- end release-specific documentation -->
+ * </div> <!-- end release-specific documentation -->
  * @author boucherb@users
  * @author fredt@users
  * @version 1.7.2
- * @see jdbcDriver
+ * @see org.hsqldb.jdbcDriver
  * @see jdbcStatement
  * @see jdbcPreparedStatement
  * @see jdbcCallableStatement
@@ -416,8 +446,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, support for precompilation at the engine level
      * has been implemented, so it is now much more efficient and performant
@@ -441,7 +471,7 @@ public class jdbcConnection implements Connection {
      * closed connections. Starting with 1.7.0. the behaviour is to throw a
      * <code>SQLException</code> if the connection is closed. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return a new default Statement object
      * @throws SQLException if a database access error occurs<p>
@@ -485,8 +515,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, support for precompilation at the engine level
      * has been implemented, so it is now much more efficient and performant
@@ -495,9 +525,9 @@ public class jdbcConnection implements Connection {
      *
      * Starting with 1.7.2, the support for and behaviour of
      * PreparedStatment has changed.  Please read the introductory section
-     * of the documentation for org.hsqldb.jdbcPreparedStatement. <P>
+     * of the documentation for org.hsqldb.jdbc.jdbcPreparedStatement. <P>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql an SQL statement that may contain one or more '?'
      *    IN parameter placeholders
@@ -545,14 +575,14 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with 1.7.2, the support for and behaviour of
      * CallableStatement has changed.  Please read the introductory section
-     * of the documentation for org.hsqldb.jdbcCallableStatement.
+     * of the documentation for org.hsqldb.jdbc.jdbcCallableStatement.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a String object that is the SQL statement to be
      *  sent to the database; may contain one or more ?
@@ -591,8 +621,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including 1.7.2, HSQLDB converts the JDBC SQL
      * grammar into the system's native SQL grammar prior to sending
@@ -649,7 +679,7 @@ public class jdbcConnection implements Connection {
      * <li>{ts ...}
      * </ol> <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a SQL statement that may contain one or more '?'
      *     parameter placeholders
@@ -846,8 +876,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including HSQLDB 1.7.2, <p>
      *
@@ -862,7 +892,7 @@ public class jdbcConnection implements Connection {
      * </ol>
      * <p>
      *
-     * (boucherb@users) </span> <!-- end release-specific
+     * (boucherb@users) </div> <!-- end release-specific
      * documentation -->
      *
      * @param autoCommit <code>true</code> to enable auto-commit
@@ -908,8 +938,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, savepoints are supported both
      * in SQL and via the JDBC interface. <p>
@@ -923,7 +953,7 @@ public class jdbcConnection implements Connection {
      * ROLLBACK TO SAVEPOINT &lt;savepoint-name&gt;
      * </pre>
      *
-     * </span><!-- end release-specific documentation -->
+     * </div><!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit
@@ -948,8 +978,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, savepoints are fully supported both
      * in SQL and via the JDBC interface. <p>
@@ -963,7 +993,7 @@ public class jdbcConnection implements Connection {
      * ROLLBACK TO SAVEPOINT &lt;savepoint-name&gt;
      * </pre>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit
@@ -994,13 +1024,13 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In 1.7.2, <code>INTERNAL</code> <code>Connection</code>
      * objects are not closable from JDBC client code. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      */
@@ -1043,8 +1073,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * JDBC <code>DatabaseMetaData</code> methods returning
      * <code>ResultSet</code> were not implemented fully before 1.7.2.
@@ -1065,7 +1095,7 @@ public class jdbcConnection implements Connection {
      * For discussion in greater detail, please follow the link to the
      * overview for jdbcDatabaseMetaData, below.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return a DatabaseMetaData object for this Connection
      * @throws SQLException if a database access error occurs
@@ -1088,8 +1118,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including 1.7.2, HSQLDB will commit the current
      * transaction automatically when this method is called. <p>
@@ -1119,7 +1149,7 @@ public class jdbcConnection implements Connection {
      * the CHECKPOINT DEFRAG command followed by SHUTDOWN to take the
      * database offline in preparation to burn the database files to CD. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param readonly The new readOnly value
      * @exception SQLException if a database access error occurs
@@ -1158,12 +1188,12 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB does not yet support catalogs and simply ignores this
      * request. <p>
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param catalog the name of a catalog (subspace in this
@@ -1180,13 +1210,13 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB does not yet support catalogs and always returns null.
      * <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return the current catalog name or null <p>
      *
@@ -1212,13 +1242,13 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including 1.7.1, HSQLDB supports only
      * <code>Connection.TRANSACTION_READ_UNCOMMITTED</code>. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param level one of the following <code>Connection</code>
      *     constants: <code>Connection.TRANSACTION_READ_UNCOMMITTED</code>
@@ -1250,13 +1280,13 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB always returns
      * <code>Connection.TRANSACTION_READ_UNCOMMITED</code>. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return the current transaction isolation level, which will be
      *    one of the following constants:
@@ -1296,15 +1326,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with 1.7.2, HSQLDB produces warnings whenever a createStatement(),
      * prepareStatement() or prepareCall() invocation requests an unsupported
      * but defined combination of result set type, concurrency and holdability,
      * such that another set is substituted.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      * @return the first <code>SQLWarning</code> object or <code>null</code>
      *     if there are none<p>
      * @exception SQLException if a database access error occurs or
@@ -1329,15 +1359,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Before HSQLDB 1.7.2, <code>SQLWarning</code> was not
      * supported, and calls to this method are simply ignored. <p>
      *
      * Starting with HSQLDB 1.7.2, the standard behaviour is implemented. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs <p>
      */
@@ -1363,8 +1393,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to HSQLDB 1.6.1, support was provided only for type
      * <code>TYPE_FORWARD_ONLY</code>
@@ -1390,7 +1420,7 @@ public class jdbcConnection implements Connection {
      * closed connections. Starting with 1.7.0. the behaviour is to throw a
      * <code>SQLException</code> if the connection is closed.<p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param type a result set type; one of
      *  <code>ResultSet.TYPE_FORWARD_ONLY</code>,
@@ -1435,8 +1465,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, the behaviour regarding the type and
      * concurrency values has changed to more closely conform to the
@@ -1446,9 +1476,9 @@ public class jdbcConnection implements Connection {
      *
      * Also starting with 1.7.2, the support for and behaviour of
      * PreparedStatment has changed.  Please read the introductory section
-     * of the documentation for org.hsqldb.jdbcPreparedStatement.
+     * of the documentation for org.hsqldb.jdbc.jdbcPreparedStatement.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a String object that is the SQL statement to be
      *  sent to the database; may contain one or more ? IN
@@ -1501,8 +1531,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, the behaviour regarding the type,
      * concurrency and holdability values has changed to more closely
@@ -1512,9 +1542,9 @@ public class jdbcConnection implements Connection {
      *
      * Also starting with 1.7.2, the support for and behaviour of
      * CallableStatement has changed.  Please read the introdutory section
-     * of the documentation for org.hsqldb.jdbcCallableStatement.
+     * of the documentation for org.hsqldb.jdbc.jdbcCallableStatement.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a String object that is the SQL statement to be
      * sent to the database; may contain one or more ? parameters
@@ -1562,14 +1592,14 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. Calling this
      * method always throws a <code>SQLException</code>, stating that the
      * function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return the <code>java.util.Map</code> object associated with
      *     this <code>Connection</code> object
@@ -1594,14 +1624,14 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. Calling this
      * method always throws a <code>SQLException</code>, stating that
      * the function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param map the <code>java.util.Map</code> object to install as
      *     the replacement for this <code>Connection</code> object's
@@ -1633,15 +1663,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
      * As of 1.7.2, only HOLD_CURSORS_OVER_COMMIT is supported; supplying
      * any other value will throw an exception. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param holdability a <code>ResultSet</code> holdability
      *     constant; one of <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code>
@@ -1676,14 +1706,14 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
      * Calling this method always returns HOLD_CURSORS_OVER_COMMIT. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return the holdability, one of
      *     <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code>
@@ -1711,15 +1741,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @return the new <code>Savepoint</code> object
      * @exception SQLException if a database access error occurs or
@@ -1746,11 +1776,6 @@ public class jdbcConnection implements Connection {
      * <code>Savepoint</code> object that represents it. <p>
      *
      * <!-- end generic documentation -->
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * </span> <!-- end release-specific documentation -->
      *
      * @param name a <code>String</code> containing the name of the savepoint
      * @return the new <code>Savepoint</code> object
@@ -1800,11 +1825,6 @@ public class jdbcConnection implements Connection {
      * disabled. <p>
      *
      * <!-- end generic documentation -->
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * </span> <!-- end release-specific documentation -->
      *
      * @param savepoint the <code>Savepoint</code> object to roll back to
      * @exception SQLException if a database access error occurs,
@@ -1877,11 +1897,6 @@ public class jdbcConnection implements Connection {
      * <code>SQLException</code> to be thrown. <p>
      *
      * <!-- end generic documentation -->
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * </span> <!-- end release-specific documentation -->
      *
      * @param savepoint the <code>Savepoint</code> object to be removed
      * @exception SQLException if a database access error occurs or
@@ -1941,8 +1956,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
@@ -1952,7 +1967,7 @@ public class jdbcConnection implements Connection {
      * a SQLWarning is issued on this Connection and the closest supported
      * combination is used instead. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param resultSetType one of the following <code>ResultSet</code>
      *     constants: <code>ResultSet.TYPE_FORWARD_ONLY</code>,
@@ -2007,8 +2022,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
@@ -2020,9 +2035,9 @@ public class jdbcConnection implements Connection {
      *
      * Also starting with 1.7.2, the support for and behaviour of
      * PreparedStatment has changed.  Please read the introductory section
-     * of the documentation for org.hsqldb.jdbcPreparedStatement.
+     * of the documentation for org.hsqldb.jdbc.jdbcPreparedStatement.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a <code>String</code> object that is the SQL
      *     statement to be sent to the database; may contain one or
@@ -2084,8 +2099,8 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
@@ -2097,9 +2112,9 @@ public class jdbcConnection implements Connection {
      *
      * Also starting with 1.7.2, the support for and behaviour of
      * CallableStatment has changed.  Please read the introdutory section
-     * of the documentation for org.hsqldb.jdbcCallableStatement.
+     * of the documentation for org.hsqldb.jdbc.jdbcCallableStatement.
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql a <code>String</code> object that is the SQL
      *     statement to be sent to the database; may contain on or
@@ -2178,15 +2193,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql an SQL statement that may contain one or more '?'
      *     IN parameter placeholders
@@ -2246,15 +2261,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql an SQL statement that may contain one or more '?'
      *     IN parameter placeholders
@@ -2311,15 +2326,15 @@ public class jdbcConnection implements Connection {
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * </div> <!-- end release-specific documentation -->
      *
      * @param sql an SQL statement that may contain one or more '?'
      *     IN parameter placeholders
@@ -2425,7 +2440,7 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     * Constructs an {@link #INTERNAL INTERNAL} <code>Connection</code>,
+     * Constructs an <code>INTERNAL</code> <code>Connection</code>,
      * using the specified {@link Session Session}. <p>
      *
      * This constructor is called only on behalf of an existing
@@ -2462,7 +2477,7 @@ public class jdbcConnection implements Connection {
      * @param c the Session requesting the construction of this
      *     Connection
      * @exception HsqlException never (reserved for future use);
-     * @see Function
+     * @see org.hsqldb.Function
      */
     public jdbcConnection(Session c) throws HsqlException {
 

@@ -45,13 +45,18 @@ import org.hsqldb.lib.IntValueHashMap;
 // comply
 // TODO: 1.7.2 Alpha N :: DONE
 //       maybe implement set-by-parameter-name.  We have an informal spec,
-//       being "@1" => 1, "@2" => 2, etc.  Problems: return value is "@0"
+//       being "@p1" => 1, "@p2" => 2, etc.  Problems: return value is "@p0"
 //       and there is no support for registering the return value as an out
 //       parameter.
-// TODO: 1.7.2 RC
+// TODO: 1.7.3
 //       engine and client-side mechanisms for adding, retrieving,
 //       navigating (and perhaps controlling holdability of) multiple
-//       single-statement-scope result sets.
+//       results generated from a single execution.
+// boucherb@users 2004-03/04-xx - patch 1.7.2 - some minor code cleanup
+//                                            - parameter map NPE correction
+//                                            - embedded SQL/SQLCLI client usability
+//                                              (parameter naming changed from @n to @pn)
+// boucherb@users 2004-04-xx - doc 1.7.2 - javadocs added/updated
 
 /**
  * <!-- start generic documentation -->
@@ -84,33 +89,31 @@ import org.hsqldb.lib.IntValueHashMap;
  * <P>
  * <!-- end generic documentation -->
  * <!-- start Release-specific documentation -->
- * <span class="ReleaseSpecificDocumentation">
- * <B>HSQLDB-Specific Information:</B> <p>
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3> <p>
  *
- * Starting with HSQLDB 1.7.2, the JDBC CallableStatement interface
- * implementation has been broken out of the jdbcPreparedStatement class
- * into this one.  Some of the previously unsupported features of this
- * interface are now supported, such as the parameterName-based setter
- * methods. More importantly, however, JDBC CallableStatement objects are now
- * backed in the engine core using an underlying true precompiled parameteric
- * representation. As such, there are significant performance gains to
- * be had by using CallableStatement over Statement objects if a CALL statement
- * is to be executed more than a small number of times. Moreover, although not
- * yet supported, the internal work has opened the door for support of
- * OUT parameters for retrieving Java method return values, as well the
- * generation and retrieval of multiple results in response to the execution
- * of a CallableStatement object.  Indeed, the getter methods of this class,
- * although not fully supported yet, report more accurate exceptions, stating
- * that index values are out of range, parameter names are not found or
- * that the indicated parameters have not been registered.  Similarly,
- * the registerOutParameter methods report more accurately, throwing
- * exceptions indicating range violation or incompatible parameter mode,
- * rather than simply indicating the operation is totally
- * unsupported.  This lays the foundation for work in 1.7.3 to implement
- * greater support for OUT (and possibly IN OUT) parameters, as well as
- * multiple results, under CallableStatement execution. <p>
+ * Since 1.7.2, the JDBC CallableStatement interface implementation has been
+ * broken out of the jdbcPreparedStatement class into this one. <p>
  *
- * As with many DBMS, support for stored procedures is not provided in
+ * With 1.7.2, some of the previously unsupported features of this interface
+ * are now supported, such as the parameterName-based setter methods. <p>
+ *
+ * More importantly, jdbcCallableStatement objects are now backed by a true
+ * compiled parameteric representation. Hence, there are now significant
+ * performance gains to be had by using a CallableStatement object instead of
+ * a Statement object, if a short-running CALL statement is to be executed more
+ * than a small number of times.  Moreover, the recent work lays the foundation
+ * for work in a subsequenct release to support CallableStatement OUT and
+ * IN OUT style parameters, as well as the generation and retrieval of multiple
+ * results in response to the execution of a CallableStatement object. <p>
+ *
+ * For a more in-depth discussion of performance issues regarding 1.7.2
+ * prepared and callable statement objects, please see overview section of
+ * {@link jdbcPreparedStatement jdbcPreparedStatment}.
+ *
+ * <hr>
+ *
+ * As with many DBMS, HSQLDB support for stored procedures is not provided in
  * a completely standard fashion. <p>
  *
  * Beyond the XOpen/ODBC extended scalar functions, stored procedures are
@@ -123,11 +126,11 @@ import org.hsqldb.lib.IntValueHashMap;
  * porting issues and often may not be possible at all. <em>Be warned</em>. <p>
  *
  * At present, HSQLDB stored procedures map directly onto the methods of
- * compiled Java classes found on the classpath of the engine. This is done
- * in a non-standard but fairly efficient way by issuing a class
+ * compiled Java classes found on the classpath of the engine at runtime. This
+ * is done in a non-standard but fairly efficient way by issuing a class
  * grant (and possibly method aliases) of the form: <p>
  *
- * <PRE>
+ * <PRE class="SqlCodeExample">
  * GRANT ALL ON CLASS &quot;package.class&quot; TO [&lt;user-name&gt; | PUBLIC]
  * CREATE ALIAS &ltcall-alias&gt; FOR &quot;package.class.method&quot; -- optional
  * </PRE>
@@ -138,7 +141,7 @@ import org.hsqldb.lib.IntValueHashMap;
 
  * For example: <p>
  *
- * <PRE>
+ * <PRE class="SqlCodeExample">
  * CONNECT &lt;admin-user&gt; PASSWORD &lt;admin-user-password&gt;;
  * GRANT ALL ON CLASS &quot;org.myorg.MyClass&quot; TO PUBLIC;
  * CREATE ALIAS sp_my_method FOR &quot;org.myorg.MyClass.myMethod&quot;
@@ -149,117 +152,129 @@ import org.hsqldb.lib.IntValueHashMap;
  * CALL 2 + sp_my_method(-5);
  * </PRE>
  *
- * Please note the use of the term &quot;uniquely named&quot; above.  Up to
- * and including HSQLDB 1.7.2, no support is provided to deterministically
- * resolve overloaded method names, and there can be issues with inherited
- * methods as well, so it is strongly recommended that developers creating
- * stored procedure library classes for HSQLDB simply avoid designs such
- * that the SQL stored procedure call interface includes: <p>
+ * Please note the use of the term &quot;uniquely named&quot; above. Including
+ * 1.7.2, no support is provided to deterministically resolve overloaded
+ * method names, and there can be issues with inherited methods as well;
+ * currently, it is strongly recommended that developers creating stored
+ * procedure library classes for HSQLDB simply avoid designs such that SQL
+ * stored procedure calls attempt to resolve to: <p>
  *
  * <ol>
  * <li>inherited public static methods
  * <li>overloaded public static methods
  * </ol>
  *
- * Also, please recall that, as stated above, <code>OUT</code> and
- * <code>IN OUT</code> parameters are not yet supported due to lack of
- * low level support for this in the engine.  In fact, the HSQLDB stored
- * procedure call mechanism is essentially a thin wrap of the HSQLDB SQL
- * function call mechanism, in combination with the more general HSQLDB
- * SQL expression evaluation mechanism, allowing simple SQL expressions,
- * possibly containing Java method invocations, to be evaluated outside of
- * an <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> or
- * <code>SELECT</code> statement context. That is, issuing a
- * <code>CALL</code> statement returning an opaque (OTHER type) or known
- * scalar object reference (an instance of a Java class automatically mapped
- * to a supported HSQLDB data type) has virtually the same effect as:
+ * Also, please note that <code>OUT</code> and <code>IN OUT</code> parameters
+ * are not yet supported due to some unresolved low level support issues. <p>
  *
- * <PRE>
+ * Including 1.7.2, the HSQLDB stored procedure call mechanism is essentially a
+ * thin wrap of the HSQLDB SQL function call mechanism, extended to include the
+ * more general HSQLDB SQL expression evaluation mechanism.  In addition to
+ * stored procedure calls that resolve directly to Java method invocations, the
+ * extention provides the ability to evaluate simple SQL expressions, possibly
+ * containing Java method invocations, outside any <code>INSERT</code>,
+ * <code>UPDATE</code>, <code>DELETE</code> or <code>SELECT</code> statement
+ * context. <p>
+ *
+ * With HSQLDB, executing a <code>CALL</code> statement that produces an opaque
+ * (OTHER) or known scalar object reference has virtually the same effect as:
+ *
+ * <PRE class="SqlCodeExample">
  * CREATE TABLE DUAL (dummy VARCHAR);
  * INSERT INTO DUAL VALUES(NULL);
  * SELECT &lt;simple-expression&gt; FROM DUAL;
  * </PRE>
  *
- * As a transitional measure, 1.7.2 further provides the ability to materialize
- * a custom-built result of arbitrary arity in response to a stored procedure
- * execution. In this case, the stored procedure's Java method descriptor
- * must specify a return type of java.lang.Object or, preferably for
- * metadata reporting, org.hsqldb.jdbcResultSet. When HSQLDB detects that
- * the class of the Object returned by evaluating a CALL expression is
- * an instance of jdbcResultSet, an automatic internal unwrapping is performed,
- * such that the arity of the underlying result is exposed to the client.
- * Also, the stored procedure and SQL function call mechanisms automatically
- * detect if Connection is the class of the first argument of any underlying
- * Java method(s).  If it is, then the engine transparently supplies a
- * Connection object that is equivalent to the Connection executing the call,
- * adjusting the positions of other arguments to suit the SQL context. <p>
+ * As a transitional measure, HSQLDB provides the ability to materialize a
+ * general result set in response to stored procedure execution.  In this case,
+ * the stored procedure's Java method descriptor must specify a return type of
+ * java.lang.Object for external use (although at any point in the devlopment
+ * cycle, other, proprietary return types may accepted internally for engine
+ * development purposes).
+
+ * When HSQLDB detects that the runtime class of the resulting Object is
+ * elligible, an automatic internal unwrapping is performed to correctly
+ * expose the underlying result set to the client, whether local or remote. <p>
  *
- * These features definitely are not permanent, as more general and powerful
- * mechanisms will be offered in a future release.  As such, it is recommended
- * to use them only as a temporary convenience, for instance by writing
- * HSQLDB-specific adapter methods that in turn call the real logic
- * of an underlying generalized SQL stored procedure libarary. <p>
+ * Additionally, HSQLDB automatically detects if java.sql.Connection is
+ * the class of the first argument of any underlying Java method(s).  If so,
+ * then the engine transparently supplies the internal Connection object
+ * corresponding to the Session executing the call, adjusting the positions
+ * of other arguments to suite the SQL context. <p>
  *
- * Here is a very simple example of an HSQLDB stored procedure returning a
- * custom built result set:
+ * The features above are not intended to be permanent.  Rather, the intention
+ * is to offer more general and powerful mechanisms in a future release;
+ * it is recommend to use them only as a temporary convenience. <p>
  *
- * <PRE>
- * package mypackage;
+ * For instance, one might be well advised to future-proof by writing
+ * HSQLDB-specific adapter methods that in turn call the real logic of an
+ * underlying generalized JDBC stored procedure library. <p>
  *
- * import org.hsqldb.jdbcResultSet;
+ * Here is a very simple example of an HSQLDB stored procedure generating a
+ * user-defined result set:
  *
- * class MyClass {
+ * <pre class="JavaCodeExample">
+ * <span class="JavaKeyWord">package</span> mypackage;
  *
- *      public static jdbcResultSet mySp(Connection conn) throws SQLException {
- *          return conn.createStatement().executeQuery("select * from names");
+ * <span class="JavaKeyWord">class</span> MyClass {
+ *
+ *      <span class="JavaKeyWord">public static</span> Object <b>mySp</b>(Connection conn) <span class="JavaKeyWord">throws</span> SQLException {
+ *          <span class="JavaKeyWord">return</span> conn.<b>createStatement</b>().<b>executeQuery</b>(<span class="JavaStringLiteral">"select * from my_table"</span>);
  *      }
  * }
- * </PRE>
+ * </pre>
  *
- * Here is a slightly more complex example demonstrating the essence of the
- * idea behind a more portable style:
+ * Here is a refinement demonstrating no more than the bare essence of the idea
+ * behind a more portable style:
  *
- * <PRE>
- * package mylibrarypackage;
+ * <pre class="JavaCodeExample">
+ * <span class="JavaKeyWord">package</span> mypackage;
  *
- * import java.sql.Connection;
- * import java.sql.SQLException;
+ * <span class="JavaKeyWord">import</span> java.sql.ResultSet;
+ * <span class="JavaKeyWord">import</span> java.sql.SQLException;
  *
- * class MyLibraryClass {
+ * <span class="JavaKeyWord">class</span> MyLibraryClass {
  *
- *      public static ResultSet mySp() throws SQLException {
- *          Connection conn = ctx.getConnection();
- *          return conn.createStatement().executeQuery("select * from names");
+ *      <span class="JavaKeyWord">public static</span> ResultSet <b>mySp()</b> <span class="JavaKeyWord">throws</span> SQLException {
+ *          <span class="JavaKeyWord">return</span> ctx.<b>getConnection</b>().<b>createStatement</b>().<b>executeQuery</b>(<span class="JavaStringLiteral">"select * from my_table"</span>);
  *      }
- *
- *      ...
  * }
  *
  * //--
  *
- * package myadaptorpackage;
+ * <span class="JavaKeyWord">package</span> myadaptorpackage;
  *
- * import java.sql.Connection;
- * import java.sql.SQLException;
- * import org.hsqldb.jdbcResultSet;
+ * <span class="JavaKeyWord">import</span> java.sql.Connection;
+ * <span class="JavaKeyWord">import</span> java.sql.SQLException;
  *
- * class MyAdaptorClass {
+ * <span class="JavaKeyWord">class</span> MyAdaptorClass {
  *
- *      public static jdbcResultSet mySp(Connection conn) throws SQLException {
- *          MyLibraryClass.getCtx().setConnection(conn);
- *          return (jdbcResultSet) MyLibraryClass.mySp();
+ *      <span class="JavaKeyWord">public static</span> Object <b>mySp</b>(Connection conn) <span class="JavaKeyWord">throws</span> SQLException {
+ *          MyLibraryClass.<b>getCtx()</b>.<b>setConnection</b>(conn);
+ *          <span class="JavaKeyWord">return</span> MyLibraryClass.<b>mySp</b>();
  *      }
  * }
- * </PRE>
+ * </pre>
  *
- * In a future release, it is intended to allow writing fairly portable
- * stored procedure code by supporting the special "jdbc:default:connection"
- * database connection url and a well-defined specification of the behaviour
- * of the execution stack under stored procedure calls. <p>
+ * In a future release, it is intended to provided some new features
+ * that will support writing fairly portable JDBC-based stored procedure
+ * code: <P>
+ *
+ * <ul>
+ *  <li> Support for the <span class="JavaStringLiteral">"jdbc:default:connection"</span>
+ *       standard database connection url. <p>
+ *
+ *  <li> A well-defined specification of the behaviour of the HSQLDB execution
+ *       stack under stored procedure calls. <p>
+ *
+ *  <li> A well-defined, pure JDBC specification for generating multiple
+ *       results from HSQLDB stored procedures for client retrieval.
+ * </ul>
  *
  * (boucherb@users)
- * </span>
+ * </div>
  * <!-- end Release-specific documentation -->
+ *
  * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
@@ -276,26 +291,37 @@ implements CallableStatement {
 
     //    private IntKeyIntValueHashMap outRegistrationMap;
 
-    /** Creates a new instance of jdbcCallableStatement */
+    /**
+     * Constructs a new jdbcCallableStatement with the specified connection and
+     * result type.
+     *
+     * @param  c the connection on which this statement will execute
+     * @param sql the SQL statement this object represents
+     * @param type the type of result this statement will produce
+     * @throws HsqlException if the statement is not accepted by the database
+     * @throws SQLException if preprocessing by driver fails
+     */
     public jdbcCallableStatement(jdbcConnection c, String sql,
                                  int type)
                                  throws HsqlException, SQLException {
 
         super(c, sql, type);
 
-        // outRegistrationMap = new IntKeyIntValueHashMap();
         String[] names;
         String   name;
+
+        // outRegistrationMap = new IntKeyIntValueHashMap();
+        parameterNameMap = new IntValueHashMap();
 
         if (pmdDescriptor != null && pmdDescriptor.metaData != null) {
             names = pmdDescriptor.metaData.sName;
 
-            for (int i = 0; i > names.length; i++) {
+            for (int i = 0; i < names.length; i++) {
                 name = names[i];
 
                 // PRE:  should never happen in practice
                 if (name == null || name.length() == 0) {
-                    continue;
+                    continue;    // throw?
                 }
 
                 parameterNameMap.put(name, i);
@@ -328,23 +354,25 @@ implements CallableStatement {
      * Does the specialized work required to free this object's resources and
      * that of it's parent classes. <p>
      *
-     * @param isDisconnect true if parenet connection is closing
      * @throws SQLException if a database access error occurs
      */
-    void closeImpl(boolean isDisconnect) throws SQLException {
+    public void close() throws SQLException {
 
-        parameterNameMap = null;
+        if (isClosed()) {
+            return;
+        }
 
         // outRegistrationMap = null;
+        parameterNameMap = null;
+
         super.close();
     }
 
     /**
-     * Performs an internal check for column index validity. <p>
+     * Performs an internal check for OUT or IN OUT column index validity. <p>
      *
-     * @param i
-     * @throws SQLException when this object's parent ResultSet has
-     *      no such column
+     * @param i the one-based column index to check
+     * @throws SQLException if there is no such OUT or IN OUT column
      */
     private void checkGetParameterIndex(int i) throws SQLException {
 
@@ -420,14 +448,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>.<p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -462,14 +489,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>.<p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -494,14 +520,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>.<p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return <code>true</code> if the last parameter read was SQL
@@ -526,14 +551,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -555,14 +579,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -583,14 +606,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>.<p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -611,14 +633,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>.<p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -639,14 +660,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -667,14 +687,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -695,14 +714,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -723,14 +741,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -752,14 +769,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -785,14 +801,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      * @param parameterIndex the first parameter is 1, the second is 2,
      *   and so on
@@ -812,14 +827,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      * @param parameterIndex the first parameter is 1, the second is 2,
      *   and so on
@@ -839,14 +853,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -867,14 +880,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -903,14 +915,12 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
-     *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -934,14 +944,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -971,15 +980,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2, and so on
      * @param map the mapping from SQL type names to Java classes
      * @return a <code>java.lang.Object</code> holding the OUT parameter value
@@ -1000,15 +1009,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2,
      * and so on
      * @return the parameter value as a <code>Ref</code> object in the
@@ -1030,15 +1039,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2,
      * and so on
      * @return the parameter value as a <code>Blob</code> object in the
@@ -1060,15 +1069,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2, and
      * so on
      * @return the parameter value as a <code>Clob</code> object in the
@@ -1090,15 +1099,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2, and
      * so on
      * @return the parameter value as an <code>Array</code> object in
@@ -1125,14 +1134,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -1172,14 +1180,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -1219,14 +1226,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
@@ -1283,14 +1289,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param paramIndex the first parameter is 1, the second is 2,...
@@ -1327,15 +1332,15 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @param sqlType the JDBC type code defined by <code>java.sql.Types</code>.
      * If the parameter is of JDBC type <code>NUMERIC</code>
@@ -1371,21 +1376,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @param sqlType SQL type code defined by <code>java.sql.Types</code>.
      * @param scale the desired number of digits to the right of the
      * decimal point.  It must be greater than or equal to zero.
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      * @see java.sql.Types
      */
 //#ifdef JDBC3
@@ -1426,14 +1431,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -1458,14 +1462,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -1476,7 +1479,7 @@ implements CallableStatement {
      *      or if the URL being returned is
      *      not a valid URL on the Java platform
      * @see #setURL
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int parameterIndex) throws SQLException {
@@ -1493,12 +1496,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -1524,18 +1528,17 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param sqlType the SQL type code defined in <code>java.sql.Types</code>
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setNull(String parameterName,
@@ -1553,19 +1556,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getBoolean
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setBoolean(String parameterName,
@@ -1583,19 +1585,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getByte
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setByte(String parameterName, byte x) throws SQLException {
@@ -1612,19 +1613,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getShort
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setShort(String parameterName, short x) throws SQLException {
@@ -1641,19 +1641,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getInt
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setInt(String parameterName, int x) throws SQLException {
@@ -1670,19 +1669,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getLong
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setLong(String parameterName, long x) throws SQLException {
@@ -1699,19 +1697,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getFloat
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setFloat(String parameterName, float x) throws SQLException {
@@ -1728,19 +1725,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getDouble
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setDouble(String parameterName,
@@ -1759,19 +1755,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getBigDecimal
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setBigDecimal(String parameterName,
@@ -1791,19 +1786,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getString
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setString(String parameterName,
@@ -1823,19 +1817,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getBytes
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setBytes(String parameterName, byte[] x) throws SQLException {
@@ -1852,19 +1845,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getDate
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setDate(String parameterName,
@@ -1882,19 +1874,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getTime
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setTime(String parameterName,
@@ -1913,19 +1904,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      * @see #getTimestamp
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setTimestamp(String parameterName,
@@ -1951,19 +1941,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the Java input stream that contains the ASCII parameter value
      * @param length the number of bytes in the stream
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setAsciiStream(String parameterName, java.io.InputStream x,
@@ -1988,19 +1977,18 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
      * @param x the java input stream which contains the binary parameter value
      * @param length the number of bytes in the stream
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setBinaryStream(String parameterName, java.io.InputStream x,
@@ -2033,12 +2021,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2051,7 +2038,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @see java.sql.Types
      * @see #getObject
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setObject(String parameterName, Object x, int targetSqlType,
@@ -2069,12 +2056,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2083,7 +2069,7 @@ implements CallableStatement {
      *                 sent to the database
      * @exception SQLException if a database access error occurs
      * @see #getObject
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setObject(String parameterName, Object x,
@@ -2123,12 +2109,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2136,7 +2121,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs or if the given
      *      <code>Object</code> parameter is ambiguous
      * @see #getObject
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setObject(String parameterName,
@@ -2162,12 +2147,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2175,7 +2159,7 @@ implements CallableStatement {
      *  contains the UNICODE data used as the designated parameter
      * @param length the number of characters in the stream
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setCharacterStream(String parameterName,
@@ -2200,12 +2184,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2214,7 +2197,7 @@ implements CallableStatement {
      *      to construct the date
      * @exception SQLException if a database access error occurs
      * @see #getDate
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setDate(String parameterName, java.sql.Date x,
@@ -2238,12 +2221,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2252,7 +2234,7 @@ implements CallableStatement {
      *      to construct the time
      * @exception SQLException if a database access error occurs
      * @see #getTime
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setTime(String parameterName, java.sql.Time x,
@@ -2277,12 +2259,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2291,7 +2272,7 @@ implements CallableStatement {
      *      to construct the timestamp
      * @exception SQLException if a database access error occurs
      * @see #getTimestamp
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setTimestamp(String parameterName, java.sql.Timestamp x,
@@ -2325,12 +2306,11 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, HSLQDB supports this. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, HSLQDB supports this.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2339,7 +2319,7 @@ implements CallableStatement {
      *  ignored if the parameter is not a user-defined type or
      *  SQL <code>REF</code> value
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setNull(String parameterName, int sqlType,
@@ -2363,21 +2343,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value. If the value is SQL <code>NULL</code>,
      * the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setString
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public String getString(String parameterName) throws SQLException {
@@ -2393,21 +2373,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      * the result is <code>false</code>.
      * @exception SQLException if a database access error occurs
      * @see #setBoolean
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public boolean getBoolean(String parameterName) throws SQLException {
@@ -2423,21 +2403,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      * the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setByte
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public byte getByte(String parameterName) throws SQLException {
@@ -2453,21 +2433,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      * the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setShort
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public short getShort(String parameterName) throws SQLException {
@@ -2483,14 +2463,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2498,7 +2477,7 @@ implements CallableStatement {
      *   the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setInt
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public int getInt(String parameterName) throws SQLException {
@@ -2514,14 +2493,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2529,7 +2507,7 @@ implements CallableStatement {
      *   the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setLong
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public long getLong(String parameterName) throws SQLException {
@@ -2545,21 +2523,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      *   the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setFloat
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public float getFloat(String parameterName) throws SQLException {
@@ -2575,21 +2553,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      *   the result is <code>0</code>.
      * @exception SQLException if a database access error occurs
      * @see #setDouble
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public double getDouble(String parameterName) throws SQLException {
@@ -2606,21 +2584,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setBytes
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public byte[] getBytes(String parameterName) throws SQLException {
@@ -2636,14 +2614,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2651,7 +2628,7 @@ implements CallableStatement {
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setDate
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Date getDate(String parameterName) throws SQLException {
@@ -2667,14 +2644,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2682,7 +2658,7 @@ implements CallableStatement {
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setTime
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Time getTime(String parameterName) throws SQLException {
@@ -2698,21 +2674,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value.  If the value is SQL <code>NULL</code>,
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setTimestamp
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Timestamp getTimestamp(String parameterName)
@@ -2736,21 +2712,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return A <code>java.lang.Object</code> holding the OUT parameter value.
      * @exception SQLException if a database access error occurs
      * @see java.sql.Types
      * @see #setObject
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Object getObject(String parameterName) throws SQLException {
@@ -2767,21 +2743,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value in full precision.  If the value is
      * SQL <code>NULL</code>, the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setBigDecimal
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public BigDecimal getBigDecimal(String parameterName)
@@ -2805,21 +2781,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @param map the mapping from SQL type names to Java classes
      * @return a <code>java.lang.Object</code> holding the OUT parameter value
      * @exception SQLException if a database access error occurs
      * @see #setObject
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Object getObject(String parameterName,
@@ -2836,14 +2812,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2851,7 +2826,7 @@ implements CallableStatement {
      *    Java programming language.  If the value was SQL <code>NULL</code>,
      *    the value <code>null</code> is returned.
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Ref getRef(String parameterName) throws SQLException {
@@ -2867,14 +2842,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2882,7 +2856,7 @@ implements CallableStatement {
      *    Java programming language.  If the value was SQL <code>NULL</code>,
      *    the value <code>null</code> is returned.
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Blob getBlob(String parameterName) throws SQLException {
@@ -2898,21 +2872,21 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param parameterName the name of the parameter
      * @return the parameter value as a <code>Clob</code> object in the
      *    Java programming language.  If the value was SQL <code>NULL</code>,
      *    the value <code>null</code> is returned.
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Clob getClob(String parameterName) throws SQLException {
@@ -2928,14 +2902,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2943,7 +2916,7 @@ implements CallableStatement {
      *    Java programming language.  If the value was SQL <code>NULL</code>,
      *    the value <code>null</code> is returned.
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public Array getArray(String parameterName) throws SQLException {
@@ -2965,14 +2938,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -2982,7 +2954,7 @@ implements CallableStatement {
      * the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setDate
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Date getDate(String parameterName,
@@ -3005,14 +2977,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -3022,7 +2993,7 @@ implements CallableStatement {
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setTime
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Time getTime(String parameterName,
@@ -3045,14 +3016,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      *
@@ -3063,7 +3033,7 @@ implements CallableStatement {
      *      the result is <code>null</code>.
      * @exception SQLException if a database access error occurs
      * @see #setTimestamp
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.sql.Timestamp getTimestamp(String parameterName,
@@ -3080,14 +3050,13 @@ implements CallableStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws an <code>SQLException</code>. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterName the name of the parameter
@@ -3097,7 +3066,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs,
      *      or if there is a problem with the URL
      * @see #setURL
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public java.net.URL getURL(String parameterName) throws SQLException {

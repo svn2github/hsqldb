@@ -64,7 +64,10 @@ public class ArrayUtil {
         classCodeMap.put(Object.class, ArrayUtil.CLASS_CODE_OBJECT);
     }
 
-    public static int getClassCode(Class cla) {
+    /**
+     * Returns a distinct int code for each primitive type and for all Object types.
+     */
+    static int getClassCode(Class cla) {
 
         if (!cla.isPrimitive()) {
             return ArrayUtil.CLASS_CODE_OBJECT;
@@ -73,6 +76,9 @@ public class ArrayUtil {
         return classCodeMap.get(cla, -1);
     }
 
+    /**
+     * Clears an area of the given array of the given type.
+     */
     public static void clearArray(int type, Object data, int from, int to) {
 
         switch (type) {
@@ -162,7 +168,14 @@ public class ArrayUtil {
     }
 
     /**
-     * Handles both addition and removal of rows
+     * Moves the contents of an array to allow both addition and removal of
+     * elements. Used arguments must be in range.
+     *
+     * @param type class type of the array
+     * @param array the array
+     * @param usedElements count of elements of array in use
+     * @param index point at which to add or remove elements
+     * @count number of elements to add or remove
      */
     public static void adjustArray(int type, Object array, int usedElements,
                                    int index, int count) {
@@ -196,7 +209,7 @@ public class ArrayUtil {
     }
 
     /**
-     *   Basic sort for small arrays.
+     * Basic sort for small arrays of int.
      */
     public static void sortArray(int array[]) {
 
@@ -218,7 +231,7 @@ public class ArrayUtil {
     }
 
     /**
-     *  Basic find for small arrays.
+     *  Basic find for small arrays of Object.
      */
     public static int find(Object array[], Object object) {
 
@@ -238,7 +251,7 @@ public class ArrayUtil {
     }
 
     /**
-     *  Basic find for small arrays.
+     *  Basic find for small arrays of int.
      */
     public static int find(int array[], int value) {
 
@@ -252,7 +265,7 @@ public class ArrayUtil {
     }
 
     /**
-     *  Basic find for small arrays.
+     *  Finds the first element of the array that is not equal to the given value.
      */
     public static int findNot(int array[], int value) {
 
@@ -500,7 +513,7 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns the index of arrb in arra. Or -1 if not found.
+     * Returns the index of the first occurence of arrb in arra. Or -1 if not found.
      */
     public static int find(byte[] arra, int start, int limit, byte[] arrb) {
 
@@ -625,8 +638,7 @@ public class ArrayUtil {
 
     /**
      * Returns the count of elements in arra from position start that are
-     * among the elements of arrb. Stop at any element not in arrb
-     *
+     * among the elements of arrb. Stops at any element not in arrb.
      */
     public static int countStartElementsAt(byte[] arra, int start,
                                            byte[] arrb) {
@@ -674,7 +686,7 @@ public class ArrayUtil {
     }
 
     /**
-     * Convenience wrapper for System.arraycopy()
+     * Convenience wrapper for System.arraycopy().
      */
     public static void copyArray(Object source, Object dest, int count) {
         System.arraycopy(source, 0, dest, 0, count);
@@ -693,7 +705,7 @@ public class ArrayUtil {
     }
 
     /**
-     * Fills the array with a value
+     * Fills the array with a value.
      */
     public static void fillArray(Object[] array, Object value) {
 
@@ -746,12 +758,6 @@ public class ArrayUtil {
      *
      *  No checks are perfomed on array sizes and an exception is thrown
      *  if they are not consistent with the other arguments.
-     *
-     * @param  source
-     * @param  dest
-     * @param  addition
-     * @param colindex
-     * @param  adjust +1, 0 or -1
      */
     public static void copyAdjustArray(Object[] source, Object[] dest,
                                        Object addition, int colindex,

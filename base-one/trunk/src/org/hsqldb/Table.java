@@ -95,6 +95,10 @@ import org.hsqldb.store.ValuePool;
 // fredt@users 20030901 - patch 1.7.2 - allow multiple nulls for UNIQUE columns
 // fredt@users 20030901 - patch 1.7.2 - reworked IDENTITY support
 // achnettest@users 20040130 - patch 878288 - bug fix for new indexes in memory tables by Arne Christensen
+// boucherb@users 20040327 - doc 1.7.2 - javadoc updates
+// boucherb@users 200404xx - patch 1.7.2 - proper uri for getCatalogName
+
+/**@todo: fredt - move error and assert string literals to Trace*/
 
 /**
  *  Holds the data structures and methods for creation of a database table.
@@ -102,8 +106,6 @@ import org.hsqldb.store.ValuePool;
  *
  * @version 1.7.2
  */
-
-/** @todo fredt - move error and assert string literals to Trace */
 public class Table extends BaseTable {
 
     // types of table
@@ -262,17 +264,17 @@ public class Table extends BaseTable {
 // ----------------------------------------------------------------------------
     }
 
-    boolean equals(String other, Session c) {
+    boolean equals(String name, Session session) {
 
-        if (isTemp && c.getId() != ownerSessionId) {
+        if (isTemp && session.getId() != ownerSessionId) {
             return false;
         }
 
-        return (tableName.name.equals(other));
+        return (tableName.name.equals(name));
     }
 
-    boolean equals(String other) {
-        return (tableName.name.equals(other));
+    boolean equals(String name) {
+        return (tableName.name.equals(name));
     }
 
     public final boolean isText() {
@@ -288,7 +290,8 @@ public class Table extends BaseTable {
     }
 
     final boolean isSystem() {
-        return tableType == SYSTEM_TABLE || tableType == SYSTEM_SUBQUERY;
+        return tableType == SYSTEM_TABLE || tableType == SYSTEM_SUBQUERY
+               || tableType == SYSTEM_VIEW;
     }
 
     final boolean isView() {
@@ -363,25 +366,21 @@ public class Table extends BaseTable {
     }
 
     /**
-     * For text tables
+     * For text tables.
      */
     protected boolean isDescDataSource() {
         return false;
     }
 
     /**
-     *  Adds a constraint
-     *
-     * @param  c
+     *  Adds a constraint.
      */
     void addConstraint(Constraint c) {
         constraintList.add(c);
     }
 
     /**
-     *  returns the list of constraints
-     *
-     * @return
+     *  Returns the list of constraints.
      */
     HsqlArrayList getConstraints() {
         return constraintList;
@@ -391,11 +390,8 @@ public class Table extends BaseTable {
      * multi-column indexes */
 
     /**
-     *  Get the index supporting a constraint with the given column signature.
+     *  Returns the index supporting a constraint with the given column signature.
      *  Only Unique constraints are considered.
-     *
-     * @param  col column list array
-     * @return
      */
     Index getConstraintIndexForColumns(int[] col) {
 
@@ -421,12 +417,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Get any foreign key constraint equivalent to the column sets
-     *
-     * @param tablemain
-     * @param  colmain
-     * @param  colref
-     * @return
+     *  Returns any foreign key constraint equivalent to the column sets
      */
     Constraint getConstraintForColumns(Table tablemain, int[] colmain,
                                        int[] colref) {
@@ -443,7 +434,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Get any unique Constraint using this index
+     *  Returns any unique Constraint using this index
      *
      * @param  index
      * @return
@@ -503,9 +494,6 @@ public class Table extends BaseTable {
     /**
      *  Performs the table level checks and adds a column to the table at the
      *  DDL level.
-     *
-     * @param  column new column to add
-     * @throws  HsqlException when table level checks fail
      */
     void addColumn(Column column) throws HsqlException {
 
@@ -533,15 +521,11 @@ public class Table extends BaseTable {
 
     /**
      *  Add a set of columns based on a ResultMetaData
-     *
-     * @param  metadata
-     * @param columns
-     * @throws  HsqlException
      */
     void addColumns(Result.ResultMetaData metadata,
-                    int columns) throws HsqlException {
+                    int count) throws HsqlException {
 
-        for (int i = 0; i < columns; i++) {
+        for (int i = 0; i < count; i++) {
             Column column = new Column(
                 database.nameManager.newHsqlName(
                     metadata.sLabel[i], metadata.isLabelQuoted[i]), true,
@@ -554,9 +538,6 @@ public class Table extends BaseTable {
 
     /**
      *  Adds a set of columns based on a compiled Select
-     *
-     * @param  select
-     * @throws  HsqlException
      */
     void addColumns(Select select) throws HsqlException {
 
@@ -576,8 +557,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns the HsqlName object fo the table
-     *
-     * @return
      */
     public HsqlName getName() {
         return tableName;
@@ -587,10 +566,6 @@ public class Table extends BaseTable {
      * Changes table name. Used by 'alter table rename to'.
      * Essential to use the existing HsqlName as this is is referenced by
      * intances of Constraint etc.
-     *
-     * @param newname
-     * @param isquoted
-     * @throws  HsqlException
      */
     void renameTable(String newname, boolean isquoted) throws HsqlException {
 
@@ -607,8 +582,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns total column counts, including hidden ones.
-     *
-     * @return
      */
     int getInternalColumnCount() {
         return columnCount;
@@ -659,21 +632,22 @@ public class Table extends BaseTable {
      * DROP INDEX and CREATE INDEX on non empty tables both recreate the table
      * and the data to reflect the new indexing structure. The new structure
      * should be reflected in the DDL script, otherwise if a
-     * SHUTDOWN IMMEDIATE occures, the following will happen:<br>
-     * If the table is cached, the index roots will be different from what
-     * is specified in SET INDEX ROOTS. <br>
-     * If the table is memory, the old index will be used until the script
-     * reaches drop index etc. and data is recreated again.<b>
+     * SHUTDOWN IMMEDIATELY occures, the following will happen:<br>
      *
-     * The fix avoids scripting the row insert and delete ops.
+     * <ul>
+     * <li>If the table is cached, the index roots will be different from what
+     *     is specified in SET INDEX ROOTS. <p>
      *
-     * Constraints that need removing are removed outside this (fredt@users)
-     * @param  withoutindex
-     * @param  newcolumn
-     * @param  colindex
-     * @param  adjust -1 or 0 or +1
-     * @return
-     * @throws  HsqlException
+     * <li>If the table is memory, the old index will be used until the script
+     *     reaches drop index etc. and data is recreated again. <p>
+     *
+     * <ul>
+     *
+     * The fix avoids scripting the row insert and delete ops. <p>
+     *
+     * Constraints that need removing are removed outside this method.<br>
+     * withoutindex is the name of an index to be removed <br>
+     * adjust {-1 | 0 | +1} indicates if a column {removed | no change | added}
      */
     Table moveDefinition(String withoutindex, Column newcolumn, int colindex,
                          int adjust) throws HsqlException {
@@ -741,6 +715,10 @@ public class Table extends BaseTable {
         return tn;
     }
 
+    /**
+     * Updates the constraint and replaces references to the old table with
+     * the new one, adjusting column index arrays by the given amount.
+     */
     void updateConstraintsTables(Table old, int colindex,
                                  int adjust) throws HsqlException {
 
@@ -767,7 +745,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used after adding columns or indexes to the table
+     * Used after adding columns or indexes to the table.
      */
     private void recompileCheckConstraint(Constraint c) throws HsqlException {
 
@@ -793,7 +771,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used for drop column
+     * Used for drop column.
      */
     void checkColumnInCheckConstraint(String colname) throws HsqlException {
 
@@ -810,7 +788,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used for rename column
+     * Used for rename column.
      */
     private void renameColumnInCheckConstraints(String oldname,
             String newname, boolean isquoted) throws HsqlException {
@@ -837,7 +815,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used for drop column
+     * Used for drop column.
      */
     private void renameTableInCheckConstraints(String oldname,
             String newname) throws HsqlException {
@@ -866,27 +844,21 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the count of user defined columns
-     *
-     * @return
+     *  Returns the count of user defined columns.
      */
     public int getColumnCount() {
         return visibleColumnCount;
     }
 
     /**
-     *  Returns the count of indexes on this table
-     *
-     * @return
+     *  Returns the count of indexes on this table.
      */
     int getIndexCount() {
         return indexList.size();
     }
 
     /**
-     *  Returns the identity column or null
-     *
-     * @return
+     *  Returns the identity column or null.
      */
     int getIdentityColumn() {
         return identityColumn;
@@ -894,10 +866,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns the index of given column name or throws if not found
-     *
-     * @param  c
-     * @return
-     * @throws  HsqlException
      */
     int getColumnNr(String c) throws HsqlException {
 
@@ -911,10 +879,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the index of given column name or -1 if not found
-     *
-     * @param  c
-     * @return
+     *  Returns the index of given column name or -1 if not found.
      */
     int searchColumn(String c) {
 
@@ -925,10 +890,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the user defined primary index or null
-     *
-     * @return
-     * @throws  HsqlException
+     *  Returns the user defined primary index or null.
      */
     Index getPrimaryIndex() {
 
@@ -940,10 +902,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Return the user defined primary key column index array or null if not defined
-     *
-     * @return
-     * @throws  HsqlException
+     *  Return the user defined primary key column index array or null if not defined.
      */
     int[] getPrimaryKey() {
         return (primaryKeyCols[0] == visibleColumnCount) ? null
@@ -1000,9 +959,14 @@ public class Table extends BaseTable {
             int[] cols      = index.getColumns();
             int   colsCount = index.getVisibleColumns();
 
-            // ignore system primary keys
-            if (i == 0 && getPrimaryKey() == null) {
-                continue;
+            if (i == 0) {
+
+                // ignore system primary keys
+                if (getPrimaryKey() == null) {
+                    continue;
+                } else {
+                    isStrict = true;
+                }
             }
 
             if (bestIndexForColumn[cols[0]] == -1) {
@@ -1075,6 +1039,9 @@ public class Table extends BaseTable {
         needsRowID = getPrimaryKey() == null;
     }
 
+    /**
+     * Sets the SQL default value for a columm.
+     */
     void setDefaultString(int columnIndex, String def) {
 
         Column column = getColumn(columnIndex);
@@ -1095,11 +1062,8 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Used in TableFilter to get an index for the column
-     *
-     * @param  column
-     * @return index
-     * @throws  HsqlException
+     *  Used in TableFilter to get an index for the column.
+     *  An index is created automatically for system tables or subqueries.
      */
     Index getIndexForColumn(int column) {
 
@@ -1120,9 +1084,6 @@ public class Table extends BaseTable {
 
     /**
      *  Used for TableFilter to get an index for the columns
-     *
-     * @param  columnCheck
-     * @throws  HsqlException
      */
     Index getIndexForColumns(boolean[] columnCheck) {
 
@@ -1145,10 +1106,6 @@ public class Table extends BaseTable {
 
     /**
      *  Finds an existing index for a foreign key column group
-     *
-     * @param  col
-     * @return
-     * @throws  HsqlException
      */
     Index getIndexForColumns(int col[], boolean unique) throws HsqlException {
 
@@ -1188,9 +1145,6 @@ public class Table extends BaseTable {
      * Returns the string consisting of file pointers to roots of indexes
      * plus the next identity value (hidden or user defined). This is used
      * with CACHED tables.
-     *
-     * @return
-     * @throws  HsqlException
      */
     String getIndexRoots() {
 
@@ -1209,9 +1163,6 @@ public class Table extends BaseTable {
      *  file pointer is -1 then the particular index root is null. A null index
      *  root signifies an empty table. Accordingly, all index roots should be
      *  null or all should be a valid file pointer/reference.
-     *
-     * @param  roots
-     * @throws  HsqlException
      */
     void setIndexRoots(int[] roots) throws HsqlException {
 
@@ -1237,9 +1188,6 @@ public class Table extends BaseTable {
 
     /**
      *  Sets the index roots and next identity.
-     *
-     * @param  s
-     * @throws  HsqlException
      */
     void setIndexRoots(String s) throws HsqlException {
 
@@ -1262,18 +1210,14 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Shortcut for creating system table PK's
-     *
-     * @throws  HsqlException
+     *  Shortcut for creating system table PK's.
      */
     void createPrimaryKey(int[] cols) throws HsqlException {
         createPrimaryKey(null, cols, false);
     }
 
     /**
-     *  Shortcut for creating default PK's
-     *
-     * @throws  HsqlException
+     *  Shortcut for creating default PK's.
      */
     void createPrimaryKey() throws HsqlException {
         createPrimaryKey(null, null, false);
@@ -1283,9 +1227,6 @@ public class Table extends BaseTable {
      *  Adds the SYSTEM_ID column if no primary key is specified in DDL.
      *  Creates a single or multi-column primary key and index. sets the
      *  colTypes array. Finalises the creation of the table. (fredt@users)
-     *
-     * @param columns primary key column(s) or null if no primary key in DDL
-     * @throws  HsqlException
      */
 
 // tony_lai@users 20020820 - patch 595099
@@ -1359,12 +1300,6 @@ public class Table extends BaseTable {
     /**
      *  Create new index taking into account removal or addition of a column
      *  to the table.
-     *
-     * @param  index
-     * @param  colindex
-     * @param  adjust -1 or 0 or 1
-     * @return new index or null if a column is removed from index
-     * @throws  HsqlException
      */
     private Index createAdjustedIndex(Index index, int colindex,
                                       int adjust) throws HsqlException {
@@ -1385,11 +1320,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Create new memory resident index. For MEMORY and TEXT tables.
-     *
-     * @param  column
-     * @param  name
-     * @param  unique
+     *  Create new memory-resident index. For MEMORY and TEXT tables.
      */
     Index createIndex(int column[], HsqlName name, boolean unique,
                       boolean constraint,
@@ -1448,16 +1379,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Creates the internal structures for an index
-     *
-     * @param  column
-     * @param  name
-     * @param pk
-     * @param  unique
-     * @param constraint
-     * @param forward
-     * @return
-     * @throws  HsqlException
+     * Creates the internal structures for an index.
      */
     Index createIndexStructure(int column[], HsqlName name, boolean pk,
                                boolean unique, boolean constraint,
@@ -1535,10 +1457,8 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Checks for use of a named index in table constraints
-     *
-     * @param  indexname
-     * @param ignore null or a set of constraints that should be ignored in checks
+     *  Checks for use of a named index in table constraints,
+     *  while ignorring a given set of constraints.
      * @throws  HsqlException if index is used in a constraint
      */
     void checkDropIndex(String indexname,
@@ -1575,8 +1495,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns true if the table has any rows at all.
-     *
-     * @return
      */
     boolean isEmpty() {
 
@@ -1588,7 +1506,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Returns direct mapping array
+     * Returns direct mapping array.
      */
     int[] getColumnMap() {
         return defaultColumnMap;
@@ -1677,11 +1595,9 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Moves the data from table to table
-     *
-     * @param  from
-     * @param  colindex index of the column that was added or removed
-     * @throws  HsqlException normally for lack of resources
+     * Moves the data from table to table.
+     * The colindex argument is the index of the column that was
+     * added or removed. The adjust argument is {-1 | 0 | +1}
      */
     void moveData(Table from, int colindex, int adjust) throws HsqlException {
 
@@ -2023,6 +1939,7 @@ public class Table extends BaseTable {
      * @param  s    the string to pad to truncate
      * @param  len  the len to make the string
      * @param pad   pad the string
+     * @param check if true, throw an exception if truncation takes place
      * @return      the string of size len
      */
     static String padOrTrunc(String s, int len, boolean pad,
@@ -2058,11 +1975,8 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Row level triggers
+     *  Fires all row-level triggers of the given set (trigger type)
      *
-     * @param  trigVecIndx
-     * @param  oldrow
-     * @param  newrow
      */
     void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
 
@@ -2080,18 +1994,14 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Statement level triggers
-     *
-     * @param  trigVecIndx
+     *  Statement level triggers.
      */
     void fireAll(int trigVecIndx) {
         fireAll(trigVecIndx, null, null);
     }
 
     /**
-     * Adds a trigger
-     *
-     * @param  trigDef
+     * Adds a trigger.
      */
     void addTrigger(TriggerDef trigDef) {
         triggerLists[trigDef.vectorIndx].add(trigDef);
@@ -2384,12 +2294,12 @@ public class Table extends BaseTable {
             } else if (c.getType() == Constraint.MAIN && c.getRef() != null) {
 
                 // -- (2) If it happens to be a main constraint we check if the slave
-                // --     table holds any records refering to the old contents. If so
+                // --     table holds any records refering to the old contents. If so,
                 // --     the constraint has to support an 'on update' action or we
                 // --     throw an exception (all via a call to Constraint.findFkRef).
                 // --
-                // -- if there are no common columns between the reference constraint
-                // -- and the changed columns we reiterate.
+                // -- If there are no common columns between the reference constraint
+                // -- and the changed columns, we reiterate.
                 int[] common = ArrayUtil.commonElements(cols,
                     c.getMainColumns());
 
@@ -2515,7 +2425,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Merge a triggered change with a previous triggered change, or add to
+     *  Merges a triggered change with a previous triggered change, or adds to
      * list.
      */
     static void mergeUpdate(HashMappedList rowSet, Row row, Object[] newData,
@@ -2639,13 +2549,13 @@ public class Table extends BaseTable {
      *  Mid level row delete method. Fires triggers but no integrity
      *  constraint checks.
      */
-    private void deleteNoRefCheck(Row r,
+    private void deleteNoRefCheck(Row row,
                                   Session session) throws HsqlException {
 
-        Object[] data = r.getData();
+        Object[] data = row.getData();
 
         fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
-        deleteNoCheck(r, session, true);
+        deleteNoCheck(row, session, true);
 
         // fire the delete after statement trigger
         fireAll(Trigger.DELETE_AFTER_ROW, data, null);
@@ -2655,34 +2565,34 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
-    private void deleteNoCheck(Row r, Session c,
+    private void deleteNoCheck(Row row, Session session,
                                boolean log) throws HsqlException {
 
-        Object[] data = r.getData();
+        Object[] data = row.getData();
 
-        r = r.getUpdatedRow();
+        row = row.getUpdatedRow();
 
-        if (r.isDeleted()) {
+        if (row.isDeleted()) {
             return;
         }
 
         for (int i = getIndexCount() - 1; i >= 0; i--) {
-            Node node = r.getNode(i);
+            Node node = row.getNode(i);
 
             getIndex(i).delete(node);
         }
 
-        r = r.getUpdatedRow();
+        row = row.getUpdatedRow();
 
-        r.delete();
+        row.delete();
 
-        if (c != null) {
-            c.addTransactionDelete(this, data);
+        if (session != null) {
+            session.addTransactionDelete(this, data);
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, data);
+            database.logger.writeDeleteStatement(session, this, data);
         }
     }
 
@@ -2690,25 +2600,25 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache. Used by rollback.
      */
-    void deleteNoCheckRollback(Object row[], Session c,
+    void deleteNoCheckRollback(Object data[], Session session,
                                boolean log) throws HsqlException {
 
-        Node node = getIndex(0).search(row);
-        Row  r    = node.getRow();
+        Node node = getIndex(0).search(data);
+        Row  row  = node.getRow();
 
         for (int i = getIndexCount() - 1; i >= 0; i--) {
-            node = r.getNode(i);
+            node = row.getNode(i);
 
             getIndex(i).delete(node);
         }
 
-        r = r.getUpdatedRow();
+        row = row.getUpdatedRow();
 
-        r.delete();
+        row.delete();
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, row);
+            database.logger.writeDeleteStatement(session, this, data);
         }
     }
 
@@ -2848,27 +2758,22 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  True if table is CACHED or TEXT
-     *
-     * @return
+     *  Returns true if table is CACHED or TEXT
      */
     boolean isIndexCached() {
         return isCached;
     }
 
     /**
-     * Returns the index of the given name or null if not found.
-     *
-     * @param  s
-     * @return
+     * Returns the Index object of the given name or null if not found.
      */
-    Index getIndex(String s) {
+    Index getIndex(String indexName) {
 
         for (int i = 0; i < getIndexCount(); i++) {
-            Index h = getIndex(i);
+            Index indexObject = getIndex(i);
 
-            if (s.equals(h.getName().name)) {
-                return h;
+            if (indexName.equals(indexObject.getName().name)) {
+                return indexObject;
             }
         }
 
@@ -2878,17 +2783,14 @@ public class Table extends BaseTable {
 
     /**
      *  Return the position of the constraint within the list
-     *
-     * @param  s
-     * @return
      */
-    int getConstraintIndex(String s) {
+    int getConstraintIndex(String constraintName) {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint tempc = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.size(); i < size; i++) {
+            Constraint constraint = (Constraint) constraintList.get(i);
 
-            if (tempc.getName().name.equals(s)) {
-                return j;
+            if (constraint.getName().name.equals(constraintName)) {
+                return i;
             }
         }
 
@@ -2897,26 +2799,17 @@ public class Table extends BaseTable {
 
     /**
      *  return the named constriant
-     *
-     * @param  s
-     * @return
      */
-    Constraint getConstraint(String s) {
+    Constraint getConstraint(String constraintName) {
 
-        int j = getConstraintIndex(s);
+        int i = getConstraintIndex(constraintName);
 
-        if (j >= 0) {
-            return (Constraint) constraintList.get(j);
-        } else {
-            return null;
-        }
+        return (i < 0) ? null
+                       : (Constraint) constraintList.get(i);
     }
 
     /**
      *  Returns the Column object at the given index
-     *
-     * @param  i
-     * @return
      */
     Column getColumn(int i) {
         return (Column) columnList.get(i);
@@ -2935,8 +2828,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns an array of int valuse indicating the SQL type of the columns
-     *
-     * @return
      */
     public int[] getColumnTypes() {
         return colTypes;
@@ -2944,9 +2835,6 @@ public class Table extends BaseTable {
 
     /**
      *  Returns the Index object at the given index
-     *
-     * @param  i
-     * @return
      */
     protected Index getIndex(int i) {
         return (Index) indexList.get(i);
@@ -2958,10 +2846,6 @@ public class Table extends BaseTable {
      *
      *  TEXT tables pass the memory resident Node parameter so that the Row
      *  and its index Nodes can be relinked.
-     *
-     * @param  pos
-     * @return
-     * @throws  HsqlException
      */
     CachedRow getRow(int pos, Node primarynode) throws HsqlException {
 
@@ -2972,35 +2856,35 @@ public class Table extends BaseTable {
         return null;
     }
 
-    void addRowToStore(Row r) throws HsqlException {
+    void addRowToStore(Row row) throws HsqlException {
 
         if (isCached && cache != null) {
-            cache.add((CachedRow) r);
+            cache.add((CachedRow) row);
         } else if (needsRowID) {
 
             // fredt - this is required when there is a non-primary index
             // and a user defined pk - should reduce the cases where it is
             // necessary
-            r.getData()[visibleColumnCount] =
+            row.getData()[visibleColumnCount] =
                 ValuePool.getInt((int) rowIdSequence.getValue());
         }
     }
 
-    void registerRow(CachedRow r) {
+    void registerRow(CachedRow row) {
 
         if (needsRowID) {
-            r.getData()[visibleColumnCount] = new Integer(r.iPos);
+            row.getData()[visibleColumnCount] = new Integer(row.iPos);
         }
     }
 
-    void removeRow(CachedRow r) throws HsqlException {
+    void removeRow(CachedRow row) throws HsqlException {
 
         if (cache != null) {
-            cache.free(r);
+            cache.free(row);
         }
     }
 
-    void indexRow(Row r) throws HsqlException {
+    void indexRow(Row row) throws HsqlException {
 
         int i = 0;
 
@@ -3008,7 +2892,7 @@ public class Table extends BaseTable {
             Node n = null;
 
             for (; i < getIndexCount(); i++) {
-                n = r.getNextNode(n);
+                n = row.getNextNode(n);
 
                 getIndex(i).insert(n);
             }
@@ -3018,14 +2902,14 @@ public class Table extends BaseTable {
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
-                Node n = r.getNode(i);
+                Node n = row.getNode(i);
 
                 getIndex(i).delete(n);
             }
 
-            r = r.getUpdatedRow();
+            row = row.getUpdatedRow();
 
-            r.delete();
+            row.delete();
 
             if (isconstraint) {
                 Constraint c    = getConstraintForIndex(index);
@@ -3063,37 +2947,58 @@ public class Table extends BaseTable {
                &&!(database.filesReadOnly && (isCached || isText));
     }
 
+    /**
+     * Returns the catalog name or null, depending on a database property.
+     */
     String getCatalogName() {
 
-        if (database == null
-                || database.getProperties().isPropertyTrue(
-                    "hsqldb.catalogs")) {
-            return null;
-        }
-
-        return database.getPath();
+        // PRE: database is never null
+        return database.getProperties().isPropertyTrue("hsqldb.catalogs")
+               ? database.getURI()
+               : null;
     }
 
+    /**
+     * Returns the schema name or null, depending on a database property.
+     */
     String getSchemaName() {
 
-        if (database == null
-                || database.getProperties().isPropertyTrue(
-                    "hsqldb.schemas")) {
+        // PRE: database is never null
+        if (!database.getProperties().isPropertyTrue("hsqldb.schemas")) {
             return null;
         }
 
-        if (tableType == SYSTEM_TABLE) {
-            return "DEFINITION_SCHEMA";
-        } else if (tableType == SYSTEM_VIEW) {
-            return "INFORMATION_SCHEMA";
-        } else if (isTemp) {
-            Session s = database.sessionManager.getSession(ownerSessionId);
+        switch (tableType) {
 
-            return (s != null && s.getId() == ownerSessionId)
-                   ? s.getUsername()
-                   : null;
-        } else {
-            return "PUBLIC";
+            case SYSTEM_TABLE : {
+                return "DEFINITION_SCHEMA";
+            }
+            case SYSTEM_VIEW : {
+                return "INFORMATION_SCHEMA";
+            }
+            case MEMORY_TABLE :
+            case CACHED_TABLE :
+            case TEXT_TABLE :
+            case VIEW : {
+                return UserManager.PUBLIC_USER_NAME;
+            }
+            case TEMP_TABLE :
+            case TEMP_TEXT_TABLE : {
+                Session s =
+                    database.sessionManager.getSession(ownerSessionId);
+
+                if (s == null) {
+                    return null;
+                } else if (s.getId() == ownerSessionId) {
+                    return s.getUsername();
+                } else {
+                    return null;
+                }
+            }
+            case SYSTEM_SUBQUERY :
+            default : {
+                return null;
+            }
         }
     }
 }

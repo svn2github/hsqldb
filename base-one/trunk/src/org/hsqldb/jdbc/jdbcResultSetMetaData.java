@@ -34,17 +34,19 @@ package org.hsqldb.jdbc;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-import org.hsqldb.Column;
 import org.hsqldb.HsqlProperties;
-import org.hsqldb.Record;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 
 // fredt@users 20040412 - removed DITypeInfo dependencies
+// boucherb@users - 200404xx - removed unused imports;refinement for better
+//                             usability of getColumnDisplaySize;
+//                             javadoc updates
 
-/** <!-- start generic documentation -->
+/**
+ * <!-- start generic documentation -->
  * An object that can be used to get information about the types
  * and properties of the columns in a <code>ResultSet</code> object.
  * The following code fragment creates the <code>ResultSet</code>
@@ -89,27 +91,6 @@ import org.hsqldb.Types;
  * @see java.sql.ResultSetMetaData
  */
 public class jdbcResultSetMetaData implements ResultSetMetaData {
-
-    /**
-     * The minimum value that this object returns in response to
-     * calling {@link #getColumnDisplaySize(int) getColumnDisplaySize()}.
-     */
-    public static final int MIN_DISPLAY_SIZE = 1;
-
-    /**
-     * The maximum value that this object returns in response to
-     * calling {@link #getColumnDisplaySize(int) getColumnDisplaySize()}.
-     */
-    public static final int MAX_DISPLAY_SIZE = 255;
-
-    /**
-     * The maximum number of rows in this object's parent ResultSet that
-     * will be scanned to calculate an approximation of
-     * {@link #getColumnDisplaySize(int) getColumnDisplaySize()}, when the
-     * value is not to be determined statically from the known maximum
-     * length or precision of the column's data type.
-     */
-    public static final int MAX_SCAN = 512;
 
     /**
      * An array of objects, each of which represents the reported attributes
@@ -205,6 +186,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         if (r.iMode != ResultConstants.DATA) {
+
+            // implied: columnCount = 0;
             return;
         }
 
@@ -221,33 +204,76 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.catalogName     = rmd.sCatalog[i] == null ? ""
-                                                          : rmd.sCatalog[i];
-            cmd.schemaName      = rmd.sSchema[i] == null ? ""
-                                                         : rmd.sSchema[i];
-            cmd.tableName       = rmd.sTable[i] == null ? ""
-                                                        : rmd.sTable[i];
-            cmd.columnName      = rmd.sName[i] == null ? ""
-                                                       : rmd.sName[i];
-            cmd.columnLabel     = rmd.sLabel[i] == null ? ""
-                                                        : rmd.sLabel[i];
-            cmd.columnType      = rmd.colType[i];
-            cmd.columnTypeName  = Types.getTypeString(cmd.columnType);
-            cmd.columnClassName = rmd.sClassName[i];
-            cmd.isWritable      = rmd.isWritable[i];
-            cmd.isReadOnly      = !cmd.isWritable;
+            cmd.catalogName    = rmd.sCatalog[i] == null ? ""
+                                                         : rmd.sCatalog[i];
+            cmd.schemaName     = rmd.sSchema[i] == null ? ""
+                                                        : rmd.sSchema[i];
+            cmd.tableName      = rmd.sTable[i] == null ? ""
+                                                       : rmd.sTable[i];
+            cmd.columnName     = rmd.sName[i] == null ? ""
+                                                      : rmd.sName[i];
+            cmd.columnLabel    = rmd.sLabel[i] == null ? ""
+                                                       : rmd.sLabel[i];
+            cmd.columnType     = rmd.colType[i];
+            cmd.columnTypeName = Types.getTypeString(cmd.columnType);
+            cmd.isWritable     = rmd.isWritable[i];
+            cmd.isReadOnly     = !cmd.isWritable;
 
             // default: cmd.isDefinitelyWritable = false;
             cmd.isAutoIncrement = rmd.isIdentity[i];
             cmd.isNullable      = rmd.nullability[i];
             type                = cmd.columnType;
+            cmd.columnClassName = rmd.sClassName[i];
 
             if (cmd.columnClassName == null
                     || cmd.columnClassName.length() == 0) {
                 cmd.columnClassName = Types.getColStClsName(type);
             }
 
+            // Some tools, such as PowerBuilder, require that (for char and
+            // varchar types, at any rate) getMaxDisplaySize returns a value
+            // _at least_ as large as the length of the longest value in this
+            // column of the result set, or else an internal error will occur
+            // at retrieve time the instant a longer value is fetched.
+            //
+            // org.hsqldb.Types has been patched to retrieve, by default, either
+            // a large-but-reasonable value or a value defined through system
+            // properties that is expected to be unlikely to cause problems in
+            // the majority of cases.
+            if (Types.isCharacterType(type)
+                    && Types.acceptsPrecisionCreateParam(type)) {
+                if (rmd.colSize[i] == 0) {
+                    cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
+                } else {
+                    cmd.columnDisplaySize = rmd.colSize[i];
+                }
+            } else {
+                cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
+            }
+
+            // todo: declared scale (and precision?) across the network
+            // for types that accept (precision, scale) declarations
+            // We do not yet (will we ever?) enforce/consider
+            // NUMERIC/DECIMAL precision
+//            if (Types.isNumberType(type)
+//                    &&Types.acceptsPrecisionCreateParam(type)
+//             ) {
+//                cmd.precision = rmd.colSize[i];
+//                if (cmd.precision == 0) {
+//                    cmd.precision = Types.getPrecision(type);
+//                }
+//            } else {
             cmd.precision = Types.getPrecision(type);
+
+//            }
+            // Without a non-zero scale value, some (legacy only?) tools will
+            // simply truncate digits to the right of the decimal point when
+            // retrieving values from the result set. The measure below can
+            // help, but currently only as long as one is connected to an
+            // embedded instance at design time, not via a network connection.
+            if (Types.acceptsScaleCreateParam(type)) {
+                cmd.scale = rmd.colScale[i];
+            }
 
             Boolean iua = Types.isUnsignedAttribute(type);
 
@@ -255,61 +281,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
             Boolean ics = Types.isCaseSensitive(type);
 
-            cmd.isCaseSensitive   = ics != null && ics.booleanValue();
-            cmd.isSearchable      = Types.isSearchable(type);
-            cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
-
-            if (cmd.columnDisplaySize > 0
-                    && cmd.columnDisplaySize <= MIN_DISPLAY_SIZE) {
-                cmd.columnDisplaySize = MIN_DISPLAY_SIZE;
-            } else if (cmd.columnDisplaySize <= MAX_DISPLAY_SIZE) {
-
-                // do nothing
-            } else {
-                String s;
-                int    rc;
-                int    len;
-                int    max;
-                Record rec;
-
-                rc  = 0;
-                max = MIN_DISPLAY_SIZE;
-                rec = r.rRoot;
-
-                while (rec != null && rc < MAX_SCAN) {
-                    s = null;
-
-                    try {
-                        s = (String) Column.convertObject(rec.data[i],
-                                                          Types.CHAR);
-                    } catch (Exception e) {
-
-                        // If this this fails for one, it
-                        // will probably fail for all,
-                        // due to the column being OTHER and
-                        // the local JVM being unable to
-                        // deserialize, so break early.
-                        break;
-                    }
-
-                    len = (s == null) ? 3    // arbitrary: "null".length()
-                                      : s.length();
-
-                    if (len >= MAX_DISPLAY_SIZE) {
-                        max = MAX_DISPLAY_SIZE;
-
-                        break;
-                    } else if (len > max) {
-                        max = len;
-                    }
-
-                    rc++;
-
-                    rec = rec.next;
-                }
-
-                cmd.columnDisplaySize = max;
-            }
+            cmd.isCaseSensitive = ics != null && ics.booleanValue();
+            cmd.isSearchable    = Types.isSearchable(type);
         }
     }
 
@@ -596,39 +569,58 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * Starting with 1.7.2, this feature is better supported.  <p>
      *
-     * For colums whose data type has a known maximum display size (not zero),
-     * the following rules apply:
+     * The current calculation follows these rules: <p>
      *
      * <ol>
+     * <li>Long character types and datetime types:<p>
      *
-     * <li> if the value is in [1,MIN_DISPLAY_SIZE],  MIN_DISPLAY_SIZE is
-     * reported.  <p>
+     *     The maximum length/precision, repectively.<p>
      *
-     * <li> if the value is in [MIN_DISPLAY_SIZE + 1, MAX_DISPLAY_SIZE],
-     * the value itself is reported.
-     * </ol> <p>
+     * <li>CHAR and VARCHAR types: <p>
      *
-     * In the standard distribution, MIN_DISPLAY_SIZE is 6, the minimum number
-     * of characters required to display a character sequence representing the
-     * Java String representation of null, bracketed with two additional
-     * characters (e.g. "(null)"), while MAX_DISPLAY_SIZE is 255, the typical
-     * maximum size for character display in graphical presentation
-     * manangers. <p>
+     *      <ul>
+     *      <li> If the result set column is a direct pass through of a table
+     *           column value, column size was declared and the connection is
+     *           to an embedded database instance, then the declared value is
+     *           returned.<p>
      *
-     * In all other cases, up to the first MAX_SCAN (512 in the standard
-     * distribution) rows of the result set are scanned to calculate an
-     * approximation of the maximum width, in characters, that would be
-     * required to display the column's data if each value were retrieved
-     * as a Java String using ResultSet.getString(). If the scan at any time
-     * determines that the approximation will result in a value greater than
-     * or equal to MAX_DISPLAY_SIZE, then the scan is terminated and
-     * MAX_DISPLAY_SIZE is reported.  Othersize, the fully approximated
-     * display size is reported. MIN_DISPLAY_SIZE is reported if the scan
-     * encounters that the parent result set has no rows, while the minimum
-     * value calculated by the approximation is also MIN_DISPLAY_SIZE, in the
-     * case where the first MAX_SCAN (or fewer) values of the column are all
-     * null, zero-length or less than MIN_DISPLAY_SIZE characters when
-     * retreived using ResultSet.getString(). <p>
+     *      <li> Otherwise, the value of the system property
+     *           hsqldb.max_xxxchar_display_size or the magic value
+     *           32766 (0x7FFE) (tested usable/accepted by most tools and
+     *           compatible with assumptions made by java.io read/write
+     *           UTF) when the system property is not defined or is not
+     *           accessible, due to security constraints. <p>
+     *
+     *      </ul>
+     *
+     *      It must be noted that the latter value in no way affects the
+     *      ability of the HSQLDB JDBC driver to retrieve longer values
+     *      and serves only as the current best effort at providing a
+     *      value that maximizes usability across a wide range of tools,
+     *      given that the HSQLDB database engine does not require the
+     *      length to be declared and does not necessarily enforce it,
+     *      even if declared. <p>
+     *
+     * <li>Number types: <p>
+     *
+     *     The max precision, plus the length of the negation character (1),
+     *     plus (if applicable) the maximum number of characters that may
+     *     occupy the exponent character sequence.  Note that some legacy tools
+     *     do not correctly handle BIGINT values of greater than 18 digits. <p>
+     *
+     * <li>BOOLEAN (BIT) type: <p>
+     *
+     *     The length of the character sequence "false" (5), the longer of the
+     *     two boolean value String representations. <p>
+     *
+     * <li>Remaining types: <p>
+     *
+     *     The maximum length/precision, respectively, as reported by
+     *     DatabaseMetaData.getTypeInfo(), when applicable.  If the maximum
+     *     display size is unknown, unknowable or inapplicable, then zero is
+     *     returned. <p>
+     *
+     * </ol>
      *
      * </span>
      * <!-- end release-specific documentation -->

@@ -50,6 +50,7 @@ import org.hsqldb.Trace;
 // boucherb@users and fredt@users - 20020505 extensive review and update
 // of docs and behaviour to comply with java.sql specification
 // fredt@users 20030620 - patch 1.7.2 - rewritten and simplified
+// boucherb@users 200404xx - javadoc updates toward 1.7.2 final
 
 /**
  * <!-- start generic documentation -->
@@ -66,8 +67,8 @@ import org.hsqldb.Trace;
  * <!-- end generic documentation-->
  *
  * <!-- start release-specific documentation -->
- * <span class="ReleaseSpecificDocumentation">
- * <b>HSQLDB-Specific Information:</b><p>
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3><p>
  *
  * <b>JRE 1.1.x Notes:</b> <p>
  *
@@ -92,12 +93,13 @@ import org.hsqldb.Trace;
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
- * <CODE class="JavaCodeExample">
- * jdbcResultSet.FETCH_FORWARD<br>
- * jdbcResultSet.TYPE_FORWARD_ONLY<br>
- * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
- * jdbcResultSet.CONCUR_READ_ONLY<br>
- * </code> <p>
+ * <pre class="JavaCodeExample">
+ * jdbcResultSet.FETCH_FORWARD
+ * jdbcResultSet.TYPE_FORWARD_ONLY
+ * jdbcResultSet.TYPE_SCROLL_INSENSITIVE
+ * jdbcResultSet.CONCUR_READ_ONLY
+ * //etc.
+ * </pre> <p>
  *
  * However, please note that code written to use HSQLDB JDBC 2 features under
  * JDK 1.1.x will not be compatible for use with other JDBC 2 drivers. Please
@@ -109,7 +111,7 @@ import org.hsqldb.Trace;
  * (fredt@users)<br>
  * (boucherb@users)<p>
  *
- * </span>
+ * </div>
  * <!-- end release-specific documentation -->
  *
  * @author boucherb@users
@@ -166,12 +168,6 @@ public class jdbcStatement implements java.sql.Statement {
      * <code>ResultSet</code> object. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
-     *
      * @param sql an SQL statement to be sent to the database, typically a
      *      static SQL <code>SELECT</code> statement
      * @return a <code>ResultSet</code> object that contains the data produced
@@ -197,11 +193,6 @@ public class jdbcStatement implements java.sql.Statement {
      * SQL statement that returns nothing, such as an SQL DDL statement. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @param sql an SQL <code>INSERT</code>, <code>UPDATE</code> or
      * <code>DELETE</code> statement or an SQL statement that returns nothing
      * @return either the row count for <code>INSERT</code>, <code>UPDATE</code>
@@ -218,7 +209,10 @@ public class jdbcStatement implements java.sql.Statement {
 
         if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
 
-            /** doto - fredt@users - check for type of statement _must_ be done in the engine and error returnd _without_ executing */
+            /**
+             * @todo: - fredt@users - check for type of statement _must_ be done
+             * in the engine and error returned _without_ executing
+             */
             throw new SQLException(
                 Trace.getMessage(Trace.jdbcStatement_executeUpdate));
         } else if (resultIn.iMode == ResultConstants.ERROR) {
@@ -245,12 +239,6 @@ public class jdbcStatement implements java.sql.Statement {
      * closed, its current <code>ResultSet</code> object, if one exists, is
      * also closed. <p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:<b> <p>
-     * </span>
-     * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      */
@@ -282,13 +270,12 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB always returns zero, meaning there
-     * is no limit. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB always returns zero, meaning there
+     * is no limit.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the current column size limit for columns storing character and
@@ -316,18 +303,17 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- emd generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Calls to this method are simply ignored; HSQLDB always stores the
-     * full number of bytes when dealing with any of the field types
+     * Including 1.7.2, calls to this method are simply ignored; HSQLDB always
+     * stores the full number of bytes when dealing with any of the field types
      * mentioned above. These types all have an absolute maximum element upper
      * bound determined by the Java array index limit
      * java.lang.Integer.MAX_VALUE.  For XXXBINARY types, this translates to
      * Integer.MAX_VALUE bytes.  For XXXCHAR types, this translates to
      * 2 * Integer.MAX_VALUE bytes (2 bytes / character)
-     *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param max the new column size limit in bytes; zero means there is no limit
@@ -352,11 +338,6 @@ public class jdbcStatement implements java.sql.Statement {
      * the excess rows are silently dropped. <p>
      * <!-- start generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @return the current maximum number of rows for a <code>ResultSet</code>
      *       object produced by this <code>Statement</code> object;
      *       zero means there is no limit
@@ -377,11 +358,6 @@ public class jdbcStatement implements java.sql.Statement {
      * If the limit is exceeded, the excess
      * rows are silently dropped. <p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
      *
      * @param max the new max rows limit; zero means there is no limit
      * @exception SQLException if a database access error occurs
@@ -410,12 +386,6 @@ public class jdbcStatement implements java.sql.Statement {
      * <code>PreparedStatements</code> objects will have no effect. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @param enable <code>true</code> to enable escape processing;
      *     <code>false</code> to disable it
      * @exception SQLException if a database access error occurs
@@ -431,17 +401,16 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- start generic documentation -->
      * Retrieves the number of seconds the driver will
      * wait for a <code>Statement</code> object to execute. If the
-     * limit is exceeded, a <code>SQLException</code> is thrown. <p>
+     * limit is exceeded, an <code>SQLException</code> is thrown. <p>
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB always returns zero, meaning there
-     * is no limit. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB always returns zero, meaning there
+     * is no limit.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the current query timeout limit in seconds; zero means there is
@@ -464,14 +433,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Calls to this method are simply ignored; up to and including 1.7.2,
-     * HSQLDB waits an unlimited amount of time for statement execution
-     * requests to return. <p>
-     *
-     * </span>
+     * Including 1.7.2, calls to this method are ignored; HSQLDB waits an
+     * unlimited amount of time for statement execution
+     * requests to return.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param seconds the new query timeout limit in seconds; zero means
@@ -498,13 +466,12 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.2, aborting a SQL statement is
-     * <i>not</i> supported, and calls to this method are simply ignored. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB does <i>not</i> support aborting a SQL
+     * statement; calls to this method are ignored.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
@@ -531,13 +498,12 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB never produces Statement warnings and
-     * always returns null.<p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB never produces Statement warnings;
+     * this method always returns null.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the first <code>SQLWarning</code> object or <code>null</code>
@@ -562,14 +528,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.2, <code>SQLWarning</code> objects are
-     * never produced for Statement Objects, and calls to this method are
-     * simply ignored. <p>
-     *
-     * </span>
+     * Including HSQLDB 1.7.2, <code>SQLWarning</code> objects are
+     * never produced for Statement Objects; calls to this method are
+     * ignored.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
@@ -598,15 +563,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not support named cursors,
-     * updateable results or table locking via
-     * <code>SELECT FOR UPDATE</code>, so calls to this method are
-     * simply ignored. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB does not support named cursors,
+     * updateable results or table locking via <code>SELECT FOR UPDATE</code>;
+     * calls to this method are ignored.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param name the new cursor name, which must be unique within
@@ -635,11 +598,6 @@ public class jdbcStatement implements java.sql.Statement {
      * move to any subsequent result(s). <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @param sql any SQL statement
      * @return <code>true</code> if the first result is a <code>ResultSet</code>
      *       object; <code>false</code> if it is an update count or there are
@@ -665,13 +623,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Calling this method multiple times without interceding calls to
-     * executeXXX returns multiple result set instances,
-     * each referring to the same result, if any.
-     * </span>
+     * Without an interceding call to executeXXX, each invocation of this
+     * method will produce a new, initialized ResultSet instance referring to
+     * the current result, if any.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the current result as a <code>ResultSet</code> object or
@@ -696,11 +654,6 @@ public class jdbcStatement implements java.sql.Statement {
      * if the result is a <code>ResultSet</code> object or there are no more results, -1
      * is returned. This method should be called only once per result. <p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
      *
      * @return the current result as an update count; -1 if the current result is a
      * <code>ResultSet</code> object or there are no more results
@@ -729,10 +682,6 @@ public class jdbcStatement implements java.sql.Statement {
      *    <code>(!getMoreResults() && (getUpdateCount() == -1)</code>
      * </PRE> <p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <!-- end release-specific documentation -->
      *
      * @return <code>true</code> if the next result is a <code>ResultSet</code>
      *       object; <code>false</code> if it is an update count or there are
@@ -765,15 +714,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB supports only
-     * <code>FETCH_FORWARD</code>. <p>
+     * Including 1.7.2, HSQLDB supports only <code>FETCH_FORWARD</code>. <p>
      *
-     * Setting any other value will throw a <code>SQLException</code>,
-     * stating the operation is not supported.
-     * </span>
+     * Setting any other value will throw an <code>SQLException</code>
+     * stating that the operation is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param direction the initial direction for processing rows
@@ -808,12 +756,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB always returns FETCH_FORWARD. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB always returns FETCH_FORWARD.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the default fetch direction for result sets generated
@@ -840,13 +787,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- start generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.2, calls to this method are simply
-     * ignored; HSQLDB always fetches a result completely as part of
+     * Including 1.7.2, calls to this method are ignored;
+     * HSQLDB fetches each result completely as part of
      * executing its statement.
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param rows the number of rows to fetch
@@ -875,13 +822,13 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
+     * <div class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information</b> <p>
      *
-     * Up to and including 1.7.2, this method always returns 0.
-     * HSQLDB always fetches all rows of a result. <p>
-     *
-     * </span>
+     * Including 1.7.2, this method always returns 0.
+     * HSQLDB fetches each result completely as part of
+     * executing its statement
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return the default fetch size for result sets generated
@@ -905,13 +852,12 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.2, HSQLDB supports only
-     * <code>CONCUR_READ_ONLY</code> concurrency. <p>
-     *
-     * </span>
+     * Including 1.7.2, HSQLDB supports only
+     * <code>CONCUR_READ_ONLY</code> concurrency.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return either <code>ResultSet.CONCUR_READ_ONLY</code> or
@@ -934,13 +880,12 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.0 and later versions support <code>TYPE_FORWARD_ONLY</code>
      * and <code>TYPE_SCROLL_INSENSITIVE</code>.
-     *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return one of <code>ResultSet.TYPE_FORWARD_ONLY</code>,
@@ -971,12 +916,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, this feature is supported. <p>
-     *
-     * </span>
+     * Starting with 1.7.2, this feature is supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql typically this is a static SQL <code>INSERT</code> or
@@ -1007,12 +951,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- start generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
-     *
-     * </span>
+     * Starting with HSQLDB 1.7.2, this feature is supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs or the
@@ -1068,8 +1011,8 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
@@ -1077,12 +1020,12 @@ public class jdbcStatement implements java.sql.Statement {
      * results in an exception. The size of the returned array equals the
      * number of commands that were executed successfully.<p>
      *
-     * When the product is built under the JAVA1 and JAVA2 target, an exception
-     * is never thrown and is is the responsibility of the client software to
+     * When the product is built under the JAVA1 target, an exception
+     * is never thrown and it is the responsibility of the client software to
      * check the size of the  returned update count array to determine if any
-     * batch items failed.<p>
-     *
-     * </span>
+     * batch items failed.  To build and run under the JAVA2 target, JDK/JRE
+     * 1.3 or higher must be used.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return an array of update counts containing one element for each
@@ -1139,10 +1082,6 @@ public class jdbcStatement implements java.sql.Statement {
      * that produced this <code>Statement</code> object. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
      * @return the connection that produced this statement
      * @exception SQLException if a database access error occurs
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
@@ -1171,15 +1110,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param current one of the following <code>Statement</code>
@@ -1212,15 +1150,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return a <code>ResultSet</code> object containing the auto-generated key(s)
@@ -1244,15 +1181,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql must be an SQL <code>INSERT</code>, <code>UPDATE</code> or
@@ -1288,15 +1224,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql an SQL <code>INSERT</code>, <code>UPDATE</code> or
@@ -1328,15 +1263,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql an SQL <code>INSERT</code>, <code>UPDATE</code> or
@@ -1379,15 +1313,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql any SQL statement
@@ -1438,15 +1371,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql any SQL statement
@@ -1494,15 +1426,14 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
+     * Calling this method always throws an <code>SQLException</code>,
+     * stating that the function is not supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param sql any SQL statement
@@ -1534,12 +1465,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, this method returns HOLD_CURSORS_OVER_COMMIT<p>
-     *
-     * </span>
+     * Starting with 1.7.2, this method returns HOLD_CURSORS_OVER_COMMIT
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @return either <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code> or

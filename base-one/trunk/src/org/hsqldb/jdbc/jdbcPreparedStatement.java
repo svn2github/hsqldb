@@ -39,6 +39,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.Binary;
@@ -63,6 +65,8 @@ import org.hsqldb.Types;
 // boucherb@users 20030801 - patch 1.7.2 - support for batch execution
 // boucherb@users 20030801 - patch 1.7.2 - support for getMetaData and getParameterMetadata
 // boucherb@users 20030801 - patch 1.7.2 - updated some setXXX methods
+// boucherb@users 200403/4xx - doc 1.7.2 - javadoc updates toward 1.7.2 final
+// boucherb@users 200403/4xx - patch 1.7.2 - eliminate eager buffer allocation from setXXXStream/Blob/Clob
 
 /**
  * <!-- start generic documentation -->
@@ -93,6 +97,38 @@ import org.hsqldb.Types;
  * </PRE> <p>
  * <!-- end generic documentation -->
  * <!-- start Release-specific documentation -->
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3> <p>
+ *
+ * Starting with HSQLDB 1.7.2, jdbcPreparedStatement objects are backed by
+ * a true compiled parameteric representation. Hence, there are now significant
+ * performance gains to be had by using a jdbcPreparedStatement object in
+ * preference to a jdbcStatement object, if a short-running SQL statement is
+ * to be executed more than a small number of times. <p>
+ *
+ * Please note, however, that 1.7.2 does not yet provide a sophisticated
+ * internal statement pooling facility.  For this reason, the observation
+ * above is guaranteed to apply only under certain use patterns. <p>
+ *
+ * Specifically, when it can be otherwise avoided, it is to be considered poor
+ * practice to fully prepare (construct), parameterize, execute, fetch and
+ * close a jdbcPreparedStatement object for each execution cycle. Indeed, under
+ * HSQLDB 1.7.2, this practice is likely to be noticably <em>less</em>
+ * performant for short-running statements than the equivalent process using
+ * jdbcStatement objects, albeit far more convenient, less error prone and
+ * certainly much less resource-intensive, especially when large binary and
+ * character values are involved, due to the optimized parameterization
+ * facility. <p>
+ *
+ * Instead, when developing an application that is not totally oriented toward
+ * the execution of ad hoc SQL, it is recommended to expend some effort toward
+ * identifing the SQL statements that are good candidates for regular reuse and
+ * adapting the structure of the application accordingly. Often, this is done
+ * by recording the text of candidate SQL statements in an application resource
+ * object (which has the nice side-benefit of isolating and hiding differences
+ * in SQL dialects across different drivers) and caching for possible reuse the
+ * PreparedStatement objects derived from the recorded text. <p>
+ *
  * <b>Multi thread use:</b> <p>
  *
  * A PreparedStatement object is stateful and should not normally be shared
@@ -125,12 +161,13 @@ import org.hsqldb.Types;
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
- * <CODE class="JavaCodeExample">
- * jdbcResultSet.FETCH_FORWARD<br>
- * jdbcResultSet.TYPE_FORWARD_ONLY<br>
- * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
- * jdbcResultSet.CONCUR_READ_ONLY<br>
- * </code> <p>
+ * <pre class="JavaCodeExample">
+ * jdbcResultSet.FETCH_FORWARD
+ * jdbcResultSet.TYPE_FORWARD_ONLY
+ * jdbcResultSet.TYPE_SCROLL_INSENSITIVE
+ * jdbcResultSet.CONCUR_READ_ONLY
+ * // etc.
+ * </pre>
  *
  * However, please note that code written in such a manner will not be
  * compatible for use with other JDBC 2 drivers, since they expect and use
@@ -141,10 +178,10 @@ import org.hsqldb.Types;
  * specification.<p>
  *
  * (fredt@users)<br>
- * (boucherb@users)<p>
- *
- * </span>
+ * (boucherb@users)
+ * </div>
  * <!-- end Release-specific documentation -->
+ *
  * @author boucherb@users
  * @author fredt@users
  * @version 1.7.2
@@ -163,16 +200,14 @@ implements java.sql.PreparedStatement {
     /** The (IN, IN OUT, or OUT) modes of parameters */
     protected int[] parameterModes;
 
+    /** Lengths for streams. */
+    protected int[] streamLengths;
+
+    /** Has a stream or CLOB / BLOB parameter value. */
+    protected boolean hasStreams;
+
     /**
      * Description of result set metadata. <p>
-     *
-     * Note that getColumnDisplaySize() will not
-     * necessarily the same as that returned by a
-     * a retrieved ResultSet object's ResultSetMetaData
-     * object.  This is because we currently approximate
-     * the value by scanning certain columns of the row data
-     * to find the approximate max length of the String
-     * representation
      */
     protected Result rsmdDescriptor;
 
@@ -191,8 +226,11 @@ implements java.sql.PreparedStatement {
     protected String sql;
 
     /**
-     * The id with which this object's corresponding CompiledStatement
-     * object is registered in the engine's CompiledStatementManager object.
+     * The id with which this object's corresponding
+     * {@link org.hsqldb.CompiledStatement CompiledStatement}
+     * object is registered in the engine's
+     * {@link org.hsqldb.CompiledStatementManager CompiledStatementManager}
+     * object.
      */
     protected int statementID;
 
@@ -218,16 +256,17 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with HSQLDB 1.7.0, the implementation follows the standard
-     * behaviour by overriding the same method in jdbcStatement class. <p>
+     * Since 1.7.0, the implementation follows the standard
+     * behaviour by overriding the same method in jdbcStatement
+     * class. <p>
      *
-     * In other words, calling this method has no effect. <p>
-     *
-     * </span>
+     * In other words, calling this method has no effect.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param enable <code>true</code> to enable escape processing;
      *     <code>false</code> to disable it
      * @exception SQLException if a database access error occurs
@@ -253,23 +292,16 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.0, statements never return multiple
-     * result sets. <p>
+     * Including 1.7.2, prepared statements do not generate
+     * multiple fetchable results. <p>
      *
-     * Starting with HSQLDB 1.7.2, statements <i>may</i> return multiple result
-     * sets under certain conditions. <p>
+     * Following 1.7.2, it will be possible that statements
+     * generate multiple fetchable results under certain conditions.
+     * </div>
      *
-     * With 1.7.2 (contrary to the generic documentation above) support for
-     * preparation of DDL statements and character sequences representing
-     * multiple SQL commands is not available.  Support for preparation of
-     * single, non-parametric DDL commands may become supported before the
-     * final release of 1.7.2 or in a subsequent point release. Limited support
-     * for parametric DDL may or may not become supported. <p>
-     *
-     * </span>
      * @return <code>true</code> if the first result is a <code>ResultSet</code>
      *    object; <code>false</code> if the first result is an update
      *    count or there is no result
@@ -309,10 +341,6 @@ implements java.sql.PreparedStatement {
      * Executes the SQL query in this <code>PreparedStatement</code> object
      * and returns the <code>ResultSet</code> object generated by the query.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @return a <code>ResultSet</code> object that contains the data produced
      *    by the query; never <code>null</code>
@@ -356,10 +384,6 @@ implements java.sql.PreparedStatement {
      * statement that returns nothing, such as a DDL statement.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     *
      * @return either (1) the row count for <code>INSERT</code>,
      *     <code>UPDATE</code>, or <code>DELETE</code>
      *     statements or (2) 0 for SQL statements that
@@ -402,12 +426,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to HSQLDB 1.7.2, the sqlType argument is ignored. <p>
+     * HSQLDB ignores the sqlType argument.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
-     * </span>
      * @param paramIndex the first parameter is 1, the second is 2, ...
      * @param sqlType the SQL type code defined in <code>java.sql.Types</code>
      * @exception SQLException if a database access error occurs
@@ -424,11 +449,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.2 uses the BOOLEAN type instead of BIT. <p>
-     * </span>
+     * Since 1.7.2, HSQLDB uses the BOOLEAN type instead of BIT, as
+     * per SQL 200n (SQL 3).
+     * </div>
+     * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -450,10 +477,6 @@ implements java.sql.PreparedStatement {
      * it sends it to the database.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -468,10 +491,6 @@ implements java.sql.PreparedStatement {
      * value. The driver converts this to an SQL <code>SMALLINT</code>
      * value when it sends it to the database.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -488,10 +507,6 @@ implements java.sql.PreparedStatement {
      * it sends it to the database.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -506,10 +521,6 @@ implements java.sql.PreparedStatement {
      * The driver converts this to an SQL <code>BIGINT</code> value when
      * it sends it to the database.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -527,14 +538,16 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * With 1.7.1 and greater, HSQLDB handleS Java positive/negative Infinity or
-     * NaN <code>float</code> values properly. These values are sent to the
-     * database and stored there. <p>
+     * Since 1.7.1, HSQLDB handles Java positive/negative Infinity
+     * and NaN <code>float</code> values consistent with the Java Language
+     * Specification; these <em>special</em> values are now correctly stored
+     * to and retrieved from the database.
+     * </div>
+     * <!-- start release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -551,14 +564,16 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * With 1.7.1 and greater, HSQLDB handleS Java positive/negative Infinity or
-     * NaN <code>float</code> values properly. These values are sent to the
-     * database and stored there. <p>
+     * Since 1.7.1, HSQLDB handles Java positive/negative Infinity
+     * and NaN <code>double</code> values consistent with the Java Language
+     * Specification; these <em>special</em> values are now correctly stored
+     * to and retrieved from the database.
+     * </div>
+     * <!-- start release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -577,10 +592,6 @@ implements java.sql.PreparedStatement {
      * The driver converts this to an SQL <code>NUMERIC</code> value when
      * it sends it to the database.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -602,14 +613,15 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.2 stores all XXXCHAR values as
-     * java.lang.String objects, so there is no appreciable difference between
-     * VARCHAR and LONGVARCHAR.<p>
+     * Including 1.7.2, HSQLDB stores all XXXCHAR values as java.lang.String
+     * objects; there is no appreciable difference between
+     * CHAR, VARCHAR and LONGVARCHAR.
+     * </div>
+     * <!-- start release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -628,14 +640,15 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB stores all XXXBINARY values
-     * the same way and there is no appreciable difference between
-     * VARBINARY and LONGVARBINARY.<p>
+     * Including 1.7.2, HSQLDB stores all XXXBINARY values the same way; there
+     * is no appreciable difference between BINARY, VARBINARY and
+     * LONGVARBINARY.
+     * </div>
+     * <!-- start release-specific documentation -->
      *
-     * </span>
      * @param paramIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -650,10 +663,6 @@ implements java.sql.PreparedStatement {
      * <code>java.sql.Date</code> value.  The driver converts this
      * to an SQL <code>DATE</code> value when it sends it to the database.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -671,10 +680,6 @@ implements java.sql.PreparedStatement {
      * sends it to the database.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
@@ -691,10 +696,6 @@ implements java.sql.PreparedStatement {
      * an SQL <code>TIMESTAMP</code> value when it sends it to the
      * database.<p>
      * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
@@ -720,17 +721,18 @@ implements java.sql.PreparedStatement {
      * standard interface.<p>
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * This method uses the default platform character encoding to convert bytes
      * from the stream into the characters of a String. In the future this is
      * likely to change to always treat the stream as ASCII.<p>
      *
      * Before HSQLDB 1.7.0, <code>setAsciiStream</code> and
-     * <code>setUnicodeStream</code> were identical. <p>
+     * <code>setUnicodeStream</code> were identical.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the Java input stream that contains the ASCII parameter value
      * @param length the number of bytes in the stream
@@ -749,15 +751,13 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, s);
         }
 
-        s = null;    // else compiler complains
-
         try {
-            s = StringConverter.inputStreamToString(x);
+            s = StringConverter.inputStreamToString(x, length);
+
+            setParameter(parameterIndex, s);
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.INVALID_CHARACTER_ENCODING);
         }
-
-        setParameter(parameterIndex, s);
     }
 
     /**
@@ -779,13 +779,14 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Beginning with HSQLDB 1.7.0, this method complies with behavior as
-     * defined by the JDBC3 specification. <p>
+     * Since 1.7.0, this method complies with behavior as defined by the
+     * JDBC3 specification.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x a <code>java.io.InputStream</code> object that contains the
      *      Unicode parameter value as two-byte Unicode characters
@@ -799,31 +800,23 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
 
-        if (x == null) {
-            String msg = "input stream is null";
+        String msg = null;
 
+        if (x == null) {
+            msg = "input stream is null";
+        } else if (length % 2 != 0) {
+            msg = "odd length argument";
+        }
+
+        if (msg != null) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-// NOTE:
-//
-// No longer using StringBuffer, as chlen may end up exceeding
-// chread.  The new way ensures that the slack is taken up so
-// that no larger a character array than necessary is ever
-// made internal to the database.  On the down side, this requires
-// up to twice the intermediate memory, as chars is copied, whereas
-// the undocumented behavior of String is to share the array with
-// the StringBuffer from which it was created, until such time,
-// if any, that the StringBuffer is later modified.
-// CHECKME:
-//
-// what about when length is odd?
-        int    chlen  = length / 2;
-        int    chread = 0;
-        char[] chars  = new char[chlen];
-        int    hi;
-        int    lo;
-        String s;
+        int          chlen  = length / 2;
+        int          chread = 0;
+        StringBuffer sb     = new StringBuffer();
+        int          hi;
+        int          lo;
 
         try {
             for (; chread < chlen; chread++) {
@@ -839,15 +832,13 @@ implements java.sql.PreparedStatement {
                     break;
                 }
 
-                chars[chread] = (char) (hi << 8 | lo);
+                sb.append((char) (hi << 8 | lo));
             }
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.TRANSFER_CORRUPTED);
         }
 
-        s = new String(chars, 0, chread);
-
-        setParameter(parameterIndex, s);
+        setParameter(parameterIndex, sb.toString());
     }
 
     /**
@@ -865,12 +856,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with 1.7.2, this method works according to the standard. <p>
+     * Since 1.7.2, this method works according to the standard.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the java input stream which contains the binary parameter value
      * @param length the number of bytes in the stream
@@ -887,25 +879,29 @@ implements java.sql.PreparedStatement {
                     Trace.INVALID_JDBC_ARGUMENT, Trace.JDBC_NULL_STREAM));
         }
 
-        byte b[] = new byte[length];
-        int  bytesread;
+        final HsqlByteArrayOutputStream out = new HsqlByteArrayOutputStream();
+        final int                       size = 2048;
+        final byte[]                    buff = new byte[size];
 
         try {
-            bytesread = x.read(b, 0, length);
+            for (int left = length; left > 0; ) {
+                final int read = x.read(buff, 0, left > size ? size
+                                                             : left);
+
+                if (read == -1) {
+                    break;
+                }
+
+                out.write(buff, 0, read);
+
+                left -= read;
+            }
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
         }
 
-        if (bytesread < length) {
-            byte[] old = b;
-
-            b = new byte[bytesread];
-
-            System.arraycopy(old, 0, b, 0, bytesread);
-        }
-
-        setParameter(parameterIndex, b);
+        setParameter(parameterIndex, out.toByteArray());
     }
 
     /**
@@ -919,15 +915,11 @@ implements java.sql.PreparedStatement {
      * be done by calling the method <code>clearParameters</code>.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     *
      * @exception SQLException if a database access error occurs
      */
     public void clearParameters() throws SQLException {
         checkClosed();
-        org.hsqldb.lib.ArrayUtil.fillArray(parameterValues, null);
+        ArrayUtil.fillArray(parameterValues, null);
     }
 
     //----------------------------------------------------------------------
@@ -957,19 +949,20 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.1, calling this method is identical to
+     * Inculding 1.7.1,this method was identical to
      * {@link #setObject(int, Object, int) setObject(int, Object, int)}.
-     * That is, this method simply calls setObject(int, Object, int),
+     * That is, this method simply called setObject(int, Object, int),
      * ignoring the scale specification. <p>
      *
-     * In 1.7.2, this method supports conversions listed in the conversion
-     * table B-5 of the JDBC 3 specification. The scale argument is not
-     * used.<p>
+     * Since 1.7.2, this method supports the conversions listed in the
+     * conversion table B-5 of the JDBC 3 specification. The scale argument
+     * is not used.
+     * </div>
+     * <!-- start release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the object containing the input parameter value
      * @param targetSqlType the SQL type (as defined in java.sql.Types) to be
@@ -998,13 +991,14 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * In 1.7.2, this method supports conversions listed in the conversion
-     * table B-5 of the JDBC 3 specification.<p>
+     * Since 1.7.2, this method supports conversions listed in the
+     * conversion table B-5 of the JDBC 3 specification.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
-     * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the object containing the input parameter value
      * @param targetSqlType the SQL type (as defined in java.sql.Types) to be
@@ -1046,13 +1040,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b><p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3><p>
      *
-     * In 1.7.2, this method supports conversions listed in the conversion
+     * Since 1.7.2, this method supports conversions listed in the conversion
      * table B-5 of the JDBC 3 specification.<p>
      *
-     * </span>
+     * </div>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the object containing the input parameter value
@@ -1072,12 +1066,11 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Since HSQLDB 1.7.2, this feature is supported. <p>
-     *
-     * </span>
+     * Since 1.7.2, this feature is supported.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
@@ -1113,13 +1106,12 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB stores CHARACTER and related SQL types as Unicode so
-     * this method does not perform any conversion.<p>
-     *
-     * </span>
+     * this method does not perform any conversion.
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
@@ -1145,23 +1137,29 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        char[] buffer = new char[length];
-        int    chread;
+        final StringBuffer sb   = new StringBuffer();
+        final int          size = 2048;
+        final char[]       buff = new char[size];
 
         try {
-            chread = reader.read(buffer);
+            for (int left = length; left > 0; ) {
+                final int read = reader.read(buff, 0, left > size ? size
+                                                                  : left);
 
-            if (chread == -1) {
-                throw new IOException(
-                    Trace.getMessage(
-                        Trace.jdbcPreparedStatement_setCharacterStream));
+                if (read == -1) {
+                    break;
+                }
+
+                sb.append(buff, 0, read);
+
+                left -= read;
             }
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.TRANSFER_CORRUPTED,
                                         e.toString());
         }
 
-        setParameter(parameterIndex, new String(buffer, 0, chread));
+        setParameter(parameterIndex, sb.toString());
     }
 
     /**
@@ -1173,13 +1171,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support the SQL REF type. Calling this method
      * throws an exception.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an SQL <code>REF</code> value
@@ -1199,21 +1197,21 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.1, this feature is not supported. <p>
+     * Previous to 1.7.2, this feature was not supported. <p>
      *
-     * Starting with 1.7.2, setBlob is supported for Blob objects of length
-     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setBlob(i,x) is
-     * roughly equivalent (null and length handling not shown) to:
+     * Since 1.7.2, setBlob is supported.  With 1.7.2, setting Blob objects is
+     * limited to those of length less than or equal to Integer.MAX_VALUE.
+     * In 1.7.2, setBlob(i,x) is roughly equivalent (null and length handling
+     * not shown) to:
      *
-     * <pre>
-     * setBinaryStream(i, x.getBinaryStream(), (int) x.length());
-     * </pre>
-     *
-     * </span>
+     * <pre class="JavaCodeExample">
+     * <b>setBinaryStream</b>(i, x.<b>getBinaryStream</b>(), (<span class="JavaKeyWord">int</span>) x.<b>length</b>());
+     * </pre></div>
      * <!-- end release-specific documentation -->
+     *
      * @param i the first parameter is 1, the second is 2, ...
      * @param x a <code>Blob</code> object that maps an SQL <code>BLOB</code>
      *     value
@@ -1225,44 +1223,51 @@ implements java.sql.PreparedStatement {
 // boucherb@users 20030801 - method implemented
     public void setBlob(int i, Blob x) throws SQLException {
 
-        checkSetParameterIndex(i);
+        if (x instanceof jdbcBlob) {
+            setParameter(i, ((jdbcBlob) x).data);
 
-        if (x == null) {
+            return;
+        } else if (x == null) {
             setParameter(i, null);
 
             return;
         }
 
-        long   length;
-        String msg;
+        checkSetParameterIndex(i);
 
-        length = x.length();
+        final long length = x.length();
 
         if (length > Integer.MAX_VALUE) {
-            msg = "Maximum Blob input octet length exceeded: " + length;
+            String msg = "Maximum Blob input octet length exceeded: "
+                         + length;
 
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
 
-        int  len = (int) length;
-        byte b[] = new byte[len];
+        final java.io.InputStream       in       = x.getBinaryStream();
+        final HsqlByteArrayOutputStream out = new HsqlByteArrayOutputStream();
+        final int                       buffSize = 2048;
+        final byte[]                    buff     = new byte[buffSize];
 
         try {
-            len = x.getBinaryStream().read(b, 0, len);
+            for (int left = (int) length; left > 0; ) {
+                final int read = in.read(buff, 0, left > buffSize ? buffSize
+                                                                  : left);
+
+                if (read == -1) {
+                    break;
+                }
+
+                out.write(buff, 0, read);
+
+                left -= read;
+            }
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
         }
 
-        if (len < length) {
-            byte[] old = b;
-
-            b = new byte[len];
-
-            System.arraycopy(old, 0, b, 0, len);
-        }
-
-        setParameter(i, b);
+        setParameter(i, out.toByteArray());
     }
 
     /**
@@ -1273,20 +1278,19 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.1, this feature was not supported. <p>
+     * Previous to 1.7.2, this feature was not supported. <p>
      *
-     * Starting with 1.7.2, setClob is supported for Clob objects of length
-     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setClob(i,x) is
-     * rougly equivalent (null and length handling not shown) to: <p>
+     * Since 1.7.2, setClob is supported.  With 1.7.2, setting Blob objects is
+     * limited to those of length less than or equal to Integer.MAX_VALUE.
+     * In 1.7.2, setClob(i,x) is rougly equivalent (null and length handling
+     * not shown) to: <p>
      *
-     * <pre>
-     * setCharacterStream(i, x.getCharacterStream(), (int) x.length());
-     * </pre>
-     *
-     * </span>
+     * <pre class="JavaCodeExample">
+     * <b>setCharacterStream</b>(i, x.<b>getCharacterStream</b>(), (<span class="JavaKeyWord">int</span>) x.<b>length</b>());
+     * </pre></div>
      * <!-- end release-specific documentation -->
      * @param i the first parameter is 1, the second is 2, ...
      * @param x a <code>Clob</code> object that maps an SQL <code>CLOB</code>
@@ -1299,41 +1303,51 @@ implements java.sql.PreparedStatement {
 // boucherb@users 20030801 - method implemented
     public void setClob(int i, Clob x) throws SQLException {
 
-        checkSetParameterIndex(i);
+        if (x instanceof jdbcClob) {
+            setParameter(i, ((jdbcClob) x).data);
 
-        if (x == null) {
+            return;
+        } else if (x == null) {
             setParameter(i, null);
 
             return;
         }
 
-        long   length;
-        String msg;
+        checkSetParameterIndex(i);
 
-        length = x.length();
+        final long length = x.length();
 
         if (length > Integer.MAX_VALUE) {
-            msg = "Maximum Clob input character length exceeded: " + length;
+            String msg = "Max Clob input character length exceeded: "
+                         + length;
 
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
 
-        char[] buffer = new char[(int) length];
-        int    chread;
+        java.io.Reader     reader = x.getCharacterStream();
+        final StringBuffer sb     = new StringBuffer();
+        final int          size   = 2048;
+        final char[]       buff   = new char[size];
 
         try {
-            chread = x.getCharacterStream().read(buffer);
+            for (int left = (int) length; left > 0; ) {
+                final int read = reader.read(buff, 0, left > size ? size
+                                                                  : left);
 
-            if (chread == -1) {
-                throw new IOException(
-                    Trace.getMessage(Trace.jdbcPreparedStatement_setClob));
+                if (read == -1) {
+                    break;
+                }
+
+                sb.append(buff, 0, read);
+
+                left -= read;
             }
         } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.TRANSFER_CORRUPTED,
                                         e.toString());
         }
 
-        setParameter(i, new String(buffer, 0, chread));
+        setParameter(i, sb.toString());
     }
 
     /**
@@ -1344,13 +1358,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.2 does not support the SQL ARRAY type. Calling this method
      * throws an exception.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an <code>Array</code> object that maps an SQL <code>ARRAY</code>
@@ -1383,13 +1397,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with HSQLDB 1.7.2, this feature is supported.  If the statement
+     * Since 1.7.2, this feature is supported.  If the statement
      * generates an update count, then null is returned.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      * @return the description of a <code>ResultSet</code> object's columns or
      *    <code>null</code> if the driver cannot return a
@@ -1429,11 +1443,6 @@ implements java.sql.PreparedStatement {
      * application. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @param cal the <code>Calendar</code> object the driver will use
@@ -1472,11 +1481,6 @@ implements java.sql.PreparedStatement {
      * application. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
-     *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @param cal the <code>Calendar</code> object the driver will use
@@ -1514,10 +1518,6 @@ implements java.sql.PreparedStatement {
      * timezone, which is that of the virtual machine running the application. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * </span>
-     * <!-- end release-specific documentation -->
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
      * @param cal the <code>Calendar</code> object the driver will use
@@ -1568,13 +1568,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB ignores the typeName argument. <p>
-     *
-     * </span>
+     * HSQLDB ignores the sqlType and typeName arguments.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param paramIndex the first parameter is 1, the second is 2, ...
      * @param sqlType a value from <code>java.sql.Types</code>
      * @param typeName the fully-qualified name of an SQL user-defined type;
@@ -1598,13 +1598,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.2 does not support DATALINK SQL type for which this method
-     * is intended. Calling this method throws an exception.
+     * HSQLDB 1.7.2 does not support the DATALINK SQL type for which this
+     * method is intended. Calling this method throws an exception.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the <code>java.net.URL</code> object to be set
@@ -1626,13 +1626,13 @@ implements java.sql.PreparedStatement {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
-     *
-     * </span>
+     * Since 1.7.2, this feature is supported.
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @return a <code>ParameterMetaData</code> object that contains information
      *    about the number, types and properties of this
      *    <code>PreparedStatement</code> object's parameters
@@ -1659,9 +1659,9 @@ implements java.sql.PreparedStatement {
 
     /**
      * Constructs a statement that produces results of the requested
-     * <code>type</code>.<br>
+     * <code>type</code>. <p>
      *
-     * A prepared statement must be a single SQL statement.<br>
+     * A prepared statement must be a single SQL statement. <p>
      *
      * @param c the Connection used execute this statement
      * @param sql the SQL statement this object represents
@@ -1976,6 +1976,12 @@ implements java.sql.PreparedStatement {
         throw jdbcUtil.notSupported;
     }
 
+    /**
+     * Does the specialized work required to free this object's resources and
+     * that of it's parent class. <p>
+     *
+     * @throws SQLException if a database access error occurs
+     */
     public void close() throws java.sql.SQLException {
 
         HsqlException he;

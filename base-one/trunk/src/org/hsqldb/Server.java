@@ -70,14 +70,12 @@ package org.hsqldb;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.FileUtil;
@@ -342,10 +340,11 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public static void main(String args[]) {
 
-        String         propsPath = FileUtil.canonicalOrAbsolutePath("server");
-        HsqlProperties fileProps = getPropertiesFromFile(propsPath);
-        HsqlProperties props     = fileProps == null ? new HsqlProperties()
-                                                     : fileProps;
+        String propsPath = FileUtil.canonicalOrAbsolutePath("server");
+        HsqlProperties fileProps =
+            ServerConfiguration.getPropertiesFromFile(propsPath);
+        HsqlProperties props = fileProps == null ? new HsqlProperties()
+                                                 : fileProps;
         HsqlProperties stringProps = HsqlProperties.argArrayToProps(args,
             ServerConstants.SC_KEY_PREFIX);
 
@@ -359,19 +358,13 @@ public class Server implements HsqlSocketRequestHandler {
             props.addProperties(stringProps);
         }
 
-        String defaultdb = props.getProperty(ServerConstants.SC_KEY_DATABASE);
-
-        if (defaultdb != null) {
-            props.setProperty(ServerConstants.SC_KEY_DATABASE + ".0",
-                              defaultdb);
-        }
+        ServerConfiguration.translateDefaultDatabaseProperty(props);
 
         // Standard behaviour when started from the command line
         // is to halt the VM when the server shuts down.  This may, of
         // course, be overridden by whatever, if any, security policy
         // is in place.
-        props.setPropertyIfNotExists(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
-                                     "false");
+        ServerConfiguration.translateDefaultNoSystemExitProperty(props);
 
         // finished setting up properties;
         Server server = new Server();
@@ -478,88 +471,84 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retrieves the url alias (external name) of the i'th database
+     * Retrieves the url alias (network name) of the i'th database
      * that this Server hosts.
      *
-     * NB Campbell - this shouldn't be used externally when ONLINE as names
-     * without path strings can be returned.
-     * Use the validated dbPath and dbType arrays.
-     *
+     * @param index the index of the url alias upon which to report
+     * @param asconfigured if true, report the configured value, else
+     *      the live value
      * @return the url alias component of the i'th database
-     *      that this Server hosts.
+     *      that this Server hosts, or null if no such name exists.
      *
-     * @jmx.managed-attribute
-     *  access="read-write"
+     * @jmx.managed-operation
+     *  impact="INFO"
      *  description="url alias component of the i'th hosted Database"
      *
-     * @jmx.managed-parameter
+     * @jmx.managed-operation-parameter
      *      name="index"
      *      type="int"
      *      position="0"
      *      description="This Server's index for the hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="asconfigured"
+     *      type="boolean"
+     *      position="1"
+     *      description="if true, the configured value, else the live value"
      */
-    public String getDatabaseName(int index) {
-        return serverProperties.getProperty(ServerConstants.SC_KEY_DBNAME
-                                            + "." + index);
+    public String getDatabaseName(int index, boolean asconfigured) {
+
+        if (asconfigured) {
+            return serverProperties.getProperty(ServerConstants.SC_KEY_DBNAME
+                                                + "." + index);
+        } else if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
+            return (dbAlias == null || index < 0 || index >= dbAlias.length)
+                   ? null
+                   : dbAlias[index];
+        } else {
+            return null;
+        }
     }
 
     /**
      * Retrieves the HSQLDB path descriptor (uri) of the i'th
      * Database that this Server hosts.
      *
-     * NB Campbell - this shouldn't be used externally when ONLINE as orphan
-     * path strings are returned. Use the validated dbPath and dbType arrays.
-     *
+     * @param index the index of the uri upon which to report
+     * @param asconfigured if true, report the configured value, else
+     *      the live value
      * @return the HSQLDB database path descriptor of the i'th database
-     *      that this Server hosts
+     *      that this Server hosts, or null if no such path descriptor
+     *      exists
      *
-     * @jmx.managed-attribute
-     *  access="read-write"
+     * @jmx.managed-operation
+     *  impact="INFO"
      *  description="For i'th hosted database"
      *
-     * @jmx.managed-parameter
+     * @jmx.managed-operation-parameter
      *      name="index"
      *      type="int"
      *      position="0"
      *      description="This Server's index for the hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="asconfigured"
+     *      type="boolean"
+     *      position="1"
+     *      description="if true, the configured value, else the live value"
      */
-    public String getDatabasePath(int index) {
-        return serverProperties.getProperty(ServerConstants.SC_KEY_DATABASE
-                                            + "." + index);
-    }
+    public String getDatabasePath(int index, boolean asconfigured) {
 
-    /**
-     * Retrieves the default port that this Server will try to use in the
-     * abscence of an explicitly specified one, given the specified
-     * value for whether or not to use secure sockets.
-     *
-     * @param isTls if true, retrieve the default port when using secure
-     *      sockets, else the default port when using plain sockets
-     * @return the default port used in the abscence of an explicit
-     *      specification.
-     */
-    public static int getDefaultPort(boolean isTls) {
-        return isTls ? ServerConstants.SC_DEFAULT_HSQLS_SERVER_PORT
-                     : ServerConstants.SC_DEFAULT_HSQL_SERVER_PORT;
-    }
-
-    /**
-     * Retrieves the path that will be used by default if a null or zero-length
-     * path is specified to putPropertiesFromFile().  This path does not
-     * include the '.properties' file extention, which is implicit.
-     *
-     * NB Campbell - this method is misleading and should be removed -
-     * default properties path is for the main() method only.
-     *
-     * @return The path that will be used by default if null is specified to
-     *      putPropertiesFromFile()
-     *
-     * @jmx.managed-attribute
-     *  access="read-only"
-     *  description="Read by putPropertiesFromFile()"
-     */
-    public String getDefaultPropertiesPath() {
-        return FileUtil.canonicalOrAbsolutePath("server");
+        if (asconfigured) {
+            return serverProperties.getProperty(
+                ServerConstants.SC_KEY_DATABASE + "." + index);
+        } else if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
+            return (dbPath == null || index < 0 || index >= dbPath.length)
+                   ? null
+                   : dbPath[index];
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -614,8 +603,10 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="At which ServerSocket listens for connections"
      */
     public int getPort() {
+
         return serverProperties.getIntegerProperty(
-            ServerConstants.SC_KEY_PORT, getDefaultPort(isTls()));
+            ServerConstants.SC_KEY_PORT,
+            ServerConfiguration.getDefaultPort(serverProtocol, isTls()));
     }
 
     /**
@@ -720,7 +711,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @jmx.managed-attribute
      *  access="read-only"
-     *  description="State [: exception ]"
+     *  description="State as string"
      */
     public String getStateDescriptor() {
 
@@ -863,7 +854,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retreives whether the use of secure sockets was requested in the
+     * Retrieves whether the use of secure sockets was requested in the
      * server properties.
      *
      * @return if true, secure sockets are requested, else not
@@ -920,7 +911,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         path = FileUtil.canonicalOrAbsolutePath(path);
 
-        HsqlProperties p = getPropertiesFromFile(path);
+        HsqlProperties p = ServerConfiguration.getPropertiesFromFile(path);
 
         if (p == null) {
             return false;
@@ -930,23 +921,6 @@ public class Server implements HsqlSocketRequestHandler {
         setProperties(p);
 
         return true;
-    }
-
-    protected static HsqlProperties getPropertiesFromFile(String path) {
-
-        if (StringUtil.isEmpty(path)) {
-            return null;
-        }
-
-        HsqlProperties p = new HsqlProperties(path);
-
-        path = FileUtil.canonicalOrAbsolutePath(path);
-
-        try {
-            p.load();
-        } catch (Exception e) {}
-
-        return p;
     }
 
     /**
@@ -998,7 +972,7 @@ public class Server implements HsqlSocketRequestHandler {
      *    using the signature that does not specify the InetAddress.
      * @throws RuntimeException if this server is running
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setAddress(String address) throws RuntimeException {
 
@@ -1020,6 +994,20 @@ public class Server implements HsqlSocketRequestHandler {
      * @throws RuntimeException if this server is running
      *
      * @jmx.managed-operation
+     *      impact="ACTION"
+     *      description="Sets the url alias by which is known the i'th hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="index"
+     *      type="int"
+     *      position="0"
+     *      description="This Server's index for the hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="name"
+     *      type="java.lang.String"
+     *      position="1"
+     *      description="url alias component for the hosted Database"
      */
     public void setDatabaseName(int index,
                                 String name) throws RuntimeException {
@@ -1037,6 +1025,20 @@ public class Server implements HsqlSocketRequestHandler {
      *      is to host.
      *
      * @jmx.managed-operation
+     *      impact="ACTION"
+     *      description="Sets the database uri path for the i'th hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="index"
+     *      type="int"
+     *      position="0"
+     *      description="This Server's index for the hosted Database"
+     *
+     * @jmx.managed-operation-parameter
+     *      name="path"
+     *      type="java.lang.String"
+     *      position="1"
+     *      description="database uri path of the hosted Database"
      */
     public void setDatabasePath(int index,
                                 String path) throws RuntimeException {
@@ -1052,7 +1054,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param file the name of the web page served when no page is specified
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setDefaultWebPage(String file) {
 
@@ -1072,7 +1074,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param port the port at which this server listens
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setPort(int port) throws RuntimeException {
 
@@ -1108,7 +1110,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param noExit if true, System.exit() will not be called.
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setNoSystemExit(boolean noExit) {
 
@@ -1122,7 +1124,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param restart if true, this server restarts on shutdown
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setRestartOnShutdown(boolean restart) {
 
@@ -1137,7 +1139,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param silent if true, then silent mode, else trace messages
      *  are to be printed
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setSilent(boolean silent) {
 
@@ -1153,7 +1155,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param tls true for secure sockets, else false
      * @throws RuntimeException if this server is running
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setTls(boolean tls) {
 
@@ -1168,7 +1170,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param trace if true, route JDBC trace messages to System.out
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setTrace(boolean trace) {
 
@@ -1183,7 +1185,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param root the root (context) directory from which web content
      *      is served
      *
-     * @jmx.managed-operation
+     * @jmx.managed-attribute
      */
     public void setWebRoot(String root) {
 
@@ -1211,7 +1213,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         if (p != null) {
             serverProperties.addProperties(p);
-            translateAddressProperty(serverProperties);
+            ServerConfiguration.translateAddressProperty(serverProperties);
         }
 
         maxConnections = serverProperties.getIntegerProperty(
@@ -1322,7 +1324,7 @@ public class Server implements HsqlSocketRequestHandler {
         serverId         = toString();
         serverId         = serverId.substring(serverId.lastIndexOf('.') + 1);
         serverProtocol   = protocol;
-        serverProperties = newDefaultProperties();
+        serverProperties = ServerConfiguration.newDefaultProperties(protocol);
         logWriter        = new PrintWriter(System.out);
         errWriter        = new PrintWriter(System.err);
 
@@ -1574,6 +1576,15 @@ public class Server implements HsqlSocketRequestHandler {
 
                 sb.append(r.getStatementID());
 
+/**
+ * todo - fredt - NOW - fix this without appendStringValueOf
+ */
+/*
+                if (r.getSize() == 1) {
+                    sb.append('\n');
+                    StringUtil.appendStringValueOf(r.getParameterData(), sb, true);
+                }
+*/
                 break;
             }
             case ResultConstants.SQLFREESTMT : {
@@ -1665,48 +1676,6 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retrieves a new default properties object for this server
-     *
-     * @return a new default properties object
-     */
-    private static final HsqlProperties newDefaultProperties() {
-
-        HsqlProperties p;
-        boolean        isTls;
-
-        p = new HsqlProperties();
-
-        p.setProperty(ServerConstants.SC_KEY_AUTORESTART_SERVER,
-                      ServerConstants.SC_DEFAULT_SERVER_AUTORESTART);
-        p.setProperty(ServerConstants.SC_KEY_ADDRESS,
-                      ServerConstants.SC_DEFAULT_ADDRESS);
-        p.setProperty(ServerConstants.SC_KEY_DATABASE + "." + 0,
-                      ServerConstants.SC_DEFAULT_DATABASE);
-        p.setProperty(ServerConstants.SC_KEY_DBNAME + "." + 0, "");
-        p.setProperty(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
-                      ServerConstants.SC_DEFAULT_NO_SYSTEM_EXIT);
-
-        isTls = ServerConstants.SC_DEFAULT_TLS;
-
-        try {
-            isTls = System.getProperty("javax.net.ssl.keyStore") != null;
-        } catch (Exception e) {}
-
-        p.setProperty(ServerConstants.SC_KEY_PORT, getDefaultPort(isTls));
-        p.setProperty(ServerConstants.SC_KEY_SILENT,
-                      ServerConstants.SC_DEFAULT_SILENT);
-        p.setProperty(ServerConstants.SC_KEY_TLS, isTls);
-        p.setProperty(ServerConstants.SC_KEY_TRACE,
-                      ServerConstants.SC_DEFAULT_TRACE);
-        p.setProperty(ServerConstants.SC_KEY_WEB_DEFAULT_PAGE,
-                      ServerConstants.SC_DEFAULT_WEB_PAGE);
-        p.setProperty(ServerConstants.SC_KEY_WEB_ROOT,
-                      ServerConstants.SC_DEFAULT_WEB_ROOT);
-
-        return p;
-    }
-
-    /**
      * Opens this server's database instances. This method returns true If
      * at least one database goes online, otherwise it returns false.
      *
@@ -1740,15 +1709,15 @@ public class Server implements HsqlSocketRequestHandler {
                 dbID[i] = id;
                 success = true;
             } catch (HsqlException e) {
+                printError("Database [index=" + i + "db=" + dbType[i]
+                           + dbPath[i] + ", alias=" + dbAlias[i]
+                           + "] did not open: " + e.toString());
+                setServerError(e);
+
                 dbAlias[i] = null;
                 dbPath[i]  = null;
                 dbType[i]  = null;
                 dbProps[i] = null;
-
-                setServerError(e);
-                printError("Database [index=" + i + "db=" + dbType[i]
-                           + dbPath[i] + ", alias=" + dbAlias[i]
-                           + "] did not open");
 
                 continue;
             }
@@ -1790,7 +1759,7 @@ public class Server implements HsqlSocketRequestHandler {
             }
 
             HsqlProperties dbURL =
-                DatabaseManager.parseURL(getDatabasePath(i), false);
+                DatabaseManager.parseURL(getDatabasePath(i, true), false);
 
             if (dbURL == null) {
                 dbAlias[i] = null;
@@ -1852,7 +1821,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         String    address;
         int       port;
-        Vector    candidateAddrs;
+        String[]  candidateAddrs;
         String    emsg;
         StopWatch sw;
 
@@ -1875,12 +1844,13 @@ public class Server implements HsqlSocketRequestHandler {
             try {
                 socket = socketFactory.createServerSocket(port, address);
             } catch (UnknownHostException e) {
-                candidateAddrs = listLocalInetAddressNames();
+                candidateAddrs =
+                    ServerConfiguration.listLocalInetAddressNames();
 
                 int      messageID;
                 Object[] messageParameters;
 
-                if (candidateAddrs.size() > 0) {
+                if (candidateAddrs.length > 0) {
                     messageID         = Trace.Server_openServerSocket;
                     messageParameters = new Object[] {
                         address, candidateAddrs
@@ -2156,102 +2126,5 @@ public class Server implements HsqlSocketRequestHandler {
      */
     protected static void printHelp(String key) {
         System.out.print(BundleHandler.getString(serverBundleHandle, key));
-    }
-
-    /**
-     * Retrieves a list of Strings naming the distinct, known to be valid local
-     * InetAddress names for this machine.  The process is to collect and
-     * return the union of the following sets:
-     *
-     * <ol>
-     * <li> InetAddress.getAllByName(InetAddress.getLocalHost().getHostAddress())
-     * <li> InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())
-     * <li> InetAddress.getAllByName(InetAddress.getByName(null).getHostAddress())
-     * <li> InetAddress.getAllByName(InetAddress.getByName(null).getHostName())
-     * <li> InetAddress.getByName("loopback").getHostAddress()
-     * <li> InetAddress.getByName("loopback").getHostname()
-     * </ol>
-     *
-     * @return the distinct, known to be valid local
-     *        InetAddress names for this machine
-     */
-    public static Vector listLocalInetAddressNames() {
-
-        InetAddress   addr;
-        InetAddress[] addrs;
-        HashSet       set;
-        Vector        out;
-        StringBuffer  sb;
-
-        set = new HashSet();
-        out = new Vector();
-
-        try {
-            addr  = InetAddress.getLocalHost();
-            addrs = InetAddress.getAllByName(addr.getHostAddress());
-
-            for (int i = 0; i < addrs.length; i++) {
-                set.add(addrs[i].getHostAddress());
-                set.add(addrs[i].getHostName());
-            }
-
-            addrs = InetAddress.getAllByName(addr.getHostName());
-
-            for (int i = 0; i < addrs.length; i++) {
-                set.add(addrs[i].getHostAddress());
-                set.add(addrs[i].getHostName());
-            }
-        } catch (Exception e) {}
-
-        try {
-            addr  = InetAddress.getByName(null);
-            addrs = InetAddress.getAllByName(addr.getHostAddress());
-
-            for (int i = 0; i < addrs.length; i++) {
-                set.add(addrs[i].getHostAddress());
-                set.add(addrs[i].getHostName());
-            }
-
-            addrs = InetAddress.getAllByName(addr.getHostName());
-
-            for (int i = 0; i < addrs.length; i++) {
-                set.add(addrs[i].getHostAddress());
-                set.add(addrs[i].getHostName());
-            }
-        } catch (Exception e) {}
-
-        try {
-            set.add(InetAddress.getByName("loopback").getHostAddress());
-            set.add(InetAddress.getByName("loopback").getHostName());
-        } catch (Exception e) {}
-
-        for (Iterator i = set.iterator(); i.hasNext(); ) {
-            out.addElement(i.next());
-        }
-
-        return out;
-    }
-
-    /**
-     * Translates null or zero length value for address key to the
-     * special value ServerConstants.SC_DEFAULT_ADDRESS which causes
-     * ServerSockets to be constructed without specifying an InetAddress.
-     *
-     * @param p The properties object upon which to perform the translation
-     */
-    private void translateAddressProperty(HsqlProperties p) {
-
-        String address;
-
-        if (p == null) {
-            return;
-        }
-
-        address = p.getProperty(ServerConstants.SC_KEY_ADDRESS);
-
-        if (org.hsqldb.lib.StringUtil.isEmpty(address)) {
-            p.setProperty(ServerConstants.SC_KEY_ADDRESS,
-                          ServerConstants.SC_DEFAULT_ADDRESS);
-        }
     }
 }

@@ -80,12 +80,13 @@ import org.hsqldb.lib.StringConverter;
 // fredt@users 20021013 - patch 1.7.1 - ignore non-static methods
 // boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
 // fredt@users 20030621 - patch 1.7.2 - shortcut treatment of session calls
+// boucherb@users 200404xx - doc 1.7.2 - updates toward 1.7.2 final
 
 /**
- * Provides services to evaluate and invoke Java methods in the context of
- * SQL function and stored procedure calls.
+ * Provides services to evaluate SQL function and stored procedure calls,
+ * by invoking Java methods.
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class Function {
 
@@ -127,25 +128,15 @@ class Function {
      * specified class or construction cannot procede and an HsqlException is
      * thrown. <p>
      *
-     * The Session paramter is the connected context in which this
-     * Function object will evaluate.  if checkPrivs is true and it is
-     * determined that the connected user does not have the right to evaluate
-     * this Function, construction cannot proceed and a HsqlException is
-     * thrown. If checkPrivs is false, the construction proceeds without
-     * a privilege check.  This behaviour is in support of VIEW resolution,
-     * wherein tables and routines may be involved to which the session
-     * user has been granted no privileges but should be allowed to
-     * select from the VIEW regardless, by virtue of being granted SELECT
-     * on the VIEW object.
+     * The isSimple parameter is true when certain SQL standard functions
+     * that are used without brackets are invokded.
      *
-     * @param name name of the function
+     * @param name this Function object's call name
      * @param fqn the fully qualified name of a Java method
-     * @param session the connected context in which this Function object will
+     * @param isSimple if true, used to evalate CURRENT_TIME, NOW etc.
      *      evaluate
      * @throws HsqlException if the specified function FQN corresponds to no
-     *      Java method or the session user at the time of
-     *      construction does not have the right to evaluate
-     *      this Function.
+     *      Java method
      */
     Function(String name, String fqn, boolean isSimple) throws HsqlException {
 
@@ -177,6 +168,8 @@ class Function {
                 });
             }
 
+            // public only, but includes those inherited from
+            // superclasses and superinterfaces.  List is unordered.
             Method methods[] = classinstance.getMethods();
 
             for (i = 0; i < methods.length; i++) {
@@ -198,18 +191,55 @@ class Function {
 
         if (cReturnClass.equals(org.hsqldb.Result.class)) {
 
-            // For now, people can write stored procedures with
-            // descriptor having above return types to indicate
-            // result of arbitrary arity.  Later, this must be
-            // replaced with a better system.
+            // For now, we can write stored procedures whose
+            // descriptor explicitly specifies the above return type.
+            // Later, this will be modified or replaced to provide proper
+            // support for jdbcCallableStatement OUT mode return parameter,
+            // multiple results (Result.MULTI etc.)
             iReturnType = Types.OTHER;
         } else {
 
-            // Now we can return an object of any Class,
-            // as long as it's a primitive array, directly
-            // implements java.io.Serializable directly or is a
-            // non-primitive array whose base component implements
+            // Now we support the following construction-time return type
+            // Classes, as specified by the method descriptor:
+            //
+            // 1.) any primitive or primitive wrapper type, except Byte(.TYPE),
+            //     Short(.TYPE) and Float(.TYPE) (TBD; narrow if no truncation)
+            //
+            // 2.) any primitive array type
+            //
+            // 3.) any non-primitive array whose base component implements
             // java.io.Serializable
+            //
+            // 4.) any class implementing java.io.Serializable, except those
+            //     described in 1.) as currently unsupported
+            //
+            // 5.) java.lang.Object
+            //
+            // For java.lang.Object, checking is deferred from the construction
+            // stage to the evaluation stage.  In general, for the evaluation
+            // to succeed, the runtime class of the retrieved Object must be
+            //
+            // 1.) any primitive or primitive wrapper type, except Byte(.TYPE),
+            //     Short(.TYPE) and Float(.TYPE) (TBD; narrow if no trunction)
+            //
+            // 2.) any primitive array type
+            // 3.) any non-primitive array whose base component implements
+            //     java.io.Serializable
+            //
+            // 4.) any class implementing java.io.Serializable, except those
+            //     described in 1.) as currently unsupported
+            //
+            // Additionally, it is possible for the evaluation to succeed under
+            // an SQL CALL if the runtime Class of the returned Object is not
+            // from the list above but is from the list below:
+            //
+            // 1.) is org.hsqldb.Result
+            // 2.) is org.hsqldb.jdbc.jdbcResultSet
+            //
+            // In these special cases, the statement executor notices the
+            // types and presents the client with a view the underlying result
+            // rather than with a view of the object as an opaque scalar value
+            //
             iReturnType = Types.getParameterTypeNr(cReturnClass);
         }
 
@@ -224,17 +254,13 @@ class Function {
 
             if ((i == 0) && a.equals(java.sql.Connection.class)) {
 
-                // TODO: make this obsolete, providing
-                // jdbc:default:connection url functionality
-                // instead
+                // TODO: provide jdbc:default:connection url functionality
+                //
                 // only the first parameter can be a Connection
                 bConnection = true;
             } else {
 
-                // Now we can pass values of any Class to args of any
-                // Class, as long as they are primitive arrays, directly
-                // implement java.io.Serializable or are non-primitive
-                // arrays whose base component implements java.io.Serializable
+                // see discussion above for iReturnType
                 iArgType[i]     = Types.getParameterTypeNr(a);
                 bArgNullable[i] = !a.isPrimitive();
             }
@@ -254,24 +280,9 @@ class Function {
     }
 
     /**
-     * Retrieves the value this Function evaluates to, given the current
-     * state of this object's {@link #resolve(TableFilter) resolved}
-     * TableFilter, if any, and any mapping of expressions to this
-     * Function's parameter list that has been performed via
-     * {link #setArgument(int,Expression) setArgument}.
-     *
-     *
-     * @return the value resulting from evaluating this Function
-     * @throws HsqlException if an invocation exception is encountered when
-     * calling the Java
-     * method underlying this object
+     * Evaluates and returns this Function in the context of the session.<p>
      */
     Object getValue(Session session) throws HsqlException {
-
-        if (session != null) {
-
-//            cSession = session;
-        }
 
         switch (fID) {
 
@@ -310,8 +321,11 @@ class Function {
         return getValue(oArg, session);
     }
 
-    private Object getValue(Object[] arguments,
-                            Session session) throws HsqlException {
+    /**
+     * Evaluates the Function with the given arguments in the session context.
+     */
+    Object getValue(Object[] arguments,
+                    Session session) throws HsqlException {
 
         if (bConnection) {
             arguments[0] = session.getInternalConnection();
@@ -443,7 +457,7 @@ class Function {
     }
 
     /**
-     * Retrieves the number of parameters that must be supplied to evaluate
+     * Returns the number of parameters that must be supplied to evaluate
      * this Function object from SQL.  <p>
      *
      * This value may be different than the number of parameters of the
@@ -451,9 +465,6 @@ class Function {
      * if the first parameter is of type java.sql.Connection, and supplies a
      * live Connection object constructed from the evaluating session context
      * if so.
-     *
-     * @return the number of arguments this Function takes, as known to the
-     * calling SQL context
      */
     int getArgCount() {
         return iSqlArgCount;
@@ -483,11 +494,6 @@ class Function {
     /**
      * Checks the Expresion parameters to this Function object against the
      * set of TableFilter.
-     *
-     * @param fa the array of TableFilter against which to resolve this Function
-     * object's arguments
-     * @throws HsqlException if there is a problem resolving a parameter
-     * against the specified TableFilter
      */
     void checkTables(HsqlArrayList fa) throws HsqlException {
 
@@ -505,11 +511,6 @@ class Function {
     /**
      * Resolves the Expression parameters to this Function object against the
      * specified TableFilter.
-     *
-     * @param f the TableFilter against which to resolve this Function
-     * object's arguments
-     * @throws HsqlException if there is a problem resolving a parameter
-     * against the specified TableFilter
      */
     void resolveTables(TableFilter f) throws HsqlException {
 
@@ -527,8 +528,6 @@ class Function {
     /**
      * Resolves the type of this expression and performs certain
      * transformations and optimisations of the expression tree.
-     *
-     * @throws HsqlException if there is a problem resolving the expression
      */
     void resolveType() throws HsqlException {
 
@@ -551,10 +550,9 @@ class Function {
     }
 
     /**
-     * Checks each of this object's arguments for resolution, throwing a
+     * Checks each of this object's arguments for resolution, throwing an
      * HsqlException if any arguments have not yet been resolved. <p>
-     *
-     * @throws HsqlException if any arguments have not yet been resolved
+     * The check boolean argument is passed on to further check calls.<p>
      */
     boolean checkResolved(boolean check) throws HsqlException {
 
@@ -570,33 +568,24 @@ class Function {
     }
 
     /**
-     * Retrieves the java.sql.Types type of the argument at the specified
+     * Returns the java.sql.Types type of the argument at the specified
      * offset in this Function object's paramter list. <p>
-     *
-     * @param i the offset of the desired argument in this Function object's
-     * paramter list
-     * @return the specified argument's java.sql.Types type
      */
     int getArgType(int i) {
         return iArgType[i];
     }
 
     /**
-     * Retrieves the java.sql.Types type of this Function
+     * Returns the java.sql.Types type of this Function
      * object's return type. <p>
-     *
-     * @return this Function object's java.sql.Types return type
      */
     int getReturnType() {
         return iReturnType;
     }
 
     /**
-     * Binds the specified expression to the specified argument in this
-     * Function object's paramter list. <p>
-     *
-     * @param i the position of the agument to bind to
-     * @param e the expression to bind
+     * Binds the specified expression to the specified position in this
+     * Function object's parameter list. <p>
      */
     void setArgument(int i, Expression e) {
 
@@ -609,9 +598,7 @@ class Function {
     }
 
     /**
-     * Retrieves a DDL representation of this object. <p>
-     *
-     * @return
+     * Returns a DDL representation of this object. <p>
      */
     String getDLL() throws HsqlException {
 
@@ -669,9 +656,7 @@ class Function {
     }
 
     /**
-     * Retrieves a String representation of this object. <p>
-     *
-     * @return a String representation of this object
+     * Returns a String representation of this object. <p>
      */
     public String toString() {
 
@@ -691,28 +676,21 @@ class Function {
     }
 
     /**
-     * Retrieves the Java Class of the object returned by getValue(). <p>
-     *
-     * @return the Java Class of the objects retrieved by calls to
-     *      getValue()
+     * Returns the Java Class of the object returned by getValue(). <p>
      */
     Class getReturnClass() {
         return cReturnClass;
     }
 
     /**
-     * Retreives the Java Class of the i'th argument. <p>
-     *
-     * @return the Java Class of the i'th argument
+     * Returns the Java Class of the i'th argument. <p>
      */
     Class getArgClass(int i) {
         return aArgClasses[i];
     }
 
     /**
-     * Retrieves the SQL nullability code of the i'th argument. <p>
-     *
-     * @return the SQL nullability code of the i'th argument
+     * Returns the SQL nullability code of the i'th argument. <p>
      */
     int getArgNullability(int i) {
         return bArgNullable[i] ? Expression.NULLABLE

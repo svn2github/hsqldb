@@ -106,10 +106,6 @@ Referential Constraint 4 SET DEFAULT
 
     /**
      *  Constructor declaration for UNIQUE
-     *
-     * @param  name
-     * @param  t
-     * @param  index
      */
     Constraint(HsqlName name, Table t, Index index) {
 
@@ -128,9 +124,6 @@ Referential Constraint 4 SET DEFAULT
 
     /**
      *  Constructor for main constraints (foreign key references in PK table)
-     *
-     * @param  name
-     * @param  fkconstraint
      */
     Constraint(HsqlName name, Constraint fkconstraint) {
 
@@ -140,18 +133,18 @@ Referential Constraint 4 SET DEFAULT
     }
 
     /**
-     *  Constructor for foreign key constraints
+     *  Constructor for foreign key constraints.
      *
-     * @param  pkname
-     * @param  fkname
-     * @param  main
-     * @param  ref
-     * @param  colmain
-     * @param  colref
-     * @param  imain
-     * @param  iref
-     * @param  deleteAction
-     * @param  updateAction
+     * @param  pkname name in the main (referenced) table, used internally
+     * @param  fkname name in the referencing table, public name of the constraint
+     * @param  main referenced table
+     * @param  ref referencing talbe
+     * @param  colmain array of column indexes in main table
+     * @param  colref array of column indexes in referencing table
+     * @param  imain index on the main table
+     * @param  iref index on the referencing table
+     * @param  deleteAction triggered action on delete
+     * @param  updateAction triggered action on update
      * @exception  HsqlException  Description of the Exception
      */
     Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
@@ -196,15 +189,15 @@ Referential Constraint 4 SET DEFAULT
 
     private Constraint() {}
 
+    /**
+     * Returns the HsqlName.
+     */
     HsqlName getName() {
         return constName;
     }
 
     /**
      * Changes constraint name.
-     *
-     * @param name
-     * @param isquoted
      */
     private void setName(String name, boolean isquoted) throws HsqlException {
         constName.rename(name, isquoted);
@@ -235,81 +228,71 @@ Referential Constraint 4 SET DEFAULT
     }
 
     /**
-     *  Method declaration
-     *
-     * @return name of the index for the foreign key column (child)
+     *  Returns the type of constraint
      */
     int getType() {
         return constType;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     *  Returns the main table
      */
     Table getMain() {
         return core.mainTable;
     }
 
+    /**
+     *  Returns the main index
+     */
     Index getMainIndex() {
         return core.mainIndex;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     *  Returns the reference table
      */
     Table getRef() {
         return core.refTable;
     }
 
+    /**
+     *  Returns the reference index
+     */
     Index getRefIndex() {
         return core.refIndex;
     }
 
     /**
-     *  The action of (foreign key) constraint on delete
-     *
-     * @return
+     *  The ON DELETE triggered action of (foreign key) constraint
      */
     int getDeleteAction() {
         return core.deleteAction;
     }
 
     /**
-     *  The action of (foreign key) constraint on update
-     *
-     * @return
+     *  The ON UPDATE triggered action of (foreign key) constraint
      */
     int getUpdateAction() {
         return core.updateAction;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     *  Returns the main table column index array
      */
     int[] getMainColumns() {
         return core.mainColArray;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     *  Returns the reference table column index array
      */
     int[] getRefColumns() {
         return core.refColArray;
     }
 
     /**
-     *  See if an index is part this constraint and the constraint is set for
-     *  a foreign key. Used for tests before dropping an index. (fredt@users)
-     *
-     * @return
+     *  Returns true if an index is part this constraint and the constraint is set for
+     *  a foreign key. Used for tests before dropping an index.
      */
     boolean isIndexFK(Index index) {
 
@@ -323,11 +306,8 @@ Referential Constraint 4 SET DEFAULT
     }
 
     /**
-     *  See if an index is part this constraint and the constraint is set for
+     *  Returns true if an index is part this constraint and the constraint is set for
      *  a unique constraint. Used for tests before dropping an index.
-     *  (fredt@users)
-     *
-     * @return
      */
     boolean isIndexUnique(Index index) {
 
@@ -444,11 +424,8 @@ Referential Constraint 4 SET DEFAULT
     }
 
     /**
-     *  Checks for foreign key violation when inserting a row in the child
-     *  table.
-     *
-     * @param  row
-     * @throws  HsqlException
+     * Checks for foreign key or check constraint violation when
+     * inserting a row into the child table.
      */
     void checkInsert(Object row[], Session session) throws HsqlException {
 
@@ -497,6 +474,9 @@ Referential Constraint 4 SET DEFAULT
         }
     }
 
+    /*
+     * Tests a row against this CHECK constraint.
+     */
     void checkCheckConstraint(Object[] row,
                               Session session) throws HsqlException {
 
@@ -563,18 +543,11 @@ Referential Constraint 4 SET DEFAULT
     }
 
     /**
-     * Method to find any referring node in the main table. This is used
-     * to check referential integrity when updating a node. We have to make
-     * sure that the main table still holds a valid main record. If a valid
-     * row is found the corresponding <code>Node</code> is returned.
+     * For the candidate table row, finds any referring node in the main table.
+     * This is used to check referential integrity when updating a node. We
+     * have to make sure that the main table still holds a valid main record.
+     * If a valid row is found the corresponding <code>Node</code> is returned.
      * Otherwise a 'INTEGRITY VIOLATION' Exception gets thrown.
-     *
-     * @param row Obaject[]; the row containing the key columns which have to be
-     * checked.
-     *
-     * @see Table#checkUpdateCascade(Table,Object[],Object[],Session,boolean)
-     *
-     * @throws HsqlException
      */
     Node findMainRef(Object row[]) throws HsqlException {
 
@@ -596,8 +569,14 @@ Referential Constraint 4 SET DEFAULT
         return node;
     }
 
-    static boolean hasReferencedRow(Object[] rowdata, int[] rowColArray,
-                                    Index mainIndex) throws HsqlException {
+    /**
+     * Test used before adding a new foreign key constraint. This method
+     * returns true if the given row has a corresponding row in the main
+     * table. Also returns true if any column covered by the foreign key
+     * constraint has a null value.
+     */
+    private static boolean hasReferencedRow(Object[] rowdata,
+            int[] rowColArray, Index mainIndex) throws HsqlException {
 
         // check for nulls and return true if any
         for (int i = 0; i < rowColArray.length; i++) {
@@ -616,6 +595,11 @@ Referential Constraint 4 SET DEFAULT
         return true;
     }
 
+    /**
+     * Check used before creating a new foreign key cosntraint, this method
+     * checks all rows of a table to ensure they all have a corresponding
+     * row in the main table.
+     */
     static void checkReferencedRows(Table table, int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 

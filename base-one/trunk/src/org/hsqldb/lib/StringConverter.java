@@ -541,29 +541,32 @@ public class StringConverter {
     }
 
     /**
-     * Using a Reader and a Writer, returns a String from an InputStream
+     * Using a Reader and a Writer, returns a String from an InputStream.
      */
-    public static String inputStreamToString(InputStream x)
-    throws IOException {
+    public static String inputStreamToString(InputStream x,
+            int length) throws IOException {
 
         InputStreamReader in        = new InputStreamReader(x);
-        StringWriter      write     = new StringWriter();
+        StringWriter      writer    = new StringWriter();
         int               blocksize = 8 * 1024;
         char              buffer[]  = new char[blocksize];
 
-        while (true) {
-            int l = in.read(buffer, 0, blocksize);
+        for (int left = length; left > 0; ) {
+            int read = in.read(buffer, 0, left > blocksize ? blocksize
+                                                           : left);
 
-            if (l == -1) {
+            if (read == -1) {
                 break;
             }
 
-            write.write(buffer, 0, l);
+            writer.write(buffer, 0, read);
+
+            left -= read;
         }
 
-        write.close();
+        writer.close();
 
-        return write.toString();
+        return writer.toString();
     }
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified

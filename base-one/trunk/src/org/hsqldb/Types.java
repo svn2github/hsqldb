@@ -107,199 +107,6 @@ public final class Types {
     public static final int BINARY = -2;
 
     /**
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>BLOB</code>.
@@ -315,9 +122,6 @@ public final class Types {
      *
      * @since JDK 1.4
      */
-
-    // boucherb@users
-    // NOTE:  See discussion at BIT
     public static final int BOOLEAN = 16;
 
     /**
@@ -1260,7 +1064,7 @@ public final class Types {
     // recommended that LONGVARCHAR be used for larger values in RAD
     // tool layout & presentation use cases until such time as we provide
     // true BLOB support (at which point, LONGVARCHAR will most likely become
-    // an alias for CLOB).  
+    // an alias for CLOB).
     //
     // Most GUI tools seem to handle LONGVARCHAR gracefully by:
     //
