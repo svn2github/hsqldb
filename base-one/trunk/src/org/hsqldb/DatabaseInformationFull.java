@@ -1206,7 +1206,7 @@ extends org.hsqldb.DatabaseInformationMain {
     /**
      * Retrieves a <code>Table</code> object describing the TEXT TABLE objects
      * defined within this database. The table contains one row for each row
-     * in the SYSTEM_TABLES table with a HSQLDB_TYPE of ’TEXT’. <p>
+     * in the SYSTEM_TABLES table with a HSQLDB_TYPE of  TEXT . <p>
      *
      * Each row is a description of the attributes that defines its TEXT TABLE,
      * with the following columns:
@@ -1811,7 +1811,7 @@ extends org.hsqldb.DatabaseInformationMain {
     /**
      * Retrieves a <code>Table</code> object describing the VIEW objects
      * defined within this database. The table contains one row for each row
-     * in the SYSTEM_TABLES table with a TABLE_TYPE of ’VIEW’. <p>
+     * in the SYSTEM_TABLES table with a TABLE_TYPE of  VIEW . <p>
      *
      * Each row is a description of the query expression that defines its view,
      * with the following columns:

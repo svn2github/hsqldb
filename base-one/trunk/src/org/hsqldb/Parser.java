@@ -1296,7 +1296,7 @@ class Parser {
                 r = new Expression(type, readTerm(), null);
 
                 checkParamAmbiguity(!r.getArg().isParam(),
-                                    "as the operand of a unary – operation");
+                                    "as the operand of a unary   operation");
 
                 break;
             }

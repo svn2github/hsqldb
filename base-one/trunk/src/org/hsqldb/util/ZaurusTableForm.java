@@ -306,7 +306,7 @@ implements TextListener, ItemListener, ActionListener {
 
         // the initial settings of the textfields counts with one
         // so a real change by the user needs as many changes as there are columns
-        // System.out.print("Änderungen in den Feldern: ");
+        // System.out.print(" nderungen in den Feldern: ");
         // there are changes to the database
         // memorize all columns which have been changed
         int[] changedColumns = new int[columns.length];
