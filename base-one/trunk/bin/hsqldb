@@ -32,12 +32,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id$
+# $Id: hsqldb,v 1.1 2004/02/19 20:54:14 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
 # chkconfig: - 87 13
 # description: Hsqldb, A High Performance Java Database
+# pidfile: /var/run/hsqldb.pid
 # config: /etc/sysconfig/hsqldb
 
 # N.b.  Being a system script, this script does not use inherited variables.
@@ -55,19 +56,22 @@ SYNTAX_MSG='SYNTAX:  /path/to/this/script/hsqldb start|stop|restart|status'
 
 CFGFILE=
 LOGFILE=
+PIDFILE=
 case "`uname`" in
     Linux)
         CFGFILE=/etc/sysconfig/hsqldb
         LOGFILE=/var/log/hsqldb.log
+        PIDFILE=/var/run/hsqldb.pid
     ;;
     *)
         CFGFILE=/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
+        PIDFILE=/etc/hsqldb.pid
     ;;
 esac
 
 # Sanity check
-[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] || {
+[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] || {
     echo "Internal problem in init script" 1>&2
     exit 11
 }
@@ -117,7 +121,38 @@ URLIDS=
     exit 2
 }
 
-case "$1" in
+# Set HSQLDB_PID according to pid file.
+HSQLDB_PID=
+[ -r "$PIDFILE" ]  && {
+    [ -f "$PIDFILE" ] || {
+        echo "'$PIDFILE' is not a regular file" 1>&2
+        exit 6
+    }
+    [ -w "$PIDFILE" ] || {
+        echo "'$PIDFILE' is not writable" 1>&2
+        exit 6
+    }
+    HSQLDB_PID="`cat $PIDFILE`" || {
+        echo "Failed to read pid file '$PIDFILE'" 1>&2
+        exit 6
+    }
+    case "$HSQLDB_PID" in *[a-zA-Z/!@#$%^*+=_~]*) HSQLDB_PID=;; esac
+    [ -n "$HSQLDB_PID" ] || {
+        echo "Pid file '$PIDFILE' does not contain a valid process identifier" 1>&2
+        exit 6
+    }
+    kill -0 "$HSQLDB_PID" > /dev/null 2>&1 || {
+        echo 'Removing stale pid file'
+        rm -f "$PIDFILE" || {
+            echo "Failed to remove pid file '$PIDFILE'"
+            exit 6
+        }
+        HSQLDB_PID=
+    }
+    #echo "PID is ($HSQLDB_PID)"
+}
+
+case "$COMMAND" in
     start)
         echo "I am here"
     ;;
