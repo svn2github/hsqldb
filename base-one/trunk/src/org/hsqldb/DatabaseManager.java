@@ -29,6 +29,9 @@
  */
 
 
+
+
+
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlTimer;
@@ -132,11 +135,12 @@ class DatabaseManager {
     /**
      * Used by in-process connections and by Servlet
      */
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     static Session newSession(String type, String path, String user,
                               String password,
-                              boolean ifexists) throws HsqlException {
+                              boolean ifexists,HsqlProperties props) throws HsqlException {
 
-        Database db = getDatabase(type, path, ifexists);
+        Database db = getDatabase(type, path, ifexists,props);
 
         return db.connect(user, password);
     }
@@ -169,10 +173,11 @@ class DatabaseManager {
     /**
      * Used by server to open or create a database
      */
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     static int getDatabase(String type, String path,
-                           Server server) throws HsqlException {
+                           Server server,HsqlProperties props) throws HsqlException {
 
-        Database db = getDatabase(type, path, false);
+        Database db = getDatabase(type, path, false,props);
 
         registerServer(server, db);
 
@@ -193,8 +198,9 @@ class DatabaseManager {
      * the db can be reopened for the new connection).
      *
      */
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     static Database getDatabase(String type, String path,
-                                boolean ifexists) throws HsqlException {
+                                boolean ifexists,HsqlProperties props) throws HsqlException {
 
         // If the (type, path) pair does not correspond to a registered
         // instance, then getDatabaseObject() returns a newly constructed
@@ -202,7 +208,7 @@ class DatabaseManager {
         // The database state will be DATABASE_SHUTDOWN,
         // which means that the switch below will attempt to
         // open the database instance.
-        Database db = getDatabaseObject(type, path, ifexists);
+        Database db = getDatabaseObject(type, path, ifexists,props);
 
         synchronized (db) {
             switch (db.getState()) {
@@ -221,7 +227,7 @@ class DatabaseManager {
                     db.open();
                     break;
 
-                // This state will be currently not be as Database.Close() is
+                // This state will currently not be reached as Database.Close() is
                 // called while a lock is held on the database.
                 // If we remove the lock from this method and a database is
                 // being shutdown by a thread and in the meantime another thread
@@ -242,9 +248,9 @@ class DatabaseManager {
 
         return db;
     }
-
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private static synchronized Database getDatabaseObject(String type,
-            String path, boolean ifexists) throws HsqlException {
+            String path, boolean ifexists,HsqlProperties props) throws HsqlException {
 
         Database db;
         Object   key = path;
@@ -262,7 +268,7 @@ class DatabaseManager {
         db = (Database) databaseMap.get(key);
 
         if (db == null) {
-            db            = new Database(type, path, path, ifexists);
+            db            = new Database(type, path, path, ifexists,props);
             db.databaseID = dbIDCounter;
 
             databaseIDMap.put(dbIDCounter, db);

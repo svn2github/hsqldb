@@ -144,7 +144,9 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             dbType = dbURL.getProperty("connection_type");
 
             try {
-                DatabaseManager.getDatabase(dbType, dbPath, false);
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
+                DatabaseManager.getDatabase(dbType, dbPath, false, dbURL);
             } catch (HsqlException e) {
                 errorStr = e.getMessage();
             }
@@ -243,7 +245,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                 try {
                     Session session = DatabaseManager.newSession(dbType,
                         dbPath, resultIn.getMainString(),
-                        resultIn.getSubString(), true);
+                        resultIn.getSubString(), true, null);
 
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
                     resultOut.sessionID = session.getId();

@@ -95,14 +95,25 @@ import org.hsqldb.lib.Sort;
  * Handles cached table persistence with a *.data file and memory cache.<p>
  *
  * All CACHED tables are stored in a *.data file. The Cache object provides
- * buffered access to the rows. The buffer is a linear
- * hash index implementation. Chains of elements in the hash table buckets
- * form a circular double-linked list of all the
- * cached elements. This list is used to select modified rows that need
- * saving to disk or to free infrequently-accessed rows to make way for new
- * rows. Saving modified rows to disk is performed in the sequential order of
- * the file offsets of the rows but it may sometimes take more than one
- * pass.<p>
+ * buffered access to the rows. The buffer is a hash index implementation,
+ * with separate chaining. The maximum number of elements is fixed.<p>
+ *
+ * Chains of elements for each index slot are linked to the next
+ * and previous chain to form a circular double-linked list of all the
+ * cached elements. When the maximum number of elements is reached and new
+ * rows are added to the cache, either due to INSERT commands or reading from
+ * the disk, some elements of the cache are released. These elements are
+ * selected from the least frequently-accessed rows. If any of these rows
+ * have been modified, they are written to disk before being freed.<p>
+ *
+ * In 1.7.2 a new cleanUp() method allows the rows to be freed to be selected
+ * precisely according to their last access sequence number. The double-linked
+ * list is traversed once and all the access count values are copied to an
+ * int array. A statistical function calculates the access sequence number
+ * corresponding to the given percentile. This value is used in another
+ * traversal of the double-linked list to put the given percentile of rows.
+ * Modified rows are put in an array and sorted according to their file
+ * position before they are saved to disk and removed from the array.<p>
  *
  * A separate linked list of free slots in the *.data file is also kept. This
  * list is formed when rows are deleted from the database, and is used for
@@ -186,7 +197,6 @@ abstract class Cache {
 // ---------------------------------------------------
     //
     private CachedRow rFirst;                     // must point to one of rData[]
-    private CachedRow rLastChecked;               // can be any row
 
     // outside access allowed to all below only for metadata
     CacheFree fRoot;
@@ -252,7 +262,6 @@ abstract class Cache {
         rowTable       = new CachedRow[maxCacheSize];
         rData          = new CachedRow[cacheLength];
         rFirst         = null;
-        rLastChecked   = null;
         iFreePos       = 0;
         fRoot          = null;
         iFreeCount     = 0;
@@ -486,73 +495,8 @@ abstract class Cache {
         }
 
         saveAllTimer.stop();
-
-        for (int i = 0; i < removecount; i++) {
-            rowTable[i] = null;
-        }
-
         resetAccessCount();
         initBuffers();
-    }
-
-    /**
-     * Reduces the number of rows held in this Cache object. <p>
-     *
-     * Cleanup is done by checking the accessCount of the Rows and removing
-     * the third of the rows that have been accessed less recently.
-     *
-     */
-    private void cleanUpOld() throws HsqlException {
-
-        // put all rows in the array
-        for (int i = 0; i < iCacheSize; i++) {
-            rowTable[i] = rFirst;
-            rFirst      = rFirst.rNext;
-        }
-
-        // sort by access count
-        rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
-        sortTimer.start();
-        Sort.sort(rowTable, rowComparator, 0, iCacheSize - 1);
-        sortTimer.stop();
-
-        // sort by file position
-        int removecount = iCacheSize / 4;
-
-        rowComparator.setType(rowComparator.COMPARE_POSITION);
-        sortTimer.start();
-        Sort.sort(rowTable, rowComparator, 0, removecount - 1);
-        sortTimer.stop();
-        saveAllTimer.start();
-
-        for (int i = 0; i < removecount; i++) {
-            CachedRow r = rowTable[i];
-
-            try {
-                if (r.hasChanged()) {
-                    saveRow(r);
-
-                    saveRowCount++;
-                }
-
-                if (!r.isRoot()) {
-                    remove(r);
-                }
-            } catch (Exception e) {
-                throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_cleanUp,
-                                  new Object[]{ e });
-            }
-
-            rowTable[i] = null;
-        }
-
-        saveAllTimer.stop();
-
-        for (int i = removecount; i < rowTable.length; i++) {
-            rowTable[i] = null;
-        }
-
-        resetAccessCount();
     }
 
     /**
@@ -581,15 +525,6 @@ abstract class Cache {
     protected CachedRow remove(CachedRow r) throws HsqlException {
 
         // r.hasChanged() == false unless called from Cache.remove(Table)
-        // make sure rLastChecked does not point to r
-        if (r == rLastChecked) {
-            rLastChecked = rLastChecked.rNext;
-
-            if (rLastChecked == r) {
-                rLastChecked = null;
-            }
-        }
-
         // make sure rData[k] does not point here
         // HJB-2001-06-21
         int k = (r.iPos >> 3) & multiplierMask;
@@ -618,47 +553,6 @@ abstract class Cache {
         iCacheSize--;
 
         return r.free();
-    }
-
-    /**
-     * Finds a Row with the smallest (oldest) iLastAccess member among six
-     * rows that are examined, using LRU. <p>
-     *
-     * Freeing one out of six rows ensures that in all circumstances, the
-     * 5 most recently used rows always remain in the Cache. The rows to
-     * which a pointer is kept while deleting or inserting rows must
-     * therefore be among the 5 most recently accessed. The Index class
-     * keeps such pointers on a temporary basis.
-     *
-     */
-    private CachedRow getWorst() throws HsqlException {
-
-        if (rLastChecked == null) {
-            rLastChecked = rFirst;
-
-            if (rLastChecked == null) {
-                return null;
-            }
-        }
-
-        CachedRow candidate = rLastChecked;
-        int       worst     = rLastChecked.iLastAccess;
-
-        rLastChecked = rLastChecked.rNext;
-
-        // algorithm: check the next 5 rows and take the worst
-        for (int i = 0; i < 5; i++) {
-            int w = rLastChecked.iLastAccess;
-
-            if (w < worst) {
-                candidate = rLastChecked;
-                worst     = w;
-            }
-
-            rLastChecked = rLastChecked.rNext;
-        }
-
-        return candidate;
     }
 
     /**

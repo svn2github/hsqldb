@@ -1652,7 +1652,9 @@ public class Server implements HsqlSocketRequestHandler {
 
             sw = new StopWatch();
 
-            int id = DatabaseManager.getDatabase(dbType[i], dbPath[i], this);
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
+            int id = DatabaseManager.getDatabase(dbType[i], dbPath[i], this,
+                                                 dbURL);
 
             sw.stop();
 

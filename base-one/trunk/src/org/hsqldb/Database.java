@@ -68,6 +68,8 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Properties;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
@@ -113,15 +115,18 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class Database {
 
-    int                   databaseID;
-    private String        sType;
-    private String        sName;
-    private String        sPath;
-    boolean               isNew;
-    private UserManager   userManager;
-    private HsqlArrayList tTable;
-    DatabaseInformation   dInfo;
-    ClassLoader           classLoader;
+    int            databaseID;
+    private String sType;
+    private String sName;
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
+    private HsqlProperties urlProperties;
+    private String         sPath;
+    boolean                isNew;
+    private UserManager    userManager;
+    private HsqlArrayList  tTable;
+    DatabaseInformation    dInfo;
+    ClassLoader            classLoader;
 
     /** indicates the state of the database */
     private int dbState;
@@ -165,12 +170,17 @@ class Database {
      * @param path is the canonical path to the database files
      * @param ifexists if true, prevents creation of a new database if it
      * does not exist. Only valid for file-system databases.
+     * @param props property overrides placed on the connect URL
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-    Database(String type, String path, String name,
-             boolean ifexists) throws HsqlException {
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL    
+    Database(String type, String path, String name, boolean ifexists,
+             HsqlProperties props) throws HsqlException {
+
+        urlProperties = props;
 
         setState(Database.DATABASE_SHUTDOWN);
 
@@ -242,6 +252,20 @@ class Database {
             databaseProperties = new HsqlDatabaseProperties(this);
 
             databaseProperties.load();
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL    
+            // overload file database properties with any passed on URL line
+            if (urlProperties != null) {
+                for (Enumeration e = urlProperties.propertyNames();
+                        e.hasMoreElements(); ) {
+                    String propertyName = (String) e.nextElement();
+
+                    databaseProperties.setProperty(
+                        propertyName,
+                        urlProperties.getProperty(propertyName));
+                }
+            }
+
             compiledStatementManager.reset();
 
             tTable                = new HsqlArrayList();

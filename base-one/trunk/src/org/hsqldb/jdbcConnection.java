@@ -2415,8 +2415,10 @@ public class jdbcConnection implements Connection {
             if (connType == DatabaseManager.S_FILE
                     || connType == DatabaseManager.S_MEM
                     || connType == DatabaseManager.S_RES) {
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL                         
                 sessionProxy = DatabaseManager.newSession(connType, database,
-                        user, password, ifExists);
+                        user, password, ifExists, props);
             } else if (connType == DatabaseManager.S_HSQL
                        || connType == DatabaseManager.S_HSQLS) {
                 sessionProxy = new HSQLClientConnection(host, port, path,
