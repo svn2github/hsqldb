@@ -10,6 +10,7 @@ java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/h
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/HsqlProperties.java -JAVA2
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/BinaryServerRowOutput.java -JAVA2
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/jdbcSystem.java -JAVA2
+java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/JDBCTypes.java -JAVA2
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferDb.java -JAVA2
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferSQLText.java -JAVA2
 java -classpath %classpath%;../classes org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferHelper.java -JAVA2

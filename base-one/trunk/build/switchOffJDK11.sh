@@ -72,6 +72,8 @@ echo "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitche
 "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/BinaryServerRowOutput.java +JAVA2
 echo "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/jdbcSystem.java +JAVA2
 "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/jdbcSystem.java +JAVA2
+echo "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/JDBCTypes.java +JAVA2
+"$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/JDBCTypes.java +JAVA2
 echo "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferDb.java +JAVA2
 "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferDb.java +JAVA2
 echo "$jdkhome/bin/java" -classpath "$cp:../classes" org.hsqldb.util.CodeSwitcher ../src/org/hsqldb/util/TransferSQLText.java +JAVA2

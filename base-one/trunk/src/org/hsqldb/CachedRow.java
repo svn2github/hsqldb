@@ -336,7 +336,9 @@ class CachedRow extends Row {
 
         oData = in.readData(tTable.getColumnTypes());
 
-        Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+        if (tTable.isIndexCached()) {
+            Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+        }
 
         iLastAccess = iCurrentAccess++;
     }

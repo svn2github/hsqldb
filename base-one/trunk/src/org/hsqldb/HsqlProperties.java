@@ -47,7 +47,7 @@ import java.util.Properties;
 public class HsqlProperties {
 
     protected String           fileName;
-    protected final Properties stringProps;;
+    protected Properties stringProps;;
 
     public HsqlProperties() {
         stringProps = new Properties();
