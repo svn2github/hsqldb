@@ -1528,7 +1528,7 @@ class Table {
      */
     private void insertRow(Object row[], Session c) throws HsqlException {
 
-        fireAll(TriggerDef.INSERT_BEFORE_ROW, row);
+        fireAll(TriggerDef.INSERT_BEFORE_ROW, null, row);
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0, size = vConstraint.size(); i < size; i++) {
@@ -1537,7 +1537,7 @@ class Table {
         }
 
         insertNoCheck(row, c, true);
-        fireAll(TriggerDef.INSERT_AFTER_ROW, row);
+        fireAll(TriggerDef.INSERT_AFTER_ROW, null, row);
     }
 
     /**
@@ -1815,27 +1815,6 @@ class Table {
         }
     }
 
-    /**
-     *  Row level DELETE and INSERT triggers
-     *
-     * @param  trigVecIndx
-     * @param  row
-     */
-    void fireAll(int trigVecIndx, Object row[]) {
-
-        if (!database.isReferentialIntegrity()) {    // reloading db
-            return;
-        }
-
-        HsqlArrayList trigVec = vTrigs[trigVecIndx];
-
-        for (int i = 0, size = trigVec.size(); i < size; i++) {
-            TriggerDef td = (TriggerDef) trigVec.get(i);
-
-            td.push(row, null);    // tell the trigger thread to fire with this row
-        }
-    }
-
 // statement-level triggers
 
     /**
@@ -1849,7 +1828,7 @@ class Table {
 
         row[0] = new String("Statement-level");
 
-        fireAll(trigVecIndx, row);
+        fireAll(trigVecIndx, row, null);
     }
 
     /**
@@ -2317,11 +2296,11 @@ class Table {
     private void deleteNoRefCheck(Object row[],
                                   Session session) throws HsqlException {
 
-        fireAll(TriggerDef.DELETE_BEFORE_ROW, row);
+        fireAll(TriggerDef.DELETE_BEFORE_ROW, row, null);
         deleteNoCheck(row, session, true);
 
         // fire the delete after statement trigger
-        fireAll(TriggerDef.DELETE_AFTER_ROW, row);
+        fireAll(TriggerDef.DELETE_AFTER_ROW, row, null);
     }
 
     /**
@@ -2331,11 +2310,11 @@ class Table {
     private void deleteNoRefCheck(Row r,
                                   Session session) throws HsqlException {
 
-        fireAll(TriggerDef.DELETE_BEFORE_ROW, r.getData());
+        fireAll(TriggerDef.DELETE_BEFORE_ROW, r.getData(), null);
         deleteNoCheck(r, session, true);
 
         // fire the delete after statement trigger
-        fireAll(TriggerDef.DELETE_AFTER_ROW, r.getData());
+        fireAll(TriggerDef.DELETE_AFTER_ROW, r.getData(), null);
     }
 
     /**

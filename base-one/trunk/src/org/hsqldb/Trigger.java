@@ -31,24 +31,76 @@
 
 package org.hsqldb;
 
-// fredt@users 20030727 - signature altered
+// fredt@users 20030727 - signature altered to support update triggers
+
+/*
+
+Contents of row1[] and row2[] in each type of trigger.
+
+BEFORE INSERT
+ - row1[] contains single String object = "Statement-level".
+
+AFTER INSERT
+ - row1[] contains single String object = "Statement-level".
+
+BEFORE UPDATE
+ - row1[] contains single String object = "Statement-level".
+
+AFTER UPDATE
+ - row1[] contains single String object = "Statement-level".
+
+BEFORE DELETE
+ - row1[] contains single String object = "Statement-level".
+
+AFTER DELETE
+ - row1[] contains single String object = "Statement-level".
+
+BEFORE INSERT FOR EACH ROW
+ - row2[] contains data about to be inserted and this can
+be modified within the trigger such that modified data gets written to the
+database. Perfect.
+
+AFTER INSERT FOR EACH ROW
+ - row2[] contains data just inserted into the table.
+
+BEFORE UPDATE FOR EACH ROW
+ - row1[] contains currently stored data and not the data that is about to be
+updated.
+
+ - row2[] contains the data that is about to be updated.
+
+AFTER UPDATE FOR EACH ROW
+ - row1[] contains old stored data.
+ - row2[] contains the new data.
+
+BEFORE DELETE FOR EACH ROW
+ - row1[] contains row data about to be deleted.
+
+AFTER DELETE FOR EACH ROW
+ - row1[] contains row data that has been deleted.
+
+List compiled by Andrew Knight (quozzbat@users)
+*/
 
 /**
  *
  *
  *
  * @author Peter Hudson
- * @version 1.7.0
+ * @version 1.7.2
+ * @since 1.7.0
  */
 public interface Trigger {
 
     /**
-     * This method when UPDATE triggers are fired with row1 containing the
-     * existing values of the table row and row2 containing the new values.<p>
+     * When UPDATE triggers are fired, row1 contains the
+     * existing values of the table row and row2 contains the new values.<p>
      *
-     * For INSERT and DELETE triggers, row2 is null and row1 contains the
-     * table row to be inserted or deleted respectively. (fredt)
+     * For INSERT triggers, row1 is null and row2 contains the
+     * table row to be inserted.
      *
+     * For DELETE triggers, row2 is null and row1 contains the
+     * table row to be deleted. (fredt)
      *
      * @param trigName
      * @param tabName
