@@ -261,7 +261,7 @@ public class Trace extends PrintWriter {
      LockFile_checkHeartbeat2                       = 144,
      QuotedTextDatabaseRowOutput_checkConvertString = 145,
      Result_Result                                  = 146,
-     Server_checkRunning                            = 147,
+     SERVER_NO_DATABASE                             = 147,
      Server_openServerSocket                        = 148,
      Server_openServerSocket2                       = 149,
      TextDatabaseRowOutput_checkConvertString       = 150,
@@ -493,7 +493,7 @@ public class Trace extends PrintWriter {
         "$$$$ is presumably locked by another process.",    // LockFile_checkHeartbeat2
         "end of line characters not allowed",    // QuotedTextDatabaseRowOutput_checkConvertString
         "trying to use unsupported result mode: $$",    // Result_Result
-        "server is $$running",    // Server_checkRunning
+        "no valid database paths",    // SERVER_NO_DATABASE
         "Invalid address : $$\nTry one of: $$",    // Server_openServerSocket
         "Invalid address : $$",    // Server_openServerSocket2
         "end of line characters not allowed",    // TextDatabaseRowOutput_checkConvertString
@@ -527,8 +527,8 @@ public class Trace extends PrintWriter {
         "No end sep.",    // TextDatabaseRowInput_getField
         "No end sep.",    // TextDatabaseRowInput_getField2
         "field $$ ($$)",    // TextDatabaseRowInput_getField3
-        "It is ambiguous to specify a parameter marker for both the first and second operands of a BETWEEN comparison predicate",
-        "It is ambiguous to specify a parameter marker for both the first and third operands of a BETWEEN comparison predicate",
+        "parameter markers for both the first and second operands of a BETWEEN comparison predicate",
+        "parameter markers for both the first and third operands of a BETWEEN comparison predicate",
         "reserved 187",                                                                                                         //
         "openning file: $$ error: $$",    //TextCache - or generic file error
         "closing file: $$ error: $$",    //TextCache - or generic file error

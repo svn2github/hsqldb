@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.sql.SQLException;
+
 import org.hsqldb.jdbc.jdbcUtil;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - modified
@@ -58,10 +60,14 @@ public class HsqlServerFactory {
 
         server.setProperties(props);
 
-        try {
-            server.openDatabases();
-        } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+        if (server.openDatabases() == false) {
+            Throwable t = server.getServerError();
+
+            if (t != null && t instanceof HsqlException) {
+                throw jdbcUtil.sqlException((HsqlException) t);
+            } else {
+                throw new SQLException(Trace.getMessage(Trace.GENERAL_ERROR));
+            }
         }
 
         server.setState(ServerConstants.SERVER_STATE_ONLINE);

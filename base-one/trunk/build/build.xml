@@ -170,6 +170,8 @@ examples:
          <include name="*.java"/>
          <include name="org/hsqldb/*.java"/>
          <include name="org/hsqldb/resources/*.java"/>
+         <include name="org/hsqldb/rowio/*.java"/>
+         <include name="org/hsqldb/scriptio/*.java"/>
          <exclude name="org/hsqldb/jmx/*.java"/>
          <exclude name="org/hsqldb/lib/*.java"/>
          <exclude name="org/hsqldb/test/*.java"/>

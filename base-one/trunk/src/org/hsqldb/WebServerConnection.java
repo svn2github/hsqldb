@@ -402,7 +402,7 @@ class WebServerConnection implements Runnable {
 
             is = null;
 
-            server.trace("GET " + name);
+            server.printWithThread("GET " + name);
 
             try {
                 is = new BufferedInputStream(
@@ -474,7 +474,7 @@ class WebServerConnection implements Runnable {
 
         String msg;
 
-        server.trace("processError " + code);
+        server.printWithThread("processError " + code);
 
         switch (code) {
 

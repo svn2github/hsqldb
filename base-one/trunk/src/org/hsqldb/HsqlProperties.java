@@ -399,9 +399,12 @@ public class HsqlProperties {
         return props;
     }
 
-// boucher@users  20021128 - metadata 1.7.2
     public Enumeration propertyNames() {
         return stringProps.propertyNames();
+    }
+
+    public boolean isEmpty() {
+        return stringProps.isEmpty();
     }
 
     public static void main(String[] argv) {

@@ -197,7 +197,8 @@ class ServerConnection implements Runnable {
                 dbID = server.dbID[dbIndex];
                 user = resultIn.getMainString();
 
-                server.trace(mThread + ":trying to connect user " + user);
+                server.printWithThread(mThread + ":trying to connect user "
+                                       + user);
 
                 session = DatabaseManager.newSession(dbID,
                                                      resultIn.getMainString(),
@@ -218,7 +219,7 @@ class ServerConnection implements Runnable {
 
             return;
         } catch (Exception e) {
-            server.trace(mThread + ":couldn't connect " + user);
+            server.printWithThread(mThread + ":couldn't connect " + user);
         }
 
         close();
@@ -237,7 +238,7 @@ class ServerConnection implements Runnable {
                 while (keepAlive) {
                     Result resultIn = Result.read(rowIn, dataInput);
 
-                    server.traceRequest(mThread, resultIn);
+                    server.printRequest(mThread, resultIn);
 
                     Result resultOut = session.execute(resultIn);
 
@@ -248,7 +249,7 @@ class ServerConnection implements Runnable {
             } catch (IOException e) {
 
                 // fredt - is thrown when connection drops
-                server.trace(mThread + ":disconnected " + user);
+                server.printWithThread(mThread + ":disconnected " + user);
             } catch (HsqlException e) {
 
                 // fredt - is thrown while constructing the result

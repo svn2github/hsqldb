@@ -2205,10 +2205,11 @@ public class Expression {
             }
         } else {    // eArg2.exprType == VALUELIST
             Expression[] vl = eArg2.valueList;
+            int          len = vl.length;
 
             if (eArg.isParam) {
                 Trace.check(
-                    vl.length > 0, Trace.COLUMN_TYPE_MISMATCH,
+                    len > 0, Trace.COLUMN_TYPE_MISMATCH,
                     Trace.getMessage(Trace.Expression_resolveTypeForIn1));
                 Trace.check(
                     !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
@@ -2232,7 +2233,7 @@ public class Expression {
                     }
                 }
 
-                for (int i = 1; i < vl.length; i++) {
+                for (int i = 1; i < len; i++) {
                     e = vl[i];
 
                     if (e.isParam) {
@@ -2250,7 +2251,7 @@ public class Expression {
                     eArg2.dataType = dt;
                 }
 
-                for (int i = 0; i < vl.length; i++) {
+                for (int i = 0; i < len; i++) {
                     Expression e = vl[i];
 
                     if (e.isParam) {
@@ -2262,8 +2263,6 @@ public class Expression {
                     }
                 }
             }
-
-            int len = vl.length;
 
             eArg2.isFixedConstantValueList = true;
 
@@ -2623,8 +2622,7 @@ public class Expression {
                                              : Boolean.FALSE;
 
             case IN :
-                return eArg2.testValueList(leftValue, eArg.dataType)
-                       ? Boolean.TRUE
+                return eArg2.testValueList(leftValue) ? Boolean.TRUE
                        : Boolean.FALSE;
 
             case EXISTS :
@@ -2900,16 +2898,6 @@ public class Expression {
                 return eArg.test() || eArg2.test();
 
             case LIKE :
-/*
-                // todo: now for all tests a new 'like' object required!
-                String s    = (String) eArg2.getValue(Types.VARCHAR);
-                int    type = eArg.dataType;
-                Like l = new Like(s, likeEscapeChar,
-                                  type == Types.VARCHAR_IGNORECASE);
-                String c = (String) eArg.getValue(Types.VARCHAR);
-
-                return l.compare(c);
-*/
                 String s = (String) eArg2.getValue(Types.VARCHAR);
 
                 if (eArg2.isParam || eArg2.exprType != VALUE) {
@@ -2921,7 +2909,7 @@ public class Expression {
                 return likeObject.compare(c);
 
             case IN :
-                return eArg2.testValueList(eArg.getValue(), eArg.dataType);
+                return eArg2.testValueList(eArg.getValue());
 
             case EXISTS :
                 Result r = eArg.subSelect.getResult(1);    // 1 is already enough
@@ -2931,10 +2919,6 @@ public class Expression {
 
         Trace.check(eArg != null, Trace.GENERAL_ERROR);
 
-/*
-        int    type = eArg2.likeOptimized ? Types.VARCHAR
-                                          : eArg.dataType;
-*/
         int    type = eArg.dataType;
         Object o    = eArg.getValue(type);
 
@@ -3047,6 +3031,15 @@ public class Expression {
         }
     }
 
+/*
+
+    for ( int i = 0; i < vl.length; i++ ){
+        if ( vl[i].isConstant() ){
+            vl[i] = Column.convertObject(vl[i].valueData, eArg2.dataType);
+        }
+    }
+*/
+
     /**
      * Method declaration
      *
@@ -3063,21 +3056,18 @@ public class Expression {
 // boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
 //                  and correlated IN list expressions
 // fredt - catch type conversion exception due to narrowing
-    private boolean testValueList(Object o,
-                                  int datatype) throws HsqlException {
+    private boolean testValueList(Object o) throws HsqlException {
 
         if (o == null) {
             return false;
         }
 
         if (exprType == VALUELIST) {
-            if (datatype != this.dataType) {
                 try {
                     o = Column.convertObject(o, this.dataType);
                 } catch (HsqlException e) {
                     return false;
                 }
-            }
 
             if (isFixedConstantValueList) {
                 return hList.contains(o);
@@ -3086,9 +3076,9 @@ public class Expression {
             final int len = valueList.length;
 
             for (int i = 0; i < len; i++) {
-                Object o2 = valueList[i].getValue(datatype);
+                Object o2 = valueList[i].getValue(dataType);
 
-                if (Column.compare(o, o2, datatype) == 0) {
+                if (Column.compare(o, o2, dataType) == 0) {
                     return true;
                 }
             }

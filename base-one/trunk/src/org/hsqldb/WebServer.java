@@ -154,63 +154,63 @@ public class WebServer extends Server {
      */
     public static void main(String args[]) {
 
-        WebServer      server;
-        HsqlProperties props;
-        String         propsPath;
+        String propsPath = FileUtil.canonicalOrAbsolutePath("webserver");
+        HsqlProperties fileProps = getPropertiesFromFile(propsPath);
+        HsqlProperties props     = fileProps == null ? new HsqlProperties()
+                                                     : fileProps;
+        HsqlProperties stringProps = HsqlProperties.argArrayToProps(args,
+            ServerConstants.SC_KEY_PREFIX);
 
-        if (args.length > 0) {
-            String p = args[0];
-
-            if ((p != null) && p.startsWith("-?")) {
+        if (stringProps != null) {
+            if (stringProps.errorKeys.length != 0) {
                 printHelp("webserver.help");
 
                 return;
             }
+
+            props.addProperties(stringProps);
         }
 
-        props = HsqlProperties.argArrayToProps(args,
-                                               ServerConstants.SC_KEY_PREFIX);
+        String defaultdb = props.getProperty(ServerConstants.SC_KEY_DATABASE);
+
+        if (defaultdb != null) {
+            props.setProperty(ServerConstants.SC_KEY_DATABASE + ".0",
+                              defaultdb);
+        }
 
         // Standard behaviour when started from the command line
-        // is to halt the VM when the server exits.  This may, of
-        // course, be partially overridden with a security policy
+        // is to halt the VM when the server shuts down.  This may, of
+        // course, be overridden by whatever, if any, security policy
+        // is in place.
         props.setPropertyIfNotExists(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
                                      "false");
 
-        server    = new WebServer();
-        propsPath = server.getDefaultPropertiesPath();
+        // finished setting up properties;
+        Server server = new WebServer();
 
-        server.print("Invoked from main() method");
-        server.print("Loading properties from [" + propsPath + "]");
+        server.setProperties(props);
 
-        if (!server.putPropertiesFromFile(propsPath)) {
+        // now messages go to the channel specified in properties
+        server.print("Startup sequence initiated from main() method");
+
+        if (fileProps != null) {
+            server.print("Loaded properties from [" + propsPath
+                         + ".properties]");
+        } else {
             server.print("Could not load properties from file");
             server.print("Using cli/default properties only");
         }
 
-        server.setProperties(props);
         server.start();
-    }
-
-    /**
-     * Retrieves the default port that this Server will try to use in the
-     * abscence of an explicitly specified one, given the specified
-     * value for whether or not to use secure sockets.
-     *
-     * @param isTls if true, retrieve the default port when using secure
-     *      sockets, else the default port when using plain sockets
-     * @return the default port used in the abscence of an explicit
-     *      specification.
-     */
-    public int getDefaultPort(boolean isTls) {
-        return isTls ? ServerConstants.SC_DEFAULT_HTTPS_SERVER_PORT
-                     : ServerConstants.SC_DEFAULT_HTTP_SERVER_PORT;
     }
 
     /**
      * Retrieves the path that will be used by default if a null or zero-length
      * path is specified to putPropertiesFromFile().  This path does not
      * include the '.properties' file extention, which is implicit.
+     *
+     * NB Campbell - this method is misleading and should be removed -
+     * default properties path is for the main() method only.
      *
      * @return The path that will be used by default if null is specified to
      *      putPropertiesFromFile()

@@ -2,7 +2,9 @@ Readme File
 
 
 
-2004.03.19
+2004.03.20
+
+Enhancements to Server
 
 Bug fixes for: 
 BIGINT values in IN predicate value lists.
