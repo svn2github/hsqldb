@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -131,7 +131,7 @@ implements Serializable, Referenceable, DataSource {
      * @return  a connection to the data source
      * @exception SQLException if a database access error occurs
      */
-    public Connection getConnection() throws java.sql.SQLException {
+    public Connection getConnection() throws SQLException {
         return getConnection(user, password);
     }
 
@@ -182,7 +182,7 @@ implements Serializable, Referenceable, DataSource {
      * @exception SQLException if a database access error occurs.
      * @see #setLoginTimeout
      */
-    public int getLoginTimeout() throws java.sql.SQLException {
+    public int getLoginTimeout() throws SQLException {
         return 0;
     }
 
@@ -206,7 +206,7 @@ implements Serializable, Referenceable, DataSource {
      * @exception SQLException if a database access error occurs
      * @see #setLogWriter
      */
-    public java.io.PrintWriter getLogWriter() throws java.sql.SQLException {
+    public java.io.PrintWriter getLogWriter() throws SQLException {
         return logWriter;
     }
 
@@ -255,7 +255,7 @@ implements Serializable, Referenceable, DataSource {
      * @exception SQLException if a database access error occurs.
      * @see #getLoginTimeout
      */
-    public void setLoginTimeout(int seconds) throws java.sql.SQLException {
+    public void setLoginTimeout(int seconds) throws SQLException {
         loginTimeout = 0;
     }
 
@@ -278,8 +278,7 @@ implements Serializable, Referenceable, DataSource {
      * @exception SQLException if a database access error occurs
      * @see #getLogWriter
      */
-    public void setLogWriter(PrintWriter logWriter)
-    throws java.sql.SQLException {
+    public void setLogWriter(PrintWriter logWriter) throws SQLException {
         this.logWriter = logWriter;
     }
 

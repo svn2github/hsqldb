@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,30 +42,10 @@ import java.io.Serializable;
  * Input / Output utility
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 public class InOutUtil {
-
-    /**
-     * reads an int from an InputStream
-     */
-    public static int readInt(InputStream datain) throws IOException {
-
-        int value = 0;
-
-        for (int scale = 24; scale >= 0; scale -= 8) {
-            int b = datain.read();
-
-            if (b == -1) {
-                throw new IOException();
-            }
-
-            value += b << scale;
-        }
-
-        return value;
-    }
 
     /**
      * Implementation only supports unix line-end format and is suitable for

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,8 @@
 
 package org.hsqldb;
 
-import java.sql.DatabaseMetaData;
 import java.util.Locale;
 
-import org.hsqldb.lib.FileUtil;
 import org.hsqldb.resources.BundleHandler;
 import org.hsqldb.store.ValuePool;
 
@@ -47,6 +45,14 @@ import org.hsqldb.store.ValuePool;
  * @since HSQLDB 1.7.2
  */
 final class DITableInfo {
+
+    // related to DatabaseMetaData
+    int                bestRowTemporary   = 0;
+    int                bestRowTransaction = 1;
+    int                bestRowSession     = 2;
+    int                bestRowUnknown     = 0;
+    int                bestRowNotPseudo   = 1;
+    static final short tableIndexOther    = 3;
 
     /** Used in buffer size and character octet length determinations. */
     private static final int HALF_MAX_INT = Integer.MAX_VALUE >>> 1;
@@ -112,7 +118,7 @@ final class DITableInfo {
      * a pseudo column
      */
     Integer getBRIPseudo() {
-        return ValuePool.getInt(DatabaseMetaData.bestRowNotPseudo);
+        return ValuePool.getInt(bestRowNotPseudo);
     }
 
     /**
@@ -126,32 +132,8 @@ final class DITableInfo {
     Integer getBRIScope() {
 
         return (table.isTemp() ||!table.isWritable())
-               ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
-               : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
-    }
-
-    /**
-     * Retrieves the hashCode() value for the table's Cache object. <p>
-     *
-     * @return the hashCode() value for the table's Cache object.
-     */
-    Integer getCacheHash() {
-
-        return (table.cache == null) ? null
-                                     : ValuePool.getInt(
-                                         table.cache.hashCode());
-    }
-
-    /**
-     * Retrieves the absolute path of the the table's data file. <p>
-     *
-     * @return the absolute path of the the table's data file
-     */
-    String getCachePath() {
-
-        return (table.cache == null) ? null
-                                     : FileUtil.canonicalOrAbsolutePath(
-                                         table.cache.sName);
+               ? ValuePool.getInt(bestRowSession)
+               : ValuePool.getInt(bestRowTemporary);
     }
 
     /**
@@ -376,8 +358,8 @@ final class DITableInfo {
         Column column = table.getColumn(i);
 
         return (column.isNullable() &&!column.isIdentity())
-               ? ValuePool.getInt(DatabaseMetaData.columnNullable)
-               : ValuePool.getInt(DatabaseMetaData.columnNoNulls);
+               ? ValuePool.getInt(DITypeInfo.columnNullable)
+               : ValuePool.getInt(DITypeInfo.columnNoNulls);
     }
 
     /**
@@ -643,7 +625,7 @@ final class DITableInfo {
      * @return the DatabaseMetaData type code of the specified Index
      */
     Integer getIndexType(int i) {
-        return ValuePool.getInt(DatabaseMetaData.tableIndexOther);
+        return ValuePool.getInt(tableIndexOther);
     }
 
     /**

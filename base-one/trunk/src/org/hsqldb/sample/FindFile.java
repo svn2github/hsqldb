@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@ class FindFile {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         // Exceptions may occur
         try {
@@ -261,7 +261,7 @@ class FindFile {
                 path += File.separator;
             }
 
-            String list[] = f.list();
+            String[] list = f.list();
 
             // Process all files recursivly
             for (int i = 0; (list != null) && (i < list.length); i++) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,19 +47,19 @@ import java.io.InputStream;
 public class HsqlByteArrayInputStream extends InputStream
 implements DataInput {
 
-    protected byte buf[];
-    protected int  pos;
-    protected int  mark = 0;
-    protected int  count;
+    protected byte[] buf;
+    protected int    pos;
+    protected int    mark = 0;
+    protected int    count;
 
-    public HsqlByteArrayInputStream(byte buf[]) {
+    public HsqlByteArrayInputStream(byte[] buf) {
 
         this.buf   = buf;
         this.pos   = 0;
         this.count = buf.length;
     }
 
-    public HsqlByteArrayInputStream(byte buf[], int offset, int length) {
+    public HsqlByteArrayInputStream(byte[] buf, int offset, int length) {
 
         this.buf   = buf;
         this.pos   = offset;
@@ -68,11 +68,11 @@ implements DataInput {
     }
 
     // methods that implement java.io.DataInput
-    public final void readFully(byte b[]) throws IOException {
+    public final void readFully(byte[] b) throws IOException {
         readFully(b, 0, b.length);
     }
 
-    public final void readFully(byte b[], int off,
+    public final void readFully(byte[] b, int off,
                                 int len) throws IOException {
 
         if (len < 0) {
@@ -125,7 +125,7 @@ implements DataInput {
         return ch;
     }
 
-    public final short readShort() throws IOException {
+    public short readShort() throws IOException {
 
         if (count - pos < 2) {
             pos = count;
@@ -163,7 +163,7 @@ implements DataInput {
         return (char) ((ch1 << 8) + (ch2));
     }
 
-    public final int readInt() throws IOException {
+    public int readInt() throws IOException {
 
         if (count - pos < 4) {
             pos = count;
@@ -180,7 +180,8 @@ implements DataInput {
     }
 
     public final long readLong() throws IOException {
-        return ((long) (readInt()) << 32) + (readInt() & 0xFFFFFFFFL);
+        return (((long) readInt()) << 32)
+               + (((long) readInt()) & 0xffffffffL);
     }
 
     public final float readFloat() throws IOException {
@@ -222,7 +223,7 @@ implements DataInput {
                              : -1;
     }
 
-    public int read(byte b[], int off, int len) {
+    public int read(byte[] b, int off, int len) {
 
         if (pos >= count) {
             return -1;

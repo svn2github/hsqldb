@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,16 +50,11 @@ class CachedDataRow extends CachedRow {
     /**
      *  Constructor for new rows.
      */
-    CachedDataRow(Table t, Object o[]) throws HsqlException {
+    CachedDataRow(Table t, Object[] o) throws HsqlException {
 
         super(t, o);
 
-        Node n = nPrimaryNode;
-
-        while (n != null) {
-            ((PointerNode) n).iData = iPos;
-            n                       = n.nNext;
-        }
+        hasDataChanged = true;
     }
 
     /**
@@ -69,12 +64,11 @@ class CachedDataRow extends CachedRow {
     CachedDataRow(Table t,
                   RowInputInterface in) throws IOException, HsqlException {
 
-        tTable      = t;
-        iPos        = in.getPos();
-        storageSize = in.getSize();
+        tTable         = t;
+        iPos           = in.getPos();
+        storageSize    = in.getSize();
         oData = in.readData(tTable.getColumnTypes(), tTable.columnCount);
-
-        setPos(iPos);
+        hasDataChanged = false;
     }
 
     /**
@@ -113,17 +107,50 @@ class CachedDataRow extends CachedRow {
     }
 
     /**
+     * returned size does not include the row size written at the beginning
+     */
+    public int getRealSize(RowOutputInterface out) {
+        return out.getSize(this);
+    }
+
+    /**
      *  Writes the data to disk. Unlike CachedRow, hasChanged is never set
      *  to true when changes are made to the Nodes. (Nodes are in-memory).
      *  The only time this is used is when a new Row is added to the Caches.
      */
-    void write(RowOutputInterface out) throws IOException, HsqlException {
+    public void write(RowOutputInterface out) {
 
         out.writeSize(storageSize);
         out.writeData(oData, tTable);
         out.writeEnd();
 
-        hasChanged = false;
+        hasDataChanged = false;
+    }
+
+    public boolean hasChanged() {
+        return hasDataChanged;
+    }
+
+    /**
+     * Sets the file position for the row and registers the row with
+     * the table.
+     *
+     * @param pos position in data file
+     */
+    public void setPos(int pos) {
+
+        iPos = pos;
+
+        if (tTable.needsRowID) {
+            oData[tTable.visibleColumnCount] = new Integer(iPos);
+        }
+
+        Node n = nPrimaryNode;
+
+        while (n != null) {
+            ((PointerNode) n).iData = iPos;
+            n                       = n.nNext;
+        }
     }
 
     /**

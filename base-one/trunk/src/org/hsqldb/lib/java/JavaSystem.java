@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.DriverManager;
 import java.util.Properties;
+import java.text.Collator;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // fredt@users 20021030 - patch 1.7.2 - updates
@@ -53,6 +54,43 @@ import java.util.Properties;
  * @version 1.7.2
  */
 public class JavaSystem {
+
+//#ifdef USECOLLATOR
+    private static Collator i18nCollator = Collator.getInstance();
+
+//#endif
+
+    /**
+     * Arguments are never null.
+     */
+    public static int CompareIngnoreCase(String a, String b) {
+
+//#ifdef JAVA1TARGET
+/*
+        return a.toUpperCase().compareTo(b.toUpperCase());
+*/
+
+//#else
+        return a.compareToIgnoreCase(b);
+
+//#endif
+    }
+
+    /**
+     * Arguments are never null.
+     */
+    public static int CompareInLocale(String a, String b) {
+
+//#ifdef USECOLLATOR
+        return i18nCollator.compare((String) a, (String) b);
+
+//#else
+/*
+        return a.compareTo(b);
+*/
+
+//#endif
+    }
 
     public static BigInteger getUnscaledValue(BigDecimal o) {
 

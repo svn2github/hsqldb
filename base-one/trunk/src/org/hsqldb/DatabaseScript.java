@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,12 +66,12 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Script generation.
@@ -167,8 +167,8 @@ public class DatabaseScript {
                 a.append(' ').append(Token.T_ON).append(' ');
                 a.append(t.getName().statementName);
 
-                int col[] = index.getColumns();
-                int len   = index.getVisibleColumns();
+                int[] col = index.getColumns();
+                int   len = index.getVisibleColumns();
 
                 getColumnList(t, col, len, a);
                 addRow(r, a.toString());
@@ -297,7 +297,7 @@ public class DatabaseScript {
         addRightsStatements(dDatabase, r);
 
         if (dDatabase.logger.hasLog()) {
-            int    delay     = dDatabase.logger.lLog.writeDelay;
+            int    delay     = dDatabase.logger.getWriteDelay();
             String statement = "SET WRITE_DELAY " + delay;
 
             addRow(r, statement);
@@ -329,6 +329,8 @@ public class DatabaseScript {
             a.append(Token.T_TEXT).append(' ');
         } else if (t.isCached()) {
             a.append(Token.T_CACHED).append(' ');
+        } else {
+            a.append(Token.T_MEMORY).append(' ');
         }
 
         a.append(Token.T_TABLE).append(' ');
@@ -337,7 +339,7 @@ public class DatabaseScript {
 
         int   columns = t.getColumnCount();
         Index pki     = t.getIndex(0);
-        int   pk[]    = pki.getColumns();
+        int[] pk      = pki.getColumns();
 
         for (int j = 0; j < columns; j++) {
             Column column  = t.getColumn(j);
@@ -419,7 +421,7 @@ public class DatabaseScript {
                     a.append(c.getName().statementName);
                     a.append(' ').append(Token.T_UNIQUE);
 
-                    int col[] = c.getMainColumns();
+                    int[] col = c.getMainColumns();
 
                     getColumnList(c.getMain(), col, col.length, a);
                     break;
@@ -492,7 +494,7 @@ public class DatabaseScript {
     /**
      * Generates the column definitions for a table.
      */
-    private static void getColumnList(Table t, int col[], int len,
+    private static void getColumnList(Table t, int[] col, int len,
                                       StringBuffer a) {
 
         a.append('(');
@@ -517,7 +519,7 @@ public class DatabaseScript {
         a.append(c.getName().statementName);
         a.append(' ').append(Token.T_FOREIGN).append(' ').append(Token.T_KEY);
 
-        int col[] = c.getRefColumns();
+        int[] col = c.getRefColumns();
 
         getColumnList(c.getRef(), col, col.length, a);
         a.append(' ').append(Token.T_REFERENCES).append(' ');
@@ -566,7 +568,7 @@ public class DatabaseScript {
      */
     private static void addRow(Result r, String sql) {
 
-        String s[] = new String[1];
+        String[] s = new String[1];
 
         s[0] = sql;
 

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -125,7 +125,7 @@ class TestSelf extends TestUtil {
      *
      * @param  argv
      */
-    public static void main(String argv[]) {
+    public static void main(String[] argv) {
 
         print("Usage: TestSelf [records [-m]] (-m means in-memory only)");
 
@@ -266,10 +266,10 @@ class TestSelf extends TestUtil {
         testScript(cConnection, path);
     }
 
-    static byte[] b1   = {
+    static byte[] b1 = {
         0, 1, -128, 44, 12
     };
-    static byte   b2[] = {
+    static byte[] b2 = {
         10, 127
     };
 
@@ -321,7 +321,7 @@ class TestSelf extends TestUtil {
             p.setString(2, "\"Birdie\"'s car ?");
             p.setBoolean(3, false);
 
-            byte b2[] = {
+            byte[] b2 = {
                 10, 127
             };
 
@@ -429,7 +429,7 @@ class TestSelf extends TestUtil {
 
             p.setInt(1, 1);
 
-            int ia1[] = {
+            int[] ia1 = {
                 1, 2, 3
             };
 
@@ -456,7 +456,7 @@ class TestSelf extends TestUtil {
 
             r.next();
 
-            int ia2[] = (int[]) (r.getObject(1));
+            int[] ia2 = (int[]) (r.getObject(1));
 
             if (ia2[0] != 1 || ia2[1] != 2 || ia2[2] != 3
                     || ia2.length != 3) {

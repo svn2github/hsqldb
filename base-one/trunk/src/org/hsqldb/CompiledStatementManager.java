@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,22 +80,22 @@ final class CompiledStatementManager {
      * The Database for which this object is managing
      * CompiledStatement objects.
      */
-    Database database;
+    private Database database;
 
     /** Map:  SQL String => Compiled Statement id (int) */
-    IntValueHashMap sqlMap;
+    private IntValueHashMap sqlMap;
 
     /** Map: Compiled Statement id (int) => SQL String */
-    IntKeyHashMap sqlLookup;
+    private IntKeyHashMap sqlLookup;
 
     /** Map: Compiled statment id (int) => CompiledStatement object. */
-    IntKeyHashMap csidMap;
+    private IntKeyHashMap csidMap;
 
     /** Map: Session id (int) => Map: compiled statement id (int) => use count in session; */
-    IntKeyHashMap sessionMap;
+    private IntKeyHashMap sessionMap;
 
     /** Map: Compiled statment id (int) => total use count (all sessions) */
-    IntKeyIntValueHashMap useMap;
+    private IntKeyIntValueHashMap useMap;
 
     /**
      * Monotonically increasing counter used to assign unique ids to compiled

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,8 +98,7 @@ public class SessionManager {
         return s;
     }
 
-// TODO:
-// sig change should be either:  getSysSession(Database) or getSysSession(dbID)
+/** @todo sig change should be either:  getSysSession(Database) or getSysSession(dbID) */
 
     /**
      * Retrieves the special SYS Session.
@@ -110,8 +109,7 @@ public class SessionManager {
         return sysSession;
     }
 
-// TODO:
-// sig change should be either:  closeAllSessions(Database) or closeAllSessions(dbID)
+/** @todo sig change should be either:  closeAllSessions(Database) or closeAllSessions(dbID) */
 
     /**
      * Closes all Sessions registered with this SessionManager.
@@ -168,7 +166,7 @@ public class SessionManager {
         return (Session) sessionMap.get(id);
     }
 
-    Session[] getAllSessions() {
+    public Session[] getAllSessions() {
 
         Session[] sessions = new Session[sessionMap.size()];
         Iterator  it       = sessionMap.values().iterator();

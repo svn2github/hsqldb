@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.persist.TextCache;
 
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
@@ -92,20 +93,18 @@ class TextTable extends org.hsqldb.Table {
                                                       isReadOnlyNew,
                                                       isReversedNew);
 
-                // force creation of Row objects with nextPos pointers
-                ((TextCache) cache).setSourceIndexing(true);
-
                 // read and insert all the rows from the source file
-                PointerCachedDataRow row = (PointerCachedDataRow) getRow(0,
-                    null);
+                while (true) {
+                    int           pos = ((TextCache) cache).getNextRowPos();
+                    CachedDataRow row = (CachedDataRow) rowStore.get(pos);
 
-                while (row != null) {
+                    if (row == null) {
+                        break;
+                    }
+
+                    row.setNewNodes();
                     insertNoChange(row);
-
-                    row = (PointerCachedDataRow) getRow(row.nextPos, null);
                 }
-
-                ((TextCache) cache).setSourceIndexing(false);
             } catch (HsqlException e) {
                 int linenumber = cache == null ? 0
                                                : ((TextCache) cache)
@@ -120,7 +119,7 @@ class TextTable extends org.hsqldb.Table {
                     openCache(dataSource, isReversed, isReadOnly);
                 } else {
                     if (cache != null) {
-                        cache.closeFile();
+                        cache.close(false);
                     }
 
                     //fredt added
@@ -140,36 +139,6 @@ class TextTable extends org.hsqldb.Table {
 
         dataSource = dataSourceNew;
         isReversed = (isReversedNew && dataSourceNew.length() > 0);
-    }
-
-    boolean equals(Session c, String other) {
-
-        boolean isEqual = super.equals(c, other);
-
-        if (isEqual && isReversed) {
-            try {
-                openCache(dataSource, isReversed, isReadOnly);
-            } catch (HsqlException e) {
-                return false;
-            }
-        }
-
-        return isEqual;
-    }
-
-    boolean equals(String other) {
-
-        boolean isEqual = super.equals(other);
-
-        if (isEqual && isReversed) {
-            try {
-                openCache(dataSource, isReversed, isReadOnly);
-            } catch (HsqlException e) {
-                return false;
-            }
-        }
-
-        return isEqual;
     }
 
     /**
@@ -242,24 +211,8 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected Table duplicate() throws HsqlException {
-        return new TextTable(database, tableName, tableType, ownerSessionId);
-    }
-
-    CachedRow getRow(int pos, Node primarynode) throws HsqlException {
-
-        CachedDataRow r = (CachedDataRow) cache.getRow(pos, this);
-
-        if (r == null) {
-            return null;
-        }
-
-        if (primarynode == null) {
-            r.setNewNodes();
-        } else {
-            r.setPrimaryNode(primarynode);
-        }
-
-        return r;
+        return new TextTable(database, tableName, getTableType(),
+                             ownerSessionId);
     }
 
     void drop() throws HsqlException {

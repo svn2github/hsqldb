@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,17 +56,17 @@ public interface HsqlHeap {
     /**
      * Removes all of the elements from this Heap.
      */
-    public void clear();
+    void clear();
 
     /**
      * Retrieves whether this Heap is empty.
      */
-    public boolean isEmpty();
+    boolean isEmpty();
 
     /**
      * Retrieves whether this Heap is full.
      */
-    public boolean isFull();
+    boolean isFull();
 
     /**
      * Adds the specified element to this Heap.
@@ -78,27 +78,26 @@ public interface HsqlHeap {
      *      dictates that this Heap is not currently accepting additions
      *      or that this Heap is currently full (optional)
      */
-    public void add(Object o)
-    throws IllegalArgumentException, RuntimeException;
+    void add(Object o) throws IllegalArgumentException, RuntimeException;
 
     /**
      * Retrieves the least element from this Heap, without removing it.
      *
      * @return the least element from this Heap
      */
-    public Object peek();
+    Object peek();
 
     /**
      * Retrieves the least element from this Heap, removing it in the process.
      *
      * @return the least element from this Heap
      */
-    public Object remove();
+    Object remove();
 
     /**
      * Retrieves the number of elements currently in this Heap.
      *
      * @return the number of elements currently in this Heap
      */
-    public int size();
+    int size();
 }

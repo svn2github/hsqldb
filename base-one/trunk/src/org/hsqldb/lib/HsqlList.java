@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,19 +42,19 @@ package org.hsqldb.lib;
  */
 public interface HsqlList {
 
-    public void add(int index, Object element);
+    void add(int index, Object element);
 
-    public boolean add(Object element);
+    boolean add(Object element);
 
-    public Object get(int index);
+    Object get(int index);
 
-    public Object remove(int index);
+    Object remove(int index);
 
-    public Object set(int index, Object element);
+    Object set(int index, Object element);
 
-    public boolean isEmpty();
+    boolean isEmpty();
 
-    public int size();
+    int size();
 
-    public Iterator iterator();
+    Iterator iterator();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,40 +42,64 @@ import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.rowio.RowInputTextLog;
+
+import java.io.BufferedInputStream;
+
+import org.hsqldb.store.ValuePool;
+
+import java.io.DataInputStream;
+import java.io.InputStream;
 
 /**
  * Handles operations involving reading back a script or log file written
- * out by DatabaseScriptWriter. This implementation and its subclasses
- * correspond to DatabaseScriptWriter and its subclasses for the supported
- * formats.
+ * out by ScriptWriterText. This implementation
+ * corresponds to ScriptWriterText.
  *
  *  @author fredt@users
+ *  @version 1.8.0
  *  @since 1.7.2
- *  @version 1.7.2
  */
 public class ScriptReaderText extends ScriptReaderBase {
 
     // this is used only to enable reading one logged line at a time
-    BufferedReader d;
+    BufferedReader  dataStreamIn;
+    RowInputTextLog rowIn;
+    boolean         isInsert;
 
     ScriptReaderText(Database db,
                      String file) throws HsqlException, IOException {
+
         super(db, file);
+
+        rowIn = new RowInputTextLog();
+    }
+
+    protected void openFile() throws IOException {
+
+        InputStream d = db.isFilesInJar()
+                        ? getClass().getResourceAsStream(fileName)
+                        : db.getFileAccess().openInputStreamElement(fileName);
+
+        dataStreamIn = new BufferedReader(
+            new InputStreamReader(new BufferedInputStream(d)));
     }
 
     protected void readDDL(Session session)
     throws IOException, HsqlException {
 
-        for (;;) {
-            lastLine = readLoggedStatement();
+        for (; readLoggedStatement(); ) {
+            if (rowIn.getStatementType() == INSERT_STATEMENT) {
+                isInsert = true;
 
-            if (lastLine == null || lastLine.startsWith("INSERT INTO ")) {
                 break;
             }
 
-            Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
+            Result result = session.sqlExecuteDirectNoPreChecks(statement);
 
             if (result != null && result.mode == ResultConstants.ERROR) {
+                db.logger.appLog.logContext(result.getException());
+
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   Trace.DatabaseScriptReader_readDDL,
                                   new Object[] {
@@ -88,61 +112,106 @@ public class ScriptReaderText extends ScriptReaderBase {
     protected void readExistingData(Session session)
     throws IOException, HsqlException {
 
-        // fredt - needed for forward referencing FK constraints
-        db.setReferentialIntegrity(false);
+        try {
+            String tablename = null;
 
-        if (lastLine == null) {
-            lastLine = readLoggedStatement();
-        }
+            // fredt - needed for forward referencing FK constraints
+            db.setReferentialIntegrity(false);
 
-        for (;;) {
-            if (lastLine == null) {
-                break;
+            for (; isInsert || readLoggedStatement(); isInsert = false) {
+                if (!rowIn.getTableName().equals(tablename)) {
+                    tablename    = rowIn.getTableName();
+                    currentTable = db.getUserTable(null, tablename);
+                }
+
+                currentTable.insertFromScript(rowData);
             }
 
-            Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
+            db.setReferentialIntegrity(true);
+        } catch (Exception e) {
+            db.logger.appLog.logContext(e);
 
-            if (result != null && result.mode == ResultConstants.ERROR) {
-                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  Trace.DatabaseScriptReader_readExistingData,
-                                  new Object[] {
-                    new Integer(lineCount), result.getMainString()
-                });
-            }
-
-            lastLine = readLoggedStatement();
+            throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                              Trace.DatabaseScriptReader_readExistingData,
+                              new Object[] {
+                new Integer(lineCount), e.getMessage()
+            });
         }
-
-        db.setReferentialIntegrity(true);
     }
 
-    public String readLoggedStatement() throws IOException {
+    public boolean readLoggedStatement() throws IOException {
 
         //fredt temporary solution - should read bytes directly from buffer
-        String s = d.readLine();
+        String s = dataStreamIn.readLine();
 
         lineCount++;
 
-        return StringConverter.asciiToUnicode(s);
+        statement = StringConverter.asciiToUnicode(s);
+
+        if (statement == null) {
+            return false;
+        }
+
+        processStatement();
+
+        return true;
     }
 
-    /**
-     * openFile
-     *
-     * @throws IOException
-     * @todo Implement this org.hsqldb.scriptio.ScriptReaderBase method
-     */
-    protected void openFile() throws IOException {
+    private void processStatement() throws IOException {
 
-        super.openFile();
+        try {
+            if (statement.startsWith("/*C")) {
+                int endid = statement.indexOf('*', 4);
 
-        d = new BufferedReader(new InputStreamReader(dataStreamIn));
+                sessionNumber = Integer.parseInt(statement.substring(3,
+                        endid));
+                statement = statement.substring(endid + 2);
+            }
+
+            rowIn.setSource(statement);
+
+            statementType = rowIn.getStatementType();
+
+            if (statementType == ANY_STATEMENT) {
+                rowData      = null;
+                currentTable = null;
+
+                return;
+            } else if (statementType == COMMIT_STATEMENT) {
+                rowData      = null;
+                currentTable = null;
+
+                return;
+            }
+
+            String name = rowIn.getTableName();
+
+            currentTable = db.getUserTable(null, name);
+
+            int[] colTypes;
+
+            if (statementType == INSERT_STATEMENT) {
+                colTypes = currentTable.getColumnTypes();
+                rowData =
+                    rowIn.readData(colTypes,
+                                   currentTable.getInvisibleColumnCount());
+            } else if (currentTable.hasPrimaryKey()) {
+                colTypes = currentTable.getPrimaryKeyTypes();
+                rowData  = rowIn.readData(colTypes, colTypes.length);
+            } else {
+                colTypes = currentTable.getColumnTypes();
+                rowData = rowIn.readData(colTypes,
+                                         currentTable.getColumnCount());
+            }
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     public void close() {
 
         try {
-            d.close();
+            dataStreamIn.close();
         } catch (Exception e) {}
     }
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,6 +126,6 @@ public interface Trigger {
      * @param row1 the old row
      * @param row2 the new row
      */
-    public void fire(int type, String trigName, String tabName,
-                     Object row1[], Object row2[]);
+    void fire(int type, String trigName, String tabName, Object[] row1,
+              Object[] row2);
 }

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,13 +66,17 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
+import java.lang.reflect.Constructor;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.HsqlProperties;
+import org.hsqldb.persist.Logger;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions to different parts to support savepoint transactions
@@ -101,6 +105,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users - fredt@users 200305..200307 - patch 1.7.2 - DatabaseManager upgrade
 // loosecannon1@users - patch 1.7.2 - properties on the JDBC URL
+// oj@openoffice.org - changed to file access api
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -121,15 +126,14 @@ public class Database {
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private HsqlProperties urlProperties;
     private String         sPath;
-    boolean                isNew;
     private UserManager    userManager;
     private HsqlArrayList  tTable;
     DatabaseInformation    dInfo;
     ClassLoader            classLoader;
 
     /** indicates the state of the database */
-    private int dbState;
-    Logger      logger;
+    private int   dbState;
+    public Logger logger;
 
     /** true means that all tables are readonly. */
     boolean databaseReadOnly;
@@ -142,44 +146,42 @@ public class Database {
 
     /** true means filesReadOnly but CACHED and TEXT tables are disallowed */
     private boolean                filesInJar;
-    boolean                        sqlEnforceSize;
-    boolean                        sqlEnforceStrictSize;
-    int                            firstIdentity;
+    public boolean                 sqlEnforceSize;
+    public boolean                 sqlEnforceStrictSize;
+    public int                     firstIdentity;
     private HashMap                hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
-    SessionManager                 sessionManager;
+    public SessionManager          sessionManager;
     private HsqlDatabaseProperties databaseProperties;
     HsqlNameManager                nameManager;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
     DatabaseObjectNames            constraintNameList;
-    SequenceManager                sequenceManager;
+    public SequenceManager         sequenceManager;
     CompiledStatementManager       compiledStatementManager;
 
     //
-    static final int DATABASE_ONLINE       = 1;
-    static final int DATABASE_OPENING      = 4;
-    static final int DATABASE_CLOSING      = 8;
-    static final int DATABASE_SHUTDOWN     = 16;
-    static final int CLOSEMODE_IMMEDIATELY = -1;
-    static final int CLOSEMODE_NORMAL      = 0;
-    static final int CLOSEMODE_COMPACT     = 1;
-    static final int CLOSEMODE_SCRIPT      = 2;
+    public static final int DATABASE_ONLINE       = 1;
+    public static final int DATABASE_OPENING      = 4;
+    public static final int DATABASE_CLOSING      = 8;
+    public static final int DATABASE_SHUTDOWN     = 16;
+    public static final int CLOSEMODE_IMMEDIATELY = -1;
+    public static final int CLOSEMODE_NORMAL      = 0;
+    public static final int CLOSEMODE_COMPACT     = 1;
+    public static final int CLOSEMODE_SCRIPT      = 2;
 
     /**
      *  Constructs a new Database object.
      *
      * @param type is the type of the database: "mem", "file", "res"
      * @param path is the canonical path to the database files
-     * @param ifexists if true, prevents creation of a new database if it
-     * does not exist. Only valid for file-system databases.
      * @param props property overrides placed on the connect URL
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-    Database(String type, String path, String name, boolean ifexists,
+    Database(String type, String path, String name,
              HsqlProperties props) throws HsqlException {
 
         urlProperties = props;
@@ -193,7 +195,6 @@ public class Database {
         if (sType == DatabaseManager.S_RES) {
             filesInJar    = true;
             filesReadOnly = true;
-            ifexists      = true;
         }
 
         // does not need to be done more than once
@@ -205,14 +206,33 @@ public class Database {
             classLoader = null;
         }
 
-        try {
-            isNew = (sType == DatabaseManager.S_MEM
-                     ||!FileUtil.exists(path + ".properties", isFilesInJar(),
-                                        getClass()));
-        } catch (IOException e) {}
+// oj@openoffice.org - changed to file access api
+        String fileaccess_class_name =
+            (String) props.getProperty("fileaccess_class_name");
 
-        if (isNew && ifexists) {
-            throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);
+        if (fileaccess_class_name != null) {
+            String storagekey = props.getProperty("storage_key");
+
+            try {
+                Class zclass = Class.forName(fileaccess_class_name);
+                Constructor constructor = zclass.getConstructor(new Class[]{
+                    Object.class });
+
+                fileaccess =
+                    (FileAccess) constructor.newInstance(new Object[]{
+                        storagekey });
+                isStoredFileAccess = true;
+            } catch (java.lang.ClassNotFoundException e) {
+                System.out.println("ClassNotFoundException");
+            } catch (java.lang.InstantiationException e) {
+                System.out.println("InstantiationException");
+            } catch (java.lang.IllegalAccessException e) {
+                System.out.println("IllegalAccessException");
+            } catch (Exception e) {
+                System.out.println("Exception");
+            }
+        } else {
+            fileaccess = new FileUtil();
         }
 
         logger                   = new Logger();
@@ -238,15 +258,20 @@ public class Database {
      */
     void reopen() throws HsqlException {
 
+        boolean isNew;
+
         setState(DATABASE_OPENING);
 
         try {
             User sysUser;
 
-            isNew = (sType == DatabaseManager.S_MEM
-                     ||!FileUtil.exists(sPath + ".properties",
-                                        isFilesInJar(), getClass()));
             databaseProperties = new HsqlDatabaseProperties(this);
+            isNew = sType == DatabaseManager.S_MEM
+                    ||!databaseProperties.checkFileExists();
+
+            if (isNew && urlProperties.isPropertyTrue("ifexists")) {
+                throw Trace.error(Trace.DATABASE_NOT_EXISTS, sType + sPath);
+            }
 
             databaseProperties.load();
             databaseProperties.setURLProperties(urlProperties);
@@ -261,7 +286,7 @@ public class Database {
             constraintNameList    = new DatabaseObjectNames();
             sequenceManager       = new SequenceManager();
             bReferentialIntegrity = true;
-            sysUser               = userManager.createSysUser(this);
+            sysUser               = userManager.createSysUser();
             sessionManager        = new SessionManager(this, sysUser);
             dInfo = DatabaseInformation.newDatabaseInformation(this);
 
@@ -305,7 +330,6 @@ public class Database {
             }
         }
 
-        isNew              = false;
         tTable             = null;
         userManager        = null;
         hAlias             = null;
@@ -321,21 +345,21 @@ public class Database {
     /**
      *  Returns the type of the database: "mem", "file", "res"
      */
-    String getType() {
+    public String getType() {
         return sType;
     }
 
     /**
      *  Returns the path of the database
      */
-    String getPath() {
+    public String getPath() {
         return sPath;
     }
 
     /**
      *  Returns the database properties.
      */
-    HsqlDatabaseProperties getProperties() {
+    public HsqlDatabaseProperties getProperties() {
         return databaseProperties;
     }
 
@@ -373,7 +397,7 @@ public class Database {
      *  transactions. Any following attempts to update the state of the
      *  database will result in throwing an HsqlException.
      */
-    void setReadOnly() {
+    public void setReadOnly() {
         databaseReadOnly = true;
         filesReadOnly    = true;
     }
@@ -384,14 +408,14 @@ public class Database {
      * be stored or updated in the script file. This mode is intended for
      * use with read-only media where data should not be persisted.
      */
-    void setFilesReadOnly() {
+    public void setFilesReadOnly() {
         filesReadOnly = true;
     }
 
     /**
      * Is this in filesReadOnly mode?
      */
-    boolean isFilesReadOnly() {
+    public boolean isFilesReadOnly() {
         return filesReadOnly;
     }
 
@@ -483,7 +507,8 @@ public class Database {
      *  any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
      */
-    Table getUserTable(Session session, String name) throws HsqlException {
+    public Table getUserTable(Session session,
+                              String name) throws HsqlException {
 
         Table t = findUserTable(session, name);
 
@@ -499,12 +524,12 @@ public class Database {
      *  tables and all temp tables.
      *  Returns null if the table does not exist.
      */
-    Table findUserTable(String name) {
+    public Table findUserTable(String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
             Table t = (Table) tTable.get(i);
 
-            if (t.equals(name)) {
+            if (t.tableName.name.equals(name)) {
                 return t;
             }
         }
@@ -618,7 +643,7 @@ public class Database {
             throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
         }
 
-        t.checkDropIndex(indexname, null);
+        t.checkDropIndex(indexname, null, false);
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
 // see Table.moveDefinition();
@@ -633,7 +658,7 @@ public class Database {
     /**
      * Returns the SessionManager for the database.
      */
-    SessionManager getSessionManager() {
+    public SessionManager getSessionManager() {
         return sessionManager;
     }
 
@@ -1076,7 +1101,7 @@ public class Database {
      *
      * @param  resetPrepared If true, reset all prepared statements.
      */
-    void setMetaDirty(boolean resetPrepared) {
+    public void setMetaDirty(boolean resetPrepared) {
 
         if (dInfo != null) {
             dInfo.setDirty();
@@ -1167,5 +1192,21 @@ public class Database {
      */
     public String getURI() {
         return sName;
+    }
+
+// oj@openoffice.org - changed to file access api
+    public HsqlProperties getURLProperties() {
+        return urlProperties;
+    }
+
+    private FileAccess fileaccess;
+    private boolean    isStoredFileAccess;
+
+    public synchronized FileAccess getFileAccess() {
+        return fileaccess;
+    }
+
+    public synchronized boolean isStoredFileAccess() {
+        return isStoredFileAccess;
     }
 }

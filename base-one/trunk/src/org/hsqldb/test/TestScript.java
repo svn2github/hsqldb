@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,9 @@ import java.sql.Statement;
 
 public class TestScript extends TestBase {
 
-//    String path = "TestSelfCasewhen.txt";
-    String path = "TestSelfQueries.txt";
+    String path = "TestSelfCasewhen.txt";
 
+//    String path = "TestSelfQueries.txt";
 //    String path = "TestSelfCheckConstraints.txt";
 //    String path = "TestSelfLeftJoin.txt";
     public TestScript(String name) {

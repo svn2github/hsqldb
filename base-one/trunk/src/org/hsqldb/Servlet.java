@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,10 +73,10 @@ import java.io.PrintWriter;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowOutputBinary;
 
@@ -180,7 +180,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             try {
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
-                DatabaseManager.getDatabase(dbType, dbPath, false, dbURL);
+                DatabaseManager.getDatabase(dbType, dbPath, dbURL);
             } catch (HsqlException e) {
                 errorStr = e.getMessage();
             }
@@ -283,7 +283,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                     try {
                         Session session = DatabaseManager.newSession(dbType,
                             dbPath, resultIn.getMainString(),
-                            resultIn.getSubString(), true, null);
+                            resultIn.getSubString(), null);
 
                         resultOut = new Result(ResultConstants.UPDATECOUNT);
                         resultOut.sessionID = session.getId();

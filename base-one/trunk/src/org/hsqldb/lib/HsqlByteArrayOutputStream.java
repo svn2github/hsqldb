@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,8 @@ import java.io.UnsupportedEncodingException;
 public class HsqlByteArrayOutputStream extends java.io.OutputStream
 implements DataOutput {
 
-    protected byte buf[];
-    protected int  count;
+    protected byte[] buf;
+    protected int    count;
 
     public HsqlByteArrayOutputStream() {
         this(128);
@@ -78,7 +78,9 @@ implements DataOutput {
 
     public final void writeInt(int v) {
 
-        ensureRoom(4);
+        if (count + 4 > buf.length) {
+            ensureRoom(4);
+        }
 
         buf[count++] = (byte) (v >>> 24);
         buf[count++] = (byte) (v >>> 16);
@@ -193,11 +195,11 @@ implements DataOutput {
         count++;
     }
 
-    public void write(byte[] b) throws java.io.IOException {
+    public void write(byte[] b) {
         write(b, 0, b.length);
     }
 
-    public void write(byte b[], int off, int len) {
+    public void write(byte[] b, int off, int len) {
 
         ensureRoom(len);
         System.arraycopy(b, off, buf, count, len);
@@ -215,7 +217,7 @@ implements DataOutput {
 
     public byte[] toByteArray() {
 
-        byte newbuf[] = new byte[count];
+        byte[] newbuf = new byte[count];
 
         System.arraycopy(buf, 0, newbuf, 0, count);
 
@@ -255,7 +257,7 @@ implements DataOutput {
         int newcount = count + extra;
 
         if (newcount > buf.length) {
-            byte newbuf[] =
+            byte[] newbuf =
                 new byte[(newcount + newcount / 2 + 256) & 0xffffff00];
 
             System.arraycopy(buf, 0, newbuf, 0, count);

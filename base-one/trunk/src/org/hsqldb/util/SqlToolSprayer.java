@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@ public class SqlToolSprayer {
             urlids.add(sa[i]);
         }
 
-        boolean status[] = new boolean[urlids.size()];
+        boolean[] status = new boolean[urlids.size()];
 
         for (int i = 0; i < status.length; i++) {
             status[i] = false;

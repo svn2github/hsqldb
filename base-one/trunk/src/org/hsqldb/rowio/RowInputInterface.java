@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,24 +45,22 @@ import org.hsqldb.HsqlException;
  */
 public interface RowInputInterface {
 
-    public int getPos();
+    int getPos();
 
-    public int getNextPos() throws IOException;
+    int getSize();
 
-    public int getSize();
+    int readType() throws IOException;
 
-    public int readType() throws IOException;
+    String readString() throws IOException;
 
-    public String readString() throws IOException;
+    int readIntData() throws IOException;
 
-    public int readIntData() throws IOException;
+    long readLongData() throws IOException;
 
-    public long readLongData() throws IOException;
+    Object[] readData(int[] colTypes,
+                      int length) throws IOException, HsqlException;
 
-    public Object[] readData(int[] colTypes,
-                             int length) throws IOException, HsqlException;
+    void resetRow(int filePos, int size) throws IOException;
 
-    public void resetRow(int filePos, int size) throws IOException;
-
-    public byte[] getBuffer();
+    byte[] getBuffer();
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
@@ -55,13 +58,13 @@ import org.hsqldb.types.JavaObject;
 public class RowInputBinary extends RowInputBase
 implements org.hsqldb.rowio.RowInputInterface {
 
-    RowOutputBinary out;
+    private RowOutputBinary out;
 
     public RowInputBinary() {
         super();
     }
 
-    public RowInputBinary(byte buf[]) {
+    public RowInputBinary(byte[] buf) {
         super(buf);
     }
 
@@ -102,7 +105,6 @@ implements org.hsqldb.rowio.RowInputInterface {
         int    length = readInt();
         String s      = StringConverter.readUTF(buf, pos, length);
 
-// fredt - memory opt tests
         s   = ValuePool.getString(s);
         pos += length;
 
@@ -122,30 +124,18 @@ implements org.hsqldb.rowio.RowInputInterface {
     }
 
     protected Integer readSmallint() throws IOException, HsqlException {
-
-// fredt - memory opt tests
-//        return new Integer(readShort());
         return ValuePool.getInt(readShort());
     }
 
     protected Integer readInteger() throws IOException, HsqlException {
-
-// fredt - memory opt tests
-//        return new Integer(readInt());
         return ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, HsqlException {
-
-// fredt - memory opt tests
-//        return new Long(readLong());
         return ValuePool.getLong(readLong());
     }
 
     protected Double readReal(int type) throws IOException, HsqlException {
-
-// fredt - memory opt tests
-//        return new Double(Double.longBitsToDouble(readLong()));
         return ValuePool.getDouble(readLong());
     }
 
@@ -155,8 +145,6 @@ implements org.hsqldb.rowio.RowInputInterface {
         int        scale  = readInt();
         BigInteger bigint = new BigInteger(bytes);
 
-// fredt - memory opt tests
-//        return new BigDecimal(bigint, scale);
         return ValuePool.getBigDecimal(new BigDecimal(bigint, scale));
     }
 
@@ -165,20 +153,18 @@ implements org.hsqldb.rowio.RowInputInterface {
                              : Boolean.FALSE;
     }
 
-/** @todo fredt - get time and data longs then normalise before fetching value */
-    protected java.sql.Time readTime() throws IOException, HsqlException {
-        return HsqlDateTime.getNormalisedTime(readLong());
+    protected Time readTime() throws IOException, HsqlException {
+        return new Time(HsqlDateTime.getNormalisedTime(readLong()));
     }
 
-    protected java.sql.Date readDate() throws IOException, HsqlException {
+    protected Date readDate() throws IOException, HsqlException {
 
         long date = HsqlDateTime.getNormalisedDate(readLong());
 
         return ValuePool.getDate(date);
     }
 
-    protected java.sql.Timestamp readTimestamp()
-    throws IOException, HsqlException {
+    protected Timestamp readTimestamp() throws IOException, HsqlException {
         return HsqlDateTime.timestampValue(readLong(), readInt());
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,69 @@ import java.util.Random;
 
 import org.hsqldb.lib.java.JavaSystem;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+
 /**
  * A collection of static file management methods.
  *
  * @author fredt@users
  * @author boucherb@users
+ * @author  Ocke Janssen oj@openoffice.org
+ * @version 1.8.0
+ * @since 1.7.2
  */
-public class FileUtil {
+public class FileUtil implements FileAccess {
 
+    /** Creates a new instance of FileUtil */
+    public FileUtil() {}
+
+    public boolean isStreamElement(java.lang.String elementName)
+    throws java.util.NoSuchElementException, java.io.IOException {
+
+        try {
+            return (new File(elementName)).exists();
+        } catch (Throwable e) {
+            throw toIOException(e);
+        }
+    }
+
+    public java.io.InputStream openInputStreamElement(
+            java.lang.String streamName) throws java.io.IOException {
+
+        try {
+            return new FileInputStream(new File(streamName));
+        } catch (Throwable e) {
+            throw toIOException(e);
+        }
+    }
+
+    public void createParentDirs(java.lang.String filename) {
+        makeParentDirectories(new File(filename));
+    }
+
+    public void removeElement(java.lang.String filename)
+    throws java.util.NoSuchElementException, java.io.IOException {
+
+        if (isStreamElement(filename)) {
+            delete(filename);
+        }
+    }
+
+    public void renameElement(java.lang.String oldName,
+                              java.lang.String newName)
+                              throws java.util.NoSuchElementException,
+                                     java.io.IOException {
+        renameOverwrite(oldName, newName);
+    }
+
+    public java.io.OutputStream openOutputStreamElement(
+            java.lang.String streamName) throws java.io.IOException {
+        return new FileOutputStream(new File(streamName));
+    }
+
+    // end of FileAccess implementation
     // a new File("...")'s path is not canonicalized, only resolved
     // and normalized (e.g. redundant separator chars removed),
     // so as of JDK 1.4.2, this is a valid test for case insensitivity,
@@ -67,13 +122,8 @@ public class FileUtil {
     /**
      * Delete the named file
      */
-    public static void delete(String filename) throws IOException {
-
-        try {
-            (new File(filename)).delete();
-        } catch (Throwable e) {
-            throw toIOException(e);
-        }
+    public static void delete(String filename) {
+        (new File(filename)).delete();
     }
 
     /**
@@ -98,12 +148,12 @@ public class FileUtil {
     /**
      * Return true or false based on whether the named file exists.
      */
-    static public boolean exists(String filename) {
+    public static boolean exists(String filename) {
         return (new File(filename)).exists();
     }
 
     public static boolean exists(String fileName, boolean resource,
-                                 Class cla) throws IOException {
+                                 Class cla) {
 
         if (fileName == null || fileName.length() == 0) {
             return false;
@@ -114,27 +164,24 @@ public class FileUtil {
     }
 
     /**
-     * Rename the file with oldname to newname. If a file with oldname does not
-     * exist, nothing occurs. If a file with newname already exists, it is
-     * deleted it before the renaming operation proceeds.
+     * Rename the file with oldname to newname. If a file with newname already
+     * exists, it is deleted before the renaming operation proceeds.
+     *
+     * If a file with oldname does not exist, no file will exist after the
+     * operation.
      */
-    static public void renameOverwrite(String oldname,
-                                       String newname) throws IOException {
+    public static void renameOverwrite(String oldname, String newname) {
 
-        try {
-            if (exists(oldname)) {
-                delete(newname);
+        delete(newname);
 
-                File file = new File(oldname);
+        if (exists(oldname)) {
+            File file = new File(oldname);
 
-                file.renameTo(new File(newname));
-            }
-        } catch (Throwable e) {
-            throw toIOException(e);
+            file.renameTo(new File(newname));
         }
     }
 
-    static IOException toIOException(Throwable e) {
+    public static IOException toIOException(Throwable e) {
 
         if (e instanceof IOException) {
             return (IOException) e;
@@ -212,5 +259,44 @@ public class FileUtil {
         } catch (Exception e) {
             return absolutePath(path);
         }
+    }
+
+    public static void makeParentDirectories(File f) {
+
+        String parent = f.getParent();
+
+        if (parent != null) {
+            new File(parent).mkdirs();
+        } else {
+
+            // workaround for jdk 1.1 bug (returns null when there is a parent)
+            parent = f.getPath();
+
+            int index = parent.lastIndexOf('/');
+
+            if (index > 0) {
+                parent = parent.substring(0, index);
+
+                new File(parent).mkdirs();
+            }
+        }
+    }
+
+    public class FileSync implements FileAccess.FileSync {
+
+        FileDescriptor outDescriptor;
+
+        FileSync(FileOutputStream os) throws java.io.IOException {
+            outDescriptor = os.getFD();
+        }
+
+        public void sync() throws java.io.IOException {
+            outDescriptor.sync();
+        }
+    }
+
+    public FileAccess.FileSync getFileSync(java.io.OutputStream os)
+    throws java.io.IOException {
+        return new FileSync((FileOutputStream) os);
     }
 }

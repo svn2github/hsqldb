@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.IntLookup;
+import org.hsqldb.persist.CachedObject;
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
@@ -74,33 +78,15 @@ package org.hsqldb;
  * Base class for a database row object implementing rows for
  * memory resident tables.<p>
  *
- * A Row object references a linked list consisting of Node Objects
- * (one Node per index on the table), and an Object[] containing references
- * to the field values for the row.
+ * Subclass CachedRow implements rows for CACHED and TEXT tables
  *
- * Subclass CachedRow implements rows for CACHED and TEXT tables with extra
- * links to other Row Objects
- *
- * @version 1.7.2
+ * @version 1.8.0
  */
-public class Row {
+public class Row implements CachedObject {
 
-    protected Object oData[];
-    protected Node   nPrimaryNode;
-
-    /**
-     *  Factory method instantiates a Row based on table type.
-     */
-    static Row newRow(Table t, Object o[]) throws HsqlException {
-
-        if (t.isText()) {
-            return new CachedDataRow(t, o);
-        } else if (t.isCached()) {
-            return new CachedRow(t, o);
-        } else {
-            return new Row(t, o);
-        }
-    }
+    int                iPos;
+    protected Object[] oData;
+    protected Node     nPrimaryNode;
 
     /**
      *  Default constructor used only in subclasses.
@@ -111,7 +97,7 @@ public class Row {
      *  Constructor for MEMORY table Row. The result is a Row with Nodes that
      *  are not yet linked with other Nodes in the AVL indexes.
      */
-    Row(Table t, Object o[]) throws HsqlException {
+    Row(Table t, Object[] o) throws HsqlException {
 
         int index = t.getIndexCount();
 
@@ -125,8 +111,6 @@ public class Row {
         }
 
         oData = o;
-
-        t.addRowToStore(this);
     }
 
     /**
@@ -160,15 +144,6 @@ public class Row {
     }
 
     /**
-     * Returns the array of fields in the database row. If the table has no
-     * primary index, an extra internal field is included in the last
-     * position of this array.
-     */
-    public Object[] getData() {
-        return oData;
-    }
-
-    /**
      * Returns the Row Object that currently represents the same database row.
      * In current implementations of Row, this is always the same as the this
      * Object for MEMORY tables, but could be a different Object for CachedRow
@@ -179,6 +154,15 @@ public class Row {
      */
     Row getUpdatedRow() throws HsqlException {
         return this;
+    }
+
+    /**
+     * Returns the array of fields in the database row. If the table has no
+     * primary index, an extra internal field is included in the last
+     * position of this array.
+     */
+    public Object[] getData() {
+        return oData;
     }
 
     /**
@@ -195,5 +179,76 @@ public class Row {
 
     boolean isDeleted() {
         return nPrimaryNode == null;
+    }
+
+    public int getRealSize(RowOutputInterface out) {
+        return 0;
+    }
+
+    public void setStorageSize(int size) {
+        ;
+    }
+
+    public int getStorageSize() {
+        return 0;
+    }
+
+    public int getPos() {
+        return iPos;
+    }
+
+    public void setPos(int pos) {
+        iPos = pos;
+    }
+
+    public boolean hasChanged() {
+        return false;
+    }
+
+    public boolean isKeepInMemory() {
+        return true;
+    }
+
+    public void keepInMemory(boolean keep) {}
+
+    public boolean isInMemory() {
+        return true;
+    }
+
+    public void setInMemory(boolean in) {}
+
+    public void write(RowOutputInterface out) {}
+
+    public void write(RowOutputInterface out, IntLookup lookup) {}
+
+    /**
+     * Lifetime scope of this method depends on the operations performed on
+     * any cached tables since this row or the parameter were constructed.
+     * If only deletes or only inserts have been performed, this method
+     * remains valid. Otherwise it can return invalid results.
+     *
+     * @param obj row to compare
+     * @return boolean
+     */
+    public boolean equals(Object obj) {
+
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj instanceof Row) {
+            return ((Row) obj).iPos == iPos;
+        }
+
+        return false;
+    }
+
+    /**
+     * Hash code is valid only until a modification to the cache
+     *
+     * @return file position of row
+     */
+    public int hashCode() {
+        return iPos;
     }
 }

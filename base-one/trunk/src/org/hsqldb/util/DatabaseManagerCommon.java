@@ -1,39 +1,4 @@
-/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * Neither the name of the Hypersonic SQL Group nor the names of its
- * contributors may be used to endorse or promote products derived from this
- * software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals 
- * on behalf of the Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,6 +43,8 @@ import java.util.Random;
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 // nickferguson@users 20021005 - patch 1.7.1 - enhancements
 // fredt@users 20021012 - patch 1.7.1 - changes to test database DDL
+// weconsultants@users 20041116 - patch 1.8.0 - in 'TestHelp' added 'IF EXISTS for both DROPS.
+//                                Now catching the execption that was never caught before.
 
 /**
  * Common code in Swing and AWT versions of DatabaseManager
@@ -85,8 +52,8 @@ import java.util.Random;
  */
 class DatabaseManagerCommon {
 
-    private static Random rRandom      = new Random(100);
-    static String         selectHelp[] = {
+    private static Random rRandom    = new Random(100);
+    static String[]       selectHelp = {
         "SELECT * FROM ",
         "SELECT [LIMIT n m] [DISTINCT] \n"
         + "{ selectExpression | table.* | * } [, ... ] \n"
@@ -96,46 +63,46 @@ class DatabaseManagerCommon {
         + "[GROUP BY Expression [, ...] ] \n"
         + "[UNION [ALL] selectStatement]"
     };
-    static String insertHelp[] = {
+    static String[] insertHelp = {
         "INSERT INTO ",
         "INSERT INTO table [ (column [,...] ) ] \n"
         + "{ VALUES(Expression [,...]) | SelectStatement }"
     };
-    static String updateHelp[] = {
+    static String[] updateHelp = {
         "UPDATE ",
         "UPDATE table SET column = Expression [, ...] \n"
         + "[WHERE Expression]"
     };
-    static String deleteHelp[]      = {
+    static String[] deleteHelp      = {
         "DELETE FROM ", "DELETE FROM table [WHERE Expression]"
     };
-    static String createTableHelp[] = {
+    static String[] createTableHelp = {
         "CREATE TABLE ",
         "CREATE [TEMP] [CACHED|MEMORY|TEXT] TABLE name \n"
         + "( columnDefinition [, ...] ) \n\n" + "columnDefinition: \n"
         + "column DataType [ [NOT] NULL] [PRIMARY KEY] \n" + "DataType: \n"
         + "{ INTEGER | DOUBLE | VARCHAR | DATE | TIME |... }"
     };
-    static String dropTableHelp[]   = {
+    static String[] dropTableHelp   = {
         "DROP TABLE ", "DROP TABLE table"
     };
-    static String createIndexHelp[] = {
+    static String[] createIndexHelp = {
         "CREATE INDEX ",
         "CREATE [UNIQUE] INDEX index ON \n" + "table (column [, ...])"
     };
-    static String dropIndexHelp[]  = {
+    static String[] dropIndexHelp  = {
         "DROP INDEX ", "DROP INDEX table.index"
     };
-    static String checkpointHelp[] = {
+    static String[] checkpointHelp = {
         "CHECKPOINT", "(HSQLDB SQL only)"
     };
-    static String scriptHelp[]     = {
+    static String[] scriptHelp     = {
         "SCRIPT", "SCRIPT ['file']\n\n" + "(HSQLDB SQL only)"
     };
-    static String shutdownHelp[]   = {
+    static String[] shutdownHelp   = {
         "SHUTDOWN", "SHUTDOWN [COMPACT|IMMEDIATELY]\n\n" + "(HSQLDB SQL only)"
     };
-    static String setHelp[]        = {
+    static String[] setHelp        = {
         "SET ",
         "AUTOCOMMIT { TRUE | FALSE }\n" + "IGNORECASE { TRUE | FALSE }\n"
         + "LOGSIZE size\n" + "MAXROWS maxrows\n" + "PASSWORD password\n"
@@ -145,15 +112,15 @@ class DatabaseManagerCommon {
         + "TABLE table SOURCE \"file\" [DESC]\n"
         + "WRITE_DELAY { TRUE | FALSE }\n\n" + "(HSQLDB SQL only)"
     };
-    static String testHelp[] = {
-        "-->>>TEST<<<-- ;\n" + "--#1000;\n" + "DROP TABLE Test ;\n"
+    static String[] testHelp = {
+        "-->>>TEST<<<-- ;\n" + "--#1000;\n" + "DROP TABLE Test IF EXISTS;\n"
         + "CREATE TABLE Test(\n" + "  Id INTEGER PRIMARY KEY,\n"
         + "  FirstName VARCHAR(20),\n" + "  Name VARCHAR(50),\n"
         + "  ZIP INTEGER) ;\n" + "INSERT INTO Test \n"
         + "  VALUES(#,'Julia','Peterson-Clancy',#) ;\n"
         + "UPDATE Test SET Name='Hans' WHERE Id=# ;\n"
         + "SELECT * FROM Test WHERE Id=# ;\n"
-        + "DELETE FROM Test WHERE Id=# ;\n" + "DROP TABLE Test",
+        + "DELETE FROM Test WHERE Id=# ;\n" + "DROP TABLE Test IF EXISTS;",
         "This test script is parsed by the DatabaseManager\n"
         + "It may be changed manually. Rules:\n"
         + "- it must start with -->>>TEST<<<--.\n"
@@ -161,7 +128,7 @@ class DatabaseManagerCommon {
         + "- lines starting with -- are comments\n"
         + "- lines starting with --#<count> means set new count\n"
     };
-    static String testDataSql[] = {
+    static String[] testDataSql = {
         "SELECT * FROM Product", "SELECT * FROM Invoice",
         "SELECT * FROM Item",
         "SELECT * FROM Customer a INNER JOIN Invoice i ON a.ID=i.CustomerID",
@@ -181,7 +148,7 @@ class DatabaseManagerCommon {
      *
      * @return
      */
-    static String random(String s[]) {
+    static String random(String[] s) {
         return s[random(s.length)];
     }
 
@@ -207,7 +174,7 @@ class DatabaseManagerCommon {
      */
     static void createTestTables(Statement sStatement) {
 
-        String demo[] = {
+        String[] demo = {
             "DROP TABLE Item IF EXISTS;", "DROP TABLE Invoice IF EXISTS;",
             "DROP TABLE Product IF EXISTS;", "DROP TABLE Customer IF EXISTS;",
             "CREATE TABLE Customer(ID INTEGER PRIMARY KEY,FirstName VARCHAR,"
@@ -242,28 +209,28 @@ class DatabaseManagerCommon {
      */
     static String createTestData(Statement sStatement) throws SQLException {
 
-        String name[] = {
+        String[] name = {
             "White", "Karsen", "Smith", "Ringer", "May", "King", "Fuller",
             "Miller", "Ott", "Sommer", "Schneider", "Steel", "Peterson",
             "Heiniger", "Clancy"
         };
-        String firstname[] = {
+        String[] firstname = {
             "Mary", "James", "Anne", "George", "Sylvia", "Robert", "Janet",
             "Michael", "Andrew", "Bill", "Susanne", "Laura", "Bob", "Julia",
             "John"
         };
-        String street[] = {
+        String[] street = {
             "Upland Pl.", "College Av.", "- 20th Ave.", "Seventh Av."
         };
-        String city[]   = {
+        String[] city   = {
             "New York", "Dallas", "Boston", "Chicago", "Seattle",
             "San Francisco", "Berne", "Oslo", "Paris", "Lyon", "Palo Alto",
             "Olten"
         };
-        String product[] = {
+        String[] product = {
             "Iron", "Ice Tea", "Clock", "Chair", "Telephone", "Shoe"
         };
-        int    max       = 50;
+        int      max     = 50;
 
         sStatement.execute("SET REFERENTIAL_INTEGRITY FALSE");
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,17 +68,19 @@ public class ValuePoolHashMap extends BaseHashMap {
                               int purgePolicy)
                               throws IllegalArgumentException {
 
-        if (hashIndex.elementCount > maxCapacity) {
-            int surplus = 128 + hashIndex.elementCount - maxCapacity;
+        if (maxCapacity != 0) {
+            while (hashIndex.elementCount > maxCapacity) {
+                int surplus = 256 + hashIndex.elementCount - maxCapacity;
 
-            if (surplus > hashIndex.elementCount) {
-                surplus = hashIndex.elementCount;
+                if (surplus > hashIndex.elementCount) {
+                    surplus = hashIndex.elementCount;
+                }
+
+                clear(surplus);
             }
-
-            clear(surplus);
         }
 
-        if (maxCapacity < threshold) {
+        if (maxCapacity != 0 && maxCapacity < threshold) {
             rehash(maxCapacity);
         }
 

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@ import java.util.Random;
 
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
@@ -116,7 +117,7 @@ public class Library {
         new FieldPosition(SimpleDateFormat.MONTH_FIELD);
     static final FieldPosition dayPosition =
         new FieldPosition(SimpleDateFormat.DAY_OF_WEEK_FIELD);
-    public static final String sNumeric[][] = {
+    public static final String[][] sNumeric = {
         {
             "ABS", "org.hsqldb.Library.abs"
         }, {
@@ -170,13 +171,15 @@ public class Library {
         }, {
             "BITOR", "org.hsqldb.Library.bitor"
         }, {
+            "BITXOR", "org.hsqldb.Library.bitxor"
+        }, {
             "ROUNDMAGIC", "org.hsqldb.Library.roundMagic"
         }
     };
 
 // fredt@users 20010701 - patch 418023 by deforest@users
 // the definition for SUBSTR was added
-    public static final String sString[][]   = {
+    public static final String[][] sString   = {
         {
             "ASCII", "org.hsqldb.Library.ascii"
         }, {
@@ -233,7 +236,7 @@ public class Library {
             "UPPER", "org.hsqldb.Library.ucase"
         }
     };
-    public static final String sTimeDate[][] = {
+    public static final String[][] sTimeDate = {
         {
             "CURDATE", "org.hsqldb.Library.curdate"
         }, {
@@ -270,7 +273,7 @@ public class Library {
             "YEAR", "org.hsqldb.Library.year"
         }
     };
-    public static final String sSystem[][]   = {
+    public static final String[][] sSystem   = {
         {
             "DATABASE", "org.hsqldb.Library.database"
         }, {
@@ -279,6 +282,8 @@ public class Library {
             "IDENTITY", "org.hsqldb.Library.identity"
         }
     };
+
+    private Library() {}
 
     static HashMap getAliasMap() {
 
@@ -292,7 +297,7 @@ public class Library {
         return h;
     }
 
-    private static void register(HashMap h, String s[][]) {
+    private static void register(HashMap h, String[][] s) {
 
         for (int i = 0; i < s.length; i++) {
             h.put(s[i][0], s[i][1]);
@@ -528,11 +533,24 @@ public class Library {
      *
      * @param i the first value
      * @param j the second value
-     * @return the bit-wise logical <em>and</em> of
+     * @return the bit-wise logical <em>or</em> of
      *      <code>i</code> and <code>j</code>
      */
     public static int bitor(int i, int j) {
         return i | j;
+    }
+
+    /**
+     * Returns the bit-wise logical <em>xor</em> of the given
+     * integer values.
+     *
+     * @param i the first value
+     * @param j the second value
+     * @return the bit-wise logical <em>xor</em> of
+     *      <code>i</code> and <code>j</code>
+     */
+    public static int bitxor(int i, int j) {
+        return i ^ j;
     }
 
     // STRING FUNCTIONS
@@ -912,7 +930,7 @@ public class Library {
             return null;
         }
 
-        char         from[] = s.toCharArray();
+        char[]       from = s.toCharArray();
         String       hex;
         StringBuffer to = new StringBuffer(4 * s.length());
 
@@ -1137,11 +1155,11 @@ public class Library {
 
         s = s.toUpperCase();
 
-        int  len       = s.length();
-        char b[]       = new char[] {
+        int    len       = s.length();
+        char[] b         = new char[] {
             '0', '0', '0', '0'
         };
-        char lastdigit = '0';
+        char   lastdigit = '0';
 
         for (int i = 0, j = 0; i < len && j < 4; i++) {
             char c = s.charAt(i);
@@ -1196,7 +1214,7 @@ public class Library {
             return null;
         }
 
-        char c[] = new char[count];
+        char[] c = new char[count];
 
         while (count > 0) {
             c[--count] = ' ';
@@ -1212,6 +1230,28 @@ public class Library {
      * specified (is <code>null</code>), the remainder of <code>s</code> is
      * implied.
      *
+     * The rules for boundary conditions on s, start and length are,
+     * in order of precedence: <p>
+     *
+     * 1.) if s is null, return null
+     *
+     * 2.) If length is less than 1, return null.
+     *
+     * 3.) If start is 0, it is treated as 1.
+     *
+     * 4.) If start is positive, count from the beginning of s to find
+     *     the first character postion.
+     *
+     * 5.) If start is negative, count backwards from the end of s
+     *     to find the first character.
+     *
+     * 6.) If, after applying 2.) or 3.), the start position lies outside s,
+     *     then return null
+     *
+     * 7.) if length is ommited or is greated than the number of characters
+     *     from the start position to the end of s, return the remaineder of s,
+     *     starting with the start position.
+     *
      * @param s the <code>String</code> from which to produce the indicated
      *      substring
      * @param start the starting position of the desired substring
@@ -1220,30 +1260,35 @@ public class Library {
      */
 
 // fredt@users 20020210 - patch 500767 by adjbirch@users - modified
-    public static String substring(String s, int start, Integer length) {
+// boucherb@users 20050205 - patch to correct bug 1107477
+    public static String substring(final String s, int start,
+                                   final Integer length) {
 
         if (s == null) {
             return null;
         }
 
-        int len = s.length();
+        int sl = s.length();
+        int ol = (length == null) ? sl
+                                  : length.intValue();
 
-        start--;
-
-        start = (start > len) ? len
-                              : start;
-
-        int l = len;
-
-        if (length != null) {
-            l = length.intValue();
+        if (ol < 1) {
+            return null;
         }
 
-        if (start + l > len) {
-            l = len - start;
+        if (start < 0) {
+            start = sl + start;
+        } else if (start > 0) {
+            start--;
         }
 
-        return s.substring(start, start + l);
+        if (start < 0 || start >= sl) {
+            return null;
+        } else if (start > sl - ol) {
+            ol = sl - start;
+        }
+
+        return s.substring(start, start + ol);
     }
 
     /**
@@ -1278,7 +1323,7 @@ public class Library {
      *
      * @return a time value representing the current local time
      */
-    public static java.sql.Time curtime(Connection c) {
+    public static Time curtime(Connection c) {
         return null;
     }
 
@@ -1364,7 +1409,7 @@ public class Library {
      */
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - hour
-    public static Integer hour(java.sql.Time t) {
+    public static Integer hour(Time t) {
 
         if (t == null) {
             return null;
@@ -1381,7 +1426,7 @@ public class Library {
      * @param t the time value from which to extract the minute value
      * @return the minute value from the given time value
      */
-    public static Integer minute(java.sql.Time t) {
+    public static Integer minute(Time t) {
 
         if (t == null) {
             return null;
@@ -1471,7 +1516,7 @@ public class Library {
      * @return an integer representing the second of the hour from the
      *      given time value
      */
-    public static Integer second(java.sql.Time d) {
+    public static Integer second(Time d) {
 
         if (d == null) {
             return null;
@@ -1489,7 +1534,7 @@ public class Library {
      * @return an integer representing the week of the year from the given
      *      date value
      */
-    public static Integer week(java.sql.Date d) {
+    public static Integer week(Date d) {
 
         if (d == null) {
             return null;
@@ -1794,12 +1839,14 @@ public class Library {
     static final int bitand                    = 2;
     static final int bitLength                 = 3;
     static final int bitor                     = 4;
+    static final int bitxor                    = 64;
     static final int character                 = 5;
     static final int concat                    = 6;
     static final int cot                       = 7;
     static final int curdate                   = 8;
     static final int curtime                   = 9;
     static final int database                  = 10;
+    static final int datediff                  = 63;
     static final int day                       = 11;
     static final int dayname                   = 12;
     static final int dayofmonth                = 13;
@@ -1852,7 +1899,8 @@ public class Library {
     static final int user                      = 60;
     static final int week                      = 61;
     static final int year                      = 62;
-    static final int datediff                  = 63;
+
+/** @todo  see bitxor and datediff numbering */
 
     //
     private static final IntValueHashMap functionMap =
@@ -1865,6 +1913,7 @@ public class Library {
         functionMap.put("bitand", bitand);
         functionMap.put("bitlength", bitLength);
         functionMap.put("bitor", bitor);
+        functionMap.put("bitxor", bitor);
         functionMap.put("character", character);
         functionMap.put("concat", concat);
         functionMap.put("cot", cot);
@@ -1951,6 +2000,11 @@ public class Library {
                     return ValuePool.getInt(
                         bitor(((Number) params[0]).intValue(),
                               ((Number) params[1]).intValue()));
+                }
+                case bitxor : {
+                    return ValuePool.getInt(
+                        bitxor(((Number) params[0]).intValue(),
+                               ((Number) params[1]).intValue()));
                 }
                 case character : {
                     return character(((Number) params[0]).intValue());

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 
 package org.hsqldb.scriptio;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
@@ -39,6 +38,7 @@ import java.util.zip.DeflaterOutputStream;
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
+import org.hsqldb.lib.FileAccess;
 
 /**
  *
@@ -63,9 +63,10 @@ class ScriptWriterZipped extends ScriptWriterBinary {
     protected void openFile() throws HsqlException {
 
         try {
-            FileOutputStream fos = new FileOutputStream(outFile, true);
+            FileAccess           fa  = db.getFileAccess();
+            java.io.OutputStream fos = fa.openOutputStreamElement(outFile);
 
-            outDescriptor = fos.getFD();
+            outDescriptor = fa.getFileSync(fos);
             fileStreamOut = new DeflaterOutputStream(fos,
                     new Deflater(Deflater.DEFAULT_COMPRESSION), bufferSize);
         } catch (IOException e) {

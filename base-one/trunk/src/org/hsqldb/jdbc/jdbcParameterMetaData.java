@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,7 +121,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         if (param < 1 || param > parameterCount) {
             String msg = param + " is out of range";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
     }
 

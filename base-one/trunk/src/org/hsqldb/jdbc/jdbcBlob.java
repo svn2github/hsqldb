@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ public class jdbcBlob implements Blob {
     public jdbcBlob(final byte[] data) throws SQLException {
 
         if (data == null) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, "null");
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, "null");
         }
 
         this.data = data;    // (byte[]) data.clone();
@@ -157,13 +157,13 @@ public class jdbcBlob implements Blob {
         pos--;
 
         if (pos < 0 || pos > dlen) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        "pos: " + (pos + 1));
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    "pos: " + (pos + 1));
         }
 
         if (length < 0 || length > dlen - pos) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        "length: " + length);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    "length: " + length);
         }
 
         final byte[] out = new byte[length];
@@ -352,7 +352,7 @@ public class jdbcBlob implements Blob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setBytes(long pos, byte[] bytes) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -389,7 +389,7 @@ public class jdbcBlob implements Blob {
      */
     public int setBytes(long pos, byte[] bytes, int offset,
                         int len) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -418,7 +418,7 @@ public class jdbcBlob implements Blob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public OutputStream setBinaryStream(long pos) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -446,8 +446,8 @@ public class jdbcBlob implements Blob {
         final byte[] ldata = data;
 
         if (len < 0 || len > ldata.length) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        Long.toString(len));
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    Long.toString(len));
         }
 
         if (len == ldata.length) {

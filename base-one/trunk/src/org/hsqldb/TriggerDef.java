@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -337,8 +337,8 @@ class TriggerDef extends Thread {
      * @param  row1
      * @param  row2
      */
-    synchronized void pushPair(Session session, Object row1[],
-                               Object row2[]) {
+    synchronized void pushPair(Session session, Object[] row1,
+                               Object[] row2) {
 
         if (maxRowsQueued == 0) {
             trig.fire(vectorIndex, name.name, table.getName().name, row1,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,12 @@ package org.hsqldb;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // boucherb@users - 2004xxxx - patch 1.7.2
 // -- canonical database uri for catalog name reporting
@@ -1023,7 +1023,7 @@ final class DINameSpace {
         String   className;
 
         out          = new WrapperIterator();
-        classNameSet = session.getGrantedClassNames(true);
+        classNameSet = session.getUser().getGrantedClassNames(true);
 
         addBuiltinToSet(classNameSet);
 

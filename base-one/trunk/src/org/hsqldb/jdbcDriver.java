@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import org.hsqldb.jdbc.jdbcConnection;
-import org.hsqldb.jdbc.jdbcUtil;
+import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.HsqlProperties;
 
 // fredt@users 20011220 - patch 1.7.0 by fredt
 // new version numbering scheme
@@ -232,11 +233,11 @@ public class jdbcDriver implements Driver {
      */
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
 
-        String[]           choices = new String[] {
+        String[]             choices = new String[] {
             "true", "false"
         };
-        DriverPropertyInfo pinfo[] = new DriverPropertyInfo[4];
-        DriverPropertyInfo p;
+        DriverPropertyInfo[] pinfo   = new DriverPropertyInfo[4];
+        DriverPropertyInfo   p;
 
         p          = new DriverPropertyInfo("user", null);
         p.value    = info.getProperty("user");
@@ -266,7 +267,7 @@ public class jdbcDriver implements Driver {
      * @return  this driver's major version number
      */
     public int getMajorVersion() {
-        return jdbcUtil.MAJOR;
+        return HsqlDatabaseProperties.MAJOR;
     }
 
     /**
@@ -275,7 +276,7 @@ public class jdbcDriver implements Driver {
      * @return  this driver's minor version number
      */
     public int getMinorVersion() {
-        return jdbcUtil.MINOR;
+        return HsqlDatabaseProperties.MINOR;
     }
 
     /**

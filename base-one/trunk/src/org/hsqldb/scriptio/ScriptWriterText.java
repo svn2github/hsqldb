@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,21 @@ import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputTextLog;
 
 /**
- * Handles all logging to file operations. A log consists of three blocks:<p>
+ * Handles all scripting and logging operations. A script consists of two blocks:<p>
  *
- * LOG BLOCK: SQL statements logged since startup or the last CHECKPOINT<br>
+ * DDL: SQL statements for table and user definitions
+ * DATA: INSERT statements for memory tables
+ *
+ * This happens as part of the CHECKPOINT and SHUTDOWN COMPACT
+ * process. In this case, the
+ * DATA block contains the CACHED table data as well.<p>
  *
  * A related use for this class is for saving a current snapshot of the
- * database data to a user-defined file. This happens in the SHUTDOWN COMPACT
- * process or done as a result of the SCRIPT command. In this case, the
- * DATA block contains the CACHED table data as well.<p>
+ * database data to a user-defined file with the SCRIPT command
+ *
+ * A log consists of SQL statements of different types. Each statement is
+ * encoded as ASCII and saved.
+ *
  *
  * @author fredt@users
  * @version 1.7.2
@@ -66,6 +73,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         BYTES_LINE_SEP = sLineSep.getBytes();
     }
 
+    static final byte[] BYTES_COMMIT       = "COMMIT".getBytes();
     static final byte[] BYTES_INSERT_INTO  = "INSERT INTO ".getBytes();
     static final byte[] BYTES_VALUES       = " VALUES(".getBytes();
     static final byte[] BYTES_TERM         = ")".getBytes();
@@ -76,6 +84,8 @@ public class ScriptWriterText extends ScriptWriterBase {
     static final byte[] BYTES_C_ID_INIT    = "/*C".getBytes();
     static final byte[] BYTES_C_ID_TERM    = "*/".getBytes();
 
+    ScriptWriterText() {}
+
     public ScriptWriterText(Database db, String file,
                             boolean includeCachedData,
                             boolean newFile) throws HsqlException {
@@ -84,34 +94,6 @@ public class ScriptWriterText extends ScriptWriterBase {
 
     protected void initBuffers() {
         rowOut = new RowOutputTextLog();
-    }
-
-    public void writeRow(int sid, Table table,
-                         Object[] data) throws HsqlException, IOException {
-
-        busyWriting = true;
-
-        rowOut.reset();
-        ((RowOutputTextLog) rowOut).setMode(RowOutputTextLog.MODE_INSERT);
-        writeSessionId(sid);
-        rowOut.write(BYTES_INSERT_INTO);
-        rowOut.writeString(table.getName().statementName);
-        rowOut.write(BYTES_VALUES);
-        rowOut.writeData(data, table);
-        rowOut.write(BYTES_TERM);
-        rowOut.write(BYTES_LINE_SEP);
-        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
-
-        byteCount += rowOut.size();
-
-        fileStreamOut.flush();
-
-        needsSync   = true;
-        busyWriting = false;
-
-        if (forceSync) {
-            sync();
-        }
     }
 
     protected void writeDataTerm() throws IOException {}
@@ -138,16 +120,44 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
-        byteCount += rowOut.size();
-
-        fileStreamOut.flush();
-
+        byteCount   += rowOut.size();
         needsSync   = true;
         busyWriting = false;
 
         if (forceSync) {
             sync();
         }
+    }
+
+    public void writeRow(int sid, Table table,
+                         Object[] data) throws HsqlException, IOException {
+
+        busyWriting = true;
+
+        rowOut.reset();
+        ((RowOutputTextLog) rowOut).setMode(RowOutputTextLog.MODE_INSERT);
+        writeSessionId(sid);
+        rowOut.write(BYTES_INSERT_INTO);
+        rowOut.writeString(table.getName().statementName);
+        rowOut.write(BYTES_VALUES);
+        rowOut.writeData(data, table);
+        rowOut.write(BYTES_TERM);
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        byteCount   += rowOut.size();
+        needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
+    }
+
+    public void writeInsertStatement(int sid, Table table,
+                                     Object[] data)
+                                     throws HsqlException, IOException {
+        writeRow(sid, table, data);
     }
 
     public void writeDeleteStatement(int sid, Table table,
@@ -167,10 +177,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
-        byteCount += rowOut.size();
-
-        fileStreamOut.flush();
-
+        byteCount   += rowOut.size();
         needsSync   = true;
         busyWriting = false;
 
@@ -194,11 +201,27 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
-        byteCount += rowOut.size();
-
-        fileStreamOut.flush();
-
+        byteCount   += rowOut.size();
         needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
+    }
+
+    public void writeCommitStatement(int sid)
+    throws HsqlException, IOException {
+
+        busyWriting = true;
+
+        rowOut.reset();
+        writeSessionId(sid);
+        rowOut.write(BYTES_COMMIT);
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        byteCount   += rowOut.size();
         busyWriting = false;
 
         if (forceSync) {

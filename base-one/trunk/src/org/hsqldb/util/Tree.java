@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -206,7 +206,7 @@ class Tree extends Panel {
      */
     public void addRow(String key, String value, String state, int color) {
 
-        String row[] = new String[4];
+        String[] row = new String[4];
 
         if (value == null) {
             value = "";
@@ -327,8 +327,8 @@ class Tree extends Panel {
         gImage.setColor(Color.white);
         gImage.fillRect(0, 0, iWidth, iHeight);
 
-        int    lasty[] = new int[100];
-        String root[]  = new String[100];
+        int[]    lasty = new int[100];
+        String[] root  = new String[100];
 
         root[0] = "";
 
@@ -340,11 +340,11 @@ class Tree extends Panel {
         boolean closed = false;
 
         for (int i = 0; i < iRowCount; i++) {
-            String s[]    = (String[]) vData.elementAt(i);
-            String key    = s[0];
-            String data   = s[1];
-            String folder = s[2];
-            int    ci     = currentindent;
+            String[] s      = (String[]) vData.elementAt(i);
+            String   key    = s[0];
+            String   data   = s[1];
+            String   folder = s[2];
+            int      ci     = currentindent;
 
             for (; ci > 0; ci--) {
                 if (key.startsWith(root[ci])) {
@@ -473,7 +473,7 @@ class Tree extends Panel {
 
         y += iRowHeight / 2;
 
-        String root[] = new String[100];
+        String[] root = new String[100];
 
         root[0] = "";
 
@@ -485,10 +485,10 @@ class Tree extends Panel {
         y += iY;
 
         for (; i < iRowCount; i++) {
-            String s[]    = (String[]) vData.elementAt(i);
-            String key    = s[0];
-            String folder = s[2];
-            int    ci     = currentindent;
+            String[] s      = (String[]) vData.elementAt(i);
+            String   key    = s[0];
+            String   folder = s[2];
+            int      ci     = currentindent;
 
             for (; ci > 0; ci--) {
                 if (key.startsWith(root[ci])) {
@@ -515,8 +515,8 @@ class Tree extends Panel {
         }
 
         if (i >= 0 && i < iRowCount) {
-            String s[]    = (String[]) vData.elementAt(i);
-            String folder = s[2];
+            String[] s      = (String[]) vData.elementAt(i);
+            String   folder = s[2];
 
             if (folder != null && folder.equals("+")) {
                 folder = "-";

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,9 @@ package org.hsqldb;
  */
 public class HsqlException extends Exception {
 
-    String message;
-    String state;
-    int    code;
+    private String message;
+    private String state;
+    private int    code;
 
     /**
      * @param message String
@@ -66,6 +66,10 @@ public class HsqlException extends Exception {
         this.message = r.getMainString();
         this.state   = r.getSubString();
         this.code    = r.getStatementID();
+    }
+
+    public HsqlException(Throwable t) {
+        this.message = t.getMessage();
     }
 
     /**

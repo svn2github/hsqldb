@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +56,12 @@ public class TestDatabaseMetaData extends TestBase {
         int               updateCount;
 
         try {
+            pstmt = conn.prepareStatement(
+                "SET PROPERTY \"sql.enforce_strict_size\" true");
+
+            pstmt.executeUpdate();
+            pstmt.close();
+
             pstmt = conn.prepareStatement("DROP TABLE t1 IF EXISTS");
 
             pstmt.executeUpdate();
@@ -68,6 +75,8 @@ public class TestDatabaseMetaData extends TestBase {
             assertTrue("expected update count of zero", updateCount == 0);
 
             pstmt = conn.prepareStatement("CREATE INDEX t1 ON t1 (cha );");
+            updateCount = pstmt.executeUpdate();
+            pstmt       = conn.prepareStatement("DROP TABLE t2 IF EXISTS");
             updateCount = pstmt.executeUpdate();
             pstmt = conn.prepareStatement(
                 "CREATE TABLE t2 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
@@ -145,7 +154,7 @@ public class TestDatabaseMetaData extends TestBase {
             pstmt.close();
 
             pstmt = conn.prepareStatement(
-                "CREATE TABLE t_1 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
+                "CREATE TABLE t_1 (cha CHARACTER(10), dec DECIMAL(10,2), doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
             updateCount = pstmt.executeUpdate();
 
@@ -162,6 +171,30 @@ public class TestDatabaseMetaData extends TestBase {
 
             rs.close();
             assertTrue("expected table t_1 count of 1", i == 1);
+
+            // test ResultSetMetaData
+            pstmt = conn.prepareStatement(
+                "INSERT INTO T_1 (cha, dec, doub) VALUES ('name', 10.23, 0)");
+
+            pstmt.executeUpdate();
+            pstmt.close();
+
+            pstmt = conn.prepareStatement("SELECT * FROM T_1");
+            rs    = pstmt.executeQuery();
+
+            ResultSetMetaData md = rs.getMetaData();
+            int               x  = md.getColumnDisplaySize(1);
+            int               y  = md.getColumnDisplaySize(2);
+            int               b  = md.getPrecision(2);
+            int               c  = md.getScale(1);
+            int               d  = md.getScale(2);
+            String            e  = md.getColumnClassName(10);
+            boolean testresult = (x == y) && (x == 10) && (b == 10)
+                                 && (c == 0) && (d == 2)
+                                 && e.equals("java.sql.Timestamp");
+
+            assertTrue("wrong result metadata", testresult);
+            pstmt.close();
             conn.close();
         } catch (Exception e) {
             assertTrue("unable to prepare or execute DDL", false);

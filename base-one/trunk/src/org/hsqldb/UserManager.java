@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -378,18 +378,8 @@ class UserManager {
     }
 
     boolean exists(String name) {
-
-        int i = uUser.size();
-
-        while (i-- > 0) {
-            User u = (User) uUser.get(i);
-
-            if (u != null && u.getName().equals(name)) {
-                return true;
-            }
-        }
-
-        return false;
+        return uUser.get(name) == null ? false
+                                       : true;
     }
 
     /**
@@ -549,16 +539,13 @@ class UserManager {
      * Constructs a new <code>SYS</code> <code>User</code> object for the
      * specified <code>Database</code> object. <p>
      *
-     * @param database the <code>Database</code> object for which to
-     *          construct a new
-     * <code>SYS</code> <code>User</code> object
      * @throws HsqlException - if the specified <code>Database</code>
      *          object already has a non-null <code>SYS</code>
      *          <code>User</code> attribute
      * @return a new <code>SYS</code> <code>User</code> object
      *
      */
-    static User createSysUser(Database database) throws HsqlException {
+    User createSysUser() throws HsqlException {
         return new User(SYS_USER_NAME, null, true, null);
     }
 }

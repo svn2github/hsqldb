@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
@@ -91,14 +92,17 @@ class Constraint {
      Referential Constraint 3 NO ACTION
      Referential Constraint 4 SET DEFAULT
      */
-    static final int CASCADE     = 0,
-                     SET_NULL    = 2,
-                     NO_ACTION   = 3,
-                     SET_DEFAULT = 4;
-    static final int FOREIGN_KEY = 0,
-                     MAIN        = 1,
-                     UNIQUE      = 2,
-                     CHECK       = 3;
+    static final int CASCADE        = 0,
+                     SET_NULL       = 2,
+                     NO_ACTION      = 3,
+                     SET_DEFAULT    = 4,
+                     INIT_DEFERRED  = 5,
+                     INIT_IMMEDIATE = 6,
+                     NOT_DEFERRABLE = 7;
+    static final int FOREIGN_KEY    = 0,
+                     MAIN           = 1,
+                     UNIQUE         = 2,
+                     CHECK          = 3;
     ConstraintCore   core;
     HsqlName         constName;
     int              constType;
@@ -147,7 +151,7 @@ class Constraint {
      * @exception  HsqlException
      */
     Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
-               int colmain[], int colref[], Index imain, Index iref,
+               int[] colmain, int[] colref, Index imain, Index iref,
                int deleteAction, int updateAction) throws HsqlException {
 
         core           = new ConstraintCore();
@@ -345,7 +349,7 @@ class Constraint {
      * Compares this with another constraint column set. This implementation
      * only checks UNIQUE constraints.
      */
-    boolean isEquivalent(int col[], int type) {
+    boolean isEquivalent(int[] col, int type) {
 
         if (type != constType || constType != UNIQUE
                 || core.colLen != col.length) {
@@ -359,8 +363,8 @@ class Constraint {
      * Compares this with another constraint column set. This implementation
      * only checks FOREIGN KEY constraints.
      */
-    boolean isEquivalent(Table tablemain, int colmain[], Table tableref,
-                         int colref[]) {
+    boolean isEquivalent(Table tablemain, int[] colmain, Table tableref,
+                         int[] colref) {
 
         if (constType != Constraint.MAIN
                 || constType != Constraint.FOREIGN_KEY) {
@@ -391,7 +395,7 @@ class Constraint {
         if (oldt == core.mainTable) {
             core.mainTable = newt;
 
-            // excluede CHECK
+            // exclude CHECK
             if (core.mainIndex != null) {
                 core.mainIndex =
                     core.mainTable.getIndex(core.mainIndex.getName().name);
@@ -421,7 +425,7 @@ class Constraint {
      * Checks for foreign key or check constraint violation when
      * inserting a row into the child table.
      */
-    void checkInsert(Session session, Object row[]) throws HsqlException {
+    void checkInsert(Session session, Object[] row) throws HsqlException {
 
         if (constType == Constraint.MAIN || constType == Constraint.UNIQUE) {
 
@@ -441,7 +445,9 @@ class Constraint {
         }
 
         // a record must exist in the main table
-        if (core.mainIndex.findNotNull(row, core.refColArray, true) == null) {
+        boolean exists = core.mainIndex.exists(row, core.refColArray);
+
+        if (!exists) {
 
             // special case: self referencing table and self referencing row
             if (core.mainTable == core.refTable) {
@@ -507,33 +513,33 @@ class Constraint {
      * @return Node object or null
      * @throws  HsqlException
      */
-    Node findFkRef(Object row[], boolean forDelete) throws HsqlException {
+    RowIterator findFkRef(Object[] row, boolean forDelete,
+                          boolean delete) throws HsqlException {
 
-        if (row == null) {
-            return null;
-        }
-
-        if (Index.isNull(row, core.mainColArray)) {
-            return null;
+        if (row == null || Index.isNull(row, core.mainColArray)) {
+            return core.refIndex.emptyIterator();
         }
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
-        boolean findfirst = forDelete ? core.deleteAction != NO_ACTION
-                                      : core.updateAction != NO_ACTION;
-        Node node = core.refIndex.findNotNull(row, core.mainColArray,
-                                              findfirst);
+        boolean noaction = forDelete ? core.deleteAction == NO_ACTION
+                                     : core.updateAction == NO_ACTION;
 
-        // tony_lai@users 20020820 - patch 595156
-        // sebastian@scienion -- check whether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
-        if (!(node == null || findfirst)) {
-            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                              Trace.Constraint_violation, new Object[] {
-                core.fkName.name, core.refTable.getName().name
-            });
+        if (noaction) {
+            if (core.refIndex.exists(row, core.mainColArray)) {
+                throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                                  Trace.Constraint_violation, new Object[] {
+                    core.fkName.name, core.refTable.getName().name
+                });
+            } else {
+                return core.refIndex.emptyIterator();
+            }
+        } else {
+            return delete
+                   ? core.refIndex.findFirstRowForDelete(row,
+                       core.mainColArray)
+                   : core.refIndex.findFirstRow(row, core.mainColArray);
         }
-
-        return node;
     }
 
     /**
@@ -543,24 +549,24 @@ class Constraint {
      * If a valid row is found the corresponding <code>Node</code> is returned.
      * Otherwise a 'INTEGRITY VIOLATION' Exception gets thrown.
      */
-    Node findMainRef(Object row[]) throws HsqlException {
+    boolean hasMainRef(Object[] row) throws HsqlException {
 
         if (Index.isNull(row, core.refColArray)) {
-            return null;
+            return false;
         }
 
-        Node node = core.mainIndex.findNotNull(row, core.refColArray, true);
+        boolean exists = core.mainIndex.exists(row, core.refColArray);
 
         // -- there has to be a valid node in the main table
         // --
-        if (node == null) {
+        if (!exists) {
             throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT,
                               Trace.Constraint_violation, new Object[] {
                 core.fkName.name, core.refTable.getName().name
             });
         }
 
-        return node;
+        return exists;
     }
 
     /**
@@ -572,21 +578,12 @@ class Constraint {
     private static boolean hasReferencedRow(Object[] rowdata,
             int[] rowColArray, Index mainIndex) throws HsqlException {
 
-        // check for nulls and return true if any
-        for (int i = 0; i < rowColArray.length; i++) {
-            Object o = rowdata[rowColArray[i]];
-
-            if (o == null) {
-                return true;
-            }
+        if (Index.isNull(rowdata, rowColArray)) {
+            return true;
         }
 
         // else a record must exist in the main index
-        if (mainIndex.find(rowdata, rowColArray) == null) {
-            return false;
-        }
-
-        return true;
+        return mainIndex.exists(rowdata, rowColArray);
     }
 
     /**
@@ -597,11 +594,16 @@ class Constraint {
     static void checkReferencedRows(Table table, int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 
-        Index index = table.getPrimaryIndex();
-        Node  node  = index.first();
+        RowIterator it = table.rowIterator();
 
-        while (node != null) {
-            Object[] rowdata = node.getData();
+        while (true) {
+            Row row = it.next();
+
+            if (row == null) {
+                break;
+            }
+
+            Object[] rowdata = row.getData();
 
             if (!Constraint.hasReferencedRow(rowdata, rowColArray,
                                              mainIndex)) {
@@ -620,8 +622,6 @@ class Constraint {
                     colvalues, table.getName().name
                 });
             }
-
-            node = index.next(node);
         }
     }
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputBinary;
+import org.hsqldb.NumberSequence;
 
 /**
  *  @author fredt@users
@@ -63,7 +64,7 @@ class ScriptWriterBinary extends ScriptWriterBase {
     }
 
     // int : row size (0 if no more rows) ,
-    // BinaryServerRowInput/Output : row (column values)
+    // RowInput/OutputBinary : row (column values)
     protected void writeRow(int sid, Table t,
                             Object[] data) throws IOException, HsqlException {
 
@@ -102,9 +103,17 @@ class ScriptWriterBinary extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
 
-    protected void writeLogStatement(String s,
-                                     int sid)
-                                     throws IOException, HsqlException {}
+    public void writeLogStatement(String s,
+                                  int sid)
+                                  throws IOException, HsqlException {}
 
     protected void writeSessionId(int sid) throws IOException {}
+
+    public void writeDeleteStatement(int sid, Table table, Object[] ddata) {}
+
+    public void writeSequenceStatement(int sid, NumberSequence seq) {}
+
+    public void writeInsertStatement(int sid, Table table, Object[] data) {}
+
+    public void writeCommitStatement(int sid) {}
 }

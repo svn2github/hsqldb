@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,13 @@
 package org.hsqldb.test;
 
 import java.util.Random;
+import java.util.Arrays;
 
-import org.hsqldb.lib.DoubleIntTable;
+import org.hsqldb.lib.DoubleIntIndex;
 
 import junit.framework.TestCase;
+
+import org.hsqldb.lib.StopWatch;
 
 /**
  * @author fredt@users
@@ -149,12 +152,12 @@ public class TestHashStructures extends TestCase {
 
     public void testDoubleIntLookup() throws Exception {
 
-        int testSize = 33;
+        int testSize = 512;
         org.hsqldb.lib.IntKeyHashMap hIntMap =
             new org.hsqldb.lib.IntKeyHashMap();
-        org.hsqldb.lib.DoubleIntTable intLookup =
-            new org.hsqldb.lib.DoubleIntTable(12);
+        DoubleIntIndex intLookup = new DoubleIntIndex(12, false);
 
+        intLookup.setKeysSearchTarget();
         populateBySerialIntKeysInt(intLookup, hIntMap, testSize);
         compareByHIteratorInt(intLookup, hIntMap);
         populateByRandomIntKeysInt(intLookup, hIntMap, testSize);
@@ -162,6 +165,74 @@ public class TestHashStructures extends TestCase {
 
         //-
         assertTrue(true);
+    }
+
+    public void testDoubleIntSpeed() throws Exception {
+
+        int testSize = 500;
+        org.hsqldb.lib.IntKeyHashMap hIntMap =
+            new org.hsqldb.lib.IntKeyHashMap();
+        DoubleIntIndex intLookup = new DoubleIntIndex(testSize, false);
+
+        intLookup.setKeysSearchTarget();
+        populateByRandomIntKeysInt(intLookup, hIntMap, testSize);
+        compareByHIteratorInt(intLookup, hIntMap);
+
+        int[]     sample     = getSampleIntArray(intLookup, 100);
+        int[]     sampleVals = new int[sample.length];
+        int       i          = 0;
+        int       j          = 0;
+        StopWatch sw         = new StopWatch();
+
+        try {
+            for (j = 0; j < 10000; j++) {
+                for (i = 0; i < sample.length; i++) {
+                    int pos = intLookup.findFirstEqualKeyIndex(sample[i]);
+
+                    sampleVals[i] = intLookup.getValue(pos);
+
+                    intLookup.remove(pos);
+                }
+
+                for (i = 0; i < sample.length; i++) {
+                    intLookup.addUnique(sample[i], sampleVals[i]);
+                }
+            }
+
+            System.out.println(
+                sw.elapsedTimeToMessage("Double int table times"));
+            intLookup.findFirstEqualKeyIndex(0);    // sort
+            compareByHIteratorInt(intLookup, hIntMap);
+        } catch (Exception e) {
+            System.out.println(
+                sw.elapsedTimeToMessage("Double int table error: i =" + i));
+
+            throw e;
+        }
+
+        assertTrue(true);
+    }
+
+    int[] getSampleIntArray(org.hsqldb.lib.DoubleIntIndex index, int size) {
+
+        int[]                        array = new int[size];
+        org.hsqldb.lib.IntKeyHashMap map = new org.hsqldb.lib.IntKeyHashMap();
+
+        for (; map.size() < size; ) {
+            int pos = nextIntRandom(randomgen, index.size());
+
+            map.put(pos, null);
+        }
+
+        org.hsqldb.lib.Iterator it = map.keySet().iterator();
+
+        for (int i = 0; i < size; i++) {
+            int pos = it.nextInt();
+
+            array[i] = index.getKey(pos);
+        }
+
+        return array;
     }
 
     void populateBySerialIntKeys(java.util.HashMap uMap,
@@ -196,14 +267,14 @@ public class TestHashStructures extends TestCase {
         }
     }
 
-    void populateBySerialIntKeysInt(DoubleIntTable intLookup,
+    void populateBySerialIntKeysInt(DoubleIntIndex intLookup,
                                     org.hsqldb.lib.IntKeyHashMap hMap,
                                     int testSize) throws Exception {
 
         for (int i = 0; i < testSize; i++) {
             int intValue = randomgen.nextInt();
 
-            intLookup.add(i, intValue);
+            intLookup.addUnique(i, intValue);
             hMap.put(i, new Integer(intValue));
 
             if (intLookup.size() != hMap.size()) {
@@ -212,14 +283,14 @@ public class TestHashStructures extends TestCase {
         }
     }
 
-    void populateByRandomIntKeysInt(DoubleIntTable intLookup,
+    void populateByRandomIntKeysInt(DoubleIntIndex intLookup,
                                     org.hsqldb.lib.IntKeyHashMap hMap,
                                     int testSize) throws Exception {
 
         for (int i = 0; i < testSize; i++) {
             int intValue = randomgen.nextInt();
 
-            intLookup.add(intValue, i);
+            intLookup.addUnique(intValue, i);
             hMap.put(intValue, new Integer(i));
 
             // actually this can happen as duplicates are allowed in DoubleIntTable
@@ -431,7 +502,7 @@ public class TestHashStructures extends TestCase {
         }
     }
 
-    void compareByHIteratorInt(DoubleIntTable intLookup,
+    void compareByHIteratorInt(DoubleIntIndex intLookup,
                                org.hsqldb.lib.IntKeyHashMap hMap)
                                throws Exception {
 
@@ -439,14 +510,21 @@ public class TestHashStructures extends TestCase {
 
         for (int i = 0; hIt.hasNext(); i++) {
             int     hK     = hIt.nextInt();
-            int     lookup = intLookup.find(0, hK);
-            int     lV     = intLookup.get(lookup, 1);
+            int     lookup = intLookup.findFirstEqualKeyIndex(hK);
+            int     lV     = intLookup.getValue(lookup);
             Integer hV     = (Integer) hMap.get(hK);
 
             if (hV.intValue() != lV) {
                 throw new Exception("HashMap value mismatch");
             }
         }
+    }
+
+    int nextIntRandom(Random r, int range) {
+
+        int b = Math.abs(r.nextInt());
+
+        return b % range;
     }
 
     public static void main(String[] argv) {
@@ -458,6 +536,7 @@ public class TestHashStructures extends TestCase {
             test.testIntKeyHashMap();
             test.testHashMappedList();
             test.testDoubleIntLookup();
+            test.testDoubleIntSpeed();
         } catch (Exception e) {
             e.printStackTrace();
         }

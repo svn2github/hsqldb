@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ public class TestSql extends TestBase {
                 System.out.println(md.getTimeDateFunctions());
                 System.out.println(md.getURL());
                 System.out.println(md.getUserName());
-                System.out.println(md.importedKeyCascade);
+                System.out.println(DatabaseMetaData.importedKeyCascade);
                 System.out.println(md.isCatalogAtStart());
                 System.out.println(md.isReadOnly());
 
@@ -530,7 +530,7 @@ public class TestSql extends TestBase {
         }
     }
 
-    public static void main(String argv[]) {
+    public static void main(String[] argv) {
 
         TestResult result = new TestResult();
         TestCase   testA  = new TestSql("testMetaData");

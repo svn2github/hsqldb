@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,26 +45,26 @@ package org.hsqldb.util;
 public interface ZaurusComponent {
 
     // reset the counter of changes to the component
-    public void clearChanges();
+    void clearChanges();
 
     // reset the component
-    public void clearContent();
+    void clearContent();
 
     // answer the content of the component
-    public String getContent();
+    String getContent();
 
     // answer whether the content has changed
-    public boolean hasChanged();
+    boolean hasChanged();
 
     // tell component that it has been changed
-    public void setChanged();
+    void setChanged();
 
     // request the focus
-    public void requestFocus();
+    void requestFocus();
 
     // set a new content
-    public void setContent(String s);
+    void setContent(String s);
 
     // make the component editable or not editable
-    public void setEditable(boolean b);
+    void setEditable(boolean b);
 }

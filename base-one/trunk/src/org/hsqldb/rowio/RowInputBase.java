@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@ package org.hsqldb.rowio;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.types.Binary;
 import org.hsqldb.HsqlException;
@@ -56,25 +59,7 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
 
     // fredt - initialisation may be unnecessary as it's done in resetRow()
     protected int filePos = NO_POS;
-    protected int nextPos = NO_POS;
     protected int size;
-
-    public static RowInputInterface newRowInput(int cachedRowType)
-    throws HsqlException {
-
-        try {
-            if (cachedRowType == RowOutputBase.CACHED_ROW_170) {
-                return new RowInputBinary();
-            } else {
-                Class c = Class.forName("org.hsqldb.RowInputLegacy");
-
-                return (RowInputInterface) c.newInstance();
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              Trace.DatabaseRowInput_newDatabaseRowInput);
-        }
-    }
 
     public RowInputBase() {
         this(new byte[4]);
@@ -98,16 +83,6 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
         }
 
         return (filePos);
-    }
-
-    public int getNextPos() throws IOException {
-
-        if (nextPos == NO_POS) {
-            throw new IOException(
-                Trace.getMessage(Trace.DatabaseRowInput_getNextPos));
-        }
-
-        return (nextPos);
     }
 
     public int getSize() {
@@ -145,13 +120,11 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
 
     protected abstract Boolean readBit() throws IOException, HsqlException;
 
-    protected abstract java.sql.Time readTime()
-    throws IOException, HsqlException;
+    protected abstract Time readTime() throws IOException, HsqlException;
 
-    protected abstract java.sql.Date readDate()
-    throws IOException, HsqlException;
+    protected abstract Date readDate() throws IOException, HsqlException;
 
-    protected abstract java.sql.Timestamp readTimestamp()
+    protected abstract Timestamp readTimestamp()
     throws IOException, HsqlException;
 
     protected abstract Object readOther() throws IOException, HsqlException;
@@ -162,7 +135,8 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
     /**
      *  reads row data from a stream using the JDBC types in colTypes
      *
-     * @param  colTypes currently only the length is used
+     * @param  colTypes
+     * @param  cols total columns including invisible col, can be one more than colTypes
      * @return
      * @throws  IOException
      * @throws  HsqlException
@@ -170,10 +144,10 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
     public Object[] readData(int[] colTypes,
                              int cols) throws IOException, HsqlException {
 
-        int    l      = colTypes.length;
-        Object data[] = new Object[cols];
-        Object o;
-        int    type;
+        int      l    = colTypes.length;
+        Object[] data = new Object[cols];
+        Object   o;
+        int      type;
 
         for (int i = 0; i < l; i++) {
             if (checkNull()) {

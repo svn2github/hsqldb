@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,40 +65,38 @@ public class RowOutputTextLog extends RowOutputBase {
         logMode = mode;
     }
 
-    protected void writeFieldPrefix() throws IOException {
+    protected void writeFieldPrefix() {
 
         if (logMode == MODE_DELETE && isWritten) {
             write(BYTES_AND);
         }
     }
 
-    protected void writeChar(String s, int t) throws IOException {
+    protected void writeChar(String s, int t) {
 
         write('\'');
         StringConverter.unicodeToAscii(this, s, true);
         write('\'');
     }
 
-    protected void writeReal(Double o,
-                             int type) throws IOException, HsqlException {
+    protected void writeReal(Double o, int type) {
         writeBytes(Column.createSQLString(((Number) o).doubleValue()));
     }
 
-    protected void writeSmallint(Number o) throws IOException, HsqlException {
+    protected void writeSmallint(Number o) {
         this.writeBytes(o.toString());
     }
 
-    public void writeEnd() throws IOException {}
+    public void writeEnd() {}
 
-    protected void writeTime(Time o) throws IOException, HsqlException {
+    protected void writeTime(Time o) {
 
         write('\'');
         writeBytes(o.toString());
         write('\'');
     }
 
-    protected void writeBinary(Binary o,
-                               int t) throws IOException, HsqlException {
+    protected void writeBinary(Binary o, int t) {
 
         ensureRoom(o.getBytesLength() * 2 + 2);
         write('\'');
@@ -109,11 +107,11 @@ public class RowOutputTextLog extends RowOutputBase {
         write('\'');
     }
 
-    public void writeType(int type) throws IOException {}
+    public void writeType(int type) {}
 
-    public void writeSize(int size) throws IOException {}
+    public void writeSize(int size) {}
 
-    protected void writeDate(Date o) throws IOException, HsqlException {
+    protected void writeDate(Date o) {
 
         write('\'');
         this.writeBytes(o.toString());
@@ -124,16 +122,16 @@ public class RowOutputTextLog extends RowOutputBase {
         return 0;
     }
 
-    protected void writeInteger(Number o) throws IOException, HsqlException {
+    protected void writeInteger(Number o) {
         this.writeBytes(o.toString());
     }
 
-    protected void writeBigint(Number o) throws IOException, HsqlException {
+    protected void writeBigint(Number o) {
         this.writeBytes(o.toString());
     }
 
 //fredt@users - patch 1108647 by nkowalcz@users (NataliaK) fix for IS NULL
-    protected void writeNull(int type) throws IOException {
+    protected void writeNull(int type) {
 
         if (logMode == MODE_DELETE) {
             write(BYTES_IS);
@@ -146,8 +144,7 @@ public class RowOutputTextLog extends RowOutputBase {
         write(BYTES_NULL);
     }
 
-    protected void writeOther(JavaObject o)
-    throws IOException, HsqlException {
+    protected void writeOther(JavaObject o) {
 
         ensureRoom(o.getBytesLength() * 2 + 2);
         write('\'');
@@ -158,21 +155,20 @@ public class RowOutputTextLog extends RowOutputBase {
         write('\'');
     }
 
-    public void writeString(String value) throws IOException {
+    public void writeString(String value) {
         StringConverter.unicodeToAscii(this, value, false);
     }
 
-    protected void writeBit(Boolean o) throws IOException, HsqlException {
+    protected void writeBit(Boolean o) {
         write(o.booleanValue() ? BYTES_TRUE
                                : BYTES_FALSE);
     }
 
-    protected void writeDecimal(BigDecimal o)
-    throws IOException, HsqlException {
+    protected void writeDecimal(BigDecimal o) {
         this.writeBytes(o.toString());
     }
 
-    protected void writeFieldType(int type) throws IOException {
+    protected void writeFieldType(int type) {
 
         if (logMode == MODE_DELETE) {
             write('=');
@@ -187,17 +183,16 @@ public class RowOutputTextLog extends RowOutputBase {
         this.writeBytes(Long.toString(value));
     }
 
-    public void writeIntData(int i, int position) throws IOException {}
+    public void writeIntData(int i, int position) {}
 
-    protected void writeTimestamp(Timestamp o)
-    throws IOException, HsqlException {
+    protected void writeTimestamp(Timestamp o) {
 
         write('\'');
         this.writeBytes(o.toString());
         write('\'');
     }
 
-    public void writeIntData(int i) throws IOException {
+    public void writeIntData(int i) {
         writeBytes(Integer.toString(i));
     }
 

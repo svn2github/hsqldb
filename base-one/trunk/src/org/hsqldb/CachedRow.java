@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,7 @@ import java.io.IOException;
 
 import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputInterface;
+import org.hsqldb.lib.IntLookup;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - patch 1.7.1 - refactoring to cut memory footprint
@@ -91,21 +92,20 @@ import org.hsqldb.rowio.RowOutputInterface;
 public class CachedRow extends Row {
 
     static final int NO_POS = -1;
-    protected Table  tTable;
-    int              iLastAccess;
-    CachedRow        rLast, rNext;
-    int              iPos = NO_POS;
-    int              storageSize;
+
+    //
+    protected Table tTable;
+    int             storageSize;
 
     /**
-     *  Flag indicating any change to Node data.
-     */
-    protected boolean hasChanged;
-
-    /**
-     *  Flag indicating both Row and Node data has changed.
+     *  Flag indicating unwritten data.
      */
     protected boolean hasDataChanged;
+
+    /**
+     *  Flag indicating Node data has changed.
+     */
+    boolean hasNodesChanged;
 
     /**
      *  Default constructor used only in subclasses.
@@ -120,7 +120,7 @@ public class CachedRow extends Row {
      * @param o row data
      * @throws HsqlException if a database access error occurs
      */
-    public CachedRow(Table t, Object o[]) throws HsqlException {
+    public CachedRow(Table t, Object[] o) throws HsqlException {
 
         tTable = t;
 
@@ -135,10 +135,8 @@ public class CachedRow extends Row {
             n       = n.nNext;
         }
 
-        oData      = o;
-        hasChanged = hasDataChanged = true;
-
-        t.addRowToStore(this);
+        oData          = o;
+        hasDataChanged = hasNodesChanged = true;
     }
 
     /**
@@ -168,11 +166,12 @@ public class CachedRow extends Row {
         }
 
         oData = in.readData(tTable.getColumnTypes(), tTable.columnCount);
+    }
 
-        setPos(iPos);
+    private void readRowInfo(RowInputInterface in)
+    throws IOException, HsqlException {
 
-        // change from 1.7.0 format - the check is no longer read or written
-        // Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+        // for use when additional transaction info is attached to rows
     }
 
     /**
@@ -182,38 +181,41 @@ public class CachedRow extends Row {
      *
      * @throws HsqlException
      */
-    void delete() throws HsqlException {
+    public void delete() throws HsqlException {
 
         Record.memoryRecords++;
 
-        hasChanged = false;
+        hasNodesChanged = hasDataChanged = false;
 
         tTable.removeRow(this);
 
-        rNext        = null;
-        rLast        = null;
         tTable       = null;
         nPrimaryNode = null;
     }
 
+    public int getStorageSize() {
+        return storageSize;
+    }
+
     /**
-     * Sets the file position for the row and registers the row with
-     * the table.
+     * Sets the file position for the row
      *
      * @param pos position in data file
      */
-    void setPos(int pos) {
+    public void setPos(int pos) {
 
         iPos = pos;
 
-        tTable.registerRow(this);
+        if (tTable.needsRowID) {
+            oData[tTable.visibleColumnCount] = new Integer(iPos);
+        }
     }
 
     /**
      * Sets flag for Node data change.
      */
     void setChanged() {
-        hasChanged = true;
+        hasNodesChanged = true;
     }
 
     /**
@@ -221,24 +223,8 @@ public class CachedRow extends Row {
      *
      * @return boolean
      */
-    boolean hasChanged() {
-        return hasChanged;
-    }
-
-    /**
-     * Sets flag for Row data change.
-     */
-    void setDataChanged() {
-        hasDataChanged = true;
-    }
-
-    /**
-     * Returns true if either Row or Node data.
-     *
-     * @return boolean
-     */
-    boolean hasDataChanged() {
-        return hasDataChanged;
+    public boolean hasChanged() {
+        return hasNodesChanged;
     }
 
     /**
@@ -251,21 +237,29 @@ public class CachedRow extends Row {
     }
 
     /**
+     * returned size does not include the row size written at the beginning
+     */
+    public int getRealSize(RowOutputInterface out) {
+        return tTable.getIndexCount() * DiskNode.SIZE_IN_BYTE
+               + out.getSize(this);
+    }
+
+    public void setStorageSize(int size) {
+        storageSize = size;
+    }
+
+    /**
      * Returns true if any of the Nodes for this row is a root node.
      * Used only in Cache.java to avoid removing the row from the cache.
      *
      * @return boolean
      * @throws HsqlException
      */
-    boolean isRoot() throws HsqlException {
+    public boolean isKeepInMemory() {
 
         Node n = nPrimaryNode;
 
         while (n != null) {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(n.getBalance() != -2);
-            }
-
             if (n.isRoot()) {
                 return true;
             }
@@ -290,7 +284,7 @@ public class CachedRow extends Row {
      */
     Row getUpdatedRow() throws HsqlException {
         return tTable == null ? null
-                              : tTable.getRow(iPos, null);
+                              : (CachedRow) tTable.rowStore.get(iPos);
     }
 
     /**
@@ -304,16 +298,39 @@ public class CachedRow extends Row {
      * @throws IOException
      * @throws HsqlException
      */
-    void write(RowOutputInterface out) throws IOException, HsqlException {
+    public void write(RowOutputInterface out) {
 
-        writeNodes(out);
+        try {
+            writeNodes(out);
 
-        if (hasDataChanged) {
-            out.writeData(oData, tTable);
-            out.writeEnd();
+            if (hasDataChanged) {
+                out.writeData(oData, tTable);
+                out.writeEnd();
+
+                hasDataChanged = false;
+            }
+        } catch (IOException e) {}
+    }
+
+    private void writeRowInfo(RowOutputInterface out) {
+
+        // for use when additional transaction info is attached to rows
+    }
+
+    public void write(RowOutputInterface out, IntLookup lookup) {
+
+        out.writeSize(storageSize);
+
+        Node rownode = nPrimaryNode;
+
+        while (rownode != null) {
+            ((DiskNode) rownode).writeTranslate(out, lookup);
+
+            rownode = rownode.nNext;
         }
 
-        hasDataChanged = false;
+        out.writeData(getData(), getTable());
+        out.writeEnd();
     }
 
     /**
@@ -324,8 +341,7 @@ public class CachedRow extends Row {
      * @throws IOException
      * @throws HsqlException
      */
-    private void writeNodes(RowOutputInterface out)
-    throws IOException, HsqlException {
+    private void writeNodes(RowOutputInterface out) throws IOException {
 
         out.writeSize(storageSize);
 
@@ -337,49 +353,7 @@ public class CachedRow extends Row {
             n = n.nNext;
         }
 
-        hasChanged = false;
-    }
-
-    /**
-     * Used to insert the Row into the linked list that includes all the rows
-     * currently in the Cache.
-     *
-     * @param before the row before which to insert
-     */
-    void insert(CachedRow before) {
-
-        Record.memoryRecords++;
-
-        if (before == null) {
-            rNext = this;
-            rLast = this;
-        } else {
-            rNext        = before;
-            rLast        = before.rLast;
-            before.rLast = this;
-            rLast.rNext  = this;
-        }
-    }
-
-    /**
-     *  Removes the Row from the linked list of Rows in the Cache.
-     *
-     * @return the next Row in the linked list
-     * @throws HsqlException never
-     */
-    CachedRow free() throws HsqlException {
-
-        CachedRow nextrow = rNext;
-
-        rLast.rNext = rNext;
-        rNext.rLast = rLast;
-        rNext       = rLast = null;
-
-        if (nextrow == this) {
-            return null;
-        }
-
-        return nextrow;
+        hasNodesChanged = false;
     }
 
     /**

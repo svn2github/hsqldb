@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,5 +32,5 @@
 package org.hsqldb.lib;
 
 public interface ObjectComparator {
-    public int compare(Object a, Object b);
+    int compare(Object a, Object b);
 }

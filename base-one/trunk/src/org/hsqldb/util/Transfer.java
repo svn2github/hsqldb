@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -125,7 +125,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
     int              iSelectionStep;
     Vector           tTable;
     java.awt.List    lTable;
-    String           sSourceSchemas[];
+    String[]         sSourceSchemas;
     String           sSourceCatalog, sDestSchema, sDestCatalog;
     TextField tSourceTable, tDestTable, tDestDropIndex, tDestCreateIndex;
     TextField        tDestDrop, tDestCreate, tDestDelete, tDestAlter;
@@ -179,7 +179,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
      * Method declaration
      *
      */
-    public static void work(String arg[]) {
+    public static void work(String[] arg) {
 
         Transfer m = new Transfer();
 
@@ -192,7 +192,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         System.getProperties().put("sun.java2d.noddraw", "true");
 
@@ -208,9 +208,9 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
         try {
             lTable.removeAll();
 
-            if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+            if (iSelectionStep == Transfer.SELECT_SOURCE_CATALOG) {
                 result = sourceDb.getCatalog();
-            } else if (iSelectionStep == this.SELECT_DEST_CATALOG) {
+            } else if (iSelectionStep == Transfer.SELECT_DEST_CATALOG) {
                 result = targetDb.getCatalog();
             } else {
                 Exit();
@@ -219,7 +219,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
             if (result.size() > 1) {
                 lTable.setMultipleMode(true);
 
-                if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                if (iSelectionStep == Transfer.SELECT_SOURCE_CATALOG) {
                     bStart.setLabel("Select Catalog: Source");
                 } else {
                     bStart.setLabel("Select Catalog: Destination");
@@ -237,7 +237,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 trace("Select correct Catalog");
             } else {
                 if (result.size() == 1) {
-                    if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                    if (iSelectionStep == Transfer.SELECT_SOURCE_CATALOG) {
                         sSourceCatalog = (String) result.firstElement();
                         sSourceSchemas = null;
                     } else {
@@ -245,7 +245,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                         sDestSchema  = null;
                     }
                 } else {
-                    if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                    if (iSelectionStep == Transfer.SELECT_SOURCE_CATALOG) {
                         sSourceCatalog = null;
                         sSourceSchemas = null;
                     } else {
@@ -254,7 +254,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                     }
                 }
 
-                if ((iSelectionStep == this.SELECT_DEST_CATALOG)
+                if ((iSelectionStep == Transfer.SELECT_DEST_CATALOG)
                         && (sDestCatalog != null)) {
                     try {
                         targetDb.setCatalog(sDestCatalog);
@@ -288,9 +288,9 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
         try {
             lTable.removeAll();
 
-            if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+            if (iSelectionStep == Transfer.SELECT_SOURCE_SCHEMA) {
                 result = sourceDb.getSchemas();
-            } else if (iSelectionStep == this.SELECT_DEST_SCHEMA) {
+            } else if (iSelectionStep == Transfer.SELECT_DEST_SCHEMA) {
                 result = targetDb.getSchemas();
             } else {
                 Exit();
@@ -299,7 +299,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
             if (result.size() > 1) {
                 lTable.setMultipleMode(true);
 
-                if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                if (iSelectionStep == Transfer.SELECT_SOURCE_SCHEMA) {
                     bStart.setLabel("Select Schema: Source");
                 } else {
                     bStart.setLabel("Select Schema: Destination");
@@ -317,14 +317,14 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 trace("Select correct Schema or load Settings file");
             } else {
                 if (result.size() == 1) {
-                    if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                    if (iSelectionStep == Transfer.SELECT_SOURCE_SCHEMA) {
                         sSourceSchemas    = new String[1];
                         sSourceSchemas[0] = (String) result.firstElement();
                     } else {
                         sDestSchema = (String) result.firstElement();
                     }
                 } else {
-                    if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                    if (iSelectionStep == Transfer.SELECT_SOURCE_SCHEMA) {
                         sSourceSchemas = null;
                     } else {
                         sDestSchema = null;
@@ -332,7 +332,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 }
 
                 if (iTransferMode == TRFM_DUMP) {
-                    iSelectionStep = this.SELECT_SOURCE_TABLES;
+                    iSelectionStep = Transfer.SELECT_SOURCE_TABLES;
                 } else {
                     iSelectionStep++;
                 }
@@ -354,7 +354,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
      * Method declaration
      *
      */
-    void _main(String arg[]) {
+    void _main(String[] arg) {
 
         /*
          ** What function is asked from the transfer tool?
@@ -380,8 +380,8 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
         fMain.setSize(640, 480);
         fMain.add("Center", this);
 
-        MenuBar bar      = new MenuBar();
-        String  extras[] = {
+        MenuBar  bar    = new MenuBar();
+        String[] extras = {
             "Insert 10 rows only", "Insert 1000 rows only", "Insert all rows",
             "-", "Load Settings...", "Save Settings...", "-", "Exit"
         };
@@ -528,7 +528,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
      * @param f
      * @param m
      */
-    private void addMenuItems(Menu f, String m[]) {
+    private void addMenuItems(Menu f, String[] m) {
 
         for (int i = 0; i < m.length; i++) {
             if (m[i].equals("-")) {
@@ -801,14 +801,14 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 return;
             }
 
-            if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+            if (iSelectionStep == Transfer.SELECT_SOURCE_SCHEMA) {
                 sSourceSchemas = selection;
             } else {
                 sDestSchema = selection[0];
             }
 
             if (iTransferMode == TRFM_DUMP) {
-                iSelectionStep = this.SELECT_SOURCE_TABLES;
+                iSelectionStep = Transfer.SELECT_SOURCE_TABLES;
             } else {
                 iSelectionStep++;
             }
@@ -821,7 +821,7 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
                 return;
             }
 
-            if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+            if (iSelectionStep == Transfer.SELECT_SOURCE_CATALOG) {
                 sSourceCatalog = selection;
                 sSourceSchemas = null;
             } else {
@@ -1080,9 +1080,9 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
             bContinue = new Button("Continue Transfer");
 
             bContinue.setEnabled(false);
-        } else if (iTransferMode == this.TRFM_DUMP) {
+        } else if (iTransferMode == Transfer.TRFM_DUMP) {
             bStart = new Button("Start Dump");
-        } else if (iTransferMode == this.TRFM_RESTORE) {
+        } else if (iTransferMode == Transfer.TRFM_RESTORE) {
             bStart = new Button("Start Restore");
         }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ public class ExecHarness {
      *           Remaining arguments will be passed as command-line args
      *           to the sa[0] program.
      */
-    static public void main(String[] sa)
+    public static void main(String[] sa)
     throws IOException, FileNotFoundException, InterruptedException {
 
         byte[] localBa = new byte[10240];
@@ -306,7 +306,7 @@ public class ExecHarness {
     /**
      * These utility methods really belong in a class in the util package.
      */
-    static public String[] unshift(String newHead, String[] saIn) {
+    public static String[] unshift(String newHead, String[] saIn) {
 
         String[] saOut = new String[saIn.length + 1];
 
@@ -319,7 +319,7 @@ public class ExecHarness {
         return saOut;
     }
 
-    static public String[] shift(String[] saIn) {
+    public static String[] shift(String[] saIn) {
 
         String[] saOut = new String[saIn.length - 1];
 
@@ -330,7 +330,7 @@ public class ExecHarness {
         return saOut;
     }
 
-    static public String[] listToPrimitiveArray(List list) {
+    public static String[] listToPrimitiveArray(List list) {
 
         String[] saOut = new String[list.size()];
 
@@ -341,7 +341,7 @@ public class ExecHarness {
         return saOut;
     }
 
-    static public String[] push(String newTail, String[] saIn) {
+    public static String[] push(String newTail, String[] saIn) {
 
         String[] saOut = new String[saIn.length + 1];
 
@@ -354,7 +354,7 @@ public class ExecHarness {
         return saOut;
     }
 
-    static public String[] pop(String[] saIn) {
+    public static String[] pop(String[] saIn) {
 
         String[] saOut = new String[saIn.length - 1];
 
@@ -365,7 +365,7 @@ public class ExecHarness {
         return saOut;
     }
 
-    static public String stringArrayToString(String[] sa) {
+    public static String stringArrayToString(String[] sa) {
 
         StringBuffer sb = new StringBuffer("{");
 

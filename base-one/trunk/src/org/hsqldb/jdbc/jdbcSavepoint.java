@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 package org.hsqldb.jdbc;
 
 import java.sql.SQLException;
+import java.sql.Savepoint;
 
 import org.hsqldb.Trace;
 
@@ -65,7 +66,7 @@ import org.hsqldb.Trace;
  * @author boucherb@users
  * @since JDK 1.4, HSQLDB 1.7.2
  */
-public class jdbcSavepoint implements java.sql.Savepoint {
+public class jdbcSavepoint implements Savepoint {
 
     String         name;
     jdbcConnection connection;
@@ -73,8 +74,8 @@ public class jdbcSavepoint implements java.sql.Savepoint {
     jdbcSavepoint(String name, jdbcConnection conn) throws SQLException {
 
         if (name == null) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        "name is null");
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    "name is null");
         }
 
         this.name  = name;
@@ -90,7 +91,7 @@ public class jdbcSavepoint implements java.sql.Savepoint {
      * @since 1.4
      */
     public int getSavepointId() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**

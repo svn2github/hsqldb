@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.store.ValuePool;
 
 /**
@@ -135,11 +136,11 @@ public class DatabaseManager {
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     public static Session newSession(String type, String path, String user,
-                                     String password, boolean ifexists,
+                                     String password,
                                      HsqlProperties props)
                                      throws HsqlException {
 
-        Database db = getDatabase(type, path, ifexists, props);
+        Database db = getDatabase(type, path, props);
 
         return db.connect(user, password);
     }
@@ -168,7 +169,7 @@ public class DatabaseManager {
     static int getDatabase(String type, String path, Server server,
                            HsqlProperties props) throws HsqlException {
 
-        Database db = getDatabase(type, path, false, props);
+        Database db = getDatabase(type, path, props);
 
         registerServer(server, db);
 
@@ -191,7 +192,7 @@ public class DatabaseManager {
      */
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
-    static Database getDatabase(String type, String path, boolean ifexists,
+    static Database getDatabase(String type, String path,
                                 HsqlProperties props) throws HsqlException {
 
         // If the (type, path) pair does not correspond to a registered
@@ -200,7 +201,7 @@ public class DatabaseManager {
         // The database state will be DATABASE_SHUTDOWN,
         // which means that the switch below will attempt to
         // open the database instance.
-        Database db = getDatabaseObject(type, path, ifexists, props);
+        Database db = getDatabaseObject(type, path, props);
 
         synchronized (db) {
             switch (db.getState()) {
@@ -242,8 +243,7 @@ public class DatabaseManager {
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private static synchronized Database getDatabaseObject(String type,
-            String path, boolean ifexists,
-            HsqlProperties props) throws HsqlException {
+            String path, HsqlProperties props) throws HsqlException {
 
         Database db;
         Object   key = path;
@@ -261,7 +261,7 @@ public class DatabaseManager {
         db = (Database) databaseMap.get(key);
 
         if (db == null) {
-            db = new Database(type, path, type + key, ifexists, props);
+            db            = new Database(type, path, type + key, props);
             db.databaseID = dbIDCounter;
 
             databaseIDMap.put(dbIDCounter, db);
@@ -496,7 +496,7 @@ public class DatabaseManager {
      * protocol and could refer to another JDBC driver.
      *
      */
-    static HsqlProperties parseURL(String url, boolean hasPrefix) {
+    public static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
         String         urlImage = url.toLowerCase();
         HsqlProperties props    = new HsqlProperties();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
 
-import org.hsqldb.HsqlProperties;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.persist.HsqlProperties;
 
 /**
  * Test large tables containing columns of different types.
@@ -54,11 +54,11 @@ public class TestAllTypes {
     protected String filepath = "/hsql/testalltypes/test";
 
 //    protected String filepath = "hsql://localhost/yourtest";
-    boolean          network  = true;
-    String           user;
-    String           password;
-    Statement        sStatement;
-    Connection       cConnection;
+    boolean    network = true;
+    String     user;
+    String     password;
+    Statement  sStatement;
+    Connection cConnection;
 
     // prameters
     boolean reportProgress  = false;
@@ -430,7 +430,7 @@ public class TestAllTypes {
         return b % range;
     }
 
-    public static void main(String argv[]) {
+    public static void main(String[] argv) {
 
         StopWatch    sw   = new StopWatch();
         TestAllTypes test = new TestAllTypes();

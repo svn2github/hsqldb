@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,11 @@ package org.hsqldb.jdbc;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-import org.hsqldb.HsqlProperties;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
+import org.hsqldb.persist.HsqlProperties;
 
 // fredt@users 20040412 - removed DITypeInfo dependencies
 // boucherb@users - 200404xx - removed unused imports;refinement for better
@@ -157,9 +157,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     void init(jdbcResultSet rs, HsqlProperties props) throws SQLException {
 
         if (rs == null) {
-            throw jdbcUtil.sqlException(Trace.GENERAL_ERROR,
-                                        Trace.JDBC_NO_RESULT_SET_METADATA,
-                                        null);
+            throw Util.sqlException(Trace.GENERAL_ERROR,
+                                    Trace.JDBC_NO_RESULT_SET_METADATA, null);
         }
 
         init(rs.rResult, props);
@@ -182,8 +181,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         Result.ResultMetaData rmd;
 
         if (r == null) {
-            throw jdbcUtil.sqlException(Trace.GENERAL_ERROR,
-                                        Trace.JDBC_NO_RESULT_SET, null);
+            throw Util.sqlException(Trace.GENERAL_ERROR,
+                                    Trace.JDBC_NO_RESULT_SET, null);
         }
 
         if (r.mode != ResultConstants.DATA) {
@@ -262,17 +261,17 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // for types that accept (precision, scale) declarations
             // We do not yet (will we ever?) enforce/consider
             // NUMERIC/DECIMAL precision
-//            if (Types.isNumberType(type)
-//                    &&Types.acceptsPrecisionCreateParam(type)
-//             ) {
-//                cmd.precision = rmd.colSize[i];
-//                if (cmd.precision == 0) {
-//                    cmd.precision = Types.getPrecision(type);
-//                }
-//            } else {
-            cmd.precision = Types.getPrecision(type);
+            if (Types.isNumberType(type)
+                    && Types.acceptsPrecisionCreateParam(type)) {
+                cmd.precision = rmd.colSizes[i];
 
-//            }
+                if (cmd.precision == 0) {
+                    cmd.precision = Types.getPrecision(type);
+                }
+            } else {
+                cmd.precision = Types.getPrecision(type);
+            }
+
             // Without a non-zero scale value, some (legacy only?) tools will
             // simply truncate digits to the right of the decimal point when
             // retrieving values from the result set. The measure below can
@@ -1152,8 +1151,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     private void checkColumn(int column) throws SQLException {
 
         if (column < 1 || column > columnCount) {
-            throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND,
-                                        String.valueOf(column));
+            throw Util.sqlException(Trace.COLUMN_NOT_FOUND,
+                                    String.valueOf(column));
         }
     }
 }

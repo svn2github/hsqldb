@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ class McKoiTransferHelper extends TransferHelper {
 
         if (columnType.indexOf(CompareString) > 0) {
 
-            // We just found a increment            
+            // We just found a increment
             columnType = "SERIAL";
         }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,11 +127,11 @@ public class SqlFile {
     BooleanBucket possiblyUncommitteds = new BooleanBucket();
 
     // Ascii field separator blanks
-    private final static int SEP_LEN = 2;
-    private final static String DIVIDER =
+    private static final int SEP_LEN = 2;
+    private static final String DIVIDER =
         "-----------------------------------------------------------------"
         + "-----------------------------------------------------------------";
-    private final static String SPACES =
+    private static final String SPACES =
         "                                                                 "
         + "                                                                 ";
     private static String revnum = null;
@@ -157,7 +157,7 @@ public class SqlFile {
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n";
-    private final static String BUFFER_HELP_TEXT =
+    private static final String BUFFER_HELP_TEXT =
         "BUFFER Commands (only available for interactive use).\n\n"
         + "    :?                Help\n"
         + "    :;                Execute current buffer as an SQL Statement\n"
@@ -179,7 +179,7 @@ public class SqlFile {
         + "                       2:  Narrows substitution to specified buffer line number\n"
         + "                           (Use any line number in place of '2').\n"
     ;
-    private final static String HELP_TEXT = "SPECIAL Commands.\n"
+    private static final String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
@@ -199,7 +199,7 @@ public class SqlFile {
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
         + "    \\q [abort message]   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
     ;
-    private final static String PL_HELP_TEXT =
+    private static final String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
         + "    *                             Expand PL variables from now on.\n"
@@ -2199,7 +2199,7 @@ public class SqlFile {
         }
     }
 
-    private final static int    COL_HEAD = 0,
+    private static final int    COL_HEAD = 0,
                                 COL_ODD  = 1,
                                 COL_EVEN = 2
     ;
@@ -2473,7 +2473,7 @@ public class SqlFile {
         statement.close();
     }
 
-    static public String[] getTokenArray(String inString) {
+    public static String[] getTokenArray(String inString) {
 
         // I forget how to code a String array literal outside of a
         // definition.

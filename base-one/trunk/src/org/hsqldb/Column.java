@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,15 +70,16 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.text.Collator;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -142,8 +143,8 @@ public class Column {
     static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
     static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
     static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
-    static final BigDecimal BIG_DECIMAL_0 = new BigDecimal(0);
-    static final BigDecimal BIG_DECIMAL_1 = new BigDecimal(1);
+    static final BigDecimal BIG_DECIMAL_0 = new BigDecimal(0.0);
+    static final BigDecimal BIG_DECIMAL_1 = new BigDecimal(1.0);
 
     /**
      *  Creates a column defined in DDL statement.
@@ -184,6 +185,26 @@ public class Column {
                 }
             }
         }
+    }
+
+    private Column() {}
+
+    /**
+     * Used for primary key changes, does not copy primary key or identity
+     * settings.
+     */
+    Column duplicate() {
+
+        Column newCol = new Column();
+
+        newCol.columnName        = columnName;
+        newCol.isNullable        = isNullable;
+        newCol.colType           = colType;
+        newCol.colSize           = colSize;
+        newCol.colScale          = colScale;
+        newCol.defaultExpression = defaultExpression;
+
+        return newCol;
     }
 
     /**
@@ -383,7 +404,7 @@ public class Column {
             return null;
         }
 
-        return convertObject(a) + convertObject(b);
+        return a.toString() + b.toString();
     }
 
     /**
@@ -612,10 +633,9 @@ public class Column {
 
 // fredt@users 20020130 - patch 505356 by daniel_fiser@users
 // modified for performance and made optional
-    private static Collator i18nCollator          = Collator.getInstance();
-    static boolean          sql_compare_in_locale = false;
+    static boolean sql_compare_in_locale = false;
 
-    static void setCompareInLocal(boolean value) {
+    public static void setCompareInLocal(boolean value) {
         sql_compare_in_locale = value;
     }
 
@@ -655,7 +675,7 @@ public class Column {
             case Types.VARCHAR :
             case Types.LONGVARCHAR :
                 if (sql_compare_in_locale) {
-                    i = i18nCollator.compare((String) a, (String) b);
+                    i = JavaSystem.CompareInLocale((String) a, (String) b);
                 } else {
                     i = ((String) a).compareTo((String) b);
                 }
@@ -665,8 +685,8 @@ public class Column {
 // use of rtrim() to mimic SQL92 behaviour
             case Types.CHAR :
                 if (sql_compare_in_locale) {
-                    i = i18nCollator.compare(Library.rtrim((String) a),
-                                             Library.rtrim((String) b));
+                    i = JavaSystem.CompareInLocale(Library.rtrim((String) a),
+                                                   Library.rtrim((String) b));
                 } else {
                     i = (Library.rtrim((String) a)).compareTo(
                         Library.rtrim((String) b));
@@ -685,11 +705,11 @@ public class Column {
 // the other outside the ascii character range.
             case Types.VARCHAR_IGNORECASE :
                 if (sql_compare_in_locale) {
-                    i = i18nCollator.compare(((String) a).toUpperCase(),
-                                             ((String) b).toUpperCase());
-                } else {
-                    i = ((String) a).toUpperCase().compareTo(
+                    i = JavaSystem.CompareInLocale(
+                        ((String) a).toUpperCase(),
                         ((String) b).toUpperCase());
+                } else {
+                    i = JavaSystem.CompareIngnoreCase((String) a, (String) b);
                 }
                 break;
 
@@ -727,24 +747,14 @@ public class Column {
                 break;
 
             case Types.DATE :
-                if (((java.sql.Date) a).after((java.sql.Date) b)) {
-                    return 1;
-                } else if (((java.sql.Date) a).before((java.sql.Date) b)) {
-                    return -1;
-                } else {
-                    return 0;
-                }
+                return HsqlDateTime.compare((Date) a, (Date) b);
+
             case Types.TIME :
                 return HsqlDateTime.compare((Time) a, (Time) b);
 
             case Types.TIMESTAMP :
-                if (((Timestamp) a).after((Timestamp) b)) {
-                    return 1;
-                } else if (((Timestamp) a).before((Timestamp) b)) {
-                    return -1;
-                } else {
-                    return 0;
-                }
+                return HsqlDateTime.compare((Timestamp) a, (Timestamp) b);
+
             case Types.BOOLEAN : {
                 boolean boola = ((Boolean) a).booleanValue();
                 boolean boolb = ((Boolean) b).booleanValue();
@@ -776,21 +786,6 @@ public class Column {
         return (i == 0) ? 0
                         : (i < 0 ? -1
                                  : 1);
-    }
-
-    /**
-     *  Return a java string representation of a java object.
-     *
-     * @param  o
-     * @return result (null value for null object)
-     */
-    static String convertObject(Object o) {
-
-        if (o == null) {
-            return null;
-        }
-
-        return o.toString();
     }
 
     /**
@@ -833,12 +828,6 @@ public class Column {
                     return null;
 
                 case Types.TINYINT :
-                    if (o instanceof java.lang.Boolean) {
-                        return ((Boolean) o).booleanValue()
-                               ? ValuePool.getInt(1)
-                               : ValuePool.getInt(0);
-                    }
-
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
@@ -878,15 +867,15 @@ public class Column {
                     if (o instanceof java.lang.Number) {
                         return convertObject(convertToInt(o), type);
                     }
-                    break;
 
-                case Types.SMALLINT :
                     if (o instanceof java.lang.Boolean) {
                         return ((Boolean) o).booleanValue()
                                ? ValuePool.getInt(1)
                                : ValuePool.getInt(0);
                     }
+                    break;
 
+                case Types.SMALLINT :
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
@@ -920,24 +909,23 @@ public class Column {
                     }
 
                     // fredt@users - direct conversion for JDBC setObject(Short), etc.
-                    if (o instanceof java.lang.Byte
-                            || o instanceof java.lang.Short) {
+                    if (o instanceof Byte || o instanceof Short) {
                         return ValuePool.getInt(((Number) o).intValue());
                     }
 
                     // fredt@users - returns to this method for range checking
-                    if (o instanceof java.lang.Number) {
+                    if (o instanceof Number) {
                         return convertObject(convertToInt(o), type);
                     }
-                    break;
 
-                case Types.INTEGER :
                     if (o instanceof java.lang.Boolean) {
                         return ((Boolean) o).booleanValue()
                                ? ValuePool.getInt(1)
                                : ValuePool.getInt(0);
                     }
+                    break;
 
+                case Types.INTEGER :
                     if (o instanceof java.lang.Integer) {
                         return o;
                     }
@@ -967,19 +955,13 @@ public class Column {
                     }
 
                     if (o instanceof java.lang.Boolean) {
-                        return ValuePool.getInt(((Boolean) o).booleanValue()
-                                                ? 1
-                                                : 0);
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getInt(1)
+                               : ValuePool.getInt(0);
                     }
                     break;
 
                 case Types.BIGINT :
-                    if (o instanceof java.lang.Boolean) {
-                        return ((Boolean) o).booleanValue()
-                               ? ValuePool.getLong(1)
-                               : ValuePool.getLong(0);
-                    }
-
                     if (o instanceof java.lang.Long) {
                         return o;
                     }
@@ -999,17 +981,17 @@ public class Column {
                     if (o instanceof java.lang.Number) {
                         return convertToLong(o);
                     }
+
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getLong(1)
+                               : ValuePool.getLong(0);
+                    }
                     break;
 
                 case Types.REAL :
                 case Types.FLOAT :
                 case Types.DOUBLE :
-                    if (o instanceof java.lang.Boolean) {
-                        return ((Boolean) o).booleanValue()
-                               ? ValuePool.getDouble(1)
-                               : ValuePool.getDouble(0);
-                    }
-
                     if (o instanceof java.lang.Double) {
                         return o;
                     }
@@ -1028,17 +1010,27 @@ public class Column {
                     if (o instanceof java.lang.Number) {
                         return convertToDouble(o);
                     }
+
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getDouble(1)
+                               : ValuePool.getDouble(0);
+                    }
                     break;
 
                 case Types.NUMERIC :
                 case Types.DECIMAL :
+                    if (o instanceof BigDecimal) {
+                        return o;
+                    }
+
+                    if (o instanceof Long) {
+                        return BigDecimal.valueOf(((Long) o).longValue());
+                    }
+
                     if (o instanceof java.lang.Boolean) {
                         return ((Boolean) o).booleanValue() ? BIG_DECIMAL_1
                                                             : BIG_DECIMAL_0;
-                    }
-
-                    if (o instanceof java.math.BigDecimal) {
-                        return o;
                     }
                     break;
 
@@ -1069,9 +1061,10 @@ public class Column {
                             (Double) o);
                     }
 
-                    if (o instanceof java.math.BigDecimal) {
-                        return org.hsqldb.lib.BooleanConverter.getBoolean(
-                            (java.math.BigDecimal) o);
+                    if (o instanceof BigDecimal) {
+                        return ((BigDecimal) o).equals(BIG_DECIMAL_0)
+                               ? Boolean.FALSE
+                               : Boolean.TRUE;
                     }
 
                     throw Trace.error(Trace.WRONG_DATA_TYPE);
@@ -1408,8 +1401,6 @@ public class Column {
      */
     static Integer convertToInt(Object o) throws HsqlException {
 
-        int val = ((Number) o).intValue();
-
         if (o instanceof BigDecimal) {
             BigInteger bi = ((BigDecimal) o).toBigInteger();
 
@@ -1417,7 +1408,7 @@ public class Column {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
-            return ValuePool.getInt(val);
+            return ValuePool.getInt(bi.intValue());
         }
 
         if (o instanceof Double || o instanceof Float) {
@@ -1428,7 +1419,7 @@ public class Column {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
-            return ValuePool.getInt(val);
+            return ValuePool.getInt((int) d);
         }
 
         throw Trace.error(Trace.INVALID_CONVERSION);
@@ -1440,8 +1431,6 @@ public class Column {
      */
     static Long convertToLong(Object o) throws HsqlException {
 
-        long val = ((Number) o).longValue();
-
         if (o instanceof BigDecimal) {
             BigInteger bi = ((BigDecimal) o).toBigInteger();
 
@@ -1449,7 +1438,7 @@ public class Column {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
-            return ValuePool.getLong(val);
+            return ValuePool.getLong(bi.longValue());
         }
 
         if (o instanceof Double || o instanceof Float) {
@@ -1460,7 +1449,7 @@ public class Column {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
-            return ValuePool.getLong(val);
+            return ValuePool.getLong((long) d);
         }
 
         throw Trace.error(Trace.INVALID_CONVERSION);

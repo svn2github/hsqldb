@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,10 +66,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
@@ -91,7 +91,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * granted rights, in order to decide which rights exist for the user.
  * @version 1.7.2
  */
-class User {
+public class User {
 
     /** true if this user has database administrator role. */
     private boolean isAdministrator;
@@ -121,7 +121,8 @@ class User {
      * Constructor, with a argument reference to the PUBLIC User Object which
      * is null if this is the SYS or PUBLIC user.
      */
-    User(String name, String password, boolean admin, User pub) {
+    User(String name, String password, boolean admin,
+            User pub) throws HsqlException {
 
         rightsMap = new IntValueHashMap();
         sName     = name;
@@ -136,12 +137,6 @@ class User {
 
     String getName() {
         return sName;
-    }
-
-    String getPassword() {
-
-        // necessary to create the script
-        return sPassword;
     }
 
     /**
@@ -168,7 +163,7 @@ class User {
         return rightsMap;
     }
 
-    void setPassword(String password) {
+    void setPassword(String password) throws HsqlException {
 
         // TODO:
         // checkComplexity(password);
@@ -461,7 +456,7 @@ class User {
      * @return the redo log character sequence for connecting
      *      this user
      */
-    String getConnectStatement() {
+    public String getConnectStatement() {
 
         StringBuffer sb = new StringBuffer();
 

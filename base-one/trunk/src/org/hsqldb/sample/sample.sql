@@ -4,11 +4,7 @@
     PCTASK Table creation
 */
 
-/* Ignore error for the two drop statements
- * For HSQLDB databases, you can use "IF EXISTS" instead of ignoring errors:
- *    DROP TABLE x IF EXISTS;
- * "IF EXISTS" is non-portable, however.
- */
+/* Ignore error for these two statements */
 \* true
 DROP TABLE pctasklist;
 DROP TABLE pctask;

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,9 @@
 
 
 package org.hsqldb;
+
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.jdbc.jdbcConnection;
 import org.hsqldb.lib.ArrayUtil;
@@ -255,7 +258,7 @@ public class Session implements SessionInterface {
      *
      * @return this Session's User object
      */
-    User getUser() {
+    public User getUser() {
         return user;
     }
 
@@ -334,15 +337,6 @@ public class Session implements SessionInterface {
     }
 
     /**
-     * Sets the session user's password to the value of the argument, s.
-     *
-     * @param  s
-     */
-    void setPassword(String s) {
-        user.setPassword(s);
-    }
-
-    /**
      *  Adds a single-row deletion step to the transaction UNDO buffer.
      *
      * @param  table the table from which the row was deleted
@@ -416,7 +410,7 @@ public class Session implements SessionInterface {
         synchronized (database) {
             if (!transactionList.isEmpty()) {
                 try {
-                    database.logger.writeToLog(this, Token.T_COMMIT);
+                    database.logger.writeCommitStatement(this);
                 } catch (HsqlException e) {}
 
                 transactionList.clear();
@@ -634,7 +628,7 @@ public class Session implements SessionInterface {
         return script;
     }
 
-    String getAutoCommitStatement() {
+    public String getAutoCommitStatement() {
         return isAutoCommit ? "SET AUTOCOMMIT TRUE"
                             : "SET AUTOCOMMIT FALSE";
     }
@@ -695,26 +689,6 @@ public class Session implements SessionInterface {
      */
     boolean isAccessible(Object dbobject) throws HsqlException {
         return user.isAccessible(dbobject);
-    }
-
-    /**
-     * Retrieves the set of the fully qualified names of the classes on
-     * which this Session's current user has been granted execute access.
-     * If the current user has the privileges of the ADMIN role, the
-     * set of all class grants made to all users is returned, including
-     * the PUBLIC user, regardless of the value of the andToPublic argument.
-     * In reality, ADMIN users have the right to invoke the methods of any
-     * and all classes on the class path, but this list is still useful in
-     * an ADMIN user context, for other reasons.
-     *
-     * @param andToPublic if true, grants to public are included
-     * @return the list of the fully qualified names of the classes on
-     *      which this Session's current user has been granted execute
-     *      access.
-     */
-    HashSet getGrantedClassNames(boolean andToPublic) {
-        return (isAdmin()) ? database.getUserManager().getGrantedClassNames()
-                           : user.getGrantedClassNames(andToPublic);
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
@@ -779,7 +753,7 @@ public class Session implements SessionInterface {
         // valid DML or DDL statement. We do not check the DDL yet.
         // fredt - now accepts semicolon and whitespace at the end of statement
         // fredt - investigate if it should or not for prepared statements
-        if (cs.type != cs.DDL) {
+        if (cs.type != CompiledStatement.DDL) {
             while (tokenizer.getPosition() < tokenizer.getLength()) {
                 token = tokenizer.getString();
 
@@ -925,9 +899,10 @@ public class Session implements SessionInterface {
                     return emptyUpdateCount;
                 }
                 default : {
-                    return Trace.toResult(
-                        Trace.error(
-                            Trace.INTERNAL_session_operation_not_supported));
+                    return new Result(
+                        Trace.runtimeError(
+                            Trace.INTERNAL_session_operation_not_supported,
+                            null), null);
                 }
             }
         }
@@ -938,6 +913,10 @@ public class Session implements SessionInterface {
         try {
             if (database != null) {
                 database.sequenceManager.logSequences(this, database.logger);
+
+                if (isAutoCommit) {
+                    database.logger.synchLog();
+                }
             }
 
             return r;
@@ -1027,8 +1006,9 @@ public class Session implements SessionInterface {
             if (cs == null) {
 
                 // invalid sql has been removed already
-                return Trace.toResult(
-                    Trace.error(Trace.INVALID_PREPARED_STATEMENT));
+                return new Result(
+                    Trace.runtimeError(
+                        Trace.INVALID_PREPARED_STATEMENT, null), null);
             }
         }
 
@@ -1165,8 +1145,9 @@ public class Session implements SessionInterface {
             if (cs == null) {
 
                 // invalid sql has been removed already
-                return Trace.toResult(
-                    Trace.error(Trace.INVALID_PREPARED_STATEMENT));
+                return new Result(
+                    Trace.runtimeError(
+                        Trace.INVALID_PREPARED_STATEMENT, null), null);
             }
         }
 
@@ -1231,11 +1212,11 @@ public class Session implements SessionInterface {
     }
 
 // session DATETIME functions
-    long               currentDateTimeSCN;
-    long               currentMillis;
-    java.sql.Date      currentDate;
-    java.sql.Time      currentTime;
-    java.sql.Timestamp currentTimestamp;
+    long          currentDateTimeSCN;
+    long          currentMillis;
+    java.sql.Date currentDate;
+    Time          currentTime;
+    Timestamp     currentTimestamp;
 
     /**
      * Returns the current date, unchanged for the duration of the current
@@ -1271,16 +1252,18 @@ public class Session implements SessionInterface {
      * Returns the current time, unchanged for the duration of the current
      * execution unit (statement)
      */
-    java.sql.Time getCurrentTime() {
+    Time getCurrentTime() {
 
         if (currentDateTimeSCN != sessionSCN) {
             currentDateTimeSCN = sessionSCN;
             currentMillis      = System.currentTimeMillis();
             currentDate        = null;
-            currentTime = HsqlDateTime.getNormalisedTime(currentMillis);
-            currentTimestamp   = null;
+            currentTime =
+                new Time(HsqlDateTime.getNormalisedTime(currentMillis));
+            currentTimestamp = null;
         } else if (currentTime == null) {
-            currentTime = HsqlDateTime.getNormalisedTime(currentMillis);
+            currentTime =
+                new Time(HsqlDateTime.getNormalisedTime(currentMillis));
         }
 
         return currentTime;
@@ -1290,7 +1273,7 @@ public class Session implements SessionInterface {
      * Returns the current timestamp, unchanged for the duration of the current
      * execution unit (statement)
      */
-    java.sql.Timestamp getCurrentTimestamp() {
+    Timestamp getCurrentTimestamp() {
 
         if (currentDateTimeSCN != sessionSCN) {
             currentDateTimeSCN = sessionSCN;

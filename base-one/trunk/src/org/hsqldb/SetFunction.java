@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -252,16 +252,12 @@ public class SetFunction {
                                   : Boolean.TRUE;
 
             case Expression.STDDEV_POP :
+            case Expression.STDDEV_SAMP :
                 return getStdDev();
 
-            case Expression.STDDEV_SAMP :
-                return getStdDevSamp();
-
             case Expression.VAR_POP :
-                return getVariance();
-
             case Expression.VAR_SAMP :
-                return getVarianceSamp();
+                return getVariance();
 
             default :
                 throw Trace.error(Trace.INVALID_CONVERSION);
@@ -398,6 +394,7 @@ public class SetFunction {
     // this section was orginally an independent class
     private double  sk;
     private double  vk;
+    private double  v;
     private long    n;
     private boolean initialized;
 
@@ -415,6 +412,7 @@ public class SetFunction {
             n           = 1;
             sk          = xi;
             vk          = 0.0;
+            v           = 0.0;
             initialized = true;
 
             return;
@@ -425,30 +423,17 @@ public class SetFunction {
         vk += (Math.pow((sk - (double) (n - 1) * xi), 2.0) / (double) n)
               / (double) (n - 1);
         sk += xi;
+        v  = vk / (double) (n);
     }
 
     private Number getVariance() {
-        return initialized ? new Double(vk / (double) (n))
+        return initialized ? new Double(v)
                            : null;
     }
 
     private Number getStdDev() {
-
-        return initialized
-               ? new Double(java.lang.Math.sqrt(vk / (double) (n)))
-               : null;
-    }
-
-    private Number getVarianceSamp() {
-        return initialized ? new Double(vk / ((double) (n) - 1))
+        return initialized ? new Double(java.lang.Math.sqrt(v))
                            : null;
-    }
-
-    private Number getStdDevSamp() {
-
-        return initialized
-               ? new Double(java.lang.Math.sqrt(vk / ((double) (n) - 1)))
-               : null;
     }
 
     // end statistics support

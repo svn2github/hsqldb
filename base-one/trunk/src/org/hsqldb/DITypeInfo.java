@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.DatabaseMetaData;
 import java.util.Locale;
 
 import org.hsqldb.resources.BundleHandler;
@@ -48,6 +47,14 @@ import org.hsqldb.store.ValuePool;
  * @since HSQLDB 1.7.2
  */
 final class DITypeInfo {
+
+    // related to DatabaseMetaDataValues
+    static final int columnNoNulls  = 0;
+    static final int columnNullable = 1;
+    static final int typePredNone   = 0;
+    static final int typePredChar   = 1;
+    static final int typePredBasic  = 2;
+    static final int typeSearchable = 3;
 
     /** BundleHandler id for create params resource bundle. */
     private int hnd_create_params = -1;
@@ -511,7 +518,7 @@ final class DITypeInfo {
      * @return the DatabaseMetaData nullability code for the type.
      */
     Integer getNullability() {
-        return ValuePool.getInt(DatabaseMetaData.columnNullable);
+        return ValuePool.getInt(columnNullable);
     }
 
     /**
@@ -592,10 +599,8 @@ final class DITypeInfo {
      * @return the DatabaseMetaData searchability code for the type
      */
     Integer getSearchability() {
-
-        return Types.isSearchable(type)
-               ? ValuePool.getInt(DatabaseMetaData.typeSearchable)
-               : ValuePool.getInt(DatabaseMetaData.typePredNone);
+        return Types.isSearchable(type) ? ValuePool.getInt(typeSearchable)
+                                        : ValuePool.getInt(typePredNone);
     }
 
     /**

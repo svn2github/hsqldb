@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.DataInput;
 import java.util.NoSuchElementException;
 
 import org.hsqldb.lib.InOutUtil;
@@ -121,6 +122,9 @@ public class Result {
 
     // database name
     String subSubString;
+
+    // the exception if this is an error
+    private Throwable exception;
 
     // prepared statement id / error vendor code
     int statementID;
@@ -205,8 +209,6 @@ public class Result {
                                            int i)
                                            throws IOException, HsqlException {
 
-            // Currently, HSQLDB accepts and logs (precision, scale)
-            // for all types, which is not to the spec.
             // HSQLDB also ignores precision and scale for all types except
             // XXXCHAR, for which it may (or may not) perform some trimming/padding.
             // All in all, it's currently meaningless (indeed misleading) to
@@ -281,18 +283,24 @@ public class Result {
             schemaNames[i]  = in.readString();
         }
 
-        void read(RowInputBinary in) throws HsqlException, IOException {
+        ResultMetaData(RowInputBinary in,
+                       int mode) throws HsqlException, IOException {
 
             int l = in.readIntData();
 
             prepareData(l);
 
-            if (isParameterDescription) {
-                paramMode = new int[l];
+            if (mode == ResultConstants.PARAM_META_DATA) {
+                isParameterDescription = true;
+                paramMode              = new int[l];
             }
 
             for (int i = 0; i < l; i++) {
-                colTypes[i]   = in.readType();
+                colTypes[i] = in.readType();
+
+                // fredt - 1.8.0 added
+                colSizes[i]   = in.readIntData();
+                colScales[i]  = in.readIntData();
                 colLabels[i]  = in.readString();
                 tableNames[i] = in.readString();
                 colNames[i]   = in.readString();
@@ -302,7 +310,7 @@ public class Result {
                     readTableColumnAttrs(in, i);
                 }
 
-                if (isParameterDescription) {
+                if (mode == ResultConstants.PARAM_META_DATA) {
                     paramMode[i] = in.readIntData();
                 }
             }
@@ -316,15 +324,9 @@ public class Result {
             for (int i = 0; i < colCount; i++) {
                 out.writeType(colTypes[i]);
 
-                // CAREFUL: writeString will throw NPE if passed NULL
-                // There is no guarantee that these will all be non-null
-                // and there's no point in hanging network communications
-                // or doing a big rewrite for null-safety over something
-                // like this.  We could explicitly do a writeNull here if
-                // detected null, but, frankly, readString on the other
-                // end will simply turn it into a zero-length string
-                // anyway, as nulls are only handled "properly" by
-                // readData(...), not by the individual readXXX methods.
+                // fredt - 1.8.0 added
+                out.writeIntData(colSizes[i]);
+                out.writeIntData(colScales[i]);
                 out.writeString(colLabels[i] == null ? ""
                                                      : colLabels[i]);
                 out.writeString(tableNames[i] == null ? ""
@@ -413,7 +415,7 @@ public class Result {
     /**
      * For BATCHEXECUTE and BATCHEXECDIRECT
      */
-    public Result(int type, int types[], int id) {
+    public Result(int type, int[] types, int id) {
 
         mode               = type;
         metaData           = new ResultMetaData();
@@ -523,12 +525,7 @@ public class Result {
                 }
                 case ResultConstants.DATA :
                 case ResultConstants.PARAM_META_DATA : {
-                    metaData = new ResultMetaData();
-                    metaData.isParameterDescription =
-                        mode == ResultConstants.PARAM_META_DATA;
-
-                    metaData.read(in);
-
+                    metaData           = new ResultMetaData(in, mode);
                     significantColumns = metaData.colLabels.length;
 
                     int count = in.readIntData();
@@ -761,7 +758,7 @@ public class Result {
      *
      * @param  d
      */
-    public void add(Object d[]) {
+    public void add(Object[] d) {
 
         Record r = new Record();
 
@@ -863,8 +860,8 @@ public class Result {
             return;
         }
 
-        int order[] = new int[columnCount];
-        int way[]   = new int[columnCount];
+        int[] order = new int[columnCount];
+        int[] way   = new int[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
             order[i] = i;
@@ -1003,17 +1000,17 @@ public class Result {
      * @param  way
      * @throws  HsqlException
      */
-    void sortResult(final int order[], final int way[]) throws HsqlException {
+    void sortResult(final int[] order, final int[] way) throws HsqlException {
 
         if (rRoot == null || rRoot.next == null) {
             return;
         }
 
-        Record source0, source1;
-        Record target[]     = new Record[2];
-        Record targetlast[] = new Record[2];
-        int    dest         = 0;
-        Record n            = rRoot;
+        Record   source0, source1;
+        Record[] target     = new Record[2];
+        Record[] targetlast = new Record[2];
+        int      dest       = 0;
+        Record   n          = rRoot;
 
         while (n != null) {
             Record next = n.next;
@@ -1087,9 +1084,9 @@ public class Result {
      * @return -1, 0, +1
      * @throws  HsqlException
      */
-    private int compareRecord(Object a[], final Object b[],
-                              final int order[],
-                              int way[]) throws HsqlException {
+    private int compareRecord(Object[] a, final Object[] b,
+                              final int[] order,
+                              int[] way) throws HsqlException {
 
         int i = Column.compare(a[order[0]], b[order[0]],
                                metaData.colTypes[order[0]]);
@@ -1117,7 +1114,7 @@ public class Result {
      * @return -1, 0, +1
      * @throws  HsqlException
      */
-    private int compareRecord(Object a[], Object b[],
+    private int compareRecord(Object[] a, Object[] b,
                               int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
@@ -1133,7 +1130,6 @@ public class Result {
 
     void write(RowOutputBinary out) throws IOException, HsqlException {
 
-//        if (isMulti) {
         if (mode == ResultConstants.MULTI) {
             writeMulti(out);
 
@@ -1331,25 +1327,17 @@ public class Result {
      * Convenience method for reading, shared by Server side.
      */
     public static Result read(RowInputBinary rowin,
-                              InputStream datain)
+                              DataInput datain)
                               throws IOException, HsqlException {
 
-        int length = InOutUtil.readInt(datain);
+        int length = datain.readInt();
 
         rowin.resetRow(0, length);
 
         byte[] byteArray = rowin.getBuffer();
         int    offset    = 4;
 
-        for (; offset < length; ) {
-            int count = datain.read(byteArray, offset, length - offset);
-
-            if (count < 0) {
-                throw new IOException();
-            }
-
-            offset += count;
-        }
+        datain.readFully(byteArray, offset, length - offset);
 
         return new Result(rowin);
     }
@@ -1357,19 +1345,20 @@ public class Result {
 /** @todo fredt - move the messages to Trace.java */
     public Result(Throwable t, String statement) {
 
-        mode = ResultConstants.ERROR;
+        mode      = ResultConstants.ERROR;
+        exception = t;
 
         if (t instanceof HsqlException) {
             HsqlException he = (HsqlException) t;
 
-            subString  = he.state;
-            mainString = he.message;
+            subString  = he.getSQLState();
+            mainString = he.getMessage();
 
             if (statement != null) {
                 mainString += " in statement [" + statement + "]";
             }
 
-            statementID = he.code;
+            statementID = he.getErrorCode();
         } else if (t instanceof Exception) {
             t.printStackTrace();
 
@@ -1393,6 +1382,10 @@ public class Result {
         }
 
         subSubString = "";
+    }
+
+    public Throwable getException() {
+        return exception;
     }
 
     public int getStatementID() {

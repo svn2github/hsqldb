@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@ implements ActionListener, WindowListener, KeyListener {
     DatabaseMetaData    dMeta;
     Statement           sStatement;
     Menu                mRecent;
-    String              sRecent[];
+    String[]            sRecent;
     int                 iRecent;
     TextArea            txtCommand;
     Button              butExecute;
@@ -175,7 +175,7 @@ implements ActionListener, WindowListener, KeyListener {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         System.getProperties().put("sun.java2d.noddraw", "true");
 
@@ -301,14 +301,14 @@ implements ActionListener, WindowListener, KeyListener {
         MenuBar bar = new MenuBar();
 
         // used shortcuts: CERGTSIUDOLM
-        String fitems[] = {
+        String[] fitems = {
             "-Connect...", "--", "-Open Script...", "-Save Script...",
             "-Save Result...", "-Save Result csv...", "--", "-Exit"
         };
 
         addMenu(bar, "File", fitems);
 
-        String vitems[] = {
+        String[] vitems = {
             "RRefresh Tree", "--", "GResults in Grid", "TResults in Text",
             "--", "1Shrink Tree", "2Enlarge Tree", "3Shrink Command",
             "4Enlarge Command"
@@ -316,7 +316,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "View", vitems);
 
-        String sitems[] = {
+        String[] sitems = {
             "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "--", "-CREATE TABLE",
             "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX", "--",
             "-CHECKPOINT", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
@@ -331,7 +331,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         bar.add(mRecent);
 
-        String soptions[] = {
+        String[] soptions = {
             "-AutoCommit on", "-AutoCommit off", "OCommit", "LRollback", "--",
             "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
             "-Logging off", "--", "-Insert test data"
@@ -339,7 +339,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Options", soptions);
 
-        String stools[] = {
+        String[] stools = {
             "-Dump", "-Restore", "-Transfer"
         };
 
@@ -385,7 +385,7 @@ implements ActionListener, WindowListener, KeyListener {
      * @param name
      * @param items
      */
-    void addMenu(MenuBar b, String name, String items[]) {
+    void addMenu(MenuBar b, String name, String[] items) {
 
         Menu menu = new Menu(name);
 
@@ -400,7 +400,7 @@ implements ActionListener, WindowListener, KeyListener {
      * @param f
      * @param m
      */
-    void addMenuItems(Menu f, String m[]) {
+    void addMenuItems(Menu f, String[] m) {
 
         for (int i = 0; i < m.length; i++) {
             MenuItem item = new MenuItem(m[i].substring(1));
@@ -674,7 +674,7 @@ implements ActionListener, WindowListener, KeyListener {
      * @param s
      * @param help
      */
-    void showHelp(String help[]) {
+    void showHelp(String[] help) {
 
         txtCommand.setText(help[0]);
         txtResult.setText(help[1]);
@@ -786,7 +786,7 @@ implements ActionListener, WindowListener, KeyListener {
             return;
         }
 
-        String g[] = new String[1];
+        String[] g = new String[1];
 
         lTime = System.currentTimeMillis();
 
@@ -865,7 +865,7 @@ implements ActionListener, WindowListener, KeyListener {
     void formatResultSet(ResultSet r) {
 
         if (r == null) {
-            String g[] = new String[1];
+            String[] g = new String[1];
 
             g[0] = "Result";
 
@@ -881,7 +881,7 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             ResultSetMetaData m   = r.getMetaData();
             int               col = m.getColumnCount();
-            String            h[] = new String[col];
+            String[]          h   = new String[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
@@ -925,7 +925,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         all = b.toString();
 
-        String g[] = new String[4];
+        String[] g = new String[4];
 
         g[0] = "ms";
         g[1] = "count";
@@ -993,10 +993,10 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             File      file   = new File(filename);
             CSVWriter writer = new CSVWriter(file, null);
-            String    col[]  = gResult.getHead();
+            String[]  col    = gResult.getHead();
             int       width  = col.length;
             Vector    data   = gResult.getData();
-            String    row[];
+            String[]  row;
             int       height = data.size();
 
             writer.writeHeader(col);
@@ -1004,7 +1004,7 @@ implements ActionListener, WindowListener, KeyListener {
             for (int i = 0; i < height; i++) {
                 row = (String[]) data.elementAt(i);
 
-                String myRow[] = new String[row.length];
+                String[] myRow = new String[row.length];
 
                 for (int j = 0; j < row.length; j++) {
                     String r = row[j];
@@ -1033,12 +1033,12 @@ implements ActionListener, WindowListener, KeyListener {
      */
     void showResultInText() {
 
-        String col[]  = gResult.getHead();
-        int    width  = col.length;
-        int    size[] = new int[width];
-        Vector data   = gResult.getData();
-        String row[];
-        int    height = data.size();
+        String[] col   = gResult.getHead();
+        int      width = col.length;
+        int[]    size  = new int[width];
+        Vector   data  = gResult.getData();
+        String[] row;
+        int      height = data.size();
 
         for (int i = 0; i < width; i++) {
             size[i] = col[i].length();
@@ -1204,11 +1204,11 @@ implements ActionListener, WindowListener, KeyListener {
 
             tTree.addRow("", dMeta.getURL(), "-", 0);
 
-            String    usertables[] = {
+            String[]  usertables = {
                 "TABLE", "GLOBAL TEMPORARY", "VIEW"
             };
             ResultSet result = dMeta.getTables(null, null, null, usertables);
-            Vector    tables       = new Vector();
+            Vector    tables     = new Vector();
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();

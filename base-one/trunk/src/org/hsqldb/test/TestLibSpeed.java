@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 
 package org.hsqldb.test;
 
-import org.hsqldb.lib.DoubleIntTable;
+import org.hsqldb.lib.DoubleIntIndex;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
@@ -43,7 +43,7 @@ import org.hsqldb.lib.StopWatch;
  */
 public class TestLibSpeed {
 
-    static final String sNumeric[][] = {
+    static final String[][] sNumeric = {
         {
             "ABS", "org.hsqldb.Library.abs"
         }, {
@@ -100,9 +100,9 @@ public class TestLibSpeed {
             "ROUNDMAGIC", "org.hsqldb.Library.roundMagic"
         }
     };
-    static HashSet      hashSet      = new HashSet();
-    static DoubleIntTable doubleIntLookup =
-        new DoubleIntTable(sNumeric.length);
+    static HashSet          hashSet  = new HashSet();
+    static DoubleIntIndex doubleIntLookup =
+        new DoubleIntIndex(sNumeric.length, false);
     static IntKeyIntValueHashMap intKeyIntValueHashLookup =
         new IntKeyIntValueHashMap();
     static IntValueHashMap intValueHashLookup =
@@ -110,6 +110,8 @@ public class TestLibSpeed {
     static IntKeyHashMap intKeyHashLookup = new IntKeyHashMap();
 
     static {
+        doubleIntLookup.setKeysSearchTarget();
+
         java.util.Random randomgen = new java.util.Random();
         int[]            row       = new int[2];
 
@@ -181,7 +183,7 @@ public class TestLibSpeed {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    doubleIntLookup.find(0, r);
+                    doubleIntLookup.findFirstEqualKeyIndex(r);
 
                     dummy += r;
                 }
@@ -219,7 +221,7 @@ public class TestLibSpeed {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    doubleIntLookup.find(0, r);
+                    doubleIntLookup.findFirstEqualKeyIndex(r);
 
                     dummy += r;
                 }
@@ -231,7 +233,7 @@ public class TestLibSpeed {
         }
     }
 
-    public static void main(String argv[]) {
+    public static void main(String[] argv) {
         TestLibSpeed ls = new TestLibSpeed();
     }
 }

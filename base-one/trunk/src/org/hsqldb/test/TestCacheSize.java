@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
 package org.hsqldb.test;
 
 import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -41,9 +40,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
 
-import org.hsqldb.HsqlProperties;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.persist.HsqlProperties;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -87,13 +86,13 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
-    String  tableType      = "CACHED";
-    int     cacheScale     = 10;
+    String  tableType      = "TEXT";
+    int     cacheScale     = 12;
     int     cacheSizeScale = 10;
-    boolean nioMode        = false;
+    boolean nioMode        = true;
 
     // script format {TEXT | BINARY | COMPRESSED}
-    String  logType       = "BINARY";
+    String  logType       = "TEXT";
     int     writeDelay    = 60;
     boolean indexZip      = false;
     boolean indexLastName = false;
@@ -108,11 +107,11 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 256000;
+    int bigrows = 64000;
 
     // number of ops
-    int bigops    = 256000;
-    int smallops  = 32000;
+    int bigops    = 64000;
+    int smallops  = 8000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -300,7 +299,7 @@ public class TestCacheSize {
             if (shutdown) {
                 sStatement.execute("SHUTDOWN");
 
-                int time = (int) sw.elapsedTime();
+                long time = sw.elapsedTime();
 
                 storeResult("shutdown", 0, time, 0);
                 System.out.println("shutdown time  -- " + time + " ms");
@@ -374,8 +373,8 @@ public class TestCacheSize {
 //            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
 //            sStatement.execute("DROP TABLE temptest;");
 //            sStatement.execute(ddl7);
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = ((long) i * 1000) / (time + 1);
 
         storeResult("insert", i, time, rate);
         System.out.println("insert time for " + i + " rows -- " + time
@@ -451,7 +450,7 @@ public class TestCacheSize {
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
 
-            int time = (int) sw.elapsedTime();
+            long time = sw.elapsedTime();
 
             storeResult("reopen", 0, time, 0);
             System.out.println("database reopen time -- " + time + " ms");
@@ -467,7 +466,7 @@ public class TestCacheSize {
             if (shutdown) {
                 sStatement.execute("SHUTDOWN");
 
-                time = (int) sw.elapsedTime();
+                time = sw.elapsedTime();
 
                 storeResult("shutdown", 0, time, 0);
                 System.out.println("shutdown time  -- " + time + " ms");
@@ -511,8 +510,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = ((long) i * 1000) / (time + 1);
 
         storeResult("select random zip", i, time, rate);
         System.out.println("select time for random zip " + i + " rows  -- "
@@ -544,8 +543,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = ((long) i * 1000) / (time + 1);
 
         storeResult("select random id", i, time, rate);
         System.out.println("select time for random id " + i + " rows  -- "
@@ -577,8 +576,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = ((long) i * 1000) / (time + 1);
 
         storeResult("select random zip (zip table)", i, time, rate);
         System.out.println("select time for random zip from zip table " + i
@@ -598,8 +597,8 @@ public class TestCacheSize {
 
             rs.next();
 
-            int time = (int) sw.elapsedTime();
-            int rate = (bigrows * 1000) / (time + 1);
+            long time = sw.elapsedTime();
+            long rate = ((long) bigrows * 1000) / (time + 1);
 
             storeResult("count (index on id)", rs.getInt(1), time, rate);
             System.out.println("count time (index on id) " + rs.getInt(1)
@@ -619,8 +618,8 @@ public class TestCacheSize {
 
             rs.next();
 
-            int time = (int) sw.elapsedTime();
-            int rate = (bigrows * 1000) / (time + 1);
+            long time = (long) sw.elapsedTime();
+            long rate = ((long) bigrows * 1000) / (time + 1);
 
             storeResult("count (index on zip)", rs.getInt(1), time, rate);
             System.out.println("count time (index on zip) " + rs.getInt(1)
@@ -674,8 +673,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = (i * 1000) / (time + 1);
 
         storeResult("update with random zip", i, time, rate);
         System.out.println("update time with random zip " + i + " rows  -- "
@@ -714,8 +713,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (i * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = (i * 1000) / (time + 1);
 
         storeResult("update with random id", i, time, rate);
         System.out.println("update time with random id " + i + " rows  -- "
@@ -755,8 +754,8 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (count * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = (count * 1000) / (time + 1);
 
         storeResult("delete with random id", count, time, rate);
         System.out.println("delete time for random id " + count
@@ -797,15 +796,15 @@ public class TestCacheSize {
             e.printStackTrace();
         }
 
-        int time = (int) sw.elapsedTime();
-        int rate = (count * 1000) / (time + 1);
+        long time = sw.elapsedTime();
+        long rate = ((long) count * 1000) / (time + 1);
 
         storeResult("delete with random zip", count, time, rate);
         System.out.println("delete time for random zip " + count
                            + " rows  -- " + time + " ms -- " + rate + " tps");
     }
 
-    void storeResult(String description, int count, int time, int rate) {
+    void storeResult(String description, int count, long time, long rate) {
 
         try {
             writer.write("<tr><td>" + description + "</td><td>" + count
@@ -816,14 +815,13 @@ public class TestCacheSize {
 
     static void deleteDatabase(String path) {
 
-        try {
-            FileUtil.delete(path + ".backup");
-            FileUtil.delete(path + ".properties");
-            FileUtil.delete(path + ".script");
-            FileUtil.delete(path + ".data");
-            FileUtil.delete(path + ".log");
-            FileUtil.delete(path + ".lck");
-        } catch (IOException e) {}
+        FileUtil.delete(path + ".backup");
+        FileUtil.delete(path + ".properties");
+        FileUtil.delete(path + ".script");
+        FileUtil.delete(path + ".data");
+        FileUtil.delete(path + ".log");
+        FileUtil.delete(path + ".lck");
+        FileUtil.delete(path + ".csv");
     }
 
     int nextIntRandom(Random r, int range) {
@@ -833,9 +831,9 @@ public class TestCacheSize {
         return b % range;
     }
 
-    public static void main(String argv[]) {
+    public static void main(String[] argv) {
 
-        TestCacheSize test = new TestCacheSize();
+        TestCacheSize  test  = new TestCacheSize();
         HsqlProperties props = HsqlProperties.argArrayToProps(argv, "test");
 
         test.bigops   = props.getIntegerProperty("test.bigops", test.bigops);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,40 +49,36 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
  */
 public interface RowOutputInterface {
 
-    public void writeEnd() throws IOException;
+    void writeEnd();
 
-    public void writeSize(int size) throws IOException;
+    void writeSize(int size);
 
-    public void writeType(int type) throws IOException;
+    void writeType(int type);
 
-    public void writeString(String value) throws IOException;
+    void writeString(String value);
 
-    public void writeIntData(int i) throws IOException;
+    void writeIntData(int i);
 
-    public void writeIntData(int i, int position) throws IOException;
+    void writeIntData(int i, int position);
 
-    public void writeLongData(long i) throws IOException;
+    void writeLongData(long i);
 
-    public void writeRow(Object[] data,
-                         Table t) throws IOException, HsqlException;
+    void writeRow(Object[] data, Table t);
 
-    public void writeData(Object[] data,
-                          Table t) throws IOException, HsqlException;
+    void writeData(Object[] data, Table t);
 
-    public void writeData(int l, int[] types, Object[] data,
-                          HashMappedList cols,
-                          int[] primarykeys)
-                          throws IOException, HsqlException;
+    void writeData(int l, int[] types, Object[] data, HashMappedList cols,
+                   int[] primarykeys);
 
     // independent of the this object, calls only a static method
-    public int getSize(CachedRow row);
+    int getSize(CachedRow row);
 
     // returns the underlying HsqlByteArrayOutputStream
-    public HsqlByteArrayOutputStream getOutputStream();
+    HsqlByteArrayOutputStream getOutputStream();
 
     // resets the byte[] buffer, ready for processing new row
-    public void reset();
+    void reset();
 
     // returns the current size
-    public int size();
+    int size();
 }

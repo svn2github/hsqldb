@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,10 +58,10 @@ public class ArrayCounter {
     public static int[] countSegments(int[] array, int segments, int start,
                                       int limit) {
 
-        int  counts[] = new int[segments];
-        long interval = calcInterval(segments, start, limit);
-        int  index    = 0;
-        int  element  = 0;
+        int[] counts   = new int[segments];
+        long  interval = calcInterval(segments, start, limit);
+        int   index    = 0;
+        int   element  = 0;
 
         if (interval <= 0) {
             return counts;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,8 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
-import org.hsqldb.jdbc.jdbcUtil;
+import org.hsqldb.jdbc.Util;
+import org.hsqldb.persist.HsqlProperties;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - modified
 // minor changes to support the new HsqlServerProperties class
@@ -46,9 +47,10 @@ import org.hsqldb.jdbc.jdbcUtil;
  */
 public class HsqlServerFactory {
 
+    private HsqlServerFactory() {}
+
     public static HsqlSocketRequestHandler createHsqlServer(String dbFilePath,
-            boolean debugMessages,
-            boolean silentMode) throws java.sql.SQLException {
+            boolean debugMessages, boolean silentMode) throws SQLException {
 
         HsqlProperties props = new HsqlProperties();
 
@@ -64,7 +66,7 @@ public class HsqlServerFactory {
             Throwable t = server.getServerError();
 
             if (t != null && t instanceof HsqlException) {
-                throw jdbcUtil.sqlException((HsqlException) t);
+                throw Util.sqlException((HsqlException) t);
             } else {
                 throw new SQLException(Trace.getMessage(Trace.GENERAL_ERROR));
             }

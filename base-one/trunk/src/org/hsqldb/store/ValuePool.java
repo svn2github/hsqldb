@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 
 
 package org.hsqldb.store;
+
+import java.math.BigDecimal;
 
 /**
  * Supports pooling of Integer, Long, Double, BigDecimal, String and Date
@@ -73,6 +75,7 @@ public class ValuePool {
         DEFAULT_VALUE_POOL_SIZE, DEFAULT_VALUE_POOL_SIZE,
         DEFAULT_VALUE_POOL_SIZE, DEFAULT_VALUE_POOL_SIZE
     };
+    static final int POOLS_COUNT            = defaultPoolLookupSize.length;
     static final int defaultSizeFactor      = 2;
     static final int defaultMaxStringLength = 16;
 
@@ -89,14 +92,14 @@ public class ValuePool {
 
     private static void initPool() {
 
-        int sizeArray[] = defaultPoolLookupSize;
-        int sizeFactor  = defaultSizeFactor;
+        int[] sizeArray  = defaultPoolLookupSize;
+        int   sizeFactor = defaultSizeFactor;
 
         synchronized (ValuePool.class) {
             maxStringLength = defaultMaxStringLength;
-            poolList        = new ValuePoolHashMap[6];
+            poolList        = new ValuePoolHashMap[POOLS_COUNT];
 
-            for (int i = 0; i < poolList.length; i++) {
+            for (int i = 0; i < POOLS_COUNT; i++) {
                 int size = sizeArray[i];
 
                 poolList[i] = new ValuePoolHashMap(size, size * sizeFactor,
@@ -115,7 +118,7 @@ public class ValuePool {
     public static void resetPool(int[] sizeArray, int sizeFactor) {
 
         synchronized (ValuePool.class) {
-            for (int i = 0; i < poolList.length; i++) {
+            for (int i = 0; i < POOLS_COUNT; i++) {
                 poolList[i].resetCapacity(sizeArray[i] * sizeFactor,
                                           BaseHashMap.PURGE_HALF);
             }
@@ -132,7 +135,7 @@ public class ValuePool {
     public static void clearPool() {
 
         synchronized (ValuePool.class) {
-            for (int i = 0; i < poolList.length; i++) {
+            for (int i = 0; i < POOLS_COUNT; i++) {
                 poolList[i].clear();
             }
         }
@@ -177,15 +180,14 @@ public class ValuePool {
         }
     }
 
-    public static java.math.BigDecimal getBigDecimal(
-            java.math.BigDecimal val) {
+    public static BigDecimal getBigDecimal(BigDecimal val) {
 
         if (val == null) {
             return val;
         }
 
         synchronized (bigdecimalPool) {
-            return (java.math.BigDecimal) bigdecimalPool.getOrAddObject(val);
+            return (BigDecimal) bigdecimalPool.getOrAddObject(val);
         }
     }
 

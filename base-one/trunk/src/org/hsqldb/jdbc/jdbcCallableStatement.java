@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,21 @@
 package org.hsqldb.jdbc;
 
 import java.math.BigDecimal;
-import java.sql.*;     // for Array, Blob etc.
+import java.sql.CallableStatement;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.SQLException;
 import java.util.Calendar;
-import java.util.*;    // for Map
 
+//#ifdef JAVA2
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Ref;
+import java.util.Map;
+
+//#endif JAVA2
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.IntValueHashMap;
@@ -347,7 +358,7 @@ implements CallableStatement {
             return index;
         }
 
-        throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND, parameterName);
+        throw Util.sqlException(Trace.COLUMN_NOT_FOUND, parameterName);
     }
 
     /**
@@ -381,7 +392,7 @@ implements CallableStatement {
         if (i < 1 || i > parameterModes.length) {
             String msg = "Parameter index out of bounds: " + i;
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 /*
         int mode = parameterModes[i - 1];
@@ -392,7 +403,7 @@ implements CallableStatement {
                 String msg = "Not OUT or IN OUT mode: " + mode
                              + " for parameter: " + i;
 
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             case Expression.PARAM_IN_OUT :
             case Expression.PARAM_OUT :
                 break;
@@ -423,7 +434,7 @@ implements CallableStatement {
         if (type == Integer.MIN_VALUE) {
             msg = "Parameter not registered: " + parameterIndex;
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
     }
     */
@@ -469,7 +480,7 @@ implements CallableStatement {
      */
     public void registerOutParameter(int parameterIndex,
                                      int sqlType) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -534,7 +545,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public boolean wasNull() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -569,7 +580,7 @@ implements CallableStatement {
      * @see #setString
      */
     public String getString(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -596,7 +607,7 @@ implements CallableStatement {
      * @see #setBoolean
      */
     public boolean getBoolean(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -623,7 +634,7 @@ implements CallableStatement {
      * @see #setByte
      */
     public byte getByte(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -650,7 +661,7 @@ implements CallableStatement {
      * @see #setShort
      */
     public short getShort(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -677,7 +688,7 @@ implements CallableStatement {
      * @see #setInt
      */
     public int getInt(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -704,7 +715,7 @@ implements CallableStatement {
      * @see #setLong
      */
     public long getLong(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -731,7 +742,7 @@ implements CallableStatement {
      * @see #setFloat
      */
     public float getFloat(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -758,7 +769,7 @@ implements CallableStatement {
      * @see #setDouble
      */
     public double getDouble(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -792,7 +803,7 @@ implements CallableStatement {
 //#ifdef DEPRECATEDJDBC
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif
@@ -821,7 +832,7 @@ implements CallableStatement {
      * @see #setBytes
      */
     public byte[] getBytes(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -846,8 +857,8 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @see #setDate
      */
-    public java.sql.Date getDate(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+    public Date getDate(int parameterIndex) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -873,8 +884,8 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @see #setTime
      */
-    public java.sql.Time getTime(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+    public Time getTime(int parameterIndex) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -900,9 +911,8 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @see #setTimestamp
      */
-    public java.sql.Timestamp getTimestamp(int parameterIndex)
-    throws SQLException {
-        throw jdbcUtil.notSupported;
+    public Timestamp getTimestamp(int parameterIndex) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -935,7 +945,7 @@ implements CallableStatement {
      * @see #setObject
      */
     public Object getObject(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 // ----------------------------------- JDBC 2 ----------------------------------
@@ -967,7 +977,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1002,7 +1012,7 @@ implements CallableStatement {
      *   jdbcPreparedStatement)
      */
     public Object getObject(int i, Map map) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1032,7 +1042,7 @@ implements CallableStatement {
      * jdbcPreparedStatement)
      */
     public Ref getRef(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1062,7 +1072,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Blob getBlob(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1092,7 +1102,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Clob getClob(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1122,7 +1132,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Array getArray(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1158,15 +1168,15 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *      jdbcPreparedStatement)
      */
-    public java.sql.Date getDate(int parameterIndex,
-                                 Calendar cal) throws SQLException {
+    public Date getDate(int parameterIndex,
+                        Calendar cal) throws SQLException {
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
 
 //        try {
 //            return HsqlDateTime.getDate(getString(parameterIndex), cal);
 //        } catch (Exception e) {
-//            throw jdbcUtil.sqlException(Trace.INVALID_ESCAPE,
+//            throw Util.sqlException(Trace.INVALID_ESCAPE,
 //                                          e.getMessage());
 //        }
     }
@@ -1204,15 +1214,15 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *    jdbcPreparedStatement)
      */
-    public java.sql.Time getTime(int parameterIndex,
-                                 Calendar cal) throws SQLException {
+    public Time getTime(int parameterIndex,
+                        Calendar cal) throws SQLException {
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
 
 //        try {
 //            return HsqlDateTime.getTime(getString(parameterIndex), cal);
 //        } catch (Exception e) {
-//            throw jdbcUtil.sqlException(Trace.INVALID_ESCAPE,
+//            throw Util.sqlException(Trace.INVALID_ESCAPE,
 //                                          e.getMessage());
 //        }
     }
@@ -1250,15 +1260,15 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *    jdbcPreparedStatement)
      */
-    public java.sql.Timestamp getTimestamp(int parameterIndex,
-                                           Calendar cal) throws SQLException {
+    public Timestamp getTimestamp(int parameterIndex,
+                                  Calendar cal) throws SQLException {
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
 
 //        try {
 //            return HsqlDateTime.getTimestamp(getString(parameterIndex), cal);
 //        } catch (Exception e) {
-//            throw jdbcUtil.sqlException(Trace.INVALID_ESCAPE,
+//            throw Util.sqlException(Trace.INVALID_ESCAPE,
 //                                          e.getMessage());
 //        }
     }
@@ -1487,7 +1497,7 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int parameterIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -1863,8 +1873,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public void setDate(String parameterName,
-                        java.sql.Date x) throws SQLException {
+    public void setDate(String parameterName, Date x) throws SQLException {
         setDate(findParameterIndex(parameterName), x);
     }
 
@@ -1892,8 +1901,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public void setTime(String parameterName,
-                        java.sql.Time x) throws SQLException {
+    public void setTime(String parameterName, Time x) throws SQLException {
         setTime(findParameterIndex(parameterName), x);
     }
 
@@ -1923,7 +1931,7 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
     public void setTimestamp(String parameterName,
-                             java.sql.Timestamp x) throws SQLException {
+                             Timestamp x) throws SQLException {
         setTimestamp(findParameterIndex(parameterName), x);
     }
 
@@ -2204,7 +2212,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public void setDate(String parameterName, java.sql.Date x,
+    public void setDate(String parameterName, Date x,
                         Calendar cal) throws SQLException {
         setDate(findParameterIndex(parameterName), x, cal);
     }
@@ -2241,7 +2249,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public void setTime(String parameterName, java.sql.Time x,
+    public void setTime(String parameterName, Time x,
                         Calendar cal) throws SQLException {
         setTime(findParameterIndex(parameterName), x, cal);
     }
@@ -2279,7 +2287,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public void setTimestamp(String parameterName, java.sql.Timestamp x,
+    public void setTimestamp(String parameterName, Timestamp x,
                              Calendar cal) throws SQLException {
         setTimestamp(findParameterIndex(parameterName), x, cal);
     }
@@ -2635,7 +2643,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Date getDate(String parameterName) throws SQLException {
+    public Date getDate(String parameterName) throws SQLException {
         return getDate(findParameterIndex(parameterName));
     }
 
@@ -2665,7 +2673,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Time getTime(String parameterName) throws SQLException {
+    public Time getTime(String parameterName) throws SQLException {
         return getTime(findParameterIndex(parameterName));
     }
 
@@ -2695,8 +2703,7 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Timestamp getTimestamp(String parameterName)
-    throws SQLException {
+    public Timestamp getTimestamp(String parameterName) throws SQLException {
         return getTimestamp(findParameterIndex(parameterName));
     }
 
@@ -2961,8 +2968,8 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Date getDate(String parameterName,
-                                 Calendar cal) throws SQLException {
+    public Date getDate(String parameterName,
+                        Calendar cal) throws SQLException {
         return getDate(findParameterIndex(parameterName), cal);
     }
 
@@ -3000,8 +3007,8 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Time getTime(String parameterName,
-                                 Calendar cal) throws SQLException {
+    public Time getTime(String parameterName,
+                        Calendar cal) throws SQLException {
         return getTime(findParameterIndex(parameterName), cal);
     }
 
@@ -3040,8 +3047,8 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-    public java.sql.Timestamp getTimestamp(String parameterName,
-                                           Calendar cal) throws SQLException {
+    public Timestamp getTimestamp(String parameterName,
+                                  Calendar cal) throws SQLException {
         return getTimestamp(findParameterIndex(parameterName), cal);
     }
 

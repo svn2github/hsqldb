@@ -1,0 +1,697 @@
+/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the Hypersonic SQL Group nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * This software consists of voluntary contributions made by many individuals 
+ * on behalf of the Hypersonic SQL Group.
+ *
+ *
+ * For work added by the HSQL Development Group:
+ *
+ * Copyright (c) 2001-2005, The HSQL Development Group
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the HSQL Development Group nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+package org.hsqldb.persist;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.hsqldb.Database;
+import org.hsqldb.HsqlException;
+import org.hsqldb.NumberSequence;
+import org.hsqldb.Session;
+import org.hsqldb.Table;
+import org.hsqldb.Trace;
+import org.hsqldb.lib.FileAccess;
+import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.ZipUnzipFile;
+import org.hsqldb.scriptio.ScriptReaderBase;
+import org.hsqldb.scriptio.ScriptWriterBase;
+
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// to move operations on the database.properties files to new
+// class HsqlDatabaseProperties
+// fredt@users 20020220 - patch 488200 by xclayl@users - throw exception
+// throw addded to all methods relying on file io
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt@users 20020405 - patch 1.7.0 by fredt - no change in db location
+// because important information about the database is now stored in the
+// *.properties file, all database files should be in the same folder as the
+// *.properties file
+// tony_lai@users 20020820 - export hsqldb.log_size to .properties file
+// tony_lai@users 20020820 - changes to shutdown compact to save memory
+// fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
+// fredt@users 20021208 - ongoing revamp
+// fredt@users 20021212 - do not rewrite the *.backup file if the *.data
+// file has not been updated in the current session.
+// boucherb@users 20030510 - patch 1.7.2 consolidated all periodic database
+// tasks in one timed task queue
+// fredt@users - 20050102 patch 1.8.0 - refactoring and clearer separation of concerns
+
+/**
+ *  This class is responsible for managing the database files. An HSQLDB database
+ *  consists of a .properties file, a .script file (contains an SQL script),
+ *  a .data file (contains data of cached tables) a .backup file
+ *  and a .log file.<p>
+ *  When using TEXT tables, a data source for each table is also present.<p>
+ *
+ *  Notes on OpenOffice.org integration.
+ *
+ *  A Storage API is used when HSQLDB is integrated into OpenOffice.org. All
+ *  file operations on the 4 main files are performed by OOo, which integrates
+ *  the contents of these files into its database file. The script format is
+ *  always TEXT in this case.
+ *
+ * @version 1.8.0
+ */
+public class Log {
+
+    private HsqlDatabaseProperties properties;
+    private String                 fileName;
+    private Database               database;
+    private FileAccess             fa;
+    private ScriptWriterBase       dbLogWriter;
+    private String                 scriptFileName;
+    private String                 cacheFileName;
+    private String                 backupFileName;
+    private String                 logFileName;
+    private boolean                filesReadOnly;
+    private long                   maxLogSize;
+    private int                    writeDelay = 60;
+    private int                    scriptFormat;
+    private DataFileCache          cache;
+
+    Log(Database db) throws HsqlException {
+
+        database   = db;
+        fa         = db.getFileAccess();
+        fileName   = db.getPath();
+        properties = db.getProperties();
+    }
+
+    /**
+     * When opening a database, the hsqldb.compatible_version property is
+     * used to determine if this version of the engine is equal to or greater
+     * than the earliest version of the engine capable of opening that
+     * database.<p>
+     *
+     * @throws  HsqlException
+     */
+    void open() throws HsqlException {
+
+        // Allows the user to set log size in the properties file.
+        int logMegas = properties.getIntegerProperty("hsqldb.log_size", 0);
+
+        maxLogSize = logMegas * 1024 * 1024;
+        scriptFormat = properties.getIntegerProperty("hsqldb.script_format",
+                ScriptWriterBase.SCRIPT_TEXT_170);
+
+        if (database.isStoredFileAccess()) {
+            scriptFormat = ScriptWriterBase.SCRIPT_TEXT_170;
+        }
+
+        filesReadOnly  = database.isFilesReadOnly();
+        scriptFileName = fileName + ".script";
+        logFileName    = fileName + ".log";
+        cacheFileName  = fileName + ".data";
+        backupFileName = fileName + ".backup";
+
+        int state = properties.getDBModified();
+
+        switch (state) {
+
+            case HsqlDatabaseProperties.FILES_MODIFIED :
+                deleteNewAndOldFiles();
+                restoreBackup();
+                processScript();
+                processDataFile();
+                processLog();
+                close(false);
+
+                if (cache != null) {
+                    cache.open(filesReadOnly);
+                }
+                break;
+
+            case HsqlDatabaseProperties.FILES_NOT_MODIFIED :
+                processScript();
+                break;
+
+            case HsqlDatabaseProperties.FILES_NEW :
+                break;
+        }
+
+        openLog();
+
+        if (!filesReadOnly) {
+            properties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED);
+        }
+    }
+
+    /**
+     * Close all the database files. If script argument is true, no .data
+     * or .backup file will remain and the .script file will contain all the
+     * data of the cached tables as well as memory tables.
+     */
+    void close(boolean script) throws HsqlException {
+
+        closeLog();
+        deleteNewAndOldFiles();
+
+        // create '.script.new'
+        writeScript(script);
+        closeAllTextCaches(script);
+
+        if (cache != null) {
+            cache.close(!script);
+            cache.postClose(!script);
+        }
+
+        // oj@openoffice.org - changed to file access api
+        try {
+            fa.renameElement(scriptFileName + ".new", scriptFileName);
+            fa.removeElement(logFileName);
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
+
+        properties.setProperty("version",
+                               HsqlDatabaseProperties.THIS_VERSION);
+        properties.setProperty(
+            "hsqldb.compatible_version",
+            HsqlDatabaseProperties.FIRST_COMPATIBLE_VERSION);
+
+        // set this one last to save the props
+        properties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
+    }
+
+    /**
+     * Fast counterpart to close(). Does not perform a checkpoint or a backup
+     * of the .data file.
+     */
+    void shutdown() throws HsqlException {
+
+        synchLog();
+
+        if (cache != null) {
+            cache.close(false);
+        }
+
+        closeAllTextCaches(false);
+        closeLog();
+    }
+
+    /**
+     * Deletes the leftovers from any previous unfinished operations.
+     */
+    void deleteNewAndOldFiles() {
+
+        try {
+            fa.removeElement(cacheFileName + ".old");
+            fa.removeElement(cacheFileName + ".new");
+            fa.removeElement(backupFileName + ".new");
+            fa.removeElement(scriptFileName + ".new");
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
+    }
+
+    /**
+     * Performs checkpoint including pre and post operations. Returns to the
+     * same state as before the checkpoint.
+     */
+    void checkpoint(boolean defrag) throws HsqlException {
+
+        if (filesReadOnly) {
+            return;
+        }
+
+        closeLog();
+        closeAllTextCaches(false);
+        reopenAllTextCaches();
+
+        if (cache != null) {
+            if (forceDefrag()) {
+                defrag = true;
+            }
+
+            if (defrag) {
+                cache.defrag();
+            } else {
+                cache.close(true);
+                cache.postClose(true);
+                cache.open(false);
+            }
+        }
+
+        writeScript(false);
+
+        try {
+            fa.renameElement(scriptFileName + ".new", scriptFileName);
+            fa.removeElement(logFileName);
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
+
+        properties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED);
+
+        if (dbLogWriter == null) {
+            return;
+        }
+
+        dbLogWriter.reopen();
+
+        Session[] sessions = database.sessionManager.getAllSessions();
+
+        try {
+            for (int i = 0; i < sessions.length; i++) {
+                Session session = sessions[i];
+
+                if (session.isAutoCommit() == false) {
+                    dbLogWriter.writeLogStatement(
+                        session.getAutoCommitStatement(), session.getId());
+                }
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+    }
+
+    /**
+     * Returns true if lost space is above the threshold
+     */
+    boolean forceDefrag() {
+
+        long megas =
+            properties.getIntegerProperty(HsqlDatabaseProperties.DEFRAG_LIMIT,
+                                          200);
+        long defraglimit = megas * 1024 * 1024;
+
+        return cache.freeBlocks.getLostBlocksSize() > defraglimit;
+    }
+
+    /**
+     * Responsible for creating the cache instance.
+     */
+    DataFileCache getCache() throws HsqlException {
+
+        if (database.isFilesInJar()) {
+            return null;
+        }
+
+        if (cache == null) {
+            cache = new DataFileCache(database, cacheFileName,
+                                      backupFileName);
+
+            cache.open(filesReadOnly);
+        }
+
+        return cache;
+    }
+
+    int getLogSize() {
+        return (int) (maxLogSize / (1024 * 11024));
+    }
+
+    void setLogSize(int megas) {
+
+        properties.setProperty("hsqldb.log_size", megas);
+
+        maxLogSize = megas * 1024 * 1024;
+    }
+
+    int getScriptType() {
+        return scriptFormat;
+    }
+
+    /**
+     * Changing the script format results in a checkpoint, with the .script
+     * file written in the new format.
+     */
+    void setScriptType(int type) throws HsqlException {
+
+        if (database.isStoredFileAccess()) {
+            return;
+        }
+
+        boolean needsCheckpoint = scriptFormat != type;
+
+        scriptFormat = type;
+
+        properties.setProperty("hsqldb.script_format", scriptFormat);
+
+        if (needsCheckpoint) {
+            checkpoint(false);
+        }
+    }
+
+    /**
+     * Write delay specifies the frequency of FileDescriptor.sync() calls.
+     */
+    int getWriteDelay() {
+        return writeDelay;
+    }
+
+    void setWriteDelay(int delay) {
+
+        writeDelay = delay;
+
+        if (dbLogWriter != null) {
+            synchLog();
+            dbLogWriter.setWriteDelay(delay);
+        }
+    }
+
+    /**
+     * Various writeXXX() methods are used for logging statements.
+     */
+    void writeStatement(int id, String s) throws HsqlException {
+
+        if (s == null || s.length() == 0) {
+            return;
+        }
+
+        try {
+            dbLogWriter.writeLogStatement(s, id);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeInsertStatement(int id, Table t,
+                              Object[] row) throws HsqlException {
+
+        try {
+            dbLogWriter.writeInsertStatement(id, t, row);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeDeleteStatement(int id, Table t,
+                              Object[] row) throws HsqlException {
+
+        try {
+            dbLogWriter.writeDeleteStatement(id, t, row);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeSequenceStatement(int id,
+                                NumberSequence s) throws HsqlException {
+
+        try {
+            dbLogWriter.writeSequenceStatement(id, s);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeCommitStatement(int id) throws HsqlException {
+
+        try {
+            dbLogWriter.writeCommitStatement(id);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+
+        if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void synchLog() {
+
+        if (dbLogWriter != null) {
+            dbLogWriter.sync();
+        }
+    }
+
+    /**
+     * Wrappers for openning-starting / stoping-closing the log file and
+     * writer.
+     */
+    private void openLog() throws HsqlException {
+
+        if (filesReadOnly) {
+            return;
+        }
+
+        try {
+            dbLogWriter = ScriptWriterBase.newScriptWriter(database,
+                    logFileName, false, false,
+                    ScriptWriterBase.SCRIPT_TEXT_170);
+
+            dbLogWriter.setWriteDelay(writeDelay);
+            dbLogWriter.start();
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
+        }
+    }
+
+    private synchronized void closeLog() throws HsqlException {
+
+        if (dbLogWriter != null) {
+            dbLogWriter.close();
+        }
+    }
+
+    /**
+     * Write the .script file as .script.new.
+     */
+    private void writeScript(boolean full) throws HsqlException {
+
+        String sNewName = scriptFileName + ".new";
+
+        try {
+            if (fa.isStreamElement(sNewName)) {
+                fa.removeElement(sNewName);
+            }
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
+
+        //fredt - to do - flag for chache set index
+        ScriptWriterBase scw = ScriptWriterBase.newScriptWriter(database,
+            scriptFileName + ".new", full, true, scriptFormat);
+
+        scw.writeAll();
+        scw.close();
+    }
+
+    /**
+     * Performs all the commands in the .script file.
+     */
+    private void processScript() throws HsqlException {
+
+        try {
+            if (database.isFilesInJar()
+                    || fa.isStreamElement(scriptFileName)) {
+                ScriptReaderBase scr =
+                    ScriptReaderBase.newScriptReader(database,
+                                                     scriptFileName,
+                                                     scriptFormat);
+
+                scr.readAll(database.sessionManager.getSysSession());
+                scr.close();
+            }
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+
+            throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * Defrag large data files when the sum of .log and .data files is large.
+     */
+    private void processDataFile() throws HsqlException {
+
+        if (cache == null || filesReadOnly || database.isStoredFileAccess()
+                ||!FileUtil.exists(logFileName)) {
+            return;
+        }
+
+        File file       = new File(logFileName);
+        long logLength  = file.length();
+        long dataLength = cache.getFileFreePos();
+
+        if (logLength + dataLength > cache.maxDataFileSize) {
+            checkpoint(true);
+        }
+    }
+
+    /**
+     * Performs all the commands in the .log file.
+     */
+    private void processLog() throws HsqlException {
+
+        try {
+            if (!database.isFilesInJar() && fa.isStreamElement(logFileName)) {
+                ScriptRunner.runScript(database, logFileName,
+                                       ScriptWriterBase.SCRIPT_TEXT_170);
+            }
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
+    }
+
+    /**
+     * Restores a compressed backup or the .data file.
+     */
+    private void restoreBackup() throws HsqlException {
+
+        // in case data file cannot be deleted, reset it
+        DataFileCache.deleteOrResetFreePos(database, cacheFileName);
+
+        try {
+            ZipUnzipFile.decompressFile(backupFileName, cacheFileName,
+                                        database.getFileAccess());
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
+                              new Object[] {
+                backupFileName, e.getMessage()
+            });
+        }
+    }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
+    private HashMap textCacheList = new HashMap();
+
+    DataFileCache openTextCache(Table table, String source,
+                                boolean readOnlyData,
+                                boolean reversed) throws HsqlException {
+
+        closeTextCache(table);
+
+        if (!properties.isPropertyTrue("textdb.allow_full_path")) {
+            if (source.indexOf("..") != -1) {
+                throw (Trace.error(Trace.ACCESS_IS_DENIED, source));
+            }
+
+            String path =
+                new File(new File(fileName).getAbsolutePath()).getParent();
+
+            if (path != null) {
+                source = path + File.separator + source;
+            }
+        }
+
+        TextCache c;
+        int       type;
+
+        if (reversed) {
+            c = new TextCache(table, source);
+        } else {
+            c = new TextCache(table, source);
+        }
+
+        c.open(readOnlyData || filesReadOnly);
+        textCacheList.put(table.getName(), c);
+
+        return c;
+    }
+
+    void closeTextCache(Table table) throws HsqlException {
+
+        TextCache c = (TextCache) textCacheList.remove(table.getName());
+
+        if (c != null) {
+            c.close(true);
+        }
+    }
+
+    private void closeAllTextCaches(boolean compact) throws HsqlException {
+
+        Iterator it = textCacheList.values().iterator();
+
+        while (it.hasNext()) {
+            if (compact) {
+                ((TextCache) it.next()).purge();
+            } else {
+                ((TextCache) it.next()).close(true);
+            }
+        }
+    }
+
+    private void reopenAllTextCaches() throws HsqlException {
+
+        Iterator it = textCacheList.values().iterator();
+
+        while (it.hasNext()) {
+            ((TextCache) it.next()).reopen();
+        }
+    }
+}

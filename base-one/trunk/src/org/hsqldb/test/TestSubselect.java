@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ public class TestSubselect extends TestCase {
     //------------------------------------------------------------
     // Class variables
     //------------------------------------------------------------
-    private static final String databaseDriver   = "org.hsqldb.jdbcDriver";
+    private static final String databaseDriver = "org.hsqldb.jdbcDriver";
     private static final String databaseURL =
         "jdbc:hsqldb:/hsql/test/subselect";
     private static final String databaseUser     = "sa";
@@ -413,10 +413,10 @@ public class TestSubselect extends TestCase {
 
         String sql =
             "select a.val, b.name from sizes a, trees b where a.id = b.size_id and b.id in (select a.id from trees a, fruits b where a.fruit_id = b.id and b.name='red delicious') order by a.val";
-        String expectedSizes[] = new String[] {
+        String[] expectedSizes = new String[] {
             "large", "small"
         };
-        String expectedTrees[] = new String[] {
+        String[] expectedTrees = new String[] {
             "large red delicious tree", "small red delicious tree"
         };
 

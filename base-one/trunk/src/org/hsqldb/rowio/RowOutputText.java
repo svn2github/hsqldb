@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,16 @@ package org.hsqldb.rowio;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.CachedRow;
-import org.hsqldb.HsqlException;
-import org.hsqldb.TextCache;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.persist.TextCache;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
 
@@ -68,18 +71,15 @@ public class RowOutputText extends RowOutputBase {
 
         super();
 
-//        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   "ASCII");
     }
 
     public RowOutputText(String fieldSep, String varSep, String longvarSep,
-                         boolean allQuoted,
-                         String encoding) throws IOException {
+                         boolean allQuoted, String encoding) {
 
         super();
 
-//        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   encoding);
     }
@@ -87,8 +87,7 @@ public class RowOutputText extends RowOutputBase {
     private void initTextDatabaseRowOutput(String fieldSep, String varSep,
                                            String longvarSep,
                                            boolean allQuoted,
-                                           String encoding)
-                                           throws IOException {
+                                           String encoding) {
 
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
@@ -113,7 +112,7 @@ public class RowOutputText extends RowOutputBase {
         this.encoding   = encoding;
     }
 
-    public void writeEnd() throws IOException {
+    public void writeEnd() {
 
         // terminate at the end of row
         if (nextSepEnd) {
@@ -123,21 +122,27 @@ public class RowOutputText extends RowOutputBase {
         writeBytes(TextCache.NL);
     }
 
-    public void writeSize(int size) throws IOException {
+    public void writeSize(int size) {
 
         // initialise at the start of row
         nextSep    = "";
         nextSepEnd = false;
     }
 
-    public void writeType(int type) throws IOException {
+    public void writeType(int type) {
 
         //--do Nothing
     }
 
-    public void writeString(String s) throws IOException {
+/** @todo handle errors from checkConvertString() */
+    public void writeString(String s) {
 
         s = checkConvertString(s, fieldSep);
+
+        // error
+        if (s == null) {
+            return;
+        }
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
@@ -148,9 +153,14 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = fieldSepEnd;
     }
 
-    protected void writeVarString(String s) throws IOException {
+/** @todo handle errors from checkConvertString() */
+    protected void writeVarString(String s) {
 
         s = checkConvertString(s, varSep);
+
+        if (s == null) {
+            return;
+        }
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
@@ -161,9 +171,14 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = varSepEnd;
     }
 
-    protected void writeLongVarString(String s) throws IOException {
+/** @todo handle errors from checkConvertString() */
+    protected void writeLongVarString(String s) {
 
         s = checkConvertString(s, longvarSep);
+
+        if (s == null) {
+            return;
+        }
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
@@ -174,17 +189,12 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = longvarSepEnd;
     }
 
-    protected String checkConvertString(String s,
-                                        String sep) throws IOException {
+    protected String checkConvertString(String s, String sep) {
 
         if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            throw new IOException(
-                Trace.getMessage(
-                    Trace.TextDatabaseRowOutput_checkConvertString));
+            return null;
         } else if (s.indexOf(sep) != -1) {
-            throw new IOException(
-                Trace.getMessage(
-                    Trace.TextDatabaseRowOutput_checkConvertString2));
+            return null;
         }
 
         return s;
@@ -203,7 +213,7 @@ public class RowOutputText extends RowOutputBase {
         return bytes;
     }
 
-    protected void writeByteArray(byte b[]) throws IOException {
+    protected void writeByteArray(byte[] b) {
 
         ensureRoom(b.length * 2);
         StringConverter.writeHex(this.getBuffer(), count, b);
@@ -211,7 +221,7 @@ public class RowOutputText extends RowOutputBase {
         count += b.length * 2;
     }
 
-    public void writeIntData(int i) throws IOException {
+    public void writeIntData(int i) {
 
         writeBytes(Integer.toString(i));
 
@@ -219,17 +229,17 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = fieldSepEnd;
     }
 
-    public void writeIntData(int i, int position) throws IOException {
+    public void writeIntData(int i, int position) {
         throw new java.lang.RuntimeException(
             Trace.getMessage(Trace.TextDatabaseRowOutput_writeIntData));
     }
 
-    public void writeLongData(long i) throws IOException {
+    public void writeLongData(long i) {
         throw new RuntimeException();
     }
 
 // fredt@users - comment - methods used for writing each SQL type
-    protected void writeFieldType(int type) throws IOException {
+    protected void writeFieldType(int type) {
 
         writeBytes(nextSep);
 
@@ -253,11 +263,11 @@ public class RowOutputText extends RowOutputBase {
         }
     }
 
-    protected void writeNull(int type) throws IOException {
+    protected void writeNull(int type) {
         writeFieldType(type);
     }
 
-    protected void writeChar(String s, int t) throws IOException {
+    protected void writeChar(String s, int t) {
 
         switch (t) {
 
@@ -280,57 +290,50 @@ public class RowOutputText extends RowOutputBase {
         }
     }
 
-    protected void writeSmallint(Number o) throws IOException, HsqlException {
+    protected void writeSmallint(Number o) {
         writeString(o.toString());
     }
 
-    protected void writeInteger(Number o) throws IOException, HsqlException {
+    protected void writeInteger(Number o) {
         writeString(o.toString());
     }
 
-    protected void writeBigint(Number o) throws IOException, HsqlException {
+    protected void writeBigint(Number o) {
         writeString(o.toString());
     }
 
-    protected void writeReal(Double o,
-                             int type) throws IOException, HsqlException {
+    protected void writeReal(Double o, int type) {
         writeString(o.toString());
     }
 
-    protected void writeDecimal(java.math.BigDecimal o)
-    throws IOException, HsqlException {
+    protected void writeDecimal(BigDecimal o) {
         writeString(o.toString());
     }
 
-    protected void writeBit(Boolean o) throws IOException, HsqlException {
+    protected void writeBit(Boolean o) {
         writeString(o.toString());
     }
 
-    protected void writeDate(java.sql.Date o)
-    throws IOException, HsqlException {
+    protected void writeDate(Date o) {
         writeString(o.toString());
     }
 
-    protected void writeTime(java.sql.Time o)
-    throws IOException, HsqlException {
+    protected void writeTime(Time o) {
         writeString(o.toString());
     }
 
-    protected void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, HsqlException {
+    protected void writeTimestamp(Timestamp o) {
         writeString(o.toString());
     }
 
-    protected void writeOther(JavaObject o)
-    throws IOException, HsqlException {
+    protected void writeOther(JavaObject o) {
 
         byte[] ba = o.getBytes();
 
         writeByteArray(ba);
     }
 
-    protected void writeBinary(Binary o,
-                               int t) throws IOException, HsqlException {
+    protected void writeBinary(Binary o, int t) {
         writeByteArray(o.getBytes());
     }
 

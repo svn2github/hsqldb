@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 package org.hsqldb.jdbc;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -39,6 +40,7 @@ import org.hsqldb.Column;
 import org.hsqldb.Library;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.persist.HsqlDatabaseProperties;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -341,7 +343,7 @@ import org.hsqldb.lib.StringUtil;
  * @see org.hsqldb.DatabaseInformationMain
  * @see org.hsqldb.DatabaseInformationFull
  */
-public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
+public class jdbcDatabaseMetaData implements DatabaseMetaData {
 
     /** Used by getBestRowIdentifier to avoid extra object construction */
     static final Integer INT_COLUMNS_NO_NULLS = new Integer(columnNoNulls);
@@ -708,7 +710,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverName() throws SQLException {
-        return jdbcUtil.PRODUCT + " Driver";
+        return HsqlDatabaseProperties.PRODUCT_NAME + " Driver";
     }
 
     /**
@@ -718,7 +720,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverVersion() throws SQLException {
-        return jdbcUtil.VERSION;
+        return HsqlDatabaseProperties.THIS_VERSION;
     }
 
     /**
@@ -727,7 +729,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver major version
      */
     public int getDriverMajorVersion() {
-        return jdbcUtil.MAJOR;
+        return HsqlDatabaseProperties.MAJOR;
     }
 
     /**
@@ -736,7 +738,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver minor version number
      */
     public int getDriverMinorVersion() {
-        return jdbcUtil.MINOR;
+        return HsqlDatabaseProperties.MINOR;
     }
 
     /**
@@ -3270,7 +3272,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getTables(String catalog, String schemaPattern,
                                String tableNamePattern,
-                               String types[]) throws SQLException {
+                               String[] types) throws SQLException {
 
         if (wantsIsNull(tableNamePattern)
                 || (types != null && types.length == 0)) {
@@ -3768,9 +3770,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default :
-                throw jdbcUtil.sqlException(Trace.ASSERT_FAILED,
-                                            Trace.JDBC_INVALID_BRI_SCOPE,
-                                            null);
+                throw Util.sqlException(Trace.ASSERT_FAILED,
+                                        Trace.JDBC_INVALID_BRI_SCOPE, null);
         }
 
         if (wantsIsNull(table)) {

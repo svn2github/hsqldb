@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -167,7 +168,7 @@ public class WebServer extends Server {
      *      the WebServer.  "-?" will cause the command line arguments
      *      help to be printed to the standard output
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         String propsPath = FileUtil.canonicalOrAbsolutePath("webserver");
         HsqlProperties fileProps =
@@ -178,7 +179,7 @@ public class WebServer extends Server {
             ServerConstants.SC_KEY_PREFIX);
 
         if (stringProps != null) {
-            if (stringProps.errorKeys.length != 0) {
+            if (stringProps.getErrorKeys().length != 0) {
                 printHelp("webserver.help");
 
                 return;

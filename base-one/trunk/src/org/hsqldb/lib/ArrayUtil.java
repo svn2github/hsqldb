@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,8 @@ public class ArrayUtil {
         classCodeMap.put(boolean.class, ArrayUtil.CLASS_CODE_BOOLEAN);
         classCodeMap.put(Object.class, ArrayUtil.CLASS_CODE_OBJECT);
     }
+
+    private ArrayUtil() {}
 
     /**
      * Returns a distinct int code for each primitive type and for all Object types.
@@ -211,7 +213,7 @@ public class ArrayUtil {
     /**
      * Basic sort for small arrays of int.
      */
-    public static void sortArray(int array[]) {
+    public static void sortArray(int[] array) {
 
         boolean swapped;
 
@@ -233,7 +235,7 @@ public class ArrayUtil {
     /**
      *  Basic find for small arrays of Object.
      */
-    public static int find(Object array[], Object object) {
+    public static int find(Object[] array, Object object) {
 
         for (int i = 0; i < array.length; i++) {
             if (array[i] == object) {
@@ -253,7 +255,7 @@ public class ArrayUtil {
     /**
      *  Basic find for small arrays of int.
      */
-    public static int find(int array[], int value) {
+    public static int find(int[] array, int value) {
 
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
@@ -267,7 +269,7 @@ public class ArrayUtil {
     /**
      *  Finds the first element of the array that is not equal to the given value.
      */
-    public static int findNot(int array[], int value) {
+    public static int findNot(int[] array, int value) {
 
         for (int i = 0; i < array.length; i++) {
             if (array[i] != value) {
@@ -632,7 +634,7 @@ public class ArrayUtil {
      * Returns true if arra from position start contains all elements of arrb
      * in sequential order.
      */
-    public static boolean containsAt(byte[] arra, int start, byte arrb[]) {
+    public static boolean containsAt(byte[] arra, int start, byte[] arrb) {
         return countSameElements(arra, start, arrb) == arrb.length;
     }
 
@@ -667,7 +669,7 @@ public class ArrayUtil {
      *
      */
     public static int countNonStartElementsAt(byte[] arra, int start,
-            byte arrb[]) {
+            byte[] arrb) {
 
         int k = 0;
 
@@ -881,11 +883,26 @@ public class ArrayUtil {
      *  @param colindex the list of indexes into row
      *  @param colobject the destination array
      */
-    public static void copyColumnValues(Object row[], int colindex[],
-                                        Object colobject[]) {
+    public static void copyColumnValues(Object[] row, int[] colindex,
+                                        Object[] colobject) {
 
         for (int i = 0; i < colindex.length; i++) {
             colobject[i] = row[colindex[i]];
+        }
+    }
+
+    public static void copyColumnValues(int[] row, int[] colindex,
+                                        int[] colobject) {
+
+        for (int i = 0; i < colindex.length; i++) {
+            colobject[i] = row[colindex[i]];
+        }
+    }
+
+    public static void fillSequence(int[] colindex) {
+
+        for (int i = 0; i < colindex.length; i++) {
+            colindex[i] = i;
         }
     }
 /*

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -216,8 +216,8 @@ public class Trace {
                             DatabaseScriptReader_readDDL              = 113,
                             DatabaseScriptReader_readExistingData     = 114,
                             Message_Pair                              = 115,
-                            HsqlDatabaseProperties_load               = 116,
-                            HsqlDatabaseProperties_save               = 117,
+                            HsqlDatabaseProperties                    = 116,
+                            not_used                                  = 117,
                             JDBC_INVALID_BRI_SCOPE                    = 118,
                             JDBC_NO_RESULT_SET_METADATA               = 119,
                             JDBC_NO_RESULT_SET                        = 120,
@@ -229,7 +229,7 @@ public class Trace {
                             STATEMENT_IS_CLOSED                       = 126,
                             DatabaseRowInput_skipBytes                = 127,
                             DatabaseRowInput_readLine                 = 128,
-                            DataFileDefrag_writeTableToDataFile       = 129,
+                            DATA_FILE_ERROR                           = 129,
                             DiskNode_writeTranslatePointer            = 130,
                             HsqlDateTime_null_string                  = 131,
                             HsqlDateTime_invalid_timestamp            = 132,
@@ -325,7 +325,8 @@ public class Trace {
                             Session_execute                           = 222,
                             Session_sqlExecuteDirect                  = 223,
                             Session_sqlExecuteCompiled                = 224,
-                            LAST_ERROR_HANDLE                         = 225;
+                            DATA_FILE_IS_FULL                         = 225,
+                            LAST_ERROR_HANDLE                         = 226;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -448,8 +449,8 @@ public class Trace {
         " line: $$ $$",                                                 // DatabaseScriptReader_readDDL
         " line: $$ $$",                                                 // DatabaseScriptReader_readExistingData
         " $$ $$",                                                       // Function_Function
-        "$$.properties $$",                                             // HsqlDatabaseProperties_load
-        "$$.properties $$",                                             // HsqlDatabaseProperties_save
+        " $$.properties $$",                                            // HsqlDatabaseProperties_load
+        "",                                                             // unused
         "invalid scope value",                                          // jdbcDatabaseMetaData_getBestRowIdentifier
         "result set is null",                                           // jdbcResultSetMetaData_jdbcResultSetMetaData
         "result set is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_2
@@ -461,7 +462,7 @@ public class Trace {
         "00000 statement is closed",                                    // SET PROPERTY "name" "value"
         "Method skipBytes() not yet implemented.",                      // DatabaseRowInput_skipBytes
         "Method readLine() not yet implemented.",                       // DatabaseRowInput_readLine
-        "S1000 ",                                                       // DataFileDefrag_writeTableToDataFile
+        "S1000 Data File input/output error",                           //
         "S1000 ",                                                       // DiskNode_writeTranslatePointer
         "null string",                                                  // 131 HsqlDateTime_null_string
         "invalid timestamp",                                            // HsqlDateTime_invalid_timestamp
@@ -475,7 +476,7 @@ public class Trace {
         "End of stream with no data read",                              // jdbcPreparedStatement_setCharacterStream
         "End of stream with no data read",                              // 141 jdbcPreparedStatement_setClob
         "executeUpdate() cannot be used with this statement",           // jdbcStatement_executeUpdate
-        "$$ : $$",                                                      // LockFile_checkHeartbeat
+        " $$ : $$",                                                     // LockFile_checkHeartbeat
         "$$$$ is presumably locked by another process.",                // LockFile_checkHeartbeat2
         "end of line characters not allowed",                           // QuotedTextDatabaseRowOutput_checkConvertString
         "trying to use unsupported result mode: $$",                    // Result_Result
@@ -503,7 +504,7 @@ public class Trace {
         "LIMIT n m",                                                    // Parser_parseLimit1
         "TOP n",                                                        // Parser_parseLimit2
         "S0011 primary or unique constraint required on main table",    //
-        "$$ in table: $$",                                              // 171
+        " $$ in table: $$",                                             // 171
         "no file name specified for source",                            //
         "no value for: ",                                               //
         "zero length separator",                                        //
@@ -557,6 +558,7 @@ public class Trace {
         "Session is closed",                                            // Session_execute
         "Session is closed",                                            // Session_sqlExecuteDirect
         "Session is closed",                                            // Session_sqlExecuteCompiled
+        "S1000 Data file size limit is reached",
         "LAST"                                                          // Control variable
     };
 
@@ -692,7 +694,7 @@ public class Trace {
      * @param result    the <code>Result</code> associated with the exception
      *     @return a new <code>HsqlException</code> according to the result parameter
      */
-    static HsqlException error(final Result result) {
+    public static HsqlException error(final Result result) {
         return new HsqlException(result);
     }
 
@@ -712,6 +714,13 @@ public class Trace {
      */
     static Result toResult(HsqlException e) {
         return new Result(e.getMessage(), e.getSQLState(), e.getErrorCode());
+    }
+
+    public static RuntimeException runtimeError(int code, Object add) {
+
+        HsqlException e = error(code, add);
+
+        return new RuntimeException(e.getMessage());
     }
 
     /**
@@ -805,7 +814,8 @@ public class Trace {
      *
      * @throws HsqlException
      */
-    static void check(boolean condition, int code) throws HsqlException {
+    public static void check(boolean condition,
+                             int code) throws HsqlException {
         check(condition, code, null, null, null, null);
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -358,7 +358,7 @@ class TransferDb extends DataAccessPoint {
     }
 
     Vector getTables(String sCatalog,
-                     String sSchemas[]) throws DataAccessPointException {
+                     String[] sSchemas) throws DataAccessPointException {
 
         Vector    tTable = new Vector();
         ResultSet result = null;

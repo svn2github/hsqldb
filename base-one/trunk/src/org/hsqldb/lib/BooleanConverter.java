@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,6 @@ package org.hsqldb.lib;
  */
 public final class BooleanConverter {
 
-    private static final java.math.BigDecimal BIGDECIMAL_0 =
-        new java.math.BigDecimal("0");
-
     public static Boolean getBoolean(Boolean o) {
         return o;
     }
@@ -64,10 +61,5 @@ public final class BooleanConverter {
     public static Boolean getBoolean(String o) {
         return o != null && o.toLowerCase().equals("true") ? Boolean.TRUE
                                                            : Boolean.FALSE;
-    }
-
-    public static Boolean getBoolean(java.math.BigDecimal o) {
-        return o.compareTo(BIGDECIMAL_0) == 0 ? Boolean.FALSE
-                                              : Boolean.TRUE;
     }
 }

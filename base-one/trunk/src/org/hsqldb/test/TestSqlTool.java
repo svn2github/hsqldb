@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-
-import junit.framework.TestCase;
 
 public class TestSqlTool extends junit.framework.TestCase {
 
@@ -157,7 +155,7 @@ public class TestSqlTool extends junit.framework.TestCase {
         super(s);
     }
 
-    static public void main(String[] sa) {
+    public static void main(String[] sa) {
 
         if (sa.length > 0 && sa[0].startsWith("--gui")) {
             junit.swingui.TestRunner.run(TestSqlTool.class);
@@ -172,7 +170,7 @@ public class TestSqlTool extends junit.framework.TestCase {
         }
     }
 
-    static public junit.framework.Test suite() {
+    public static junit.framework.Test suite() {
 
         junit.framework.TestSuite newSuite = new junit.framework.TestSuite();
 

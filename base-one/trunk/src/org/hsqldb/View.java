@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -177,7 +177,7 @@ class View extends Table {
             Select select = viewSubqueries[i].select;
 
             for (; select != null; select = select.unionSelect) {
-                TableFilter tfilter[] = select.tFilter;
+                TableFilter[] tfilter = select.tFilter;
 
                 for (int j = 0; j < tfilter.length; j++) {
                     if (table.equals(tfilter[j].filterTable.tableName.name)) {

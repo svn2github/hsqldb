@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,20 +68,20 @@ public class TestBatchBug {
 
     static int ldfNrFuerKennung;
 
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         try {
 
 // Load the HSQL Database Engine JDBC driver
             Class.forName("org.hsqldb.jdbcDriver");
 
-            String urls[] = {
+            String[] urls = {
                 IN_PROCESS_FILE_URL, HSQLDB_LOCALHOST_URL,
             };
 
             for (int i = 0; i < urls.length; i++) {
-                String url          = urls[i];
-                String tableAttrs[] = { TABLE_ATTR_CACHED };
+                String   url        = urls[i];
+                String[] tableAttrs = { TABLE_ATTR_CACHED };
 
                 for (int iAttr = 0; iAttr < tableAttrs.length; iAttr++) {
                     testURL(url, "CACHED");

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,8 +110,8 @@ class Grid extends Panel {
     protected Vector   vData    = new Vector();
 
 // --------------------------------------------------
-    private int iColWidth[];
-    private int iColCount;
+    private int[] iColWidth;
+    private int   iColCount;
 
 // boucherb@users changed access for databasemanager2
     protected int iRowCount;
@@ -208,7 +208,7 @@ class Grid extends Panel {
      *
      * @param head
      */
-    public void setHead(String head[]) {
+    public void setHead(String[] head) {
 
         iColCount = head.length;
         sColHead  = new String[iColCount];
@@ -230,13 +230,13 @@ class Grid extends Panel {
      *
      * @param data
      */
-    public void addRow(String data[]) {
+    public void addRow(String[] data) {
 
         if (data.length != iColCount) {
             return;
         }
 
-        String row[] = new String[iColCount];
+        String[] row = new String[iColCount];
 
         for (int i = 0; i < iColCount; i++) {
             row[i] = data[i];
@@ -592,7 +592,7 @@ class Grid extends Panel {
         w = Math.max(w, fMetrics.stringWidth(sColHead[i]));
 
         for (int j = 0; j < iRowCount; j++) {
-            String s[] = (String[]) (vData.elementAt(j));
+            String[] s = (String[]) (vData.elementAt(j));
 
             w = Math.max(w, fMetrics.stringWidth(s[i]));
         }

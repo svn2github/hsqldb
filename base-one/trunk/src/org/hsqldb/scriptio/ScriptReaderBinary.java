@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,15 @@
 
 package org.hsqldb.scriptio;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.DataInputStream;
 import java.io.InputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
+import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
@@ -54,7 +57,8 @@ import org.hsqldb.rowio.RowInputBinary;
  */
 class ScriptReaderBinary extends ScriptReaderBase {
 
-    RowInputBinary rowIn;
+    private RowInputBinary    rowIn;
+    protected DataInputStream dataStreamIn;
 
     ScriptReaderBinary(Database db,
                        String file) throws HsqlException, IOException {
@@ -62,6 +66,16 @@ class ScriptReaderBinary extends ScriptReaderBase {
         super(db, file);
 
         rowIn = new RowInputBinary();
+    }
+
+    protected void openFile() throws IOException {
+
+        InputStream d = db.isFilesInJar()
+                        ? getClass().getResourceAsStream(fileName)
+                        : db.getFileAccess().openInputStreamElement(fileName);
+
+        dataStreamIn = new DataInputStream(new BufferedInputStream(d,
+                1 << 13));
     }
 
     protected void readDDL(Session session)
@@ -78,16 +92,17 @@ class ScriptReaderBinary extends ScriptReaderBase {
         while (it.hasNext()) {
             Object[] data = (Object[]) it.next();
             String   s    = (String) data[0];
+            Result   re   = session.sqlExecuteDirectNoPreChecks(s);
 
-            session.sqlExecuteDirectNoPreChecks(s);
+            if (re.mode == ResultConstants.ERROR) {
+                throw Trace.error(re);
+            }
         }
     }
 
     protected void readExistingData(Session session)
     throws IOException, HsqlException {
 
-        // wsoni variable i never accessed!
-        //for (int i = 0; ; i++) {
         for (;;) {
             String s = readTableInit();
 
@@ -95,7 +110,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
                 break;
             }
 
-            Table t = db.getTable(session, s);
+            Table t = db.getUserTable(session, s);
             int   j = 0;
 
             for (j = 0; ; j++) {
@@ -116,15 +131,11 @@ class ScriptReaderBinary extends ScriptReaderBase {
         }
     }
 
-    public String readLoggedStatement() throws IOException {
-        return null;
-    }
-
     // int : row size (0 if no more rows) ,
     // BinaryServerRowInput : row (column values)
     protected boolean readRow(Table t) throws IOException, HsqlException {
 
-        boolean more = readRow(rowIn, 0, dataStreamIn);
+        boolean more = readRow(rowIn, 0);
 
         if (!more) {
             return false;
@@ -140,13 +151,13 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     // int : rowcount
     protected int readTableTerm() throws IOException, HsqlException {
-        return InOutUtil.readInt(dataStreamIn);
+        return dataStreamIn.readInt();
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
     protected String readTableInit() throws IOException, HsqlException {
 
-        boolean more = readRow(rowIn, 0, dataStreamIn);
+        boolean more = readRow(rowIn, 0);
 
         if (!more) {
             return null;
@@ -165,10 +176,9 @@ class ScriptReaderBinary extends ScriptReaderBase {
         return s;
     }
 
-    boolean readRow(RowInputBase rowin, int pos,
-                    InputStream streamIn) throws IOException {
+    boolean readRow(RowInputBase rowin, int pos) throws IOException {
 
-        int length = InOutUtil.readInt(streamIn);
+        int length = dataStreamIn.readInt();
         int count  = 4;
 
         if (length == 0) {
@@ -176,18 +186,19 @@ class ScriptReaderBinary extends ScriptReaderBase {
         }
 
         rowin.resetRow(pos, length);
-
-        while (count < length) {
-            int read = dataStreamIn.read(rowin.getBuffer(), count,
-                                         length - count);
-
-            if (read == -1) {
-                throw new IOException();
-            }
-
-            count += read;
-        }
+        dataStreamIn.readFully(rowin.getBuffer(), count, length - count);
 
         return true;
+    }
+
+    public boolean readLoggedStatement() throws IOException {
+        return false;
+    }
+
+    public void close() {
+
+        try {
+            dataStreamIn.close();
+        } catch (IOException e) {}
     }
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,10 +95,10 @@ implements HandshakeCompletedListener {
         Provider p;
         String   cls;
 
-        if (Security.getProvider(DEFAULT_SSL_PROVIDER_NAME) == null) {
+        if (Security.getProvider("SunJSSE") == null) {
             try {
-                cls = DEFAULT_SSL_PROVIDER_CLASS;
-                p   = (Provider) Class.forName(cls).newInstance();
+                p = (Provider) Class.forName(
+                    "com.sun.net.ssl.internal.ssl.Provider").newInstance();
 
                 Security.addProvider(p);
             } catch (Exception e) {}
@@ -174,7 +174,7 @@ implements HandshakeCompletedListener {
         return ss;
     }
 
-    private static final void dump(String title, String[] as) {
+    private static void dump(String title, String[] as) {
 
         Trace.printSystemOut(title);
         Trace.printSystemOut("----------------------------");

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,13 +70,15 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.Logger;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Provides SQL Interpreter services relative to a Session and
@@ -102,9 +104,9 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20031224 - support for CREATE SEQUENCE ...
 class DatabaseCommandInterpreter {
 
-    Tokenizer          tokenizer = new Tokenizer();
-    protected Database database;
-    protected Session  session;
+    private Tokenizer tokenizer = new Tokenizer();
+    private Database  database;
+    private Session   session;
 
     /**
      * Constructs a new DatabaseCommandInterpreter for the given Session
@@ -173,9 +175,6 @@ class DatabaseCommandInterpreter {
                 }
             }
         } catch (Throwable t) {
-
-/** @todo fredt - when out of memory error is thrown it does not get classified
- *   making scriptRunner vulnerable */
             result = new Result(t, tokenizer.getLastPart());
         }
 
@@ -437,8 +436,13 @@ class DatabaseCommandInterpreter {
 
             // table
             case Token.TABLE :
-                tableType = isTemp ? Table.TEMP_TABLE
-                                   : Table.MEMORY_TABLE;
+                if (isTemp) {
+                    tableType = Table.TEMP_TABLE;
+                } else {
+                    tableType = database.isStoredFileAccess()
+                                ? Table.CACHED_TABLE
+                                : Table.MEMORY_TABLE;
+                }
 
                 processCreateTable(tableType);
                 break;
@@ -518,7 +522,7 @@ class DatabaseCommandInterpreter {
         HsqlArrayList list;
         HashSet       set;
         String        token;
-        int           col[];
+        int[]         col;
         int           size;
 
         list = new HsqlArrayList();
@@ -749,9 +753,7 @@ class DatabaseCommandInterpreter {
         boolean    isQuoted;
         String     typeName;
         int        type;
-        String     sLen;
-        int        length = 0;
-        String     sScale;
+        int        length      = 0;
         int        scale       = 0;
         boolean    isNullable  = true;
         Expression defaultExpr = null;
@@ -781,57 +783,27 @@ class DatabaseCommandInterpreter {
             type = Types.VARCHAR_IGNORECASE;
         }
 
-        token = tokenizer.getString();
-
-        if (type == Types.DOUBLE && token.equals(Token.T_PRECISION)) {
-            token = tokenizer.getString();
+        if (type == Types.DOUBLE) {
+            tokenizer.isGetThis(Token.T_PRECISION);
         }
 
-        // fredt@users 20020130 - patch 491987 by jimbag@users
-        sLen = "";
+        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+            length = tokenizer.getInt();
 
-        if (token.equals(Token.T_OPENBRACKET)) {
-            while (true) {
-                token = tokenizer.getString();
-
-                if (token.equals(Token.T_CLOSEBRACKET)) {
-                    break;
-                }
-
-                sLen += token;
-            }
-
-            token = tokenizer.getString();
-        }
-
-        // see if we have a scale specified
-        int index;
-
-        if ((index = sLen.indexOf(Token.T_COMMA)) != -1) {
-            sScale = sLen.substring(index + 1, sLen.length());
-            sLen   = sLen.substring(0, index);
-
-            Trace.check(Types.acceptsScaleCreateParam(type),
-                        Trace.UNEXPECTED_TOKEN);
-
-            try {
-                scale = Integer.parseInt(sScale.trim());
-            } catch (NumberFormatException ne) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
-            }
-        }
-
-        // convert the length
-        if (!org.hsqldb.lib.StringUtil.isEmpty(sLen)) {
             Trace.check(Types.acceptsPrecisionCreateParam(type),
                         Trace.UNEXPECTED_TOKEN);
 
-            try {
-                length = Integer.parseInt(sLen.trim());
-            } catch (NumberFormatException ne) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
+            if (tokenizer.isGetThis(Token.T_COMMA)) {
+                scale = tokenizer.getInt();
+
+                Trace.check(Types.acceptsScaleCreateParam(type),
+                            Trace.UNEXPECTED_TOKEN);
             }
+
+            tokenizer.getThis(Token.T_CLOSEBRACKET);
         }
+
+        token = tokenizer.getString();
 
         if (token.equals(Token.T_DEFAULT)) {
             defaultExpr = processCreateDefaultExpression(type, length);
@@ -846,11 +818,7 @@ class DatabaseCommandInterpreter {
                 tokenizer.getThis(Token.T_START);
                 tokenizer.getThis(Token.T_WITH);
 
-                try {
-                    identityStart = tokenizer.getBigint();
-                } catch (NumberFormatException ne) {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
-                }
+                identityStart = tokenizer.getBigint();
 
                 if (tokenizer.isGetThis(Token.T_COMMA)) {
                     tokenizer.getThis(Token.T_INCREMENT);
@@ -1034,7 +1002,7 @@ class DatabaseCommandInterpreter {
                     // tony_lai@users 20020820 - patch 595099
                     pkHsqlName = cname;
 
-                    int        col[] = processColumnList(t);
+                    int[]      col = processColumnList(t);
                     Constraint mainConst;
 
                     mainConst = (Constraint) tcList.get(0);
@@ -1052,7 +1020,7 @@ class DatabaseCommandInterpreter {
                     break;
                 }
                 case Token.UNIQUE : {
-                    int col[] = processColumnList(t);
+                    int[] col = processColumnList(t);
 
                     if (cname == null) {
                         cname = database.nameManager.newAutoName("CT");
@@ -1079,7 +1047,7 @@ class DatabaseCommandInterpreter {
                             mainConst.core.mainColArray;
 
                         if (tempConst.core.refColArray == null) {
-                            throw Trace.error(Trace.INDEX_NOT_FOUND,
+                            throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                                               Trace.TABLE_HAS_NO_PRIMARY_KEY);
                         }
                     }
@@ -1289,6 +1257,9 @@ class DatabaseCommandInterpreter {
         }
     }
 
+// fredt@users 20020221 - patch 520213 by boucherb@users - self reference FK
+// allows foreign keys that reference a column in the same table
+
     /**
      * @param t table
      * @param cname foreign key name
@@ -1310,9 +1281,7 @@ class DatabaseCommandInterpreter {
 
         expTableName = tokenizer.getString();
 
-// fredt@users 20020221 - patch 520213 by boucherb@users - self reference FK
-// allows foreign keys that reference a column in the same table
-        if (t.equals(expTableName)) {
+        if (t.getName().name.equals(expTableName)) {
             expTable = t;
         } else {
             expTable = database.getTable(session, expTableName);
@@ -1323,25 +1292,24 @@ class DatabaseCommandInterpreter {
 
         tokenizer.back();
 
-// fredt@users 20020503 - patch 1.7.0 by fredt -  FOREIGN KEY on table
         if (token.equals(Token.T_OPENBRACKET)) {
             expcol = processColumnList(expTable);
         } else {
+            if (expTable.getPrimaryKey() == null) {
 
-            // the exp table must have a user defined primary key
-            if (!expTable.hasPrimaryKey()) {
-                throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
-                                  Trace.TABLE_HAS_NO_PRIMARY_KEY,
-                                  new Object[]{ expTableName });
+                // getPrimaryKey() == null is true while creating the table
+                // fredt - FK statement is part of CREATE TABLE and is self-referencing
+                // reference must be to same table being created
+                // it is resolved in the calling method
+                Trace.check(t == expTable, Trace.TABLE_HAS_NO_PRIMARY_KEY);
+            } else {
+                if (expTable.hasPrimaryKey()) {
+                    expcol = expTable.getPrimaryKey();
+                } else {
+                    throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
+                                      Trace.TABLE_HAS_NO_PRIMARY_KEY);
+                }
             }
-
-            expcol = expTable.getPrimaryKey();
-
-            // with CREATE TABLE, (expIndex == null) when self referencing FK
-            // is declared in CREATE TABLE
-            // null will be returned for expCol and will be checked
-            // in caller method
-            // with ALTER TABLE, (expIndex == null) when table has no PK
         }
 
         token = tokenizer.getString();
@@ -1609,6 +1577,12 @@ class DatabaseCommandInterpreter {
 
                         return;
 
+                    case Token.PRIMARY :
+                        tokenizer.getThis(Token.T_KEY);
+                        processAlterTableAddPrimaryKey(t, cname);
+
+                        return;
+
                     default :
                         if (cname != null) {
                             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -1625,6 +1599,22 @@ class DatabaseCommandInterpreter {
                 token = tokenizer.getString();
 
                 switch (Token.get(token)) {
+
+                    case Token.PRIMARY :
+                        tokenizer.getThis(Token.T_KEY);
+
+                        if (t.hasPrimaryKey()) {
+                            processAlterTableDropConstraint(
+                                t, t.getIndexes()[0].getName().name);
+                        } else {
+                            throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
+                                              Trace.TABLE_HAS_NO_PRIMARY_KEY,
+                                              new Object[] {
+                                "PRIMARY KEY", t.getName().name
+                            });
+                        }
+
+                        return;
 
                     case Token.CONSTRAINT :
                         processAlterTableDropConstraint(t);
@@ -1922,6 +1912,13 @@ class DatabaseCommandInterpreter {
                 Object value = tokenizer.getInType(isboolean ? Types.BOOLEAN
                                                              : Types.INTEGER);
 
+                if (HsqlDatabaseProperties.CACHE_FILE_SCALE.equals(token)) {
+                    if (database.getTables().size() != 0
+                            || ((Integer) value).intValue() != 8) {
+                        Trace.throwerror(Trace.ACCESS_IS_DENIED, token);
+                    }
+                }
+
                 p.setProperty(token, value.toString().toLowerCase());
 
                 token = tokenizer.getString();
@@ -1930,7 +1927,7 @@ class DatabaseCommandInterpreter {
             }
             case Token.PASSWORD : {
                 session.checkDDLWrite();
-                session.setPassword(tokenizer.getUserOrPassword());
+                session.getUser().setPassword(tokenizer.getUserOrPassword());
 
                 break;
             }
@@ -1944,7 +1941,7 @@ class DatabaseCommandInterpreter {
                 session.checkAdmin();
                 session.checkDDLWrite();
 
-                int i = tokenizer.getInt();        // Integer.parseInt(tokenizer.getString());
+                int i = tokenizer.getInt();
 
                 database.logger.setLogSize(i);
 
@@ -1978,7 +1975,7 @@ class DatabaseCommandInterpreter {
             case Token.MAXROWS : {
                 session.setScripting(false);
 
-                int i = tokenizer.getInt();        // Integer.parseInt(tokenizer.getString());
+                int i = tokenizer.getInt();
 
                 session.setSQLMaxRows(i);
 
@@ -2055,6 +2052,18 @@ class DatabaseCommandInterpreter {
 
                 break;
             }
+            case Token.CHECKPOINT : {
+                session.checkAdmin();
+                session.checkDDLWrite();
+                tokenizer.getThis(Token.T_DEFRAG);
+
+                int size = tokenizer.getInt();
+
+                database.getProperties().setProperty(
+                    HsqlDatabaseProperties.DEFRAG_LIMIT, size);
+
+                break;
+            }
             case Token.WRITE_DELAY : {
                 session.checkAdmin();
                 session.checkDDLWrite();
@@ -2069,7 +2078,7 @@ class DatabaseCommandInterpreter {
                 } else {
                     tokenizer.back();
 
-                    delay = tokenizer.getInt();    // Integer.parseInt(s);
+                    delay = tokenizer.getInt();
                 }
 
                 database.logger.setWriteDelay(delay);
@@ -2550,10 +2559,18 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableDropConstraint(Table t)
     throws HsqlException {
+        processAlterTableDropConstraint(t, tokenizer.getName());
+    }
 
-        String cname;
-
-        cname = tokenizer.getName();
+    /**
+     * Responsible for handling tail of ALTER TABLE ... DROP CONSTRAINT ...
+     *
+     * @param t table
+     * @param name
+     * @throws HsqlException
+     */
+    private void processAlterTableDropConstraint(Table t,
+            String cname) throws HsqlException {
 
         session.commit();
 
@@ -2941,7 +2958,7 @@ class DatabaseCommandInterpreter {
     private void processAlterTableAddUniqueConstraint(Table t,
             HsqlName n) throws HsqlException {
 
-        int col[];
+        int[] col;
 
         col = processColumnList(t);
 
@@ -2997,6 +3014,20 @@ class DatabaseCommandInterpreter {
         TableWorks tableWorks = new TableWorks(session, table);
 
         tableWorks.createCheckConstraint(check, name);
+    }
+
+    private void processAlterTableAddPrimaryKey(Table t,
+            HsqlName n) throws HsqlException {
+
+        int[] col;
+
+        col = processColumnList(t);
+
+        session.commit();
+
+        TableWorks tableWorks = new TableWorks(session, t);
+
+        tableWorks.addOrDropPrimaryKey(col, n);
     }
 
     private void processReleaseSavepoint() throws HsqlException {

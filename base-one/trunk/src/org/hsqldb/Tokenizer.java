@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -236,7 +236,7 @@ public class Tokenizer {
      *
      * @param match
      */
-    boolean isGetThis(String match) throws HsqlException {
+    public boolean isGetThis(String match) throws HsqlException {
 
         getToken();
 
@@ -415,30 +415,53 @@ public class Tokenizer {
 
     int getInt() throws HsqlException {
 
-        getToken();
+        long v = getBigint();
 
-        Object o = getAsValue();
-        int    t = getType();
-
-        if (t != Types.INTEGER) {
-            throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
+        if (v > Integer.MAX_VALUE || v < Integer.MIN_VALUE) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE,
+                              Types.getTypeString(getType()));
         }
 
-        return ((Number) o).intValue();
+        return (int) v;
     }
 
     long getBigint() throws HsqlException {
 
+        boolean minus = false;
+
         getToken();
+
+        if (sToken.equals(Token.T_MINUS)) {
+            minus = true;
+
+            getToken();
+        }
 
         Object o = getAsValue();
         int    t = getType();
 
-        if (t != Types.INTEGER && t != Types.BIGINT) {
+        if (t != Types.INTEGER && t != Types.BIGINT && t != Types.DECIMAL) {
             throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
         }
 
-        return ((Number) o).longValue();
+        if (t == Types.DECIMAL) {
+
+            // only Long.MAX_VALUE + 1 together with minus is acceptable
+            BigDecimal bd = (BigDecimal) o;
+
+            if (minus && bd.subtract(new BigDecimal(Long.MAX_VALUE)).equals(
+                    new BigDecimal(1))) {
+                return Long.MIN_VALUE;
+            } else {
+                throw Trace.error(Trace.WRONG_DATA_TYPE,
+                                  Types.getTypeString(t));
+            }
+        }
+
+        long v = ((Number) o).longValue();
+
+        return minus ? -v
+                     : v;
     }
 
     Object getInType(int type) throws HsqlException {

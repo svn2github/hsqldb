@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ public class Sort {
      * the comparator. (fredt@users)
      *
      */
-    public static final void sort(Object w[], ObjectComparator comparator,
+    public static final void sort(Object[] w, ObjectComparator comparator,
                                   int l, int r) {
 
         int    i;
@@ -143,7 +143,7 @@ public class Sort {
     /**
      * Swaps the a'th and b'th elements of the specified Row array.
      */
-    private static void swap(Object w[], int a, int b) {
+    private static void swap(Object[] w, int a, int b) {
 
         Object t = w[a];
 

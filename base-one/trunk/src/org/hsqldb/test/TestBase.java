@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ import junit.framework.TestCase;
  * @version 1.7.2
  * @since 1.7.2
  */
-abstract public class TestBase extends TestCase {
+public abstract class TestBase extends TestCase {
 
     //  change the url to reflect your preferred db location and name
     //  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
@@ -54,7 +54,7 @@ abstract public class TestBase extends TestCase {
     String  user     = "sa";
     String  password = "";
     Server  server;
-    boolean isNetwork = true;
+    boolean isNetwork = false;
 
     public TestBase(String name) {
         super(name);

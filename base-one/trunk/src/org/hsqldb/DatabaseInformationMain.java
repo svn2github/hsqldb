@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,14 @@
 
 package org.hsqldb;
 
-import java.sql.DatabaseMetaData;
-
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.store.ValuePool;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -850,7 +849,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             pseudo       = ti.getBRIPseudo();
 
             for (int i = 0; i < cols.length; i++) {
-                row                  = t.getNewRow();
+                row                  = t.getEmptyRowData();
                 row[iscope]          = scope;
                 row[icolumn_name]    = ti.getColName(i);
                 row[idata_type]      = ti.getColDataType(i);
@@ -910,7 +909,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         catalogs = ns.iterateCatalogNames();
 
         while (catalogs.hasNext()) {
-            row    = t.getNewRow();
+            row    = t.getEmptyRowData();
             row[0] = (String) catalogs.next();
 
             t.insert(row);
@@ -1124,7 +1123,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             columnCount  = table.getColumnCount();
 
             for (int i = 0; i < columnCount; i++) {
-                row                     = t.getNewRow();
+                row                     = t.getEmptyRowData();
                 row[itable_cat]         = tableCatalog;
                 row[itable_schem]       = tableSchema;
                 row[itable_name]        = tableName;
@@ -1279,8 +1278,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         fkInfo = new DITableInfo();
 
         // the only deferrability rule currently supported by hsqldb is:
-        deferrability =
-            ValuePool.getInt(DatabaseMetaData.importedKeyNotDeferrable);
+        deferrability = ValuePool.getInt(Constraint.NOT_DEFERRABLE);
 
         // We must consider all the constraints in all the user tables, since
         // this is where reference relationships are recorded.  However, we
@@ -1336,63 +1334,17 @@ class DatabaseInformationMain extends DatabaseInformation {
             refCols        = constraint.getRefColumns();
             columnCount    = refCols.length;
             fkName         = constraint.getFkName();
+            pkName         = constraint.getPkName();
 
-            // CHECKME:
-            // Shouldn't the next line be what gives the correct name?
-            // pkName   = constraint.getPkName();
-            pkName = constraint.getMainIndex().getName().name;
-
-            switch (constraint.getDeleteAction()) {
-
-                case Constraint.CASCADE :
-                    deleteRule =
-                        ValuePool.getInt(DatabaseMetaData.importedKeyCascade);
-                    break;
-
-                case Constraint.SET_DEFAULT :
-                    deleteRule = ValuePool.getInt(
-                        DatabaseMetaData.importedKeySetDefault);
-                    break;
-
-                case Constraint.SET_NULL :
-                    deleteRule =
-                        ValuePool.getInt(DatabaseMetaData.importedKeySetNull);
-                    break;
-
-                case Constraint.NO_ACTION :
-                default :
-                    deleteRule = ValuePool.getInt(
-                        DatabaseMetaData.importedKeyNoAction);
-            }
-
-            switch (constraint.getUpdateAction()) {
-
-                case Constraint.CASCADE :
-                    updateRule =
-                        ValuePool.getInt(DatabaseMetaData.importedKeyCascade);
-                    break;
-
-                case Constraint.SET_DEFAULT :
-                    updateRule = ValuePool.getInt(
-                        DatabaseMetaData.importedKeySetDefault);
-                    break;
-
-                case Constraint.SET_NULL :
-                    updateRule =
-                        ValuePool.getInt(DatabaseMetaData.importedKeySetNull);
-                    break;
-
-                case Constraint.NO_ACTION :
-                default :
-                    updateRule = ValuePool.getInt(
-                        DatabaseMetaData.importedKeyNoAction);
-            }
+            //pkName = constraint.getMainIndex().getName().name;
+            deleteRule = ValuePool.getInt(constraint.getDeleteAction());
+            updateRule = ValuePool.getInt(constraint.getUpdateAction());
 
             for (int j = 0; j < columnCount; j++) {
                 keySequence          = ValuePool.getInt(j + 1);
                 pkColumnName         = pkInfo.getColName(mainCols[j]);
                 fkColumnName         = fkInfo.getColName(refCols[j]);
-                row                  = t.getNewRow();
+                row                  = t.getEmptyRowData();
                 row[ipk_table_cat]   = pkTableCatalog;
                 row[ipk_table_schem] = pkTableSchema;
                 row[ipk_table_name]  = pkTableName;
@@ -1500,7 +1452,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         int[]          cols;
         int            col;
         int            colCount;
-        Object         row[];
+        Object[]       row;
         DITableInfo    ti;
         HsqlProperties p;
 
@@ -1564,7 +1516,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
                 for (int k = 0; k < colCount; k++) {
                     col                    = cols[k];
-                    row                    = t.getNewRow();
+                    row                    = t.getEmptyRowData();
                     row[itable_cat]        = tableCatalog;
                     row[itable_schem]      = tableSchema;
                     row[itable_name]       = tableName;
@@ -1689,7 +1641,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             colCount       = cols.length;
 
             for (int j = 0; j < colCount; j++) {
-                row               = t.getNewRow();
+                row               = t.getEmptyRowData();
                 row[itable_cat]   = tableCatalog;
                 row[itable_schem] = tableSchema;
                 row[itable_name]  = tableName;
@@ -1913,7 +1865,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // Do it.
         while (schemas.hasNext()) {
-            row    = t.getNewRow();
+            row    = t.getEmptyRowData();
             row[0] = schemas.next();
             row[1] = ns.getCatalogName(row[0]);
 
@@ -2040,7 +1992,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
                 for (int j = 0; j < tablePrivileges.length; j++) {
                     privilege          = (String) tablePrivileges[j];
-                    row                = t.getNewRow();
+                    row                = t.getEmptyRowData();
                     row[itable_cat]    = tableCatalog;
                     row[itable_schem]  = tableSchema;
                     row[itable_name]   = tableName;
@@ -2134,7 +2086,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         // intermediate holders
         Iterator    tables;
         Table       table;
-        Object      row[];
+        Object[]    row;
         HsqlName    accessKey;
         DITableInfo ti;
 
@@ -2171,7 +2123,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             ti.setTable(table);
 
-            row               = t.getNewRow();
+            row               = t.getEmptyRowData();
             row[itable_cat]   = ns.getCatalogName(table);
             row[itable_schem] = ns.getSchemaName(table);
             row[itable_name]  = ti.getName();
@@ -2241,7 +2193,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Object[] row;
 
         for (int i = 0; i < tableTypes.length; i++) {
-            row    = t.getNewRow();
+            row    = t.getEmptyRowData();
             row[0] = tableTypes[i];
 
             t.insert(row);
@@ -2614,7 +2566,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             ti.setTypeCode(Types.ALL_TYPES[i][0]);
             ti.setTypeSub(Types.ALL_TYPES[i][1]);
 
-            row                      = t.getNewRow();
+            row                      = t.getEmptyRowData();
             row[itype_name]          = ti.getTypeName();
             row[idata_type]          = ti.getDataType();
             row[iprecision]          = ti.getPrecision();
@@ -2721,7 +2673,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // Do it.
         for (int i = 0; i < users.size(); i++) {
-            row    = t.getNewRow();
+            row    = t.getEmptyRowData();
             user   = (User) users.get(i);
             row[0] = user.getName();
             row[1] = ValuePool.getBoolean(user.isAdmin());
@@ -2842,7 +2794,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         }
 
         for (int i = 0; i < constraintList.size(); i++) {
-            row              = t.getNewRow();
+            row              = t.getEmptyRowData();
             constraint       = (Constraint) constraintList.get(i);
             table            = constraint.getMain();
             row[icons_cat]   = ns.getCatalogName(table);
@@ -2994,7 +2946,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         it = database.sequenceManager.sequenceMap.values().iterator();
 
         while (it.hasNext()) {
-            row              = t.getNewRow();
+            row              = t.getEmptyRowData();
             sequence         = (NumberSequence) it.next();
             dataType         = sequence.getType();
             sequenceName     = sequence.getName().name;

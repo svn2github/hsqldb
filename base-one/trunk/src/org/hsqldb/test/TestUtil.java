@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -272,7 +272,7 @@ public class TestUtil {
             default :
 
                 //if we arrive here, then we should have a valid code,
-                //since we validated it earlier, so return an 
+                //since we validated it earlier, so return an
                 //IgnoreParsedSection object
                 return new IgnoreParsedSection(rows, type);
         }
@@ -385,7 +385,7 @@ abstract class ParsedSection {
      * returns a String representation of the expected result for the test
      * @return The expected result(s) for the test
      */
-    abstract protected String getResultString();
+    protected abstract String getResultString();
 
     /**
      *  returns the error message for the section

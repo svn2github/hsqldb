@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,7 +121,7 @@ public class CodeSwitcher {
      *
      * @param a
      */
-    public static void main(String a[]) {
+    public static void main(String[] a) {
 
         CodeSwitcher s = new CodeSwitcher();
 
@@ -238,7 +238,7 @@ public class CodeSwitcher {
         if (f.isFile() && path.endsWith(".java")) {
             vList.addElement(path);
         } else if (f.isDirectory()) {
-            String list[] = f.list();
+            String[] list = f.list();
 
             for (int i = 0; i < list.length; i++) {
                 addDir(path + File.separatorChar + list[i]);

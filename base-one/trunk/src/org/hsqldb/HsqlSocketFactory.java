@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,9 +50,6 @@ public class HsqlSocketFactory {
 // ----------------------------- static members ---------------------------------
     private static HsqlSocketFactory plainImpl;
     private static HsqlSocketFactory sslImpl;
-    static final String DEFAULT_SSL_PROVIDER_CLASS =
-        "com.sun.net.ssl.internal.ssl.Provider";
-    static final String DEFAULT_SSL_PROVIDER_NAME = "SunJSSE";
 
 // ------------------------------ constructors ---------------------------------
 
@@ -136,7 +133,7 @@ public class HsqlSocketFactory {
     }
 
 // ------------------------ static utility methods -----------------------------
-    private static final HsqlSocketFactory getPlainImpl() throws Exception {
+    private static HsqlSocketFactory getPlainImpl() throws Exception {
 
         synchronized (HsqlSocketFactory.class) {
             if (plainImpl == null) {
@@ -147,7 +144,7 @@ public class HsqlSocketFactory {
         return plainImpl;
     }
 
-    private static final HsqlSocketFactory getSSLImpl() throws Exception {
+    private static HsqlSocketFactory getSSLImpl() throws Exception {
 
         synchronized (HsqlSocketFactory.class) {
             if (sslImpl == null) {
@@ -173,7 +170,7 @@ public class HsqlSocketFactory {
      * @throws Exception if a new secure socket factory cannot
      *      be constructed
      */
-    private static final HsqlSocketFactory newFactory(String implClass)
+    private static HsqlSocketFactory newFactory(String implClass)
     throws Exception {
 
         Class       clazz;

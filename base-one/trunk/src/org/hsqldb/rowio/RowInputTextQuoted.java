@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,24 +49,16 @@ public class RowInputTextQuoted extends RowInputText {
     private static final int NORMAL_FIELD   = 0;
     private static final int NEED_END_QUOTE = 1;
     private static final int FOUND_QUOTE    = 2;
-    char                     qtext[];
+    char[]                   qtext;
 
     public RowInputTextQuoted(String fieldSep, String varSep,
-                              String longvarSep,
-                              boolean allQuoted) throws IOException {
+                              String longvarSep, boolean allQuoted) {
         super(fieldSep, varSep, longvarSep, allQuoted);
     }
 
     public void setSource(String text, int pos) {
 
         super.setSource(text, pos);
-
-        qtext = this.text.toCharArray();
-    }
-
-    public void setSource(String text, int pos, int len) {
-
-        super.setSource(text, pos, len);
 
         qtext = this.text.toCharArray();
     }

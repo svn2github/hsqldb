@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ public class TestGroupByHaving extends TestCase {
     //------------------------------------------------------------
     private static final String databaseDriver = "org.hsqldb.jdbcDriver";
     private static final String databaseURL =
-        "jdbc:hsqldb:mem:GroupByHaving";
+        "jdbc:hsqldb:file:test/GroupByHaving";
     private static final String databaseUser     = "sa";
     private static final String databasePassword = "";
 

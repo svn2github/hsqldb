@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,10 +73,10 @@ package org.hsqldb;
  */
 class Transaction {
 
-    private boolean isDelete;
-    private Table   tTable;
-    private Object  oRow[];
-    long            SCN;
+    private boolean  isDelete;
+    private Table    tTable;
+    private Object[] oRow;
+    long             SCN;
 
     /**
      * Constructor. <p>
@@ -88,7 +88,7 @@ class Transaction {
      * @param table the Table object against which the operation occured
      * @param row the row data that iis inserted or deleted
      */
-    Transaction(boolean delete, Table table, Object row[], long SCN) {
+    Transaction(boolean delete, Table table, Object[] row, long SCN) {
 
         isDelete = delete;
         tTable   = table;

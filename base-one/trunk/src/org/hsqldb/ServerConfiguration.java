@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@ import java.net.InetAddress;
 
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.persist.HsqlProperties;
 
 //TODO:  move to here from Server and WebServer the remaining extraneous code
 //       dealing primarily with reading/setting properties from files, etc.
@@ -176,7 +177,7 @@ public final class ServerConfiguration implements ServerConstants {
      *
      * @return a new default properties object
      */
-    public static final HsqlProperties newDefaultProperties(int protocol) {
+    public static HsqlProperties newDefaultProperties(int protocol) {
 
         HsqlProperties p = new HsqlProperties();
 

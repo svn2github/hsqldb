@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,9 @@ import org.hsqldb.lib.IntValueHashMap;
 public class Types {
 
     /**
-     * Names of types used for external, JDBC reporting
+     * Names of types.
+     * Used for external, JDBC reporting
+     * Used for library and user function arguments
      */
     public static final String DecimalClassName   = "java.math.BigDecimal";
     public static final String DateClassName      = "java.sql.Date";

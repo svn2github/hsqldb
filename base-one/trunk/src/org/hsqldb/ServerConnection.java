@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,7 @@ package org.hsqldb;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -102,7 +103,7 @@ class ServerConnection implements Runnable {
     private Session              session;
     private Socket               socket;
     private Server               server;
-    private BufferedInputStream  dataInput;
+    private DataInputStream      dataInput;
     private BufferedOutputStream dataOutput;
     private static int           mCurrentThread = 0;
     private int                  mThread;
@@ -180,7 +181,7 @@ class ServerConnection implements Runnable {
         try {
             socket.setTcpNoDelay(true);
 
-            dataInput  = new BufferedInputStream(socket.getInputStream());
+            dataInput  = new DataInputStream(socket.getInputStream());
             dataOutput = new BufferedOutputStream(socket.getOutputStream());
 
             Result resultIn = Result.read(rowIn, dataInput);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.lang.reflect.Method;
-import java.sql.DatabaseMetaData;
 import java.sql.Timestamp;
 
 import org.hsqldb.lib.FileUtil;
@@ -40,6 +39,11 @@ import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.persist.DataFileCache;
+import org.hsqldb.persist.HsqlProperties;
+import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.Log;
+import org.hsqldb.persist.TextCache;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.store.ValuePool;
 
@@ -252,7 +256,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // Do it.
         while (aliases.hasNext()) {
-            row     = t.getNewRow();
+            row     = t.getEmptyRowData();
             alias   = (String) aliases.next();
             objName = (String) hAliases.get(alias);
 
@@ -295,7 +299,7 @@ extends org.hsqldb.DatabaseInformationMain {
             objType = "DOMAIN";
 
             while (typeAliases.hasNext()) {
-                row   = t.getNewRow();
+                row   = t.getEmptyRowData();
                 alias = (String) typeAliases.next();
 
                 int tn = Types.typeAliases.get(alias, Integer.MIN_VALUE);
@@ -325,11 +329,6 @@ extends org.hsqldb.DatabaseInformationMain {
         return t;
     }
 
-// boucherb@users - 20020305 - added cache_hash column to cover the case
-// of multiple text tables sharing single text file.  This is possible
-// without file corruption under read-only text tables, but really should be
-// disallowed under all other cases, else corruption is sure to result.
-
     /**
      * Retrieves a <code>Table</code> object describing the current
      * state of all row caching objects for the accessible
@@ -346,19 +345,14 @@ extends org.hsqldb.DatabaseInformationMain {
      * columns: <p>
      *
      * <pre class="SqlCodeExample">
-     * CACHE_CLASS         VARCHAR   FQN of Cache class
-     * CACHE_HASH          INTEGER   in-memory hashCode() value of Cache object
      * CACHE_FILE          VARCHAR   absolute path of cache data file
-     * CACHE_LENGTH        INTEGER   number of data bytes currently cached
-     * CACHE_SIZE          INTEGER   number of rows currently cached
-     * FREE_BYTES          INTEGER   total bytes in available allocation units
-     * SMALLEST_FREE_ITEM  INTEGER   bytes of smallest available allocation unit
-     * LARGEST_FREE_ITEM   INTEGER   bytes of largest available allocation unit
-     * FREE_COUNT          INTEGER   total # of allocation units available
-     * FREE_POS            INTEGER   largest file position allocated + 1
      * MAX_CACHE_SIZE      INTEGER   maximum allowable cached Row objects
      * MAX_CACHE_BYTE_SIZE INTEGER   maximum allowable size of cached Row objects
-     * WRITER_LENGTH       INTEGER   length of row write buffer array
+     * CACHE_LENGTH        INTEGER   number of data bytes currently cached
+     * CACHE_SIZE          INTEGER   number of rows currently cached
+     * FREE_BYTES          INTEGER   total bytes in available file allocation units
+     * FREE_COUNT          INTEGER   total # of allocation units available
+     * FREE_POS            INTEGER   largest file position allocated + 1
      * </pre> <p>
      *
      * <b>Notes:</b> <p>
@@ -387,26 +381,15 @@ extends org.hsqldb.DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CACHEINFO]);
 
-            addColumn(t, "CACHE_CLASS", Types.VARCHAR, false);           // not null
-            addColumn(t, "CACHE_HASH", Types.INTEGER, false);            // not null
-            addColumn(t, "CACHE_FILE", Types.VARCHAR, false);            // not null
-            addColumn(t, "CACHE_LENGTH", Types.INTEGER, false);          // not null
-            addColumn(t, "CACHE_SIZE", Types.INTEGER, false);            // not null
-            addColumn(t, "FREE_BYTES", Types.INTEGER, false);            // not null
-            addColumn(t, "SMALLEST_FREE_ITEM", Types.INTEGER, false);    // not null
-            addColumn(t, "LARGEST_FREE_ITEM", Types.INTEGER, false);     // not null
-            addColumn(t, "FREE_COUNT", Types.INTEGER, false);            // not null
-            addColumn(t, "FREE_POS", Types.INTEGER, false);              // not null
-            addColumn(t, "MAX_CACHE_SIZE", Types.INTEGER, false);        // not null
-            addColumn(t, "MAX_CACHE_BYTE_SIZE", Types.BIGINT, false);    // not null
-            addColumn(t, "WRITER_LENGTH", Types.INTEGER, false);         // not null
-
-            // order: CACHE_CLASS, CACHE_FILE
-            // added for unique: CACHE_HASH
-            // true PK
-            t.createPrimaryKey(null, new int[] {
-                0, 2, 1
-            }, true);
+            addColumn(t, "CACHE_FILE", Types.VARCHAR, false);         // not null
+            addColumn(t, "MAX_CACHE_COUNT", Types.INTEGER, false);    // not null
+            addColumn(t, "MAX_CACHE_BYTES", Types.BIGINT, false);     // not null
+            addColumn(t, "CACHE_SIZE", Types.INTEGER, false);         // not null
+            addColumn(t, "CACHE_BYTES", Types.BIGINT, false);         // not null
+            addColumn(t, "FILE_FREE_BYTES", Types.INTEGER, false);    // not null
+            addColumn(t, "FILE_FREE_COUNT", Types.INTEGER, false);    // not null
+            addColumn(t, "FILE_FREE_POS", Types.BIGINT, false);       // not null
+            t.createPrimaryKey(null, new int[]{ 0 }, true);
 
             return t;
         }
@@ -417,25 +400,19 @@ extends org.hsqldb.DatabaseInformationMain {
         Iterator      caches;
         Iterator      tables;
         Table         table;
-        CacheFree     cacheFree;
         int           iFreeBytes;
         int           iLargestFreeItem;
         long          lSmallestFreeItem;
 
         // column number mappings
-        final int icache_class     = 0;
-        final int icache_hash      = 1;
-        final int icache_file      = 2;
-        final int icache_length    = 3;
-        final int icache_size      = 4;
+        final int icache_file      = 0;
+        final int imax_cache_sz    = 1;
+        final int imax_cache_bytes = 2;
+        final int icache_size      = 3;
+        final int icache_length    = 4;
         final int ifree_bytes      = 5;
-        final int is_free_item     = 6;
-        final int il_free_item     = 7;
-        final int ifree_count      = 8;
-        final int ifree_pos        = 9;
-        final int imax_cache_sz    = 10;
-        final int imax_cache_bytes = 11;
-        final int iwriter_length   = 12;
+        final int ifree_count      = 6;
+        final int ifree_pos        = 7;
 
         // Initialization
         cacheSet = new HashSet();
@@ -447,7 +424,7 @@ extends org.hsqldb.DatabaseInformationMain {
             table = (Table) tables.next();
 
             if (table.isCached() && isAccessibleTable(table)) {
-                cache = table.cache;
+                cache = table.getCache();
 
                 if (cache != null) {
                     cacheSet.add(cache);
@@ -459,45 +436,20 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // Do it.
         while (caches.hasNext()) {
-            cache             = (DataFileCache) caches.next();
-            row               = t.getNewRow();
-            cacheFree         = new CacheFree();
-            iFreeBytes        = 0;
-            iLargestFreeItem  = 0;
-            lSmallestFreeItem = Long.MAX_VALUE;
-            cacheFree.fNext   = cache.fRoot;
-
-            while (cacheFree.fNext != null) {
-                cacheFree  = cacheFree.fNext;
-                iFreeBytes += cacheFree.iLength;
-
-                if (cacheFree.iLength > iLargestFreeItem) {
-                    iLargestFreeItem = cacheFree.iLength;
-                }
-
-                if (cacheFree.iLength < lSmallestFreeItem) {
-                    lSmallestFreeItem = cacheFree.iLength;
-                }
-            }
-
-            if (lSmallestFreeItem > Integer.MAX_VALUE) {
-                lSmallestFreeItem = 0;
-            }
-
-            row[icache_class]     = cache.getClass().getName();
-            row[icache_hash]      = ValuePool.getInt(cache.hashCode());
-            row[icache_file] = FileUtil.canonicalOrAbsolutePath(cache.sName);
-            row[icache_length]    = ValuePool.getLong(cache.cacheBytesLength);
-            row[icache_size]      = ValuePool.getInt(cache.getCachedCount());
-            row[ifree_bytes]      = ValuePool.getInt(iFreeBytes);
-            row[is_free_item]     = ValuePool.getInt((int) lSmallestFreeItem);
-            row[il_free_item]     = ValuePool.getInt(iLargestFreeItem);
-            row[ifree_count]      = ValuePool.getInt(cache.iFreeCount);
-            row[ifree_pos]        = ValuePool.getInt(cache.fileFreePosition);
-            row[imax_cache_sz]    = ValuePool.getInt(cache.maxCacheSize);
-            row[imax_cache_bytes] = ValuePool.getLong(cache.maxCacheBytes);
-            row[iwriter_length] = ValuePool.getInt(
-                cache.rowOut.getOutputStream().getBuffer().length);
+            cache      = (DataFileCache) caches.next();
+            row        = t.getEmptyRowData();
+            iFreeBytes = 0;
+            row[icache_file] =
+                FileUtil.canonicalOrAbsolutePath(cache.getFileName());
+            row[imax_cache_sz]    = ValuePool.getInt(cache.capacity());
+            row[imax_cache_bytes] = ValuePool.getLong(cache.bytesCapacity());
+            row[icache_size] = ValuePool.getInt(cache.getCachedObjectCount());
+            row[icache_length] =
+                ValuePool.getLong(cache.getTotalCachedBlockSize());
+            row[ifree_bytes] =
+                ValuePool.getInt(cache.getTotalFreeBlockSize());
+            row[ifree_count] = ValuePool.getInt(cache.getFreeBlockCount());
+            row[ifree_pos]   = ValuePool.getLong(cache.getFileFreePos());
 
             t.insert(row);
         }
@@ -612,7 +564,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 clsName         = (String) classNames.next();
                 clsCat          = ns.getCatalogName(clsName);
                 clsSchem        = ns.getSchemaName(clsName);
-                row             = t.getNewRow();
+                row             = t.getEmptyRowData();
                 row[icls_cat]   = clsCat;
                 row[icls_schem] = clsSchem;
                 row[icls_name]  = clsName;
@@ -635,7 +587,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 clsName         = (String) classNames.next();
                 clsCat          = ns.getCatalogName(clsName);
                 clsSchem        = ns.getSchemaName(clsName);
-                row             = t.getNewRow();
+                row             = t.getEmptyRowData();
                 row[icls_cat]   = clsCat;
                 row[icls_schem] = clsSchem;
                 row[icls_name]  = clsName;
@@ -700,33 +652,33 @@ extends org.hsqldb.DatabaseInformationMain {
 
         Object[] row;
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "SESSION_ID";
         row[1] = String.valueOf(session.getId());
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "AUTOCOMMIT";
         row[1] = session.isAutoCommit() ? "TRUE"
                                         : "FALSE";
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "USER";
         row[1] = session.getUsername();
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "SESSION_READONLY";
         row[1] = session.isReadOnly() ? "TRUE"
                                       : "FALSE";
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "DATABASE_READONLY";
         row[1] = database.databaseReadOnly ? "TRUE"
                                            : "FALSE";
@@ -734,19 +686,19 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // fredt - value set by SET MAXROWS in SQL, not Statement.setMaxRows()
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "MAXROWS";
         row[1] = String.valueOf(session.getSQLMaxRows());
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "DATABASE";
         row[1] = database.getURI();
 
         t.insert(row);
 
-        row    = t.getNewRow();
+        row    = t.getEmptyRowData();
         row[0] = "IDENTITY";
         row[1] = String.valueOf(session.getLastIdentity());
 
@@ -862,10 +814,9 @@ extends org.hsqldb.DatabaseInformationMain {
         scope     = "SESSION";
         props     = database.getProperties();
         nameSpace = "database.properties";
-        log       = database.logger.lLog;
 
         // hsqldb.catalogs
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.catalogs";
@@ -875,7 +826,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.schemas
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.schemas";
@@ -885,7 +836,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // sql.enforce_size
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "sql.enforce_size";
@@ -895,7 +846,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // sql.enforce_strict_size
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "sql.enforce_strict_size";
@@ -905,7 +856,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // sql.compare_in_locale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "sql.compare_in_locale";
@@ -915,7 +866,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.files_readonly
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.files_readonly";
@@ -925,7 +876,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.first_identity
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.first_identity";
@@ -935,7 +886,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.compatible_version
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.compatible_version";
@@ -945,17 +896,17 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.cache_version
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.cache_version";
-        row[ivalue] = props.getProperty("hsqldb.cache_version");
+        row[iname]  = HsqlDatabaseProperties.CACHE_VERSION;
+        row[ivalue] = props.getProperty(HsqlDatabaseProperties.CACHE_VERSION);
         row[iclass] = "java.lang.String";
 
         t.insert(row);
 
         // hsqldb.original_version
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.original_version";
@@ -965,7 +916,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.cache_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.cache_scale";
@@ -975,17 +926,18 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.cache_file_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.cache_file_scale";
-        row[ivalue] = props.getProperty("hsqldb.cache_file_scale");
+        row[iname]  = HsqlDatabaseProperties.CACHE_FILE_SCALE;
+        row[ivalue] =
+            props.getProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE);
         row[iclass] = "int";
 
         t.insert(row);
 
         // hsqldb.cache_size_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.cache_size_scale";
@@ -995,7 +947,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.max_nio_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.max_nio_scale";
@@ -1005,7 +957,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.nio_data_file
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.nio_data_file";
@@ -1015,7 +967,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.all_quoted
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.all_quoted";
@@ -1025,7 +977,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.cache_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.cache_scale";
@@ -1035,7 +987,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.cache_size_scale
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.cache_size_scale";
@@ -1045,7 +997,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.ignore_first
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.ignore_first";
@@ -1055,7 +1007,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.quoted
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.quoted";
@@ -1065,7 +1017,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.fs
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.fs";
@@ -1073,7 +1025,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iclass] = "java.lang.String";
 
         // textdb.vs
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.vs";
@@ -1083,7 +1035,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.lvs
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.lvs";
@@ -1093,7 +1045,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // textdb.encoding
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "textdb.encoding";
@@ -1103,7 +1055,7 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // hsqldb.gc_interval
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.gc_interval";
@@ -1118,23 +1070,24 @@ extends org.hsqldb.DatabaseInformationMain {
         nameSpace = "org.hsqldb.Database";
 
         // log size
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "LOGSIZE";
-        row[ivalue] = props.getProperty("hsqldb.log_size", "200");
+        row[ivalue] = "" + database.logger.getLogSize();
         row[iclass] = "int";
 
         t.insert(row);
 
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "SCRIPTFORMAT";
 
         try {
             row[ivalue] =
-                ScriptWriterBase.LIST_SCRIPT_FORMATS[log.scriptFormat];
+                ScriptWriterBase
+                    .LIST_SCRIPT_FORMATS[database.logger.getScriptType()];
         } catch (Exception e) {}
 
         row[iclass] = "java.lang.String";
@@ -1142,18 +1095,17 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // write delay
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "WRITE_DELAY";
-        row[ivalue] = (log == null) ? "0"
-                                    : "" + log.writeDelay;
+        row[ivalue] = "" + database.logger.getWriteDelay();
         row[iclass] = "int";
 
         t.insert(row);
 
         // ignore case
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "IGNORECASE";
@@ -1164,13 +1116,24 @@ extends org.hsqldb.DatabaseInformationMain {
         t.insert(row);
 
         // referential integrity
-        row         = t.getNewRow();
+        row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "REFERENTIAL_INTEGRITY";
         row[ivalue] = database.isReferentialIntegrity() ? "true"
                                                         : "false";
         row[iclass] = "boolean";
+
+        t.insert(row);
+
+        // debug
+        // oj@openoffice.org
+        row         = t.getEmptyRowData();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.applog";
+        row[ivalue] = "" + database.logger.appLog.getLevel();
+        row[iclass] = "int";
 
         t.insert(row);
         t.setDataReadOnly(true);
@@ -1249,7 +1212,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // Do it.
         for (int i = 0; i < sessions.length; i++) {
             s              = sessions[i];
-            row            = t.getNewRow();
+            row            = t.getEmptyRowData();
             row[isid]      = ValuePool.getInt(s.getId());
             row[ict]       = new Timestamp(s.getConnectTime());
             row[iuname]    = s.getUsername();
@@ -1381,7 +1344,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * @throws HsqlException if an error occurs while producing the table
      *
      */
-    final Table SYSTEM_TEXTTABLES() throws HsqlException {
+    Table SYSTEM_TEXTTABLES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TEXTTABLES];
 
@@ -1411,7 +1374,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // intermediate holders
         Iterator tables;
         Table    table;
-        Object   row[];
+        Object[] row;
 
 //        DITableInfo ti;
         TextCache tc;
@@ -1442,22 +1405,24 @@ extends org.hsqldb.DatabaseInformationMain {
                 continue;
             }
 
-            row               = t.getNewRow();
+            row               = t.getEmptyRowData();
             row[itable_cat]   = ns.getCatalogName(table);
             row[itable_schem] = ns.getSchemaName(table);
             row[itable_name]  = table.getName().name;
 
-            if (table.cache != null && table.cache instanceof TextCache) {
-                tc              = (TextCache) table.cache;
-                row[idsd]       = table.getDataSource();
-                row[ifile_path] = FileUtil.canonicalOrAbsolutePath(tc.sName);
-                row[ifile_enc]  = tc.stringEncoding;
-                row[ifs]        = tc.fs;
-                row[ivfs]       = tc.vs;
-                row[ilvfs]      = tc.lvs;
-                row[iif]        = ValuePool.getBoolean(tc.ignoreFirst);
-                row[iiq]        = ValuePool.getBoolean(tc.isQuoted);
-                row[iiaq]       = ValuePool.getBoolean(tc.isAllQuoted);
+            if (table.getCache() != null
+                    && table.getCache() instanceof TextCache) {
+                tc        = (TextCache) table.getCache();
+                row[idsd] = table.getDataSource();
+                row[ifile_path] =
+                    FileUtil.canonicalOrAbsolutePath(tc.getFileName());
+                row[ifile_enc] = tc.stringEncoding;
+                row[ifs]       = tc.fs;
+                row[ivfs]      = tc.vs;
+                row[ilvfs]     = tc.lvs;
+                row[iif]       = ValuePool.getBoolean(tc.ignoreFirst);
+                row[iiq]       = ValuePool.getBoolean(tc.isQuoted);
+                row[iiaq]      = ValuePool.getBoolean(tc.isAllQuoted);
                 row[iid] = ValuePool.getBoolean(table.isDescDataSource());
             }
 
@@ -1634,7 +1599,7 @@ extends org.hsqldb.DatabaseInformationMain {
         HsqlArrayList[] vTrigs;
         HsqlArrayList   triggerList;
         TriggerDef      def;
-        Object          row[];
+        Object[]        row;
 
         // column number mappings
         final int itrigger_cat       = 0;
@@ -1710,7 +1675,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     }
 
                     triggeringEvent         = def.operation;
-                    row                     = t.getNewRow();
+                    row                     = t.getEmptyRowData();
                     row[itrigger_cat]       = triggerCatalog;
                     row[itrigger_schem]     = triggerSchema;
                     row[itrigger_name]      = triggerName;
@@ -2035,7 +2000,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 continue;
             }
 
-            row         = t.getNewRow();
+            row         = t.getEmptyRowData();
             defn        = ((View) table).getStatement();
             row[icat]   = ns.getCatalogName(table);
             row[ischem] = ns.getSchemaName(table);
@@ -2558,7 +2523,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 iterator = result.iterator();
 
                 while (iterator.hasNext()) {
-                    row              = t.getNewRow();
+                    row              = t.getEmptyRowData();
                     resultRow        = (Object[]) iterator.next();
                     row[icons_cat]   = constraintCatalog;
                     row[icons_schem] = constraintSchema;
@@ -2706,25 +2671,26 @@ extends org.hsqldb.DatabaseInformationMain {
                     expression = (Expression) iterator.next();
                     function   = expression.function;
 
-                    if (!session.isAccessible(
-                            function.mMethod.getDeclaringClass().getName())) {
+                    if (!session
+                            .isAccessible(function.getMethod()
+                                .getDeclaringClass().getName())) {
                         continue;
                     }
 
-                    methodSet.add(function.mMethod);
+                    methodSet.add(function.getMethod());
                 }
 
                 iterator = methodSet.iterator();
 
                 while (iterator.hasNext()) {
                     method           = (Method) iterator.next();
-                    row              = t.getNewRow();
+                    row              = t.getEmptyRowData();
                     row[icons_cat]   = constraintCatalog;
                     row[icons_schem] = constraintSchema;
                     row[icons_name]  = constraintName;
                     row[ir_cat]      = ns.getCatalogName(method);
                     row[ir_schem]    = ns.getSchemaName(method);
-                    row[ir_name]     = ns.getMethodSpecificName(method);
+                    row[ir_name] = DINameSpace.getMethodSpecificName(method);
 
                     t.insert(row);
                 }
@@ -2969,8 +2935,8 @@ extends org.hsqldb.DatabaseInformationMain {
 
             index = table.getPrimaryIndex();
 
-            if (index != null && table.getPrimaryKey() != null) {
-                row              = t.getNewRow();
+            if (table.hasPrimaryKey()) {
+                row              = t.getEmptyRowData();
                 cat              = ns.getCatalogName(table);
                 schem            = ns.getSchemaName(table);
                 row[icons_cat]   = cat;
@@ -3002,7 +2968,7 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         for (Iterator it = constraintSet.iterator(); it.hasNext(); ) {
-            row        = t.getNewRow();
+            row        = t.getEmptyRowData();
             constraint = (Constraint) it.next();
 
             switch (constraint.getType()) {
@@ -3249,7 +3215,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 tableFilter = expression.getFilter();
                 columnTable = tableFilter.getTable();
 
-                if (columnTable.tableType == Table.SYSTEM_SUBQUERY
+                if (columnTable.getTableType() == Table.SYSTEM_SUBQUERY
                         ||!isAccessibleTable(columnTable)) {
                     continue;
                 }
@@ -3266,7 +3232,7 @@ extends org.hsqldb.DatabaseInformationMain {
             iterator = result.iterator();
 
             while (iterator.hasNext()) {
-                row           = t.getNewRow();
+                row           = t.getEmptyRowData();
                 resultRow     = (Object[]) iterator.next();
                 row[iv_cat]   = viewCatalog;
                 row[iv_schem] = viewSchema;
@@ -3409,8 +3375,8 @@ extends org.hsqldb.DatabaseInformationMain {
                 function   = expression.function;
 
                 if (session.isAccessible(
-                        function.mMethod.getDeclaringClass().getName())) {
-                    methodSet.add(function.mMethod);
+                        function.getMethod().getDeclaringClass().getName())) {
+                    methodSet.add(function.getMethod());
                 }
             }
 
@@ -3418,13 +3384,13 @@ extends org.hsqldb.DatabaseInformationMain {
 
             while (iterator.hasNext()) {
                 method        = (Method) iterator.next();
-                row           = t.getNewRow();
+                row           = t.getEmptyRowData();
                 row[iv_cat]   = viewCat;
                 row[iv_schem] = viewSchem;
                 row[iv_name]  = viewName;
                 row[ir_cat]   = ns.getCatalogName(method);
                 row[ir_schem] = ns.getSchemaName(method);
-                row[ir_name]  = ns.getMethodSpecificName(method);
+                row[ir_name]  = DINameSpace.getMethodSpecificName(method);
 
                 t.insert(row);
             }
@@ -3488,7 +3454,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iremark    = 12;
         final int isn        = 13;
         final int iseq       = 14;
-        Object[]  row        = t.getNewRow();
+        Object[]  row        = t.getEmptyRowData();
         Integer   sequence   = ValuePool.getInt(seq);
 
         row[icat]       = cat;
@@ -3513,7 +3479,7 @@ extends org.hsqldb.DatabaseInformationMain {
             int size = l.size();
 
             for (int i = 0; i < size; i++) {
-                row             = t.getNewRow();
+                row             = t.getEmptyRowData();
                 pName           = (String) l.get(i);
                 row[icat]       = cat;
                 row[ischem]     = schem;
@@ -3581,7 +3547,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iptype        = 7;
         final int iporigin      = 8;
         final int isn           = 9;
-        Object[]  row           = t.getNewRow();
+        Object[]  row           = t.getEmptyRowData();
 
         row[icat]          = cat;
         row[ischem]        = schem;
@@ -3600,7 +3566,7 @@ extends org.hsqldb.DatabaseInformationMain {
             int size = l.size();
 
             for (int i = 0; i < size; i++) {
-                row                = t.getNewRow();
+                row                = t.getEmptyRowData();
                 pName              = (String) l.get(i);
                 row[icat]          = cat;
                 row[ischem]        = schem;

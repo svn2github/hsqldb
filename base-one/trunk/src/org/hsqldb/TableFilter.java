@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.index.RowIterator;
 
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
@@ -79,7 +80,7 @@ import org.hsqldb.lib.ArrayUtil;
  *
  * @version 1.7.2
  */
-class TableFilter {
+final class TableFilter {
 
     static final int CONDITION_NONE      = -1;     // not a condition expression
     static final int CONDITION_UNORDERED = 0;      // not candidate for eStart or eEnd
@@ -89,9 +90,9 @@ class TableFilter {
     static final int   CONDITION_OUTER     = 4;    // add to this
     Table              filterTable;
     private String     tableAlias;
-    private Index      filterIndex;
-    private Node       currentNode;
-    private Object     emptyData[];
+    Index              filterIndex;
+    private Object[]   emptyData;
+    boolean[]          usedColumns;
     private Expression eStart, eEnd;
 
     //
@@ -104,8 +105,9 @@ class TableFilter {
     Expression[] findFirstExpressions;             // expressions for column values
 
     //
-    Object currentData[];
-    Row    currentRow;
+    private RowIterator it;
+    Object[]            currentData;
+    Row                 currentRow;
 
     // addendum to the result of findFirst() and next() with isOuterJoin==true
     // when the result is false, it indicates if a non-join condition caused the failure
@@ -128,7 +130,8 @@ class TableFilter {
         tableAlias  = alias == null ? t.getName().name
                                     : alias;
         isOuterJoin = outerjoin;
-        emptyData   = filterTable.getNewRow();
+        emptyData   = filterTable.getEmptyRowData();
+        usedColumns = filterTable.getNewColumnCheckList();
     }
 
     /**
@@ -157,7 +160,7 @@ class TableFilter {
      * @param exprType an expression type code
      * @return
      */
-    static final int toConditionType(int exprType) {
+    static int toConditionType(int exprType) {
 
         switch (exprType) {
 
@@ -462,31 +465,38 @@ class TableFilter {
         }
 
         if (this.isMultiFindFirst) {
-            Object[] data  = filterTable.getNewRow();
+            Object[] data  = filterTable.getEmptyRowData();
             int[]    types = filterTable.getColumnTypes();
 
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(session, types[i]);
+                    data[i] = e.getValue(null, types[i]);
                 }
             }
 
-            currentNode = filterIndex.findFirst(data);
+            it = filterIndex.findFirstRow(data);
         } else if (eStart == null) {
-            currentNode = eEnd == null ? filterIndex.first()
-                                       : filterIndex.findFirstNotNull();
+            it = eEnd == null ? filterIndex.firstRow()
+                              : filterIndex.findFirstRowNotNull();
         } else {
-            int    type = eStart.getArg().getDataType();
-            Object o    = eStart.getArg2().getValue(session, type);
 
-            currentNode = filterIndex.findFirst(o, eStart.getType());
+/** @todo fredt -- if a compare value is wider than the column of the index, incorrect results may emerge */
+            int    type = eStart.getArg().getDataType();
+            Object o    = eStart.getArg2().getValue(null, type);
+
+            it = filterIndex.findFirstRow(o, eStart.getType());
         }
 
-        while (currentNode != null) {
-            currentData = currentNode.getData();
-            currentRow  = currentNode.getRow();
+        while (true) {
+            currentRow = it.next();
+
+            if (currentRow == null) {
+                break;
+            }
+
+            currentData = currentRow.getData();
 
             if (!(eEnd == null || eEnd.testCondition(session))) {
                 break;
@@ -495,8 +505,6 @@ class TableFilter {
             if (eAnd == null || eAnd.testCondition(session)) {
                 return true;
             }
-
-            currentNode = filterIndex.next(currentNode);
         }
 
         currentRow  = null;
@@ -516,11 +524,15 @@ class TableFilter {
 
         nonJoinIsNull  = false;
         isCurrentOuter = false;
-        currentNode    = filterIndex.next(currentNode);
 
-        while (currentNode != null) {
-            currentData = currentNode.getData();
-            currentRow  = currentNode.getRow();
+        while (true) {
+            currentRow = it.next();
+
+            if (currentRow == null) {
+                break;
+            }
+
+            currentData = currentRow.getData();
 
             if (!(eEnd == null || eEnd.testCondition(session))) {
                 break;
@@ -529,8 +541,6 @@ class TableFilter {
             if (eAnd == null || eAnd.testCondition(session)) {
                 return true;
             }
-
-            currentNode = filterIndex.next(currentNode);
         }
 
         currentRow  = null;
@@ -610,7 +620,7 @@ class TableFilter {
             index = primaryIndex;
         }
 
-        if (index == primaryIndex && primaryKey == null) {
+        if (index == primaryIndex && primaryKey.length == 0) {
             hidden   = true;
             fullScan = true;
         }

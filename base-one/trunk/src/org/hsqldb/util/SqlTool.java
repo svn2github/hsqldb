@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -317,7 +317,7 @@ public class SqlTool {
      * @throws SqlToolException May be thrown only if the system property
      *                          'sqltool.noexit' is set (to anything).
      */
-    public static void main(String arg[]) throws SqlToolException {
+    public static void main(String[] arg) throws SqlToolException {
 
         /*
          * The big picture is, we parse input args; load a ConnectData;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ public class SqlToolHarness {
      * @returns Exits with 0 or 1 depending on whether the last
      * SqlToolHarness.execute() returned true or false (correspondingly).
      */
-    static public void main(String[] sa)
+    public static void main(String[] sa)
     throws IOException, InterruptedException {
 
         if (sa.length > 0 && sa[0].equals("-v")) {
@@ -363,7 +363,7 @@ public class SqlToolHarness {
         }
     }
 
-    static public Pattern[] push(Pattern newTail, Pattern[] pataIn) {
+    public static Pattern[] push(Pattern newTail, Pattern[] pataIn) {
 
         Pattern[] pataOut = new Pattern[pataIn.length + 1];
 
@@ -376,7 +376,7 @@ public class SqlToolHarness {
         return pataOut;
     }
 
-    static public String patternArrayToString(Pattern[] pata) {
+    public static String patternArrayToString(Pattern[] pata) {
 
         StringBuffer sb = new StringBuffer("{");
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,7 +102,7 @@ public final class jdbcClob implements Clob {
     public jdbcClob(final String data) throws SQLException {
 
         if (data == null) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, "null");
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, "null");
         }
 
         this.data = data;
@@ -163,13 +163,13 @@ public final class jdbcClob implements Clob {
         pos--;
 
         if (pos < 0 || pos > dlen) {
-            jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                  "pos: " + (pos + 1L));
+            Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                              "pos: " + (pos + 1L));
         }
 
         if (length < 0 || length > dlen - pos) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        "length: " + length);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    "length: " + length);
         }
 
         if (pos == 0 && length == dlen) {
@@ -327,7 +327,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setString(long pos, String str) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -360,7 +360,7 @@ public final class jdbcClob implements Clob {
      */
     public int setString(long pos, String str, int offset,
                          int len) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -388,7 +388,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -417,7 +417,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -451,8 +451,8 @@ public final class jdbcClob implements Clob {
 
             // nothing has changed, so there's nothing to be done
         } else if (len < 0 || chars > dlen) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        Long.toString(len));
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                    Long.toString(len));
         } else {
 
             // use new String() to ensure we get rid of slack

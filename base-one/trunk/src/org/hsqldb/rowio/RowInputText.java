@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,17 @@
 package org.hsqldb.rowio;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
+import org.hsqldb.lib.BooleanConverter;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
 
@@ -105,25 +110,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
 
     public void setSource(String text, int pos) {
 
-        this.text = text.substring(0, text.indexOf('\n'));
+        this.text = text;    //.substring(0, text.indexOf('\n'));
         textLen   = this.text.length();
         filePos   = pos;
         size      = text.length();
-        nextPos   = pos + size;
-        next      = 0;
-
-        line++;
-
-        field = 0;
-    }
-
-    public void setSource(String text, int pos, int len) {
-
-        this.text = text.substring(0, text.indexOf('\n'));
-        textLen   = this.text.length();
-        filePos   = pos;
-        size      = len;
-        nextPos   = pos + size;
         next      = 0;
 
         line++;
@@ -302,8 +292,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         return Double.valueOf(s);
     }
 
-    protected java.math.BigDecimal readDecimal()
-    throws IOException, HsqlException {
+    protected BigDecimal readDecimal() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -317,10 +306,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return new java.math.BigDecimal(s);
+        return new BigDecimal(s);
     }
 
-    protected java.sql.Time readTime() throws IOException, HsqlException {
+    protected Time readTime() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -334,10 +323,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return java.sql.Time.valueOf(s);
+        return HsqlDateTime.timeValue(s);
     }
 
-    protected java.sql.Date readDate() throws IOException, HsqlException {
+    protected Date readDate() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -351,11 +340,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return java.sql.Date.valueOf(s);
+        return HsqlDateTime.dateValue(s);
     }
 
-    protected java.sql.Timestamp readTimestamp()
-    throws IOException, HsqlException {
+    protected Timestamp readTimestamp() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -369,11 +357,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        try {
-            return java.sql.Timestamp.valueOf(s);
-        } catch (IllegalArgumentException e) {
-            return HsqlDateTime.timestampValue(s);
-        }
+        return HsqlDateTime.timestampValue(s);
     }
 
     protected Boolean readBit() throws IOException, HsqlException {
@@ -390,7 +374,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return org.hsqldb.lib.BooleanConverter.getBoolean(s);
+        return BooleanConverter.getBoolean(s);
     }
 
     protected Object readOther() throws IOException, HsqlException {
@@ -434,10 +418,6 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         return line;
     }
 
-    public void setNextPos(int pos) {
-        nextPos = pos;
-    }
-
     public void skippedLine() {
         line++;
     }
@@ -448,7 +428,6 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         textLen = 0;
         filePos = 0;
         size    = 0;
-        nextPos = 0;
         next    = 0;
         field   = 0;
         line    = 0;

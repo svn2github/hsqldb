@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,8 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 20031005 - patch 1.7.2 - optimised LIKE
 // boucherb@users 20031005 - patch 1.7.2 - improved IN value lists
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
+// thomasm@users 20041001 - patch 1.7.3 - BOOLEAN undefined handling
+// fredt@users 200412xx - patch 1.7.2 - evaluation of time functions
 
 /**@todo fredt - move error string literals to Trace*/
 
@@ -1549,16 +1551,21 @@ public class Expression {
             }
         }
 
-        if (exprType == COLUMN && tableFilter == null) {
+        if (exprType == COLUMN) {
+            if (tableFilter == null) {
 
-            // if an order by column alias
-            result = orderColumnIndex != -1;
+                // if an order by column alias
+                result = orderColumnIndex != -1;
 
-            if (!result && check) {
-                String err = tableName == null ? columnName
-                                               : tableName + "." + columnName;
+                if (!result && check) {
+                    String err = tableName == null ? columnName
+                                                   : tableName + "."
+                                                     + columnName;
 
-                throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
+                    throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
+                }
+            } else {
+                tableFilter.usedColumns[this.columnIndex] = true;
             }
         }
 
@@ -3153,8 +3160,6 @@ public class Expression {
                                                               : Boolean.FALSE;
             }
             case OR : {
-
-                // TODO: maybe use C style optimization?
                 boolean r1 = Boolean.TRUE.equals(eArg.test(session));
 
                 if (r1) {
@@ -3217,12 +3222,12 @@ public class Expression {
         Object o2   = eArg2.getValue(session, type);
 
         if (o == null || o2 == null) {
-            /*
-             TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
-             column expression for the table on the right hand side.
-             We do not join tables on nulls apart from outer joins
-             Any comparison operator can exist in WHERE or JOIN conditions
-             */
+/*
+ TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
+ column expression for the table on the right hand side.
+ We do not join tables on nulls apart from outer joins
+ Any comparison operator can exist in WHERE or JOIN conditions
+*/
             if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
                 if (isInJoin) {
                     if (eArg.tableFilter.isCurrentOuter && o == null) {
@@ -3326,9 +3331,9 @@ public class Expression {
                     return Boolean.FALSE;
                 }
 
-                return subTable.getPrimaryIndex().findFirst(o, Expression.EQUAL)
-                       == null ? Boolean.FALSE
-                               : Boolean.TRUE;
+                return subTable.getPrimaryIndex().findFirstRow(o, Expression.EQUAL).hasNext()
+                       ? Boolean.TRUE
+                       : Boolean.FALSE;
             }
 
             Result r = subSelect.getResult(session, 0);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,11 @@
 package org.hsqldb.rowio;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.CachedRow;
 import org.hsqldb.HsqlException;
@@ -57,7 +59,7 @@ import org.hsqldb.types.JavaObject;
  */
 public class RowOutputBinary extends RowOutputBase {
 
-    final private static int INT_STORE_SIZE = 4;
+    private static final int INT_STORE_SIZE = 4;
     int                      storageSize;
 
     public RowOutputBinary() {
@@ -78,11 +80,11 @@ public class RowOutputBinary extends RowOutputBase {
     }
 
 // fredt@users - comment - methods for writing column type, name and data size
-    public void writeIntData(int i) throws IOException {
+    public void writeIntData(int i) {
         writeInt(i);
     }
 
-    public void writeIntData(int i, int position) throws IOException {
+    public void writeIntData(int i, int position) {
 
         int temp = count;
 
@@ -95,11 +97,11 @@ public class RowOutputBinary extends RowOutputBase {
         }
     }
 
-    public void writeLongData(long i) throws IOException {
+    public void writeLongData(long i) {
         this.writeLong(i);
     }
 
-    public void writeEnd() throws IOException {
+    public void writeEnd() {
 
         // fredt - this value is used in 1.7.0 when reading back, for a
         // 'data integrity' check
@@ -110,25 +112,23 @@ public class RowOutputBinary extends RowOutputBase {
         }
     }
 
-    public void writeSize(int size) throws IOException {
+    public void writeSize(int size) {
 
         storageSize = size;
 
         writeInt(size);
     }
 
-    public void writeType(int type) throws IOException {
+    public void writeType(int type) {
         writeShort(type);
     }
 
-    public void writeString(String s) throws IOException {
+    public void writeString(String s) {
 
         int temp = count;
 
         writeInt(0);
-
-        int writecount = StringConverter.writeUTF(s, this);
-
+        StringConverter.writeUTF(s, this);
         writeIntData(count - temp - 4, temp);
     }
 
@@ -141,54 +141,52 @@ public class RowOutputBinary extends RowOutputBase {
      */
     public int getSize(CachedRow row) {
 
-        Object data[] = row.getData();
-        int    type[] = row.getTable().getColumnTypes();
-        int    cols   = row.getTable().getColumnCount();
+        Object[] data = row.getData();
+        int[]    type = row.getTable().getColumnTypes();
+        int      cols = row.getTable().getColumnCount();
 
         return INT_STORE_SIZE + getSize(data, cols, type);
     }
 
     public static int getRowSize(CachedRow row) {
 
-        Object data[] = row.getData();
-        int    type[] = row.getTable().getColumnTypes();
-        int    cols   = row.getTable().getColumnCount();
+        Object[] data = row.getData();
+        int[]    type = row.getTable().getColumnTypes();
+        int      cols = row.getTable().getColumnCount();
 
         return getSize(data, cols, type);
     }
 
 // fredt@users - comment - methods used for writing each SQL type
-    protected void writeFieldType(int type) throws IOException {
+    protected void writeFieldType(int type) {
         write(1);
     }
 
-    protected void writeNull(int type) throws IOException {
+    protected void writeNull(int type) {
         write(0);
     }
 
-    protected void writeChar(String s, int t) throws IOException {
+    protected void writeChar(String s, int t) {
         writeString(s);
     }
 
-    protected void writeSmallint(Number o) throws IOException, HsqlException {
+    protected void writeSmallint(Number o) {
         writeShort(o.intValue());
     }
 
-    protected void writeInteger(Number o) throws IOException, HsqlException {
+    protected void writeInteger(Number o) {
         writeInt(o.intValue());
     }
 
-    protected void writeBigint(Number o) throws IOException, HsqlException {
+    protected void writeBigint(Number o) {
         writeLong(o.longValue());
     }
 
-    protected void writeReal(Double o,
-                             int type) throws IOException, HsqlException {
+    protected void writeReal(Double o, int type) {
         writeLong(Double.doubleToLongBits((o.doubleValue())));
     }
 
-    protected void writeDecimal(BigDecimal o)
-    throws IOException, HsqlException {
+    protected void writeDecimal(BigDecimal o) {
 
         int        scale   = o.scale();
         BigInteger bigint  = JavaSystem.getUnscaledValue(o);
@@ -198,39 +196,34 @@ public class RowOutputBinary extends RowOutputBase {
         writeInt(scale);
     }
 
-    protected void writeBit(Boolean o) throws IOException, HsqlException {
+    protected void writeBit(Boolean o) {
         write(o.booleanValue() ? 1
                                : 0);
     }
 
-    protected void writeDate(java.sql.Date o)
-    throws IOException, HsqlException {
+    protected void writeDate(Date o) {
         writeLong(o.getTime());
     }
 
-    protected void writeTime(java.sql.Time o)
-    throws IOException, HsqlException {
+    protected void writeTime(Time o) {
         writeLong(o.getTime());
     }
 
-    protected void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, HsqlException {
+    protected void writeTimestamp(Timestamp o) {
         writeLong(o.getTime());
         writeInt(o.getNanos());
     }
 
-    protected void writeOther(JavaObject o)
-    throws IOException, HsqlException {
+    protected void writeOther(JavaObject o) {
         writeByteArray(o.getBytes());
     }
 
-    protected void writeBinary(Binary o,
-                               int t) throws IOException, HsqlException {
+    protected void writeBinary(Binary o, int t) {
         writeByteArray(o.getBytes());
     }
 
 // fredt@users - comment - helper and conversion methods
-    protected void writeByteArray(byte[] b) throws IOException {
+    protected void writeByteArray(byte[] b) {
         writeInt(b.length);
         write(b, 0, b.length);
     }
@@ -244,7 +237,7 @@ public class RowOutputBinary extends RowOutputBase {
      * @return size of byte array
      * @exception  HsqlException when data is inconsistent
      */
-    private static int getSize(Object data[], int l, int type[]) {
+    private static int getSize(Object[] data, int l, int[] type) {
 
         int s = 0;
 

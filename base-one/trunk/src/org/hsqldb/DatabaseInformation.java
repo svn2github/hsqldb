@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,7 +111,7 @@ class DatabaseInformation {
     protected static final int SYSTEM_VIEW_ROUTINE_USAGE  = 41;
 
     /** system table names strictly in order of their ids */
-    protected static final String sysTableNames[] = {
+    protected static final String[] sysTableNames = {
         "SYSTEM_BESTROWIDENTIFIER",      //
         "SYSTEM_CATALOGS",               //
         "SYSTEM_COLUMNPRIVILEGES",       //
@@ -296,34 +296,25 @@ class DatabaseInformation {
     static final DatabaseInformation newDatabaseInformation(Database db)
     throws HsqlException {
 
-        String[] impls = new String[] {
-            "org.hsqldb.DatabaseInformationFull",
-            "org.hsqldb.DatabaseInformationMain",
-            "org.hsqldb.DatabaseInformation"
-        };
-        Class               clazz;
-        Class[]             ctorParmTypes = new Class[]{ Database.class };
-        Object[]            ctorParms     = new Object[]{ db };
-        DatabaseInformation impl          = null;
-        Constructor         ctor;
+        Class clazz = null;
 
-        for (int i = 0; i < impls.length; i++) {
+        try {
+            clazz = Class.forName("org.hsqldb.DatabaseInformationFull");
+        } catch (Exception e) {
             try {
-                clazz = Class.forName(impls[i]);
-                ctor  = clazz.getDeclaredConstructor(ctorParmTypes);
-                impl  = (DatabaseInformation) ctor.newInstance(ctorParms);
-
-                if (impl != null) {
-                    break;
-                }
-            } catch (Exception e) {}
+                clazz = Class.forName("org.hsqldb.DatabaseInformationMain");
+            } catch (Exception e2) {}
         }
 
-        if (impl == null) {
-            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE);
-        }
+        try {
+            Class[]     ctorParmTypes = new Class[]{ Database.class };
+            Object[]    ctorParms     = new Object[]{ db };
+            Constructor ctor = clazz.getDeclaredConstructor(ctorParmTypes);
 
-        return impl;
+            return (DatabaseInformation) ctor.newInstance(ctorParms);
+        } catch (Exception e) {}
+
+        return new DatabaseInformation(db);
     }
 
     /**

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -123,7 +123,7 @@ implements WindowListener, ActionListener {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         fMain = new Frame("Query Tool");
 
@@ -255,8 +255,8 @@ implements WindowListener, ActionListener {
         String s = arg.toString();
 
         if (s.equals("Execute")) {
-            String sCmd = txtCommand.getText();
-            String g[]  = new String[1];
+            String   sCmd = txtCommand.getText();
+            String[] g    = new String[1];
 
             try {
                 sStatement.execute(sCmd);
@@ -321,7 +321,7 @@ implements WindowListener, ActionListener {
         try {
             ResultSetMetaData m   = r.getMetaData();
             int               col = m.getColumnCount();
-            String            h[] = new String[col];
+            String[]          h   = new String[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
@@ -426,7 +426,7 @@ implements WindowListener, ActionListener {
         choRecent.addItem(s);
     }
 
-    String     sRecent[];
+    String[]   sRecent;
     static int iMaxRecent = 24;
     int        iRecent;
     TextArea   txtCommand;
@@ -511,7 +511,7 @@ implements WindowListener, ActionListener {
         doLayout();
     }
 
-    static String sTestData[] = {
+    static String[] sTestData = {
         "drop table Place if exists",
         "create table Place (Code integer,Name varchar(255))",
         "create index iCode on Place (Code)", "delete from place",

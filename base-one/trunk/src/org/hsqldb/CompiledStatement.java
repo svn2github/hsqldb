@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -449,9 +449,10 @@ final class CompiledStatement {
                 return updateCountResult;
 
             default :
-                return Trace.toResult(
-                    Trace.error(
-                        Trace.INTERNAL_unknown_internal_statement_type));
+                return new Result(
+                    Trace.runtimeError(
+                        Trace.INTERNAL_unknown_internal_statement_type,
+                        null), null);
         }
     }
 

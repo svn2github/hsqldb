@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,11 @@ import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
+import org.hsqldb.NumberSequence;
 import org.hsqldb.Session;
+import org.hsqldb.Table;
 
-abstract public class ScriptReaderBase {
+public abstract class ScriptReaderBase {
 
     public static ScriptReaderBase newScriptReader(Database db, String file,
             int scriptType) throws HsqlException, IOException {
@@ -53,10 +55,14 @@ abstract public class ScriptReaderBase {
         }
     }
 
-    BufferedInputStream dataStreamIn;
-    Database            db;
-    int                 lineCount;
-    String              lastLine;
+    public static final int ANY_STATEMENT      = 1;
+    public static final int DELETE_STATEMENT   = 2;
+    public static final int INSERT_STATEMENT   = 3;
+    public static final int SEQUENCE_STATEMENT = 4;
+    public static final int COMMIT_STATEMENT   = 5;
+    public static final int SESSION_ID         = 6;
+    Database                db;
+    int                     lineCount;
 
 //    int         byteCount;
     String fileName;
@@ -70,41 +76,60 @@ abstract public class ScriptReaderBase {
         openFile();
     }
 
-    protected void openFile() throws IOException {
-
-        // canonical path for "res:" type databases always starts with "/"
-        // so we don't need to use getClassLoader.getResourceAsStream here
-        // or anywhere else.
-        // In fact, getClass().getResourceAsStream() is preferred, as
-        // it is not subject to the same security restrictions
-        dataStreamIn = db.isFilesInJar()
-                       ? new BufferedInputStream(
-                           getClass().getResourceAsStream(fileName), 1 << 13)
-                       : new BufferedInputStream(
-                           new FileInputStream(fileName), 1 << 13);
-    }
+    protected abstract void openFile() throws IOException;
 
     public void readAll(Session session) throws IOException, HsqlException {
         readDDL(session);
         readExistingData(session);
     }
 
-    abstract protected void readDDL(Session session)
+    protected abstract void readDDL(Session session)
     throws IOException, HsqlException;
 
-    abstract protected void readExistingData(Session session)
+    protected abstract void readExistingData(Session session)
     throws IOException, HsqlException;
 
-    abstract public String readLoggedStatement() throws IOException;
+    public abstract boolean readLoggedStatement() throws IOException;
+
+    int            statementType;
+    int            sessionNumber;
+    Object[]       rowData;
+    long           sequenceValue;
+    String         statement;
+    Table          currentTable;
+    NumberSequence currentSequence;
+
+    public int getStatementType() {
+        return statementType;
+    }
+
+    public int getSessionNumber() {
+        return sessionNumber;
+    }
+
+    public Object[] getData() {
+        return rowData;
+    }
+
+    public String getLoggedStatement() {
+        return statement;
+    }
+
+    public NumberSequence getCurrentSequence() {
+        return currentSequence;
+    }
+
+    public long getSequenceValue() {
+        return sequenceValue;
+    }
+
+    public Table getCurrentTable() {
+        return currentTable;
+    }
 
     public int getLineNumber() {
         return lineCount;
     }
 
-    public void close() {
-
-        try {
-            dataStreamIn.close();
-        } catch (Exception e) {}
-    }
+    public abstract void close();
 }

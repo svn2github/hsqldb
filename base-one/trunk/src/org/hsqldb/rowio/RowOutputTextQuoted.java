@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,23 +54,32 @@ public class RowOutputTextQuoted extends RowOutputText {
 
     public RowOutputTextQuoted(String fieldSep, String varSep,
                                String longvarSep, boolean allQuoted,
-                               String encoding) throws IOException {
+                               String encoding) {
         super(fieldSep, varSep, longvarSep, allQuoted, encoding);
     }
 
-    protected String checkConvertString(String s,
-                                        String sep) throws IOException {
+    protected String checkConvertString(String s, String sep) {
 
-        if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            throw new IOException(
-                Trace.getMessage(Trace.TEXT_STRING_HAS_NEWLINE));
-        }
-
+        //if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
+        //    return null;
+        //}
         if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1
-                || (sep.length() > 0 && s.indexOf(sep) != -1)) {
+                || (sep.length() > 0 && s.indexOf(sep) != -1)
+                || hasUnprintable(s)) {
             s = StringConverter.toQuotedString(s, '\"', true);
         }
 
         return s;
+    }
+
+    private boolean hasUnprintable(String s) {
+
+        for (int i = 0, len = s.length(); i < len; i++) {
+            if (Character.isISOControl(s.charAt(i))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -132,7 +132,7 @@ implements ActionListener, WindowListener, KeyListener {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         bMustExit = true;
 
@@ -298,14 +298,14 @@ implements ActionListener, WindowListener, KeyListener {
         MenuBar bar = new MenuBar();
 
         // no shortcuts used
-        String fitems[] = {
+        String[] fitems = {
             "-Connect...", "--", "-Open Script...", "-Save Script...",
             "-Save Result...", "--", "-Exit"
         };
 
         addMenu(bar, "File", fitems);
 
-        String vitems[] = {
+        String[] vitems = {
             "-Refresh Tree", "--", "-View Tree", "-View Command",
             "-View Result", "-View Editor", "--", "-Results in Grid",
             "-Results in Text"
@@ -313,7 +313,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "View", vitems);
 
-        String sitems[] = {
+        String[] sitems = {
             "-SELECT", "-INSERT", "-UPDATE", "-DELETE", "--", "-CREATE TABLE",
             "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX", "--", "-SCRIPT",
             "-SHUTDOWN", "--", "-Test Script"
@@ -327,7 +327,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         bar.add(mRecent);
 
-        String soptions[] = {
+        String[] soptions = {
             "-AutoCommit on", "-AutoCommit off", "-Commit", "-Rollback", "--",
             "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
             "-Logging off", "--",
@@ -336,7 +336,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Options", soptions);
 
-        String shelp[] = { "-Show HTML-Help in browser" };
+        String[] shelp = { "-Show HTML-Help in browser" };
 
         addMenu(bar, "?", shelp);
         fMain.setMenuBar(bar);

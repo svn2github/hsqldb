@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,11 @@ package org.hsqldb.scriptio;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 import org.hsqldb.Database;
+import org.hsqldb.DatabaseManager;
 import org.hsqldb.DatabaseScript;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
@@ -47,7 +46,10 @@ import org.hsqldb.Token;
 import org.hsqldb.Trace;
 import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.FileAccess;
+import org.hsqldb.NumberSequence;
 
 //import org.hsqldb.lib.StopWatch;
 
@@ -79,13 +81,13 @@ import org.hsqldb.lib.Iterator;
  */
 // todo - can lock the database engine as readonly in a wrapper for this when
 // used at checkpoint
-public abstract class ScriptWriterBase {
+public abstract class ScriptWriterBase implements Runnable {
 
-    Database       db;
-    String         outFile;
-    OutputStream   fileStreamOut;
-    FileDescriptor outDescriptor;
-    int            tableRowCount;
+    Database            db;
+    String              outFile;
+    OutputStream        fileStreamOut;
+    FileAccess.FileSync outDescriptor;
+    int                 tableRowCount;
 
     /**
      * this determines if the script is the normal script (false) used
@@ -93,7 +95,6 @@ public abstract class ScriptWriterBase {
      */
     boolean          includeCachedData;
     long             byteCount;
-    int              writeDelay;
     volatile boolean needsSync;
     volatile boolean forceSync;
     volatile boolean busyWriting;
@@ -123,19 +124,21 @@ public abstract class ScriptWriterBase {
         }
     }
 
+    ScriptWriterBase() {}
+
     ScriptWriterBase(Database db, String file, boolean includeCachedData,
-                     boolean newFile) throws HsqlException {
+                     boolean isNewFile) throws HsqlException {
 
         initBuffers();
 
-        File newFileFile = new File(file);
+        boolean exists = false;
 
-        if (newFileFile.exists()) {
-            if (newFile) {
-                throw Trace.error(Trace.FILE_IO_ERROR, file);
-            } else {
-                byteCount = newFileFile.length();
-            }
+        try {
+            exists = db.getFileAccess().isStreamElement(file);
+        } catch (IOException e) {}
+
+        if (exists && isNewFile) {
+            throw Trace.error(Trace.FILE_IO_ERROR, file);
         }
 
         this.db                = db;
@@ -145,21 +148,20 @@ public abstract class ScriptWriterBase {
         openFile();
     }
 
-    abstract protected void initBuffers();
-
-    /**
-     *  Not used in current implementation.
-     */
-    public void setWriteDelay(int delay) {
-        writeDelay = delay;
+    public void reopen() throws HsqlException {
+        openFile();
     }
 
+    protected abstract void initBuffers();
+
+    private int syncCount;
+
     /**
-     *  Called externally in write delay intervals.
+     *  Called internally or externally in write delay intervals.
      */
     public synchronized void sync() {
 
-        if (needsSync) {
+        if (needsSync && fileStreamOut != null) {
             if (busyWriting) {
                 forceSync = true;
 
@@ -167,13 +169,10 @@ public abstract class ScriptWriterBase {
             }
 
             try {
-
-                // Group One
-                if (fileStreamOut != null) {
-                    fileStreamOut.flush();
-                }
-
+                fileStreamOut.flush();
                 outDescriptor.sync();
+
+                syncCount++;
             } catch (IOException e) {
                 Trace.printSystemOut("flush() or sync() error: "
                                      + e.getMessage());
@@ -186,9 +185,9 @@ public abstract class ScriptWriterBase {
 
     public void close() throws HsqlException {
 
-        try {
+        stop();
 
-            // Group One
+        try {
             if (fileStreamOut != null) {
                 fileStreamOut.flush();
                 fileStreamOut.close();
@@ -196,6 +195,8 @@ public abstract class ScriptWriterBase {
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR);
         }
+
+        byteCount = 0;
     }
 
     public long size() {
@@ -220,9 +221,10 @@ public abstract class ScriptWriterBase {
     protected void openFile() throws HsqlException {
 
         try {
-            FileOutputStream fos = new FileOutputStream(outFile, true);
+            FileAccess   fa  = db.getFileAccess();
+            OutputStream fos = fa.openOutputStreamElement(outFile);
 
-            outDescriptor = fos.getFD();
+            outDescriptor = fa.getFileSync(fos);
             fileStreamOut = new BufferedOutputStream(fos, 2 << 12);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
@@ -247,8 +249,7 @@ public abstract class ScriptWriterBase {
 
     protected void writeExistingData() throws HsqlException, IOException {
 
-        boolean       wroteTable = false;
-        HsqlArrayList tables     = db.getTables();
+        HsqlArrayList tables = db.getTables();
 
         for (int i = 0, size = tables.size(); i < size; i++) {
             Table t = (Table) tables.get(i);
@@ -323,11 +324,70 @@ public abstract class ScriptWriterBase {
     abstract void writeRow(int sid, Table table,
                            Object[] data) throws HsqlException, IOException;
 
-    abstract protected void writeDataTerm() throws IOException;
+    protected abstract void writeDataTerm() throws IOException;
 
-    abstract protected void writeSessionId(int sid) throws IOException;
+    protected abstract void writeSessionId(int sid) throws IOException;
 
-    abstract void writeLogStatement(String s,
-                                    int sid)
-                                    throws IOException, HsqlException;
+    public abstract void writeLogStatement(String s,
+                                           int sid)
+                                           throws IOException, HsqlException;
+
+    public abstract void writeInsertStatement(int sid, Table table,
+            Object[] data) throws HsqlException, IOException;
+
+    public abstract void writeDeleteStatement(int sid, Table table,
+            Object[] data) throws HsqlException, IOException;
+
+    public abstract void writeSequenceStatement(int sid,
+            NumberSequence seq) throws HsqlException, IOException;
+
+    public abstract void writeCommitStatement(int sid)
+    throws HsqlException, IOException;
+
+    //
+    private Object       timerTask;
+    private int          ticks;
+    private volatile int writeDelay;
+
+    public void run() {
+
+        try {
+            if (writeDelay != 0 && ++ticks >= writeDelay) {
+                sync();
+
+                ticks = 0;
+            }
+
+            // todo: try to do Cache.cleanUp() here, too
+        } catch (Exception e) {
+
+            // ignore exceptions
+            // may be InterruptedException or IOException
+            if (Trace.TRACE) {
+                Trace.printSystemOut(e.toString());
+            }
+        }
+    }
+
+    public void setWriteDelay(int delay) {
+        writeDelay = delay;
+    }
+
+    public void start() {
+        timerTask = DatabaseManager.getTimer().schedulePeriodicallyAfter(0,
+                1000, this, false);
+    }
+
+    public void stop() {
+
+        if (timerTask != null) {
+            HsqlTimer.cancel(timerTask);
+
+            timerTask = null;
+        }
+    }
+
+    public int getWriteDelay() {
+        return writeDelay;
+    }
 }

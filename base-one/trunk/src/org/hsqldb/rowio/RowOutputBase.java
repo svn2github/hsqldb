@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@ package org.hsqldb.rowio;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.hsqldb.Column;
 import org.hsqldb.HsqlException;
@@ -63,23 +66,6 @@ implements RowOutputInterface {
     // the last column in a table is an ID that should not be written to file
     protected boolean skipSystemId = false;
 
-    public static RowOutputInterface newRowOutput(int cachedRowType)
-    throws HsqlException {
-
-        try {
-            if (cachedRowType == CACHED_ROW_170) {
-                return new RowOutputBinary();
-            } else {
-                Class c = Class.forName("org.hsqldb.rowio.RowOutputLegacy");
-
-                return (RowOutputInterface) c.newInstance();
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              Trace.DatabaseRowOutput_newDatabaseRowOutput);
-        }
-    }
-
     /**
      *  Constructor used for persistent storage of a Table row
      *
@@ -108,64 +94,50 @@ implements RowOutputInterface {
     }
 
 // fredt@users - comment - methods for writing Result column type, name and data size
-    public abstract void writeEnd() throws IOException;
+    public abstract void writeEnd();
 
-    public abstract void writeSize(int size) throws IOException;
+    public abstract void writeSize(int size);
 
-    public abstract void writeType(int type) throws IOException;
+    public abstract void writeType(int type);
 
-    public abstract void writeIntData(int i) throws IOException;
+    public abstract void writeIntData(int i);
 
-    public abstract void writeIntData(int i, int position) throws IOException;
+    public abstract void writeIntData(int i, int position);
 
-    public abstract void writeString(String s) throws IOException;
+    public abstract void writeString(String s);
 
 // fredt@users - comment - methods used for writing each SQL type
-    protected void writeFieldPrefix() throws IOException {}
+    protected void writeFieldPrefix() {}
 
-    protected abstract void writeFieldType(int type) throws IOException;
+    protected abstract void writeFieldType(int type);
 
-    protected abstract void writeNull(int type) throws IOException;
+    protected abstract void writeNull(int type);
 
-    protected abstract void writeChar(String s, int t) throws IOException;
+    protected abstract void writeChar(String s, int t);
 
-    protected abstract void writeSmallint(Number o)
-    throws IOException, HsqlException;
+    protected abstract void writeSmallint(Number o);
 
-    protected abstract void writeInteger(Number o)
-    throws IOException, HsqlException;
+    protected abstract void writeInteger(Number o);
 
-    protected abstract void writeBigint(Number o)
-    throws IOException, HsqlException;
+    protected abstract void writeBigint(Number o);
 
-    protected abstract void writeReal(Double o,
-                                      int type)
-                                      throws IOException, HsqlException;
+    protected abstract void writeReal(Double o, int type);
 
-    protected abstract void writeDecimal(java.math.BigDecimal o)
-    throws IOException, HsqlException;
+    protected abstract void writeDecimal(BigDecimal o);
 
-    protected abstract void writeBit(Boolean o)
-    throws IOException, HsqlException;
+    protected abstract void writeBit(Boolean o);
 
-    protected abstract void writeDate(java.sql.Date o)
-    throws IOException, HsqlException;
+    protected abstract void writeDate(Date o);
 
-    protected abstract void writeTime(java.sql.Time o)
-    throws IOException, HsqlException;
+    protected abstract void writeTime(Time o);
 
-    protected abstract void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, HsqlException;
+    protected abstract void writeTimestamp(Timestamp o);
 
-    protected abstract void writeOther(JavaObject o)
-    throws IOException, HsqlException;
+    protected abstract void writeOther(JavaObject o);
 
-    protected abstract void writeBinary(Binary o,
-                                        int t)
-                                        throws IOException, HsqlException;
+    protected abstract void writeBinary(Binary o, int t);
 
-    public void writeRow(Object data[],
-                         Table t) throws IOException, HsqlException {
+    public void writeRow(Object[] data, Table t) {
 
         writeSize(0);
         writeData(data, t);
@@ -179,8 +151,7 @@ implements RowOutputInterface {
      * @param  t
      * @throws  IOException
      */
-    public void writeData(Object data[],
-                          Table t) throws IOException, HsqlException {
+    public void writeData(Object[] data, Table t) {
 
         int[] types = t.getColumnTypes();
         int   l     = t.getColumnCount();
@@ -198,17 +169,16 @@ implements RowOutputInterface {
      * @param primarykeys
      * @throws  IOException
      */
-    public void writeData(int l, int types[], Object data[],
-                          HashMappedList cols,
-                          int[] primaryKeys)
-                          throws IOException, HsqlException {
+    public void writeData(int l, int[] types, Object[] data,
+                          HashMappedList cols, int[] primaryKeys) {
 
-        int limit = primaryKeys == null ? l
-                                        : primaryKeys.length;
+        boolean hasPK = primaryKeys != null && primaryKeys.length != 0;
+        int     limit = hasPK ? primaryKeys.length
+                              : l;
 
         for (int i = 0; i < limit; i++) {
-            int    j = primaryKeys == null ? i
-                                           : primaryKeys[i];
+            int    j = hasPK ? primaryKeys[i]
+                             : i;
             Object o = data[j];
             int    t = types[j];
 
@@ -266,15 +236,15 @@ implements RowOutputInterface {
                     break;
 
                 case Types.DATE :
-                    writeDate((java.sql.Date) o);
+                    writeDate((Date) o);
                     break;
 
                 case Types.TIME :
-                    writeTime((java.sql.Time) o);
+                    writeTime((Time) o);
                     break;
 
                 case Types.TIMESTAMP :
-                    writeTimestamp((java.sql.Timestamp) o);
+                    writeTimestamp((Timestamp) o);
                     break;
 
                 case Types.OTHER :
@@ -288,8 +258,8 @@ implements RowOutputInterface {
                     break;
 
                 default :
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                      Types.getTypeString(t));
+                    throw Trace.runtimeError(Trace.FUNCTION_NOT_SUPPORTED,
+                                             Types.getTypeString(t));
             }
         }
     }

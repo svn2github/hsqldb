@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,13 +69,27 @@ package org.hsqldb.jdbc;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.sql.*;     // for Array, Blob, Clob, Ref (jdk 1.1)
-import java.util.*;    // for Map (jdk 1.1)
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Calendar;
 
+//#ifdef JAVA2
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Ref;
+import java.util.Map;
+
+//#endif JAVA2
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.HsqlProperties;
 import org.hsqldb.Record;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
@@ -83,6 +97,7 @@ import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.AsciiStringInputStream;
 import org.hsqldb.lib.StringInputStream;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
 
@@ -730,7 +745,7 @@ public class jdbcResultSet implements ResultSet {
             Types.DECIMAL);
 
         if (scale < 0) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
         if (bd != null) {
@@ -799,8 +814,8 @@ public class jdbcResultSet implements ResultSet {
      * value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Date getDate(int columnIndex) throws SQLException {
-        return (java.sql.Date) getColumnInType(columnIndex, Types.DATE);
+    public Date getDate(int columnIndex) throws SQLException {
+        return (Date) getColumnInType(columnIndex, Types.DATE);
     }
 
     /**
@@ -815,7 +830,7 @@ public class jdbcResultSet implements ResultSet {
      * value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Time getTime(int columnIndex) throws SQLException {
+    public Time getTime(int columnIndex) throws SQLException {
         return (Time) getColumnInType(columnIndex, Types.TIME);
     }
 
@@ -832,8 +847,7 @@ public class jdbcResultSet implements ResultSet {
      * value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Timestamp getTimestamp(int columnIndex)
-    throws SQLException {
+    public Timestamp getTimestamp(int columnIndex) throws SQLException {
         return (Timestamp) getColumnInType(columnIndex, Types.TIMESTAMP);
     }
 
@@ -1200,7 +1214,7 @@ public class jdbcResultSet implements ResultSet {
      * value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Date getDate(String columnName) throws SQLException {
+    public Date getDate(String columnName) throws SQLException {
         return getDate(findColumn(columnName));
     }
 
@@ -1217,7 +1231,7 @@ public class jdbcResultSet implements ResultSet {
      * the value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Time getTime(String columnName) throws SQLException {
+    public Time getTime(String columnName) throws SQLException {
         return getTime(findColumn(columnName));
     }
 
@@ -1233,8 +1247,7 @@ public class jdbcResultSet implements ResultSet {
      * value returned is <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.Timestamp getTimestamp(String columnName)
-    throws SQLException {
+    public Timestamp getTimestamp(String columnName) throws SQLException {
         return getTimestamp(findColumn(columnName));
     }
 
@@ -1439,7 +1452,7 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      */
     public String getCursorName() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1544,12 +1557,14 @@ public class jdbcResultSet implements ResultSet {
         checkAvailable();
 
         Object o;
+        int    t;
 
         try {
             o = nCurrent.data[--columnIndex];
+            t = rResult.metaData.colTypes[columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND,
-                                        String.valueOf(++columnIndex));
+            throw Util.sqlException(Trace.COLUMN_NOT_FOUND,
+                                    String.valueOf(++columnIndex));
         }
 
         // use checknull because getColumnInType is not used
@@ -1557,35 +1572,38 @@ public class jdbcResultSet implements ResultSet {
             return null;
         }
 
-// fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
-// fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
-        if (o instanceof JavaObject) {
-            try {
-                return ((JavaObject) o).getObject();
-            } catch (HsqlException e) {
-                throw jdbcUtil.sqlException(
-                    Trace.error(Trace.SERIALIZATION_FAILURE));
-            }
-        } else if (o instanceof Binary) {
-            return ((Binary) o).getClonedBytes();
-        }
+        switch (t) {
 
-//#ifdef JAVA1TARGET
-/*
-*/
+            case Types.DATE :
+                return new Date(((Date) o).getTime());
 
-//#else
-        else if (o instanceof java.sql.Date) {
-            return ((java.sql.Date) o).clone();
-        } else if (o instanceof java.sql.Time) {
-            return ((java.sql.Time) o).clone();
-        } else if (o instanceof java.sql.Timestamp) {
-            return ((java.sql.Timestamp) o).clone();
-        }
+            case Types.TIME :
+                return new Time(((Time) o).getTime());
 
-//#endif JAVA1TARGET
-        else {
-            return o;
+            case Types.TIMESTAMP :
+                long      m  = ((Timestamp) o).getTime();
+                int       n  = ((Timestamp) o).getNanos();
+                Timestamp ts = new Timestamp(m);
+
+                ts.setNanos(n);
+
+                return ts;
+
+            case Types.OTHER :
+            case Types.JAVA_OBJECT :
+                try {
+                    return ((JavaObject) o).getObject();
+                } catch (HsqlException e) {
+                    throw Util.sqlException(
+                        Trace.error(Trace.SERIALIZATION_FAILURE));
+                }
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
+                return ((Binary) o).getClonedBytes();
+
+            default :
+                return o;
         }
     }
 
@@ -1644,7 +1662,7 @@ public class jdbcResultSet implements ResultSet {
             }
         }
 
-        throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND, columnName);
+        throw Util.sqlException(Trace.COLUMN_NOT_FOUND, columnName);
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -1728,8 +1746,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *    jdbcResultSet)
      */
-    public BigDecimal getBigDecimal(int columnIndex)
-    throws java.sql.SQLException {
+    public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         return (BigDecimal) getColumnInType(columnIndex, Types.DECIMAL);
     }
 
@@ -1876,7 +1893,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         // Set to beforeFirst status
@@ -1902,7 +1919,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult != null && rResult.rRoot != null) {
@@ -1932,7 +1949,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -1968,7 +1985,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2055,7 +2072,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2145,7 +2162,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2199,7 +2216,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw jdbcUtil.sqlException(Trace.RESULTSET_FORWARD_ONLY);
+            throw Util.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null || rResult.rRoot == null || iCurrentRow == 0) {
@@ -2286,7 +2303,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
-            throw jdbcUtil.notSupported;
+            throw Util.notSupported;
         }
     }
 
@@ -2354,7 +2371,7 @@ public class jdbcResultSet implements ResultSet {
     public void setFetchSize(int rows) throws SQLException {
 
         if (rows < 0) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
     }
 
@@ -2570,7 +2587,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2
      */
     public void updateNull(int columnIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2600,7 +2617,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBoolean(int columnIndex,
                               boolean x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2630,7 +2647,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateByte(int columnIndex, byte x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2660,7 +2677,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateShort(int columnIndex, short x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2690,7 +2707,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateInt(int columnIndex, int x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2720,7 +2737,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateLong(int columnIndex, long x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2750,7 +2767,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateFloat(int columnIndex, float x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2780,7 +2797,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateDouble(int columnIndex, double x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2812,7 +2829,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBigDecimal(int columnIndex,
                                  BigDecimal x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2842,7 +2859,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateString(int columnIndex, String x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -2871,8 +2888,8 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcResultSet)
      */
-    public void updateBytes(int columnIndex, byte x[]) throws SQLException {
-        throw jdbcUtil.notSupported;
+    public void updateBytes(int columnIndex, byte[] x) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -2901,9 +2918,8 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcResultSet)
      */
-    public void updateDate(int columnIndex,
-                           java.sql.Date x) throws SQLException {
-        throw jdbcUtil.notSupported;
+    public void updateDate(int columnIndex, Date x) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -2932,9 +2948,8 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcResultSet)
      */
-    public void updateTime(int columnIndex,
-                           java.sql.Time x) throws SQLException {
-        throw jdbcUtil.notSupported;
+    public void updateTime(int columnIndex, Time x) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -2965,8 +2980,8 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateTimestamp(int columnIndex,
-                                java.sql.Timestamp x) throws SQLException {
-        throw jdbcUtil.notSupported;
+                                Timestamp x) throws SQLException {
+        throw Util.notSupported;
     }
 
     /**
@@ -2997,7 +3012,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateAsciiStream(int columnIndex, java.io.InputStream x,
                                   int length) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3029,7 +3044,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBinaryStream(int columnIndex, java.io.InputStream x,
                                    int length) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3061,7 +3076,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateCharacterStream(int columnIndex, java.io.Reader x,
                                       int length) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3096,7 +3111,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateObject(int columnIndex, Object x,
                              int scale) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3126,7 +3141,7 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public void updateObject(int columnIndex, Object x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3460,7 +3475,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateBytes(String columnName, byte x[]) throws SQLException {
+    public void updateBytes(String columnName, byte[] x) throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
@@ -3490,8 +3505,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateDate(String columnName,
-                           java.sql.Date x) throws SQLException {
+    public void updateDate(String columnName, Date x) throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
@@ -3521,8 +3535,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateTime(String columnName,
-                           java.sql.Time x) throws SQLException {
+    public void updateTime(String columnName, Time x) throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
@@ -3554,7 +3567,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void updateTimestamp(String columnName,
-                                java.sql.Timestamp x) throws SQLException {
+                                Timestamp x) throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -3748,7 +3761,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void insertRow() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3775,7 +3788,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void updateRow() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3802,7 +3815,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void deleteRow() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3845,7 +3858,7 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void refreshRow() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3878,7 +3891,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void cancelRowUpdates() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3917,7 +3930,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void moveToInsertRow() throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -3997,7 +4010,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Object getObject(int i, Map map) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -4026,7 +4039,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Ref getRef(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -4120,7 +4133,7 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public Array getArray(int i) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -4299,13 +4312,9 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
+    public Date getDate(int columnIndex, Calendar cal) throws SQLException {
 
-// fredt@users 20020320 - comment - to do
-// use new code already in jdbcPreparedStatement
-    public java.sql.Date getDate(int columnIndex,
-                                 Calendar cal) throws SQLException {
-
-        java.sql.Date date = getDate(columnIndex);
+        Date date = getDate(columnIndex);
 
         if (date == null) {
             return null;
@@ -4318,7 +4327,7 @@ public class jdbcResultSet implements ResultSet {
         cal.setTime(date);
         HsqlDateTime.resetToDate(cal);
 
-        return new java.sql.Date(cal.getTime().getTime());
+        return new Date(cal.getTime().getTime());
     }
 
     /**
@@ -4344,8 +4353,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
-    public java.sql.Date getDate(String columnName,
-                                 Calendar cal) throws SQLException {
+    public Date getDate(String columnName, Calendar cal) throws SQLException {
         return getDate(findColumn(columnName), cal);
     }
 
@@ -4370,8 +4378,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public java.sql.Time getTime(int columnIndex,
-                                 Calendar cal) throws SQLException {
+    public Time getTime(int columnIndex, Calendar cal) throws SQLException {
 
         Time t = getTime(columnIndex);
 
@@ -4386,7 +4393,7 @@ public class jdbcResultSet implements ResultSet {
         cal.setTime(t);
         HsqlDateTime.resetToTime(cal);
 
-        return new java.sql.Time(cal.getTime().getTime());
+        return new Time(cal.getTime().getTime());
     }
 
     /**
@@ -4412,8 +4419,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
-    public java.sql.Time getTime(String columnName,
-                                 Calendar cal) throws SQLException {
+    public Time getTime(String columnName, Calendar cal) throws SQLException {
         return getTime(findColumn(columnName), cal);
     }
 
@@ -4439,8 +4445,8 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
-    public java.sql.Timestamp getTimestamp(int columnIndex,
-                                           Calendar cal) throws SQLException {
+    public Timestamp getTimestamp(int columnIndex,
+                                  Calendar cal) throws SQLException {
         return getTimestamp(columnIndex);
     }
 
@@ -4466,8 +4472,8 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
-    public java.sql.Timestamp getTimestamp(String columnName,
-                                           Calendar cal) throws SQLException {
+    public Timestamp getTimestamp(String columnName,
+                                  Calendar cal) throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
     }
 
@@ -4502,7 +4508,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int columnIndex) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4535,7 +4541,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(String columnName) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4568,7 +4574,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4601,7 +4607,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4634,7 +4640,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4667,7 +4673,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4700,7 +4706,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4733,7 +4739,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4766,7 +4772,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4799,7 +4805,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -4846,7 +4852,7 @@ public class jdbcResultSet implements ResultSet {
     private void checkAvailable() throws SQLException {
 
         if (rResult == null ||!bInit || nCurrent == null) {
-            throw jdbcUtil.sqlException(Trace.NO_DATA_IS_AVAILABLE);
+            throw Util.sqlException(Trace.NO_DATA_IS_AVAILABLE);
         }
     }
 
@@ -4859,7 +4865,7 @@ public class jdbcResultSet implements ResultSet {
 
         if (rResult == null
                 || (sqlStatement != null && sqlStatement.isClosed)) {
-            throw jdbcUtil.sqlException(Trace.JDBC_RESULTSET_IS_CLOSED);
+            throw Util.sqlException(Trace.JDBC_RESULTSET_IS_CLOSED);
         }
     }
 
@@ -4872,8 +4878,8 @@ public class jdbcResultSet implements ResultSet {
     void checkColumn(int columnIndex) throws SQLException {
 
         if (columnIndex < 1 || columnIndex > iColumnCount) {
-            throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND,
-                                        String.valueOf(columnIndex));
+            throw Util.sqlException(Trace.COLUMN_NOT_FOUND,
+                                    String.valueOf(columnIndex));
         }
     }
 
@@ -4922,48 +4928,51 @@ public class jdbcResultSet implements ResultSet {
             t = rResult.metaData.colTypes[--columnIndex];
             o = nCurrent.data[columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND,
-                                        String.valueOf(++columnIndex));
+            throw Util.sqlException(Trace.COLUMN_NOT_FOUND,
+                                    String.valueOf(++columnIndex));
         }
 
         if (checkNull(o)) {
             return null;
         }
 
-        // no conversion necessary
-        if (type == t) {
-
-//#ifdef JAVA1TARGET
-/*
-*/
-
-//#else
-            if (type == Types.DATE) {
-                o = ((java.sql.Date) o).clone();
-            } else if (type == Types.TIME) {
-                o = ((java.sql.Time) o).clone();
-            } else if (type == Types.TIMESTAMP) {
-                o = ((java.sql.Timestamp) o).clone();
+        if (t != type) {
+            if (o instanceof Binary) {
+                throw Util.sqlException(Trace.WRONG_DATA_TYPE);
             }
 
-//#endif JAVA1TARGET
-            return o;
+            // try to convert
+            try {
+                o = Column.convertObject(o, type);
+            } catch (Exception e) {
+                String s = "type: " + Types.getTypeString(t) + " (" + t
+                           + ") expected: " + Types.getTypeString(type)
+                           + " value: " + o.toString();
+
+                throw Util.sqlException(Trace.WRONG_DATA_TYPE, s);
+            }
         }
 
-        if (o instanceof Binary) {
-            throw jdbcUtil.sqlException(Trace.WRONG_DATA_TYPE);
+        // treat datetime stuff
+        switch (type) {
+
+            case Types.DATE :
+                return new Date(((Date) o).getTime());
+
+            case Types.TIME :
+                return new Time(((Time) o).getTime());
+
+            case Types.TIMESTAMP :
+                long      m  = ((Timestamp) o).getTime();
+                int       n  = ((Timestamp) o).getNanos();
+                Timestamp ts = new Timestamp(m);
+
+                ts.setNanos(n);
+
+                return ts;
         }
 
-        // try to convert
-        try {
-            return Column.convertObject(o, type);
-        } catch (Exception e) {
-            String s = "type: " + Types.getTypeString(t) + " (" + t
-                       + ") expected: " + Types.getTypeString(type)
-                       + " value: " + o.toString();
-
-            throw jdbcUtil.sqlException(Trace.WRONG_DATA_TYPE, s);
-        }
+        return o;
     }
 
     //-------------------------- Package Private ---------------------------
@@ -4989,7 +4998,7 @@ public class jdbcResultSet implements ResultSet {
         if (r.mode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.getUpdateCount();
         } else if (r.mode == ResultConstants.ERROR) {
-            jdbcUtil.throwError(r);
+            Util.throwError(r);
         } else {
             if (s != null) {
                 this.rsType = s.rsType;

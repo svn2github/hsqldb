@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 package org.hsqldb.scriptio;
 
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.zip.Inflater;
@@ -39,12 +40,15 @@ import java.util.zip.InflaterInputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
+import org.hsqldb.rowio.RowInputBase;
+
+import java.io.InputStream;
 
 /**
  *
  *  @author fredt@users
  *  @since 1.7.2
- *  @version 1.7.2
+ *  @version 1.8.0
  */
 class ScriptReaderZipped extends ScriptReaderBinary {
 
@@ -55,8 +59,12 @@ class ScriptReaderZipped extends ScriptReaderBinary {
 
     protected void openFile() throws IOException {
 
-        dataStreamIn = new BufferedInputStream(
-            new InflaterInputStream(
-                new FileInputStream(fileName), new Inflater()), 1 << 13);
+        InputStream d = db.isFilesInJar()
+                        ? getClass().getResourceAsStream(fileName)
+                        : db.getFileAccess().openInputStreamElement(fileName);
+
+        dataStreamIn = new DataInputStream(
+            new BufferedInputStream(
+                new InflaterInputStream(d, new Inflater()), 1 << 13));
     }
 }

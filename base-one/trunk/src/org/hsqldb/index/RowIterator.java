@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,9 @@ import org.hsqldb.Row;
 
 public interface RowIterator {
 
-    public Row next();
+    Row next();
 
-    public boolean hasNext();
+    boolean hasNext();
+
+    void release();
 }

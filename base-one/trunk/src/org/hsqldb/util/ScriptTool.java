@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ public class ScriptTool {
      *
      * @param arg
      */
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         for (int i = 0; i < arg.length; i++) {
             String p = arg[i];
@@ -85,7 +85,7 @@ public class ScriptTool {
         System.exit(0);
     }    // end main
 
-    public void execute(String arg[]) {
+    public void execute(String[] arg) {
 
         for (int i = 0; i < arg.length; i++) {
             String p = arg[i];

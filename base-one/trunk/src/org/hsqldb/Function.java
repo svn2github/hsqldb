@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,15 +93,15 @@ import org.hsqldb.types.JavaObject;
 class Function {
 
     private String         sFunction;
-    Method                 mMethod;
+    private Method         mMethod;
     private Class          cReturnClass;
     private Class[]        aArgClasses;
     private int            iReturnType;
     private int            iArgCount;
     private int            iSqlArgCount;
     private int            iSqlArgStart;
-    private int            iArgType[];
-    private boolean        bArgNullable[];
+    private int[]          iArgType;
+    private boolean[]      bArgNullable;
     Expression[]           eArg;
     private boolean        bConnection;
     private static HashMap methodCache = new HashMap();
@@ -172,7 +172,7 @@ class Function {
 
             // public only, but includes those inherited from
             // superclasses and superinterfaces.  List is unordered.
-            Method methods[] = classinstance.getMethods();
+            Method[] methods = classinstance.getMethods();
 
             for (i = 0; i < methods.length; i++) {
                 Method m = methods[i];
@@ -709,5 +709,9 @@ class Function {
     int getArgNullability(int i) {
         return bArgNullable[i] ? Expression.NULLABLE
                                : Expression.NO_NULLS;
+    }
+
+    Method getMethod() {
+        return mMethod;
     }
 }

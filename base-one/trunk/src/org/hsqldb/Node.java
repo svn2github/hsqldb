@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ import org.hsqldb.rowio.RowOutputInterface;
 abstract class Node {
 
     static final int NO_POS = CachedRow.NO_POS;
-    protected int    iBalance;    // currently, -2 means 'deleted'
+    int              iBalance;    // currently, -2 means 'deleted'
     Node             nNext;       // node of next index (nNext==null || nNext.iId=iId+1)
 
     static final Node newNode(Row r, int id, Table t) {
@@ -179,7 +179,7 @@ abstract class Node {
      */
     abstract Object[] getData() throws HsqlException;
 
-    abstract boolean equals(Node n) throws HsqlException;
+    abstract boolean equals(Node n);
 
     /**
      *  Returns the Node Object that currently represents this Node in the
@@ -197,8 +197,7 @@ abstract class Node {
     /**
      *  Writes out the node in an implementation dependent way.
      */
-    abstract void write(RowOutputInterface out)
-    throws IOException, HsqlException;
+    abstract void write(RowOutputInterface out) throws IOException;
 
     boolean isDeleted() {
         return iBalance == -2;

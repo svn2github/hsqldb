@@ -1,39 +1,4 @@
-/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * Neither the name of the Hypersonic SQL Group nor the names of its
- * contributors may be used to endorse or promote products derived from this
- * software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals 
- * on behalf of the Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,7 +106,7 @@ class TableWorks {
      * @param  updateAction
      * @throws HsqlException
      */
-    void createForeignKey(int fkcol[], int expcol[], HsqlName name,
+    void createForeignKey(int[] fkcol, int[] expcol, HsqlName name,
                           Table expTable, int deleteAction,
                           int updateAction) throws HsqlException {
 
@@ -220,7 +185,7 @@ class TableWorks {
      * @return  new index
      * @throws  HsqlException normally for lack of resources
      */
-    Index createIndex(int col[], HsqlName name, boolean unique,
+    Index createIndex(int[] col, HsqlName name, boolean unique,
                       boolean constraint,
                       boolean forward) throws HsqlException {
 
@@ -233,8 +198,8 @@ class TableWorks {
             Table tn = table.moveDefinition(null, null,
                                             table.getColumnCount(), 0);
 
-            newindex = tn.createIndexStructure(col, name, false, unique,
-                                               constraint, forward);
+            newindex = tn.createIndexStructure(col, name, unique, constraint,
+                                               forward);
 
             tn.moveData(session, table, table.getColumnCount(), 0);
             tn.updateConstraintsTables(table, table.getColumnCount(), 0);
@@ -252,6 +217,27 @@ class TableWorks {
         table.database.recompileViews(table.getName().name);
 
         return newindex;
+    }
+
+    void addOrDropPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
+
+        if (cols == null) {
+            table.checkDropIndex(table.getIndexes()[0].getName().name, null,
+                                 true);
+        }
+
+        Table tn = table.moveDefinitionPK(name, cols);
+
+        tn.moveData(session, table, table.getColumnCount(), 0);
+        tn.updateConstraintsTables(table, table.getColumnCount(), 0);
+
+        int index = table.database.getTableIndex(table);
+
+        table.database.getTables().set(index, tn);
+
+        table = tn;
+
+        table.database.recompileViews(table.getName().name);
     }
 
 // fredt@users 20020225 - avoid duplicate constraints
@@ -413,6 +399,12 @@ class TableWorks {
         int        j = table.getConstraintIndex(name);
         Constraint c = table.getConstraint(name);
 
+        if (name.equals(table.getIndexes()[0].getName().name)) {
+            addOrDropPrimaryKey(null, null);
+
+            return;
+        }
+
         if (c == null) {
             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                               Trace.TableWorks_dropConstraint, new Object[] {
@@ -446,7 +438,8 @@ class TableWorks {
             cset.add(c);
 
             // throw if the index for unique constraint is shared
-            table.checkDropIndex(c.getMainIndex().getName().name, cset);
+            table.checkDropIndex(c.getMainIndex().getName().name, cset,
+                                 false);
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);

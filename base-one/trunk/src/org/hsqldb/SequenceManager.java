@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.persist.Logger;
 
 /**
  * Manages SEQUENCE objects for a Database instance. <p>
@@ -41,7 +42,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * @version 1.7.2
  * @since 1.7.2
  */
-class SequenceManager {
+public class SequenceManager {
 
     HashMappedList sequenceMap;
 
@@ -63,7 +64,7 @@ class SequenceManager {
         sequenceMap.remove(name);
     }
 
-    NumberSequence getSequence(String name) {
+    public NumberSequence getSequence(String name) {
         return (NumberSequence) sequenceMap.get(name);
     }
 

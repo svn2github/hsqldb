@@ -1,39 +1,4 @@
-/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * Neither the name of the Hypersonic SQL Group nor the names of its
- * contributors may be used to endorse or promote products derived from this
- * software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals 
- * on behalf of the Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,14 +31,17 @@
 
 package org.hsqldb.util;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Vector;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -84,10 +52,20 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// weconsultants@users 20041109 - patch 1.8.0 - enhancements:
+//              Added CommonSwing.errorMessage() to handle error messages
+//              for errors so eliminated the mError JLable field and Status HorizontalBox.
+//              Changed dispose on cancel to exit. If "Dup", "Restore" or Transer" needed ust
+//              Press <OK> Conform toprogramming standards
+//              Added spaces to "OK" button to make same size buttons
+//              Added ":" to all labels as in databaseManager.java
+//              Added: Added code from DatabaseManager to store connection settings
 
 /**
  * Opens a connection to a database
@@ -97,10 +75,18 @@ import javax.swing.border.EmptyBorder;
 class ConnectionDialogSwing extends JDialog
 implements ActionListener, ItemListener {
 
-    private Connection     mConnection;
-    private JTextField     mDriver, mURL, mUser, mError;
-    private JPasswordField mPassword;
-    private String         connTypes[][];
+    /**
+     * Comment for <code>serialVersionUID</code>
+     */
+    private static final long serialVersionUID = 1L;
+    private Connection        mConnection;
+    private JTextField        mName, mDriver, mURL, mUser;
+    private JPasswordField    mPassword;
+    private String[][]        connTypes;
+    private Hashtable         settings;
+    private JButton           okCancel, clear;
+    private JComboBox mSettingName =
+        new JComboBox(loadRecentConnectionSettings());
 
     public static Connection createConnection(String driver, String url,
             String user, String password) throws Exception {
@@ -116,22 +102,25 @@ implements ActionListener, ItemListener {
 
     private void create() {
 
-        CommonSwing.setDefaultColor();
+        Box main     = Box.createHorizontalBox();
+        Box labels   = Box.createVerticalBox();
+        Box controls = Box.createVerticalBox();
+        Box buttons  = Box.createHorizontalBox();
+        Box whole    = Box.createVerticalBox();
 
-        JButton b;
-        Box     main     = Box.createHorizontalBox();
-        Box     labels   = Box.createVerticalBox();
-        Box     controls = Box.createVerticalBox();
-        Box     buttons  = Box.createHorizontalBox();
-        Box     whole    = Box.createVerticalBox();
-        Box     status   = Box.createHorizontalBox();
+        // (weconsultants@users) New code
+        Box extra = Box.createHorizontalBox();
 
+        main.add(Box.createHorizontalStrut(10));
         main.add(Box.createHorizontalGlue());
         main.add(labels);
         main.add(Box.createHorizontalStrut(10));
         main.add(Box.createHorizontalGlue());
         main.add(controls);
-        main.add(Box.createHorizontalGlue());
+        main.add(Box.createHorizontalStrut(10));
+        main.add(Box.createVerticalGlue());
+        main.add(extra);
+        main.add(Box.createVerticalGlue());
         whole.add(Box.createVerticalGlue());
         whole.add(Box.createVerticalStrut(10));
         whole.add(main);
@@ -140,24 +129,44 @@ implements ActionListener, ItemListener {
         whole.add(buttons);
         whole.add(Box.createVerticalGlue());
         whole.add(Box.createVerticalStrut(10));
-        whole.add(status);
-        whole.add(Box.createVerticalStrut(10));
         whole.add(Box.createVerticalGlue());
+        labels.add(createLabel("Recent Setting:"));
+        labels.add(Box.createVerticalGlue());
+        labels.add(createLabel("Setting Name:"));
         labels.add(Box.createVerticalGlue());
         labels.add(createLabel("Type:"));
         labels.add(Box.createVerticalGlue());
-        labels.add(createLabel("Driver"));
+        labels.add(createLabel("Driver:"));
         labels.add(Box.createVerticalGlue());
-        labels.add(createLabel("URL"));
+        labels.add(createLabel("URL:"));
         labels.add(Box.createVerticalGlue());
         labels.add(createLabel("User:"));
         labels.add(Box.createVerticalGlue());
         labels.add(createLabel("Password:"));
         labels.add(Box.createVerticalGlue());
         labels.add(Box.createVerticalStrut(10));
-
-        // Now the 2nd column which is the controls box:
         controls.add(Box.createVerticalGlue());
+
+        // (weconsultants@users) New code
+        mSettingName.setActionCommand("Select Setting");
+        mSettingName.addActionListener(this);
+        controls.add(mSettingName);
+        controls.add(Box.createHorizontalGlue());
+
+        // (weconsultants@users) New code
+        mName = new JTextField();
+
+        mName.addActionListener(this);
+        controls.add(mName);
+
+        // (weconsultants@users) New code
+        clear = new JButton("Clear Names");
+
+        clear.setActionCommand("Clear");
+        clear.addActionListener(this);
+        buttons.add(clear);
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(Box.createHorizontalStrut(10));
 
         JComboBox types = new JComboBox();
 
@@ -199,36 +208,28 @@ implements ActionListener, ItemListener {
         buttons.add(Box.createHorizontalGlue());
         buttons.add(Box.createHorizontalStrut(10));
 
-        b = new JButton("Ok");
+        okCancel = new JButton("     Ok      ");
 
-        b.setActionCommand("ConnectOk");
-        b.addActionListener(this);
-        buttons.add(b);
-        getRootPane().setDefaultButton(b);
+        okCancel.setActionCommand("ConnectOk");
+        okCancel.addActionListener(this);
+        buttons.add(okCancel);
+        getRootPane().setDefaultButton(okCancel);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(Box.createHorizontalStrut(20));
 
-        b = new JButton("Cancel");
+        okCancel = new JButton("  Cancel   ");
 
-        b.setActionCommand("ConnectCancel");
-        b.addActionListener(this);
-        buttons.add(b);
+        okCancel.setActionCommand("ConnectCancel");
+        okCancel.addActionListener(this);
+        buttons.add(okCancel);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(Box.createHorizontalStrut(10));
 
-        // Now the status line
-        mError = new JTextField("");
+        JPanel jPanel = new JPanel();
 
-        mError.setEditable(false);
-        status.add(Box.createHorizontalGlue());
-        status.add(mError);
-        status.add(Box.createHorizontalGlue());
-
-        JPanel jp = new JPanel();
-
-        jp.setBorder(new EmptyBorder(10, 10, 10, 10));
-        jp.add("Center", whole);
-        getContentPane().add("Center", jp);
+        jPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        jPanel.add("Center", whole);
+        getContentPane().add("Center", jPanel);
         doLayout();
         pack();
 
@@ -244,13 +245,22 @@ implements ActionListener, ItemListener {
             setSize(d);
         }
 
-        show();
+        setVisible(true);
     }
 
     public static Connection createConnection(JFrame owner, String title) {
 
         ConnectionDialogSwing dialog = new ConnectionDialogSwing(owner,
             title);
+
+//      Added: (weconsultants@users) Default LAF of Native
+        try {
+
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            SwingUtilities.updateComponentTreeUI(dialog);
+        } catch (Exception e) {
+            CommonSwing.errorMessage(e);
+        }
 
         dialog.create();
 
@@ -262,6 +272,30 @@ implements ActionListener, ItemListener {
         JLabel l = new JLabel(s);
 
         return l;
+    }
+
+    // (weconsultants@users) New code
+    public Vector loadRecentConnectionSettings() {
+
+        Vector passSettings = new Vector();
+
+        settings = new Hashtable();
+
+        try {
+            settings = ConnectionDialogCommon.loadRecentConnectionSettings();
+
+            Iterator it = settings.values().iterator();
+
+            passSettings.add(ConnectionDialogCommon.emptySettingName);
+
+            while (it.hasNext()) {
+                passSettings.add(((ConnectionSetting) it.next()).getName());
+            }
+        } catch (java.io.IOException ioe) {
+            CommonSwing.errorMessage(ioe);
+        }
+
+        return (passSettings);
     }
 
     public void actionPerformed(ActionEvent ev) {
@@ -279,13 +313,51 @@ implements ActionListener, ItemListener {
                                      mUser.getText(),
                                      new String(mPassword.getPassword()));
 
+                // (weconsultants@users) New code
+                if (mName.getText() != null
+                        && mName.getText().trim().length() != 0) {
+                    ConnectionSetting newSetting = new ConnectionSetting(
+                        mName.getText(), mDriver.getText(), mURL.getText(),
+                        mUser.getText(), new String(mPassword.getPassword()));
+
+                    ConnectionDialogCommon.addToRecentConnectionSettings(
+                        settings, newSetting);
+                }
+
                 dispose();
             } catch (Exception e) {
-                e.printStackTrace();
-                mError.setText(e.toString());
+
+                // Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
+
+            // (weconsultants@users) New code
+        } else if (s.equals("Select Setting")) {
+            String            s2 = (String) mSettingName.getSelectedItem();
+            ConnectionSetting setting = (ConnectionSetting) settings.get(s2);
+
+            if (setting != null) {
+                mName.setText(setting.getName());
+                mDriver.setText(setting.getDriver());
+                mURL.setText(setting.getUrl());
+                mUser.setText(setting.getUser());
+                mPassword.setText(setting.getPassword());
             }
         } else if (s.equals("ConnectCancel")) {
-            dispose();
+
+            // Changed to system exit.. Can't do anything any way ...
+            // dispose();
+            System.exit(0);
+
+            // (weconsultants@users) New code
+        } else if (s.equals("Clear")) {
+            ConnectionDialogCommon.deleteRecentConnectionSettings();
+
+            settings = new Hashtable();
+
+            mSettingName.removeAllItems();
+            mSettingName.addItem(ConnectionDialogCommon.emptySettingName);
+            mName.setText(null);
         }
     }
 

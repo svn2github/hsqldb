@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,6 @@ package org.hsqldb;
 class HsqlInternalException extends HsqlException {
 
     HsqlInternalException(HsqlException e) {
-        super(e.message, e.state, e.code);
+        super(e.getMessage(), e.getSQLState(), e.getErrorCode());
     }
 }

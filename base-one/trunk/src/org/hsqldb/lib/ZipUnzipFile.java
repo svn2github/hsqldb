@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,39 +66,38 @@
 
 package org.hsqldb.lib;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+// oj@openoffice.org - use FileAccess
 public class ZipUnzipFile {
 
     private static final int COPY_BLOCK_SIZE = 1 << 16;
 
-    public static void compressFile(String infilename,
-                                    String outfilename) throws IOException {
+    public static void compressFile(String infilename, String outfilename,
+                                    FileAccess storage) throws IOException {
 
-        FileInputStream      in        = null;
+        InputStream          in        = null;
         DeflaterOutputStream f         = null;
         boolean              completed = false;
 
+        // if there is no file
+        if (!storage.isStreamElement(infilename)) {
+            return;
+        }
+
         try {
+            byte[] b = new byte[COPY_BLOCK_SIZE];
 
-            // if there is no file
-            if (!(new File(infilename)).exists()) {
-                return;
-            }
-
-            byte b[] = new byte[COPY_BLOCK_SIZE];
-
-            in = new FileInputStream(infilename);
-            f = new DeflaterOutputStream(new FileOutputStream(outfilename),
-                                         new Deflater(Deflater.BEST_SPEED),
-                                         COPY_BLOCK_SIZE);
+            in = storage.openInputStreamElement(infilename);
+            f = new DeflaterOutputStream(
+                storage.openOutputStreamElement(outfilename),
+                new Deflater(Deflater.BEST_SPEED), COPY_BLOCK_SIZE);
 
             while (true) {
                 int l = in.read(b, 0, COPY_BLOCK_SIZE);
@@ -123,8 +122,8 @@ public class ZipUnzipFile {
                     f.close();
                 }
 
-                if (!completed) {
-                    FileUtil.delete(outfilename);
+                if (!completed && storage.isStreamElement(outfilename)) {
+                    storage.removeElement(outfilename);
                 }
             } catch (Throwable e) {
                 throw FileUtil.toIOException(e);
@@ -132,23 +131,25 @@ public class ZipUnzipFile {
         }
     }
 
-    public static void decompressFile(String infilename,
-                                      String outfilename) throws IOException {
+    public static void decompressFile(String infilename, String outfilename,
+                                      FileAccess storage) throws IOException {
 
         InflaterInputStream f         = null;
-        FileOutputStream    outstream = null;
+        OutputStream        outstream = null;
         boolean             completed = false;
 
         try {
-            if (!(new File(infilename)).exists()) {
+            if (!storage.isStreamElement(infilename)) {
                 return;
             }
 
-            f = new InflaterInputStream(new FileInputStream(infilename),
-                                        new Inflater());
-            outstream = new FileOutputStream(outfilename);
+            storage.removeElement(outfilename);
 
-            byte b[] = new byte[COPY_BLOCK_SIZE];
+            f = new InflaterInputStream(
+                storage.openInputStreamElement(infilename), new Inflater());
+            outstream = storage.openOutputStreamElement(outfilename);
+
+            byte[] b = new byte[COPY_BLOCK_SIZE];
 
             while (true) {
                 int l = f.read(b, 0, COPY_BLOCK_SIZE);
@@ -173,8 +174,8 @@ public class ZipUnzipFile {
                     outstream.close();
                 }
 
-                if (!completed) {
-                    FileUtil.delete(outfilename);
+                if (!completed && storage.isStreamElement(outfilename)) {
+                    storage.removeElement(outfilename);
                 }
             } catch (Throwable e) {
                 throw FileUtil.toIOException(e);

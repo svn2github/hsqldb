@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ import junit.framework.TestCase;
  * @version 1.7.2
  * @since 1.7.2
  */
-abstract public class TestBugBase extends TestCase {
+public abstract class TestBugBase extends TestCase {
 
     //  change the url to reflect your preferred db location and name
     //  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
@@ -87,5 +87,5 @@ abstract public class TestBugBase extends TestCase {
         return DriverManager.getConnection(url, user, password);
     }
 
-    abstract public void test() throws Exception;
+    public abstract void test() throws Exception;
 }

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,8 @@ public class Record {
     public static int memoryRecords;
 
     // structure member
-    public Object data[];
-    public Record next;
+    public Object[] data;
+    public Record   next;
 
     Record() {
         memoryRecords++;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ import java.net.Socket;
 // fredt@users - patch 461556 by paul-h@users
 public interface HsqlSocketRequestHandler {
 
-    public void handleConnection(final Socket socket);
+    void handleConnection(Socket socket);
 
     void signalCloseAllServerConnections();
 }

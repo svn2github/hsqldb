@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ import java.awt.event.WindowEvent;
 public class ZaurusConnectionDialog extends ConnectionDialog
 implements ActionListener, ItemListener, KeyListener {
 
-    static final String sJDBCTypes[][] = {
+    static final String[][] sJDBCTypes = {
         {
             "HSQL In-Memory", "org.hsqldb.jdbcDriver", "jdbc:hsqldb:."
         }, {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 package org.hsqldb.test;
 
 // nbazin@users - enhancements to the original code
+// fredt@users - 20050202 - corrected getRandomID(int) to return a randomly distributed value
 /*
  *  This is a sample implementation of the Transaction Processing Performance
  *  Council Benchmark B coded in Java and ANSI SQL2.
@@ -779,28 +780,22 @@ class JDBCBench {
 
     public static int getRandomID(int type) {
 
-        int min, max, num;
-
-        max = min = 0;
-        num = naccounts;
+        int min = 0,
+            max = 0;
 
         switch (type) {
 
             case TELLER :
-                min += nbranches;
-                num = ntellers;
+                max = ntellers * tps;
+                break;
 
-            /* FALLTHROUGH */
             case BRANCH :
-                if (type == BRANCH) {
-                    num = nbranches;
-                }
+                max = nbranches * tps;
+                break;
 
-                min += naccounts;
-
-            /* FALLTHROUGH */
             case ACCOUNT :
-                max = min + num - 1;
+                max = naccounts * tps;
+                break;
         }
 
         return (getRandomInt(min, max));

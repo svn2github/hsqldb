@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,10 @@ import org.hsqldb.store.BaseHashMap;
  * @version 1.7.2
  * @since 1.7.2
  */
-public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
+public class IntKeyIntValueHashMap extends BaseHashMap {
 
-    Set        keySet;
-    Collection values;
+    private Set        keySet;
+    private Collection values;
 
     public IntKeyIntValueHashMap() {
         this(16, 0.75f);

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ import java.io.UTFDataFormatException;
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 public class StringConverter {
 
-    private static final byte HEXBYTES[] = {
+    private static final byte[] HEXBYTES = {
         (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4',
         (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9',
         (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f'
@@ -121,9 +121,9 @@ public class StringConverter {
      */
     public static byte[] hexToByte(String s) throws IOException {
 
-        int  l      = s.length() / 2;
-        byte data[] = new byte[l];
-        int  j      = 0;
+        int    l    = s.length() / 2;
+        byte[] data = new byte[l];
+        int    j    = 0;
 
         if (s.length() % 2 != 0) {
             throw new IOException(
@@ -159,7 +159,7 @@ public class StringConverter {
      *
      * @return hex string
      */
-    public static String byteToHex(byte b[]) {
+    public static String byteToHex(byte[] b) {
 
         int    len = b.length;
         char[] s   = new char[len * 2];
@@ -181,8 +181,7 @@ public class StringConverter {
      * @param o output stream
      * @param b byte array
      */
-    public static void writeHex(byte[] o, int from,
-                                byte b[]) throws IOException {
+    public static void writeHex(byte[] o, int from, byte[] b) {
 
         int len = b.length;
 
@@ -216,30 +215,9 @@ public class StringConverter {
 
         HsqlByteArrayOutputStream bout = new HsqlByteArrayOutputStream();
 
-        try {
-            writeUTF(s, bout);
-        } catch (IOException e) {
-            return null;
-        }
+        writeUTF(s, bout);
 
         return byteToHex(bout.toByteArray());
-    }
-
-    /**
-     * Converts a hex string into a byte array then converts the byte array
-     * into a Unicode string.
-     *
-     *
-     * @param s
-     *
-     * @return
-     * @throws IOException
-     */
-    public static String hexStringToUnicode(String s) throws IOException {
-
-        byte[] b = hexToByte(s);
-
-        return readUTF(b, 0, b.length);
     }
 
 // fredt@users 20011120 - patch 450455 by kibu@users - modified
@@ -270,9 +248,8 @@ public class StringConverter {
      * @return number of bytes written out
      *
      */
-    public static int unicodeToAscii(OutputStream b, String s,
-                                     boolean doubleSingleQuotes)
-                                     throws IOException {
+    public static int unicodeToAscii(HsqlByteArrayOutputStream b, String s,
+                                     boolean doubleSingleQuotes) {
 
         int count = 0;
 
@@ -348,8 +325,8 @@ public class StringConverter {
             return "";
         }
 
-        char b[] = new char[length];
-        int  j   = 0;
+        char[] b = new char[length];
+        int    j = 0;
 
         for (int i = 0; i < length; i++) {
             byte c = s[offset + i];
@@ -384,9 +361,9 @@ public class StringConverter {
             return s;
         }
 
-        int  len = s.length();
-        char b[] = new char[len];
-        int  j   = 0;
+        int    len = s.length();
+        char[] b   = new char[len];
+        int    j   = 0;
 
         for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
@@ -418,10 +395,17 @@ public class StringConverter {
     public static String readUTF(byte[] bytearr, int offset,
                                  int length) throws IOException {
 
-        char[] buf    = new char[length * 2];
-        int    bcount = 0;
-        int    c, char2, char3;
-        int    count = 0;
+        char[] buf = new char[length * 2];
+
+        return readUTF(bytearr, offset, length, buf);
+    }
+
+    public static String readUTF(byte[] bytearr, int offset, int length,
+                                 char[] buf) throws IOException {
+
+        int bcount = 0;
+        int c, char2, char3;
+        int count = 0;
 
         while (count < length) {
             c = (int) bytearr[offset + count];
@@ -505,10 +489,8 @@ public class StringConverter {
      * @param      str   a string to be written.
      * @param      out   destination to write to
      * @return     The number of bytes written out.
-     * @exception  IOException  if an I/O error occurs.
      */
-    public static int writeUTF(String str,
-                               OutputStream out) throws IOException {
+    public static int writeUTF(String str, HsqlByteArrayOutputStream out) {
 
         int strlen = str.length();
         int c,
@@ -568,7 +550,7 @@ public class StringConverter {
         InputStreamReader in        = new InputStreamReader(x);
         StringWriter      writer    = new StringWriter();
         int               blocksize = 8 * 1024;
-        char              buffer[]  = new char[blocksize];
+        char[]            buffer    = new char[blocksize];
 
         for (int left = length; left > 0; ) {
             int read = in.read(buffer, 0, left > blocksize ? blocksize

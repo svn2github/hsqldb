@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -303,7 +303,7 @@ public class ZaurusEditor extends Panel implements ActionListener {
             }
         } else if ((button == bNext)) {
             this.resetLastButtonDelete();
-            this.clearStatus();
+            ZaurusEditor.clearStatus();
 
             if (((ZaurusTableForm) vHoldForms.elementAt(
                     aktHoldNr)).saveChanges()) {
@@ -316,7 +316,7 @@ public class ZaurusEditor extends Panel implements ActionListener {
             }
         } else if ((button == bPrev)) {
             this.resetLastButtonDelete();
-            this.clearStatus();
+            ZaurusEditor.clearStatus();
 
             if (((ZaurusTableForm) vHoldForms.elementAt(
                     aktHoldNr)).saveChanges()) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ package org.hsqldb.util;
  */
 interface Traceable {
 
-    static final boolean TRACE = Boolean.getBoolean("hsqldb.util.trace");
+    boolean TRACE = Boolean.getBoolean("hsqldb.util.trace");
 
-    public void trace(String s);
+    void trace(String s);
 }

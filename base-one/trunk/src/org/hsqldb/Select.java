@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,11 +66,11 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m
@@ -86,6 +86,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030811 - patch 1.7.2 - prepared statement support
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
 // fredt@users 20031012 - patch 1.7.2 - SQL standard ORDER BY with UNION and other set queries
+// fredt@users 200408xx - patch 1.7.2 - correct evaluation of the precedence of nested UNION and other set query
 
 /**
  * The compiled representation of an SQL SELECT.
@@ -244,6 +245,17 @@ class Select {
 
         if (queryCondition != null) {
             result = result && queryCondition.checkResolved(check);
+        }
+
+        if (havingCondition != null) {
+            result = result && havingCondition.checkResolved(check);
+        }
+
+        for (int i = 0; i < tFilter.length; i++) {
+            if (tFilter[i].filterIndex == null) {
+                tFilter[i].filterIndex =
+                    tFilter[i].filterTable.getPrimaryIndex();
+            }
         }
 
         return result;
@@ -503,7 +515,7 @@ class Select {
 
     private Result getResultMain(Session session) throws HsqlException {
 
-        Result unionResults[] = new Result[unionArray.length];
+        Result[] unionResults = new Result[unionArray.length];
 
         for (int i = 0; i < unionArray.length; i++) {
             unionResults[i] = unionArray[i].getSingleResult(session,
@@ -733,14 +745,19 @@ class Select {
     private Result buildResult(int limitcount,
                                Session session) throws HsqlException {
 
-        GroupedResult gResult     = new GroupedResult(this, resultMetaData);
-        final int     len         = exprColumns.length;
-        final int     filter      = tFilter.length;
-        boolean       first[]     = new boolean[filter];
-        boolean       outerused[] = new boolean[filter];
-        int           level       = 0;
+        GroupedResult gResult   = new GroupedResult(this, resultMetaData);
+        final int     len       = exprColumns.length;
+        final int     filter    = tFilter.length;
+        boolean[]     first     = new boolean[filter];
+        boolean[]     outerused = new boolean[filter];
+        int           level     = 0;
 
-        while (level >= 0) {
+        // fredt - shortcut needed by OpenOffice to speed up empty query processing for metadata
+        boolean notempty = !(queryCondition != null
+                             && queryCondition.isFixedConditional()
+                             &&!queryCondition.testCondition(session));
+
+        while (notempty && level >= 0) {
 
             // perform a join
             TableFilter t = tFilter[level];
@@ -787,7 +804,7 @@ class Select {
             if (queryCondition == null
                     || queryCondition.testCondition(session)) {
                 try {
-                    Object row[] = new Object[len];
+                    Object[] row = new Object[len];
 
                     // gets the group by column values first.
                     for (int i = gResult.groupBegin; i < gResult.groupEnd;
@@ -826,7 +843,7 @@ class Select {
         }
 
         if (isAggregated &&!isGrouped && gResult.size() == 0) {
-            Object row[] = new Object[len];
+            Object[] row = new Object[len];
 
             for (int i = 0; i < len; i++) {
                 row[i] = exprColumns[i].isAggregate() ? null

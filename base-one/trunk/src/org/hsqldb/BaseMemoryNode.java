@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,14 +173,9 @@ abstract class BaseMemoryNode extends Node {
         return equals(parent.getLeft());
     }
 
-    boolean equals(Node n) throws HsqlException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
+    boolean equals(Node n) {
         return n == this;
     }
 
-    void write(RowOutputInterface out) throws IOException, HsqlException {}
+    void write(RowOutputInterface out) throws IOException {}
 }

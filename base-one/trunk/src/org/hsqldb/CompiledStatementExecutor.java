@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,8 +88,6 @@ final class CompiledStatementExecutor {
 
             result = executeImpl(cs);
         } catch (Throwable t) {
-
-            //t.printStackTrace();
             result = new Result(t, cs.sql);
         }
 
@@ -198,21 +196,13 @@ final class CompiledStatementExecutor {
 
             del = new HsqlArrayList();
 
-            if (c == null) {
-                do {
+            do {
+                if (c == null || c.testCondition(session)) {
                     del.add(filter.currentRow);
-                } while (filter.next(session));
+                }
+            } while (filter.next(session));
 
-                count = table.delete(session, del);
-            } else {
-                do {
-                    if (c.testCondition(session)) {
-                        del.add(filter.currentRow);
-                    }
-                } while (filter.next(session));
-
-                count = table.delete(session, del);
-            }
+            count = table.delete(session, del);
         }
 
         updateResult.updateCount = count;
@@ -376,7 +366,7 @@ final class CompiledStatementExecutor {
                 if (condition == null || condition.testCondition(session)) {
                     try {
                         Row      row = filter.currentRow;
-                        Object[] ni  = table.getNewRow();
+                        Object[] ni  = table.getEmptyRowData();
 
                         System.arraycopy(row.getData(), 0, ni, 0, size);
 

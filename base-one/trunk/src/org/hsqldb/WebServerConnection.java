@@ -1,39 +1,4 @@
-/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * Neither the name of the Hypersonic SQL Group nor the names of its
- * contributors may be used to endorse or promote products derived from this
- * software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals 
- * on behalf of the Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -79,6 +43,7 @@ import java.net.Socket;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.InOutUtil;
+import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.resources.BundleHandler;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowOutputBinary;
@@ -119,8 +84,8 @@ class WebServerConnection implements Runnable {
     private static final String HEADER_NOT_FOUND = "HTTP/1.0 404 Not Found";
     private static final String HEADER_FORBIDDEN = "HTTP/1.0 403 Forbidden";
     static final int            BUFFER_SIZE      = 256;
-    RowOutputBinary             rowOut = new RowOutputBinary(BUFFER_SIZE);
-    RowInputBinary              rowIn            = new RowInputBinary(rowOut);
+    private RowOutputBinary     rowOut = new RowOutputBinary(BUFFER_SIZE);
+    private RowInputBinary      rowIn            = new RowInputBinary(rowOut);
 
     //
     static final byte[] BYTES_GET        = "GET".getBytes();
@@ -320,7 +285,7 @@ class WebServerConnection implements Runnable {
 
         try {
             Result resultIn = Result.read(rowIn,
-                                          new BufferedInputStream(inStream));
+                                          new DataInputStream(inStream));
 
             //
             Result resultOut;
@@ -413,7 +378,7 @@ class WebServerConnection implements Runnable {
             try {
                 File file = new File(name);
 
-                is = new BufferedInputStream(new FileInputStream(file));
+                is = new DataInputStream(new FileInputStream(file));
                 hdr = getHead(HEADER_OK, true, getMimeTypeString(name),
                               (int) file.length());
             } catch (IOException e) {
@@ -463,7 +428,8 @@ class WebServerConnection implements Runnable {
 
         if (addInfo) {
             sb.append("Allow: GET, HEAD, POST\nMIME-Version: 1.0\r\n");
-            sb.append("Server: ").append(Server.serverName).append("\r\n");
+            sb.append("Server: ").append(
+                HsqlDatabaseProperties.PRODUCT_NAME).append("\r\n");
         }
 
         if (mimeType != null) {

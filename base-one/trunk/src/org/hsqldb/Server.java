@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,6 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
@@ -84,6 +83,8 @@ import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.lib.java.JavaSystem;
+import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0
@@ -138,6 +139,7 @@ import org.hsqldb.resources.BundleHandler;
  * | -dbname.i      | alias       | --       | url alias for database i     |
  * | -silent        | true|false  | true     | false => display all queries |
  * | -trace         | true|false  | false    | display JDBC trace messages  |
+ * | -tls           | true|false  | false    | TLS/SSL (secure) sockets     |
  * | -no_system_exit| true|false  | false    | do not issue System.exit()   |
  * +----------------+-------------+----------+------------------------------+
  * </pre>
@@ -240,7 +242,6 @@ import org.hsqldb.resources.BundleHandler;
 public class Server implements HsqlSocketRequestHandler {
 
 //
-    static final String serverName = "HSQLDB/1.7.2";
     protected static final int serverBundleHandle =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
@@ -336,7 +337,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param args the command line arguments for the Server instance
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         String propsPath = FileUtil.canonicalOrAbsolutePath("server");
         HsqlProperties fileProps =
@@ -347,7 +348,7 @@ public class Server implements HsqlSocketRequestHandler {
             ServerConstants.SC_KEY_PREFIX);
 
         if (stringProps != null) {
-            if (stringProps.errorKeys.length != 0) {
+            if (stringProps.getErrorKeys().length != 0) {
                 printHelp("server.help");
 
                 return;
@@ -1254,6 +1255,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         serverThread.start();
 
+        // call synchronized getState() to become owner of the Server Object's monitor
         while (getState() == ServerConstants.SERVER_STATE_OPENING) {
             try {
                 Thread.sleep(100);
@@ -1471,7 +1473,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param msg the message to print
      */
     final void printWithTimestamp(String msg) {
-        print(new Timestamp(System.currentTimeMillis()) + " " + msg);
+        print(HsqlDateTime.getSytemTimeString() + " " + msg);
     }
 
     /**
@@ -1823,7 +1825,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @throws Exception if it is not possible to construct and install
      *      a new ServerSocket
      */
-    private final void openServerSocket() throws Exception {
+    private void openServerSocket() throws Exception {
 
         String    address;
         int       port;
@@ -1887,7 +1889,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /** Prints a timestamped message indicating that this server is online */
-    private final void printServerOnlineMessage() {
+    private void printServerOnlineMessage() {
 
         String s = getProductName() + " " + getProductVersion()
                    + " is online";
@@ -1899,7 +1901,7 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Prints a description of the server properties iff !isSilent().
      */
-    private final void printProperties() {
+    private void printProperties() {
 
         Enumeration e;
         String      key;
@@ -1927,7 +1929,7 @@ public class Server implements HsqlSocketRequestHandler {
      * this method exists immediately, otherwise, the result is to fully
      * shut down the server.
      */
-    private final void releaseServerSocket() {
+    private void releaseServerSocket() {
 
         printWithThread("releaseServerSocket() entered");
 
@@ -1956,7 +1958,7 @@ public class Server implements HsqlSocketRequestHandler {
      * If any part of the process fails, then this server enters
      * its shutdown sequence.
      */
-    private final void run() {
+    private void run() {
 
         StopWatch   sw;
         ThreadGroup tg;
@@ -2058,7 +2060,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param error true if shutdown is in response to an error
      *      state, else false
      */
-    private final void shutdown(boolean error) {
+    private void shutdown(boolean error) {
 
         StopWatch sw;
 

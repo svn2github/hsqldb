@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,9 +86,11 @@ public class TestCascade {
             "sa", "");
         String[] saDDL = {
             "CREATE CACHED TABLE XB (EIACODXA VARCHAR(10) NOT NULL, LSACONXB VARCHAR(18) NOT NULL, ALTLCNXB VARCHAR(2) NOT NULL, LCNTYPXB VARCHAR(1) NOT NULL, LCNINDXB VARCHAR(1), LCNAMEXB VARCHAR(19), UPDT_BY VARCHAR(32), LST_UPDT TIMESTAMP, CONSTRAINT XPKXB PRIMARY KEY (EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB));",
-            "CREATE INDEX XIF2XB ON XB (EIACODXA);",
+
+//            "CREATE INDEX XIF2XB ON XB (EIACODXA);",
             "CREATE CACHED TABLE CA ( EIACODXA VARCHAR(10) NOT NULL, LSACONXB VARCHAR(18) NOT NULL, ALTLCNXB VARCHAR(2) NOT NULL, LCNTYPXB VARCHAR(1) NOT NULL, TASKCDCA VARCHAR(7) NOT NULL, TSKFRQCA NUMERIC(7,4), UPDT_BY VARCHAR(32), LST_UPDT TIMESTAMP, CONSTRAINT XPKCA PRIMARY KEY (EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB, TASKCDCA),        CONSTRAINT R_XB_CA FOREIGN KEY (EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB) REFERENCES XB ON DELETE CASCADE);",
-            "CREATE INDEX XIF26CA ON CA ( EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB);"
+
+//            "CREATE INDEX XIF26CA ON CA ( EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB);"
         };
         Statement stmt = con.createStatement();
 
@@ -96,6 +98,7 @@ public class TestCascade {
             stmt.executeUpdate(saDDL[index]);
         }
 
+        stmt.execute("SHUTDOWN");
         con.close();
     }    // createDatabase
 
@@ -116,22 +119,22 @@ public class TestCascade {
     private static void insertData(Connection con) throws SQLException {
 
         String[] saData = {
-            "INSERT INTO XB VALUES('T850','LEAA','00','P',NULL,'LCN NAME','sa','NOW')",
-            "INSERT INTO XB VALUES('T850','LEAA01','00','P',NULL,'LCN NAME','sa','NOW')",
-            "INSERT INTO XB VALUES('T850','LEAA02','00','P',NULL,'LCN NAME','sa','NOW')",
-            "INSERT INTO XB VALUES('T850','LEAA03','00','P',NULL,'LCN NAME','sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA','00','P','ABCDEFG',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA','00','P','QRSTUJV',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA','00','P','ZZZZZZZ',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA01','00','P','ABCDEFG',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA01','00','P','QRSTUJV',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA01','00','P','ZZZZZZZ',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA02','00','P','ABCDEFG',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA02','00','P','QRSTUJV',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA02','00','P','ZZZZZZZ',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA03','00','P','ABCDEFG',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA03','00','P','QRSTUJV',3.14,'sa','NOW')",
-            "INSERT INTO CA VALUES('T850','LEAA03','00','P','ZZZZZZZ',3.14,'sa','NOW')"
+            "INSERT INTO XB VALUES('T850','LEAA','00','P',NULL,'LCN NAME','sa',NOW)",
+            "INSERT INTO XB VALUES('T850','LEAA01','00','P',NULL,'LCN NAME','sa',NOW)",
+            "INSERT INTO XB VALUES('T850','LEAA02','00','P',NULL,'LCN NAME','sa',NOW)",
+            "INSERT INTO XB VALUES('T850','LEAA03','00','P',NULL,'LCN NAME','sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA','00','P','ABCDEFG',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA','00','P','QRSTUJV',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA','00','P','ZZZZZZZ',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA01','00','P','ABCDEFG',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA01','00','P','QRSTUJV',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA01','00','P','ZZZZZZZ',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA02','00','P','ABCDEFG',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA02','00','P','QRSTUJV',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA02','00','P','ZZZZZZZ',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA03','00','P','ABCDEFG',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA03','00','P','QRSTUJV',3.14,'sa',NOW)",
+            "INSERT INTO CA VALUES('T850','LEAA03','00','P','ZZZZZZZ',3.14,'sa',NOW)"
         };
         Statement stmt = con.createStatement();
 

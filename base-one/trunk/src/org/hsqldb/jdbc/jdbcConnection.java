@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2004, The HSQL Development Group
+/* Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,14 +31,27 @@
 
 package org.hsqldb.jdbc;
 
-import java.sql.*;     // avoid specific import due to java.sql.Savepoint
-import java.util.*;    // java.util.Map
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 
+//#ifdef JDBC3
+import java.sql.Savepoint;
+
+//#endif JDBC3
+//#ifdef JAVA2
+import java.util.Map;
+
+//#endif JAVA2
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.HSQLClientConnection;
 import org.hsqldb.HTTPClientConnection;
 import org.hsqldb.HsqlException;
-import org.hsqldb.HsqlProperties;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
@@ -549,7 +562,7 @@ public class jdbcConnection implements Connection {
 
             return stmt;
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -608,7 +621,7 @@ public class jdbcConnection implements Connection {
 
             return stmt;
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -910,7 +923,7 @@ public class jdbcConnection implements Connection {
         try {
             sessionProxy.setAutoCommit(autoCommit);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -928,7 +941,7 @@ public class jdbcConnection implements Connection {
         try {
             return sessionProxy.isAutoCommit();
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -968,7 +981,7 @@ public class jdbcConnection implements Connection {
         try {
             sessionProxy.commit();
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1008,7 +1021,7 @@ public class jdbcConnection implements Connection {
         try {
             sessionProxy.rollback();
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1165,7 +1178,7 @@ public class jdbcConnection implements Connection {
         try {
             sessionProxy.setReadOnly(readonly);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1180,7 +1193,7 @@ public class jdbcConnection implements Connection {
         try {
             return sessionProxy.isReadOnly();
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1274,7 +1287,7 @@ public class jdbcConnection implements Connection {
         checkClosed();
 
         if (level != Connection.TRANSACTION_READ_UNCOMMITTED) {
-            throw jdbcUtil.notSupported;
+            throw Util.notSupported;
         }
     }
 
@@ -1514,7 +1527,7 @@ public class jdbcConnection implements Connection {
         try {
             return new jdbcPreparedStatement(this, sql, type);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1573,7 +1586,7 @@ public class jdbcConnection implements Connection {
         try {
             return new jdbcCallableStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -1605,7 +1618,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
     /**
@@ -1640,7 +1653,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 // boucherb@users 20020409 - javadocs for all JDBC 3 methods
@@ -1686,7 +1699,7 @@ public class jdbcConnection implements Connection {
         if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
             String msg = "ResultSet holdability: " + holdability;
 
-            throw jdbcUtil.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
+            throw Util.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
         }
     }
 
@@ -1760,7 +1773,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -1794,7 +1807,7 @@ public class jdbcConnection implements Connection {
         if (name == null) {
             String msg = "name is null";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         req = Result.newSetSavepointRequest(name);
@@ -1802,7 +1815,7 @@ public class jdbcConnection implements Connection {
         try {
             sessionProxy.execute(req);
         } catch (HsqlException e) {
-            jdbcUtil.throwError(e);
+            Util.throwError(e);
         }
 
         return new jdbcSavepoint(name, this);
@@ -1843,22 +1856,22 @@ public class jdbcConnection implements Connection {
         if (savepoint == null) {
             msg = "savepoint is null";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         try {
             if (sessionProxy.isAutoCommit()) {
                 msg = "connection is autocommit";
 
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             }
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
 
 // fredt - might someone call this with a Savepoint from a different driver???
         if (!(savepoint instanceof jdbcSavepoint)) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
         sp = (jdbcSavepoint) savepoint;
@@ -1866,7 +1879,7 @@ public class jdbcConnection implements Connection {
         if (this != sp.connection) {
             msg = savepoint + " was not issued on this connection";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         req = Result.newRollbackToSavepointRequest(sp.name);
@@ -1875,10 +1888,10 @@ public class jdbcConnection implements Connection {
             Result result = sessionProxy.execute(req);
 
             if (result.mode == ResultConstants.ERROR) {
-                jdbcUtil.throwError(result);
+                Util.throwError(result);
             }
         } catch (HsqlException e) {
-            jdbcUtil.throwError(e);
+            Util.throwError(e);
         }
     }
 
@@ -1915,12 +1928,12 @@ public class jdbcConnection implements Connection {
         if (savepoint == null) {
             msg = "savepoint is null";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
 // fredt - might someone call this with a Savepoint from a different driver???
         if (!(savepoint instanceof jdbcSavepoint)) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
         sp = (jdbcSavepoint) savepoint;
@@ -1929,7 +1942,7 @@ public class jdbcConnection implements Connection {
             msg = savepoint.getSavepointName()
                   + " was not issued on this connection";
 
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         req = Result.newReleaseSavepointRequest(sp.name);
@@ -1938,10 +1951,10 @@ public class jdbcConnection implements Connection {
             Result result = sessionProxy.execute(req);
 
             if (result.mode == ResultConstants.ERROR) {
-                jdbcUtil.throwError(result);
+                Util.throwError(result);
             }
         } catch (HsqlException e) {
-            jdbcUtil.throwError(e);
+            Util.throwError(e);
         }
     }
 
@@ -2076,7 +2089,7 @@ public class jdbcConnection implements Connection {
         try {
             return new jdbcPreparedStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -2149,7 +2162,7 @@ public class jdbcConnection implements Connection {
         try {
             return new jdbcCallableStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -2213,7 +2226,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -2274,11 +2287,11 @@ public class jdbcConnection implements Connection {
      */
 //#ifdef JDBC3
     public synchronized PreparedStatement prepareStatement(String sql,
-            int columnIndexes[]) throws SQLException {
+            int[] columnIndexes) throws SQLException {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -2339,11 +2352,11 @@ public class jdbcConnection implements Connection {
      */
 //#ifdef JDBC3
     public synchronized PreparedStatement prepareStatement(String sql,
-            String columnNames[]) throws SQLException {
+            String[] columnNames) throws SQLException {
 
         checkClosed();
 
-        throw jdbcUtil.notSupported;
+        throw Util.notSupported;
     }
 
 //#endif JDBC3
@@ -2375,14 +2388,13 @@ public class jdbcConnection implements Connection {
      */
     public jdbcConnection(HsqlProperties props) throws SQLException {
 
-        String  user     = props.getProperty("user");
-        String  password = props.getProperty("password");
-        boolean ifExists = props.isPropertyTrue("ifexists");
-        String  connType = props.getProperty("connection_type");
-        String  host     = props.getProperty("host");
-        int     port     = props.getIntegerProperty("port", 0);
-        String  path     = props.getProperty("path");
-        String  database = props.getProperty("database");
+        String user     = props.getProperty("user");
+        String password = props.getProperty("password");
+        String connType = props.getProperty("connection_type");
+        String host     = props.getProperty("host");
+        int    port     = props.getIntegerProperty("port", 0);
+        String path     = props.getProperty("path");
+        String database = props.getProperty("database");
         boolean isTLS = (connType == DatabaseManager.S_HSQLS
                          || connType == DatabaseManager.S_HTTPS);
 
@@ -2407,7 +2419,7 @@ public class jdbcConnection implements Connection {
 /** @todo fredt - this should be the only static reference to a core class in
                      *  the jdbc package - we may make it dynamic */
                 sessionProxy = DatabaseManager.newSession(connType, database,
-                        user, password, ifExists, props);
+                        user, password, props);
             } else if (connType == DatabaseManager.S_HSQL
                        || connType == DatabaseManager.S_HSQLS) {
                 sessionProxy = new HSQLClientConnection(host, port, path,
@@ -2419,12 +2431,12 @@ public class jdbcConnection implements Connection {
                         database, isTLS, user, password);
                 isNetConn = true;
             } else {    // alias: type not yet implemented
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
             }
 
             connProperties = props;
         } catch (HsqlException e) {
-            throw jdbcUtil.sqlException(e);
+            throw Util.sqlException(e);
         }
     }
 
@@ -2513,7 +2525,7 @@ public class jdbcConnection implements Connection {
     synchronized void checkClosed() throws SQLException {
 
         if (isClosed) {
-            throw jdbcUtil.sqlException(Trace.CONNECTION_IS_CLOSED);
+            throw Util.sqlException(Trace.CONNECTION_IS_CLOSED);
         }
     }
 
@@ -2582,7 +2594,7 @@ public class jdbcConnection implements Connection {
             default : {
                 msg = "ResultSet type: " + type;
 
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             }
         }
     }
@@ -2621,7 +2633,7 @@ public class jdbcConnection implements Connection {
             default : {
                 msg = "ResultSet concurrency: " + concurrency;
 
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             }
         }
     }
@@ -2663,7 +2675,7 @@ public class jdbcConnection implements Connection {
             default : {
                 msg = "ResultSet holdability: " + holdability;
 
-                throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             }
         }
     }

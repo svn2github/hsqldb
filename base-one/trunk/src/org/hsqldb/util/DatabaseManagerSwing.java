@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2004, The HSQL Development Group
+ * Copyright (c) 2001-2005, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,20 +66,13 @@
 
 package org.hsqldb.util;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Vector;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -87,15 +80,28 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.util.Collections;
+import java.util.Vector;
 
+import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -104,6 +110,7 @@ import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -111,11 +118,24 @@ import javax.swing.tree.MutableTreeNode;
 
 import org.hsqldb.lib.java.JavaSystem;
 
-// dmarshall@users - 20020101 - original swing port
-// sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
-// sqlbob@users 20020407 - patch 1.7.0 - reengineering and enhancements
-// nickferguson@users 20021005 - patch 1.7.1 - enhancements
-// deccles@users 20040412 - patch 933671 - various bug fixes
+//dmarshall@users - 20020101 - original swing port
+//sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
+//sqlbob@users 20020407 - patch 1.7.0 - reengineering and enhancements
+//nickferguson@users 20021005 - patch 1.7.1 - enhancements
+//deccles@users 20040412 - patch 933671 - various bug fixes
+//weconsultants@users 20041109 - version 1.8.0 - reengineering and enhancements:
+//              Added: Goodies 'Look and Feel'.
+//              Added: a Font Changer(Font Type\Style).
+//              Added: a Color Changer (foreground\bckground).
+//              Added: RowCounts for each JTree table nodes.
+//              Added: OneTouchExpandable attribute to JSplitPanes.
+//              Moved: setFramePositon code to a CommonSwing.setFramePositon() Method.
+//              Added: call to new method to handle exeption processing (CommonSwing.errorMessage());
+//              Added: Added a new pane added at the bottom of the Frame. (Status Icon and StatusLine).
+//              Added: 2 Methods (setStatusMessage()), one overrides the other. One to change the ruung status
+//                              another to allow a message to be posted without changing the Status Icon if needed.
+//              Added: Added a customCursor for the current wait cursor
+//      Added: Ability to switch the current LAF while runing (Native,Java or Motif)
 
 /**
  * Swing Tool for manageing a JDBC database.<p>
@@ -137,10 +157,11 @@ implements ActionListener, WindowListener, KeyListener {
     static final String    NL         = System.getProperty("line.separator");
     static int             iMaxRecent = 24;
     Connection             cConn;
+    Connection             rowConn;        // holds the connetion for getting table row counts
     DatabaseMetaData       dMeta;
     Statement              sStatement;
     JMenu                  mRecent;
-    String                 sRecent[];
+    String[]               sRecent;
     int                    iRecent;
     JTextArea              txtCommand;
     JScrollPane            txtCommandScroll;
@@ -166,6 +187,16 @@ implements ActionListener, WindowListener, KeyListener {
     String                 ifHuge = "";
     JToolBar               jtoolbar;
 
+    // Added: (weconsultants@users)
+    static DatabaseManagerSwing refForFontDialogSwing;
+    boolean                     displayRowCounts;
+    String                      currentLAF = CommonSwing.Native;
+    JPanel                      pStatus;
+    static JRadioButton         iReadyStatus;
+    static JLabel               jStatusLine;
+    static String               READY_STATUS   = "Ready...";
+    static String               RUNNING_STATUS = "Running...";
+
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
     Cursor fMainCursor;
@@ -175,7 +206,11 @@ implements ActionListener, WindowListener, KeyListener {
     /**
      * Wait Cursor
      */
-    private static final Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
+
+    // Changed: (weconsultants@users): commonted out the, out of the box, cursor to use a custom cursor
+    private final Cursor waitCursor =
+        getToolkit().createCustomCursor(CommonSwing.getIcon("SystemCursor"),
+                                        new Point(4, 4), "HourGlass cursor");
 
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
@@ -197,11 +232,13 @@ implements ActionListener, WindowListener, KeyListener {
             m.insertTestData();
             m.refreshTree();
         } catch (Exception e) {
-            e.printStackTrace();
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
         }
     }
 
-    public static void main(String arg[]) {
+    public static void main(String[] arg) {
 
         System.getProperties().put("sun.java2d.noddraw", "true");
 
@@ -245,6 +282,11 @@ implements ActionListener, WindowListener, KeyListener {
 
         DatabaseManagerSwing m = new DatabaseManagerSwing();
 
+        // Added: (weconsultants@users): Need databaseManagerSwing for later Reference
+        refForFontDialogSwing = m;
+
+        // Added: (weconsultants@users): For preloadng FontDialogSwing
+        FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
         m.main();
 
         Connection c = null;
@@ -258,7 +300,9 @@ implements ActionListener, WindowListener, KeyListener {
                         "Connect");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
         }
 
         if (c == null) {
@@ -266,6 +310,9 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         m.connect(c);
+
+        // Added: (weconsultants@users) Changes the running status icon
+        setStatusMessage(READY_STATUS);
     }
 
     public void connect(Connection c) {
@@ -277,10 +324,17 @@ implements ActionListener, WindowListener, KeyListener {
         if (cConn != null) {
             try {
                 cConn.close();
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         }
 
         cConn = c;
+
+        // Added: (weconsultants@users) Need to barrow to get the table rowcounts
+        rowConn = c;
 
         try {
             dMeta      = cConn.getMetaData();
@@ -288,7 +342,9 @@ implements ActionListener, WindowListener, KeyListener {
 
             refreshTree();
         } catch (SQLException e) {
-            e.printStackTrace();
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
         }
     }
 
@@ -310,7 +366,9 @@ implements ActionListener, WindowListener, KeyListener {
 
         try {
             DatabaseManagerCommon.createTestTables(sStatement);
-            refreshTree();
+
+            // Modified: (weconsultants@users)  Not needed, overkill.
+            // refreshTree();
             txtCommand.setText(
                 DatabaseManagerCommon.createTestData(sStatement));
             refreshTree();
@@ -322,41 +380,46 @@ implements ActionListener, WindowListener, KeyListener {
 
             execute();
         } catch (SQLException e) {
-            e.printStackTrace();
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
         }
     }
 
+    // Comment: (weconsultants@users) this boolean does not get referenced..?
     public void setMustExit(boolean b) {
         this.bMustExit = b;
     }
 
     public void main() {
 
-//         CommonSwing.setDefaultColor();
         fMain = new JFrame("HSQL Database Manager");
+
+        // Added: (weconsultants@users) Default LAF (Goodies)
+        CommonSwing.setSwingLAF(fMain, CommonSwing.Native);
 
         // (ulrivo): An actual icon.
         fMain.getContentPane().add(createToolBar(), "North");
-        fMain.setIconImage(CommonSwing.getIcon());
+        fMain.setIconImage(CommonSwing.getIcon("Frame"));
         fMain.addWindowListener(this);
 
         JMenuBar bar = new JMenuBar();
 
         // used shortcuts: CERGTSIUDOLM
-        String fitems[] = {
+        String[] fitems = {
             "-Connect...", "--", "-Open Script...", "-Save Script...",
             "-Save Result...", "--", "-Exit"
         };
 
         addMenu(bar, "File", fitems);
 
-        String vitems[] = {
+        String[] vitems = {
             "RRefresh Tree", "--", "GResults in Grid", "TResults in Text"
         };
 
         addMenu(bar, "View", vitems);
 
-        String sitems[] = {
+        String[] sitems = {
             "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "EEXECUTE", "---",
             "-CREATE TABLE", "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX",
             "--", "-CHECKPOINT", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
@@ -369,15 +432,20 @@ implements ActionListener, WindowListener, KeyListener {
 
         bar.add(mRecent);
 
-        String soptions[] = {
-            "-AutoCommit on", "-AutoCommit off", "OCommit", "LRollback", "--",
-            "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
-            "-Logging off", "--", "-Insert test data"
+        String[] soptions = {
+
+            // Added: (weconsultants@users) New menu options
+            "-Set Look and Feel( Native )", "-Set Look and Feel( Java )",
+            "-Set Look and Feel( Motif )", "--", "-Set Fonts", "--",
+            "-Set Table RowCount", "--", "-AutoCommit on", "-AutoCommit off",
+            "OCommit", "LRollback", "--", "-Disable MaxRows",
+            "-Set MaxRows to 100", "--", "-Logging on", "-Logging off", "--",
+            "-Insert test data"
         };
 
         addMenu(bar, "Options", soptions);
 
-        String stools[] = {
+        String[] stools = {
             "-Dump", "-Restore", "-Transfer"
         };
 
@@ -387,19 +455,11 @@ implements ActionListener, WindowListener, KeyListener {
 
         sRecent = new String[iMaxRecent];
 
-        Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension size = fMain.getSize();
+        // Modified: (weconsultants@users)Mode code to CommonSwing for general use
+        CommonSwing.setFramePositon(fMain);
 
-        // (ulrivo): full size on screen with less than 640 width
-        if (d.width >= 640) {
-            fMain.setLocation((d.width - size.width) / 2,
-                              (d.height - size.height) / 2);
-        } else {
-            fMain.setLocation(0, 0);
-            fMain.setSize(d);
-        }
-
-        fMain.show();
+        // Modified: (weconsultants@users) Changed from deprecated show()
+        fMain.setVisible(true);
 
         // (ulrivo): load query from command line
         if (defScript != null) {
@@ -425,7 +485,7 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
-    private void addMenu(JMenuBar b, String name, String items[]) {
+    private void addMenu(JMenuBar b, String name, String[] items) {
 
         JMenu menu = new JMenu(name);
 
@@ -433,7 +493,7 @@ implements ActionListener, WindowListener, KeyListener {
         b.add(menu);
     }
 
-    private void addMenuItems(JMenu f, String m[]) {
+    private void addMenuItems(JMenu f, String[] m) {
 
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -494,7 +554,7 @@ implements ActionListener, WindowListener, KeyListener {
         if (s.equals("Execute")) {
             execute();
         } else
-*/
+          */
         if (s == null) {}
         else if (s.equals("Exit")) {
             windowClosing(null);
@@ -518,13 +578,7 @@ implements ActionListener, WindowListener, KeyListener {
             connect(ConnectionDialogSwing.createConnection(fMain, "Connect"));
             refreshTree();
         } else if (s.equals("Results in Grid")) {
-            iResult = 0;
-
-            pResult.removeAll();
-            pResult.add(gScrollPane, BorderLayout.CENTER);
-            pResult.doLayout();
-            gResult.fireTableChanged(null);
-            pResult.repaint();
+            setResultsInGrid();
         } else if (s.equals("Open Script...")) {
             JFileChooser f = new JFileChooser(".");
 
@@ -597,39 +651,133 @@ implements ActionListener, WindowListener, KeyListener {
                 }
             }
         } else if (s.equals("Results in Text")) {
-            iResult = 1;
+            setResultsInText();
+        } else if (s.equals("Set Table RowCount")) {
 
-            pResult.removeAll();
-            pResult.add(txtResultScroll, BorderLayout.CENTER);
-            pResult.doLayout();
-            showResultInText();
-            pResult.repaint();
+            // Added: (weconsultants@users)
+            if (displayRowCounts) {
+                displayRowCounts = false;
+            } else {
+                displayRowCounts = true;
+            }
+
+            try {
+                refreshTree();
+            } catch (Exception e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
+        } else if (s.equals("Set Look and Feel( Native )")) {
+
+            // Added: (weconsultants@users)
+            if (currentLAF != CommonSwing.Native) {
+                if (iResult == 0) {
+                    pResult.removeAll();
+                }
+
+                currentLAF = CommonSwing.Native;
+
+                CommonSwing.setSwingLAF(fMain, currentLAF);
+
+                if (iResult == 0) {
+                    setResultsInGrid();
+                }
+            }
+        } else if (s.equals("Set Look and Feel( Java )")) {
+
+            // Added: (weconsultants@users)
+            if (currentLAF != CommonSwing.Java) {
+                if (iResult == 0) {
+                    pResult.removeAll();
+                }
+
+                currentLAF = CommonSwing.Java;
+
+                CommonSwing.setSwingLAF(fMain, currentLAF);
+
+                if (iResult == 0) {
+                    setResultsInGrid();
+                }
+            }
+        } else if (s.equals("Set Look and Feel( Motif )")) {
+            if (currentLAF != CommonSwing.Motif) {
+                if (iResult == 0) {
+                    pResult.removeAll();
+                }
+
+                currentLAF = CommonSwing.Motif;
+
+                CommonSwing.setSwingLAF(fMain, currentLAF);
+
+                if (iResult == 0) {
+                    setResultsInGrid();
+                }
+            }
+        }
+
+//        else if (s.equals("Set Look and Feel( GTK )")) {
+//            // Added: (weconsultants@users) Not using currently
+//            currentLAF = CommonSwing.GTK;
+//            CommonSwing.setSwingLAF(fMain, currentLAF);
+//        }
+//        else if (s.equals("Set Look and Feel( Plaf )")) {
+//            // Added: (weconsultants@users) Not using currently
+//            currentLAF = CommonSwing.plaf;
+//            CommonSwing.setSwingLAF(fMain, currentLAF);
+//        }
+        else if (s.equals("Set Fonts")) {
+
+            // Added: (weconsultants@users)
+            FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
         } else if (s.equals("AutoCommit on")) {
             try {
                 cConn.setAutoCommit(true);
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("AutoCommit off")) {
             try {
                 cConn.setAutoCommit(false);
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("Commit")) {
             try {
                 cConn.commit();
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("Insert test data")) {
             insertTestData();
         } else if (s.equals("Rollback")) {
             try {
                 cConn.rollback();
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("Disable MaxRows")) {
             try {
                 sStatement.setMaxRows(0);
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("Set MaxRows to 100")) {
             try {
                 sStatement.setMaxRows(100);
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("SELECT")) {
             showHelp(DatabaseManagerCommon.selectHelp);
         } else if (s.equals("INSERT")) {
@@ -661,7 +809,29 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    private void showHelp(String help[]) {
+    private void setResultsInGrid() {
+
+        iResult = 0;
+
+        pResult.removeAll();
+        pResult.add(gScrollPane, BorderLayout.CENTER);
+        pResult.doLayout();
+        gResult.fireTableChanged(null);
+        pResult.repaint();
+    }
+
+    private void setResultsInText() {
+
+        iResult = 1;
+
+        pResult.removeAll();
+        pResult.add(txtResultScroll, BorderLayout.CENTER);
+        pResult.doLayout();
+        showResultInText();
+        pResult.repaint();
+    }
+
+    private void showHelp(String[] help) {
 
         txtCommand.setText(help[0]);
 
@@ -692,7 +862,11 @@ implements ActionListener, WindowListener, KeyListener {
 
         try {
             cConn.close();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
+        }
 
         fMain.dispose();
 
@@ -738,12 +912,18 @@ implements ActionListener, WindowListener, KeyListener {
             fMain.setCursor(waitCursor);
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
+
+            // Added: (weconsultants@users) Changes the running status icon
+            setStatusMessage(RUNNING_STATUS);
         } else {
 
             // restore the cursors we saved
             fMain.setCursor(fMainCursor);
             txtCommand.setCursor(txtCommandCursor);
             txtResult.setCursor(txtResultCursor);
+
+            // Added: (weconsultants@users) Changes the running status icon
+            setStatusMessage(READY_STATUS);
         }
     }
 
@@ -764,48 +944,12 @@ implements ActionListener, WindowListener, KeyListener {
 
             if (sCmd.startsWith("-->>>TEST<<<--")) {
                 testPerformance();
-
-                return;
+            } else {
+                executeCommand();
             }
 
-            String g[] = new String[1];
-
-            try {
-                lTime = System.currentTimeMillis();
-
-                sStatement.execute(sCmd);
-
-                int r = sStatement.getUpdateCount();
-
-                if (r == -1) {
-                    formatResultSet(sStatement.getResultSet());
-                } else {
-                    g[0] = "update count";
-
-                    gResult.setHead(g);
-
-                    g[0] = "" + r;
-
-                    gResult.addRow(g);
-                }
-
-                lTime = System.currentTimeMillis() - lTime;
-
-                addToRecent(txtCommand.getText());
-            } catch (SQLException e) {
-                lTime = System.currentTimeMillis() - lTime;
-                g[0]  = "SQL Error";
-
-                gResult.setHead(g);
-
-                String s = e.getMessage();
-
-                s    += " / Error Code: " + e.getErrorCode();
-                s    += " / State: " + e.getSQLState();
-                g[0] = s;
-
-                gResult.addRow(g);
-            }
+            // Added: (weconsultants@users) Changes the running status icon
+            setStatusMessage(READY_STATUS);
 
             // Call with invokeLater because these commands change the gui.
             // Do not want to be updating the gui outside of the AWT event
@@ -820,6 +964,51 @@ implements ActionListener, WindowListener, KeyListener {
                     setWaiting(false);
                 }
             });
+        }
+    }
+
+    private void executeCommand() {
+
+        String[] g = new String[1];
+
+        try {
+            lTime = System.currentTimeMillis();
+
+            sStatement.execute(txtCommand.getText());
+
+            int r = sStatement.getUpdateCount();
+
+            if (r == -1) {
+                formatResultSet(sStatement.getResultSet());
+            } else {
+                g[0] = "update count";
+
+                gResult.setHead(g);
+
+                g[0] = "" + r;
+
+                gResult.addRow(g);
+            }
+
+            lTime = System.currentTimeMillis() - lTime;
+
+            addToRecent(txtCommand.getText());
+        } catch (SQLException e) {
+            lTime = System.currentTimeMillis() - lTime;
+            g[0]  = "SQL Error";
+
+            gResult.setHead(g);
+
+            String s = e.getMessage();
+
+            s    += " / Error Code: " + e.getErrorCode();
+            s    += " / State: " + e.getSQLState();
+            g[0] = s;
+
+            gResult.addRow(g);
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
         }
     }
 
@@ -848,7 +1037,7 @@ implements ActionListener, WindowListener, KeyListener {
     private void formatResultSet(ResultSet r) {
 
         if (r == null) {
-            String g[] = new String[1];
+            String[] g = new String[1];
 
             g[0] = "Result";
 
@@ -864,7 +1053,7 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             ResultSetMetaData m   = r.getMetaData();
             int               col = m.getColumnCount();
-            Object            h[] = new Object[col];
+            Object[]          h   = new Object[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
@@ -885,7 +1074,11 @@ implements ActionListener, WindowListener, KeyListener {
             }
 
             r.close();
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
+        }
     }
 
     private void testPerformance() {
@@ -904,7 +1097,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         all = b.toString();
 
-        String g[] = new String[4];
+        String[] g = new String[4];
 
         g[0] = "ms";
         g[1] = "count";
@@ -950,6 +1143,9 @@ implements ActionListener, WindowListener, KeyListener {
             } catch (SQLException e) {
                 g[0] = g[1] = "n/a";
                 g[3] = e.toString();
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
             }
 
             gResult.addRow(g);
@@ -965,6 +1161,9 @@ implements ActionListener, WindowListener, KeyListener {
         lTime = System.currentTimeMillis() - lTime;
 
         updateResult();
+
+        // Added: (weconsultants@users) Clear HourGlass for "test Script"
+        setWaiting(false);
     }
 
     /**
@@ -973,12 +1172,12 @@ implements ActionListener, WindowListener, KeyListener {
      */
     private void showResultInText() {
 
-        Object col[]  = gResult.getHead();
-        int    width  = col.length;
-        int    size[] = new int[width];
-        Vector data   = gResult.getData();
-        Object row[];
-        int    height = data.size();
+        Object[] col   = gResult.getHead();
+        int      width = col.length;
+        int[]    size  = new int[width];
+        Vector   data  = gResult.getData();
+        Object[] row;
+        int      height = data.size();
 
         for (int i = 0; i < width; i++) {
             size[i] = col[i].toString().length();
@@ -1071,6 +1270,8 @@ implements ActionListener, WindowListener, KeyListener {
         nsSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pCommand,
                                      pResult);
 
+        // Added: (weconsultants@users)
+        nsSplitPane.setOneTouchExpandable(true);
         pCommand.setLayout(new BorderLayout());
         pResult.setLayout(new BorderLayout());
 
@@ -1131,7 +1332,26 @@ implements ActionListener, WindowListener, KeyListener {
         ewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                                      tScrollPane, nsSplitPane);
 
+        // Added: (weconsultants@users)
+        ewSplitPane.setOneTouchExpandable(true);
         fMain.getContentPane().add(ewSplitPane, BorderLayout.CENTER);
+
+        // Added: (weconsultants@users)
+        jStatusLine = new JLabel();
+        iReadyStatus = new JRadioButton(
+            new ImageIcon(CommonSwing.getIcon("StatusReady")));
+
+        iReadyStatus.setSelectedIcon(
+            new ImageIcon(CommonSwing.getIcon("StatusRunning")));
+        iReadyStatus.setSelected(true);
+        setStatusMessage(RUNNING_STATUS);
+
+        pStatus = new JPanel();
+
+        pStatus.setLayout(new BorderLayout());
+        pStatus.add(iReadyStatus, BorderLayout.WEST);
+        pStatus.add(jStatusLine, BorderLayout.CENTER);
+        fMain.getContentPane().add(pStatus, "South");
         doLayout();
         fMain.pack();
     }
@@ -1154,8 +1374,12 @@ implements ActionListener, WindowListener, KeyListener {
      */
     protected void refreshTree() {
 
+        int[]                  rowCounts;
         DefaultMutableTreeNode propertiesNode;
-        DefaultMutableTreeNode leaf;
+
+        // Added: (weconsultants@users) Moved tableNode here for visibiity nd new DECFM
+        DefaultMutableTreeNode tableNode;
+        DecimalFormat DECFMT = new DecimalFormat(" ( ####,###,####,##0 )");
 
         // First clear the existing tree by simply enumerating
         // over the root node's children and removing them one by one.
@@ -1179,11 +1403,11 @@ implements ActionListener, WindowListener, KeyListener {
             rootNode.setUserObject(dMeta.getURL());
 
             // get metadata about user tables by building a vector of table names
-            String    usertables[] = {
-                "TABLE", "GLOBAL TEMPORARY", "VIEW"
+            String[]  usertables = {
+                "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM"
             };
             ResultSet result = dMeta.getTables(null, null, null, usertables);
-            Vector    tables       = new Vector();
+            Vector    tables     = new Vector();
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();
@@ -1195,10 +1419,33 @@ implements ActionListener, WindowListener, KeyListener {
 
             result.close();
 
+            // Added: (weconsultants@users)
+            // Sort not to go into production. Have to sync with 'remarks Vector' for DBMS that has it
+            //   Collections.sort(tables);
+            // Added: (weconsultants@users) - Add rowCounts if needed.
+            rowCounts = new int[tables.size()];
+
+            try {
+                rowCounts = getRowCounts(tables);
+            } catch (Exception e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
+            }
+
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
-                String                 name = (String) tables.elementAt(i);
-                DefaultMutableTreeNode tableNode = makeNode(name, rootNode);
+                String name = (String) tables.elementAt(i);
+
+                // weconsul@ptd.net Add rowCounts if needed.
+                if (!displayRowCounts) {
+                    tableNode = makeNode(name, rootNode);
+                } else {
+                    tableNode =
+                        makeNode(name + ", " + DECFMT.format(rowCounts[i]),
+                                 rootNode);
+                }
+
                 ResultSet col = dMeta.getColumns(null, null, name, null);
 
                 // sqlbob@users Added remarks.
@@ -1268,6 +1515,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             makeNode(se.getMessage(), propertiesNode);
             makeNode(se.getSQLState(), propertiesNode);
+            CommonSwing.errorMessage(se);
         }
 
         treeModel.nodeStructureChanged(rootNode);
@@ -1275,16 +1523,70 @@ implements ActionListener, WindowListener, KeyListener {
         tScrollPane.repaint();
     }
 
+    // Added: (weconsultants@users) Sets up\changes the running status icon
+    private static void setStatusMessage(String inStatus) {
+
+        if (inStatus.equals(READY_STATUS)) {
+            iReadyStatus.setSelected(false);
+            jStatusLine.setText("  " + READY_STATUS);
+        } else {
+            iReadyStatus.setSelected(true);
+            jStatusLine.setText("  " + RUNNING_STATUS);
+        }
+    }
+
+    // Added: (weconsultants@users) Overloads setStatusMessage, just a send message to
+    //                              the statusline, not changing the Icon oer status literal
+    private static void setStatusMessage(String inStatus,
+                                         String inStatusMsg) {
+        jStatusLine.setText(jStatusLine.getText() + "  " + inStatusMsg);
+    }
+
+    // Added: (weconsultants@users) Needed to aggragate counts per table in jTree
+    protected int[] getRowCounts(Vector inTable) throws Exception {
+
+        if (!displayRowCounts) {
+            return (null);
+        }
+
+        String rowCountSelect = "SELECT COUNT(*) FROM ";
+        int[]  counts;
+
+        counts = new int[inTable.size()];
+
+        try {
+            Statement select = rowConn.createStatement();
+
+            for (int i = 0; i < inTable.size(); i++) {
+                String displayRowCounts = rowCountSelect
+                                          + (String) inTable.elementAt(i);
+                ResultSet resultSet = select.executeQuery(displayRowCounts);
+
+                while (resultSet.next()) {
+                    counts[i] = resultSet.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            CommonSwing.errorMessage(e);
+        }
+
+        return (counts);
+    }
+
     protected JToolBar createToolBar() {
 
+        // Build jtoolbar and jtoolbar Buttons
         JToolBar jtoolbar = new JToolBar();
 
         jtoolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
 
-        //---------------------------------------
-        JButton jbuttonClear = new JButton("Clear SQL Statement");
+        // Build jbuttonClear Buttons
+        JButton jbuttonClear =
+            new JButton("Clear SQL Statement",
+                        new ImageIcon(CommonSwing.getIcon("Clear")));
 
         jbuttonClear.setToolTipText("Clear SQL Statement");
+        jbuttonClear.putClientProperty("is3DEnabled", Boolean.TRUE);
         jbuttonClear.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -1292,10 +1594,12 @@ implements ActionListener, WindowListener, KeyListener {
             }
         });
 
-        //---------------------------------------
-        JButton jbuttonExecute = new JButton("Execute SQL Statement");
+        JButton jbuttonExecute =
+            new JButton("Execute SQL Statement",
+                        new ImageIcon(CommonSwing.getIcon("Execute")));
 
         jbuttonExecute.setToolTipText("Execute SQL Statement");
+        jbuttonExecute.putClientProperty("is3DEnabled", Boolean.TRUE);
         jbuttonExecute.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
