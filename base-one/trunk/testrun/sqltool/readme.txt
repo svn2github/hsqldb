@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.2 2004/06/16 17:20:58 unsaved Exp $
+$Id: readme.txt,v 1.3 2004/06/16 17:31:12 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -46,8 +46,9 @@ To run tests of specific SQL files against SqlTool without JUnit.
 
         java [-v] org.hsqldb.test.SqlToolHarness file1.sql [file2.sql...]
 
-    The -v switch is to debug your test.
-    It will print out, among other things, all of the harness metadata values.
+    The -v switch will tell you exactly which test failed, and gives 
+    information to help debug your test file itself (e.g. it echos all of
+    the harness metadata values₎.
 
 
 To make a new SQL test file.
