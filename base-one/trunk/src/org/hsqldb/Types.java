@@ -1085,6 +1085,7 @@ class Types {
 //            case LONGVARCHAR :
             case VARBINARY :
             case VARCHAR :
+            case VARCHAR_IGNORECASE :
             case DECIMAL :
             case NUMERIC :
             case FLOAT :

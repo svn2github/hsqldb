@@ -856,8 +856,8 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      * @return
      */
-    private String processCreateDefaultValue(int iType,
-            int iLen) throws HsqlException {
+    private String processCreateDefaultValue(int type,
+            int length) throws HsqlException {
 
         String  dv;
         Object  sv;
@@ -874,15 +874,14 @@ class DatabaseCommandInterpreter {
             dv       += tokenizer.getString();
         }
 
-        if (iType == Types.BINARY || iType == Types.OTHER
-                ||!tokenizer.wasValue()) {
+        if (type == Types.OTHER ||!tokenizer.wasValue()) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
         }
 
         sv = tokenizer.getAsValue();
 
         if (wasminus) {
-            sv = Column.negate(sv, iType);
+            sv = Column.negate(sv, type);
         }
 
         if (sv == null) {
@@ -891,15 +890,18 @@ class DatabaseCommandInterpreter {
 
         // check conversion of literals to values and size constraints
         try {
-            Column.convertObject(sv, iType);
+            Column.convertObject(sv, type);
+
         } catch (Exception e) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
         }
 
+        checkBooleanDefault(dv, type);
+
         // ensure char triming does not affect the value
         if (database.sqlEnforceSize || database.sqlEnforceSize) {
             dvTemp = Column.convertObject(sv);
-            dvTest = (String) Table.enforceSize(dvTemp, iType, iLen, false,
+            dvTest = (String) Table.enforceSize(dvTemp, type, length, false,
                                                 false);
 
             if (!dvTemp.equals(dvTest)) {
@@ -910,6 +912,26 @@ class DatabaseCommandInterpreter {
         }
 
         return dv;
+    }
+
+    public static void checkBooleanDefault(String s, int type) throws HsqlException{
+
+        if (type != Types.BIT || s == null) {
+            return;
+        }
+
+        s = s.toUpperCase();
+
+        if (s.equals(Token.T_TRUE) ||
+            s.equals(Token.T_FALSE)){
+            return;
+        }
+
+        if (s.equals("0") || s.equals("1") ){
+            return;
+        }
+
+        throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, s);
     }
 
     /**

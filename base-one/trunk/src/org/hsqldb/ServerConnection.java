@@ -184,6 +184,7 @@ class ServerConnection implements Runnable {
                                              resultIn.subSubString);
 
                 dbID = server.dbID[dbIndex];
+                user = resultIn.getMainString();
 
                 server.trace(mThread + ":trying to connect user " + user);
 

@@ -333,6 +333,9 @@ class DatabaseScript {
                     case Types.VARCHAR :
                     case Types.VARCHAR_IGNORECASE :
                     case Types.LONGVARCHAR :
+                    case Types.BINARY :
+                    case Types.VARBINARY :
+                    case Types.LONGVARBINARY :
                         quote = true;
                     default :
                 }
