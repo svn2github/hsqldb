@@ -96,6 +96,14 @@ class TextTable extends org.hsqldb.Table {
                 roots += freePos;
 
                 super.setIndexRoots(roots);
+                // fredt - moved here from TableFilter
+                // build the indexes
+                Node readAll = this.getPrimaryIndex().getRoot();
+
+                while (readAll != null) {
+                    readAll = readAll.getRight();
+                }
+
             } catch (SQLException e) {
                 if (!dataSource.equals(source) || isDesc != isReversed
                         || isRdOnly != isReadOnly) {
