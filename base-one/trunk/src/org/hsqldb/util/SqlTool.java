@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.16 2004/02/21 20:19:49 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.21 2004/04/03 21:39:11 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.21 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -103,8 +103,8 @@ public class SqlTool {
             boolean         thisone   = false;
             String          s;
             String          keyword, value;
-            BufferedReader  br = new BufferedReader(new FileReader(file));
             int             linenum = 0;
+            BufferedReader  br = new BufferedReader(new FileReader(file));
 
             while ((s = br.readLine()) != null) {
                 ++linenum;
@@ -121,13 +121,16 @@ public class SqlTool {
 
                 tokenizer = new StringTokenizer(s);
 
-                if (tokenizer.countTokens() != 2) {
+                if (tokenizer.countTokens() == 1) {
+                    keyword = tokenizer.nextToken();
+                    value   = "";
+                } else if (tokenizer.countTokens() == 2) {
+                    keyword = tokenizer.nextToken();
+                    value   = tokenizer.nextToken();
+                } else {
                     throw new Exception("Bad line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
-
-                keyword = tokenizer.nextToken();
-                value   = tokenizer.nextToken();
 
                 if (dbKey == null) {
                     if (keyword.equals("urlid")) {

@@ -35,6 +35,10 @@ package org.hsqldb.store;
  * Subclass of BaseHashMap for maintaining a pool of objects. Supports a
  * range of java.lang.* objects.
  *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ *
  */
 
 /** @todo fredt - check accessCount and reset on each getOrAddXXX() */
@@ -192,8 +196,8 @@ public class ValuePoolHashMap extends BaseHashMap {
     protected java.sql.Date getOrAddDate(long longKey) {
 
         java.sql.Date testValue;
-        int           hash       = (int) longKey ^ (int) (longKey >> 32);
-        int           index      = hashIndex.getHashIndex((int) longKey);
+        int           hash       = (int) longKey ^ (int) (longKey >>> 32);
+        int           index      = hashIndex.getHashIndex(hash);
         int           lookup     = hashIndex.hashTable[index];
         int           lastLookup = -1;
 

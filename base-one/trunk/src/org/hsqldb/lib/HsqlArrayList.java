@@ -226,7 +226,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
 /*
     public Enumeration elements() {
 
-        Enumeration enum = new Enumeration() {
+        Enumeration en = new Enumeration() {
 
             private int pos = 0;
 
@@ -246,7 +246,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
             }
         };
 
-        return enum;
+        return en;
     }
 */
 

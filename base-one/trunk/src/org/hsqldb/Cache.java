@@ -172,15 +172,15 @@ abstract class Cache {
 
     // this flag is used externally to determine if a backup is required
     boolean fileModified;
+    int     maxNioScale;
 
-    // package access to all below allowed only for metadata
+    // package access to all variables below allowed only for metadata
     int                         cacheScale;
     int                         cacheSizeScale;
     int                         cacheFileScale;
     protected int               cachedRowPadding = 8;
     int                         cachedRowType = RowOutputBase.CACHED_ROW_160;
     protected int               rowStoreExtra;
-    int                         cacheLength;
     int                         maxCacheSize;     // number of Rows
     long                        maxCacheBytes;    // number of bytes
     int                         multiplierMask;
@@ -204,10 +204,11 @@ abstract class Cache {
     //
     private CachedRow rFirst;                     // must point to one of rData[]
 
-    // outside access allowed to all below only for metadata
+    // outside access allowed to all below only for system table
     CacheFree fRoot;
     int       iFreeCount;
     int       iCacheSize;
+    int       cacheBytesLength;
 
     // reusable input / output streams
     RowInputInterface            rowIn;
@@ -237,9 +238,11 @@ abstract class Cache {
     protected void initParams() throws HsqlException {
 
         cacheScale = dbProps.getIntegerProperty("hsqldb.cache_scale", 14, 8,
-                16);
+                18);
         cacheSizeScale = dbProps.getIntegerProperty("hsqldb.cache_size_scale",
-                20, 8, 20);
+                10, 6, 20);
+
+        // fredt - this is not yet supported
         cacheFileScale = dbProps.getIntegerProperty("hsqldb.cache_file_scale",
                 1, 1, 8);
 
@@ -258,21 +261,24 @@ abstract class Cache {
     protected void init() {
 
         cacheReadonly = dDatabase.filesReadOnly;
-        cacheLength   = 1 << cacheScale;
+
+        int lookupTableLength = 1 << cacheScale;
+        int avgRowBytes       = 1 << cacheSizeScale;
 
         // HJB-2001-06-21: let the cache be larger than the array
-        maxCacheSize   = cacheLength * 3;
-        maxCacheBytes  = cacheLength * cacheSizeScale;
-        multiplierMask = cacheLength - 1;
-        rowComparator  = new CachedRowComparator();
-        accessCount    = new int[maxCacheSize];
-        rowTable       = new CachedRow[maxCacheSize];
-        rData          = new CachedRow[cacheLength];
-        rFirst         = null;
-        iFreePos       = 0;
-        fRoot          = null;
-        iFreeCount     = 0;
-        iCacheSize     = 0;
+        maxCacheSize     = lookupTableLength * 3;
+        maxCacheBytes    = maxCacheSize * avgRowBytes;
+        multiplierMask   = lookupTableLength - 1;
+        rowComparator    = new CachedRowComparator();
+        accessCount      = new int[maxCacheSize];
+        rowTable         = new CachedRow[maxCacheSize];
+        rData            = new CachedRow[lookupTableLength];
+        rFirst           = null;
+        iFreePos         = 0;
+        fRoot            = null;
+        iFreeCount       = 0;
+        iCacheSize       = 0;
+        cacheBytesLength = 0;
     }
 
     protected void initBuffers() throws HsqlException {
@@ -280,7 +286,6 @@ abstract class Cache {
         rowOut = RowOutputBase.newRowOutput(cachedRowType);
         rowIn  = RowInputBase.newRowInput(cachedRowType);
 
-//        rowOut.setSystemId(true);
         rowIn.setSystemId(true);
 
         rowStoreExtra = rowOut instanceof RowOutputBinary
@@ -308,7 +313,8 @@ abstract class Cache {
 
         fileModified = true;
 
-        if (iCacheSize >= maxCacheSize) {
+        if (iCacheSize >= maxCacheSize
+                || r.storageSize + cacheBytesLength > maxCacheBytes) {
             cleanUp();
         }
 
@@ -341,8 +347,9 @@ abstract class Cache {
 
         iCacheSize++;
 
-        rData[k] = r;
-        rFirst   = r;
+        cacheBytesLength += r.storageSize;
+        rData[k]         = r;
+        rFirst           = r;
     }
 
     abstract int setFilePos(CachedRow r) throws HsqlException;
@@ -389,17 +396,20 @@ abstract class Cache {
             before = rFirst;
         }
 
-        if (r != null) {
-            r.insert(before);
+        r.insert(before);
 
-            iCacheSize++;
+        iCacheSize++;
 
-            rData[k] = r;
-            rFirst   = r;
+        cacheBytesLength += r.storageSize;
+        rData[k]         = r;
+        rFirst           = r;
 
-            resetAccessCount();
+        resetAccessCount();
 
-            r.iLastAccess = currentAccessCount++;
+        r.iLastAccess = currentAccessCount++;
+
+        if (cacheBytesLength > maxCacheBytes) {
+            cleanUp();
         }
 
         return r;
@@ -446,6 +456,8 @@ abstract class Cache {
      */
     private void cleanUp() throws HsqlException {
 
+        int tempfirstaccess = firstAccessCount;
+
         // put access count in the array
         for (int i = 0; i < maxCacheSize; i++) {
             accessCount[i] = rFirst.iLastAccess;
@@ -454,13 +466,13 @@ abstract class Cache {
 
         rankTimer.start();
 
-        // In _theory_ it is possible that the target access count is shared
-        // by many elements. So remove the next access count to account for
-        // this condition.
+        // It is possible the target access count is shared
+        // by many elements due to resetting of all access counts. So remove
+        // the next access count to account for this condition.
         firstAccessCount =
             ArrayCounter.rank(
-                accessCount, maxCacheSize / 8, firstAccessCount,
-                currentAccessCount, maxCacheSize / 512) + 1;
+                accessCount, iCacheSize / 8, firstAccessCount,
+                currentAccessCount, iCacheSize / 512) + 1;
 
         rankTimer.stop();
 
@@ -509,8 +521,10 @@ abstract class Cache {
 
         saveAllTimer.stop();
 
-//        Trace.printSystemOut("cache.cleanup() total saveRowCount: ", saveRowCount);
-//        Trace.printSystemOut("cache.cleanup() removed row count for this call: ", removedRows);
+        // Trace.printSystemOut("cache.cleanup() min access: ", tempfirstaccess);
+        // Trace.printSystemOut("cache.cleanup() current access: ", currentAccessCount);
+        // Trace.printSystemOut("cache.cleanup() total saveRowCount: ", saveRowCount);
+        // Trace.printSystemOut("cache.cleanup() removed row count for this call: ", removedRows);
         initBuffers();
     }
 
@@ -566,6 +580,8 @@ abstract class Cache {
         }
 
         iCacheSize--;
+
+        cacheBytesLength -= r.storageSize;
 
         return r.free();
     }

@@ -2583,11 +2583,14 @@ public class Table extends BaseTable {
 
         fireAll(Trigger.DELETE_BEFORE);
 
-        for (int i = 0; i < deleteList.size(); i++) {
-            Row row = (Row) deleteList.get(i);
+        if (database.isReferentialIntegrity()) {
+            for (int i = 0; i < deleteList.size(); i++) {
+                Row row = (Row) deleteList.get(i);
 
-            path.clear();
-            checkCascadeDelete(this, tUpdateList, row, session, true, path);
+                path.clear();
+                checkCascadeDelete(this, tUpdateList, row, session, true,
+                                   path);
+            }
         }
 
         for (int i = 0; i < deleteList.size(); i++) {
@@ -2741,12 +2744,14 @@ public class Table extends BaseTable {
         }
 
         // perform check/cascade operations
-        for (int i = 0; i < updateList.size(); i++) {
-            Object[] data = (Object[]) updateList.get(i);
-            Row      row  = (Row) updateList.getKey(i);
+        if (database.isReferentialIntegrity()) {
+            for (int i = 0; i < updateList.size(); i++) {
+                Object[] data = (Object[]) updateList.get(i);
+                Row      row  = (Row) updateList.getKey(i);
 
-            checkCascadeUpdate(this, tUpdateList, row, data, session, cols,
-                               null, path);
+                checkCascadeUpdate(this, tUpdateList, row, data, session,
+                                   cols, null, path);
+            }
         }
 
         fireAll(Trigger.UPDATE_BEFORE);

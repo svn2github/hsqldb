@@ -1817,10 +1817,10 @@ public class Server implements HsqlSocketRequestHandler {
         int          maxindex  = 0;
 
         try {
-            Enumeration enum = serverProperties.propertyNames();
+            Enumeration en = serverProperties.propertyNames();
 
-            for (; enum.hasMoreElements(); ) {
-                String key = (String) enum.nextElement();
+            for (; en.hasMoreElements(); ) {
+                String key = (String) en.nextElement();
 
                 if (!key.startsWith(prefix)) {
                     continue;

@@ -85,7 +85,8 @@ public class ArrayCounter {
      * With an unsorted int[] array and with target a positive integer in the
      * range (1,array.length), finds the value in the range (start,limit) of the
      * largest element (rank) where the count of all smaller elements in that
-     * range is less than or equals target.<p>
+     * range is less than or equals target. Parameter margin indicates the
+     * margin of error<p>
      *
      * In statistics, this can be used to calculate a median or quadrile value.
      * A usage example applied to an array of age values is to determine,

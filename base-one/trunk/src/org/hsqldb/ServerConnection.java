@@ -200,7 +200,7 @@ class ServerConnection implements Runnable {
                 if (!server.isSilent()) {
                     server.printWithThread(mThread
                                            + ":trying to connect user "
-                                       + user);
+                                           + user);
                 }
 
                 session = DatabaseManager.newSession(dbID,

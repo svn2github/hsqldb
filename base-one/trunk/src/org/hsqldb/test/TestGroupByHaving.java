@@ -31,18 +31,14 @@
 
 package org.hsqldb.test;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 import org.hsqldb.Trace;
 
@@ -60,10 +56,9 @@ public class TestGroupByHaving extends TestCase {
     //------------------------------------------------------------
     private static final String databaseDriver = "org.hsqldb.jdbcDriver";
     private static final String databaseURL =
-        "jdbc:hsqldb:test/GroupByHaving";
+        "jdbc:hsqldb:file:test/GroupByHaving";
     private static final String databaseUser     = "sa";
     private static final String databasePassword = "";
-    public static final String  datasetPath = "../test/dataset-subselect.xml";
 
     //------------------------------------------------------------
     // Instance variables

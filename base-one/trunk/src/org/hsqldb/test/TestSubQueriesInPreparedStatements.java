@@ -60,8 +60,8 @@ public class TestSubQueriesInPreparedStatements {
 
         DriverManager.registerDriver(driver);
 
-        conn  = DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "");
-        stmnt = conn.createStatement();
+        conn = DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "");
+        stmnt  = conn.createStatement();
         pstmnt = conn.prepareStatement("drop table t if exists");
 
         boolean result = pstmnt.execute();

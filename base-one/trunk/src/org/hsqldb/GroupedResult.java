@@ -124,9 +124,9 @@ class GroupedResult {
             }
         } else if (isAggregated) {
             if (currGroup == null) {
-            currGroup = new ResultGroup(row);
+                currGroup = new ResultGroup(row);
 
-            result.add(row);
+                result.add(row);
             } else {
                 ArrayUtil.copyArray(row, currGroup.row, row.length);
             }

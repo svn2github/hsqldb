@@ -767,22 +767,22 @@ class Parser {
         }
 
         // column name only
-            Expression found = e;
+        Expression found = e;
 
-            for (int i = 0, size = vcolumn.size(); i < size; i++) {
-                Expression colexpr  = (Expression) vcolumn.get(i);
-                String     colalias = colexpr.getDefinedAlias();
+        for (int i = 0, size = vcolumn.size(); i < size; i++) {
+            Expression colexpr  = (Expression) vcolumn.get(i);
+            String     colalias = colexpr.getDefinedAlias();
             String     colname  = colexpr.getColumnName();
 
             if (ordercolname.equals(colalias)
                     || ordercolname.equals(colname)) {
 
-                    // check for ambiguity if two displayed cols have the same name
-                    // do not check beyond as a column may be repeated for grouping purposes
-                    if (found != e && i < visiblecols) {
-                        throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
+                // check for ambiguity if two displayed cols have the same name
+                // do not check beyond as a column may be repeated for grouping purposes
+                if (found != e && i < visiblecols) {
+                    throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
                                       ordercolname);
-                    }
+                }
 
                 // choose the first expression
                 if (found == e) {

@@ -41,7 +41,7 @@ import java.util.Vector;
  * the expected results. The test script format is compatible with existing
  * scripts.
  *
- * @author Ewan Slater
+ * @author ewanslater@users
  * @author fredt@users
  */
 public class TestUtil {

@@ -32,12 +32,18 @@
 package org.hsqldb.store;
 
 /**
- * Under development.
+ * Supports pooling of Integer, Long, Double, BigDecimal, String and Date
+ * Java Objects. Leads to reduction in memory use when an Object is used more
+ * then twice in the database.
  *
- * Only getXXX methods are used for retrival of values. If a value is not in
+ * getXXX methods are used for retrival of values. If a value is not in
  * the pool, it is added to the pool and returned. When the pool gets
- * full, the contents are purged.
- * (fredt@users)
+ * full, half the contents that have been accessed less recently are purged.
+ *
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public class ValuePool {
 
@@ -48,13 +54,14 @@ public class ValuePool {
     static ValuePoolHashMap bigdecimalPool;
     static ValuePoolHashMap stringPool;
     static ValuePoolHashMap datePool;
-
-    //
-    static final int[] defaultPoolLookupSize  = new int[] {
-        10000, 10000, 10000, 10000, 10000, 10000
+    static final int        DEFAULT_VALUE_POOL_SIZE = 10000;
+    static final int[]      defaultPoolLookupSize   = new int[] {
+        DEFAULT_VALUE_POOL_SIZE, DEFAULT_VALUE_POOL_SIZE,
+        DEFAULT_VALUE_POOL_SIZE, DEFAULT_VALUE_POOL_SIZE,
+        DEFAULT_VALUE_POOL_SIZE, DEFAULT_VALUE_POOL_SIZE
     };
-    static final int   defaultSizeFactor      = 2;
-    static final int   defaultMaxStringLength = 16;
+    static final int defaultSizeFactor      = 2;
+    static final int defaultMaxStringLength = 16;
 
     //
     static ValuePoolHashMap[] poolList;

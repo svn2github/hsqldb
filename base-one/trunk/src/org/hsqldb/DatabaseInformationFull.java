@@ -335,7 +335,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * CACHE_CLASS        VARCHAR   FQN of Cache class
      * CACHE_HASH         INTEGER   in-memory hashCode() value of Cache object
      * CACHE_FILE         VARCHAR   absolute path of cache data file
-     * CACHE_LENGTH       INTEGER   length of row data array
+     * CACHE_LENGTH       INTEGER   number of data bytes currently cached
      * CACHE_SIZE         INTEGER   number of rows currently cached
      * FREE_BYTES         INTEGER   total bytes in available allocation units
      * SMALLEST_FREE_ITEM INTEGER   bytes of smallest available allocation unit
@@ -473,7 +473,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[icache_class]  = cache.getClass().getName();
             row[icache_hash]   = ValuePool.getInt(cache.hashCode());
             row[icache_file] = FileUtil.canonicalOrAbsolutePath(cache.sName);
-            row[icache_length] = ValuePool.getInt(cache.cacheLength);
+            row[icache_length] = ValuePool.getInt(cache.cacheBytesLength);
             row[icache_size]   = ValuePool.getInt(cache.iCacheSize);
             row[ifree_bytes]   = ValuePool.getInt(iFreeBytes);
             row[is_free_item]  = ValuePool.getInt((int) lSmallestFreeItem);

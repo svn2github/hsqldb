@@ -74,8 +74,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // user defined boolean properties
         String[] booleanPropertiesNames = {
             "hsqldb.nio_data_file", "hsqldb.schemas", "hsqldb.catalogs",
-            "sql.enforce_size", "sql.enforce_strict_size", "textdb.quoted",
-            "textdb.all_quoted", "textdb.ignore_first",
+            "textdb.quoted", "textdb.all_quoted", "textdb.ignore_first",
         };
 
         booleanProperties.addAll(booleanPropertiesNames);
@@ -84,7 +83,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         String[] integralPropertiesNames = {
             "runtime.gc_interval", "hsqldb.max_nio_scale",
             "hsqldb.cache_file_scale", "hsqldb.cache_scale",
-            "hsqldb.first_identity", "hsqldb.log_size", "textdb.cache_scale"
+            "hsqldb.cache_size_scale", "hsqldb.first_identity",
+            "hsqldb.log_size", "textdb.cache_scale"
         };
 
         integralProperties.addAll(integralPropertiesNames);
@@ -105,12 +105,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         super(db.getPath(), db.isFilesInJar());
 
         database = db;
-
-        // char trimming and padding to size and varchar trimming to size
-        setProperty("sql.enforce_size", false);
-
-        // char and padding to size and exception if data is too long
-        setProperty("sql.enforce_strict_size", false);
 
         // char and varchar sorting in charset of the current jvm Locale
         setProperty("sql.compare_in_locale", false);
