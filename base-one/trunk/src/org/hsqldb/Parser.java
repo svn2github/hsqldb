@@ -99,6 +99,10 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
 // fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTHPOSITION(string)
 // fredt@users 20030820 - patch 1.7.2 - POSITION(string IN string)
+// fredt@users 20030820 - patch 1.7.2 - SUBSTRING(string FROM pos [FOR length])
+// fredt@users 20030820 - patch 1.7.2 - TRIM({LEADING | TRAILING | BOTH} FROM <string expression>)
+// fredt@users 20030820 - patch 1.7.2 - CASE ... WHEN ... THEN ... [ELSE ...] END and its variants
+// fredt@users 20030820 - patch 1.7.2 - NULLIF(expr,expr)
 
 /**
  *  This class is responsible for parsing non-DDL statements.
@@ -1283,9 +1287,16 @@ class Parser {
 
                 break;
             }
+            case Expression.COALESCE :
             case Expression.IFNULL :
             case Expression.CONCAT : {
-                int type = iToken;
+                int type;
+
+                if (iToken == Expression.COALESCE) {
+                    type = Expression.IFNULL;
+                } else {
+                    type = iToken;
+                }
 
                 read();
                 readThis(Expression.OPEN);
@@ -1540,6 +1551,8 @@ class Parser {
                 break;
             }
             case Expression.SUBSTRING : {
+                boolean commas = false;
+
                 read();
                 readThis(Expression.OPEN);
 
@@ -1547,13 +1560,25 @@ class Parser {
                                           session, false);
 
                 f.setArgument(0, readTerm());
-                readThis(Expression.FROM);
+
+                if (iToken == Expression.FROM) {
+                    readThis(Expression.FROM);
+                } else {
+                    readThis(Expression.COMMA);
+
+                    commas = true;
+                }
+
                 f.setArgument(1, readOr());
 
                 Expression count = null;
 
-                if (sToken.equals(Token.T_FOR)) {
-                    readTerm();
+                if (!commas && iToken == Expression.FOR) {
+                    readThis(Expression.FOR);
+
+                    count = readTerm();
+                } else if (commas && iToken == Expression.COMMA) {
+                    readThis(Expression.COMMA);
 
                     count = readTerm();
                 }
@@ -1645,6 +1670,7 @@ class Parser {
                 case Expression.MAX :
                 case Expression.AVG :
                 case Expression.IFNULL :
+                case Expression.COALESCE :
                 case Expression.NULLIF :
                 case Expression.CONVERT :
                 case Expression.CAST :
@@ -1659,6 +1685,7 @@ class Parser {
                 case Expression.POSITION :
                 case Expression.SUBSTRING :
                 case Expression.FROM :
+                case Expression.FOR :
                 case Expression.END :
                 case Expression.PARAM :
                 case Expression.TRIM :
@@ -1729,7 +1756,7 @@ class Parser {
         tokenSet.put("MAX", Expression.MAX);
         tokenSet.put("AVG", Expression.AVG);
         tokenSet.put("IFNULL", Expression.IFNULL);
-        tokenSet.put("NULLIF", Expression.NULLIF);
+        tokenSet.put(Token.T_NULLIF, Expression.NULLIF);
         tokenSet.put("CONVERT", Expression.CONVERT);
         tokenSet.put("CAST", Expression.CAST);
         tokenSet.put(Token.T_CASE, Expression.CASE);
@@ -1739,11 +1766,13 @@ class Parser {
         tokenSet.put(Token.T_END, Expression.ENDWHEN);
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
         tokenSet.put("CONCAT", Expression.CONCAT);
+        tokenSet.put(Token.T_COALESCE, Expression.COALESCE);
         tokenSet.put(Token.T_EXTRACT, Expression.EXTRACT);
         tokenSet.put(Token.T_POSITION, Expression.POSITION);
         tokenSet.put(Token.T_FROM, Expression.FROM);
         tokenSet.put(Token.T_TRIM, Expression.TRIM);
         tokenSet.put(Token.T_SUBSTRING, Expression.SUBSTRING);
+        tokenSet.put(Token.T_FOR, Expression.FOR);
         tokenSet.put("IS", Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }

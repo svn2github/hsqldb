@@ -48,7 +48,9 @@ org.hsqldb.util.ScriptTool</pre>
   the cache. All these files are essential and should never be deleted. If the 
   database has no cached tables, the <code>test.data</code> and <code>test.backup</code> 
   files will not be present. In addition to those files, HSQLDB database may link 
-  to any formatted text files, such as CSV lists, anywhere on the disk. <em>When 
+  to any formatted text files, such as CSV lists, anywhere on the disk.</p>
+<p>While the &quot;test&quot; database is operational, a <code>test.log</code> file is used to write the changes made to data. This file is removed at a normal SHUDOWN. Otherwise (with abnormal shutdown) this file is used at the next startup to redo the changes. A <code>test.lck </code>file is also used to record the fact that the database is open. This is deleted at a normal SHUTDOWN.</p>
+<p><em>When 
   the engine closes the database at a shutdown, it creates temporary files with 
   the extension</em><code> .new </code><em>which it then renames to those listed 
   above.</em></p>
@@ -67,23 +69,19 @@ org.hsqldb.util.ScriptTool</pre>
 <p>This is the preferred way of running a database server and the fastest one. 
   A proprietary communications protocol is used for this mode. A command similar 
   to those used for running tools and described above is used for running the 
-  server. An example of the command for starting the server is:</p>
+  server. The following example of the command for starting the server starts the server with one (default) database with files named &quot;mydb.*&quot;.</p>
 <pre>java -cp ../lib/hsqldb.jar org.hsqldb.Server -database mydb</pre>
 <p>The command line argument <code>-?</code> can be used to get a list of available 
   arguments.</p>
 <h4>HSQLDB Web Server</h4>
 <p>This mode is used when access to the computer hosting the database server is restricted 
   to the HTTP protocol. The only reason for using the Web Server mode is restrictions imposed by firewalls on the client or server machines and it should not be used where there are no such restrictions.  The HSQLDB Web Server is a special web server that allows 
-  JDBC clients to connect via HTTP. As the HTTP protocol is stateless, connections 
-  to a web server do not have a persistent session. This limits the range of actions 
-  that can be performed on the database. Each time you issue a JDBC command, it 
-  is treated as a new connection to the database. As a result transactions cannot 
-  be rolled back.</p>
+  JDBC clients to connect via HTTP. From 1.7.2 this mode also supports transactions.</p>
 <p>To run  a web server, replace the  main class for the server in the example command line above with the following:</p>
 <pre>org.hsqldb.WebServer</pre>
 <p>The command line argument -? can be used to get a list of available arguments.</p>
 <h4>HSQLDB Servlet</h4>
-<p>This uses the same protocol as the Web Server and has the same limitations. 
+<p>This uses the same protocol as the Web Server. 
   It is used when a separate servlet engine (or application server) such as Tomcat 
   or Resin provides access to the database. The Servlet Mode cannot be started 
   independently from the servlet engine. The <code>hsqlServlet</code> class, in 
@@ -91,7 +89,7 @@ org.hsqldb.util.ScriptTool</pre>
   connection. The database is specified using an application server property. 
   Refer to the source file <code>hsqlServlet.java</code> to see the details.</p>
 <p>Both Web Server and Servlet modes can only be accessed using the JDBC driver 
-  at the client end. They do not provide a web front end to the database.</p>
+  at the client end. They do not provide a web front end to the database. The Servlet mode can serve only a single database.</p>
 <h4>Connecting to a Databases Running as Server</h4>
 <p>Once an HSQLDB server is running, client programs can connect to it using the 
   HSQLDB JDBC Driver contained in <code>hsqldb.jar</code>. Full information on 
@@ -145,8 +143,8 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
  
 <h4>Closing the Database</h4>
 <p>All databases running in different modes can be closed with the SHUTDOWN command, 
-  issued as an SQL query. In-process databases are closed also when the last connection 
-  to the database is explicitly closed via JDBC. When SHUTDOWN is issued, all 
+  issued as an SQL query. In 1.7.2, in-process databases are no longer closed when the last connection 
+  to the database is explicitly closed via JDBC, a SHUTDOWN is required. When SHUTDOWN is issued, all 
   active transactions are rolled back. A special form of closing the database 
   is via the SHUTDOWN COMPACT command. This command rewrites the <code>.data</code> 
   file that contains the information stored in CACHED tables and compacts it to 
@@ -194,8 +192,7 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   or other delimited text file as the source of their data. You can specify an 
   existing CSV file, such as a dump from another database or program, as the source 
   of a TEXT table. Alternatively, you can specify an empty file to be filled with 
-  data by the database engine. TEXT tables are efficient in memory usage and faster 
-  than CACHED tables. Two commands are needed to set up a TEXT table as detailed 
+  data by the database engine. TEXT tables are efficient in memory usage as they cache only part of the text data. Two commands are needed to set up a TEXT table as detailed 
   in <a href="hsqlTextTables.html">hsqlTextTables.html</a> document.</p>
 <p>With memory-only databases (see above), both MEMORY table and CACHED  table declarations are treated as declarations for non-persistent memory tables. TEXT table declarations are not allowed in this mode.</p>
 <h4>CONSTRAINTS and INDEXES</h4>
@@ -211,7 +208,7 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   overheads. See the discussion in <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html</a>  for more information.</p>
 <p>Indexes are crucial for adequate query speed. When queries joining multiple tables are used, there must be an  index on each joined column of each table. When range or equality conditions are used e.g. SELECT ... WHERE a &gt;10 AND  b = 0, an  indexes is  required on  column used in the condition. Indexes have no effect on LIKE conditions or ORDER BY clauses.</p>
 <p>As a rule of thumb, HSQLDB is capable of processing queries and returning over 100,000 rows per second. Any query that runs into several seconds should be checked and indexes should be added to the relevant columns of the tables if necessary.</p>
-<p>Author: Fred Toussi - 14 July 2002 - updated 18 Oct 2002</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 20 Aug 2002</p>
 <p>Copyright 2002 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

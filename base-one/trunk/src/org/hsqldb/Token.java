@@ -72,6 +72,7 @@ class Token {
     static final String T_CASE                  = "CASE";
     static final String T_CHECKPOINT            = "CHECKPOINT";
     static final String T_CLASS                 = "CLASS";
+    static final String T_COALESCE              = "COALESCE";
     static final String T_COLUMN                = "COLUMN";
     static final String T_COMMIT                = "COMMIT";
     static final String T_COMPACT               = "COMPACT";

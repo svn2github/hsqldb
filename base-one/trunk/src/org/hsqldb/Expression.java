@@ -145,7 +145,8 @@ class Expression {
                      TRIM      = 65,
                      SUBSTRING = 66,
                      NULLIF    = 67,
-                     CASE      = 68;
+                     CASE      = 68,
+                     COALESCE  = 69;
 
     // temporary used during paring
     static final int PLUS         = 100,
@@ -161,21 +162,22 @@ class Expression {
                      WHEN         = 110,
                      THEN         = 111,
                      ELSE         = 112,
-                     ENDWHEN      = 113,
+                     ENDWHEN      = 113;
 
     // used inside brackets for system functions
-    FROM                                         = 114,
-                         BOTH                    = 115,
-                         LEADING                 = 116,
-                         TRAILING                = 117,
-                         YEAR                    = 118,
-                         MONTH                   = 119,
-                         DAY                     = 120,
-                         HOUR                    = 121,
-                         MINUTE                  = 122,
-                         SECOND                  = 123,
-                         TIMEZONE_HOUR           = 124,
-                         T_TIMEZONE_MINUTE       = 125;
+    static final int     FOR                     = 123,
+                         FROM                    = 124,
+                         BOTH                    = 125,
+                         LEADING                 = 126,
+                         TRAILING                = 127,
+                         YEAR                    = 128,
+                         MONTH                   = 129,
+                         DAY                     = 130,
+                         HOUR                    = 131,
+                         MINUTE                  = 132,
+                         SECOND                  = 133,
+                         TIMEZONE_HOUR           = 134,
+                         T_TIMEZONE_MINUTE       = 135;
     static final HashSet SQL_EXTRACT_FIELD_NAMES = new HashSet();
     static final HashSet SQL_TRIM_SPECIFICATION  = new HashSet();
 
