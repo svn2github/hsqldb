@@ -210,4 +210,28 @@ class View extends Table {
 
         return false;
     }
+
+    /**
+     * Returns true if the view references the named SEQUENCE,
+     * otherwise false.
+     */
+    boolean hasSequence(NumberSequence sequence) {
+
+        Expression.Collector coll = new Expression.Collector();
+
+        coll.addAll(viewSubqueries[viewSubqueries.length - 1].select,
+                    Expression.SEQUENCE);
+
+        Iterator it = coll.iterator();
+
+        for (; it.hasNext(); ) {
+            Expression e = (Expression) it.next();
+
+            if (e.valueData == sequence) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

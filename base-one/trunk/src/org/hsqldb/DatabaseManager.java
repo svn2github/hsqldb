@@ -257,7 +257,7 @@ public class DatabaseManager {
         db = (Database) databaseMap.get(key);
 
         if (db == null) {
-            db            = new Database(type, path, path, ifexists, props);
+            db = new Database(type, path, type + key, ifexists, props);
             db.databaseID = dbIDCounter;
 
             databaseIDMap.put(dbIDCounter, db);
@@ -606,6 +606,12 @@ public class DatabaseManager {
         } else {
             if (type == S_MEM || type == S_RES) {
                 database = urlImage.substring(pos, semicolpos).toLowerCase();
+
+                if (type == S_RES) {
+                    if (database.indexOf('/') != 0) {
+                        database = '/' + database;
+                    }
+                }
             } else {
                 database = url.substring(pos, semicolpos);
             }

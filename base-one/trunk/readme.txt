@@ -6,9 +6,11 @@ More tests are required to verify the improvements. Please perform tests and rep
 issues. Testers are needed for build scripts with different JVM's using both ANT and batch 
 builds.
 
-2004.05.09
+2004.05.11
 
 Bug fixes and minor enhancements to Database Manager and Transfer tools.
+
+Database Manager Swing table view is sortable.
 
 Fixed bug with different values in one row with multiple CURRENT_TIMESTAMP or
 NOW() calls.

@@ -366,6 +366,10 @@ implements ActionListener, ItemListener {
 
         if (s.equals("ConnectOk") || (ev.getSource() instanceof TextField)) {
             try {
+                if (mURL.getText().indexOf('\u00AB') >= 0) {
+                    throw new Exception("please specify db path");
+                }
+
                 mConnection = createConnection(mDriver.getText(),
                                                mURL.getText(),
                                                mUser.getText(),

@@ -85,7 +85,7 @@ class ConnectionDialogCommon {
     private final static String sJDBCTypes[][] = {
         {
             "HSQL Database Engine In-Memory", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:mem:\u00ABdbname?\u00BB"
+            "jdbc:hsqldb:mem:."
         }, {
             "HSQL Database Engine Standalone", "org.hsqldb.jdbcDriver",
             "jdbc:hsqldb:file:\u00ABdatabase/path?\u00BB"
@@ -326,12 +326,12 @@ class ConnectionDialogCommon {
             try {
                 Class.forName("sun.security.action.GetPropertyAction");
 
-            sun.security.action.GetPropertyAction a =
+                sun.security.action.GetPropertyAction a =
                     new sun.security.action.GetPropertyAction(
                         "java.io.tmpdir");
 
-            tmpdir =
-                ((String) java.security.AccessController.doPrivileged(a));
+                tmpdir =
+                    ((String) java.security.AccessController.doPrivileged(a));
             } catch (Exception e) {}
         }
 

@@ -287,7 +287,7 @@ public class Trace {
                             TextDatabaseRowInput_getField2            = 183,
                             TextDatabaseRowInput_getField3            = 184,
                             Parser_ambiguous_between1                 = 185,
-                            unused186                                 = 186,
+                            SEQUENCE_REFERENCED_BY_VIEW               = 186,
                             Generic_reading_file_error                = 187,
                             TextCache_openning_file_error             = 188,
                             TextCache_closing_file_error              = 189,
@@ -519,7 +519,7 @@ public class Trace {
         "No end sep.",                                                  // TextDatabaseRowInput_getField2
         "field $$ ($$)",                                                // TextDatabaseRowInput_getField3
         "as operands of a BETWEEN predicate",                           //
-        "unused",                                                       //
+        "23000 Sequence is referenced by view",                         //
         "error reading script file",                                    //
         "openning file: $$ error: $$",                                  // TextCache - or generic file error
         "closing file: $$ error: $$",                                   // TextCache - or generic file error

@@ -787,8 +787,8 @@ public class Database {
         if (isView) {
             checkViewIsInView((View) toDrop);
         } else {
-        checkTableIsReferenced(toDrop);
-        checkTableIsInView(toDrop.tableName.name);
+            checkTableIsReferenced(toDrop);
+            checkTableIsInView(toDrop.tableName.name);
         }
 
         tTable.remove(dropIndex);
@@ -875,6 +875,19 @@ public class Database {
     }
 
     /**
+     * Throws if the view is referenced in a view.
+     */
+    void checkSequenceIsInView(NumberSequence sequence) throws HsqlException {
+
+        View[] views = getViewsWithSequence(sequence);
+
+        if (views != null) {
+            throw Trace.error(Trace.SEQUENCE_REFERENCED_BY_VIEW,
+                              views[0].getName().name);
+        }
+    }
+
+    /**
      * Throws if the column is referenced in a view.
      */
     void checkColumnIsInView(String table,
@@ -930,6 +943,33 @@ public class Database {
                 boolean found = column == null ? ((View) t).hasTable(table)
                                                : ((View) t).hasColumn(table,
                                                    column);
+
+                if (found) {
+                    if (list == null) {
+                        list = new HsqlArrayList();
+                    }
+
+                    list.add(t);
+                }
+            }
+        }
+
+        return list == null ? null
+                            : (View[]) list.toArray(new View[list.size()]);
+    }
+
+    /**
+     * Returns an array of views that reference a sequence.
+     */
+    View[] getViewsWithSequence(NumberSequence sequence) {
+
+        HsqlArrayList list = null;
+
+        for (int i = 0; i < tTable.size(); i++) {
+            Table t = (Table) tTable.get(i);
+
+            if (t.isView()) {
+                boolean found = ((View) t).hasSequence(sequence);
 
                 if (found) {
                     if (list == null) {
@@ -1111,20 +1151,6 @@ public class Database {
      * @return the uri portion of this object's in-process JDBC url
      */
     public String getURI() {
-
-        if (uri == null) {
-            String type = getType();
-            String path = getPath();
-
-            if ("file:".equals(type)) {
-
-// this should have been done when instantiating the database
-//                path = FileUtil.canonicalOrAbsolutePath(path);
-            }
-
-            uri = type + path;
-        }
-
-        return uri;
+        return sName;
     }
 }

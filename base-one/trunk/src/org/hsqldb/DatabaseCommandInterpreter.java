@@ -2701,8 +2701,17 @@ class DatabaseCommandInterpreter {
     }
 
     private void processDropSequence() throws HsqlException {
+
         session.checkDDLWrite();
-        database.sequenceManager.dropSequence(tokenizer.getString());
+
+        String         name     = tokenizer.getString();
+        NumberSequence sequence = database.sequenceManager.getSequence(name);
+
+        if (sequence != null) {
+            database.checkSequenceIsInView(sequence);
+        }
+
+        database.sequenceManager.dropSequence(name);
     }
 
     private void processDropTrigger() throws HsqlException {
