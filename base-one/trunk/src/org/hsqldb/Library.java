@@ -75,6 +75,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
 import java.text.SimpleDateFormat;
+import java.text.FieldPosition;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
@@ -94,6 +95,16 @@ import org.hsqldb.store.ValuePool;
  */
 public class Library {
 
+    static final SimpleDateFormat daynameFormat =
+        new SimpleDateFormat("EEEE");
+    static final SimpleDateFormat monthnameFormat =
+        new SimpleDateFormat("MMMM");
+    static final StringBuffer daynameBuffer   = new StringBuffer();
+    static final StringBuffer monthnameBuffer = new StringBuffer();
+    static final FieldPosition monthPosition =
+        new FieldPosition(SimpleDateFormat.MONTH_FIELD);
+    static final FieldPosition dayPosition =
+        new FieldPosition(SimpleDateFormat.DAY_OF_WEEK_FIELD);
     static final String sNumeric[][] = {
         {
             "ABS", "org.hsqldb.Library.abs"
@@ -1215,11 +1226,11 @@ public class Library {
      * @return the name of the day corresponding to the given
      * <code>java.sql.Date</code>
      */
-    public static String dayname(java.sql.Date d) {
+    synchronized public static String dayname(java.sql.Date d) {
 
-        SimpleDateFormat f = new SimpleDateFormat("EEEE");
+        daynameBuffer.setLength(0);
 
-        return f.format(d);
+        return daynameFormat.format(d, daynameBuffer, dayPosition).toString();
     }
 
     /**
@@ -1315,16 +1326,16 @@ public class Library {
 
     /**
      * Returns the month from the given date value, as an integer value in the
-     * range of 1-12 or 0-11. <p>
+     * range of 1-12. <p>
      *
-     * If the sql_month database property is set <code>true</code>, then the
-     * range is 1-12, else 0-11
+     * The sql_month database property is now obsolete.
+     * The function always returns the SQL (1-12) value for month.
      *
      * @param d the date value from which to extract the month value
      * @return the month value from the given date value
      */
     public static int month(java.sql.Date d) {
-        return 0;
+        return getDateTimePart(d, Calendar.MONTH) + 1;
     }
 
     /**
@@ -1336,11 +1347,12 @@ public class Library {
      * @param d the date value from which to extract the month name
      * @return a String representing the month name from the given date value
      */
-    public static String monthname(java.sql.Date d) {
+    synchronized public static String monthname(java.sql.Date d) {
 
-        SimpleDateFormat f = new SimpleDateFormat("MMMM");
+        daynameBuffer.setLength(0);
 
-        return f.format(d);
+        return monthnameFormat.format(d, monthnameBuffer,
+                                      monthPosition).toString();
     }
 
     /**
@@ -2094,7 +2106,8 @@ public class Library {
                     return null;
                 }
                 default : {
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                      "org.hsqldb.Library: fID: " + fID);
                 }
             }
         } catch (Exception e) {

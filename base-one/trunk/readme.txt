@@ -1,7 +1,15 @@
 Readme File
 
 
-2003.10.13
+2003.11.23
+
+Fixed reported bugs including order by with UNION.
+
+Added support for aggregate functions in CASEWHEN, IFNULL, etc.
+
+Added support for aggregate functions as arguments to non-aggregate functions.
+
+2003.11.13
 
 Fixed reported bugs.
 

@@ -732,35 +732,34 @@ class Parser {
             throw Trace.error(Trace.INVALID_ORDER_BY);
         } else if (e.getType() == Expression.COLUMN
                    && e.getTableName() == null) {
-            if (union) {
-                throw Trace.error(Trace.INVALID_ORDER_BY);
-            }
 
             // this could be an alias column
             String     s     = e.getColumnName();
             Expression found = e;
 
             for (int i = 0, size = vcolumn.size(); i < size; i++) {
-                Expression ec = (Expression) vcolumn.get(i);
+                Expression colexpr = (Expression) vcolumn.get(i);
+                String     colalias = colexpr.getDefinedAlias();
 
-                // We can only substitute alias explicitly defined in the select clause,
-                // since there may be more that one result column with the
-                // same column name.  For example:
-                //   "select 500-column1, column1 from table 1 order by column2"
-                if (s.equals(ec.getDefinedAlias())) {
+                if (s.equals(colalias)
+                        || (colalias == null
+                            && s.equals(colexpr.getColumnName()))) {
+
+                    // check for ambiguity
                     if (found != e) {
                         throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
                                           s);
                     }
 
-                    found = ec;
+                    found                    = colexpr;
+
+                    // set this for use in sorting
+                    found.orderColumnIndex = i;
                 }
             }
 
             e = found;
-        }
-
-        if (union) {
+        } else if (union) {
             throw Trace.error(Trace.INVALID_ORDER_BY);
         }
 

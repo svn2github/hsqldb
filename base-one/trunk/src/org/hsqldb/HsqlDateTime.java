@@ -199,71 +199,75 @@ class HsqlDateTime {
     static java.sql.Date getDate(String dateString,
                                  Calendar cal) throws Exception {
 
-        java.text.SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
+        synchronized (sdfd) {
+            sdfd.setCalendar(cal);
 
-        sdfd.setCalendar(cal);
+            java.util.Date d = sdfd.parse(dateString);
 
-        java.util.Date d = sdfd.parse(dateString);
-
-        return new java.sql.Date(d.getTime());
+            return new java.sql.Date(d.getTime());
+        }
     }
 
     static Time getTime(String timeString, Calendar cal) throws Exception {
 
-        java.text.SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
+        synchronized (sdft) {
+            sdft.setCalendar(cal);
 
-        sdft.setCalendar(cal);
+            java.util.Date d = sdft.parse(timeString);
 
-        java.util.Date d = sdft.parse(timeString);
-
-        return new java.sql.Time(d.getTime());
+            return new java.sql.Time(d.getTime());
+        }
     }
 
     static Timestamp getTimestamp(String dateString,
                                   Calendar cal) throws Exception {
 
-        java.text.SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
+        synchronized (sdfts) {
+            sdfts.setCalendar(cal);
 
-        sdfts.setCalendar(cal);
+            java.util.Date d = sdfts.parse(dateString.substring(0,
+                sdftsPattern.length()));
+            String nanostring = dateString.substring(sdftsPattern.length(),
+                dateString.length());
+            java.sql.Timestamp ts = new java.sql.Timestamp(d.getTime());
 
-        java.util.Date d = sdfts.parse(dateString.substring(0,
-            sdftsPattern.length()));
-        String nanostring = dateString.substring(sdftsPattern.length(),
-            dateString.length());
-        java.sql.Timestamp ts = new java.sql.Timestamp(d.getTime());
+            ts.setNanos(Integer.parseInt(nanostring));
 
-        ts.setNanos(Integer.parseInt(nanostring));
-
-        return ts;
+            return ts;
+        }
     }
 
     static SimpleDateFormat sdfd  = new SimpleDateFormat(sdfdPattern);
     static SimpleDateFormat sdft  = new SimpleDateFormat(sdftPattern);
     static SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
-    synchronized static String getTimestampString(Timestamp x,
-            Calendar cal) throws Exception {
+    static String getTimestampString(Timestamp x,
+                                     Calendar cal) throws Exception {
 
-        sdfts.setCalendar(cal);
+        synchronized (sdfts) {
+            sdfts.setCalendar(cal);
 
-        return sdfts.format(new java.util.Date(x.getTime()
-                                               + x.getNanos() / 1000000));
+            return sdfts.format(new java.util.Date(x.getTime()
+                                                   + x.getNanos() / 1000000));
+        }
     }
 
-    synchronized static String getTimeString(Time x,
-            Calendar cal) throws Exception {
+    static String getTimeString(Time x, Calendar cal) throws Exception {
 
-        sdft.setCalendar(cal);
+        synchronized (sdft) {
+            sdft.setCalendar(cal);
 
-        return sdft.format(x);
+            return sdft.format(x);
+        }
     }
 
-    synchronized static String getDateString(Date x,
-            Calendar cal) throws Exception {
+    static String getDateString(Date x, Calendar cal) throws Exception {
 
-        sdfd.setCalendar(cal);
+        synchronized (sdfd) {
+            sdfd.setCalendar(cal);
 
-        return sdfd.format(x);
+            return sdfd.format(x);
+        }
     }
 
 /*
@@ -346,15 +350,15 @@ class HsqlDateTime {
     private static void setTimeInMillis(Calendar cal, long millis) {
 
 //#ifdef JDBC3
-                // Use method directly
-                cal.setTimeInMillis(millis);
+/*
+        // Use method directly
+        cal.setTimeInMillis(millis);
+*/
 
 //#else
-/*
         // Have to go indirect
         tempDate.setTime(millis);
         cal.setTime(tempDate);
-*/
 
 //#endif JDBC3
     }
@@ -369,14 +373,14 @@ class HsqlDateTime {
     private static long getTimeInMillis(Calendar cal) {
 
 //#ifdef JDBC3
-                // Use method directly
-                return (cal.getTimeInMillis());
+/*
+        // Use method directly
+        return (cal.getTimeInMillis());
+*/
 
 //#else
-/*
         // Have to go indirect
         return (cal.getTime().getTime());
-*/
 
 //#endif JDBC3
     }

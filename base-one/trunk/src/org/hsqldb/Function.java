@@ -102,12 +102,12 @@ class Function {
     private int            iSqlArgStart;
     private int            iArgType[];
     private boolean        bArgNullable[];
-    private Object         oArg[];
     private Expression     eArg[];
     private boolean        bConnection;
     private static HashMap methodCache = new HashMap();
     private int            fID;
     String                 name;    // name used to call function
+    boolean                hasAggregate;
 
     /**
      * Constructs a new Function object with the given function call name
@@ -254,7 +254,6 @@ class Function {
         ;
 
         eArg = new Expression[iArgCount];
-        oArg = new Object[iArgCount];
     }
 
     /**
@@ -301,48 +300,24 @@ class Function {
                                                             : Boolean.FALSE;
         }
 
-        int i = 0;
+        Object[] oArg = getArguments();
 
-        if (bConnection) {
-            oArg[i] = cSession.getInternalConnection();
-
-            i++;
+        if (oArg == null) {
+            return null;
         }
 
-        for (; i < iArgCount; i++) {
-            Expression e = eArg[i];
-            Object     o = null;
+        return getValue(oArg);
+    }
 
-            if (e != null) {
+    Object getValue(Object[] arguments) throws HsqlException {
 
-                // no argument: null
-                o = e.getValue(iArgType[i]);
-            }
-
-            if ((o == null) &&!bArgNullable[i]) {
-
-                // null argument for primitive datatype: don't call
-                return null;
-            }
-
-            if (o instanceof JavaObject) {
-                o = ((JavaObject) o).getObject();
-            } else if (o instanceof Binary) {
-                o = ((Binary) o).getBytes();
-            }
-
-            oArg[i] = o;
+        if (bConnection) {
+            arguments[0] = cSession.getInternalConnection();
         }
 
         try {
-            if (fID == Library.month) {
-                return ValuePool.getInt(
-                    Library.getDateTimePart((Date) oArg[0], Calendar.MONTH)
-                    + cSession.getDatabase().sqlMonth);
-            }
-
-            Object ret = (fID >= 0) ? Library.invoke(fID, oArg)
-                                    : mMethod.invoke(null, oArg);
+            Object ret = (fID >= 0) ? Library.invoke(fID, arguments)
+                                    : mMethod.invoke(null, arguments);
 
             //if (ret instanceof byte[] || ret instanceof Object) {
             // it's always an instanceof Object
@@ -370,6 +345,78 @@ class Function {
                 throw Trace.error(Trace.GENERAL_ERROR, s);
             }
         }
+    }
+
+    private Object[] getArguments() throws HsqlException {
+
+        int      i    = bConnection ? 1
+                                    : 0;
+        Object[] oArg = new Object[iArgCount];
+
+        for (; i < iArgCount; i++) {
+            Expression e = eArg[i];
+            Object     o = null;
+
+            if (e != null) {
+
+                // no argument: null
+                o = e.getValue(iArgType[i]);
+            }
+
+            if ((o == null) &&!bArgNullable[i]) {
+
+                // null argument for primitive datatype: don't call
+                return null;
+            }
+
+            if (o instanceof JavaObject) {
+                o = ((JavaObject) o).getObject();
+            } else if (o instanceof Binary) {
+                o = ((Binary) o).getBytes();
+            }
+
+            oArg[i] = o;
+        }
+
+        return oArg;
+    }
+
+    Object getAggregatedValue(Object currValue) throws HsqlException {
+
+        Object[] valueArray = (Object[]) currValue;
+
+        if (valueArray == null) {
+            valueArray = new Object[iArgCount];
+        }
+
+        for (int i = 0; i < iArgCount; i++) {
+            Expression e = eArg[i];
+
+            if (eArg[i] != null) {
+                valueArray[i] = e.getAggregatedValue(valueArray[i]);
+            }
+        }
+
+        return getValue(valueArray);
+    }
+
+    Object updateAggregatingValue(Object currValue) throws HsqlException {
+
+        Object[] valueArray = (Object[]) currValue;
+
+        if (valueArray == null) {
+            valueArray = new Object[iArgCount];
+        }
+
+        for (int i = 0; i < iArgCount; i++) {
+            Expression e = eArg[i];
+
+            if (eArg[i] != null) {
+                valueArray[i] = e.updateAggregatingValue(valueArray[i]);
+            }
+        }
+
+        return valueArray;
     }
 
     /**
@@ -534,7 +581,8 @@ class Function {
             i++;
         }
 
-        eArg[i] = e;
+        eArg[i]      = e;
+        hasAggregate = hasAggregate || e.isAggregate();
     }
 
     /**

@@ -201,11 +201,12 @@ class Expression {
         });
     }
 
-    private static final int AGGREGATE_SELF  = -1;
-    private static final int AGGREGATE_NONE  = 0;
-    private static final int AGGREGATE_LEFT  = 1;
-    private static final int AGGREGATE_RIGHT = 2;
-    private static final int AGGREGATE_BOTH  = 3;
+    private static final int AGGREGATE_SELF     = -1;
+    private static final int AGGREGATE_NONE     = 0;
+    private static final int AGGREGATE_LEFT     = 1;
+    private static final int AGGREGATE_RIGHT    = 2;
+    private static final int AGGREGATE_BOTH     = 3;
+    private static final int AGGREGATE_FUNCTION = 4;
 
     // type
     int         exprType;
@@ -253,7 +254,7 @@ class Expression {
 
     //
     private boolean isDescending;        // if it is a column in a order by
-    int             orderColumnIndex;    // when it is a column index in an order by
+    int             orderColumnIndex = -1;    // when it is a column index in an order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -283,8 +284,13 @@ class Expression {
      * @param f
      */
     Expression(Function f) {
+
         exprType = FUNCTION;
         function = f;
+
+        if (f.hasAggregate) {
+            aggregateSpec = AGGREGATE_FUNCTION;
+        }
     }
 
     /**
@@ -1035,12 +1041,8 @@ class Expression {
      * It can, if itself is a column expression.
      */
     boolean canBeInOrderBy() {
-
-        if (exprType == FUNCTION) {
-            return true;
-        }
-
-        return isColumn() || isAggregate();
+        return exprType == FUNCTION || orderColumnIndex != -1 || isColumn()
+               || isAggregate();
     }
 
     /**
@@ -1398,14 +1400,16 @@ class Expression {
         }
 
         if (exprType == COLUMN && tableFilter == null) {
-            if (check) {
+
+            // if an order by column alias
+            result = orderColumnIndex != -1;
+
+            if (!result && check) {
                 String err = tableName == null ? columnName
                                                : tableName + "." + columnName;
 
                 throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
             }
-
-            result = false;
         }
 
         return result;
@@ -2464,12 +2468,12 @@ class Expression {
             case AGGREGATE_LEFT :
                 leftValue  = eArg.getAggregatedValue(currValue);
                 rightValue = eArg2 == null ? null
-                                           : eArg2.getValue(eArg.dataType);
+                                           : eArg2.getValue();
                 break;
 
             case AGGREGATE_RIGHT :
                 leftValue  = eArg == null ? null
-                                          : eArg.getValue(eArg2.dataType);
+                                          : eArg.getValue();
                 rightValue = eArg2.getAggregatedValue(currValue);
                 break;
 
@@ -2515,19 +2519,6 @@ class Expression {
                                                                 .FALSE;
 
             case LIKE :
-/*
-                // todo: now for all tests a new 'like' object required!
-                String s = (String) Column.convertObject(rightValue,
-                    Types.VARCHAR);
-                int type = eArg.dataType;
-                Like l = new Like(s, likeEscapeChar,
-                                  type == Types.VARCHAR_IGNORECASE);
-                String c = (String) Column.convertObject(leftValue,
-                    Types.VARCHAR);
-
-                return l.compare(c) ? Boolean.TRUE
-                                    : Boolean.FALSE;
-*/
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
 
@@ -2556,6 +2547,49 @@ class Expression {
                     return subTable.isEmpty() ? Boolean.FALSE
                                               : Boolean.TRUE;
                 }
+            case CASEWHEN :
+                if (leftValue instanceof SetFunction) {
+                    leftValue = Column.convertObject(
+                        ((SetFunction) leftValue).getValue(), Types.BOOLEAN);
+                } else {
+                    leftValue = Column.convertObject(leftValue,
+                                                     Types.BOOLEAN);
+                }
+
+                boolean test   = ((Boolean) leftValue).booleanValue();
+                Object  result = test ? ((Object[]) rightValue)[0]
+                                      : ((Object[]) rightValue)[1];
+
+                if (result instanceof SetFunction) {
+                    return Column.convertObject(
+                        ((SetFunction) result).getValue(), dataType);
+                } else {
+                    return Column.convertObject(result, dataType);
+                }
+            case ALTERNATIVE :
+                if (leftValue instanceof SetFunction) {
+                    leftValue = Column.convertObject(
+                        ((SetFunction) leftValue).getValue(), dataType);
+                } else {
+                    leftValue = Column.convertObject(leftValue, dataType);
+                }
+
+                if (rightValue instanceof SetFunction) {
+                    rightValue = Column.convertObject(
+                        ((SetFunction) rightValue).getValue(), dataType);
+                } else {
+                    rightValue = Column.convertObject(rightValue, dataType);
+                }
+
+                Object[] objectPair = new Object[2];
+
+                objectPair[0] = leftValue;
+                objectPair[1] = rightValue;
+
+                return objectPair;
+
+            case FUNCTION :
+                return function.getAggregatedValue(currValue);
         }
 
         // handle comparisons
@@ -2610,63 +2644,53 @@ class Expression {
      *
      * @throws HsqlException
      */
-    Object getAggregatingValue(Object currValue) throws HsqlException {
+    Object updateAggregatingValue(Object currValue) throws HsqlException {
 
         if (!isAggregate()) {
             return getValue();
         }
 
-        if (aggregateSpec == AGGREGATE_SELF) {
-            if (currValue == null) {
-                currValue = new SetFunction(exprType, eArg.dataType,
-                                            isDistinctAggregate);
-            }
-
-            Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
-                                                       : eArg.getValue();
-
-            ((SetFunction) currValue).add(newValue);
-
-            return currValue;
-        }
-
-        Object leftCurrValue  = currValue;
-        Object rightCurrValue = currValue;
-
-        if (aggregateSpec == AGGREGATE_BOTH) {
-            if (currValue == null) {
-                currValue = new Object[2];
-            }
-
-            leftCurrValue  = ((Object[]) currValue)[0];
-            rightCurrValue = ((Object[]) currValue)[1];
-        }
-
-        if (eArg.isAggregate()) {
-            leftCurrValue = eArg.getAggregatingValue(leftCurrValue);
-        }
-
-        if (eArg2 != null && eArg2.isAggregate()) {
-            rightCurrValue = eArg2.getAggregatingValue(rightCurrValue);
-        }
-
         switch (aggregateSpec) {
 
+            case AGGREGATE_SELF : {
+                if (currValue == null) {
+                    currValue = new SetFunction(exprType, eArg.dataType,
+                                                isDistinctAggregate);
+                }
+
+                Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
+                                                           : eArg.getValue();
+
+                ((SetFunction) currValue).add(newValue);
+
+                return currValue;
+            }
+            case AGGREGATE_BOTH : {
+                Object[] valuePair = (Object[]) currValue;
+
+                if (valuePair == null) {
+                    valuePair = new Object[2];
+                }
+
+                valuePair[0] = eArg.updateAggregatingValue(valuePair[0]);
+                valuePair[1] = eArg2.updateAggregatingValue(valuePair[1]);
+
+                return valuePair;
+            }
             case AGGREGATE_LEFT :
-                currValue = leftCurrValue;
-                break;
+                return eArg.updateAggregatingValue(currValue);
 
             case AGGREGATE_RIGHT :
-                currValue = rightCurrValue;
-                break;
+                return eArg2.updateAggregatingValue(currValue);
 
-            case AGGREGATE_BOTH :
-                ((Object[]) currValue)[0] = leftCurrValue;
-                ((Object[]) currValue)[1] = rightCurrValue;
-                break;
+            case AGGREGATE_FUNCTION :
+                return function.updateAggregatingValue(currValue);
+
+            default :
+
+                // never gets here
+                return currValue;
         }
-
-        return currValue;
     }
 
     Object getValue() throws HsqlException {
@@ -2704,6 +2728,12 @@ class Expression {
                 } else {
                     return eArg2.eArg2.getValue(dataType);
                 }
+
+            // gets here from getAggregatedValue()
+            case ALTERNATIVE :
+                return new Object[] {
+                    eArg.getValue(dataType), eArg2.getValue(dataType)
+                };
         }
 
         // todo: simplify this

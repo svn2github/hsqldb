@@ -884,6 +884,7 @@ class Column {
                 } else {
                     return 0;
                 }
+            case Types.BOOLEAN :
             case Types.BIT : {
                 boolean boola = ((Boolean) a).booleanValue();
                 boolean boolb = ((Boolean) b).booleanValue();
@@ -1111,6 +1112,7 @@ class Column {
                     }
                     break;
 
+                case Types.BOOLEAN :
                 case Types.BIT :
                     if (o instanceof java.lang.Boolean) {
                         return (Boolean) o;
@@ -1312,6 +1314,7 @@ class Column {
             case Types.DECIMAL :
                 return new BigDecimal(s.trim());
 
+            case Types.BOOLEAN :
             case Types.BIT :
                 return org.hsqldb.lib.BooleanConverter.getBoolean(s);
 

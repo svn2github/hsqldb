@@ -474,7 +474,8 @@ class Select {
                 int colindex = i;
 
                 // fredt - when a union, use the visible select columns for sort comparison
-                if (sUnion != null) {
+                // also whenever a column alias is used
+                if (eColumn[i].orderColumnIndex != -1) {
                     colindex = eColumn[i].orderColumnIndex;
                 }
 
@@ -645,13 +646,13 @@ class Select {
                 // Get all other values
                 for (int i = 0; i < gResult.groupBegin; i++) {
                     row[i] = isAggregated && eColumn[i].isAggregate()
-                             ? eColumn[i].getAggregatingValue(row[i])
+                             ? eColumn[i].updateAggregatingValue(row[i])
                              : eColumn[i].getValue();
                 }
 
                 for (int i = gResult.groupEnd; i < len; i++) {
                     row[i] = isAggregated && eColumn[i].isAggregate()
-                             ? eColumn[i].getAggregatingValue(row[i])
+                             ? eColumn[i].updateAggregatingValue(row[i])
                              : eColumn[i].getValue();
                 }
 
