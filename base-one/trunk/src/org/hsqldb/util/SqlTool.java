@@ -34,6 +34,7 @@ package org.hsqldb.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.DatabaseMetaData;
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
@@ -41,7 +42,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.33 2004/06/06 18:59:03 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.34 2004/06/08 05:08:05 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +53,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.33 $
+ * @version $Revision: 1.34 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -64,8 +65,8 @@ public class SqlTool {
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.33 $".substring("$Revision: ".length(),
-                "$Revision: 1.33 $".length() - 2);
+        revnum = "$Revision: 1.34 $".substring("$Revision: ".length(),
+                "$Revision: 1.34 $".length() - 2);
     }
 
     /**
@@ -444,11 +445,19 @@ public class SqlTool {
             conn = DriverManager.getConnection(conData.url, conData.username,
                                                conData.password);
             conn.setAutoCommit(autoCommit);
+            DatabaseMetaData md = null;
+            if (interactive && (md = conn.getMetaData()) != null) {
+                System.out.println(
+                        "JDBC Connection established to a "
+                        + md.getDatabaseProductName() + " v. "
+                        + md.getDatabaseProductVersion() + " database as '"
+                        + md.getUserName() + "'.");
+            }
         } catch (Exception e) {
             //e.printStackTrace();
             // Let's not continue as if nothing is wrong.
             exitMain(10, "Failed to get a connection to " + conData.url
-                   + ".  " + e.getMessage());
+                   + " as " + conData.username + ".  " + e.getMessage());
             return;
         }
         File[] emptyFileArray      = {};
