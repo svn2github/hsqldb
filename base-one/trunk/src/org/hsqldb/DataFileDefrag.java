@@ -65,59 +65,65 @@ class DataFileDefrag {
 
         Trace.printSystemOut("Defrag Transfer begins");
 
-        HsqlArrayList rootsList = new HsqlArrayList();
-        HsqlArrayList tTable    = db.getTables();
+        HsqlArrayList    rootsList = new HsqlArrayList();
+        HsqlArrayList    tTable    = db.getTables();
+        RandomAccessFile dest      = null;
 
         try {
             FileOutputStream fos = new FileOutputStream(filename + ".new",
                 false);
 
             fileStreamOut = new BufferedOutputStream(fos, 1 << 12);
+
+            for (int i = 0; i < DataFileCache.INITIAL_FREE_POS; i++) {
+                fileStreamOut.write(0);
+            }
+
+            filePos = DataFileCache.INITIAL_FREE_POS;
+
+            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                Table t = (Table) tTable.get(i);
+
+                if (t.tableType == Table.CACHED_TABLE) {
+                    int[] rootsArray = writeTableToDataFile(t);
+
+                    rootsList.add(rootsArray);
+                } else {
+                    rootsList.add(null);
+                }
+
+                Trace.printSystemOut(t.getName().name + " complete");
+            }
+
+            fileStreamOut.close();
+
+            // write out the end of file position
+            dest = new RandomAccessFile(filename + ".new", "rw");
+
+            dest.seek(DataFileCache.FREE_POS_POS);
+            dest.writeInt((int) filePos);
+
+            for (int i = 0, size = rootsList.size(); i < size; i++) {
+                int[] roots = (int[]) rootsList.get(i);
+
+                if (roots != null) {
+                    Trace.printSystemOut(
+                        org.hsqldb.lib.StringUtil.getList(roots, ",", ""));
+                }
+            }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, filename + ".new");
-        }
-
-        for (int i = 0; i < DataFileCache.INITIAL_FREE_POS; i++) {
-            fileStreamOut.write(0);
-        }
-
-        filePos = DataFileCache.INITIAL_FREE_POS;
-
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.tableType == Table.CACHED_TABLE) {
-                int[] rootsArray = writeTableToDataFile(t);
-
-                rootsList.add(rootsArray);
-            } else {
-                rootsList.add(null);
+        } finally {
+            if (fileStreamOut != null) {
+                fileStreamOut.close();
             }
 
-            Trace.printSystemOut(t.getName().name + " complete");
-        }
-
-        fileStreamOut.flush();
-        fileStreamOut.close();
-
-        // write out the end of file position
-        RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
-
-        dest.seek(DataFileCache.FREE_POS_POS);
-        dest.writeInt((int) filePos);
-        dest.close();
-
-        for (int i = 0, size = rootsList.size(); i < size; i++) {
-            int[] roots = (int[]) rootsList.get(i);
-
-            if (roots != null) {
-                Trace.printSystemOut(org.hsqldb.lib.StringUtil.getList(roots,
-                        ",", ""));
+            if (dest != null) {
+                dest.close();
             }
         }
 
-        Trace.printSystemOut("Transfer complete: ", stopw.elapsedTime());
-
+        //Trace.printSystemOut("Transfer complete: ", stopw.elapsedTime());
         return rootsList;
     }
 

@@ -432,14 +432,22 @@ public class DataFileCache extends Cache {
 
     static void resetFreePos(String filename) {
 
+        ScaledRAFile raFile = null;
+
         try {
-            ScaledRAFile raFile = ScaledRAFile.newScaledRAFile(filename,
-                false, 1, ScaledRAFile.DATA_FILE_RAF);
+            raFile = ScaledRAFile.newScaledRAFile(filename, false, 1,
+                                                  ScaledRAFile.DATA_FILE_RAF);
 
             raFile.seek(Cache.FREE_POS_POS);
             raFile.writeInt(Cache.INITIAL_FREE_POS);
-            raFile.close();
         } catch (IOException e) {}
+        finally {
+            if (raFile != null) {
+                try {
+                    raFile.close();
+                } catch (IOException e) {}
+            }
+        }
     }
 
     /**

@@ -961,14 +961,17 @@ implements java.sql.PreparedStatement {
                     Trace.INVALID_JDBC_ARGUMENT, Trace.JDBC_NULL_STREAM));
         }
 
-        final HsqlByteArrayOutputStream out = new HsqlByteArrayOutputStream();
-        final int                       size = 2048;
-        final byte[]                    buff = new byte[size];
+        HsqlByteArrayOutputStream out = null;
 
         try {
+            out = new HsqlByteArrayOutputStream();
+
+            int    size = 2048;
+            byte[] buff = new byte[size];
+
             for (int left = length; left > 0; ) {
-                final int read = x.read(buff, 0, left > size ? size
-                                                             : left);
+                int read = x.read(buff, 0, left > size ? size
+                                                       : left);
 
                 if (read == -1) {
                     break;
@@ -978,20 +981,18 @@ implements java.sql.PreparedStatement {
 
                 left -= read;
             }
-        } catch (IOException e) {
-            try {
-                out.close();
-            } catch (IOException e1) {}
 
+            setParameter(parameterIndex, out.toByteArray());
+        } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e1) {}
+            }
         }
-
-        setParameter(parameterIndex, out.toByteArray());
-
-        try {
-            out.close();
-        } catch (IOException e1) {}
     }
 
     /**
@@ -1340,15 +1341,18 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
 
-        final java.io.InputStream       in       = x.getBinaryStream();
-        final HsqlByteArrayOutputStream out = new HsqlByteArrayOutputStream();
-        final int                       buffSize = 2048;
-        final byte[]                    buff     = new byte[buffSize];
+        HsqlByteArrayOutputStream out = null;
 
         try {
+            out = new HsqlByteArrayOutputStream();
+
+            java.io.InputStream in       = x.getBinaryStream();
+            int                 buffSize = 2048;
+            byte[]              buff     = new byte[buffSize];
+
             for (int left = (int) length; left > 0; ) {
-                final int read = in.read(buff, 0, left > buffSize ? buffSize
-                                                                  : left);
+                int read = in.read(buff, 0, left > buffSize ? buffSize
+                                                            : left);
 
                 if (read == -1) {
                     break;
@@ -1358,20 +1362,18 @@ implements java.sql.PreparedStatement {
 
                 left -= read;
             }
-        } catch (IOException e) {
-            try {
-                out.close();
-            } catch (IOException e1) {}
 
+            setParameter(i, out.toByteArray());
+        } catch (IOException e) {
             throw jdbcUtil.sqlException(Trace.INPUTSTREAM_ERROR,
                                         e.getMessage());
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e1) {}
+            }
         }
-
-        setParameter(i, out.toByteArray());
-
-        try {
-            out.close();
-        } catch (IOException e1) {}
     }
 
     /**
@@ -2086,13 +2088,11 @@ implements java.sql.PreparedStatement {
      */
     public void close() throws java.sql.SQLException {
 
-        HsqlException he;
-
         if (isClosed()) {
             return;
         }
 
-        he = null;
+        HsqlException he = null;
 
         try {
 

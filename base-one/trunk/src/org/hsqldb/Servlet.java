@@ -242,14 +242,17 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                        HttpServletResponse response)
                        throws IOException, ServletException {
 
-        try {
+        synchronized (this) {
+            DataInputStream     inStream  = null;
+            ServletOutputStream outStream = null;
 
-            // fredt@users - the servlet container, Resin does not return all
-            // the bytes with one call to input.read(b,0,len) when len > 8192
-            // bytes, the loop in the Result.read() method handles this
-            synchronized (this) {
-                DataInputStream inStream =
-                    new DataInputStream(request.getInputStream());
+            try {
+
+                // fredt@users - the servlet container, Resin does not return all
+                // the bytes with one call to input.read(b,0,len) when len > 8192
+                // bytes, the loop in the Result.read() method handles this
+                inStream = new DataInputStream(request.getInputStream());
+
                 Result resultIn = Result.read(rowIn, inStream);
                 Result resultOut;
 
@@ -279,16 +282,23 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                 response.setContentLength(rowOut.size());
 
                 //
-                ServletOutputStream outStream = response.getOutputStream();
+                outStream = response.getOutputStream();
 
                 outStream.write(rowOut.getOutputStream().getBuffer(), 0,
                                 rowOut.getOutputStream().size());
-                outStream.flush();
-                outStream.close();
 
                 iQueries++;
+            } catch (HsqlException e) {}
+            finally {
+                if (outStream != null) {
+                    outStream.close();
+                }
+
+                if (inStream != null) {
+                    inStream.close();
+                }
             }
-        } catch (HsqlException e) {}
+        }
 
         // Trace.printSystemOut("Queries processed: "+iQueries+"  \n");
     }

@@ -665,11 +665,10 @@ public class LockFile {
      */
     public static boolean isLocked(String path) {
 
-        LockFile        lf;
-        FileInputStream fis;
+        FileInputStream fis = null;
 
         try {
-            lf = LockFile.newLockFile(path);
+            LockFile lf = LockFile.newLockFile(path);
 
             lf.checkHeartbeat();
 
@@ -677,13 +676,19 @@ public class LockFile {
                 fis = new FileInputStream(lf.f);
 
                 fis.read();
-                fis.close();
             }
-        } catch (Exception e) {
-            return true;
+
+            return false;
+        } catch (Exception e) {}
+        finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (java.io.IOException ioe) {}
+            }
         }
 
-        return false;
+        return true;
     }
 
     /**

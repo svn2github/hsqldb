@@ -279,20 +279,26 @@ public class HsqlProperties {
             }
         }
 
-        FileOutputStream fos = new FileOutputStream(f);
+        FileOutputStream fos = null;
 
-        if (savePropsMethod == null) {
-            stringProps.save(fos, "HSQL database");
-        } else {
-            try {
-                savePropsMethod.invoke(stringProps, new Object[] {
-                    fos, "HSQL database"
-                });
-            } catch (java.lang.reflect.InvocationTargetException e) {}
-            catch (IllegalAccessException e) {}
+        try {
+            fos = new FileOutputStream(f);
+
+            if (savePropsMethod == null) {
+                stringProps.save(fos, "HSQL database");
+            } else {
+                try {
+                    savePropsMethod.invoke(stringProps, new Object[] {
+                        fos, "HSQL database"
+                    });
+                } catch (java.lang.reflect.InvocationTargetException e) {}
+                catch (IllegalAccessException e) {}
+            }
+        } finally {
+            if (fos != null) {
+                fos.close();
+            }
         }
-
-        fos.close();
     }
 
     /**

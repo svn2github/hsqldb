@@ -359,21 +359,26 @@ class DatabaseCommandInterpreter {
     private Result processScript() throws IOException, HsqlException {
 
         String           token = tokenizer.getString();
-        ScriptWriterText dsw;
+        ScriptWriterText dsw   = null;
 
-        if (tokenizer.wasValue()) {
-            token = (String) tokenizer.getAsValue();
-            dsw   = new ScriptWriterText(database, token, true, true);
+        try {
+            if (tokenizer.wasValue()) {
+                token = (String) tokenizer.getAsValue();
+                dsw   = new ScriptWriterText(database, token, true, true);
 
-            dsw.writeAll();
-            dsw.close();
+                dsw.writeAll();
 
-            return new Result(ResultConstants.UPDATECOUNT);
-        } else {
-            tokenizer.back();
-            session.checkAdmin();
+                return new Result(ResultConstants.UPDATECOUNT);
+            } else {
+                tokenizer.back();
+                session.checkAdmin();
 
-            return DatabaseScript.getScript(database, false);
+                return DatabaseScript.getScript(database, false);
+            }
+        } finally {
+            if (dsw != null) {
+                dsw.close();
+            }
         }
     }
 
