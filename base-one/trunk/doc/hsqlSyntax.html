@@ -242,12 +242,13 @@ shrinks the data file.
 </ul>
 <p><font face="Arial, Helvetica" size="2">Only one identity column is allowed in each table. <font face="Arial"> 
   Identity columns are autoincrement columns. They must be of  INTEGER or BIGINT type 
-  and are automatically primary key columns. Using the long SQL syntax the (START WITH &lt;n&gt;) clause specifies the first value that will be used.  The last inserted value into an identity 
+  and are automatically primary key columns (as a result, multi-column primary keys are not possible with an IDENTITY column present). Using the long SQL syntax the (START WITH &lt;n&gt;) clause specifies the first value that will be used.  The last inserted value into an identity 
   column for a connection is available using the function IDENTITY(), for example 
   (where Id is the identity column): <br>
   </font></font></p>
 <p><font face="Arial, Helvetica" size="2"><font face="Arial">
-  INSERT INTO Test (Id, Name) VALUES (NULL,'Test'); CALL IDENTITY();
+  INSERT INTO Test (Id, Name) VALUES (NULL,'Test');<br>
+   CALL IDENTITY();
 </font></font></p>
 <p><font face="Arial, Helvetica" size="2"> <font face="Arial">constraintDefinition: <br>
   [ CONSTRAINT &lt;name&gt; ] <br>
