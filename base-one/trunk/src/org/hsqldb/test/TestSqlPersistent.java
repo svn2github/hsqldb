@@ -335,7 +335,7 @@ public class TestSqlPersistent extends TestCase {
             sqlString = "SELECT * FROM TESTOBJECT WHERE STOREDOBJECT IN(?)";
             ps        = cConnection.prepareStatement(sqlString);
 
-            ps.setObject(1, (new Integer(1000)).toString());
+            ps.setObject(1, new Integer(1000));
 
             rs = ps.executeQuery();
 

@@ -67,6 +67,8 @@
 
 package org.hsqldb;
 
+import java.io.IOException;
+
 /**
  * Representation of instnace of BINARY field data
  *
@@ -77,7 +79,33 @@ package org.hsqldb;
  */
 public class Binary {
 
-    byte[] data;
+    private byte[] data;
 
-    public Binary() {}
+    /**
+     * This constructor is used only from classes implementing the JDBC
+     * interfaces.
+     */
+    Binary(byte[] data) {
+        this.data = data;
+    }
+
+    /**
+     * This constructor is used inside the engine when an already serialized
+     * Object is read from a file (.log, .script, .data or text table source).
+     *
+     * fromfile is a marker argument to fully distinguish this from the other
+     * constructor
+     */
+    Binary(byte[] data,
+               boolean fromfile) throws IOException {
+        this.data = data;
+    }
+
+    byte[] getBytes() {
+        return data;
+    }
+
+    int getBytesLength() {
+        return data.length;
+    }
 }

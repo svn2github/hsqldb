@@ -81,28 +81,38 @@ public class JavaObject {
 
     private byte[] data;
 
+    /**
+     * This constructor is used only from classes implementing the JDBC
+     * interfaces.
+     */
     JavaObject(Object o) {
         data = Column.serialize(o);
     }
 
     /**
-     * fromfile is a marker argument
+     * This constructor is used inside the engine when an already serialized
+     * Object is read from a file (.log, .script, .data or text table source).
+     *
+     * fromfile is a marker argument to fully distinguish this from the other
+     * constructor
      */
-
-    JavaObject(byte[] data, boolean fromfile) throws IOException, HsqlException{
-
-        data = data;
-
+    JavaObject(byte[] data,
+               boolean fromfile) throws IOException, HsqlException {
+        this.data = data;
     }
 
     byte[] getBytes() {
         return data;
     }
 
-    int getBytesLength(){
+    int getBytesLength() {
         return data.length;
     }
 
+    /**
+     * This method is called only from classes implementing the JDBC
+     * interfaces.
+     */
     Object getObject() throws IOException, HsqlException {
         return Column.deserialize(data);
     }
