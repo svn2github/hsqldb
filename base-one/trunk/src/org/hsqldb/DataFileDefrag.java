@@ -48,7 +48,7 @@ import org.hsqldb.lib.StopWatch;
  *  new.
  *
  * @version    1.7.2
- * @author     frest@users
+ * @author     fredt@users
  */
 class DataFileDefrag {
 
