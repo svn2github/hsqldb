@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.6 2004/06/16 18:08:05 unsaved Exp $
+$Id: readme.txt,v 1.7 2004/06/16 18:30:04 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -64,7 +64,7 @@ To run tests of specific SQL files against SqlTool without JUnit.
 
     The -v switch will tell you exactly which test failed, and gives 
     information to help debug your test file itself (e.g. it echos all of
-    the harness metadata values₎.
+    the harness metadata values and stdout and stderr in their entirety).
 
 
 To make a new SQL test file.
