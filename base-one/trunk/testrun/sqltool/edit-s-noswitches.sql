@@ -1,15 +1,16 @@
 /*
-    $Id: edit-s-noswitches.sql,v 1.1 2004/06/16 19:53:33 unsaved Exp $
+    $Id: edit-s-noswitches.sql,v 1.2 2004/06/16 20:06:36 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
     Tests:  Command-line editing with switch command.  No subst. switches.
 
     HARNESS_METADATA        BEGIN         
+    arg                 --noAutoFile
     requireStdoutRegex  (?m)\sMARK A\n.*Current Buffer:\nalpha beta gamma delta$
     requireStdoutRegex  (?m)\sMARK B\n.*Current Buffer:\nalphREPLbeta gamma delta$
     requireStdoutRegex  (?m)\sMARK C\n.*Current Buffer:\nalphREPLbeta g delta$
-    arg mem 
+    arg                 mem 
     HARNESS_METADATA        END       
 */
 

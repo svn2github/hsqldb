@@ -1,13 +1,14 @@
 /*
-    $Id: hist-recall-19.sql,v 1.1 2004/06/16 19:26:24 unsaved Exp $
+    $Id: hist-recall-runquery.sql,v 1.1 2004/06/16 19:36:07 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
     Tests:  Recall a SQL query from the SQL buffer and execute it.
 
     HARNESS_METADATA        BEGIN         
+    arg                 --noAutoFile
     requireStdoutRegex  (?mis)recalling and executing now:.*select \* from t\b.*^31$
-    arg mem 
+    arg                 mem 
     HARNESS_METADATA        END       
 */
 

@@ -1,5 +1,5 @@
 /*
-    $Id: hist-recall-19.sql,v 1.1 2004/06/16 19:26:24 unsaved Exp $
+    $Id: hist-recall-19.sql,v 1.2 2004/06/16 19:37:10 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -7,8 +7,9 @@
             (command -19, since the history begins at 0).
 
     HARNESS_METADATA        BEGIN         
+    arg                 --noAutoFile
     requireStdoutRegex  (?mi)restored following command.*\n\Qcommand 06\E$
-    arg mem 
+    arg                     mem 
     HARNESS_METADATA        END       
 */
 

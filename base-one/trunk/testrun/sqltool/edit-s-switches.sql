@@ -1,15 +1,16 @@
 /*
-    $Id$
+    $Id: edit-s-switches.sql,v 1.1 2004/06/16 20:07:55 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
     Tests:  Command-line editing with switch command.  With subst. switches.
 
     HARNESS_METADATA        BEGIN         
+    arg                 --noAutoFile
     requireStdoutRegex  (?m)\sMARK A\n.*Current Buffer:\nalpha beta gamma delta$
     requireStdoutRegex  (?m)\sMARK B\n.*Current Buffer:\nalphALTbeta gamma delta$
     requireStdoutRegex  (?m)\sMARK C\n.*Current Buffer:\nGLOBlphALTbetGLOB gGLOBmmGLOB deltGLOB$
-    arg mem 
+    arg                 mem 
     HARNESS_METADATA        END       
 */
 
