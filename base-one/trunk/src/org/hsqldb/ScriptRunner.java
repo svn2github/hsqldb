@@ -97,7 +97,7 @@ class ScriptRunner {
         HsqlHashMap sessionMap = new HsqlHashMap();
         Session     sysSession = database.sessionManager.getSysSession();
         Session     current    = sysSession;
-
+        database.setReferentialIntegrity(false);
         try {
             StopWatch sw = new StopWatch();
             DatabaseScriptReader scr =
@@ -148,5 +148,6 @@ class ScriptRunner {
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, scriptFilename + " " + e);
         }
+        database.setReferentialIntegrity(true);
     }
 }

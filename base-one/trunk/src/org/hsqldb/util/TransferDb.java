@@ -752,7 +752,7 @@ class TransferDb extends DataAccessPoint {
                 String name = Dest.helper.formatIdentifier(col.getString(4));
                 int    type        = col.getShort(5);
                 String source      = col.getString(6);
-                int    column_size = col.getShort(7);
+                int    column_size = col.getInt(7);
                 String DefaultVal  = col.getString(13);
                 boolean rsmdata_NoNulls =
                     (select_rsmdata.isNullable(colnum)

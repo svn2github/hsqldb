@@ -4984,4 +4984,36 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
         vParameter.setElementAt(s, --i);
     }
+
+    /**
+     * This method should always throw if called for a PreparedStatement.
+     */
+    public void addBatch(String sql) throws java.sql.SQLException {
+        throw jdbcDriver.notSupported;
+    }
+
+    /**
+     * This method should always throw if called for a PreparedStatement.
+     */
+    public ResultSet executeQuery(String sql) throws java.sql.SQLException {
+        throw jdbcDriver.notSupported;
+    }
+
+    /**
+     * This method should always throw if called for a PreparedStatement.
+     */
+    public boolean execute(String sql) throws java.sql.SQLException {
+        throw jdbcDriver.notSupported;
+    }
+
+    /**
+     * This method should always throw if called for a PreparedStatement.
+     */
+    public int executeUpdate(String sql) throws java.sql.SQLException {
+        throw jdbcDriver.notSupported;
+    }
+
+    public String toString() {
+        return this.build();
+    }
 }

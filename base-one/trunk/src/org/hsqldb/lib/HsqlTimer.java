@@ -123,7 +123,7 @@ public class HsqlTimer implements ObjectComparator {
         if (taskRunnerThread == null) {
             taskRunnerThread = threadFactory.newThread(taskRunner);
 
-            //taskRunnerThread.setDaemon(true);
+            taskRunnerThread.setDaemon(true);
             taskRunnerThread.start();
         } else {
             notify();

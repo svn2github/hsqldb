@@ -164,6 +164,13 @@ public class HsqlArrayHeap implements HsqlHeap {
 
         count--;
 
+        // CHANGED:  ****short-circuit****
+        if (count == 0) {
+            heap[0] = null;
+
+            return ro;
+        }
+
         co          = heap[count];
         heap[count] = null;
 

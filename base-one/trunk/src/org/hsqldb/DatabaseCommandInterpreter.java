@@ -269,12 +269,12 @@ class DatabaseCommandInterpreter implements DITypes {
                     case Token.SEMICOLON :
                         break;
 
+                    case Token.EXPLAIN :
+                        result = processExplainPlan();
+                        break;
+
                     default :
-                        if ("EXPLAIN".equals(sToken)) {
-                            result = processExplainPlan();
-                        } else {
-                            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                        }
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
                 }
 
                 if (session.getScripting()) {
@@ -1680,6 +1680,7 @@ class DatabaseCommandInterpreter implements DITypes {
                 break;
             }
             case Token.MAXROWS : {
+                session.setScripting(false);
                 int i = Integer.parseInt(tokenizer.getString());
 
                 session.setMaxRows(i);
@@ -1752,6 +1753,7 @@ class DatabaseCommandInterpreter implements DITypes {
             case Token.REFERENTIAL_INTEGRITY : {
                 session.checkAdmin();
                 session.checkDDLWrite();
+                session.setScripting(false);
                 database.setReferentialIntegrity(processTrueOrFalse());
 
                 break;
@@ -2449,8 +2451,8 @@ class DatabaseCommandInterpreter implements DITypes {
         String            line;
         LineNumberReader  lnr;
 
-        tokenizer.getThis("PLAN");
-        tokenizer.getThis("FOR");
+        tokenizer.getThis(Token.T_PLAN);
+        tokenizer.getThis(Token.T_FOR);
 
         parser = new Parser(database, tokenizer, session);
         token  = tokenizer.getString();
@@ -2529,22 +2531,22 @@ class DatabaseCommandInterpreter implements DITypes {
         return classLoader == null ? Class.forName(fqn)
                                    : classLoader.loadClass(fqn);
     }
-    
+
     private static boolean isCompile() {
         try {
             return !Boolean.getBoolean("org.hsqldb.Parser.shadow");
         } catch (Exception e) {}
         return true;
-    }  
-    
+    }
+
     // -Dorg.hsqldb.Parser.shadow=true|false
     static final boolean compile = isCompile();
 
     static final Result emptyResult = new Result();
-        
+
     TableWorks        tableWorks = new TableWorks(null);
     Tokenizer         tokenizer  = new Tokenizer();
-    CompiledStatement cs         = new CompiledStatement();    
+    CompiledStatement cs         = new CompiledStatement();
 
     private static class TempConstraint {
 

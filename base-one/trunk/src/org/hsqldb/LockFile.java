@@ -850,7 +850,7 @@ public class LockFile {
 //            Trace.printSystemOut(super.toString() + ": " + o);
 //        }
         // just for debugging until released
-        System.out.println(super.toString() + ": " + o);
+//        System.out.println(super.toString() + ": " + o);
     }
 
     /**

@@ -114,6 +114,10 @@ public class HsqlProperties {
         return setProperty(key, value);
     }
 
+    public Properties getProperties(){
+        return stringProps;
+    }
+
     public String getProperty(String key) {
         return stringProps.getProperty(key);
     }
@@ -170,15 +174,19 @@ public class HsqlProperties {
         stringProps.remove(key);
     }
 
-    public void addProperties(HsqlProperties props) {
+    public void addProperties(Properties props) {
 
-        Enumeration keys = props.stringProps.propertyNames();
+        Enumeration keys = props.keys();
 
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
 
-            this.stringProps.put(key, props.stringProps.get(key));
+            this.stringProps.put(key, props.get(key));
         }
+    }
+
+    public void addProperties(HsqlProperties props) {
+        addProperties(props.stringProps);
     }
 
     public boolean checkFileExists() {

@@ -78,6 +78,7 @@ import java.util.Properties;
 // new version numbering scheme
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
+// fredt@users 20030528 - patch 1.7.2 suggested by Gerhard Hiller - support for properties in URL
 
 /**
  *  Each JDBC driver must supply a class that implements the Driver
@@ -175,6 +176,21 @@ public class jdbcDriver implements Driver {
         }
 
         String s = url.substring(sStartURL.length());
+
+        if (s.indexOf(';') > -1) {
+            String additionalProperties = s.substring(s.indexOf(';') + 1,
+                s.length());
+
+            s = s.substring(0, s.indexOf(';'));
+
+            HsqlProperties props =
+                HsqlProperties.delimitedArgPairsToProps(additionalProperties,
+                    "=", ";", null);
+
+            props.addProperties(info);
+
+            info = props.getProperties();
+        }
 
         return new jdbcConnection(s, info);
     }

@@ -117,8 +117,11 @@ class Logger {
      *      the specified files are in use by another process
      */
     void openLog(Database db, String name) throws SQLException {
+
         aquireLock(name);
+
         lLog = new Log(db, name);
+
         lLog.open();
     }
 
@@ -326,6 +329,7 @@ class Logger {
     }
 
     void aquireLock(String name) throws SQLException {
+
         boolean locked;
         String  msg;
 
@@ -336,6 +340,7 @@ class Logger {
         try {
             locked = lf.tryLock();
         } catch (Exception e) {
+
             // e.printStackTrace();
             msg = e.toString();
         }
@@ -346,6 +351,7 @@ class Logger {
     }
 
     void releaseLock() {
+
         try {
             if (lf != null) {
                 lf.tryRelease();
@@ -355,6 +361,7 @@ class Logger {
                 Trace.printSystemOut(e.toString());
             }
         }
+
         lf = null;
     }
 }

@@ -290,7 +290,7 @@ class Parser {
 
         TableFilter filter = new TableFilter(table, null, false);
 
-        tTokenizer.getThis("SET");
+        tTokenizer.getThis(Token.T_SET);
 
         HsqlArrayList vColumn = new HsqlArrayList();
         HsqlArrayList eColumn = new HsqlArrayList();
@@ -304,7 +304,7 @@ class Parser {
             int i = table.getColumnNr(tTokenizer.getString());
 
             vColumn.add(new Integer(i));
-            tTokenizer.getThis("=");
+            tTokenizer.getThis(Token.T_EQUALS);
 
             Expression e = parseExpression();
 
@@ -312,11 +312,11 @@ class Parser {
             eColumn.add(e);
 
             token = tTokenizer.getString();
-        } while (token.equals(","));
+        } while (token.equals(Token.T_COMMA));
 
         Expression eCondition = null;
 
-        if (token.equals("WHERE")) {
+        if (token.equals(Token.T_WHERE)) {
             eCondition = parseExpression();
 
             eCondition.resolve(filter);
@@ -419,7 +419,7 @@ class Parser {
      */
     Result processDelete() throws SQLException {
 
-        tTokenizer.getThis("FROM");
+        tTokenizer.getThis(Token.T_FROM);
 
         String token = tTokenizer.getString();
 
@@ -435,7 +435,7 @@ class Parser {
 
         Expression eCondition = null;
 
-        if (token.equals("WHERE")) {
+        if (token.equals(Token.T_WHERE)) {
             eCondition = parseExpression();
 
             eCondition.resolve(filter);
@@ -477,7 +477,7 @@ class Parser {
      */
     Result processInsert() throws SQLException {
 
-        tTokenizer.getThis("INTO");
+        tTokenizer.getThis(Token.T_INTO);
 
         String token = tTokenizer.getString();
 
@@ -494,7 +494,7 @@ class Parser {
         int           columnmap[]    = t.getColumnMap();
         int           len            = t.getColumnCount();
 
-        if (token.equals("(")) {
+        if (token.equals(Token.T_OPENBRACKET)) {
             colnames = getColumnNames();
 
             if (colnames.size() > len) {
@@ -517,14 +517,14 @@ class Parser {
 
         int count = 0;
 
-        if (token.equals("VALUES")) {
+        if (token.equals(Token.T_VALUES)) {
             Object row[] = t.getNewRow(checkcolumns);
 
             getColumnValues(t, row, columnmap, len);
             t.insert(row, cSession);
 
             count = 1;
-        } else if (token.equals("SELECT")) {
+        } else if (token.equals(Token.T_SELECT)) {
             int[]  columntypes = t.getColumnTypes();
             Result result      = processSelect();
             Record r           = result.rRoot;
@@ -587,11 +587,11 @@ class Parser {
 
             token = tTokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 break;
             }
 
@@ -609,7 +609,7 @@ class Parser {
         String  token;
         int[]   columntypes = t.getColumnTypes();
 
-        tTokenizer.getThis("(");
+        tTokenizer.getThis(Token.T_OPENBRACKET);
 
         for (; i < len; i++) {
             int colindex;
@@ -618,11 +618,11 @@ class Parser {
             row[colindex] = getValue(columntypes[colindex]);
             token         = tTokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 enclosed = true;
 
                 break;
@@ -656,7 +656,7 @@ class Parser {
 // fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
         String token = tTokenizer.getString();
 
-        if (token.equals("LIMIT")) {
+        if (token.equals(Token.T_LIMIT)) {
             String limStart = tTokenizer.getString();
             String limEnd   = tTokenizer.getString();
 
@@ -670,7 +670,7 @@ class Parser {
             }
 
             token = tTokenizer.getString();
-        } else if (token.equals("TOP")) {
+        } else if (token.equals(Token.T_TOP)) {
             String limEnd = tTokenizer.getString();
 
             try {
@@ -685,7 +685,7 @@ class Parser {
             token = tTokenizer.getString();
         }
 
-        if (token.equals("DISTINCT")) {
+        if (token.equals(Token.T_DISTINCT)) {
             select.isDistinctSelect = true;
         } else {
             tTokenizer.back();
@@ -699,7 +699,7 @@ class Parser {
 
             token = tTokenizer.getString();
 
-            if (token.equals("AS")) {
+            if (token.equals(Token.T_AS)) {
                 e.setAlias(tTokenizer.getName(),
                            tTokenizer.wasQuotedIdentifier());
 
@@ -711,24 +711,24 @@ class Parser {
             }
 
             vcolumn.add(e);
-        } while (token.equals(","));
+        } while (token.equals(Token.T_COMMA));
 
-        if (token.equals("INTO")) {
+        if (token.equals(Token.T_INTO)) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             token = tTokenizer.getString();
 
-            if (token.equals("CACHED")) {
+            if (token.equals(Token.T_CACHED)) {
                 select.intoType = Table.CACHED_TABLE;
                 select.sIntoTable =
                     new HsqlName(tTokenizer.getString(),
                                  tTokenizer.wasQuotedIdentifier());
-            } else if (token.equals("TEMP")) {
+            } else if (token.equals(Token.T_TEMP)) {
                 select.intoType = Table.TEMP_TABLE;
                 select.sIntoTable =
                     new HsqlName(tTokenizer.getString(),
                                  tTokenizer.wasQuotedIdentifier());
-            } else if (token.equals("TEXT")) {
+            } else if (token.equals(Token.T_TEXT)) {
                 select.intoType = Table.TEXT_TABLE;
                 select.sIntoTable =
                     new HsqlName(tTokenizer.getString(),
@@ -741,7 +741,7 @@ class Parser {
             token = tTokenizer.getString();
         }
 
-        if (!token.equals("FROM")) {
+        if (!token.equals(Token.T_FROM)) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
@@ -755,17 +755,17 @@ class Parser {
         while (true) {
             token = tTokenizer.getString();
 
-            if (token.equals("LEFT")) {
+            if (token.equals(Token.T_LEFT)) {
                 token = tTokenizer.getString();
 
-                if (token.equals("OUTER")) {
+                if (token.equals(Token.T_OUTER)) {
                     token = tTokenizer.getString();
                 }
 
-                Trace.check(token.equals("JOIN"), Trace.UNEXPECTED_TOKEN,
+                Trace.check(token.equals(Token.T_JOIN), Trace.UNEXPECTED_TOKEN,
                             token);
                 vfilter.add(parseTableFilter(true));
-                tTokenizer.getThis("ON");
+                tTokenizer.getThis(Token.T_ON);
 
                 condition = addCondition(condition, parseExpression());
 
@@ -773,13 +773,13 @@ class Parser {
                 if (!condition.canBeInOuterJoin()) {
                     throw Trace.error(Trace.OUTER_JOIN_CONDITION);
                 }
-            } else if (token.equals("INNER")) {
-                tTokenizer.getThis("JOIN");
+            } else if (token.equals(Token.T_INNER)) {
+                tTokenizer.getThis(Token.T_JOIN);
                 vfilter.add(parseTableFilter(false));
-                tTokenizer.getThis("ON");
+                tTokenizer.getThis(Token.T_ON);
 
                 condition = addCondition(condition, parseExpression());
-            } else if (token.equals(",")) {
+            } else if (token.equals(Token.T_COMMA)) {
                 vfilter.add(parseTableFilter(false));
             } else {
                 break;
@@ -852,7 +852,7 @@ class Parser {
         // where
         token = tTokenizer.getString();
 
-        if (token.equals("WHERE")) {
+        if (token.equals(Token.T_WHERE)) {
             condition = addCondition(condition, parseExpression());
             token     = tTokenizer.getString();
         }
@@ -861,8 +861,8 @@ class Parser {
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to support GROUP BY with more than one column
-        if (token.equals("GROUP")) {
-            tTokenizer.getThis("BY");
+        if (token.equals(Token.T_GROUP)) {
+            tTokenizer.getThis(Token.T_BY);
 
             len = 0;
 
@@ -877,13 +877,13 @@ class Parser {
                 token = tTokenizer.getString();
 
                 len++;
-            } while (token.equals(","));
+            } while (token.equals(Token.T_COMMA));
 
             select.iGroupLen = len;
         }
 
         // tony_lai@users - having support
-        if (token.equals("HAVING")) {
+        if (token.equals(Token.T_HAVING)) {
             select.iHavingIndex    = vcolumn.size();
             select.havingCondition = parseExpression();
             token                  = tTokenizer.getString();
@@ -891,8 +891,8 @@ class Parser {
             vcolumn.add(select.havingCondition);
         }
 
-        if (token.equals("ORDER")) {
-            tTokenizer.getThis("BY");
+        if (token.equals(Token.T_ORDER)) {
+            tTokenizer.getThis(Token.T_BY);
 
             len = 0;
 
@@ -902,18 +902,18 @@ class Parser {
                 e     = checkOrderByColumns(e, vcolumn);
                 token = tTokenizer.getString();
 
-                if (token.equals("DESC")) {
+                if (token.equals(Token.T_DESC)) {
                     e.setDescending();
 
                     token = tTokenizer.getString();
-                } else if (token.equals("ASC")) {
+                } else if (token.equals(Token.T_ASC)) {
                     token = tTokenizer.getString();
                 }
 
                 vcolumn.add(e);
 
                 len++;
-            } while (token.equals(","));
+            } while (token.equals(Token.T_COMMA));
 
             select.iOrderLen = len;
         }
@@ -923,10 +923,10 @@ class Parser {
 
         vcolumn.toArray(select.eColumn);
 
-        if (token.equals("UNION")) {
+        if (token.equals(Token.T_UNION)) {
             token = tTokenizer.getString();
 
-            if (token.equals("ALL")) {
+            if (token.equals(Token.T_ALL)) {
                 select.iUnionType = Select.UNIONALL;
             } else {
                 select.iUnionType = Select.UNION;
@@ -934,16 +934,16 @@ class Parser {
                 tTokenizer.back();
             }
 
-            tTokenizer.getThis("SELECT");
+            tTokenizer.getThis(Token.T_SELECT);
 
             select.sUnion = parseSelect();
-        } else if (token.equals("INTERSECT")) {
-            tTokenizer.getThis("SELECT");
+        } else if (token.equals(Token.T_INTERSECT)) {
+            tTokenizer.getThis(Token.T_SELECT);
 
             select.iUnionType = Select.INTERSECT;
             select.sUnion     = parseSelect();
-        } else if (token.equals("EXCEPT") || token.equals("MINUS")) {
-            tTokenizer.getThis("SELECT");
+        } else if (token.equals(Token.T_EXCEPT) || token.equals(Token.T_MINUS)) {
+            tTokenizer.getThis(Token.T_SELECT);
 
             select.iUnionType = Select.EXCEPT;
             select.sUnion     = parseSelect();
@@ -1012,10 +1012,10 @@ class Parser {
         String token = tTokenizer.getString();
         Table  t     = null;
         Select s     = null;
-        TableFilter  tf;        
+        TableFilter  tf;
 
-        if (token.equals("(")) {
-            tTokenizer.getThis("SELECT");
+        if (token.equals(Token.T_OPENBRACKET)) {
+            tTokenizer.getThis(Token.T_SELECT);
 
             s        = parseSelect();
             Result r = s.getResult(0);
@@ -1024,7 +1024,7 @@ class Parser {
             t = new Table(dDatabase, new HsqlName("SYSTEM_SUBQUERY", false),
                           Table.SYSTEM_TABLE, 0);
 
-            tTokenizer.getThis(")");
+            tTokenizer.getThis(Token.T_CLOSEBRACKET);
             t.addColumns(r);
             t.createPrimaryKey();
 
@@ -1047,7 +1047,7 @@ class Parser {
 
                 token = tTokenizer.getString();
 
-                if (token.equals("AS")) {
+                if (token.equals(Token.T_AS)) {
                     Viewname  = tTokenizer.getName();
                     NewCurPos = tTokenizer.getPosition();
                 } else if (tTokenizer.wasName()) {
@@ -1072,7 +1072,7 @@ class Parser {
                 sFromView.append(sRight);
                 tTokenizer.setString(sFromView.toString(),
                                      CurrentPos - TokenLength + 1);
-                tTokenizer.getThis("SELECT");
+                tTokenizer.getThis(Token.T_SELECT);
 
                 s        = parseSelect();
                 Result r = s.getResult(0);
@@ -1082,7 +1082,7 @@ class Parser {
                               new HsqlName("SYSTEM_SUBQUERY", false),
                               Table.SYSTEM_TABLE, 0);
 
-                tTokenizer.getThis(")");
+                tTokenizer.getThis(Token.T_CLOSEBRACKET);
                 t.addColumns(r);
                 t.createPrimaryKey();
 
@@ -1095,7 +1095,7 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        if (token.equals("AS")) {
+        if (token.equals(Token.T_AS)) {
             sAlias = tTokenizer.getName();
         } else if (tTokenizer.wasName()) {
             sAlias = token;
@@ -1166,7 +1166,7 @@ class Parser {
 
         read();
 
-        if (tTokenizer.getString().equals("DISTINCT")) {
+        if (tTokenizer.getString().equals(Token.T_DISTINCT)) {
             distinct = true;
         } else {
             tTokenizer.back();
@@ -1279,7 +1279,7 @@ class Parser {
                         Expression b      = readConcat();
                         char       escape = 0;
 
-                        if (sToken.equals("ESCAPE")) {
+                        if (sToken.equals(Token.T_ESCAPE)) {
                             read();
 
                             Expression c = readTerm();
@@ -1634,7 +1634,7 @@ class Parser {
 
                 r = readOr();
 
-                Trace.check(sToken.equals("AS"), Trace.UNEXPECTED_TOKEN,
+                Trace.check(sToken.equals(Token.T_AS), Trace.UNEXPECTED_TOKEN,
                             sToken);
                 read();
 
@@ -1685,7 +1685,7 @@ class Parser {
             sTable = tTokenizer.getLongNameFirst();
             sToken = tTokenizer.getLongNameLast();
 
-            if (sToken.equals("*")) {
+            if (sToken.equals(Token.T_ASTERISK)) {
                 iToken = Expression.MULTIPLY;
             } else {
                 iToken = Expression.COLUMN;
@@ -1743,7 +1743,7 @@ class Parser {
                 case Expression.IS :
                     sToken = tTokenizer.getString();
 
-                    if (sToken.equals("NOT")) {
+                    if (sToken.equals(Token.T_NOT)) {
                         iToken = Expression.NOT_EQUAL;
                     } else {
                         iToken = Expression.EQUAL;
@@ -1819,15 +1819,15 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        if ("CALL".equals(token)) {
+        if (Token.T_CALL.equals(token)) {
             return compileCallStatement(cs);
-        } else if ("DELETE".equals(token)) {
+        } else if (Token.T_DELETE.equals(token)) {
             return compileDeleteStatement(cs);
-        } else if ("INSERT".equals(token)) {
+        } else if (Token.T_INSERT.equals(token)) {
             return compileInsertStatement(cs);
-        } else if ("UPDATE".equals(token)) {
+        } else if (Token.T_UPDATE.equals(token)) {
             return compileUpdateStatement(cs);
-        } else if ("SELECT".equals(token)) {
+        } else if (Token.T_SELECT.equals(token)) {
             return compileSelectStatement(cs);
         } else {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -1866,7 +1866,7 @@ class Parser {
         Expression condition;
 
         clearParameters();
-        tTokenizer.getThis("FROM");
+        tTokenizer.getThis(Token.T_FROM);
 
         token = tTokenizer.getString();
 
@@ -1879,7 +1879,7 @@ class Parser {
         token     = tTokenizer.getString();
         condition = null;
 
-        if (token.equals("WHERE")) {
+        if (token.equals(Token.T_WHERE)) {
             condition = parseExpression();
         } else {
             tTokenizer.back();
@@ -1905,7 +1905,7 @@ class Parser {
         enclosed = false;
         i        = 0;
 
-        tTokenizer.getThis("(");
+        tTokenizer.getThis(Token.T_OPENBRACKET);
 
         for (; i < len; i++) {
             cve = parseExpression();
@@ -1915,11 +1915,11 @@ class Parser {
             acve[i] = cve;
             token   = tTokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 enclosed = true;
 
                 break;
@@ -1950,7 +1950,7 @@ class Parser {
         Select        select;
 
         clearParameters();
-        tTokenizer.getThis("INTO");
+        tTokenizer.getThis(Token.T_INTO);
 
         token = tTokenizer.getString();
 
@@ -1966,7 +1966,7 @@ class Parser {
         cm     = t.getColumnMap();
         len    = t.getColumnCount();
 
-        if (token.equals("(")) {
+        if (token.equals(Token.T_OPENBRACKET)) {
             cNames = getColumnNames();
 
             if (cNames.size() > len) {
@@ -1986,7 +1986,7 @@ class Parser {
             token = tTokenizer.getString();
         }
 
-        if (token.equals("VALUES")) {
+        if (token.equals(Token.T_VALUES)) {
             acve = new Expression[len];
 
             getColumnValueExpressions(t, acve, len);
@@ -1998,7 +1998,7 @@ class Parser {
             cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
 
             return cs;
-        } else if (token.equals("SELECT")) {
+        } else if (token.equals(Token.T_SELECT)) {
             select = parseSelect();
 
             if (cs == null) {
@@ -2059,7 +2059,7 @@ class Parser {
         table = dDatabase.getTable(token, cSession);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
-        tTokenizer.getThis("SET");
+        tTokenizer.getThis(Token.T_SET);
 
         ciList  = new HsqlArrayList();
         cveList = new HsqlArrayList();
@@ -2072,7 +2072,7 @@ class Parser {
             int ci = table.getColumnNr(tTokenizer.getString());
 
             ciList.add(new Integer(ci));
-            tTokenizer.getThis("=");
+            tTokenizer.getThis(Token.T_EQUALS);
 
             cve = parseExpression();
 
@@ -2081,11 +2081,11 @@ class Parser {
             cveList.add(cve);
 
             token = tTokenizer.getString();
-        } while (token.equals(","));
+        } while (token.equals(Token.T_COMMA));
 
         condition = null;
 
-        if (token.equals("WHERE")) {
+        if (token.equals(Token.T_WHERE)) {
             condition = parseExpression();
 
             // later.
