@@ -191,7 +191,6 @@ class Row {
 
         Record.memoryRecords++;
 
-        oData        = null;
         nPrimaryNode = null;
     }
 

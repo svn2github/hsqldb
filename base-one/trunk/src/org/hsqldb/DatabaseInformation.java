@@ -353,13 +353,13 @@ class DatabaseInformation {
      * the execution context indicated by the session argument as well as the
      * current value of <code>withContent</code>. <p>
      *
-     * @param name the name of the table to produce
      * @param session the context in which to produce the table
+     * @param name the name of the table to produce
      * @throws HsqlException if a database access error occurs
      * @return a table corresponding to the name and session arguments, or
      *      <code>null</code> if there is no such table to be produced
      */
-    Table getSystemTable(String name, Session session) throws HsqlException {
+    Table getSystemTable(Session session, String name) throws HsqlException {
         return null;
     }
 

@@ -144,6 +144,12 @@ final class CompiledStatementExecutor {
     }
 
     /**
+     *  todo - fredt - NOW
+     *  JavaObject is a wrapper for Serializable. Neither Result nor
+     *  jdbcResultSet is serialzable. The usage in this method will fail.
+     */
+
+    /**
      * Executes a CALL statement.  It is assumed that the argument is
      * of the correct type.
      *
@@ -159,7 +165,9 @@ final class CompiledStatementExecutor {
         Result     r;
 
         if (o instanceof JavaObject) {    // then it might wrap a Result
-            Object wrapped = ((JavaObject) o).getObjectNoDeserialize();
+
+            // fredt - note todo above
+            Object wrapped = ((JavaObject) o).getObject();
 
             if (wrapped instanceof Result) {
                 return (Result) wrapped;
@@ -207,7 +215,7 @@ final class CompiledStatementExecutor {
                     del.add(filter.currentRow);
                 } while (filter.next());
 
-                count = table.delete(del, session);
+                count = table.delete(session, del);
             } else {
                 do {
                     if (c.test(session)) {
@@ -215,7 +223,7 @@ final class CompiledStatementExecutor {
                     }
                 } while (filter.next());
 
-                count = table.delete(del, session);
+                count = table.delete(session, del);
             }
         }
 
@@ -251,7 +259,7 @@ final class CompiledStatementExecutor {
 
         try {
             while (rc != null) {
-                row = t.getNewRow(session, ccl);
+                row = t.getNewRowData(session, ccl);
 
                 for (int i = 0; i < len; i++) {
                     int j = cm[i];
@@ -267,7 +275,7 @@ final class CompiledStatementExecutor {
                 rc      = rc.next;
             }
 
-            count   = t.insert(r, session);
+            count   = t.insert(session, r);
             success = true;
         } finally {
             session.endNestedTransaction(!success);
@@ -290,7 +298,7 @@ final class CompiledStatementExecutor {
     throws HsqlException {
 
         Table        t    = cs.targetTable;
-        Object[]     row  = t.getNewRow(session, cs.checkColumns);
+        Object[]     row  = t.getNewRowData(session, cs.checkColumns);
         int[]        cm   = cs.columnMap;        // column map
         Expression[] acve = cs.columnValues;
         Expression   cve;
@@ -304,7 +312,7 @@ final class CompiledStatementExecutor {
             row[ci] = cve.getValue(ct[ci], session);
         }
 
-        t.insert(row, session);
+        t.insert(session, row);
 
         updateResult.iUpdateCount = 1;
 
@@ -356,7 +364,7 @@ final class CompiledStatementExecutor {
             Expression[]   colvalues = cs.columnValues;
             Expression     condition = cs.condition;    // update condition
             int            len       = colvalues.length;
-            HashMappedList del       = new HashMappedList();
+            HashMappedList rowset    = new HashMappedList();
             int            size      = table.getColumnCount();
             int[]          coltypes  = table.getColumnTypes();
             boolean        success   = false;
@@ -376,7 +384,7 @@ final class CompiledStatementExecutor {
                                                            session);
                         }
 
-                        del.add(row, ni);
+                        rowset.add(row, ni);
                     } catch (HsqlInternalException e) {}
                 }
             } while (filter.next());
@@ -384,7 +392,7 @@ final class CompiledStatementExecutor {
             session.beginNestedTransaction();
 
             try {
-                count   = table.update(del, colmap, session);
+                count   = table.update(session, rowset, colmap);
                 success = true;
             } finally {
 

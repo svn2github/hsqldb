@@ -281,18 +281,18 @@ class Parser {
                     s.exprColumns[i].setAlias(name.name, name.isNameQuoted);
                 }
             } else {
-            for (int i = 0; i < s.iResultLen; i++) {
-                String colname = s.exprColumns[i].getAlias();
+                for (int i = 0; i < s.iResultLen; i++) {
+                    String colname = s.exprColumns[i].getAlias();
 
-                if (colname == null || colname.length() == 0) {
+                    if (colname == null || colname.length() == 0) {
 
-                    // fredt - this does not guarantee the uniqueness of column
-                    // names but addColumns() will throw if names are not unique.
-                    colname = "COL_" + String.valueOf(i + 1);
+                        // fredt - this does not guarantee the uniqueness of column
+                        // names but addColumns() will throw if names are not unique.
+                        colname = "COL_" + String.valueOf(i + 1);
 
-                    s.exprColumns[i].setAlias(colname, false);
+                        s.exprColumns[i].setAlias(colname, false);
+                    }
                 }
-            }
             }
 
             table.addColumns(s);
@@ -302,7 +302,8 @@ class Parser {
 
             table.createPrimaryKey(pcol);
 
-            sq.table = table;
+            sq.table         = table;
+            sq.isInPredicate = predicateType == Expression.IN;
 
             subQueryList.add(sq);
         } else {
@@ -899,7 +900,7 @@ class Parser {
 
             t = sq.table;
         } else {
-            t = database.getTable(token, session);
+            t = database.getTable(session, token);
 
             session.check(t.getName(), UserManager.SELECT);
 
@@ -1086,7 +1087,7 @@ class Parser {
 
                 SubQuery sq = parseSubquery(null, null, false,
                                             Expression.EXISTS);
-                Select   select = sq.select;
+                Select select = sq.select;
                 Expression s = new Expression(select, sq.table,
                                               !sq.isResolved);
 
@@ -2222,7 +2223,7 @@ class Parser {
         tokenizer.getThis(Token.T_FROM);
 
         token = tokenizer.getString();
-        table = database.getTable(token, session);
+        table = database.getTable(session, token);
 
         checkTableWriteAccess(table, UserManager.DELETE);
 
@@ -2297,7 +2298,7 @@ class Parser {
         int[]         columnMap;
         int           len;
         String        token = tokenizer.getString();
-        Table         table = database.getTable(token, session);
+        Table         table = database.getTable(session, token);
 
         checkTableWriteAccess(table, UserManager.INSERT);
 
@@ -2375,7 +2376,7 @@ class Parser {
 
             intoName = select.sIntoTable.name;
 
-            if (database.findUserTable(intoName, session) != null) {
+            if (database.findUserTable(session, intoName) != null) {
                 throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
             }
         }
@@ -2404,7 +2405,7 @@ class Parser {
         clearParameters();
 
         token = tokenizer.getString();
-        table = database.getTable(token, session);
+        table = database.getTable(session, token);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
 

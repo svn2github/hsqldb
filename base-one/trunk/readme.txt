@@ -2,11 +2,13 @@ Readme File
 
 Leading to final Release Candidate
 
-More tests are required to verify the improvements. Please perform tests and report any 
-issues. Testers are needed for build scripts with different JVM's using both ANT and batch 
-builds.
+More tests are required to verify the improvements. Please perform tests and 
+report any issues. Testers are needed for build scripts with different JVM's 
+using both ANT and batch builds.
 
-2004.05.11
+2004.05.13
+
+More bug fixes to engine and JDBC classes.
 
 Bug fixes and minor enhancements to Database Manager and Transfer tools.
 

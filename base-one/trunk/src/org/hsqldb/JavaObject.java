@@ -60,10 +60,9 @@ package org.hsqldb;
 public class JavaObject {
 
     private byte[] data;
-    private Object object;
 
     /**
-     * This constructor is used inside the engine when an already serialized
+     * Constructor used inside the engine when an already serialized
      * Object is read from a file (.log, .script, .data or text table source).
      */
     public JavaObject(byte[] data) {
@@ -71,34 +70,20 @@ public class JavaObject {
     }
 
     /**
-     * This constructor is used in classes implementing the JDBC interfaces.
-     * It is also used inside the engine to convert an object into an object
-     * of type OTHER.
+     * Constructor used inside the engine to convert an Object into an
+     * object of type OTHER.
+     * Used also with JDBC setParameter().
+     * If parameter serialize is true, the Object is serialized for storage.
      */
-    public JavaObject(Object o, boolean serialise) throws HsqlException {
-
-        if (serialise) {
-            data = Column.serialize(o);
-        } else {
-            object = o;
-        }
+    public JavaObject(Object o) throws HsqlException {
+        data = Column.serialize(o);
     }
 
     public byte[] getBytes() throws HsqlException {
-
-        if (data == null) {
-            data = Column.serialize(object);
-        }
-
         return data;
     }
 
     public int getBytesLength() throws HsqlException {
-
-        if (data == null) {
-            data = Column.serialize(object);
-        }
-
         return data.length;
     }
 
@@ -109,26 +94,7 @@ public class JavaObject {
      * of a classe that is not available.
      */
     public Object getObject() throws HsqlException {
-
-        if (object == null) {
-            object = Column.deserialize(data);
-        }
-
-        return object;
-    }
-
-/** @todo fredt - use instead an explicit internal data type for this purpose */
-
-    /**
-     * Returns the deserialized (Object) form of the OTHER value without
-     * performing any deserialization. This is a workaround for
-     * CompiledStatementExecutor.executeCallStatement which makes an attemp
-     * to determine if a returned JavaObject wraps a Result, in which case the
-     * Result is unwrapped and and used directly to present results through
-     * the JDBC client interfaces. (added by boucherb@user) <p>
-     */
-    Object getObjectNoDeserialize() {
-        return object;
+        return Column.deserialize(data);
     }
 
     /**
@@ -137,13 +103,6 @@ public class JavaObject {
      * @return a String represntation of this object.
      */
     public String toString() {
-
-        String s = super.toString() + "[";
-
-        try {
-            return s + "getObject()=[" + String.valueOf(getObject()) + "]]";
-        } catch (Exception e) {
-            return s + "getObject()_exception=[" + e.toString() + "]]";
-        }
+        return super.toString();
     }
 }

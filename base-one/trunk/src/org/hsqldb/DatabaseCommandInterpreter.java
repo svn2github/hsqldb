@@ -638,7 +638,7 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_ON);
 
         tableName = tokenizer.getString();
-        t         = database.getTable(tableName, session);
+        t         = database.getTable(session, tableName);
 
         checkIsReallyTable(t);
 
@@ -1304,7 +1304,7 @@ class DatabaseCommandInterpreter {
         if (t.equals(expTableName)) {
             expTable = t;
         } else {
-            expTable = database.getTable(expTableName, session);
+            expTable = database.getTable(session, expTableName);
         }
 
         expcol = null;
@@ -1473,12 +1473,11 @@ class DatabaseCommandInterpreter {
         String  tableName;
         String  newName;
         boolean isquoted;
-        Table   ttemp;
 
         tableName = t.getName().name;
 
         // ensures that if temp table, it also belongs to this session
-        if (!t.equals(tableName, session)) {
+        if (!t.equals(session, tableName)) {
             throw Trace.error(Trace.TABLE_NOT_FOUND);
         }
 
@@ -1810,7 +1809,7 @@ class DatabaseCommandInterpreter {
 
             // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             // to make sure the table exists
-            Table t = database.getTable(token, session);
+            Table t = database.getTable(session, token);
 
             accessKey = t.getName();
 
@@ -1984,7 +1983,7 @@ class DatabaseCommandInterpreter {
 // sqlbob@users 20020427 support for SET TABLE <table> SOURCE "spec" [DESC]
                 session.checkDDLWrite();
 
-                Table t = database.getTable(tokenizer.getString(), session);
+                Table t = database.getTable(session, tokenizer.getString());
 
                 token = tokenizer.getString();
 
@@ -2014,7 +2013,7 @@ class DatabaseCommandInterpreter {
                             tokenizer.back();
                         }
 
-                        t.setDataSource(token, isDesc, session, false);
+                        t.setDataSource(session, token, isDesc, false);
 
                         break;
                     }
@@ -2260,7 +2259,7 @@ class DatabaseCommandInterpreter {
         boolean exists;
         int     code;
 
-        exists = database.findUserTableForIndex(indexName, session) != null;
+        exists = database.findUserTableForIndex(session, indexName) != null;
 
         if (exists != yes) {
             code = yes ? Trace.INDEX_NOT_FOUND
@@ -2288,7 +2287,7 @@ class DatabaseCommandInterpreter {
         exists = database.dInfo.isSystemTable(tableName);
 
         if (!exists) {
-            exists = database.findUserTable(tableName, session) != null;
+            exists = database.findUserTable(session, tableName) != null;
         }
 
         if (exists != yes) {
@@ -2316,7 +2315,7 @@ class DatabaseCommandInterpreter {
         boolean isView;
         int     code;
 
-        t      = database.findUserTable(viewName, session);
+        t      = database.findUserTable(session, viewName);
         exists = (t != null);
         isView = exists && t.isView();
 
@@ -2451,7 +2450,7 @@ class DatabaseCommandInterpreter {
 
         newName  = tokenizer.getName();
         isQuoted = tokenizer.wasQuotedIdentifier();
-        t        = database.findUserTableForIndex(indexName, session);
+        t        = database.findUserTableForIndex(session, indexName);
 
         if (t == null) {
             throw Trace.error(Trace.INDEX_NOT_FOUND, indexName);
@@ -2577,7 +2576,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_ON);
 
-        t = database.getTable(tokenizer.getName(), session);
+        t = database.getTable(session, tokenizer.getName());
 
         addIndexOn(t, name, isQuoted, unique);
 
@@ -2854,7 +2853,7 @@ class DatabaseCommandInterpreter {
         intoHsqlName = select.sIntoTable;
         intoName     = intoHsqlName.name;
 
-        if (database.findUserTable(intoName, session) != null) {
+        if (database.findUserTable(session, intoName) != null) {
             throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
         }
 
@@ -2879,9 +2878,9 @@ class DatabaseCommandInterpreter {
                 // char's converted to underscores):
                 txtSrc = StringUtil.toLowerSubset(intoName, '_') + ".csv";
 
-                t.setDataSource(txtSrc, false, session, true);
+                t.setDataSource(session, txtSrc, false, true);
                 logTableDDL(t);
-                t.insertIntoTable(r, session);
+                t.insertIntoTable(session, r);
             } catch (HsqlException e) {
                 database.dropTable(intoName, false, false, session);
 
@@ -2891,7 +2890,7 @@ class DatabaseCommandInterpreter {
             logTableDDL(t);
 
             // SELECT .. INTO can't fail because of constraint violation
-            t.insertIntoTable(r, session);
+            t.insertIntoTable(session, r);
         }
 
         uc              = new Result(ResultConstants.UPDATECOUNT);

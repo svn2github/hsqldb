@@ -44,7 +44,7 @@ import org.hsqldb.lib.WrapperIterator;
 // boucherb@users - 2004xxxx - patch 1.7.2
 // -- canonical database uri for catalog name reporting
 // -- enumXXX methods to iterateXXX
-// -- simple support for SEQUENCE schema reporting 
+// -- simple support for SEQUENCE schema reporting
 // -- report built-in procedures/procedure columns without dependency on user grants;
 
 /**
@@ -339,8 +339,8 @@ final class DINameSpace {
         prefix = session.getUsername() + ".";
 
         return name.startsWith(prefix)
-               ? database.findUserTable(name.substring(prefix.length()),
-                                        session)
+               ? database.findUserTable(session,
+                                        name.substring(prefix.length()))
                : null;
     }
 

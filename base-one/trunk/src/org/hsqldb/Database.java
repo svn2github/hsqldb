@@ -454,12 +454,12 @@ public class Database {
      *  name. It excludes any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
      */
-    public Table getTable(String name, Session session) throws HsqlException {
+    public Table getTable(Session session, String name) throws HsqlException {
 
-        Table t = findUserTable(name, session);
+        Table t = findUserTable(session, name);
 
         if (t == null) {
-            t = dInfo.getSystemTable(name, session);
+            t = dInfo.getSystemTable(session, name);
         }
 
         if (t == null) {
@@ -477,7 +477,7 @@ public class Database {
      */
     Table getUserTable(String name, Session session) throws HsqlException {
 
-        Table t = findUserTable(name, session);
+        Table t = findUserTable(session, name);
 
         if (t == null) {
             throw Trace.error(Trace.TABLE_NOT_FOUND, name);
@@ -512,12 +512,12 @@ public class Database {
      *  any temp tables created in different Sessions.
      *  Returns null if the table does not exist in the context.
      */
-    Table findUserTable(String name, Session session) {
+    Table findUserTable(Session session, String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
             Table t = (Table) tTable.get(i);
 
-            if (t.equals(name, session)) {
+            if (t.equals(session, name)) {
                 return t;
             }
         }
@@ -553,7 +553,7 @@ public class Database {
      * whole database and is visible in this session.
      * Returns null if not found.
      */
-    Table findUserTableForIndex(String name, Session session) {
+    Table findUserTableForIndex(Session session, String name) {
 
         HsqlName hsqlname = indexNameList.getOwner(name);
 
@@ -561,7 +561,7 @@ public class Database {
             return null;
         }
 
-        return findUserTable(hsqlname.name, session);
+        return findUserTable(session, hsqlname.name);
     }
 
     /**
@@ -596,7 +596,7 @@ public class Database {
     void dropIndex(String indexname, boolean ifExists,
                    Session session) throws HsqlException {
 
-        Table t = findUserTableForIndex(indexname, session);
+        Table t = findUserTableForIndex(session, indexname);
 
         if (t == null) {
             if (ifExists) {
@@ -762,7 +762,7 @@ public class Database {
         for (int i = 0; i < tTable.size(); i++) {
             toDrop = (Table) tTable.get(i);
 
-            if (toDrop.equals(name, session) && isView == toDrop.isView()) {
+            if (toDrop.equals(session, name) && isView == toDrop.isView()) {
                 dropIndex = i;
 
                 break;
@@ -1041,7 +1041,7 @@ public class Database {
         Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
 
         HsqlName tableName = (HsqlName) triggerNameList.removeName(name);
-        Table    t         = this.findUserTable(tableName.name, session);
+        Table    t         = this.findUserTable(session, tableName.name);
 
         t.dropTrigger(name);
         session.setScripting(!t.isTemp());

@@ -98,7 +98,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
                 break;
             }
 
-            Table t = db.getTable(s, session);
+            Table t = db.getTable(session, s);
             int   j = 0;
 
             for (j = 0; ; j++) {
@@ -133,9 +133,9 @@ class ScriptReaderBinary extends ScriptReaderBase {
             return false;
         }
 
-        Object[] row = rowIn.readData(t.getColumnTypes());
+        Object[] data = rowIn.readData(t.getColumnTypes());
 
-        t.insertNoCheck(row, null, false);
+        t.insert(data);
 
         return true;
     }

@@ -35,15 +35,13 @@ import java.io.StringReader;
 import java.sql.Clob;
 import java.sql.SQLException;
 
-import org.hsqldb.HsqlException;
-import org.hsqldb.Result;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.AsciiStringInputStream;
 
 // boucherb@users 2004-03/04-xx - doc 1.7.2 - javadocs updated; methods put in
 //                                            correct (historical, interface
 //                                            declared) order
-// boucherb@users 2004-03/04-xx - patch 1.7.2 - null check for constructor (a 
+// boucherb@users 2004-03/04-xx - patch 1.7.2 - null check for constructor (a
 //                                              null CLOB value is Java null,
 //                                              not a Clob object with null
 //                                              data);moderate thread safety;
@@ -163,12 +161,12 @@ final public class jdbcClob implements Clob {
 
         pos--;
 
-        if (pos < 0 || pos >= dlen) {
+        if (pos < 0 || pos > dlen) {
             jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                   "pos: " + (pos + 1L));
         }
 
-        if (length < 0 || pos > dlen - length) {
+        if (length < 0 || length > dlen - pos) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                         "length: " + length);
         }

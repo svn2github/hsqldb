@@ -1837,7 +1837,7 @@ implements java.sql.PreparedStatement {
 
         try {
             if (outType == Types.OTHER) {
-                o = new JavaObject(o, !connection.isNetConn);
+                o = new JavaObject(o);
             } else if (outType == Types.BINARY) {
                 if (!(o instanceof byte[])) {
                     throw jdbcUtil.sqlException(

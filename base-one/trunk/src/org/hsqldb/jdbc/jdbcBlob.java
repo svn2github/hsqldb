@@ -37,7 +37,6 @@ import java.io.OutputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 
-import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.Trace;
 
 // boucherb@users 2004-04-xx - patch 1.7.2 - position and truncate methods
@@ -157,12 +156,12 @@ public class jdbcBlob implements Blob {
 
         pos--;
 
-        if (pos < 0 || pos >= dlen) {
+        if (pos < 0 || pos > dlen) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                         "pos: " + (pos + 1));
         }
 
-        if (length < 0 || pos > dlen - length) {
+        if (length < 0 || length > dlen - pos) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                         "length: " + length);
         }

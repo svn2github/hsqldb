@@ -80,13 +80,11 @@ class TriggerDef extends Thread {
         return defaultQueueSize;
     }
 
-    protected static int defaultQueueSize = 1024;
-    Table                table;
-    Trigger              trig;
-    String               fire;
-    int                  vectorIndx;             // index into HsqlArrayList[]
-
-    //protected boolean busy;               // firing trigger in progress
+    protected static int       defaultQueueSize = 1024;
+    Table                      table;
+    Trigger                    trig;
+    String                     fire;
+    int                        vectorIndex;      // index into HsqlArrayList[]
     protected HsqlDeque        pendingQueue1;    // row triggers pending
     protected HsqlDeque        pendingQueue2;    // row triggers pending
     protected int              rowsQueued;       // rows in pendingQueue
@@ -138,14 +136,14 @@ class TriggerDef extends Thread {
         table         = pTab;
         trig          = pTrig;
         fire          = sFire;
-        vectorIndx    = SqlToIndex();
+        vectorIndex   = SqlToIndex();
 
         //busy = false;
         rowsQueued    = 0;
         pendingQueue1 = new HsqlDeque();
         pendingQueue2 = new HsqlDeque();
 
-        if (vectorIndx < 0) {
+        if (vectorIndex < 0) {
             valid = false;
         } else {
             valid = true;
@@ -266,7 +264,7 @@ class TriggerDef extends Thread {
         while (keepGoing) {
             Object[][] trigRows = popPair();
 
-            trig.fire(this.vectorIndx, name.name, table.getName().name,
+            trig.fire(this.vectorIndex, name.name, table.getName().name,
                       trigRows[0], trigRows[1]);
         }
     }
@@ -333,7 +331,7 @@ class TriggerDef extends Thread {
     synchronized void pushPair(Object row1[], Object row2[]) {
 
         if (maxRowsQueued == 0) {
-            trig.fire(vectorIndx, name.name, table.getName().name, row1,
+            trig.fire(vectorIndex, name.name, table.getName().name, row1,
                       row2);
 
             return;

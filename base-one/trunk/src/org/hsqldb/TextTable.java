@@ -144,9 +144,22 @@ class TextTable extends org.hsqldb.Table {
         isReversed = (isReversedNew && dataSourceNew.length() > 0);
     }
 
-    boolean equals(String other, Session c) {
+    /**
+     * Used by TextCache to insert a row into the indexes when the source
+     * file is first read.
+     */
+    private void insertNoChange(CachedDataRow r) throws HsqlException {
 
-        boolean isEqual = super.equals(other, c);
+        Object[] row = r.getData();
+
+        enforceNullConstraints(row);
+        setIdentityColumn(null, row);
+        indexRow(r);
+    }
+
+    boolean equals(Session c, String other) {
+
+        boolean isEqual = super.equals(c, other);
 
         if (isEqual && isReversed) {
             try {
@@ -178,8 +191,8 @@ class TextTable extends org.hsqldb.Table {
      * High level command to assign a data source to the table definition.
      * Reassigns only if the data source or direction has changed.
      */
-    protected void setDataSource(String dataSourceNew, boolean isReversedNew,
-                                 Session s,
+    protected void setDataSource(Session s, String dataSourceNew,
+                                 boolean isReversedNew,
                                  boolean newFile) throws HsqlException {
 
         if (isTemp) {

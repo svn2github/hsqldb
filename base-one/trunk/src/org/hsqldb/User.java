@@ -399,16 +399,17 @@ class User {
 
     /**
      * Retrieves a string[] whose elements are the names, of the rights
-     * granted to this <code>User</code> object on the <code>Table</code>
-     * object identified by the <code>name</code> argument.
-     * @return array of Strings naming the rights granted to this
+     * explicitly granted with the GRANT command to this <code>User</code>
+     * object on the <code>Table</code> object identified by the
+     * <code>name</code> argument.
+     * * @return array of Strings naming the rights granted to this
      *        <code>User</code> object on the <code>Table</code> object
      *        identified by the <code>name</code> argument.
      * @param name a <code>Table</code> object identifier
      * @since HSQLDB 1.7.2
      *
      */
-    String[] listTablePrivileges(HsqlName name) {
+    String[] listGrantedTablePrivileges(HsqlName name) {
         return UserManager.getRightsArray(rightsMap.get(name, 0));
     }
 

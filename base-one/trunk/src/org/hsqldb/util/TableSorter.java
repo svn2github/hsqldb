@@ -1,34 +1,3 @@
-/* Copyright 1994-2004 Sun Microsystems, Inc. All Rights Reserved.
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * Redistribution of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * Redistribution in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * Neither the name of Sun Microsystems, Inc. or the names of contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * This software is provided "AS IS," without a warranty of any kind. ALL
- * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY
- * IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR
- * NON-INFRINGEMENT, ARE HEREBY EXCLUDED. SUN MICROSYSTEMS, INC. ("SUN") AND
- * ITS LICENSORS SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
- * RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- * IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT
- * OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL, INCIDENTAL OR
- * PUNITIV DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY,
- * ARISING OUT OF THE USE OF OR INABILITY TO USE THIS SOFTWARE, EVEN IF SUN HAS
- * BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- *
- * You acknowledge that this software is not designed, licensed or intended for
- * use in the design, construction, operation or maintenance of any nuclear
- * facility.
- */
 package org.hsqldb.util;
 
 import java.awt.*;
@@ -337,7 +306,7 @@ public class TableSorter extends AbstractTableModel {
         return modelToView;
     }
 
-    // TableModel interface methods 
+    // TableModel interface methods
     public int getRowCount() {
         return (tableModel == null) ? 0
                                     : tableModel.getRowCount();
@@ -414,7 +383,7 @@ public class TableSorter extends AbstractTableModel {
 
         public void tableChanged(TableModelEvent e) {
 
-            // If we're not sorting by anything, just pass the event along.             
+            // If we're not sorting by anything, just pass the event along.
             if (!isSorting()) {
                 clearSortingState();
                 fireTableChanged(e);
@@ -422,9 +391,9 @@ public class TableSorter extends AbstractTableModel {
                 return;
             }
 
-            // If the table structure has changed, cancel the sorting; the             
-            // sorting columns may have been either moved or deleted from             
-            // the model. 
+            // If the table structure has changed, cancel the sorting; the
+            // sorting columns may have been either moved or deleted from
+            // the model.
             if (e == null || e.getFirstRow() == TableModelEvent.HEADER_ROW) {
                 cancelSorting();
                 fireTableChanged(e);
@@ -432,24 +401,24 @@ public class TableSorter extends AbstractTableModel {
                 return;
             }
 
-            // We can map a cell event through to the view without widening             
-            // when the following conditions apply: 
-            // 
-            // a) all the changes are on one row (e.getFirstRow() == e.getLastRow()) and, 
+            // We can map a cell event through to the view without widening
+            // when the following conditions apply:
+            //
+            // a) all the changes are on one row (e.getFirstRow() == e.getLastRow()) and,
             // b) all the changes are in one column (column != TableModelEvent.ALL_COLUMNS) and,
-            // c) we are not sorting on that column (getSortingStatus(column) == NOT_SORTED) and, 
+            // c) we are not sorting on that column (getSortingStatus(column) == NOT_SORTED) and,
             // d) a reverse lookup will not trigger a sort (modelToView != null)
             //
             // Note: INSERT and DELETE events fail this test as they have column == ALL_COLUMNS.
-            // 
-            // The last check, for (modelToView != null) is to see if modelToView 
-            // is already allocated. If we don't do this check; sorting can become 
-            // a performance bottleneck for applications where cells  
-            // change rapidly in different parts of the table. If cells 
-            // change alternately in the sorting column and then outside of             
-            // it this class can end up re-sorting on alternate cell updates - 
-            // which can be a performance problem for large tables. The last 
-            // clause avoids this problem. 
+            //
+            // The last check, for (modelToView != null) is to see if modelToView
+            // is already allocated. If we don't do this check; sorting can become
+            // a performance bottleneck for applications where cells
+            // change rapidly in different parts of the table. If cells
+            // change alternately in the sorting column and then outside of
+            // it this class can end up re-sorting on alternate cell updates -
+            // which can be a performance problem for large tables. The last
+            // clause avoids this problem.
             int column = e.getColumn();
 
             if (e.getFirstRow() == e.getLastRow()
@@ -465,7 +434,7 @@ public class TableSorter extends AbstractTableModel {
                 return;
             }
 
-            // Something has happened to the data that may have invalidated the row order. 
+            // Something has happened to the data that may have invalidated the row order.
             clearSortingState();
             fireTableDataChanged();
 
@@ -489,8 +458,8 @@ public class TableSorter extends AbstractTableModel {
                     cancelSorting();
                 }
 
-                // Cycle the sorting states through {NOT_SORTED, ASCENDING, DESCENDING} or 
-                // {NOT_SORTED, DESCENDING, ASCENDING} depending on whether shift is pressed. 
+                // Cycle the sorting states through {NOT_SORTED, ASCENDING, DESCENDING} or
+                // {NOT_SORTED, DESCENDING, ASCENDING} depending on whether shift is pressed.
                 status = status + (e.isShiftDown() ? -1
                                                    : 1);
                 status = (status + 4) % 3 - 1;    // signed mod, returning {-1, 0, 1}
@@ -518,13 +487,13 @@ public class TableSorter extends AbstractTableModel {
             Color color = c == null ? Color.GRAY
                                     : c.getBackground();
 
-            // In a compound sort, make each succesive triangle 20% 
-            // smaller than the previous one. 
+            // In a compound sort, make each succesive triangle 20%
+            // smaller than the previous one.
             int dx = (int) (size / 2 * Math.pow(0.8, priority));
             int dy = descending ? dx
                                 : -dx;
 
-            // Align icon (roughly) with font baseline. 
+            // Align icon (roughly) with font baseline.
             y = y + 5 * size / 6 + (descending ? -dy
                                                : 0);
 
@@ -533,17 +502,17 @@ public class TableSorter extends AbstractTableModel {
 
             g.translate(x, y);
 
-            // Right diagonal. 
+            // Right diagonal.
             g.setColor(color.darker());
             g.drawLine(dx / 2, dy, 0, 0);
             g.drawLine(dx / 2, dy + shift, 0, shift);
 
-            // Left diagonal. 
+            // Left diagonal.
             g.setColor(color.brighter());
             g.drawLine(dx / 2, dy, dx, 0);
             g.drawLine(dx / 2, dy + shift, dx, shift);
 
-            // Horizontal line. 
+            // Horizontal line.
             if (descending) {
                 g.setColor(color.darker().darker());
             } else {

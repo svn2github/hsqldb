@@ -107,9 +107,9 @@ class Transaction {
 
         try {
             if (isDelete) {
-                tTable.insertNoCheckRollback(oRow, session, isNested);
+                tTable.insertNoCheckRollback(session, oRow, isNested);
             } else {
-                tTable.deleteNoCheckRollback(oRow, session, isNested);
+                tTable.deleteNoCheckRollback(session, oRow, isNested);
             }
         } catch (Exception e) {}
     }

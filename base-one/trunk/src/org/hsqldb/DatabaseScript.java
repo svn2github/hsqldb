@@ -199,7 +199,12 @@ public class DatabaseScript {
 
             for (int tv = 0; tv < numTrigs; tv++) {
                 HsqlArrayList trigVec = t.triggerLists[tv];
-                int           trCount = trigVec.size();
+
+                if (trigVec == null) {
+                    continue;
+                }
+
+                int trCount = trigVec.size();
 
                 for (int k = 0; k < trCount; k++) {
                     a = ((TriggerDef) trigVec.get(k)).getDDL();

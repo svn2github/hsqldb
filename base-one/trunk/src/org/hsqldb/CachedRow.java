@@ -178,7 +178,8 @@ public class CachedRow extends Row {
 
     /**
      *  This method is called only when the Row is deleted from the database
-     *  table. The links with all the other objects are removed.
+     *  table. The links with all the other objects apart from the data
+     *  are removed.
      *
      * @throws HsqlException
      */
@@ -193,7 +194,6 @@ public class CachedRow extends Row {
         rNext        = null;
         rLast        = null;
         tTable       = null;
-        oData        = null;
         nPrimaryNode = null;
     }
 

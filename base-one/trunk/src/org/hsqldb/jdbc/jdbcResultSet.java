@@ -1545,16 +1545,13 @@ public class jdbcResultSet implements ResultSet {
                     Trace.error(Trace.SERIALIZATION_FAILURE));
             }
         } else if (o instanceof Binary) {
-            return isNetConn ? ((Binary) o).getBytes()
-                             : ((Binary) o).getClonedBytes();
+            return ((Binary) o).getClonedBytes();
         } else if (o instanceof java.sql.Date) {
             return ((java.sql.Date) o).clone();
         } else if (o instanceof java.sql.Time) {
-            return isNetConn ? o
-                             : ((java.sql.Time) o).clone();
+            return ((java.sql.Time) o).clone();
         } else if (o instanceof java.sql.Timestamp) {
-            return isNetConn ? o
-                             : ((java.sql.Timestamp) o).clone();
+            return ((java.sql.Timestamp) o).clone();
         } else {
             return o;
         }

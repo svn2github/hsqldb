@@ -155,6 +155,7 @@ public class Table extends BaseTable {
     // properties for subclasses
     protected int      columnCount;                   // inclusive the hidden primary key
     protected int      visibleColumnCount;            // exclusive of hidden primary key
+    protected int      triggerCount;                  // count of named triggers
     protected Database database;
     protected Cache    cache;
     protected HsqlName tableName;                     // SQL name
@@ -250,10 +251,6 @@ public class Table extends BaseTable {
         constraintList = new HsqlArrayList();
         triggerLists   = new HsqlArrayList[TriggerDef.NUM_TRIGS];
 
-        for (int vi = 0; vi < TriggerDef.NUM_TRIGS; vi++) {
-            triggerLists[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
-        }
-
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
@@ -264,7 +261,7 @@ public class Table extends BaseTable {
 // ----------------------------------------------------------------------------
     }
 
-    boolean equals(String name, Session session) {
+    boolean equals(Session session, String name) {
 
         if (isTemp && session.getId() != ownerSessionId) {
             return false;
@@ -351,7 +348,7 @@ public class Table extends BaseTable {
     /**
      * For text tables
      */
-    protected void setDataSource(String source, boolean isDesc, Session s,
+    protected void setDataSource(Session s, String source, boolean isDesc,
                                  boolean newFile) throws HsqlException {
 
         // Same exception as setIndexRoots.
@@ -1541,10 +1538,10 @@ public class Table extends BaseTable {
      * required and avoids evaluating these values where they will be
      * overwritten.
      */
-    Object[] getNewRow(Session session,
-                       boolean[] exists) throws HsqlException {
+    Object[] getNewRowData(Session session,
+                           boolean[] exists) throws HsqlException {
 
-        Object[] row = new Object[columnCount];
+        Object[] data = new Object[columnCount];
         int      i;
 
         if (exists != null && hasDefaultValues) {
@@ -1552,12 +1549,12 @@ public class Table extends BaseTable {
                 Expression def = colDefaults[i];
 
                 if (exists[i] == false && def != null) {
-                    row[i] = def.getValue(colTypes[i], session);
+                    data[i] = def.getValue(colTypes[i], session);
                 }
             }
         }
 
-        return row;
+        return data;
     }
 
     /**
@@ -1621,29 +1618,11 @@ public class Table extends BaseTable {
             Object newrow[] = this.getNewRow();
 
             ArrayUtil.copyAdjustArray(o, newrow, colvalue, colindex, adjust);
-            insertNoCheck(newrow, null, false);
+            insertNoCheck(null, newrow, false);
 
             n = index.next(n);
         }
 
-        // fredt - this is replaced with drop()
-/*
-        index = from.getPrimaryIndex();
-        n     = index.first();
-
-        while (n != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
-            Node   nextnode = index.next(n);
-            Object o[]      = n.getData();
-
-            from.deleteNoCheck(o, null, false);
-
-            n = nextnode;
-        }
-*/
         from.drop();
     }
 
@@ -1651,12 +1630,13 @@ public class Table extends BaseTable {
      *  Highest level multiple row insert method. Corresponds to an SQL
      *  INSERT INTO or SELECT .. INTO .. statement.
      */
-    int insert(Result ins, Session c) throws HsqlException {
+    int insert(Session session, Result ins) throws HsqlException {
 
         Record ni    = ins.rRoot;
         int    count = 0;
 
         while (ni != null) {
+            enforceFieldValueLimits(ni.data);
             enforceNullConstraints(ni.data);
 
             ni = ni.next;
@@ -1667,7 +1647,7 @@ public class Table extends BaseTable {
         fireAll(Trigger.INSERT_BEFORE);
 
         while (ni != null) {
-            insertRow(ni.data, c);
+            insertRow(session, ni.data);
 
             ni = ni.next;
 
@@ -1684,64 +1664,55 @@ public class Table extends BaseTable {
      *  SQL INSERT INTO .... VALUES(,,) statement.
      *  fires triggers.
      */
-    void insert(Object row[], Session c) throws HsqlException {
+    void insert(Session session, Object data[]) throws HsqlException {
 
-        enforceNullConstraints(row);
         fireAll(Trigger.INSERT_BEFORE);
-        insertRow(row, c);
+        insertRow(session, data);
         fireAll(Trigger.INSERT_AFTER);
     }
 
     /**
      *  High level method for inserting rows. Performs constraint checks and
-     *  fires triggers.
+     *  fires row level triggers.
      */
-    private void insertRow(Object row[], Session c) throws HsqlException {
+    private void insertRow(Session session,
+                           Object data[]) throws HsqlException {
 
-        fireAll(Trigger.INSERT_BEFORE_ROW, null, row);
+        fireAll(Trigger.INSERT_BEFORE_ROW, null, data);
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0, size = constraintList.size(); i < size; i++) {
-                ((Constraint) constraintList.get(i)).checkInsert(row, c);
+                ((Constraint) constraintList.get(i)).checkInsert(data,
+                        session);
             }
         }
 
-        insertNoCheck(row, c, true);
-        fireAll(Trigger.INSERT_AFTER_ROW, null, row);
+        enforceFieldValueLimits(data);
+        enforceNullConstraints(data);
+        insertNoCheck(session, data, true);
+        fireAll(Trigger.INSERT_AFTER_ROW, null, data);
     }
 
     /**
-     * Multi-row insert method. Used for SELECT ... INTO tablename queries
-     * also for creating temporary tables from subqueries. These tables are
-     * new, empty tables, with no constraints, triggers
+     * Multi-row insert method. Used for SELECT ... INTO tablename queries.
+     * These tables are new, empty tables, with no constraints, triggers
      * column default values, column size enforcement whatsoever.
-     * The exception is for IN query tables where there is a primary key.
-     *
      *
      * Not used for INSERT INTO .... SELECT ... FROM queries
      */
-    void insertIntoTable(Result result, Session c) throws HsqlException {
+    void insertIntoTable(Session session,
+                         Result result) throws HsqlException {
 
-        Record  r   = result.rRoot;
-        int     len = result.getColumnCount();
-        boolean log = !isTemp &&!isText && database.logger.hasLog();
+        insert(result);
+
+        if (isTemp || isText ||!database.logger.hasLog()) {
+            return;
+        }
+
+        Record r = result.rRoot;
 
         while (r != null) {
-            Object data[] = getNewRow();
-
-            for (int i = 0; i < len; i++) {
-                data[i] = r.data[i];
-            }
-
-            try {
-                Row row = Row.newRow(this, data);
-
-                indexRow(row);
-
-                if (log) {
-                    database.logger.writeInsertStatement(c, this, data);
-                }
-            } catch (HsqlException e) {}
+            database.logger.writeInsertStatement(session, this, r.data);
 
             r = r.next;
         }
@@ -1749,35 +1720,28 @@ public class Table extends BaseTable {
 
     /**
      *  Low level method for row insert.
-     *  It is used when reading db scripts.
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    public Row insertNoCheck(Object row[], Session c,
-                             boolean log) throws HsqlException {
+    private Row insertNoCheck(Session session, Object data[],
+                              boolean log) throws HsqlException {
 
         // this is necessary when rebuilding from the *.script but not
         // for transaction rollback
-        setIdentityColumn(row, c);
+        setIdentityColumn(session, data);
 
-        // this step is not necessary for rebuilding from the *.script file
-        // or transaction rollback - use the c parameters to determine
-        if (c != null) {
-            enforceFieldValueLimits(row);
-        }
-
-        Row r = Row.newRow(this, row);
+        Row r = Row.newRow(this, data);
 
         // this handles the UNIQUE constraints
         indexRow(r);
 
-        if (c != null) {
-            c.addTransactionInsert(this, row);
+        if (session != null) {
+            session.addTransactionInsert(this, data);
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeInsertStatement(c, this, row);
+            database.logger.writeInsertStatement(session, this, data);
         }
 
         return r;
@@ -1788,29 +1752,62 @@ public class Table extends BaseTable {
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    void insertNoCheckRollback(Object row[], Session c,
+    void insertNoCheckRollback(Session session, Object data[],
                                boolean log) throws HsqlException {
 
-        Row r = Row.newRow(this, row);
+        Row row = Row.newRow(this, data);
 
-        indexRow(r);
+        indexRow(row);
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeInsertStatement(c, this, row);
+            database.logger.writeInsertStatement(session, this, data);
         }
     }
 
     /**
-     * Used by TextCache to insert a row into the indexes when the source
-     * file is first read.
+     * Used for subquery and system table inserts.
      */
-    protected void insertNoChange(CachedDataRow r) throws HsqlException {
+    int insert(Result ins) throws HsqlException {
 
-        Object[] row = r.getData();
+        Record ni    = ins.rRoot;
+        int    count = 0;
 
-        enforceNullConstraints(row);
-        setIdentityColumn(row, null);
+        while (ni != null) {
+            insert(ni.data);
+
+            ni = ni.next;
+
+            count++;
+        }
+
+        return count;
+    }
+
+    /**
+     * Used by the method above.
+     *
+     * Used by ScriptReaderBinary to unconditionally insert a row into
+     * the table when the .script file is read. To avoid unnecessary
+     * creation of arrays The Object[] for data in the Result rows is inserted
+     * into the table if it has the same length as table row data.
+     */
+    public void insert(Object[] data) throws HsqlException {
+
+        if (data.length != columnCount) {
+            Object[] newdata = getNewRow();
+
+            ArrayUtil.copyArray(data, newdata, visibleColumnCount);
+
+            data = newdata;
+        } else {
+            for (int i = visibleColumnCount; i < columnCount; i++) {
+                data[i] = null;
+            }
+        }
+
+        Row r = Row.newRow(this, data);
+
         indexRow(r);
     }
 
@@ -1833,11 +1830,11 @@ public class Table extends BaseTable {
      * If there is an identity column (visible or hidden) on the table, sets
      * the value and/or adjusts the iIdentiy value for the table.
      */
-    protected void setIdentityColumn(Object[] row,
-                                     Session c) throws HsqlException {
+    protected void setIdentityColumn(Session session,
+                                     Object[] data) throws HsqlException {
 
         if (identityColumn != -1) {
-            Number id = (Number) row[identityColumn];
+            Number id = (Number) data[identityColumn];
 
             if (id == null) {
                 if (colTypes[identityColumn] == Types.INTEGER) {
@@ -1846,14 +1843,14 @@ public class Table extends BaseTable {
                     id = ValuePool.getLong(identitySequence.getValue());
                 }
 
-                row[identityColumn] = id;
+                data[identityColumn] = id;
             } else {
                 identitySequence.getValue(id.longValue());
             }
 
             // only do this if id is for a visible column
-            if (c != null) {
-                c.setLastIdentity(id);
+            if (session != null) {
+                session.setLastIdentity(id);
             }
         }
     }
@@ -1862,17 +1859,17 @@ public class Table extends BaseTable {
      *  Enforce max field sizes according to SQL column definition.
      *  SQL92 13.8
      */
-    void enforceFieldValueLimits(Object[] row) throws HsqlException {
+    void enforceFieldValueLimits(Object[] data) throws HsqlException {
 
         int colindex;
 
         if (sqlEnforceSize || sqlEnforceStrictSize) {
             for (colindex = 0; colindex < visibleColumnCount; colindex++) {
-                if (colSizes[colindex] != 0 && row[colindex] != null) {
-                    row[colindex] = enforceSize(row[colindex],
-                                                colTypes[colindex],
-                                                colSizes[colindex], true,
-                                                sqlEnforceStrictSize);
+                if (colSizes[colindex] != 0 && data[colindex] != null) {
+                    data[colindex] = enforceSize(data[colindex],
+                                                 colTypes[colindex],
+                                                 colSizes[colindex], true,
+                                                 sqlEnforceStrictSize);
                 }
             }
         }
@@ -1881,21 +1878,27 @@ public class Table extends BaseTable {
     /**
      *  As above but for a limited number of columns used for UPDATE queries.
      */
-    void enforceFieldValueLimits(Object[] row,
-                                 int col[]) throws HsqlException {
+    void enforceFieldValueLimits(Object[] data,
+                                 int cols[]) throws HsqlException {
 
         int i;
         int colindex;
 
-        if (sqlEnforceSize) {
-            for (i = 0; i < col.length; i++) {
-                colindex = col[i];
+        if (sqlEnforceSize || sqlEnforceStrictSize) {
+            if (cols == null) {
+                enforceFieldValueLimits(data);
 
-                if (colSizes[colindex] != 0 && row[colindex] != null) {
-                    row[colindex] = enforceSize(row[colindex],
-                                                colTypes[colindex],
-                                                colSizes[colindex], true,
-                                                sqlEnforceStrictSize);
+                return;
+            }
+
+            for (i = 0; i < cols.length; i++) {
+                colindex = cols[i];
+
+                if (colSizes[colindex] != 0 && data[colindex] != null) {
+                    data[colindex] = enforceSize(data[colindex],
+                                                 colTypes[colindex],
+                                                 colSizes[colindex], true,
+                                                 sqlEnforceStrictSize);
                 }
             }
         }
@@ -1983,11 +1986,17 @@ public class Table extends BaseTable {
      */
     void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
 
-        if (!database.isReferentialIntegrity()) {    // reloading db
+        if (triggerCount == 0 ||!database.isReferentialIntegrity()) {
+
+            // isReferentialIntegrity is false when reloading db
             return;
         }
 
         HsqlArrayList trigVec = triggerLists[trigVecIndx];
+
+        if (trigVec == null) {
+            return;
+        }
 
         for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
@@ -1999,15 +2008,25 @@ public class Table extends BaseTable {
     /**
      *  Statement level triggers.
      */
-    void fireAll(int trigVecIndx) {
-        fireAll(trigVecIndx, null, null);
+    void fireAll(int trigVecIndex) {
+
+        if (triggerCount != 0) {
+            fireAll(trigVecIndex, null, null);
+        }
     }
 
     /**
      * Adds a trigger.
      */
     void addTrigger(TriggerDef trigDef) {
-        triggerLists[trigDef.vectorIndx].add(trigDef);
+
+        if (triggerLists[trigDef.vectorIndex] == null) {
+            triggerLists[trigDef.vectorIndex] = new HsqlArrayList();
+        }
+
+        triggerLists[trigDef.vectorIndex].add(trigDef);
+
+        triggerCount++;
     }
 
     /**
@@ -2015,11 +2034,16 @@ public class Table extends BaseTable {
      */
     void dropTrigger(String name) {
 
-        // look in each trigger list of each type of trigger for each table
-        int numTrigs = TriggerDef.NUM_TRIGS;
+        // look in each trigger list of each type of trigger
+        int     numTrigs = TriggerDef.NUM_TRIGS;
+        boolean removed  = false;
 
         for (int tv = 0; tv < numTrigs; tv++) {
             HsqlArrayList v = triggerLists[tv];
+
+            if (v == null) {
+                continue;
+            }
 
             for (int tr = v.size() - 1; tr >= 0; tr--) {
                 TriggerDef td = (TriggerDef) v.get(tr);
@@ -2027,8 +2051,18 @@ public class Table extends BaseTable {
                 if (td.name.name.equals(name)) {
                     v.remove(tr);
                     td.terminate();
+
+                    removed = true;
                 }
             }
+
+            if (v.isEmpty()) {
+                triggerLists[tv] = null;
+            }
+        }
+
+        if (removed) {
+            triggerCount--;
         }
     }
 
@@ -2071,9 +2105,9 @@ public class Table extends BaseTable {
      * @param  path
      * @throws  HsqlException
      */
-    static void checkCascadeDelete(Table table,
+    static void checkCascadeDelete(Session session, Table table,
                                    HashMappedList tableUpdateLists, Row row,
-                                   Session session, boolean delete,
+                                   boolean delete,
                                    HashSet path) throws HsqlException {
 
         for (int i = 0, cSize = table.constraintList.size(); i < cSize; i++) {
@@ -2161,8 +2195,9 @@ public class Table extends BaseTable {
                         // fredt - avoid infinite recursion on circular references
                         // these can be rings of two or more mutually dependent tables
                         // so only one visit per constraint is allowed
-                        checkCascadeUpdate(reftable, null, n.getRow(), rnd,
-                                           session, r_columns, null, path);
+                        checkCascadeUpdate(session, reftable, null,
+                                           n.getRow(), rnd, r_columns, null,
+                                           path);
                         path.remove(c);
 
                         // get updated node in case they moved out of cache
@@ -2182,9 +2217,9 @@ public class Table extends BaseTable {
                 } else if (hasref) {
                     if (reftable != table) {
                         if (path.add(c)) {
-                            checkCascadeDelete(reftable, tableUpdateLists,
-                                               n.getRow(), session, delete,
-                                               path);
+                            checkCascadeDelete(session, reftable,
+                                               tableUpdateLists, n.getRow(),
+                                               delete, path);
                             path.remove(c);
 
                             // get updated node in case they moved out of cache
@@ -2200,9 +2235,9 @@ public class Table extends BaseTable {
                                           : row.getUpdatedRow();
 
                         if (n.getRow() != row) {
-                            checkCascadeDelete(reftable, tableUpdateLists,
-                                               n.getRow(), session, delete,
-                                               path);
+                            checkCascadeDelete(session, reftable,
+                                               tableUpdateLists, n.getRow(),
+                                               delete, path);
 
                             // get updated node in case they moved out of cache
                             n     = n.getUpdatedNode();
@@ -2213,7 +2248,7 @@ public class Table extends BaseTable {
                 }
 
                 if (delete &&!isUpdate &&!n.isDeleted()) {
-                    reftable.deleteNoRefCheck(n.getRow(), session);
+                    reftable.deleteNoRefCheck(session, n.getRow());
                 }
 
                 if (nextn == null) {
@@ -2236,11 +2271,11 @@ public class Table extends BaseTable {
      * to each constraint. The set of list of updates for all tables is passed
      * and filled in recursive calls.
      *
+     *   @param session current database session
      *   @param table
      *   @param tableUpdateLists lists of updates
      *   @param orow old row data to be deleted.
      *   @param nrow new row data to be inserted.
-     *   @param session current database session
      *   @param cols indices of the columns actually changed.
      *   @param ref This should be initialized to null when the
      *   method is called from the 'outside'. During recursion this will be the
@@ -2248,16 +2283,13 @@ public class Table extends BaseTable {
      *   Foreign keys to this table do not have to be checked since they have
      *   triggered the update and are valid by definition.
      *
-     *   @see #checkCascadeDelete(Object[],Session,boolean)
-     *
      *   @short Check or perform and update cascade operation on a single row.
      *
      *
      */
-    static void checkCascadeUpdate(Table table,
+    static void checkCascadeUpdate(Session session, Table table,
                                    HashMappedList tableUpdateLists, Row orow,
-                                   Object[] nrow, Session session,
-                                   int[] cols, Table ref,
+                                   Object[] nrow, int[] cols, Table ref,
                                    HashSet path) throws HsqlException {
 
         // -- We iterate through all constraints associated with this table
@@ -2390,9 +2422,9 @@ public class Table extends BaseTable {
                         }
 
                         if (path.add(c)) {
-                            checkCascadeUpdate(reftable, tableUpdateLists,
-                                               n.getRow(), rnd, session,
-                                               r_columns, null, path);
+                            checkCascadeUpdate(session, reftable,
+                                               tableUpdateLists, n.getRow(),
+                                               rnd, r_columns, null, path);
                             path.remove(c);
                         }
                     } else {
@@ -2404,9 +2436,9 @@ public class Table extends BaseTable {
                         }
 
                         if (path.add(c)) {
-                            checkCascadeUpdate(reftable, tableUpdateLists,
-                                               n.getRow(), rnd, session,
-                                               common, table, path);
+                            checkCascadeUpdate(session, reftable,
+                                               tableUpdateLists, n.getRow(),
+                                               rnd, common, table, path);
                             path.remove(c);
                         }
                     }
@@ -2483,8 +2515,8 @@ public class Table extends BaseTable {
      *  Highest level multiple row delete method. Corresponds to an SQL
      *  DELETE.
      */
-    int delete(HsqlArrayList deleteList,
-               Session session) throws HsqlException {
+    int delete(Session session,
+               HsqlArrayList deleteList) throws HsqlException {
 
         HashSet path = constraintPath == null ? new HashSet()
                                               : constraintPath;
@@ -2502,7 +2534,7 @@ public class Table extends BaseTable {
                 Row row = (Row) deleteList.get(i);
 
                 path.clear();
-                checkCascadeDelete(this, tUpdateList, row, session, false,
+                checkCascadeDelete(session, this, tUpdateList, row, false,
                                    path);
             }
         }
@@ -2514,7 +2546,7 @@ public class Table extends BaseTable {
                 Row row = (Row) deleteList.get(i);
 
                 path.clear();
-                checkCascadeDelete(this, tUpdateList, row, session, true,
+                checkCascadeDelete(session, this, tUpdateList, row, true,
                                    path);
             }
         }
@@ -2523,7 +2555,7 @@ public class Table extends BaseTable {
             Row row = (Row) deleteList.get(i);
 
             if (!row.isDeleted()) {
-                deleteNoRefCheck(row, session);
+                deleteNoRefCheck(session, row);
             }
         }
 
@@ -2531,7 +2563,7 @@ public class Table extends BaseTable {
             Table          table      = (Table) tUpdateList.getKey(i);
             HashMappedList updateList = (HashMappedList) tUpdateList.get(i);
 
-            table.updateRowSet(updateList, session, false);
+            table.updateRowSet(session, updateList, null, false);
             updateList.clear();
         }
 
@@ -2548,13 +2580,13 @@ public class Table extends BaseTable {
      *  Mid level row delete method. Fires triggers but no integrity
      *  constraint checks.
      */
-    private void deleteNoRefCheck(Row row,
-                                  Session session) throws HsqlException {
+    private void deleteNoRefCheck(Session session,
+                                  Row row) throws HsqlException {
 
         Object[] data = row.getData();
 
         fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
-        deleteNoCheck(row, session, true);
+        deleteNoCheck(session, row, true);
 
         // fire the delete after statement trigger
         fireAll(Trigger.DELETE_AFTER_ROW, data, null);
@@ -2564,7 +2596,7 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
-    private void deleteNoCheck(Row row, Session session,
+    private void deleteNoCheck(Session session, Row row,
                                boolean log) throws HsqlException {
 
         Object[] data = row.getData();
@@ -2599,7 +2631,7 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache. Used by rollback.
      */
-    void deleteNoCheckRollback(Object data[], Session session,
+    void deleteNoCheckRollback(Session session, Object data[],
                                boolean log) throws HsqlException {
 
         Node node = getIndex(0).search(data);
@@ -2644,8 +2676,8 @@ public class Table extends BaseTable {
      * replacement in that row, then an exception condition is raised:
      * triggered data change violation.
      */
-    int update(HashMappedList updateList, int[] cols,
-               Session session) throws HsqlException {
+    int update(Session session, HashMappedList updateList,
+               int[] cols) throws HsqlException {
 
         HashSet path = constraintPath == null ? new HashSet()
                                               : constraintPath;
@@ -2664,7 +2696,7 @@ public class Table extends BaseTable {
 
             // this means the identity column can be set to null to force
             // creation of a new identity value
-            setIdentityColumn(data, null);
+            setIdentityColumn(null, data);
         }
 
         // perform check/cascade operations
@@ -2673,7 +2705,7 @@ public class Table extends BaseTable {
                 Object[] data = (Object[]) updateList.get(i);
                 Row      row  = (Row) updateList.getKey(i);
 
-                checkCascadeUpdate(this, tUpdateList, row, data, session,
+                checkCascadeUpdate(session, this, tUpdateList, row, data,
                                    cols, null, path);
             }
         }
@@ -2698,12 +2730,12 @@ public class Table extends BaseTable {
             Table          table       = (Table) tUpdateList.getKey(i);
             HashMappedList updateListT = (HashMappedList) tUpdateList.get(i);
 
-            table.updateRowSet(updateListT, session, false);
+            table.updateRowSet(session, updateListT, null, false);
             updateListT.clear();
         }
 
         // update main list
-        updateRowSet(updateList, session, true);
+        updateRowSet(session, updateList, cols, true);
         fireAll(Trigger.UPDATE_AFTER);
         path.clear();
 
@@ -2715,7 +2747,7 @@ public class Table extends BaseTable {
         return updateList.size();
     }
 
-    void updateRowSet(HashMappedList rowSet, Session session,
+    void updateRowSet(Session session, HashMappedList rowSet, int[] cols,
                       boolean nodelete) throws HsqlException {
 
         for (int i = rowSet.size() - 1; i >= 0; i--) {
@@ -2732,18 +2764,18 @@ public class Table extends BaseTable {
                 }
             }
 
-            enforceFieldValueLimits(data);
+            enforceFieldValueLimits(data, cols);
             enforceNullConstraints(data);
-            deleteNoCheck(row, session, true);
+            deleteNoCheck(session, row, true);
         }
 
         for (int i = 0; i < rowSet.size(); i++) {
             Row      row  = (Row) rowSet.getKey(i);
             Object[] data = (Object[]) rowSet.get(i);
 
-            fireAll(Trigger.UPDATE_BEFORE_ROW, data, row.getData());
-            insertNoCheck(data, session, true);
-            fireAll(Trigger.UPDATE_AFTER_ROW, data, row.getData());
+            fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
+            insertNoCheck(session, data, true);
+            fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
         }
     }
 

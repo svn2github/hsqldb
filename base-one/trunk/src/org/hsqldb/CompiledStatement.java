@@ -380,7 +380,11 @@ final class CompiledStatement {
             Result r = s.getResult(sq.isExistsPredicate ? 1
                                                         : 0, session);
 
-            t.insertIntoTable(r, null);
+            if (sq.isInPredicate) {
+                r.removeDuplicates(1);
+            }
+
+            t.insert(r);
 
             sq.isMaterialised = true;
         }

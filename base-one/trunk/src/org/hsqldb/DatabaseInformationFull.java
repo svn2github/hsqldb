@@ -261,7 +261,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
             if (pos <= 0) {
 
-                // should never occur in practice, as this is typically a Java 
+                // should never occur in practice, as this is typically a Java
                 // method name, but there's nothing preventing a user from
                 // creating an alias entry that is not in method FQN form;
                 // such entries are not illegal, only useless.  Probably,
@@ -285,7 +285,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[ialias_schem]        = schem;
             row[ialias]              = alias;
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         // must have create/alter table rights to see domain aliases
@@ -316,7 +316,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[ialias_schem]        = schem;
                 row[ialias]              = alias;
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
 
@@ -499,7 +499,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[iwriter_length] = ValuePool.getInt(
                 cache.rowOut.getOutputStream().getBuffer().length);
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         t.setDataReadOnly(true);
@@ -621,7 +621,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iprivilege] = privilege;
                 row[iis_grntbl] = isGrantable;
 
-                t.insert(row, session);
+                t.insert(row);
             }
 
             classNames = ns.iterateAccessibleTriggerClassNames(granteeUser);
@@ -644,7 +644,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iprivilege] = privilege;
                 row[iis_grntbl] = isGrantable;
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
 
@@ -704,53 +704,53 @@ extends org.hsqldb.DatabaseInformationMain {
         row[0] = "SESSION_ID";
         row[1] = String.valueOf(session.getId());
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "AUTOCOMMIT";
         row[1] = session.isAutoCommit() ? "TRUE"
                                         : "FALSE";
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "USER";
         row[1] = session.getUsername();
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "SESSION_READONLY";
         row[1] = session.isReadOnly() ? "TRUE"
                                       : "FALSE";
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "DATABASE_READONLY";
         row[1] = database.databaseReadOnly ? "TRUE"
                                            : "FALSE";
 
-        t.insert(row, null);
+        t.insert(row);
 
         // fredt - value set by SET MAXROWS in SQL, not Statement.setMaxRows()
         row    = t.getNewRow();
         row[0] = "MAXROWS";
         row[1] = String.valueOf(session.getSQLMaxRows());
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "DATABASE";
         row[1] = database.getURI();
 
-        t.insert(row, null);
+        t.insert(row);
 
         row    = t.getNewRow();
         row[0] = "IDENTITY";
         row[1] = String.valueOf(session.getLastIdentity());
 
-        t.insert(row, null);
+        t.insert(row);
         t.setDataReadOnly(true);
 
         return t;
@@ -873,7 +873,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.catalogs", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.schemas
         row         = t.getNewRow();
@@ -883,7 +883,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.schemas", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // sql.enforce_size
         row         = t.getNewRow();
@@ -893,7 +893,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("sql.enforce_size", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // sql.enforce_strict_size
         row         = t.getNewRow();
@@ -903,7 +903,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("sql.enforce_strict_size", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // sql.compare_in_locale
         row         = t.getNewRow();
@@ -913,7 +913,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("sql.compare_in_locale", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.files_readonly
         row         = t.getNewRow();
@@ -923,7 +923,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.files_readonly", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.first_identity
         row         = t.getNewRow();
@@ -933,7 +933,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.first_identity", "0");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.compatible_version
         row         = t.getNewRow();
@@ -943,7 +943,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.compatible_version");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.cache_version
         row         = t.getNewRow();
@@ -953,7 +953,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.cache_version");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.original_version
         row         = t.getNewRow();
@@ -963,7 +963,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.original_version");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.cache_scale
         row         = t.getNewRow();
@@ -973,7 +973,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.cache_scale");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.cache_file_scale
         row         = t.getNewRow();
@@ -983,7 +983,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.cache_file_scale");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.cache_size_scale
         row         = t.getNewRow();
@@ -993,7 +993,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.cache_size_scale");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.max_nio_scale
         row         = t.getNewRow();
@@ -1003,7 +1003,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.max_nio_scale");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.nio_data_file
         row         = t.getNewRow();
@@ -1013,7 +1013,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.nio_data_file");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.all_quoted
         row         = t.getNewRow();
@@ -1023,7 +1023,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.all_quoted", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.cache_scale
         row         = t.getNewRow();
@@ -1033,7 +1033,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.cache_scale", "10");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.cache_size_scale
         row         = t.getNewRow();
@@ -1043,7 +1043,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.cache_size_scale", "12");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.ignore_first
         row         = t.getNewRow();
@@ -1053,7 +1053,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.ignore_first", "false");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.quoted
         row         = t.getNewRow();
@@ -1063,7 +1063,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.quoted", "true");
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.fs
         row         = t.getNewRow();
@@ -1081,7 +1081,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.vs", ",");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.lvs
         row         = t.getNewRow();
@@ -1091,7 +1091,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.lvs", ",");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // textdb.encoding
         row         = t.getNewRow();
@@ -1101,7 +1101,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("textdb.encoding", "ASCII");
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // hsqldb.gc_interval
         row         = t.getNewRow();
@@ -1111,7 +1111,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.gc_interval", "0");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // Now get a snapshot of the properties that may change over
         // the lifetime of the session
@@ -1126,7 +1126,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = props.getProperty("hsqldb.log_size", "200");
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         row         = t.getNewRow();
         row[iscope] = scope;
@@ -1140,7 +1140,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         row[iclass] = "java.lang.String";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // write delay
         row         = t.getNewRow();
@@ -1151,7 +1151,7 @@ extends org.hsqldb.DatabaseInformationMain {
                                     : "" + log.writeDelay;
         row[iclass] = "int";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // ignore case
         row         = t.getNewRow();
@@ -1161,7 +1161,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = Boolean.toString(database.isIgnoreCase());
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
 
         // referential integrity
         row         = t.getNewRow();
@@ -1171,7 +1171,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ivalue] = Boolean.toString(database.isReferentialIntegrity());
         row[iclass] = "boolean";
 
-        t.insert(row, session);
+        t.insert(row);
         t.setDataReadOnly(true);
 
         return t;
@@ -1260,7 +1260,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 ValuePool.getLong(s.getLastIdentity().longValue());
             row[it_size] = ValuePool.getInt(s.getTransactionSize());
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         t.setDataReadOnly(true);
@@ -1460,7 +1460,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iid] = ValuePool.getBoolean(table.isDescDataSource());
             }
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         t.setDataReadOnly(true);
@@ -1538,7 +1538,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 ' ').append("a.").append("TABLE_NAME").append('=').append(
                 "b.").append("TABLE_NAME").toString());
 
-        t.insert(rs, session);
+        t.insert(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -1727,7 +1727,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     row[iaction_type]       = actionType;
                     row[itrigger_body]      = triggerBody;
 
-                    t.insert(row, session);
+                    t.insert(row);
                 }
             }
         }
@@ -2066,7 +2066,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[ivalid] = Boolean.FALSE;
             }
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         t.setDataReadOnly(true);
@@ -2425,7 +2425,7 @@ extends org.hsqldb.DatabaseInformationMain {
             "select 'SYS', 'PUBLIC', SEQUENCE_CATLOG, SEQUENCE_SCHEMA, "
             + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' from  SYSTEM_SEQUENCES");
 
-        t.insert(rs, session);
+        t.insert(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -2589,7 +2589,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     row[itab_name]   = resultRow[2];
                     row[itab_col]    = resultRow[3];
 
-                    t.insert(row, session);
+                    t.insert(row);
                 }
             }
         }
@@ -2747,7 +2747,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     row[ir_schem]    = ns.getSchemaName(method);
                     row[ir_name]     = ns.getMethodSpecificName(method);
 
-                    t.insert(row, session);
+                    t.insert(row);
                 }
             }
         }
@@ -2819,7 +2819,7 @@ extends org.hsqldb.DatabaseInformationMain {
             + "CONSTRAINT_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
             + "from SYSTEM_CHECK_COLUMN_USAGE");
 
-        t.insert(rs, session);
+        t.insert(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -3004,7 +3004,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iis_defr]    = "NO";
                 row[iinit_defr]  = "NO";
 
-                t.insert(row, session);
+                t.insert(row);
             }
 
             constraints     = table.getConstraints();
@@ -3063,7 +3063,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[iis_defr]    = "NO";
             row[iinit_defr]  = "NO";
 
-            t.insert(row, session);
+            t.insert(row);
         }
 
         t.setDataReadOnly(true);
@@ -3134,7 +3134,7 @@ extends org.hsqldb.DatabaseInformationMain {
             + "VIEW_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
             + "from SYSTEM_VIEW_COLUMN_USAGE");
 
-        t.insert(rs, session);
+        t.insert(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -3297,7 +3297,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[it_name]  = resultRow[2];
                 row[it_cname] = resultRow[3];
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
 
@@ -3447,7 +3447,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[ir_schem] = ns.getSchemaName(method);
                 row[ir_name]  = ns.getMethodSpecificName(method);
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
 
@@ -3528,7 +3528,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[isn]        = specificName;
         row[iseq]       = sequence;
 
-        t.insert(row, session);
+        t.insert(row);
 
         if (l != null) {
             int size = l.size();
@@ -3552,7 +3552,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[isn]        = specificName;
                 row[iseq]       = sequence;
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
     }
@@ -3615,7 +3615,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iporigin]      = origin;
         row[isn]           = specificName;
 
-        t.insert(row, session);
+        t.insert(row);
 
         if (l != null) {
             int size = l.size();
@@ -3634,7 +3634,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iporigin]      = "ALIAS";
                 row[isn]           = specificName;
 
-                t.insert(row, session);
+                t.insert(row);
             }
         }
     }
