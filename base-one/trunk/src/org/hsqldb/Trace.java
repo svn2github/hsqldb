@@ -92,7 +92,7 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
 /** @todo  fredt - 20021022 management of nested throws inside the program in
  * such a way that it is possible to return exactly the text of the error
  *  thrown at a given level withou higher level messages being added and to
- * preserve the orignial error code
+ * preserve the original error code
  */
 public class Trace {
 
@@ -594,11 +594,11 @@ public class Trace {
         // in case of negative code
         code = Math.abs(code);
 
-        String       mainErrorMessage = getMessage(code);
-        String state =           "S1000";
+        String mainErrorMessage = getMessage(code);
+        String state            = "S1000";
 
-        if(mainErrorMessage.length() >= 5){
-            state = mainErrorMessage.substring(0, 5);
+        if (mainErrorMessage.length() >= 5) {
+            state            = mainErrorMessage.substring(0, 5);
             mainErrorMessage = mainErrorMessage.substring(6);
         }
 

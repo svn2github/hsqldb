@@ -82,16 +82,16 @@ class TriggerDef extends Thread {
         return defaultQueueSize;
     }
 
-    protected static int       defaultQueueSize = 1024;
-    Table                      table;
-    Trigger                    trig;
-    String                     fire;
-    int                        vectorIndex;      // index into HsqlArrayList[]
+    protected static int defaultQueueSize = 1024;
+    Table                table;
+    Trigger              trig;
+    String               fire;
+    int                  vectorIndex;           // index into HsqlArrayList[]
 
     //protected boolean busy;               // firing trigger in progress
     protected HsqlDeque        pendingQueue;    // row triggers pending
-    protected int              rowsQueued;       // rows in pendingQueue
-    protected boolean          valid;            // parsing valid
+    protected int              rowsQueued;      // rows in pendingQueue
+    protected boolean          valid;           // parsing valid
     protected volatile boolean keepGoing = true;
 
     /**
@@ -142,7 +142,7 @@ class TriggerDef extends Thread {
         vectorIndex   = SqlToIndex();
 
         //busy = false;
-        rowsQueued    = 0;
+        rowsQueued   = 0;
         pendingQueue = new HsqlDeque();
 
         if (vectorIndex < 0) {
@@ -400,8 +400,8 @@ class TriggerDef extends Thread {
         public TriggerData(Session session, Object[] oldRow,
                            Object[] newRow) {
 
-            this.oldRow  = oldRow;
-            this.newRow  = newRow;
+            this.oldRow   = oldRow;
+            this.newRow   = newRow;
             this.username = session.getUsername();
         }
     }

@@ -146,7 +146,7 @@ class ServerConnection implements Runnable {
 
         keepAlive = false;
 
-        if (!runnerThread.equals(Thread.currentThread())) {
+        if (!Thread.currentThread().equals(runnerThread)) {
             close();
         }
     }

@@ -35,6 +35,7 @@ import java.io.IOException;
 
 import org.hsqldb.Binary;
 import org.hsqldb.Column;
+import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.JavaObject;
 import org.hsqldb.Trace;
@@ -312,7 +313,11 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return java.sql.Timestamp.valueOf(s);
+        try {
+            return java.sql.Timestamp.valueOf(s);
+        } catch (IllegalArgumentException e) {
+            return HsqlDateTime.timestampValue(s);
+        }
     }
 
     protected Boolean readBit() throws IOException, HsqlException {

@@ -97,7 +97,7 @@ public class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd hh:mm:ss.fffffffff</code>
      */
-    static Timestamp timestampValue(String s) {
+    public static Timestamp timestampValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException(

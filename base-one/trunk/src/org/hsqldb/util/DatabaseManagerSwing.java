@@ -724,60 +724,60 @@ implements ActionListener, WindowListener, KeyListener {
         public void run() {
 
             setWaiting(true);
-        gResult.clear();
+            gResult.clear();
 
-        String sCmd = null;
+            String sCmd = null;
 
-        if (4096 <= ifHuge.length()) {
-            sCmd = ifHuge;
-        } else {
-            sCmd = txtCommand.getText();
-        }
-
-        if (sCmd.startsWith("-->>>TEST<<<--")) {
-            testPerformance();
-
-            return;
-        }
-
-        String g[] = new String[1];
-
-        try {
-            lTime = System.currentTimeMillis();
-
-            sStatement.execute(sCmd);
-
-            int r = sStatement.getUpdateCount();
-
-            if (r == -1) {
-                formatResultSet(sStatement.getResultSet());
+            if (4096 <= ifHuge.length()) {
+                sCmd = ifHuge;
             } else {
-                g[0] = "update count";
+                sCmd = txtCommand.getText();
+            }
+
+            if (sCmd.startsWith("-->>>TEST<<<--")) {
+                testPerformance();
+
+                return;
+            }
+
+            String g[] = new String[1];
+
+            try {
+                lTime = System.currentTimeMillis();
+
+                sStatement.execute(sCmd);
+
+                int r = sStatement.getUpdateCount();
+
+                if (r == -1) {
+                    formatResultSet(sStatement.getResultSet());
+                } else {
+                    g[0] = "update count";
+
+                    gResult.setHead(g);
+
+                    g[0] = "" + r;
+
+                    gResult.addRow(g);
+                }
+
+                lTime = System.currentTimeMillis() - lTime;
+
+                addToRecent(txtCommand.getText());
+            } catch (SQLException e) {
+                lTime = System.currentTimeMillis() - lTime;
+                g[0]  = "SQL Error";
 
                 gResult.setHead(g);
 
-                g[0] = "" + r;
+                String s = e.getMessage();
+
+                s    += " / Error Code: " + e.getErrorCode();
+                s    += " / State: " + e.getSQLState();
+                g[0] = s;
 
                 gResult.addRow(g);
             }
-
-            lTime = System.currentTimeMillis() - lTime;
-
-            addToRecent(txtCommand.getText());
-        } catch (SQLException e) {
-            lTime = System.currentTimeMillis() - lTime;
-            g[0]  = "SQL Error";
-
-            gResult.setHead(g);
-
-            String s = e.getMessage();
-
-            s    += " / Error Code: " + e.getErrorCode();
-            s    += " / State: " + e.getSQLState();
-            g[0] = s;
-
-            gResult.addRow(g);
-        }
 
             // Call with invokeLater because these commands change the gui.
             // Do not want to be updating the gui outside of the AWT event
@@ -786,9 +786,9 @@ implements ActionListener, WindowListener, KeyListener {
 
                 public void run() {
 
-        updateResult();
+                    updateResult();
                     gResult.fireTableChanged(null);
-        System.gc();
+                    System.gc();
                     setWaiting(false);
                 }
             });
@@ -1071,7 +1071,7 @@ implements ActionListener, WindowListener, KeyListener {
 */
         pCommand.add(txtCommandScroll, BorderLayout.CENTER);
 
-        gResult      = new GridSwing();
+        gResult = new GridSwing();
 
         TableSorter sorter = new TableSorter(gResult);
 
@@ -1080,7 +1080,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         sorter.setTableHeader(gResultTable.getTableHeader());
 
-        gScrollPane  = new JScrollPane(gResultTable);
+        gScrollPane = new JScrollPane(gResultTable);
 
         gResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         gResult.setJTable(gResultTable);

@@ -1,5 +1,9 @@
 Readme File
 
+2004.06.05 
+
+Minor changes
+
 2004.05.31 RC_6b
 
 Fixed CHECKPOINT DEFRAG bug with empty tables

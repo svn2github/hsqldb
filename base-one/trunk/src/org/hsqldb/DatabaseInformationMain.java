@@ -2031,8 +2031,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             tableSchema  = ns.getSchemaName(table);
 
             for (int i = 0; i < users.size(); i++) {
-                user            = (User) users.get(i);
-                granteeName     = user.getName();
+                user        = (User) users.get(i);
+                granteeName = user.getName();
 
                 if (user.isAdmin() &&!table.isTemp()) {
                     tablePrivileges =
@@ -2042,8 +2042,8 @@ class DatabaseInformationMain extends DatabaseInformation {
                         user.listGrantedTablePrivileges(accessKey);
                 }
 
-                isGrantable     = (user.isAdmin()) ? "YES"
-                                                   : "NO";
+                isGrantable = (user.isAdmin()) ? "YES"
+                                               : "NO";
 
                 for (int j = 0; j < tablePrivileges.length; j++) {
                     privilege          = (String) tablePrivileges[j];
