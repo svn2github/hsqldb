@@ -95,15 +95,14 @@ import java.sql.Types;
  */
 class Parser {
 
-    private Database       dDatabase;
-    private Tokenizer      tTokenizer;
-    private Session        cSession;
-    private String         sTable;
-    private String         sToken;
-    private Object         oData;
-    private int            iType;
-    private int            iToken;
-    private static boolean sql_enforce_size;
+    private Database  dDatabase;
+    private Tokenizer tTokenizer;
+    private Session   cSession;
+    private String    sTable;
+    private String    sToken;
+    private Object    oData;
+    private int       iType;
+    private int       iToken;
 
     /**
      *  Constructor declaration
@@ -117,15 +116,6 @@ class Parser {
         dDatabase  = db;
         tTokenizer = t;
         cSession   = session;
-    }
-
-    /**
-     *  Sets the enforceSize attribute of the Parser class
-     *
-     * @param  value  The new enforceSize value
-     */
-    static void setEnforceSize(boolean value) {
-        sql_enforce_size = value;
     }
 
     /**
@@ -185,7 +175,7 @@ class Parser {
 
                     t.setDataSource(src, false, cSession);
                     logTableDDL(t);
-                    t.insert(r, cSession);
+                    t.insertNoCheck(r, cSession);
                 } catch (SQLException e) {
                     dDatabase.dropTable(select.sIntoTable.name, false, false,
                                         cSession);
@@ -196,7 +186,7 @@ class Parser {
                 logTableDDL(t);
 
                 // SELECT .. INTO can't fail because of constraint violation
-                t.insert(r, cSession);
+                t.insertNoCheck(r, cSession);
             }
 
             int i = r.getSize();
@@ -320,16 +310,13 @@ class Parser {
             tTokenizer.back();
         }
 
-        // do the update
-        table.fireAll(TriggerDef.UPDATE_BEFORE);
-
         Expression exp[] = new Expression[len];
 
         eColumn.toArray(exp);
 
         int col[]   = new int[len];
         int type[]  = new int[len];
-        int csize[] = new int[len];
+        //int csize[] = new int[len];
 
         for (int i = 0; i < len; i++) {
             col[i] = ((Integer) vColumn.get(i)).intValue();
@@ -337,7 +324,7 @@ class Parser {
             Column column = table.getColumn(col[i]);
 
             type[i]  = column.getType();
-            csize[i] = column.getSize();
+            //csize[i] = column.getSize();
         }
 
         int count = 0;
@@ -355,25 +342,10 @@ class Parser {
 
                     Object ni[] = table.getNewRow();
 
-// fredt@users 20020130 - patch 1.7.0 by fredt
                     System.arraycopy(nd, 0, ni, 0, size);
 
-                    /*
-                     for (int i = 0; i < size; i++) {
-                     ni[i] = nd[i];
-                     }
-                     */
-
-// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
-                    if (sql_enforce_size) {
-                        for (int i = 0; i < len; i++) {
-                            ni[col[i]] = enforceSize(exp[i].getValue(type[i]),
-                                                     type[i], csize[i], true);
-                        }
-                    } else {
-                        for (int i = 0; i < len; i++) {
-                            ni[col[i]] = exp[i].getValue(type[i]);
-                        }
+                    for (int i = 0; i < len; i++) {
+                        ni[col[i]] = exp[i].getValue(type[i]);
                     }
 
                     ins.add(ni);
@@ -383,62 +355,7 @@ class Parser {
             cSession.beginNestedTransaction();
 
             try {
-                Record nd = del.rRoot;
-                Record ni = ins.rRoot;
-
-                // -- Check for updateCascade
-                while (nd != null && ni != null) {
-                    table.checkCascadeUpdate(nd.data, ni.data, cSession, col,
-                                             null, false);
-
-                    nd = nd.next;
-                    ni = ni.next;
-                }
-
-                nd = del.rRoot;
-                ni = ins.rRoot;
-
-                // -- No exception -> do the updateCascade
-                while (nd != null && ni != null) {
-                    table.checkCascadeUpdate(nd.data, ni.data, cSession, col,
-                                             null, true);
-
-                    nd = nd.next;
-                    ni = ni.next;
-                }
-
-                // -- do the delete main table
-                nd = del.rRoot;
-
-                while (nd != null) {
-                    table.fireAll(TriggerDef.UPDATE_BEFORE_ROW, nd.data);
-                    table.deleteNoCheck(nd.data, cSession, true);
-
-                    nd = nd.next;
-                }
-
-                // -- do the insert in the main table
-                ni = ins.rRoot;
-
-                while (ni != null) {
-                    table.insertNoCheck(ni.data, cSession, true);
-
-                    ni = ni.next;
-
-                    count++;
-                }
-
-                // -- obsolete; I hope ;-)
-                //table.checkUpdate(col, del, ins);
-                ni = ins.rRoot;
-
-                while (ni != null) {
-
-                    // fire triggers now that update has been checked
-                    table.fireAll(TriggerDef.UPDATE_AFTER_ROW, ni.data);
-
-                    ni = ni.next;
-                }
+                count = table.update(del, ins, col, cSession);
 
                 cSession.endNestedTransaction(false);
             } catch (SQLException e) {
@@ -449,8 +366,6 @@ class Parser {
                 throw e;
             }
         }
-
-        table.fireAll(TriggerDef.UPDATE_AFTER);
 
         Result r = new Result();
 
@@ -496,7 +411,6 @@ class Parser {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         Trace.check(!table.isDataReadOnly(), Trace.DATA_IS_READONLY);
-        table.fireAll(TriggerDef.DELETE_BEFORE);
 
         int count = 0;
 
@@ -509,18 +423,8 @@ class Parser {
                 }
             } while (filter.next());
 
-            Record n = del.rRoot;
-
-            while (n != null) {
-                table.delete(n.data, cSession);
-
-                count++;
-
-                n = n.next;
-            }
+            count = table.delete(del, cSession);
         }
-
-        table.fireAll(TriggerDef.DELETE_AFTER);
 
         Result r = new Result();
 
@@ -551,10 +455,12 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        HsqlArrayList vcolumns = null;
+        HsqlArrayList vcolumns       = null;
+        boolean       checkcolumns[] = null;
 
         if (token.equals("(")) {
-            vcolumns = new HsqlArrayList();
+            vcolumns     = new HsqlArrayList();
+            checkcolumns = t.getNewColumnCheckList();
 
             int i = 0;
 
@@ -576,6 +482,14 @@ class Parser {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
 
+            int len = vcolumns.size();
+
+            for (i = 0; i < len; i++) {
+                int colindex = t.getColumnNr((String) vcolumns.get(i));
+
+                checkcolumns[colindex] = true;
+            }
+
             token = tTokenizer.getString();
         }
 
@@ -592,9 +506,7 @@ class Parser {
         if (token.equals("VALUES")) {
             tTokenizer.getThis("(");
 
-            Object  row[]    = t.getNewRow();
-            boolean check[]  = (vcolumns == null) ? null
-                                                  : new boolean[row.length];
+            Object  row[]    = t.getNewRow(checkcolumns);
             boolean enclosed = false;
             int     i        = 0;
 
@@ -604,22 +516,13 @@ class Parser {
                 if (vcolumns == null) {
                     colindex = i;
                 } else {
-                    colindex        = t.getColumnNr((String) vcolumns.get(i));
-                    check[colindex] = true;
+                    colindex = t.getColumnNr((String) vcolumns.get(i));
                 }
 
                 Column column = t.getColumn(colindex);
 
-// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
-                if (sql_enforce_size) {
-                    row[colindex] = enforceSize(getValue(column.getType()),
-                                                column.getType(),
-                                                column.getSize(), true);
-                } else {
-                    row[colindex] = getValue(column.getType());
-                }
-
-                token = tTokenizer.getString();
+                row[colindex] = getValue(column.getType());
+                token         = tTokenizer.getString();
 
                 if (token.equals(",")) {
                     continue;
@@ -636,19 +539,6 @@ class Parser {
 
             if (!enclosed || i != len - 1) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-            }
-
-            if (vcolumns != null) {
-                for (i = 0; i < check.length; i++) {
-                    if (check[i] == false) {
-                        String def = t.getColumn(i).getDefaultString();
-
-                        if (def != null) {
-                            row[i] = Column.convertObject(
-                                def, t.getColumn(i).getType());
-                        }
-                    }
-                }
             }
 
             t.insert(row, cSession);
@@ -681,12 +571,9 @@ class Parser {
 
             try {
                 while (r != null) {
-                    Object  row[]   = t.getNewRow();
-                    boolean check[] = new boolean[row.length];
+                    Object row[] = t.getNewRow(checkcolumns);
 
                     for (int i = 0; i < len; i++) {
-                        check[col[i]] = true;
-
                         if (type[i] != result.colType[i]) {
                             row[col[i]] = Column.convertObject(r.data[i],
                                                                type[i]);
@@ -695,25 +582,11 @@ class Parser {
                         }
                     }
 
-                    // skitt@users - this is exactly the same loop as the
-                    // above - it probably should be in a separate method
-                    for (int i = 0; i < check.length; i++) {
-                        if (check[i] == false) {
-                            String def = t.getColumn(i).getDefaultString();
-
-                            if (def != null) {
-                                row[i] = Column.convertObject(
-                                    def, t.getColumn(i).getType());
-                            }
-                        }
-                    }
-
-                    t.insert(row, cSession);
-
-                    count++;
-
-                    r = r.next;
+                    r.data = row;
+                    r      = r.next;
                 }
+
+                count = t.insert(result, cSession);
 
                 cSession.endNestedTransaction(false);
             } catch (SQLException e) {
@@ -732,69 +605,6 @@ class Parser {
         r.iUpdateCount = count;
 
         return r;
-    }
-
-// fredt@users 20020130 - patch 491987 by jimbag@users - modified
-
-    /**
-     *  Check an object for type CHAR and VARCHAR and truncate/pad based on
-     *  the  size
-     *
-     * @param  obj   object to check
-     * @param  type  the object type
-     * @param  size  size to enforce
-     * @param  pad   pad strings
-     * @return       the altered object if the right type, else the object
-     *      passed in unaltered
-     */
-    static Object enforceSize(Object obj, int type, int size, boolean pad) {
-
-        // todo: need to handle BINARY like this as well
-        if (size == 0 || obj == null) {
-            return obj;
-        }
-
-        switch (type) {
-
-            case Types.CHAR :
-                return padOrTrunc((String) obj, size, pad);
-
-            case Types.VARCHAR :
-                if (((String) obj).length() > size) {
-
-                    // Just truncate for VARCHAR type
-                    return ((String) obj).substring(0, size);
-                }
-            default :
-                return obj;
-        }
-    }
-
-    /**
-     *  Pad or truncate a string to len size
-     *
-     * @param  s    the string to pad to truncate
-     * @param  len  the len to make the string
-     * @param pad   pad the string
-     * @return      the string of size len
-     */
-    static String padOrTrunc(String s, int len, boolean pad) {
-
-        if (s.length() >= len) {
-            return s.substring(0, len);
-        }
-
-        StringBuffer b = new StringBuffer(len);
-
-        b.append(s);
-
-        if (pad) {
-            for (int i = s.length(); i < len; i++) {
-                b.append(' ');
-            }
-        }
-
-        return b.toString();
     }
 
     /**
@@ -1189,7 +999,7 @@ class Parser {
             t.createPrimaryKey();
 
             // subquery creation can't fail because constraint violation
-            t.insert(r, cSession);
+            t.insertNoCheck(r, cSession);
         } else {
             t = dDatabase.getTable(token, cSession);
 
@@ -1245,7 +1055,7 @@ class Parser {
                 t.createPrimaryKey();
 
                 // subquery creation can't fail because constraint violation
-                t.insert(r, cSession);
+                t.insertNoCheck(r, cSession);
             }
         }
 

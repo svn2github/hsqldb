@@ -81,7 +81,7 @@ import java.sql.SQLException;
  *
  *  A CachedRow is normally part of a circular double linked list which
  *  contians all the Rows currently in the Cache for the database. It is
- *  unlinked from this list when it is freed from the Cache to make was for
+ *  unlinked from this list when it is freed from the Cache to make way for
  *  other rows.
  *
  * @version 1.7.2
@@ -99,7 +99,7 @@ class CachedRow extends Row {
     int              storageSize;
 
     /**
-     *  Flag indication any change to the Nodes or table row data.
+     *  Flag indicating any change to the Nodes or table row data.
      */
     protected boolean hasChanged;
 
@@ -118,7 +118,7 @@ class CachedRow extends Row {
      *  hasDataChanged is set to true as the current implementation of
      *  database row updates performs a delete followed by an insert. This
      *  means that once a row is created its data cannot change.
-     *  (correct as of version 1_7_2_alpha_h)
+     *  (correct as of version 1_7_2_alpha_i)
      */
     CachedRow(Table t, Object o[]) throws SQLException {
 

@@ -87,8 +87,8 @@ import org.hsqldb.lib.StringUtil;
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595099 - user defined PK name
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
-// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
-// kloska@users 20021112 - PATCH 1.7.2 - ON DELETE SET NULL | SET DEFAULT
+// kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
+// kloska@users 20021112 - patch 1.7.2 - ON DELETE SET NULL | SET DEFAULT
 // fredt@users 20021210 - patch 1.7.2 - better ADD / DROP INDEX for non-CACHED tables
 
 /**
@@ -121,9 +121,14 @@ class Table {
     HsqlArrayList         vConstraint;        // constrainst for the table
     HsqlArrayList         vTrigs[];           // array of trigger lists
     private int[]         colTypes;           // fredt - types of columns
-    private boolean       isSystem;
-    private boolean       isText;
-    private boolean       isView;
+    private int[]         colSizes;           // fredt - copy of SIZE values for columns
+    private boolean[]     colNullable;        // fredt - modified copy of isNullable() values
+    private String[] colDefaults;             // fredt - copy of DEFAULT values
+    private boolean  hasDefaultValues;        //fredt - shortcut for above
+    private boolean  isSystem;
+    private boolean  isText;
+    private boolean  isView;
+    boolean          sqlEnforceSize;          // inherited for the database -
 
     // properties for subclasses
     protected int      iColumnCount;          // inclusive the hidden primary key
@@ -151,7 +156,8 @@ class Table {
     Table(Database db, HsqlName name, int type,
             Session session) throws SQLException {
 
-        dDatabase = db;
+        dDatabase      = db;
+        sqlEnforceSize = db.sqlEnforceSize;
 
         switch (type) {
 
@@ -877,10 +883,25 @@ class Table {
 
         createIndexStructure(columns, name, true);
 
-        colTypes = new int[iColumnCount];
+        colTypes    = new int[iColumnCount];
+        colDefaults = new String[iVisibleColumns];
+        colSizes    = new int[iVisibleColumns];
+        colNullable = new boolean[iVisibleColumns];
 
         for (int i = 0; i < iColumnCount; i++) {
-            colTypes[i] = getColumn(i).getType();
+            Column column = getColumn(i);
+
+            colTypes[i] = column.getType();
+
+            if (i < iVisibleColumns) {
+                hasDefaultValues = hasDefaultValues
+                                   || column.getDefaultString() != null;
+                colDefaults[i] = column.getDefaultString();
+                colSizes[i]    = column.getSize();
+
+                // when insert or update values are processed, IDENTITY column can be null
+                colNullable[i] = column.isNullable() || column.isIdentity();
+            }
         }
     }
 
@@ -1066,7 +1087,7 @@ class Table {
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
-            if (ignore.get(c) != null) {
+            if ( ignore != null && ignore.get(c) != null) {
                 continue;
             }
 
@@ -1097,14 +1118,49 @@ class Table {
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     * Returns empty Object array for a new row.
      */
     Object[] getNewRow() {
         return new Object[iColumnCount];
     }
 
+    /**
+     * Returns empty boolean array.
+     */
+    boolean[] getNewColumnCheckList() {
+        return new boolean[iVisibleColumns];
+    }
+
+    /**
+     * Returns array for a new row with SQL DEFAULT value for each column n
+     * where exists[n] is false. This provides default values only where
+     * required and avoids evaluating these values where they will be
+     * overwritten.
+     */
+    Object[] getNewRow(boolean[] exists) throws SQLException {
+
+        Object[] row = new Object[iColumnCount];
+        int      i;
+
+        if (exists != null && hasDefaultValues) {
+            for (i = 0; i < iVisibleColumns; i++) {
+                String def = colDefaults[i];
+
+                if (exists[i] == false && def != null) {
+                    row[i] = Column.convertObject(def, colTypes[i]);
+                }
+            }
+        }
+
+        return row;
+    }
+
+    /**
+     *  Performs Table structure modification and changes to the index nodes
+     *  to remove a given index from a MEMORY or TEXT table.
+     *
+     * @return
+     */
     void dropIndex(String indexname) throws SQLException {
 
         // find the array index for indexname and remove
@@ -1195,35 +1251,82 @@ class Table {
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  col
-     * @param  deleted
-     * @param  inserted
-     * @throws  SQLException
+     *  Highest level multiple row insert method. Corresponds to an SQL
+     *  INSERT INTO statement.
      */
-    void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws SQLException {
+    int insert(Result ins, Session c) throws SQLException {
 
-        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
+        Record ni    = ins.rRoot;
+        int    count = 0;
 
-        if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0, size = vConstraint.size(); i < size; i++) {
-                Constraint v = (Constraint) vConstraint.get(i);
+        while (ni != null) {
+            checkNullColumns(ni.data);
 
-                v.checkUpdate(col, deleted, inserted);
-            }
+            ni = ni.next;
         }
+
+        ni = ins.rRoot;
+
+        fireAll(TriggerDef.INSERT_BEFORE);
+
+        while (ni != null) {
+            insertRow(ni.data, c);
+
+            ni = ni.next;
+
+            count++;
+        }
+
+        fireAll(TriggerDef.INSERT_AFTER);
+
+        return count;
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  result
-     * @param  c
-     * @throws  SQLException
+     *  Highest level method for inserting a single row. Corresponds to an
+     *  SQL INSERT INTO .... VALUES(,,) statement.
+     *  fires triggers.
      */
-    void insert(Result result, Session c) throws SQLException {
+    void insert(Object row[], Session c) throws SQLException {
+
+        // todo - clarify the place for readonly checks
+        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
+        checkNullColumns(row);
+        fireAll(TriggerDef.INSERT_BEFORE);
+        insertRow(row, c);
+        fireAll(TriggerDef.INSERT_AFTER);
+    }
+
+    /**
+     *  High level method for inserting rows. Performs constraint checks and
+     *  fires triggers.
+     */
+    private void insertRow(Object row[], Session c) throws SQLException {
+
+        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
+        fireAll(TriggerDef.INSERT_BEFORE_ROW, row);
+
+        if (dDatabase.isReferentialIntegrity()) {
+            for (int i = 0, size = vConstraint.size(); i < size; i++) {
+                ((Constraint) vConstraint.get(i)).checkInsert(row);
+            }
+        }
+
+        insertNoCheck(row, c, true);
+        fireAll(TriggerDef.INSERT_AFTER_ROW, row);
+    }
+
+    /**
+     * Multi-row insert method. Used for SELECT ... INTO tablename queries
+     * also for creating temporary tables from subqueries. These tables are
+     * new, empty tables with no constraints, triggers
+     * column default values, column size enforcement whatsoever.
+     *
+     * The identity columns has to be set as they have no defined primary key.
+     *
+     * Not used for INSERT INTO .... SELECT ... FROM queries
+     */
+    void insertNoCheck(Result result, Session c) throws SQLException {
 
         // if violation of constraints can occur, insert must be rolled back
         // outside of this function!
@@ -1237,51 +1340,79 @@ class Table {
                 row[i] = r.data[i];
             }
 
-            insert(row, c);
+            insertNoCheck(row, c, true);
 
             r = r.next;
         }
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  c
-     * @throws  SQLException
+     *  Low level method for row insert.
+     *  UNIQUE or PRIMARY constraints are enforced by attempting to
+     *  add the row to the indexes.
      */
-    void insert(Object row[], Session c) throws SQLException {
+    void insertNoCheck(Object row[], Session c,
+                       boolean log) throws SQLException {
 
-        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
-        fireAll(TriggerDef.INSERT_BEFORE, row);
+        // this is necessary when rebuilding from the *.script but no
+        // for transaction rollbadk
+        setIdentityColumn(row, c);
 
-        if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0, size = vConstraint.size(); i < size; i++) {
-                ((Constraint) vConstraint.get(i)).checkInsert(row);
-            }
+        // this step is not necessary for rebuilding from the *.script file
+        // or transaction rollback - use the c parameters to determine
+        if (c != null) {
+            enforceFieldValueLimits(row);
         }
 
-        insertNoCheck(row, c, true);
-        fireAll(TriggerDef.INSERT_AFTER, row);
+        Row r = Row.newRow(this, row);
+
+        indexRow(r);
+
+        if (c != null) {
+            c.addTransactionInsert(this, row);
+        }
+
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getInsertStatement(row));
+        }
     }
 
+
+    /**
+     * Used by TextCache to insert a row into the indexes when the source
+     * file is first read.
+     */
+    protected void insertNoChange(CachedDataRow r) throws SQLException {
+
+        Object[] row = r.getData();
+
+        checkNullColumns(row);
+        setIdentityColumn(row, null);
+        indexRow(r);
+    }
+
+    /**
+     * Checks a row against NOT NULL constraints on columns.
+     */
     protected void checkNullColumns(Object[] row) throws SQLException {
 
-        for (int i = 0; i < iColumnCount; i++) {
-            if (row[i] == null) {
-                Column  col    = getColumn(i);
-                boolean nullOK = col.isNullable() || col.isIdentity();
-
-                if (!nullOK) {
-                    Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
-                                     "column: " + col.columnName.name
-                                     + " table: " + tableName.name);
-                }
+        for (int i = 0; i < iVisibleColumns; i++) {
+            if (row[i] == null &&!colNullable[i]) {
+                Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
+                                 "column: " + getColumn(i).columnName.name
+                                 + " table: " + tableName.name);
             }
         }
     }
 
-    protected void setIdentityColumn(Object[] row) {
+    /**
+     * If there is an identity column (visible or hidden) on the table, sets
+     * the value and/or adjusts the iIdentiy value for the table.
+     */
+    protected void setIdentityColumn(Object[] row, Session c) {
+
+        int nextId = iIdentityId;
 
         if (iIdentityColumn != -1) {
             Number id = (Number) row[iIdentityColumn];
@@ -1296,41 +1427,115 @@ class Table {
                 }
             }
         }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  c
-     * @param  log
-     * @throws  SQLException
-     */
-    void insertNoCheck(Object row[], Session c,
-                       boolean log) throws SQLException {
-
-        int nextId = iIdentityId;
-
-        checkNullColumns(row);
-        setIdentityColumn(row);
-
-        Row r = Row.newRow(this, row);
-
-        indexRow(r);
 
         if (c != null) {
             c.setLastIdentity(iIdentityId);
-            c.addTransactionInsert(this, row);
         }
 
         if (iIdentityId >= nextId) {
             iIdentityId++;
         }
+    }
 
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getInsertStatement(row));
+    /**
+     *  Enforce max field sizes according to SQL column definition.
+     *  SQL92 13.8 : default values first, then any provided values, then
+     *  size enforcement
+     */
+    void enforceFieldValueLimits(Object[] row) throws SQLException {
+
+        int colindex;
+
+        if (sqlEnforceSize) {
+            for (colindex = 0; colindex < iVisibleColumns; colindex++) {
+                if (colSizes[colindex] != 0 && row[colindex] != null) {
+                    row[colindex] = enforceSize(row[colindex],
+                                                colTypes[colindex],
+                                                colSizes[colindex], true);
+                }
+            }
         }
+    }
+
+    /**
+     *  As above but for a limited number of columns used for UPDATE queries.
+     */
+    void enforceFieldValueLimits(Object[] row,
+                                 int col[]) throws SQLException {
+
+        int i;
+        int colindex;
+
+        if (sqlEnforceSize) {
+            for (i = 0; i < col.length; i++) {
+                colindex = col[i];
+
+                if (colSizes[colindex] != 0 && row[colindex] != null) {
+                    row[colindex] = enforceSize(row[colindex],
+                                                colTypes[colindex],
+                                                colSizes[colindex], true);
+                }
+            }
+        }
+    }
+
+// fredt@users 20020130 - patch 491987 by jimbag@users - modified
+
+    /**
+     *  Check an object for type CHAR and VARCHAR and truncate/pad based on
+     *  the  size
+     *
+     * @param  obj   object to check
+     * @param  type  the object type
+     * @param  size  size to enforce
+     * @param  pad   pad strings
+     * @return       the altered object if the right type, else the object
+     *      passed in unaltered
+     */
+    static Object enforceSize(Object obj, int type, int size, boolean pad) {
+
+        // todo: need to handle BINARY like this as well
+        switch (type) {
+
+            case Types.CHAR :
+                return padOrTrunc((String) obj, size, pad);
+
+            case Types.VARCHAR :
+                if (((String) obj).length() > size) {
+
+                    // Just truncate for VARCHAR type
+                    return ((String) obj).substring(0, size);
+                }
+            default :
+                return obj;
+        }
+    }
+
+    /**
+     *  Pad or truncate a string to len size
+     *
+     * @param  s    the string to pad to truncate
+     * @param  len  the len to make the string
+     * @param pad   pad the string
+     * @return      the string of size len
+     */
+    static String padOrTrunc(String s, int len, boolean pad) {
+
+        if (s.length() >= len) {
+            return s.substring(0, len);
+        }
+
+        HsqlStringBuffer b = new HsqlStringBuffer(len);
+
+        b.append(s);
+
+        if (pad) {
+            for (int i = s.length(); i < len; i++) {
+                b.append(' ');
+            }
+        }
+
+        return b.toString();
     }
 
     /**
@@ -1710,33 +1915,56 @@ class Table {
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  session        Description of the Parameter
-     * @throws  SQLException
+     *  Highest level multiple row delete method. Corresponds to an SQL
+     *  DELETE.
      */
-    void delete(Object row[], Session session) throws SQLException {
+    int delete(Result del, Session c) throws SQLException {
 
-        fireAll(TriggerDef.DELETE_BEFORE_ROW, row);
+        Record nd    = del.rRoot;
+        int    count = 0;
 
-        if (dDatabase.isReferentialIntegrity()) {
-            checkCascadeDelete(row, session, false);
-            checkCascadeDelete(row, session, true);
+        while (nd != null) {
+            delete(nd.data, c, false);
+
+            nd = nd.next;
         }
 
-        deleteNoCheck(row, session, true);
+        fireAll(TriggerDef.DELETE_BEFORE);
 
-        // fire the delete after statement trigger
-        fireAll(TriggerDef.DELETE_AFTER_ROW, row);
+        nd = del.rRoot;
+
+        while (nd != null) {
+            delete(nd.data, c, true);
+
+            nd = nd.next;
+
+            count++;
+        }
+
+        fireAll(TriggerDef.DELETE_AFTER);
+
+        return count;
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  session        Description of the Parameter
-     * @throws  SQLException
+     *  High level row delete method. Fires triggers and performs integrity
+     *  constraint checks.
+     */
+    void delete(Object row[], Session session,
+                boolean doit) throws SQLException {
+
+        if (dDatabase.isReferentialIntegrity()) {
+            checkCascadeDelete(row, session, doit);
+        }
+
+        if (doit) {
+            deleteNoRefCheck(row, session);
+        }
+    }
+
+    /**
+     *  Mid level row delete method. Fires triggers but no integrity
+     *  constraint checks.
      */
     private void deleteNoRefCheck(Object row[],
                                   Session session) throws SQLException {
@@ -1751,14 +1979,6 @@ class Table {
     /**
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
-     *
-     * The reference to the row is kept while it is removed from the indexes.
-     * This
-     *
-     * @param  row
-     * @param  c
-     * @param  log
-     * @throws  SQLException
      */
     void deleteNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
@@ -1783,6 +2003,100 @@ class Table {
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && dDatabase.logger.hasLog()) {
             dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+        }
+    }
+
+    /**
+     *  Highest level multiple row update method. Corresponds to an SQL
+     *  UPDATE.
+     */
+    int update(Result del, Result ins, int[] col,
+               Session c) throws SQLException {
+
+        Record nd    = del.rRoot;
+        Record ni    = ins.rRoot;
+        int    count = 0;
+
+        while (nd != null && ni != null) {
+            enforceFieldValueLimits(ni.data, col);
+            setIdentityColumn(ni.data, null);
+            update(nd.data, ni.data, col, c, false);
+
+            nd = nd.next;
+            ni = ni.next;
+        }
+
+        fireAll(TriggerDef.UPDATE_BEFORE);
+
+        nd = del.rRoot;
+        ni = ins.rRoot;
+
+        while (nd != null && ni != null) {
+            update(nd.data, ni.data, col, c, true);
+
+            nd = nd.next;
+            ni = ni.next;
+
+            count++;
+        }
+
+        fireAll(TriggerDef.UPDATE_AFTER);
+
+        return count;
+    }
+
+    /**
+     *  High level row update method. Fires triggers and performs integrity
+     *  constraint checks. Parameter doit indicates whether only to check
+     *  integrity or to perform the update.
+     */
+    private void update(Object[] oldrow, Object[] newrow, int[] col,
+                        Session c, boolean doit) throws SQLException {
+
+        if (dDatabase.isReferentialIntegrity()) {
+            checkCascadeUpdate(oldrow, newrow, c, col, null, doit);
+        }
+
+        if (doit) {
+            updateNoRefCheck(oldrow, newrow, c, true);
+        }
+    }
+
+    /**
+     * Mid level row update method. Fires triggers.
+     */
+    private void updateNoRefCheck(Object[] oldrow, Object[] newrow,
+                                  Session c,
+                                  boolean log) throws SQLException {
+
+        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldrow);
+        updateNoCheck(oldrow, newrow, c, log);
+        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow);
+    }
+
+    /**
+     * Low level row update method. Updates the row and the indexes.
+     */
+    private void updateNoCheck(Object[] oldrow, Object[] newrow, Session c,
+                               boolean log) throws SQLException {
+        deleteNoCheck(oldrow, c, log);
+        insertNoCheck(newrow, c, log);
+    }
+
+    /**
+     * Unused since support for cascading updates was introduced.
+     */
+    void checkUpdate(int col[], Result deleted,
+                     Result inserted) throws SQLException {
+
+        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
+
+        if (dDatabase.isReferentialIntegrity()) {
+            for (int i = 0, size = vConstraint.size(); i < size; i++) {
+                Constraint v = (Constraint) vConstraint.get(i);
+
+                v.checkUpdate(col, deleted, inserted);
+            }
         }
     }
 

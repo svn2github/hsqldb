@@ -118,6 +118,7 @@ class Database {
     private DatabaseInformation    dInfo;
     Logger                         logger;
     boolean                        bReadOnly;
+    boolean                        sqlEnforceSize;
     private boolean                bShutdown;
     private HsqlHashMap            hAlias;
     private boolean                bIgnoreCase;
@@ -287,8 +288,10 @@ class Database {
 
         HsqlName.resetNumbering();
         Library.setSqlMonth(databaseProperties.isPropertyTrue("sql.month"));
-        Parser.setEnforceSize(
-            databaseProperties.isPropertyTrue("sql.enforce_size"));
+
+        sqlEnforceSize =
+            databaseProperties.isPropertyTrue("sql.enforce_size");
+
         Column.setCompareInLocal(
             databaseProperties.isPropertyTrue("sql.compare_in_locale"));
 
@@ -1395,9 +1398,10 @@ class Database {
                     }
 
                     String testdefault =
-                        (String) Parser.enforceSize(defaultvalue, iType,
-                                                    iLen, false);
+                        (String) Table.enforceSize(defaultvalue, iType, iLen,
+                                                   false);
 
+                    // if default value is too long for fixes size column
                     if (defaultvalue.equals(testdefault) == false) {
                         throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
                                           defaultvalue);

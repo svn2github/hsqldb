@@ -202,8 +202,6 @@ public class TestCacheSize {
             ps.setString(1, "Julia");
             ps.setString(2, "Clancy");
 
-            long startTime = System.currentTimeMillis();
-
             for (i = 0; i < bigrows; i++) {
                 ps.setInt(3, randomgen.nextInt() & smallrows);
 
@@ -297,6 +295,7 @@ public class TestCacheSize {
             rs.next();
             System.out.println("Row Count: " + rs.getInt(1));
             System.out.println("Time to count: " + sw.elapsedTime());
+            checkSelects();
             sw.zero();
             cConnection.close();
             System.out.println("Closed database:" + sw.elapsedTime());
@@ -305,13 +304,49 @@ public class TestCacheSize {
         }
     }
 
+    private void checkSelects() {
+
+        StopWatch        sw        = new StopWatch();
+        int              smallrows = 0xfff;
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+
+        try {
+            for (; i < 100000; i++) {
+                PreparedStatement ps = cConnection.prepareStatement(
+                    "SELECT TOP 1 firstname,lastname,zip,filler FROM test WHERE zip = ?");
+
+                ps.setInt(1, randomgen.nextInt() & smallrows);
+                ps.execute();
+            }
+        } catch (SQLException e) {}
+
+        System.out.println("Select random zip " + i + " rows : "
+                           + sw.elapsedTime());
+        sw.zero();
+
+        try {
+            for (i = 0; i < 100000; i++) {
+                PreparedStatement ps = cConnection.prepareStatement(
+                    "SELECT firstname,lastname,zip,filler FROM test WHERE id = ?");
+
+                ps.setInt(1, randomgen.nextInt() & 0xfffff);
+                ps.execute();
+            }
+        } catch (SQLException e) {}
+
+        System.out.println("Select random id " + i + " rows : "
+                           + sw.elapsedTime());
+    }
+
     public static void main(String argv[]) {
 
         TestCacheSize test = new TestCacheSize();
 
         test.setUp();
-        test.testFillUp();
-        test.tearDown();
+
+//        test.testFillUp();
+//        test.tearDown();
         test.checkResults();
     }
 }

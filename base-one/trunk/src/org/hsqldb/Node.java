@@ -138,12 +138,12 @@ abstract class Node {
     abstract int getKey();
 
     /**
-     *  Return the Row Object that is linke to this Node.
+     *  Return the Row Object that is linked to this Node.
      */
     abstract Row getRow() throws SQLException;
 
     /**
-     *  Getters and setters for AVL index maniputions.
+     *  Getters and setters for AVL index operations.
      */
     abstract Node getLeft() throws SQLException;
 

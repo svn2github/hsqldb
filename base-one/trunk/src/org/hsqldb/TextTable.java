@@ -93,7 +93,7 @@ class TextTable extends org.hsqldb.Table {
                     null);
 
                 while (row != null) {
-                    insert(row);
+                    insertNoChange(row);
 
                     row = (PointerCachedDataRow) getRow(row.nextPos, null);
                 }
@@ -218,28 +218,6 @@ class TextTable extends org.hsqldb.Table {
         return r;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  c
-     * @param  log
-     * @throws  SQLException
-     */
-    private void insert(CachedDataRow r) throws SQLException {
-
-        Object[] row    = r.getData();
-        int      nextId = iIdentityId;
-
-        checkNullColumns(row);
-        setIdentityColumn(row);
-        indexRow(r);
-
-        if (iIdentityId >= nextId) {
-            iIdentityId++;
-        }
-    }
-
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws SQLException {
 
@@ -259,13 +237,13 @@ class TextTable extends org.hsqldb.Table {
         super.insert(row, c);
     }
 
-    void delete(Object row[], Session c) throws SQLException {
+    void delete(Object row[], Session c, boolean doit) throws SQLException {
 
         if (dataSource.length() == 0) {
             Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
         }
 
-        super.delete(row, c);
+        super.delete(row, c, doit);
     }
 
     void drop() throws SQLException {

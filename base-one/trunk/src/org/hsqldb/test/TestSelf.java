@@ -227,7 +227,7 @@ class TestSelf {
 
             print("Opened test script file: " + testfile.getAbsolutePath());
 
-            while (true) {
+            for (int lineno = 1; ; lineno++) {
                 String line = read.readLine();
 
                 if (line == null) {
@@ -237,7 +237,7 @@ class TestSelf {
                 if (line.startsWith(" ")) {
                     s += line;
                 } else {
-                    test(sStatement, s);
+                    test(sStatement, s, lineno);
 
                     s = line;
                 }
@@ -677,7 +677,7 @@ class TestSelf {
      * @param  s
      * @throws  Exception
      */
-    static void test(Statement stat, String s) throws Exception {
+    static void test(Statement stat, String s, int line) throws Exception {
 
         String result = "";
         char   type   = ' ';
@@ -704,7 +704,9 @@ class TestSelf {
 
                 case 'u' :
                     if (u != Integer.parseInt(result)) {
-                        throw new Exception("Expected update count=" + result
+                        throw new Exception("Line: " + line + " "
+                                            + "Expected update count="
+                                            + result
                                             + " but update count was " + u
                                             + " / " + s);
                     }
@@ -712,7 +714,8 @@ class TestSelf {
 
                 case 'r' :
                     if (u != -1) {
-                        throw new Exception("Expected ResultSet"
+                        throw new Exception("Line: " + line + " "
+                                            + "Expected ResultSet"
                                             + " but update count was " + u
                                             + " / " + s);
                     }
@@ -725,11 +728,13 @@ class TestSelf {
 
                     if (r.wasNull() || col == null) {
                         if (!result.equals("")) {
-                            throw new Exception("Expected " + result
+                            throw new Exception("Line: " + line + " "
+                                                + "Expected " + result
                                                 + " but got null / " + s);
                         }
                     } else if (!col.equals(result)) {
-                        throw new Exception("Expected >" + result + "<"
+                        throw new Exception("Line: " + line + " "
+                                            + "Expected >" + result + "<"
                                             + " but got >" + col + "< / "
                                             + s);
                     }
@@ -737,7 +742,8 @@ class TestSelf {
 
                 case 'c' :
                     if (u != -1) {
-                        throw new Exception("Expected ResultSet"
+                        throw new Exception("Line: " + line + " "
+                                            + "Expected ResultSet"
                                             + " but update count was " + u
                                             + " / " + s);
                     }
@@ -749,21 +755,23 @@ class TestSelf {
                     }
 
                     if (i != Integer.parseInt(result)) {
-                        throw new Exception("Expected " + result + " rows "
+                        throw new Exception("Line: " + line + " "
+                                            + "Expected " + result + " rows "
                                             + " but got " + i + " rows / "
                                             + s);
                     }
                     break;
 
                 case 'e' :
-                    throw new Exception("Expected error "
+                    throw new Exception("Line: " + line + " "
+                                        + "Expected error "
                                         + "but got no error / " + s);
             }
         } catch (SQLException e) {
             if (type != 'e') {
-                throw new Exception("Expected " + type + "/" + result
-                                    + " but got error " + e.getMessage()
-                                    + " / " + s);
+                throw new Exception("Line: " + line + " " + "Expected "
+                                    + type + "/" + result + " but got error "
+                                    + e.getMessage() + " / " + s);
             }
         }
     }

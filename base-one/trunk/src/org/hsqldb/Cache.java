@@ -168,7 +168,7 @@ class Cache {
 
     /**
      *  Structural initialisations take place here. This allows the Cache to
-     *  resized while the database is in operation.
+     *  be resized while the database is in operation.
      */
     private void init(int scale, int sizescale) {
 
@@ -644,6 +644,11 @@ class Cache {
         }
     }
 
+    /**
+     * Removes all Row objects for a table from this Cache object. This is
+     * done when a table is dropped. Necessary because the Rows corresponding
+     * to index roots will never be removed otherwise.
+     */
     protected void remove(Table t) throws SQLException {
 
         CachedRow row = rFirst;
