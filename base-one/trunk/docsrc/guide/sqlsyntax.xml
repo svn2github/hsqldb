@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.6 2004/04/21 18:01:00 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.7 2004/04/22 03:06:26 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.6 $</edition>
-    <pubdate>$Date: 2004/04/21 18:01:00 $</pubdate>
+    <edition>$Revision: 1.7 $</edition>
+    <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -1185,12 +1185,12 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             </row>
             <row>
                 <entry>DECIMAL</entry>
-                <entry>as No limit</entry>
+                <entry>No limit</entry>
                 <entry><classname>java.math.BigDecimal</classname></entry>
             </row>
             <row>
                 <entry>NUMERIC</entry>
-                <entry>as No limit</entry>
+                <entry>No limit</entry>
                 <entry><classname>java.math.BigDecimal</classname></entry>
             </row>
             <row>
