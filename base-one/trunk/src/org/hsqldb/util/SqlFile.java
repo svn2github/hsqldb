@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.17 2004/01/21 18:18:58 unsaved Exp $
+ * $Id: SqlFile.java,v 1.18 2004/01/21 23:16:12 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -95,6 +95,7 @@ public class SqlFile {
         + "    \\?                   Help\n"
         + " !!!\\! [command to run]  * Shell out\n"
         + "    \\p [line to print]   Print string to stdout\n"
+        + "    \\dt                  List tables\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands\n"
@@ -289,12 +290,18 @@ public class SqlFile {
                 throw new QuitNow();
             case 'H':
                 htmlMode = !htmlMode;
-                psStd.println("htmlMode is set to: " + htmlMode);
+                lonePrintln("htmlMode is set to: " + htmlMode);
+                return;
+            case 'd':
+                if (other.equals("t")) {
+                    listTables();
+                    return;
+                }
                 break;
             case 'p':
                 if (other == null) psStd.println();
                 else psStd.println(other);
-                break;
+                return;
             case '*':
                 if (other != null) {
                     // But remember that we have to abort on some I/O errors.
@@ -302,10 +309,10 @@ public class SqlFile {
                 }
                 psStd.println("Continue-on-error is set to: "
                         + continueOnError);
-                break;
+                return;
             case 's':
                 showHistory();
-                break;
+                return;
             case '-':
                 boolean execute = false;
                 int commandsAgo = 0;
@@ -337,17 +344,16 @@ public class SqlFile {
                     curCommand = replacement;
                     processStatement();
                 }
-                break;
+                return;
             case '?':
                 System.out.println(HELP_TEXT);
-                break;
+                return;
             case '!':
                 System.err.println("Run '"
                         + ((other == null) ? "SHELL" : other) + "'");
-                break;
-            default:
-                throw new BadSpecial("Unknown Special Command");
+                return;
         }
+        throw new BadSpecial("Unknown Special Command");
     }
 
     private void lonePrintln(String s) {
@@ -357,23 +363,23 @@ public class SqlFile {
         );
     }
 
-    /**
-     * Most of this code taken directly from ScriptTool.java
-     *
-     * TODO:  Completely rework.  All the data is in RAM anyways (in
-     * a StringBuffer).  We might as well store in a more primitive
-     * form and calculate maximul lengths, then print out in a good
-     * table where things will always line up, instead of the hit and
-     * miss method below of using tabs.
-     */
+    private void listTables() throws SQLException {
+        int[] listTableCols = { 3 };
+        displayResultSet(null,
+                curConn.getMetaData().getTables(null, null, null, null),
+                listTableCols, "SYSTEM_");
+    }
+
     private void processStatement() throws SQLException {
-        //System.out.println(Integer.toString(curLinenum) + ": " + curCommand);
         Statement statement = curConn.createStatement();
 
         statement.execute(curCommand);
-        ResultSet r = statement.getResultSet();
-        int updateCount = statement.getUpdateCount();
+        displayResultSet(statement, statement.getResultSet(), null, null);
+    }
 
+    private void displayResultSet(Statement statement,
+            ResultSet r, int[] incCols, String exclPref) throws SQLException {
+        int updateCount = (statement == null) ? -1 : statement.getUpdateCount();
         switch (updateCount) {
             case -1:
                 if (r == null) {
@@ -381,39 +387,60 @@ public class SqlFile {
                     break;
                 }
                 ResultSetMetaData m      = r.getMetaData();
-                int               col    = m.getColumnCount();
+                int cols    = m.getColumnCount();
+                int incCount = (incCols == null) ? cols : incCols.length;
                 String val;
-                StringBuffer dividerBuffer = new StringBuffer();
                 ArrayList rows = new ArrayList();
                 String[] headerArray = null;
                 String[] fieldArray;
-                int[] maxWidth = new int[col];
+                int[] maxWidth = new int[incCount];
+                int insi;
+                boolean skip;
 
+                // STEP 1: GATHER DATA
                 if (!htmlMode) {
                     for (int i = 0; i < maxWidth.length; i++) maxWidth[i] = 0;
                 }
-                if (col > 1) {
-                    headerArray = new String[col];
-                    for (int i = 1; i <= col; i++) {
-                        headerArray[i - 1] = m.getColumnLabel(i);
+                if (incCount > 1) {
+                    insi = -1;
+                    headerArray = new String[incCount];
+                    for (int i = 1; i <= cols; i++) {
+                        if (incCols != null) {
+                            skip = true;
+                            for (int j = 0; j < incCols.length; j++)
+                                if (i == incCols[j]) skip = false;
+                            if (skip) continue;
+                        }
+                        headerArray[++insi] = m.getColumnLabel(i);
                         if (htmlMode) continue;
-                        if (headerArray[i - 1].length() > maxWidth[i - 1])
-                            maxWidth[i - 1] = headerArray[i - 1].length();
+                        if (headerArray[insi].length() > maxWidth[insi])
+                            maxWidth[insi] = headerArray[insi].length();
                     }
                 }
+                EACH_ROW:
                 while (r.next()) {
-                    fieldArray = new String[col];
-                    for (int i = 1; i <= col; i++) {
+                    fieldArray = new String[incCount];
+                    insi = -1;
+                    for (int i = 1; i <= cols; i++) {
+                        if (incCols != null) {
+                            skip = true;
+                            for (int j = 0; j < incCols.length; j++)
+                                if (i == incCols[j]) skip = false;
+                            if (skip) continue;
+                        }
                         val = r.getString(i);
-                        fieldArray[i - 1] = r.wasNull() ?
+                        if (exclPref != null && val != null
+                                && val.startsWith(exclPref)) continue EACH_ROW;
+                        fieldArray[++insi] = r.wasNull() ?
                                 (htmlMode ? "<I>null</I>" : "null") : val;
                         if (htmlMode) continue;
-                        if (fieldArray[i - 1].length() > maxWidth[i - 1])
-                            maxWidth[i - 1] = fieldArray[i - 1].length();
+                        if (fieldArray[insi].length() > maxWidth[insi])
+                            maxWidth[insi] = fieldArray[insi].length();
                     }
                     rows.add(fieldArray);
                 }
-                StringBuffer sb = new StringBuffer();
+
+                // STEP 2: DISPLAY DATA
                 if (htmlMode) psStd.println("<TABLE border='1'>");
                 if (headerArray != null) {
                     if (htmlMode) psStd.print(htmlRow(COL_HEAD) + '\n'
@@ -450,6 +477,7 @@ public class SqlFile {
                     psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
                 }
                 if (htmlMode) psStd.println("</TABLE>");
+                lonePrintln("\n" + rows.size() + " rows");
                 break;
             default:
                 lonePrintln(((updateCount == 0) ? "no" 
