@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.18 2004/06/06 08:40:50 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.19 2004/06/06 09:01:14 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.18 $</edition>
-        <pubdate>$Date: 2004/06/06 08:40:50 $</pubdate>
+        <edition>$Revision: 1.19 $</edition>
+        <pubdate>$Date: 2004/06/06 09:01:14 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -197,6 +197,10 @@
             You can run any SqlTool command explained in this chapter by
             subsituting <literal>java -jar /path/to/hsqlsqltool.jar</literal>
             for <literal>java org.hsqldb.util.SqlTool</literal>.
+            (With the understanding that the sample "mem" urlid won't work,
+            and you can only use the HSQLDB JDBC driver, since you can't
+            modify the classpath when using the <literal>-jar</literal> switch
+            for <filename>java</filename>.
         </para>
     </section>
 
