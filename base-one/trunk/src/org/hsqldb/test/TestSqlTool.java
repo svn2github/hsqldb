@@ -51,6 +51,32 @@ public class TestSqlTool extends junit.framework.TestCase {
                 harness.execute(new File("edit-a.sql")));
     }
 
+    public void testArgs() throws Exception {
+        assertTrue("--noinput command-line switch",
+                harness.execute(new File("args-noinput.sql")));
+        assertTrue("--sql command-line switch",
+                harness.execute(new File("args-sql.sql")));
+        assertTrue("--sql AND --noinput command-line switches",
+                harness.execute(new File("args-sqlni.sql")));
+    }
+
+    public void testComments() throws Exception {
+        assertTrue("Comments followed immediately by another command",
+                harness.execute(new File("comment-midline.sql")));
+    }
+
+    public void testPL() throws Exception {
+        assertTrue("PL variable use",
+                harness.execute(new File("pl-variable.sql")));
+    }
+
+    public void testSpecials() throws Exception {
+        assertTrue("\\q command w/ no arg",
+                harness.execute(new File("special-q.sql")));
+        assertTrue("\\q command w/ arg",
+                harness.execute(new File("special-q-arg.sql")));
+    }
+
     // public TestSqlTool() { super(); } necessary?
     public TestSqlTool(String s) { super(s); }
 
@@ -71,6 +97,10 @@ public class TestSqlTool extends junit.framework.TestCase {
         junit.framework.TestSuite newSuite = new junit.framework.TestSuite();
         newSuite.addTest(new TestSqlTool("testHistory"));
         newSuite.addTest(new TestSqlTool("testEditing"));
+        newSuite.addTest(new TestSqlTool("testArgs"));
+        newSuite.addTest(new TestSqlTool("testComments"));
+        newSuite.addTest(new TestSqlTool("testPL"));
+        newSuite.addTest(new TestSqlTool("testSpecials"));
         return newSuite;
     };
 }
