@@ -119,7 +119,7 @@ class View extends Table {
                               this.database, tokenizer);
 
         viewSubQuery = p.parseSubquery(brackets, colList, true,
-                                       Expression.QUERY);
+                                       Expression.VIEW);
 
         p.setAsView(this);
 

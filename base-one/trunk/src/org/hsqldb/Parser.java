@@ -251,7 +251,14 @@ class Parser {
 
         subQueryLevel++;
 
-        Select s = parseSelect(brackets, false, true);
+        boolean canHaveOrder = predicateType == Expression.VIEW;
+        boolean limitWithOrder = predicateType == Expression.VIEW
+                                 || predicateType == Expression.QUERY
+                                 || predicateType == Expression.IN
+                                 || predicateType == Expression.ALL
+                                 || predicateType == Expression.ANY;
+        Select s = parseSelect(brackets, canHaveOrder, false, limitWithOrder,
+                               true);
 
         sq.level = subQueryLevel;
 
@@ -299,13 +306,16 @@ class Parser {
 
         table.addColumns(s);
 
-        int[] pcol = predicateType == Expression.IN ? new int[]{ 0 }
-                                                    : null;
+        boolean uniqueValues = predicateType == Expression.IN
+                               || predicateType == Expression.ALL
+                               || predicateType == Expression.ANY;
+        int[] pcol = uniqueValues ? new int[]{ 0 }
+                                  : null;
 
         table.createPrimaryKey(pcol);
 
-        sq.table         = table;
-        sq.isInPredicate = predicateType == Expression.IN;
+        sq.table      = table;
+        sq.uniqueRows = uniqueValues;
 
         subQueryList.add(sq);
 
@@ -333,16 +343,20 @@ class Parser {
      * @return a new Select object
      * @throws  HsqlException if a parsing error occurs
      */
-    Select parseSelect(int brackets, boolean hasOrder,
+    Select parseSelect(int brackets, boolean canHaveOrder,
+                       boolean canHaveLimit, boolean limitWithOrder,
                        boolean isMain) throws HsqlException {
 
         Select select = new Select();
+        String token  = tokenizer.getString();
 
-        if (hasOrder) {
-            parseLimit(select);
+        if (canHaveLimit || limitWithOrder) {
+            if (token.equals(Token.T_LIMIT) || token.equals(Token.T_TOP)) {
+                parseLimit(token, select, false);
+
+                token = tokenizer.getString();
+            }
         }
-
-        String token = tokenizer.getString();
 
         if (token.equals(Token.T_DISTINCT)) {
             select.isDistinctSelect = true;
@@ -485,6 +499,7 @@ class Parser {
 
         select.queryCondition = condition;
 
+        // group by
         if (token.equals(Token.T_GROUP)) {
             tokenizer.getThis(Token.T_BY);
 
@@ -493,9 +508,6 @@ class Parser {
             do {
                 Expression e = parseExpression();
 
-                // tony_lai@users having support:
-                // "group by" does not allow refering to other columns alias.
-                //e = doOrderGroup(e, vcolumn);
                 vcolumn.add(e);
 
                 token = tokenizer.getString();
@@ -506,17 +518,34 @@ class Parser {
             select.iGroupLen = len;
         }
 
-        // tony_lai@users - having support
-        // fredt - this one does not go through resolve, etc.
+        // having
         if (token.equals(Token.T_HAVING)) {
-            select.iHavingIndex    = vcolumn.size();
+            select.iHavingLen      = 1;
             select.havingCondition = parseExpression();
             token                  = tokenizer.getString();
 
             vcolumn.add(select.havingCondition);
         }
 
+        if (isMain || limitWithOrder) {
+            if (token.equals(Token.T_ORDER)) {
+                tokenizer.getThis(Token.T_BY);
+                parseOrderBy(select, vcolumn);
+
+                token = tokenizer.getString();
+            }
+
+            if (token.equals(Token.T_LIMIT)) {
+                parseLimit(token, select, true);
+
+                token = tokenizer.getString();
+            }
+        }
+
+        boolean closebrackets = false;
+
         if (brackets > 0 && token.equals(Token.T_CLOSEBRACKET)) {
+            closebrackets = true;
             brackets -= Parser.parseCloseBrackets(tokenizer, brackets - 1)
                         + 1;
             token = tokenizer.getString();
@@ -524,30 +553,65 @@ class Parser {
 
         select.unionDepth = brackets;
 
+        // checks for ORDER and LIMIT
+        if (!(isMain || closebrackets)) {
+            limitWithOrder = false;
+        }
+
+        if (!canHaveOrder &&!limitWithOrder && select.iOrderLen != 0) {
+            throw Trace.error(Trace.INVALID_ORDER_BY);
+        }
+
+        if (!canHaveLimit &&!limitWithOrder
+                && select.limitCondition != null) {
+            throw Trace.error(Trace.INVALID_LIMIT);
+        }
+
+        if (limitWithOrder
+                && ((select.limitCondition == null)
+                    ^ (select.iOrderLen == 0))) {
+            throw Trace.error(Trace.ORDER_LIMIT_REQUIRED);
+        }
+
         int unionType = parseUnion(token);
 
         if (unionType != Select.NOUNION) {
+            boolean openbracket = false;
+
             select.unionType = unionType;
 
             if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-                brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+                openbracket = true;
+                brackets    += Parser.parseOpenBrackets(tokenizer) + 1;
             }
 
+//            tokenizer.matchThis(Token.T_SELECT);
             tokenizer.getThis(Token.T_SELECT);
 
-            select.unionSelect = parseSelect(brackets, false, false);
+            // accept ORDRY BY with LIMIT
+            select.unionSelect = parseSelect(brackets, false, false,
+                                             openbracket, false);
+            token = tokenizer.getString();
         }
 
-        if (hasOrder) {
-            token = tokenizer.getString();
-
+        if (isMain && (canHaveOrder || limitWithOrder)
+                && select.iOrderLen == 0) {
             if (token.equals(Token.T_ORDER)) {
                 tokenizer.getThis(Token.T_BY);
                 parseOrderBy(select, vcolumn);
-            } else {
-                tokenizer.back();
+
+                token            = tokenizer.getString();
+                select.sortUnion = true;
+            }
+
+            if (token.equals(Token.T_LIMIT)) {
+                parseLimit(token, select, true);
+
+                token = tokenizer.getString();
             }
         }
+
+        tokenizer.back();
 
         if (isMain) {
             select.prepareUnions();
@@ -600,7 +664,6 @@ class Parser {
                 break;
 
             default :
-                tokenizer.back();
                 break;
         }
 
@@ -615,14 +678,36 @@ class Parser {
 // in other RDBMS's
 // "SELECT LIMIT n 0" discards the first n rows and returns the remaining rows
 // fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
-    private void parseLimit(Select select) throws HsqlException {
+    private void parseLimit(String token, Select select,
+                            boolean isEnd) throws HsqlException {
 
-        String     token = tokenizer.getString();
-        Expression e1;
+        if (select.limitCondition != null) {
+            return;
+        }
+
+        Expression e1 = null;
         Expression e2;
         boolean    islimit = false;
 
-        if (token.equals(Token.T_LIMIT)) {
+        if (isEnd) {
+            if (token.equals(Token.T_LIMIT)) {
+                islimit = true;
+
+                read();
+
+                e2 = readTerm();
+
+                if (sToken.equals(Token.T_OFFSET)) {
+                    read();
+
+                    e1 = readTerm();
+                }
+
+                tokenizer.back();
+            } else {
+                return;
+            }
+        } else if (token.equals(Token.T_LIMIT)) {
             read();
 
             e1      = readTerm();
@@ -633,14 +718,15 @@ class Parser {
         } else if (token.equals(Token.T_TOP)) {
             read();
 
-            e1 = new Expression(Types.INTEGER, ValuePool.getInt(0));
             e2 = readTerm();
 
             tokenizer.back();
         } else {
-            tokenizer.back();
-
             return;
+        }
+
+        if (e1 == null) {
+            e1 = new Expression(Types.INTEGER, ValuePool.getInt(0));
         }
 
         if ((e1.getType() == Expression.VALUE && e1.getDataType() == Types
@@ -661,8 +747,8 @@ class Parser {
             }
         }
 
-        int messageid = islimit ? Trace.Parser_parseLimit1
-                                : Trace.Parser_parseLimit2;
+        int messageid = islimit ? Trace.INVALID_LIMIT_EXPRESSION
+                                : Trace.INVALID_TOP_EXPRESSION;
 
         throw Trace.error(Trace.WRONG_DATA_TYPE, messageid);
     }
@@ -676,8 +762,7 @@ class Parser {
         do {
             Expression e = parseExpression();
 
-            e = resolveOrderByColumnAlias(e, vcolumn, select.iResultLen,
-                                          select.unionSelect != null);
+            e     = resolveOrderByExpression(e, select, vcolumn);
             token = tokenizer.getString();
 
             if (token.equals(Token.T_DESC)) {
@@ -799,9 +884,55 @@ class Parser {
      * @throws HsqlException if an ambiguous reference to an alias or
      *      non-integer column index is encountered
      */
-    private static Expression resolveOrderByColumnAlias(Expression e,
-            HsqlArrayList vcolumn, int visiblecols,
-            boolean union) throws HsqlException {
+    private static Expression resolveOrderByExpression(Expression e,
+            Select select, HsqlArrayList vcolumn) throws HsqlException {
+
+        int     visiblecols = select.iResultLen;
+        boolean union       = select.unionSelect != null;
+
+        if (e.getType() == Expression.VALUE) {
+            return resolveOrderByColumnIndex(e, vcolumn, visiblecols);
+        }
+
+        if (e.getType() != Expression.COLUMN) {
+            if (union) {
+                throw Trace.error(Trace.INVALID_ORDER_BY);
+            }
+
+            return e;
+        }
+
+        String ecolname   = e.getColumnName();
+        String etablename = e.getTableName();
+
+        for (int i = 0, size = visiblecols; i < size; i++) {
+            Expression colexpr    = (Expression) vcolumn.get(i);
+            String     colalias   = colexpr.getDefinedAlias();
+            String     colname    = colexpr.getColumnName();
+            String     tablename  = colexpr.getTableName();
+            String     filtername = colexpr.getFilterTableName();
+
+            if ((ecolname.equals(colalias) || ecolname.equals(colname))
+                    && (etablename == null || etablename.equals(tablename)
+                        || etablename.equals(filtername))) {
+                colexpr.joinedTableColumnIndex = i;
+
+                return colexpr;
+            }
+        }
+
+        if (union) {
+            throw Trace.error(Trace.INVALID_ORDER_BY, ecolname);
+        }
+
+        return e;
+    }
+
+    private static Expression resolveOrderByExpressionOld(Expression e,
+            Select select, HsqlArrayList vcolumn) throws HsqlException {
+
+        int     visiblecols = select.iResultLen;
+        boolean union       = select.unionSelect != null;
 
         if (e.getType() == Expression.VALUE) {
             return resolveOrderByColumnIndex(e, vcolumn, visiblecols);
@@ -825,7 +956,7 @@ class Parser {
 
                 if (ordercolname.equals(colexpr.getColumnName())
                         && ordertablename.endsWith(colexpr.getTableName())) {
-                    colexpr.orderColumnIndex = i;
+                    colexpr.joinedTableColumnIndex = i;
 
                     return colexpr;
                 }
@@ -861,13 +992,13 @@ class Parser {
                     found = colexpr;
 
                     // set this for use in sorting
-                    found.orderColumnIndex = i;
+                    found.joinedTableColumnIndex = i;
                 }
             }
         }
 
         if (union) {
-            if (found == e || found.orderColumnIndex >= visiblecols) {
+            if (found == e || found.joinedTableColumnIndex >= visiblecols) {
 
                 // no column in select list is found
                 throw Trace.error(Trace.INVALID_ORDER_BY, ordercolname);
@@ -887,7 +1018,7 @@ class Parser {
             if (0 < i && i <= visiblecols) {
                 Expression colexpr = (Expression) vcolumn.get(i - 1);
 
-                colexpr.orderColumnIndex = i - 1;
+                colexpr.joinedTableColumnIndex = i - 1;
 
                 return colexpr;
             }
@@ -1372,6 +1503,40 @@ class Parser {
         return new Expression(type, a, b);
     }
 
+    private Expression parseAllAnyPredicate() throws HsqlException {
+
+        int type = iToken;
+
+        read();
+        readThis(Expression.OPEN);
+
+        Expression b        = null;
+        int        brackets = 0;
+
+        if (iToken == Expression.OPEN) {
+            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+
+            read();
+        }
+
+        if (iToken != Expression.SELECT) {
+            throw Trace.error(Trace.INVALID_IDENTIFIER);
+        }
+
+        SubQuery sq     = parseSubquery(brackets, null, false, type);
+        Select   select = sq.select;
+
+        // until we support rows
+        Trace.check(select.iResultLen == 1, Trace.SINGLE_COLUMN_EXPECTED);
+
+        b = new Expression(select, sq.table, !sq.isResolved);
+
+        read();
+        readThis(Expression.CLOSE);
+
+        return new Expression(type, b, null);
+    }
+
     /**
      *  Method declaration
      *
@@ -1541,7 +1706,9 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-                Select select = parseSelect(0, true, true);
+
+                // accept ORDRY BY with LIMIT
+                Select select = parseSelect(0, false, false, true, true);
 
                 select.resolve();
 
@@ -1549,6 +1716,13 @@ class Parser {
 
                 read();
 
+                break;
+            }
+            case Expression.ANY :
+            case Expression.ALL : {
+                r = parseAllAnyPredicate();
+
+//                read();
                 break;
             }
             case Expression.MULTIPLY : {
@@ -2154,6 +2328,8 @@ class Parser {
                 case Expression.AND :
                 case Expression.OR :
                 case Expression.NOT :
+                case Expression.ALL :
+                case Expression.ANY :
                 case Expression.IN :
                 case Expression.EXISTS :
                 case Expression.BETWEEN :
@@ -2202,6 +2378,7 @@ class Parser {
                 case Expression.BOTH :
                 case Expression.AS :
                 case Expression.IS :
+                case Expression.DISTINCT :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
@@ -2239,6 +2416,9 @@ class Parser {
         tokenSet.put(Token.T_AND, Expression.AND);
         tokenSet.put(Token.T_NOT, Expression.NOT);
         tokenSet.put(Token.T_OR, Expression.OR);
+        tokenSet.put(Token.T_ALL, Expression.ALL);
+
+//        tokenSet.put(Token.T_ANY, Expression.ANY); todo
         tokenSet.put(Token.T_IN, Expression.IN);
         tokenSet.put(Token.T_EXISTS, Expression.EXISTS);
         tokenSet.put(Token.T_BETWEEN, Expression.BETWEEN);
@@ -2506,7 +2686,10 @@ class Parser {
                 tokenizer.getThis(Token.T_SELECT);
             }
             case Token.SELECT : {
-                Select select = parseSelect(brackets, true, true);
+
+                // accept ORDER BY or ORDRY BY with LIMIT
+                Select select = parseSelect(brackets, true, false, true,
+                                            true);
 
                 if (len != select.iResultLen) {
                     throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
@@ -2536,7 +2719,7 @@ class Parser {
 
         clearParameters();
 
-        select = parseSelect(brackets, true, true);
+        select = parseSelect(brackets, true, true, false, true);
 
         if (select.sIntoTable != null) {
             session.checkDDLWrite();

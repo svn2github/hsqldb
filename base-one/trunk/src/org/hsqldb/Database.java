@@ -74,7 +74,6 @@ import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.StringUtil;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.persist.Logger;
@@ -1188,7 +1187,6 @@ public class Database {
 
 // boucherb@users - 200403?? - patch 1.7.2 - metadata
 //------------------------------------------------------------------------------
-    private String uri;
 
     /**
      * Retrieves the uri portion of this object's in-process JDBC url.

@@ -101,22 +101,21 @@ class Select {
     private HashSet       groupColumnNames;
     TableFilter[]         tFilter;
     Expression            limitCondition;
-    Expression            queryCondition;       // null means no condition
-    Expression            havingCondition;      // null means none
-    Expression[]          exprColumns;          // 'result', 'group' and 'order' columns
-    int                   iResultLen;           // number of columns that are 'result'
-    int                   iGroupLen;            // number of columns that are 'group'
-    int                   iHavingIndex = -1;    // -1 means no having
-    int                   iOrderLen;            // number of columns that are 'order'
+    Expression            queryCondition;     // null means no condition
+    Expression            havingCondition;    // null means none
+    Expression[]          exprColumns;        // 'result', 'group' and 'order' columns
+    int                   iResultLen;         // number of columns that are 'result'
+    int                   iGroupLen;          // number of columns that are 'group'
+    int                   iHavingLen;         // number of columns that are 'group'
+    int                   iOrderLen;          // number of columns that are 'order'
     int[]                 sortOrder;
     int[]                 sortDirection;
-    HsqlName              sIntoTable;           // null means not select..into
+    boolean               sortUnion;          // if true, sort the result of the full union
+    HsqlName              sIntoTable;         // null means not select..into
     int                   intoType = Table.MEMORY_TABLE;
-    boolean               isIntoTableQuoted;
-    boolean               isMainSelect;         // false if this is appended in a union chain
-    Select[]              unionArray;           // only set in the first Select in a union chain
-    int                   unionMaxDepth;        // max unionDepth in chain
-    Select                unionSelect;          // null means no union select
+    Select[]              unionArray;         // only set in the first Select in a union chain
+    int                   unionMaxDepth;      // max unionDepth in chain
+    Select                unionSelect;        // null means no union select
     int                   unionType;
     int                   unionDepth;
     static final int      NOUNION   = 0,
@@ -124,8 +123,9 @@ class Select {
                           UNIONALL  = 2,
                           INTERSECT = 3,
                           EXCEPT    = 4;
-    private int           limitStart;           // set only by the LIMIT keyword
-    private int           limitCount;           // set only by the LIMIT keyword
+    private int           limitStart;         // set only by the LIMIT keyword
+    private int           limitCount;         // set only by the LIMIT keyword
+    private boolean       simpleLimit;        // true if maxrows can be uses as is
     Result.ResultMetaData resultMetaData;
 
     /**
@@ -161,6 +161,7 @@ class Select {
         resolveTables();
         resolveTypes();
         setFilterConditions();
+        setLimitCounts();
     }
 
     /**
@@ -342,8 +343,7 @@ class Select {
         // tony_lai@users having
         int groupByStart = iResultLen;
         int groupByEnd   = groupByStart + iGroupLen;
-        int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
-                                             : groupByEnd;
+        int orderByStart = groupByEnd + iHavingLen;
         int orderByEnd   = orderByStart + iOrderLen;
 
         for (int i = 0; i < len; i++) {
@@ -357,17 +357,18 @@ class Select {
                 isAggregated = true;
             }
 
-            if (!(i < groupByStart || i >= groupByEnd
-                    || exprColumns[i].canBeInGroupBy())) {
+            if (i >= groupByStart && i < groupByEnd
+                    &&!exprColumns[i].canBeInGroupBy()) {
                 Trace.error(Trace.INVALID_GROUP_BY, exprColumns[i]);
             }
 
-            if (!(i != iHavingIndex || exprColumns[i].isConditional())) {
+            if (i >= groupByEnd && i < groupByEnd + iHavingLen
+                    &&!exprColumns[i].isConditional()) {
                 Trace.error(Trace.INVALID_HAVING, exprColumns[i]);
             }
 
-            if (!(i < orderByStart) || i >= orderByEnd
-                    || exprColumns[i].canBeInOrderBy()) {
+            if (i >= orderByStart && i < orderByEnd
+                    &&!exprColumns[i].canBeInOrderBy()) {
                 Trace.error(Trace.INVALID_ORDER_BY, exprColumns[i]);
             }
 
@@ -388,11 +389,7 @@ class Select {
         }
 
         checkAggregateOrGroupByColumns(0, iResultLen);
-
-        if (iHavingIndex >= 0) {
-            checkAggregateOrGroupByColumns(iHavingIndex, iHavingIndex + 1);
-        }
-
+        checkAggregateOrGroupByColumns(groupByEnd, orderByStart);
         checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
         prepareSort();
     }
@@ -431,7 +428,27 @@ class Select {
         }
     }
 
-// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
+    /**
+     * For SELECT LIMIT n m ....
+     * finds cases where the result does not have to be fully built and
+     * returns and adjusted maxrows with LIMIT params.
+     * LIMIT applies only to the result of UNION and other set operations,
+     * not to individual SELECT statements in the set.
+     *
+     */
+    private void setLimitCounts() throws HsqlException {
+
+        limitStart = limitCondition == null ? 0
+                                            : ((Integer) limitCondition
+                                            .getArg().getValue(null))
+                                                .intValue();
+        limitCount = limitCondition == null ? 0
+                                            : ((Integer) limitCondition
+                                            .getArg2().getValue(null))
+                                                .intValue();
+        simpleLimit = (isDistinctSelect == false && isGrouped == false
+                       && unionSelect == null && iOrderLen == 0);
+    }
 
     /**
      * For SELECT LIMIT n m ....
@@ -443,33 +460,16 @@ class Select {
      */
     private int getLimitCount(int maxrows) throws HsqlException {
 
-        limitStart = limitCondition == null ? 0
-                                            : ((Integer) limitCondition
-                                            .getArg().getValue(null))
-                                                .intValue();
-        limitCount = limitCondition == null ? 0
-                                            : ((Integer) limitCondition
-                                            .getArg2().getValue(null))
-                                                .intValue();
-
         if (maxrows == 0) {
-            maxrows = limitCount;
-        } else if (limitCount == 0) {
-            limitCount = maxrows;
-        } else {
-            maxrows = limitCount = (maxrows > limitCount) ? limitCount
-                                                          : maxrows;
+            return limitCount;
         }
 
-        boolean issimplemaxrows = false;
-
-        if (maxrows != 0 && isDistinctSelect == false && isGrouped == false
-                && unionSelect == null && iOrderLen == 0) {
-            issimplemaxrows = true;
+        if (limitCount == 0) {
+            return maxrows;
         }
 
-        return issimplemaxrows ? limitStart + maxrows
-                               : Integer.MAX_VALUE;
+        return (maxrows > limitCount) ? limitCount
+                                      : maxrows;
     }
 
     /**
@@ -484,19 +484,21 @@ class Select {
 
         Result r;
 
-        maxrows = getLimitCount(maxrows);
-
         if (unionType == NOUNION) {
             r = getSingleResult(session, maxrows);
         } else {
             r = getResultMain(session);
-        }
 
-        sortResult(session, r);
+            if (sortUnion) {
+                int newlimitcount = getLimitCount(maxrows);
+
+                sortResult(session, r);
+                r.trimResult(limitStart, newlimitcount);
+            }
+        }
 
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
-        r.trimResult(limitStart, limitCount);
 
         return r;
     }
@@ -587,12 +589,23 @@ class Select {
             prepareResult();
         }
 
+        int newlimitcount = getLimitCount(maxrows);
+
+        maxrows = newlimitcount != 0 && simpleLimit
+                  ? limitStart + newlimitcount
+                  : Integer.MAX_VALUE;
+
         Result r = buildResult(maxrows, session);
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
         if (isDistinctSelect) {
             r.removeDuplicates(session, iResultLen);
+        }
+
+        if (!sortUnion) {
+            sortResult(session, r);
+            r.trimResult(limitStart, newlimitcount);
         }
 
         return r;
@@ -607,22 +620,15 @@ class Select {
         sortOrder     = new int[iOrderLen];
         sortDirection = new int[iOrderLen];
 
-        int startCol;
-
-        if (iHavingIndex > 0) {
-            startCol = iHavingIndex + 1;
-        } else {
-            startCol = iResultLen + (isGrouped ? iGroupLen
-                                               : 0);
-        }
+        int startCol = iResultLen + iGroupLen + iHavingLen;
 
         for (int i = startCol, j = 0; j < iOrderLen; i++, j++) {
             int colindex = i;
 
             // fredt - when a union, use the visible select columns for sort comparison
             // also whenever a column alias is used
-            if (exprColumns[i].orderColumnIndex != -1) {
-                colindex = exprColumns[i].orderColumnIndex;
+            if (exprColumns[i].joinedTableColumnIndex != -1) {
+                colindex = exprColumns[i].joinedTableColumnIndex;
             }
 
             sortOrder[j]     = colindex;
@@ -856,12 +862,12 @@ class Select {
                 }
             }
 
-            if (iHavingIndex >= 0) {
+            if (iHavingLen > 0) {
 
                 // The test value, either aggregate or not, is set already.
                 // Removes the row that does not satisfy the HAVING
                 // condition.
-                if (!((Boolean) row[iHavingIndex]).booleanValue()) {
+                if (!Boolean.TRUE.equals(row[iResultLen + iGroupLen])) {
                     it.remove();
                 }
             }
@@ -933,8 +939,8 @@ class Select {
         // if has HAVING
         sb.append(' ').append(Token.T_HAVING).append(' ');
 
-        for (int i = iHavingIndex; i < iHavingIndex + exprColumns.length;
-                i++) {
+        for (int i = iResultLen + iGroupLen;
+                i < iResultLen + iGroupLen + iHavingLen; i++) {
             sb.append(exprColumns[i].getDDL());
 
             if (i < iResultLen + iGroupLen - 1) {
@@ -966,8 +972,7 @@ class Select {
 
         // if has ORDER BY
         int groupByEnd   = iResultLen + iGroupLen;
-        int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
-                                             : groupByEnd;
+        int orderByStart = groupByEnd + iHavingLen;
         int orderByEnd   = orderByStart + iOrderLen;
 
         sb.append(' ').append(Token.T_ORDER).append(Token.T_BY).append(' ');

@@ -116,6 +116,7 @@ public class Collation {
         nameToJavaName.put("Somali", "so-SO");
         nameToJavaName.put("Albanian", "sq-AL");
         nameToJavaName.put("Serbian_Cyrillic", "sr-YU");
+        nameToJavaName.put("Serbian_Latin", "sh-BA");
         nameToJavaName.put("Swedish", "sv-SE");
         nameToJavaName.put("Swahili", "sw-KE");
         nameToJavaName.put("Tamil", "ta-IN");

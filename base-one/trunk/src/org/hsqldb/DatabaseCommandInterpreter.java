@@ -1453,8 +1453,8 @@ class DatabaseCommandInterpreter {
 
         Select select;
 
-        // do not accept LIMIT and ORDER BY - accept unions
-        select = parser.parseSelect(brackets, false, true);
+        // accept ORDER BY or ORDRY BY with LIMIT - accept unions
+        select = parser.parseSelect(brackets, true, false, true, true);
 
         if (select.sIntoTable != null) {
             throw (Trace.error(Trace.TABLE_NOT_FOUND));

@@ -39,6 +39,7 @@ import java.sql.Timestamp;
 
 import org.hsqldb.CachedRow;
 import org.hsqldb.Column;
+import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.types.Binary;
@@ -188,7 +189,7 @@ public class RowOutputTextLog extends RowOutputBase {
     protected void writeTimestamp(Timestamp o) {
 
         write('\'');
-        this.writeBytes(o.toString());
+        this.writeBytes(HsqlDateTime.getTimestampString(o, null));
         write('\'');
     }
 

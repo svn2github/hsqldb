@@ -173,7 +173,9 @@ public class Tokenizer {
      */
     void back() throws HsqlException {
 
-        Trace.doAssert(!bWait, "back");
+        if (bWait) {
+            Trace.doAssert(!bWait, "back");
+        }
 
         nextTokenIndex = iIndex;
         iIndex         = tokenIndex;
@@ -181,8 +183,7 @@ public class Tokenizer {
     }
 
     /**
-     * Method declaration
-     *
+     * get the given token or throw
      *
      * @param match
      *
@@ -200,12 +201,12 @@ public class Tokenizer {
         }
     }
 
-    static void matchThis(String match, String token) throws HsqlException {
+    void matchThis(String match) throws HsqlException {
 
-        if (!token.equals(match)) {
+        if (!sToken.equals(match)) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
                               new Object[] {
-                token, match
+                sToken, match
             });
         }
     }

@@ -160,14 +160,19 @@ final class TableFilter {
      * @param exprType an expression type code
      * @return
      */
-    static int toConditionType(int exprType) {
+    static int getConditionType(Expression e) {
+
+        int exprType = e.getType();
 
         switch (exprType) {
 
             case Expression.NOT_EQUAL :
             case Expression.LIKE :
-            case Expression.IN : {
                 return CONDITION_UNORDERED;
+
+            case Expression.IN : {
+                return e.isCorrelated ? CONDITION_NONE
+                                      : CONDITION_UNORDERED;
             }
             case Expression.IS_NULL :
             case Expression.EQUAL : {
@@ -336,7 +341,7 @@ final class TableFilter {
             return;
         }
 
-        int conditionType = toConditionType(type);
+        int conditionType = getConditionType(e);
 
         if (conditionType == CONDITION_NONE) {
 

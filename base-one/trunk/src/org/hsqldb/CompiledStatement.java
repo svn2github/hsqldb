@@ -382,7 +382,7 @@ final class CompiledStatement {
             Result r = s.getResult(session, sq.isExistsPredicate ? 1
                                                                  : 0);
 
-            if (sq.isInPredicate) {
+            if (sq.uniqueRows) {
                 r.removeDuplicates(session, 1);
             }
 

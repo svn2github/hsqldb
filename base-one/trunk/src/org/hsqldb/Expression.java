@@ -69,6 +69,7 @@ package org.hsqldb;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.index.RowIterator;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -101,7 +102,8 @@ public class Expression {
                      VALUELIST = 5,
                      ASTERIX   = 6,
                      FUNCTION  = 7,
-                     LIMIT     = 8;
+                     LIMIT     = 8,
+                     ROW       = 9;
 
 // boucherb@users 20020410 - parametric compiled statements
     // new leaf type
@@ -129,7 +131,9 @@ public class Expression {
                      OR            = 29,
                      IN            = 30,
                      EXISTS        = 31,
-                     IS_NULL       = 32;
+                     ALL           = 32,
+                     ANY           = 33,
+                     IS_NULL       = 34;
 
     // aggregate functions
     static final int COUNT       = 40,
@@ -172,7 +176,9 @@ public class Expression {
                      WHEN         = 110,
                      THEN         = 111,
                      ELSE         = 112,
-                     ENDWHEN      = 113;
+                     ENDWHEN      = 113,
+                     DISTINCT     = 114,
+                     VIEW         = 115;
 
     // used inside brackets for system functions
     static final int     AS                      = 122,
@@ -228,8 +234,8 @@ public class Expression {
 
     // QUERY - in single value selects, IN or EXISTS predicates
     Select  subSelect;
-    boolean isCorrelated;                     // correlated subquery
-    Table   subTable;                         // if not correlated
+    boolean isCorrelated;                           // correlated subquery
+    Table   subTable;                               // if not correlated
 
     // FUNCTION
     Function function;
@@ -242,20 +248,20 @@ public class Expression {
     private String      schema;
     private String      tableName;
     private String      columnName;
-    private TableFilter tableFilter;          // null if not yet resolved
-    TableFilter         outerFilter;          // defined if this is part of an OUTER JOIN condition tree
+    private TableFilter tableFilter;                // null if not yet resolved
+    TableFilter         outerFilter;                // defined if this is part of an OUTER JOIN condition tree
 
     //
     private int     columnIndex;
     private boolean columnQuoted;
     private int     precision;
     private int     scale;
-    private String  columnAlias;              // if it is a column of a select column list
+    private String  columnAlias;                    // if it is a column of a select column list
     private boolean aliasQuoted;
 
     //
-    private boolean isDescending;             // if it is a column in a order by
-    int             orderColumnIndex = -1;    // >= 0 when it is used for order by
+    private boolean isDescending;                   // if it is a column in a order by
+    int             joinedTableColumnIndex = -1;    // >= 0 when it is used for order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -702,6 +708,18 @@ public class Expression {
 
                 return buf.toString();
 
+            case ALL :
+                buf.append(left).append(' ').append(Token.T_ALL).append(
+                    ' ').append(right);
+
+                return buf.toString();
+
+            case ANY :
+                buf.append(left).append(' ').append(Token.T_ANY).append(
+                    ' ').append(right);
+
+                return buf.toString();
+
             case IN :
                 buf.append(left).append(' ').append(Token.T_IN).append(
                     ' ').append(right);
@@ -945,6 +963,14 @@ public class Expression {
                 buf.append("OR ");
                 break;
 
+            case ALL :
+                buf.append("ALL ");
+                break;
+
+            case ANY :
+                buf.append("ANY ");
+                break;
+
             case IN :
                 buf.append("IN ");
                 break;
@@ -1161,8 +1187,8 @@ public class Expression {
      * @return boolean
      */
     boolean canBeInOrderBy() {
-        return exprType == FUNCTION || orderColumnIndex != -1 || isColumn()
-               || isAggregate();
+        return exprType == FUNCTION || joinedTableColumnIndex != -1
+               || isColumn() || isAggregate();
     }
 
     /**
@@ -1443,30 +1469,15 @@ public class Expression {
             return columnAlias;
         }
 
-        if (exprType == VALUE) {
-            return "";
-        }
-
         if (exprType == COLUMN) {
             return columnName;
         }
 
-// fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
-// return column name for aggregates without alias
-        if (eArg != null) {
-            String name = eArg.getColumnName();
-
-            if (name.length() > 0) {
-                return name;
-            }
-        }
-
-        return eArg2 == null ? ""
-                             : eArg2.getAlias();
+        return "";
     }
 
     /**
-     * Is an column alias quoted
+     * Is a column alias quoted
      *
      * @return boolean
      */
@@ -1568,7 +1579,7 @@ public class Expression {
             if (tableFilter == null) {
 
                 // if an order by column alias
-                result = orderColumnIndex != -1;
+                result = joinedTableColumnIndex != -1;
 
                 if (!result && check) {
                     String err = tableName == null ? columnName
@@ -1652,6 +1663,10 @@ public class Expression {
                 if (function != null) {
                     function.checkTables(filters);
                 }
+                break;
+
+            case ALL :
+            case ANY :
                 break;
 
             case IN :
@@ -1814,13 +1829,6 @@ public class Expression {
                     int   i     = table.searchColumn(columnName);
 
                     if (i != -1) {
-/*
-// fredt@users 20011110 - fix for 471711 - subselects
-                        boolean repeat = tableFilter != null && !tableFilter.getName().equals(filterName);
-                        if ( repeat){
-                             throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE, columnName);
-                        }
-*/
                         tableFilter = f;
                         columnIndex = i;
                         tableName   = filterName;
@@ -1846,6 +1854,10 @@ public class Expression {
                 if (function != null) {
                     function.resolveTables(f);
                 }
+                break;
+
+            case ALL :
+            case ANY :
                 break;
 
             case IN :
@@ -2133,6 +2145,11 @@ public class Expression {
                 }
 
                 dataType = Types.BOOLEAN;
+                break;
+
+            case ALL :
+            case ANY :
+                dataType = eArg.dataType;
                 break;
 
             case IN :
@@ -2438,6 +2455,8 @@ public class Expression {
             if (eArg.isParam) {
                 eArg.dataType = eArg2.dataType;
             }
+
+            isCorrelated = eArg2.isCorrelated;
         } else {    // eArg2.exprType == VALUELIST
             Expression[] vl  = eArg2.valueList;
             int          len = vl.length;
@@ -2507,6 +2526,7 @@ public class Expression {
             for (int i = 0; i < len; i++) {
                 if (!vl[i].isFixedConstant()) {
                     eArg2.isFixedConstantValueList = false;
+                    isCorrelated                   = true;
 
                     break;
                 }
@@ -2597,6 +2617,20 @@ public class Expression {
 
         // todo
         return "";
+    }
+
+    /**
+     * Returns the table name for a column expression as a string
+     *
+     * @return table name
+     */
+    String getFilterTableName() {
+
+        if (tableFilter == null) {
+            return "";
+        } else {
+            return tableFilter.getTable().getName().name;
+        }
     }
 
     /**
@@ -2734,14 +2768,6 @@ public class Expression {
         return Column.convertObject(o, type);
     }
 
-/** @todo fredt - should be rewritten to handle only set function operation,
-     *  with other operations handled in the normal way */
-    Object getAggregatedValue(Session session, Object currValue,
-                              int type) throws HsqlException {
-        return Column.convertObject(getAggregatedValue(session, currValue),
-                                    type);
-    }
-
     /**
      * Get the result of a SetFunction or an ordinary value
      *
@@ -2801,15 +2827,25 @@ public class Expression {
         switch (aggregateSpec) {
 
             case AGGREGATE_LEFT :
-                leftValue  = eArg.getAggregatedValue(session, currValue);
-                rightValue = eArg2 == null ? null
-                                           : eArg2.getValue(session);
+                if (currValue == null) {
+                    currValue = new Object[2];
+                }
+
+                leftValue =
+                    eArg.getAggregatedValue(session,
+                                            ((Object[]) currValue)[0]);
+                rightValue = ((Object[]) currValue)[1];
                 break;
 
             case AGGREGATE_RIGHT :
-                leftValue  = eArg == null ? null
-                                          : eArg.getValue(session);
-                rightValue = eArg2.getAggregatedValue(session, currValue);
+                if (currValue == null) {
+                    currValue = new Object[2];
+                }
+
+                leftValue = ((Object[]) currValue)[0];
+                rightValue =
+                    eArg2.getAggregatedValue(session,
+                                             ((Object[]) currValue)[1]);
                 break;
 
             case AGGREGATE_BOTH :
@@ -2829,7 +2865,6 @@ public class Expression {
         // handle other operations
         switch (exprType) {
 
-// tony_lai@users having >>>
             case TRUE :
                 return Boolean.TRUE;
 
@@ -2837,23 +2872,30 @@ public class Expression {
                 return Boolean.FALSE;
 
             case NOT :
-                Trace.doAssert(eArg2 == null,
-                               "Expression.getAggregatedValue.NOT");
+                if (leftValue == null) {
+                    return null;
+                }
 
                 return ((Boolean) leftValue).booleanValue() ? Boolean.FALSE
                                                             : Boolean.TRUE;
 
             case AND :
+                if (leftValue == null || rightValue == null) {
+                    return null;
+                }
+
                 return ((Boolean) leftValue).booleanValue()
                        && ((Boolean) rightValue).booleanValue() ? Boolean.TRUE
                                                                 : Boolean
                                                                 .FALSE;
 
             case OR :
-                return ((Boolean) leftValue).booleanValue()
-                       || ((Boolean) rightValue).booleanValue() ? Boolean.TRUE
-                                                                : Boolean
-                                                                .FALSE;
+                if (Boolean.TRUE.equals(leftValue)) {
+                    return Boolean.TRUE;
+                }
+
+                return Boolean.TRUE.equals(rightValue) ? Boolean.TRUE
+                                                       : Boolean.FALSE;
 
             case IS_NULL :
                 return leftValue == null ? Boolean.TRUE
@@ -2871,6 +2913,9 @@ public class Expression {
                     Types.VARCHAR);
 
                 return likeObject.compare(session, c);
+
+            case ALL :
+                return eArg.getSingleValueFromQurey(session);
 
             case IN :
                 return eArg2.testValueList(session, leftValue);
@@ -3018,12 +3063,38 @@ public class Expression {
 
                 return valuePair;
             }
-            case AGGREGATE_LEFT :
-                return eArg.updateAggregatingValue(session, currValue);
+            case AGGREGATE_LEFT : {
+                Object[] valuePair = (Object[]) currValue;
 
-            case AGGREGATE_RIGHT :
-                return eArg2.updateAggregatingValue(session, currValue);
+                if (valuePair == null) {
+                    valuePair = new Object[2];
+                }
 
+                valuePair[0] = eArg.updateAggregatingValue(session,
+                        currValue);
+
+                if (eArg2 != null) {
+                    valuePair[1] = eArg2.getValue(session);
+                }
+
+                return valuePair;
+            }
+            case AGGREGATE_RIGHT : {
+                Object[] valuePair = (Object[]) currValue;
+
+                if (valuePair == null) {
+                    valuePair = new Object[2];
+                }
+
+                if (eArg != null) {
+                    valuePair[0] = eArg.getValue(session);
+                }
+
+                valuePair[1] = eArg2.updateAggregatingValue(session,
+                        currValue);
+
+                return valuePair;
+            }
             case AGGREGATE_FUNCTION :
                 return function.updateAggregatingValue(session, currValue);
 
@@ -3056,6 +3127,9 @@ public class Expression {
             case NEGATE :
                 return Column.negate(eArg.getValue(session, dataType),
                                      dataType);
+
+            case ALL :
+                return eArg.getSingleValueFromQurey(session);
 
             case AND :
             case OR :
@@ -3155,8 +3229,6 @@ public class Expression {
                                                               : Boolean.TRUE;
 
             case AND : {
-
-                // can't use C style optimization because of NULL
                 Boolean r1 = eArg.test(session);
 
                 if (r1 == null) {
@@ -3377,6 +3449,79 @@ public class Expression {
         }
 
         throw Trace.error(Trace.WRONG_DATA_TYPE);
+    }
+
+    /**
+     *
+     */
+    private Object getSingleValueFromQurey(Session session)
+    throws HsqlException {
+
+        if (exprType == QUERY) {
+            if (subTable != null) {
+                RowIterator it = subTable.getPrimaryIndex().firstRow(session);
+                Row         row = it.next();
+
+                if (row == null) {
+                    return null;
+                }
+
+                Object value = row.getData()[0];
+
+                row = it.next();
+
+                return row == null ? value
+                                   : null;
+            }
+
+            Result r = subSelect.getResult(session, 0);
+
+            r.removeDuplicates(session);
+
+            if (r.getSize() == 1) {
+                Record n = r.rRoot;
+
+                return n.data[0];
+            }
+
+            return null;
+        }
+
+        throw Trace.error(Trace.WRONG_DATA_TYPE);
+    }
+
+    /**
+     * For ANY expressions. Todo
+     */
+    private boolean compareValues(Session session, Object o,
+                                  int exprType) throws HsqlException {
+
+        int result = 0;
+
+        switch (exprType) {
+
+            case EQUAL :
+                return result == 0;
+
+            case BIGGER :
+                return result > 0;
+
+            case BIGGER_EQUAL :
+                return result >= 0;
+
+            case SMALLER_EQUAL :
+                return result <= 0;
+
+            case SMALLER :
+                return result < 0;
+
+            case NOT_EQUAL :
+                return result != 0;
+
+            default :
+                throw Trace.error(Trace.GENERAL_ERROR,
+                                  Trace.Expression_compareValues);
+        }
     }
 
     /**

@@ -537,8 +537,10 @@ class ResultSetParsedSection extends ParsedSection {
                         for (int i = 0; i < expectedFields.length; i++) {
                             j = i + 1;
 
+                            String actual = results.getString(j);
+
                             //...including null values...
-                            if (results.getString(j) == null) {    //..then we have a null
+                            if (actual == null) {    //..then we have a null
 
                                 //...check to see if we were expecting it...
                                 if (!expectedFields[i].equalsIgnoreCase(
@@ -550,8 +552,7 @@ class ResultSetParsedSection extends ParsedSection {
                                         + "\nbut field " + j
                                         + " contained NULL");
                                 }
-                            } else if (!results.getString(j).equals(
-                                    expectedFields[i])) {
+                            } else if (!actual.equals(expectedFields[i])) {
 
                                 //then the results are different
                                 throw new Exception(

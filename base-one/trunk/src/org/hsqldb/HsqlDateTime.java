@@ -285,8 +285,7 @@ public class HsqlDateTime {
     /**
      * Creates a full length timestamp string, with 9 digist for nanos
      */
-    public static String getTimestampString(Timestamp x,
-            Calendar cal) throws Exception {
+    public static String getTimestampString(Timestamp x, Calendar cal) {
 
         synchronized (sdfts) {
             sdfts.setCalendar(cal == null ? tempCalDefault

@@ -8,4 +8,38 @@ INSERT INTO dups VALUES (6, 'second');
 SELECT sa.pk FROM dups sa, dups sb WHERE sa.val=sb.val AND sa.pk!=sb.pk;
 SELECT a.pk, a.val FROM dups a WHERE a.pk in (1, 2, 4, 5, 6);
 SELECT a.pk, a.val FROM dups a WHERE a.pk in (SELECT sa.pk FROM dups sa, dups sb WHERE sa.val=sb.val AND sa.pk!=sb.pk);
+-- ALL
+/*r
+ 1,first
+ 4,first
+ 5,first
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ = ALL(SELECT sa.val FROM dups sa WHERE sa.pk BETWEEN 4 AND 5) ORDER BY a.pk;
+/*c3
+ first
+ first
+ first
+*/SELECT a.val FROM dups a WHERE a.val
+ = ALL(SELECT sa.val FROM dups sa WHERE sa.pk BETWEEN 4 AND 5);
+-- non-correlated single value
+/*r
+ 1,first
+ 4,first
+ 5,first
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ = (SELECT sa.val FROM dups sa WHERE sa.pk = 4) ORDER BY a.pk;
+-- bug item #1100384
+drop table a if exists;
+drop table b if exists;
+drop table m if exists;
+create table a(a_id integer);
+create table b(b_id integer);
+create table m(m_a_id integer, m_b_id integer);
+insert into a(a_id) values(1);
+insert into b(b_id) values(10);
+insert into m(m_a_id, m_b_id) values(1, 5);
+insert into m(m_a_id, m_b_id) values(1, 10);
+insert into m(m_a_id, m_b_id) values(1, 20);
+/*r1,10*/select a.a_id, b.b_id from a, b
+ where a.a_id in (select m.m_a_id from m where b.b_id = m.m_b_id);
 

@@ -253,7 +253,7 @@ public class Trace {
                             TEXT_TABLE_HEADER                         = 150,
                             TextDatabaseRowOutput_checkConvertString2 = 151,
                             TextDatabaseRowOutput_writeIntData        = 152,
-                            ORDER_BY_POSITION                         = 153,
+                            INVALID_LIMIT                             = 153,
                             JDBC_STATEMENT_NOT_ROW_COUNT              = 154,
                             JDBC_STATEMENT_NOT_RESULTSET              = 155,
                             AMBIGUOUS_COLUMN_REFERENCE                = 156,
@@ -263,13 +263,13 @@ public class Trace {
                             TOKEN_REQUIRED                            = 160,
                             Logger_checkFilesInJar                    = 161,
                             Logger_checkFilesInJar1                   = 162,
-                            Logger_checkFilesInJar2                   = 163,
+                            ORDER_LIMIT_REQUIRED                      = 163,
                             TRIGGER_ALREADY_EXISTS                    = 164,
                             ASSERT_DIRECT_EXEC_WITH_PARAM             = 165,
                             DataFileCache_backup                      = 166,
                             Expression_compareValues                  = 167,
-                            Parser_parseLimit1                        = 168,
-                            Parser_parseLimit2                        = 169,
+                            INVALID_LIMIT_EXPRESSION                  = 168,
+                            INVALID_TOP_EXPRESSION                    = 169,
                             SQL_CONSTRAINT_REQUIRED                   = 170,
                             TableWorks_dropConstraint                 = 171,
                             TEXT_TABLE_SOURCE_FILENAME                = 172,
@@ -486,7 +486,7 @@ public class Trace {
         "22001 header not allowed or too long",                         // TEXT_TABLE_HEADER
         "22001 separator not allowed in unquoted string",               // 151 TextDatabaseRowOutput_checkConvertString2
         "not implemented",                                              // TextDatabaseRowOutput_writeIntData
-        "00000 ORDER BY must be at the end of the statement",           //
+        "00000 LIMIT or TOP not allowed",                               //
         "00000 Statement does not generate a row count",                //
         "00000 Statement does not generate a result set",               //
         "S0022 ambiguous Column reference",                             //
@@ -496,13 +496,13 @@ public class Trace {
         " $$, requires $$",                                             // Tokenizer.getThis()
         "path is null",                                                 // 161
         "file does not exist: ",                                        //
-        "wrong resource protocol: ",                                    //
+        "00000 ORDER BY with LIMIT required",                           //
         "S0002 Trigger already exists",                                 //
         "S0000 direct execute with param count > 0",                    //
         "while creating ",                                              // DataFileCache_backup
         "Expression.compareValues",                                     // Expression_compareValues
-        "LIMIT n m",                                                    // Parser_parseLimit1
-        "TOP n",                                                        // Parser_parseLimit2
+        "LIMIT clause",                                                 //
+        "TOP clause",                                                   //
         "S0011 primary or unique constraint required on main table",    //
         " $$ in table: $$",                                             // 171
         "no file name specified for source",                            //

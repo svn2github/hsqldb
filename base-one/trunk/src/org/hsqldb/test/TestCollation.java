@@ -68,6 +68,17 @@ public class TestCollation extends TestBase {
         localeIterator = collation.getLocalesIterator();
     }
 
+    protected void tearDown() {
+
+        try {
+            statement = connection.createStatement();
+
+            statement.execute("SHUTDOWN");
+        } catch (Exception e) {}
+
+        super.tearDown();
+    }
+
     /**
      * checks whether expected locales are present and selectable
      */
@@ -153,12 +164,28 @@ public class TestCollation extends TestBase {
     /**
      * checks whether sorting via a given collation works as expected
      */
-    public void verifyCollationSorting() {
+    public void verifyCollation() {
+
+        String failedCollations = "";
+        String failMessage      = "";
 
         while (collIterator.hasNext()) {
             String collationName = (String) collIterator.next();
+            String message       = checkSorting(collationName);
 
-            checkSorting(collationName);
+            if (message.length() > 0) {
+                if (failedCollations.length() > 0) {
+                    failedCollations += ", ";
+                }
+
+                failedCollations += collationName;
+                failMessage      += message;
+            }
+        }
+
+        if (failedCollations.length() > 0) {
+            fail("test failed for following collations:\n" + failedCollations
+                 + "\n" + failMessage);
         }
     }
 
@@ -176,14 +203,15 @@ public class TestCollation extends TestBase {
     /**
      * checks sorting a table with according to a given collation
      */
-    protected void checkSorting(String collationName) {
+    protected String checkSorting(String collationName) {
 
         String prepareStmt =
-            "CREATE TEXT TABLE WORDLIST ( ID INTEGER, WORD VARCHAR );"
+            "DROP TABLE WORDLIST IF EXISTS;"
+            + "CREATE TEXT TABLE WORDLIST ( ID INTEGER, WORD VARCHAR );"
             + "SET TABLE WORDLIST SOURCE \"" + collationName
             + ".csv;encoding=UTF-8\"";
-        String selectStmt  = "SELECT ID, WORD FROM WORDLIST ORDER BY WORD";
-        String cleanupStmt = "DROP TABLE WORDLIST";
+        String selectStmt    = "SELECT ID, WORD FROM WORDLIST ORDER BY WORD";
+        String returnMessage = "";
 
         try {
 
@@ -199,26 +227,21 @@ public class TestCollation extends TestBase {
 
                 if (expectedPosition != foundPosition) {
                     String word = results.getString(2);
-                    String failMessage = "testing collation '"
-                                         + collationName + "' failed\n"
-                                         + "  word              : " + word
-                                         + "\n" + "  expected position : "
-                                         + expectedPosition + "\n"
-                                         + "  found position    : "
-                                         + foundPosition + "\n";
 
-                    fail(failMessage);
+                    return "testing collation '" + collationName
+                           + "' failed\n" + "  word              : " + word
+                           + "\n" + "  expected position : "
+                           + expectedPosition + "\n"
+                           + "  found position    : " + foundPosition + "\n";
                 }
             }
         } catch (java.sql.SQLException e) {
-            fail("testing collation '" + collationName
-                 + "' failed\n  exception message: " + e.getMessage());
+            return "testing collation '" + collationName
+                   + "' failed\n  exception message: " + e.getMessage()
+                   + "\n";
         }
 
-        // drop the table for the next round
-        try {
-            statement.execute(cleanupStmt);
-        } catch (java.sql.SQLException e) {}
+        return "";
     }
 
     public static void main(String[] argv) {
@@ -228,7 +251,7 @@ public class TestCollation extends TestBase {
 
         availability.run(result);
 
-        TestCase sorting = new TestCollation("verifyCollationSorting");
+        TestCase sorting = new TestCollation("verifyCollation");
 
         sorting.run(result);
 

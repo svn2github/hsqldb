@@ -35,3 +35,13 @@ alter table mytable add constraint fk foreign key (field2)
 alter table mytable drop constraint fk;
 alter table mytable drop constraint pk;
 drop table mytable;
+
+--
+
+CREATE TABLE "Table3" ("ID" INTEGER NOT NULL,"dd" INTEGER, PRIMARY KEY ("ID"));
+ALTER TABLE "Table3" ALTER COLUMN "ID" INTEGER IDENTITY;
+ALTER TABLE "Table3" ALTER COLUMN "ID" INTEGER;
+ALTER TABLE "Table3" DROP PRIMARY KEY;
+ALTER TABLE "Table3" ADD PRIMARY KEY("dd");
+ALTER TABLE "Table3" ALTER COLUMN "dd" INTEGER IDENTITY;
+

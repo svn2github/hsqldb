@@ -675,8 +675,10 @@ public class Log {
                 throw (Trace.error(Trace.ACCESS_IS_DENIED, source));
             }
 
-            String path =
-                new File(new File(fileName).getAbsolutePath()).getParent();
+            String path = new File(
+                new File(
+                    database.getPath()
+                    + ".properties").getAbsolutePath()).getParent();
 
             if (path != null) {
                 source = path + File.separator + source;

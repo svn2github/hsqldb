@@ -197,7 +197,8 @@ class TextTable extends org.hsqldb.Table {
 
     public String getHeader() {
 
-        String header = ((TextCache) cache).getHeader();
+        String header = cache == null ? null
+                                      : ((TextCache) cache).getHeader();
 
         return header == null ? null
                               : StringConverter.toQuotedString(header, '\"',

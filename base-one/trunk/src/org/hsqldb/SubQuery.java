@@ -49,7 +49,7 @@ class SubQuery implements ObjectComparator {
     boolean hasParams;
     boolean isResolved;
     boolean isExistsPredicate;
-    boolean isInPredicate;
+    boolean uniqueRows;
     Select  select;
     Table   table;
     View    view;

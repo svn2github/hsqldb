@@ -6,6 +6,22 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+
+2005.03.25
+
+Various bug fixes in query processing.
+
+New alternative syntax for LIMIT at the end of the query:
+
+LIMIT L [OFFSET O]
+
+It is now possible to use LIMIT combined with ORDER BY in subqueries and
+SELECT statements in brackets that are terms of UNION and other set operations.
+
+
+Support for ALL(SELECT ....)
+
+
 2005.03.18
 
 Added support for collations. Each database can have its own collation. The

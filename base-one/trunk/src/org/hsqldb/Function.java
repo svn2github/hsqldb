@@ -432,11 +432,13 @@ class Function {
             Expression e = eArg[i];
 
             if (eArg[i] != null) {
-                valueArray[i] = eArg[i].isAggregate()
-                                ? e.getAggregatedValue(session,
-                                                       valueArray[i],
-                                                       iArgType[i])
-                                : e.getValue(session, iArgType[i]);
+                if (eArg[i].isAggregate()) {
+                    valueArray[i] = Column.convertObject(
+                        e.getAggregatedValue(session, valueArray[i]),
+                        iArgType[i]);
+                } else {
+                    valueArray[i] = e.getValue(session, iArgType[i]);
+                }
             }
         }
 
