@@ -1,5 +1,5 @@
 /*
-    $Id: special-q.sql,v 1.2 2004/06/17 02:50:25 unsaved Exp $
+    $Id: special-d.sql,v 1.1 2004/07/05 00:45:26 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -11,8 +11,10 @@
     rejectStdoutRegex   (?s)\bNEW_\b.*\bMARK A\b
     rejectStdoutRegex   (?s)\bMARK B.*\bNEW_VIEW.*\bMARK C\b
     requireStdoutRegex  (?s)\bMARK B\b.*\bNEW_TBL\b.*\bMARK C
-    requireStdoutRegex  (?s)\bMARK C\b.*\bNEW_VW\b
-    rejectStdoutRegex   (?s)\bMARK C\b.*\bNEW_TBL\b
+    requireStdoutRegex  (?s)\bMARK C\b.*\bNEW_VW\b.*\bMARK D
+    rejectStdoutRegex   (?s)\bMARK C\b.*\bNEW_TBL\b.*\bMARK D
+    rejectStdoutRegex   (?s)\bMARK D\b.*\bNEW_.*\bMARK E
+    requireStdoutRegex  (?s)\bMARK E\b.*\bNEW_TBL\b
     arg                 mem 
     HARNESS_METADATA        END       
 */
@@ -29,3 +31,9 @@ CREATE VIEW NEW_VW AS SELECT vc FROM NEW_TBL;
 \dt
 \p MARK C
 \dv
+
+/* Test substring filter */
+\p MARK D
+\dt other
+\p MARK E
+\dt new
