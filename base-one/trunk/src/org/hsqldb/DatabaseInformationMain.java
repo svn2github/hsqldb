@@ -543,7 +543,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             return t;
         }
 
-        t = ns.findUserSchemaTable(name, session);
+        t = ns.findUserSchemaTable(session, name);
 
         if (t != null) {
             return t;
@@ -2033,7 +2033,15 @@ class DatabaseInformationMain extends DatabaseInformation {
             for (int i = 0; i < users.size(); i++) {
                 user            = (User) users.get(i);
                 granteeName     = user.getName();
-                tablePrivileges = user.listGrantedTablePrivileges(accessKey);
+
+                if (user.isAdmin() &&!table.isTemp()) {
+                    tablePrivileges =
+                        UserManager.getRightsArray(UserManager.ALL);
+                } else {
+                    tablePrivileges =
+                        user.listGrantedTablePrivileges(accessKey);
+                }
+
                 isGrantable     = (user.isAdmin()) ? "YES"
                                                    : "NO";
 

@@ -998,7 +998,7 @@ public class Result {
      * @param  way
      * @throws  HsqlException
      */
-    void sortResult(int order[], int way[]) throws HsqlException {
+    void sortResult(final int order[], final int way[]) throws HsqlException {
 
         if (rRoot == null || rRoot.next == null) {
             return;
@@ -1082,7 +1082,8 @@ public class Result {
      * @return -1, 0, +1
      * @throws  HsqlException
      */
-    private int compareRecord(Object a[], Object b[], int order[],
+    private int compareRecord(Object a[], final Object b[],
+                              final int order[],
                               int way[]) throws HsqlException {
 
         int i = Column.compare(a[order[0]], b[order[0]],

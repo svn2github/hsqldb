@@ -279,18 +279,6 @@ public class TestGroupByHaving extends TestCase {
     }
 
     /**
-     * Tests an invalid <b>HAVING</b> clause that contains invalid condition.
-     */
-    public void testInvalidHavingCondition() throws SQLException {
-
-        String sql = "select avg(salary), max(id) from employee "
-                     + "group by lastname " + "having max(id) " + "";
-        Object[][] expected = new Object[][]{};
-
-        compareResults(sql, expected, -Trace.INVALID_HAVING);
-    }
-
-    /**
      * Tests an invalid <b>HAVING</b> clause that contains columns not in
      * the <b>GROUP BY</b> clause.  A SQLException should be thrown.
      */

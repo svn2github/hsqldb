@@ -110,8 +110,8 @@ class View extends Table {
 
         tokenizer.getThis(Token.T_SELECT);
 
-        Parser p = new Parser(this.database, tokenizer,
-                              database.sessionManager.getSysSession());
+        Parser p = new Parser(database.sessionManager.getSysSession(),
+                              this.database, tokenizer);
 
         viewSubQuery = p.parseSubquery(null, colList, true, Expression.QUERY);
 

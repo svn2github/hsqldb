@@ -751,8 +751,8 @@ public class Table extends BaseTable {
         String    ddl       = c.core.check.getDDL();
         Tokenizer tokenizer = new Tokenizer(ddl);
         Parser parser =
-            new Parser(database, tokenizer,
-                       database.getSessionManager().getSysSession());
+            new Parser(database.getSessionManager().getSysSession(),
+                       database, tokenizer);
         Expression condition = parser.parseExpression();
 
         c.core.check = condition;
@@ -1549,7 +1549,7 @@ public class Table extends BaseTable {
                 Expression def = colDefaults[i];
 
                 if (exists[i] == false && def != null) {
-                    data[i] = def.getValue(colTypes[i], session);
+                    data[i] = def.getValue(session, colTypes[i]);
                 }
             }
         }
@@ -1635,7 +1635,7 @@ public class Table extends BaseTable {
         Record ni    = ins.rRoot;
         int    count = 0;
 
-        fireAll(Trigger.INSERT_BEFORE);
+        fireAll(session, Trigger.INSERT_BEFORE);
 
         while (ni != null) {
             insertRow(session, ni.data);
@@ -1645,7 +1645,7 @@ public class Table extends BaseTable {
             count++;
         }
 
-        fireAll(Trigger.INSERT_AFTER);
+        fireAll(session, Trigger.INSERT_AFTER);
 
         return count;
     }
@@ -1657,9 +1657,9 @@ public class Table extends BaseTable {
      */
     void insert(Session session, Object data[]) throws HsqlException {
 
-        fireAll(Trigger.INSERT_BEFORE);
+        fireAll(session, Trigger.INSERT_BEFORE);
         insertRow(session, data);
-        fireAll(Trigger.INSERT_AFTER);
+        fireAll(session, Trigger.INSERT_AFTER);
     }
 
     /**
@@ -1670,7 +1670,7 @@ public class Table extends BaseTable {
                            Object data[]) throws HsqlException {
 
         if (triggerLists[Trigger.INSERT_BEFORE_ROW] != null) {
-            fireAll(Trigger.INSERT_BEFORE_ROW, null, data);
+            fireAll(session, Trigger.INSERT_BEFORE_ROW, null, data);
         }
 
         setIdentityColumn(session, data);
@@ -1678,7 +1678,7 @@ public class Table extends BaseTable {
         insertNoCheck(session, data);
 
         if (triggerLists[Trigger.INSERT_AFTER_ROW] != null) {
-            fireAll(Trigger.INSERT_AFTER_ROW, null, data);
+            fireAll(session, Trigger.INSERT_AFTER_ROW, null, data);
             checkRowDataInsert(session, data);
         }
     }
@@ -1991,7 +1991,8 @@ public class Table extends BaseTable {
      *  Fires all row-level triggers of the given set (trigger type)
      *
      */
-    void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
+    void fireAll(Session session, int trigVecIndx, Object oldrow[],
+                 Object newrow[]) {
 
         if (!database.isReferentialIntegrity()) {
 
@@ -2008,17 +2009,17 @@ public class Table extends BaseTable {
         for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
 
-            td.pushPair(oldrow, newrow);    // tell the trigger thread to fire with this row
+            td.pushPair(session, oldrow, newrow);    // tell the trigger thread to fire with this row
         }
     }
 
     /**
      *  Statement level triggers.
      */
-    void fireAll(int trigVecIndex) {
+    void fireAll(Session session, int trigVecIndex) {
 
         if (triggerLists[trigVecIndex] != null) {
-            fireAll(trigVecIndex, null, null);
+            fireAll(session, trigVecIndex, null, null);
         }
     }
 
@@ -2040,7 +2041,7 @@ public class Table extends BaseTable {
     void dropTrigger(String name) {
 
         // look in each trigger list of each type of trigger
-        int     numTrigs = TriggerDef.NUM_TRIGS;
+        int numTrigs = TriggerDef.NUM_TRIGS;
 
         for (int tv = 0; tv < numTrigs; tv++) {
             HsqlArrayList v = triggerLists[tv];
@@ -2556,7 +2557,7 @@ public class Table extends BaseTable {
             }
         }
 
-        fireAll(Trigger.DELETE_BEFORE);
+        fireAll(session, Trigger.DELETE_BEFORE);
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0; i < deleteList.size(); i++) {
@@ -2584,7 +2585,7 @@ public class Table extends BaseTable {
             updateList.clear();
         }
 
-        fireAll(Trigger.DELETE_AFTER);
+        fireAll(session, Trigger.DELETE_AFTER);
         path.clear();
 
         constraintPath  = path;
@@ -2602,11 +2603,11 @@ public class Table extends BaseTable {
 
         Object[] data = row.getData();
 
-        fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
+        fireAll(session, Trigger.DELETE_BEFORE_ROW, data, null);
         deleteNoCheck(session, row, true);
 
         // fire the delete after statement trigger
-        fireAll(Trigger.DELETE_AFTER_ROW, data, null);
+        fireAll(session, Trigger.DELETE_AFTER_ROW, data, null);
     }
 
     /**
@@ -2731,7 +2732,7 @@ public class Table extends BaseTable {
             }
         }
 
-        fireAll(Trigger.UPDATE_BEFORE);
+        fireAll(session, Trigger.UPDATE_BEFORE);
 
         // merge any triggered change to this table with the update list
         HashMappedList triggeredList = (HashMappedList) tUpdateList.get(this);
@@ -2757,7 +2758,7 @@ public class Table extends BaseTable {
 
         // update main list
         updateRowSet(session, updateList, cols, true);
-        fireAll(Trigger.UPDATE_AFTER);
+        fireAll(session, Trigger.UPDATE_AFTER);
         path.clear();
 
         constraintPath  = path;
@@ -2789,7 +2790,7 @@ public class Table extends BaseTable {
                 Constraint c = constraintList[j];
 
                 if (c.getType() == Constraint.CHECK) {
-                    c.checkCheckConstraint(data, session);
+                    c.checkCheckConstraint(session, data);
 
                     continue;
                 }
@@ -2803,14 +2804,16 @@ public class Table extends BaseTable {
             Object[] data = (Object[]) rowSet.get(i);
 
             if (triggerLists[Trigger.UPDATE_BEFORE_ROW] != null) {
-                fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
+                fireAll(session, Trigger.UPDATE_BEFORE_ROW, row.getData(),
+                        data);
                 checkRowDataUpdate(session, data, cols);
             }
 
             insertNoCheck(session, data);
 
             if (triggerLists[Trigger.UPDATE_AFTER_ROW] != null) {
-                fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
+                fireAll(session, Trigger.UPDATE_AFTER_ROW, row.getData(),
+                        data);
                 checkRowDataUpdate(session, data, cols);
             }
         }
@@ -2824,7 +2827,7 @@ public class Table extends BaseTable {
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0, size = constraintList.length; i < size; i++) {
-                constraintList[i].checkInsert(data, session);
+                constraintList[i].checkInsert(session, data);
             }
         }
     }
@@ -2839,7 +2842,7 @@ public class Table extends BaseTable {
             Constraint c = constraintList[j];
 
             if (c.getType() == Constraint.CHECK) {
-                c.checkCheckConstraint(data, session);
+                c.checkCheckConstraint(session, data);
             }
         }
     }

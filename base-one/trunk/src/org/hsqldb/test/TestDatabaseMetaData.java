@@ -62,7 +62,44 @@ public class TestDatabaseMetaData extends TestBase {
 
             assertTrue("expected update count of zero", updateCount == 0);
 
+            pstmt = conn.prepareStatement("CREATE INDEX t1 ON t1 (cha );");
+            updateCount = pstmt.executeUpdate();
+            pstmt = conn.prepareStatement(
+                "CREATE TABLE t2 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
+                + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
+            updateCount = pstmt.executeUpdate();
+            pstmt = conn.prepareStatement("CREATE INDEX t2 ON t2 (cha );");
+            updateCount = pstmt.executeUpdate();
+
             DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet        rsp  = dbmd.getTablePrivileges(null, null, "T1");
+
+            while (rsp.next()) {
+                System.out.println("Table: " + rsp.getString(3) + " priv: "
+                                   + rsp.getString(6));
+            }
+
+            rsp = dbmd.getIndexInfo(null, null, "T1", false, false);
+
+            while (rsp.next()) {
+                System.out.println("Table: " + rsp.getString(3)
+                                   + " IndexName: " + rsp.getString(6));
+            }
+
+            rsp = dbmd.getIndexInfo(null, null, "T2", false, false);
+
+            while (rsp.next()) {
+                System.out.println("Table: " + rsp.getString(3)
+                                   + " IndexName: " + rsp.getString(6));
+            }
+
+            pstmt       = conn.prepareStatement("DROP INDEX t2 ON t2;");
+            updateCount = pstmt.executeUpdate();
+            rsp         = dbmd.getIndexInfo(null, null, "T2", false, false);
+
+            assertTrue("expected getIndexInfo returns empty resultset",
+                       rsp.next() == false);
+
             ResultSet rs = dbmd.getTables(null, null, "T1",
                                           new String[]{ "TABLE" });
             ArrayList tablesarr = new ArrayList();

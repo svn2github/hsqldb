@@ -133,7 +133,7 @@ class Parser {
      * @param  t the token source from which to parse commands
      * @param  session the connected context
      */
-    Parser(Database db, Tokenizer t, Session session) {
+    Parser(Session session, Database db, Tokenizer t) {
 
         database     = db;
         tokenizer    = t;
@@ -1162,7 +1162,7 @@ class Parser {
             Trace.check(c.getType() == Expression.VALUE,
                         Trace.INVALID_ESCAPE);
 
-            String s = (String) c.getValue(Types.VARCHAR, session);
+            String s = (String) c.getValue(session, Types.VARCHAR);
 
             // boucherb@users 2003-09-25
             // CHECKME:

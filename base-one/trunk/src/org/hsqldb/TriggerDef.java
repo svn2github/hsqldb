@@ -85,8 +85,9 @@ class TriggerDef extends Thread {
     Trigger                    trig;
     String                     fire;
     int                        vectorIndex;      // index into HsqlArrayList[]
-    protected HsqlDeque        pendingQueue1;    // row triggers pending
-    protected HsqlDeque        pendingQueue2;    // row triggers pending
+
+    //protected boolean busy;               // firing trigger in progress
+    protected HsqlDeque        pendingQueue;    // row triggers pending
     protected int              rowsQueued;       // rows in pendingQueue
     protected boolean          valid;            // parsing valid
     protected volatile boolean keepGoing = true;
@@ -140,8 +141,7 @@ class TriggerDef extends Thread {
 
         //busy = false;
         rowsQueued    = 0;
-        pendingQueue1 = new HsqlDeque();
-        pendingQueue2 = new HsqlDeque();
+        pendingQueue = new HsqlDeque();
 
         if (vectorIndex < 0) {
             valid = false;
@@ -262,10 +262,15 @@ class TriggerDef extends Thread {
     public void run() {
 
         while (keepGoing) {
-            Object[][] trigRows = popPair();
+            TriggerData triggerData = popPair();
 
-            trig.fire(this.vectorIndex, name.name, table.getName().name,
-                      trigRows[0], trigRows[1]);
+            if (triggerData != null) {
+                if (triggerData.session.getUser() != null) {
+                    trig.fire(this.vectorIndex, name.name,
+                              table.getName().name, triggerData.oldRow,
+                              triggerData.newRow);
+                }
+            }
         }
     }
 
@@ -283,7 +288,10 @@ class TriggerDef extends Thread {
      * signal the thread to stop
      */
     public synchronized void terminate() {
+
         keepGoing = false;
+
+        notify();
     }
 
     /**
@@ -296,7 +304,7 @@ class TriggerDef extends Thread {
      *
      * @return  Description of the Return Value
      */
-    synchronized Object[][] popPair() {
+    synchronized TriggerData popPair() {
 
         if (rowsQueued == 0) {
             try {
@@ -311,12 +319,11 @@ class TriggerDef extends Thread {
 
         notify();    // notify push's wait
 
-        Object[] oldrow = (Object[]) pendingQueue1.removeFirst();
-        Object[] newrow = (Object[]) pendingQueue2.removeFirst();
-
-        return new Object[][] {
-            oldrow, newrow
-        };
+        if (pendingQueue.size() == 0) {
+            return null;
+        } else {
+            return (TriggerData) pendingQueue.removeFirst();
+        }
     }
 
     /**
@@ -328,7 +335,8 @@ class TriggerDef extends Thread {
      * @param  row1
      * @param  row2
      */
-    synchronized void pushPair(Object row1[], Object row2[]) {
+    synchronized void pushPair(Session session, Object row1[],
+                               Object row2[]) {
 
         if (maxRowsQueued == 0) {
             trig.fire(vectorIndex, name.name, table.getName().name, row1,
@@ -339,8 +347,7 @@ class TriggerDef extends Thread {
 
         if (rowsQueued >= maxRowsQueued) {
             if (nowait) {
-                pendingQueue2.removeLast();    // overwrite last
-                pendingQueue1.removeLast();    // overwrite last
+                pendingQueue.removeLast();    // overwrite last
             } else {
                 try {
                     wait();
@@ -355,8 +362,7 @@ class TriggerDef extends Thread {
             rowsQueued++;
         }
 
-        pendingQueue1.add(row1);
-        pendingQueue2.add(row2);
+        pendingQueue.add(new TriggerData(session, row1, row2));
         notify();    // notify pop's wait
     }
 
@@ -376,5 +382,23 @@ class TriggerDef extends Thread {
      */
     public boolean isValid() {
         return valid;
+    }
+
+    /**
+     * Class to store the data used to fire a trigger
+     */
+    class TriggerData {
+
+        public Object[] oldRow;
+        public Object[] newRow;
+        public Session  session;
+
+        public TriggerData(Session session, Object[] oldRow,
+                           Object[] newRow) {
+
+            this.oldRow  = oldRow;
+            this.newRow  = newRow;
+            this.session = session;
+        }
     }
 }

@@ -369,7 +369,7 @@ class TableFilter {
 
         if (conditionType == CONDITION_UNORDERED) {
             if (!isOuterJoin) {
-            addAndCondition(e);
+                addAndCondition(e);
             }
 
             return;
@@ -464,7 +464,7 @@ class TableFilter {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(types[i], null);
+                    data[i] = e.getValue(null, types[i]);
                 }
             }
 
@@ -474,7 +474,7 @@ class TableFilter {
                                        : filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
-            Object o    = eStart.getArg2().getValue(type, null);
+            Object o    = eStart.getArg2().getValue(null, type);
 
             currentNode = filterIndex.findFirst(o, eStart.getType());
         }

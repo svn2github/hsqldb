@@ -327,14 +327,14 @@ class Function {
             return null;
         }
 
-        return getValue(oArg, session);
+        return getValue(session, oArg);
     }
 
     /**
      * Evaluates the Function with the given arguments in the session context.
      */
-    Object getValue(Object[] arguments,
-                    Session session) throws HsqlException {
+    Object getValue(Session session,
+                    Object[] arguments) throws HsqlException {
 
         if (bConnection) {
             arguments[0] = session.getInternalConnection();
@@ -374,7 +374,7 @@ class Function {
             if (e != null) {
 
                 // no argument: null
-                o = e.getValue(iArgType[i], session);
+                o = e.getValue(session, iArgType[i]);
             }
 
             if ((o == null) &&!bArgNullable[i]) {
@@ -416,8 +416,8 @@ class Function {
         return values;
     }
 
-    Object getAggregatedValue(Object currValue,
-                              Session session) throws HsqlException {
+    Object getAggregatedValue(Session session,
+                              Object currValue) throws HsqlException {
 
         Object[] valueArray = (Object[]) currValue;
 
@@ -430,7 +430,7 @@ class Function {
 
             if (eArg[i] != null) {
                 valueArray[i] = eArg[i].isAggregate()
-                                ? e.getAggregatedValue(valueArray[i], session)
+                                ? e.getAggregatedValue(session, valueArray[i])
                                 : e.getValue(session);
             }
         }
@@ -441,11 +441,11 @@ class Function {
             return null;
         }
 
-        return getValue(valueArray, session);
+        return getValue(session, valueArray);
     }
 
-    Object updateAggregatingValue(Object currValue,
-                                  Session session) throws HsqlException {
+    Object updateAggregatingValue(Session session,
+                                  Object currValue) throws HsqlException {
 
         Object[] valueArray = (Object[]) currValue;
 
@@ -457,8 +457,8 @@ class Function {
             Expression e = eArg[i];
 
             if (eArg[i] != null) {
-                valueArray[i] = e.updateAggregatingValue(valueArray[i],
-                        session);
+                valueArray[i] = e.updateAggregatingValue(session,
+                        valueArray[i]);
             }
         }
 

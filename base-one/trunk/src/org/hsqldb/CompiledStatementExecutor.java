@@ -297,7 +297,7 @@ final class CompiledStatementExecutor {
         for (int i = 0; i < len; i++) {
             cve     = acve[i];
             ci      = cm[i];
-            row[ci] = cve.getValue(ct[ci], session);
+            row[ci] = cve.getValue(session, ct[ci]);
         }
 
         t.insert(session, row);
@@ -322,7 +322,22 @@ final class CompiledStatementExecutor {
         Result result;
 
         if (select.sIntoTable != null) {
-            result = session.dbCommandInterpreter.processSelectInto(select);
+
+            // session level user rights
+            session.checkDDLWrite();
+
+            if (session.getDatabase()
+                    .findUserTable(session, select.sIntoTable
+                        .name) != null || session.getDatabase().dInfo
+                            .getSystemTable(session, select.sIntoTable
+                                .name) != null) {
+                throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
+                                  select.sIntoTable.name);
+            }
+
+            result = select.getResult(session.getMaxRows(), session);
+            result = session.dbCommandInterpreter.processSelectInto(result,
+                    select.sIntoTable, select.intoType);
 
             session.getDatabase().setMetaDirty(false);
         } else {
@@ -368,8 +383,8 @@ final class CompiledStatementExecutor {
                         for (int i = 0; i < len; i++) {
                             int ci = colmap[i];
 
-                            ni[ci] = colvalues[i].getValue(coltypes[ci],
-                                                           session);
+                            ni[ci] = colvalues[i].getValue(session,
+                                                           coltypes[ci]);
                         }
 
                         rowset.add(row, ni);

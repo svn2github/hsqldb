@@ -105,6 +105,8 @@ class Select {
     int                   iGroupLen;            // number of columns that are 'group'
     int                   iHavingIndex = -1;    // -1 means no having
     int                   iOrderLen;            // number of columns that are 'order'
+    int                   sortOrder[];
+    int                   sortDirection[];
     Select                sUnion;               // null means no union select
     HsqlName              sIntoTable;           // null means not select..into
     int                   intoType = Table.MEMORY_TABLE;
@@ -270,7 +272,7 @@ class Select {
      * @return the single valued result
      * @throws HsqlException
      */
-    Object getValue(int type, Session session) throws HsqlException {
+    Object getValue(Session session, int type) throws HsqlException {
 
         resolve();
 
@@ -336,17 +338,19 @@ class Select {
                 isAggregated = true;
             }
 
-            Trace.check(
-                (i < groupByStart) || (i >= groupByEnd)
-                || exprColumns[i].canBeInGroupBy(), Trace.INVALID_GROUP_BY,
-                    exprColumns[i]);
-            Trace.check(
-                (i != iHavingIndex) || exprColumns[i].isConditional(),
-                Trace.INVALID_HAVING, exprColumns[i]);
-            Trace.check(
-                (i < orderByStart) || (i >= orderByEnd)
-                || exprColumns[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
-                    exprColumns[i]);
+            if (!(i < groupByStart || i >= groupByEnd
+                    || exprColumns[i].canBeInGroupBy())) {
+                Trace.error(Trace.INVALID_GROUP_BY, exprColumns[i]);
+            }
+
+            if (!(i != iHavingIndex || exprColumns[i].isConditional())) {
+                Trace.error(Trace.INVALID_HAVING, exprColumns[i]);
+            }
+
+            if (!(i < orderByStart) || i >= orderByEnd
+                    || exprColumns[i].canBeInOrderBy()) {
+                Trace.error(Trace.INVALID_ORDER_BY, exprColumns[i]);
+            }
 
             if (i < iResultLen) {
                 rmd.sLabel[i]        = e.getAlias();
@@ -383,6 +387,8 @@ class Select {
                             exprColumns[i]);
             }
         }
+
+        prepareSort();
     }
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
@@ -486,30 +492,46 @@ class Select {
         return r;
     }
 
-    private void sortResult(Result r) throws HsqlException {
+    private void prepareSort() {
 
-        if (iOrderLen != 0) {
-            int order[] = new int[iOrderLen];
-            int way[]   = new int[iOrderLen];
+        if (iOrderLen == 0) {
+            return;
+        }
 
-            for (int i = iResultLen + (isGrouped ? iGroupLen
-                                                 : 0), j = 0; j < iOrderLen;
-                    i++, j++) {
-                int colindex = i;
+        sortOrder     = new int[iOrderLen];
+        sortDirection = new int[iOrderLen];
 
-                // fredt - when a union, use the visible select columns for sort comparison
-                // also whenever a column alias is used
-                if (exprColumns[i].orderColumnIndex != -1) {
-                    colindex = exprColumns[i].orderColumnIndex;
-                }
+        int startCol;
 
-                order[j] = colindex;
-                way[j]   = exprColumns[i].isDescending() ? -1
-                                                         : 1;
+        if (iHavingIndex > 0) {
+            startCol = iHavingIndex + 1;
+        } else {
+            startCol = iResultLen + (isGrouped ? iGroupLen
+                                               : 0);
+        }
+
+        for (int i = startCol, j = 0; j < iOrderLen; i++, j++) {
+            int colindex = i;
+
+            // fredt - when a union, use the visible select columns for sort comparison
+            // also whenever a column alias is used
+            if (exprColumns[i].orderColumnIndex != -1) {
+                colindex = exprColumns[i].orderColumnIndex;
             }
 
-            r.sortResult(order, way);
+            sortOrder[j]     = colindex;
+            sortDirection[j] = exprColumns[i].isDescending() ? -1
+                                                             : 1;
         }
+    }
+
+    private void sortResult(Result r) throws HsqlException {
+
+        if (iOrderLen == 0) {
+            return;
+        }
+
+        r.sortResult(sortOrder, sortDirection);
     }
 
     /**
@@ -673,16 +695,16 @@ class Select {
                     for (int i = 0; i < gResult.groupBegin; i++) {
                         row[i] =
                             isAggregated && exprColumns[i].isAggregate()
-                            ? exprColumns[i].updateAggregatingValue(row[i],
-                                session)
+                            ? exprColumns[i].updateAggregatingValue(session,
+                                row[i])
                             : exprColumns[i].getValue(session);
                     }
 
                     for (int i = gResult.groupEnd; i < len; i++) {
                         row[i] =
                             isAggregated && exprColumns[i].isAggregate()
-                            ? exprColumns[i].updateAggregatingValue(row[i],
-                                session)
+                            ? exprColumns[i].updateAggregatingValue(session,
+                                row[i])
                             : exprColumns[i].getValue(session);
                     }
 
@@ -717,8 +739,8 @@ class Select {
             if (isAggregated) {
                 for (int i = 0; i < len; i++) {
                     if (exprColumns[i].isAggregate()) {
-                        row[i] = exprColumns[i].getAggregatedValue(row[i],
-                                session);
+                        row[i] = exprColumns[i].getAggregatedValue(session,
+                                row[i]);
                     }
                 }
             }

@@ -153,7 +153,7 @@ public class Session implements SessionInterface {
         compiledStatementExecutor = new CompiledStatementExecutor(this);
         compiledStatementManager  = db.compiledStatementManager;
         tokenizer                 = new Tokenizer();
-        parser                    = new Parser(database, tokenizer, this);
+        parser                    = new Parser(this, database, tokenizer);
     }
 
     /**

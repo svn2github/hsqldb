@@ -481,7 +481,7 @@ public class Database {
      *  any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
      */
-    Table getUserTable(String name, Session session) throws HsqlException {
+    Table getUserTable(Session session, String name) throws HsqlException {
 
         Table t = findUserTable(session, name);
 
@@ -599,8 +599,8 @@ public class Database {
      * @throws HsqlException if the index does not exist, the session lacks
      *        the permission or the operation violates database integrity
      */
-    void dropIndex(String indexname, boolean ifExists,
-                   Session session) throws HsqlException {
+    void dropIndex(Session session, String indexname,
+                   boolean ifExists) throws HsqlException {
 
         Table t = findUserTableForIndex(session, indexname);
 
@@ -678,6 +678,7 @@ public class Database {
 
         try {
             if (closemode == CLOSEMODE_COMPACT &&!filesReadOnly) {
+                clearStructures();
                 reopen();
                 setState(DATABASE_CLOSING);
                 logger.closeLog(CLOSEMODE_NORMAL);
@@ -759,8 +760,8 @@ public class Database {
      *      operation
      * @throws  HsqlException if any of the checks listed above fail
      */
-    void dropTable(String name, boolean ifExists, boolean isView,
-                   Session session) throws HsqlException {
+    void dropTable(Session session, String name, boolean ifExists,
+                   boolean isView) throws HsqlException {
 
         Table toDrop    = null;
         int   dropIndex = -1;
@@ -1040,7 +1041,7 @@ public class Database {
     /**
      *  Drops a trigger with the specified name in the given context.
      */
-    void dropTrigger(String name, Session session) throws HsqlException {
+    void dropTrigger(Session session, String name) throws HsqlException {
 
         boolean found = triggerNameList.containsName(name);
 

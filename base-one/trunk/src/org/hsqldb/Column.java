@@ -236,8 +236,8 @@ public class Column {
     Object getDefaultValue(Session session) throws HsqlException {
 
         return defaultExpression == null ? null
-                                         : defaultExpression.getValue(colType,
-                                         session);
+                                         : defaultExpression.getValue(session,
+                                         colType);
     }
 
     /**

@@ -422,7 +422,7 @@ Referential Constraint 4 SET DEFAULT
      * Checks for foreign key or check constraint violation when
      * inserting a row into the child table.
      */
-    void checkInsert(Object row[], Session session) throws HsqlException {
+    void checkInsert(Session session, Object row[]) throws HsqlException {
 
         if (constType == Constraint.MAIN || constType == Constraint.UNIQUE) {
 
@@ -432,7 +432,7 @@ Referential Constraint 4 SET DEFAULT
         }
 
         if (constType == Constraint.CHECK) {
-            checkCheckConstraint(row, session);
+            checkCheckConstraint(session, row);
 
             return;
         }
@@ -472,8 +472,8 @@ Referential Constraint 4 SET DEFAULT
     /*
      * Tests a row against this CHECK constraint.
      */
-    void checkCheckConstraint(Object[] row,
-                              Session session) throws HsqlException {
+    void checkCheckConstraint(Session session,
+                              Object[] row) throws HsqlException {
 
         core.checkFilter.currentData = row;
 

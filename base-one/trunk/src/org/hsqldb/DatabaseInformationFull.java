@@ -2057,7 +2057,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
                 tokenizer.getThis("SELECT");
 
-                parser = new Parser(database, tokenizer, sys);
+                parser = new Parser(sys, database, tokenizer);
                 select = parser.parseSelect(false);
 
                 select.resolve();

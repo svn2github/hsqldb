@@ -141,7 +141,7 @@ class DatabaseCommandInterpreter {
         try {
             tokenizer.reset(sql);
 
-            parser = new Parser(database, tokenizer, session);
+            parser = new Parser(session, database, tokenizer);
 
             while (true) {
                 tokenizer.setPartMarker();
@@ -202,14 +202,7 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                if (cStatement.select.sIntoTable == null) {
-                    result =
-                        session.sqlExecuteCompiledNoPreChecks(cStatement);
-                } else {
-                    result = processSelectInto(cStatement.select);
-
-                    database.setMetaDirty(false);
-                }
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
 
                 break;
             }
@@ -536,6 +529,10 @@ class DatabaseCommandInterpreter {
 
             token = tokenizer.getString();
 
+            if (token.equals(Token.T_DESC) || token.equals(Token.T_ASC)) {
+                token = tokenizer.getString();    // OJ: eat it up
+            }
+
             if (token.equals(Token.T_COMMA)) {
                 continue;
             }
@@ -572,6 +569,7 @@ class DatabaseCommandInterpreter {
      *
      * @param  t table
      * @param  indexName index
+     *
      * @param  indexNameQuoted is quoted
      * @param  unique is unique
      * @throws  HsqlException
@@ -912,7 +910,7 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
         }
 
-        Parser     parser = new Parser(database, tokenizer, session);
+        Parser     parser = new Parser(session, database, tokenizer);
         Expression expr   = parser.readDefaultClause();
 
         expr.resolveTypes();
@@ -923,7 +921,7 @@ class DatabaseCommandInterpreter {
             Object defValTemp;
 
             try {
-                defValTemp = expr.getValue(type, session);
+                defValTemp = expr.getValue(session, type);
             } catch (HsqlException e) {
                 throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
             }
@@ -1123,7 +1121,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_OPENBRACKET);
 
-        Parser     parser    = new Parser(database, tokenizer, session);
+        Parser     parser    = new Parser(session, database, tokenizer);
         Expression condition = parser.parseExpression();
 
         tokenizer.getThis(Token.T_CLOSEBRACKET);
@@ -1443,7 +1441,7 @@ class DatabaseCommandInterpreter {
         tokenizer.setPartMarker();
         tokenizer.getThis(Token.T_SELECT);
 
-        Parser parser = new Parser(database, tokenizer, session);
+        Parser parser = new Parser(session, database, tokenizer);
         Select select;
 
         // parse as UNION and do not accept ORDER BY
@@ -1551,7 +1549,7 @@ class DatabaseCommandInterpreter {
     private void processAlterTable() throws HsqlException {
 
         String tableName = tokenizer.getString();
-        Table  t         = database.getUserTable(tableName, session);
+        Table  t         = database.getUserTable(session, tableName);
         String token;
 
         checkIsReallyTable(t);
@@ -2691,7 +2689,7 @@ class DatabaseCommandInterpreter {
             }
         }
 
-        database.dropTable(tableName, ifExists, isView, session);
+        database.dropTable(session, tableName, ifExists, isView);
     }
 
     private void processDropUser() throws HsqlException {
@@ -2715,7 +2713,7 @@ class DatabaseCommandInterpreter {
 
     private void processDropTrigger() throws HsqlException {
         session.checkDDLWrite();
-        database.dropTrigger(tokenizer.getString(), session);
+        database.dropTrigger(session, tokenizer.getString());
     }
 
     private void processDropIndex() throws HsqlException {
@@ -2723,6 +2721,13 @@ class DatabaseCommandInterpreter {
         String  indexName = tokenizer.getString();
         String  token     = tokenizer.getString();
         boolean ifExists  = false;
+
+        // accept a table name - no check performed if it is the right table
+        if (token.equals(Token.T_ON)) {
+            database.getUserTable(session, tokenizer.getString());
+
+            token = tokenizer.getString();
+        }
 
         if (token.equals(Token.T_IF)) {
             tokenizer.getThis(Token.T_EXISTS);
@@ -2733,7 +2738,7 @@ class DatabaseCommandInterpreter {
         }
 
         session.checkDDLWrite();
-        database.dropIndex(indexName, ifExists, session);
+        database.dropIndex(session, indexName, ifExists);
     }
 
     private Result processExplainPlan() throws IOException, HsqlException {
@@ -2752,7 +2757,7 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_PLAN);
         tokenizer.getThis(Token.T_FOR);
 
-        parser = new Parser(database, tokenizer, session);
+        parser = new Parser(session, database, tokenizer);
         token  = tokenizer.getString();
         cmd    = Token.get(token);
         result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
@@ -2823,50 +2828,29 @@ class DatabaseCommandInterpreter {
                                    : classLoader.loadClass(fqn);
     }
 
-    Result processSelectInto(Select select) throws HsqlException {
+    Result processSelectInto(Result result, HsqlName intoHsqlName,
+                             int intoType) throws HsqlException {
 
-        Table        t;
-        Result       r;
-        Result       uc;
-        int          sid;
-        int          intoType;
-        HsqlName     intoHsqlName;
-        String       intoName;
-        int          colCount;
-        Expression[] eColumn;
-        String       txtSrc;
-
-        // session level user rights
-        session.checkDDLWrite();
+        int sid;
 
         // fredt@users 20020215 - patch 497872 by Nitin Chauhan
         // to require column labels in SELECT INTO TABLE
-        eColumn  = select.exprColumns;
-        colCount = eColumn.length;
+        int colCount = result.getColumnCount();
 
         for (int i = 0; i < colCount; i++) {
-            if (eColumn[i].getAlias().length() == 0) {
+            if (result.metaData.sLabel[i].length() == 0) {
                 throw Trace.error(Trace.LABEL_REQUIRED);
             }
         }
 
-        intoHsqlName = select.sIntoTable;
-        intoName     = intoHsqlName.name;
-
-        if (database.findUserTable(session, intoName) != null) {
-            throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
-        }
-
-        r        = select.getResult(0, session);
-        intoType = select.intoType;
-        sid      = session.getId();
+        sid = session.getId();
 
         // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        t = (intoType == Table.TEXT_TABLE)
-            ? new TextTable(database, intoHsqlName, intoType, sid)
-            : new Table(database, intoHsqlName, intoType, sid);
+        Table t = (intoType == Table.TEXT_TABLE)
+                  ? new TextTable(database, intoHsqlName, intoType, sid)
+                  : new Table(database, intoHsqlName, intoType, sid);
 
-        t.addColumns(r.metaData, r.getColumnCount());
+        t.addColumns(result.metaData, result.getColumnCount());
         t.createPrimaryKey();
         database.linkTable(t);
 
@@ -2876,13 +2860,14 @@ class DatabaseCommandInterpreter {
 
                 // Use default lowercase name "<table>.csv" (with invalid
                 // char's converted to underscores):
-                txtSrc = StringUtil.toLowerSubset(intoName, '_') + ".csv";
+                String txtSrc =
+                    StringUtil.toLowerSubset(intoHsqlName.name, '_') + ".csv";
 
                 t.setDataSource(session, txtSrc, false, true);
                 logTableDDL(t);
-                t.insertIntoTable(session, r);
+                t.insertIntoTable(session, result);
             } catch (HsqlException e) {
-                database.dropTable(intoName, false, false, session);
+                database.dropTable(session, intoHsqlName.name, false, false);
 
                 throw (e);
             }
@@ -2890,11 +2875,12 @@ class DatabaseCommandInterpreter {
             logTableDDL(t);
 
             // SELECT .. INTO can't fail because of constraint violation
-            t.insertIntoTable(session, r);
+            t.insertIntoTable(session, result);
         }
 
-        uc              = new Result(ResultConstants.UPDATECOUNT);
-        uc.iUpdateCount = r.getSize();
+        Result uc = new Result(ResultConstants.UPDATECOUNT);
+
+        uc.iUpdateCount = result.getSize();
 
         return uc;
     }

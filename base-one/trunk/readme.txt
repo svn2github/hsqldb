@@ -1,5 +1,13 @@
 Readme File
 
+2004.05.30
+
+Fixed ORDER BY with HAVING
+Fixed SELECT .. INTO table issue with outer joins etc.
+Fixed issue with NOT used in WHERE clause of OUTER select
+Fixed issue with DAYOFWEEK() etc. library calls with NULL parameter
+Fixes for TRIGGER thread termination
+
 2004.05.26
 
 Fixes for minor bugs

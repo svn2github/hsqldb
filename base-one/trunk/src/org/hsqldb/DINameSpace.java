@@ -327,7 +327,7 @@ final class DINameSpace {
      * @param name a database object identifier string representing the
      *      table to find, possibly prefixed with a schema qualifier
      */
-    Table findUserSchemaTable(String name, Session session) {
+    Table findUserSchemaTable(Session session, String name) {
 
         String prefix;
 

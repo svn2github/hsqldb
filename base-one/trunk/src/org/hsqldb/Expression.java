@@ -1794,7 +1794,7 @@ public class Expression {
                 dataType = eArg.dataType;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(dataType, null);
+                    valueData = getValue(null, dataType);
                     eArg      = null;
                     exprType  = VALUE;
                 }
@@ -1810,7 +1810,7 @@ public class Expression {
                     dataType = Types.VARCHAR;
 
                     if (isFixedConstant()) {
-                        valueData = getValue(dataType, null);
+                        valueData = getValue(null, dataType);
                         eArg      = null;
                         eArg2     = null;
                         exprType  = VALUE;
@@ -1837,7 +1837,7 @@ public class Expression {
                 if (isFixedConstant()) {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
                             eArg2.dataType, exprType);
-                    valueData = getValue(dataType, null);
+                    valueData = getValue(null, dataType);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -1858,7 +1858,7 @@ public class Expression {
                 dataType = Types.VARCHAR;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(dataType, null);
+                    valueData = getValue(null, dataType);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -2135,7 +2135,7 @@ public class Expression {
 
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
         String likeStr = isRightArgFixedConstant
-                         ? (String) eArg2.getValue(Types.VARCHAR, null)
+                         ? (String) eArg2.getValue(null, Types.VARCHAR)
                          : null;
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE
                              || eArg2.dataType == Types.VARCHAR_IGNORECASE;
@@ -2553,7 +2553,7 @@ public class Expression {
      *
      * @throws HsqlException
      */
-    Object getValue(int type, Session session) throws HsqlException {
+    Object getValue(Session session, int type) throws HsqlException {
 
         Object o = getValue(session);
 
@@ -2576,8 +2576,8 @@ public class Expression {
      *
      * @throws HsqlException
      */
-    Object getAggregatedValue(Object currValue,
-                              Session session) throws HsqlException {
+    Object getAggregatedValue(Session session,
+                              Object currValue) throws HsqlException {
 
         if (!isAggregate()) {
             return currValue;
@@ -2605,11 +2605,11 @@ public class Expression {
 
             case NEGATE :
                 return Column.negate(
-                    eArg.getAggregatedValue(currValue, session), dataType);
+                    eArg.getAggregatedValue(session, currValue), dataType);
 
             case CONVERT :
                 return Column.convertObject(
-                    eArg.getAggregatedValue(currValue, session), dataType);
+                    eArg.getAggregatedValue(session, currValue), dataType);
         }
 
         // handle expressions
@@ -2619,7 +2619,7 @@ public class Expression {
         switch (aggregateSpec) {
 
             case AGGREGATE_LEFT :
-                leftValue  = eArg.getAggregatedValue(currValue, session);
+                leftValue  = eArg.getAggregatedValue(session, currValue);
                 rightValue = eArg2 == null ? null
                                            : eArg2.getValue(session);
                 break;
@@ -2627,7 +2627,7 @@ public class Expression {
             case AGGREGATE_RIGHT :
                 leftValue  = eArg == null ? null
                                           : eArg.getValue(session);
-                rightValue = eArg2.getAggregatedValue(currValue, session);
+                rightValue = eArg2.getAggregatedValue(session, currValue);
                 break;
 
             case AGGREGATE_BOTH :
@@ -2635,11 +2635,12 @@ public class Expression {
                     currValue = new Object[2];
                 }
 
-                leftValue = eArg.getAggregatedValue(((Object[]) currValue)[0],
-                                                    session);
+                leftValue =
+                    eArg.getAggregatedValue(session,
+                                            ((Object[]) currValue)[0]);
                 rightValue =
-                    eArg2.getAggregatedValue(((Object[]) currValue)[1],
-                                             session);
+                    eArg2.getAggregatedValue(session,
+                                             ((Object[]) currValue)[1]);
                 break;
         }
 
@@ -2687,7 +2688,7 @@ public class Expression {
                                              : Boolean.FALSE;
 
             case IN :
-                return eArg2.testValueList(leftValue, session) ? Boolean.TRUE
+                return eArg2.testValueList(session, leftValue) ? Boolean.TRUE
                                                                : Boolean
                                                                .FALSE;
 
@@ -2743,7 +2744,7 @@ public class Expression {
                 return objectPair;
 
             case FUNCTION :
-                return function.getAggregatedValue(currValue, session);
+                return function.getAggregatedValue(session, currValue);
         }
 
         // handle comparisons
@@ -2797,8 +2798,8 @@ public class Expression {
      *
      * @throws HsqlException
      */
-    Object updateAggregatingValue(Object currValue,
-                                  Session session) throws HsqlException {
+    Object updateAggregatingValue(Session session,
+                                  Object currValue) throws HsqlException {
 
         if (!isAggregate()) {
             return getValue(session);
@@ -2827,21 +2828,21 @@ public class Expression {
                     valuePair = new Object[2];
                 }
 
-                valuePair[0] = eArg.updateAggregatingValue(valuePair[0],
-                        session);
-                valuePair[1] = eArg2.updateAggregatingValue(valuePair[1],
-                        session);
+                valuePair[0] = eArg.updateAggregatingValue(session,
+                        valuePair[0]);
+                valuePair[1] = eArg2.updateAggregatingValue(session,
+                        valuePair[1]);
 
                 return valuePair;
             }
             case AGGREGATE_LEFT :
-                return eArg.updateAggregatingValue(currValue, session);
+                return eArg.updateAggregatingValue(session, currValue);
 
             case AGGREGATE_RIGHT :
-                return eArg2.updateAggregatingValue(currValue, session);
+                return eArg2.updateAggregatingValue(session, currValue);
 
             case AGGREGATE_FUNCTION :
-                return function.updateAggregatingValue(currValue, session);
+                return function.updateAggregatingValue(session, currValue);
 
             default :
 
@@ -2867,10 +2868,10 @@ public class Expression {
                 return function.getValue(session);
 
             case QUERY :
-                return subSelect.getValue(dataType, session);
+                return subSelect.getValue(session, dataType);
 
             case NEGATE :
-                return Column.negate(eArg.getValue(dataType, session),
+                return Column.negate(eArg.getValue(session, dataType),
                                      dataType);
 
             case AND :
@@ -2882,20 +2883,20 @@ public class Expression {
                                      : Boolean.FALSE;
 
             case CONVERT :
-                return eArg.getValue(dataType, session);
+                return eArg.getValue(session, dataType);
 
             case CASEWHEN :
                 if (eArg.test(session)) {
-                    return eArg2.eArg.getValue(dataType, session);
+                    return eArg2.eArg.getValue(session, dataType);
                 } else {
-                    return eArg2.eArg2.getValue(dataType, session);
+                    return eArg2.eArg2.getValue(session, dataType);
                 }
 
             // gets here from getAggregatedValue()
             case ALTERNATIVE :
                 return new Object[] {
-                    eArg.getValue(dataType, session),
-                    eArg2.getValue(dataType, session)
+                    eArg.getValue(session, dataType),
+                    eArg2.getValue(session, dataType)
                 };
         }
 
@@ -2904,11 +2905,11 @@ public class Expression {
                b = null;
 
         if (eArg != null) {
-            a = eArg.getValue(dataType, session);
+            a = eArg.getValue(session, dataType);
         }
 
         if (eArg2 != null) {
-            b = eArg2.getValue(dataType, session);
+            b = eArg2.getValue(session, dataType);
         }
 
         switch (exprType) {
@@ -2968,18 +2969,18 @@ public class Expression {
                 return eArg.test(session) || eArg2.test(session);
 
             case LIKE :
-                String s = (String) eArg2.getValue(Types.VARCHAR, session);
+                String s = (String) eArg2.getValue(session, Types.VARCHAR);
 
                 if (eArg2.isParam || eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 
-                String c = (String) eArg.getValue(Types.VARCHAR, session);
+                String c = (String) eArg.getValue(session, Types.VARCHAR);
 
                 return likeObject.compare(c);
 
             case IN :
-                return eArg2.testValueList(eArg.getValue(session), session);
+                return eArg2.testValueList(session, eArg.getValue(session));
 
             case EXISTS :
                 Result r = eArg.subSelect.getResult(1, session);    // 1 is already enough
@@ -3001,8 +3002,8 @@ public class Expression {
         }
 
         int    type = eArg.dataType;
-        Object o    = eArg.getValue(type, session);
-        Object o2   = eArg2.getValue(type, session);
+        Object o    = eArg.getValue(session, type);
+        Object o2   = eArg2.getValue(session, type);
 
         if (o == null || o2 == null) {
 /*
@@ -3134,8 +3135,8 @@ public class Expression {
 // boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
 //                  and correlated IN list expressions
 // fredt - catch type conversion exception due to narrowing
-    private boolean testValueList(Object o,
-                                  Session session) throws HsqlException {
+    private boolean testValueList(Session session,
+                                  Object o) throws HsqlException {
 
         if (o == null) {
             return false;
@@ -3155,7 +3156,7 @@ public class Expression {
             final int len = valueList.length;
 
             for (int i = 0; i < len; i++) {
-                Object o2 = valueList[i].getValue(dataType, session);
+                Object o2 = valueList[i].getValue(session, dataType);
 
                 if (Column.compare(o, o2, dataType) == 0) {
                     return true;

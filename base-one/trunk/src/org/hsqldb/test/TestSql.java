@@ -303,8 +303,8 @@ public class TestSql extends TestBase {
                 rs.close();
 
                 // test identity with PreparedStatement
-                pstmnt =
-                    connection.prepareStatement("INSERT INTO T VALUES (?,?,?)");
+                pstmnt = connection.prepareStatement(
+                    "INSERT INTO T VALUES (?,?,?)");
 
                 pstmnt.setString(1, null);
                 pstmnt.setString(2, "test");
