@@ -2093,7 +2093,7 @@ public class Expression {
             likeObject = null;
         } else if (likeObject.isEquivalentToEqualsPredicate()) {
             exprType   = EQUAL;
-            eArg2 = new Expression(Types.VARCHAR, likeObject.getRangeLow());
+            eArg2      = new Expression(Types.VARCHAR, likeStr);
             likeObject = null;
         } else if (likeObject.isEquivalentToNotNullPredicate()) {
 

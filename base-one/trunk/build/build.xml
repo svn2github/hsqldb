@@ -397,6 +397,9 @@ examples:
       </jar>
     </target>
 
+<!-- classes referenced by the org.hsqldb.jdbc package classes -->
+<!-- or the org.hsqldb.jdbcDriver class are included here with some -->
+<!-- ommissions where the calling methods are not actually used -->
     <target name="jarclient" depends="classes14"
             description="Build the hsqljdbc.jar">
         <jar jarfile="lib/hsqljdbc.jar">
@@ -431,21 +434,21 @@ examples:
                           org/hsqldb/store/ValuePool*,
                           org/hsqldb/store/HashIndex*,
                           org/hsqldb/store/BaseHashMap*,
-                          org/hsqldb/HsqlSocketFactory*,
-                          org/hsqldb/HTTPClientConnection*,
-                          org/hsqldb/HsqlDateTime*,
-                          org/hsqldb/Column*,
                           org/hsqldb/Binary.*,
-                          org/hsqldb/Record*,
-                          org/hsqldb/SessionInterface*,
-                          org/hsqldb/Result.*,
-                          org/hsqldb/Result$*,
-                          org/hsqldb/Row*,
-                          org/hsqldb/Cached*,
+                          org/hsqldb/Column*,
+                          org/hsqldb/DatabaseManager*,
                           org/hsqldb/HSQLClient*,
                           org/hsqldb/HsqlProperties*,
                           org/hsqldb/HsqlException*,
-                          org/hsqldb/DatabaseManager*,
+                          org/hsqldb/HsqlSocketFactory*,
+                          org/hsqldb/HTTPClientConnection*,
+                          org/hsqldb/HsqlDateTime*,
+                          org/hsqldb/JavaObject.*,
+                          org/hsqldb/Record*,
+                          org/hsqldb/Result.*,
+                          org/hsqldb/Result$*,
+                          org/hsqldb/Row*,
+                          org/hsqldb/SessionInterface*,
                           org/hsqldb/Trace*
                           '/>
         </jar>

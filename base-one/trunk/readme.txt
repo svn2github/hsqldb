@@ -7,6 +7,8 @@ issues.
 Improvements to cascading update operations, allowing full capability with
 FK's referencing the same table.
 Improved parameteric INSERT .... SELECT.
+CHECKPOINT DEFRAG now works with nio mode .data files.
+DATEDIFF function has been added.
 
 
 2004.04.01 RC_5

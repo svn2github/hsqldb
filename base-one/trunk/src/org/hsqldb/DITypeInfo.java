@@ -47,7 +47,7 @@ import org.hsqldb.store.ValuePool;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public final class DITypeInfo {
+final class DITypeInfo {
 
     /** BundleHandler id for create params resource bundle. */
     private int hnd_create_params = -1;
@@ -65,7 +65,7 @@ public final class DITypeInfo {
     private int typeSub = Types.TYPE_SUB_DEFAULT;
 
     /** Creates a new DITypeInfo object having the default Locale. */
-    public DITypeInfo() {
+    DITypeInfo() {
         setLocale(Locale.getDefault());
     }
 
@@ -76,7 +76,7 @@ public final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded length, in
      *    bytes, for character types
      */
-    public Integer getCharOctLen() {
+    Integer getCharOctLen() {
         return null;
     }
 
@@ -87,7 +87,7 @@ public final class DITypeInfo {
      * @return the maximum Long.MAX_VALUE bounded length, in
      *    bytes, for character types
      */
-    public Long getCharOctLenAct() {
+    Long getCharOctLenAct() {
 
         switch (type) {
 
@@ -117,63 +117,8 @@ public final class DITypeInfo {
      *    instances are manufactured by HSQLDB to store
      *    table column values in memory
      */
-    public String getColStClsName() {
-
-        switch (type) {
-
-            case Types.BIGINT :
-                return "java.lang.Long";
-
-            case Types.BINARY :
-            case Types.LONGVARBINARY :
-            case Types.VARBINARY :
-
-                // but wrapped by org.hsqldb.Binary
-                return "[B";
-
-            case Types.OTHER :
-
-                // but wrapped by org.hsqldb.JavaObject
-                return "java.lang.Object";
-
-            case Types.BOOLEAN :
-                return "java.lang.Boolean";
-
-            case Types.CHAR :
-            case Types.LONGVARCHAR :
-            case Types.VARCHAR :
-            case Types.XML :    //?
-                return "java.lang.String";
-
-            case Types.DATALINK :
-                return "java.net.URL";
-
-            case Types.DATE :
-                return "java.sql.Date";
-
-            case Types.DECIMAL :
-            case Types.NUMERIC :
-                return "java.math.BigDecimal";
-
-            case Types.DOUBLE :
-            case Types.FLOAT :
-            case Types.REAL :
-                return "java.lang.Double";
-
-            case Types.INTEGER :
-            case Types.SMALLINT :
-            case Types.TINYINT :
-                return "java.lang.Integer";
-
-            case Types.TIME :
-                return "java.sql.Time";
-
-            case Types.TIMESTAMP :
-                return "java.sql.Timestamp";
-
-            default :
-                return null;
-        }
+    String getColStClsName() {
+        return Types.getColStClsName(type);
     }
 
     /**
@@ -184,7 +129,7 @@ public final class DITypeInfo {
      *    list, in DDL declaraion order, of the create
      *    parameters for the type.
      */
-    public String getCreateParams() {
+    String getCreateParams() {
 
         String names;
 
@@ -233,7 +178,7 @@ public final class DITypeInfo {
      *    with the indicated name is actually implemented or
      *    available on the class path
      */
-    public String getCstMapClsName() {
+    String getCstMapClsName() {
 
         switch (type) {
 
@@ -276,59 +221,8 @@ public final class DITypeInfo {
      * @return the maximum length that a String representation of
      *      the type may have
      */
-    public int getMaxDisplaySize() {
-
-        switch (type) {
-
-            case Types.BINARY :
-            case Types.CHAR :
-            case Types.LONGVARBINARY :
-            case Types.LONGVARCHAR :
-            case Types.OTHER :
-            case Types.VARBINARY :
-            case Types.VARCHAR :
-            case Types.XML :
-                return Integer.MAX_VALUE;    // same as precision
-
-            case Types.BIGINT :
-                return 20;                   // precision + "-".length();
-
-            case Types.BOOLEAN :
-                return 5;                    // Math.max("true".length(),"false".length);
-
-            case Types.DATALINK :
-                return 20004;                // same as precision
-
-            case Types.DECIMAL :
-            case Types.NUMERIC :
-                return 646456995;            // precision + "-.".length()
-
-            case Types.DATE :
-                return 10;                   // same as precision
-
-            case Types.INTEGER :
-                return 11;                   // precision + "-".length();
-
-            case Types.FLOAT :
-            case Types.REAL :
-            case Types.DOUBLE :
-                return 23;                   // String.valueOf(-Double.MAX_VALUE).length();
-
-            case Types.TIME :
-                return 8;                    // same as precision
-
-            case Types.SMALLINT :
-                return 6;                    // precision + "-".length();
-
-            case Types.TIMESTAMP :
-                return 29;                   // same as precision
-
-            case Types.TINYINT :
-                return 4;                    // precision + "-".length();
-
-            default :
-                return 0;                    // unknown
-        }
+    int getMaxDisplaySize() {
+        return Types.getMaxDisplaySize(type);
     }
 
     /**
@@ -336,7 +230,7 @@ public final class DITypeInfo {
      *
      * @return the data type, as an Integer.
      */
-    public Integer getDataType() {
+    Integer getDataType() {
         return ValuePool.getInt(type);
     }
 
@@ -358,7 +252,7 @@ public final class DITypeInfo {
      *    types, when no scale is declared or no scale declaration
      *    is permitted
      */
-    public Integer getDefaultScale() {
+    Integer getDefaultScale() {
 
         switch (type) {
 
@@ -378,7 +272,7 @@ public final class DITypeInfo {
      *
      * @return null (not implemented)
      */
-    public Integer getIntervalPrecision() {
+    Integer getIntervalPrecision() {
         return null;
     }
 
@@ -387,7 +281,7 @@ public final class DITypeInfo {
      *
      * @return the character(s) prefixing a literal of this type.
      */
-    public String getLiteralPrefix() {
+    String getLiteralPrefix() {
 
         switch (type) {
 
@@ -429,7 +323,7 @@ public final class DITypeInfo {
      *
      * @return the character(s) terminating a literal of this type
      */
-    public String getLiteralSuffix() {
+    String getLiteralSuffix() {
 
         switch (type) {
 
@@ -462,7 +356,7 @@ public final class DITypeInfo {
      *
      * @return a localized representation of the type's name
      */
-    public String getLocalName() {
+    String getLocalName() {
 
         String key = this.getTypeName();
 
@@ -476,7 +370,7 @@ public final class DITypeInfo {
      * @return the maximum Short.MAX_VALUE bounded scale supported
      *    for the type
      */
-    public Integer getMaxScale() {
+    Integer getMaxScale() {
 
         switch (type) {
 
@@ -511,7 +405,7 @@ public final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded scale supported
      *    for the type
      */
-    public Integer getMaxScaleAct() {
+    Integer getMaxScaleAct() {
 
         switch (type) {
 
@@ -531,7 +425,7 @@ public final class DITypeInfo {
      * @return the minumum Short.MIN_VALUE bounded scale
      *    supported for the type
      */
-    public Integer getMinScale() {
+    Integer getMinScale() {
 
         switch (type) {
 
@@ -566,7 +460,7 @@ public final class DITypeInfo {
      * @return the minumum Integer.MIN_VALUE bounded scale supported
      *    for the type
      */
-    public Integer getMinScaleAct() {
+    Integer getMinScaleAct() {
 
         switch (type) {
 
@@ -585,7 +479,7 @@ public final class DITypeInfo {
      *
      * @return the DatabaseMetaData nullability code for the type.
      */
-    public Integer getNullability() {
+    Integer getNullability() {
         return ValuePool.getInt(DatabaseMetaData.columnNullable);
     }
 
@@ -596,7 +490,7 @@ public final class DITypeInfo {
      * @return the number base which is to be used to interpret the
      *    value reported by getPrecision()
      */
-    public Integer getNumPrecRadix() {
+    Integer getNumPrecRadix() {
 
         switch (type) {
 
@@ -623,67 +517,12 @@ public final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded length or
      *    precision for the type
      */
-    public Integer getPrecision() {
+    Integer getPrecision() {
 
-        switch (type) {
+        int p = Types.getPrecision(type);
 
-            case Types.BINARY :
-            case Types.CHAR :
-            case Types.LONGVARBINARY :
-            case Types.LONGVARCHAR :
-            case Types.OTHER :
-            case Types.VARBINARY :
-            case Types.VARCHAR :
-            case Types.XML :
-                return ValuePool.getInt(Integer.MAX_VALUE);
-
-            case Types.BIGINT :
-                return ValuePool.getInt(19);
-
-            case Types.BOOLEAN :
-                return ValuePool.getInt(1);
-
-            case Types.DATALINK :
-
-                // from SQL CLI spec.  TODO:  Interpretation?
-                return ValuePool.getInt(20004);
-
-            case Types.DECIMAL :
-            case Types.NUMERIC :
-
-// Integer.MAX_VALUE bit 2's complement number:
-// (Integer.MAX_VALUE-1) / ((ln(10)/ln(2)) bits per decimal digit)
-// See:  java.math.BigInteger
-// - the other alternative is that we could report the numprecradix as 2 and
-// report Integer.MAX_VALUE here
-                return ValuePool.getInt(646456993);
-
-            case Types.DATE :
-            case Types.INTEGER :
-                return ValuePool.getInt(10);
-
-            case Types.FLOAT :
-            case Types.REAL :
-            case Types.DOUBLE :
-                return ValuePool.getInt(17);
-
-//            case Types.FLOAT :
-//            case Types.REAL :
-            case Types.TIME :
-                return ValuePool.getInt(8);
-
-            case Types.SMALLINT :
-                return ValuePool.getInt(5);
-
-            case Types.TIMESTAMP :
-                return ValuePool.getInt(29);
-
-            case Types.TINYINT :
-                return ValuePool.getInt(3);
-
-            default :
-                return null;
-        }
+        return p == 0 ? null
+                      : ValuePool.getInt(p);
     }
 
     /**
@@ -693,7 +532,7 @@ public final class DITypeInfo {
      * @return the maximum Long.MAX_VALUE bounded length or
      *    precision for the type
      */
-    public Long getPrecisionAct() {
+    Long getPrecisionAct() {
 
         Integer temp = getPrecision();
 
@@ -709,7 +548,7 @@ public final class DITypeInfo {
      *
      * @return the localized remarks on the type.
      */
-    public String getRemarks() {
+    String getRemarks() {
 
         String key = this.getTypeName();
 
@@ -721,23 +560,11 @@ public final class DITypeInfo {
      *
      * @return the DatabaseMetaData searchability code for the type
      */
-    public Integer getSearchability() {
+    Integer getSearchability() {
 
-        switch (type) {
-
-            case Types.ARRAY :
-            case Types.BLOB :
-            case Types.CLOB :
-            case Types.JAVA_OBJECT :
-            case Types.STRUCT :
-                return ValuePool.getInt(DatabaseMetaData.typePredNone);
-
-            case Types.OTHER :    // CHECK ME:
-                return ValuePool.getInt(DatabaseMetaData.typePredChar);
-
-            default :
-                return ValuePool.getInt(DatabaseMetaData.typeSearchable);
-        }
+        return Types.isSearchable(type)
+               ? ValuePool.getInt(DatabaseMetaData.typeSearchable)
+               : ValuePool.getInt(DatabaseMetaData.typePredNone);
     }
 
     /**
@@ -745,7 +572,7 @@ public final class DITypeInfo {
      *
      * @return the SQL CLI data type code for the type
      */
-    public Integer getSqlDataType() {
+    Integer getSqlDataType() {
 
         // values from SQL200n SQL CLI spec, or DITypes (which in turn borrows
         // first from java.sql.Types and then SQL200n SQL CLI spec) if there
@@ -882,7 +709,7 @@ public final class DITypeInfo {
      *
      * @return the SQL CLI datetime subcode for the type
      */
-    public Integer getSqlDateTimeSub() {
+    Integer getSqlDateTimeSub() {
 
         switch (type) {
 
@@ -908,7 +735,7 @@ public final class DITypeInfo {
      *    primitive, class or java.sql interface mapping for
      *    the type
      */
-    public String getStdMapClsName() {
+    String getStdMapClsName() {
 
         switch (type) {
 
@@ -995,7 +822,7 @@ public final class DITypeInfo {
      *
      * @return the data type as an int
      */
-    public int getTypeCode() {
+    int getTypeCode() {
         return type;
     }
 
@@ -1008,105 +835,11 @@ public final class DITypeInfo {
      *
      * @return the canonical data type name HSQLDB associates with the type
      */
-    public String getTypeName() {
+    String getTypeName() {
 
-        switch (type) {
-
-            case Types.ARRAY :
-                return "ARRAY";
-
-            case Types.BIGINT :
-                return "BIGINT";
-
-            case Types.BINARY :
-                return "BINARY";
-
-            case Types.BLOB :
-                return "BLOB";
-
-            case Types.BOOLEAN :
-                return "BOOLEAN";
-
-            case Types.CHAR :
-                return "CHAR";
-
-            case Types.CLOB :
-                return "CLOB";
-
-            case Types.DATALINK :
-                return "DATALINK";
-
-            case Types.DATE :
-                return "DATE";
-
-            case Types.DECIMAL :
-                return "DECIMAL";
-
-            case Types.DISTINCT :
-                return "DISTINCT";
-
-            case Types.DOUBLE :
-                return "DOUBLE";
-
-            case Types.FLOAT :
-                return "FLOAT";
-
-            case Types.INTEGER :
-                return "INTEGER";
-
-            case Types.JAVA_OBJECT :
-                return "JAVA_OBJECT";
-
-            case Types.LONGVARBINARY :
-                return "LONGVARBINARY";
-
-            case Types.LONGVARCHAR :
-                return "LONGVARCHAR";
-
-            case Types.NULL :
-                return "NULL";
-
-            case Types.NUMERIC :
-                return "NUMERIC";
-
-            case Types.OTHER :
-                return "OTHER";
-
-            case Types.REAL :
-                return "REAL";
-
-            case Types.REF :
-                return "REF";
-
-            case Types.SMALLINT :
-                return "SMALLINT";
-
-            case Types.STRUCT :
-                return "STUCT";
-
-            case Types.TIME :
-                return "TIME";
-
-            case Types.TIMESTAMP :
-                return "TIMESTAMP";
-
-            case Types.TINYINT :
-                return "TINYINT";
-
-            case Types.VARBINARY :
-                return "VARBINARY";
-
-            case Types.VARCHAR :
-                return (typeSub == Types.TYPE_SUB_IGNORECASE)
-                       ? "VARCHAR_IGNORECASE"
-                       : "VARCHAR";
-
-            case Types.XML :
-                return "XML";
-
-            default :
-                return null;
-        }
+        return typeSub == Types.TYPE_SUB_IGNORECASE
+               ? Types.getTypeName(Types.VARCHAR_IGNORECASE)
+               : Types.getTypeName(type);
     }
 
     /**
@@ -1114,7 +847,7 @@ public final class DITypeInfo {
      *
      * @return the HSQLDB data subtype as an int
      */
-    public int getTypeSub() {
+    int getTypeSub() {
         return this.typeSub;
     }
 
@@ -1123,7 +856,7 @@ public final class DITypeInfo {
      *
      * @return whether the type is an IDENTITY type.
      */
-    public Boolean isAutoIncrement() {
+    Boolean isAutoIncrement() {
 
         switch (type) {
 
@@ -1150,34 +883,11 @@ public final class DITypeInfo {
      * @return whether the type is case-sensitive in collations and
      *    comparisons.
      */
-    public Boolean isCaseSensitive() {
+    Boolean isCaseSensitive() {
 
-        switch (type) {
-
-            case Types.ARRAY :
-            case Types.BLOB :
-            case Types.CLOB :
-            case Types.DISTINCT :
-            case Types.JAVA_OBJECT :
-            case Types.NULL :
-            case Types.REF :
-            case Types.STRUCT :
-                return null;
-
-            case Types.CHAR :
-            case Types.DATALINK :
-            case Types.LONGVARCHAR :
-            case Types.OTHER :
-            case Types.XML :
-                return Boolean.TRUE;
-
-            case Types.VARCHAR :
-                return ValuePool.getBoolean(typeSub
-                                            != Types.TYPE_SUB_IGNORECASE);
-
-            default :
-                return Boolean.FALSE;
-        }
+        return typeSub == Types.TYPE_SUB_IGNORECASE ? Boolean.TRUE
+                                                    : Types.isCaseSensitive(
+                                                    type);
     }
 
     /**
@@ -1190,7 +900,7 @@ public final class DITypeInfo {
      *    and hosting JVM, HSQLDB supports storing this
      *    type in table columns
      */
-    public Boolean isColStClsSupported() {
+    Boolean isColStClsSupported() {
 
         return ValuePool.getBoolean(type == Types.NULL ? true
                                                        : getColStClsName()
@@ -1204,7 +914,7 @@ public final class DITypeInfo {
      * @return whether values of this type have a fixed
      *    precision and scale.
      */
-    public Boolean isFixedPrecisionScale() {
+    Boolean isFixedPrecisionScale() {
 
         switch (type) {
 
@@ -1233,7 +943,7 @@ public final class DITypeInfo {
      * is supported as a jdbcResultSet.getXXX return type under the current
      * HSQLDB release, class path and hosting JVM.
      */
-    public Boolean isStdMapClsSupported() {
+    Boolean isStdMapClsSupported() {
 
         // its ok to use Class.forName here instead of nameSpace.classForName,
         // because all standard map classes are loaded by the boot loader
@@ -1320,7 +1030,7 @@ public final class DITypeInfo {
      *    hosting JVM, HSQLDB supports passing or receiving
      *    this type as the value of a procedure column.
      */
-    public Boolean isSupportedAsPCol() {
+    Boolean isSupportedAsPCol() {
 
         switch (type) {
 
@@ -1345,7 +1055,7 @@ public final class DITypeInfo {
      *    and hosting JVM, HSQLDB supports this type
      *    as the values of a table column
      */
-    public Boolean isSupportedAsTCol() {
+    Boolean isSupportedAsTCol() {
 
         String columnTypeName;
 
@@ -1363,24 +1073,8 @@ public final class DITypeInfo {
      *
      * @return whether values of this type are unsigned
      */
-    public Boolean isUnsignedAttribute() {
-
-        switch (type) {
-
-            case Types.BIGINT :
-            case Types.DECIMAL :
-            case Types.DOUBLE :
-            case Types.FLOAT :
-            case Types.INTEGER :
-            case Types.NUMERIC :
-            case Types.REAL :
-            case Types.SMALLINT :
-            case Types.TINYINT :
-                return Boolean.FALSE;
-
-            default :
-                return null;
-        }
+    Boolean isUnsignedAttribute() {
+        return Types.isUnsignedAttribute(type);
     }
 
     /**
@@ -1390,7 +1084,7 @@ public final class DITypeInfo {
      * @param l the Locale object used to retrieve this object's resource
      *      bundle dependent values
      */
-    public void setLocale(Locale l) {
+    void setLocale(Locale l) {
 
         Locale oldLocale;
 
@@ -1416,7 +1110,7 @@ public final class DITypeInfo {
      *
      * @param type the SQL data type code on which this object is to report
      */
-    public void setTypeCode(int type) {
+    void setTypeCode(int type) {
         this.type = type;
     }
 
@@ -1427,7 +1121,7 @@ public final class DITypeInfo {
      * @param typeSub the HSQLDB data subtype code on which this object
      *      is to report
      */
-    public void setTypeSub(int typeSub) {
+    void setTypeSub(int typeSub) {
         this.typeSub = typeSub;
     }
 }

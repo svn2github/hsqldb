@@ -100,9 +100,6 @@ which is included in the .zip package.
 
 Batch Build
 
-The Unix / Linux builds have been written by Blaine Simpson and
-support a wide range of JDK's.
-
 A set of MSDOS batch files is also provided. These produce only
 the default jar size. The path and classpath variables for the JDK
 should of course be set before running any of the batch files.
@@ -111,11 +108,6 @@ If you are compiling for JDK's other than 1.2.x or 1.3.x, you should
 use the appropriate switchtoJDK11.bat or switchtoJDK14.bat to adapt
 the source files to the target JDK before running the appropriate
 buildJDK11.bat or buildJDK14.bat
-
-Linux build
-
-Linux scripts with the same functionality as the MSDOS batch files
-are provided.
 
 
 fredt@users

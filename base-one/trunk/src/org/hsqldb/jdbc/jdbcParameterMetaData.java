@@ -39,8 +39,8 @@ import java.lang.reflect.Method;
 import org.hsqldb.Types;
 import org.hsqldb.Result;
 import org.hsqldb.Trace;
-import org.hsqldb.DITypeInfo;
 
+// fredt@users 20040412 - removed DITypeInfo dependencies
 // boucherb@users 200307?? - patch 1.7.2
 // TODO:
 // Engine side complementary work corresponding to the TODO items
@@ -57,9 +57,6 @@ import org.hsqldb.DITypeInfo;
 public class jdbcParameterMetaData implements ParameterMetaData {
 
     Result.ResultMetaData rmd;
-
-    /** Helper used to translate numeric data type codes to attributes. */
-    DITypeInfo ti = new DITypeInfo();
 
     /** The numeric data type codes of the parameters. */
     int[] types;
@@ -211,9 +208,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         int ts;
 
         checkRange(param);
-        setupTypeInfo(--param);
 
-        return ti.getTypeName();
+        return Types.getTypeName(types[--param]);
     }
 
     /**
@@ -226,17 +222,13 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public int getPrecision(int param) throws SQLException {
 
         checkRange(param);
-        setupTypeInfo(--param);
-
-        Integer p = ti.getPrecision();
 
         // TODO:
         // parameters assigned directly to table columns
         // should report the precision of the column if it is
         // defined, otherwise the default (intrinsic) precision
         // of the undecorated type
-        return p == null ? 0
-                         : p.intValue();
+        return Types.getPrecision(types[--param]);
     }
 
     /**
@@ -287,29 +279,10 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public boolean isSigned(int param) throws SQLException {
 
         checkRange(param);
-        setupTypeInfo(--param);
 
-        Boolean b = ti.isUnsignedAttribute();
+        Boolean b = Types.isUnsignedAttribute(types[--param]);
 
         return b != null &&!b.booleanValue() &&!isIdentity[param];
-    }
-
-    private void setupTypeInfo(int param) {
-
-        int t;
-        int ts;
-
-        t = types[param];
-
-        if (t == Types.VARCHAR_IGNORECASE) {
-            t  = Types.VARCHAR;
-            ts = Types.TYPE_SUB_IGNORECASE;
-        } else {
-            ts = Types.TYPE_SUB_DEFAULT;
-        }
-
-        ti.setTypeCode(t);
-        ti.setTypeSub(ts);
     }
 
     public String toString() {

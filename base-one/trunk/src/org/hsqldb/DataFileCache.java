@@ -207,6 +207,7 @@ public class DataFileCache extends Cache {
             Trace.printSystemOut("closed old cache");
 
             if (isNio) {
+                System.gc();
                 FileUtil.renameOverwrite(sName, sName + ".old");
 
                 File oldfile = new File(sName + ".old");

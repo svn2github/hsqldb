@@ -31,19 +31,18 @@
 
 package org.hsqldb.jdbc;
 
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 import org.hsqldb.Column;
-import org.hsqldb.DITypeInfo;
 import org.hsqldb.HsqlProperties;
 import org.hsqldb.Record;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
-import org.hsqldb.lib.StopWatch;
+
+// fredt@users 20040412 - removed DITypeInfo dependencies
 
 /** <!-- start generic documentation -->
  * An object that can be used to get information about the types
@@ -197,10 +196,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     void init(Result r, HsqlProperties props) throws SQLException {
 
         jdbcColumnMetaData    cmd;
-        DITypeInfo            ti;
-        StopWatch             sw;
-        int                   ditype;
-        int                   ditype_sub;
+        int                   type;
         Result.ResultMetaData rmd;
 
         if (r == null) {
@@ -217,7 +213,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         useColumnName  = props.isPropertyTrue("get_column_name");
         columnMetaData = new jdbcColumnMetaData[columnCount];
         rmd            = r.metaData;
-        ti             = new DITypeInfo();
 
         for (int i = 0; i < columnCount; i++) {
             cmd               = new jdbcColumnMetaData();
@@ -246,42 +241,24 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // default: cmd.isDefinitelyWritable = false;
             cmd.isAutoIncrement = rmd.isIdentity[i];
             cmd.isNullable      = rmd.nullability[i];
-            ditype              = cmd.columnType;
-
-            if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
-                ditype     = Types.VARCHAR;
-                ditype_sub = Types.TYPE_SUB_IGNORECASE;
-            } else {
-                ditype_sub = Types.TYPE_SUB_DEFAULT;
-            }
-
-            ti.setTypeCode(ditype);
-            ti.setTypeSub(ditype_sub);
+            type                = cmd.columnType;
 
             if (cmd.columnClassName == null
                     || cmd.columnClassName.length() == 0) {
-                cmd.columnClassName = ti.getColStClsName();
+                cmd.columnClassName = Types.getColStClsName(type);
             }
 
-            Integer precision = ti.getPrecision();
+            cmd.precision = Types.getPrecision(type);
 
-            cmd.precision = precision == null ? 0
-                                              : precision.intValue();
-
-            Boolean iua = ti.isUnsignedAttribute();
+            Boolean iua = Types.isUnsignedAttribute(type);
 
             cmd.isSigned = iua != null &&!iua.booleanValue();
 
-            Boolean ics = ti.isCaseSensitive();
+            Boolean ics = Types.isCaseSensitive(type);
 
-            cmd.isCaseSensitive = ics != null && ics.booleanValue();
-
-            Integer sc = ti.getSearchability();
-
-            cmd.isSearchable = sc != null
-                               && sc.intValue()
-                                  != DatabaseMetaData.typePredNone;
-            cmd.columnDisplaySize = ti.getMaxDisplaySize();
+            cmd.isCaseSensitive   = ics != null && ics.booleanValue();
+            cmd.isSearchable      = Types.isSearchable(type);
+            cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
 
             if (cmd.columnDisplaySize > 0
                     && cmd.columnDisplaySize <= MIN_DISPLAY_SIZE) {

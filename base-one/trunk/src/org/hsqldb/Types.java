@@ -934,4 +934,347 @@ public class Types {
                 return false;
         }
     }
+
+    public static String getTypeName(int type) {
+
+        switch (type) {
+
+            case Types.ARRAY :
+                return "ARRAY";
+
+            case Types.BIGINT :
+                return "BIGINT";
+
+            case Types.BINARY :
+                return "BINARY";
+
+            case Types.BLOB :
+                return "BLOB";
+
+            case Types.BOOLEAN :
+                return "BOOLEAN";
+
+            case Types.CHAR :
+                return "CHAR";
+
+            case Types.CLOB :
+                return "CLOB";
+
+            case Types.DATALINK :
+                return "DATALINK";
+
+            case Types.DATE :
+                return "DATE";
+
+            case Types.DECIMAL :
+                return "DECIMAL";
+
+            case Types.DISTINCT :
+                return "DISTINCT";
+
+            case Types.DOUBLE :
+                return "DOUBLE";
+
+            case Types.FLOAT :
+                return "FLOAT";
+
+            case Types.INTEGER :
+                return "INTEGER";
+
+            case Types.JAVA_OBJECT :
+                return "JAVA_OBJECT";
+
+            case Types.LONGVARBINARY :
+                return "LONGVARBINARY";
+
+            case Types.LONGVARCHAR :
+                return "LONGVARCHAR";
+
+            case Types.NULL :
+                return "NULL";
+
+            case Types.NUMERIC :
+                return "NUMERIC";
+
+            case Types.OTHER :
+                return "OTHER";
+
+            case Types.REAL :
+                return "REAL";
+
+            case Types.REF :
+                return "REF";
+
+            case Types.SMALLINT :
+                return "SMALLINT";
+
+            case Types.STRUCT :
+                return "STUCT";
+
+            case Types.TIME :
+                return "TIME";
+
+            case Types.TIMESTAMP :
+                return "TIMESTAMP";
+
+            case Types.TINYINT :
+                return "TINYINT";
+
+            case Types.VARBINARY :
+                return "VARBINARY";
+
+            case Types.VARCHAR :
+                return "VARCHAR";
+
+            case Types.VARCHAR_IGNORECASE :
+                return "VARCHAR_IGNORECASE";
+
+            case Types.XML :
+                return "XML";
+
+            default :
+                return null;
+        }
+    }
+
+    public static int getMaxDisplaySize(int type) {
+
+        switch (type) {
+
+            case Types.BINARY :
+            case Types.CHAR :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
+            case Types.XML :
+                return Integer.MAX_VALUE;    // same as precision
+
+            case Types.BIGINT :
+                return 20;                   // precision + "-".length();
+
+            case Types.BOOLEAN :
+                return 5;                    // Math.max("true".length(),"false".length);
+
+            case Types.DATALINK :
+                return 20004;                // same as precision
+
+            case Types.DECIMAL :
+            case Types.NUMERIC :
+                return 646456995;            // precision + "-.".length()
+
+            case Types.DATE :
+                return 10;                   // same as precision
+
+            case Types.INTEGER :
+                return 11;                   // precision + "-".length();
+
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
+                return 23;                   // String.valueOf(-Double.MAX_VALUE).length();
+
+            case Types.TIME :
+                return 8;                    // same as precision
+
+            case Types.SMALLINT :
+                return 6;                    // precision + "-".length();
+
+            case Types.TIMESTAMP :
+                return 29;                   // same as precision
+
+            case Types.TINYINT :
+                return 4;                    // precision + "-".length();
+
+            default :
+                return 0;                    // unknown
+        }
+    }
+
+    public static boolean isSearchable(int type) {
+
+        switch (type) {
+
+            case Types.ARRAY :
+            case Types.BLOB :
+            case Types.CLOB :
+            case Types.JAVA_OBJECT :
+            case Types.STRUCT :
+            case Types.OTHER :
+                return false;
+
+            default :
+                return true;
+        }
+    }
+
+    public static Boolean isCaseSensitive(int type) {
+
+        switch (type) {
+
+            case Types.ARRAY :
+            case Types.BLOB :
+            case Types.CLOB :
+            case Types.DISTINCT :
+            case Types.JAVA_OBJECT :
+            case Types.NULL :
+            case Types.REF :
+            case Types.STRUCT :
+                return null;
+
+            case Types.CHAR :
+            case Types.DATALINK :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.XML :
+                return Boolean.TRUE;
+
+            case Types.VARCHAR_IGNORECASE :
+            default :
+                return Boolean.FALSE;
+        }
+    }
+
+    public static Boolean isUnsignedAttribute(int type) {
+
+        switch (type) {
+
+            case Types.BIGINT :
+            case Types.DECIMAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.INTEGER :
+            case Types.NUMERIC :
+            case Types.REAL :
+            case Types.SMALLINT :
+            case Types.TINYINT :
+                return Boolean.FALSE;
+
+            default :
+                return null;
+        }
+    }
+
+    public static int getPrecision(int type) {
+
+        switch (type) {
+
+            case Types.BINARY :
+            case Types.CHAR :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
+            case Types.XML :
+                return Integer.MAX_VALUE;
+
+            case Types.BIGINT :
+                return 19;
+
+            case Types.BOOLEAN :
+                return 1;
+
+            case Types.DATALINK :
+
+                // from SQL CLI spec.  TODO:  Interpretation?
+                return 20004;
+
+            case Types.DECIMAL :
+            case Types.NUMERIC :
+
+// Integer.MAX_VALUE bit 2's complement number:
+// (Integer.MAX_VALUE-1) / ((ln(10)/ln(2)) bits per decimal digit)
+// See:  java.math.BigInteger
+// - the other alternative is that we could report the numprecradix as 2 and
+// report Integer.MAX_VALUE here
+                return 646456993;
+
+            case Types.DATE :
+            case Types.INTEGER :
+                return 10;
+
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
+                return 17;
+
+//            case Types.FLOAT :
+//            case Types.REAL :
+            case Types.TIME :
+                return 8;
+
+            case Types.SMALLINT :
+                return 5;
+
+            case Types.TIMESTAMP :
+                return 29;
+
+            case Types.TINYINT :
+                return 3;
+
+            default :
+                return 0;
+        }
+    }
+
+    public static String getColStClsName(int type) {
+
+        switch (type) {
+
+            case Types.BIGINT :
+                return "java.lang.Long";
+
+            case Types.BINARY :
+            case Types.LONGVARBINARY :
+            case Types.VARBINARY :
+
+                // but wrapped by org.hsqldb.Binary
+                return "[B";
+
+            case Types.OTHER :
+
+                // but wrapped by org.hsqldb.JavaObject
+                return "java.lang.Object";
+
+            case Types.BOOLEAN :
+                return "java.lang.Boolean";
+
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR :
+            case Types.XML :    //?
+                return "java.lang.String";
+
+            case Types.DATALINK :
+                return "java.net.URL";
+
+            case Types.DATE :
+                return "java.sql.Date";
+
+            case Types.DECIMAL :
+            case Types.NUMERIC :
+                return "java.math.BigDecimal";
+
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+                return "java.lang.Double";
+
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT :
+                return "java.lang.Integer";
+
+            case Types.TIME :
+                return "java.sql.Time";
+
+            case Types.TIMESTAMP :
+                return "java.sql.Timestamp";
+
+            default :
+                return null;
+        }
+    }
 }
