@@ -2531,7 +2531,7 @@ class Expression {
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
 
-                if (eArg2.exprType != VALUE) {
+                if (eArg2.isParam || eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 
@@ -2786,7 +2786,7 @@ class Expression {
 */
                 String s = (String) eArg2.getValue(Types.VARCHAR);
 
-                if (eArg2.exprType != VALUE) {
+                if (eArg2.isParam || eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 

@@ -457,12 +457,12 @@ class TableFilter {
 
         if (this.isMultiFindFirst) {
             Object[] data = filterTable.getNewRow();
-
+            int[] types = filterTable.getColumnTypes();
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(e.getDataType());
+                    data[i] = e.getValue(types[i]);
                 }
             }
 

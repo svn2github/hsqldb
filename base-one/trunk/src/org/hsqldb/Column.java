@@ -135,7 +135,7 @@ class Column {
     private boolean isNullable;
     private boolean isIdentity;
     private boolean isPrimaryKey;
-    String          defaultString;
+    private String  defaultString;
     int             identityStart;
 
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
@@ -237,6 +237,9 @@ class Column {
         return defaultString;
     }
 
+    void setDefaultString(String value) {
+        defaultString = value;
+    }
     /**
      *  Type of the column.
      *
