@@ -254,6 +254,26 @@ public class Tokenizer {
      *
      *
      * @param match
+     *
+     * @throws HsqlException
+     */
+    String getCurrentThis(String match) throws HsqlException {
+
+        if (!sToken.equals(match)) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
+                              new Object[] {
+                sToken, match
+            });
+        }
+
+        return sToken;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param match
      */
     boolean isGetThis(String match) throws HsqlException {
 

@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.store.ValuePool;
-
 /**
  * A simple structure class for holding the products of
  * statement compilation for later execution.
@@ -101,7 +99,7 @@ public final class CompiledStatement {
     int[] paramTypes;
 
     /**
-     * Subqueries in heaped inverse parse depth order
+     * Subqueries inverse parse depth order
      */
     SubQuery[] subqueries;
 
@@ -137,8 +135,17 @@ public final class CompiledStatement {
      */
     String sql;
 
-    /** Creates a new instance of CompiledStatement */
-    CompiledStatement() {}
+    /**
+     * Creates a new instance of CompiledStatement for DDL
+     *
+     */
+    CompiledStatement() {
+
+        parameters = new Expression[0];
+        paramTypes = new int[0];
+        subqueries = new SubQuery[0];
+        type       = DDL;
+    }
 
     void bind(Object[] values) throws HsqlException {
 
@@ -162,7 +169,7 @@ public final class CompiledStatement {
      * @param deleteCondition
      * @param parameters
      */
-    void setAsDelete(Table targetTable, Expression deleteCondition,
+    CompiledStatement(Table targetTable, Expression deleteCondition,
                      Expression[] parameters) throws HsqlException {
 
         this.targetTable = targetTable;
@@ -410,6 +417,7 @@ public final class CompiledStatement {
             case INSERT_SELECT :
             case INSERT_VALUES :
             case UPDATE :
+            case DDL :
 
                 // will result in
                 return updateCount;

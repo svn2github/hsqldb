@@ -39,7 +39,6 @@ import java.sql.SQLWarning;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
-import org.hsqldb.Session;
 import org.hsqldb.Trace;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
@@ -149,9 +148,6 @@ public class jdbcStatement implements java.sql.Statement {
     /** Use by this statement to communicate batched execution requests */
     protected Result batchResultOut =
         new Result(ResultConstants.BATCHEXECDIRECT);
-
-    /** Whether the parent connection is to a network server instance. */
-    protected boolean isNetConn;
 
     // boucherb@users
     // NOTE:
@@ -1573,7 +1569,6 @@ public class jdbcStatement implements java.sql.Statement {
         // PRE: assume type is a valid result set type code
         connection = c;
         rsType     = type;
-        isNetConn  = !(c.sessionProxy instanceof Session);
     }
 
     /**

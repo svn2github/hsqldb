@@ -62,9 +62,13 @@ public class TestSubQueriesInPreparedStatements {
 
         conn  = DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "");
         stmnt = conn.createStatement();
+        pstmnt = conn.prepareStatement("drop table t if exists");
 
-        stmnt.executeUpdate("drop table t if exists");
-        stmnt.executeUpdate("create table t(i decimal)");
+        boolean result = pstmnt.execute();
+
+        pstmnt = conn.prepareStatement("create table t(i decimal)");
+
+        int updatecount = pstmnt.executeUpdate();
 
         pstmnt = conn.prepareStatement("insert into t values(?)");
 

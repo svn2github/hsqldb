@@ -375,6 +375,9 @@ public class jdbcConnection implements Connection {
      */
     boolean isInternal;
 
+    /** Is this connection to a network server instance. */
+    protected boolean isNetConn;
+
     /**
      * Is this connection closed?
      */
@@ -2386,16 +2389,21 @@ public class jdbcConnection implements Connection {
                     || connType == DatabaseManager.S_RES) {
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
+
+/** @todo fredt - this should be the only static reference to a core class in
+                     *  the jdbc package - we may make it dynamic */
                 sessionProxy = DatabaseManager.newSession(connType, database,
                         user, password, ifExists, props);
             } else if (connType == DatabaseManager.S_HSQL
                        || connType == DatabaseManager.S_HSQLS) {
                 sessionProxy = new HSQLClientConnection(host, port, path,
                         database, isTLS, user, password);
+                isNetConn = true;
             } else if (connType == DatabaseManager.S_HTTP
                        || connType == DatabaseManager.S_HTTPS) {
                 sessionProxy = new HTTPClientConnection(host, port, path,
                         database, isTLS, user, password);
+                isNetConn = true;
             } else {    // alias: type not yet implemented
                 throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
             }

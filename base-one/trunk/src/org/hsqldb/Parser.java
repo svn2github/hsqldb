@@ -2067,9 +2067,8 @@ class Parser {
             tokenizer.back();
         }
 
-        CompiledStatement cs = new CompiledStatement();
-
-        cs.setAsDelete(table, condition, getParameters());
+        CompiledStatement cs = new CompiledStatement(table, condition,
+            getParameters());
 
         cs.subqueries = getSortedSubqueries();
 

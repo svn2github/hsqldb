@@ -108,7 +108,11 @@ class DatabaseCommandInterpreter {
     protected Database  database;
     protected Session   session;
 
-    /** Constructs a new DatabaseCommandInterpreter for the given Session */
+    /**
+     * Constructs a new DatabaseCommandInterpreter for the given Session
+     *
+     * @param s session
+     */
     DatabaseCommandInterpreter(Session s) {
         session  = s;
         database = s.getDatabase();
@@ -117,6 +121,7 @@ class DatabaseCommandInterpreter {
     /**
      * Executes the statment(s) represented by the given SQL String
      *
+     * @param sql query
      * @return the result of executing the given SQL String
      */
     Result execute(String sql) {
@@ -553,10 +558,10 @@ class DatabaseCommandInterpreter {
      *
      *  (fredt@users) <p>
      *
-     * @param  t
-     * @param  indexName
-     * @param  indexNameQuoted
-     * @param  unique
+     * @param  t table
+     * @param  indexName index
+     * @param  indexNameQuoted is quoted
+     * @param  unique is unique
      * @throws  HsqlException
      */
     private void addIndexOn(Table t, String indexName,
@@ -885,10 +890,10 @@ class DatabaseCommandInterpreter {
     }
 
     /**
-     * @param iType
-     * @param iLen
+     * @param type type of value
+     * @param length length of string
      * @throws HsqlException
-     * @return
+     * @return new string
      */
     private String processCreateDefaultValue(int type,
             int length) throws HsqlException {
@@ -968,11 +973,11 @@ class DatabaseCommandInterpreter {
     /**
      * Responsible for handling constraints section of CREATE TABLE ...
      *
-     * @param t
-     * @param constraint
-     * @param primarykeycolumn
+     * @param t table
+     * @param constraint CONSTRAINT keyword used
+     * @param primarykeycolumn primary columns
      * @throws HsqlException
-     * @return
+     * @return list of constraints
      */
     private HsqlArrayList processCreateConstraints(Table t,
             boolean constraint, int[] primarykeycolumn) throws HsqlException {
@@ -1118,11 +1123,9 @@ class DatabaseCommandInterpreter {
     /**
      * Responsible for handling check constraints section of CREATE TABLE ...
      *
-     * @param t
-     * @param constraint
-     * @param primarykeycolumn
+     * @param t talbe
      * @throws HsqlException
-     * @return
+     * @return check expression
      */
     private Expression processCreateCheckConstraintCondition(Table t)
     throws HsqlException {
@@ -1292,10 +1295,10 @@ class DatabaseCommandInterpreter {
     }
 
     /**
-     * @param t
-     * @param cname
+     * @param t table
+     * @param cname foreign key name
      * @throws HsqlException
-     * @return
+     * @return constraint
      */
     private Constraint processCreateFK(Table t,
                                        HsqlName cname) throws HsqlException {
@@ -1380,7 +1383,8 @@ class DatabaseCommandInterpreter {
                 } else if (token.equals(Token.T_CASCADE)) {
                     deleteAction = Constraint.CASCADE;
                 } else {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                    tokenizer.getCurrentThis(Token.T_NO);
+                    tokenizer.getThis(Token.T_ACTION);
                 }
             } else if (updateAction == Constraint.NO_ACTION
                        && token.equals(Token.T_UPDATE)) {
@@ -1398,6 +1402,9 @@ class DatabaseCommandInterpreter {
                     }
                 } else if (token.equals(Token.T_CASCADE)) {
                     updateAction = Constraint.CASCADE;
+                } else {
+                    tokenizer.getCurrentThis(Token.T_NO);
+                    tokenizer.getThis(Token.T_ACTION);
                 }
             } else {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -1463,7 +1470,7 @@ class DatabaseCommandInterpreter {
 
     /**
      * Responsible for handling tail of ALTER TABLE ... RENAME ...
-     * @param t
+     * @param t table
      * @throws HsqlException
      */
     private void processAlterTableRename(Table t) throws HsqlException {
@@ -1634,6 +1641,7 @@ class DatabaseCommandInterpreter {
     /**
      * Handles ALTER COLUMN
      *
+     * @param t table
      * @throws HsqlException
      */
     private void processAlterColumn(Table t) throws HsqlException {
@@ -1674,8 +1682,8 @@ class DatabaseCommandInterpreter {
 
     /**
      * Responsible for handling tail of ALTER COLUMN ... RENAME ...
-     * @param t
-     * @param oldName
+     * @param t table
+     * @param column column
      * @throws HsqlException
      */
     private void processAlterColumnRename(Table t,
@@ -1762,7 +1770,7 @@ class DatabaseCommandInterpreter {
      *  Responsible for handling the execution of GRANT and REVOKE SQL
      *  statements.
      *
-     * @param grant
+     * @param grant true if grant, false if revoke
      * @throws HsqlException
      */
     private void processGrantOrRevoke(boolean grant) throws HsqlException {
@@ -2471,7 +2479,7 @@ class DatabaseCommandInterpreter {
 
     /**
      *
-     * @param t
+     * @param t table
      * @throws HsqlException
      */
     private void processAlterTableAddColumn(Table t) throws HsqlException {
@@ -2545,7 +2553,7 @@ class DatabaseCommandInterpreter {
     /**
      * Responsible for handling tail of ALTER TABLE ... DROP COLUMN ...
      *
-     * @param t
+     * @param t table
      * @throws HsqlException
      */
     private void processAlterTableDropColumn(Table t) throws HsqlException {
@@ -2570,7 +2578,7 @@ class DatabaseCommandInterpreter {
     /**
      * Responsible for handling tail of ALTER TABLE ... DROP CONSTRAINT ...
      *
-     * @param t
+     * @param t table
      * @throws HsqlException
      */
     private void processAlterTableDropConstraint(Table t)
@@ -2631,6 +2639,7 @@ class DatabaseCommandInterpreter {
     /**
      * limitations in Tokenizer dictate that initial value or increment must
      * be positive
+     * @throws HsqlException
      */
     private void processCreateSequence() throws HsqlException {
 
@@ -2942,6 +2951,8 @@ class DatabaseCommandInterpreter {
      *  Uses three dummy arguments for getTableDDL() as the new table has no
      *  FK constraints.
      *
+     *
+     * @param t table
      * @throws  HsqlException
      */
     private void logTableDDL(Table t) throws HsqlException {

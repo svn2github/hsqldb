@@ -243,9 +243,9 @@ public class Token {
     static final String T_RELEASE         = "RELEASE";                            //reserved
     static final String T_REPEAT          = "REPEAT";                             //reserved
     static final String T_RESIGNAL        = "RESIGNAL";                           //reserved
-    static final String T_RESULT          = "REVOKE";                             //reserved
-    static final String T_RETURN          = "REVOKE";                             //reserved
-    static final String T_RETURNS         = "REVOKE";                             //reserved
+    static final String T_RESULT          = "RESULT";                             //reserved
+    static final String T_RETURN          = "RETURN";                             //reserved
+    static final String T_RETURNS         = "RETURNS";                            //reserved
     static final String T_REVOKE          = "REVOKE";                             //reserved
     static final String T_RIGHT           = "RIGHT";                              //reserved
     static final String T_ROLLBACK        = "ROLLBACK";                           //reserved

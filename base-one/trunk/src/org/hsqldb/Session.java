@@ -119,7 +119,7 @@ public class Session implements SessionInterface {
         new Result(ResultConstants.UPDATECOUNT);
 
 /** @todo fredt - clarify in which circumstances Session has to disconnect */
-    public Session getSession() {
+    Session getSession() {
         return this;
     }
 
@@ -250,7 +250,7 @@ public class Session implements SessionInterface {
      *
      * @return this Session's User object
      */
-    public User getUser() {
+    User getUser() {
         return uUser;
     }
 
@@ -707,19 +707,17 @@ public class Session implements SessionInterface {
     CompiledStatementExecutor  compiledStatementExecutor;
     CompiledStatementManager   compiledStatementManager;
 
-    private CompiledStatement sqlCompileStatement(String sql,
-            int type) throws HsqlException {
+    private CompiledStatement sqlCompileStatement(String sql)
+    throws HsqlException {
 
         String            token;
         int               cmd;
         CompiledStatement cs;
-        boolean           isCmdOk;
 
         parser.reset(sql);
 
         token   = tokenizer.getString();
         cmd     = Token.get(token);
-        isCmdOk = true;
 
         switch (cmd) {
 
@@ -744,18 +742,14 @@ public class Session implements SessionInterface {
                 break;
             }
             case Token.CALL : {
-                if (type != CompiledStatement.CALL) {
-                    throw Trace.error(Trace.ASSERT_FAILED,
-                                      "not a CALL statement");
-                }
-
                 cs = parser.compileCallStatement();
 
                 break;
             }
             default : {
-                isCmdOk = false;
-                cs      = null;
+
+                // DDL statements
+                cs = new CompiledStatement();
 
                 break;
             }
@@ -763,19 +757,17 @@ public class Session implements SessionInterface {
 
         // In addition to requiring that the compilation was successful,
         // we also require that the submitted sql represents a _single_
-        // valid DML statement.
-        if (!isCmdOk) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-        }
-
+        // valid DML or DDL statement. We do not check the DDL yet.
         // fredt - now accepts semicolon and whitespace at the end of statement
         // fredt - investigate if it should or not for prepared statements
+        if (cs.type != cs.DDL) {
         while (tokenizer.getPosition() < tokenizer.getLength()) {
             token = tokenizer.getString();
 
             if (token.length() != 0 &&!token.equals(Token.T_SEMICOLON)) {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
+        }
         }
 
         // - need to be able to key cs against its sql in statement pool
@@ -828,8 +820,7 @@ public class Session implements SessionInterface {
                     return sqlExecuteBatchDirect(cmd);
                 }
                 case ResultConstants.SQLPREPARE : {
-                    return sqlPrepare(cmd.getMainString(),
-                                      cmd.getStatementType());
+                    return sqlPrepare(cmd.getMainString());
                 }
                 case ResultConstants.SQLFREESTMT : {
                     return sqlFreeStatement(cmd.getStatementID());
@@ -966,7 +957,7 @@ public class Session implements SessionInterface {
      * @throws HsqlException is a database access error occurs
      * @return a MULTI Result describing the compiled statement.
      */
-    private Result sqlPrepare(String sql, int type) {
+    private Result sqlPrepare(String sql) {
 
         CompiledStatement cs   = null;
         int               csid = compiledStatementManager.getStatementID(sql);
@@ -984,36 +975,11 @@ public class Session implements SessionInterface {
 
         // ...compile or (re)validate
         try {
-            cs = sqlCompileStatement(sql, type);
+            cs = sqlCompileStatement(sql);
         } catch (Throwable t) {
             return new Result(t, sql);
         }
 
-// boucherb@users
-// TODO:  It is still unclear to me as to whether, in the case of revalidation
-//        v.s. first compilation, the newly created CompiledStatement
-//        object should replace the old one in the CompiledStatementManager
-//        repository.  If, for instance, a table column has been dropped and
-//        then a column with the same name is added with different data type,
-//        constraints, etc., the existing CompiledStatement object is not
-//        equivalent in its effect and perhaps runs the risk of corrupting
-//        the database.  For instance, a CompiledStatement contains
-//        fixed mappings from positions in a column value expression array
-//        to column positions in the target table.  Thus, an alteration to a
-//        target table may leave an existing CompiledStatement's SQL
-//        character sequence valid, but not its execution plan.
-//        OTOH, simply replacing the old execution plan with a new one
-//        may also be undesirable, as the intended and actual effects
-//        may become divergent. Once again, for example, if a column name
-//        comes to mean a different column, then by blindly replacing the
-//        old CompiledStatement with the new, inserting, updating
-//        or predicating happens upon an unintended column.
-//        The only DDL operations that raise such dangers are sequences
-//        involving dropping a columns and then adding an incompatible one
-//        of the same name at the same position or alterations that
-//        change the positions of columns.  All other alterations to
-//        database objects should, in theory, allow the original
-//        CompiledStatement to continue to operate as intended.
         if (csid <= 0) {
             csid = compiledStatementManager.registerStatement(cs);
         }
@@ -1049,7 +1015,7 @@ public class Session implements SessionInterface {
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {
-            out = sqlPrepare(cs.sql, cs.type);
+            out = sqlPrepare(cs.sql);
 
             if (out.iMode == ResultConstants.ERROR) {
                 return out;
@@ -1210,7 +1176,7 @@ public class Session implements SessionInterface {
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {
-            Result r = sqlPrepare(cs.sql, cs.type);
+            Result r = sqlPrepare(cs.sql);
 
             if (r.iMode == ResultConstants.ERROR) {
 

@@ -50,7 +50,6 @@ import org.hsqldb.jdbc.jdbcResultSet;
 final class CompiledStatementExecutor {
 
     private Session  session;
-    private Database database;
     private Result   updateResult;
     private Result   emptyResult;
 
@@ -62,7 +61,6 @@ final class CompiledStatementExecutor {
     CompiledStatementExecutor(Session session) {
 
         this.session = session;
-        database     = session.getDatabase();
         updateResult = new Result(ResultConstants.UPDATECOUNT);
         emptyResult  = new Result(ResultConstants.UPDATECOUNT);
     }
@@ -131,6 +129,9 @@ final class CompiledStatementExecutor {
 
             case CompiledStatement.CALL :
                 return executeCallStatement(cs);
+
+            case CompiledStatement.DDL :
+                return executeDDLStatement(cs);
 
             default :
                 throw Trace.error(
@@ -405,5 +406,18 @@ final class CompiledStatementExecutor {
         updateResult.iUpdateCount = count;
 
         return updateResult;
+    }
+
+    /**
+     * Executes a DDL statement.  It is assumed that the argument
+     * is of the correct type.
+     *
+     * @param cs a CompiledStatement of type CompiledStatement.DDL
+     * @throws HsqlException if a database access error occurs
+     * @return the result of executing the statement
+     */
+    private Result executeDDLStatement(CompiledStatement cs)
+    throws HsqlException {
+        return session.sqlExecuteDirectNoPreChecks(cs.sql);
     }
 }

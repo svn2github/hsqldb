@@ -50,11 +50,7 @@ import org.hsqldb.JavaObject;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
-import org.hsqldb.Token;
 import org.hsqldb.Types;
-import org.hsqldb.CompiledStatement;
-import org.hsqldb.Tokenizer;
-import org.hsqldb.Expression;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -202,11 +198,6 @@ implements java.sql.PreparedStatement {
     protected int statementID;
 
     /**
-     * The type of this statement, from org.hsqldb.CompiledStatement
-     */
-    protected int compiledStatementType;
-
-    /**
      * Whether this statement generates only a single row update count in
      * response to execution.
      */
@@ -295,10 +286,6 @@ implements java.sql.PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
 
-        if (compiledStatementType == CompiledStatement.UNKNOWN) {
-            return super.execute(sql);
-        }
-
         resultIn = null;
 
         try {
@@ -385,10 +372,6 @@ implements java.sql.PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
         checkIsRowCount(true);
-
-        if (compiledStatementType == CompiledStatement.UNKNOWN) {
-            return super.executeUpdate(sql);
-        }
 
         resultIn = null;
 
@@ -1109,7 +1092,6 @@ implements java.sql.PreparedStatement {
     public void addBatch() throws SQLException {
 
         checkClosed();
-        checkAddBatch();
 
         int      len      = parameterValues.length;
         Object[] bpValues = new Object[len];
@@ -1695,37 +1677,12 @@ implements java.sql.PreparedStatement {
 
         super(c, type);
 
-        Iterator i;
-        Result   in;
-        Result   modesResult;
-        Object[] row;
-
-        isNetConn = !(c.sessionProxy instanceof org.hsqldb.Session);
         sql                   = c.nativeSQL(sql);
-        compiledStatementType = guessCompiledStatementType(sql);
-
-        // If true, then its either DDL or its invalid.
-        // In either case, handle it like we are a plain old jdbcStatement
-        if (compiledStatementType == CompiledStatement.UNKNOWN) {
-
-            // Presently, only SELECT and CALL generate result sets
-            isRowCount = true;
-
-            // Presently, DDL statements cannot take parameters
-            parameterTypes  = parameterModes = new int[0];
-            parameterValues = new Object[0];
-
-            // for toString()
-            this.sql = sql;
-
-            return;
-        }
 
         resultOut.setResultType(ResultConstants.SQLPREPARE);
         resultOut.setMainString(sql);
-        resultOut.setStatementType(compiledStatementType);
 
-        in = connection.sessionProxy.execute(resultOut);
+        Result in = connection.sessionProxy.execute(resultOut);
 
         if (in.iMode == ResultConstants.ERROR) {
             jdbcUtil.throwError(in);
@@ -1767,9 +1724,12 @@ implements java.sql.PreparedStatement {
         //     altered or disposed of
         //
         //  (boucherb@users)
+        Iterator i;
+
         i = in.iterator();
 
         try {
+            Object[] row;
 
             // PREPARE_ACK
             row         = (Object[]) i.next();
@@ -1880,7 +1840,7 @@ implements java.sql.PreparedStatement {
 
         try {
             if (outType == Types.OTHER) {
-                o = new JavaObject(o, !isNetConn);
+                o = new JavaObject(o, !connection.isNetConn);
             } else if (outType == Types.BINARY) {
                 if (!(o instanceof byte[])) {
                     throw jdbcUtil.sqlException(
@@ -2089,58 +2049,5 @@ implements java.sql.PreparedStatement {
         sb.append(']');
 
         return sb.toString();
-    }
-
-    /**
-     * Checks if this statement allows batch execution.  DDL statements,
-     * for instance, do not make sense to batch as prepared statements. <p>
-     *
-     * @throws SQLException if this is not a batchable statement
-     */
-    protected void checkAddBatch() throws SQLException {
-
-        if (compiledStatementType == CompiledStatement.UNKNOWN) {
-            String msg =
-                "prepared DDL statements do not support batch execution";
-
-            throw jdbcUtil.sqlException(Trace.ASSERT_FAILED, msg);
-        }
-    }
-
-    static int guessCompiledStatementType(String sql) throws SQLException {
-
-        if (sql == null) {
-            return CompiledStatement.UNKNOWN;
-        }
-
-        Tokenizer tokenizer = new Tokenizer(sql);
-        int       token     = Token.UNKNOWNTOKEN;
-
-        try {
-            token = Token.get(tokenizer.getString());
-        } catch (HsqlException e) {
-            jdbcUtil.throwError(e);
-        }
-
-        switch (token) {
-
-            case Token.INSERT :
-            case Token.UPDATE :
-            case Token.DELETE :
-                return CompiledStatement.DML;
-
-            case Token.SELECT :
-                return CompiledStatement.DQL;
-
-            case Token.CALL :
-                return CompiledStatement.CALL;
-
-            // In the future, we can do a test for DDL as well,
-            // for instance, pre-validating all statement preparation.
-            // For now, this is a quick 'n dirty to allow execution of
-            // DDL via the PreparedStatement internface implementation
-            default :
-                return CompiledStatement.UNKNOWN;
-        }
     }
 }
