@@ -126,6 +126,7 @@ implements ActionListener, WindowListener, KeyListener {
     JSplitPane             ewSplitPane;    // Contains tree beside nsSplitPane
     boolean                bHelp;
     JFrame                 fMain;
+    static boolean         bMustExit;
     String                 ifHuge = "";
     JToolBar               jtoolbar;
 
@@ -166,11 +167,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             i++;
 
-            if (i == arg.length) {
-                showUsage();
-
-                return;
-            }
+            bMustExit = true;
 
             if (lowerArg.equals("-driver")) {
                 defDriver   = arg[i];
@@ -188,6 +185,10 @@ implements ActionListener, WindowListener, KeyListener {
                 defDirectory = arg[i];
             } else if (lowerArg.equals("-script")) {
                 defScript = arg[i];
+            } else if (lowerArg.equals("-noexit")) {
+                bMustExit = false;
+
+                i--;
             } else {
                 showUsage();
 
@@ -254,7 +255,8 @@ implements ActionListener, WindowListener, KeyListener {
             + "    -user <name>         username used for connection\n"
             + "    -password <password> password for this user\n"
             + "    -dir <path>          default directory\n"
-            + "    -script <file>       reads from script file\n");
+            + "    -script <file>       reads from script file\n"
+            + "    -noexit              do not call system.exit()");
     }
 
     private void insertTestData() {
@@ -637,7 +639,10 @@ implements ActionListener, WindowListener, KeyListener {
         } catch (Exception e) {}
 
         fMain.dispose();
-        System.exit(0);
+
+        if (bMustExit) {
+            System.exit(0);
+        }
     }
 
     private void clear() {

@@ -190,7 +190,9 @@ class TableWorks {
 
         Index fkindex = table.getConstraintIndexForColumns(fkcol, false);
 
-        if (fkindex == null) {
+// fredt - this changes the index creation logic in ALPHA_Q - uncomment for old behaviour
+//        if (fkindex == null)
+        {
             HsqlName iname = table.database.nameManager.newAutoName("IDX");
 
             fkindex = createIndex(fkcol, iname, false);

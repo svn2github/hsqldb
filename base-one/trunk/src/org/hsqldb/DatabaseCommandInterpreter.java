@@ -2062,6 +2062,8 @@ class DatabaseCommandInterpreter {
             closemode = Database.CLOSEMODE_IMMEDIATELY;
         } else if (token.equals(Token.T_COMPACT)) {
             closemode = Database.CLOSEMODE_COMPACT;
+        } else if (token.equals(Token.T_SCRIPT)) {
+            closemode = Database.CLOSEMODE_SCRIPT;
         } else {
             tokenizer.back();
         }

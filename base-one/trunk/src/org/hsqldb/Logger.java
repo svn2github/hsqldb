@@ -140,11 +140,8 @@ class Logger {
                     break;
 
                 case Database.CLOSEMODE_COMPACT :
+                case Database.CLOSEMODE_SCRIPT :
                     lLog.close(true, true);
-                    break;
-
-                case 2 :
-                    lLog.close(false, true);
                     break;
             }
         } catch (Throwable e) {

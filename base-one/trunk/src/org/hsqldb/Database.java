@@ -154,6 +154,7 @@ class Database {
     final static int               CLOSEMODE_IMMEDIATELY = -1;
     final static int               CLOSEMODE_NORMAL      = 0;
     final static int               CLOSEMODE_COMPACT     = 1;
+    final static int               CLOSEMODE_SCRIPT      = 2;
 
     /**
      *  Constructs a new Database object.

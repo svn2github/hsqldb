@@ -351,6 +351,20 @@ class Expression {
         }
     }
 
+    Expression(Table table, Column column) {
+
+        sTable = table.tableName.name;
+
+        if (column == null) {
+            iType = ASTERIX;
+        } else {
+            iType        = COLUMN;
+            sColumn      = column.columnName.name;
+            columnQuoted = column.columnName.isNameQuoted;
+            iDataType    = column.getType();
+        }
+    }
+
     /**
      * Creates a new VALUE expression
      *

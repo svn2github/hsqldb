@@ -447,9 +447,15 @@ class Parser {
                     int col = table.getColumnCount();
 
                     for (int c = 0; c < col; c++) {
+
+//
+/*
                         Expression ins = new Expression(
                             f.getName(), table.getColumn(c).columnName.name,
                             table.getColumn(c).columnName.isNameQuoted);
+*/
+                        Expression ins = new Expression(table,
+                                                        table.getColumn(c));
 
                         vcolumn.add(current++, ins);
 
@@ -666,7 +672,7 @@ class Parser {
 
             t.addColumns(s);
 
-            // TODO:
+            // TODO:  (fredt - you often can't as the subquery column involved in join does not have unique values)
             // We lose / do not exploit index info here.
             // Look at what, if any, indexes the query might benefit from
             // and create or carry them across here if it might speed up
