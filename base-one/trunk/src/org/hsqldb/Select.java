@@ -207,8 +207,8 @@ class Select {
 
         Object o = r.rRoot.data[0];
 
-        return r.colType[0] == type ? o
-                                    : Column.convertObject(o, type);
+        return r.metaData.colType[0] == type ? o
+                                             : Column.convertObject(o, type);
     }
 
 /** @todo fredt - having moved the Result metadata into it's own class,
@@ -246,9 +246,9 @@ class Select {
         for (int i = 0; i < len; i++) {
             Expression e = eColumn[i];
 
-            r.colType[i]  = e.getDataType();
-            r.colSize[i]  = e.getColumnSize();
-            r.colScale[i] = e.getColumnScale();
+            r.metaData.colType[i]  = e.getDataType();
+            r.metaData.colSize[i]  = e.getColumnSize();
+            r.metaData.colScale[i] = e.getColumnScale();
 
             if (e.isAggregate()) {
                 isAggregated = true;
@@ -266,18 +266,18 @@ class Select {
                                                 eColumn[i]);
 
             if (i < iResultLen) {
-                r.sLabel[i]        = e.getAlias();
-                r.isLabelQuoted[i] = e.isAliasQuoted();
-                r.sTable[i]        = e.getTableName();
-                r.sName[i]         = e.getColumnName();
+                r.metaData.sLabel[i]        = e.getAlias();
+                r.metaData.isLabelQuoted[i] = e.isAliasQuoted();
+                r.metaData.sTable[i]        = e.getTableName();
+                r.metaData.sName[i]         = e.getColumnName();
 
-                if (r.isTableColumn(i)) {
-                    r.nullability[i] = e.nullability;
-                    r.isIdentity[i]  = e.isIdentity;
-                    r.isWritable[i]  = e.isWritable;
+                if (r.metaData.isTableColumn(i)) {
+                    r.metaData.nullability[i] = e.nullability;
+                    r.metaData.isIdentity[i]  = e.isIdentity;
+                    r.metaData.isWritable[i]  = e.isWritable;
                 }
 
-                r.sClassName[i] = e.getValueClassName();
+                r.metaData.sClassName[i] = e.getValueClassName();
             }
         }
 
@@ -750,19 +750,19 @@ class Select {
         r = new Result(ResultConstants.DATA, iResultLen);
 
         for (int i = 0; i < iResultLen; i++) {
-            e                  = eColumn[i];
-            r.colType[i]       = e.getDataType();
-            r.colSize[i]       = e.getColumnSize();
-            r.colScale[i]      = e.getColumnScale();
-            r.sLabel[i]        = e.getAlias();
-            r.isLabelQuoted[i] = e.isAliasQuoted();
-            r.sTable[i]        = e.getTableName();
-            r.sName[i]         = e.getColumnName();
+            e                           = eColumn[i];
+            r.metaData.colType[i]       = e.getDataType();
+            r.metaData.colSize[i]       = e.getColumnSize();
+            r.metaData.colScale[i]      = e.getColumnScale();
+            r.metaData.sLabel[i]        = e.getAlias();
+            r.metaData.isLabelQuoted[i] = e.isAliasQuoted();
+            r.metaData.sTable[i]        = e.getTableName();
+            r.metaData.sName[i]         = e.getColumnName();
 
-            if (r.isTableColumn(i)) {
-                r.nullability[i] = e.nullability;
-                r.isIdentity[i]  = e.isIdentity;
-                r.isWritable[i]  = e.isWritable;
+            if (r.metaData.isTableColumn(i)) {
+                r.metaData.nullability[i] = e.nullability;
+                r.metaData.isIdentity[i]  = e.isIdentity;
+                r.metaData.isWritable[i]  = e.isWritable;
             }
         }
 

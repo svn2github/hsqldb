@@ -57,18 +57,18 @@ class View extends Table {
     void addColumns(Result result) throws HsqlException {
 
         for (int i = 0; i < result.getColumnCount(); i++) {
-            String name = result.sTable[i];
+            String name = result.metaData.sTable[i];
             Table  t    = database.findUserTable(name);
 
             if (t != null && t.isTemp()) {
                 throw Trace.error(Trace.TABLE_NOT_FOUND);
             }
 
-            if (result.sLabel[i] == null) {
+            if (result.metaData.sLabel[i] == null) {
 
                 // fredt - this does not guarantee the uniqueness of column
                 // names but addColumns() will throw if names are not unique.
-                result.sLabel[i] = "COL_" + String.valueOf(i);
+                result.metaData.sLabel[i] = "COL_" + String.valueOf(i);
             }
         }
 

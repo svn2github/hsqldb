@@ -81,7 +81,7 @@ import org.hsqldb.store.ValuePool;
 // vorburger@users 20021229 - patch 1.7.2 - null handling
 // boucherb@users 200307?? - patch 1.7.2 - resolve param nodes
 // boucherb@users 200307?? - patch 1.7.2 - compress constant expr during resolve
-// boucherb@users 200307?? - patch 1.7.2 - eager pmd and rsmd 
+// boucherb@users 200307?? - patch 1.7.2 - eager pmd and rsmd
 
 /**
  * Expression class declaration
@@ -95,7 +95,7 @@ class Expression {
                      COLUMN    = 2,
                      QUERY     = 3,
                      TRUE      = 4,
-                     FALSE     = -4,    // arbitrary                     
+                     FALSE     = -4,    // arbitrary
                      VALUELIST = 5,
                      ASTERIX   = 6,
                      FUNCTION  = 7;
@@ -1378,7 +1378,7 @@ class Expression {
                 // case 1 (how to get the value when the condition in
                 // the parent evaluates to true) and its eArg2 is case 2
                 // (how to get the value when the condition in
-                // the parent evaluates to true)  
+                // the parent evaluates to true)
                 if (eArg2.eArg == null) {
                     break;
                 }
@@ -2203,7 +2203,7 @@ class Expression {
             r.removeDuplicates();
 
             Record n    = r.rRoot;
-            int    type = r.colType[0];
+            int    type = r.metaData.colType[0];
 
             if (datatype != type) {
                 o = Column.convertObject(o, type);
@@ -2349,7 +2349,7 @@ class Expression {
         iColumnScale = c.getScale();
         isIdentity   = c.isIdentity();
 
-        // IDENTITY columns are not nullable; 
+        // IDENTITY columns are not nullable;
         // NULLs are converted into the next identity value for the table
         nullability = c.isNullable() &&!isIdentity ? NULLABLE
                                                    : NO_NULLS;

@@ -263,7 +263,7 @@ public class CompiledStatement {
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
 
-            // If its not a param, it's already been resolved in 
+            // If its not a param, it's already been resolved in
             // Parser.getColumnValueExpressions
             if (cve.isParam()) {
                 cve.setTableColumnAttributes(targetTable, columnMap[i]);
@@ -390,19 +390,19 @@ public class CompiledStatement {
                 // 2.) Represent the return value, if any (which is
                 // not, in truth, a result set), as an OUT parameter
                 //
-                // For now, I've reverted a bunch of code I had in place 
+                // For now, I've reverted a bunch of code I had in place
                 // and instead simply reflect things as the are, describing
                 // a single column result set that communicates
                 // the return value.  If the expression generating the
                 // return value has a void return type, a result set
-                // is described whose single column is of type NULL 
+                // is described whose single column is of type NULL
                 Expression e;
                 Result     r;
 
                 e = expression;
                 r = Result.newSingleColumnResult("@0" /*e.getAlias()*/,
                                                  e.getDataType());
-                r.sClassName[0] = e.getValueClassName();
+                r.metaData.sClassName[0] = e.getValueClassName();
 
                 // no more setup for r; all the defaults apply
                 return r;
@@ -419,7 +419,7 @@ public class CompiledStatement {
             case INSERT_VALUES :
             case UPDATE :
 
-                // will result in 
+                // will result in
                 return updateCount;
 
             default :
@@ -440,45 +440,45 @@ public class CompiledStatement {
         outlen = parameters.length;
         offset = 0;
 
-// NO:  Not yet        
+// NO:  Not yet
 //        hasReturnValue = (type == CALL && !expression.isProcedureCall());
-//        
+//
 //        if (hasReturnValue) {
 //            outlen++;
 //            offset = 1;
 //        }
         out = Result.newParameterDescriptionResult(outlen);
 
-// NO: Not yet        
+// NO: Not yet
 //        if (hasReturnValue) {
-//            e = expression;          
+//            e = expression;
 //            out.sName[0]       = "@0";
 //            out.sClassName[0]  = e.getValueClassName();
-//            out.colType[0]     = e.getDataType();  
+//            out.colType[0]     = e.getDataType();
 //            out.colSize[0]     = e.getColumnSize();
 //            out.colScale[0]    = e.getColumnScale();
 //            out.nullability[0] = e.nullability;
 //            out.isIdentity[0]  = false;
 //            out.paramMode[0]   = expression.PARAM_OUT;
-//        }        
+//        }
         for (int i = 0; i < parameters.length; i++) {
             e   = parameters[i];
             idx = i + offset;
 
             // always i + 1.  We will use the convention of @0 to name the
             // return value OUT parameter
-            out.sName[idx] = "@" + i + 1;
+            out.metaData.sName[idx] = "@" + i + 1;
 
             // sLabel is meaningless in this context.
-            out.sClassName[idx]  = e.getValueClassName();
-            out.colType[idx]     = e.getDataType();
-            out.colSize[idx]     = e.getColumnSize();
-            out.colScale[idx]    = e.getColumnScale();
-            out.nullability[idx] = e.nullability;
-            out.isIdentity[idx]  = e.isIdentity;
+            out.metaData.sClassName[idx]  = e.getValueClassName();
+            out.metaData.colType[idx]     = e.getDataType();
+            out.metaData.colSize[idx]     = e.getColumnSize();
+            out.metaData.colScale[idx]    = e.getColumnScale();
+            out.metaData.nullability[idx] = e.nullability;
+            out.metaData.isIdentity[idx]  = e.isIdentity;
 
             // currently will always be Expression.PARAM_IN
-            out.paramMode[idx] = e.paramMode;
+            out.metaData.paramMode[idx] = e.paramMode;
         }
 
         return out;

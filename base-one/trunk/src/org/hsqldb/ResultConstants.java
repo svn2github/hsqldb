@@ -61,7 +61,7 @@ public interface ResultConstants {
 
     /**
      * Indicates that the Result object encapsulates a result
-     * set response.
+     * set response containing data.
      */
     int DATA = HSQL_API_BASE + 3;
 
@@ -71,6 +71,12 @@ public interface ResultConstants {
      * CompiledStatement object in the form of its statementID.
      */
     int PREPARE_ACK = HSQL_API_BASE + 4;
+
+    /**
+     * Indicates that the Result object encapsulates a result
+     * set response containing parameter metadata.
+     */
+    int PARAM_META_DATA = HSQL_API_BASE + 5;
 
     /**
      * Indicates that the Result object encapsulates multiple Result objects.

@@ -114,37 +114,221 @@ class Result {
     int statementID;
 
     // max rows (out) or update count (in)
-    int iUpdateCount;
+    int            iUpdateCount;
+    ResultMetaData metaData;
 
-/** @todo fredt - move the next three blocks into a static inner class */
+    static class ResultMetaData {
 
-    // always resolved
-    String  sLabel[];
-    String  sTable[];
-    String  sName[];
-    boolean isLabelQuoted[];
-    int     colType[];
-    int     colSize[];
-    int     colScale[];
+        // always resolved
+        String  sLabel[];
+        String  sTable[];
+        String  sName[];
+        boolean isLabelQuoted[];
+        int     colType[];
+        int     colSize[];
+        int     colScale[];
 
-    // extra attrs, sometimes resolved
-    String    sCatalog[];
-    String    sSchema[];
-    int       nullability[];
-    boolean   isIdentity[];
-    boolean[] isWritable;
-    int       paramMode[];
+        // extra attrs, sometimes resolved
+        String    sCatalog[];
+        String    sSchema[];
+        int       nullability[];
+        boolean   isIdentity[];
+        boolean[] isWritable;
+        int       paramMode[];
 
-    // It's possible to do better than java.lang.Object
-    // for type OTHER if the expression generating the value
-    // is of type FUNCTION.  This applies to result set columns
-    // whose value is the result of a SQL function call and
-    // especially to the arguments and return value of a CALL
-    String  sClassName[];
-    boolean isParameterDescription;
+        // It's possible to do better than java.lang.Object
+        // for type OTHER if the expression generating the value
+        // is of type FUNCTION.  This applies to result set columns
+        // whose value is the result of a SQL function call and
+        // especially to the arguments and return value of a CALL
+        String  sClassName[];
+        boolean isParameterDescription;
+
+        /**
+         *  Method declaration
+         *
+         * @param  columns
+         */
+        private void prepareData(int columns) {
+
+            sLabel        = new String[columns];
+            sTable        = new String[columns];
+            sName         = new String[columns];
+            isLabelQuoted = new boolean[columns];
+            colType       = new int[columns];
+            colSize       = new int[columns];
+            colScale      = new int[columns];
+            sCatalog      = new String[columns];
+            sSchema       = new String[columns];
+            nullability   = new int[columns];
+            isIdentity    = new boolean[columns];
+            isWritable    = new boolean[columns];
+            sClassName    = new String[columns];
+        }
+
+        int[] getParameterTypes() {
+            return colType;
+        }
+
+        boolean isTableColumn(int i) {
+            return sTable[i] != null && sTable[i].length() > 0
+                   && sName[i] != null && sName[i].length() > 0;
+        }
+
+        private void decodeTableColumnAttrs(int in, int i) {
+
+            nullability[i] = in & 0x0000000f;
+            isIdentity[i]  = (in & 0x00000010) != 0;
+            isWritable[i]  = (in & 0x00000020) != 0;
+        }
+
+        private void writeTableColumnAttrs(DatabaseRowOutputInterface out,
+                                           int i)
+                                           throws IOException, HsqlException {
+
+            // Currently, HSQLDB accepts and logs (precision, scale)
+            // for all types, which is not to the spec.
+            // HSQLDB also ignores precision and scale for all types except
+            // XXXCHAR, for which it may (or may not) perform some trimming/padding.
+            // All in all, it's currently meaningless (indeed misleading) to
+            // transmit and report the values, as the data typically will
+            // not be constrained accordingly.
+//        switch(colType[i]) {
+//            // As early as SQL 92, these are allowed to have a scale.
+//            // However, DatabaseCommandInterpreter.processCreateColumn
+//            // does not currently handle this correctly and will assign
+//            // a precision instead of a scale if TIME(s) or TIMESTAMP(s)
+//            // is specified
+//            case Types.TIME :
+//            case Types.TIMESTAMP :
+//                  out.writeIntData(colScale[i]);
+//                  break;
+//            case Types.DECIMAL :
+//            case Types.NUMERIC : {
+//                out.writeIntData(colScale[i]);
+//            } // fall through
+//            // Apparently, SQL 92 specifies that FLOAT can have
+//            // a declared precision, which is typically the number of
+//            // bits (not binary digits).  In any case, this is somewhat
+//            // meaningless under HSQLDB/Java, in that we use java.lang.Double
+//            // to represent SQL FLOAT
+//            case Types.FLOAT :
+//            // It's legal to declare precision for these, although HSQLDB
+//            // currently does not use it to constrain values
+//            case Types.BINARY :
+//            case Types.VARBINARY :
+//            case Types.LONGVARBINARY :
+//            // possibly, but not universally acted upon (trimmming/padding)
+//            case Types.CHAR  :
+//            case Types.VARCHAR :
+//            case Types.LONGVARCHAR : {
+//                out.writeIntData(colSize[i]);
+//            }
+//        }
+            out.writeIntData(encodeTableColumnAttrs(i));
+            out.writeString(sCatalog[i] == null ? ""
+                                                : sCatalog[i]);
+            out.writeString(sSchema[i] == null ? ""
+                                               : sSchema[i]);
+        }
+
+        private int encodeTableColumnAttrs(int i) {
+
+            int out = nullability[i];    // always between 0x00 and 0x02
+
+            if (isIdentity[i]) {
+                out &= 0x00000010;
+            }
+
+            if (isWritable[i]) {
+                out &= 0x00000020;
+            }
+
+            return out;
+        }
+
+        private void readTableColumnAttrs(DatabaseRowInputInterface in,
+                                          int i)
+                                          throws IOException, HsqlException {
+
+// no point in transmitting these yet
+// if ever implemented, must follow logic of switch as outlined in comments
+// for corresponding write method
+//        colScale[i] = in.readIntData();
+//        colSize[i] = in.readIntData();
+            decodeTableColumnAttrs(in.readIntData(), i);
+
+            sCatalog[i] = in.readString();
+            sSchema[i]  = in.readString();
+        }
+
+        void read(DatabaseRowInputInterface in)
+        throws HsqlException, IOException {
+
+            int l = in.readIntData();
+
+            prepareData(l);
+
+            if (isParameterDescription) {
+                paramMode = new int[l];
+            }
+
+            for (int i = 0; i < l; i++) {
+                colType[i]    = in.readType();
+                sLabel[i]     = in.readString();
+                sTable[i]     = in.readString();
+                sName[i]      = in.readString();
+                sClassName[i] = in.readString();
+
+                if (isTableColumn(i)) {
+                    readTableColumnAttrs(in, i);
+                }
+
+                if (isParameterDescription) {
+                    paramMode[i] = in.readIntData();
+                }
+            }
+        }
+
+        void write(DatabaseRowOutputInterface out,
+                   int colCount) throws HsqlException, IOException {
+
+            out.writeIntData(colCount);
+
+            for (int i = 0; i < colCount; i++) {
+                out.writeType(colType[i]);
+
+                // CAREFUL: writeString will throw NPE if passed NULL
+                // There is no guarantee that these will all be non-null
+                // and there's no point in hanging network communications
+                // or doing a big rewrite for null-safety over something
+                // like this.  We could explicitly do a writeNull here if
+                // detected null, but, frankly, readString on the other
+                // end will simply turn it into a zero-length string
+                // anyway, as nulls are only handled "properly" by
+                // readData(...), not by the individual readXXX methods.
+                out.writeString(sLabel[i] == null ? ""
+                                                  : sLabel[i]);
+                out.writeString(sTable[i] == null ? ""
+                                                  : sTable[i]);
+                out.writeString(sName[i] == null ? ""
+                                                 : sName[i]);
+                out.writeString(sClassName[i] == null ? ""
+                                                      : sClassName[i]);
+
+                if (isTableColumn(i)) {
+                    writeTableColumnAttrs(out, i);
+                }
+
+                if (isParameterDescription) {
+                    out.writeIntData(paramMode[i]);
+                }
+            }
+        }
+    }
 
     /**
-     *  Constructor declaration
+     *  General constructor
      */
     Result(int type) {
 
@@ -153,12 +337,19 @@ class Result {
         if (type == ResultConstants.MULTI) {
             isMulti = true;
         }
+
+        if (type == ResultConstants.DATA
+                || type == ResultConstants.PARAM_META_DATA
+                || type == ResultConstants.SQLEXECUTE
+                || type == ResultConstants.SQLSETENVATTR) {
+            metaData = new ResultMetaData();
+        }
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
-     *  Constructor declaration
+     *  Constructor for errors
      *
      * @param  error
      * @param  code   Description of the Parameter
@@ -173,13 +364,20 @@ class Result {
     }
 
     /**
-     *  Constructor declaration
+     *  Only used with DATA and PARAM_META_DATA results
      *
      * @param  columns
      */
     Result(int type, int columns) {
 
-        prepareData(columns);
+        metaData = new ResultMetaData();
+
+        metaData.prepareData(columns);
+
+        if (type == ResultConstants.PARAM_META_DATA) {
+            metaData.isParameterDescription = true;
+            metaData.paramMode              = new int[columns];
+        }
 
         iMode              = type;
         significantColumns = columns;
@@ -188,7 +386,8 @@ class Result {
     Result(int type, int types[], int id) {
 
         iMode              = type;
-        colType            = types;
+        metaData           = new ResultMetaData();
+        metaData.colType   = types;
         significantColumns = types.length;
         statementID        = id;
     }
@@ -264,55 +463,38 @@ class Result {
 
                     int l = in.readIntData();
 
-                    prepareData(l);
+                    metaData = new ResultMetaData();
+
+                    metaData.prepareData(l);
 
                     significantColumns = l;
 
                     for (int i = 0; i < l; i++) {
-                        colType[i] = in.readType();
+                        metaData.colType[i] = in.readType();
                     }
 
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(colType));
+                        add(in.readData(metaData.colType));
                     }
 
                     break;
                 }
-                case ResultConstants.DATA : {
-                    isParameterDescription = (1 == in.readIntData());
+                case ResultConstants.DATA :
+                case ResultConstants.PARAM_META_DATA : {
+                    metaData = new ResultMetaData();
+                    metaData.isParameterDescription =
+                        iMode == ResultConstants.PARAM_META_DATA;
 
-                    int l = in.readIntData();
+                    metaData.read(in);
 
-                    prepareData(l);
-
-                    if (isParameterDescription) {
-                        paramMode = new int[l];
-                    }
-
-                    significantColumns = l;
-
-                    for (int i = 0; i < l; i++) {
-                        colType[i]    = in.readType();
-                        sLabel[i]     = in.readString();
-                        sTable[i]     = in.readString();
-                        sName[i]      = in.readString();
-                        sClassName[i] = in.readString();
-
-                        if (isTableColumn(i)) {
-                            readTableColumnAttrs(in, i);
-                        }
-
-                        if (isParameterDescription) {
-                            paramMode[i] = in.readIntData();
-                        }
-                    }
+                    significantColumns = metaData.sLabel.length;
 
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(colType));
+                        add(in.readData(metaData.colType));
                     }
 
                     break;
@@ -331,10 +513,10 @@ class Result {
 
         Result result = new Result(ResultConstants.DATA, 1);
 
-        result.sName[0]   = colName;
-        result.sLabel[0]  = colName;
-        result.sTable[0]  = "";
-        result.colType[0] = colType;
+        result.metaData.sName[0]   = colName;
+        result.metaData.sLabel[0]  = colName;
+        result.metaData.sTable[0]  = "";
+        result.metaData.colType[0] = colType;
 
         return result;
     }
@@ -358,10 +540,10 @@ class Result {
 
     static Result newParameterDescriptionResult(int len) {
 
-        Result r = new Result(ResultConstants.DATA, len);
+        Result r = new Result(ResultConstants.PARAM_META_DATA, len);
 
-        r.isParameterDescription = true;
-        r.paramMode              = new int[len];
+        r.metaData.isParameterDescription = true;
+        r.metaData.paramMode              = new int[len];
 
         return r;
     }
@@ -808,12 +990,13 @@ class Result {
     private int compareRecord(Object a[], Object b[], int order[],
                               int way[]) throws HsqlException {
 
-        int i = Column.compare(a[order[0]], b[order[0]], colType[order[0]]);
+        int i = Column.compare(a[order[0]], b[order[0]],
+                               metaData.colType[order[0]]);
 
         if (i == 0) {
             for (int j = 1; j < order.length; j++) {
                 i = Column.compare(a[order[j]], b[order[j]],
-                                   colType[order[j]]);
+                                   metaData.colType[order[j]]);
 
                 if (i != 0) {
                     return i * way[j];
@@ -837,7 +1020,7 @@ class Result {
                               int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
-            int i = Column.compare(a[j], b[j], colType[j]);
+            int i = Column.compare(a[j], b[j], metaData.colType[j]);
 
             if (i != 0) {
                 return i;
@@ -946,7 +1129,7 @@ class Result {
                 out.writeIntData(l);
 
                 for (int i = 0; i < l; i++) {
-                    out.writeType(colType[i]);
+                    out.writeType(metaData.colType[i]);
                 }
 
                 out.writeIntData(iSize);
@@ -954,56 +1137,23 @@ class Result {
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(l, colType, n.data);
+                    out.writeData(l, metaData.colType, n.data);
 
                     n = n.next;
                 }
 
                 break;
             }
-            case ResultConstants.DATA : {
-                int l = significantColumns;
-
-                out.writeIntData(isParameterDescription ? 1
-                                                        : 0);
-                out.writeIntData(l);
-
-                for (int i = 0; i < l; i++) {
-                    out.writeType(colType[i]);
-
-                    // CAREFUL: writeString will throw NPE if passed NULL
-                    // There is no guarantee that these will all be non-null
-                    // and there's no point in hanging network communications
-                    // or doing a big rewrite for null-safety over something
-                    // like this.  We could explicitly do a writeNull here if
-                    // detected null, but, frankly, readString on the other
-                    // end will simply turn it into a zero-length string
-                    // anyway, as nulls are only handled "properly" by
-                    // readData(...), not by the individual readXXX methods.
-                    out.writeString(sLabel[i] == null ? ""
-                                                      : sLabel[i]);
-                    out.writeString(sTable[i] == null ? ""
-                                                      : sTable[i]);
-                    out.writeString(sName[i] == null ? ""
-                                                     : sName[i]);
-                    out.writeString(sClassName[i] == null ? ""
-                                                          : sClassName[i]);
-
-                    if (isTableColumn(i)) {
-                        writeTableColumnAttrs(out, i);
-                    }
-
-                    if (isParameterDescription) {
-                        out.writeIntData(paramMode[i]);
-                    }
-                }
-
+            case ResultConstants.DATA :
+            case ResultConstants.PARAM_META_DATA : {
+                metaData.write(out, significantColumns);
                 out.writeIntData(iSize);
 
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(l, colType, n.data);
+                    out.writeData(significantColumns, metaData.colType,
+                                  n.data);
 
                     n = n.next;
                 }
@@ -1017,71 +1167,6 @@ class Result {
         }
 
         out.writeIntData(out.size(), startPos);
-    }
-
-    private void writeTableColumnAttrs(DatabaseRowOutputInterface out,
-                                       int i)
-                                       throws IOException, HsqlException {
-
-        // Currently, HSQLDB accepts and logs (precision, scale)
-        // for all types, which is not to the spec.
-        // HSQLDB also ignores precision and scale for all types except
-        // XXXCHAR, for which it may (or may not) perform some trimming/padding.
-        // All in all, it's currently meaningless (indeed misleading) to
-        // transmit and report the values, as the data typically will
-        // not be constrained accordingly.
-//        switch(colType[i]) {
-//            // As early as SQL 92, these are allowed to have a scale.
-//            // However, DatabaseCommandInterpreter.processCreateColumn
-//            // does not currently handle this correctly and will assign
-//            // a precision instead of a scale if TIME(s) or TIMESTAMP(s)
-//            // is specified
-//            case Types.TIME :
-//            case Types.TIMESTAMP :
-//                  out.writeIntData(colScale[i]);
-//                  break;
-//            case Types.DECIMAL :
-//            case Types.NUMERIC : {
-//                out.writeIntData(colScale[i]);
-//            } // fall through
-//            // Apparently, SQL 92 specifies that FLOAT can have
-//            // a declared precision, which is typically the number of
-//            // bits (not binary digits).  In any case, this is somewhat
-//            // meaningless under HSQLDB/Java, in that we use java.lang.Double
-//            // to represent SQL FLOAT
-//            case Types.FLOAT :
-//            // It's legal to declare precision for these, although HSQLDB
-//            // currently does not use it to constrain values
-//            case Types.BINARY :
-//            case Types.VARBINARY :
-//            case Types.LONGVARBINARY :
-//            // possibly, but not universally acted upon (trimmming/padding)
-//            case Types.CHAR  :
-//            case Types.VARCHAR :
-//            case Types.LONGVARCHAR : {
-//                out.writeIntData(colSize[i]);
-//            }
-//        }
-        out.writeIntData(encodeTableColumnAttrs(i));
-        out.writeString(sCatalog[i] == null ? ""
-                                            : sCatalog[i]);
-        out.writeString(sSchema[i] == null ? ""
-                                           : sSchema[i]);
-    }
-
-    private void readTableColumnAttrs(DatabaseRowInputInterface in,
-                                      int i)
-                                      throws IOException, HsqlException {
-
-// no point in transmitting these yet
-// if ever implemented, must follow logic of switch as outlined in comments
-// for corresponding write method
-//        colScale[i] = in.readIntData();
-//        colSize[i] = in.readIntData();
-        decodeTableColumnAttrs(in.readIntData(), i);
-
-        sCatalog[i] = in.readString();
-        sSchema[i]  = in.readString();
     }
 
     void readMultiResult(DatabaseRowInputInterface in)
@@ -1130,28 +1215,6 @@ class Result {
         }
 
         out.writeIntData(out.size(), startPos);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  columns
-     */
-    private void prepareData(int columns) {
-
-        sLabel        = new String[columns];
-        sTable        = new String[columns];
-        sName         = new String[columns];
-        isLabelQuoted = new boolean[columns];
-        colType       = new int[columns];
-        colSize       = new int[columns];
-        colScale      = new int[columns];
-        sCatalog      = new String[columns];
-        sSchema       = new String[columns];
-        nullability   = new int[columns];
-        isIdentity    = new boolean[columns];
-        isWritable    = new boolean[columns];
-        sClassName    = new String[columns];
     }
 
 // boucerb@users 20030513
@@ -1228,8 +1291,9 @@ class Result {
         return iUpdateCount;
     }
 
+    /** @todo fred - check this reporposing */
     int[] getUpdateCounts() {
-        return colType;
+        return metaData.colType;
     }
 
     Object[] getParameterData() {
@@ -1249,39 +1313,8 @@ class Result {
         iSize      = 1;
     }
 
-    int[] getParameterTypes() {
-        return colType;
-    }
-
     void setResultType(int type) {
         iMode = type;
-    }
-
-    private int encodeTableColumnAttrs(int i) {
-
-        int out = nullability[i];    // always between 0x00 and 0x02
-
-        if (isIdentity[i]) {
-            out &= 0x00000010;
-        }
-
-        if (isWritable[i]) {
-            out &= 0x00000020;
-        }
-
-        return out;
-    }
-
-    private void decodeTableColumnAttrs(int in, int i) {
-
-        nullability[i] = in & 0x0000000f;
-        isIdentity[i]  = (in & 0x00000010) != 0;
-        isWritable[i]  = (in & 0x00000020) != 0;
-    }
-
-    boolean isTableColumn(int i) {
-        return sTable[i] != null && sTable[i].length() > 0
-               && sName[i] != null && sName[i].length() > 0;
     }
 
     void setStatementType(int type) {

@@ -278,7 +278,7 @@ public final class CompiledStatementExecutor {
                 for (int i = 0; i < len; i++) {
                     int j = cm[i];
 
-                    if (ct[j] != r.colType[i]) {
+                    if (ct[j] != r.metaData.colType[i]) {
                         row[j] = Column.convertObject(rc.data[i], ct[j]);
                     } else {
                         row[j] = rc.data[i];

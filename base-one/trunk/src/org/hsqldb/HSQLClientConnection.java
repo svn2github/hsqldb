@@ -116,16 +116,17 @@ public class HSQLClientConnection implements SessionInterface {
      */
     private void initStructures() {
 
-        rowOut          = new BinaryServerRowOutput(mainBuffer);
-        rowIn           = new BinaryServerRowInput(rowOut);
-        resultOut       = new Result(ResultConstants.DATA, 7);
-        resultOut.sName = resultOut.sLabel = resultOut.sTable = new String[] {
+        rowOut    = new BinaryServerRowOutput(mainBuffer);
+        rowIn     = new BinaryServerRowInput(rowOut);
+        resultOut = new Result(ResultConstants.DATA, 7);
+        resultOut.metaData.sName = resultOut.metaData.sLabel =
+            resultOut.metaData.sTable = new String[] {
             "", "", "", "", "", "", ""
         };
 
         resultOut.add(new Object[7]);
 
-        resultOut.colType = new int[] {
+        resultOut.metaData.colType = new int[] {
             Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
             Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
         };

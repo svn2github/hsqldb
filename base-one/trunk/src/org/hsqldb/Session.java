@@ -949,17 +949,17 @@ class Session implements SessionInterface {
             return new Result(t, sql);
         }
 
-// boucherb@users        
+// boucherb@users
 // TODO:  It is still unclear to me as to whether, in the case of revalidation
 //        v.s. first compilation, the newly created CompiledStatement
 //        object should replace the old one in the CompiledStatementManager
 //        repository.  If, for instance, a table column has been dropped and
 //        then a column with the same name is added with different data type,
-//        constraints, etc., the existing CompiledStatement object is not 
+//        constraints, etc., the existing CompiledStatement object is not
 //        equivalent in its effect and perhaps runs the risk of corrupting
 //        the database.  For instance, a CompiledStatement contains
 //        fixed mappings from positions in a column value expression array
-//        to column positions in the target table.  Thus, An alteration to a 
+//        to column positions in the target table.  Thus, An alteration to a
 //        target table may leave an existing CompiledStatement's SQL
 //        character sequence valid, but not its execution plan.
 //        OTOH, simply replacing the old execution plan with a new one
@@ -973,7 +973,7 @@ class Session implements SessionInterface {
 //        of the same name at the same position or alterations that
 //        change the positions of columns.  All other alterations to
 //        database objects should, in theory, allow the original
-//        CompiledStatement to operate correctly.        
+//        CompiledStatement to operate correctly.
         if (csid <= 0) {
             csid = compiledStatementManager.registerStatement(cs);
         }
@@ -1233,10 +1233,11 @@ class Session implements SessionInterface {
 
         Result r = new Result(ResultConstants.DATA, 7);
 
-        r.sName   = r.sLabel = r.sTable = new String[] {
+        r.metaData.sName = r.metaData.sLabel = r.metaData.sTable =
+            new String[] {
             "", "", "", "", "", "", ""
         };
-        r.colType = new int[] {
+        r.metaData.colType = new int[] {
             Types.VARCHAR, Types.VARCHAR, Types.INTEGER,
             iLastIdentity instanceof Long ? Types.BIGINT
                                           : Types.INTEGER, Types.BOOLEAN,

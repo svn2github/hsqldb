@@ -2137,15 +2137,15 @@ implements java.sql.PreparedStatement {
             // DATA - isParameterDescription == true
             row             = (Object[]) i.next();
             pmdDescriptor   = (Result) row[0];
-            parameterTypes  = pmdDescriptor.getParameterTypes();
+            parameterTypes  = pmdDescriptor.metaData.getParameterTypes();
             parameterValues = new Object[parameterTypes.length];
-            parameterModes  = pmdDescriptor.paramMode;
+            parameterModes  = pmdDescriptor.metaData.paramMode;
         } catch (Exception e) {
             throw Trace.error(Trace.GENERAL_ERROR, e.toString());
         }
 
         resultOut = new Result(ResultConstants.SQLEXECUTE,
-                               pmdDescriptor.colType, statementID);
+                               pmdDescriptor.metaData.colType, statementID);
 
         // for toString()
         this.sql = sql;

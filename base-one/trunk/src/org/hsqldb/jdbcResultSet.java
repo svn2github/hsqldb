@@ -1811,7 +1811,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         for (int i = 0; i < iColumnCount; i++) {
-            if (columnName.equals(rResult.sLabel[i])) {
+            if (columnName.equals(rResult.metaData.sLabel[i])) {
                 return i + 1;
             }
         }
@@ -5562,7 +5562,7 @@ public class jdbcResultSet implements ResultSet {
         Object o;
 
         try {
-            t = rResult.colType[--columnIndex];
+            t = rResult.metaData.colType[--columnIndex];
             o = nCurrent.data[columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,

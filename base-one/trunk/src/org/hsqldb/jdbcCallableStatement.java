@@ -258,7 +258,7 @@ implements CallableStatement {
         super(c, sql, type);
 
         outRegistrationMap = new IntKeyIntValueHashMap();
-        parameterNames     = pmdDescriptor.sName;
+        parameterNames     = pmdDescriptor.metaData.sName;
     }
 
     /**

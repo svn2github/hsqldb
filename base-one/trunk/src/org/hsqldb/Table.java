@@ -528,11 +528,12 @@ class Table {
         int colCount = result.getColumnCount();
 
         for (int i = 0; i < colCount; i++) {
-            Column column = new Column(
-                database.nameManager.newHsqlName(
-                    result.sLabel[i], result.isLabelQuoted[i]), true,
-                        result.colType[i], result.colSize[i],
-                        result.colScale[i], false, false, null);
+            Column column =
+                new Column(database.nameManager
+                    .newHsqlName(result.metaData.sLabel[i], result.metaData
+                        .isLabelQuoted[i]), true, result.metaData
+                            .colType[i], result.metaData.colSize[i], result
+                            .metaData.colScale[i], false, false, null);
 
             addColumn(column);
         }

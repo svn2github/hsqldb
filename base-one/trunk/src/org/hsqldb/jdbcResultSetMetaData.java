@@ -251,25 +251,30 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.catalogName     = r.sCatalog[i] == null ? ""
-                                                        : r.sCatalog[i];
-            cmd.schemaName      = r.sSchema[i] == null ? ""
-                                                       : r.sSchema[i];
-            cmd.tableName       = r.sTable[i] == null ? ""
-                                                      : r.sTable[i];
-            cmd.columnName      = r.sName[i] == null ? ""
-                                                     : r.sName[i];
-            cmd.columnLabel     = r.sLabel[i] == null ? ""
-                                                      : r.sLabel[i];
-            cmd.columnType      = r.colType[i];
+            cmd.catalogName = r.metaData.sCatalog[i] == null ? ""
+                                                             : r.metaData
+                                                             .sCatalog[i];
+            cmd.schemaName = r.metaData.sSchema[i] == null ? ""
+                                                           : r.metaData
+                                                           .sSchema[i];
+            cmd.tableName = r.metaData.sTable[i] == null ? ""
+                                                         : r.metaData
+                                                         .sTable[i];
+            cmd.columnName = r.metaData.sName[i] == null ? ""
+                                                         : r.metaData
+                                                         .sName[i];
+            cmd.columnLabel = r.metaData.sLabel[i] == null ? ""
+                                                           : r.metaData
+                                                           .sLabel[i];
+            cmd.columnType      = r.metaData.colType[i];
             cmd.columnTypeName  = Types.getTypeString(cmd.columnType);
-            cmd.columnClassName = r.sClassName[i];
-            cmd.isWritable      = r.isWritable[i];
+            cmd.columnClassName = r.metaData.sClassName[i];
+            cmd.isWritable      = r.metaData.isWritable[i];
             cmd.isReadOnly      = !cmd.isWritable;
 
             // default: cmd.isDefinitelyWritable = false;
-            cmd.isAutoIncrement = r.isIdentity[i];
-            cmd.isNullable      = r.nullability[i];
+            cmd.isAutoIncrement = r.metaData.isIdentity[i];
+            cmd.isNullable      = r.metaData.nullability[i];
             ditype              = cmd.columnType;
 
             if (cmd.columnType == Types.VARCHAR_IGNORECASE) {

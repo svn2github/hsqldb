@@ -98,7 +98,7 @@ class DatabaseScript {
         HsqlArrayList forwardFKSource = new HsqlArrayList();
         Result r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
 
-        r.sTable[0] = "SYSTEM_SCRIPT";
+        r.metaData.sTable[0] = "SYSTEM_SCRIPT";
 
         HsqlStringBuffer a;
 
