@@ -200,7 +200,7 @@ public class DataFileCache extends Cache {
             open(true);
 
             boolean        wasNio = dataFile.wasNio();
-            DataFileDefrag dfd   = new DataFileDefrag();
+            DataFileDefrag dfd    = new DataFileDefrag();
 
             indexRoots = dfd.defrag(dDatabase, sName);
 

@@ -1,8 +1,8 @@
 Readme File
 
-Dec 2004
+Jan 2004
 
-This package contains the latest release 1 of HSQLDB 1.7.3
+This package contains the latest revision 2 of HSQLDB 1.7.3
 
 HSQLDB is a relational database engine and a set of tools written in Java.
 

@@ -4307,6 +4307,14 @@ public class jdbcResultSet implements ResultSet {
 
         java.sql.Date date = getDate(columnIndex);
 
+        if (date == null) {
+            return null;
+        }
+
+        if (cal == null) {
+            return date;
+        }
+
         cal.setTime(date);
         HsqlDateTime.resetToDate(cal);
 
@@ -4366,6 +4374,14 @@ public class jdbcResultSet implements ResultSet {
                                  Calendar cal) throws SQLException {
 
         Time t = getTime(columnIndex);
+
+        if (t == null) {
+            return null;
+        }
+
+        if (cal == null) {
+            return t;
+        }
 
         cal.setTime(t);
         HsqlDateTime.resetToTime(cal);

@@ -585,6 +585,33 @@ examples:
         </jar>
     </target>
 
+    <target name="jarutil" depends="util,swing"
+            description="Build the utility hsqldbutil.jar">
+        <jar jarfile="lib/hsqldbutil.jar"
+             basedir="classes"
+             compress="true"
+         >
+         <manifest>
+             <!-- This attribute is completely ignored unless the user
+                  uses the jar like "java -jar .../hsqldb.jar" -->
+             <attribute name='Main-Class' value='org.hsqldb.util.DatabaseManager'/>
+         </manifest>
+         <include name="org/hsqldb/util/*.class"/>
+         <include name="org/hsqldb/lib/java/*.class"/>
+         <exclude name="org/hsqldb/util/Files.class"/>
+         <exclude name="org/hsqldb/util/ShutdownServer.class"/>
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>
+         <exclude name="org/hsqldb/util/Zaurus*.*"/>
+         <exclude name="org/hsqldb/test/*.class"/>
+         <exclude name="org/hsqldb/sample/*.class"/>
+         <exclude name="org/hsqldb/jdbc/*.class"/>
+         <exclude name="org/hsqldb/rowio/*.class"/>
+         <exclude name="org/hsqldb/scriptio/*.class"/>
+         <exclude name="org/hsqldb/*.class"/>
+      </jar>
+    </target>
+
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
       <javadoc

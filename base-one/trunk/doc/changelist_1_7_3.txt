@@ -5,6 +5,13 @@ hsqldb 1.7.3 in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.01.12 1.7.3.2
+
+Fixed issue with null values in calls to ResultSet methods with a Calendar
+argument.
+Enhancement to allow INSERT INTO <T> SELECT (....) where no column list
+list for the table T is specified.
+
 2004.12.24 1.7.3.1
 
 Corrected scripting of CHECK constraints with NOT NULL and IS NULL

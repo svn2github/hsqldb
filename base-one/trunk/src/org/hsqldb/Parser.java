@@ -2409,13 +2409,20 @@ class Parser {
 
         checkTableWriteAccess(table, UserManager.INSERT);
 
-        token           = tokenizer.getString();
         columnNames     = null;
         columnCheckList = null;
         columnMap       = table.getColumnMap();
         len             = table.getColumnCount();
 
-        if (token.equals(Token.T_OPENBRACKET)) {
+        int brackets = Parser.parseOpenBrackets(tokenizer);
+
+        token = tokenizer.getString();
+
+        if (brackets == 1 &&!Token.T_SELECT.equals(token)) {
+            brackets = 0;
+
+            tokenizer.back();
+
             columnNames = getColumnNames(database, tokenizer, false);
 
             if (columnNames.size() > len) {
@@ -2436,8 +2443,7 @@ class Parser {
             token = tokenizer.getString();
         }
 
-        int command  = Token.get(token);
-        int brackets = 0;
+        int command = Token.get(token);
 
         switch (command) {
 
