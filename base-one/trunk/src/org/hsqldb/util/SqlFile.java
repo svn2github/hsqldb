@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.69 2004/06/06 18:59:31 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.70 2004/06/07 15:42:10 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.69 $
+ * @version $Revision: 1.70 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.69 $".substring("$Revision: ".length(),
-                "$Revision: 1.69 $".length() - 2);
+        revnum = "$Revision: 1.70 $".substring("$Revision: ".length(),
+                "$Revision: 1.70 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -133,7 +133,7 @@ public class SqlFile {
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
         + "    :?          Help\n"
-        + "    :a          Enter append mode with contents of buffer as current command\n"
+        + "    :a [text]   Enter append mode with contents of buffer as current command\n"
         + "    :l          List current contents of buffer\n"
         + "    :s/from/to/ Substitute \"to\" for all occurrences of \"from\"\n"
         + "                ('$'s in \"from\" and \"to\" represent line breaks)\n"
@@ -535,6 +535,23 @@ public class SqlFile {
             case 'a':
             case 'A':
                 stringBuffer.append(commandFromHistory(0));
+                if (other != null) {
+                    String deTerminated = deTerminated(other);
+                    if (!other.equals(";")) {
+                        stringBuffer.append("\n"
+                        + ((deTerminated == null) ? other : deTerminated));
+                    }
+                    if (deTerminated != null) {
+                        // If we reach here, then stringBuffer contains a 
+                        // complete SQL command.
+                        curCommand = stringBuffer.toString();
+                        setBuf(curCommand);
+                        processStatement();
+                        stringBuffer.setLength(0);
+                        return;
+                    }
+                }
+                stdprintln("Appending to:\n" + stringBuffer);
                 return;
             case 'l':
             case 'L':
