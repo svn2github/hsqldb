@@ -100,9 +100,12 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
             int checkCount = readTableTerm();
 
             if (j != checkCount) {
-                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  Trace.BinaryDatabaseScriptReader_readExistingData,
-                                  new Object[]{ s, new Integer( j ), new Integer( checkCount ) } );
+                throw Trace.error(
+                    Trace.ERROR_IN_SCRIPT_FILE,
+                    Trace.BinaryDatabaseScriptReader_readExistingData,
+                    new Object[] {
+                    s, new Integer(j), new Integer(checkCount)
+                });
             }
         }
     }

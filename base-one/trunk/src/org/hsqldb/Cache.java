@@ -68,10 +68,8 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.io.File;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.ObjectComparator;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.StopWatch;
 
@@ -127,13 +125,17 @@ import org.hsqldb.lib.StopWatch;
  * @see        CachedRow
  * @see        CacheFree
  */
-class Cache {
+abstract class Cache {
+
+    final static int CACHE_TYPE_DATA         = 0;
+    final static int CACHE_TYPE_TEXT         = 1;
+    final static int CACHE_TYPE_REVERSE_TEXT = 2;
 
     // cached row access counter
     static int iCurrentAccess = 0;
 
     // pre openning fields
-    private Database dDatabase;
+    protected Database dDatabase;
 
 // boucherb@users - access changed for metadata 1.7.2
     protected HsqlDatabaseProperties dbProps;
@@ -179,7 +181,6 @@ class Cache {
     //
     private CachedRow        rFirst;              // must point to one of rData[]
     private CachedRow        rLastChecked;        // can be any row
-    private static final int MAX_FREE_COUNT = 1024;
 
     // outside access allowed to all below only for metadata
     CacheFree fRoot;
@@ -193,9 +194,26 @@ class Cache {
     // for testing
     StopWatch sw;
 
-    Cache(String name, Database db) throws HsqlException {
+    static Cache newCache(String name, Database db,
+                          int type) throws HsqlException {
 
-        sName     = name;
+        switch (type) {
+
+            case CACHE_TYPE_DATA :
+                return new DataFileCache(name, db);
+
+            case CACHE_TYPE_TEXT :
+                return new TextCache(name, db);
+
+            case CACHE_TYPE_REVERSE_TEXT :
+                return new ReverseTextCache(name, db);
+        }
+
+        return null;
+    }
+
+    Cache(Database db) throws HsqlException {
+
         dDatabase = db;
         dbProps   = db.getProperties();
 
@@ -227,7 +245,7 @@ class Cache {
      *  Structural initialisations take place here. This allows the Cache to
      *  be resized while the database is in operation.
      */
-    private void init() {
+    protected void init() {
 
         cacheReadonly = dDatabase.filesReadOnly;
         cacheLength   = 1 << cacheScale;
@@ -250,171 +268,11 @@ class Cache {
         iCacheSize     = 0;
     }
 
-    private void initBuffers() throws HsqlException {
-        rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
-        rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
-    }
-
-    /**
-     * Opens the *.data file for this cache, setting the variables that
-     * allow accesse to the particular database version of the *.data file.
-     */
-    void open(boolean readonly) throws HsqlException {
-
-        try {
-            boolean exists = false;
-            File    f      = new File(sName);
-
-            if (f.exists() && f.length() > FREE_POS_POS) {
-                exists = true;
-            }
-
-            rFile = new DatabaseFile(sName, readonly ? "r"
-                                                     : "rw", 2048);
-
-            if (exists) {
-                rFile.readSeek(FREE_POS_POS);
-
-                iFreePos = rFile.readInteger();
-            } else {
-
-// erik - iFreePos = INITIAL_FREE_POS / cacheFileScale;
-                iFreePos = INITIAL_FREE_POS;
-
-                dbProps.setProperty("hsqldb.cache_version", "1.7.0");
-            }
-
-            String cacheVersion = dbProps.getProperty("hsqldb.cache_version",
-                "1.6.0");
-
-            if (cacheVersion.equals("1.7.0")) {
-                cachedRowType = DatabaseRowOutput.CACHED_ROW_170;
-            }
-
-            initBuffers();
-        } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " opening file " + sName);
-        }
-    }
-
-    /**
-     *  Writes out all cached rows that have been modified and the free
-     *  position pointer for the *.data file and then closes the file.
-     */
-    void flush() throws HsqlException {
-
-        if (rFile == null || rFile.readOnly) {
-            return;
-        }
-
-        try {
-            rFile.seek(FREE_POS_POS);
-            rFile.writeInteger(iFreePos);
-            saveAllNew();
-
-//            saveAll();
-            rFile.close();
-
-            rFile = null;
-
-            boolean empty = new File(sName).length() < INITIAL_FREE_POS;
-
-            if (empty) {
-                new File(sName).delete();
-            }
-        } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " closing file " + sName);
-        }
-    }
-
-    /**
-     *  Writes out all the rows to a new file without fragmentation and
-     *  returns an ArrayList containing new positions for index roots.
-     */
-    HsqlArrayList defrag() throws HsqlException {
-
-        HsqlArrayList indexRoots = null;
-
-        try {
-            flush();
-
-            if (!FileUtil.exists(sName)) {
-                return null;
-            }
-
-            open(true);
-
-            DataFileDefrag dfd = new DataFileDefrag();
-
-            indexRoots = dfd.defrag(dDatabase, rFile, sName);
-
-            closeFile();
-            Trace.printSystemOut("closed source");
-            new File(sName).delete();
-            new File(sName + ".new").renameTo(new File(sName));
-            init();
-            open(cacheReadonly);
-            Trace.printSystemOut("opened new file");
-        } catch (Exception e) {
-            e.printStackTrace();
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " defrag file " + sName);
-        }
-
-        return indexRoots;
-    }
-
-    /**
-     *  Closes this object's database file without flushing pending writes.
-     */
-    void closeFile() throws HsqlException {
-
-        if (rFile == null) {
-            return;
-        }
-
-        try {
-            rFile.close();
-
-            rFile = null;
-        } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " in shutdown file " + sName);
-        }
-    }
-
-    /**
-     * Used when a row is deleted as a result of some DML or DDL command.
-     * Adds the file space for the row to the list of free positions.
-     * If there exists more than MAX_FREE_COUNT free positions,
-     * then they are probably all too small, so we start a new list. <p>
-     * todo: This is wrong when deleting lots of records <p>
-     * Then remove the row from the cache data structures.
-     */
-    void free(CachedRow r) throws HsqlException {
-
-        fileModified = true;
-
-        iFreeCount++;
-
-        CacheFree n = new CacheFree();
-
-        n.iPos    = r.iPos;
-        n.iLength = r.storageSize;
-
-        if (iFreeCount > MAX_FREE_COUNT) {
-            iFreeCount = 0;
-        } else {
-            n.fNext = fRoot;
-        }
-
-        fRoot = n;
-
-        // it's possible to remove roots too
-        remove(r);
-    }
+    abstract void open(boolean readonly) throws HsqlException;
+    abstract void flush() throws HsqlException;
+    abstract HsqlArrayList defrag() throws HsqlException;
+    abstract void closeFile() throws HsqlException;
+    abstract void free(CachedRow r) throws HsqlException;
 
     /**
      * Calculates the number of bytes required to store a Row in this object's
@@ -441,9 +299,7 @@ class Cache {
         fileModified = true;
 
         if (iCacheSize >= maxCacheSize) {
-            cleanUpNew();
-
-//            cleanUp();
+            cleanUp();
         }
 
         setStorageSize(r);
@@ -478,92 +334,8 @@ class Cache {
         rFirst   = r;
     }
 
-    /**
-     * Allocates file space for the row. <p>
-     *
-     * A Row is added by walking the list of CacheFree objects to see if
-     * there is available space to store it, reusing space if it exists.
-     * Otherwise the file is grown to accommodate it.
-     */
-    int setFilePos(CachedRow r) throws HsqlException {
-
-        int       rowSize = r.storageSize;
-        int       size    = rowSize;
-        CacheFree f       = fRoot;
-        CacheFree last    = null;
-        int       i       = iFreePos;
-
-        while (f != null) {
-            if (Trace.TRACE) {
-                Trace.stop();
-            }
-
-            // first that is long enough
-            if (f.iLength >= size) {
-                i    = f.iPos;
-                size = f.iLength - size;
-
-                if (size < 32) {
-
-                    // remove almost empty blocks
-                    if (last == null) {
-                        fRoot = f.fNext;
-                    } else {
-                        last.fNext = f.fNext;
-                    }
-
-                    iFreeCount--;
-                } else {
-                    f.iLength = size;
-
-// erik  f.iPos += rowSize / cacheFileScale
-                    f.iPos += rowSize;
-                }
-
-                break;
-            }
-
-            last = f;
-            f    = f.fNext;
-        }
-
-        if (i == iFreePos) {
-
-// erik  iFreePs += size / cacheFileScale
-            iFreePos += size;
-        }
-
-        r.setPos(i);
-
-        return i;
-    }
-
-    /**
-     * Constructs a new Row for the specified table, using row data read
-     * at the specified position (pos) in this object's database file.
-     */
-    protected CachedRow makeRow(int pos, Table t) throws HsqlException {
-
-        CachedRow r = null;
-
-        try {
-
-// erik -  rFile.readSeek(pos*cacheFileScale);
-            rFile.readSeek(pos);
-
-            int size = rFile.readInteger();
-
-            rowIn.resetRow(pos, size);
-            rFile.read(rowIn.getBuffer(), 4, size - 4);
-
-            r = new CachedRow(t, rowIn);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Trace.throwerror(Trace.FILE_IO_ERROR, "reading file : " + e);
-        }
-
-        return r;
-    }
+    abstract int setFilePos(CachedRow r) throws HsqlException;
+    abstract protected CachedRow makeRow(int pos, Table t) throws HsqlException;
 
     /**
      * Reads a Row object from this Cache that corresponds to the
@@ -580,9 +352,7 @@ class Cache {
         }
 
         if (iCacheSize >= maxCacheSize) {
-            cleanUpNew();
-
-//            cleanUp();
+            cleanUp();
         }
 
         //-- makeRow in text tables may change iPos because of blank lines
@@ -646,81 +416,10 @@ class Cache {
      * Reduces the number of rows held in this Cache object. <p>
      *
      * Cleanup is done by checking the accessCount of the Rows and removing
-     * some of those that have been accessed less recently.
+     * the third of the rows that have been accessed less recently.
      *
      */
     private void cleanUp() throws HsqlException {
-
-        if (sw == null) {
-            sw = new StopWatch();
-        }
-
-        sw.start();
-
-        int count  = 0;
-        int j      = 0;
-        int jlimit = iCacheSize / 6;
-
-        resetAccessCount();
-
-        rLastChecked = null;
-
-        // HJB-2001-06-21
-        while (j++ < jlimit && iCacheSize > maxCacheSize / 2
-                && count < writerLength) {
-            CachedRow r = getWorst();
-
-            if (r == null) {
-                return;
-            }
-
-            if (r.hasChanged()) {
-
-                // HJB-2001-06-21
-                // make sure that the row will not be added twice
-                // getWorst() in some cases returns the same row many times
-
-                /**
-                 *  for (int i=0;i<count;i++) { if (rowTable[i]==r) { r=null;
-                 *  break; } } if (r!=null) { rowTable[count++] = r; }
-                 */
-                rowTable[count++] = r;
-            } else {
-
-                // here we can't remove roots
-                if (!r.isRoot()) {
-                    remove(r);
-                }
-            }
-        }
-
-        if (count != 0) {
-            saveSorted(count);
-        }
-
-        for (int i = 0; i < count; i++) {
-
-            // here we can't remove roots
-            CachedRow r = rowTable[i];
-
-            if (!r.isRoot()) {
-                remove(r);
-            }
-
-            rowTable[i] = null;
-        }
-
-        sw.stop();
-    }
-
-    /**
-     * Reduces the number of rows held in this Cache object. <p>
-     *
-     * Cleanup is done by checking the accessCount of the Rows and removing
-     * some of those that have been accessed less recently.
-     *
-     */
-    private void cleanUpNew() throws HsqlException {
 
         if (sw == null) {
             sw = new StopWatch();
@@ -910,52 +609,6 @@ class Cache {
         }
 
         System.out.println(
-            sw.elapsedTimeToMessage("Cache.saveAll() total cleanup time"));
-
-        if (rFirst == null) {
-            return;
-        }
-
-        CachedRow r = rFirst;
-
-        while (true) {
-            int       count = 0;
-            CachedRow begin = r;
-
-            do {
-                if (Trace.STOP) {
-                    Trace.stop();
-                }
-
-                if (r.hasChanged()) {
-                    rowTable[count++] = r;
-                }
-
-                r = r.rNext;
-            } while (r != begin && count < writerLength);    // HJB-2001-06-21
-
-            if (count == 0) {
-                return;
-            }
-
-            saveSorted(count);
-
-            for (int i = 0; i < count; i++) {
-                rowTable[i] = null;
-            }
-        }
-    }
-
-    /**
-     * Writes out all modified cached Rows.
-     */
-    protected void saveAllNew() throws HsqlException {
-
-        if (sw == null) {
-            sw = new StopWatch();
-        }
-
-        System.out.println(
             sw.elapsedTimeToMessage("Cache.saveAll total cleanup time"));
 
         if (rFirst == null) {
@@ -992,20 +645,7 @@ class Cache {
         }
     }
 
-    /**
-     * Writes out the specified Row. Will write only the Nodes or both Nodes
-     * and table row data depending on what is not already persisted to disk.
-     */
-    protected void saveRow(CachedRow r) throws IOException, HsqlException {
-
-        rowOut.reset();
-
-// erik - multiply position by cacheFileScale   rFile.seek(r.iPos * cacheFileScale);
-        rFile.seek(r.iPos);
-        r.write(rowOut);
-        rFile.write(rowOut.getOutputStream().getBuffer(), 0,
-                    rowOut.getOutputStream().size());
-    }
+    abstract protected void saveRow(CachedRow r) throws IOException, HsqlException;
 
     /**
      * Writes out the first count rowTable Rows in iPos

@@ -47,7 +47,7 @@ import org.hsqldb.lib.FileUtil;
  */
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
-class TextCache extends Cache {
+class TextCache extends DataFileCache {
 
     //state of Cache
     private boolean                isIndexingSource;
@@ -291,7 +291,7 @@ class TextCache extends Cache {
         }
 
         try {
-            saveAllNew();
+            saveAll();
 
             boolean empty = (rFile.length() <= NL.length());
 

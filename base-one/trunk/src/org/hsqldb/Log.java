@@ -345,7 +345,8 @@ class Log {
         }
 
         if (cCache == null) {
-            cCache = new Cache(sFileCache, this.dDatabase);
+            cCache = Cache.newCache(sFileCache, this.dDatabase,
+                                    Cache.CACHE_TYPE_DATA);
 
             cCache.open(filesReadOnly);
         }
@@ -697,13 +698,16 @@ class Log {
             }
         }
 
-        TextCache c;
+        Cache c;
+        int   type;
 
         if (reversed) {
-            c = new ReverseTextCache(source, dDatabase);
+            type = Cache.CACHE_TYPE_REVERSE_TEXT;
         } else {
-            c = new TextCache(source, dDatabase);
+            type = Cache.CACHE_TYPE_TEXT;
         }
+
+        c = Cache.newCache(source, dDatabase, type);
 
         c.open(readOnlyData || filesReadOnly);
         textCacheList.put(tablename, c);
