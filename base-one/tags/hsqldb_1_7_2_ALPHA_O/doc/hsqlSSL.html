@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+    <META http-equiv="Content-Type" content="text/html">
+    <TITLE>TLS Support</TITLE>
+</HEAD>
+
+<BODY>
+<CENTER><H1>TLS Support</H1></CENTER>
+(A.k.a. SSL.)
+The instructions in this document are liable to change at any time.
+In particular, we will be changing the method to supply the server-side
+certificate password.
+<H2>Requirements</H2>
+<UL>
+    <LI>Java 2.x and up
+    <LI>If Java 2.x or 3.x, then you will need need to
+     <A href="#jsse">install JSSE</A>.
+     Your server and/or client will start up much slower than that of 
+     Java 4.x users.
+     Client-side users will not be able to use the https: JDBC protocol
+      (because the https protocol handler is not implemented in 2.x/3.x
+      Java JSSE; if there is demand, we could work around this).
+    <LI>A <A href="#keystore">JKS keystore containing a private key</A>, in
+      order to run a server.
+</UL>
+<H2>Encrypting your JDBC connection</H2>
+At this time, only 1-way, server-cert encryption is tested.
+<P>
+<SPAN style="font-weight: bold">CLIENT-SIDE</SPAN>
+<P>
+    Just use one of the following protocol prefixes.
+    <UL>
+    	<LI>jdbc:hsqldb:hsqls://
+    	<LI>jdbc:hsqldb:https://
+    </UL>
+    At this time, the latter will only work for clients running with Java 1.4.
+    <P>
+    If the server you wish to connect to is using a certificate approved by
+    your default trust keystores, then there is nothing else to do.  If not,
+    then you need to tell Java to "trust" the server cert.
+    <P>
+    First, you need to obtain the cert (only the "public" part of it).
+    Since this cert is passed to all clients, you could obtain it by writing
+     a java client that dumps it to file, or perhaps by using 
+     <SPAN style="font-style: italic">openssl s_client</SPAN>.
+    Since in most cases, if you want to trust a non-commercial cert, you
+     probably have access to the server keystore, I'll show an example of
+     how to get what you need from the server-side JKS keystore.
+    <P>
+    <CODE>
+     keytool -export -keystore server.store -alias existing_alias -file server.cer
+    </CODE>
+    <P>
+    What you need is the file 
+    <SPAN style="font-style: italic">server.cer</SPAN>.
+    Now, you need to add this cert to one of the system trust keystores
+    or to a keystore of your own.
+    See 
+    <A href=
+    "http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html#CustomizingStores">
+     the Customizing Stores section in JSSERefGuide.html</A>
+     to see where your system trust keystores are.
+    You can put private keystores anywhere you want to.
+    The following command will add the cert to an existing keystore, or create
+    a new keystore if "client.store" doesn't exist.
+    <P>
+    <CODE>
+     keytool -import -trustcacerts -keystore trust.store -alias new_alias -file server.cer
+    </CODE>
+    <P>
+    Unless your OS can't stop other people from writing to your files, you
+    probably do not want to set a password on the trust keystore.
+    <P>
+    If you added the cert to a system trust store, then you are finished.
+    Otherwise, you will need to set the sytem property
+     javax.net.ssl.trustStore every time that you run your client program.
+    For example
+    <P>
+    <CODE>
+java -cp /path/to/hsqldb.jar -Djavax.net.ssl.trustStore=/home/blaine/trust.store org.hsqldb.util.DatabaseManager
+    </CODE>
+    <P>
+    N.b.  The hostname in your database URL must match the 
+    <SPAN style="font-style: italic">Common Name</SPAN> of the server's
+    certificate exactly.
+    That means that if a site certificate is 
+    <SPAN style="font-style: italic">admc.com</SPAN>, you can not use
+    <SPAN style="font-style: italic">jdbc:hsqldb:hsqls://localhost</SPAN> or
+  <SPAN style="font-style: italic">jdbc:hsqldb:hsqls://www.admc.com:1100</SPAN>
+    to connect to it.
+    <P>
+    If you want more details on anything, see JSSERefGuide.html on
+    <A href=
+    "http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html">
+    	Sun's site</A>, or in the subdirectory 
+	docs/guide/security/jsse of your Java SE docs.
+
+<P>
+<SPAN style="font-weight: bold">SERVER-SIDE</SPAN>
+<P>
+Get yourself a <A href="#keystore">JKS keystore containing a private key</A>.
+Then set the system property javax.net.ssl.keyStore to the path to that file,
+and javax.net.ssl.keyStorePassword to the password of the keystore (and to
+the private key-- they have to be the same).  Example
+    <P>
+    <CODE>
+     java -Djavax.net.ssl.keyStorePassword=secret -Djavax.net.ssl.keyStore=/usr/hsqldb/db/db3/server.store -cp /path/to/hsqldb.jar org.hsqldb.Server -port 9005 -database /usr/hsqldb/db/db3/db3
+
+    </CODE>
+    <P>
+Note that specifying a password on the command-line is definitely
+<SPAN style="font-weight: bold">not secure</SPAN>.
+It's really only appropriate when untrusted users do not have any
+access to your computer.
+Before long, we will have a more secure way to give the password.
+
+<A name="jsse"/>
+<H2>JSSE</H2>
+If you are running Java 4.x, then you are all set.
+Java 1.x users, you are on your own (Sun does not provide a JSSE that will
+work with 1.x).
+Java 2.x and 3.x users continue...
+<P>
+Go to <A href="http://java.sun.com/products/jsse/index-103.html">
+http://java.sun.com/products/jsse/index-103.html</A>.
+If you agree to the terms and meet the requirements, download the domestic 
+or global JSSE software.
+All you from the software is the three jar files.
+If you have a JDK installation, then move the 3 jar files into the directory 
+$JAVA_HOME/jre/lib/ext.
+If you have a JRE installation, then move the 3 jar files into the directory 
+$JAVA_HOME/lib/ext.
+<P>
+Pretty painless.
+<A name="keystore"/>
+<H2>Making a Private-key Keystore</H2>
+There are two main ways to do this.
+Either you can use a certificate signed by a certificate authority, or
+you can make your own.
+One thing that you need to know in both cases is,
+the <SPAN style="font-weight: bold">Common Name</SPAN> of the cert
+has to be the exact hostname that JDBC clients will use in their database URL.
+<P>
+<SPAN style="font-weight: bold">CA-SIGNED CERT</SPAN>
+<P>
+I'm not going to tell you how to get a CA-signed SSL certificate.
+That is well documented at many other places.
+<P>
+Assuming that you have a standard pem-style private key certificate, here's
+how you can use <A href="http://www.openssl.org">openssl</A> and the program
+DERImport to get it into a JKS keystore.
+<P>
+Because I have spent a lot of time on this document already, I am just
+giving you an example.
+    <P>
+    <CODE>
+    openssl pkcs8 -topk8 -outform DER -in Xpvk.pem -inform PEM -out Xpvk.pk8 -nocrypt
+    <BR>
+    openssl x509 -in Xcert.pem -out Xcert.der -outform DER
+    <BR>java DERImport new.keystore NEWALIAS Xpvk.pk8 Xcert.der
+    </CODE>
+    <P>
+You need the program DERImport.class of course.
+Do some internet searches to find DERImport.java or DERImport.class and
+download it.
+<P>
+If DERImport has become difficult to obtain, I can write a program to do
+the same thing-- just let me know.
+<P>
+<SPAN style="font-weight: bold">NON-CA-SIGNED CERT</SPAN>
+<P>
+Run <SPAN style="font-style: italic">man keytool</SPAN> or see
+<A href="http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html#CreateKeystore">the Creating a Keystore section of JSSERefGuide.html<A>.
+<H2>Author</H2>
+Written by
+<A href="mailto:blaine.simpson@admc.com?subject=hsqlSSL.html">blaine.simpson@admc.com</A> (a.k.a. <SPAN style="font-style: italic">unsaved</SPAN> at 
+<A href="http://sourceforge.net">http://sourceforge.net</A>).
+<BR>
+Document revision $Revision: 1.5 $.
+<BR>
+Last updated $Date: 2003/06/05 13:32:52 $.
+</BODY>
