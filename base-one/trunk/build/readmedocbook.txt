@@ -1,0 +1,56 @@
+How to build Hsqldb documentation from DocBook source
+-----------------------------------------------------
+
+$Id$
+
+1.  OBTAIN REQUIRED LIBRARIES AND STYLE SHEETS
+
+If you are building on one of the Sourceforge shell servers, then you can 
+skip this step because I have all of the needed resources under
+/home/users/us/unsaved.  You shouldn't build docs on Sourceforge unless
+you are a developer who is building the documentation for publishing.
+
+You need the following resources.
+In all cases, use the latest stable version unless there is some
+specific reason to use something else.
+
+    ant-contrib*.jar from ant-contrib-*-bin.*, available from 
+    http://sourceforge.net/projects/showfiles.php?group_id=36177
+    Place this jar into the lib subdirectory of your Ant installation.
+
+    The docbook-xsl package from 
+  http://sourceforge.net/projects/showfiles.php?group_id=21935&package_id=16608
+    (or, for Linux RPM users, the docbook-xsl-stylesheets package).
+    You need at least version 1.61.
+    Extract anyplace.
+
+That's all if you just want to build HTML docs.  If you want to build
+PDF or postscript, then you also need the following.
+
+    Binary distro of FOP, available from
+    http://www.apache.org/dyn/closer.cgi/xml/fop
+    Extract it anyplace.
+
+    JimiProClasses.zip from Sun's JIMI SDK, available at 
+    http://java.sun.com/products/jimi
+    Just pull the JimiProClasses.zip file out and rename it to 
+    jimi-1.0.jar in the lib subdirectory of your FOP installation.
+    (If this seems weird to you, read about it in the FOP docs.
+    Note that we use JIMI insnstead of JAI because JAI is non-portable).
+
+
+2.  MAKE A build.properties TO TELL Ant WHERE TO FIND THE LIBRARIES AND
+    STYLE SHEETS
+
+Create a Java properties file named "build.properties" in the same directory 
+as this readme file.  (If there's already one there, then just add to it).
+Add values for 'docbook.xsl.home' and for 'fop.home'.
+This example build.properties file (which works on cvs.sourceforge.net)
+shows what is needed.
+
+    docbook.xsl.home: /home/users/u/un/unsaved/docbook-xsl-1.65.1
+    fop.home: /home/users/u/un/unsaved/fop-0.20.5
+
+(RPM users be aware that docbook-xsl-stylesheets installs the style
+sheets under /usr/share/sgml/docbook/docbook-xsl-stylesheets.  Run
+"rpm -ql docbook-xsl-stylesheets").
