@@ -45,13 +45,24 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.29 2004/02/16 15:05:09 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.30 2004/02/16 18:38:20 unsaved Exp $ */
 
 /**
- * Definitions.
- * COMMAND = Statement || Special
+ * Encapsulation of a sql text file like 'myscript.sql'.
+ * The ultimate goal is to run the execute() method to feed the SQL
+ * commands within the file to a jdbc connection.
+ *
+ * Some implementation comments and variable names use keywords based
+ * on the following definitions.  <UL>
+ * <LI> COMMAND = Statement || SpecialCommand || BufferCommand
  * Statement = SQL statement like "SQL Statement;"
- * Special =   Special Command like "\x arg..."
+ * SpecialCommand =  Special Command like "\x arg..."
+ * BufferCommand =  Editing/buffer command like ":s/this/that/"
+ *
+ * When entering SQL statements, you are always "appending" to the
+ * "current" command (not the "buffer", which is a different thing).
+ * All you can do to the current command is append new lines to it,
+ * execute it, or save it to buffer.
  *
  * In general, the special commands mirror those of Postgresql's psql,
  * but SqlFile handles command editing much different from Postgresql
@@ -60,8 +71,15 @@ import java.util.StringTokenizer;
  * Also, to keep the code simpler, we're sticking to only single-char
  * special commands until we really need more.
  *
- * For now, using Sql*plus's method of only keeping SQL statements
- * in history (as opposed to Special commands and comments).
+ * Buffer commands are uniqueue to SQLFile.  The ":" commands allow 
+ * you to edit the buffer and to execute the buffer.
+ *
+ * The command history consists only of SQL Statements (i.e., special
+ * commands and editing commands are not stored for later viewing or
+ * editing).
+ *
+ * Most of the Special Commands and all of the Editing Commands are for
+ * interactive use only.
  */
 public class SqlFile {
 
@@ -101,27 +119,28 @@ public class SqlFile {
         + "    :;          Execute current buffer as an SQL Statement\n"
         ;
     final private static String HELP_TEXT =
-        "**********    SPECIAL COMMANDS MARKED !!! DO NOT WORK YET!!!  *******\n"
-        + "SPECIAL Commands.\n"
+        "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
         + "    \\?                   Help\n"
-        + " !!!\\! [command to run]  * Shell out\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\dt                  List tables\n"
         + "    \\d TABLENAME         Describe table\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
-        + "    \\s                   * Show previous commands\n"
-        + "    \\-[3]                * reload a previous command for appending\n"
-        + "    \\-[3];               * reload and execute a previous command\n"
-        + " !!!\\e [3]               * Edit a previous command in external editor\n"
+        + "    \\s                   * Show previous commands (i.e. command history)\n"
+        + "    \\-[3]                * reload a command to buffer (for / commands)\n"
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
-        + "    \\s\n" + "    \\e 3\n" + "    ;\n";
+        + "    \\s\n" + "    \\-3\n" + "    /;\n";
 
     /**
+     * Interpret lines of input file as SQL Statements, Comments, 
+     * Special Commands, and Buffer Commands.
+     * Most Special Commands and many Buffer commands are only for
+     * interactive use.
+     * 
      * @param inFile  inFile of null means to read stdin.
      * @param inInteractive  If true, prompts are printed, the interactive
      *                       Special commands are enabled, and
@@ -137,10 +156,21 @@ public class SqlFile {
         }
     }
 
+    /**
+     * Constructor for reading stdin instead of a file for commands.
+     *
+     * @see #SqlFile(File,boolean)
+     */
     SqlFile(boolean inInteractive) throws IOException {
         this(null, inInteractive);
     }
 
+    /**
+     * Process all the commands on stdin.
+     *
+     * @param conn The JDBC connection to use for SQL Commands.
+     * @see #execute(Connection,PrintStream,PrintStream)
+     */
     public void execute(Connection conn)
     throws IOException, SqlToolError, SQLException {
         execute(conn, System.out, System.err);
@@ -152,6 +182,7 @@ public class SqlFile {
     private PrintStream psStd      = null;
     private PrintStream psErr      = null;
     StringBuffer        stringBuffer  = new StringBuffer();
+
     /*
      * This is reset upon each execute() invocation (to true if interactive,
      * false otherwise).
@@ -159,10 +190,14 @@ public class SqlFile {
     private boolean continueOnError = false;
 
     /**
+     * Process all the commands in the file (or stdin) associated with
+     * "this" object.
      * Run SQL in the file through the given database connection.
      *
      * This is synchronized so that I can use object variables to keep
      * track of current line number, command, connection, i/o streams, etc.
+     *
+     * @param conn The JDBC connection to use for SQL Commands.
      */
     public synchronized void execute(Connection conn, PrintStream stdIn,
                                      PrintStream errIn)
@@ -291,9 +326,9 @@ public class SqlFile {
                     if (deTerminated == null) {
                         continue;
                     }
+
                     // If we reach here, then stringBuffer contains a complete
                     // SQL command.
-
                     curCommand     = stringBuffer.toString();
                     trimmedCommand = curCommand.trim();
 
@@ -344,6 +379,9 @@ public class SqlFile {
     /**
      * Returns a copy of given string without a terminating semicolon.
      * If there is no terminating semicolon, null is returned.
+     *
+     * @param inString Base String, which will not be modified (because
+     *                 a "copy" will be returned).
      */
     static private String deTerminated(String inString) {
 
@@ -362,14 +400,21 @@ public class SqlFile {
         return inString.substring(0, index);
     }
 
+    /**
+     * Utility nested Exception class for internal use.
+     */
     private class BadSpecial extends Exception {
         private BadSpecial(String s) {
             super(s);
         }
     }
-
+    /**
+     * Utility nested Exception class for internal use.
+     */
     private class QuitNow extends Exception {}
-
+    /**
+     * Utility nested Exception class for internal use.
+     */
     private class BadSwitch extends Exception {
         private BadSwitch(int i) {
             super(Integer.toString(i));
@@ -377,9 +422,11 @@ public class SqlFile {
     }
 
     /**
-     * Process a Buffer Command.
+     * Process a Buffer/Edit Command.
      *
+     * @param inString Complete command, less the leading ':' character.
      * @throws SQLException Passed through from processStatement()
+     * @throws BadSpecial Runtime error()
      */
     private void processBuffer(String inString)
     throws BadSpecial, SQLException {
@@ -459,7 +506,10 @@ public class SqlFile {
     /**
      * Process a Special Command.
      *
+     * @param inString Complete command, less the leading '\' character.
      * @throws SQLException Passed through from processStatement()
+     * @throws BadSpecial Runtime error()
+     * @throws QuitNot Command execution (but not the JVM!) should stop
      */
     private void processSpecial(String inString)
     throws BadSpecial, QuitNow, SQLException {
@@ -569,6 +619,11 @@ public class SqlFile {
         throw new BadSpecial("Unknown Special Command");
     }
 
+    /**
+     * Encapsulates normal output.
+     *
+     * Conditionally HTML-ifies output.
+     */
     private void stdprint() {
 
         if (htmlMode) {
@@ -578,21 +633,43 @@ public class SqlFile {
         }
     }
 
+    /**
+     * Encapsulates error output.
+     *
+     * Conditionally HTML-ifies error output.
+     */
     private void errprint(String s) {
-
         psErr.println(htmlMode
                       ? ("<DIV style='color:white; background: red; "
                          + "font-weight: bold'>" + s + "</DIV>")
                       : s);
     }
 
+    /**
+     * Encapsulates normal output.
+     *
+     * Conditionally HTML-ifies output.
+     */
     private void stdprint(String s) {
         psStd.println(htmlMode ? ("<P>" + s + "</P>")
                                : s);
     }
 
+    /**
+     * Lists available database tables.
+     * This method needs work.  See the implementation comments.
+     */
     private void listTables() throws SQLException {
 
+        /*
+         * Need to investigate what tables should be excluded for the major
+         * databases (perhaps hsqldb, Oracle, Postgresql, db2, mysql, msql)),
+         * see what tables need to be excluded for each, and what method that
+         * work can be done in.  It'd be simplest if that work can stay here.
+         *
+         * Need to do this because without it, for example, Oracle shows 
+         * hundreds of Database Dictionary tables.
+         */
         int[] listTableCols = { 3 };
         java.sql.DatabaseMetaData md = curConn.getMetaData();
         String dbProductName = md.getDatabaseProductName();
@@ -612,6 +689,9 @@ public class SqlFile {
             listTableCols, excludePrefix);
     }
 
+    /**
+     * Process the currenct command as an SQL Statement
+     */
     private void processStatement() throws SQLException {
 
         Statement statement = curConn.createStatement();
@@ -620,10 +700,26 @@ public class SqlFile {
         displayResultSet(statement, statement.getResultSet(), null, null);
     }
 
+    /**
+     * Display the given result set for user.
+     *
+     * @param statement The SQL Statement that the result set is for.
+     *                  (I think that this is just for reporting purposes.
+     * @param r         The ResultSet to display.
+     * @param incCols   Optional list of which columns to include (i.e., if
+     *                  given, then other columns will be skipped).
+     * @param exclPref  Exclude prefix to filter out some records.  See impl.
+     *                  notes.
+     */
     private void displayResultSet(Statement statement, ResultSet r,
                                   int[] incCols,
                                   String exclPref) throws SQLException {
-
+        /*
+         * The last 2 params are so that this method will work for 
+         * metadata work.
+         * This reduces redundancy, but does make things a bit inelegant.
+         * Hopefully there's a better way to accomplish the same ends.
+         */
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
 
@@ -819,35 +915,54 @@ public class SqlFile {
     static private final String PRE_TR   = spaces(4);
     static private final String PRE_TD   = spaces(8);
 
+    /**
+     * Print a properly formatted HTML &lt;TR&gt; command for the given 
+     * situation.
+     *
+     * @param colType Column type:  COL_HEAD, COL_ODD or COL_EVEN.
+     */
     static private String htmlRow(int colType) {
-
         switch (colType) {
-
             case COL_HEAD :
                 return PRE_TR + "<TR style='font-weight: bold;'>";
-
             case COL_ODD :
                 return PRE_TR
                        + "<TR style='background: #94d6ef; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
-
             case COL_EVEN :
                 return PRE_TR
                        + "<TR style='background: silver; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
         }
-
         return null;
     }
 
+    /**
+     * Returns a divider of hypens of requested length.
+     *
+     * @param len Length of output String.
+     */
     static private String divider(int len) {
         return (len > DIVIDER.length()) ? DIVIDER
                                         : DIVIDER.substring(0, len);
     }
 
+    /**
+     * Returns a String of spaces of requested length.
+     *
+     * @param len Length of output String.
+     */
     static private String spaces(int len) {
         return (len > SPACES.length()) ? SPACES
                                        : SPACES.substring(0, len);
     }
 
+    /**
+     * Pads given input string out to requested length with space
+     * characters.
+     *
+     * @param inString Base string.
+     * @param fulllen  Output String length.
+     * @param rightJustify  True to right justify, false to left justify.
+     */
     static private String pad(String inString, int fulllen,
                               boolean rightJustify) {
 
@@ -864,6 +979,10 @@ public class SqlFile {
                                                                : pad));
     }
 
+    /**
+     * Display command history, which consists of complete or incomplete SQL
+     * commands.
+     */
     private void showHistory() {
 
         int      ctr = -1;
@@ -909,6 +1028,9 @@ public class SqlFile {
         }
     }
 
+    /**
+     * Return a SQL Command from command history.
+     */
     private String commandFromHistory(int commandsAgo) throws BadSpecial {
 
         if (commandsAgo >= statementHistory.length) {
@@ -926,6 +1048,10 @@ public class SqlFile {
         return s;
     }
 
+    /**
+     * Push a command onto the history array (the first element of which
+     * is the "Buffer").
+     */
     private void setBuf(String inString) {
         curHist++;
 
@@ -935,6 +1061,11 @@ public class SqlFile {
         statementHistory[curHist] = inString;
     }
 
+    /**
+     * Describe the columns of specified table.
+     *
+     * @param tableName  Table that will be described.
+     */
     private void describe(String tableName) throws SQLException {
 
         Statement statement = curConn.createStatement();
