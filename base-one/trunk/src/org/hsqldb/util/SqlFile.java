@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.28 2004/02/13 22:26:14 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.29 2004/02/16 15:05:09 unsaved Exp $ */
 
 /**
  * Definitions.
@@ -78,14 +78,28 @@ public class SqlFile {
     final private static String SPACES =
         "                                                                 ";
     final private static String BANNER =
-        "SqlFile processor.  Enter \"\\?\" to list Special Commands, "
-        + "\"\\q\" to quit.\n\n"
+        "SqlFile processor.  Enter \"\\q\" to quit,\n"
+        + "    \"\\?\" to list Special Commands, "
+        + "\"/?\" to list Buffer/Editing commands\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
-        + "An empty line within an SQL Statement clears it (but it can be reloaded later).\n"
+        + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
+        + "An empty line within an SQL Statement moves it into the buffer.\n"
         + "All other lines comprise SQL Statements.\n"
         + "SQL Statement lines ending with ';' cause the current Statement to be executed.\n"
         + "SQL Statements consisting of only /* SQL comment */ are not executed, therefore\n"
-        + "you can comment scripts like \"/* This is a comment */;\"\n";
+        + "    you can comment scripts like \"/* This is a comment */;\"\n";
+    final private static String BUFFER_HELP_TEXT =
+          "BUFFER Commands (only available for interactive use).\n"
+        + "In place of \"3\" below, you can use nothing for the previous command, or\n"
+        + "an integer \"X\" to indicate the Xth previous command.\n\n"
+        + "    :?          Help\n"
+        + "    :a          Enter append mode with contents of buffer as current command\n"
+        + "    :l          List current contents of buffer\n"
+        + "    :s/from/to/ Switch all occurrences of \"from\" to \"to\"\n"
+        + "                ('$'s in \"from\" will match line separators)\n"
+        + "                (use \":s/from//\" to delete 'from' strings)\n"
+        + "    :;          Execute current buffer as an SQL Statement\n"
+        ;
     final private static String HELP_TEXT =
         "**********    SPECIAL COMMANDS MARKED !!! DO NOT WORK YET!!!  *******\n"
         + "SPECIAL Commands.\n"
@@ -137,7 +151,7 @@ public class SqlFile {
     private int         curHist    = -1;
     private PrintStream psStd      = null;
     private PrintStream psErr      = null;
-    StringBuffer        curBuffer  = new StringBuffer();
+    StringBuffer        stringBuffer  = new StringBuffer();
     /*
      * This is reset upon each execute() invocation (to true if interactive,
      * false otherwise).
@@ -181,7 +195,7 @@ public class SqlFile {
 
             while (true) {
                 if (interactive) {
-                    psStd.print((curBuffer.length() == 0) ? primaryPrompt
+                    psStd.print((stringBuffer.length() == 0) ? primaryPrompt
                                                           : contPrompt);
                 }
 
@@ -201,7 +215,7 @@ public class SqlFile {
                     // normally thrown below in Statement processing, but
                     // could be called up above if a Special processing
                     // executes a SQL command from history.
-                    if (curBuffer.length() == 0) {
+                    if (stringBuffer.length() == 0) {
 
                         // This is just to filter out useless newlines at
                         // beginning of commands.
@@ -231,16 +245,34 @@ public class SqlFile {
 
                             continue;
                         }
+                        if (interactive && trimmedInput.charAt(0) == ':') {
+                            try {
+                                processBuffer(trimmedInput.substring(1));
+                            } catch (BadSpecial bs) {
+                                errprint("Error at '"
+                                         + ((file == null) ? "stdin"
+                                                           : file.toString()) + "' line "
+                                                           + curLinenum
+                                                           + ":\n\""
+                                                           + inputLine
+                                                           + "\"\n"
+                                                           + bs.getMessage());
+
+                                if (!continueOnError) {
+                                    throw new SqlToolError(bs);
+                                }
+                            }
+
+                            continue;
+                        }
                     }
 
                     if (trimmedInput.length() == 0) {
                         if (interactive) {
-                            setHist(curBuffer.toString());
-                            curBuffer.setLength(0);
-                            stdprint(
-                                "Buffer stored into history then cleared.");
+                            setBuf(stringBuffer.toString());
+                            stringBuffer.setLength(0);
+                            stdprint("Current input moved into buffer.");
                         }
-
                         continue;
                     }
 
@@ -248,19 +280,21 @@ public class SqlFile {
 
                     // A null terminal line (i.e., /\s*;\s*$/) is never useful.
                     if (!trimmedInput.equals(";")) {
-                        if (curBuffer.length() > 0) {
-                            curBuffer.append('\n');
+                        if (stringBuffer.length() > 0) {
+                            stringBuffer.append('\n');
                         }
 
-                        curBuffer.append((deTerminated == null) ? inputLine
+                        stringBuffer.append((deTerminated == null) ? inputLine
                                                                 : deTerminated);
                     }
 
                     if (deTerminated == null) {
                         continue;
                     }
+                    // If we reach here, then stringBuffer contains a complete
+                    // SQL command.
 
-                    curCommand     = curBuffer.toString();
+                    curCommand     = stringBuffer.toString();
                     trimmedCommand = curCommand.trim();
 
                     if (trimmedCommand.length() == 0) {
@@ -274,7 +308,7 @@ public class SqlFile {
                                 "/*", 2) > -1) || (trimmedCommand.lastIndexOf(
                                 "*/", trimmedCommand.length() - 4) > -1)) {
                         if (interactive) {
-                            setHist(curCommand);
+                            setBuf(curCommand);
                         }
 
                         processStatement();
@@ -294,11 +328,11 @@ public class SqlFile {
                     }
                 }
 
-                curBuffer.setLength(0);
+                stringBuffer.setLength(0);
             }
 
-            if (curBuffer.length() != 0) {
-                errprint("Unterminated input:  [" + curBuffer + ']');
+            if (stringBuffer.length() != 0) {
+                errprint("Unterminated input:  [" + stringBuffer + ']');
             }
         } finally {
             if (br != null) {
@@ -329,13 +363,98 @@ public class SqlFile {
     }
 
     private class BadSpecial extends Exception {
-
         private BadSpecial(String s) {
             super(s);
         }
     }
 
     private class QuitNow extends Exception {}
+
+    private class BadSwitch extends Exception {
+        private BadSwitch(int i) {
+            super(Integer.toString(i));
+        }
+    }
+
+    /**
+     * Process a Buffer Command.
+     *
+     * @throws SQLException Passed through from processStatement()
+     */
+    private void processBuffer(String inString)
+    throws BadSpecial, SQLException {
+        int    index = 0;
+        int    special;
+        char   commandChar = 'i';
+        String other = null;
+
+        if (inString.length() > 0) {
+            commandChar = inString.charAt(0);
+            other = inString.substring(1).trim();
+            if (other.length() == 0) other = null;
+        }
+
+        switch (commandChar) {
+            case ';':
+                curCommand = commandFromHistory(0);
+                stdprint("Executing command from buffer:\n"
+                        + curCommand + '\n');
+                processStatement();
+                return;
+            case 'a':
+            case 'A':
+                stringBuffer.append(commandFromHistory(0));
+                return;
+            case 'l':
+            case 'L':
+                stdprint("Current Buffer:\n" + commandFromHistory(0));
+                return;
+            case 's':
+            case 'S':
+                try {
+                    StringBuffer sb = new StringBuffer(commandFromHistory(0));
+                    if (other == null) throw new BadSwitch(0);
+                    StringTokenizer toker =
+                        new StringTokenizer(other, "/", true);
+                    if (toker.countTokens() < 4
+                            || !toker.nextToken().equals("/")) {
+                        throw new BadSwitch(1);
+                            }
+                    String from = toker.nextToken().replace('$', '\n');
+                    if (!toker.nextToken().equals("/")) {
+                        throw new BadSwitch(2);
+                    }
+                    String to = toker.nextToken();
+                    if (to.equals("/")) {
+                        to = "";
+                    } else {
+                        if (toker.countTokens() < 1
+                         || !toker.nextToken().equals("/")) {
+                            throw new BadSwitch(3);
+                         }
+                    }
+                    if (toker.countTokens() > 0) {
+                        throw new BadSwitch(4);
+                    }
+                    int i = sb.length();
+                    while ((i = sb.lastIndexOf(from, i-1)) > -1) {
+                        sb.replace(i, i + from.length(), to);
+                    }
+                    statementHistory[curHist] = sb.toString();
+                    stdprint("Current Buffer:\n" + commandFromHistory(0));
+                } catch (BadSwitch badswitch) {
+                    throw new BadSpecial(
+                            "Switch syntax:  \":s/from this/to that/\".  "
+                            + "Use '$' for line separations.  ["
+                            + badswitch.getMessage() + ']');
+                }
+                return;
+            case '?' :
+                stdprint(BUFFER_HELP_TEXT);
+                return;
+        }
+        throw new BadSpecial("Unknown Buffer Command");
+    }
 
     /**
      * Process a Special Command.
@@ -414,50 +533,25 @@ public class SqlFile {
                 return;
 
             case '-' :
-                boolean execute     = false;
                 int     commandsAgo = 0;
                 String  numStr;
 
-                if (arg1.charAt(arg1.length() - 1) == ';') {
-                    execute = true;
-                    numStr  = (arg1.length() == 2) ? null
-                                                   : arg1.substring(1,
-                                                   arg1.length() - 1);
-                } else {
-                    numStr = (arg1.length() == 1) ? null
-                                                  : arg1.substring(1,
-                                                  arg1.length());
-                }
-
+                numStr = (arg1.length() == 1) ? null
+                                              : arg1.substring(1,
+                                              arg1.length());
                 if (numStr == null) {
                     commandsAgo = 0;
                 } else {
                     try {
-                        commandsAgo = Integer.parseInt(numStr) - 1;
+                        commandsAgo = Integer.parseInt(numStr);
                     } catch (NumberFormatException nfe) {
                         throw new BadSpecial("Malformatted command number");
                     }
                 }
 
-                String replacement = commandFromHistory(commandsAgo);
-
-                // Don't add to history if executing without modification
-                if (!execute) {
-                    curBuffer.setLength(0);
-                    curBuffer.append(replacement);
-                }
-
-                stdprint("RESTORED.  "
-                         + (execute ? "Executing the following command:"
-                                    : ("You are now appending.  " + "Just enter ; to re-execute.")) + '\n'
-                                    + replacement);
-
-                if (execute) {
-                    curCommand = replacement;
-
-                    processStatement();
-                }
-
+                setBuf(commandFromHistory(commandsAgo));
+                stdprint("RESTORED following command to buffer.  Enter \"/?\" "
+                        + "to see buffer commands:\n" + commandFromHistory(0));
                 return;
 
             case '?' :
@@ -805,13 +899,13 @@ public class SqlFile {
 
             for (int i = ctr; i >= 0; i--) {
                 psStd.println(
-                    "-" + (i + 1)
-                    + "  **********************************************\n"
+                    ((i == 0) ? "BUFR" : ("-" + i + "  "))
+                    + " **********************************************\n"
                     + reversedList[i]);
             }
 
-            psStd.println("\n<<<    Restore for append like \"\\-3\"       "
-                          + "Re-execute like \"\\-4;\"    >>>");
+            psStd.println("\n<<<  Copy a command to buffer like \"\\-3\"       "
+                          + "Re-execute buffer like \"/;\"  >>>");
         }
     }
 
@@ -832,14 +926,12 @@ public class SqlFile {
         return s;
     }
 
-    private void setHist(String inString) {
-
+    private void setBuf(String inString) {
         curHist++;
 
         if (curHist == statementHistory.length) {
             curHist = 0;
         }
-
         statementHistory[curHist] = inString;
     }
 
