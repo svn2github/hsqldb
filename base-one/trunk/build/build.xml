@@ -637,7 +637,7 @@ examples:
         </then></if>
         <copy todir='doc'>
             <fileset dir='docsrc'
-                     includes='**/*.css, **/*.java, **/*.sql, **/*.txt'/>
+          includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties'/>
         </copy>
     </target>
     <target name='fo' description='Build one DocBook FO file'
@@ -718,7 +718,7 @@ examples:
         <!-- You MUST set property 'book' before calling this target -->
         <fileset id='bookXsltSrcFiles' dir='docsrc/${book}'
             includes='**/*.xml, **/*.png, **/*.jpg, **/*.txt, **/*.java,
-                      **/*.sql'/>
+                      **/*.sql, **/*.properties, **/*.rc'/>
         <fileset id='sharedXsltSrcFiles' dir='docsrc'
                 includes='*.xml, *.txt, *.png, *.java, *.jpg, *.html, *.sql'/>
     </target>
