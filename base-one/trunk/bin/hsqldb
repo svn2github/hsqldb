@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.14 2004/05/12 18:37:47 unsaved Exp $
+# $Id: hsqldb,v 1.15 2004/05/13 22:14:14 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -66,9 +66,8 @@
 # Since some Bourne shells don't support shell functions at all, we don't
 # even define any local functions.
 
-# This scripts starts up an org.hsqldb.Server instance, not an
-# org.hsqldb.WebServer instance.  If you have a genuine need for this
-# script to accommodate WebServer, email me.
+# This scripts starts up an org.hsqldb.Server or org.hsqldb.WebServer
+# instance, BUT NOT BOTH!
 
 #  -- blaine.simpson@admc.com
 
@@ -90,6 +89,10 @@ SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 # And for it to shutdown after it receives the last SQL "shutdown" command.
 # This gets overridden by optional setting in the config file.
 MAX_STARTSTOP_SECS=1
+# Class in the org.hsqldb package to start.
+# At this time, only the values "Server" or "WebServer" will work.
+# This gets overridden by optional setting in the config file.
+TARGET_CLASS=Server
 
 CFGFILE=
 LOGFILE=
@@ -180,12 +183,21 @@ SHUTDOWN_URLIDS=
     echo "A *_HOME variables set in '$CFGFILE' is set to a non-directory." 1>&2
     exit 2
 }
-[ -f "$SERVER_HOME"/server.properties ] || {
-    echo "'$SERVER_HOME' doesn't contain a server.properties file" 1>&2
+
+# PROPERTY_FILE is a derived value.
+case "$TARGET_CLASS" in
+    Server) PROPERTY_FILE="$SERVER_HOME"/server.properties;;
+    WebServer) PROPERTY_FILE="$SERVER_HOME"/webserver.properties;;
+    *)
+        echo 'Unsupported value for $TARGET_CLASS:  '"$TARGET_CLASS" 1>&2
+        exit 2;;
+esac
+[ -f "$PROPERTY_FILE" ] || {
+    echo "'$PROPERTY_FILE' is missing" 1>&2
     exit 2
 }
-[ -r "$SERVER_HOME"/server.properties ] || {
-    echo "'$SERVER_HOME/server.properties' isn't readable" 1>&2
+[ -r "$PROPERTY_FILE" ] || {
+    echo "'$PROPERTY_FILE' isn't readable" 1>&2
     exit 2
 }
 [ -f "$HSQLDB_HOME"/lib/hsqldb.jar ] || {
@@ -260,7 +272,7 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" >> "$LOGFILE" 2>&1 &
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
@@ -274,7 +286,7 @@ running with pid $HSQLDB_PID."
                     echo "Failed to write pid to pid file" 1>&2
                     exit 1
                 }
-                exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.Server
+                exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
         sleep $MAX_STARTSTOP_SECS
@@ -283,10 +295,10 @@ running with pid $HSQLDB_PID."
         # but regardless of why, the pid file does not contain a valid pid.
         kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
             rm -f "$PIDFILE"
-echo "Failed to start an org.hsqldb.Server.  See log file at '$LOGFILE'." 1>&2
+echo "Failed to start an org.hsqldb.${TARGET_CLASS}.  See log file at '$LOGFILE'." 1>&2
             exit 1
         }
-        echo "org.hsqldb.Server started with pid `cat $PIDFILE`"
+        echo "org.hsqldb.$TARGET_CLASS started with pid `cat $PIDFILE`"
         exit 0
     ;;
     stop)
