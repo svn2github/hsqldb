@@ -295,7 +295,7 @@ class Like {
 
     boolean isEquivalentToNotNullPredicate() {
 
-        if (isNull || !hasWildcards()) {
+        if (isNull ||!hasWildcards()) {
             return false;
         }
 

@@ -778,7 +778,6 @@ implements java.sql.PreparedStatement {
                                int length) throws SQLException {
 
         checkSetParameterIndex(parameterIndex);
-        checkClosed();
 
         String s;
 
@@ -837,7 +836,6 @@ implements java.sql.PreparedStatement {
                                  int length) throws SQLException {
 
         checkSetParameterIndex(parameterIndex);
-        checkClosed();
 
         if (x == null) {
             String msg = "input stream is null";
@@ -920,7 +918,6 @@ implements java.sql.PreparedStatement {
                                 int length) throws SQLException {
 
         checkSetParameterIndex(parameterIndex);
-        checkClosed();
 
         if (x == null) {
             String msg = "input stream is null";
@@ -1180,7 +1177,6 @@ implements java.sql.PreparedStatement {
                                    int length) throws SQLException {
 
         checkSetParameterIndex(parameterIndex);
-        checkClosed();
 
         if (reader == null) {
             String msg = "reader is null";
@@ -1269,7 +1265,6 @@ implements java.sql.PreparedStatement {
     public void setBlob(int i, Blob x) throws SQLException {
 
         checkSetParameterIndex(i);
-        checkClosed();
 
         if (x == null) {
             setParameter(i, null);
@@ -1344,7 +1339,6 @@ implements java.sql.PreparedStatement {
     public void setClob(int i, Clob x) throws SQLException {
 
         checkSetParameterIndex(i);
-        checkClosed();
 
         if (x == null) {
             setParameter(i, null);
@@ -1607,7 +1601,6 @@ implements java.sql.PreparedStatement {
                              Calendar cal) throws SQLException {
 
         checkSetParameterIndex(parameterIndex);
-        checkClosed();
 
 // CHECKME:  What happens if the client specifies a null Calendar object?
 //           If this happens, do we properly use the default
@@ -1896,6 +1889,8 @@ implements java.sql.PreparedStatement {
         int    mode;
         String msg;
 
+        checkClosed();
+
         if (i < 1 || i > parameterValues.length) {
             msg = "parameter index out of range: " + i;
 
@@ -1931,7 +1926,6 @@ implements java.sql.PreparedStatement {
     private void setParameter(int i, Object o) throws SQLException {
 
         checkSetParameterIndex(i);
-        checkClosed();
 
         i--;
 
@@ -1972,7 +1966,6 @@ implements java.sql.PreparedStatement {
     private void setIntParameter(int i, int value) throws SQLException {
 
         checkSetParameterIndex(i);
-        checkClosed();
 
         int outType = parameterTypes[i - 1];
 
@@ -2002,7 +1995,6 @@ implements java.sql.PreparedStatement {
     private void setLongParameter(int i, long value) throws SQLException {
 
         checkSetParameterIndex(i);
-        checkClosed();
 
         int outType = parameterTypes[i - 1];
 
