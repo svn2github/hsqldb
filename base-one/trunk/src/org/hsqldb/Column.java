@@ -1425,7 +1425,7 @@ public class Column {
 
             case Types.NUMERIC :
             case Types.DECIMAL :
-                if (!(o instanceof Number)) {
+                if (!(o instanceof BigDecimal)) {
                     o = convertObject(o, type);
                 }
 

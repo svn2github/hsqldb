@@ -751,7 +751,7 @@ class Parser {
                 len--;
 
                 vcolumn.remove(current);
-            } else if (e.getType() == Expression.COLUMN) {
+            } else /* if (e.getType() == Expression.COLUMN) */ {
                 if (e.getFilter() == null) {
                     for (int f = 0; f < filters.length; f++) {
                         e.resolveTables(filters[f]);
@@ -2257,6 +2257,7 @@ class Parser {
         tokenSet.put(Token.T_VAR_POP, Expression.VAR_POP);
         tokenSet.put(Token.T_VAR_SAMP, Expression.VAR_SAMP);
         tokenSet.put(Token.T_IFNULL, Expression.IFNULL);
+        tokenSet.put(Token.T_NVL, Expression.IFNULL);
         tokenSet.put(Token.T_NULLIF, Expression.NULLIF);
         tokenSet.put(Token.T_CONVERT, Expression.CONVERT);
         tokenSet.put(Token.T_CAST, Expression.CAST);

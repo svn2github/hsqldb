@@ -366,6 +366,7 @@ public class Token {
     static final String        T_NOW            = "NOW";
     static final String        T_NOWAIT         = "NOWAIT";
     static final String        T_NULLIF         = "NULLIF";
+    static final String        T_NVL            = "NVL";
     static final String        T_PASSWORD       = "PASSWORD";
     static final String        T_PLAN           = "PLAN";
     static final String        T_POSITION       = "POSITION";
@@ -679,6 +680,7 @@ public class Token {
     static final int        TEXT                  = 327;
     static final int        VIEW                  = 328;
     static final int        WRITE_DELAY           = 329;
+    static final int        TOCHAR                = 330;
 
     // added stuff
     static final int VAR_POP     = 330;
@@ -807,7 +809,7 @@ public class Token {
             Token.T_IS, Token.T_IN, Token.T_INTERSECT, Token.T_JOIN,
             Token.T_INNER, Token.T_LEADING, Token.T_LIKE, Token.T_MAX,
             Token.T_MIN, Token.T_NEXT, Token.T_NULLIF, Token.T_NOT,
-            Token.T_MINUS, Token.T_ON, Token.T_ORDER, Token.T_OR,
+            Token.T_NVL, Token.T_MINUS, Token.T_ON, Token.T_ORDER, Token.T_OR,
             Token.T_OUTER, Token.T_POSITION, Token.T_PRIMARY, Token.T_SELECT,
             Token.T_SET, Token.T_SOME, Token.T_STDDEV_POP,
             Token.T_STDDEV_SAMP, Token.T_SUBSTRING, Token.T_SUM, Token.T_THEN,

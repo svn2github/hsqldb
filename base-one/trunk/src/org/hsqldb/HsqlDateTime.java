@@ -526,4 +526,202 @@ public class HsqlDateTime {
             return tempCalDefault.get(part);
         }
     }
+
+    private final static char[][] dateTokens     = {
+        {
+            'R', 'R', 'R', 'R'
+        }, {
+            'I', 'Y', 'Y', 'Y'
+        }, {
+            'Y', 'Y', 'Y', 'Y'
+        }, {
+            'I', 'Y'
+        }, {
+            'Y', 'Y'
+        }, {
+            'B', 'C'
+        }, {
+            'B', '.', 'C', '.'
+        }, {
+            'A', 'D'
+        }, {
+            'A', '.', 'D', '.'
+        }, {
+            'M', 'O', 'N'
+        }, {
+            'M', 'O', 'N', 'T', 'H'
+        }, { 'D' }, {
+            'I', 'W'
+        }, {
+            'D', 'D'
+        }, {
+            'D', 'D', 'D'
+        }, {
+            'H', 'H', '2', '4'
+        }, {
+            'H', 'H', '1', '2'
+        }, {
+            'H', 'H'
+        }, {
+            'M', 'I',
+        }, {
+            'S', 'S'
+        }, {
+            'A', 'M'
+        }, {
+            'P', 'M',
+        }, {
+            'A', '.', 'M', '.'
+        }, {
+            'P', '.', 'M', '.'
+        }
+    };
+    private final static String[] javaDateTokens = {
+        "yyyy", "yyyy", "yyyy", "yy", "yy", "G", "G", "G", "G", "MMM",
+        "MMMMM", "E", "w", "dd", "D", "k", "K", "K", "mm", "ss", "aaa", "aaa",
+        "aaa", "aaa"
+    };
+
+    /** Indicates end-of-input */
+    public static final char e = 0xffff;
+
+    /**
+     * Converts the given format into a pattern accepted by <code>java.text.SimpleDataFormat</code>
+     * @param format
+     * @return
+     */
+    public static String toJavaDatePattern(String format) {
+
+        int          len = format.length();
+        char         ch;
+        StringBuffer pattern   = new StringBuffer(len);
+        Tokenizer    tokenizer = new Tokenizer();
+
+        for (int i = 0; i <= len; i++) {
+            ch = (i == len) ? e
+                            : format.charAt(i);
+
+            if (!tokenizer.next(ch, dateTokens)) {
+                int index = tokenizer.getLastMatch();
+
+                if (index >= 0) {
+                    pattern.setLength(pattern.length() - tokenizer.length());
+                    pattern.append(javaDateTokens[index]);
+                }
+
+                tokenizer.reset();
+
+                if (tokenizer.isConsumed()) {
+                    continue;
+                }
+            }
+
+            pattern.append(ch);
+        }
+
+        return pattern.substring(0, pattern.length() - 1);
+    }
+
+    /**
+     * This class can match 64 tokens at maximum.
+     */
+    static class Tokenizer {
+
+        private int     last;
+        private int     offset;
+        private long    state;
+        private boolean consumed;
+
+        public Tokenizer() {
+            reset();
+        }
+
+        /**
+         * Resets for next reuse.
+         *
+         */
+        public void reset() {
+
+            last   = -1;
+            offset = -1;
+            state  = 0;
+        }
+
+        /**
+         * Returns a length of a token to match.
+         * @return
+         */
+        public int length() {
+            return offset;
+        }
+
+        /**
+         * Returns an index of the last matched token.
+         * @return
+         */
+        public int getLastMatch() {
+            return last;
+        }
+
+        /**
+         * Indicates whethe the last character has been consumed by the matcher.
+         * @return
+         */
+        public boolean isConsumed() {
+            return consumed;
+        }
+
+        /**
+         * Checks whether the specified bit is not set.
+         * @param bit
+         * @return
+         */
+        private boolean isZeroBit(int bit) {
+            return (state & (1L << bit)) == 0;
+        }
+
+        /**
+         * Sets the specified bit.
+         * @param bit
+         */
+        private void setBit(int bit) {
+            state |= (1L << bit);
+        }
+
+        /**
+         * Matches the specified character against tokens.
+         * @param ch
+         * @param tokens
+         * @return
+         */
+        public boolean next(char ch, char[][] tokens) {
+
+            // Use local variable for performance
+            int index = ++offset;
+            int len   = offset + 1;
+            int left  = 0;
+
+            consumed = false;
+
+            for (int i = tokens.length; --i >= 0; ) {
+                if (isZeroBit(i)) {
+                    if (tokens[i][index] == ch) {
+                        consumed = true;
+
+                        if (tokens[i].length == len) {
+                            setBit(i);
+
+                            last = i;
+                        } else {
+                            ++left;
+                        }
+                    } else {
+                        setBit(i);
+                    }
+                }
+            }
+
+            return left > 0;
+        }
+    }
 }

@@ -87,6 +87,7 @@ import org.hsqldb.store.ValuePool;
 // boucherb@user 20020918 - doc 1.7.2 - added JavaDoc  and code comments
 // fredt@user 20021021 - doc 1.7.2 - modified JavaDoc
 // boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
+//
 
 /**
  * fredt - todo - since the introduction of SQL built-in functions and
@@ -107,6 +108,7 @@ import org.hsqldb.store.ValuePool;
  */
 public class Library {
 
+    static final SimpleDateFormat tocharFormat = new SimpleDateFormat();
     static final SimpleDateFormat daynameFormat = new SimpleDateFormat("EEEE",
         Locale.ENGLISH);
     static final SimpleDateFormat monthnameFormat =
@@ -271,6 +273,8 @@ public class Library {
             "WEEK", "org.hsqldb.Library.week"
         }, {
             "YEAR", "org.hsqldb.Library.year"
+        }, {
+            "TO_CHAR", "org.hsqldb.Library.to_char"
         }
     };
     public static final String[][] sSystem   = {
@@ -1562,6 +1566,19 @@ public class Library {
                 Calendar.YEAR));
     }
 
+    public static String to_char(java.util.Date d, String format) {
+
+        if (d == null || format == null) {
+            return null;
+        }
+
+        synchronized (tocharFormat) {
+            tocharFormat.applyPattern(HsqlDateTime.toJavaDatePattern(format));
+
+            return tocharFormat.format(d);
+        }
+    }
+
     // date calculations.
 
     /**
@@ -1893,6 +1910,7 @@ public class Library {
     static final int soundex                   = 54;
     static final int space                     = 55;
     static final int substring                 = 56;
+    static final int to_char                   = 65;
     static final int trim                      = 57;
     static final int truncate                  = 58;
     static final int ucase                     = 59;
@@ -1968,6 +1986,7 @@ public class Library {
         functionMap.put("soundex", soundex);
         functionMap.put("space", space);
         functionMap.put("substring", substring);
+        functionMap.put("to_char", to_char);
         functionMap.put("trim", trim);
         functionMap.put("truncate", truncate);
         functionMap.put("ucase", ucase);
@@ -2205,6 +2224,9 @@ public class Library {
                 }
                 case year : {
                     return year((Date) params[0]);
+                }
+                case to_char : {
+                    return to_char((Date) params[0], (String) params[1]);
                 }
                 case isReadOnlyDatabaseFiles : {
                     return null;

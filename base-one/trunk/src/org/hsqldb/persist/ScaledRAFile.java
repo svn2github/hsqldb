@@ -55,6 +55,7 @@ class ScaledRAFile implements Storage {
 
     static final int         DATA_FILE_RAF = 0;
     static final int         DATA_FILE_NIO = 1;
+    static final int         DATA_FILE_JAR = 2;
     final RandomAccessFile   file;
     private final boolean    readOnly;
     final String             fileName;
@@ -101,7 +102,9 @@ class ScaledRAFile implements Storage {
             }
         }
 
-        if (type == DATA_FILE_RAF) {
+        if (type == DATA_FILE_JAR) {
+            return new ScaledRAFileInJar(name);
+        } else if (type == DATA_FILE_RAF) {
             return new ScaledRAFile(name, readonly);
         } else {
             try {
@@ -248,7 +251,6 @@ class ScaledRAFile implements Storage {
             cacheHit++;
         }
 
-// 1_8_0_n
         ba.reset();
         ba.skip(seekPosition - bufferOffset);
 

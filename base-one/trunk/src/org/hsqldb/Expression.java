@@ -375,6 +375,8 @@ public class Expression {
         this.dataType  = dataType;
         this.precision = precision;
         this.scale     = scale;
+
+        checkAggregate();
     }
 
     /**
@@ -1874,6 +1876,9 @@ public class Expression {
         }
 
         switch (exprType) {
+
+            case COLUMN :
+                break;
 
             case FUNCTION :
                 function.resolveType();

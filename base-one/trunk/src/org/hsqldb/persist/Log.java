@@ -376,10 +376,11 @@ public class Log {
      */
     DataFileCache getCache() throws HsqlException {
 
+/*
         if (database.isFilesInJar()) {
             return null;
         }
-
+*/
         if (cache == null) {
             cache = new DataFileCache(database, cacheFileName,
                                       backupFileName);

@@ -197,10 +197,10 @@ public class DataFileCache {
         fileFreePosition = 0;
 
         try {
-            boolean preexists = false;
+            boolean preexists = database.isFilesInJar();
             long    freesize  = 0;
 
-            if (fa.isStreamElement(fileName)) {
+            if (!preexists && fa.isStreamElement(fileName)) {
                 if (database.isStoredFileAccess()) {
                     preexists = true;
                 } else {
@@ -233,6 +233,10 @@ public class DataFileCache {
                 "hsqldb.nio_data_file");
             int fileType = isNio ? ScaledRAFile.DATA_FILE_NIO
                                  : ScaledRAFile.DATA_FILE_RAF;
+
+            if (database.isFilesInJar()) {
+                fileType = ScaledRAFile.DATA_FILE_JAR;
+            }
 
             // oj@openofice.org - change to file access api
             String cname =
