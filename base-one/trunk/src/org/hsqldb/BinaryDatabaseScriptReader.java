@@ -171,29 +171,29 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         return s;
     }
 
-    boolean readRow(DatabaseRowInput rowIn, int pos,
+    boolean readRow(DatabaseRowInput rowin, int pos,
                     InputStream streamIn) throws IOException {
 
-        rowIn.reset();
+        rowin.reset();
 
         int count  = 0;
         int length = 4;
 
         while (streamIn.available() > 0 && count < length) {
-            count += dataStreamIn.read(rowIn.getBuffer(), count,
+            count += dataStreamIn.read(rowin.getBuffer(), count,
                                        length - count);
         }
 
-        length = rowIn.readInt();
+        length = rowin.readInt();
 
         if (length == 0) {
             return false;
         }
 
-        rowIn.resetRow(pos, length);
+        rowin.resetRow(pos, length);
 
         while (streamIn.available() > 0 && count < length) {
-            count += dataStreamIn.read(rowIn.getBuffer(), count,
+            count += dataStreamIn.read(rowin.getBuffer(), count,
                                        length - count);
         }
 

@@ -562,6 +562,11 @@ Referential Constraint 4 SET DEFAULT
             return null;
         }
 
+        if (core.refIndex.isNull(row, core.mainColArray)) {
+            return null;
+        }
+
+/*
         for (int i = 0; i < core.colLen; i++) {
             Object o = row[core.mainColArray[i]];
 
@@ -571,12 +576,13 @@ Referential Constraint 4 SET DEFAULT
                 return null;
             }
         }
+*/
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
         boolean findfirst = forDelete ? core.deleteAction != NO_ACTION
                                       : core.updateAction != NO_ACTION;
-        Node node = core.refIndex.findSimple(row, core.mainColArray,
+        Node node = core.refIndex.findNotNull(row, core.mainColArray,
                                              findfirst);
 
         // tony_lai@users 20020820 - patch 595156
@@ -607,6 +613,11 @@ Referential Constraint 4 SET DEFAULT
      */
     Node findMainRef(Object row[]) throws HsqlException {
 
+        if (core.mainIndex.isNull(row, core.refColArray)) {
+            return null;
+        }
+
+/*
         for (int i = 0; i < core.colLen; i++) {
             Object o = row[core.refColArray[i]];
 
@@ -616,8 +627,8 @@ Referential Constraint 4 SET DEFAULT
                 return null;
             }
         }
-
-        Node node = core.mainIndex.findSimple(row, core.refColArray, true);
+*/
+        Node node = core.mainIndex.findNotNull(row, core.refColArray, true);
 
         // -- there has to be a valid node in the main table
         // --

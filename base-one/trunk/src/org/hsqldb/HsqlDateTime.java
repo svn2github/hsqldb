@@ -42,6 +42,7 @@ import java.util.GregorianCalendar;
 // replaces patch by deforest@users
 // fredt@users 20020414 - patch 517028 by peterhudson@users - use of calendar
 // fredt@users 20020414 - patch 828957 by tjcrowder@users - JDK 1.3 compatibility
+// fredt@users 20040105 - patch 870957 by Gerhard Hiller - JDK bug workaround
 
 /**
  *  collection of static methods to convert Date, Time and Timestamp strings
@@ -56,7 +57,7 @@ import java.util.GregorianCalendar;
 /**
  * fredt - 20030103 - currently under review for 1.7.2
  * There is a fundamental SQL compatibility problem as SQL stores
- * DATETIME values as their separate fields, wheras Java stores them
+ * DATETIME values as their separate fields, whereas Java stores them
  * all as a long representing milliseconds.
  * Currently, this causes issues in comparison between DATETIME values
  * if the db is accessed from different time zones.
@@ -413,11 +414,12 @@ class HsqlDateTime {
         }
     }
 
+// clear(Calendar.HOUR_OF_DAY) won't work : http://developer.java.sun.com/developer/bugParade/bugs/4414844.html.
     static Date getNormalisedDate(Timestamp ts) {
 
         synchronized (tempCal) {
             setTimeInMillis(tempCal, ts.getTime());
-            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.set(Calendar.HOUR_OF_DAY, 0);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);
@@ -432,7 +434,7 @@ class HsqlDateTime {
 
         synchronized (tempCal) {
             setTimeInMillis(tempCal, d.getTime());
-            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.set(Calendar.HOUR_OF_DAY, 0);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);
@@ -466,7 +468,7 @@ class HsqlDateTime {
 
         synchronized (tempCal) {
             setTimeInMillis(tempCal, d.getTime());
-            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.set(Calendar.HOUR_OF_DAY, 0);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);

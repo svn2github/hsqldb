@@ -519,8 +519,7 @@ class Index {
     }
 
     /**
-     * for finding foreign key referencing rows (in child table)
-     *
+     * For finding foreign key referencing rows (in child table)
      *
      * @param data
      *
@@ -528,19 +527,18 @@ class Index {
      *
      * @throws HsqlException
      */
-    Node findSimple(Object rowdata[], int[] rowColArray,
+    Node findNotNull(Object rowdata[], int[] rowColMap,
                     boolean first) throws HsqlException {
 
         Node x      = root, n;
         Node result = null;
 
-        if (rowdata[0] == null) {
+        if (isNull(rowdata, rowColMap)) {
             return null;
         }
 
         while (x != null) {
-            int i = this.compareRowNonUnique(rowdata, rowColArray,
-                                             x.getData());
+            int i = this.compareRowNonUnique(rowdata, rowColMap, x.getData());
 
             if (i == 0) {
                 if (first == false) {
@@ -570,19 +568,20 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Find any row that matches the rowdata. Use rowColMap to map index
+     * columns to rowdata. Limit to visible columns of data.
      *
      *
      * @param data
      * @return
      * @throws HsqlException
      */
-    Node find(Object rowdata[], int[] rowColIndex) throws HsqlException {
+    Node find(Object rowdata[], int[] rowColMap) throws HsqlException {
 
         Node x = root;
 
         while (x != null) {
-            int c = compareRowNonUnique(rowdata, rowColIndex, x.getData());
+            int c = compareRowNonUnique(rowdata, rowColMap, x.getData());
 
             if (c == 0) {
                 return x;
@@ -596,20 +595,26 @@ class Index {
         return null;
     }
 
-    private boolean isNotNull(Object a[]) {
+    boolean isNull(Object row[], int[] rowColMap) {
 
-        for (int j = 0; j < visibleColumns; j++) {
-            if (a[colIndex[j]] == null) {
-                return false;
+        int count = rowColMap.length;
+
+        if (count > visibleColumns) {
+            count = visibleColumns;
+        }
+
+        for (int i = 0; i < count; i++) {
+            if (row[rowColMap[i]] == null) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**
-     * Return the first node equal to the row object. Use visible columns
-     * only.
+     * Return the first node equal to the rowdata object. Use visible columns
+     * only. The rowdata has the same column mapping as this table.
      *
      * @param data
      * @return
@@ -619,10 +624,10 @@ class Index {
 
         Node    x      = root;
         Node    found  = null;
-        boolean unique = isUnique && isNotNull(rowdata);
+        boolean unique = isUnique &&!isNull(rowdata, colIndex);
 
         while (x != null) {
-            int c = compareRowNonUnique(rowdata, this.colIndex, x.getData());
+            int c = compareRowNonUnique(rowdata, colIndex, x.getData());
 
             if (c == 0) {
                 found = x;
@@ -643,7 +648,8 @@ class Index {
     }
 
     /**
-     * Finds the first node that is larger or equal to the given one
+     * Finds the first node that is larger or equal to the given one based
+     * on the first column of the index only.
      *
      *
      * @param value
@@ -954,23 +960,23 @@ class Index {
      *
      * @throws HsqlException
      */
-    int compareRowNonUnique(Object a[], int[] aColIndex,
+    int compareRowNonUnique(Object a[], int[] rowColMap,
                             Object b[]) throws HsqlException {
 
-        int i = Column.compare(a[aColIndex[0]], b[colIndex_0], colType_0);
+        int i = Column.compare(a[rowColMap[0]], b[colIndex_0], colType_0);
 
         if (i != 0) {
             return i;
         }
 
-        int fieldcount = aColIndex.length;
+        int fieldcount = rowColMap.length;
 
         if (fieldcount > visibleColumns) {
             fieldcount = visibleColumns;
         }
 
         for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(a[aColIndex[j]], b[colIndex[j]], colType[j]);
+            i = Column.compare(a[rowColMap[j]], b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;

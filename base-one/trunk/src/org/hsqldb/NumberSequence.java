@@ -170,6 +170,11 @@ public class NumberSequence {
         markValue = currValue = value;
     }
 
+    void reset(long value, long increment) {
+        markValue      = currValue = value;
+        this.increment = increment;
+    }
+
     int getType() {
         return dataType;
     }

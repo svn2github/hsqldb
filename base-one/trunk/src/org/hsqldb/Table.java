@@ -454,7 +454,7 @@ class Table {
 
         Column column =
             new Column(database.nameManager.newHsqlName(name, false), true,
-                       type, 0, 0, false, 0, false, null);
+                       type, 0, 0, false, 0, 0, false, null);
 
         addColumn(column);
     }
@@ -506,7 +506,7 @@ class Table {
                 database.nameManager.newHsqlName(
                     metadata.sLabel[i], metadata.isLabelQuoted[i]), true,
                         metadata.colType[i], metadata.colSize[i],
-                        metadata.colScale[i], false, 0, false, null);
+                        metadata.colScale[i], false, 0, 0, false, null);
 
             addColumn(column);
         }
@@ -527,7 +527,7 @@ class Table {
             Column column = new Column(
                 database.nameManager.newHsqlName(
                     e.getAlias(), e.isAliasQuoted()), true, e.getDataType(),
-                        e.getColumnSize(), e.getColumnScale(), false, 0,
+                        e.getColumnSize(), e.getColumnScale(), false, 0, 0,
                         false, null);
 
             addColumn(column);
@@ -1170,7 +1170,8 @@ class Table {
 
         Column column =
             new Column(database.nameManager.newAutoName(DEFAULT_PK), false,
-                       Types.INTEGER, 0, 0, false, 0, columns == null, null);
+                       Types.INTEGER, 0, 0, false, 0, 0, columns == null,
+                       null);
 
         addColumn(column);
 
@@ -1220,7 +1221,8 @@ class Table {
             }
 
             if (column.isIdentity()) {
-                this.identitySequence.reset(column.identityStart);
+                identitySequence.reset(column.identityStart,
+                                       column.identityIncrement);
             }
         }
 

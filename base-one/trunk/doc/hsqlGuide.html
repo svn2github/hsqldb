@@ -186,7 +186,7 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   read the next time the database is opened, and the MEMORY tables are recreated 
   with all their contents.</p>
 <p>CACHED tables are created with the CREATE CACHED TABLE command. Only part of 
-  their data is held in memory, allowing large tables that would otherwise take 
+  their data or indexes is held in memory, allowing large tables that would otherwise take 
   up to several hundred megabytes of memory. Another advantage of cached tables 
   is that the database engine takes less time to start up when a cached table 
   is used for large amounts of data. The disadvantage of cached tables is a reduction 
@@ -195,14 +195,14 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   or other delimited text file as the source of their data. You can specify an 
   existing CSV file, such as a dump from another database or program, as the source 
   of a TEXT table. Alternatively, you can specify an empty file to be filled with 
-  data by the database engine. TEXT tables are efficient in memory usage as they cache only part of the text data. Two commands are needed to set up a TEXT table as detailed 
+  data by the database engine. TEXT tables are efficient in memory usage as they cache only part of the text data and all of the indexes. Two commands are needed to set up a TEXT table as detailed 
   in <a href="hsqlTextTables.html">hsqlTextTables.html</a> document.</p>
 <p>With memory-only databases (see above), both MEMORY table and CACHED  table declarations are treated as declarations for non-persistent memory tables. TEXT table declarations are not allowed in this mode.</p>
 <h4>CONSTRAINTS and INDEXES</h4>
-<p>HSQLDB supports PRIMARY KEY, NOT NULL, UNIQUE and FOREIGN KEY constraints. 
+<p>HSQLDB supports PRIMARY KEY, NOT NULL, UNIQUE, CHECK and FOREIGN KEY constraints. 
   In addition, it supports UNIQUE or ordinary indexes. This support is fairly 
   comprehensive and covers multi-column constraints and indexes, plus cascading 
-  deletes for foreign keys.</p>
+  updates and deletes for foreign keys.</p>
 <p>HSQLDB creates indexes internally to support PRIMARY KEY, UNIQUE and FOREIGN 
   KEY constraints: a unique index is created for each PRIMARY KEY or UNIQUE constraint; 
   an ordinary index is created for each FOREIGN KEY constraint. Because of this, 
@@ -218,7 +218,7 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   <li>correct processing of selects with JOIN and LEFT OUTER JOIN</li>
   <li>correct processing of aggregate functions contained in expressions or containing expression arguments</li>
 </ul>
-<p>The supported commands are listed in <a href="hsqlSyntax.html">hsqlSyntax.html</a> . For a  well written basic guide to SQL you can consult <a href="http://www.postgresql.org/docs/awbook.html">PostgreSQL: Introduction and Concepts</a> by Bruce Momjian, which is available on the web. Most of the SQL coverage in the book applies also  to HSQLDB. There are some  differences is keywords supported by one and not the other engine (ALL, ANY, OUTER, IDENTITY/SERIAL, OID's, SEQUENCE, etc.) or used differently (LIMIT, TRIGGER, etc.).</p>
+<p>The supported commands are listed in <a href="hsqlSyntax.html">hsqlSyntax.html</a> . For a  well written basic guide to SQL you can consult <a href="http://www.postgresql.org/docs/awbook.html">PostgreSQL: Introduction and Concepts</a> by Bruce Momjian, which is available on the web. Most of the SQL coverage in the book applies also  to HSQLDB. There are some  differences is keywords supported by one and not the other engine (ALL, ANY, OUTER,  OID's,  etc.) or used differently (IDENTITY/SERIAL, LIMIT, TRIGGER, SEQUENCE, etc.).</p>
 <h4>JDBC SUPPORT</h4>
 <p>In 1.7.2, support for JDBC2 has been significantly extended and some features of JDBC3 are also supported. The relevant classes are thoroughly documented. See the JavaDoc for <a href="src/">org.hsqldb.jdbcXXXX </a>classes.</p>
 <p>&nbsp;</p>

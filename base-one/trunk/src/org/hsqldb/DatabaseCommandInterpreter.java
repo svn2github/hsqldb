@@ -711,7 +711,8 @@ class DatabaseCommandInterpreter {
     private Column processCreateColumn(Table t) throws HsqlException {
 
         boolean isIdentity    = false;
-        int     identityStart = 0;
+        long    identityStart     = 0;
+        long    identityIncrement = 1;
         boolean isPrimaryKey  = false;
         String  columnName;
         boolean isQuoted;
@@ -815,9 +816,16 @@ class DatabaseCommandInterpreter {
                 tokenizer.getThis(Token.T_WITH);
 
                 try {
-                    identityStart = tokenizer.getInt();
+                    identityStart = tokenizer.getBigint();
                 } catch (NumberFormatException ne) {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
+                }
+
+                if (tokenizer.isGetThis(Token.T_COMMA)) {
+                    tokenizer.getThis(Token.T_INCREMENT);
+                    tokenizer.getThis(Token.T_BY);
+
+                    identityIncrement = tokenizer.getBigint();
                 }
 
                 tokenizer.getThis(Token.T_CLOSEBRACKET);
@@ -865,7 +873,7 @@ class DatabaseCommandInterpreter {
         return new Column(
             database.nameManager.newHsqlName(columnName, isQuoted),
             isNullable, type, length, scale, isIdentity, identityStart,
-            isPrimaryKey, defaultValue);
+            identityIncrement, isPrimaryKey, defaultValue);
     }
 
     /**

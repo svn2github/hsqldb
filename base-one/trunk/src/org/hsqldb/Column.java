@@ -137,7 +137,8 @@ class Column {
     private boolean         isIdentity;
     private boolean         isPrimaryKey;
     private String          defaultString;
-    int                     identityStart;
+    long                    identityStart;
+    long                    identityIncrement;
     static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
     static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
     static final BigInteger MAX_INT  = BigInteger.valueOf(Integer.MAX_VALUE);
@@ -156,8 +157,8 @@ class Column {
      * @param  defvalue    Description of the Parameter
      */
     Column(HsqlName name, boolean nullable, int type, int size, int scale,
-            boolean identity, int startvalue, boolean primarykey,
-            String defstring) {
+            boolean identity, long startvalue, long increment,
+            boolean primarykey, String defstring) throws HsqlException {
 
         columnName    = name;
         isNullable    = nullable;
@@ -166,8 +167,19 @@ class Column {
         colScale      = scale;
         isIdentity    = identity;
         identityStart = startvalue;
+        identityIncrement = increment;
         isPrimaryKey  = primarykey;
         defaultString = defstring;
+
+        if (isIdentity) {
+            if (type == Types.INTEGER) {
+                if (identityStart > Integer.MAX_VALUE
+                        || identityIncrement > Integer.MAX_VALUE) {
+                    throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE,
+                                      name.statementName);
+                }
+            }
+        }
     }
 
     /**
@@ -741,9 +753,9 @@ class Column {
                 throw Trace.error(Trace.INVALID_CONVERSION, type);
         }
 
-        return (i > 0) ? 1
+        return (i == 0) ? 0
                        : (i < 0 ? -1
-                                : 0);
+                                 : 1);
     }
 
     /**
