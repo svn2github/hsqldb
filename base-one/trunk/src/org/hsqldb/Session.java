@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.jdbc.jdbcConnection;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
@@ -1026,11 +1027,8 @@ public class Session implements SessionInterface {
     private Result sqlExecuteBatch(Result cmd) {
 
         int               csid;
-        Object[]          pvals;
         Record            record;
-        Result            in;
         Result            out;
-        Result            err;
         CompiledStatement cs;
         Expression[]      parameters;
         int[]             updateCounts;
@@ -1056,12 +1054,10 @@ public class Session implements SessionInterface {
         count        = 0;
         updateCounts = new int[cmd.getSize()];
         record       = cmd.rRoot;
-        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
-        err          = new Result(ResultConstants.ERROR);
 
         while (record != null) {
-            pvals = record.data;
-            in    = err;
+            Result            in;
+            Object[]          pvals = record.data;
 
             try {
                 for (int i = 0; i < parameters.length; i++) {
@@ -1070,6 +1066,7 @@ public class Session implements SessionInterface {
 
                 in = compiledStatementExecutor.execute(cs);
             } catch (Throwable t) {
+                in         = new Result(ResultConstants.ERROR);
 
                 // t.printStackTrace();
                 // Trace.printSystemOut(t.toString());
@@ -1084,14 +1081,10 @@ public class Session implements SessionInterface {
             // On the client side, iterate over the vals and throw
             // a BatchUpdateException if a batch status value of
             // esultConstants.EXECUTE_FAILED is encountered in the result
-            switch (in.iMode) {
-
-                case ResultConstants.UPDATECOUNT : {
+            if (in.iMode == ResultConstants.UPDATECOUNT) {
                     updateCounts[count++] = in.iUpdateCount;
 
-                    break;
-                }
-                case ResultConstants.DATA : {
+            } else if (in.iMode == ResultConstants.DATA) {
 
                     // FIXME:  we don't have what it takes yet
                     // to differentiate between things like
@@ -1100,45 +1093,36 @@ public class Session implements SessionInterface {
                     // a single row/column containg null
                     updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
 
+            } else {
+                updateCounts = ArrayUtil.arraySlice(updateCounts,0, count);
                     break;
                 }
-                case ResultConstants.ERROR :
-                default : {
-                    updateCounts[count++] = ResultConstants.EXECUTE_FAILED;
-
-                    break;
-                }
-            }
 
             record = record.next;
         }
-
+        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
         return out;
     }
 
     private Result sqlExecuteBatchDirect(Result cmd) {
 
         Record record;
-        Result in;
         Result out;
-        Result err;
         int[]  updateCounts;
         int    count;
-        String sql;
 
         count        = 0;
         updateCounts = new int[cmd.getSize()];
         record       = cmd.rRoot;
-        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
-        err          = new Result(ResultConstants.ERROR);
 
         while (record != null) {
-            sql = (String) record.data[0];
-            in  = err;
+            Result in;
+            String sql = (String) record.data[0];
 
             try {
                 in = dbCommandInterpreter.execute(sql);
             } catch (Throwable t) {
+                in          = new Result(ResultConstants.ERROR);
 
                 // if (t instanceof OutOfMemoryError) {
                 // System.gc();
@@ -1151,14 +1135,10 @@ public class Session implements SessionInterface {
             // On the client side, iterate over the colType vals and throw
             // a BatchUpdateException if a batch status value of
             // ResultConstants.EXECUTE_FAILED is encountered
-            switch (in.iMode) {
-
-                case ResultConstants.UPDATECOUNT : {
+            if (in.iMode == ResultConstants.UPDATECOUNT) {
                     updateCounts[count++] = in.iUpdateCount;
 
-                    break;
-                }
-                case ResultConstants.DATA : {
+            } else if (in.iMode == ResultConstants.DATA) {
 
                     // FIXME:  we don't have what it takes yet
                     // to differentiate between things like
@@ -1166,20 +1146,14 @@ public class Session implements SessionInterface {
                     // void return type and select statements with
                     // a single row/column containg null
                     updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
-
+            } else {
+                updateCounts = ArrayUtil.arraySlice(updateCounts,0, count);
                     break;
                 }
-                case ResultConstants.ERROR :
-                default : {
-                    updateCounts[count++] = ResultConstants.EXECUTE_FAILED;
-
-                    break;
-                }
-            }
-
             record = record.next;
         }
 
+        out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
         return out;
     }
 

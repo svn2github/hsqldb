@@ -1071,13 +1071,14 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * HSQLDB always contines to executes all of the commands in a batch. <p>
+     * HSQLDB stops execution of commands in a batch when one of the commands
+     * results in an exception. The size of the returned array equals the
+     * number of commands that were executed successfully.<p>
      *
-     * When the product is built under the JAVA1 target, an exception is never
-     * thrown and is is the responsibility of the client software to scan the
-     * returned update count array for values of -3
-     * (<code>EXECUTE_FAILED</code>) to determine if any batch items
-     * failed. <p>
+     * When the product is built under the JAVA1 and JAVA2 target, an exception
+     * is never thrown and is is the responsibility of the client software to
+     * check the size of the  returned update count array to determine if any
+     * batch items failed.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1097,12 +1098,13 @@ public class jdbcStatement implements java.sql.Statement {
     public int[] executeBatch() throws SQLException {
 
         int[]         updateCounts;
+        int           batchCount;
         HsqlException he;
 
         checkClosed();
         connection.clearWarningsNoCheck();
-
-        if (batchResultOut.getSize() == 0) {
+        batchCount = batchResultOut.getSize();
+        if ( batchCount == 0) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                         "Empty batch");
         }
@@ -1124,10 +1126,8 @@ public class jdbcStatement implements java.sql.Statement {
         updateCounts = resultIn.getUpdateCounts();
 
 //#ifdef JAVA2
-        for (int i = 0; i < updateCounts.length; i++) {
-            if (updateCounts[i] == ResultConstants.EXECUTE_FAILED) {
+        if (updateCounts.length != batchCount) {
                 throw new java.sql.BatchUpdateException(updateCounts);
-            }
         }
 
 //#endif JAVA2
