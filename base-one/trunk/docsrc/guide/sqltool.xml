@@ -9,8 +9,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/13 04:01:25 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -164,7 +164,7 @@
             anonymous remote access (like via NFS, FTP or Samba).
         </para><para>
             You can also put the following optional settings into a urlid 
-            stanze.  The setting will, of course, only apply to that urlid.
+            stanza.  The setting will, of course, only apply to that urlid.
         </para>
         <variablelist>
             <varlistentry><term>charset</term><listitem><para>
