@@ -1,9 +1,9 @@
 /*
-    $Id: special-q-arg.sql,v 1.2 2004/06/17 02:50:25 unsaved Exp $
+    $Id: special-q-arg.sql,v 1.3 2004/06/17 11:50:23 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
-    Tests:  Special command \s with arg.
+    Tests:  Special command \q with arg.
 
     HARNESS_METADATA        BEGIN         
     arg                 --noAutoFile
