@@ -46,10 +46,10 @@ public class HTTPClientConnection extends HSQLClientConnection {
 
     final static String ENCODING = "8859_1";
 
-    HTTPClientConnection(String host, int port, String database,
+    HTTPClientConnection(String host, int port, String path, String database,
                          boolean isTLS, String user,
                          String password) throws HsqlException {
-        super(host, port, database, isTLS, user, password);
+        super(host, port, path, database, isTLS, user, password);
     }
 
     protected void initConnection(String host, int port,
@@ -71,8 +71,7 @@ public class HTTPClientConnection extends HSQLClientConnection {
         rowOut.reset();
         r.write(rowOut);
         dataOutput.write("POST ".getBytes(ENCODING));
-        dataOutput.write('/');
-        dataOutput.write(database.getBytes(ENCODING));
+        dataOutput.write(path.getBytes(ENCODING));
         dataOutput.write(" HTTP/1.0\r\n".getBytes(ENCODING));
         dataOutput.write(
             "Content-Type: application/octet-stream\r\n".getBytes(ENCODING));
@@ -92,10 +91,10 @@ public class HTTPClientConnection extends HSQLClientConnection {
         rowOut.reset();
 
         for (;;) {
-            int count  = InOutUtil.readLine(dataInput, rowOut);
+            int count = InOutUtil.readLine(dataInput, rowOut);
+
 //            int offset = rowOut.size() - count;
 //            String line = new String(rowOut.getBuffer(), offset, count, ENCODING);
-
             if (count <= 2) {
                 break;
             }

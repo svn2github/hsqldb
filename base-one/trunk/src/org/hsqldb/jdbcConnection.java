@@ -2125,13 +2125,14 @@ public class jdbcConnection implements Connection {
      */
     jdbcConnection(HsqlProperties props) throws SQLException {
 
-        String user     = (String) props.getProperty("user");
-        String password = (String) props.getProperty("password");
+        String  user     = (String) props.getProperty("user");
+        String  password = (String) props.getProperty("password");
         boolean ifExists = props.isPropertyTrue("ifexists");
-        String connType = (String) props.getProperty("connection_type");
-        String dbString = (String) props.getProperty("database");
-        String host     = props.getProperty("host");
-        int    port     = props.getIntegerProperty("port", 0);
+        String  connType = (String) props.getProperty("connection_type");
+        String  host     = props.getProperty("host");
+        int     port     = props.getIntegerProperty("port", 0);
+        String  path     = props.getProperty("path");
+        String  database = (String) props.getProperty("database");
         boolean isTLS = (connType == DatabaseManager.S_HSQLS
                          || connType == DatabaseManager.S_HTTPS);
 
@@ -2139,16 +2140,16 @@ public class jdbcConnection implements Connection {
             if (connType == DatabaseManager.S_FILE
                     || connType == DatabaseManager.S_MEM
                     || connType == DatabaseManager.S_RES) {
-                sessionProxy = DatabaseManager.newSession(connType, dbString,
+                sessionProxy = DatabaseManager.newSession(connType, database,
                         user, password, ifExists);
             } else if (connType == DatabaseManager.S_HSQL
                        || connType == DatabaseManager.S_HSQLS) {
-                sessionProxy = new HSQLClientConnection(host, port, dbString,
-                        isTLS, user, password);
+                sessionProxy = new HSQLClientConnection(host, port, path,
+                        database, isTLS, user, password);
             } else if (connType == DatabaseManager.S_HTTP
                        || connType == DatabaseManager.S_HTTPS) {
-                sessionProxy = new HTTPClientConnection(host, port, dbString,
-                        isTLS, user, password);
+                sessionProxy = new HTTPClientConnection(host, port, path,
+                        database, isTLS, user, password);
             }
 
             connProperties = props;

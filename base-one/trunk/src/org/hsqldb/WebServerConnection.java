@@ -303,8 +303,8 @@ class WebServerConnection implements Runnable {
             if (resultIn.iMode == ResultConstants.SQLCONNECT) {
                 try {
                     Session session =
-                        DatabaseManager.newSession(server.dbType,
-                                                   server.dbPath,
+                        DatabaseManager.newSession(server.dbType[0],
+                                                   server.dbPath[0],
                                                    resultIn.getMainString(),
                                                    resultIn.getSubString(),
                                                    true);
@@ -316,8 +316,8 @@ class WebServerConnection implements Runnable {
                                            e.getErrorCode());
                 }
             } else {
-                Session session = DatabaseManager.getSession(server.dbType,
-                    server.dbPath, resultIn.sessionID);
+                Session session = DatabaseManager.getSession(server.dbType[0],
+                    server.dbPath[0], resultIn.sessionID);
 
                 resultOut = session.execute(resultIn);
             }

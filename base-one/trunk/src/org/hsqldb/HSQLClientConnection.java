@@ -68,19 +68,22 @@ public class HSQLClientConnection implements SessionInterface {
     protected BinaryServerRowInput  rowIn;
     private Result                  resultOut;
     private final int               sessionID;
+
 //
-    String              host;
-    int                 port;
-    String              database;
-    boolean             isTLS;
+    String  host;
+    int     port;
+    String  path;
+    String  database;
+    boolean isTLS;
 
-    HSQLClientConnection(String host, int port, String path, boolean isTLS,
-                         String user, String password) throws HsqlException {
-
+    HSQLClientConnection(String host, int port, String path, String database,
+                         boolean isTLS, String user,
+                         String password) throws HsqlException {
 
         this.host     = host;
         this.port     = port;
-        this.database = path;
+        this.path     = path;
+        this.database = database;
         this.isTLS    = isTLS;
 
         initStructures();

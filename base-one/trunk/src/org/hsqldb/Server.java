@@ -147,8 +147,8 @@ public class Server implements HsqlSocketRequestHandler {
     HashSet serverConnSet;
 
 //    Database       mDatabase;
-    String         dbType;
-    String         dbPath;
+    String[]       dbType = new String[1];
+    String[]       dbPath = new String[1];
     HsqlProperties serverProperties;
 
 //------------------------------- protected ------------------------------------
@@ -200,7 +200,7 @@ public class Server implements HsqlSocketRequestHandler {
 
             String dbname;
 
-            dbname = dbType + dbPath;
+            dbname = dbType[0] + dbPath[0];
 
             return super.toString() + "[Database[" + dbname + "]," + socket
                    + "]";
@@ -354,8 +354,9 @@ public class Server implements HsqlSocketRequestHandler {
      *  access="read-write"
      *  description="For hosted database"
      */
-    public String getDatabasePath() {
-        return serverProperties.getProperty(ServerConstants.SC_KEY_DATABASE);
+    public String getDatabasePath(int i) {
+        return serverProperties.getProperty(ServerConstants.SC_KEY_DATABASE
+                                            + "." + i);
     }
 
     /**
@@ -1298,7 +1299,7 @@ public class Server implements HsqlSocketRequestHandler {
                       ServerConstants.SC_DEFAULT_SERVER_AUTORESTART);
         p.setProperty(ServerConstants.SC_KEY_ADDRESS,
                       ServerConstants.SC_DEFAULT_ADDRESS);
-        p.setProperty(ServerConstants.SC_KEY_DATABASE,
+        p.setProperty(ServerConstants.SC_KEY_DATABASE + "." + 0,
                       ServerConstants.SC_DEFAULT_DATABASE);
         p.setProperty(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
                       ServerConstants.SC_DEFAULT_NO_SYSTEM_EXIT);
@@ -1347,26 +1348,29 @@ public class Server implements HsqlSocketRequestHandler {
         trace("openDB() entered");
 
         synchronized (mDatabase_mutex) {
-            HsqlProperties dbURL = DatabaseManager.parseURL(getDatabasePath(),
-                false);
+            for (int i = 0; i < dbPath.length; i++) {
+                HsqlProperties dbURL =
+                    DatabaseManager.parseURL(getDatabasePath(i), false);
 
-            dbPath = dbURL.getProperty("database");
-            dbType = dbURL.getProperty("connection_type");
+                dbPath[i] = dbURL.getProperty("database");
+                dbType[i] = dbURL.getProperty("connection_type");
 
 //            if (mDatabase == null) {
-            trace("Opening database: [" + dbType + dbPath + "]");
+                trace("Opening database: [" + dbType[i] + dbPath[i] + "]");
 
-            sw = new StopWatch();
+                sw = new StopWatch();
 
-            Database db = DatabaseManager.getDatabase(dbType, dbPath, false);
+                Database db = DatabaseManager.getDatabase(dbType[i],
+                    dbPath[i], false);
 
-            DatabaseManager.registerServer(this, db);
+                DatabaseManager.registerServer(this, db);
 /*
                 print(sw.elapsedTimeToMessage("Database opened sucessfully"));
             } else {
                 trace("database already open: [" + dbType + dbPath + "]");
             }
 */
+            }
         }
 
         trace("openDB() exiting");
@@ -1467,7 +1471,7 @@ public class Server implements HsqlSocketRequestHandler {
      * that this server is no longer using the database instance and to
      * nullify the internal reference.
      */
-    private final void releaseDB() {
+    private final void releaseDB(int i) {
 
         trace("releaseDB() entered");
 
@@ -1476,8 +1480,8 @@ public class Server implements HsqlSocketRequestHandler {
 /*
                 if (mDatabase != null) {
 */
-                trace("Releasing database: [" + dbType + dbPath + "]");
-                DatabaseManager.releaseDatabase(dbType, dbPath);
+                trace("Releasing database: [" + dbType[i] + dbPath[i] + "]");
+                DatabaseManager.releaseDatabase(dbType[i], dbPath[i]);
 /*
                     mDatabase = null;
                 }
@@ -1621,38 +1625,41 @@ public class Server implements HsqlSocketRequestHandler {
         print("Initiating shutdown sequence...");
         releaseServerSocket();
         closeAllServerConnections();
-        releaseDB();
 
-        serverThread = null;
+        for (int i = 0; i < dbPath.length; i++) {
+            releaseDB(i);
 
-        // paranoia:  try { sctg.destroy() } is probably fine
-        if (serverConnectionThreadGroup != null) {
-            if (!serverConnectionThreadGroup.isDestroyed()) {
-                try {
-                    serverConnectionThreadGroup.destroy();
-                } catch (Throwable t) {
-                    if (Trace.TRACE) {
-                        Trace.trace(t.toString());
+            serverThread = null;
+
+            // paranoia:  try { sctg.destroy() } is probably fine
+            if (serverConnectionThreadGroup != null) {
+                if (!serverConnectionThreadGroup.isDestroyed()) {
+                    try {
+                        serverConnectionThreadGroup.destroy();
+                    } catch (Throwable t) {
+                        if (Trace.TRACE) {
+                            Trace.trace(t.toString());
+                        }
                     }
                 }
+
+                serverConnectionThreadGroup = null;
             }
 
-            serverConnectionThreadGroup = null;
-        }
+            setState(ServerConstants.SERVER_STATE_SHUTDOWN);
+            print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
+            notifyStatus();
 
-        setState(ServerConstants.SERVER_STATE_SHUTDOWN);
-        print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
-        notifyStatus();
+            if (isNoSystemExit()) {
+                printWithTimestamp("SHUTDOWN : System.exit() was not called");
+            } else {
+                printWithTimestamp("SHUTDOWN : System.exit() is called next");
 
-        if (isNoSystemExit()) {
-            printWithTimestamp("SHUTDOWN : System.exit() was not called");
-        } else {
-            printWithTimestamp("SHUTDOWN : System.exit() is called next");
-
-            try {
-                System.exit(0);
-            } catch (Throwable t) {
-                trace(t.toString());
+                try {
+                    System.exit(0);
+                } catch (Throwable t) {
+                    trace(t.toString());
+                }
             }
         }
     }
