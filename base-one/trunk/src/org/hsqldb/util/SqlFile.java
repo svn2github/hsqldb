@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.19 2004/01/22 00:06:48 unsaved Exp $
+ * $Id: SqlFile.java,v 1.20 2004/01/22 05:26:19 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -414,11 +414,13 @@ public class SqlFile {
                 int[] maxWidth = new int[incCount];
                 int insi;
                 boolean skip;
+                String dataType;
 
                 // STEP 1: GATHER DATA
                 if (!htmlMode) {
                     for (int i = 0; i < maxWidth.length; i++) maxWidth[i] = 0;
                 }
+                boolean[] rightJust = new boolean[incCount];
                 if (incCount > 1) {
                     insi = -1;
                     headerArray = new String[incCount];
@@ -430,6 +432,9 @@ public class SqlFile {
                             if (skip) continue;
                         }
                         headerArray[++insi] = m.getColumnLabel(i);
+                        dataType = m.getColumnTypeName(i);
+                        rightJust[insi] = dataType.equals("INTEGER")
+                            || dataType.equals("NUMBER");
                         if (htmlMode) continue;
                         if (headerArray[insi].length() > maxWidth[insi])
                             maxWidth[insi] = headerArray[insi].length();
@@ -467,7 +472,8 @@ public class SqlFile {
                         psStd.print(htmlMode
                                 ? ("<TD>" + headerArray[i] + "</TD>")
                                 : (((i > 0) ? spaces(2) : "")
-                                    + pad(headerArray[i], maxWidth[i], false))
+                                    + pad(headerArray[i],
+                                        maxWidth[i], rightJust[i]))
                         );
                     }
                     psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
@@ -489,18 +495,18 @@ public class SqlFile {
                             ? ("<TD>" + fieldArray[j] + "</TD>")
                             : (((j > 0) ? spaces(2) : "")
                                     + pad(fieldArray[j], maxWidth[j],
-                                            false))
+                                            rightJust[i]))
                         );
                     };
                     psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
                 }
                 if (htmlMode) psStd.println("</TABLE>");
-                stdprint("\n" + rows.size() + " rows");
+                if (rows.size() != 1) stdprint("\n" + rows.size() + " rows");
                 break;
             default:
                 stdprint(((updateCount == 0) ? "no" 
                             : Integer.toString(updateCount))
-                        + "row" + ((updateCount == 1) ? "" : "s") + "updated");
+                        + " row" + ((updateCount == 1) ? "" : "s") + " updated");
                 break;
         }
     }
@@ -601,6 +607,7 @@ public class SqlFile {
         String[] headerArray = { "name", "datatype", "width", "no-nulls" };
         String[] fieldArray;
         int[] maxWidth = { 0, 0, 0, 0 };
+        boolean[] rightJust = { false, false, true, false };
 
         // STEP 1: GATHER DATA
         for (int i = 0; i < headerArray.length; i++) {
@@ -615,7 +622,8 @@ public class SqlFile {
             fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
             fieldArray[3] = ((m.isNullable(i + 1) ==
                                     java.sql.ResultSetMetaData.columnNullable)
-                                    ? "&nbsp;" : "*");
+                                    ? (htmlMode ? "&nbsp;" : "")
+                                    : "*");
             rows.add(fieldArray);
             for (int j = 0; j < fieldArray.length; j++)
                 if (fieldArray[j].length() > maxWidth[j])
@@ -628,7 +636,7 @@ public class SqlFile {
             psStd.print(htmlMode
                     ? ("<TD>" + headerArray[i] + "</TD>")
                     : (((i > 0) ? spaces(2) : "")
-                        + pad(headerArray[i], maxWidth[i], false))
+                        + pad(headerArray[i], maxWidth[i], rightJust[i]))
             );
         }
         psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
@@ -647,7 +655,7 @@ public class SqlFile {
                 psStd.print(htmlMode
                     ? ("<TD>" + fieldArray[j] + "</TD>")
                     : (((j > 0) ? spaces(2) : "")
-                            + pad(fieldArray[j], maxWidth[j], false))
+                            + pad(fieldArray[j], maxWidth[j], rightJust[j]))
                 );
             };
             psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
