@@ -1757,8 +1757,15 @@ public class Server implements HsqlSocketRequestHandler {
                 continue;
             }
 
-            HsqlProperties dbURL =
-                DatabaseManager.parseURL(getDatabasePath(i, true), false);
+            String path = getDatabasePath(i, true);
+
+            if (path == null) {
+                dbAlias[i] = null;
+
+                continue;
+            }
+
+            HsqlProperties dbURL = DatabaseManager.parseURL(path, false);
 
             if (dbURL == null) {
                 dbAlias[i] = null;

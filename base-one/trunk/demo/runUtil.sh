@@ -7,6 +7,7 @@
 
 # the value set here will override the value passed by $JAVA_HOME or the -jdkhome switch
 jdkhome=""
+jdkhome=""
 jargs=""
 thread_flag=""
 

@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.13 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.14 2004/07/15 14:50:10 fredt Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.13 $</edition>
-        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+        <edition>$Revision: 1.14 $</edition>
+        <pubdate>$Date: 2004/07/15 14:50:10 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -38,48 +38,47 @@
     </section>
     <section>
         <title>SQL Standard Support</title>
-        <section>
-            <para>
-                HSQLDB 1.7.2 supports the dialect of SQL defined by SQL
-                standards 92, 99 and 2003. This means where a feature of the
-                standard is supported, e.g. left outer join, the syntax is
-                that specified by the standard text. Many features
-                of SQL92 and 99 up to Advanced Level are supported and there
-                is support for most of SQL 2003 Foundation and several optional
-                features of this standard. However, certain features
-                of the Standards are not supported so no claim is made for full
-                support of any level of the standards.
-            </para><para>
-                The SQL Syntax chapter of this guide
-                <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
-                lists all the keywords and syntax that is supported. When
-                writing or converting existing SQL DDL (Data Definition Language)
-                and DML (Data Manipulation Language) statements for HSQLDB,
-                you should consult the supported syntax and modify the statements
-                accordingly.
-            </para><para>
-                Several words are reserved by the standard and cannot be used
-                as table or column names. For example, the word POSITION is
-                reserved as it is a function defined by the Standards with a
-                similar role as String.indexOf() in Java. HSQLDB does not
-                currently prevent you from using a reserved word if it does not
-                support its use or can distinguish it. For example ANY and BEGIN
-                are reserved words
-                that are not currently supported by HSQLDB and are allowed as
-                names of tables or columns. You should avoid the use of such
-                words as future versions of HSQLDB are likely to support the
-                words and will reject your table definitions or queries. The
-                full list of SQL reserved words is in the source of the
-               <classname>org.hsqldb.Token</classname> class.
-            </para><para>
-                HSQLDB also supports some keywords and expressions that are
-                not part of the SQL standard as enhancements. Expressions
-                such as <literal>SELECT TOP 5 FROM ..</literal>,
-                <literal>SELECT LIMIT 0 10 FROM ...</literal>
-                or <literal>DROP TABLE mytable IF EXISTS</literal>
-                are among such constructs.
-            </para>
-        </section>
+        <para>
+            HSQLDB 1.7.2 supports the dialect of SQL defined by SQL
+            standards 92, 99 and 2003. This means where a feature of the
+            standard is supported, e.g. left outer join, the syntax is
+            that specified by the standard text. Many features
+            of SQL92 and 99 up to Advanced Level are supported and there
+            is support for most of SQL 2003 Foundation and several optional
+            features of this standard. However, certain features
+            of the Standards are not supported so no claim is made for full
+            support of any level of the standards.
+        </para><para>
+            The SQL Syntax chapter of this guide
+            <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
+            lists all the keywords and syntax that is supported. When
+            writing or converting existing SQL DDL (Data Definition Language)
+            and DML (Data Manipulation Language) statements for HSQLDB,
+            you should consult the supported syntax and modify the statements
+            accordingly.
+        </para><para>
+            Several words are reserved by the standard and cannot be used
+            as table or column names. For example, the word POSITION is
+            reserved as it is a function defined by the Standards with a
+            similar role as String.indexOf() in Java. HSQLDB does not
+            currently prevent you from using a reserved word if it does not
+            support its use or can distinguish it. For example ANY and BEGIN
+            are reserved words
+            that are not currently supported by HSQLDB and are allowed as
+            names of tables or columns. You should avoid the use of such
+            words as future versions of HSQLDB are likely to support the
+            words and will reject your table definitions or queries. The
+            full list of SQL reserved words is in the source of the
+           <classname>org.hsqldb.Token</classname> class.
+        </para><para>
+            HSQLDB also supports some keywords and expressions that are
+            not part of the SQL standard as enhancements. Expressions
+            such as <literal>SELECT TOP 5 FROM ..</literal>,
+            <literal>SELECT LIMIT 0 10 FROM ...</literal>
+            or <literal>DROP TABLE mytable IF EXISTS</literal>
+            are among such constructs.
+        </para>
+    </section>
     <section>
         <title>Constraints and Indexes</title>
         <section>
