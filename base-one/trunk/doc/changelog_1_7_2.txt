@@ -74,16 +74,15 @@ Support for multiple rows with null fields under unique constraints.
 
 Exclusion of NULL values from results of queries with range conditions. 
 
+
 ----------------
-OTHER
+FOREIGN KEY
 
-IN value lists can now contain column values or expressions. See TestSelfQueries.txt for an example.
+Full support of triggered actions, including foreign keys that reference the same table.
 
-LIKE has been debugged and optimised when possible.
+FORIEGN KEY ... ON UPDATE { CASCADE | SET NULL | SET DEFAULT } ON DELETE { CASCADE | SET NULL | SET DEFAULT }
 
-FORIEGN KEY ... ON UPDATE { DELETE | SET NULL | SET DEFAULT }
-
-Strict treatment of foreign key index requirements is now enforced. A foreign key declaration _requires_ a unique constraint to exist on the columns of the referenced table. This applies both to old and new databases. Duplicate foreign keys (with exactly the same column sets) are now disallowed.
+Strict treatment of foreign key constraint requirements is now enforced. A foreign key declaration _requires_ a unique constraint to exist on the columns of the referenced table. This applies both to old and new databases. Duplicate foreign keys (with exactly the same column sets) are now disallowed.
 
 ----------------
 SEQUENCE
@@ -124,6 +123,12 @@ DATETIME
 
 Fixed the TIMESTAMPS, TIME and DATE normalisation issues.
 
+----------------
+OTHER
+
+IN value lists can now contain column values or expressions. See TestSelfQueries.txt for an example.
+
+LIKE has been debugged and optimised when possible.
 
 ----------------------------------------------------
 
@@ -178,11 +183,6 @@ Further speed improvements in all logged modes
 INSERT and UPDATE ops are faster by 5-20% in MEMORY tables, less in CACHED tables.
 
 General speedup of CACHED table operation due to better management of the memory cache.
-
-NIO ACCESS FOR .data FILES
-
-New nio access layer for .data files speeds up most CACHED TABLE related operations very significantly. 90% speedups in TestCacheSize tests have been observed. The program must be compiled with JDK 1.4 and run in a 1.4 JRE to use the new access mode.
-
 
 ----------------------------------------------------
 
@@ -309,14 +309,25 @@ Changes the format of the *.script file and performs a checkpoint.
 
 The *.script file now contains only the DDL and data that is written at CHECKPOINT or SHUTDOWN. The COMPRESSED format has the side benefit of hiding the DDL and the admin password.
 
+The *.log file now contains the statements executed since the last startup or CHECKPOINT. This file is in plain text format.
+
 SET WRITE_DELAY {TRUE | FALSE}
 
 SET WRITE_DELAY <n>
 
 The behaviour of SET WRITE_DELAY has changed with the introduction of the sync() method to force the log to be written out completely to disk at given intervals.
-SET WRITE_DELAY {TRUE | FALSE} is interpreted as synch every 60 seconds or 1 second. SET WRITE_DELAY <n> where n is an integer is interpreted as synch every n seconds. The current default is 60 seconds which seems to provide the right balance. The performance impact of SET WRITE_DELAY 1 is probably about 15% over that of SET WRITE_DELAY 300.
+SET WRITE_DELAY {TRUE | FALSE} is interpreted as synch every 60 seconds or 1 second. SET WRITE_DELAY <n> where n is an integer is interpreted as synch every n seconds. The current default is 60 seconds which seems to provide the right balance. Under heavy INSERT/DELETE/UPDATE test conditions, the performance impact of SET WRITE_DELAY 1 is probably about 15% over that of SET WRITE_DELAY 300.
 
-Crash recovery has been modified so that any line in the log that is not properly written (and causes an error) ends the redo process. A message is reported to the user, instead of stopping engine operation.
+Crash recovery has been modified so that any line in the *.log file that is not properly written (and causes an error) ends the redo process. A message is reported to the user, instead of stopping engine operation.
+
+NIO ACCESS FOR *.data FILES
+
+New nio access layer for .data files speeds up most CACHED TABLE related operations very significantly. 90% speedups in TestCacheSize tests have been observed.
+
+The program must be compiled with JDK 1.4 and run in a 1.4 JRE to use the new access mode.
+
+There must be enough available memory in the machine to allow a memory-mapped buffer for the entire *.data file. Beyond this size, the engine reverts to non-nio access.
+
 
 
 ----------------------------------------------------

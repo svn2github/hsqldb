@@ -369,154 +369,111 @@
   in database operations. Most of these values have been introduced for the new features since 1.7.0 and are listed 
   below with their default values in different contexts:</p>
 <table border cellspacing=1 cellpadding=9 width=750>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <p>VALUE 
-      
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>DEFAULT 
-      
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>DESCRIPTION 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> <code> 
-         
       <p>readonly 
-         
       </code></td>
     <td width="33%" valign="TOP"> <code> 
-         
       <p>no 
-         
       </code></td>
     <td width="33%" valign="TOP"> 
-         
       <p>whole database is read-only 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
       <p>When true, the database cannot be modified in use. This setting can be 
         changed to <code>yes </code>if the database is to be opened from a CD. 
         Prior to changing this setting, the database should be closed with the 
         <code>SHUTDOWN COMPACT </code>command to ensure consistency and compactness 
-        of the data.
+        of the data. 
     </td>
   </tr>
-  <tr>
+  <tr> 
     <td width="33%" valign="TOP"><code>hsqldb.files_readonly</code></td>
     <td width="33%" valign="TOP"><code>false</code></td>
     <td width="33%" valign="TOP">database files will not be written to</td>
   </tr>
-  <tr>
-    <td colspan="3" valign="TOP">When true, data in MEMORY tables can be modified and  new MEMORY tables can be added. However, these changes are not saved when  the database is shutdown. CACHED and TEXT tables are always readonly when this setting is true.</td>
+  <tr> 
+    <td colspan="3" valign="TOP">When true, data in MEMORY tables can be modified 
+      and new MEMORY tables can be added. However, these changes are not saved 
+      when the database is shutdown. CACHED and TEXT tables are always readonly 
+      when this setting is true.</td>
   </tr>
-  <tr>
+  <tr> 
     <td width="33%" valign="TOP"><code>hsqldb.first_identity</code></td>
     <td width="33%" valign="TOP"><code>0</code></td>
     <td width="33%" valign="TOP">first identity value for a new table</td>
   </tr>
-  <tr>
-    <td colspan="3" valign="TOP">The first value assigned automatically to the identity column of  new tables.<code>(SET PROPERTY)</code></td>
+  <tr> 
+    <td colspan="3" valign="TOP">The first value assigned automatically to the 
+      identity column of new tables.<code>(SET PROPERTY)</code></td>
   </tr>
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>sql.enforce_size </pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>false</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>trimming and padding string columns 
-      
     </td>
   </tr>
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
       <p>When true, all CHARACTER and VARCHAR values that are in a row affected 
         by an INSERT INTO or UPDATE statement are trimmed to the size specified 
         in the SQL table definition. Also all char strings that are shorter than 
         the specified size are padded with spaces. When false (default), stores 
-        the exact string that is inserted. <code> (SET PROPERTY) </code>
-      
+        the exact string that is inserted. <code> (SET PROPERTY) </code> 
     </td>
   </tr>
-  
-  
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>sql.enforce_strict_size </pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>false</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>size enforcement and padding string columns 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
-      <p>Conforms to SQL standards. When true, all CHARACTER and VARCHAR values that are in a row affected 
-        by an INSERT INTO or UPDATE statement are checked against the size specified 
-        in the SQL table definition. An exception is thrown if the value is too long. Also all char strings that are shorter than 
-        the specified size are padded with spaces. When false (default), stores 
-        the exact string that is inserted.  <code> (SET PROPERTY)</code>
-      
+      <p>Conforms to SQL standards. When true, all CHARACTER and VARCHAR values 
+        that are in a row affected by an INSERT INTO or UPDATE statement are checked 
+        against the size specified in the SQL table definition. An exception is 
+        thrown if the value is too long. Also all char strings that are shorter 
+        than the specified size are padded with spaces. When false (default), 
+        stores the exact string that is inserted. <code> (SET PROPERTY)</code> 
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>sql.compare_in_locale </pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>false</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>locale used for sorting 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
       <p>CHARACTER and VARCHAR columns are by default sorted according to POSIX 
         standards. Setting the value to true will result in sorting in the character 
         set of the current JRE locale.</p>
@@ -524,177 +481,158 @@
         will break the indexing and result in inconsistent operation. To avoid 
         this, first change the value in the properties file, then open the database 
         and issue the SHUTDOWN COMPACT command to recreate all the indexes. 
-      <p>If set <code>true</code>, this setting affects all the
-database in the JVM.      
+      <p>If set <code>true</code>, this setting affects all the database in the 
+        JVM. 
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>sql.strict_fk</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>true</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>require unique index for foreign keys 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
-      <p>Deprecated property. 1.7.2  always requires a pre-existing unique constraint or primary key for the column(s) referenced 
-        by a foreign key constraint and returns an error if the unique constraint does not 
-        already exist.</p>
+      <p>Deprecated property. 1.7.2 always requires a pre-existing unique constraint 
+        or primary key for the column(s) referenced by a foreign key constraint 
+        and returns an error if the unique constraint does not already exist.</p>
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>sql.strong_fk</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>true</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>make unique index for foreign keys 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
-      <p>Deprecated property. In version 1.7.2 no automatic index will be created on referenced columns and this property will have no effect.</p>
+      <p>Deprecated property. In version 1.7.2 no automatic index will be created 
+        on referenced columns and this property will have no effect.</p>
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>hsqldb.cache_scale</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>14</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>memory cache exponent 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
-      <p>Indicates the size of memory cache used with cached tables, calculated 
-        as 3 *(2**value) (three multiplied by (two to the power value)). The default results in thus up to 3*16384 rows from all cached 
-        tables being held in memory at any time. </p>
-      <p>The value can range between 8-16.  <code> (SET PROPERTY) </code>If the value is set via SET PROPERTY then it becomes effective after the next database SHUTDOWN.
+      <p>Indicates the maximum number of rows of cached tables that are held in 
+        memory, calculated as 3 *(2**value) (three multiplied by (two to the power 
+        value)). The default results in up to 3*16384 rows from all cached tables 
+        being held in memory at any time. </p>
+      <p>The value can range between 8-18. <code> (SET PROPERTY) </code>If the 
+        value is set via SET PROPERTY then it becomes effective after the next 
+        database SHUTDOWN or CHECKPOINT DEFRAG. 
     </td>
   </tr>
-   
-  <tr>
-      
-    <td width="33%" valign="TOP">
-         
+  <tr> 
+    <td width="33%" valign="TOP"><code>hsqldb.cache_size_scale</code></td>
+    <td width="33%" valign="TOP"><code>10</code></td>
+    <td width="33%" valign="TOP"><code>memory cache exponent </code></td>
+  </tr>
+  <tr> 
+    <td colspan="3" valign="TOP">Indicates the average size of each row in the 
+      memory cache used with cached tables, calculated as 2**value (two to the 
+      power value). This result value is multiplied by the maximum number of rows 
+      defined by <code>hsqldb.cache_scale</code> to form the maximum number of 
+      bytes for all the rows in memory cache. The default results in 1024 bytes 
+      per row. This default, combined with the default number of rows results 
+      in approximately 50MB of memory used for the cache.</td>
+  </tr>
+  <tr> 
+    <td width="33%" valign="TOP"> 
       <pre>hsqldb.log_size</pre>
     </td>
-    <td width="33%" valign="TOP">
-         
+    <td width="33%" valign="TOP"> 
       <pre>200</pre>
     </td>
     <td width="33%" valign="TOP">size of log when checkpoint is performed</td>
   </tr>
-   
-  <tr>
-      
-    <td width="99%" valign="TOP" colspan="3">
-         
-      <p>The value is the size in megabytes that the <tt>.script</tt> file can reach before an automatic checkpoint occurs to rewrite the file. The value can be changed via the<tt> SET LOGSIZE nnn </tt>SQL command.</p>
+  <tr> 
+    <td width="99%" valign="TOP" colspan="3"> 
+      <p>The value is the size in megabytes that the <tt>.script</tt> file can 
+        reach before an automatic checkpoint occurs to rewrite the file. The value 
+        can be changed via the<tt> SET LOGSIZE nnn </tt>SQL command.</p>
     </td>
   </tr>
-   
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>hsqldb.gc_interval</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>0</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <p>forced garbage collection 
-      
     </td>
   </tr>
-   
   <tr> 
-      
     <td valign="TOP" colspan=3> 
-         
       <p>This setting forces garbage collection each time a set number of result 
         set row or cache row objects are created. The default, "0" means no garbage 
         collection is forced by the program.</p>
-      <p>This should not be set when the database engine is acting as a server inside an exclusive JVM. 
-        The setting can be useful when the database is used in-process with the application with some 
-        Java Runtime Environments (JRE’s). Some JRE’s increase the size of the 
-        memory heap before doing any automatic garbage collection. This setting 
-        would prevent any unnecessary enlargement of the heap. Typical values 
-        for this setting would probably be between 10,000 to 100,000.  <code> (SET PROPERTY)</code>
-      
+      <p>This should not be set when the database engine is acting as a server 
+        inside an exclusive JVM. The setting can be useful when the database is 
+        used in-process with the application with some Java Runtime Environments 
+        (JRE’s). Some JRE’s increase the size of the memory heap before doing 
+        any automatic garbage collection. This setting would prevent any unnecessary 
+        enlargement of the heap. Typical values for this setting would probably 
+        be between 10,000 to 100,000. <code> (SET PROPERTY)</code> 
     </td>
   </tr>
-  <tr>
+  <tr> 
     <td width="33%" valign="TOP"><code>hsqldb.nio_data_file</code></td>
-    <td width="33%" valign="TOP">
+    <td width="33%" valign="TOP"> 
       <pre>true</pre>
     </td>
     <td width="33%" valign="TOP">use of nio access methods for the .data file</td>
   </tr>
-  <tr>
-    <td colspan="3" valign="TOP">
-      <p>When HSQLDB is compiled and run in Java 1.4, setting this property to <code>false</code> will avoid the use of nio access methods, resulting in reduced speed. </p>
-      <p><code>(SET PROPERTY) </code>If used before defining any CACHED table, it applies to the current session, otherwise it comes to effect after a SHUTDOWN and restart.</p>
+  <tr> 
+    <td colspan="3" valign="TOP"> 
+      <p>When HSQLDB is compiled and run in Java 1.4, setting this property to 
+        <code>false</code> will avoid the use of nio access methods, resulting 
+        in reduced speed. </p>
+      <p><code>(SET PROPERTY) </code>If used before defining any CACHED table, 
+        it applies to the current session, otherwise it comes to effect after 
+        a SHUTDOWN and restart.</p>
     </td>
   </tr>
   <tr> 
-      
     <td width="33%" valign="TOP"> 
-         
       <pre>textdb.*</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
       <pre>0</pre>
     </td>
     <td width="33%" valign="TOP"> 
-         
-      <p>default properties for new text tables
+      <p>default properties for new text tables 
     </td>
   </tr>
-  <tr>
-    <td colspan="3" valign="TOP">Properties that  override the database engine defaults for newly created text tables. Settings in the text table <code>SET &lt;tablename&gt; SOURCE &lt;source string&gt; </code>command override  both the engine defaults and the database properties defaults. Individual <code>textdb.*</code> properties are listed in  <a href="hsqlTextTables.html">hsqlTextTables.html</a> . <code>(SET PROPERTY)</code></td>
+  <tr> 
+    <td colspan="3" valign="TOP">Properties that override the database engine 
+      defaults for newly created text tables. Settings in the text table <code>SET 
+      &lt;tablename&gt; SOURCE &lt;source string&gt; </code>command override both 
+      the engine defaults and the database properties defaults. Individual <code>textdb.*</code> 
+      properties are listed in <a href="hsqlTextTables.html">hsqlTextTables.html</a> 
+      . <code>(SET PROPERTY)</code></td>
   </tr>
-  
 </table>
 <p>&nbsp;</p>
 <p><i>Upgrading: From 1.7.0, the location of the database files can no longer be overridden 
@@ -736,19 +674,46 @@ database in the JVM.
   per row, with a total of 10 slots of 4 bytes each - currently taking up 80 bytes per 
   row. Beyond this, each extra column in the table adds at least a few bytes to 
   the size of each row.</p>
-<p>With CACHED tables, the data is stored on disk and   only up to a maximum number of rows are held in memory 
-  at any time. The default is up to 3*16384. The <code>hsqldb.cache_scale</code> database 
-  property can be set to alter this amount. As any random subset of the rows in any of  the CACHED tables can be held in the cache, the amount of memory needed  by cached rows can reach the sum of the rows containing the largest field data. For example if a table with 100,000 rows contains 40,000 rows with 1,000 bytes  of data in each row and 60,000 rows with 100 bytes in each, the cache can grow to contain over 49,000 rows, including all the 40,000 larger rows. If memory is limited, the  <code>hsqldb.cache_scale</code> database 
-  property should be reduced to 13  (corresponding to 3*8192 rows) or less.</p>
-<h3></h3>
 <p>The memory used for a result set row has fewer overheads (fewer slots and no 
-  index nodes) but still uses a lot of memory. All the rows in the result set are built in memory, so very large result sets may not be possible. In server mode databases, the result set memory is released 
-  from the server once the database server has returned the result set. In-process 
-  databases release the memory  when the application program releases the <code>java.sql.ResultSet</code> 
-  object. Server modes require additional memory for returning result sets, as they convert the full  result set into an array of bytes which is then transmitted to the client.</p>
+  index nodes) but still uses a lot of memory. All the rows in the result set 
+  are built in memory, so very large result sets may not be possible. In server 
+  mode databases, the result set memory is released from the server once the database 
+  server has returned the result set. In-process databases release the memory 
+  when the application program releases the <code>java.sql.ResultSet</code> object. 
+  Server modes require additional memory for returning result sets, as they convert 
+  the full result set into an array of bytes which is then transmitted to the 
+  client.</p>
 <p>When transactions support is enabled with SET AUTOCOMMIT OFF, lists  of all  insert, delete or update operations are  stored in memory so that they can be undone when ROLLBACK is issued. Transactions that span hundreds of modification to data will take up a lot of memory until the next COMMIT or ROLLBACK clears the list.</p>
 <p>Most JVM implementations allocate up to a maximum amount of memory (usually 64 MB by default). This amount is generally not adequate when large memory tables are used, or when the average size of rows in cached tables is larger than a few hundred bytes. The maximum amount of allocated memory can be set on the JAVA ... command line that is used for running HSQLDB. For example, with Sun JVM    version 1.3.0 the parameter -Xmx256m increases the amount to 256 MB.</p>
-<p>1.7.2 uses a fast cache for immutable objects such as Integer or String that are stored in the database. In most circumstances, this reduces the memory footprint still further as fewer copies of the most frequently-used objects are kept in memory.</p>
+<p>1.7.2 uses a fast cache for immutable objects such as Integer or String that 
+  are stored in the database. In most circumstances, this reduces the memory footprint 
+  still further as fewer copies of the most frequently-used objects are kept in 
+  memory.</p>
+<h3></h3>
+<p></p>
+<h4>Cache Memory Allocation</h4>
+<p>With CACHED tables, the data is stored on disk and only up to a maximum number 
+  of rows are held in memory at any time. The default is up to 3*16384 rows. The 
+  <code>hsqldb.cache_scale</code> database property can be set to alter this amount. 
+  As any random subset of the rows in any of the CACHED tables can be held in 
+  the cache, the amount of memory needed by cached rows can reach the sum of the 
+  rows containing the largest field data. For example if a table with 100,000 
+  rows contains 40,000 rows with 1,000 bytes of data in each row and 60,000 rows 
+  with 100 bytes in each, the cache can grow to contain nearly 50,000 rows, including 
+  all the 40,000 larger rows.</p>
+<p>In 1.7.2, an additional property, hsqldb.cache_size_scale is introduced. This 
+  property, combined with the <code>hsqldb.cache_scale</code> proprety, puts a 
+  limit in bytes on the total size of rows that are cached. When the default values 
+  is used for both properties, the limit on the total size of rows is approximately 
+  50MB. This translates to more actual memory used for the cache, typically 2-4 
+  times. </p>
+<p>If memory is limited, the <code>hsqldb.cache_scale</code> or <code>hsqldb.cache_size_scale</code> 
+  database properties can be reduced. In the example above, if the <code>hsqldb.cache_size_scale</code> 
+  is reduced from 10 to 8, then the total size limit is reduced from 50MB to 12.5 
+  MB. This will allow the number of cached rows to reach 50,000 small rows, but 
+  only 12,500 of the larger rows.</p>
+<h3></h3>
+<p></p>
 <h3>UPGRADING AND MANAGING DATABASES</h3>
 <p>Any database not produced with the release version of HSQLDB 1.7.2 must be upgraded to this version. This includes databases created with the ALPHA versions of 1.7.2. The instructions under UPGRADING USING THE SCRIPT COMMAND should be followed when possible. The DIRECT UPGRADE instructions may or may not work depending on the structure of the database.</p>
 <h4>DIRECT UPGRADE</h4>
