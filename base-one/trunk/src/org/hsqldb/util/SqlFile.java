@@ -49,7 +49,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.51 2004/05/13 20:08:09 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.52 2004/06/01 18:20:24 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +85,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.51 $
+ * @version $Revision: 1.52 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -135,7 +135,7 @@ public class SqlFile {
         + "    \\?                   Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
-        + "    \\i file/path.sql     Import/execute commands from external file\n"
+        + "    \\i file/path.sql     Include/execute commands from external file\n"
         + "    \\dt                  List tables\n"
         + "    \\d TABLENAME         Describe table\n"
         + "    \\H                   Toggle HTML output mode\n"
