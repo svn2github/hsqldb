@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.67 2004/06/06 01:36:55 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.68 2004/06/06 16:37:14 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.67 $
+ * @version $Revision: 1.68 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,11 +109,11 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.67 $".substring("$Revision: ".length(),
-                "$Revision: 1.67 $".length() - 2);
+        revnum = "$Revision: 1.68 $".substring("$Revision: ".length(),
+                "$Revision: 1.68 $".length() - 2);
     }
     private static String BANNER =
-        "SqlFile processor v. " + revnum + ".\n"
+        "(SqlFile processor v. " + revnum + ")\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
         + "    \"\\q\"  to quit.\n"
