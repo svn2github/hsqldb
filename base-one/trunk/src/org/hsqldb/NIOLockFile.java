@@ -71,16 +71,35 @@ final class NIOLockFile extends LockFile {
     protected boolean lockImpl() throws Exception {
 
         boolean isValid;
+        
+        if (fl != null && fl.isValid()) {
+            return true;
+        }
 
         trace("lockImpl(): fc = raf.getChannel()");
 
         fc = raf.getChannel();
 
         trace("lockImpl(): fl = fc.tryLock()");
+        
+        fl = null;
+        
+        try {
+            fl = fc.tryLock();
+            trace("lockImpl(): fl = " + fl);
+        } catch (Exception e) {
+            // CHECKME:
+            // This might not work with a localized JVM
+            // If not, then I suppose we could just use:
+            // trace(e.toString());
+            // although it is far lesss restrictive
+            if (-1 == e.toString().indexOf("No locks available")) {
+                throw e;
+            } else {
+                trace(e.toString());
+            }
+        }
 
-        fl = fc.tryLock();
-
-        trace("lockImpl(): fl = " + fl);
         trace("lockImpl(): f.deleteOnExit()");
         f.deleteOnExit();
 

@@ -54,8 +54,6 @@ interface DatabaseRowInputInterface {
 
     public int readIntData() throws IOException;
 
-    public int available() throws IOException;
-
     public void setSystemId(boolean flag);
 
     public Object[] readData(int[] colTypes)

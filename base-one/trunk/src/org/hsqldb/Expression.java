@@ -2021,57 +2021,91 @@ class Expression {
         if (likeObject.optimised) {
             return;
         }
+        
+        boolean isRightArgFixedConstant = eArg2.isFixedConstant();
 
-        String likeStr = eArg2.isFixedConstant()
+        String likeStr = isRightArgFixedConstant
                          ? (String) eArg2.getValue(Types.VARCHAR)
                          : null;
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE;
 
         likeObject.setParams(likeStr, ignoreCase);
 
-        if (eArg2.isFixedConstant()) {
-            if (likeObject.isEquivalentToFalsePredicate()) {
-                exprType   = FALSE;
-                eArg       = null;
-                eArg2      = null;
-                likeObject = null;
-            } else if (likeObject.isEquivalentToEqualsPredicate()) {
-                exprType = EQUAL;
-                eArg2 = new Expression(Types.VARCHAR,
-                                       likeObject.getRangeLow());
-                likeObject = null;
-            } else if (likeObject.isEquivalentToNotNullPredicate()) {
-
-                // X LIKE '%' <=>  X IS NOT NULL
-                exprType   = NOT_EQUAL;
-                eArg2      = new Expression(Types.NULL, null);
-                likeObject = null;
-            } else if (likeObject.isEquivalentToBetweenPredicate()) {
-
-                // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abd'
+        if (!isRightArgFixedConstant) {
+            // Then we are done here, since it's impossible
+            // to determine at this point if the right expression 
+            // will have a fixed prefix that can be used to optimize
+            // any involved table filters
+            return;
+        }
+        
+        if (likeObject.isEquivalentToFalsePredicate()) {
+            exprType   = FALSE;
+            eArg       = null;
+            eArg2      = null;
+            likeObject = null;
+        } else if (likeObject.isEquivalentToEqualsPredicate()) {
+            exprType   = EQUAL;
+            eArg2 = new Expression(Types.VARCHAR, likeObject.getRangeLow());
+            likeObject = null;
+        } else if (likeObject.isEquivalentToNotNullPredicate()) {
+            
+            // X LIKE '%' <=>  X IS NOT NULL
+            exprType   = NOT_EQUAL;
+            eArg2      = new Expression(Types.NULL, null);
+            likeObject = null;
+        } else {
+            
+            if (eArg.exprType != Expression.COLUMN) {
+                // Then we are done here, since range predicates are 
+                // not picked up for use to optimize table filters
+                // unless the predicate is on the first column of
+                // an index.
+                // TODO:
+                // We might go one step further here and check if the
+                // column is elligible (is the first column of some
+                // index on its table).  If it is not, it may be that
+                // substituting/inserting range predicate below
+                // can actually lower performance.
+                // Indeed, we might better consider delaying the
+                // optimizations below till the TableFilter.setConditions()
+                // phase.
+                return;
+            }
+            
+            if (!Types.isCharacterType(eArg.dataType)) {
+                // TODO:
+                // correct range low / range high generation for
+                // types other than XXXCHAR
+                return;
+            }
+            
+            if (likeObject.isEquivalentToBetweenPredicate()) {
+                
+                // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abc' || max_collation_char
                 Expression eArgOld = eArg;
                 Expression eFirst = new Expression(Types.VARCHAR,
-                                                   likeObject.getRangeLow());
+                likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                                                  likeObject.getRangeHigh());
-
+                likeObject.getRangeHigh());
+                
                 eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
                 eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
                 exprType = AND;
-
+                
                 //
                 likeObject = null;
             } else if (likeObject
                     .isEquivalentToBetweenPredicateAugmentedWithLike()) {
-
-                // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abd' AND X LIKE 'abc%...'
+                
+                // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abc' || max_collation_char AND X LIKE 'abc%...'
                 Expression eFirst = new Expression(Types.VARCHAR,
-                                                   likeObject.getRangeLow());
+                likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                                                  likeObject.getRangeHigh());
+                likeObject.getRangeHigh());
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
                 Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
-
+                
                 eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
                 eArg2.likeObject = likeObject;
                 eArg             = new Expression(AND, gte, lte);
