@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.3 2004/01/19 23:09:38 unsaved Exp $
+ * $Id: SqlFile.java,v 1.4 2004/01/19 23:15:50 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -63,7 +63,7 @@ public class SqlFile {
             + "REMEMBER TO TERMINATE EVERY COMMAND WITH ';'\n";
     final private static String HELP_TEXT =
               "All Commands (SQL Statements and SPECIAL Commands) are "
-            + "delimited with ';'.\n"
+            + "terminated with ';'.\n"
             + "SPECIAL Commands all begin with '\\', SQL Statements do not.\n"
             + "SPECIAL Commands:\n"
             + "    \\h;  Help\n"
