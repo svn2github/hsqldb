@@ -75,11 +75,17 @@ If you want to provide a link to the document, you just ulink to
 the document in the current directory, not to the one in the cdata
 
 
-TIP
+TIPS
+
 When closing DocBook <screen> and <programlisting> elements, make
 sure that there is no line break after the text to display and before
 the closing </screen> or </programlisting> tag.
 Otherwise the resultant display will not look right.
+
+Don't capitalize words or phrases to emphasize them.
+If you want to emphasize something a certain way, then use a DocBook
+emphasis role, and leave the presentation decisions to the style sheets.
+
 
 
 * Theoretically it would be better and SHOULD be simpler to use
