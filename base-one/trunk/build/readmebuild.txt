@@ -1,6 +1,4 @@
-Build instructions for HSQLDB 1.7.2
-
-These instructions have been updated for Release 5 of 1.7.2
+Build instructions for HSQLDB 1.7.3
 
 A jar file for HSQLDB is provided in the /lib directory of the 
 .zip package. This jar contains both the database and the 

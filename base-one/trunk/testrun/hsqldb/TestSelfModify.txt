@@ -1,8 +1,8 @@
 --
--- TestSelfCreate.txt
+-- TestSelfModify.txt
 --
 
--- TestSelfCreate.txt is used by TestSelf.java to test the database
+-- TestSelfModify.txt is used by TestSelf.java to test the database
 --
 -- This is part of a three part suite of scripts to test persistence in the same DB
 --
@@ -18,6 +18,7 @@
 --scripting test for order of indexes
 /*c1*/SELECT * FROM APP WHERE APP_NAME = 'Eran';
 /*c1*/SELECT * FROM APP WHERE APP_NAME = 'Shelly';
+/*c2*/SELECT * FROM APP;
 --
 -- TEST 1
 -- Correct handling of index creation for foreign keys
@@ -33,6 +34,27 @@
 /*u1*/insert into bewerb values ('opqrstu',8);
 /*e*/insert into bewerb values ('opqrstu',9);
 /*u1*/insert into bewerb values ('vwxyz',10);
+
+--test identity increment
+INSERT INTO APP2 (VALUE) VALUES(11);
+INSERT INTO APP2 (VALUE) VALUES(12);
+
+--test result of update before previous shutdown
+/*r
+  14,newdir,NULL,NULL,NULL
+*/select * from file;
+
+--test insert into table
+
+SELECT * INTO NEWAPP FROM APP;
+/*c1*/SELECT * FROM NEWAPP WHERE APP_NAME = 'Eran';
+/*c1*/SELECT * FROM NEWAPP WHERE APP_NAME = 'Shelly';
+/*c2*/SELECT * FROM NEWAPP;
+
+INSERT INTO NEWAPP (SELECT * FROM APP)
+/*c2*/SELECT * FROM NEWAPP WHERE APP_NAME = 'Eran';
+/*c2*/SELECT * FROM NEWAPP WHERE APP_NAME = 'Shelly';
+/*c4*/SELECT * FROM NEWAPP;
 
 -- SHUTDOWN is necessary for test1
 /*u0*/SHUTDOWN;

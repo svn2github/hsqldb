@@ -101,6 +101,25 @@ INSERT INTO APP VALUES (1, 1, 'Shelly');
 INSERT INTO APP VALUES (2, 2, 'Eran');
 /*c1*/SELECT * FROM APP WHERE APP_NAME = 'Shelly';
 
+--test identity increment
+CREATE CACHED TABLE APP2 (
+ ID INTEGER NOT NULL IDENTITY,
+ VALUE INTEGER NOT NULL)
+
+INSERT INTO APP2 (VALUE) VALUES(10);
+
+--test update with no primary key
+DROP TABLE FILE IF EXISTS;
+CREATE TABLE FILE(ID VARCHAR, NAME VARCHAR,
+ DESCRIPTION VARCHAR, FIELD1 INT, FIELD2 VARCHAR);
+/*c0*/select * from file;
+insert into file(id, name) values('14', 'dir');
+/*c1*/select * from file;
+update file set name = 'newdir' where id = '14';
+/*r
+  14,newdir,NULL,NULL,NULL
+*/select * from file;
+
 -- SHUTDOWN is necessary for test1
 SHUTDOWN;
 

@@ -858,6 +858,17 @@ public class Column {
                         return o;
                     }
 
+                    if (o instanceof java.lang.Long) {
+                        long temp = ((Number) o).longValue();
+
+                        if (Byte.MAX_VALUE < temp || temp < Byte.MIN_VALUE) {
+                            throw Trace.error(
+                                Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+                        }
+
+                        return ValuePool.getInt(((Number) o).intValue());
+                    }
+
                     // fredt@users - direct conversion to optimise JDBC setObject(Byte)
                     if (o instanceof java.lang.Byte) {
                         return ValuePool.getInt(((Number) o).intValue());
@@ -894,6 +905,18 @@ public class Column {
                         }
 
                         return o;
+                    }
+
+                    if (o instanceof java.lang.Long) {
+                        long temp = ((Number) o).longValue();
+
+                        if (Short.MAX_VALUE < temp
+                                || temp < Short.MIN_VALUE) {
+                            throw Trace.error(
+                                Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+                        }
+
+                        return ValuePool.getInt(((Number) o).intValue());
                     }
 
                     // fredt@users - direct conversion for JDBC setObject(Short), etc.

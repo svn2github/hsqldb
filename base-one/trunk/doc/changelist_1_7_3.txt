@@ -5,8 +5,9 @@ hsqldb 1.7.3 in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.01.12 1.7.3.2
+2004.01.31 1.7.3.2
 
+Allow conversion from BIGINT to SAMMLINT and TYNYINT (all other legal conversions worked fine)
 Fixed issue with null values in calls to ResultSet methods with a Calendar
 argument.
 Enhancement to allow INSERT INTO <T> SELECT (....) where no column list

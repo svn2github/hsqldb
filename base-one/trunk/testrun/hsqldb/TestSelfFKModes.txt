@@ -1,7 +1,7 @@
 -- CIRCULAR SELF REFERENCING FK
 -- ON DELETE CASCADE
 drop table testB if exists;
-create table testB(id integer, parent integer, ref integer,
+create cached table testB(id integer, parent integer, ref integer,
  data varchar(200), unique(parent), primary key (id),foreign key (parent)
  references testB(id) on delete cascade, foreign key (id)
  references testB(parent) on delete cascade);
@@ -12,7 +12,7 @@ create table testB(id integer, parent integer, ref integer,
 -- NORMAL SELF REFERENCING FK
 -- ON DELETE CASCADE
 drop table testB if exists;
-create table testB(id integer, parent integer, ref integer,
+create cached table testB(id integer, parent integer, ref integer,
  data varchar(200), unique (id), foreign key (parent)
  references testB(id) on delete cascade);
 /*u1*/insert into testB values(100,100,1,'xxxx');
@@ -23,7 +23,7 @@ create table testB(id integer, parent integer, ref integer,
 /*r200,200,1,xxxx*/select * from testB
 -- ON DELETE SET NULL
 drop table testB if exists;
-create table testB(id integer, parent integer, ref integer,
+create cached table testB(id integer, parent integer, ref integer,
  data varchar(200), unique (id), foreign key (parent)
  references testB(id) on delete set null);
 /*u1*/insert into testB values(100,100,1,'xxxx');
@@ -39,7 +39,7 @@ create table testB(id integer, parent integer, ref integer,
 /*c2*/select * from testB where parent is null
 -- ON DELETE SET DEFAULT
 drop table testB if exists;
-create table testB(id integer, parent integer default 20, ref integer,
+create cached table testB(id integer, parent integer default 20, ref integer,
  data varchar(200), unique (id),foreign key (parent)
  references testB(id) on delete set default);
 /*u1*/insert into testB values(20,20,1,'xxxx');
@@ -111,9 +111,9 @@ insert into GroupSubject values (null, null, 100, 200);
 drop table testA if exists;
 drop table testB if exists;
 drop table testC if exists;
-create table testA(id integer primary key);
-create table testB(id integer, foreign key (id) references testA(id) on delete cascade);
-create table testC(id integer, foreign key (id) references testA(id));
+create cached table testA(id integer primary key);
+create cached table testB(id integer, foreign key (id) references testA(id) on delete cascade);
+create cached table testC(id integer, foreign key (id) references testA(id));
 insert into testA values(1);
 insert into testA values(2);
 insert into testB values(1);

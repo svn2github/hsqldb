@@ -2047,6 +2047,13 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * External method to shut down this server.
+     */
+    public void shutdown() {
+        shutdown(false);
+    }
+
+    /**
      * Shuts down this server.
      *
      * @param error true if shutdown is in response to an error

@@ -618,7 +618,10 @@ class Log {
         try {
             ZipUnzipFile.decompressFile(sFileBackup, sFileCache);
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
+                              new Object[] {
+                sFileBackup, e.getMessage()
+            });
         }
     }
 
