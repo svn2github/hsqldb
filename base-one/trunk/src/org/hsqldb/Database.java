@@ -121,7 +121,7 @@ class Database {
     private String        sType;
     private String        sName;
     private String        sPath;
-    boolean                isNew;
+    boolean               isNew;
     private UserManager   aAccess;
     private HsqlArrayList tTable;
     DatabaseInformation   dInfo;
@@ -139,12 +139,10 @@ class Database {
     boolean filesReadOnly;           // cached tables are readonly
 
 // ----------------------------------------------------------------------------
-    boolean filesInJar;
-    boolean sqlEnforceSize;
-    int     sqlMonth;
-    int     firstIdentity;
-
-//    private boolean                bShutdown;
+    boolean                        filesInJar;
+    boolean                        sqlEnforceSize;
+    int                            sqlMonth;
+    int                            firstIdentity;
     private HashMap                hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
@@ -171,7 +169,8 @@ class Database {
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-    Database(String name, String path, String type) throws HsqlException {
+    Database(String type, String path, String name,
+             boolean ifexists) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -185,8 +184,6 @@ class Database {
             setFilesInJar();
         }
 
-        logger = new Logger();
-
         // does not need to be done more than once
         try {
             classLoader = getClass().getClassLoader();
@@ -196,12 +193,21 @@ class Database {
             classLoader = null;
         }
 
+        isNew = (sType == DatabaseManager.S_MEM
+                 ||!HsqlProperties.checkFileExists(path, isFilesInJar(),
+                     getClass()));
+
+        if (isNew && ifexists) {
+            throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);
+        }
+
+        logger = new Logger();
+
         compiledStatementManager = new CompiledStatementManager(this);
 
+        databaseProperties    = new HsqlDatabaseProperties(this);
+        databaseProperties.load();
         setState(Database.DATABASE_SHUTDOWN);
-
-        isNew = !HsqlProperties.checkFileExists(path, this.isFilesInJar(),
-                    getClass());
     }
 
     /**
@@ -230,29 +236,23 @@ class Database {
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
-        newdatabase           = false;
         sysUser               = aAccess.createSysUser(this);
         sessionManager        = new SessionManager(this, sysUser);
-        databaseProperties    = new HsqlDatabaseProperties(this);
         dInfo = DatabaseInformation.newDatabaseInformation(this);
 
-        if (sType == DatabaseManager.S_MEM) {
-            newdatabase = true;
-        } else {
-
-            // create properties file if not exits and report if new file
-            newdatabase = !databaseProperties.load();
+        if (sType != DatabaseManager.S_MEM) {
+            databaseProperties.load();
 
             logger.openLog(this);
         }
 
-        if (newdatabase) {
+        if (isNew) {
             sessionManager.getSysSession().sqlExecuteDirect(
                 "CREATE USER SA PASSWORD \"\" ADMIN");
         }
 
-        setState(DATABASE_ONLINE);
         dInfo.setWithContent(true);
+        setState(DATABASE_ONLINE);
     }
 
     /**

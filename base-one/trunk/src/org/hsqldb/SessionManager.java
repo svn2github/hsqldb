@@ -78,7 +78,6 @@ import org.hsqldb.lib.Iterator;
 public class SessionManager {
 
     int                   sessionIdCount;
-    private HsqlArrayList sessionList = new HsqlArrayList();
     private IntKeyHashMap sessionMap  = new IntKeyHashMap();
     Session               sysSession;
 
@@ -162,6 +161,7 @@ public class SessionManager {
 
             if (s != sysSession) {
                 s.disconnect();
+                it.remove();
             }
         }
     }
@@ -210,10 +210,7 @@ public class SessionManager {
         for (; it.hasNext(); ) {
             observed = (Session) it.next();
 
-            if (observed == null) {
-
-                // do nothing
-            } else if (isObserverAdmin || observed.getId() == observerId) {
+            if (isObserverAdmin || observed.getId() == observerId) {
                 out.add(observed);
             }
         }

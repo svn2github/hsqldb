@@ -246,15 +246,15 @@ class Logger {
     }
 
     /**
-     *  Sets the type of log, currently 0 for text (default) and
+     *  Sets the type of script, currently 0 for text (default) and
      *  1 for binary
      *
      * @param  i The type
      */
-    void setLogType(int i) throws HsqlException {
+    void setScriptType(int i) throws HsqlException {
 
         if (lLog != null) {
-            lLog.setLogType(i);
+            lLog.setScriptType(i);
         }
     }
 

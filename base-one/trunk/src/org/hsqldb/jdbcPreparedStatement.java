@@ -1073,7 +1073,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void clearParameters() throws SQLException {
-        org.hsqldb.lib.ArrayUtil.arrayFill(parameters, null);
+        org.hsqldb.lib.ArrayUtil.fillArray(parameters, null);
     }
 
     //----------------------------------------------------------------------

@@ -1105,7 +1105,7 @@ class Table {
                                       int adjust) throws HsqlException {
 
         int[] indexcolumns =
-            (int[]) ArrayUtil.newResizedArray(index.getColumns(),
+            (int[]) ArrayUtil.resizeArray(index.getColumns(),
                                               index.getVisibleColumns());
         int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns,
             colindex, adjust);

@@ -41,12 +41,8 @@ package org.hsqldb.store;
  */
 public class ValuePool {
 
-    static int intInitCapacity        = 1000;
-    static int longInitCapacity       = 1000;
-    static int doubleInitCapacity     = 1000;
-    static int bigdecimalInitCapacity = 1000;
-    static int stringInitCapacity     = 1000;
-    static int dateInitCapacity       = 1000;
+    //
+    static int maxStringLength = 16;
 
     //
     static int intAccessCount;
@@ -57,19 +53,64 @@ public class ValuePool {
     static int dateAccessCount;
 
     //
-    static BaseHashMap intPool = new BaseHashMap(intInitCapacity,
-        intInitCapacity * 2, BaseHashMap.purgeAll);
-    static BaseHashMap longPool = new BaseHashMap(longInitCapacity,
-        longInitCapacity * 2, BaseHashMap.purgeAll);
-    static BaseHashMap doublePool = new BaseHashMap(doubleInitCapacity,
-        longInitCapacity * 2, BaseHashMap.purgeAll);
-    static BaseHashMap bigdecimalPool =
-        new BaseHashMap(bigdecimalInitCapacity, bigdecimalInitCapacity * 2,
-                        BaseHashMap.purgeAll);
-    static BaseHashMap stringPool = new BaseHashMap(stringInitCapacity,
-        stringInitCapacity * 2, BaseHashMap.purgeAll);
-    static BaseHashMap datePool = new BaseHashMap(dateInitCapacity,
-        dateInitCapacity * 2, BaseHashMap.purgeAll);
+    static BaseHashMap intPool;
+    static BaseHashMap longPool;
+    static BaseHashMap doublePool;
+    static BaseHashMap bigdecimalPool;
+    static BaseHashMap stringPool;
+    static BaseHashMap datePool;
+
+    //
+    static final int[]   defaultPoolLookupSize = new int[] {
+        1000, 1000, 1000, 1000, 1000, 1000
+    };
+    static final int     defaultSizeFactor     = 2;
+    static BaseHashMap[] poolList              = new BaseHashMap[6];
+    static int[]         poolLookupSize        = new int[6];
+
+    //
+    static {
+        initPool(defaultPoolLookupSize, defaultSizeFactor);
+    }
+
+    public static void initPool(int sizeArray[], int sizeFactor) {
+
+        synchronized (ValuePool.class) {
+            for (int i = 0; i < poolList.length; i++) {
+                int size = sizeArray[i];
+
+                poolLookupSize[i] = size;
+                poolList[i] = new BaseHashMap(size, size * sizeFactor,
+                                              BaseHashMap.purgeAll);
+            }
+
+            intPool               = poolList[0];
+            longPool              = poolList[1];
+            doublePool            = poolList[2];
+            bigdecimalPool        = poolList[3];
+            stringPool            = poolList[4];
+            datePool              = poolList[5];
+            intAccessCount        = 0;
+            longAccessCount       = 0;
+            doubleAccessCount     = 0;
+            bigdecimalAccessCount = 0;
+            stringAccessCount     = 0;
+            dateAccessCount       = 0;
+        }
+    }
+
+    public static void resetPool(int[] sizeArray, int sizeFactor) {
+
+        for (int i = 0; i < poolList.length; i++) {
+            poolList[i].clear();
+        }
+
+        initPool(sizeArray, sizeFactor);
+    }
+
+    public static void resetPool() {
+        resetPool(defaultPoolLookupSize, defaultSizeFactor);
+    }
 
     public static Integer getInt(int val) {
 
@@ -94,7 +135,7 @@ public class ValuePool {
 
     public static String getString(String val) {
 
-        if (val.length() > 16) {
+        if (val.length() > maxStringLength) {
             return val;
         }
 
@@ -123,8 +164,22 @@ public class ValuePool {
                  : Boolean.FALSE;
     }
 
-    public ValuePool(int dummy) {
+    public static class poolSettings {
 
-//   temp     workaround
+        String[] propertyStrings = new String[] {
+            "runtime.pool.int_size",        //
+            "runtime.pool.long_size",       //
+            "runtime.pool.double_size",     //
+            "runtime.pool.decimal_size",    //
+            "runtime.pool.string_size",     //
+            "runtime.pool.date_size",       //
+            "runtime.pool.factor",          //
+            "runtime.pool.string_length"    //
+        };
+
+        //
+        static final int[] defaultPoolLookupSize = new int[] {
+            1000, 1000, 1000, 1000, 1000, 1000
+        };
     }
 }

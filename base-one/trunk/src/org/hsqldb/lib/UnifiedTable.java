@@ -54,80 +54,33 @@ import java.util.Hashtable;
  */
 public class UnifiedTable {
 
-    private static Hashtable classCodeMap = new Hashtable(37, 1);
-
-    // Define primitive class code using current hash code, for fast
-    // searching for corresponding class comparator using a switch statement.
-    static final int PRIM_CLASS_CODE_BYTE   = 101;
-    static final int PRIM_CLASS_CODE_CHAR   = 102;
-    static final int PRIM_CLASS_CODE_SHORT  = 103;
-    static final int PRIM_CLASS_CODE_INT    = 104;
-    static final int PRIM_CLASS_CODE_LONG   = 105;
-    static final int PRIM_CLASS_CODE_FLOAT  = 106;
-    static final int PRIM_CLASS_CODE_DOUBLE = 107;
-
-    // Define Object class code using current hash code, for fast
-    // searching for corresponding class comparator using a switch statement.
-/*
-    static final int OBJ_CLASS_CODE_BYTE = 201;
-    static final int OBJ_CLASS_CODE_CHAR   = Character.class.hashCode();
-    static final int OBJ_CLASS_CODE_SHORT  = Short.class.hashCode();
-    static final int OBJ_CLASS_CODE_INT    = Integer.class.hashCode();
-    static final int OBJ_CLASS_CODE_LONG   = Long.class.hashCode();
-    static final int OBJ_CLASS_CODE_FLOAT  = Float.class.hashCode();
-    static final int OBJ_CLASS_CODE_DOUBLE = Double.class.hashCode();
-    static final int OBJ_CLASS_CODE_STRING = String.class.hashCode();
-*/
-
-// fredt
-    static final int OBJ_CLASS_CODE_OBJECT =
-        (new Object()).getClass().hashCode();
-
-    static {
-        classCodeMap.put(byte.class, new Integer(PRIM_CLASS_CODE_BYTE));
-        classCodeMap.put(char.class, new Integer(PRIM_CLASS_CODE_SHORT));
-        classCodeMap.put(short.class, new Integer(PRIM_CLASS_CODE_SHORT));
-        classCodeMap.put(int.class, new Integer(PRIM_CLASS_CODE_INT));
-        classCodeMap.put(long.class, new Integer(PRIM_CLASS_CODE_LONG));
-        classCodeMap.put(float.class, new Integer(PRIM_CLASS_CODE_FLOAT));
-        classCodeMap.put(double.class, new Integer(PRIM_CLASS_CODE_DOUBLE));
-/*
-        classCodeMap.put(Byte.class, new Integer(OBJ_CLASS_CODE_BYTE));
-        classCodeMap.put(Character.class, new Integer(OBJ_CLASS_CODE_SHORT));
-        classCodeMap.put(Short.class, new Integer(OBJ_CLASS_CODE_SHORT));
-        classCodeMap.put(Integer.class, new Integer(OBJ_CLASS_CODE_INT));
-        classCodeMap.put(Long.class, new Integer(OBJ_CLASS_CODE_LONG));
-        classCodeMap.put(Float.class, new Integer(OBJ_CLASS_CODE_FLOAT));
-        classCodeMap.put(Double.class, new Integer(OBJ_CLASS_CODE_DOUBLE));
-        classCodeMap.put(String.class, new Integer(OBJ_CLASS_CODE_STRING));
-*/
-        classCodeMap.put(Object.class, new Integer(OBJ_CLASS_CODE_OBJECT));
-    }
-
     protected SingleCellComparator getSingleCellComparator(int targetColumn) {
 
         switch (cellTypeCode) {
 
-            case PRIM_CLASS_CODE_BYTE :
+            case ArrayUtil.CLASS_CODE_BYTE :
                 return new PrimByteCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_CHAR :
+            case ArrayUtil.CLASS_CODE_CHAR :
                 return new PrimCharCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_SHORT :
+            case ArrayUtil.CLASS_CODE_SHORT :
                 return new PrimShortCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_INT :
+            case ArrayUtil.CLASS_CODE_INT :
                 return new PrimIntCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_LONG :
+            case ArrayUtil.CLASS_CODE_LONG :
                 return new PrimLongCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_FLOAT :
+            case ArrayUtil.CLASS_CODE_FLOAT :
                 return new PrimFloatCellComparator(targetColumn);
 
-            case PRIM_CLASS_CODE_DOUBLE :
+            case ArrayUtil.CLASS_CODE_DOUBLE :
                 return new PrimDoubleCellComparator(targetColumn);
+
+            case ArrayUtil.CLASS_CODE_BOOLEAN     :
+                return new PrimBooleanCellComparator(targetColumn);
 
             default :
                 if (comparatorArray[targetColumn] == null) {
@@ -164,20 +117,20 @@ public class UnifiedTable {
                         int growth) {
 
         this.cellType = cellType;
-        cellTypeCode  = ((Integer) classCodeMap.get(cellType)).intValue();
+        cellTypeCode  = ArrayUtil.getClassCode(cellType);
         this.columns  = columns;
         this.growth   = growth;
         tableData     = Array.newInstance(cellType, initRows * columns);
         rowAvailable  = initRows;
 
-        if (cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
+        if (cellTypeCode == ArrayUtil.CLASS_CODE_OBJECT) {
             comparatorArray = new PrimObjectCellComparator[columns];
         }
     }
 
     public void SetComparator(ObjectComparator objectCompare, int column) {
 
-        if (cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
+        if (cellTypeCode == ArrayUtil.CLASS_CODE_OBJECT) {
             if (comparatorArray[column] == null) {
                 comparatorArray[column] = new PrimObjectCellComparator(column,
                         objectCompare);
@@ -426,86 +379,6 @@ public class UnifiedTable {
         return rowCount;
     }
 
-// fredt - support for removal as well as addition
-    void clearArray(int from, int to) {
-
-        switch (cellTypeCode) {
-
-            case PRIM_CLASS_CODE_BYTE : {
-                byte[] array = (byte[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_CHAR : {
-                byte[] array = (byte[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_SHORT : {
-                short[] array = (short[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_INT : {
-                int[] array = (int[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_LONG : {
-                long[] array = (long[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_FLOAT : {
-                float[] array = (float[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            case PRIM_CLASS_CODE_DOUBLE : {
-                double[] array = (double[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = 0;
-                }
-
-                return;
-            }
-            default : {
-                Object[] array = (Object[]) tableData;
-
-                while (--to >= from) {
-                    array[to] = null;
-                }
-
-                return;
-            }
-        }
-    }
-
     /**
      * Handles both addition and removal of rows
      */
@@ -541,8 +414,8 @@ public class UnifiedTable {
             }
 
             // leave the phantom rows at the end if not Objects
-            if (rows < 0 && cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
-                clearArray(newCount * columns, rowCount * columns);
+            if (rows < 0 && cellTypeCode == ArrayUtil.CLASS_CODE_OBJECT) {
+                ArrayUtil.clearArray(cellTypeCode,tableData, newCount * columns, rowCount * columns);
             }
         }
 
@@ -1100,6 +973,59 @@ public class UnifiedTable {
         }
     }
 
+    class PrimBooleanCellComparator extends SingleCellComparator {
+
+        private boolean[] myTableData;
+        private boolean   mySearchTarget;
+
+        PrimBooleanCellComparator(int targetColumn) {
+            super(targetColumn);
+        }
+
+        public void reset() {
+            myTableData = (boolean[]) tableData;
+        }
+
+        /**
+         * Check if row indexed i is less than row indexed j
+         */
+        public boolean lessThan(int i, int j) {
+            return !myTableData[i * columns + targetColumn] &&
+                   myTableData[j * columns + targetColumn];
+        }
+
+        /**
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
+         * @see setSearchTarget(Object)
+         */
+        public boolean lessThan(int i) {
+            return !myTableData[i * columns + targetColumn] && mySearchTarget;
+        }
+
+        /**
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
+         * @see setSearchTarget(Object)
+         */
+        public boolean greaterThan(int i) {
+            return myTableData[i * columns + targetColumn] && !mySearchTarget;
+        }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(Object target) {
+            mySearchTarget = ((Boolean) target).booleanValue();
+        }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(boolean target) {
+            mySearchTarget = target;
+        }
+    }
     class PrimObjectCellComparator extends SingleCellComparator {
 
         private Object[] myTableData;

@@ -35,7 +35,7 @@ import org.hsqldb.lib.IntValueHashMap;
 
 /**
  * Provides an enumeration of the token types commonly encountered
- * while processing database commands. <p>
+ * while processing database commands.<p>
  *
  * @author  Nitin Chauhan
  * @since HSQLDB 1.7.2
@@ -108,7 +108,6 @@ class Token {
     static final String T_LEFT                  = "LEFT";
     static final String T_LIMIT                 = "LIMIT";
     static final String T_LOGSIZE               = "LOGSIZE";
-    static final String T_LOGTYPE               = "LOGTYPE";
     static final String T_MAXROWS               = "MAXROWS";
     static final String T_MEMORY                = "MEMORY";
     static final String T_MINUS                 = "MINUS";
@@ -133,6 +132,7 @@ class Token {
     static final String T_ROW                   = "ROW";
     static final String T_SAVEPOINT             = "SAVEPOINT";
     static final String T_SCRIPT                = "SCRIPT";
+    static final String T_SCRIPTFORMAT          = "SCRIPTFORMAT";
     static final String T_SELECT                = "SELECT";
     static final String T_SET                   = "SET";
     static final String T_SHUTDOWN              = "SHUTDOWN";
@@ -178,21 +178,21 @@ class Token {
     static final int INDEX                 = 20;
     static final int INSERT                = 21;
     static final int LOGSIZE               = 22;
-    static final int LOGTYPE               = 23;
-    static final int MAXROWS               = 24;
-    static final int MEMORY                = 25;
-    static final int NOT                   = 26;
-    static final int PASSWORD              = 27;
-    static final int PLAN                  = 28;
-    static final int PRIMARY               = 29;
-    static final int PROPERTY              = 30;
-    static final int READONLY              = 31;
-    static final int REFERENTIAL_INTEGRITY = 32;
-    static final int RENAME                = 33;
-    static final int REVOKE                = 34;
-    static final int ROLLBACK              = 35;
-    static final int SAVEPOINT             = 36;
-    static final int SCRIPT                = 37;
+    static final int MAXROWS               = 23;
+    static final int MEMORY                = 24;
+    static final int NOT                   = 25;
+    static final int PASSWORD              = 26;
+    static final int PLAN                  = 27;
+    static final int PRIMARY               = 28;
+    static final int PROPERTY              = 29;
+    static final int READONLY              = 30;
+    static final int REFERENTIAL_INTEGRITY = 31;
+    static final int RENAME                = 32;
+    static final int REVOKE                = 33;
+    static final int ROLLBACK              = 34;
+    static final int SAVEPOINT             = 35;
+    static final int SCRIPT                = 36;
+    static final int SCRIPTFORMAT          = 37;
     static final int SELECT                = 38;
     static final int SEMICOLON             = 39;
     static final int SET                   = 40;
@@ -247,7 +247,6 @@ class Token {
         commandSet.put(T_INDEX, INDEX);
         commandSet.put(T_INSERT, INSERT);
         commandSet.put(T_LOGSIZE, LOGSIZE);
-        commandSet.put(T_LOGTYPE, LOGTYPE);
         commandSet.put(T_MAXROWS, MAXROWS);
         commandSet.put(T_MEMORY, MEMORY);
         commandSet.put(T_PASSWORD, PASSWORD);
@@ -261,6 +260,7 @@ class Token {
         commandSet.put(T_ROLLBACK, ROLLBACK);
         commandSet.put(T_SAVEPOINT, SAVEPOINT);
         commandSet.put(T_SCRIPT, SCRIPT);
+        commandSet.put(T_SCRIPTFORMAT, SCRIPTFORMAT);
         commandSet.put(T_SELECT, SELECT);
         commandSet.put(T_SET, SET);
         commandSet.put(T_SHUTDOWN, SHUTDOWN);

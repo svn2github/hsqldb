@@ -304,9 +304,9 @@ public class HsqlProperties {
      */
     private void addError(int code, String key) {
 
-        errorCodes = (int[]) ArrayUtil.newResizedArray(errorCodes,
+        errorCodes = (int[]) ArrayUtil.resizeArray(errorCodes,
                 errorCodes.length + 1);
-        errorKeys = (String[]) ArrayUtil.newResizedArray(errorKeys,
+        errorKeys = (String[]) ArrayUtil.resizeArray(errorKeys,
                 errorKeys.length + 1);
         errorCodes[errorCodes.length - 1] = code;
         errorKeys[errorKeys.length - 1]   = key;
@@ -405,7 +405,7 @@ public class HsqlProperties {
     public Enumeration propertyNames() {
         return stringProps.propertyNames();
     }
-
+/*
     public String addSystemProperty(String key, int def) {
 
         String sdef  = String.valueOf(def);
@@ -455,4 +455,5 @@ public class HsqlProperties {
             "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey", "=",
             ";", "textdb");
     }
+*/
 }

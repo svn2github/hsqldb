@@ -79,8 +79,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     private static HashSet  protectedProperties      = new HashSet();
     private static String[] protectedPropertiesNames = {
         "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-        "hsqldb.original_version", "hsqldb.log_type", "hsqldb.files_readonly",
-        "hsqldb.files_in_jar", "readonly", "modified", "sql.compare_in_locale"
+        "hsqldb.original_version", "hsqldb.script_format",
+        "hsqldb.files_readonly", "hsqldb.files_in_jar", "readonly",
+        "modified", "sql.compare_in_locale"
     };
 
     static {
@@ -152,7 +153,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // the default, "0" means no garbage collection is forced by
         // hsqldb (the Java Runtime will do it's own garbage collection
         // in any case).
-        setProperty("hsqldb.gc_interval", "0");
+        setProperty("runtime.gc_interval", "0");
 
         // this property is either 1 or 8
         setProperty("hsqldb.cache_file_scale", "1");
@@ -165,11 +166,11 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // values between 8-16 are allowed
         setProperty("hsqldb.cache_scale", "14");
 
-        // maximum size of .script file in megabytes
+        // maximum size of .log file in megabytes
         setProperty("hsqldb.log_size", "200");
 
         // type of logging (0 : text , 1 : binary)
-        setProperty("hsqldb.log_type", "0");
+        setProperty("hsqldb.script_format", "0");
 
         // initial value of idendity columns
         setProperty("hsqldb.first_identity", "0");
@@ -197,7 +198,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         Column.setCompareInLocal(isPropertyTrue("sql.compare_in_locale"));
 
-        Record.gcFrequency = getIntegerProperty("hsqldb.gc_interval", 0);
+        Record.gcFrequency = getIntegerProperty("runtime.gc_interval", 0);
     }
 
     /**

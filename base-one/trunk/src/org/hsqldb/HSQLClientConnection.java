@@ -206,7 +206,7 @@ public class HSQLClientConnection implements SessionInterface {
     private void setAttribute(Object property, int id) throws HsqlException {
 
         resultOut.setResultType(ResultConstants.SQLSETENVATTR);
-        ArrayUtil.arrayFill(resultOut.rRoot.data, null);
+        ArrayUtil.fillArray(resultOut.rRoot.data, null);
 
         resultOut.rRoot.data[id] = property;
 

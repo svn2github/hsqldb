@@ -147,7 +147,7 @@ class Log {
     // metadata visibilty when not private
     int maxLogSize;
     int iLogCount;
-    int logType;
+    int scriptFormat;
 
     //private Thread tRunner;
     private Object timerTask;
@@ -235,7 +235,7 @@ class Log {
         // Allows the user to set log size in the properties file.
         maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
         maxLogSize = maxLogSize * 1024 * 1024;
-        logType = pProperties.getIntegerProperty("hsqldb.log_type",
+        scriptFormat = pProperties.getIntegerProperty("hsqldb.script_format",
                 DatabaseScriptWriter.SCRIPT_TEXT_170);
         filesReadOnly = dDatabase.filesReadOnly;;
         sFileScript   = sName + ".script";
@@ -255,7 +255,7 @@ class Log {
             try {
                 DatabaseScriptReader scr =
                     DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                        sFileScript, logType);
+                        sFileScript, scriptFormat);
 
                 scr.readAll(dDatabase.sessionManager.getSysSession());
                 scr.close();
@@ -303,7 +303,7 @@ class Log {
         try {
             DatabaseScriptReader scr =
                 DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                    sFileScript, logType);
+                    sFileScript, scriptFormat);
 
             scr.readAll(dDatabase.sessionManager.getSysSession());
             scr.close();
@@ -489,17 +489,13 @@ class Log {
      *
      * @param  mb
      */
-    void setLogType(int type) throws HsqlException {
+    void setScriptType(int type) throws HsqlException {
 
-        boolean needsCheckpoint = false;
+        boolean needsCheckpoint = scriptFormat != type;
 
-        if (logType != type) {
-            needsCheckpoint = true;
-        }
+        scriptFormat = type;
 
-        logType = type;
-
-        pProperties.setProperty("hsqldb.log_type", logType);
+        pProperties.setProperty("hsqldb.script_format", scriptFormat);
 
         if (needsCheckpoint) {
             checkpoint(false);
@@ -675,7 +671,7 @@ class Log {
         //fredt - to do - flag for chache set index
         DatabaseScriptWriter scw =
             DatabaseScriptWriter.newDatabaseScriptWriter(dDatabase,
-                sFileScript + ".new", full, true, logType);
+                sFileScript + ".new", full, true, scriptFormat);
 
         scw.writeAll();
         scw.close();

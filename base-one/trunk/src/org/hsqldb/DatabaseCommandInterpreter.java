@@ -1733,7 +1733,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
-            case Token.LOGTYPE : {
+            case Token.SCRIPTFORMAT : {
                 session.checkAdmin();
                 session.checkDDLWrite();
                 session.setScripting(false);
@@ -1741,7 +1741,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 int i = Integer.parseInt(tokenizer.getString());
 
                 if (i == 0 || i == 1 || i == 3) {
-                    database.logger.setLogType(i);
+                    database.logger.setScriptType(i);
                 }
 
                 break;

@@ -33,8 +33,10 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.store.ValuePool;
 import java.io.File;
 
 /**
@@ -128,6 +130,12 @@ class DatabaseManager {
 
         Database db = getDatabaseObject(type, path, ifexists);
 
+        /** @todo  set the size of value pool */
+        if (databaseAccessMap.size() == 1
+                && databaseAccessMap.get(db, Integer.MIN_VALUE) == 1) {
+            ValuePool.resetPool();
+        }
+
         synchronized (db) {
             switch (db.getState()) {
 
@@ -151,7 +159,7 @@ class DatabaseManager {
 
     /**
      * The access counters maintained by this and other methods are not
-     * actually used in the engine.
+     * actually used outside this class
      */
     static synchronized Database getDatabaseObject(String type, String path,
             boolean ifexists) throws HsqlException {
@@ -172,12 +180,7 @@ class DatabaseManager {
         db = (Database) databaseMap.get(key);
 
         if (db == null) {
-            db = new Database(path, path, type);
-
-            if (ifexists && db.isNew) {
-                throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);
-            }
-
+            db = new Database(type,path, path, ifexists);
             databaseMap.put(key, db);
             databaseAccessMap.put(db, 1);
         } else {
@@ -252,6 +255,8 @@ class DatabaseManager {
         Object  key  = path;
         HashMap databaseMap;
 
+        notifyServers(database);
+
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
             key         = new File(path);
@@ -263,14 +268,30 @@ class DatabaseManager {
 
         databaseMap.remove(key);
         databaseAccessMap.remove(database);
-        notifyServers(database);
+
+        if (databaseAccessMap.isEmpty()) {
+            ValuePool.resetPool();
+        }
     }
 
-    //
+    /**
+     * Maintains a map of servers to sets of databases.
+     * Servers register each of their databases.
+     * When a database is shutdown, all the servers accessing it are notified.
+     * The database is then removed form the sets for all servers and the
+     * servers that have no other database are removed from the map.
+     */
     private static HashMap serverMap = new HashMap();
 
     static void registerServer(Server server, Database database) {
-        serverMap.put(server, database);
+
+        if (!serverMap.containsKey(server)) {
+            serverMap.put(server, new HashSet());
+        }
+
+        HashSet databases = (HashSet) serverMap.get(server);
+
+        databases.add(database);
     }
 
     static void notifyServers(Database database) {
@@ -278,9 +299,10 @@ class DatabaseManager {
         Iterator it = serverMap.keySet().iterator();
 
         for (; it.hasNext(); ) {
-            Server server = (Server) it.next();
+            Server  server    = (Server) it.next();
+            HashSet databases = (HashSet) serverMap.get(server);
 
-            if (serverMap.get(server).equals(database)) {
+            if (databases.contains(database)) {
                 server.notify(ServerConstants.SC_DATABASE_SHUTDOWN);
             }
         }
@@ -288,8 +310,13 @@ class DatabaseManager {
         it = serverMap.values().iterator();
 
         for (; it.hasNext(); ) {
-            it.next().equals(database);
-            it.remove();
+            HashSet databases = (HashSet) it.next();
+
+            databases.remove(database);
+
+            if (databases.isEmpty()) {
+                it.remove();
+            }
         }
     }
 

@@ -35,29 +35,45 @@ import java.util.NoSuchElementException;
 
 public class BaseHashMap {
 
+/**
+ * Base class for hash tables or sets. The exact type of the structure is
+ * defined by the constructor. Each instance has at least a keyTable array
+ * and a HashIndex instance for looking up the keys into this table. Instances
+ * that are maps also have a valueTable the same size as the keyTable.
+ *
+ * Special getOrAddXXX() methods are used for object maps.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
+
 /*
+
     data store:
     keys: {array of primitive | array of object}
     values: {none | array of primitive | array of object} same size as keys
     objects support : hashCode(), equals()
 
-    implemented keys:
+    implemented types of keyTable:
     {objectKeyTable: variable size Object[] array for keys |
     intKeyTable: variable size int[] for keys |
     longKeyTable: variable size long[] for keys }
 
-    implemented values:
+    implemented types of valueTable:
     {objectValueTable: variable size Object[] array for values |
     intValueTable: variable size int[] for values }
 
+    valueTable does not exist for sets or for object pools
+
     hash index:
     hashTable: fixed size int[] array for hash lookup into keyTable
-    linkTable: pointer to the next key ; size not dependent on keyTable but
-    equal to the keys table
+    linkTable: pointer to the next key ; size equal or larger than hashTable
+    but equal to the valueTable
 
     access count table:
     {none |
-    variable size int[] array for access count} same size as keys table
+    variable size int[] array for access count} same size as keyTable
 */
 
     //
@@ -108,8 +124,7 @@ public class BaseHashMap {
     protected BaseHashMap(int initialCapacity, int maxCapacity,
                           int purgePolicy) throws IllegalArgumentException {
 
-        this(initialCapacity, 1,
-             BaseHashMap.objectKeyOrValue,
+        this(initialCapacity, 1, BaseHashMap.objectKeyOrValue,
              BaseHashMap.noKeyOrValue);
 
         this.maxCapacity = maxCapacity;
@@ -149,8 +164,6 @@ public class BaseHashMap {
         } else {
             isNoValue = true;
         }
-
-        this.purgePolicy = purgePolicy;
     }
 
     protected Object getObject(int key) {
@@ -476,9 +489,16 @@ public class BaseHashMap {
 
     /**
      * This is dissimilar to normal hash map get() methods. The key Object
-     * should hava an equals(String) method which should return true if the
-     * key.toString.equals(String) is true. Also the key.hasCode() method
-     * must return the same value as key.toString.hashCode()
+     * should have an equals(String) method which should return true if the
+     * key.toString.equals(String) is true. Also the key.hashCode() method
+     * must return the same value as key.toString.hashCode().<p>
+     *
+     * The above is always true when the key is a String. But it means it is
+     * possible to submit special keys that fulfill the contract. For example
+     * a wrapper around a byte[] can be submitted as key to retrieve either
+     * a new String, which is the toString() method of the wrapper, or return
+     * an existing String which would be equal to the product of toString().
+     *
      */
     protected String getOrAddString(Object key) {
 

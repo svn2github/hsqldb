@@ -41,6 +41,160 @@ import java.lang.reflect.*;
  */
 public class ArrayUtil {
 
+    final public static int        CLASS_CODE_BYTE    = 'B';
+    final public static int        CLASS_CODE_CHAR    = 'C';
+    final public static int        CLASS_CODE_DOUBLE  = 'D';
+    final public static int        CLASS_CODE_FLOAT   = 'F';
+    final public static int        CLASS_CODE_INT     = 'I';
+    final public static int        CLASS_CODE_LONG    = 'J';
+    final public static int        CLASS_CODE_OBJECT  = 'L';
+    final public static int        CLASS_CODE_SHORT   = 'S';
+    final public static int        CLASS_CODE_BOOLEAN = 'Z';
+    private static IntValueHashMap classCodeMap       = new IntValueHashMap();
+
+    static {
+        classCodeMap.put(byte.class, ArrayUtil.CLASS_CODE_BYTE);
+        classCodeMap.put(char.class, ArrayUtil.CLASS_CODE_SHORT);
+        classCodeMap.put(short.class, ArrayUtil.CLASS_CODE_SHORT);
+        classCodeMap.put(int.class, ArrayUtil.CLASS_CODE_INT);
+        classCodeMap.put(long.class, ArrayUtil.CLASS_CODE_LONG);
+        classCodeMap.put(float.class, ArrayUtil.CLASS_CODE_FLOAT);
+        classCodeMap.put(double.class, ArrayUtil.CLASS_CODE_DOUBLE);
+        classCodeMap.put(boolean.class, ArrayUtil.CLASS_CODE_BOOLEAN);
+        classCodeMap.put(Object.class, ArrayUtil.CLASS_CODE_OBJECT);
+    }
+
+    public static int getClassCode(Class cla) {
+
+        if (!cla.isPrimitive()) {
+            return ArrayUtil.CLASS_CODE_OBJECT;
+        }
+
+        return classCodeMap.get(cla, -1);
+    }
+
+    public static void clearArray(int code, Object data, int from, int to) {
+
+        switch (code) {
+
+            case ArrayUtil.CLASS_CODE_BYTE : {
+                byte[] array = (byte[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_CHAR : {
+                byte[] array = (byte[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_SHORT : {
+                short[] array = (short[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_INT : {
+                int[] array = (int[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_LONG : {
+                long[] array = (long[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_FLOAT : {
+                float[] array = (float[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_DOUBLE : {
+                double[] array = (double[]) data;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case ArrayUtil.CLASS_CODE_BOOLEAN : {
+                boolean[] array = (boolean[]) data;
+
+                while (--to >= from) {
+                    array[to] = false;
+                }
+
+                return;
+            }
+            default : {
+                Object[] array = (Object[]) data;
+
+                while (--to >= from) {
+                    array[to] = null;
+                }
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * Handles both addition and removal of rows
+     */
+    public static void adjustArray(int code, Object data, int usedElements,
+                            int index, int count) {
+
+        if (index >= usedElements) {
+            return;
+        }
+
+        int newCount = usedElements + count;
+        int source;
+        int target;
+        int size;
+
+        if (count >= 0) {
+            source = index;
+            target = index + count;
+            size   = usedElements - index;
+        } else {
+            source = index - count;
+            target = index;
+            size   = usedElements - index + count;
+        }
+
+        if (size > 0) {
+            System.arraycopy(data, source, data, target, size);
+        }
+
+        if (count < 0) {
+            clearArray(code, data, newCount, usedElements);
+        }
+    }
+
     /**
      *   Basic sort for small arrays.
      */
@@ -132,8 +286,8 @@ public class ArrayUtil {
             return a[0] == b[0];
         }
 
-        int[] tempa = (int[]) newResizedArray(a, count);
-        int[] tempb = (int[]) newResizedArray(b, count);
+        int[] tempa = (int[]) resizeArray(a, count);
+        int[] tempb = (int[]) resizeArray(b, count);
 
         sortArray(tempa);
         sortArray(tempb);
@@ -358,7 +512,7 @@ public class ArrayUtil {
     /**
      * Fills the array with a value
      */
-    public static void arrayFill(Object[] array, Object value) {
+    public static void fillArray(Object[] array, Object value) {
 
         int to = array.length;
 
@@ -386,7 +540,7 @@ public class ArrayUtil {
      * the original array as it can hold. N.B. Always returns a new array
      * even if newsize parameter is the same as the old size.
      */
-    public static Object newResizedArray(Object source, int newsize) {
+    public static Object resizeArray(Object source, int newsize) {
 
         Object newarray =
             Array.newInstance(source.getClass().getComponentType(), newsize);

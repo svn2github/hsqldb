@@ -106,7 +106,7 @@ class Session implements SessionInterface {
     private boolean         isReadOnly;
     private int             currentMaxRows;
     private int             sessionMaxRows;
-    private Number          iLastIdentity;
+    private Number          iLastIdentity = ValuePool.getInt(0);
     private boolean         isClosed;
     private int             iId;
     private IntValueHashMap savepoints;
@@ -264,9 +264,16 @@ class Session implements SessionInterface {
         return currentMaxRows;
     }
 
+    int getSQLMaxRows() {
+        return sessionMaxRows;
+    }
+
     /**
+     * The SQL command SET MAXROWS n will override the Statement.setMaxRows(n)
+     * until SET MAXROWS 0 is issued.
+     *
      * NB this is dedicated to the SET MAXROWS sql statement and should not
-     * otherwise be called
+     * otherwise be called. (fredt@users)
      */
     void setSQLMaxRows(int rows) {
         currentMaxRows = sessionMaxRows = rows;

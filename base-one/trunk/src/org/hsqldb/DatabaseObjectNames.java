@@ -31,7 +31,7 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.UnifiedTable;
+import org.hsqldb.lib.*;
 
 /**
  * Transitional container for object names that are unique across the
@@ -42,7 +42,7 @@ import org.hsqldb.lib.UnifiedTable;
  * @since 1.7.2
  */
 class DatabaseObjectNames {
-
+/*
     UnifiedTable nameList = new UnifiedTable(Object.class, 2);
     Object[]     tempName = new Object[2];
 
@@ -114,4 +114,51 @@ class DatabaseObjectNames {
             }
         }
     }
+*/
+
+    HashMap nameList = new HashMap();
+
+    DatabaseObjectNames() {
+    }
+
+    boolean containsName(String name) {
+        return nameList.containsKey(name);
+    }
+
+    HsqlName getOwner(String name) {
+        return (HsqlName) nameList.get(name);
+    }
+
+    void addName(String name, Object owner) throws HsqlException {
+
+        // should not contain name
+        if (containsName(name)) {
+            throw Trace.error(Trace.GENERAL_ERROR);
+        }
+        nameList.put(name,owner);
+    }
+
+    void rename(String name, String newname) throws HsqlException {
+        Object value = nameList.get(name);
+        addName(newname,value);
+        nameList.remove(name);
+    }
+
+    void removeName(String name) throws HsqlException {
+        if ( nameList.remove(name) == null ) {
+            // should contain name
+            throw Trace.error(Trace.GENERAL_ERROR);
+        }
+    }
+
+    void removeOwner(Object value) {
+        Iterator it = nameList.values().iterator();
+        while ( it.hasNext()){
+            Object currentvalue = it.next();
+            if (value.equals(currentvalue)) {
+                it.remove();
+            }
+        }
+    }
+
 }

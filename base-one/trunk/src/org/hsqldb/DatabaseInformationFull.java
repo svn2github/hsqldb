@@ -618,7 +618,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * AUTOCOMMIT          YES: session is in autocommit mode, else NO
      * USER                the name of user connected in the calling session
      * (was READ_ONLY)
-     * CONNECTION_READONLY TRUE: session is in read-only mode, else FALSE
+     * SESSION_READONLY    TRUE: session is in read-only mode, else FALSE
      * (new)
      * DATABASE_READONLY   TRUE: database is in read-only mode, else FALSE
      * MAXROWS             the MAXROWS setting in the calling session
@@ -672,7 +672,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         t.insert(row, null);
 
         row    = t.getNewRow();
-        row[0] = "CONNECTION_READONLY";
+        row[0] = "SESSION_READONLY";
         row[1] = session.isReadOnly() ? "TRUE"
                                       : "FALSE";
 
@@ -684,14 +684,12 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                            : "FALSE";
 
         t.insert(row, null);
-/*
-fredt - this is a statement sepecific property
+        // fredt - value set by SET MAXROWS in SQL, not Statement.setMaxRows()
         row    = t.getNewRow();
         row[0] = "MAXROWS";
-        row[1] = String.valueOf(session.getMaxRows());
+        row[1] = String.valueOf(session.getSQLMaxRows());
 
         t.insert(row, null);
-*/
         row    = t.getNewRow();
         row[0] = "DATABASE";
         row[1] = String.valueOf(database.getPath());
@@ -965,12 +963,12 @@ fredt - this is a statement sepecific property
         t.insert(row, session);
 
         Integer logType = (log == null) ? null
-                                        : ValuePool.getInt(log.logType);
+                                        : ValuePool.getInt(log.scriptFormat);
 
         row         = t.getNewRow();
         row[iscope] = scope;
         row[ins]    = nameSpace;
-        row[iname]  = "LOGTYPE";
+        row[iname]  = "SCRIPTFORMAT";
         row[ivalue] = logType == null ? null
                                       : String.valueOf(logType);
         row[iclass] = "int";
@@ -1052,7 +1050,7 @@ fredt - this is a statement sepecific property
             addColumn(t, "IS_ADMIN", BIT, false);
             addColumn(t, "AUTOCOMMIT", BIT, false);
             addColumn(t, "READONLY", BIT, false);
-//            addColumn(t, "MAXROWS", INTEGER, false);
+            addColumn(t, "MAXROWS", INTEGER, false);
 
             // Note: some sessions may have a NULL LAST_IDENTITY value
             addColumn(t, "LAST_IDENTITY", BIGINT);
@@ -1077,9 +1075,9 @@ fredt - this is a statement sepecific property
         final int iis_admin = 3;
         final int iautocmt  = 4;
         final int ireadonly = 5;
-//        final int imaxrows  = 6;
-        final int ilast_id  = 6;
-        final int it_size   = 7;
+        final int imaxrows  = 6;
+        final int ilast_id  = 7;
+        final int it_size   = 8;
 
         // Initialisation
         sessions = ns.listVisibleSessions(session);
@@ -1094,7 +1092,7 @@ fredt - this is a statement sepecific property
             row[iis_admin] = ValuePool.getBoolean(s.isAdmin());
             row[iautocmt]  = ValuePool.getBoolean(s.isAutoCommit());
             row[ireadonly] = ValuePool.getBoolean(s.isReadOnly());
-//            row[imaxrows]  = ValuePool.getInt(s.getMaxRows());
+            row[imaxrows]  = ValuePool.getInt(s.getSQLMaxRows());
             row[ilast_id] =
                 ValuePool.getLong(s.getLastIdentity().longValue());
             row[it_size] = ValuePool.getInt(s.getTransactionSize());

@@ -264,36 +264,6 @@ public class TestLibSpeed {
             System.out.println("UnifiedTable Lookup " + sw.elapsedTime());
             sw.zero();
             System.out.println("Object Cache Test " + sw.elapsedTime());
-
-            Integer   testValue = new Integer(-1);
-            ValuePool hm        = new ValuePool(1000000);
-
-            for (int j = 0; j < 10000000; j++) {
-                int     r = randomgen.nextInt(1000000);
-                Integer h = hm.getInt(r);
-
-                if (h.equals(testValue)) {
-                    System.out.println("Never prints this");
-                }
-            }
-
-            System.out.println("Handle 10,000,000 Integers "
-                               + sw.elapsedTime());
-            sw.zero();
-
-            hm = new ValuePool(1000000);
-
-            for (int j = 0; j < 10000000; j++) {
-                int     r = randomgen.nextInt(1000000);
-                Integer h = new Integer(j);
-
-                if (h.equals(testValue)) {
-                    System.out.println("Never prints this");
-                }
-            }
-
-            System.out.println("emptyOp " + sw.elapsedTime());
-            sw.zero();
         }
     }
 
