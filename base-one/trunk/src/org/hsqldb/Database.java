@@ -623,6 +623,10 @@ class Database {
 
                     case CONNECT :
                         rResult = processConnect(tokenizer, session);
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case DISCONNECT :
