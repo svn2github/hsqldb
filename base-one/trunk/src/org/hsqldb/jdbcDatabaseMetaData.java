@@ -4321,8 +4321,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default :
-                throw jdbcDriver.sqlException(Trace.ASSERT_FAILED,
-                                              "invalid scope value");
+                throw jdbcDriver.sqlException(
+                    Trace.ASSERT_FAILED,
+                    Trace.jdbcDatabaseMetaData_getBestRowIdentifier, null);
         }
 
         if (wantsIsNull(table)) {

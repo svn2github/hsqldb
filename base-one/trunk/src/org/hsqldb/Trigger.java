@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 // fredt@users 20030727 - signature altered to support update triggers
-
 /*
 
 Contents of row1[] and row2[] in each type of trigger.

@@ -66,7 +66,8 @@ implements DatabaseRowOutputInterface {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              "legacy db support");
+                              Trace.DatabaseRowOutput_newDatabaseRowOutput,
+                              null);
         }
     }
 

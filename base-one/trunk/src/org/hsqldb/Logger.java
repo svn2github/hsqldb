@@ -90,7 +90,7 @@ class Logger {
         if (db.isFilesInJar()) {
             checkFilesInJar(path);
         } else {
-            aquireLock(path);
+            acquireLock(path);
         }
 
         lLog = new Log(db, path);
@@ -302,7 +302,7 @@ class Logger {
     /**
      * Attempts to aquire a cooperative lock condition on the database files
      */
-    void aquireLock(String path) throws HsqlException {
+    void acquireLock(String path) throws HsqlException {
 
         boolean locked;
         String  msg;

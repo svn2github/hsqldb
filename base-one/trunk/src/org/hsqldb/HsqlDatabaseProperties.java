@@ -214,7 +214,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             exists = super.load();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              fileName + ".properties " + e);
+                              Trace.HsqlDatabaseProperties_load,
+                              new Object[] {
+                fileName, e
+            });
         }
 
         if (!exists) {
@@ -272,7 +275,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             super.save();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              fileName + ".properties " + e);
+                              Trace.HsqlDatabaseProperties_save,
+                              new Object[] {
+                fileName, e
+            });
         }
     }
 

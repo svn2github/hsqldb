@@ -81,7 +81,9 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     protected void readExistingData(Session session)
     throws IOException, HsqlException {
 
-        for (int i = 0; ; i++) {
+        // wsoni variable i never accessed!
+        //for (int i = 0; ; i++) {
+        for (;;) {
             String s = readTableInit();
 
             if (s == null) {

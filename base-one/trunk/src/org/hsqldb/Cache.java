@@ -463,7 +463,8 @@ abstract class Cache {
                     remove(r);
                 }
             } catch (Exception e) {
-                Trace.throwerror(Trace.FILE_IO_ERROR, "SaveRow " + e);
+                throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_cleanUp,
+                                  new Object[]{ e });
             }
 
             rowTable[i] = null;
@@ -646,7 +647,8 @@ abstract class Cache {
 
                 rowTable[i] = null;
             } catch (Exception e) {
-                Trace.throwerror(Trace.FILE_IO_ERROR, "SaveRow " + e);
+                throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_saveAll,
+                                  new Object[]{ e });
             }
         }
     }

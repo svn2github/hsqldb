@@ -352,7 +352,7 @@ class TextCache extends DataFileCache {
                 rFile.seek(pos);
                 rFile.write(out.getBuffer(), 0, out.size());
             } catch (IOException e) {
-                throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
+                throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
             }
         }
 

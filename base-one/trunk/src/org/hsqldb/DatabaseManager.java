@@ -184,9 +184,9 @@ class DatabaseManager {
 
                 case Database.DATABASE_CLOSING :
                 case Database.DATABASE_OPENING :
-                    throw Trace.error(
-                        Trace.DATABASE_ALREADY_IN_USE,
-                        "attempt to connect while db opening /closing");
+                    throw Trace.error(Trace.DATABASE_ALREADY_IN_USE,
+                                      Trace.DatabaseManager_getDatabase,
+                                      null);
             }
         }
 
@@ -230,7 +230,8 @@ class DatabaseManager {
 
             if (accessCount == Integer.MIN_VALUE) {
                 throw Trace.error(Trace.GENERAL_ERROR,
-                                  "problem in db access count");
+                                  Trace.DatabaseManager_getDatabaseObject,
+                                  null);
             }
 
             databaseAccessMap.put(db, ++accessCount);
@@ -265,7 +266,7 @@ class DatabaseManager {
 
         if (accessCount == Integer.MIN_VALUE || accessCount == 0) {
             throw Trace.error(Trace.GENERAL_ERROR,
-                              "problem in db access count");
+                              Trace.DatabaseManager_releaseSession, null);
         }
 
         databaseAccessMap.put(database, --accessCount);
@@ -284,7 +285,7 @@ class DatabaseManager {
 
         if (accessCount == Integer.MIN_VALUE || accessCount == 0) {
             throw Trace.error(Trace.GENERAL_ERROR,
-                              "problem in db access count");
+                              Trace.DatabaseManager_releaseDatabase, null);
         }
 
         databaseAccessMap.put(database, --accessCount);

@@ -496,8 +496,9 @@ class DatabaseCommandInterpreter {
             set.add(token);
 
             if (list.size() != set.size()) {
-                throw Trace.error(Trace.COLUMN_ALREADY_EXISTS,
-                                  "duplicate column in list");
+                throw Trace.error(
+                    Trace.COLUMN_ALREADY_EXISTS,
+                    Trace.DatabaseCommandInterpreter_processColumnList, null);
             }
 
             token = tokenizer.getString();
@@ -988,8 +989,10 @@ class DatabaseCommandInterpreter {
                         tempConst.expCol = mainConst.localCol;
 
                         if (tempConst.expCol == null) {
-                            throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                              "table has no primary key");
+                            throw Trace.error(
+                                Trace.INDEX_NOT_FOUND,
+                                Trace.DatabaseCommandInterpreter_processCreateConstraints,
+                                null);
                         }
                     }
 
@@ -1204,8 +1207,10 @@ class DatabaseCommandInterpreter {
                 expcol = expIndex.getColumns();
 
                 if (expcol[0] == expTable.getColumnCount()) {
-                    throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                      expTableName + " has no primary key");
+                    throw Trace.error(
+                        Trace.INDEX_NOT_FOUND,
+                        Trace.DatabaseCommandInterpreter_processCreateFK,
+                        new Object[]{ expTableName });
                 }
             }
 
@@ -2232,9 +2237,10 @@ class DatabaseCommandInterpreter {
                 if (defStr == null) {
                     columnName = column.columnName.name;
 
-                    throw Trace.error(Trace.COLUMN_TYPE_MISMATCH,
-                                      "missing DEFAULT value on column '"
-                                      + columnName + "'");
+                    throw Trace.error(
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        Trace.DatabaseCommandInterpreter_checkFKColumnDefaults,
+                        new Object[]{ columnName });
                 }
             }
         }
@@ -2779,7 +2785,8 @@ class DatabaseCommandInterpreter {
                 || tc.updateAction != Constraint.NO_ACTION) {
             throw Trace.error(
                 Trace.FOREIGN_KEY_NOT_ALLOWED,
-                "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
+                Trace.DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint,
+                null);
         }
 
         session.commit();

@@ -106,7 +106,8 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              "legacy db support");
+                              Trace.DatabaseRowInput_newDatabaseRowInput,
+                              null);
         }
     }
 

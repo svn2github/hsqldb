@@ -96,8 +96,10 @@ class DatabaseScriptReader {
 
             if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  " line: " + lineCount + " "
-                                  + result.mainString);
+                                  Trace.DatabaseScriptReader_readDDL,
+                                  new Object[] {
+                    new Integer(lineCount), result.mainString
+                });
             }
         }
     }
@@ -121,8 +123,10 @@ class DatabaseScriptReader {
 
             if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  " line: " + lineCount + " "
-                                  + result.mainString);
+                                  Trace.DatabaseScriptReader_readExistingData,
+                                  new Object[] {
+                    new Integer(lineCount), result.mainString
+                });
             }
 
             lastLine = readLoggedStatement();

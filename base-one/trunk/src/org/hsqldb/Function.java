@@ -162,7 +162,9 @@ class Function {
                 classinstance = Class.forName(classname);
             } catch (Exception e) {
                 throw Trace.error(Trace.ERROR_IN_FUNCTION,
-                                  classname + " " + e);
+                                  Trace.Function_Function, new Object[] {
+                    classname, e
+                });
             }
 
             Method method[] = classinstance.getMethods();

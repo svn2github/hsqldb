@@ -458,9 +458,10 @@ Referential Constraint 4 SET DEFAULT
 
         // a record must exist in the main table
         if (core.iMain.find(core.oMain) == null) {
-            Trace.throwerror(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                             core.fkName.name + " table: "
-                             + core.tMain.getName().name);
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                              Trace.Constraint_checkInsert, new Object[] {
+                core.fkName.name, core.tMain.getName().name
+            });
         }
     }
 

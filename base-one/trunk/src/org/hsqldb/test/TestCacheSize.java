@@ -56,21 +56,22 @@ import org.hsqldb.lib.FileUtil;
  */
 public class TestCacheSize {
 
-    protected boolean filedb   = true;
-    protected boolean shutdown = true;
+    protected boolean filedb   = false;
+    protected boolean shutdown = false;
     protected String  url      = "jdbc:hsqldb:";
 
 //    protected String  filepath = "hsql://localhost";
-//    protected String filepath = "mem:test";
-    protected String filepath = "/hsql/testcache/test";
-    String           user;
-    String           password;
-    Statement        sStatement;
-    Connection       cConnection;
+    protected String filepath = "mem:test";
+
+//    protected String filepath = "/hsql/testcache/test";
+    String     user;
+    String     password;
+    Statement  sStatement;
+    Connection cConnection;
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = false;
+    boolean cachedTable     = true;
     int     cacheScale      = 12;
     String  logType         = "TEXT";
     int     writeDelay      = 60;
@@ -85,7 +86,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows   = 100000;
+    int bigrows   = 200000;
     int smallrows = 0xfff;
 
     protected void setUp() {

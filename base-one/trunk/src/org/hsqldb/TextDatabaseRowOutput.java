@@ -330,7 +330,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
             writeData(r.getData(), r.getTable());
             writePos(0);
         } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
+            throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
         }
 
         int rowsize = size();

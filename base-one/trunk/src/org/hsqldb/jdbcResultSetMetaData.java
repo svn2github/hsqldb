@@ -448,8 +448,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         jdbcColumnMetaData cmd;
 
         if (rs == null) {
-            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
-                                          "result set is null");
+            throw jdbcDriver.sqlException(
+                Trace.GENERAL_ERROR,
+                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData, null);
         }
 
         useColumnName = props.isPropertyTrue("get_column_name");
@@ -476,8 +477,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         if (rResult == null) {
-            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
-                                          "result set is closed");
+            throw jdbcDriver.sqlException(
+                Trace.GENERAL_ERROR,
+                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_2, null);
         }
 
         // Typically, these assertions are not required, but they are
@@ -510,8 +512,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         Trace.doAssert(conn != null, "connection is null");
 */
         if (conn.isClosed()) {
-            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
-                                          "connection is closed");
+            throw jdbcDriver.sqlException(
+                Trace.GENERAL_ERROR,
+                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_3, null);
         }
 
         columnMetaData = new jdbcColumnMetaData[columnCount];

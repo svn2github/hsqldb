@@ -143,6 +143,10 @@ public class jdbcDriver implements Driver {
         return sqlException(Trace.error(id, message));
     }
 
+    static final SQLException sqlException(int id, int subId, Object[] add) {
+        return sqlException(Trace.error(id, subId, add));
+    }
+
     static final SQLException notSupported =
         sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
     static final SQLException notSupportedJDBC3 =

@@ -42,7 +42,9 @@ import junit.framework.*;
 public class TestSqlPersistent extends TestCase {
 
     // change the url to reflect your preferred db location and name
-    String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
+    String url = "jdbc:hsqldb:hsql://localhost/yourtest";
+
+//   String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
     String     user;
     String     password;
     Statement  sStatement;
@@ -264,20 +266,20 @@ public class TestSqlPersistent extends TestCase {
 
     public void testSelectObject() {
 
-        Object  stringValue        = null;
-        Object  integerValue       = null;
-        Object  arrayValue         = null;
-        Object  stringValueResult  = null;
-        Object  integerValueResult = null;
-        Object  arrayValueResult   = null;
-        boolean wasNull            = false;
-        String  message            = "DB operation completed";
+        String   stringValue        = null;
+        Integer  integerValue       = null;
+        Double[] arrayValue         = null;
+        String   stringValueResult  = null;
+        Integer  integerValueResult = null;
+        Double[] arrayValueResult   = null;
+        boolean  wasNull            = false;
+        String   message            = "DB operation completed";
 
         try {
             String sqlString = "DROP TABLE TESTOBJECT IF EXISTS;"
                                + "CREATE CACHED TABLE TESTOBJECT ("
                                + "ID INTEGER NOT NULL IDENTITY, "
-                               + "STOREDOBJECT OTHER )";
+                               + "STOREDOBJECT OTHER, STOREDBIN BINARY )";
 
             sStatement.execute(sqlString);
 
@@ -314,24 +316,31 @@ public class TestSqlPersistent extends TestCase {
             boolean result = rs.next();
 
             // retrieving objects inserted into the third column
-            stringValueResult = rs.getObject(2);
+            stringValueResult = (String) rs.getObject(2);
 
             rs.next();
 
-            integerValueResult = rs.getObject(2);
+            integerValueResult = (Integer) rs.getObject(2);
 
             rs.next();
 
-            arrayValueResult = rs.getObject(2);
+            arrayValueResult = (Double[]) rs.getObject(2);
 
             // cast objects to original types - will throw if type is wrong
             String   castStringValue      = (String) stringValueResult;
             Integer  castIntegerValue     = (Integer) integerValueResult;
             Double[] castDoubleArrayValue = (Double[]) arrayValueResult;
 
+            for (int i = 0; i < arrayValue.length; i++) {
+                if (!arrayValue[i].equals(arrayValueResult[i])) {
+                    System.out.println("array mismatch: " + arrayValue[i]
+                                       + " : " + arrayValueResult[i]);
+                }
+            }
+
             rs.close();
             ps.close();
-
+/*
             sqlString = "SELECT * FROM TESTOBJECT WHERE STOREDOBJECT IN(?)";
             ps        = cConnection.prepareStatement(sqlString);
 
@@ -344,17 +353,15 @@ public class TestSqlPersistent extends TestCase {
             integerValueResult = rs.getObject(2);
 
             rs.next();
+*/
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
 
-        /*
         boolean success = stringValue.equals(stringValueResult)
                           && integerValue.equals(integerValueResult)
                           && java.util.Arrays.equals((Double[]) arrayValue,
                               (Double[]) arrayValueResult);
-        */
-        boolean success = true;
 
         assertEquals(true, success);
     }

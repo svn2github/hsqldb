@@ -856,8 +856,10 @@ class Database {
 
 // tony_lai@users 20020820 - patch 595156
                     throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                                      currentConstraint.getName().name
-                                      + " table: " + refTable.getName().name);
+                                      Trace.Database_dropTable, new Object[] {
+                        currentConstraint.getName().name,
+                        refTable.getName().name
+                    });
                 }
             }
         }
