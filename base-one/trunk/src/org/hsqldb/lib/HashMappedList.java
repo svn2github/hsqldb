@@ -73,11 +73,7 @@ public class HashMappedList extends HashMap {
 
         checkRange(index);
 
-        Object returnValue = objectValueTable[index];
-
-        removeRow(index);
-
-        return returnValue;
+        return remove(objectKeyTable[index]);
     }
 
     public boolean add(Object key, Object value) {

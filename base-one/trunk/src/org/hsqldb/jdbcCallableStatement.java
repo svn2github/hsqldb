@@ -1618,7 +1618,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setNull(String parameterName, int sqlType) throws SQLException {
+    public void setNull(String parameterName,
+                        int sqlType) throws SQLException {
         setNull(findParameterIndex(parameterName), sqlType);
     }
 */
@@ -1649,7 +1650,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setBoolean(String parameterName, boolean x) throws SQLException {
+    public void setBoolean(String parameterName,
+                           boolean x) throws SQLException {
         setBoolean(findParameterIndex(parameterName), x);
     }
 */
@@ -1835,7 +1837,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setDouble(String parameterName, double x) throws SQLException {
+    public void setDouble(String parameterName,
+                          double x) throws SQLException {
         setDouble(findParameterIndex(parameterName), x);
     }
 */
@@ -1901,7 +1904,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setString(String parameterName, String x) throws SQLException {
+    public void setString(String parameterName,
+                          String x) throws SQLException {
         setString(findParameterIndex(parameterName), x);
     }
 */
@@ -2251,7 +2255,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setObject(String parameterName, Object x) throws SQLException {
+    public void setObject(String parameterName,
+                          Object x) throws SQLException {
         setObject(findParameterIndex(parameterName), x);
     }
 */
@@ -2291,7 +2296,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setCharacterStream(String parameterName, java.io.Reader reader,
+    public void setCharacterStream(String parameterName,
+                                   java.io.Reader reader,
                                    int length) throws SQLException {
         setCharacterStream(findParameterIndex(parameterName), reader, length);
     }
@@ -2932,7 +2938,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public BigDecimal getBigDecimal(String parameterName) throws SQLException {
+    public BigDecimal getBigDecimal(String parameterName)
+    throws SQLException {
         return getBigDecimal(findParameterIndex(parameterName));
     }
 */

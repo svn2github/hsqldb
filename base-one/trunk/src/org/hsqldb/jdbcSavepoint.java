@@ -53,9 +53,10 @@ public class jdbcSavepoint implements java.sql.Savepoint {
     String             name;
     int                id;
     boolean            valid;
+    int                sessionID;
     private static int idseq;
 
-    jdbcSavepoint(String name) throws SQLException {
+    jdbcSavepoint(String name, int sid) throws SQLException {
 
         if (name == null) {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
@@ -63,6 +64,7 @@ public class jdbcSavepoint implements java.sql.Savepoint {
         }
 
         this.name  = name;
+        this.sessionID = sid;
         this.id    = idseq++;
         this.valid = true;
     }

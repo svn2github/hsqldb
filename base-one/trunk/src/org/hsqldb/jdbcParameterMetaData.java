@@ -80,7 +80,6 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      * and transport objects whose class is not in the standard mapping.
      */
     String[] classNames;
-    
     int parameterCount;
 
     /**
@@ -94,11 +93,11 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         
         if (r == null) {
             msg = "r is null";
+
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         rmd = r.metaData;
-
         types          = rmd.colType;
         parameterCount = types.length;
         nullability    = rmd.nullability;
@@ -209,7 +208,6 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         int ts;
 
         checkRange(param);
-
         setupTypeInfo(--param);
 
         return ti.getTypeName();
@@ -225,7 +223,6 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public int getPrecision(int param) throws SQLException {
 
         checkRange(param);
-
         setupTypeInfo(--param);
 
         Integer p = ti.getPrecision();
@@ -287,7 +284,6 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public boolean isSigned(int param) throws SQLException {
 
         checkRange(param);
-        
         setupTypeInfo(--param);
 
         Boolean b = ti.isUnsignedAttribute();
@@ -296,6 +292,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
     
     private void setupTypeInfo(int param) {
+
         int t;
         int ts;
         
@@ -315,6 +312,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
     
     public String toString() {
+
         try {
             return toStringImpl();
         } catch (Throwable t) {
@@ -323,6 +321,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     private String toStringImpl() throws Exception {
+
         StringBuffer  sb;
         Method[]      methods;
         Method        method;
@@ -336,6 +335,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         
         if (count == 0) {
             sb.append("[parameterCount=0]");
+
             return sb.toString();
         }
         
@@ -344,15 +344,13 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         sb.append('[');
         
         for (int i = 0; i < count; i++) {
-            
             sb.append('\n');
             sb.append("    parameter_");
-            sb.append(i+1);
+            sb.append(i + 1);
             sb.append('=');
             sb.append('[');
 
             for (int j = 0; j < methods.length; j++) {
-                
                 method = methods[j];
 
                 if (!Modifier.isPublic(method.getModifiers())) {
@@ -366,7 +364,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
                 sb.append(method.getName());
                 sb.append('=');
                 sb.append(method.invoke(this, 
-                                        new Object[] {new Integer(i+1)}));
+                                        new Object[]{ new Integer(i + 1) }));
                 sb.append(',');
                 sb.append(' ');
             }

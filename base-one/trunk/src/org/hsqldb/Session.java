@@ -109,14 +109,7 @@ class Session implements SessionInterface {
     private Number          iLastIdentity = ValuePool.getInt(0);
     private boolean         isClosed;
     private int             iId;
-
-    // Really, this should be a HashMappedList, since the spec says that
-    // a savepoint rollback or release destroys all _following_ savepoints,
-    // but not preceeding ones.  That is, if for some strange reason two
-    // distinctly named savepoints are set in the same place in a transaction,
-    // then rolling back or releasing the second one will destroy the first
-    // one, despite the fact that, strictly speaking, it preceeds the second.
-    private HashMappedList savepoints = new HashMappedList(4);
+    private HashMappedList savepoints;
     private boolean         script;
     private jdbcConnection  intConnection;
     final static Result emptyUpdateCount =
@@ -143,6 +136,7 @@ class Session implements SessionInterface {
         dDatabase                 = db;
         uUser                     = user;
         tTransaction              = new HsqlArrayList();
+        savepoints                = new HashMappedList(4);
         isAutoCommit              = autocommit;
         isReadOnly                = readonly;
         dbCommandInterpreter      = new DatabaseCommandInterpreter(this);
@@ -155,7 +149,7 @@ class Session implements SessionInterface {
      *
      * @return the session identifier for this Session
      */
-    int getId() {
+    public int getId() {
         return iId;
     }
 
@@ -392,7 +386,15 @@ class Session implements SessionInterface {
      * @throws  HsqlException
      */
     public void commit() {
+
+        if (!tTransaction.isEmpty()) {
+            try {
+                dDatabase.logger.writeToLog(this, Token.T_COMMIT);
+            } catch (HsqlException e) {}
+
         tTransaction.clear();
+        }
+
             savepoints.clear();
         }
 
@@ -413,7 +415,14 @@ class Session implements SessionInterface {
             }
         }
 
+        if (!tTransaction.isEmpty()) {
+            try {
+                dDatabase.logger.writeToLog(this, Token.T_ROLLBACK);
+            } catch (HsqlException e) {}
+
         tTransaction.clear();
+        }
+
             savepoints.clear();
         }
 
@@ -426,7 +435,13 @@ class Session implements SessionInterface {
      * @throws  HsqlException
      */
     void savepoint(String name) throws HsqlException {
+
+        savepoints.remove(name);
         savepoints.add(name, ValuePool.getInt(tTransaction.size()));
+
+        try {
+            dDatabase.logger.writeToLog(this, Token.T_SAVEPOINT + " " + name);
+        } catch (HsqlException e) {}
     }
 
     /**
@@ -456,11 +471,19 @@ class Session implements SessionInterface {
         }
 
         releaseSavepoint(name);
+
+        try {
+            dDatabase.logger.writeToLog(this,
+                                        Token.T_ROLLBACK + " " + Token.T_TO
+                                        + " " + Token.T_SAVEPOINT + " "
+                                        + name);
+        } catch (HsqlException e) {}
     }
 
+// fredt - spec doesn't say invalidate later savepoints
+
     /**
-     * Implements release of named SAVEPOINT.  Destroys the named SAVEPOINT
-     * and all subsequent SAVEPOINTs.  Preceding SAVEPOINTs remain intact.
+     * Implements release of named SAVEPOINT. Other SAVEPOINTs remain intact.
      *
      * @param  name Name of savepoint that was marked before by savepoint()
      *      call
@@ -472,10 +495,7 @@ class Session implements SessionInterface {
         int index = savepoints.getIndex(name);
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
-
-        for (int i = savepoints.size() - 1; i >= index; i--) {
-            savepoints.remove(i);
-        }
+        savepoints.remove(index);
     }
 
     /**
@@ -567,9 +587,9 @@ class Session implements SessionInterface {
 
     /**
      *  A switch to set scripting on the basis of type of statement executed.
-     *  A method in Database.java sets this value to false before other
-     *  methods are called to act on an SQL statement, which may set this to
-     *  true. Afterwards the method reponsible for logging uses
+     *  A method in DatabaseCommandInterpreter.java sets this value to false
+     *  before other  methods are called to act on an SQL statement, which may
+     *  set this to true. Afterwards the method reponsible for logging uses
      *  getScripting() to determine if logging is required for the executed
      *  statement. (fredt@users)
      *
@@ -814,16 +834,10 @@ class Session implements SessionInterface {
 
                         case ResultConstants.COMMIT :
                             commit();
-
-                            // dDatabase.logger.writeToLog(this,
-                            //                             Token.T_COMMIT);
                             break;
 
                         case ResultConstants.ROLLBACK :
                             rollback();
-
-                            // dDatabase.logger.writeToLog(this,
-                            //                             Token.T_ROLLBACK);
                             break;
 
                         case ResultConstants.SAVEPOINT_NAME_RELEASE :
@@ -831,11 +845,6 @@ class Session implements SessionInterface {
                                 String name = cmd.getMainString();
 
                                 releaseSavepoint(name);
-
-                                // dDatabase.logger.writeToLog(this,
-                                //     Token.T_RELEASE + " "
-                                //     + Token.T_SAVEPOINT + " "
-                                //     + name);
                             } catch (Throwable t) {
                                 return new Result(t, null);
                             }

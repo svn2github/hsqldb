@@ -271,6 +271,10 @@ public class HSQLClientConnection implements SessionInterface {
         execute(resultOut);
     }
 
+    public int getId() {
+        return sessionID;
+    }
+
     protected void write(Result r) throws IOException, HsqlException {
         Result.write(r, rowOut, dataOutput);
     }

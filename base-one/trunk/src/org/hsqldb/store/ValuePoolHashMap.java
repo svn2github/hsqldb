@@ -53,10 +53,14 @@ public class ValuePoolHashMap extends BaseHashMap {
                               int purgePolicy)
                               throws IllegalArgumentException {
 
-        int extra = hashIndex.elementCount - maxCapacity;
+        if (hashIndex.elementCount > maxCapacity) {
+            int surplus = 128 + hashIndex.elementCount - maxCapacity;
 
-        if (extra < 0) {
-            clear(128 - extra);
+            if (surplus > hashIndex.elementCount) {
+                surplus = hashIndex.elementCount;
+            }
+
+            clear(surplus);
         }
 
         if (maxCapacity < threshold) {
@@ -103,7 +107,8 @@ public class ValuePoolHashMap extends BaseHashMap {
     protected Long getOrAddLong(long longKey) {
 
         Long testValue;
-        int  index      = hashIndex.getHashIndex((int) longKey);
+        int index = hashIndex.getHashIndex((int) (longKey
+            ^ (longKey >>> 32)));
         int  lookup     = hashIndex.hashTable[index];
         int  lastLookup = -1;
 
@@ -185,9 +190,7 @@ public class ValuePoolHashMap extends BaseHashMap {
     protected java.sql.Date getOrAddDate(long longKey) {
 
         java.sql.Date testValue;
-
-        // the 10 least significant bits are generally similar
-        int hash       = (((int) longKey) >> 10) ^ (int) (longKey >> 32);
+        int           hash       = (int) longKey ^ (int) (longKey >> 32);
         int index      = hashIndex.getHashIndex((int) longKey);
         int lookup     = hashIndex.hashTable[index];
         int lastLookup = -1;
@@ -221,7 +224,8 @@ public class ValuePoolHashMap extends BaseHashMap {
     protected Double getOrAddDouble(long longKey) {
 
         Double testValue;
-        int    index      = hashIndex.getHashIndex((int) longKey);
+        int index = hashIndex.getHashIndex((int) (longKey
+            ^ (longKey >>> 32)));
         int    lookup     = hashIndex.hashTable[index];
         int    lastLookup = -1;
 

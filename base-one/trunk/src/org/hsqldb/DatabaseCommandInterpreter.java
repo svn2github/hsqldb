@@ -249,17 +249,14 @@ class DatabaseCommandInterpreter {
 
             case Token.COMMIT :
                 processCommit();
-                session.setScripting(true);
                 break;
 
             case Token.ROLLBACK :
                 processRollback();
-                session.setScripting(true);
                 break;
 
             case Token.SAVEPOINT :
                 processSavepoint();
-                session.setScripting(true);
                 break;
 
             case Token.CREATE :
@@ -1976,20 +1973,9 @@ class DatabaseCommandInterpreter {
 
             // do nothing
         } else if (token.equals(Token.T_TO)) {
-
-//            token = tokenizer.getString();
-//
-//            if (!token.equals("SAVEPOINT")) {
-//                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-//            }
             tokenizer.getThis(Token.T_SAVEPOINT);
 
             token = tokenizer.getString();
-
-            if (token.length() == 0) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
-
             toSavepoint = true;
         } else {
             tokenizer.back();

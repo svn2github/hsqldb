@@ -785,7 +785,6 @@ class TestSelf {
                 cConnection = DriverManager.getConnection(url, user,
                         password);
                 sStatement = cConnection.createStatement();
-
             }
 
             start = System.currentTimeMillis();

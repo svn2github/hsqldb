@@ -59,4 +59,6 @@ interface SessionInterface {
     void commit() throws HsqlException;
 
     void rollback() throws HsqlException;
+
+    int getId();
 }

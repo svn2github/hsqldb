@@ -488,6 +488,8 @@ public class BaseHashMap {
      * rehash uses existing key and element arrays. key / value pairs are
      * put back into the arrays from the top, removing any gaps. any redundant
      * key / value pairs duplicated at the end of the array are then cleared.
+     *
+     * newCapacity must be larger or equal to existing number of elements.
      */
     protected void rehash(int newCapacity) {
 
@@ -761,6 +763,9 @@ public class BaseHashMap {
         }
     }
 
+    /**
+     * Clear the map completely.
+     */
     public void clear() {
 
         accessCount  = 0;
@@ -772,6 +777,10 @@ public class BaseHashMap {
         hashIndex.clear();
     }
 
+    /**
+     * Clear approximately count elements from the map, starting with
+     * those with low accessTable ranking.
+     */
     public void clear(int count) {
 
         int margin = threshold >> 8;
@@ -781,9 +790,10 @@ public class BaseHashMap {
         }
 
         int accessBase = ArrayCounter.rank(accessTable, count, accessMin,
-                                           accessCount, 64);
+                                           accessCount, margin);
+        int maxlookup = hashIndex.newNodePointer;
 
-        for (int lookup = 0; lookup < hashIndex.newNodePointer; lookup++) {
+        for (int lookup = 0; lookup < maxlookup; lookup++) {
             Object o = objectKeyTable[lookup];
 
             if (o != null && accessTable[lookup] < accessBase) {
@@ -805,7 +815,7 @@ public class BaseHashMap {
 
         int i = accessTable.length;
 
-        while (--i >= 2) {
+        while (--i >= 0) {
             accessTable[i] >>= 2;
         }
     }

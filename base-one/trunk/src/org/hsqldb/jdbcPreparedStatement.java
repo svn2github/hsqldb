@@ -2208,7 +2208,7 @@ implements java.sql.PreparedStatement {
         return (t1 == Types.OTHER || t2 == Types.OTHER) ? false
                                                         : org.hsqldb.Types
                                                         .promotesWithoutConversion(
-                                                            t2, t2);
+                                                            t1, t2);
     }
 
     /**

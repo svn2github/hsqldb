@@ -440,7 +440,6 @@ public class jdbcConnection implements Connection {
 
     /** Synchronizes concurrent modification of the statement set */
     private Object statementSet_mutex = new Object();
-    private org.hsqldb.lib.HashSet savepointSet;
 
 // ----------------------------------- JDBC 1 -------------------------------
 
@@ -649,7 +648,7 @@ public class jdbcConnection implements Connection {
      * native form of the statement that the driver would send in place
      * of client-specified JDBC SQL grammar. <p>
      *
-     * Up to and including 1.7.1, escape processing was incomplete and
+     * Before 1.7.2, escape processing was incomplete and
      * also broken in terms of support for nested escapes. <p>
      *
      * Starting with 1.7.2, escape processing is complete and handles nesting
@@ -896,7 +895,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, <p>
+     * Up to and including HSQLDB 1.7.2, <p>
      *
      * <ol>
      *   <li> All rows of a result set are retrieved internally <em>
@@ -1013,18 +1012,11 @@ public class jdbcConnection implements Connection {
      * from this <code>Connection</code>'s {@link Session Session}.
      * <p>
      *
-     * Up to 1.6.1, HSQLDB did not support Savepoints in
-     * transactions, named or anonymous. <p>
-     *
      * As of 1.7.0, HSQLDB supports an arbitrary number of named
      * Savepoints per transaction and allows explicitly rolling back
      * to any one of them. At this time, HSQLDB does not support
      * anonymous Savepoints. However, this feature <i>is</i> slated
      * for the 1.7.x series. <p>
-     *
-     * Also, as of 1.7.0, JDBC 3 support for java.sql.Savepoint has
-     * not yet been implemented. At present, rather, the following
-     * SQL syntax must be used: <p>
      *
      * <code class="JavaCodeExample">
      * SAVEPOINT savepoint_name1;<br>
@@ -1034,11 +1026,6 @@ public class jdbcConnection implements Connection {
      * ROLLABACK TO SAVEPOINT savepoint_name2<br>
      * ...-- perform some work<br>
      * ROLLABACK TO SAVEPOINT savepoint_name1; </code> <p>
-     *
-     * <code>Note:</code> If two or more Savepoints with the same
-     * name are performed during the same transaction, the latest one
-     * replaces the previous one, making it impossible to roll back
-     * to the previous one. </span> <p>
      *
      * <!-- end release-specific documentation -->
      *
@@ -1130,45 +1117,17 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not provide accurate
-     * results for the full range of <code>DatabaseMetaData</code>
-     * methods returning <code>ResultSet</code>. Some of these
-     * methods may always return empty result sets, even though they
-     * should contain information. Other methods may not accurately
-     * reflect all of the MetaData for the category they report on.
-     * Also, some methods may ignore the filters provided as
+     * JDBC <code>DatabaseMetaData</code> methods returning
+     * <code>ResultSet</code> were not implemented fully before 1.7.2.
+     * Some of these methods always returned empty result sets.
+     * Other methods did not accurately
+     * reflect all of the MetaData for the category.
+     * Also, some method ignored the filters provided as
      * parameters, returning an unfiltered result each time. <p>
      *
-     * As of version 1.7.1, the only reasonably accurate
-     * <code>DatabaseMetaData</code>
-     * methods returning <code>ResultSet</code> are {@link
-     * jdbcDatabaseMetaData#getTables getTables},
-     * {@link jdbcDatabaseMetaData#getColumns getColumns},
-     * {@link jdbcDatabaseMetaData#getColumns getPrimaryKeys},
-     * and {@link jdbcDatabaseMetaData#getIndexInfo getIndexInfo}.
      * Also, the majority of methods returning <code>ResultSet</code>
-     * throw an <code>SQLException</code> when accessed by a non-admin
-     * user. In order to provide non-admin users access to these methods,
-     * an admin user must explicitly grant SELECT to such users or to
-     * the PUBLIC user on each HSQLDB system table corresponding to a
-     * DatabaseMetaData method that returns <code>ResultSet</code>.
-     * For example, to provide access to {@link
-     * jdbcDatabaseMetaData#getTables getTables} to all users, the
-     * following must be issued by an admin user:<p>
-     *
-     * <code class = "JavaCodeExample">
-     * GRANT SELECT ON SYSTEM_TABLES TO PUBLIC
-     * </code> <p>
-     *
-     * Under 1.7.1 and previous verersions of the database engine,
-     * care should be taken when making such grants, however, since
-     * HSQLDB makes no attempt to filter such information, based on
-     * the grants of the accessing user. That is, in the example
-     * above, getTables will return information about all tables
-     * (except system tables, which are never listed in MetaData),
-     * regardless of whether the calling user has any rights on any
-     * of the tables. <p>
-     *
+     * threw an <code>SQLException</code> when accessed by a non-admin
+     * user.
      * <hr>
      *
      * Starting with HSQLDB 1.7.2, essentially full database metadata
@@ -1182,9 +1141,6 @@ public class jdbcConnection implements Connection {
      * @return a DatabaseMetaData object for this Connection
      * @throws SQLException if a database access error occurs
      * @see jdbcDatabaseMetaData
-     * @see DatabaseInformation
-     * @see DatabaseInformationMain
-     * @see DatabaseInformationFull
      */
     public DatabaseMetaData getMetaData() throws SQLException {
 
@@ -1206,7 +1162,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB will commit the current
+     * Up to and including 1.7.2, HSQLDB will commit the current
      * transaction automatically when this method is called. <p>
      *
      * Additionally, HSQLDB provides a way to put a whole database in
@@ -1220,20 +1176,19 @@ public class jdbcConnection implements Connection {
      * be in regular (read-write) mode. <p>
      *
      * When a database is put in readonly mode, its files are opened
-     * in readonly mode, making it possible to create CDROM-based
-     * readonly databases. To create a CDROM-based readonly database
+     * in readonly mode, making it possible to create CD-based
+     * readonly databases. To create a CD-based readonly database
      * that has CACHED tables and whose .data file is suspected of
      * being highly fragmented, it is recommended that the database
-     * first be SHUTDOWN COMPACTed, taken off-line, restarted,
-     * SHUTDOWN and taken off-line again before copying the database
-     * files to CDROM. This will reduce the space required and may
+     * first be SHUTDOWN COMPACTed before copying the database
+     * files to CD. This will reduce the space required and may
      * improve access times against the .data file which holds the
      * CACHED table data. <p>
      *
      * Starting with 1.7.2, an alternate approach to opimizing the
-     * .data file before creating a CDROM-based readonly is to issue
-     * the CHECKPOINT DEFRAG command before taking the database offline
-     * in preparation to burn the database files to CD. <p>
+     * .data file before creating a CD-based readonly database is to issue
+     * the CHECKPOINT DEFRAG command followed by SHUTDOWN to take the
+     * database offline in preparation to burn the database files to CD. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1446,7 +1401,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, <code>SQLWarning</code> is not
+     * Before HSQLDB 1.7.2, <code>SQLWarning</code> was not
      * supported, and calls to this method are simply ignored. <p>
      *
      * Starting with HSQLDB 1.7.2, the standard behaviour is implemented. <p>
@@ -1685,7 +1640,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. Calling this
+     * HSQLDB 1.7.2 does not support this feature. Calling this
      * method always throws a <code>SQLException</code>, stating that the
      * function is not supported. <p>
      *
@@ -1717,7 +1672,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. Calling this
+     * HSQLDB 1.7.2 does not support this feature. Calling this
      * method always throws a <code>SQLException</code>, stating that
      * the function is not supported. <p>
      *
@@ -1782,6 +1737,7 @@ public class jdbcConnection implements Connection {
 
         if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
             String msg = "ResultSet holdability: " + holdability;
+
             throw jdbcDriver.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
         }
     }
@@ -1837,7 +1793,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1875,11 +1831,6 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
      * </span> <!-- end release-specific documentation -->
      *
      * @param name a <code>String</code> containing the name of the savepoint
@@ -1903,6 +1854,7 @@ public class jdbcConnection implements Connection {
 
         if (name == null) {
             String msg = "name is null";
+
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
@@ -1914,13 +1866,7 @@ public class jdbcConnection implements Connection {
             jdbcDriver.throwError(e);
         }
 
-        sp = new jdbcSavepoint(name);
-
-        if (savepointSet == null) {
-            savepointSet = new org.hsqldb.lib.HashSet();
-        }
-
-        savepointSet.add(sp);
+        sp = new jdbcSavepoint(name, sessionProxy.getId());
 
         return sp;
     }
@@ -1940,11 +1886,6 @@ public class jdbcConnection implements Connection {
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1970,30 +1911,41 @@ public class jdbcConnection implements Connection {
 
         if (savepoint == null) {
             msg = "savepoint is null";
+
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        if (!(savepoint instanceof jdbcSavepoint)) {
-            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        try {
+            if (sessionProxy.isAutoCommit()) {
+                msg = "connection is autocommit";
+
+                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                              msg);
+            }
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
 
+// fredt - might someone call this with a Savepoint from a different driver???
+//        if (!(savepoint instanceof jdbcSavepoint)) {
+//            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
+//            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+//        }
         sp = (jdbcSavepoint) savepoint;
+
+        if (sp.sessionID != sessionProxy.getId()) {
+            msg = "" + savepoint + " was not issued on " + this;
+
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
 
         if (!sp.valid) {
             msg = "" + savepoint + " was previously released or rolled back";
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-        }
 
-        if (savepointSet == null || !savepointSet.contains(sp)) {
-            msg = "" + savepoint + " was not issued on " + this;
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         sp.valid = false;
-
-        savepointSet.remove(sp);
-
         req = Result.newRollbackToSavepointRequest(sp.name);
 
         try {
@@ -2001,7 +1953,6 @@ public class jdbcConnection implements Connection {
         } catch (HsqlException e) {
             jdbcDriver.throwError(e);
         }
-
     }
 */
 
@@ -2018,11 +1969,6 @@ public class jdbcConnection implements Connection {
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -2047,30 +1993,29 @@ public class jdbcConnection implements Connection {
 
         if (savepoint == null) {
             msg = "savepoint is null";
+
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        if (!(savepoint instanceof jdbcSavepoint)) {
-            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-        }
-
+//        if (!(savepoint instanceof jdbcSavepoint)) {
+//            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
+//            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+//        }
         sp = (jdbcSavepoint) savepoint;
+
+        if (sp.sessionID != sessionProxy.getId()) {
+            msg = "" + savepoint + " was not issued on " + this;
+
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
 
         if (!sp.valid) {
             msg = "" + savepoint + " was previously released or rolled back";
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-        }
 
-        if (savepointSet == null || !savepointSet.contains(sp)) {
-            msg = "" + savepoint + " was not issued on " + this;
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
         sp.valid = false;
-
-        savepointSet.remove(sp);
-
         req = Result.newReleaseSavepointRequest(sp.name);
 
         try {
@@ -2134,6 +2079,7 @@ public class jdbcConnection implements Connection {
                                      int resultSetConcurrency,
                                      int resultSetHoldability)
                                      throws SQLException {
+
         Statement stmt;
 
         checkClosed();
@@ -2292,6 +2238,7 @@ public class jdbcConnection implements Connection {
                                          int resultSetConcurrency,
                                          int resultSetHoldability)
                                          throws SQLException {
+
         CallableStatement stmt;
 
         checkClosed();
