@@ -56,7 +56,7 @@ public class TestGroupByHaving extends TestCase {
     //------------------------------------------------------------
     private static final String databaseDriver = "org.hsqldb.jdbcDriver";
     private static final String databaseURL =
-        "jdbc:hsqldb:file:test/GroupByHaving";
+        "jdbc:hsqldb:mem:GroupByHaving";
     private static final String databaseUser     = "sa";
     private static final String databasePassword = "";
 
