@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.9 2004/04/23 01:09:53 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.10 2004/04/23 12:46:43 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/04/23 01:09:53 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/04/23 12:46:43 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -267,13 +267,12 @@
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory, run</para>
                 <informalexample><screen>
-    java org.hsqldb.Server</screen>
+    java org.hsqldb.Server &</screen>
                 </informalexample><para>
-                    This will create your database instance and start it up.
-                    Use <literal>Ctrl Z</literal> then the 
-                    <literal>bg</literal> command to move the
-                    <classname>Server</classname> process to the background so 
-                    we can continue.
+                    This will start the Server process in the background, and 
+                    will create your new database instance "db0".
+                    Continue on when you see the message containing
+                    "HSQLDB server... is online".
                 </para>
             </step>
         </procedure>
