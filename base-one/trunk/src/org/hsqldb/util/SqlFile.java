@@ -49,7 +49,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.49 2004/04/12 21:51:41 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.50 2004/05/13 02:16:46 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +85,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.49 $
+ * @version $Revision: 1.50 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -554,6 +554,18 @@ public class SqlFile {
                 } catch (Exception e) {
                     throw new BadSpecial("Failed to append to file '"
                             + other + "':  " + e);
+                }
+                return;
+            case 'i':
+                if (other == null) {
+                    throw new BadSpecial("You must supply an SQL file name");
+                }
+                try {
+                    (new SqlFile(new File(other), false)).execute(curConn);
+                } catch (Exception e) {
+                    throw new BadSpecial(
+                            "Failed to execute SQL from file '" + other + "':  "
+                            + e.getMessage());
                 }
                 return;
             case 'p':
