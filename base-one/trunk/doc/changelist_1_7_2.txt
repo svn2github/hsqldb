@@ -6,17 +6,26 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.10.04
+2004.10.22 UPDATED RELEASE 1.7.2.5
 
 Fixed bugs OUTER support.
 Fixed bug that resulted in slowdown when JDBC metadata calls are called many times.
-Fixed bug related to Statement.setMaxRows(int). The maximum row count will no longer apply to result sets returned and used internally.
+Fixed bug related to Statement.setMaxRows(int). The maximum row count will no
+longer apply to result sets returned and used internally.
 Fixed bug to allow ResultSetMetaData methods to be used inside stored procedures.
+Performance improvements to some operations on CACHED tables.
+Improved compatibility with older database files, allowing old style DEFAULT
+clauses to compile.
+Improvements to startup after a machine crash. The .log file is now read only
+until the first malformed line.
+Corrections to build scripts and #idfef blocks to allow jars to be compiled to
+run under JDK 1.1.
+ 
 
 2004.08.26 UPDATED RELEASE 1.7.2.4
 
 Fixed bug in data file enlargement.
-Fixed bug when temp tables were removed after another connection closed.
+Fixed bug where temp tables were removed after another connection closed.
 
 2004.08.12 UPDATED RELEASE 1.7.2.3
 
