@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.4 2004/04/15 21:44:19 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.5 2004/04/15 21:46:30 unsaved Exp $ -->
 
 <chapter>
     <title>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/15 21:44:19 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/15 21:46:30 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -210,8 +210,8 @@
 
     SELECT * FROM TA JOIN TB ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;
 
-    SELECT * FROM TB JOIN TA ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;
-            </programlisting></informalexample><para>
+    SELECT * FROM TB JOIN TA ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;</programlisting>
+            </informalexample><para>
                 The general rule is to put first the table that has a narrowing 
                 condition on one of its columns.
             </para> <para>
