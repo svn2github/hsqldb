@@ -59,7 +59,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         String[] fullyProtectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
             "hsqldb.original_version", "readonly", "modified",
-            "sql.compare_in_locale"
+            "sql.compare_in_locale", "textdb.allow_full_path"
         };
 
         fullyProtectedProperties.addAll(fullyProtectedPropertiesNames);
@@ -75,7 +75,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         String[] booleanPropertiesNames = {
             "hsqldb.nio_data_file", "hsqldb.schemas", "hsqldb.catalogs",
             "sql.enforce_size", "sql.enforce_strict_size", "textdb.quoted",
-            "textdb.all_quoted", "textdb.ignore_first",
+            "textdb.all_quoted", "textdb.ignore_first"
         };
 
         booleanProperties.addAll(booleanPropertiesNames);

@@ -1,4 +1,4 @@
-<!-- $Id: texttables.xml,v 1.5 2004/04/21 18:01:03 unsaved Exp $ -->
+<!-- $Id: texttables.xml,v 1.6 2004/05/19 14:51:44 unsaved Exp $ -->
 
 <chapter id='texttables-chapter'>
     <title id='texttables-title'>Text Tables</title>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/21 18:01:03 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/05/19 14:51:44 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
@@ -276,7 +276,8 @@
         <title>Text File Issues</title>
         <listitem><para>
             File locations are restricted to below the directory that 
-            contains the database.
+            contains the database, unless the textdb.allow_full_path property
+			is set true in the database properties file.
         </para></listitem> <listitem><para>
             The file location for a text table created with
             </para><programlisting>
@@ -324,5 +325,6 @@
         <listitem><para><literal>textdb.ignore_first</literal></para></listitem>
         <listitem><para><literal>textdb.encoding</literal></para></listitem>
         <listitem><para><literal>textdb.cache_scale</literal></para></listitem>
+        <listitem><para><literal>textdb.allow_full_path</literal></para></listitem>
     </itemizedlist>
 </chapter>
