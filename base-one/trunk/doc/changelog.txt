@@ -1,6 +1,7 @@
 1/15/2003 CHANGE
 THIS IS A TEST
 Added syncmail script...testing hsqldb-cvs@lists.sourceforge.net
+TEST 2
 TEST COMPLETE
 
 HSQLDB version 1.7.1 CHANGELOG SINCE VERSION 1.60
