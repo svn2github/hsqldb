@@ -107,6 +107,7 @@ example:
                  optimize="${build.optimize}"
        >
     <include name="org/hsqldb/lib/**"/>
+    <include name="org/hsqldb/lib/java/**"/>
       </javac>
     </target>
 
@@ -147,7 +148,7 @@ example:
                  optimize="${build.optimize}"
        >
      <include name="org/hsqldb/util/**"/>
-         <exclude name="*Swing.java"/>
+         <exclude name="org/hsqldb/util/*Swing.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">
       <fileset dir="${src}/org/hsqldb/util">
