@@ -81,7 +81,7 @@ import org.hsqldb.lib.ArrayUtil;
 // fredt@users 20030618 - patch 1.7.2 by fredt - changed read -write
 
 /**
- *  All ServerConnection objects are listed in a Vector in mServer
+ *  All ServerConnection objects are listed in a Vector in server
  *  and removed when closed.<p>
  *
  *  When a connection is dropped or closed the Server.notify() method is
@@ -98,8 +98,8 @@ class ServerConnection implements Runnable {
     private String          user;
     int                     dbIndex;
     private Session         session;
-    private Socket          mSocket;
-    private Server          mServer;
+    private Socket          socket;
+    private Server          server;
     private DataInputStream dataInput;
     private OutputStream    dataOutput;
     private static int      mCurrentThread = 0;
@@ -115,15 +115,15 @@ class ServerConnection implements Runnable {
      */
     ServerConnection(Socket socket, Server server) {
 
-        mSocket = socket;
-        mServer = server;
+        this.socket = socket;
+        this.server = server;
 
         synchronized (ServerConnection.class) {
             mThread = mCurrentThread++;
         }
 
-        synchronized (mServer.serverConnSet) {
-            mServer.serverConnSet.add(this);
+        synchronized (server.serverConnSet) {
+            server.serverConnSet.add(this);
         }
     }
 
@@ -135,11 +135,11 @@ class ServerConnection implements Runnable {
 
         // fredt@user - closing the socket is to stop this thread
         try {
-            mSocket.close();
+            socket.close();
         } catch (IOException e) {}
 
-        synchronized (mServer.serverConnSet) {
-            mServer.serverConnSet.remove(this);
+        synchronized (server.serverConnSet) {
+            server.serverConnSet.remove(this);
         }
     }
 
@@ -154,40 +154,39 @@ class ServerConnection implements Runnable {
         Session c = null;
 
         try {
-            mSocket.setTcpNoDelay(true);
+            socket.setTcpNoDelay(true);
 
             dataInput = new DataInputStream(
-                new BufferedInputStream(mSocket.getInputStream()));
-            dataOutput = new BufferedOutputStream(mSocket.getOutputStream());
+                new BufferedInputStream(socket.getInputStream()));
+            dataOutput = new BufferedOutputStream(socket.getOutputStream());
 
             Result resultIn = HSQLClientConnection.read(rowIn, dataInput);
             Result resultOut;
 
             try {
-                dbIndex = ArrayUtil.find(mServer.dbAlias,
+                dbIndex = ArrayUtil.find(server.dbAlias,
                                          resultIn.subSubString);
 
-                mServer.trace(mThread + ":trying to connect user " + user);
+                server.trace(mThread + ":trying to connect user " + user);
 
-                c = DatabaseManager.newSession(mServer.dbType[dbIndex],
-                                               mServer.dbPath[dbIndex],
+                c = DatabaseManager.newSession(server.dbType[dbIndex],
+                                               server.dbPath[dbIndex],
                                                resultIn.getMainString(),
                                                resultIn.getSubString(), true);
                 resultOut = new Result(ResultConstants.UPDATECOUNT);
             } catch (HsqlException e) {
-                resultOut = new Result(e.getMessage(), e.getSQLState(),
-                                       e.getErrorCode());
+                resultOut = new Result(e, null);
             } catch (ArrayIndexOutOfBoundsException e) {
-                resultOut =
-                    new Result(Trace.getMessage(Trace.DATABASE_NOT_EXISTS),
-                               null, Trace.DATABASE_NOT_EXISTS);
+                resultOut = new Result(
+                    Trace.getError(Trace.DATABASE_NOT_EXISTS, null),
+                    resultIn.subSubString);
             }
 
             HSQLClientConnection.write(resultOut, rowOut, dataOutput);
 
             return c;
         } catch (Exception e) {
-            mServer.trace(mThread + ":couldn't connect " + user);
+            server.trace(mThread + ":couldn't connect " + user);
 
             if (c != null) {
                 c.disconnect();
@@ -213,13 +212,13 @@ class ServerConnection implements Runnable {
                     Result resultIn = HSQLClientConnection.read(rowIn,
                         dataInput);
 
-                    mServer.trace(mThread + ":" + resultIn.getMainString());
+                    server.trace(mThread + ":" + resultIn.getMainString());
 
                     Result resultOut = session.execute(resultIn);
 
                     HSQLClientConnection.write(resultOut, rowOut, dataOutput);
 /*
-                    if (mServer.mDatabase.isShutdown()) {
+                    if (server.mDatabase.isShutdown()) {
                         break;
                     }
 */
@@ -227,7 +226,7 @@ class ServerConnection implements Runnable {
             } catch (IOException e) {
 
                 // fredt - is thrown when connection drops
-                mServer.trace(mThread + ":disconnected " + user);
+                server.trace(mThread + ":disconnected " + user);
             } catch (HsqlException e) {
 
                 // fredt - is thrown while constructing the result

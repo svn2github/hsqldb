@@ -91,8 +91,8 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result login = new Result(ResultConstants.SQLCONNECT);
 
-        login.mainString = user;
-        login.subString  = password;
+        login.mainString   = user;
+        login.subString    = password;
         login.subSubString = database;
 
         initConnection(host, port, isTLS);
@@ -102,10 +102,10 @@ public class HSQLClientConnection implements SessionInterface {
         if (resultIn.iMode == ResultConstants.ERROR) {
 
 /** @todo fredt - review error message */
-            throw Trace.error(Trace.USER_NOT_FOUND);
+            throw new HsqlException(resultIn);
         }
 
-        sessionID = resultIn.sessionID;
+        sessionID  = resultIn.sessionID;
         databaseID = resultIn.databaseID;
     }
 
@@ -165,7 +165,7 @@ public class HSQLClientConnection implements SessionInterface {
     public synchronized Result execute(Result r) throws HsqlException {
 
         try {
-            r.sessionID = sessionID;
+            r.sessionID  = sessionID;
             r.databaseID = databaseID;
 
             write(r);
@@ -210,11 +210,10 @@ public class HSQLClientConnection implements SessionInterface {
 
         resultOut.rRoot.data[id] = property;
 
-        Result in = execute(resultOut);
+        Result resultIn = execute(resultOut);
 
-        if (in.iMode == ResultConstants.ERROR) {
-            throw new HsqlException(in.getMainString(), in.getSubString(),
-                                    in.getStatementID());
+        if (resultIn.iMode == ResultConstants.ERROR) {
+            throw new HsqlException(resultIn);
         }
     }
 

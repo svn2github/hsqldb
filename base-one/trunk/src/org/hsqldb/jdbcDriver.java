@@ -194,8 +194,10 @@ public class jdbcDriver implements Driver {
                                     Properties info) throws SQLException {
 
         HsqlProperties props = DatabaseManager.parseURL(url, true);
+
         if (props == null) {
-            throw new SQLException(Trace.getMessage(Trace.INVALID_JDBC_ARGUMENT));
+            throw new SQLException(
+                Trace.getMessage(Trace.INVALID_JDBC_ARGUMENT));
         }
 
         props.addProperties(info);
@@ -282,7 +284,6 @@ public class jdbcDriver implements Driver {
      * @return  this driver's major version number
      */
     public int getMajorVersion() {
-
         return MAJOR;
     }
 
@@ -292,7 +293,6 @@ public class jdbcDriver implements Driver {
      * @return  this driver's minor version number
      */
     public int getMinorVersion() {
-
         return MINOR;
     }
 
@@ -329,7 +329,6 @@ public class jdbcDriver implements Driver {
     static {
         try {
             DriverManager.registerDriver(new jdbcDriver());
-
         } catch (Exception e) {
             if (Trace.TRACE) {
                 Trace.trace(e.getMessage());

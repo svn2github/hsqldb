@@ -136,7 +136,7 @@ public class Server implements HsqlSocketRequestHandler {
 
 //******************************** fields **************************************
 //-------------------------------- static --------------------------------------
-    static final String mServerName = "HSQLDB/1.7.2";
+    static final String serverName = "HSQLDB/1.7.2";
 
 //    static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
     private static final int bhnd =
@@ -399,11 +399,11 @@ public class Server implements HsqlSocketRequestHandler {
         switch (serverProtocol) {
 
             case ServerConstants.SC_PROTOCOL_HTTP : {
-                return (new File("webserver.properties")).getAbsolutePath();
+                return (new File("webserver")).getAbsolutePath();
             }
             case ServerConstants.SC_PROTOCOL_HSQL :
             default : {
-                return (new File("server.properties")).getAbsolutePath();
+                return (new File("server")).getAbsolutePath();
             }
         }
     }
@@ -1052,11 +1052,15 @@ public class Server implements HsqlSocketRequestHandler {
                 }
             }
         } catch (ArrayIndexOutOfBoundsException e) {
+
             /** @todo this should display an error */
         }
 
         dbAlias = new String[maxindex + 1];
-        ArrayUtil.copyArray(dblist,dbAlias,maxindex + 1);
+        dbType  = new String[maxindex + 1];
+        dbPath  = new String[maxindex + 1];
+
+        ArrayUtil.copyArray(dblist, dbAlias, maxindex + 1);
     }
 
     /**

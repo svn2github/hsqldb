@@ -377,12 +377,12 @@ class DatabaseManager {
 
         props.setProperty("connection_type", type);
 
-        int semiCoPos = url.indexOf(';', pos);
+        int semicolpos = url.indexOf(';', pos);
 
-        if (semiCoPos < 0) {
-            semiCoPos = url.length();
+        if (semicolpos < 0) {
+            semicolpos = url.length();
         } else {
-            String arguments = urlImage.substring(semiCoPos + 1,
+            String arguments = urlImage.substring(semicolpos + 1,
                                                   urlImage.length());
             HsqlProperties extraProps =
                 HsqlProperties.delimitedArgPairsToProps(arguments, "=", ";",
@@ -395,8 +395,8 @@ class DatabaseManager {
         if (isNetwork) {
             int slashpos = url.indexOf('/', pos);
 
-            if (slashpos < pos || slashpos > semiCoPos) {
-                slashpos = semiCoPos;
+            if (slashpos < pos || slashpos > semicolpos) {
+                slashpos = semicolpos;
             }
 
             int colonpos = url.indexOf(':', pos);
@@ -413,25 +413,28 @@ class DatabaseManager {
             }
 
             host = urlImage.substring(pos, colonpos);
-            pos  = url.lastIndexOf('/', semiCoPos);
 
-            if (pos <= slashpos) {
-                path = "/";
+            int secondslashpos = url.lastIndexOf('/', semicolpos);
+
+            if (secondslashpos < pos) {
+                path     = "/";
                 database = "";
+            } else if (secondslashpos == slashpos) {
+                path     = "/";
+                database = urlImage.substring(secondslashpos + 1, semicolpos);
             } else {
-                path = url.substring(slashpos, pos);
-                database = urlImage.substring(pos + 1, semiCoPos);
+                path     = url.substring(slashpos, secondslashpos);
+                database = urlImage.substring(secondslashpos + 1, semicolpos);
             }
-
 
             props.setProperty("port", port);
             props.setProperty("host", host);
             props.setProperty("path", path);
         } else {
             if (type == S_MEM) {
-                database = urlImage.substring(pos, semiCoPos);
+                database = urlImage.substring(pos, semicolpos);
             } else {
-                database = url.substring(pos, semiCoPos);
+                database = url.substring(pos, semicolpos);
             }
         }
 
@@ -450,7 +453,6 @@ class DatabaseManager {
     static final String S_HTTP       = "http://";
     static final String S_HTTPS      = "https://";
     static final String S_URL_PREFIX = "jdbc:hsqldb:";
-
     /*
     public static void main(String[] argv) {
 

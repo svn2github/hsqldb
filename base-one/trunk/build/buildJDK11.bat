@@ -13,7 +13,7 @@ copy org\hsqldb\jdbcDataSource*.java ..\temp\
 del org\hsqldb\jdbcDataSource*.java
 copy org\hsqldb\util\*Swing.java ..\temp\
 del org\hsqldb\util\*Swing.java
-javac -O -nowarn -d ../classes -classpath %classpath%;../classes;../lib/servlet.jar;. ./*.java org/hsqldb/*.java org/hsqldb/lib/*.java org/hsqldb/util/*.java
+javac -O -nowarn -d ../classes -classpath "%classpath%;../classes;../lib/servlet.jar;." ./*.java org/hsqldb/*.java org/hsqldb/lib/*.java org/hsqldb/util/*.java
 copy ..\temp\jdbcDataSource*.java org\hsqldb
 del ..\temp\jdbcDataSource*.java
 copy ..\temp\*Swing.java org\hsqldb\util

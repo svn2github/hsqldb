@@ -1627,9 +1627,7 @@ public class jdbcStatement implements java.sql.Statement {
             resultIn = connection.sessionProxy.execute(resultOut);
 
             if (resultIn.iMode == ResultConstants.ERROR) {
-                throw new HsqlException(resultIn.getMainString(),
-                                        resultIn.getSubString(),
-                                        resultIn.getStatementID());
+                throw new HsqlException(resultIn);
             }
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);

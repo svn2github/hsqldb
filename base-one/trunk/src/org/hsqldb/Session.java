@@ -1093,8 +1093,7 @@ class Session implements SessionInterface {
                         break;
                 }
             } catch (HsqlException e) {
-                return new Result(e.getMessage(), e.getSQLState(),
-                                  e.getErrorCode());
+                return new Result(e,null);
             }
         }
 

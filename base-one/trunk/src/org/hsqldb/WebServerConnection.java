@@ -312,14 +312,14 @@ class WebServerConnection implements Runnable {
                                                    true);
 
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
+                    resultOut.databaseID = dbIndex;
                     resultOut.sessionID = session.getId();
                 } catch (HsqlException e) {
-                    resultOut = new Result(e.getMessage(), e.getSQLState(),
-                                           e.getErrorCode());
+                    resultOut = new Result(e, null);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     resultOut = new Result(
-                        Trace.getMessage(Trace.DATABASE_NOT_EXISTS), null,
-                        Trace.DATABASE_NOT_EXISTS);
+                        Trace.getError(Trace.DATABASE_NOT_EXISTS, null),
+                        resultIn.subSubString);
                 }
             } else {
                 int dbIndex = resultIn.databaseID;
@@ -421,7 +421,7 @@ class WebServerConnection implements Runnable {
 
         if (addInfo) {
             sb.append("Allow: GET, HEAD, POST\nMIME-Version: 1.0\r\n");
-            sb.append("Server: ").append(server.mServerName).append("\r\n");
+            sb.append("Server: ").append(server.serverName).append("\r\n");
         }
 
         if (mimeType != null) {

@@ -61,8 +61,7 @@ public class HsqlServerFactory {
         try {
             server.openDB();
         } catch (HsqlException e) {
-            throw new SQLException(e.getMessage(), e.getSQLState(),
-                                   e.getErrorCode());
+            throw jdbcDriver.sqlException(e);
         }
 
         server.setState(ServerConstants.SERVER_STATE_ONLINE);

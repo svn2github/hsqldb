@@ -89,29 +89,36 @@ class Result {
     private int    iSize;
 
     // transient - number of significant columns
-    private int    significantColumns;
+    private int significantColumns;
+
     // type of result
-    int            iMode;
+    int iMode;
+
     // database ID
-    int            databaseID;
+    int databaseID;
+
     // session ID
-    int            sessionID;
+    int sessionID;
+
     // user / password or error strings
-    String         mainString;
-    String         subString;
+    String mainString;
+    String subString;
+
     // database name
-    String         subSubString;
+    String subSubString;
+
     // parepared statement id
-    int            statementID;
+    int statementID;
+
     // max rows (out) or update count (in)
-    int            iUpdateCount;
-    String         sLabel[];
-    String         sTable[];
-    String         sName[];
-    boolean        isLabelQuoted[];
-    int            colType[];
-    int            colSize[];
-    int            colScale[];
+    int     iUpdateCount;
+    String  sLabel[];
+    String  sTable[];
+    String  sName[];
+    boolean isLabelQuoted[];
+    int     colType[];
+    int     colSize[];
+    int     colScale[];
 
     /**
      *  Constructor declaration
@@ -130,10 +137,11 @@ class Result {
      */
     Result(String error, String state, int code) {
 
-        iMode      = ResultConstants.ERROR;
-        mainString = error;
-        subString  = state;
-        statementID     = code;
+        iMode        = ResultConstants.ERROR;
+        mainString   = error;
+        subString    = state;
+        statementID  = code;
+        subSubString = "";
     }
 
     /**
@@ -144,16 +152,19 @@ class Result {
     Result(int type, int columns) {
 
         prepareData(columns);
-        iMode = type;
+
+        iMode              = type;
         significantColumns = columns;
     }
 
     Result(int type, int types[], int id) {
-        iMode = type;
-        colType = types;
+
+        iMode              = type;
+        colType            = types;
         significantColumns = types.length;
-        statementID = id;
+        statementID        = id;
     }
+
     /**
      *  Constructor declaration
      *
@@ -163,15 +174,16 @@ class Result {
     Result(DatabaseRowInputInterface in) throws HsqlException {
 
         try {
-
-            iMode = in.readIntData();
+            iMode      = in.readIntData();
             databaseID = in.readIntData();
-            sessionID = in.readIntData();
+            sessionID  = in.readIntData();
 
             switch (iMode) {
 
                 case ResultConstants.SQLGETSESSIONINFO :
                 case ResultConstants.SQLDISCONNECT :
+                case ResultConstants.SQLENDTRAN:
+                case ResultConstants.SQLSTARTTRAN:
                     break;
 
                 case ResultConstants.SQLPREPARE :
@@ -180,14 +192,14 @@ class Result {
 
                 case ResultConstants.SQLEXECDIRECT :
                     iUpdateCount = in.readIntData();
-                    statementID       = in.readIntData();
+                    statementID  = in.readIntData();
                     mainString   = in.readString();
                     break;
 
                 case ResultConstants.ERROR :
                 case ResultConstants.SQLCONNECT :
-                    mainString = in.readString();
-                    subString  = in.readString();
+                    mainString   = in.readString();
+                    subString    = in.readString();
                     subSubString = in.readString();
 
 //                    throw Trace.getError(string, code);
@@ -200,7 +212,7 @@ class Result {
                 case ResultConstants.SQLEXECUTE :
                 case ResultConstants.SQLSETENVATTR : {
                     iUpdateCount = in.readIntData();
-                    statementID     = in.readIntData();
+                    statementID  = in.readIntData();
 
                     int l = in.readIntData();
 
@@ -240,7 +252,7 @@ class Result {
                 }
                 default :
                     throw new HsqlException(
-                        "trying to use unsuppoted result mode", null, 0);
+                        "trying to use unsuppoted result mode", "", 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
@@ -742,10 +754,13 @@ class Result {
         out.writeIntData(iMode);
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
+
         switch (iMode) {
 
             case ResultConstants.SQLGETSESSIONINFO :
-    case ResultConstants.SQLDISCONNECT :
+            case ResultConstants.SQLDISCONNECT :
+            case ResultConstants.SQLENDTRAN:
+            case ResultConstants.SQLSTARTTRAN:
                 break;
 
             case ResultConstants.SQLPREPARE :
@@ -773,6 +788,7 @@ class Result {
             case ResultConstants.SQLSETENVATTR : {
                 out.writeIntData(iUpdateCount);
                 out.writeIntData(statementID);
+
                 int l = significantColumns;
 
                 out.writeIntData(l);
@@ -815,7 +831,7 @@ class Result {
             }
             default :
                 throw new HsqlException(
-                    "trying to use unsuppoted result mode", null, 0);
+                    "trying to use unsuppoted result mode", "", 0);
         }
 
         out.writeIntData(out.size(), 0);
@@ -885,7 +901,8 @@ private    String getMode() {
             statementID = ((HsqlException) t).code;
         } else if (t instanceof Exception) {
             t.printStackTrace();
-            subString = "";
+
+            subString  = "";
             mainString = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
 
             if (statement != null) {
@@ -895,10 +912,12 @@ private    String getMode() {
             statementID = Trace.GENERAL_ERROR;
         } else if (t instanceof OutOfMemoryError) {
             t.printStackTrace();
-            subString = "";
-            mainString = "out of memory";
-            statementID     = Trace.GENERAL_ERROR;
+
+            subString   = "";
+            mainString  = "out of memory";
+            statementID = Trace.GENERAL_ERROR;
         }
+        subSubString = "";
     }
 
     int getStatementID() {

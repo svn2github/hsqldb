@@ -90,6 +90,13 @@ public class HsqlException extends Exception {
         this.code    = code;
     }
 
+    public HsqlException(Result r) {
+
+        this.message = r.getMainString();
+        this.state   = r.getSubString();
+        this.code    = r.getStatementID();
+    }
+
     public String getMessage() {
         return message;
     }

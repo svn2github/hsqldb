@@ -410,7 +410,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         }
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+            throw new SQLException(resultIn.getMainString(),
+                                   resultIn.getSubString(),
                                    resultIn.getStatementID());
         }
 
@@ -487,7 +488,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             throw new SQLException(
                 "executeUpdate() cannot be used with this statement");
         } else if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+            throw new SQLException(resultIn.getMainString(),
+                                   resultIn.getSubString(),
                                    resultIn.getStatementID());
         }
 
@@ -509,9 +511,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 if (lookup != null) {
                     id = lookup.intValue();
                 }
-             } else {
+            } else {
                 id = -1;
-             }
+            }
 
             switch (id) {
 
@@ -529,8 +531,10 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                     parameters[i] = Column.convertObject(parameters[i],
                                                          types[i]);
                     break;
+
                 case -1 :
                     break;
+
                 default :
                     parameters[i] = Column.serializeToString(parameters[i]);
             }
@@ -4742,7 +4746,13 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         resultOut.setResultType(ResultConstants.SQLPREPARE);
         resultOut.setMainString(sql);
 
-        resultOut  = connection.sessionProxy.execute(resultOut);
+        Result resultIn = connection.sessionProxy.execute(resultOut);
+
+        if (resultIn.iMode == ResultConstants.ERROR) {
+            throw new HsqlException(resultIn);
+        }
+
+        resultOut  = resultIn;
         types      = resultOut.getParameterTypes();
         parameters = new Object[types.length];
 

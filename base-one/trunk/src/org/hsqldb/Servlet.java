@@ -251,8 +251,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
                     resultOut.sessionID = session.getId();
                 } catch (HsqlException e) {
-                    resultOut = new Result(e.getMessage(), e.getSQLState(),
-                                           e.getErrorCode());
+                    resultOut = new Result(e,null);
                 }
             } else {
                 Session session = DatabaseManager.getSession(dbType, dbPath,

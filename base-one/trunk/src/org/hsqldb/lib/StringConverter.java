@@ -98,7 +98,7 @@ public class StringConverter {
      * @param s hexadecimal string
      *
      * @return byte array for the hex string
-     * @throws SQLException
+     * @throws IOException
      */
     public static byte[] hexToByte(String s) throws IOException {
 
@@ -189,7 +189,7 @@ public class StringConverter {
      * @param s
      *
      * @return
-     * @throws SQLException
+     * @throws IOException
      */
     public static String hexStringToUnicode(String s) throws IOException {
 

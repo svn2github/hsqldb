@@ -203,7 +203,7 @@ class DataFileDefrag {
             int lookupIndex = pointerLookup.search(rootsArray[i]);
 
             if (lookupIndex == -1) {
-                throw new HsqlException(null, null, 0);
+                throw new HsqlException("","", 0);
             }
 
             rootsArray[i] = pointerLookup.getIntCell(lookupIndex, 1);

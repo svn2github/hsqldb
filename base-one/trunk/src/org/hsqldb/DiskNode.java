@@ -350,7 +350,7 @@ class DiskNode extends Node {
             int i = lookup.search(pointer);
 
             if (i == -1) {
-                throw new HsqlException(null, null, 0);
+                throw new HsqlException("","", 0);
             }
 
             newPointer = lookup.getIntCell(i, 1);
