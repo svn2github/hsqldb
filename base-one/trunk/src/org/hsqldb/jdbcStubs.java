@@ -139,6 +139,10 @@ interface Clob {
 
 interface Ref {
     String getBaseTypeName() throws SQLException;
+// NO:  These are JDBC3-only
+//    Object getObject() throws SQLException;
+//    Object getObject(Map map) throws SQLException;
+//    void setObject(Object value) throws SQLException;
 }
 */
 

@@ -122,11 +122,11 @@ import org.hsqldb.resources.BundleHandler;
  *  database (fredt@users). <p>
  *
  *  <b>1.7.2 Notes:</b> start() and stop() methods added and Server always
- *  runs in its own thread, tracked by HsqlRuntime.  Default is now to
- *  set server.no_system_exit=true when calling start() directly, while
- *  setting server.no_system_exit=false by default when server is started
- *  by calling main(String[] args).  main(String[] args) no longer
- *  blocks, because server runs in its own thread. (boucherb@users)
+ *  runs in its own thread.  Default is now to set server.no_system_exit=true
+ *  when calling start() directly, while setting server.no_system_exit=false
+ *  by default when server is started by calling main(String[] args).  
+ *  main(String[] args) no longer blocks, because server runs in its own
+ * thread. (boucherb@users)
  *
  * @version 1.7.2
  *
@@ -138,7 +138,6 @@ public class Server implements HsqlSocketRequestHandler {
 //
     static final String serverName = "HSQLDB/1.7.2";
 
-//    static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
     private static final int bhnd =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
@@ -1179,9 +1178,8 @@ public class Server implements HsqlSocketRequestHandler {
         javaSystem.setLogToSystem(isTrace());
     }
 
-// Package visibility for related classes and interfaces,
-// such as HsqlRuntime, XXXServerConnection and HsqlSocketRequestHandlerImpl,
-// etc. that may need to make calls back here.
+// Package visibility for related classes and intefaces
+// that may need to make calls back here.
 
     /**
      * This is called from org.hsqldb.DatabaseManager when a database is
@@ -1542,8 +1540,8 @@ public class Server implements HsqlSocketRequestHandler {
 
     /**
      * Attempts to bring this server fully online by opening
-     * a new ServerSocket, obtaining the hosted database from
-     * HsqlRuntime, notifying the status waiter thread (if any) and
+     * a new ServerSocket, obtaining the hosted databases,
+     * notifying the status waiter thread (if any) and
      * finally entering the listen loop if all else succeeds.
      * If any part of the process fails, then this server enters
      * its shutdown sequence.
@@ -1590,8 +1588,8 @@ public class Server implements HsqlSocketRequestHandler {
         try {
 
             // Mount the databases this server is supposed to host.
-            // This may take some time if the database is not already
-            // open in the HsqlRuntime repository.
+            // This may take some time if the databases are not sll
+            // already open.
             openDB();
         } catch (Exception e) {
             traceError(this + ".run/openDB(): ");

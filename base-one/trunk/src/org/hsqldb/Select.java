@@ -79,6 +79,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
+// boucherb@users 20030811 - patch 1.7.2 - 200% speedup for compiled statement
 
 /**
  * Class declaration
@@ -114,6 +115,7 @@ class Select {
                      EXCEPT     = 4;
     int              limitStart = 0;       // set only by the LIMIT keyword
     int              limitCount = 0;       // set only by the LIMIT keyword
+    private Result   rResult;
 
     /**
      * Set to preprocess mode
@@ -205,17 +207,26 @@ class Select {
 
         Object o = r.rRoot.data[0];
 
-        if (r.colType[0] == type) {
-            return o;
-        }
-
-        return Column.convertObject(o, type);
+        return r.colType[0] == type ? o 
+                                    : Column.convertObject(o, type);
     }
 
     /**
-     * Returns an empty result set to contain the rows returned from select
+     * Prepares rResult having structure compatible with
+     * internally building the set of rows returned from getResult().
      */
-    private Result getEmptyResult() throws HsqlException {
+    private void prepareResult() throws HsqlException {
+       
+        resolveAll();
+
+        if (iGroupLen > 0) {    // has been set in Parser
+            isGrouped        = true;
+            groupColumnNames = new HashSet();
+
+            for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
+                eColumn[i].collectColumnName(groupColumnNames);
+            }
+        }                 
 
         int    len = eColumn.length;
         Result r   = new Result(ResultConstants.DATA, len);
@@ -248,6 +259,19 @@ class Select {
                 (i < orderByStart) || (i >= orderByEnd)
                 || eColumn[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
                                                 eColumn[i]);
+            
+            if (i < iResultLen) {
+                r.sLabel[i]        = e.getAlias();
+                r.isLabelQuoted[i] = e.isAliasQuoted();
+                r.sTable[i]        = e.getTableName();
+                r.sName[i]         = e.getColumnName();
+                if (r.isTableColumn(i)) {
+                    r.nullability[i] = e.nullability;
+                    r.isIdentity[i]  = e.isIdentity;
+                    r.isWritable[i]  = e.isWritable;
+                }
+                r.sClassName[i]     = e.getValueClassName();
+            }
         }
 
         checkAggregateOrGroupByColumns(0, iResultLen);
@@ -265,8 +289,8 @@ class Select {
                             eColumn[i]);
             }
         }
-
-        return r;
+        
+        rResult = r;
     }
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
@@ -300,9 +324,6 @@ class Select {
                                : Integer.MAX_VALUE;
     }
 
-// TODO: Clean up the whole approach to setting up Select state variables,
-// (re)resoving expression trees, (re) parameterizing expression trees
-
     /**
      * maxrow may be 0 to indicate no limit on the number of rows, or -1
      * to indicate 0 size result (used for pre-processing the selects in
@@ -317,29 +338,13 @@ class Select {
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
     Result getResult(int maxrows) throws HsqlException {
 
-        if (!isResolved) {
-            resolve();
-            checkResolved();
 
-            isResolved = true;
-        }
-
-        if (sUnion != null && sUnion.iResultLen != iResultLen) {
-            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-        }
-
-        if (iGroupLen > 0) {    // has been set in Parser
-            isGrouped        = true;
-            groupColumnNames = new HashSet();
-
-            for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
-                eColumn[i].collectColumnName(groupColumnNames);
-            }
-        }
-
-        Result r = getEmptyResult();
-
-        buildResult(r, getLimitCount(maxrows));
+        Result r;
+            
+        prepareResult();           
+        buildResult(getLimitCount(maxrows));
+        
+        r = rResult;
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -366,16 +371,9 @@ class Select {
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
 
-        for (int i = 0; i < iResultLen; i++) {
-            Expression e = eColumn[i];
-
-            r.sLabel[i]        = e.getAlias();
-            r.isLabelQuoted[i] = e.isAliasQuoted();
-            r.sTable[i]        = e.getTableName();
-            r.sName[i]         = e.getColumnName();
-        }
-
 // fredt@users 20020130 - patch 471710 - LIMIT rewritten
+// CHECKME:
+// boucherb@users - 20030811 - shouldn't this go _after_ the set operations?        
         r.trimResult(limitStart, limitCount);
 
         if (sUnion != null) {
@@ -497,9 +495,9 @@ class Select {
     }
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
-    private void buildResult(Result r, int limitcount) throws HsqlException {
+    private void buildResult(int limitcount) throws HsqlException {
 
-        GroupedResult gResult     = new GroupedResult(this, r);
+        GroupedResult gResult     = new GroupedResult(this, rResult);
         final int     len         = eColumn.length;
         final int     filter      = tFilter.length;
         boolean       first[]     = new boolean[filter];
@@ -615,10 +613,7 @@ class Select {
         }
     }
 
-// boucherb@users 20030418 - patch 1.7.2 - faster execution for compiled statements
-// TODO: improve/clean up the resolution system from the 50,000' perspective,
-// allowing efficient, understandable (from the developer's perspective) reuse
-// patterns under parameterized compiled statements.
+// boucherb@users 20030418 - patch 1.7.2 - fast execution for compiled statements
 // -----------------------------------------------------------------------------
     boolean isResolved = false;
 
@@ -630,14 +625,14 @@ class Select {
 
         resolve();
         checkResolved();
-
-        Select u = sUnion;
-
-        if (u != null) {
-
-            // recurse
-            u.resolveAll();
-        }
+       
+        
+        if (sUnion != null) {
+            if(sUnion.iResultLen != iResultLen) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+            sUnion.resolveAll();
+        }        
 
         isResolved = true;
     }
@@ -654,7 +649,7 @@ class Select {
         StringBuffer sb;
 
         // temporary :  it is currently unclear whether this may affect
-        // later attempts to retrieve an actual results (calls getResult(-1)
+        // later attempts to retrieve an actual result (calls getResult(1)
         // in preProcess mode).  Thus, toString() probably should not be called
         // on Select objects that will actually be used to retrieve results,
         // only on Select objects used by EXPLAIN PLAN FOR
@@ -725,15 +720,7 @@ class Select {
         return sb.toString();
     }
 
-// NOTES: boucherb@users.sourceforge.net 20030601
-// setTrue()  is bad.  It is a destructive operation that
-// affects the ability to resolve an expression more than once.
-// The related methods below are useful only for now and only for toString()
-// under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
-// In the future, this all needs to be changed around to
-// support clean reparameterization and reresolution of
-// expression trees.
-    // Used only be toString()
+    // Used only by toString()
     private void preProcess() {
 
         boolean oldPreProcess;
@@ -748,17 +735,38 @@ class Select {
         isPreProcess = oldPreProcess;
     }
 
-    // Not used yet
-    Result describeResult() throws HsqlException {
+    Result describeResult() {
 
-        Result  r;
-        boolean oldPreProcess;
+        Result     r;
+        Expression e;
+        
+        r = new Result(ResultConstants.DATA, iResultLen);
+        
+        for (int i = 0; i < iResultLen; i++) {
 
-        oldPreProcess = isPreProcess;
-        isPreProcess  = true;
-        r             = getResult(1);
-        isPreProcess  = oldPreProcess;
+            e = eColumn[i];
+
+            r.colType[i]       = e.getDataType();
+            r.colSize[i]       = e.getColumnSize();
+            r.colScale[i]      = e.getColumnScale();
+            r.sLabel[i]        = e.getAlias();
+            r.isLabelQuoted[i] = e.isAliasQuoted();
+            r.sTable[i]        = e.getTableName();
+            r.sName[i]         = e.getColumnName();
+
+            if (r.isTableColumn(i)) {
+                r.nullability[i] = e.nullability;
+                r.isIdentity[i]  = e.isIdentity;
+                r.isWritable[i]  = e.isWritable;
+            }
+        }
 
         return r;
+    }
+    
+    void resetResult() {
+        if (rResult != null) {
+            rResult.trimResult(0,0);
+        }
     }
 }

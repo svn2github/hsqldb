@@ -221,6 +221,24 @@ class Tokenizer {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
     }
+    
+    /**
+     * Method declaration
+     *
+     *
+     * @param match
+     */    
+    boolean isGetThis(String match) throws HsqlException {
+
+        getToken();
+
+        if (sToken.equals(match)) {
+            return true;
+        } else {
+            back();
+            return false;
+        }
+    }
 
     /**
      * This is used solely for user name and password
@@ -387,6 +405,20 @@ class Tokenizer {
         getToken();
 
         return sToken;
+    }
+    
+    int getInt() throws HsqlException {
+
+        getToken();
+
+        Object o = getAsValue();
+        int    t = getType();
+
+        if (t != Types.INTEGER) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
+        }
+
+        return ((Number)o).intValue();        
     }
 
     /**

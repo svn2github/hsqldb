@@ -100,7 +100,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 /**
  *  This class is responsible for parsing non-DDL statements.
  *
- *@version    1.7.0
+ * @version    1.7.2
  */
 
 /** @todo fredt - implement numeric value functions (SQL92 6.6)
@@ -217,7 +217,7 @@ class Parser {
         }
     }
 
-    SubQuery parseSubquery() throws HsqlException {
+    SubQuery parseSubquery(boolean isView) throws HsqlException {
 
         HsqlException se;
         Select        s;
@@ -237,6 +237,7 @@ class Parser {
         s        = null;
         sq       = new SubQuery();
         sq.level = subQueryLevel;
+        sq.isView = isView;
 
         subQueryStack.push(sq);
 
@@ -643,7 +644,7 @@ class Parser {
         if (token.equals(Token.T_OPENBRACKET)) {
             tokenizer.getThis(Token.T_SELECT);
 
-            sq = parseSubquery();
+            sq = parseSubquery(false);
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
 
@@ -669,9 +670,13 @@ class Parser {
         } else {
             tokenizer.checkUnexpectedParam("parametric table identifier");
 
-            t = database.getTable(token, session);
-
-            session.check(t.getName(), UserManager.SELECT);
+            t = database.getTable(token, session); 
+            
+            boolean checkSelectPriv = !isParsingView();
+                
+            if (checkSelectPriv) {
+                session.check(t.getName(), UserManager.SELECT);
+            }
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
             if (t.isView()) {
@@ -709,7 +714,7 @@ class Parser {
                                     CurrentPos - TokenLength + 1);
                 tokenizer.getThis(Token.T_SELECT);
 
-                sq = parseSubquery();
+                sq = parseSubquery(true);
 
                 tokenizer.getThis(Token.T_CLOSEBRACKET);
 
@@ -1171,9 +1176,13 @@ class Parser {
 
                 read();
 
-                if (iToken == Expression.OPEN) {
+                if (iToken == Expression.OPEN) {                   
+
+                    boolean checkPrivs = !isParsingView();
+                    
                     Function f = new Function(database.getAlias(name),
-                                              session);
+                                              session,
+                                              checkPrivs);
                     int len = f.getArgCount();
                     int i   = 0;
 
@@ -1192,6 +1201,8 @@ class Parser {
                     }
 
                     readThis(Expression.CLOSE);
+                    
+                    // TODO: Maybe allow AS <alias> here
 
                     r = new Expression(f);
                 }
@@ -1326,6 +1337,23 @@ class Parser {
 
                 int t = Types.getTypeNr(sToken);
 
+                // For now, parse but ignore precision and scale
+                // TODO: definitely validate values (e.g. check non-neg) and
+                //       maybe even enforce in Expression.getValue(), incl. 
+                //       trim, pad, throw on overflow, etc.
+                int p = 0;
+                int s = 0;
+                
+                if (Types.acceptsPrecisionCreateParam(t)
+                    && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                        p = tokenizer.getInt();
+                        if (Types.acceptsScaleCreateParam(t) 
+                            && tokenizer.isGetThis(Token.T_COMMA)) {
+                                s = tokenizer.getInt();
+                        } 
+                        tokenizer.getThis(Token.T_CLOSEBRACKET);
+                }
+
                 if (r.isParam()) {
                     r.setDataType(t);
                 }
@@ -1348,7 +1376,24 @@ class Parser {
                             Trace.UNEXPECTED_TOKEN, sToken);
                 read();
 
-                int t = Types.getTypeNr(sToken);
+                int t = Types.getTypeNr(sToken); 
+                
+                // For now, parse but ignore precision and scale
+                // TODO: definitely validate values (e.g. check non-neg) and
+                //       maybe even enforce in Expression.getValue(), incl. 
+                //       trim, pad, throw on overflow, etc.              
+                int p = 0;
+                int s = 0;
+                
+                if (Types.acceptsPrecisionCreateParam(t)
+                    && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                        p = tokenizer.getInt();
+                        if (Types.acceptsScaleCreateParam(t) 
+                            && tokenizer.isGetThis(Token.T_COMMA)) {
+                                s = tokenizer.getInt();
+                        } 
+                        tokenizer.getThis(Token.T_CLOSEBRACKET);
+                }
 
                 if (r.isParam()) {
                     r.setDataType(t);
@@ -1857,8 +1902,6 @@ class Parser {
 
             cve = parseExpression();
 
-            // later.
-            // cve.resolve(filter);
             cveList.add(cve);
 
             token = tokenizer.getString();
@@ -1868,10 +1911,6 @@ class Parser {
 
         if (token.equals(Token.T_WHERE)) {
             condition = parseExpression();
-
-            // later.
-            //condition.resolve(filter);
-            //filter.setCondition(condition);
         } else {
             tokenizer.back();
         }
@@ -1904,6 +1943,12 @@ class Parser {
     static void checkParamAmbiguity(boolean b,
                                     String msg) throws HsqlException {
         Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg + msg);
+    }
+    
+    boolean isParsingView() {
+        return subQueryStack != null 
+               &&!subQueryStack.isEmpty() 
+               &&((SubQuery) subQueryStack.peek()).isView;     
     }
 
 // --

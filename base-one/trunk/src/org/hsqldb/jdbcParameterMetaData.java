@@ -33,6 +33,9 @@ package org.hsqldb;
 
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
+import org.hsqldb.lib.Iterator;
 
 // boucherb@users 200307?? - patch 1.7.2
 // TODO:
@@ -49,23 +52,57 @@ import java.sql.SQLException;
  */
 public class jdbcParameterMetaData implements ParameterMetaData {
 
-// TEMPORARY - will change to accommodate listed TODO items
-
     /** Helper used to translate numeric data type codes to attributes. */
     DITypeInfo ti = new DITypeInfo();
 
     /** The numeric data type codes of the parameters. */
     int[] types;
+    
+    /** Parameter mode values */
+    int[] modes;
+    
+    /** whether param is assigned directly to identity column */
+    boolean[] isIdentity;
+    
+    /** nullability code for site to which param is bound */
+    int[] nullability;
+    
+    /**
+     * The fully-qualified name of the Java class whose instances should
+     * be passed to the method PreparedStatement.setObject. <p>
+     *
+     * Note that changes to Function.java and Types.java allow passing
+     * objects of any class implementing java.io.Serializable and that,
+     * as such, the parameter expression resolution mechanism has been
+     * upgraded to provide the precise FQN for SQL function and stored
+     * procedure arguments, rather than the more generic
+     * org.hsqldb.JavaObject class that is used internally to represent
+     * and transport objects whose class is not in the standard mapping.
+     */
+    String[] classNames;
+    
+    int parameterCount;
 
     /**
      * Creates a new instance of jdbcParameterMetaData
      * @param types The numeric data type codes of the parameters
      */
-    jdbcParameterMetaData(int[] types) {
-        this.types = types;
-    }
+    jdbcParameterMetaData(Result r) throws SQLException {
+        
+        String   msg;
+        
+        if (r == null) {
+            msg = "r is null";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
 
-// -- END TEMPORARY
+        types          = r.colType;
+        parameterCount = types.length;
+        nullability    = r.nullability;
+        isIdentity     = r.isIdentity;
+        classNames     = r.sClassName;
+        modes          = r.paramMode;                
+    }
 
     /**
      * Checks if the param argument indicates a valid parameter position.
@@ -76,7 +113,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      */
     void checkRange(int param) throws SQLException {
 
-        if (param < 1 || param > types.length) {
+        if (param < 1 || param > parameterCount) {
             String msg = param + " is out of range";
 
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
@@ -99,9 +136,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public String getParameterClassName(int param) throws SQLException {
 
         checkRange(param);
-        ti.setTypeCode(types[--param]);
-
-        return ti.getColStClsName();
+        
+        return classNames[--param];
     }
 
     /**
@@ -113,7 +149,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int getParameterCount() throws SQLException {
-        return types.length;
+        return parameterCount;
     }
 
     /**
@@ -131,8 +167,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
         checkRange(param);
 
-        // we only support IN parameters at this point.
-        return parameterModeIn;
+        return modes[--param];
     }
 
     /**
@@ -145,9 +180,14 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      */
     public int getParameterType(int param) throws SQLException {
 
+        int t;
+        
         checkRange(param);
 
-        return types[--param];
+        t = types[--param];
+        
+        return t == Types.VARCHAR_IGNORECASE ? Types.VARCHAR 
+                                             : t;
     }
 
     /**
@@ -162,14 +202,13 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      */
     public String getParameterTypeName(int param) throws SQLException {
 
-        checkRange(param);
-        ti.setTypeCode(types[--param]);
+        int t;
+        int ts;
 
-        // TODO:
-        // parameters assigned directly to table columns
-        // should report the type declared (eg INTEGER IDENTITY,
-        // VARCHAR_IGNORECASE), otherwise the generic type name of the
-        // undecorated type
+        checkRange(param);
+
+        setupTypeInfo(--param);
+
         return ti.getTypeName();
     }
 
@@ -183,7 +222,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public int getPrecision(int param) throws SQLException {
 
         checkRange(param);
-        ti.setTypeCode(types[--param]);
+
+        setupTypeInfo(--param);
 
         Integer p = ti.getPrecision();
 
@@ -210,7 +250,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
         // TODO:
         // parameters assigned directly to DECIMAL/NUMERIC columns
-        // should report the scale of the column
+        // should report the declared scale of the column
         // For now, to be taken as "default or unknown"
         return 0;
     }
@@ -229,21 +269,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
         checkRange(param);
 
-        // TODO:
-        //
-        // Parameters assigned directly to not null table columns or to
-        // Java primitive method arguments in SQL function/sp calls
-        // should be reported no nulls.
-        //
-        // Parameters assigned directly
-        // to nullable table columns should be reported nullable.
-        //
-        // Parameters assigned directly to Java Object method arguments
-        // in SQL function / sp calls should be reported nullable unknown.
-        //
-        // Parameters not directly assigned to table columns or Java method
-        // arguments should be reported nullable.
-        return parameterNullableUnknown;
+        return nullability[--param];
     }
 
     /**
@@ -257,79 +283,101 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      */
     public boolean isSigned(int param) throws SQLException {
 
-        // CHECKME: interpretation.
-        //
-        // Yet another great and totally clear JDBC spec point ;-)
-        //
-        // Does this mean whether the parameter's value will
-        // eventually be used as a signed number, or does this mean the
-        // parameter can accept a signed number input?  There is a big difference.
-        //
-        // For Example:  we can convert a signed number input to just about
-        // any SQL type, so if the parameter is used as, say, the insert value
-        // to a VARCHAR column, then we can certainly _accept_ a signed number.
-        //
-        // OTOH, if the parameter value is to be assigned to a column (table or proceedure)
-        // whose type is some number type, we cannot always make the conversion if a setXXX
-        // is used where XXX is not some number type (indeed, there is also a
-        // truncation issue to consider).
-        //
-        // Further, an otherwise guaranteed signed number assignment will fail
-        // if the value is to be used for an identity table column and the value
-        // is negative.
-        //
-        // Proposed truth table, displaying values for a number of assumed
-        // interpretations:
-        //
-        // ******************************************************************************************
-        // * Interpretation   | setXXX type      | Param Type  | Answer                             *
-        // ******************************************************************************************
-        // * accepts sn       | number           | number      | narrow && (!identity || sign >= 0) *
-        // ******************************************************************************************
-        // * accepts sn       | number           | not number  | true                               *
-        // ******************************************************************************************
-        // *                  |                  |             | convert (incl. narrow) &&          *
-        // * accepts sn       | not number       | number      | (!identity || sign(convert) >= 0)  *
-        // ******************************************************************************************
-        // * accepts sn       | not number       | not number  | true                               *
-        // ******************************************************************************************
-        // * will use as sn   | number           | number      | narrow && (!identity || sign >= 0) *
-        // ******************************************************************************************
-        // * will use as sn   | number           | not number  | false                              *
-        // ******************************************************************************************
-        // *                  |                  |             | convert (incl. narrow) &&          *
-        // * will use as sn   | not number       | number      | (!identity || sign(convert) >= 0)  *
-        // ******************************************************************************************
-        // * will use as sn   | not number       | not number  | false                              *
-        // ******************************************************************************************
-        //
-        // Since we cannot predict apriori the convertability to number under setXXX where XXX is
-        // not a number type (or indeed, the convertability, where the conversion is a narrowing
-        // from one number type to another, the most accurate conclusions possible under the two
-        // assumptions are:
-        //
-        // Given interpretation "accepts sn", we should always report true (maybe), as it is impossible
-        // to refuse signed numbers without first knowing their value...one must at least
-        // wait to test for non-negativity under assignment to identity column.  The same
-        // applies to all other types, with the addition of conversion and possibly narrowing.
-        //
-        // Given interpretation "will be used as sn", we should return true (maybe) whenever param target type
-        // is number and it's value will not be used to assign directly to an identity column.
-        //
-        // The current implementation reflects the "will be used as sn" assumption (my opinion
-        // is that it conveys at least some information, which is far better than the alternate),
-        // but does not yet include the identity column assigment test, as this depends on work
-        // remaining to be done in Expression.resolve and corresponding work in Result to transmit
-        // this data without calls back to the database.
-        //
-        // TODO:
-        // parameter values assigned directly to identity column cannot
-        // be signed
         checkRange(param);
-        ti.setTypeCode(types[--param]);
+        
+        setupTypeInfo(--param);
 
         Boolean b = ti.isUnsignedAttribute();
 
-        return b != null &&!b.booleanValue();
+        return b != null &&!b.booleanValue() &&!isIdentity[param];
+    }
+    
+    private void setupTypeInfo(int param) {
+        int t;
+        int ts;
+        
+        t = types[param];
+        
+        if (t == Types.VARCHAR_IGNORECASE) {
+            t = Types.VARCHAR;
+            ts = Types.TYPE_SUB_IGNORECASE;
+        } else if (isIdentity[param]) {
+            ts = Types.TYPE_SUB_IDENTITY;
+        } else {
+            ts = Types.TYPE_SUB_DEFAULT;
+        }
+        
+        ti.setTypeCode(t);
+        ti.setTypeSub(ts);        
+    }
+    
+    public String toString() {
+        try {
+            return toStringImpl();
+        } catch (Throwable t) {
+            return super.toString() + "[toStringImpl_exception=" + t + "]";
+        }
+    }
+
+    private String toStringImpl() throws Exception {
+        StringBuffer  sb;
+        Method[]      methods;
+        Method        method;
+        int           count;
+        
+        sb = new StringBuffer();
+        
+        sb.append(super.toString());
+                
+        count   = getParameterCount();
+        
+        if (count == 0) {
+            sb.append("[parameterCount=0]");
+            return sb.toString();
+        }
+        
+        methods = getClass().getDeclaredMethods();
+        
+        sb.append('[');
+        
+        for (int i = 0; i < count; i++) {
+            
+            sb.append('\n');
+            sb.append("    parameter_");
+            sb.append(i+1);
+            sb.append('=');
+            sb.append('[');
+
+            for (int j = 0; j < methods.length; j++) {
+                
+                method = methods[j];
+
+                if (!Modifier.isPublic(method.getModifiers())) {
+                    continue;
+                }
+                
+                if (method.getParameterTypes().length != 1) {
+                    continue;
+                }
+
+                sb.append(method.getName());
+                sb.append('=');
+                sb.append(method.invoke(this, 
+                                        new Object[] {new Integer(i+1)}));
+                sb.append(',');
+                sb.append(' ');
+            }
+
+            sb.setLength(sb.length() - 2);
+            sb.append(']');
+            sb.append(',');
+            sb.append(' ');
+        }
+
+        sb.setLength(sb.length() - 2);
+        sb.append('\n');
+        sb.append(']');
+
+        return sb.toString();
     }
 }

@@ -97,7 +97,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20030401 - patch 1.7.2 by akede@users - data files readonly
 // fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
 // boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
-// boucherb@users 20030510 - patch 1.7.2 - HsqlRuntime upgrade (close())
+// boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
+// boucherb@users - fredt@users 200305..200307 - patch 1.7.2 - DatabaseManager upgrade
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -107,7 +108,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *  directly by an application. Instead, to achieve portability and
  *  generality, the JDBC interface classes should be used.
  *
- * @version  1.7.0
+ * @version  1.7.2
  */
 class Database {
 
@@ -116,7 +117,7 @@ class Database {
     private String        sName;
     private String        sPath;
     boolean               isNew;
-    private UserManager   aAccess;
+    private UserManager   userManager;
     private HsqlArrayList tTable;
     DatabaseInformation   dInfo;
     ClassLoader           classLoader;
@@ -201,6 +202,7 @@ class Database {
         databaseProperties       = new HsqlDatabaseProperties(this);
 
         databaseProperties.load();
+
         setState(Database.DATABASE_SHUTDOWN);
     }
 
@@ -234,13 +236,13 @@ class Database {
         compiledStatementManager.reset();
 
         tTable                = new HsqlArrayList();
-        aAccess               = new UserManager();
+        userManager           = new UserManager();
         hAlias                = Library.getAliasMap();
         nameManager           = new HsqlNameManager();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
-        sysUser               = aAccess.createSysUser(this);
+        sysUser               = userManager.createSysUser(this);
         sessionManager        = new SessionManager(this, sysUser);
         dInfo = DatabaseInformation.newDatabaseInformation(this);
 
@@ -249,7 +251,7 @@ class Database {
         }
 
         if (isNew) {
-            sessionManager.getSysSession().sqlExecuteDirect(
+            sessionManager.getSysSession().sqlExecuteDirectNoPreChecks(
                 "CREATE USER SA PASSWORD \"\" ADMIN");
         }
 
@@ -308,7 +310,7 @@ class Database {
     synchronized Session connect(String username,
                                  String password) throws HsqlException {
 
-        User user = aAccess.getUser(username.toUpperCase(),
+        User user = userManager.getUser(username.toUpperCase(),
                                     password.toUpperCase());
         Session session = sessionManager.newSession(this, user,
             databaseReadOnly);
@@ -381,7 +383,7 @@ class Database {
      * @return  UserManager object
      */
     UserManager getUserManager() {
-        return aAccess;
+        return userManager;
     }
 
     /**
@@ -862,7 +864,7 @@ class Database {
 
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
-        aAccess.removeDbObject(toDrop.getName());
+        userManager.removeDbObject(toDrop.getName());
         triggerNameList.removeOwner(toDrop.tableName);
         indexNameList.removeOwner(toDrop.tableName);
         toDrop.drop();

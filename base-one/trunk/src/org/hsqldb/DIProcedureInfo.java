@@ -636,7 +636,8 @@ final class DIProcedureInfo {
         // we have no standard mapping for the specified class
         // at this point...is it even storable?
         if (Serializable.class.isAssignableFrom(c)
-                || Externalizable.class.isAssignableFrom(c)) {
+                /* Oops: Externalizable extends Serializable 
+                 || Externalizable.class.isAssignableFrom(c) */ ) {
 
             // Yes: it is storable, as an OTHER.
             return Types.OTHER;

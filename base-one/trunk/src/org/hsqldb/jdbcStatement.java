@@ -82,6 +82,7 @@ import java.sql.SQLWarning;
 // boucherb@users and fredt@users - 20020505 extensive review and update
 // of docs and behaviour to comply with java.sql specification
 // fredt@users 20030620 - patch 1.7.2 - rewritten and simplified
+// boucherb@users 20030804 - patch 1.7.2 - simplified some more
 
 /**
  * <!-- start generic documentation -->
@@ -108,11 +109,13 @@ import java.sql.SQLWarning;
  * versions of JDBC depends on the JDK version used for compiling and building
  * HSQLDB.<p>
  *
- * Since 1.7.0,
- * all JDBC 2 methods can be called while executing under the version 1.1.x
+ * Since 1.7.0, all JDBC 2 methods can be called while executing under the
+ * version 1.1.x
  * <em>Java Runtime Environment</em><sup><font size="-2">TM</font></sup>.
- * However, some of these method calls require <code>int</code> values that
- * are defined only in the JDBC 2 or greater version of
+ * However, in addition to this technique requiring explicit casts to the
+ * org.hsqldb.jdbcXXX classes, some of these method calls require
+ * <code>int</code> values that are defined only in the JDBC 2 or greater
+ * version of the
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
  * <code>ResultSet</code></a> interface.  For this reason these values are
  * defined in {@link jdbcResultSet jdbcResultSet}.<p>
@@ -129,13 +132,12 @@ import java.sql.SQLWarning;
  * jdbcResultSet.CONCUR_READ_ONLY<br>
  * </code> <p>
  *
- * However, please note that code written in such a manner will not be
- * compatible for use with other JDBC 2 drivers, since they expect and use
- * <code>ResultSet</code>, rather than <code>jdbcResultSet</code>.  Also
- * note, this feature is offered solely as a convenience to developers
+ * However, please note that code written to use HSQLDB JDBC 2 features under
+ * JDK 1.1.x will not be compatible for use with other JDBC 2 drivers. Please
+ * also note that this feature is offered solely as a convenience to developers
  * who must work under JDK 1.1.x due to operating constraints, yet wish to
  * use some of the more advanced features available under the JDBC 2
- * specification.<p>
+ * specification. <p>
  *
  * (fredt@users)<br>
  * (boucherb@users)<p>
@@ -148,6 +150,13 @@ import java.sql.SQLWarning;
  */
 public class jdbcStatement implements java.sql.Statement {
 
+    /**
+     * Whether this Statement has been explicitly closed.  A jdbcConnection
+     * object now explicitly closes all of its open jdbcXXXStatement objects
+     * when it is closed.
+     */
+    private boolean isClosed;
+    
     /**
      * Is escape processing enabled?
      */
@@ -169,15 +178,25 @@ public class jdbcStatement implements java.sql.Statement {
     protected Result resultIn;
 
     /**
-     * The result type obtained by executing this statement.
+     * The result set type obtained by executing this statement.
      */
     protected int rsType = jdbcResultSet.TYPE_FORWARD_ONLY;
 
     /**
-     * The result type used by this statement.
+     * The Result object used by this statement to communicate
+     * sqlExecDirect requests.
      */
-    Result           resultOut = new Result(ResultConstants.SQLEXECDIRECT);
+    protected Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
+    
+    /**
+     * The Result used by this statement to hold batch execution data
+     */
     protected Result batch     = new Result(ResultConstants.DATA);
+    
+    /**
+     * Whether the parent connection is to a network server instance.
+     */
+    protected final boolean isNetConn;
 
     /**
      * <!-- start generic documentation -->
@@ -199,8 +218,15 @@ public class jdbcStatement implements java.sql.Statement {
      *          SQL statement produces anything other than a single
      *          <code>ResultSet</code> object
      */
-    public ResultSet executeQuery(String sql) throws SQLException {
+    public synchronized ResultSet executeQuery(String sql) throws SQLException {
 
+        // boucherb@users
+        // NOTE:
+        // This method is synchronized since resultIn is an instance attribute 
+        // and thus it is theoretically possible that a race condition occurs
+        // in which a different thread executes fetchResult(sql), replacing
+        // resultIn before it gets assigned propery to the new result set.
+        
         checkClosed();
         fetchResult(sql);
 
@@ -227,7 +253,15 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs or the given
      *          SQL statement produces a <code>ResultSet</code> object
      */
-    public int executeUpdate(String sql) throws SQLException {
+    public synchronized int executeUpdate(String sql) throws SQLException {
+        
+        // boucherb@users
+        // NOTE:
+        // This method is synchronized since resultIn is an instance attribute
+        // and thus it is  theoretically possible that a race condition occurs
+        // in which a different thread executes fetchResult(sql), replacing
+        // resultIn before it is properly tested and/or its update count
+        // returned.
 
         checkClosed();
         fetchResult(sql);
@@ -264,14 +298,42 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:<b> <p>
+     *
+     * Starting with HSQLDB 1.7.2 (and contrary to the advice above) it may be
+     * more efficient to simply close the parent connection when done and not
+     * bother individually closing each of the prepared or callable statement
+     * objects derived from it.  This observation does not apply to plain old
+     * Statement objects, however. <p>
+     * 
+     * The reason it may be more efficient not to individually close statement
+     * objects is that a call to close the parent connection essentially
+     * batches the release of all the connection's resorces, including any open
+     * statement resources on both the client and engine sides of the equation.
+     * Hence, under network connections with a fair number of open prepared or
+     * callable statement objects, not bothering to close them individually
+     * avoids as many network round trips as there are open prepared or
+     * callable statement objects for the connection.  Even for in-process mode
+     * connections, not bothing to individually close statement objects saves
+     * as many database execution invocations as there are open prepared and
+     * callable statement objects. <p>
+     *
+     * On the other hand, HSQLDB jdbcStatement objects certainly do consume 
+     * some resources, and both jdbcPreparedStatement and jdbcCallableStatement
+     * object consume even more, part of which are located at the engine rather
+     * than only in the JDBC objects.  As such, it may well be advisable to
+     * close HSQLDB jdbcXXXStatement objects soon after they will no longer be
+     * used in an application, if it is known that there will be a large number
+     * of connections allocating a large number of statement objects over the
+     * life of the application. <p>
+     *
      * </span>
      * <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      */
     public void close() throws SQLException {
-        resultOut = null;
-        resultIn  = null;
+        closeImpl(/*isDisconnecting*/false);
     }
 
     //----------------------------------------------------------------------
@@ -292,7 +354,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.1, HSQLDB always returns zero, meaning there
+     * Up to and including 1.7.2, HSQLDB always returns zero, meaning there
      * is no limit. <p>
      *
      * </span>
@@ -412,10 +474,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to HSQLDB 1.6.1, disabling escape processing for
-     * <code>PreparedStatements</code> objects <i>does</i> have an effect. <p>
+     * Up to and including HSQLDB 1.6.1, disabling escape processing for
+     * <code>PreparedStatement</code> oand <code>CallableStatement</code>
+     * objects may have an adverse effect. <p>
      *
-     * HSQLDB 1.7.0 follows the standard behaviour. <p>
+     * Starting with HSQLDB 1.7.0, the standard behaviour is followed. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -428,33 +491,6 @@ public class jdbcStatement implements java.sql.Statement {
 
         checkClosed();
 
-        // fredt - this is a no-brainer - we just override this method in
-        // jdbcPreparedStatement.java with no action performed
-        //
-        // FIXME:TODO ??? (not sure which category this best fits in)
-        //
-        // In our current implementation, setEscapeProcessing false for a
-        // jdbcXXXStatement *does* actually disable escape processing for
-        // prepared/callable statements.  However, the javadocs mention that
-        // prepared/callable statements are usually parsed prior to making a
-        // setEscapeProcessing call, so disabling escape processing for
-        // prepared/callable statements will have no effect.
-        //
-        // The big question is:
-        //
-        // "Why would we want to perform nativeSQL over and over again on
-        // prepared/callable statements (or even regular statements,
-        // if it is redundant)?"
-        //
-        // This is not efficient and makes the standard comments
-        // innacurate against our current implementation.  It would be pretty
-        // simple to set up something to preprocess escape processing
-        // for prepared/callable statements, as well as something to
-        // normalize, escape-process, and cache regular statmements (although
-        // normalizing and caching is probably better left completely on the
-        // engine side, rather than here in client-side code).
-        //
-        // boucherb@users 20020425
         isEscapeProcessing = enable;
     }
 
@@ -469,7 +505,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.1, HSQLDB always returns zero, meaning there
+     * Up to and including 1.7.2, HSQLDB always returns zero, meaning there
      * is no limit. <p>
      *
      * </span>
@@ -498,7 +534,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Calls to this method are simply ignored; up to and including 1.7.1,
+     * Calls to this method are simply ignored; up to and including 1.7.2,
      * HSQLDB waits an unlimited amount of time for statement execution
      * requests to return. <p>
      *
@@ -527,7 +563,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including HSQLDB 1.7.0, aborting a SQL statement is
+     * Up to and including HSQLDB 1.7.2, aborting a SQL statement is
      * <i>not</i> supported, and calls to this method are simply ignored. <p>
      *
      * </span>
@@ -560,7 +596,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB never produces warnings and
+     * Up to and including 1.7.2, HSQLDB never produces warnings and
      * always returns null.<p>
      *
      * </span>
@@ -591,7 +627,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including HSQLDB 1.7.0, <code>SQLWarning</code> objects are
+     * Up to and including HSQLDB 1.7.2, <code>SQLWarning</code> objects are
      * never produced, and calls to this method are simply ignored. <p>
      *
      * </span>
@@ -626,7 +662,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB does not support named cursors,
+     * Up to and including 1.7.2, HSQLDB does not support named cursors,
      * updateable results or table locking via
      * <code>SELECT FOR UPDATE</code>, so calls to this method are
      * simply ignored. <p>
@@ -674,8 +710,17 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getUpdateCount
      * @see #getMoreResults
      */
-    public boolean execute(String sql) throws SQLException {
-
+    public synchronized boolean execute(String sql) throws SQLException {
+        
+        // boucherb@users
+        // NOTE:
+        // this method is synchronized since resultIn is an instance attribute
+        // and thus it is theoretically possible that a race condition occurs
+        // in which a different thread executes fetchResult(sql), replacing
+        // resultIn after this methods call to fetchResult but before it
+        // calculates and returns the value of
+        // resultIn.iMode == ResultConstants.DATA.
+        
         checkClosed();
         fetchResult(sql);
 
@@ -692,23 +737,31 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Calling this method multiple times returns multiple references
-     * to the same result, if any.
+     * Calling this method multiple times without interceding calls to
+     * executeXXX returns multiple result set instances,
+     * each referring to the same result, if any.
      * </span>
      * <!-- end release-specific documentation -->
      *
      * @return the current result as a <code>ResultSet</code> object or
-     * <code>null</code> if the result is an update count or there are no more results
+     *      <code>null</code> if the result is an update count or there
+            are no more results
      * @exception SQLException if a database access error occurs
      * @see #execute
      */
-    public ResultSet getResultSet() throws SQLException {
+    public synchronized ResultSet getResultSet() throws SQLException {
 
+        // boucherb@users
+        // NOTE:
+        // synchronized since another thread can theoretically replace 
+        // resultIn between the test
+        // resultIn.iMode == ResultConstants.DATA and the construction
+        // of the jdbcResultSet.        
         checkClosed();
 
-        return resultIn.iMode == ResultConstants.DATA
-               ? new jdbcResultSet(this, resultIn, connection.connProperties)
-               : null;
+        return resultIn == null ||resultIn.iMode != ResultConstants.DATA
+            ? null
+            : new jdbcResultSet(this, resultIn, connection.connProperties);
     }
 
     /**
@@ -728,16 +781,15 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      * @see #execute
      */
-    public int getUpdateCount() throws SQLException {
+    public synchronized int getUpdateCount() throws SQLException {
 
 // fredt - omit checkClosed() in order to be able to handle the result of a
 // SHUTDOWN query
 //        checkClosed();
-        if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
-            return -1;
-        }
 
-        return resultIn.getUpdateCount();
+        return (resultIn == null ||resultIn.iMode == ResultConstants.DATA)
+            ? -1
+            : resultIn.getUpdateCount();
     }
 
     /**
@@ -788,11 +840,11 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB supports only
+     * Up to and including 1.7.2, HSQLDB supports only
      * <code>FETCH_FORWARD</code>. <p>
      *
      * Setting any other value will throw a <code>SQLException</code>,
-     * stating the the function is not supported.
+     * stating the operation is not supported.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -831,7 +883,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.1, HSQLDB always returns FETCH_FORWARD. <p>
+     * Up to and including 1.7.2, HSQLDB always returns FETCH_FORWARD. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -863,9 +915,9 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, calls to this method are simply
-     * ignored; HSQLDB always fetches a result completely as part of e
-     * xecuting its statement.
+     * Up to and including HSQLDB 1.7.2, calls to this method are simply
+     * ignored; HSQLDB always fetches a result completely as part of
+     * executing its statement.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -898,7 +950,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information</b> <p>
      *
-     * Up to and including 1.7.1, this method always returns 0.
+     * Up to and including 1.7.2, this method always returns 0.
      * That is, HSQLDB always decides the fetch size, that being all the
      * rows of a result. <p>
      *
@@ -916,13 +968,11 @@ public class jdbcStatement implements java.sql.Statement {
 
         checkClosed();
 
-        // FIXME: fredt - changed
         // setFetchSize suggests that the attribute is a hint and
         // that zero is the "magic number" that lets the driver decide for
-        // itself what the best fetch is.  As such, we should return zero
+        // itself what the best fetch is.  As such, we return zero
         // here, since we always ignore setFetchSize and simply fetch the
         // result entirely.
-        // boucherb@users 20020425
         return 0;
     }
 
@@ -936,7 +986,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB supports only
+     * Up to and including 1.7.2, HSQLDB supports only
      * <code>CONCUR_READ_ONLY</code> concurrency. <p>
      *
      * </span>
@@ -1008,10 +1058,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, this feature is supported. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1024,7 +1071,7 @@ public class jdbcStatement implements java.sql.Statement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *   for jdbcStatement)
      */
-    public void addBatch(String sql) throws SQLException {
+    public synchronized void addBatch(String sql) throws SQLException {
 
         checkClosed();
 
@@ -1047,10 +1094,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1061,7 +1105,9 @@ public class jdbcStatement implements java.sql.Statement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *   for jdbcStatement)
      */
-    public void clearBatch() throws SQLException {
+    public synchronized void clearBatch() throws SQLException {
+
+        checkClosed();
         batch.trimResult(0, 0);
     }
 
@@ -1110,10 +1156,15 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * HSQLDB always contines to executes all of the commands in a batch. <p>
+     *
+     * When the product is built under the JAVA1 target, an exception is never
+     * thrown and is is the responsibility of the client software to scan the
+     * returned update count array for values of -3 
+     * (<code>EXECUTE_FAILED</code>) to determine if any batch items 
+     * failed. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1130,7 +1181,7 @@ public class jdbcStatement implements java.sql.Statement {
      * @since JDK 1.3 (JDK 1.1.x developers: read the new overview
      *   for jdbcStatement)
      */
-    public int[] executeBatch() throws SQLException {
+    public synchronized int[] executeBatch() throws SQLException {
 
         int[]         updateCounts;
         HsqlException he;
@@ -1139,7 +1190,7 @@ public class jdbcStatement implements java.sql.Statement {
 
         if (batch.getSize() == 0) {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                          "empty batch");
+                                          "Empty batch");
         }
 
         resultOut.setRows(batch);
@@ -1186,8 +1237,12 @@ public class jdbcStatement implements java.sql.Statement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *    for jdbcStatement)
      */
-    public Connection getConnection() throws SQLException {
+    public synchronized Connection getConnection() throws SQLException {
 
+        // NOTE:  synchronized, since otherwise, in theory, another thread
+        //        could call close() concurrently, wherin a race condition 
+        //        causes connection to be set null between the call to 
+        //        checkClosed and actually returning connection.
         checkClosed();
 
         return connection;
@@ -1212,7 +1267,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1255,7 +1310,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1289,7 +1344,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1335,7 +1390,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1377,7 +1432,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1430,7 +1485,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1491,7 +1546,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1549,7 +1604,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1591,7 +1646,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -1622,8 +1677,77 @@ public class jdbcStatement implements java.sql.Statement {
      * @param  type the kind of results this will return
      */
     jdbcStatement(jdbcConnection c, int type) {
+        // PRE: assume connection is not null and is not closed
+        // PRE: assume type is a valid result set type code
         connection = c;
         rsType     = type;
+        isNetConn  = c.sessionProxy instanceof HSQLClientConnection;
+    }
+    
+    /**
+     * Implements the public close() method so as to avoid excessive calls
+     * to close this connection's open statment objects.
+     *
+     * @param isDisconnect if true, called from Connection.close, else from
+     *      this.close
+     */    
+    synchronized void closeImpl(boolean isDisconnect) throws SQLException {
+
+        // For plain old jdbcStatement objects, there is no
+        // CompiledStatement object at the other end of
+        // the connection because we use sqlExecDirect, not sqlPrepare
+        // and then sqlExecute.
+        // Hence, isDisconnect is only used here to avoid removal from the
+        // parent connection's open statement HashSet (it will be nulled 
+        // soon after this call anyway if the parent jdbcConnection is
+        // disconnecting).
+        // jdbcPreparedStatement, however, overrides this
+        // method, wherein if isDisconnect is false it does additional work
+        // to call out to the engine to free the corresponding resources in
+        // the database's CompiledStatementManager, finally calling back here
+        // when it is done.
+        // jdbcCallableStatement inherits this behaviour from
+        // jdbcPreparedStatement.
+
+        if (isClosed) {
+            return;
+        }
+
+        if (!isDisconnect) {
+            connection.statementSet.remove(this);
+        }
+
+        batch      = null;
+        // This is OK:
+        // Despite setting this null, getConnection() will never return null
+        // since it is now synchronized and calls checkClosed before 
+        // returning connection
+        connection = null; 
+        resultIn   = null;
+        resultOut  = null;
+        isClosed   = true;
+    }
+
+    /**
+     * Retrieves whether this statement is closed.
+     *
+     * @throws SQLException when the connection is closed
+     */    
+    synchronized boolean isClosed() throws SQLException {
+        // There is no point to checking if the parent connection
+        // is closed every time.  It's a waste.  When the parent connection
+        // closes, it now closes all open jdbcXXXStatement objects
+        // derived from it.  We never called across the network to
+        // check if the remote session was closed (way too much overhead)
+        // and session has now been properly modified so that execution
+        // attempts of any form are blocked (return error result) if the
+        // session is closed or the database is shutdown.
+        //
+        // TODO: Maybe automatically cause a local close() action on both the
+        // connection (and thus its open statements) if an interaction with
+        // the connection's sessionProxy throws an exception indicating that
+        // the Session object is closed.
+        return isClosed;
     }
 
     /**
@@ -1633,29 +1757,30 @@ public class jdbcStatement implements java.sql.Statement {
      */
 
 /** @todo fredt - message */
-    void checkClosed() throws SQLException {
-
-        if (resultOut == null) {
+    synchronized void checkClosed() throws SQLException {
+        // See comments internal to isClosed();
+        if (isClosed) {
             throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
         }
-
-        connection.checkClosed();
     }
 
     /**
-     * The internal result producer. <p>
+     * Internal result producer for jdbcStatement (sqlExecDirect mode). <p>
      *
-     * All jdbcXXXStatement objects eventually go through this method to
+     * Only plain old jdbcStatement objects go through this method to
      * get results. This method is reponsible for closing the current
-     * result, if any, translating the SQL the statement represents (if
-     * escape processing is enabled), limiting results to the maximum number
-     * set with setMaxRows, and actually submitting the query
+     * result, if any, translating the SQL character sequence the statement
+     * represents (if escape processing is enabled), limiting results to the
+     * maximum number set with setMaxRows, and actually submitting the query
      * to the engine and retrieving the corresponding result.
      *
-     * @param sql the SQL to be executed
+     * @param sql a character sequence representing the SQL to be executed
      * @throws SQLException when a database access error occurs
      */
-    private synchronized void fetchResult(String sql) throws SQLException {
+    private /* synchronized */ void fetchResult(String sql) throws SQLException {
+        
+        // NOTE:  No longer synchronzied, since all calling methods are now
+        //        synchronized instead, for the reasons noted in those methods.
 
         if (isEscapeProcessing) {
             sql = connection.nativeSQL(sql);

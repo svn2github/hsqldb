@@ -103,15 +103,11 @@ class DatabaseCommandInterpreter {
     protected Database database;
     protected Session  session;
 
-//    protected HsqlRuntime runtime;
-
     /** Constructs a new DatabaseCommandInterpreter for the given Session */
     DatabaseCommandInterpreter(Session s) {
 
         session  = s;
-        database = session.getDatabase();
-
-//        runtime  = HsqlRuntime.getHsqlRuntime();
+        database = s.getDatabase();
     }
 
     /**
@@ -139,12 +135,7 @@ class DatabaseCommandInterpreter {
         logger = database.logger;
 
         try {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(!session.isNestedTransaction());
-            }
 
-            Trace.check(!session.isClosed(), Trace.ACCESS_IS_DENIED);
-            Trace.check(!database.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
             tokenizer.reset(sql);
 
             // TODO:  make Parser resetable, like tokenizer.
@@ -194,7 +185,7 @@ class DatabaseCommandInterpreter {
                               : result;
     }
 
-    Result executePart(int cmd, String token,
+    private Result executePart(int cmd, String token,
                        Parser parser) throws Throwable {
 
         Result result = this.emptyResult;
@@ -204,10 +195,11 @@ class DatabaseCommandInterpreter {
             case Token.SELECT :
                 cs = parser.compileSelectStatement(cs);
 
-                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+                Trace.doAssert(cs.parameters.length == 0, 
+                               "direct execute with param count > 0");
 
                 if (cs.select.sIntoTable == null) {
-                    result = session.sqlExecuteCompiled(cs);
+                    result = session.sqlExecuteCompiledNoPreChecks(cs);
                 } else {
                     result = processSelectInto(cs.select);
 
@@ -218,33 +210,37 @@ class DatabaseCommandInterpreter {
             case Token.INSERT :
                 cs = parser.compileInsertStatement(cs);
 
-                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+                Trace.doAssert(cs.parameters.length == 0,
+                               "direct execute with param count > 0");
 
-                result = session.sqlExecuteCompiled(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
 
             case Token.UPDATE :
                 cs = parser.compileUpdateStatement(cs);
 
-                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+                Trace.doAssert(cs.parameters.length == 0,
+                              "direct execute with param count > 0");
 
-                result = session.sqlExecuteCompiled(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
 
             case Token.DELETE :
                 cs = parser.compileDeleteStatement(cs);
 
-                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+                Trace.doAssert(cs.parameters.length == 0,
+                               "direct execute with param count > 0");
 
-                result = session.sqlExecuteCompiled(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
 
             case Token.CALL :
                 cs = parser.compileCallStatement(cs);
 
-                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+                Trace.doAssert(cs.parameters.length < 1,
+                               "direct execute with param count > 0");
 
-                result = session.sqlExecuteCompiled(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
 
             case Token.SET :
@@ -2538,6 +2534,9 @@ class DatabaseCommandInterpreter {
 
     private Result processExplainPlan() throws IOException, HsqlException {
 
+        // PRE:  we assume only one DML or DQL has been submitted
+        //       and simply ignore anything following the first
+        //       sucessfully compliled statement
         String            token;
         Parser            parser;
         int               cmd;
@@ -2552,6 +2551,7 @@ class DatabaseCommandInterpreter {
         parser = new Parser(database, tokenizer, session);
         token  = tokenizer.getString();
         cmd    = Token.get(token);
+        result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
 
         switch (cmd) {
 
@@ -2576,10 +2576,13 @@ class DatabaseCommandInterpreter {
                 break;
 
             default :
-                throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+                // - No real need to throw, so why bother?
+                // - Just return result with no rows for now
+                // - Later, maybe there will be plan desciptions
+                //   for other operations
+                return result;
         }
-
-        result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
+        
         lnr    = new LineNumberReader(new StringReader(cs.toString()));
 
         while (null != (line = lnr.readLine())) {
@@ -2607,7 +2610,7 @@ class DatabaseCommandInterpreter {
         return fqn;
     }
 
-    Class classForName(String fqn) throws ClassNotFoundException {
+    private Class classForName(String fqn) throws ClassNotFoundException {
 
         ClassLoader classLoader = database.classLoader;
 
@@ -2615,17 +2618,6 @@ class DatabaseCommandInterpreter {
                                    : classLoader.loadClass(fqn);
     }
 
-    private static boolean isCompile() {
-
-        try {
-            return !Boolean.getBoolean("org.hsqldb.Parser.shadow");
-        } catch (Exception e) {}
-
-        return true;
-    }
-
-    // -Dorg.hsqldb.Parser.shadow=true|false
-    static final boolean compile    = isCompile();
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
     TableWorks           tableWorks = new TableWorks(null);
     Tokenizer            tokenizer  = new Tokenizer();
@@ -2747,7 +2739,7 @@ class DatabaseCommandInterpreter {
      *
      * @throws  HsqlException
      */
-    void logTableDDL(Table t) throws HsqlException {
+    private void logTableDDL(Table t) throws HsqlException {
 
         HsqlStringBuffer tableDDL;
         String           sourceDDL;

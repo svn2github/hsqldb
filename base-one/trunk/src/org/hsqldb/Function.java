@@ -92,17 +92,20 @@ class Function {
     private Session          cSession;
     private String           sFunction;
     private Method           mMethod;
+    private Class            cReturnClass;
+    private Class[]          aArgClasses;
     private int              iReturnType;
     private int              iArgCount;
+    private int              iSqlArgCount;
+    private int              iSqlArgStart;
     private int              iArgType[];
     private boolean          bArgNullable[];
     private Object           oArg[];
     private Expression       eArg[];
     private boolean          bConnection;
     private static Hashtable methodCache = new Hashtable();
-    private int              fID;
-    private String           fname;
-
+    private int              fID;  
+    
     /**
      * Constructs a new Function object with the given function call name
      * and using the specified Session context. <p>
@@ -120,42 +123,51 @@ class Function {
      * FQN. <p>
      *
      * The function FQN must match at least one static Java method FQN in the
-     * specified class or construction cannot procede and a HsqlException is
+     * specified class or construction cannot procede and an HsqlException is
      * thrown. <p>
      *
      * The Session paramter is the connected context in which this
-     * Function object will evaluate.  If it is determined that the
-     * connected user does not have the right to evaluate this Function,
-     * construction cannot proceed and a HsqlException is thrown.
+     * Function object will evaluate.  if checkPrivs is true and it is
+     * determined that the connected user does not have the right to evaluate
+     * this Function, construction cannot proceed and a HsqlException is
+     * thrown. If checkPrivs is false, the construction proceeds without
+     * a privilege check.  This behaviour is in support of VIEW resolution,
+     * wherein tables and routines may be involved to which the session
+     * user has been granted no privileges but should be allowed to
+     * select from the VIEW regardless, by virtue of being granted SELECT
+     * on the VIEW object. 
      *
-     *
-     * @param function the fully qualified name of a Java method
+     * @param fqn the fully qualified name of a Java method
      * @param session the connected context in which this Function object will
-     *                evaluate
+     *      evaluate
+     * @param checkPrivs if true, the session user's routine invocation 
+     *      privileges are checked against the declaring class of the fqn
      * @throws HsqlException if the specified function FQN corresponds to no
-     *                      Java method or the session user at the time of
-     *                      construction does not have the right to evaluate
-     *                      this Function.
-     */
-    Function(String function, Session session) throws HsqlException {
+     *      Java method or the session user at the time of
+     *      construction does not have the right to evaluate
+     *      this Function.
+     */    
+    Function(String fqn, Session session, boolean checkPrivs) 
+    throws HsqlException {
 
         cSession  = session;
-        sFunction = function;
-        fname     = function;
-        fID       = Library.functionID(function);
+        sFunction = fqn;
+        fID       = Library.functionID(fqn);
 
-        int i = function.lastIndexOf('.');
+        int i = fqn.lastIndexOf('.');
 
-        Trace.check(i != -1, Trace.UNEXPECTED_TOKEN, function);
+        Trace.check(i != -1, Trace.UNEXPECTED_TOKEN, fqn);
 
-        String classname = function.substring(0, i);
+        String classname = fqn.substring(0, i);
 
-        session.check(classname, UserManager.ALL);
+        if (checkPrivs) {
+            session.check(classname, UserManager.ALL);
+        }
 
-        mMethod = (Method) methodCache.get(function);
+        mMethod = (Method) methodCache.get(fqn);
 
         if (mMethod == null) {
-            String methodname    = function.substring(i + 1);
+            String methodname    = fqn.substring(i + 1);
             Class  classinstance = null;
 
             try {
@@ -167,10 +179,10 @@ class Function {
                 });
             }
 
-            Method method[] = classinstance.getMethods();
+            Method methods[] = classinstance.getMethods();
 
-            for (i = 0; i < method.length; i++) {
-                Method m = method[i];
+            for (i = 0; i < methods.length; i++) {
+                Method m = methods[i];
 
                 if (m.getName().equals(methodname)
                         && Modifier.isStatic(m.getModifiers())) {
@@ -181,37 +193,63 @@ class Function {
             }
 
             Trace.check(mMethod != null, Trace.UNKNOWN_FUNCTION, methodname);
-            methodCache.put(function, mMethod);
+            methodCache.put(fqn, mMethod);
         }
 
-        Class returnclass = mMethod.getReturnType();
+        cReturnClass = mMethod.getReturnType();
+        
+        if (cReturnClass.equals(org.hsqldb.Result.class) 
+                || cReturnClass.equals(org.hsqldb.jdbcResultSet.class)) {
+            // For now, people can write stored procedures with
+            // descriptor having above return types to indicate
+            // result of arbitrary arity.  Later, this must be 
+            // replaced with a better system.
+            iReturnType = Types.OTHER;
+        } else {
+            // Now we can return an object of any Class,
+            // as long as it's a primitive array, directly
+            // implements java.io.Serializable directly or is a
+            // non-primitive array whose base component implements
+            // java.io.Serializable           
+            iReturnType = Types.getParameterTypeNr(cReturnClass);
+        }
 
-        iReturnType = Types.getTypeNr(returnclass.getName());
+        aArgClasses = mMethod.getParameterTypes();
 
-        Class arg[] = mMethod.getParameterTypes();
-
-        iArgCount    = arg.length;
+        iArgCount    = aArgClasses.length;        
         iArgType     = new int[iArgCount];
         bArgNullable = new boolean[iArgCount];
 
-        for (i = 0; i < arg.length; i++) {
-            Class  a    = arg[i];
+        for (i = 0; i < aArgClasses.length; i++) {
+            Class  a    = aArgClasses[i];
             String type = a.getName();
 
-            if ((i == 0) && type.equals("java.sql.Connection")) {
+            if ((i == 0) && a.equals(java.sql.Connection.class)) {
 
-                // only the first parameter can be a Connection
+                // TODO: make this obsolete, providing 
+                // jdbc:default:connection url functionality
+                // instead
+                
+                // only the first parameter can be a Connection                
                 bConnection = true;
             } else {
-
-// fredt@users - byte[] is now supported directly as "[B"
-//                if (type.equals("[B")) {
-//                    type = "byte[]";
-//                }
-                iArgType[i]     = Types.getTypeNr(type);
+                // Now we can pass values of any Class to args of any
+                // Class, as long as they are primitive arrays, directly
+                // implement java.io.Serializable or are non-primitive
+                // arrays whose base component implements java.io.Serializable
+                iArgType[i]     = Types.getParameterTypeNr(a);
                 bArgNullable[i] = !a.isPrimitive();
             }
         }
+
+        iSqlArgCount = iArgCount;
+
+        if (bConnection) {
+            iSqlArgCount--;
+            iSqlArgStart = 1;
+        } else {
+            iSqlArgStart = 0;
+        };
 
         eArg = new Expression[iArgCount];
         oArg = new Object[iArgCount];
@@ -230,9 +268,7 @@ class Function {
      * calling the Java
      * method underlying this object
      */
-    Object getValue() throws HsqlException {
-
-        int i = 0;
+    Object getValue() throws HsqlException {        
 
         switch (fID) {
 
@@ -262,6 +298,8 @@ class Function {
                 return cSession.getDatabase().filesReadOnly ? Boolean.TRUE
                                                             : Boolean.FALSE;
         }
+        
+        int i = 0;
 
         if (bConnection) {
             oArg[i] = cSession.getInternalConnection();
@@ -304,11 +342,13 @@ class Function {
             Object ret = (fID >= 0) ? Library.invoke(fID, oArg)
                                     : mMethod.invoke(null, oArg);
 
-            if (ret instanceof byte[] || ret instanceof Object) {
-                ret = Column.convertObject(ret, iReturnType);
-            }
+            //if (ret instanceof byte[] || ret instanceof Object) {
+            // it's always an instanceof Object
+                //ret = 
+                return Column.convertObject(ret, iReturnType);
+            //}
 
-            return ret;
+            //return ret;
 
 // boucherb@users - patch 1.7.2 - better function invocation error reporting
         } catch (Throwable t) {
@@ -341,13 +381,11 @@ class Function {
      * live Connection object constructed from the evaluating session context
      * if so.
      *
-     *
      * @return the number of arguments this Function takes, as known to the
      * calling SQL context
      */
     int getArgCount() {
-        return iArgCount - (bConnection ? 1
-                                        : 0);
+        return iSqlArgCount;
     }
 
     /**
@@ -362,15 +400,16 @@ class Function {
      */
     void resolve(TableFilter f) throws HsqlException {
 
-        int i;
+        Expression e;
 
-        i = bConnection ? 1
-                        : 0;
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
+            e = eArg[i];
 
-        for (; i < iArgCount; i++) {
-            if (eArg[i] != null) {
-                if (eArg[i].isParam()) {
-                    eArg[i].setDataType(iArgType[i]);
+            if (e != null) {
+                if (e.isParam()) {
+                    e.setDataType(iArgType[i]);
+                    e.nullability = getArgNullability(i);
+                    e.valueClassName = getArgClass(i).getName();
                 } else {
                     eArg[i].resolve(f);
                 }
@@ -380,14 +419,13 @@ class Function {
 
     /**
      * Checks each of this object's arguments for resolution, throwing a
-     * HsqlException if any arguments have not yet been resolved.
-     *
+     * HsqlException if any arguments have not yet been resolved. <p>
      *
      * @throws HsqlException if any arguments have not yet been resolved
      */
     void checkResolved() throws HsqlException {
 
-        for (int i = 0; i < iArgCount; i++) {
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
             if (eArg[i] != null) {
                 eArg[i].checkResolved();
             }
@@ -396,8 +434,7 @@ class Function {
 
     /**
      * Retrieves the java.sql.Types type of the argument at the specified
-     * offset in this Function object's paramter list
-     *
+     * offset in this Function object's paramter list. <p>
      *
      * @param i the offset of the desired argument in this Function object's
      * paramter list
@@ -409,8 +446,7 @@ class Function {
 
     /**
      * Retrieves the java.sql.Types type of this Function
-     * object's return type
-     *
+     * object's return type. <p>
      *
      * @return this Function object's java.sql.Types return type
      */
@@ -420,8 +456,7 @@ class Function {
 
     /**
      * Binds the specified expression to the specified argument in this
-     * Function object's paramter list.
-     *
+     * Function object's paramter list. <p>
      *
      * @param i the position of the agument to bind to
      * @param e the expression to bind
@@ -435,6 +470,11 @@ class Function {
         eArg[i] = e;
     }
 
+    /**
+     * Retrieves a String representation of this object. <p>
+     *
+     * @return a String representation of this object
+     */
     public String toString() {
 
         StringBuffer sb = new StringBuffer();
@@ -442,14 +482,42 @@ class Function {
         sb.append(super.toString()).append("=[\n");
         sb.append(sFunction).append("(");
 
-        for (int i = 0; i < eArg.length; i++) {
+        for (int i = iSqlArgStart; i < eArg.length; i++) {
             sb.append("[").append(eArg[i]).append("]");
         }
 
-        sb.append(")\n");
-        sb.append("returns ").append(mMethod.getReturnType());
+        sb.append(") returns ").append(Types.getTypeString(getReturnType()));
         sb.append("]\n");
 
         return sb.toString();
+    }
+    
+    /**
+     * Retrieves the Java Class of the object returned by getValue(). <p>
+     *
+     * @return the Java Class of the objects retrieved by calls to
+     *      getValue()
+     */
+    Class getReturnClass() {
+        return cReturnClass;
+    }
+    
+    /**
+     * Retreives the Java Class of the i'th argument. <p>
+     *
+     * @return the Java Class of the i'th argument 
+     */
+    Class getArgClass(int i) {        
+        return aArgClasses[i];
+    }
+    
+    /**
+     * Retrieves the SQL nullability code of the i'th argument. <p>
+     *
+     * @return the SQL nullability code of the i'th argument
+     */
+    int getArgNullability(int i) {
+        return bArgNullable[i] ? Expression.NULLABLE 
+                               : Expression.NO_NULLS;
     }
 }

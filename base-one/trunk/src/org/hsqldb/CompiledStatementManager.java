@@ -37,8 +37,8 @@ import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.store.ValuePool;
 
 /**
- * Manages the registration, lookup and validation of CompiledStatement
- * objects for a Database instance.
+ * Acts as a CompliedStatement pool by managing the registration, lookup and
+ * validation of CompiledStatement objects for a Database instance.
  *
  * @author boucher@users.sourceforge.net
  * @since HSQLDB 1.7.2
@@ -325,7 +325,7 @@ public class CompiledStatementManager {
      * includes releasing the asscociated validation resources, as well as
      * possibly dropping each or some of the compiled statements themselves
      * and any resources associated with them, if it is determined that no
-     * other claims are held be different sessions.
+     * other claims are held by different sessions.
      *
      * @param sid the session identifier
      */

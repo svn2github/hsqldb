@@ -536,7 +536,7 @@ class Table {
     /**
      *  Method declaration
      *
-     * @param  result
+     * @param  select
      * @throws  HsqlException
      */
     void addColumns(Select select) throws HsqlException {
@@ -1899,7 +1899,7 @@ class Table {
 
         Object row[] = new Object[1];
 
-        row[0] = new String("Statement-level");
+        row[0] = "Statement-level";
 
         fireAll(trigVecIndx, row, null);
     }
@@ -2779,5 +2779,41 @@ class Table {
         if (cache != null &&!isEmpty()) {
             cache.remove(this);
         }
+    }
+    
+    boolean isWritable() {
+        return !isReadOnly &&!database.databaseReadOnly
+                    && !(database.filesReadOnly && (isCached ||isText));
+    }
+    
+    String getCatalogName() {
+        
+        if (database == null
+                ||database.getProperties().isPropertyTrue("hsqldb.catalogs")) {
+            return null;
+        }
+        
+        return database.getPath();
+    }
+    
+    String getSchemaName() {
+        
+        if (database == null
+                ||database.getProperties().isPropertyTrue("hsqldb.schemas")) {
+            return null;
+        }
+
+        if (tableType == SYSTEM_TABLE) {
+            return "DEFINITION_SCHEMA";
+        } else if (tableType == SYSTEM_VIEW) {
+            return "INFORMATION_SCHEMA";
+        } else if (isTemp) {
+            Session s  = database.sessionManager.getSession(ownerSessionId);
+
+            return (s != null && s.getId() == ownerSessionId) ? s.getUsername() 
+                                                                : null;
+        } else {
+            return "PUBLIC";
+        }        
     }
 }

@@ -5344,8 +5344,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not support batch updates;
-     * this method always returns <code>false</code>.
+     * Starting with 1.7.2, HSQLDB supports batch updates;
+     * this method always returns <code>true</code>.
      * </span>
      * <!-- end release-specific documentation -->
      * @return <code>true</code> if this database supports batch upcates;
@@ -5360,7 +5360,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -5526,7 +5526,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not suppoert named parameters;
+     * Up to and including 1.7.2, HSQLDB does not support named parameters;
      * this method always returns false. <p>
      *
      * </span>
@@ -5568,7 +5568,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return <code>true</code> if a <code>CallableStatement</code> object
      *        can return multiple <code>ResultSet</code> objects
      *        simultaneously; <code>false</code> otherwise
-     * @exception SQLException if a datanase access error occurs
+     * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3

@@ -184,13 +184,18 @@ class Session implements SessionInterface {
 
         rollback();
         dDatabase.dropTempTables(this);
+        compiledStatementManager.processDisconnect(iId);
 
-        dDatabase     = null;
-        uUser         = null;
-        tTransaction  = null;
-        savepoints    = null;
-        intConnection = null;
-        isClosed      = true;
+        dDatabase                 = null;
+        uUser                     = null;
+        tTransaction              = null;
+        savepoints                = null;
+        intConnection             = null;
+        compiledStatementExecutor = null;
+        compiledStatementManager  = null;
+        dbCommandInterpreter      = null;
+        iLastIdentity             = null;
+        isClosed                  = true;
     }
 
     /**
@@ -591,7 +596,7 @@ class Session implements SessionInterface {
     }
 
     /**
-     * Retrieves a Connection object equivalent to the one
+     * Retrieves an internal Connection object equivalent to the one
      * that created this Session.
      *
      * @return  internal connection.
@@ -671,12 +676,11 @@ class Session implements SessionInterface {
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
 //-------------------------------------------------------------------
     DatabaseCommandInterpreter dbCommandInterpreter;
+    CompiledStatementExecutor  compiledStatementExecutor;
+    CompiledStatementManager   compiledStatementManager;
 
-//    CompiledStatement          cs;
-    CompiledStatementExecutor compiledStatementExecutor;
-    CompiledStatementManager  compiledStatementManager;
-
-    CompiledStatement sqlCompileStatement(String sql) throws HsqlException {
+    private CompiledStatement sqlCompileStatement(String sql, int type) 
+        throws HsqlException {
 
         Tokenizer         tokenizer;
         String            token;
@@ -688,10 +692,8 @@ class Session implements SessionInterface {
         tokenizer = new Tokenizer(sql);
         parser    = new Parser(dDatabase, tokenizer, this);
         token     = tokenizer.getString();
-
-        // get first token and its command id
-        cmd     = Token.get(token);
-        isCmdOk = true;
+        cmd       = Token.get(token);
+        isCmdOk   = true;
 
         switch (cmd) {
 
@@ -716,6 +718,10 @@ class Session implements SessionInterface {
                 break;
             }
             case Token.CALL : {
+                if (type != CompiledStatement.CALL) {
+                    throw Trace.error(Trace.ASSERT_FAILED, 
+                                      "not a CALL statement");
+                }
                 cs = parser.compileCallStatement(null);
 
                 break;
@@ -759,6 +765,20 @@ class Session implements SessionInterface {
      * @return the result of executing the command
      */
     public Result execute(Result cmd) {
+        
+        try {
+            if (Trace.DOASSERT) {
+                Trace.doAssert(!isNestedTransaction);
+            }
+
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
+
+            // CHECKME:  Can this ever happen?  I don't think so, as a shutdown
+            // will close the session and that test is covered above
+            Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+        } catch (Throwable t) {
+            return new Result(t, null);
+        }        
 
         int type = cmd.iMode;
 
@@ -771,46 +791,45 @@ class Session implements SessionInterface {
 
             switch (type) {
 
-                case ResultConstants.SQLEXECUTE :
-                    if (cmd.getSize() > 1) {
-                        return sqlExecuteBatch(cmd);
-                    } else {
-                        return sqlExecute(cmd);
-                    }
-                case ResultConstants.SQLEXECDIRECT :
-                    if (cmd.getSize() > 1) {
-                        return sqlExecuteBatchDirect(cmd);
-                    } else {
-                        return dbCommandInterpreter.execute(
-                            cmd.getMainString());
-                    }
-                case ResultConstants.SQLPREPARE :
-                    return sqlPrepare(cmd.getMainString());
-
-                case ResultConstants.SQLFREESTMT :
+                case ResultConstants.SQLEXECUTE : {
+                    return cmd.getSize() > 1 ? sqlExecuteBatch(cmd)
+                                             : sqlExecute(cmd);
+                }
+                case ResultConstants.SQLEXECDIRECT : {
+                    return cmd.getSize() > 0 ? sqlExecuteBatchDirect(cmd) 
+                                             : sqlExecuteDirectNoPreChecks(
+                                                    cmd.getMainString());
+                }
+                case ResultConstants.SQLPREPARE : {
+                    return sqlPrepare(cmd.getMainString(), 
+                                      cmd.getStatementType());
+                }
+                case ResultConstants.SQLFREESTMT : {
                     return sqlFreeStatement(cmd.getStatementID());
-
-                case ResultConstants.SQLGETSESSIONINFO :
+                }               
+                case ResultConstants.SQLGETSESSIONINFO : {
                     return getAttributes();
-
-                case ResultConstants.SQLSETENVATTR :
+                }
+                case ResultConstants.SQLSETENVATTR : {
                     return setAttributes(cmd);
-
-                case ResultConstants.SQLENDTRAN :
-                    if (cmd.getUpdateCount() == ResultConstants.COMMIT) {
-                        commit();
-                    } else if (cmd.getUpdateCount()
-                               == ResultConstants.ROLLBACK) {
-                        rollback();
-                    }
-
+                }
+                case ResultConstants.SQLENDTRAN : {
+                    switch (cmd.getEndTranType()) {
+                        case ResultConstants.COMMIT :
+                            commit();
+                            break;
+                        case ResultConstants.ROLLBACK :
+                            rollback();
+                            break;
+                    }                    
                     return emptyUpdateCount;
-
-                default :
+                }
+                default : {
                     String msg = "operation type:" + type;
 
                     return new Result(msg, "s1000",
                                       Trace.OPERATION_NOT_SUPPORTED);
+                }
             }
         }
     }
@@ -822,7 +841,26 @@ class Session implements SessionInterface {
      * @param sql a sql string
      * @return the result of the last sql statement in the list
      */
-    Result sqlExecuteDirect(String sql) {
+    synchronized Result sqlExecuteDirect(String sql) {
+        
+        try {
+            if (Trace.DOASSERT) {
+                Trace.doAssert(!isNestedTransaction);
+            }
+
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
+
+            synchronized(dDatabase) {
+                Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+                return dbCommandInterpreter.execute(sql);
+            }
+
+        } catch (Throwable t) {
+            return new Result(t, null);
+        }
+    }
+    
+    Result sqlExecuteDirectNoPreChecks(String sql) {
         return dbCommandInterpreter.execute(sql);
     }
 
@@ -832,55 +870,115 @@ class Session implements SessionInterface {
      * @param cs the compiled statement to execute
      * @return the result of executing the compiled statement
      */
-    Result sqlExecuteCompiled(CompiledStatement cs) {
+    synchronized Result sqlExecuteCompiled(CompiledStatement cs) {
+
+        try {
+            if (Trace.DOASSERT) {
+                Trace.doAssert(!isNestedTransaction);
+            }
+
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
+            
+            synchronized(dDatabase) {
+                Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+                return compiledStatementExecutor.execute(cs);
+            }                       
+        } catch (Throwable t) {
+            return new Result(t, null);
+        }
+    }
+    
+    Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs) {
         return compiledStatementExecutor.execute(cs);
     }
 
     /**
-     * Retrieves an encapsulation of a compiled statement
-     * object prepared for execution in this session context. <p>
+     * Retrieves a MULTI Result describing three aspects of the
+     * CompiledStatement prepared from the SQL argument for execution 
+     * in this session context: <p>
      *
-     * The result may encapsulate a newly constructed object
-     * or a compatible object retrieved from a repository of
-     * previously compiled statement objects.
+     * <ol>
+     * <li>An STMTID mode Result describing id of the statement 
+     *     prepared by this request.  This is used by the JDBC implementation
+     *     to identify to the engine which prepared statement to execute.
+     *
+     * <li>A DATA mode result describing the statement's result set metadata.
+     *     This is used to generate the JDBC ResultSetMetaData object returned
+     *     by PreparedStatement.getMetaData and CallableStatement.getMetaData.
+     *
+     * <li>A DATA mode result describing the statement's parameter metdata.
+     *     This is used to by the JDBC implementation to determine
+     *     how to send parameters back to the engine when executing the 
+     *     statement.  It is also used to construct the JDBC ParameterMetaData
+     *     object for PreparedStatements and CallableStatements.
      *
      * @param sql a string describing the desired statement object
      * @throws HsqlException is a database access error occurs
-     * @return the result of preparing the statement
+     * @return a MULTI Result describing compiled statement.
      */
-    Result sqlPrepare(String sql) {
+    private Result sqlPrepare(String sql, int type) {
 
-        CompiledStatement cs            = null;
-        Result            result        = null;
-        int               csid = compiledStatementManager.getStatementID(sql);
-        boolean           hasSubqueries = false;
+        CompiledStatement cs    = null;
+        int               csid  = compiledStatementManager.getStatementID(sql);
+        Result            rsmd;
+        Result            pmd;
 
         // ...check valid...
         if (csid > 0 && compiledStatementManager.isValid(csid, iId)) {
-            cs = compiledStatementManager.getStatement(csid);
+            cs   = compiledStatementManager.getStatement(csid);
+            rsmd = cs.describeResultSet();
+            pmd  = cs.describeParameters();
 
-            return new Result(ResultConstants.SQLEXECUTE, cs.paramTypes,
-                              csid);
+            return Result.newPrepareResult(csid, rsmd, pmd);
         }
 
         // ...compile or (re)validate
         try {
-            cs = sqlCompileStatement(sql);
+            cs = sqlCompileStatement(sql, type);
         } catch (Throwable t) {
             return new Result(t, sql);
         }
+        
+// boucherb@users        
+// TODO:  It is still unclear to me as to whether, in the case of revalidation
+//        v.s. first compilation, the newly created CompiledStatement
+//        object should replace the old one in the CompiledStatementManager
+//        repository.  If, for instance, a table column has been dropped and
+//        then a column with the same name is added with different data type,
+//        constraints, etc., the existing CompiledStatement object is not 
+//        equivalent in its effect and perhaps runs the risk of corrupting
+//        the database.  For instance, a CompiledStatement contains
+//        fixed mappings from positions in a column value expression array
+//        to column positions in the target table.  Thus, An alteration to a 
+//        target table may leave an existing CompiledStatement's SQL
+//        character sequence valid, but not its execution plan.
+//        OTOH, simply replacing the old execution plan with a new one
+//        may also be undesirable, as the intended and actual effects
+//        may become divergent. Once again, for example, if a column name
+//        comes to mean a different column, then by blindly replacing the
+//        old CompiledStatement with the new, then inserting, updating
+//        or predicating happens upon an unintended column.
+//        The only DDL operations that raise such dangers are sequences
+//        involving dropping a columns and then adding an incompatible one
+//        of the same name at the same position or alterations that
+//        change the positions of columns.  All other alterations to
+//        database objects should, in theory, allow the original
+//        CompiledStatement to operate correctly.        
 
-        if (csid <= 0) {
+        if (csid <= 0) {          
             csid = compiledStatementManager.registerStatement(cs);
         }
 
         compiledStatementManager.setValidated(csid, iId,
-                                              dDatabase.getDDLSCN());
+                                              dDatabase.getDDLSCN());        
+        
+        rsmd   = cs.describeResultSet();
+        pmd    = cs.describeParameters();
 
-        return new Result(ResultConstants.SQLEXECUTE, cs.paramTypes, csid);
+        return Result.newPrepareResult(csid, rsmd, pmd);
     }
 
-    Result sqlExecuteBatch(Result cmd) {
+    private Result sqlExecuteBatch(Result cmd) {
 
         int               csid;
         Object[]          pvals;
@@ -897,13 +995,13 @@ class Session implements SessionInterface {
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            String msg = "Statement not prepared for csid: " + csid + ").";
+            String msg = "Statement not prepared for csid: " + csid;
 
             return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {
-            out = sqlPrepare(cs.sql);
+            out = sqlPrepare(cs.sql, cs.type);
 
             if (out.iMode == ResultConstants.ERROR) {
                 return out;
@@ -928,7 +1026,7 @@ class Session implements SessionInterface {
 
                 in = compiledStatementExecutor.execute(cs);
             } catch (Throwable t) {
-                t.printStackTrace();
+                // t.printStackTrace();
 
                 //System.out.println(t.toString());
                 // if (t instanceof OutOfMemoryError) {
@@ -945,7 +1043,7 @@ class Session implements SessionInterface {
             switch (in.iMode) {
 
                 case ResultConstants.UPDATECOUNT : {
-                    updateCounts[count] = in.iUpdateCount;
+                    updateCounts[count++] = in.iUpdateCount;
 
                     break;
                 }
@@ -962,13 +1060,11 @@ class Session implements SessionInterface {
                 }
                 case ResultConstants.ERROR :
                 default : {
-                    updateCounts[count] = ResultConstants.EXECUTE_FAILED;
+                    updateCounts[count++] = ResultConstants.EXECUTE_FAILED;
 
                     break;
                 }
             }
-
-            count++;
 
             record = record.next;
         }
@@ -976,7 +1072,7 @@ class Session implements SessionInterface {
         return out;
     }
 
-    Result sqlExecuteBatchDirect(Result cmd) {
+    private Result sqlExecuteBatchDirect(Result cmd) {
 
         Record record;
         Result in;
@@ -1049,7 +1145,7 @@ class Session implements SessionInterface {
      *
      * @return the result of executing the statement
      */
-    Result sqlExecute(Result cmd) {
+    private Result sqlExecute(Result cmd) {
 
         int               csid;
         Object[]          pvals;
@@ -1061,15 +1157,17 @@ class Session implements SessionInterface {
         cs    = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            String msg = "Statement not prepared for csid: " + csid + ").";
+            String msg = "Statement not prepared for csid: " + csid;
 
             return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {
-            Result r = sqlPrepare(cs.sql);
+            Result r = sqlPrepare(cs.sql, cs.type);
 
             if (r.iMode == ResultConstants.ERROR) {
+                // TODO:
+                // maybe compiledStatementManager.freeStatement(csid,iId);?
                 return r;
             }
         }
@@ -1079,7 +1177,7 @@ class Session implements SessionInterface {
         // Don't bother with array length or type checks...trust the client
         // to send pvals with length at least as long
         // as parameters array and with each pval already converted to the
-        // correct type
+        // correct internal representation corresponding to the type
         try {
             for (int i = 0; i < parameters.length; i++) {
                 parameters[i].bind(pvals[i]);
@@ -1088,7 +1186,7 @@ class Session implements SessionInterface {
             return new Result(t, cs.sql);
         }
 
-        return sqlExecuteCompiled(cs);
+        return compiledStatementExecutor.execute(cs);
     }
 
     /**
@@ -1097,7 +1195,7 @@ class Session implements SessionInterface {
      * @param csid the numeric identifier of the statement
      * @return the result of freeing the indicated statement
      */
-    Result sqlFreeStatement(int csid) {
+    private Result sqlFreeStatement(int csid) {
 
         boolean existed;
         Result  result;

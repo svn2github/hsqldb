@@ -36,24 +36,24 @@ import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
 
 /**
- * Provides execution of CompiledStatement objects.
+ * Provides execution of CompiledStatement objects. <p>
  *
- * If multiple threads access a CompiledStatementExecutor concurrently,
- * and at least one of the threads calls an executeXXX method,
- * it must be synchronized externally, relative to both this object's Session
- * and the Session's Database. Internally, this is accomplished by
- * synchronizing on the Session object's Database object.
+ * If multiple threads access a CompiledStatementExecutor.execute()
+ * concurrently, they must be synchronized externally, relative to both
+ * this object's Session and the Session's Database object. Internally, this
+ * is accomplished in Session.execute() by synchronizing on the Session
+ * object's Database object.
  *
  * @author  boucherb@users.sourceforge.net
  * @vesrion 1.7.2
  * @since HSQLDB 1.7.2
  */
-public class CompiledStatementExecutor {
+public final class CompiledStatementExecutor {
 
-    Session  session;
-    Database database;
-    Result   updateResult;
-    Result   emptyResult;
+    private Session        session;
+    private Database       database;
+    private Result         updateResult;
+    private Result         emptyResult;    
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -66,33 +66,33 @@ public class CompiledStatementExecutor {
         database     = session.getDatabase();
         updateResult = new Result(ResultConstants.UPDATECOUNT);
         emptyResult  = new Result(ResultConstants.UPDATECOUNT);
-
-//        runtime      = HsqlRuntime.getHsqlRuntime();
     }
 
     /**
-     * Executes a generic CompiledStatement in a thread-safe manner.
+     * Executes a generic CompiledStatement. Execution includes first building
+     * any subquery result dependencies and clearing them after the main result
+     * is built. 
      *
      * @return the result of executing the statement
      * @param cs any valid CompiledStatement
      */
     Result execute(CompiledStatement cs) {
-
-        Result   result = null;
-        SubQuery sq;
+        
+        Result result = null;
 
         DatabaseManager.gc();
 
         try {
-            cs.buildSubQueryResults();
+            cs.materializeSubQueries();
 
             result = executeImpl(cs);
         } catch (Throwable t) {
+            //t.printStackTrace();
             result = new Result(t, cs.sql);
         }
 
-        // keep memory consuption down
-        cs.clearSubQueryResults();
+        // keep memory consumption down
+        cs.dematerializeSubQueries();
 
         if (result == null) {
             result = emptyResult;
@@ -102,7 +102,9 @@ public class CompiledStatementExecutor {
     }
 
     /**
-     * Executes a generic CompiledStatement with no synchronization.
+     * Executes a generic CompiledStatement. Execution excludes building
+     * subquery result dependencies and clearing them after the main result
+     * is built. 
      *
      * @param cs any valid CompiledStatement
      * @throws HsqlException if a database access error occurs
@@ -131,7 +133,8 @@ public class CompiledStatementExecutor {
                 return executeCallStatement(cs);
 
             default :
-                throw Trace.error(Trace.OPERATION_NOT_SUPPORTED, cs.type);
+                String msg = "Unknown compiled statement type: " + cs.type;
+                throw Trace.error(Trace.OPERATION_NOT_SUPPORTED, msg);
         }
     }
 
@@ -147,36 +150,32 @@ public class CompiledStatementExecutor {
     throws HsqlException {
 
         Expression e = cs.expression;    // representing CALL
-
-        //e.resolve(null);
-        Object   o = e.getValue();       // expression return value
-        Result   r;
-        Object[] row;
+        Object     o = e.getValue();     // expression return value
+        Result     r;
+        Object[]   row;
 
         if (o instanceof Result) {
             return (Result) o;
-        }
-
-        if (o instanceof jdbcResultSet) {
+        } else if (o instanceof jdbcResultSet) {
             return ((jdbcResultSet) o).rResult;
         }
 
+ // NO:
 // boucherb@users patch 1.7.x - returning values from remote data sources
 //        if (o instanceof ResultSet) {
 //            return Result.newResult((ResultSet)o);
 //        }
 //        if (o instanceof Statement) {
-//            return Result.newResult(((Statement)o).getResultSet());
+//            return Result.newResult(((Statement)o));
 //        }
-        r           = Result.newSingleColumnResult("", e.getDataType());
-        r.sTable[0] = "";
-        row         = new Object[1];
-        row[0]      = o;
+        r      = Result.newSingleColumnResult(e.getAlias(), e.getDataType());
+        row    = new Object[1];
+        row[0] = o;
 
         r.add(row);
 
         return r;
-    }
+    }        
 
     /**
      * Executes a DELETE statement.  It is assumed that the argument is
@@ -189,28 +188,28 @@ public class CompiledStatementExecutor {
     private Result executeDeleteStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t     = cs.targetTable;
-        TableFilter    f     = cs.tf;
+        Table          t     = cs.targetTable; 
+        TableFilter    tf    = cs.tf;
         Expression     c     = cs.condition;    // delete condition
-        int            count = 0;
+        int            count = 0;        
         HsqlLinkedList del;                     // tuples to delete
-
-        if (f.findFirst()) {
+               
+        if (tf.findFirst()) {
             del = new HsqlLinkedList();
-
+            
             if (c == null) {
                 do {
-                    del.add(f.currentRow);
-                } while (f.next());
-
+                    del.add(tf.currentRow);
+                } while (tf.next());
+                
                 count = t.delete(del, session);
             } else {
                 do {
                     if (c.test()) {
-                        del.add(f.currentRow);
+                        del.add(tf.currentRow);
                     }
-                } while (f.next());
-
+                } while (tf.next());
+                
                 count = t.delete(del, session);
             }
         }
@@ -240,7 +239,8 @@ public class CompiledStatementExecutor {
                 return executeInsertValuesStatement(cs);
             }
             default :
-                throw Trace.error(Trace.UNEXPECTED_EXCEPTION);
+                String msg = "Unexpected compiled statement type: " + cs.type;
+                throw Trace.error(Trace.UNEXPECTED_EXCEPTION, msg);
         }
     }
 
@@ -289,12 +289,12 @@ public class CompiledStatementExecutor {
             count = t.insert(r, session);
 
             session.endNestedTransaction(false);
-        } catch (HsqlException se) {
+        } catch (HsqlException he) {
 
             // insert failed (violation of primary key)
             session.endNestedTransaction(true);
 
-            throw se;
+            throw he;
         }
 
         updateResult.iUpdateCount = count;
@@ -356,7 +356,7 @@ public class CompiledStatementExecutor {
      * @param cs a CompiledStatement of type CompiledStatement.UPDATE
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
-     */
+     */    
     private Result executeUpdateStatement(CompiledStatement cs)
     throws HsqlException {
 
@@ -377,8 +377,8 @@ public class CompiledStatementExecutor {
         Object[]       ni;
 
         if (f.findFirst()) {
-            del  = new HsqlLinkedList();
-            ins  = new Result(ResultConstants.UPDATECOUNT);
+            del = new HsqlLinkedList();
+            ins = new Result(ResultConstants.UPDATECOUNT);            
             size = t.getColumnCount();
             len  = cm.length;
             ct   = t.getColumnTypes();

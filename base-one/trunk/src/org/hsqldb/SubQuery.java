@@ -37,6 +37,7 @@ class SubQuery implements ObjectComparator {
 
     int     level;
     boolean hasParams;
+    boolean isView;
     Select  select;
     Table   table;
 

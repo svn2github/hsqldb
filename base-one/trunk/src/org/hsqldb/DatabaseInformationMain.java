@@ -1007,7 +1007,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
-        rs = session.sqlExecuteDirect(
+        rs = session.sqlExecuteDirectNoPreChecks(
             (new StringBuffer(185)).append("select").append(' ').append(
                 "a.").append("TABLE_CAT").append(',').append("a.").append(
                 "TABLE_SCHEM").append(',').append("a.").append(
@@ -2448,7 +2448,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 150 bytes jar space
-        rs = session.sqlExecuteDirect(
+        rs = session.sqlExecuteDirectNoPreChecks(
             (new StringBuffer(313)).append("select").append(' ').append(
                 "TYPE_NAME").append(',').append("DATA_TYPE").append(
                 ',').append("PRECISION").append(',').append(

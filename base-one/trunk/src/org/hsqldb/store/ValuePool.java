@@ -150,7 +150,46 @@ public class ValuePool {
         return b ? Boolean.TRUE
                  : Boolean.FALSE;
     }
+    
+//    public static Boolean getBoolean(String s) {
+//        return "true".equalsIgnoreCase(s) ? Boolean.TRUE
+//                                          : Boolean.FALSE;
+//    }
+    
+//    public static Boolean getBoolean(Number n) {
+//        return n == null ? null : getBoolean(n.doubleValue() == 1.0);
+//    }
+    
+//    public static Boolean getBoolean(Object o) {
+//       return o == null ? null 
+//                        : o instanceof Boolean 
+//                              ? (Boolean) o 
+//                              : o instanceof Number
+//                                    ? getBoolean((Number)o)
+//                                    : getBoolean(String.valueOf(o);
+//     }
 
+    public static Object getObject(Object o) {
+        if (o == null) {
+            return null;
+        } else if (o instanceof Boolean) {
+            return ((java.lang.Boolean)o).booleanValue() ? Boolean.TRUE
+                                                         : Boolean.FALSE;
+        } else if (o instanceof java.math.BigDecimal) {
+            return getBigDecimal((java.math.BigDecimal)o);
+        } else if (o instanceof java.sql.Date) {
+            return getDate(((java.sql.Date)o).getTime());
+        } else if (o instanceof Double) {
+            return getDouble(Double.doubleToLongBits(((Double)o).doubleValue()));
+        } else if (o instanceof Integer) {
+            return getInt(((Integer)o).intValue());
+        } else if (o instanceof Long) {
+            return getLong(((Long)o).longValue());            
+        } else if (o instanceof String) {
+            return getString((String)o);
+        }
+        return o;        
+    }   
     public static class poolSettings {
 
         String[] propertyStrings = new String[] {

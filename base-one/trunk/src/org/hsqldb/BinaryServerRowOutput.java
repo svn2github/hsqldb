@@ -220,6 +220,11 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, HsqlException {
 
+        // Maybe this would be more flexible and efficient like:
+        // jo = (o instanceof JavaObject) ? (JavaObject) o : new JavaObject(o);
+        // certainly, it's far more memory efficient to build up a Result's
+        // rows using Object[]s holding POJOs, rather than having to wrap
+        // each one
         JavaObject jo = (JavaObject) o;
 
         writeByteArray(jo.getBytes());

@@ -425,6 +425,8 @@ public class jdbcResultSet implements ResultSet {
      * there is no other way to check for this condition in those cases.
      */
     private boolean bWasNull;
+    
+    private ResultSetMetaData rsmd;
 
 // fredt@users 20020222 - patch 489917 by jytou@users - made optional
 // see setGetColumnName in package private internal implementation
@@ -1676,7 +1678,10 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcResultSetMetaData
      */
     public ResultSetMetaData getMetaData() throws SQLException {
-        return new jdbcResultSetMetaData(this, connProperties);
+        if (rsmd == null) {
+            rsmd = new jdbcResultSetMetaData(this, connProperties);
+        }
+        return rsmd;
     }
 
     /**

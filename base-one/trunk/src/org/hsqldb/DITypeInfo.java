@@ -124,10 +124,14 @@ final class DITypeInfo {
                 return "java.lang.Long";
 
             case Types.BINARY :
-            case Types.LONGVARBINARY :
-            case Types.OTHER :
+            case Types.LONGVARBINARY :            
             case Types.VARBINARY :
+                // but wrapped by org.hsqldb.Binary
                 return "[B";
+                
+            case Types.OTHER :
+                // but wrapped by org.hsqldb.JavaObject
+                return "java.lang.Object";
 
             case Types.BIT :
             case Types.BOOLEAN :
@@ -793,7 +797,16 @@ final class DITypeInfo {
                 return ValuePool.getInt(Types.SQL_DATALINK);     // SQL_DATALINK
 
             case Types.DATE :
-                return ValuePool.getInt(Types.SQL_DATE);         // fredt - was SQL_DATETIME
+                // NO:  This is the _concise_ code, whereas what we want to
+                //      return here is the Data Type Code column value from 
+                //      Table 38 in the SQL 200n FCD.  This method is used
+                //      by DatabaseInformationMain to list the sql type 
+                //      column in the SYSTEM_TYPEINFO table, which is specified
+                //      by JDBC as the sql data type code, not the concise code. 
+                //      That is why there is a sql datetime sub column
+                //      specified as well.
+                // return ValuePool.getInt(Types.SQL_DATE);         // fredt - was SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_DATETIME);
 
             case Types.DECIMAL :
                 return ValuePool.getInt(Types.SQL_DECIMAL);      // SQL_DECIMAL
@@ -841,10 +854,28 @@ final class DITypeInfo {
                 return ValuePool.getInt(Types.SQL_UDT);          // SQL_UDT
 
             case Types.TIME :
-                return ValuePool.getInt(Types.SQL_TIME);         // fredt - was SQL_DATETIME
+                // NO:  This is the _concise_ code, whereas what we want to
+                //      return here is the Data Type Code column value from 
+                //      Table 38 in the SQL 200n FCD.  This method is used
+                //      by DatabaseInformationMain to list the sql type 
+                //      column in the SYSTEM_TYPEINFO table, which is specified
+                //      by JDBC as the sql data type code, not the concise code. 
+                //      That is why there is a sql datetime sub column
+                //      specified as well.
+                // return ValuePool.getInt(Types.SQL_TIME);         // fredt - was SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_DATETIME);
 
             case Types.TIMESTAMP :
-                return ValuePool.getInt(Types.SQL_TIMESTAMP);    // fredt - sqs SQL_DATETIME
+                // NO:  This is the _concise_ code, whereas what we want to
+                //      return here is the Data Type Code column value from 
+                //      Table 38 in the SQL CLI 200n FCD.  This method is used
+                //      by DatabaseInformationMain to list the sql type 
+                //      column in the SYSTEM_TYPEINFO table, which is specified
+                //      by JDBC as the sql data type code, not the concise code. 
+                //      That is why there is a sql datetime sub column
+                //      specified as well.               
+                // return ValuePool.getInt(Types.SQL_TIMESTAMP);    // fredt - was SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_DATETIME);
 
             case Types.TINYINT :
                 return ValuePool.getInt(Types.TINYINT);          // N/A

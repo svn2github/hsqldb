@@ -130,12 +130,13 @@ class ScriptRunner {
                 }
 
                 if (s.length() != 0) {
-                    Result result = current.sqlExecuteDirect(s);
+                    Result result = current.sqlExecuteDirectNoPreChecks(s);
 
                     if (result != null
                             && result.iMode == ResultConstants.ERROR) {
 
-/** @todo fredt - must catch out of  memory erros and terminate */
+/** @todo fredt - must catch out of  memory errors and terminate */
+/* boucherb - Result(OOME,sql) now sets vendor code to Trace.OUT_OF_MEMORY */                               
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());

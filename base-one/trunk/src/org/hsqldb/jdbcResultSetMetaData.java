@@ -78,8 +78,7 @@ import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.store.ValuePool;
 
-/**
- * <!-- start generic documentation -->
+/** <!-- start generic documentation -->
  * An object that can be used to get information about the types
  * and properties of the columns in a <code>ResultSet</code> object.
  * The following code fragment creates the <code>ResultSet</code>
@@ -106,244 +105,15 @@ import org.hsqldb.store.ValuePool;
  * vague. This causes potential incompatibility between interpretations of the
  * specification as realized in different JDBC driver implementations. As such,
  * deciding to what degree reporting ResultSetMetaData is accurate has been
- * considered very carefully. <p>
- *
- * Careful consideration was also required because a poor design choice
- * (say, in favour of fully accurate end-to-end support, such as eagerly
- * calculating all ResultSetMetaData values at the engine each time a query is
- * parsed for execution) has the potential to impose a significant performance
- * penalty on all transations processed by the engine as well as upon all
- * ResultSet objects returned from HSQLDB, regardless of whether
- * ResultSetMetaData methods are actually invoked by the client. <p>
- *
- * Hopefully, the design decisions made in light of these considerations have
- * yeilded precisely the subset of full ResultSetMetaData support that is most
- * commonly needed and that is most important, while also providing, under the
- * most common use-cases, the fastest access with the least overhead and the
- * best comprimise between speed, accuracy, jar-foootprint and prolonged
- * retention of JDBC resources. <p>
+ * considered very carefully. Hopefully, the design decisions made in light of 
+ * these considerations have yeilded precisely the subset of full
+ * ResultSetMetaData support that is most commonly needed and that is most
+ * important, while also providing, under the most common use-cases, the
+ * fastest access with the least overhead and the best comprimise between
+ * speed, accuracy, jar-foootprint and retention of JDBC resources. <p>
  *
  * (fredt@users) <br>
  * (boucherb@users)<p>
- *
- * <hr>
- *
- * Unlike previous releases, 1.7.2 breaks the ResultSetMetaData interface out
- * of the jdbcResultSet class into this new interface implementation.  It does
- * so for a number of reasons, including: <p>
- *
- * <ol>
- * <li> It allows ResultSetMetaData functionality to be seemlessly dropped
- *      from the distribution or to be easily replaced by a different
- *      implementation. This serves as yet another move toward better
- *      modularity and also as a move to improve facilitation of smaller
- *      jar size under memory constrained use cases. <p>
- *
- * <li> It allows ResultSetMetaData to persist beyond the life of the
- *      ResultSet from which it is obtained, without retaining expensive
- *      JDBC resources any longer than required. <p>
- *
- * </ol> <p>
- *
- * In light of some of the latest design goals and in addition to the points
- * listed above, special consideration should be given to using HSQLDB 1.7.2
- * jdbcResultSetMetaData objects. In particular, it is necessary to understand
- * that the initialization of the values this object returns has been
- * reimplemented as three fail-safe partitions and that these initializations
- * are one-time affairs. This means that the values belonging to each partition
- * are, after its initialization, cached thereafter.  Consequentially, values
- * in the Connection-dependent partition may not reflect later changes in the
- * state of the database, relative to any result set columns that represent
- * database table columns. <p>
- *
- * The design goals that prompted the decision to use one-shot initialization
- * and to break it into partitions were: <p>
- *
- * <ol>
- * <li> avoid the transaction processing and network overhead incurred by
- *      a design path that requires the engine core to build and transmit
- *      more than the absolutely essential ResultSetMetaData values with
- *      every ResultSet requested by the client. <p>
- *
- * <li> avoid the client-side overhead of deriving less commonly used values
- *      where possible, by ensuring that they are calculated if and only if
- *      the client actually calls a dependent method. <p>
- *
- * <li> avoid repeatedly deriving values in cases where a particular method
- *      may be called more than once, relative to a particular column
- *      index. <p>
- *
- * <li> given 1.) through 3.) above, also avoid greater than one call back to
- *      the database to obtain further information, in cases where requested
- *      values are neither transmitted with the parent ResultSet or directly
- *      derivable from them.
- * </ol> <p>
- *
- * In other words, the overall goal was to avoid or delay all costs associated
- * with obtaining derived ResultSetMetaData values of secondary importance
- * until made necessary in direct response to specific client requests, while
- * at the same time avoiding accumulation of costs due to repeated client
- * requests, most importantly network round-trips and redundant
- * SQL-processing. <p>
- *
- * The current partion is as follows: <p>
- *
- * <ol>
- * <li>Core<p>
- *
- *     Core ResultSetMetaData values are essentially those that are passed
- *     directly from the engine to the client connection a part of retrieving
- *     a result set.  The only exception is the data type name value, which is
- *     included in this group none-the-less, since it is derived using a core
- *     class (Column) and is considered of core importance and frequency of
- *     use. <p>
- *
- *     Core values are initialized at the instant of construction.<p>
- *
- *     ResultSetMetaData methods retrieving Core values are: <p>
- *
- *     <ol>
- *     <li>{@link #getColumnCount() getColumnCount()}
- *     <li>{@link #getTableName(int) getTableName()}
- *     <li>{@link #getColumnName(int) getColumnName()}
- *     <li>{@link #getColumnLabel(int) getColumnLabel()}
- *     <li>{@link #getColumnType(int) getColumnType()}
- *     <li>{@link #getColumnTypeName(int) getColumnTypeName()}
- *     </ol> <p>
- *
- * <li>Derived<p>
- *
- *     Derived ResultSetMetaData values are essentially those that can
- *     be calculated with complete accuracy, directly from the information
- *     transmitted with this object's parent ResultSet.  The only potential
- *     future exception is the precision value, which may eventually require
- *     a call back to the engine.  However, since HSQLDB does not currently
- *     guarantee that table column create parameters are strictly enforced
- *     under all conditions, the derivation instead uses the statically known
- *     maximum length or numeric precision associated with a column's data
- *     type. <p>
- *
- *     All Derived values are initialized together, just once, at first call to
- *     any method retrieving a Derived value. <p>
- *
- *     ResultSetMetaData methods retrieving Derived values are: <p>
- *
- *     <ol>
- *     <li>{@link #isCaseSensitive(int) isCaseSensitive()}
- *     <li>{@link #isSearchable(int) isSearchable()}
- *     <li>{@link #isSigned(int) isSigned()}
- *     <li>{@link #getColumnDisplaySize(int) getColumnDisplaySize()}
- *     <li>{@link #getPrecision(int) getPrecision()}
- *     <li>{@link #getColumnClassName(int) getColumnClassName()}
- *     </ol> <p>
- *
- *     The methods {@link #isCurrency(int) isCurrency()} and
- *     {@link #getScale(int) getScale()} are not listed above at this time
- *     because they always return false and 0, respectively, due to lack of
- *     support for true fixed (precision,scale) data types in the engine.
- *     Initialization of these particular values currently depends upon
- *     the Java default member attribute initialization policy; there is no
- *     code that explicitly performs their initialization. <p>
- *
- * <li>Connection-dependent<p>
- *
- *     Connection-dependent ResultSetMetaData values are essentially those that
- *     are neither transmitted with this object's parent ResultSet or Derived,
- *     as described above.  Instead, a call must be made back to the engine to
- *     retrieve such values, since they naturally originate from metadata
- *     found in system tables. In this implementation of ResultSetMetaData, a
- *     builtin stored procedure is called that works directly with the internal
- *     structures of the database and produces the same result as selecting the
- *     required information from sytem tables. This is done because it is far
- *     faster and far more efficient to do so. <p>
- *
- *     All Connection-dependent values are initialized together, just once, at
- *     first call to any method retrieving a Connection-dependent value. <p>
- *
- *     ResultSetMetaData methods retrieving Connection-dependent values may
- *     be the following: <p>
- *
- *     <ol>
- *     <li>{@link #isAutoIncrement(int) isAutoIncrement()}
- *     <li>{@link #isNullable(int) isNullable()}
- *     <li>{@link #getSchemaName(int) getSchemaName()}
- *     <li>{@link #getCatalogName(int) getCatalogName()}
- *     <li>{@link #isReadOnly(int) isReadOnly()}
- *     <li>{@link #isWritable(int) isWritable()}
- *     </ol><p>
- *
- *     The method {@link #isDefinitelyWritable(int) isDefinitelyWritable()} is
- *     not listed above at this time because, in this implementation, it always
- *     returns false.  This descision stems from the fact that, under unique
- *     and foreign key constraints (not to mention triggers and other factors)
- *     the correct answer to this question cannot always be made
- *     deterministically and would be very resource intensive to make,
- *     regardless. Initialization of this value to false currently depends upon
- *     the Java default member attribute initialization policy; there is no
- *     code that explicitly initializes this value.
- * </ol> <p>
- *
- * The decision to make the Connection-dependent value partition a one-shot
- * initialization and delay that initialization until a first dependent method
- * invocation by the client is of special importance for a number of
- * reasons: <p>
- *
- * <ol>
- * <li> This implies that the state of the database may become different than
- *      the cached connection-dependent values indicate.
- * <li> It also implies that the intialization may actually fail, in the case
- *      where the parent connection is closed before a first dependent method
- *      invocation.
- * </ol>
- *
- * However, this descision is justified by a number of observations regarding
- * typical use patterns, as well as by benchmark timings noted during
- * the development of this class. Specifically, it is expected that,
- * under most applications, only a subset of the ResultSetMetaData values will
- * ever be requested. It is also expected that such subsets are most likely
- * to include either none of the connection-dependent values or practically
- * all of them. So it is deemed highly desirable to avoid retrieving related
- * data until a request is actually made by the client to obtain a dependent
- * value. But at the same time it is deemed highly desirable to try to
- * ameliorate the retrieval of the values into a single call back to the
- * database, in order to avoid excessive setup, network round trips and SQL
- * statement processing.  This is especially true, given that timings noted
- * during development indicated that, on a moderately powerful workstation
- * under the best case (a connection to an embedded mode database instance),
- * there is a fixed ~5-10 ms overhead associated with setup and database
- * call back to determine controlling information (such as whether or not to
- * report catalog and schema values), plus an additional best case ~2-10 ms
- * overhead associated with making a number of system table query calls back
- * to the database for each column, in order to retrieve its
- * connection-dependent metadata.  Under such figures, it is easy understand
- * that failing to carefully chose the correct design can instantly lead to
- * completely unacceptable performance. <p>
- *
- * Because it is expected that the database state will not change frequently
- * regarding connection-dependent values in a production environment, it was
- * felt that a one-shot initialization does not impose a significant burden on
- * the end-developer and yeilds justifyable advantages.  Further, a change in
- * the values of either isNullable() or isAutoIncrement() currently implies that
- * either a column or an entire table has been dropped and recreated, leaving
- * isReadOnly() and isWritable() as the only values that might change and be
- * desirable to refresh without also retrieving a new ResultSet representing
- * a re-execution of the original query.  In fact, because HSQLDB does not yet
- * support ResultSet.CONCUR_UPDATABLE or any of the ResultSet.rowXXX methods,
- * it is (in general) practically demanded that the parent ResultSet be
- * regenerated by re-executing its parent Statement, any time it is suspected
- * or known that the database state has changed in some way since last execute
- * and fetch cyle. Of course, if it is suspected or known that
- * connection-dependent values have changed since constructing and fully reading
- * a jdbcResultSetMetaData object, it is a simple matter (as long as the parent
- * ResultSet and Connection are still open) to request a new ResultSetMetaData
- * instance from the parent ResultSet and re-read the connection-dependent
- * values from the new instance. <p>
- *
- * This a first generation reimplementation and is thus not considered
- * finalized; all critisisms and helpful suggestions welcomed. <p>
- *
- * (boucherb@users) <p>
- *
  * </span>
  * <!-- end release-specific documentation -->
  * @see jdbcStatement#executeQuery
@@ -356,7 +126,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * The minimum value that this object returns in response to
      * calling {@link getDisplaySize(int) getDisplaySize()}.
      */
-    public static final int MIN_DISPLAY_SIZE = 6;
+    public static final int MIN_DISPLAY_SIZE = 1;
 
     /**
      * The maximum value that this object returns in response to
@@ -374,15 +144,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     public static final int MAX_SCAN = 512;
 
     /**
-     * The Connection object from which the content of this object's parent
-     * ResultSet was retrieved.
-     */
-    private Connection conn;
-
-    /** The row content (if any) of this object's parent ResultSet. */
-    private Result rResult;
-
-    /**
      * An array of objects, each of which represents the reported attributes
      * for  a single column of this object's parent ResultSet.
      */
@@ -390,184 +151,211 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
     /** The number of columns in this object's parent ResultSet. */
     private int columnCount;
-
-    /**
-     * Flag determining whether getColumnName(int) retrieves the column name
-     * (true) or column label (false).
-     */
+    
     private boolean useColumnName;
 
     /**
-     * Flag guarding against multiple initializations of the return
-     * values that depend only on statically known and derivable
-     * information.
-     */
-    private boolean derivedInitialized;
-
-    /**
-     * Flag guarding against multiple initializations of the return
-     * values that depend on additional information not transmitted
-     * with this object's parent ResultSet and that, consequentially,
-     * must be retrieved at some later point through the Connection that
-     * retrieved this object's parent ResultSet.
-     */
-    private boolean cDependentInitialized;
-
-    /**
-     * Flag indicating the success or failure of the single initialization
-     * of connection-dependent return values.
-     */
-    private boolean reportCDependent;
-
-    /**
-     * The exception, if any, that may occor upon call back to the database
-     * when performning the connection-dependent initialization
-     */
-    private SQLException cDependentException;
-
-    /** For trace times. */
-    private StopWatch sw;
-
-    /**
-     * If true, then timings for initializations are printed
+     * If true, then timings for init() are printed
      * to the console.
      */
     private static final boolean TRACE = false;
 
     /**
-     * Constructs a new jdbcResultSetMetaData object for the specified
-     * jdbcResultSet object.
-     * @param rs the jdbcResultSet object for which to construct a new
+     * Constructs a new jdbcResultSetMetaData object from the specified
+     * jdbcResultSet and HsqlProprties objects.
+     *
+     * @param rs the jdbcResultSet object from which to construct a new
      *        jdbcResultSetMetaData object
+     * @param props the HsqlProperties object from which to construct a
+     *        new jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
      */
     jdbcResultSetMetaData(jdbcResultSet rs,
                           HsqlProperties props) throws SQLException {
-
-        jdbcStatement      stmnt;
-        jdbcColumnMetaData cmd;
-
+        init(rs,props);                  
+    }
+    
+    /**
+     * Constructs a new jdbcResultSetMetaData object from the specified
+     * Result and HsqlProprties objects.
+     *
+     * @param rs the Result object from which to construct a new
+     *        jdbcResultSetMetaData object
+     * @param props the HsqlProperties object from which to construct a
+     *        new jdbcResultSetMetaData object
+     * @throws SQLException if a database access error occurs
+     */
+    jdbcResultSetMetaData(Result r,
+                          HsqlProperties props) throws SQLException {
+        init(r, props);                  
+    }    
+    
+    /**
+     * Initializes this jdbcResultSetMetaData object from the specified
+     * jdbcResultSet and HsqlProperties objects.
+     *
+     * @param rs the jdbcResultSet object from which to initialize this
+     *        jdbcResultSetMetaData object
+     * @param props the HsqlProperties object from which to initialize this
+     *        jdbcResultSetMetaData object     
+     * @throws SQLException if a database access error occurs
+     */     
+    void init(jdbcResultSet rs, HsqlProperties props) throws SQLException {
         if (rs == null) {
             throw jdbcDriver.sqlException(
                 Trace.GENERAL_ERROR,
                 Trace.jdbcResultSetMetaData_jdbcResultSetMetaData, null);
         }
 
-        useColumnName = props.isPropertyTrue("get_column_name");
-        rResult       = rs.rResult;
+        init(rs.rResult, props);       
+        
+    }
+    
+    /**
+     * Initializes this jdbcResultSetMetaData object from the specified
+     * Result and HsqlProperties objects.
+     *
+     * @param rs the Result object from which to initialize this
+     *        jdbcResultSetMetaData object
+     * @param props the HsqlProperties object from which to initialize this
+     *        jdbcResultSetMetaData object     
+     * @throws SQLException if a database access error occurs
+     */    
+    void init(Result r, HsqlProperties props) throws SQLException {
 
-        if (rResult != null && rResult.iMode != ResultConstants.DATA) {
+        jdbcColumnMetaData cmd;
+        DITypeInfo         ti;
+        StopWatch          sw;
+        int                ditype;
+        int                ditype_sub;
 
-            // Not a DATA mode result; it has no columns
-            // No further init required, as setting columnCount to
-            // zero ensures that checkColumn will guard against
-            // entry into sections attmepting to
-            // access uninitialized member attributes.
-            columnCount = 0;
-
-            return;
-        }
-
-        columnCount = rs.iColumnCount;
-
-        if (columnCount == 0) {
-
-            // still not a DATA mode result; as above
-            return;
-        }
-
-        if (rResult == null) {
+        if (r == null) {
             throw jdbcDriver.sqlException(
                 Trace.GENERAL_ERROR,
                 Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_2, null);
         }
+                
 
-        // Typically, these assertions are not required, but they are
-        // not guaranteed to be true either.  It is far more terse,
-        // code-wise, to do the checks here and fail, than to place
-        // all related code further along in try-catch blocks and wrap
-        // things like array bounds and null pointer exceptions with
-        // SQLExceptions.
-/*
-        Trace.doAssert(
-            rResult.colType != null && rResult.colType.length >= columnCount,
-            "rResult.colType array is null or too small");
-        Trace.doAssert(
-            rResult.sTable != null && rResult.sTable.length >= columnCount,
-            "rResult.sTable array is null or too small");
-        Trace.doAssert(
-            rResult.sLabel != null && rResult.sLabel.length >= columnCount,
-            "rResult.sLabel array is null or too small");
-        Trace.doAssert(
-            rResult.sName != null && rResult.sName.length >= columnCount,
-            "rResult.sName array is null or too small");
-*/
-        stmnt = (jdbcStatement) rs.getStatement();
-/*
-        Trace.doAssert(stmnt != null, "statement is null");
-*/
-        conn = stmnt.getConnection();
-
-/*
-        Trace.doAssert(conn != null, "connection is null");
-*/
-        if (conn.isClosed()) {
-            throw jdbcDriver.sqlException(
-                Trace.GENERAL_ERROR,
-                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_3, null);
+        if (r.iMode != ResultConstants.DATA) { 
+            return;
         }
-
+        
+        columnCount    = r.getColumnCount();
+        useColumnName  = props.isPropertyTrue("get_column_name");
         columnMetaData = new jdbcColumnMetaData[columnCount];
+        ti             = new DITypeInfo();
 
-// TODO: maybe some of this could be moved to the jdbcColumnMetaData.<init>?
         for (int i = 0; i < columnCount; i++) {
             cmd               = new jdbcColumnMetaData();
-            columnMetaData[i] = cmd;
-            cmd.catalogName   = "";
-            cmd.schemaName    = "";
+            columnMetaData[i] = cmd;            
 
             // Typically, these null checks are not needed, but as
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.tableName   = rResult.sTable[i] == null ? ""
-                                                        : rResult.sTable[i];
-            cmd.columnName  = rResult.sName[i] == null ? ""
-                                                       : rResult.sName[i];
-            cmd.columnLabel = rResult.sLabel[i] == null ? ""
-                                                        : rResult.sLabel[i];
+            cmd.catalogName     = r.sCatalog[i] == null ? "" : r.sCatalog[i];
+            cmd.schemaName      = r.sSchema[i] == null ? "" : r.sSchema[i];
+            cmd.tableName       = r.sTable[i] == null ? "" : r.sTable[i];
+            cmd.columnName      = r.sName[i] == null ? "" : r.sName[i];
+            cmd.columnLabel     = r.sLabel[i] == null ? "" : r.sLabel[i];
+            cmd.columnType      = r.colType[i];
+            cmd.columnTypeName  = Types.getTypeString(cmd.columnType);
+            cmd.columnClassName = r.sClassName[i];
+            cmd.isWritable      = r.isWritable[i];
+            cmd.isReadOnly      = !cmd.isWritable;
+            // default: cmd.isDefinitelyWritable = false;
+            cmd.isAutoIncrement = r.isIdentity[i];
+            cmd.isNullable      = r.nullability[i];
+            ditype              = cmd.columnType;
+            
+            if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
+                ditype     = Types.VARCHAR;
+                ditype_sub = Types.TYPE_SUB_IGNORECASE;
+            } else if (cmd.isAutoIncrement) {
+                ditype_sub = Types.TYPE_SUB_IDENTITY;
+            } else {
+                ditype_sub = Types.TYPE_SUB_DEFAULT;
+            }            
 
-            // TODO: No check on valid data type here.  implement?
-            // default Java initialization dictates that this will
-            // be zero if not explicitly set...
-            // zero maps to NULL or ANY data type, which is not handled
-            // properly by our server row input/output interface
-            // implementations...this is a future concern for transmitting
-            // call parameters back to the engine in the form of serialized
-            // Result objects
-            cmd.columnType = rResult.colType[i];
+            ti.setTypeCode(ditype);
+            ti.setTypeSub(ditype_sub);            
+            
+            if (cmd.columnClassName == null 
+                    ||cmd.columnClassName.length() == 0) {
+                cmd.columnClassName = ti.getColStClsName();
+            }
 
-            // CHECKME: this might be null...it that OK? or do we want ""?
-            cmd.columnTypeName = Types.getTypeString(cmd.columnType);
+            Integer precision = ti.getPrecision();
 
-            // This is the only explicit boolean initializer required, as
-            // the JVM's implicit false init value for boolean is the correct
-            // default for the other column metadata boolean attributes
-            cmd.isReadOnly = true;
+            cmd.precision = precision == null ? 0
+                                              : precision.intValue();
 
-            // This is the only explicit int initializer required, as
-            // the JVM's implicit false init value for int (0) is the correct
-            // default for the other column metadata int attributes
-            // (i.e. precision and scale...display size must wait)
-            cmd.isNullable = columnNullableUnknown;
-        }
+            Boolean iua = ti.isUnsignedAttribute();
 
-// boolean member attributes are false by default init anyway
-//        cDependentInitialized   = false;
-//        reportCDependent        = false;
-//        derivedInitialized      = false;
-        if (TRACE) {
-            Trace.printSystemOut(sw.elapsedTimeToMessage(this + ".<init>"));
+            cmd.isSigned = iua != null &&!iua.booleanValue();
+
+            Boolean ics = ti.isCaseSensitive();
+
+            cmd.isCaseSensitive = ics != null && ics.booleanValue();
+
+            Integer sc = ti.getSearchability();
+
+            cmd.isSearchable = sc != null
+                               && sc.intValue()
+                                  != DatabaseMetaData.typePredNone;
+
+            cmd.columnDisplaySize = ti.getMaxDisplaySize();
+
+            if (cmd.columnDisplaySize > 0
+                    && cmd.columnDisplaySize <= MIN_DISPLAY_SIZE) {
+                cmd.columnDisplaySize = MIN_DISPLAY_SIZE;
+            } else if (cmd.columnDisplaySize <= MAX_DISPLAY_SIZE) {
+
+                // do nothing
+            } else {
+                String s;
+                int    rc;
+                int    len;
+                int    max;
+                Record rec;
+
+                rc  = 0;
+                max = MIN_DISPLAY_SIZE;
+                rec = r.rRoot;
+                
+                while (rec != null && rc < MAX_SCAN) {
+                    
+                    s = null;
+                    
+                    try {
+                        s = (String) Column.convertObject(rec.data[i], 
+                                                          Types.CHAR);
+                    } catch (Exception e) {
+                        // If this this fails for one, it
+                        // will probably fail for all,
+                        // due to the column being OTHER and
+                        // the local JVM being unable to
+                        // deserialize, so break early.
+                        break;
+                    }
+                    
+                    len = (s == null) ? 3 // arbitrary: "null".length()
+                                      : s.length();
+                    
+                    if (len >= MAX_DISPLAY_SIZE) {
+                        max = MAX_DISPLAY_SIZE;
+                        
+                        break;
+                    } else if (len > max) {
+                        max = len;
+                    }
+                    
+                    rc++;
+                    rec = rec.next;
+                }
+
+                cmd.columnDisplaySize = max;
+            }            
         }
     }
 
@@ -678,17 +466,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initCDependent();
 
-        column--;
-
-        if (!reportCDependent &&!isTableColumn(column)) {
-
-            // return false;
-            throw cDependentException;
-        }
-
-        return columnMetaData[column].isAutoIncrement;
+        return columnMetaData[--column].isAutoIncrement;
     }
 
     /**
@@ -722,7 +501,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].isCaseSensitive;
     }
@@ -760,7 +538,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].isSearchable;
     }
@@ -800,8 +577,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].isCurrency;
     }
 
-    /**
-     * <!-- start generic documentation -->
+    /** <!-- start generic documentation -->
      * Indicates the nullability of values in the designated column. <p>
      * <!-- end generic documentation -->
      *
@@ -814,25 +590,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * Starting with 1.7.2, this feature is better supported.  <p>
      *
-     * Regardless of the new and better support for reporting isNullable(),
-     * it is still possible under certain conditions that accurate reporting
-     * may be impossible. For example, if this object's parent Connection is
-     * closed before the first call to this method or to any other method of
-     * this class that initializes the connection-dependent ResultSetMetaData
-     * values, then it is impossible to report accurately for result set
-     * columns that directly represent table column values. <p>
-     *
-     * When it is impossible to accurately report this value for result set
-     * columns that directly represent table column values, the driver
-     * rethrows the exception that occured during the initialization,
-     * or a SQLException wrapping it.
-     *
      * columnNullableUnknown is always returned for result set columns that
      * do not directly represent table column values (i.e. are calculated),
-     * while whenever it is possible to successfully perform the
-     * connection-dependent initialization partition, the corresponding value
-     * in SYSTEM_COLUMNS.NULLABLE is returned for result set columns that do
-     * directly represent table column values. <p>
+     * while the corresponding value in SYSTEM_COLUMNS.NULLABLE is returned
+     * for result set columns that do directly represent table column values. <p>
      *
      * Those wishing to determine the nullable status of a table column in
      * isolation from ResultSetMetaData and in a DBMS-independent fashion
@@ -842,7 +603,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @param column the first column is 1, the second is 2, ...
      * @return the nullability status of the given column; one of
      *      <code>columnNoNulls</code>,
@@ -856,17 +616,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initCDependent();
 
-        column--;
-
-        if (!reportCDependent &&!isTableColumn(column)) {
-
-            // return columnNullableUnknown;
-            throw cDependentException;
-        }
-
-        return columnMetaData[column].isNullable;
+        return columnMetaData[--column].isNullable;
     }
 
     /**
@@ -897,13 +648,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].isSigned;
     }
 
-    /**
-     * <!-- start generic documentation -->
+    /** <!-- start generic documentation -->
      * Indicates the designated column's normal maximum width in
      * characters. <p>
      * <!-- end generic documentation -->
@@ -928,7 +677,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * <li> if the value is in [1,MIN_DISPLAY_SIZE],  MIN_DISPLAY_SIZE is
      * reported.  <p>
      *
-     * <li> if the value is in [MIN_DISPLAY_SIZE + 1,MAX_DISPLAY_SIZE],
+     * <li> if the value is in [MIN_DISPLAY_SIZE + 1, MAX_DISPLAY_SIZE],
      * the value itself is reported.
      * </ol> <p>
      *
@@ -956,7 +705,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @param column the first column is 1, the second is 2, ...
      * @return the normal maximum number of characters allowed as the width
      *      of the designated column
@@ -969,7 +717,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].columnDisplaySize;
     }
@@ -1069,9 +816,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * including schema names in result set metadata; this method always
      * returned "". <p>
      *
-     * Staring with 1.7.2, this is supported, but only as an optional,
-     * experimental feature that is disabled by default. Enabling this
-     * feature requires setting the database property
+     * Staring with 1.7.2, schema name reporting is supported only as an
+     * optional, experimental feature that is disabled by default. 
+     * Enabling this feature requires setting the database property
      * "hsqldb.schemas=true". <p>
      *
      * Specifically, when this feature is enabled under 1.7.2, only very
@@ -1081,10 +828,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * to use what would otherwise be the correct, canonical SQL calculated
      * from ResultSetMetaData. <p>
      *
-     * Support, whether enabled or disabled, is not yet accurately indicated
-     * in the corresponding DatabaseMetaData.supportsXXX() method return
-     * values and likely will not be until support meets some minimum level
-     * of conformance with the applicable standards. <p>
+     * Regardless, reporting is done only in system table content and is
+     * not yet carried over to ResultSetMetaData. <p>
      *
      * For greater detail, see discussion at:
      * {@link jdbcDatabaseMetaData}. <p>
@@ -1102,16 +847,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initCDependent();
 
-        // will safely be "" here, under any combination of
-        // 1.) initCDependent fails
-        // 2.) not currently reporting schema names
-        // 3.) result column does not directly correspond to a table column
-// CHECKME:  Which is right?  Probably this way until we fully support schemas
-//        if (!reportCDependent && !isTableColumn(column)) {
-//            throw cDependentException;
-//        }
         return columnMetaData[--column].schemaName;
     }
 
@@ -1163,7 +899,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].precision;
     }
@@ -1240,15 +975,18 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Up to and including 1.7.1, HSQLDB did not support the notion of
      * catalog and this method always returned "". <p>
      *
-     * Starting with 1.7.2, HSQLDB supports this only as an optional,
-     * experimental feature that is disabled by default. Enabling this
-     * feature requires setting the database property "hsqldb.catalogs=true".
-     * When enabled, the catalog name for table columns is reported as the
-     * name by which the hosting Database knows itself. <p>
+     * Starting with 1.7.2, HSQLDB supports catalog reporting only as an 
+     * optional, experimental feature that is disabled by default. Enabling
+     * this feature requires setting the database property 
+     * "hsqldb.catalogs=true". When enabled, the catalog name for table columns
+     * is reported as the name by which the hosting Database knows itself. <p>
      *
      * HSQLDB does not yet support any use of catalog qualification in
      * DLL or DML. This fact is accurately indicated in the corresponding
      * DatabaseMetaData.supportsXXX() method return values. <p>
+     *
+     * Regardless, reporting is done only in system table content and is
+     * not yet carried over to ResultSetMetaData. <p>    
      *
      * For greater detail, see discussion at:
      * {@link jdbcDatabaseMetaData}. <p>
@@ -1268,16 +1006,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initCDependent();
 
-        // will safely be "" here, under any combination of
-        // 1.) initCDependent fails
-        // 2.) not currently reporting catalog name
-        // 3.) column does not directly correspond to a table column
-// CHECKME:  Which is right? Probably this way until we fully support catalogs
-//        if (!reportCDependent && !isTableColumn(column)) {
-//            throw cDependentException;
-//        }
         return columnMetaData[--column].catalogName;
     }
 
@@ -1313,28 +1042,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         int type = columnMetaData[--column].columnType;
 
-        // TODO:
-        // we're trying to get away from reporting non-standard type codes
-        // for what really amount to standard types with slighly different
-        // behaviour.
-        //
-        // The data type *name* is still reported correctly as:
-        //
-        // "VARCHAR_IGNORECASE"
-        //
-        // ... and the fact that this column type is not case sensitive is
-        // reflected properly in the return value of isCaseSensitive(),
-        // as well as in the SYSTEM_TYPEINFO and SYSTEM_COLUMNS system tables,
-        // (by way of their newly introduced TYPE_SUB columns) so there is no
-        // good reason to report Column.VARCHAR_IGNORECASE (100) as the type
-        // code here.
-        //
-        // Thus, eventually, we should transmit both the SQL type code and
-        // the HSQLDB typeSub values with the Result.  We can, for instance,
-        // encode these into a single value for efficient transmission
-        // (e.g. using high bytes for extention info and low bytes for SQL
-        // type), reducing transport overhead.
-        // (see: org.hsqldb.Library.getCDColumnMetaData)
         return type == Types.VARCHAR_IGNORECASE ? Types.VARCHAR
                                                 : type;
     }
@@ -1360,8 +1067,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].columnTypeName;
     }
 
-    /**
-     * <!-- start generic documentation -->
+    /** <!-- start generic documentation -->
      * Indicates whether the designated column is definitely not writable.<p>
      * <!-- end generic documentation -->
      *
@@ -1374,19 +1080,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * Starting with HSQLDB 1.7.2, this feature is better supported. <p>
      *
-     * Regardless of the new and better support for reporting isReadOnly(),
-     * it is still possible under certain conditions that accurate reporting
-     * may be impossible. For example, if this object's parent Connection is
-     * closed before the first call to this method or to any other method of
-     * this class that initializes the connection-dependent ResultSetMetaData
-     * values, then it is impossible to report accurately for result set
-     * columns that directly represent table column values. <p>
-     *
-     * Under such special circumstances, the driver rethrows the exception that
-     * occured during the initialization, or a SQLException wrapping it. <p>
-     *
-     * true is always reported for result set columns that do not directly
-     * represent table column values (i.e. are calculated). <p>
+     * For result set columns that do not directly
+     * represent table column values (i.e. are calculated), true is reported.
+     * Otherwise, the read only status of the table and the database are used
+     * in the calculation, but not the read-only status of the session. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1397,21 +1094,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     public boolean isReadOnly(int column) throws SQLException {
 
         checkColumn(column);
-        initCDependent();
 
-        column--;
-
-        if (!reportCDependent &&!isTableColumn(column)) {
-
-            // return false;
-            throw cDependentException;
-        }
-
-        return columnMetaData[column].isReadOnly;
+        return columnMetaData[--column].isReadOnly;
     }
 
-    /**
-     * <!-- start generic documentation -->
+    /** <!-- start generic documentation -->
      * Indicates whether it is possible for a write on the designated
      * column to succeed. <p>
      * <!-- end generic documentation -->
@@ -1425,23 +1112,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * Starting with HSQLDB 1.7.2, this feature is better supported. <p>
      *
-     * Regardless of the new and better support for reporting isWritable(),
-     * it is still possible under certain conditions that accurate reporting
-     * may be impossible. For example, if this object's parent Connection is
-     * closed before the first call to this method or to any other method of
-     * this class that initializes the connection-dependent  ResultSetMetaData
-     * values, then it is impossible to report accurately for result set
-     * columns that directly represent table column values. <p>
-     *
-     * Under such special circumstances, the driver rethrows the exception that
-     * occured during the initialization, or a SQLException wrapping it. <p>
-     *
-     * false is always reported for result set columns that do not directly
-     * represent table column values (i.e. are calculated). <p>
+     * In essense, the negation of isReadOnly() is reported. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -1453,21 +1127,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initCDependent();
 
-        column--;
-
-        if (!reportCDependent &&!isTableColumn(column)) {
-
-            // return true;
-            throw cDependentException;
-        }
-
-        return columnMetaData[column].isWritable;
+        return columnMetaData[--column].isWritable;
     }
 
-    /**
-     * <!-- start generic documentation -->
+    /** <!-- start generic documentation -->
      * Indicates whether a write on the designated column will definitely
      * succeed. <p>
      * <!-- end generic documentation -->
@@ -1478,21 +1142,16 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * HSQLDB 1.7.1 did not support reporting this value accurately. <p>
      *
-     * Starting with HSQLDB 1.7.2, this method always returns false, since
-     * it is always false for calculated columns, is generally impossible
-     * to calculate deterministically true for table columns under all
-     * conditions, deemed to require too much overhead to even attempt to
-     * calculate accurately for table columns and deemed to be currently
-     * of dubious usefulness, regardless. <p>
-     *
-     * This situation may change at some point in the future, if,  for
-     * instance, updateable result sets become supported using "SELECT ...
-     * FOR UPDATE" style locking.  However, this is not anticipated to occur
-     * any time in the 1.7.x release series. <p>
+     * Starting with HSQLDB 1.7.2, this method always returns false. The
+     * reason for this is that it is generally either very complex or
+     * simply impossible to calculate deterministically true for table columns
+     * under all concievable conditions. The value is of dubious usefulness, except
+     * perhaps if there were support for updateable result sets using
+     * "SELECT ... FOR UPDATE" style locking.  However, this is not anticipated to
+     * occur any time in the 1.7.x release series. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -1563,253 +1222,40 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         checkColumn(column);
-        initDerived();
 
         return columnMetaData[--column].columnClassName;
     }
 
-// ------------------------- Internal Implementation ---------------------------
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
 
-    /**
-     * Initializes connection-dependent values. <p>
-     *
-     * This method sets up the initialization of connection-dependent return
-     * values not transmitted with this object's parent ResultSet and that,
-     * consequentially, must be retrieved at some later point through this
-     * object's parent connection.  The actual code for the initialization
-     * is in the initCDependentImpl method, which is called by this method
-     * in a fail-safe manner, simply noting if there was an implementation
-     * failure for later use by connection-dependent value methods.
-     */
-    private void initCDependent() {
+        sb.append(super.toString());
 
-        if (cDependentInitialized) {
-            return;
+        if (columnCount == 0) {
+            sb.append("[columnCount=0]");
+            return sb.toString();
         }
 
-        cDependentInitialized = true;
-        cDependentException   = null;
-
-        if (TRACE) {
-            sw.zero();
-        }
-
-        try {
-            initCDependentImpl();
-
-            reportCDependent = true;
-        } catch (Exception e) {
-            if (e instanceof SQLException) {
-                cDependentException = (SQLException) e;
-            } else {
-                cDependentException =
-                    jdbcDriver.sqlException(Trace.GENERAL_ERROR,
-                                            e.toString());
-            }
-
-            reportCDependent = false;
-        }
-
-        // regardless of exception status,
-        // we don't need this anymore...
-        // so free up for gc, just in case nobody
-        // else holds a reference either.
-        conn = null;
-
-        if (TRACE) {
-            Trace.printSystemOut(sw.elapsedTimeToMessage(this
-                    + ".initCDependent"));
-        }
-    }
-
-    /**
-     * Initializes derivable values that are not also
-     * connection-dependent. <p>
-     *
-     * Initializes the return values that depend on statically
-     * known information, possibly in combination with the
-     * column values of this object's parent ResultSet.
-     */
-    private void initDerived() {
-
-        DITypeInfo         ti;
-        ResultSet          rs;
-        jdbcColumnMetaData cmd;
-        Result             rResult;
-
-        if (derivedInitialized) {
-            return;
-        }
-
-        derivedInitialized = true;
-
-        // regardless of exception status below,
-        // we won't need this anymore...
-        // so free up for gc, just in case nobody
-        // else holds a reference either.
-        rResult      = this.rResult;
-        this.rResult = null;
-
-        if (TRACE) {
-            sw.zero();
-        }
-
-        ti = new DITypeInfo();
+        sb.append('[');
 
         for (int i = 0; i < columnCount; i++) {
-            cmd = columnMetaData[i];
-
-            int ditype     = cmd.columnType;
-            int ditype_sub = Types.TYPE_SUB_DEFAULT;
-
-            if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
-                ditype     = Types.VARCHAR;
-                ditype_sub = Types.TYPE_SUB_IGNORECASE;
-            }
-
-            ti.setTypeCode(ditype);
-            ti.setTypeSub(ditype_sub);
-
-            cmd.columnClassName = ti.getColStClsName();
-
-            Integer precision = ti.getPrecision();
-
-            cmd.precision = precision == null ? 0
-                                              : precision.intValue();
-
-            Boolean iua = ti.isUnsignedAttribute();
-
-            cmd.isSigned = iua != null &&!iua.booleanValue();
-
-            Boolean ics = ti.isCaseSensitive();
-
-            cmd.isCaseSensitive = ics != null && ics.booleanValue();
-
-            Integer sc = ti.getSearchability();
-
-            cmd.isSearchable = sc != null
-                               && sc.intValue()
-                                  != DatabaseMetaData.typePredNone;
-            cmd.columnDisplaySize = ti.getMaxDisplaySize();
-
-            if (cmd.columnDisplaySize > 0
-                    && cmd.columnDisplaySize <= MIN_DISPLAY_SIZE) {
-                cmd.columnDisplaySize = MIN_DISPLAY_SIZE;
-            } else if (cmd.columnDisplaySize <= MAX_DISPLAY_SIZE) {
-
-                // do nothing
-            } else {
-                String val;
-                int    rc;
-                int    len;
-                int    max;
-
-                rc  = 0;
-                max = MIN_DISPLAY_SIZE;
-
-                try {
-                    rs = new jdbcResultSet(null, rResult, null);
-
-                    while (rs.next() && rc < MAX_SCAN) {
-                        val = rs.getString(i + 1);
-
-                        if (val != null) {
-                            len = val.length();
-
-                            if (len >= MAX_DISPLAY_SIZE) {
-                                max = MAX_DISPLAY_SIZE;
-
-                                break;
-                            } else if (len > max) {
-                                max = len;
-                            }
-                        }
-
-                        rc++;
-                    }
-                } catch (Exception e) {    /* Should never happen */
-                }
-
-                cmd.columnDisplaySize = max;
-            }
+            sb.append('\n');
+            sb.append("   column_");
+            sb.append(i + 1);
+            sb.append('=');
+            sb.append(columnMetaData[i]);
+            sb.append(',');
+            sb.append(' ');
         }
 
-        if (TRACE) {
-            Trace.printSystemOut(sw.elapsedTimeToMessage(this
-                    + ".initDerived"));
-        }
+        sb.setLength(sb.length() - 2);
+        sb.append('\n');
+        sb.append(']');
+
+        return sb.toString();
     }
 
-    /**
-     * Implements the initialization of connection-dependent values. <p>
-     *
-     * This is an internal implementation method for initializing
-     * connection-dependent return values not transmitted with this object's
-     * parent ResultSet and that, consequentially, must be retrieved at some
-     * later point through this object's parent Connection object. <p>
-     *
-     * @throws Exception If a database access error occurs
-     */
-    private void initCDependentImpl() throws Exception {
-
-        ResultSet          rs;
-        jdbcColumnMetaData cmd;
-        StringBuffer       sb;
-        HsqlArrayList      tcn;
-        int                i;
-        int                size;
-
-        // required init
-        tcn = new HsqlArrayList();
-        sb  = null;
-
-        for (i = 0; i < columnCount; i++) {
-            if (isTableColumn(i)) {
-                if (tcn.size() == 0) {
-
-                    // this may never happen:
-                    // we have encountered the first
-                    // candidate table column descriptor
-                    // so now we need to start building the list
-                    // of (table,column) pairs in the string buffer
-                    sb = new StringBuffer();
-                } else {
-                    sb.append(',');
-                }
-
-                tcn.add(ValuePool.getInt(i));
-
-                cmd = columnMetaData[i];
-
-                sb.append(Column.createSQLString(cmd.tableName));
-                sb.append(',');
-                sb.append(Column.createSQLString(cmd.columnName));
-            }
-        }
-
-        size = tcn.size();
-
-        if (size > 0) {
-            String sql = "call \"org.hsqldb.Library.getCDColumnMetaData\"("
-                         + Column.createSQLString(sb.toString()) + ")";
-
-            rs = conn.createStatement().executeQuery(sql);
-            i  = 0;
-
-            while (rs.next() && i < size) {
-                cmd = columnMetaData[((Integer) tcn.get(i++)).intValue()];
-                cmd.catalogName     = rs.getString(1);
-                cmd.schemaName      = rs.getString(2);
-                cmd.isAutoIncrement = rs.getBoolean(3);
-                cmd.isNullable      = rs.getBoolean(4) ? columnNullable
-                                                       : rs.wasNull()
-                                                       ? columnNullableUnknown
-                                                       : columnNoNulls;
-                cmd.isReadOnly = rs.getBoolean(5);
-                cmd.isWritable = !cmd.isReadOnly;
-            }
-        }
-    }
+// ------------------------- Internal Implementation ---------------------------
 
     /**
      * Performs an internal check for column index validity. <p>
@@ -1824,18 +1270,5 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
                                           String.valueOf(column));
         }
-    }
-
-    /**
-     * Retrieves whether the indicated column corresponds directly to a table
-     * column in the query expression generating the result. <p>
-     *
-     * @param column the first column is 0, the second is 1, ...
-     * @return true if the indicated column corresponds to direct table
-     *      column in the query that genrated the result
-     */
-    boolean isTableColumn(int column) {
-        return columnMetaData[column].tableName.length() > 0
-               && columnMetaData[column].columnName.length() > 0;
-    }
+    }   
 }

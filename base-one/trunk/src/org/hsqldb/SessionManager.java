@@ -86,9 +86,7 @@ public class SessionManager {
 // Eliminate the Database-centric nature of SessionManager.
 // e.g. Sessions should be able to migrate from one Database instance
 // to another using session control language moderated by
-// SessionManager interacting with HsqlRuntime (a.k.a. Connection.setCatalog()).
-// Possibly, make SessionManager an attribute of HsqlRuntime, rather than of
-// Database.
+// SessionManager
 
     /**
      * Constructs an new SessionManager handling the specified Database using
@@ -107,8 +105,7 @@ public class SessionManager {
 //           databases hosted by an existing Server, connect to a
 //           Database...
 //
-// REQUIRES:  HsqlRuntime auth scheme independent of any particular
-//            Database instance
+// REQUIRES:  auth scheme independent of any particular Database instance
 //            e.g. provide service to use /etc/passwd and /etc/groups,
 //                 JAAS-plugin, etc.
 
@@ -168,7 +165,7 @@ public class SessionManager {
     }
 
     /**
-     *  Handles the work requested by specified Session as a rewult of
+     *  Handles the work requested by specified Session as a result of
      *  having issued the DISCONNECT SQL statement.
      *
      * @param  session to disconnect

@@ -1369,7 +1369,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
-        rs = session.sqlExecuteDirect(
+        rs = session.sqlExecuteDirectNoPreChecks(
             (new StringBuffer(185)).append("select").append(' ').append(
                 "a.").append("TRIGGER_CAT").append(',').append("a.").append(
                 "TRIGGER_SCHEM").append(',').append("a.").append(
@@ -1884,6 +1884,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Iterator  tables;
         Table     table;
         Object[]  row;
+        Session   sys;
         final int icat   = 0;
         final int ischem = 1;
         final int iname  = 2;
@@ -1893,6 +1894,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int ivalid = 6;
 
         tables = database.getTables().iterator();
+        sys    = database.sessionManager.getSysSession();
 
         while (tables.hasNext()) {
             table = (Table) tables.next();
@@ -1915,7 +1917,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
                 tokenizer.getThis("SELECT");
 
-                parser = new Parser(database, tokenizer, session);
+                parser = new Parser(database, tokenizer, sys);
                 select = parser.parseSelect();
 
                 select.resolve();

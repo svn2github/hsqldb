@@ -437,6 +437,30 @@ final class DINameSpace {
      * <LI> if the specifed object is <code>null</code>, then <code>null</code>
      *      is returned immediately.
      *
+     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
+     *      instance and it is a system table, then "DEFINITION_SCHEMA" is
+     *      returned.
+     *
+     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
+     *      instance and is a system view, then "INFORMATION_SCHEMA" is
+     *      returned.
+     *
+     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
+     *      instance and it is a temp table, then either the name of the
+     *      owning session user is returned, or null is returned if the owning
+     *      session cannot be found in the context of this name space. 
+     *
+     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
+     *      instance and it is has not been covered by any of the previous
+     *      cases, then it is assumed to be a regular user-defined table
+     *      and "PUBLIC" is returned. 
+     *
+     * <LI> if the specified object is an <code>org.hsqldb.Index</code>
+     *      instance, then either the name of the schema of the table
+     *      containing the index is returned, or null is returned if no table
+     *      containing the index object can be found in the context of this
+     *      name space.         
+     *    
      * <LI> if the specified object is a String instance, then it is checked to
      *      see if it names a built in DOMAIN or Class.  If it does, then
      *      "DEFINITION_SCHEMA" is returned.  If it does not, then an attempt
@@ -450,44 +474,33 @@ final class DINameSpace {
      *      Otherwise, "PUBLIC" is returned, indicating a user-defined database
      *      object.
      *
-     * <LI> if the specified object is an <code>org.hsqldb.Index</code>
-     *      instance, then either the name of the schema of the table
-     *      containing the index is returned, or null is returned if no table
-     *      containing the index object can be found in the context of this
-     *      name space.
-     *
-     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
-     *      instance and it is a system table, then "DEFINITION_SCHEMA" is
-     *      returned.
-     *
-     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
-     *      instance and it is a temp table, then either the name of the
-     *      owning session user is returned, or null is returned if the owning
-     *      session cannot be found in the context of this name space.
-     *
-     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
-     *      instance and is a system view, then "INFORMATION_SCHEMA" is
-     *      returned.
-     *
-     * <LI> if the specified object is an <code>org.hsqldb.Table</code>
-     *      instance and it is has not been covered by any of the previous
-     *      cases, then it is assumed to be a regular user-defined table
-     *      and "PUBLIC" is returned.
+     * <LI> if none of the above points are satisfied, null is returned.
      *
      * </OL> <p>
      *
      * @return the name of the schema qualifying the specified object, or null
-     *      if schema reporting is turned off or the specified object is null.
+     *      if schema reporting is turned off or the specified object is null
+     *      or cannot be qualified.
      * @param o the object for which the name of its qualifying schema is to
      *      be retrieved
      */
     String getSchemaName(Object o) {
 
         Class c;
+        Table table;
 
         if (!isReportSchemas() || o == null) {
             return null;
         }
+        
+        if (o instanceof Table) {
+            return ((Table)o).getSchemaName();
+        }
+
+        if (o instanceof Index) {
+            table = tableForIndex((Index) o);
+            return (table == null) ? null : table.getSchemaName(); 
+        }               
 
         if (o instanceof String) {
 
@@ -508,7 +521,6 @@ final class DINameSpace {
             } catch (Exception e) {
                 return null;
             }
-
             // ----------
         }
 
@@ -519,38 +531,11 @@ final class DINameSpace {
         } else if (o instanceof Class) {
             c = (Class) o;
         }
-
-        if (c != null) {
-            return (isBuiltin(c)) ? DEFN_SCHEMA
-                                  : PUB_SCHEMA;
-        }
-
-        Table table = null;
-
-        if (o instanceof Table) {
-            table = (Table) o;
-        } else if (o instanceof Index) {
-            table = tableForIndex((Index) o);
-        }
-
-        if (table == null) {
-            return null;
-        } else if (table.tableType == Table.SYSTEM_TABLE) {
-            return DEFN_SCHEMA;
-        } else if (table.tableType == Table.SYSTEM_VIEW) {
-            return INFO_SCHEMA;
-        } else if (table.isTemp()) {
-            int     id = table.ownerSessionId;
-            Session s  = database.sessionManager.getSession(id);
-
-            if (s != null && s.getId() == id) {
-                return s.getUsername();
-            }
-
-            return null;
-        } else {
-            return PUB_SCHEMA;
-        }
+        
+        return (c == null) ? null 
+                           : isBuiltin(c) 
+                           ? DEFN_SCHEMA
+                           : PUB_SCHEMA;
     }
 
     /**

@@ -92,7 +92,7 @@ class DatabaseScriptReader {
                 break;
             }
 
-            Result result = session.sqlExecuteDirect(lastLine);
+            Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
 
             if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
@@ -119,7 +119,7 @@ class DatabaseScriptReader {
                 break;
             }
 
-            Result result = session.sqlExecuteDirect(lastLine);
+            Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
 
             if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
