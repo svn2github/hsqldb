@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.18 2004/05/16 22:37:58 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.20 2004/05/17 13:08:18 fredt Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.18 $</edition>
-        <pubdate>$Date: 2004/05/16 22:37:58 $</pubdate>
+        <edition>$Revision: 1.20 $</edition>
+        <pubdate>$Date: 2004/05/17 13:08:18 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -186,8 +186,8 @@
                 Make sure that the bin directory under your Ant home is in your 
                 search path.
                 Run the following command.
-                </para><informalexample><programlisting>
-    ant jar</programlisting>
+                </para><informalexample><screen>
+    ant jar</screen>
                 </informalexample><para>
                 This will build a new
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
