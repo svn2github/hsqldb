@@ -109,7 +109,7 @@ class JDBCBench {
 
                     if (DriverName.equals("org.hsqldb.jdbcDriver")) {
                         tableExtension  = "CREATE CACHED TABLE ";
-                        ShutdownCommand = "SHUTDOWN COMPACT";
+                        ShutdownCommand = "SHUTDOWN";
                     }
                 }
             } else if (Args[i].equals("-url")) {
@@ -204,8 +204,12 @@ class JDBCBench {
         Vector      vClient = new Vector();
         Thread      Client  = null;
         Enumeration e       = null;
+        Connection guardian = null;
 
         try {
+            
+            guardian = connect(url,user,password);
+            
             if (init) {
                 System.out.println("Start: "
                                    + (new java.util.Date()).toString());
@@ -224,6 +228,7 @@ class JDBCBench {
 
             transactions  = false;
             prepared_stmt = false;
+            
             start_time    = System.currentTimeMillis();
 
             for (int i = 0; i < n_clients; i++) {
@@ -335,13 +340,12 @@ class JDBCBench {
                 MemoryWatcher.join();
 
                 if (ShutdownCommand.length() > 0) {
-                    Connection C    = connect(url, user, password);
-                    ;
-                    Statement  Stmt = C.createStatement();
+
+                    Statement  Stmt = guardian.createStatement();
 
                     Stmt.execute(ShutdownCommand);
                     Stmt.close();
-                    connectClose(C);
+                    connectClose(guardian);
                 }
 
                 if (TabFile != null) {

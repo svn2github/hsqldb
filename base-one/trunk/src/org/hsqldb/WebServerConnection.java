@@ -306,7 +306,8 @@ class WebServerConnection implements Runnable {
                         DatabaseManager.newSession(server.dbType,
                                                    server.dbPath,
                                                    resultIn.getMainString(),
-                                                   resultIn.getSubString());
+                                                   resultIn.getSubString(),
+                                                   true);
 
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
                     resultOut.sessionID = session.getId();

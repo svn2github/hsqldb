@@ -180,7 +180,9 @@ public class Trace extends PrintWriter {
                                   BAD_IDENTITY_VALUE                  = 77,
                                   ERROR_IN_SCRIPT_FILE                = 78,
                                   NULL_IN_VALUE_LIST                  = 79,
+                                  // socket errors
                                   SOCKET_ERROR                        = 80,
+
                                   INVALID_CHARACTER_ENCODING          = 81,
                                   NO_CLASSLOADER_FOR_TLS              = 82,
                                   NO_JSSE                             = 83,
@@ -193,7 +195,9 @@ public class Trace extends PrintWriter {
                                   NO_PRINCIPAL                        = 90,
                                   INCOMPLETE_CERTIFICATE              = 91,
                                   TLS_HOSTNAME_MISMATCH               = 92,
-                                  KEYSTORE_PROBLEM                    = 93
+                                  KEYSTORE_PROBLEM                    = 93,
+                                  // more errors
+                                  DATABASE_NOT_EXISTS                 = 94
     ;
     private static final String[] sDescription                        = {
         "NOT USED", "08001 The database is already in use by another process",
@@ -267,6 +271,8 @@ public class Trace extends PrintWriter {
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
         "08000 reserved for KEYSTORE_PROBLEM",
+        //
+        "08003 Database does not exists",
     };
 
     static {

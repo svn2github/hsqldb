@@ -116,8 +116,7 @@ class Session implements SessionInterface {
         new Result(ResultConstants.UPDATECOUNT);
 
 /** @todo fredt - clarify in which circumstances Session has to disconnet */
-
-    public Session getSession(){
+    public Session getSession() {
         return this;
     }
 
@@ -165,7 +164,9 @@ class Session implements SessionInterface {
     public void close() {
 
         if (!isClosed) {
-            dDatabase.sessionManager.processDisconnect(this);
+            synchronized (dDatabase) {
+                dDatabase.sessionManager.processDisconnect(this);
+            }
         }
     }
 
@@ -267,10 +268,8 @@ class Session implements SessionInterface {
      * NB this is dedicated to the SET MAXROWS sql statement and should not
      * otherwise be called
      */
-
     void setSQLMaxRows(int rows) {
-        currentMaxRows =
-        sessionMaxRows = rows;
+        currentMaxRows = sessionMaxRows = rows;
     }
 
     /**
@@ -399,10 +398,12 @@ class Session implements SessionInterface {
 
         int i = tTransaction.size();
 
-        while (i-- > 0) {
-            Transaction t = (Transaction) tTransaction.get(i);
+        synchronized (dDatabase) {
+            while (i-- > 0) {
+                Transaction t = (Transaction) tTransaction.get(i);
 
-            t.rollback(this);
+                t.rollback(this);
+            }
         }
 
         tTransaction.clear();
@@ -441,7 +442,7 @@ class Session implements SessionInterface {
         int index = -1;
 
         if (savepoints != null) {
-            index = savepoints.get(name,-1);
+            index = savepoints.get(name, -1);
         }
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
@@ -579,7 +580,7 @@ class Session implements SessionInterface {
 
     String getAutoCommitStatement() {
         return isAutoCommit ? "SET AUTOCOMMIT TRUE"
-                    : "SET AUTOCOMMIT FALSE";
+                            : "SET AUTOCOMMIT FALSE";
     }
 
     /**
@@ -745,48 +746,52 @@ class Session implements SessionInterface {
 
         int type = cmd.iMode;
 
-        if ( sessionMaxRows == 0 ) {
-            currentMaxRows = cmd.iUpdateCount;
-        }
+        synchronized (dDatabase) {
+            if (sessionMaxRows == 0) {
+                currentMaxRows = cmd.iUpdateCount;
+            }
 
-        DatabaseManager.gc();
+            DatabaseManager.gc();
 
-        switch (type) {
+            switch (type) {
 
-            case ResultConstants.SQLEXECUTE :
-                if (cmd.getSize() > 1) {
-                    return sqlExecuteBatch(cmd);
-                } else {
-                    return sqlExecute(cmd);
-                }
-            case ResultConstants.SQLEXECDIRECT :
-                return dbCommandInterpreter.execute(cmd.getMainString());
+                case ResultConstants.SQLEXECUTE :
+                    if (cmd.getSize() > 1) {
+                        return sqlExecuteBatch(cmd);
+                    } else {
+                        return sqlExecute(cmd);
+                    }
+                case ResultConstants.SQLEXECDIRECT :
+                    return dbCommandInterpreter.execute(cmd.getMainString());
 
-            case ResultConstants.SQLPREPARE :
-                return sqlPrepare(cmd.getMainString());
+                case ResultConstants.SQLPREPARE :
+                    return sqlPrepare(cmd.getMainString());
 
-            case ResultConstants.SQLFREESTMT :
-                return sqlFreeStatement(cmd.getIDCode());
+                case ResultConstants.SQLFREESTMT :
+                    return sqlFreeStatement(cmd.getIDCode());
 
-            case ResultConstants.SQLGETSESSIONINFO :
-                return getAttributes();
+                case ResultConstants.SQLGETSESSIONINFO :
+                    return getAttributes();
 
-            case ResultConstants.SQLSETENVATTR :
+                case ResultConstants.SQLSETENVATTR :
+                    return setAttributes(cmd);
 
-                return setAttributes(cmd);
+                case ResultConstants.SQLENDTRAN :
+                    commit();
 
-            case ResultConstants.SQLENDTRAN :
-                commit();
-                return emptyUpdateCount;
+                    return emptyUpdateCount;
 
-            case ResultConstants.SQLSTARTTRAN :
-                rollback();
-                return emptyUpdateCount;
-            default :
-                String msg = "operation type:" + type;
+                case ResultConstants.SQLSTARTTRAN :
+                    rollback();
 
-                return new Result(msg, "s1000",
-                                  Trace.OPERATION_NOT_SUPPORTED);
+                    return emptyUpdateCount;
+
+                default :
+                    String msg = "operation type:" + type;
+
+                    return new Result(msg, "s1000",
+                                      Trace.OPERATION_NOT_SUPPORTED);
+            }
         }
     }
 

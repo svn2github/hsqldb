@@ -142,13 +142,18 @@ public class Servlet extends javax.servlet.http.HttpServlet {
 
         if (dbURL == null) {
             errorStr = "Bad Database name";
-
-            log(errorStr);
         } else {
             dbPath = dbURL.getProperty("database");
             dbType = dbURL.getProperty("connection_type");
+
+            try {
+                DatabaseManager.getDatabase(dbType, dbPath, false);
+            } catch (HsqlException e) {
+                errorStr = e.getMessage();
+            }
         }
 
+        log(errorStr);
         log("Initialization completed.");
     }
 
@@ -227,7 +232,6 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                        HttpServletResponse response)
                        throws IOException, ServletException {
 
-
         try {
             DataInputStream inStream =
                 new DataInputStream(request.getInputStream());
@@ -242,7 +246,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                 try {
                     Session session = DatabaseManager.newSession(dbType,
                         dbPath, resultIn.getMainString(),
-                        resultIn.getSubString());
+                        resultIn.getSubString(), true);
 
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
                     resultOut.sessionID = session.getId();

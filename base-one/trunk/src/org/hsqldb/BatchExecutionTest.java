@@ -55,17 +55,18 @@ public class BatchExecutionTest implements Types {
     };
     static final String update_sql =
         "update test set fname = 'Hans' where id = ?";
-    static final int[]       update_ptypes = new int[]{ INTEGER };
-    static final String      select_sql = "select * from test where id = ?";
-    static final int[]       select_ptypes = new int[]{ INTEGER };
-    static final String      delete_sql    = "delete from test where id = ?";
-    static final int[]       delete_ptypes = new int[]{ INTEGER };
-    static final String      def_db_path   = ".";
-    static final int         def_runs      = 3;
-    static final int         rows          = 10000;
+    static final int[]  update_ptypes = new int[]{ INTEGER };
+    static final String select_sql    = "select * from test where id = ?";
+    static final int[]  select_ptypes = new int[]{ INTEGER };
+    static final String delete_sql    = "delete from test where id = ?";
+    static final int[]  delete_ptypes = new int[]{ INTEGER };
+    static final String def_db_path   = ".";
+    static final int    def_runs      = 3;
+    static final int    rows          = 10000;
+
 //    static final HsqlRuntime runtime       = HsqlRuntime.getHsqlRuntime();
-    static Database          database;
-    static Session           session;
+    static Database database;
+    static Session  session;
 
     static void checkResult(Result r) throws Exception {
 
@@ -89,6 +90,7 @@ public class BatchExecutionTest implements Types {
         print(sw.elapsedTimeToMessage(rows + " " + cmd));
         println(" " + ((1000 * rows) / et) + " rows/s.");
     }
+
 /*
     static void printMemoryStats() {
 
@@ -104,7 +106,7 @@ public class BatchExecutionTest implements Types {
         Result r;
         Result o;
 
-        p       = new Result(ResultConstants.SQLPREPARE);
+        p = new Result(ResultConstants.SQLPREPARE);
 
         p.setMainString(sql);
 
@@ -138,8 +140,9 @@ public class BatchExecutionTest implements Types {
         } catch (Exception e) {}
 
         // get the database and its sys session
-        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE, db_path);
-        session  = database.sessionManager.getSysSession();
+        database = DatabaseManager.getDatabase(DatabaseManager.S_FILE,
+                                               db_path, false);
+        session = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
         println("featuring cached table");
@@ -161,8 +164,9 @@ public class BatchExecutionTest implements Types {
         println("---------------------------------------");
 
         // get the database and its sys session
-        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE,db_path);
-        session  = database.sessionManager.getSysSession();
+        database = DatabaseManager.getDatabase(DatabaseManager.S_FILE,
+                                               db_path, false);
+        session = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
         println("featuring memory table");
@@ -183,8 +187,9 @@ public class BatchExecutionTest implements Types {
         println("---------------------------------------");
 
         // get the database and its sys session
-        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE,db_path);
-        session  = database.sessionManager.getSysSession();
+        database = DatabaseManager.getDatabase(DatabaseManager.S_FILE,
+                                               db_path, false);
+        session = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
         println("featuring temp table");

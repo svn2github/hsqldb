@@ -54,7 +54,7 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
-    private static Method    savePropsMethod = null;
+    private static Method savePropsMethod = null;
 
     static {
         try {
@@ -84,6 +84,7 @@ public class HsqlProperties {
     }
 
     public HsqlProperties(String name, boolean b) {
+
         stringProps = new Properties();
         fileName    = name;
         resource    = b;
@@ -201,7 +202,13 @@ public class HsqlProperties {
     }
 
     public boolean checkFileExists() {
-        String      propFilename;
+        return checkFileExists(fileName, resource, getClass());
+    }
+
+    public static boolean checkFileExists(String fileName, boolean resource,
+                                          Class cla) {
+
+        String propFilename;
 
         if (fileName == null || fileName.length() == 0) {
             return false;
@@ -209,12 +216,12 @@ public class HsqlProperties {
 
         propFilename = fileName + ".properties";
 
-        return resource
-            ? null != getClass().getResource(propFilename)
-            : FileUtil.exists(propFilename);
+        return resource ? null != cla.getResource(propFilename)
+                        : FileUtil.exists(propFilename);
     }
 
     public boolean load() throws Exception {
+
         InputStream fis;
         String      propsFilename;
 
@@ -231,9 +238,8 @@ public class HsqlProperties {
         propsFilename = fileName + ".properties";
 
         try {
-            fis = resource
-                ? getClass().getResourceAsStream(propsFilename)
-                : new FileInputStream(new File(propsFilename));
+            fis = resource ? getClass().getResourceAsStream(propsFilename)
+                           : new FileInputStream(new File(propsFilename));
 
             stringProps.load(fis);
         } finally {
@@ -341,7 +347,7 @@ public class HsqlProperties {
      * and the one that represents the semicolon is specified as delimiter,
      * allowing any string to be used for either.<p>
      *
-     * Leading and trailing spaces around the keys and values are discarded.<p>
+     * Leading / trailing spaces around the keys and values are discarded.<p>
      *
      * The string is parsed by (1) subdividing into segments by delimiter
      * (2) subdividing each segment in two by finding the first instance of

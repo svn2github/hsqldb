@@ -121,6 +121,7 @@ class Database {
     private String        sType;
     private String        sName;
     private String        sPath;
+    boolean                isNew;
     private UserManager   aAccess;
     private HsqlArrayList tTable;
     DatabaseInformation   dInfo;
@@ -151,14 +152,13 @@ class Database {
     private HsqlDatabaseProperties databaseProperties;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
-    final static int               DATABASE_ONLINE   = 1;
-    final static int               DATABASE_OPENING  = 4;
-    final static int               DATABASE_CLOSING  = 8;
-    final static int               DATABASE_SHUTDOWN = 16;
-
+    final static int               DATABASE_ONLINE       = 1;
+    final static int               DATABASE_OPENING      = 4;
+    final static int               DATABASE_CLOSING      = 8;
+    final static int               DATABASE_SHUTDOWN     = 16;
     final static int               CLOSEMODE_IMMEDIATELY = -1;
-    final static int               CLOSEMODE_NORMAL = 0;
-    final static int               CLOSEMODE_COMPACT = 1;
+    final static int               CLOSEMODE_NORMAL      = 0;
+    final static int               CLOSEMODE_COMPACT     = 1;
 
     /**
      *  Constructs a new Database object having the specified canonical name,
@@ -199,6 +199,9 @@ class Database {
         compiledStatementManager = new CompiledStatementManager(this);
 
         setState(Database.DATABASE_SHUTDOWN);
+
+        isNew = !HsqlProperties.checkFileExists(path, this.isFilesInJar(),
+                    getClass());
     }
 
     /**

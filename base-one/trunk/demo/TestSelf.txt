@@ -121,7 +121,7 @@ insert into invoice select * from invoice where not total>=0.
 update invoice set total=10 where total < 0
 insert into invoice values(2,10)
 select * from system_tables
-select * from SYSTEM_CONNECTIONINFO
+select * from SYSTEM_SESSIONINFO
 create table t_double(id integer,d double,f double)
 insert into t_double values(1,1.2,1.4)
 insert into t_double values(2,1.4,1.0)

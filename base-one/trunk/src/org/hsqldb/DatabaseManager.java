@@ -88,13 +88,19 @@ class DatabaseManager {
     static HashMap         databaseFileMap   = new HashMap();
 
     static Session newSession(String type, String path, String user,
-                              String password) throws HsqlException {
+                              String password,
+                              boolean ifexists) throws HsqlException {
 
-        Database db = getDatabase(type, path);
+        Database db = getDatabase(type, path, ifexists);
 
         return db.connect(user, password);
     }
 
+    /**
+     * This returns an existing session. Used with repeat HTTP connections
+     * belonging to the same JDBC Conenction / HSQL Session pair.
+     *
+     */
     static Session getSession(String type, String path,
                               int id) throws HsqlException {
 
@@ -105,24 +111,39 @@ class DatabaseManager {
 
     /**
      * This has to be improved once a threading model is in place.
+     * Current behaviour:
+     *
+     * Attempts to connect to different databases do not block. Two db's can
+     * open simultaneously.
+     *
+     * Attempts to connect to a db while it is opening or closing will block
+     * until the db is open or closed. At this point the db state is either
+     * DATABASE_ONLINE (after db.open() has returned) which allows a new
+     * connection to be made, or the state is DATABASE_SHUTDOWN which means
+     * the db can be reopened for the new connection).
+     *
      */
+    static Database getDatabase(String type, String path,
+                                boolean ifexists) throws HsqlException {
 
-    static Database getDatabase(String type,
-                                String path) throws HsqlException {
+        Database db = getDatabaseObject(type, path, ifexists);
 
-        Database db = getDatabaseObject(type, path);
+        synchronized (db) {
+            switch (db.getState()) {
 
-        switch (db.getState()) {
+                case Database.DATABASE_ONLINE :
+                    break;
 
-            case Database.DATABASE_ONLINE :
-                break;
-            case Database.DATABASE_SHUTDOWN :
-                db.open();
-                break;
+                case Database.DATABASE_SHUTDOWN :
+                    db.open();
+                    break;
 
-            case Database.DATABASE_CLOSING :
-            case Database.DATABASE_OPENING :
-
+                case Database.DATABASE_CLOSING :
+                case Database.DATABASE_OPENING :
+                    throw Trace.error(
+                        Trace.DATABASE_ALREADY_IN_USE,
+                        "attempt to connect while db opening /closing");
+            }
         }
 
         return db;
@@ -132,9 +153,8 @@ class DatabaseManager {
      * The access counters maintained by this and other methods are not
      * actually used in the engine.
      */
-
-    static synchronized Database getDatabaseObject(String type,
-            String path) throws HsqlException {
+    static synchronized Database getDatabaseObject(String type, String path,
+            boolean ifexists) throws HsqlException {
 
         Database db;
         Object   key = path;
@@ -153,6 +173,10 @@ class DatabaseManager {
 
         if (db == null) {
             db = new Database(path, path, type);
+
+            if (ifexists && db.isNew) {
+                throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);
+            }
 
             databaseMap.put(key, db);
             databaseAccessMap.put(db, 1);
@@ -189,7 +213,8 @@ class DatabaseManager {
         return (Database) databaseMap.get(key);
     }
 
-    static synchronized void releaseSession(Database database) throws HsqlException {
+    static synchronized void releaseSession(Database database)
+    throws HsqlException {
 
         int accessCount = databaseAccessMap.get(database, Integer.MIN_VALUE);
 
@@ -202,7 +227,7 @@ class DatabaseManager {
     }
 
     static synchronized void releaseDatabase(String type,
-                                String path) throws HsqlException {
+            String path) throws HsqlException {
 
         Database database = lookupDatabaseObject(type, path);
 
@@ -271,21 +296,23 @@ class DatabaseManager {
     /**
      * Parses the url into the following components returned in the properties
      * object: <p>
-     * url: the original url
+     * <ul>
+     * url: the original url<p>
      * connection_type: a static string that indicate the protocol. If the
      * url does not begin with a valid protocol, null is returned by this
-     * method instead of the properties object.<br>
+     * method instead of the properties object.<p>
+     * host: name of host in networked modes in lowercase<p>
+     * port: port number in networked mode, or 0 if not present<p>
+     * path: path of the resource on server in networked modes,
+     * / (slash) in all cases apart from
+     * servlet path which is / (slash) plus the name of the servlet<p>
      * database: database name. For memory and networked modes, this is
      * returned in lowercase, for file or resource databases the original
      * case of characters is preserved. Returns empty string if name is not
-     * present in the url. For Servlet connections, database consists of the
-     * absolute path of the HsqlServlet/database name<br>
-     * host: name of host in networked modes in lowercase<br>
-     * port: port number in networked mode. Uses the default port number
-     * for each protocol if port number is not in the url <br>
-     *
+     * present in the url.<p>
+     * for each protocol if port number is not in the url<p>
      * Additional connection properties specified as key/value pairs.
-     *
+     * </ul>
      * @return null returned if url does not begin with valid protocol or the
      * part that should represent the port is not an integer.
      *
@@ -298,16 +325,14 @@ class DatabaseManager {
             return null;
         }
 
-        HsqlProperties props     = new HsqlProperties();
-        int            pos       = hasPrefix ? S_URL_PREFIX.length()
-                                                 : 0;
-        //
-        String host;
-
-        int            port      = 0;
-        String database;
-
-        String         type      = null;
+        HsqlProperties props = new HsqlProperties();
+        int            pos   = hasPrefix ? S_URL_PREFIX.length()
+                                         : 0;
+        String         type  = null;
+        String         host;
+        int            port = 0;
+        String         database;
+        String         path;
         boolean        isNetwork = false;
 
         props.setProperty("url", url);
@@ -350,24 +375,14 @@ class DatabaseManager {
             pos += type.length();
         }
 
-        int nextPos = url.indexOf(';', pos);
-
-        if (nextPos < 0) {
-            nextPos = url.length();
-        }
-
         props.setProperty("connection_type", type);
-/*
-        if (type == S_FILE || type == S_RES) {
-            url = url.substring(pos, nextPos);
-        } else {
-            url = urlImage.substring(pos, nextPos);
-        }
-*/
-        url = url.substring(pos, nextPos);
 
-        if (nextPos != urlImage.length()) {
-            String arguments = urlImage.substring(nextPos + 1,
+        int semiCoPos = url.indexOf(';', pos);
+
+        if (semiCoPos < 0) {
+            semiCoPos = url.length();
+        } else {
+            String arguments = urlImage.substring(semiCoPos + 1,
                                                   urlImage.length());
             HsqlProperties extraProps =
                 HsqlProperties.delimitedArgPairsToProps(arguments, "=", ";",
@@ -378,33 +393,46 @@ class DatabaseManager {
         }
 
         if (isNetwork) {
-            pos = url.indexOf('/');
+            int slashpos = url.indexOf('/', pos);
 
-            if (pos < 0) {
-                database = "";
-            } else {
-                database = url.substring(pos + 1, url.length());
-                url      = url.substring(0, pos);
+            if (slashpos < pos || slashpos > semiCoPos) {
+                slashpos = semiCoPos;
             }
 
-            pos = url.indexOf(':');
+            int colonpos = url.indexOf(':', pos);
 
-            if (pos >= 0) {
+            if (colonpos < pos || colonpos > slashpos) {
+                colonpos = slashpos;
+            } else {
                 try {
-                    port = Integer.parseInt(url.substring(pos + 1));
+                    port = Integer.parseInt(url.substring(colonpos + 1,
+                                                          slashpos));
                 } catch (NumberFormatException e) {
                     return null;
                 }
-
-                host = url.substring(0, pos);
-            } else {
-                host = url;
             }
+
+            host = urlImage.substring(pos, colonpos);
+            pos  = url.lastIndexOf('/', semiCoPos);
+
+            if (pos <= slashpos) {
+                path = "/";
+                database = "";
+            } else {
+                path = url.substring(slashpos, pos);
+                database = urlImage.substring(pos + 1, semiCoPos);
+            }
+
 
             props.setProperty("port", port);
             props.setProperty("host", host);
+            props.setProperty("path", path);
         } else {
-            database = url;
+            if (type == S_MEM) {
+                database = urlImage.substring(pos, semiCoPos);
+            } else {
+                database = url.substring(pos, semiCoPos);
+            }
         }
 
         props.setProperty("database", database);
@@ -422,4 +450,18 @@ class DatabaseManager {
     static final String S_HTTP       = "http://";
     static final String S_HTTPS      = "https://";
     static final String S_URL_PREFIX = "jdbc:hsqldb:";
+
+    /*
+    public static void main(String[] argv) {
+
+        parseURL("JDBC:hsqldb:HSQL://localhost:9000/mydb", true);
+        parseURL(
+            "JDBC:hsqldb:Http://localhost:8080/servlet/org.hsqldb.Servlet/mydb;ifexists=true",
+            true);
+        parseURL(
+            "JDBC:hsqldb:Http://localhost/servlet/org.hsqldb.Servlet/", true);
+        parseURL(
+            "JDBC:hsqldb:hsql://myhost", true);
+    }
+    */
 }

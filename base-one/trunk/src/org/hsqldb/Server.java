@@ -144,7 +144,8 @@ public class Server implements HsqlSocketRequestHandler {
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
 //-------------------------------- package -------------------------------------
-    HashSet        serverConnSet;
+    HashSet serverConnSet;
+
 //    Database       mDatabase;
     String         dbType;
     String         dbPath;
@@ -1168,6 +1169,7 @@ public class Server implements HsqlSocketRequestHandler {
         if (action != ServerConstants.SC_DATABASE_SHUTDOWN) {
             return;
         }
+
 /*
         if (mDatabase == null ||!mDatabase.isShutdown()) {
             return;
@@ -1352,11 +1354,13 @@ public class Server implements HsqlSocketRequestHandler {
             dbType = dbURL.getProperty("connection_type");
 
 //            if (mDatabase == null) {
-                trace("Opening database: [" + dbType + dbPath + "]");
+            trace("Opening database: [" + dbType + dbPath + "]");
 
-                sw        = new StopWatch();
-                Database db = DatabaseManager.getDatabase(dbType, dbPath);
-                DatabaseManager.registerServer(this, db);
+            sw = new StopWatch();
+
+            Database db = DatabaseManager.getDatabase(dbType, dbPath, false);
+
+            DatabaseManager.registerServer(this, db);
 /*
                 print(sw.elapsedTimeToMessage("Database opened sucessfully"));
             } else {
@@ -1468,13 +1472,12 @@ public class Server implements HsqlSocketRequestHandler {
         trace("releaseDB() entered");
 
         synchronized (mDatabase_mutex) {
-        try {
-
+            try {
 /*
                 if (mDatabase != null) {
 */
-                    trace("Releasing database: [" + dbType + dbPath + "]");
-                    DatabaseManager.releaseDatabase(dbType, dbPath);
+                trace("Releasing database: [" + dbType + dbPath + "]");
+                DatabaseManager.releaseDatabase(dbType, dbPath);
 /*
                     mDatabase = null;
                 }
@@ -1482,7 +1485,6 @@ public class Server implements HsqlSocketRequestHandler {
             } catch (HsqlException e) {
                 trace("error releasing database");
             }
-
         }
 
         trace("releaseDB() exiting");

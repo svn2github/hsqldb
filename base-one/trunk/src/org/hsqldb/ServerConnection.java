@@ -163,7 +163,7 @@ class ServerConnection implements Runnable {
             try {
                 mServer.trace(mThread + ":trying to connect user " + user);
                 c = DatabaseManager.newSession(mServer.dbType, mServer.dbPath, resultIn.getMainString(),
-                                              resultIn.getSubString());
+                                              resultIn.getSubString(),true);
                 resultOut = new Result(ResultConstants.UPDATECOUNT);
             } catch (HsqlException e) {
                 resultOut = new Result(e.getMessage(), e.getSQLState(),

@@ -2127,6 +2127,7 @@ public class jdbcConnection implements Connection {
 
         String user     = (String) props.getProperty("user");
         String password = (String) props.getProperty("password");
+        boolean ifExists = props.isPropertyTrue("ifexists");
         String connType = (String) props.getProperty("connection_type");
         String dbString = (String) props.getProperty("database");
         String host     = props.getProperty("host");
@@ -2139,7 +2140,7 @@ public class jdbcConnection implements Connection {
                     || connType == DatabaseManager.S_MEM
                     || connType == DatabaseManager.S_RES) {
                 sessionProxy = DatabaseManager.newSession(connType, dbString,
-                        user, password);
+                        user, password, ifExists);
             } else if (connType == DatabaseManager.S_HSQL
                        || connType == DatabaseManager.S_HSQLS) {
                 sessionProxy = new HSQLClientConnection(host, port, dbString,
