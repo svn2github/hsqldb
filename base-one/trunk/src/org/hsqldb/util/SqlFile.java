@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.72 2004/06/07 21:18:28 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.73 2004/06/07 21:46:54 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.72 $
+ * @version $Revision: 1.73 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.72 $".substring("$Revision: ".length(),
-                "$Revision: 1.72 $".length() - 2);
+        revnum = "$Revision: 1.73 $".substring("$Revision: ".length(),
+                "$Revision: 1.73 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -139,13 +139,14 @@ public class SqlFile {
         + "                from:  '$'s represent line breaks\n"
         + "                to:    If empty, from's will be deleted (e.g. \":s/x//\").\n"
         + "                       '$'s represent line breaks\n"
-        + "                       Do not terminate with ';' (use ';' switch, see below)\n"
+        + "                       You can't use ';' in order to execute the SQL (use\n"
+        + "                       the ';' switch for this purpose, as explained below).\n"
         + "                /:     Can actually be any character which occurs in\n"
         + "                       neither \"to\" string nor \"from\" string.\n"
         + "                SUBSTITUTION MODE SWITCHES:\n"
         + "                       i:  case Insensitive\n"
         + "                       ;:  execute immediately after substitution\n"
-        + "                       g:  Global (substitute all occurrences of \"from\" string)\n"
+        + "                       g:  Global (substitute ALL occurrences of \"from\" string)\n"
         + "                       2:  Narrows substitution to specified buffer line number\n"
         + "                           (Use any line number in place of '2').\n"
     ;
