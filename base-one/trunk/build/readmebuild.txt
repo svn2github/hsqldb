@@ -23,6 +23,17 @@ devices or for better download speed.
 certain non-standard JDK's.
 
 
+The source files
+
+The source files are supplied in a state that is compatible with
+JDK 1.3. Features that are specific to JDK 1.4 are enclosed in 
+comments containing preprocessor directives.
+
+The org.hsqldb.util.CodeSwitcher class can process
+the source files and make them compatible with a given JDK by
+removing or adding comments from blocks of code. This procedure
+is invoked with the supplied build scripts.
+
 
 Different jar sizes
 
@@ -73,9 +84,10 @@ different sizes of the HSQLDB Jar. The default jar is built using:
 
 ant jar
 
-The Ant method always builds a jar with the
-JDK that is used by Ant and specified in the JAVA_HOME environment
-variable. 
+The Ant method always builds a jar with the JDK that is used by Ant
+and specified in the JAVA_HOME environment variable. The script
+automatically converts the source files for compatibility with the
+given JDK.
 
 Before building the hsqldbtest.jar package, you should download the
 junit.jar and put it in the /lib directory, alongside servlet.jar, 

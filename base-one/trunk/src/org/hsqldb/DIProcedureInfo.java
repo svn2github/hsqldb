@@ -534,6 +534,12 @@ final class DIProcedureInfo {
         colCount  = pclen - colOffset;
     }
 
+    /**
+     * This requires the following properties files:
+     *
+     * org_hsqldb_Library.properties
+     * java_math.properties
+     */
     void setMethod(Method m) {
 
         String remarkKey;

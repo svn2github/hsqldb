@@ -99,8 +99,8 @@ examples:
     <target name="switchtojdk11" depends="codeswitcher"
             description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbcStatement.java
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
@@ -109,13 +109,13 @@ examples:
     <target name="switchtojdk12" depends="codeswitcher" 
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbcConnection.java
-                    ${src}/org/hsqldb/jdbcDatabaseMetaData.java
-                    ${src}/org/hsqldb/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbcStatement.java
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
        </java>
     </target>
@@ -123,13 +123,13 @@ examples:
     <target name="switchtojdk14" depends="codeswitcher" 
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbcConnection.java
-                    ${src}/org/hsqldb/jdbcDatabaseMetaData.java
-                    ${src}/org/hsqldb/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbcStatement.java
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
        </java>
     </target>
@@ -175,9 +175,9 @@ examples:
          <exclude name="org/hsqldb/test/*.java"/>
          <exclude name="org/hsqldb/sample/*.java"/>
          <exclude name="org/hsqldb/util/*.java"/>
-         <exclude name="org/hsqldb/jdbcDataSource*.java"/>
-         <exclude name="org/hsqldb/jdbcParameterMetaData.java"/>
-         <exclude name="org/hsqldb/jdbcSavepoint.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/NIOLockFile.java"/>
          <exclude name="org/hsqldb/NIOScaledRAFile.java"/>
@@ -194,8 +194,8 @@ examples:
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-         <include name="org/hsqldb/jdbcBlob.java"/>
-         <include name="org/hsqldb/jdbcClob.java"/>
+         <include name="org/hsqldb/jdbc/jdbcBlob.java"/>
+         <include name="org/hsqldb/jdbc/jdbcClob.java"/>
       </javac>
    </target>
 
@@ -206,9 +206,9 @@ examples:
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-      <include name="org/hsqldb/jdbcDataSource*.java"/>
-      <include name="org/hsqldb/jdbcParameterMetaData.java"/>
-      <include name="org/hsqldb/jdbcSavepoint.java"/>
+      <include name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+      <include name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+      <include name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
       <include name="org/hsqldb/NIOLockFile.java"/>
       <include name="org/hsqldb/NIOScaledRAFile.java"/>
       </javac>
@@ -284,18 +284,18 @@ examples:
          <exclude name="org/hsqldb/HsqlServerProperties.class"/>
          <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
          <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
-         <exclude name="org/hsqldb/jdbcDataSource.class"/>
-         <exclude name="org/hsqldb/jdbcDataSourceFactory.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/Server.class"/>
          <exclude name="org/hsqldb/ServerConnection.class"/>
          <exclude name="org/hsqldb/WebServer.class"/>
          <exclude name="org/hsqldb/WebServerConnection.class"/>
-         <exclude name="org/hsqldb/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/Array.class"/>
-         <exclude name="org/hsqldb/Blob.class"/>
-         <exclude name="org/hsqldb/Clob.class"/>
-         <exclude name="org/hsqldb/Ref.class"/>
-         <exclude name="org/hsqldb/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
        </jar>
     </target>
 
@@ -306,12 +306,12 @@ examples:
          >
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/sample/*.*"/>
-         <exclude name="org/hsqldb/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/Array.class"/>
-         <exclude name="org/hsqldb/Blob.class"/>
-         <exclude name="org/hsqldb/Clob.class"/>
-         <exclude name="org/hsqldb/Ref.class"/>
-         <exclude name="org/hsqldb/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
       </jar>
     </target>
 
@@ -324,12 +324,12 @@ examples:
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
-         <exclude name="org/hsqldb/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/Array.class"/>
-         <exclude name="org/hsqldb/Blob.class"/>
-         <exclude name="org/hsqldb/Clob.class"/>
-         <exclude name="org/hsqldb/Ref.class"/>
-         <exclude name="org/hsqldb/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
       </jar>
     </target>
 
@@ -351,21 +351,21 @@ examples:
          <exclude name="org/hsqldb/HsqlServerProperties.class"/>
          <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
          <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
-         <exclude name="org/hsqldb/jdbcDataSource.class"/>
-         <exclude name="org/hsqldb/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/Server.class"/>
          <exclude name="org/hsqldb/ServerConnection.class"/>
          <exclude name="org/hsqldb/WebServer.class"/>
          <exclude name="org/hsqldb/WebServerConnection.class"/>
-         <exclude name="org/hsqldb/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/Array.class"/>
-         <exclude name="org/hsqldb/Blob.class"/>
-         <exclude name="org/hsqldb/Clob.class"/>
-         <exclude name="org/hsqldb/Ref.class"/>
-         <exclude name="org/hsqldb/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/DatabaseInformationFull.class"/>
-         <exclude name="org/hsqldb/BinaryDatabaseRowInput.class"/>
-         <exclude name="org/hsqldb/BinaryDatabaseRowOutput.class"/>
+         <exclude name="org/hsqldb/rowio/RowInputLegacy.class"/>
+         <exclude name="org/hsqldb/rowio/RowOutputLegacy.class"/>
          <exclude name="org/hsqldb/DINameSpace.class"/>
          <exclude name="org/hsqldb/DIProcedureInfo.class"/>
          <exclude name="org/hsqldb/HSQLClientConnection.class"/>
@@ -387,11 +387,11 @@ examples:
          <exclude name="org/hsqldb/test/*.class"/>
          <exclude name="org/hsqldb/sample/*.class"/>
          <exclude name="org/hsqldb/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/Array.class"/>
-         <exclude name="org/hsqldb/Blob.class"/>
-         <exclude name="org/hsqldb/Clob.class"/>
-         <exclude name="org/hsqldb/Ref.class"/>
-         <exclude name="org/hsqldb/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
       </jar>
     </target>
 
@@ -400,45 +400,51 @@ examples:
         <jar jarfile="lib/hsqljdbc.jar">
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset dir='classes'
-                includes='org/hsqldb/jdbc*,
+                includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/rowio/RowOutputBase*,
+                          org/hsqldb/rowio/RowInputBase*,
+                          org/hsqldb/rowio/RowOutputBinary*,
+                          org/hsqldb/rowio/RowInputBinary*,
+                          org/hsqldb/rowio/RowOutputInterface*,
+                          org/hsqldb/rowio/RowInputInterface*,
                           org/hsqldb/lib/InOutUtil*,
-                          org/hsqldb/HTTPClientConnection*,
                           org/hsqldb/lib/AsciiStringInputStream*,
                           org/hsqldb/lib/StringInputStream*,
-                          org/hsqldb/HsqlDateTime*,
-                          org/hsqldb/Column*,
-                          org/hsqldb/Binary.*,
                           org/hsqldb/lib/IntValueHashMap*,
                           org/hsqldb/lib/ArrayUtil*,
-                          org/hsqldb/store/ValuePool*,
                           org/hsqldb/lib/StringConverter*,
-                          org/hsqldb/HsqlSocketFactory*,
-                          org/hsqldb/Record*,
                           org/hsqldb/lib/Iterator*,
-                          org/hsqldb/Result.*,
-                          org/hsqldb/Result$*,
-                          org/hsqldb/Row*,
-                          org/hsqldb/Cached*,
-                          org/hsqldb/lib/HsqlByte*,
-                          org/hsqldb/BinaryServer*,
-                          org/hsqldb/DatabaseRow*,
-                          org/hsqldb/HSQLClient*,
-                          org/hsqldb/Session*,
-                          org/hsqldb/HsqlProperties*,
                           org/hsqldb/lib/HsqlThreadFactory*,
                           org/hsqldb/lib/ThreadFactory*,
                           org/hsqldb/lib/HsqlHeap*,
                           org/hsqldb/lib/HsqlArray*,
                           org/hsqldb/lib/ObjectComparator*,
-                          org/hsqldb/store/HashIndex*,
                           org/hsqldb/lib/IntKeyHashMap*,
                           org/hsqldb/lib/Collection*,
                           org/hsqldb/lib/Set*,
                           org/hsqldb/lib/Hash*,
+                          org/hsqldb/lib/HsqlTimer*,
+                          org/hsqldb/lib/HsqlByte*,
+                          org/hsqldb/store/ValuePool*,
+                          org/hsqldb/store/HashIndex*,
+                          org/hsqldb/store/BaseHashMap*,
+                          org/hsqldb/HsqlSocketFactory*,
+                          org/hsqldb/HTTPClientConnection*,
+                          org/hsqldb/HsqlDateTime*,
+                          org/hsqldb/Column*,
+                          org/hsqldb/Binary.*,
+                          org/hsqldb/Record*,
+                          org/hsqldb/Result.*,
+                          org/hsqldb/Result$*,
+                          org/hsqldb/Row*,
+                          org/hsqldb/Cached*,
+                          org/hsqldb/BinaryServer*,
+                          org/hsqldb/DatabaseRow*,
+                          org/hsqldb/HSQLClient*,
+                          org/hsqldb/Session*,
+                          org/hsqldb/HsqlProperties*,
                           org/hsqldb/HsqlException*,
                           org/hsqldb/DatabaseManager*,
-                          org/hsqldb/store/BaseHashMap*,
-                          org/hsqldb/lib/HsqlTimer*,
                           org/hsqldb/Trace*
                           '/>
         </jar>
@@ -457,7 +463,7 @@ examples:
            stylesheetfile="${basedir}/doc/src/hsqldbstylesheet.css"
            windowtitle="HSQLDB 1.7.2 API"
            doctitle="HSQLDB 1.7.2"
-           bottom="&lt;i&gt;Copyright &#169; 2001 - 2002 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+           bottom="&lt;i&gt;Copyright &#169; 2001 - 2004 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
      </javadoc>
    </target>
 </project>

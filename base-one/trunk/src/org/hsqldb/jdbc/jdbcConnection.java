@@ -31,15 +31,8 @@
 
 package org.hsqldb.jdbc;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.util.Map;
+import java.sql.*;        // avoid specific import due to java.sql.Savepoint
+import java.util.*;       // java.util.Map
 
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.HSQLClientConnection;

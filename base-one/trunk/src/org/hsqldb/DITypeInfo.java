@@ -239,22 +239,22 @@ public final class DITypeInfo {
         switch (type) {
 
             case Types.ARRAY :
-                return "org.hsqldb.jdbcArray";
+                return "org.hsqldb.jdbc.jdbcArray";
 
             case Types.BLOB :
-                return "org.hsqldb.jdbcBlob";
+                return "org.hsqldb.jdbc.jdbcBlob";
 
             case Types.CLOB :
-                return "org.hsqldb.jdbcClob";
+                return "org.hsqldb.jdbc.jdbcClob";
 
             case Types.DISTINCT :
-                return "org.hsqldb.jdbcDistinct";
+                return "org.hsqldb.jdbc.jdbcDistinct";
 
             case Types.REF :
-                return "org.hsqldb.jdbcRef";
+                return "org.hsqldb.jdbc.jdbcRef";
 
             case Types.STRUCT :
-                return "org.hsqldb.jdbcStruct";
+                return "org.hsqldb.jdbc.jdbcStruct";
 
             default :
                 return null;
