@@ -290,6 +290,7 @@ example:
              basedir="classes"
          >
          <exclude name="org/hsqldb/util/CodeSwitcher.*"/>
+         <exclude name="org/hsqldb/util/Zaurus*.*"/>
          <exclude name="org/hsqldb/test/*.class"/>
          <exclude name="org/hsqldb/sample/*.class"/>
       </jar>
