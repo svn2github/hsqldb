@@ -701,6 +701,16 @@ examples:
         </then></if>
     </target>
 
+    <target name='-checkXslt' unless='_xsltChecked'>
+        <!-- Don't call this before -initContrib called -->
+        <if><not> <available
+            classname='org.apache.xalan.processor.TransformerFactoryImpl'/>
+        </not><then>
+        <fail message="XSLT library not available.  See 'readmedocbook.txt'"/>
+        </then></if>
+        <property name='_xsltChecked' value='true'/>
+    </target>
+
     <target name='-setXsltFilesets'>
         <!-- You MUST set property 'book' before calling this target -->
         <fileset id='bookXsltSrcFiles' dir='docsrc/${book}'
@@ -724,7 +734,9 @@ examples:
         </then></if>
     </target>
 
-    <target name='-initFop' unless='_fop_initted'>
+    <!-- I'm not sure that <fop> actually needs the Xslt libs, but it
+         probably does.  Test this sometime.  -->
+    <target name='-initFop' unless='_fop_initted' depends='-checkXslt'>
         <fail unless='fop.home'
   message="To build from DocBook FO files, you must set property 'fop.home'"/>
         <if><not><available file='${fop.home}' type='dir'/></not><then>
@@ -748,7 +760,7 @@ examples:
         <available property='_contrib_there'
                    classname='net.sf.antcontrib.logic.For'/>
         <fail unless='_contrib_there'
-      message="You must put ant-contrib-X.jar into 'path-to-ant-bin/..lib/'"/>
+ message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/'"/>
         <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
         <property name='_contrib_initted' value='true'/>
     </target>
@@ -761,7 +773,7 @@ examples:
         </fop>
     </target>
 
-    <target name='-htmlXslt'>
+    <target name='-htmlXslt' depends='-checkXslt'>
         <!-- This does not check dependencies.  Do that before calling. -->
         <!-- Required properties:  _stylesheet, book -->
         <fail if='_css' message="Internal property '_css' set externally"/>
@@ -789,7 +801,7 @@ message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
         </style>
     </target>
 
-    <target name='-foXslt'>
+    <target name='-foXslt' depends='-checkXslt'>
         <!-- This does not check dependencies.  Do that before calling. -->
         <!-- Required props:  book -->
         <fail unless='docbook.xsl.home'
