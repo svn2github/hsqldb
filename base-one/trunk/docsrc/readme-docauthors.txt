@@ -36,15 +36,16 @@ HOW TO REFERENCE OR INCLUDE OTHER FILES IN YOUR DOCBOOK SOURCE FILE(s).
 To link to outside documents (which you supply or not), you'll usually
 use the DocBook <ulink> element.
 
-To "import" other documents, just use the unparsed entity mechanism.
+To "import" other documents, just use the general external parsed entity 
+mechanism.
 This is a basic DTD-style XML feature where you use macros like
 &entityname;.  Either find an XML reference or look around our existing
 DocBook source files for an example to follow.
 
-One tricky point is how to include external files verbatim.  If you
-just read in external files as unparsed entities, they will be parsed
+One tricky point is how to include external files verbatim.
+If you just read in external files as parsed entities, they will be parsed
 as DocBook source (and therefore they must consist of, at least, legal
-XML).
+XML)*.
 But often you will want to import a real, working file (like a 
 configuration file, sql file, Java source file), and you won't want to
 hack it up just so you can import it.
@@ -56,12 +57,18 @@ won't work since the &...; inclusion directive would thereby be escaped.
 If you don't know what the hell CDATA is, just follow the instructions
 in the next paragraph.
 
-To import a document verbatim, define an unparsed entity to the file
-../../docwork/BOOKNAME/cdata/file.name, where BOOKNAME is your book
-name and file.name is the name of the file to be imported (which
-resides in the current directory.
+To import a document verbatim, define an external parsed entity for 
+the file ../../docwork/BOOKNAME/cdata/file.name, where BOOKNAME is 
+your book name and file.name is the name of the file to be imported
+(which resides in the current directory).
 If you want to know, what will happen is, the Ant build will copy the 
 file-to-be-imported to the directory .../docwork/BOOKNAME/cdata and will 
 sandwich it in a CDATA directive.
 If you want to provide a link to the document, you just ulink to 
 the document in the current directory, not to the one in the cdata
+
+
+* Theoretically it would be better and SHOULD be simpler to use
+unparsed entities for this purpose, but unparsed entities are a 
+messy legacy feature of DTD which is more convoluted than the 
+strategy described here.
