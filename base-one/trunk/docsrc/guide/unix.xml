@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.7 2004/04/23 00:47:18 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.8 2004/04/23 01:06:42 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/04/23 00:47:18 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/04/23 01:06:42 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -347,6 +347,8 @@
             Connect to the database as SA (or any other Administrative user)
             and run <link linkend='create_user-section'>CREATE USER</link>
             to create new accounts for your database instance.
+            HSQLDB accounts are database-instance-specific, not 
+            <classname>Server</classname>-specific.
         </para> <para>
             There are two classes of database accounts, Admin accounts and
             non-Admin accounts.
