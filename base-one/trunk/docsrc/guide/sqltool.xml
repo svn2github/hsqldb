@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.42 2004/06/14 22:25:30 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.43 2004/06/16 22:00:47 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.42 $</edition>
-        <pubdate>$Date: 2004/06/14 22:25:30 $</pubdate>
+        <edition>$Revision: 1.43 $</edition>
+        <pubdate>$Date: 2004/06/16 22:00:47 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -390,7 +390,15 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             </simpara></listitem></varlistentry>
             <varlistentry><term>\d tablename</term><listitem><simpara>
                 Lists names of all columns in the specified table.
-            </simpara></listitem></varlistentry>
+                </simpara><tip><simpara>
+                When working with real data (as opposed to learning or playing),
+                I often find it useful to run two SqlTool sessions in two
+                side-by-side terminal emulator windows.
+                I do all of my real work in one window, and use the other
+                mostly for \d commands.
+                This way I can refer to the data dictionary while writing SQL
+                commands, without having to scroll.
+            </simpara></tip></listitem></varlistentry>
             <varlistentry><term>\s</term><listitem><simpara>
                 Shows the SQL command history.
                 The SQL command history will show a number (a negative number) 
