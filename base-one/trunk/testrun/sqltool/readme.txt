@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.10 2004/07/04 18:10:01 unsaved Exp $
+$Id: readme.txt,v 1.11 2004/07/05 00:41:13 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -18,7 +18,7 @@ To do anything at all with SqlTool unit testing, you need
         the test programs, because the test program itself invokes java
         using just "java".  This won't work:
 
-            /usr/java/j2sdk1.4.2_02/bin/java org.hsqldb.test.SqlTool...
+            /usr/java/j2sdk1.4.2_02/bin/java org.hsqldb.test.TestSqlTool...
 
     Shell environmental variable "CLASSPATH" set (and export if your shell 
     supports that) to include hsqldbtest.jar (or the HSQLDB "classes" 
