@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.15 2004/05/13 22:14:14 unsaved Exp $
+# $Id: hsqldb,v 1.16 2004/05/13 22:38:49 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -85,13 +85,17 @@ INVOC_PATH=`dirname "$0"` || {
 
 SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 
-# Time to allow for java process to die, if it's not able to start up,
-# And for it to shutdown after it receives the last SQL "shutdown" command.
-# This gets overridden by optional setting in the config file.
-MAX_STARTSTOP_SECS=1
+# File used as semaphore.  If file is removed, a running pid checker
+# process will exit.
+PIDCHECKER_FLAGFILE=/tmp/pidchecker.run
+# The following settings get overridden by optional setting in the config file.
+# Time to allow for JVM to die after all HSQLDB instances stopped.
+MAX_TERMINATE_SECS=1
+# We require all Server/WebServer instances to be accessible within 
+# $MAX_START_SECS from when the Server/WebServer is started.
+MAX_START_SECS=60
 # Class in the org.hsqldb package to start.
 # At this time, only the values "Server" or "WebServer" will work.
-# This gets overridden by optional setting in the config file.
 TARGET_CLASS=Server
 
 CFGFILE=
@@ -254,6 +258,24 @@ case "$COMMAND" in
 running with pid $HSQLDB_PID."
         # I would give a nice ps command here, were ps not so damned 
         # OS-specific.
+        AUTH_FILE_SWITCH=
+        # N.b., there will be a problem if there are special characters or
+        # spaces inside of $AUTH_FILE.
+        [ -n "$AUTH_FILE" ] &&
+        AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
+        databases="`echo $SHUTDOWN_URLIDS | wc -w`"
+        echo "$databases database instance(s) to check..."
+        # Some shell implementations don't allow substitution on arg 0,
+        # so, we'll set the search path.
+        PATH="$JAVA_HOME/bin:$PATH"
+        # Might as well set CLASSPATH too, for a cleaner command.
+        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        export CLASSPATH
+        export PATH   # Required only for some funny init environments.
+        exec java $AUTH_FILE_SWITCH \
+            "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
+            "-Dsqltoolsprayer.monfile=$PIDFILE" \
+            org.hsqldb.util.SqlToolSprayer ''
     ;;
     start)
         [ -n "$HSQLDB_PID" ] && {
@@ -289,17 +311,49 @@ running with pid $HSQLDB_PID."
                 exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
-        sleep $MAX_STARTSTOP_SECS
-        # Wait long enough for it to croak, if it's gonna.
+        AUTH_FILE_SWITCH=
+        # N.b., there will be a problem if there are special characters or
+        # spaces inside of $AUTH_FILE.
+        [ -n "$AUTH_FILE" ] &&
+        AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
+        databases="`echo $SHUTDOWN_URLIDS | wc -w`"
+        echo "$databases database instance(s) to check..."
+        # Some shell implementations don't allow substitution on arg 0,
+        # so, we'll set the search path.
+        PATH="$JAVA_HOME/bin:$PATH"
+        # Might as well set CLASSPATH too, for a cleaner command.
+        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        export CLASSPATH
+        export PATH   # Required only for some funny init environments.
         # There are many reasons why we could fail to read the pid file,
         # but regardless of why, the pid file does not contain a valid pid.
-        kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
-            rm -f "$PIDFILE"
-echo "Failed to start an org.hsqldb.${TARGET_CLASS}.  See log file at '$LOGFILE'." 1>&2
+        touch "$PIDCHECKER_FLAGFILE" || {
+            echo "Failed to touch file '$PIDCHECKER_FLAGFILE'" 1>&2
             exit 1
         }
-        echo "org.hsqldb.$TARGET_CLASS started with pid `cat $PIDFILE`"
-        exit 0
+        export PIDCHECKER_FLAGFILE
+        export PIDFILE
+        (
+            while true; do
+                # -a and -e tests are not portable.
+                [ -f "$PIDCHECKER_FLAGFILE" ] || exit 0
+                kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
+                    rm -f "$PIDFILE" "$PIDCHECKER_FLAGFILE"
+                    exit 1
+                }
+                sleep 1
+            done
+        ) &
+        java $AUTH_FILE_SWITCH \
+            "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
+            "-Dsqltoolsprayer.monfile=$PIDFILE" \
+            "-Dsqltoolsprayer.maxtime=${MAX_START_SECS}000" \
+            org.hsqldb.util.SqlToolSprayer '' && {
+            echo "org.hsqldb.$TARGET_CLASS started with pid `cat $PIDFILE`"
+            exit 0
+        }
+        echo "Failed to start org.hsqldb.$TARGET_CLASS" 1>&2
+        exit 1
     ;;
     stop)
         [ -n "$HSQLDB_PID" ] || {
@@ -311,7 +365,7 @@ echo "Failed to start an org.hsqldb.${TARGET_CLASS}.  See log file at '$LOGFILE'
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] && AUTH_FILE_SWITCH="--rcfile $AUTH_FILE"
         databases="`echo $SHUTDOWN_URLIDS | wc -w`"
-        echo "$databases databases to shut down..."
+        echo "$databases database instance(s) to shut down..."
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
@@ -320,12 +374,11 @@ echo "Failed to start an org.hsqldb.${TARGET_CLASS}.  See log file at '$LOGFILE'
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
         ERRORS=
-        for urlid in $SHUTDOWN_URLIDS; do
-            echo "Shutting down database instance '$urlid'..."
-            java org.hsqldb.util.SqlTool $AUTH_FILE_SWITCH --noinput \
-                    --sql 'shutdown;' $urlid
-        done
-        sleep $MAX_STARTSTOP_SECS  # Give it time to die.
+        AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
+        java $AUTH_FILE_SWITCH \
+            "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
+            org.hsqldb.util.SqlToolSprayer 'shutdown;' $SHUTDOWN_URLIDS
+        sleep $MAX_TERMINATE_SECS  # Give the JVM a sec. or 2 to fully exit.
         kill -0 "$HSQLDB_PID" > /dev/null 2>&1 && {
             echo "WARNING:  hsqldb is still running!" 1>&2
             exit 1
@@ -334,7 +387,7 @@ echo "Failed to start an org.hsqldb.${TARGET_CLASS}.  See log file at '$LOGFILE'
             echo "Failed to remove pid file '$PIDFILE'" 1>&2
             exit 1
         }
-        echo 'Success!'
+        echo "Successful shutdown (for the $TARGET_CLASS process)!"
         exit 0
     ;;
     restart)
