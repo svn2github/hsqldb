@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.57 2004/07/18 23:00:28 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.58 2004/10/20 01:46:51 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.57 $</edition>
-        <pubdate>$Date: 2004/07/18 23:00:28 $</pubdate>
+        <edition>$Revision: 1.58 $</edition>
+        <pubdate>$Date: 2004/10/20 01:46:51 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -265,7 +265,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 <link linkend='nonint-section' endterm='nonint-title'/>
                 section.
                 You can, alternatively, set this for one SqlTool invocation 
-                by setting the system property <property>sqltool.charset
+                by setting the system property <property>sqlfile.charset
                 </property>.
                 Defaults to <literal>US-ASCII</literal>.
             </simpara></listitem></varlistentry>
@@ -1076,9 +1076,9 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &gt; /tmp/log.html 2&gt;&amp;1</scre
             <para>
                 SqlTool defaults to the US-ASCII character set (for reading).
                 You can use another character set by setting the system 
-                property <property>sqltool.charset</property>, like
+                property <property>sqlfile.charset</property>, like
             <informalexample><screen>
-java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
+java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
             </informalexample></para><simpara>
                 You can also set this per urlid in the SqlTool configuration 
                 file.
