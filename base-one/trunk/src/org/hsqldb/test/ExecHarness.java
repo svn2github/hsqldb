@@ -33,6 +33,7 @@ package org.hsqldb.test;
 
 import java.util.List;
 import java.io.InputStream;
+import java.io.FileNotFoundException;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -40,7 +41,7 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
 
-// $Id$
+// $Id: ExecHarness.java,v 1.1 2004/06/15 23:44:54 unsaved Exp $
 
 /**
  * Utilities that test classes can call to execute a specified command and to 
@@ -91,7 +92,8 @@ public class ExecHarness {
      *           Remaining arguments will be passed as command-line args 
      *           to the sa[0] program.
      */
-    static public void main(String[] sa) throws Exception {
+    static public void main(String[] sa)
+    throws IOException, FileNotFoundException, InterruptedException {
         byte[] localBa = new byte[10240];
         if (sa.length < 1) {
             System.err.println(SYNTAX_MSG);
@@ -121,8 +123,8 @@ public class ExecHarness {
         int retval = harness.getExitValue();
         System.err.println("STDOUT ******************************************");
         System.out.print(harness.getStdout());
-        System.err.println("STDERR ******************************************");
-        System.out.print(harness.getStderr());
+        System.err.println("ERROUT ******************************************");
+        System.err.print(harness.getErrout());
         System.err.println("*************************************************");
         System.err.println(progname + " exited with value " + retval);
         harness.clear();
@@ -140,7 +142,7 @@ public class ExecHarness {
     // If that read is satisfied, we know that we read > MAX_PROG_OUTPUT.
     private byte[] ba = new byte[MAX_PROG_OUTPUT + 1];
     private String stdout = null;
-    private String stderr = null;
+    private String errout = null;
     static private final String DEFAULT_CHARSET = "US-ASCII";
 
     /*
@@ -156,7 +158,7 @@ public class ExecHarness {
      *
      * In addition to passed-through exceptions, this method will throw
      * an IOException if the invoked program generates > 10 k of output
-     * to either stdout or stderr.
+     * to either stdout or errout.
      */
     public void exec() throws IOException, InterruptedException {
         InputStream stream;
@@ -200,7 +202,7 @@ public class ExecHarness {
                     + (ba.length - 1) + " bytes of error output");
         }
         stream.close();
-        stderr = new String(ba, 0, writePointer);
+        errout = new String(ba, 0, writePointer);
         exitValue = proc.waitFor();
     }
 
@@ -212,15 +214,15 @@ public class ExecHarness {
         // TODO:  Release output buffers.
         args = mtStringArray;
         executed = false;
-        stdout = stderr = null;
+        stdout = errout = null;
         input = null;
     }
 
     public String getStdout() {
         return stdout;
     }
-    public String getStderr() {
-        return stderr;
+    public String getErrout() {
+        return errout;
     }
 
     /**
@@ -262,25 +264,44 @@ public class ExecHarness {
         program = inName;
     }
 
-    static private String[] unshift(String newHead, String[] saIn) {
+    /**
+     * These utility methods really belong in a class in the util package.
+     */
+    static public String[] unshift(String newHead, String[] saIn) {
         String[] saOut = new String[saIn.length + 1];
         saOut[0] = newHead;
         for (int i = 1; i < saOut.length; i++) saOut[i] = saIn[i - 1];
         return saOut;
     }
-    static private String[] shift(String[] saIn) {
+    static public String[] shift(String[] saIn) {
         String[] saOut = new String[saIn.length - 1];
         for (int i = 0; i < saOut.length; i++) saOut[i] = saIn[i + 1];
         return saOut;
     }
-    static private String[] listToPrimitiveArray(List list) {
+    static public String[] listToPrimitiveArray(List list) {
         String[] saOut = new String[list.size()];
         for (int i = 0; i < list.size(); i++) saOut[i] = (String) list.get(i);
         return saOut;
     }
-
-    /*
-        InputStream stream;
-        byte[] ba = new byte[1024];
-    */
+    static public String[] push(String newTail, String[] saIn) {
+        String[] saOut = new String[saIn.length + 1];
+        for (int i = 0; i < saIn.length; i++) saOut[i] = saIn[i];
+        saOut[saOut.length - 1] = newTail;
+        return saOut;
+    }
+    static public String[] pop(String[] saIn) {
+        String[] saOut = new String[saIn.length - 1];
+        for (int i = 0; i < saOut.length; i++) saOut[i] = saIn[i];
+        return saOut;
+    }
+    static public String stringArrayToString(String[] sa) {
+        StringBuffer sb = new StringBuffer("{");
+        for (int i = 0; i < sa.length; i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append(sa[i]);
+        }
+        return sb.toString() + '}';
+    }
 }
