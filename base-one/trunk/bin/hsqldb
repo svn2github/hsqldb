@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.26 2004/06/11 04:24:48 unsaved Exp $
+# $Id: hsqldb,v 1.27 2004/06/11 18:40:45 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -112,6 +112,7 @@ PIDFILE=
 BASEDIR=
 AUTH_FILE=
 SHUTDOWN_OPTION=
+SERVER_ADDL_CLASSPATH=
 case "`uname`" in
     Darwin)     # I.e. Mac OS X.  I don't know about older Mac OSes.
         CFGFILE=/etc/hsqldb.conf
@@ -190,6 +191,9 @@ HSQLDB_JAR_PATH=
 SERVER_HOME=
 SHUTDOWN_URLIDS=
 . "$CFGFILE"
+# Suffix delimiter to $SERVER_ADDL_CLASSPATH, if it is set.
+[ -n "$SERVER_ADDL_CLASSPATH" ] &&
+SERVER_ADDL_CLASSPATH="${SERVER_ADDL_CLASSPATH}:"
 # Validate that config file sets all required variables.
 [ -n "$JAVA_EXECUTABLE" ] && [ -n "$HSQLDB_JAR_PATH" ] &&
 [ -n "$SERVER_HOME" ] || {
@@ -309,7 +313,7 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec '$JAVA_EXECUTABLE' $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_JAR_PATH' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec '$JAVA_EXECUTABLE' $SERVER_JVMARGS $TLS_SWITCHES -classpath '${SERVER_ADDL_CLASSPATH}${HSQLDB_JAR_PATH}' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
@@ -326,7 +330,7 @@ running with pid $HSQLDB_PID."
                     echo "Failed to write pid to pid file" 1>&2
                     exit 1
                 }
-                exec "$JAVA_EXECUTABLE" $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_JAR_PATH"  org.hsqldb.$TARGET_CLASS
+                exec "$JAVA_EXECUTABLE" $SERVER_JVMARGS $TLS_SWITCHES -classpath "${SERVER_ADDL_CLASSPATH}${HSQLDB_JAR_PATH}"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
         sleep $SU_ECHO_SECS  # Make sure bg commands have time to echo pid.
