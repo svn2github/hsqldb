@@ -1940,6 +1940,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
+// fredt@users 20030413 - return value change to support OpenOffice.org
     /**
      * Retrieves whether this database supports the SQL Integrity
      * Enhancement Facility. <p>
@@ -1948,9 +1949,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not support the SQL
-     * Integrity Enhancement Facility; this method always returns
-     * <code>false</code>.
+     * From 1.7.2, this method always returns
+     * <code>true</code>.
      * </span>
      * <!-- end release-specific documentation -->
      * @return <code>true</code> if so; <code>false</code> otherwise
@@ -1963,7 +1963,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -6214,7 +6214,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * JDBC DatabaseMetaData filter parameter values. <p>
      *
      * @return an "AND" predicate built from the arguments
-     * @param id the simple, non-quoted identifier of a system table 
+     * @param id the simple, non-quoted identifier of a system table
      *      column to filter on <p>
      *
      *      No checking is done for column name validity. <br>
@@ -6222,7 +6222,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      *      Setting this to <code>null</code> or the empty string causes the
      *      entire expression to be set to the empty string
-     * @param op the operation to perform between the system table column 
+     * @param op the operation to perform between the system table column
      *      name value and the <code>val</code> argument <p>
      *
      *      <code>null</code> or the empty string causes the entire expression
@@ -6237,16 +6237,16 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *              to be built so that the IS NULL operation will occur
      *              against the specified column.
      *          <LI>instanceof String causes the returned expression to be
-     *              built so that the specified operation will occur between 
-     *              the specified column and the specified value, converted to 
-     *              a SQL string (single quoted, with internal single quotes 
-     *              escaped by doubling). If <code>op</code> is "LIKE" and 
-     *              <code>val</code> does not contain any unescaped "%" or 
-     *              "_" wild card characters, then <code>op</code> is silently 
+     *              built so that the specified operation will occur between
+     *              the specified column and the specified value, converted to
+     *              a SQL string (single quoted, with internal single quotes
+     *              escaped by doubling). If <code>op</code> is "LIKE" and
+     *              <code>val</code> does not contain any unescaped "%" or
+     *              "_" wild card characters, then <code>op</code> is silently
      *              converted to "=".
      *          <LI>!instanceof String causes an expression to
      *              built so that the specified operation will occur
-     *              between the specified column and 
+     *              between the specified column and
      *             <code>String.valueOf(val)</code>
      *      </UL>
      */
@@ -6329,13 +6329,13 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // NOTE:
         // Need to create a jdbcStatement here so jdbcResultSet can return
-        // its Statement object on call to getStatement(). 
-        // The native jdbcConnection.execute() method does not  
-        // automatically assign a Statement object for the ResultSet, but 
-        // jdbcStatement does.  That is, without this, there is no way for the 
+        // its Statement object on call to getStatement().
+        // The native jdbcConnection.execute() method does not
+        // automatically assign a Statement object for the ResultSet, but
+        // jdbcStatement does.  That is, without this, there is no way for the
         // jdbcResultSet to find its way back to its Connection (or Statement)
         // Also, cannot use single, shared jdbcStatement object, as each
-        // fetchResult() closes any old jdbcResultSet before fetching the 
+        // fetchResult() closes any old jdbcResultSet before fetching the
         // next, causing the jdbcResultSet's Result object to be nullified
         final int scroll = ResultSet.TYPE_SCROLL_INSENSITIVE;
         final int concur = ResultSet.CONCUR_READ_ONLY;

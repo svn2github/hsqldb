@@ -2002,124 +2002,119 @@ class Database {
 
         HsqlName cname = null;
 
-        for (;;) {
-            switch (commandSet.get(sToken)) {
+        switch (commandSet.get(sToken)) {
 
-                default :
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                case RENAME :
-                    c.getThis("TO");
-                    processRenameTable(c, session, tablename);
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            case RENAME :
+                c.getThis("TO");
+                processRenameTable(c, session, tablename);
 
-                    return;
+                return;
 
-                case FOREIGN :
-                    c.getThis("KEY");
+            case ADD : {
+                sToken = c.getString();
 
-                    TempConstraint tc = processCreateFK(c, session, t, cname);
+                switch (commandSet.get(sToken)) {
 
-                    t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
+                    default :
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    case CONSTRAINT :
+                        cname = new HsqlName(c.getName(),
+                                             c.wasQuotedIdentifier());
+                        sToken = c.getString();
 
-                    if (tc.deleteAction == Constraint.SET_DEFAULT
-                            || tc.deleteAction == Constraint.SET_NULL
-                            || tc.updateAction != Constraint.NO_ACTION) {
-                        throw Trace.error(
-                            Trace.FOREIGN_KEY_NOT_ALLOWED,
-                            "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
-                    }
+                        switch (commandSet.get(sToken)) {
 
-                    session.commit();
-                    tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                        tc.expTable, tc.deleteAction,
-                                        tc.updateAction);
+                            default :
+                                throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                                  sToken);
+                            case UNIQUE :
+                                int col[] = processColumnList(c, t);
 
-                    return;
+                                session.commit();
+                                tw.createUniqueConstraint(col, cname);
 
-                case ADD : {
-                    sToken = c.getString();
+                                return;
 
-                    switch (commandSet.get(sToken)) {
+                            case FOREIGN :
+                                break;
+                        }
+                    case FOREIGN :
+                        c.getThis("KEY");
 
-                        default :
-                            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                        case CONSTRAINT :
-                            cname = new HsqlName(c.getName(),
-                                                 c.wasQuotedIdentifier());
-                            sToken = c.getString();
+                        TempConstraint tc = processCreateFK(c, session, t,
+                                                            cname);
 
-                            switch (commandSet.get(sToken)) {
+                        t.checkColumnsMatch(tc.localCol, tc.expTable,
+                                            tc.expCol);
 
-                                default :
-                                    throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                                                      sToken);
-                                case FOREIGN :
-                                    break;
+                        if (tc.deleteAction == Constraint.SET_DEFAULT
+                                || tc.deleteAction == Constraint.SET_NULL
+                                || tc.updateAction != Constraint.NO_ACTION) {
+                            throw Trace.error(
+                                Trace.FOREIGN_KEY_NOT_ALLOWED,
+                                "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
+                        }
 
-                                case UNIQUE :
-                                    int col[] = processColumnList(c, t);
+                        session.commit();
+                        tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
+                                            tc.expTable, tc.deleteAction,
+                                            tc.updateAction);
 
-                                    session.commit();
-                                    tw.createUniqueConstraint(col, cname);
+                        return;
 
-                                    return;
-                            }
-                            break;
+                    case COLUMN :
+                        int    colindex = t.getColumnCount();
+                        Column column   = processCreateColumn(c, t);
 
-                        case COLUMN :
-                            int    colindex = t.getColumnCount();
-                            Column column   = processCreateColumn(c, t);
+                        sToken = c.getString();
 
-                            sToken = c.getString();
+                        if (sToken.equals("BEFORE")) {
+                            sToken   = c.getName();
+                            colindex = t.getColumnNr(sToken);
+                        } else {
+                            c.back();
+                        }
 
-                            if (sToken.equals("BEFORE")) {
-                                sToken   = c.getName();
-                                colindex = t.getColumnNr(sToken);
-                            } else {
-                                c.back();
-                            }
+                        if (column.isIdentity() || column.isPrimaryKey()
+                                || (!t.isEmpty()
+                                    && column.isNullable() == false
+                                    && column.getDefaultString() == null)) {
+                            throw Trace.error(
+                                Trace.BAD_ADD_COLUMN_DEFINITION);
+                        }
 
-                            if (column.isIdentity() || column.isPrimaryKey()
-                                    || (!t.isEmpty()
-                                        && column.isNullable() == false
-                                        && column.getDefaultString()
-                                           == null)) {
-                                throw Trace.error(
-                                    Trace.BAD_ADD_COLUMN_DEFINITION);
-                            }
+                        session.commit();
+                        tw.addOrDropColumn(column, colindex, 1);
 
-                            session.commit();
-                            tw.addOrDropColumn(column, colindex, 1);
-
-                            return;
-                    }
-
-                    break;
+                        return;
                 }
-                case DROP : {
-                    sToken = c.getString();
+            }
+            case DROP : {
+                sToken = c.getString();
 
-                    switch (commandSet.get(sToken)) {
+                switch (commandSet.get(sToken)) {
 
-                        default :
-                            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                        case CONSTRAINT :
-                            String constname = c.getName();
+                    default :
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    case CONSTRAINT :
+                        String constname = c.getName();
 
-                            session.commit();
-                            tw.dropConstraint(constname);
+                        session.commit();
+                        tw.dropConstraint(constname);
 
-                            return;
+                        return;
 
-                        case COLUMN :
-                            sToken = c.getName();
+                    case COLUMN :
+                        sToken = c.getName();
 
-                            int colindex = t.getColumnNr(sToken);
+                        int colindex = t.getColumnNr(sToken);
 
-                            session.commit();
-                            tw.addOrDropColumn(null, colindex, -1);
+                        session.commit();
+                        tw.addOrDropColumn(null, colindex, -1);
 
-                            return;
-                    }
+                        return;
                 }
             }
         }
