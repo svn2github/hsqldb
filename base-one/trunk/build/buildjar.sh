@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.13 2002/12/06 18:14:34 unsaved Exp $
+# $Id: buildjar.sh,v 1.14 2002/12/06 18:24:37 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -28,28 +28,13 @@ progname=`basename $0`
 
 VERBOSE=
 export VERBOSE
-JDKVER=
 while [ $# -gt 0 ]; do
-    case "$1" in -*)	# Switch
+    case "$1" in -*)	# Gobble up all Switches.  Leave anything else.
     	    case "$1" in *v*) VERBOSE=1;; esac
-	;;
-	*)	# Version
-	    case "$1" in
-	    	1.4|pre1.4|1.1) JDKVER="$1";;
-		1.2|1.3) JDKVER=pre1.4
-		    echo "WARNING:  Target is '$JDKVER'" 1>&2
-		;;
-	    esac
+	    shift
 	;;
     esac
-    shift
 done
-[ -n "$JDKVER" ] || {
-    echo "SYNTAX:  $progname [-v] {1.1|pre1.4|1.4}" 1>&2
-    exit 2
-}
-NOSWING=
-[ "$JDKVER" = 1.1 ] && NOSWING=1
 
 Failout() {
     [ "$#" -gt 0 ] || Failout "There is a bad Failout invocation in $progname"
@@ -67,10 +52,13 @@ dbhome=`cd ${dbhome}; pwd`
 AWK=awk
 [ "`uname`" = SunOS ] && AWK=nawk
 
-SWITCHERVERBOSE=
-[ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
-echo 'Running CodeSwitcher...'
-$dbhome/build/settargetjre.sh $SWITCHERVERBOSE $JDKVER || exit $?
+# Just macros so commands below will fit onto one line
+hsrcdir=$dbhome/src/org/hsqldb
+hclsdir=$dbhome/classes/org/hsqldb
+
+# Validate Source files
+[ -f "$hsrcdir/util/EchoProperty.java" ] || Failout  \
+ "EchoProperty source file '$hsrcdir/util/EchoProperty.java' is not a file"
 
 # Generic initialization for $CLASSPATH, etc.
 . ${dbhome}/lib/functions
@@ -79,6 +67,47 @@ pre_main
 #############################   Main   ###########################
 
 [ -n "$VERBOSE" ] && set -x
+
+[ -d $dbhome/classes ] || {
+    mkdir $dbhome/classes ||
+     Failout "Failed to create directory '$dbhome/classes'"
+}
+
+cd $hsrcdir || Failout "Failed to cd to '$dbhome/src/org/hsqldb'"
+
+# Build EchoProperty.class if it needs to be rebuilt
+# Note that this test succeeds if the class file does not exist.
+NewerThan util/EchoProperty.java $hclsdir/util/EchoProperty.class && {
+    echo 'Rebuilding EchoProperty.class...'
+  "$jdkhome/bin/javac" -target 1.1 -d $dbhome/classes util/EchoProperty.java ||
+     Failout "Failed to rebuild EchoProperty"
+}
+RAWVER=
+RAWVER=`exec "$jdkhome/bin/java" -classpath "$dbhome/classes:$cp"  \
+ org.hsqldb.util.EchoProperty java.version` ||
+  Failout "Failed to determine Java version with EchoProperty"
+echo "RAWVER=($RAWVER)"   #  DEBUG.  Remove this line!!
+JDKVER=
+case "$RAWVER" in
+    1.1.*) JDKVER=1.1;;
+    1.[23].*) JDKVER=pre1.4;;
+    1.4.*) JDKVER=1.4;;
+    *) Failout "Unrecognized Java version '$RAWVER'";;
+esac
+
+echo "Building for target '$JDKVER'"
+case "$JDKVER" in
+    1.1) echo "    (Resultant jar can only be used with Java JRE 1.1.x)";;
+    pre1.4) echo "    (Resultant jar can be used with any Java JRE < 1.4)";;
+    1.4) echo "    (Resultant jar can only be used with Java JREs >= 1.4)";;
+esac
+
+NOSWING=
+[ "$JDKVER" = 1.1 ] && NOSWING=1
+SWITCHERVERBOSE=
+[ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
+echo 'Running CodeSwitcher...'
+$dbhome/build/settargetjre.sh $SWITCHERVERBOSE $JDKVER || exit $?
 
 cd $dbhome || Failout "Failed to cd to '$dbhome'"
 cd src || Failout "Failed to cd to '$dbhome/src'"
@@ -157,6 +186,6 @@ find * -name '*.class' -print | while read file; do case "$file" in
 esac; done > $LISTFILE
 NUMFILES=`$AWK 'END { print NR;}' $LISTFILE`
 
-echo "Assembling $NUMFILES class files into jar file..."
+echo "Assembling $NUMFILES class files into new jar file..."
 "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
 rm $LISTFILE
