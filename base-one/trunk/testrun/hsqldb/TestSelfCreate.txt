@@ -14,7 +14,6 @@
 --   u <count>    Update count <count> expected
 --   e            Exception must occur
 
--- TEST 1
 -- Correct handling of index creation for foreign keys
 
 create cached table VEREIN
@@ -25,16 +24,13 @@ create cached table VEREIN
 create unique index VEREIN_PK on VEREIN (VCODE);
 create cached table BEWERB
    (
-   VCODE CHAR(10)
-   not null,
+   VCODE CHAR(10) not null,
    ID SMALLINT not null ,
    primary key (ID)
    );
 create unique index BEWERB_FK2 on BEWERB(ID);
 create unique index BEWERB_FK1 on BEWERB(VCODE);
-alter table BEWERB
-   add constraint bv foreign key (VCODE) references VEREIN
-   (VCODE);
+alter table BEWERB add constraint bv foreign key (VCODE) references VEREIN(VCODE);
 
 -- forward FK with index
 
@@ -103,7 +99,7 @@ INSERT INTO APP VALUES (2, 2, 'Eran');
 
 --test identity increment
 CREATE CACHED TABLE APP2 (
- ID INTEGER NOT NULL IDENTITY,
+ ID BIGINT NOT NULL IDENTITY,
  VALUE INTEGER NOT NULL)
 
 INSERT INTO APP2 (VALUE) VALUES(10);

@@ -1254,7 +1254,6 @@ public class Server implements HsqlSocketRequestHandler {
 
         serverThread.start();
 
-        // call synchronized getState() to become owner of the Server Object's monitor
         while (getState() == ServerConstants.SERVER_STATE_OPENING) {
             try {
                 Thread.sleep(100);

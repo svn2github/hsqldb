@@ -55,6 +55,7 @@ public class RowOutputTextLog extends RowOutputBase {
     static final byte[]     BYTES_TRUE  = "TRUE".getBytes();
     static final byte[]     BYTES_FALSE = "FALSE".getBytes();
     static final byte[]     BYTES_AND   = " AND ".getBytes();
+    static final byte[]     BYTES_IS    = " IS ".getBytes();
     public static final int MODE_DELETE = 1;
     public static final int MODE_INSERT = 0;
     private boolean         isWritten;
@@ -131,10 +132,11 @@ public class RowOutputTextLog extends RowOutputBase {
         this.writeBytes(o.toString());
     }
 
+//fredt@users - patch 1108647 by nkowalcz@users (NataliaK) fix for IS NULL
     protected void writeNull(int type) throws IOException {
 
         if (logMode == MODE_DELETE) {
-            write('=');
+            write(BYTES_IS);
         } else if (isWritten) {
             write(',');
         }

@@ -4,8 +4,8 @@
 -- Tests demonstrating remaining issues
 --
 -- bug #901313 - fixed - subselect results in error when it returns no rows
-drop table table1 if exists;
 drop table table2 if exists;
+drop table table1 if exists;
 create table table1 (col1 integer not null, col2 integer not null);
 create table table2 (col1 integer, col2 integer);
 insert into table1 (col1, col2) values (1, 1)

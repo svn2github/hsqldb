@@ -5,6 +5,20 @@ hsqldb 1.7.3 in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.02.23 1.7.3.3
+
+Fixed NPE when defining self referencing FK's with no primary key
+
+2004.02.07 1.7.3.3
+
+Fixed bug with loggin of deletes / updates from tables without primary keys. If the a row
+from such tables contained a null value and was deleted / updated, the operation was not 
+logged correctly. Subsequently, if there was an abnormal termination after such changes and
+the database was restarted, the logged delete statement would not have any effect and result
+in duplicate rows. This bug did not affect tables with primary keys or the normal operation
+(without abnormal termination) of other tables.
+
+
 2004.01.31 1.7.3.2
 
 Allow conversion from BIGINT to SAMMLINT and TYNYINT (all other legal conversions worked fine)

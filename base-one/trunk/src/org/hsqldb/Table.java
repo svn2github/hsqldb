@@ -903,7 +903,8 @@ public class Table extends BaseTable {
     }
 
     public boolean hasPrimaryKey() {
-        return !(primaryKeyCols[0] == visibleColumnCount);
+        return primaryKeyCols != null
+               &&!(primaryKeyCols[0] == visibleColumnCount);
     }
 
     int[] getBestRowIdentifiers() {
