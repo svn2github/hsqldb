@@ -454,7 +454,7 @@ class Parser {
                             f.getName(), table.getColumn(c).columnName.name,
                             table.getColumn(c).columnName.isNameQuoted);
 */
-                        Expression ins = new Expression(table,
+                        Expression ins = new Expression(f.getName(),
                                                         table.getColumn(c));
 
                         vcolumn.add(current++, ins);
@@ -1285,7 +1285,7 @@ class Parser {
                 break;
             }
             case Expression.MULTIPLY : {
-                r = new Expression(sTable, null);
+                r = new Expression(sTable, (String) null);
 
                 read();
 

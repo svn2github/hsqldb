@@ -351,9 +351,9 @@ class Expression {
         }
     }
 
-    Expression(Table table, Column column) {
+    Expression(String table, Column column) {
 
-        sTable = table.tableName.name;
+        sTable = table;
 
         if (column == null) {
             iType = ASTERIX;
