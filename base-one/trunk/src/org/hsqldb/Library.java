@@ -575,9 +575,10 @@ public class Library {
 
     /**
      * Returns a <code>String</code> object that is the result of an
-     * <em>SQL-style</em> concatenation of the given <code>String</code> objects. <p>
+     * concatenation of the given <code>String</code> objects. <p>
      *
-     * <b>Note:</b> by <em>SQL-style</em>, it is meant:
+     * <b>When only one string is NULL, the result is different from that
+     * returned by an (string1 || string2) expression:
      *
      * <UL>
      * <LI> if both <code>String</code> objects are <code>null</code>, return
@@ -659,6 +660,10 @@ public class Library {
      *      <code>String</code>
      */
     public static String hexToRaw(String s) {
+
+        if (s == null) {
+            return null;
+        }
 
         char         raw;
         StringBuffer to  = new StringBuffer();
@@ -1288,6 +1293,10 @@ public class Library {
      */
     public static String dayname(java.sql.Date d) {
 
+        if (d == null) {
+            return null;
+        }
+
         synchronized (daynameBuffer) {
             daynameBuffer.setLength(0);
 
@@ -1303,8 +1312,14 @@ public class Library {
      * @param d the date value from which to extract the day of month
      * @return the day of the month from the given date value
      */
-    public static int dayofmonth(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_MONTH);
+    public static Integer dayofmonth(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.DAY_OF_MONTH));
     }
 
     /**
@@ -1314,8 +1329,14 @@ public class Library {
      * @param d the date value from which to extract the day of week
      * @return the day of the week from the given date value
      */
-    public static int dayofweek(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_WEEK);
+    public static Integer dayofweek(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.DAY_OF_WEEK));
     }
 
     /**
@@ -1325,8 +1346,14 @@ public class Library {
      * @param d the date value from which to extract the day of year
      * @return the day of the year from the given date value
      */
-    public static int dayofyear(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_YEAR);
+    public static Integer dayofyear(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.DAY_OF_YEAR));
     }
 
     /**
@@ -1338,8 +1365,14 @@ public class Library {
      */
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - hour
-    public static int hour(java.sql.Time t) {
-        return HsqlDateTime.getDateTimePart(t, Calendar.HOUR_OF_DAY);
+    public static Integer hour(java.sql.Time t) {
+
+        if (t == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(t,
+                Calendar.HOUR_OF_DAY));
     }
 
     /**
@@ -1349,8 +1382,14 @@ public class Library {
      * @param t the time value from which to extract the minute value
      * @return the minute value from the given time value
      */
-    public static int minute(java.sql.Time t) {
-        return HsqlDateTime.getDateTimePart(t, Calendar.MINUTE);
+    public static Integer minute(java.sql.Time t) {
+
+        if (t == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(t,
+                Calendar.MINUTE));
     }
 
     /**
@@ -1363,8 +1402,14 @@ public class Library {
      * @param d the date value from which to extract the month value
      * @return the month value from the given date value
      */
-    public static int month(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.MONTH) + 1;
+    public static Integer month(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(
+            HsqlDateTime.getDateTimePart(d, Calendar.MONTH) + 1);
     }
 
     /**
@@ -1377,6 +1422,10 @@ public class Library {
      * @return a String representing the month name from the given date value
      */
     public static String monthname(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
 
         synchronized (monthnameBuffer) {
             monthnameBuffer.setLength(0);
@@ -1405,8 +1454,14 @@ public class Library {
      * @return an integer representing the quater of the year from the given
      *      date value
      */
-    public static int quarter(java.sql.Date d) {
-        return (HsqlDateTime.getDateTimePart(d, Calendar.MONTH) / 3) + 1;
+    public static Integer quarter(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(
+            (HsqlDateTime.getDateTimePart(d, Calendar.MONTH) / 3) + 1);
     }
 
     /**
@@ -1417,8 +1472,14 @@ public class Library {
      * @return an integer representing the second of the hour from the
      *      given time value
      */
-    public static int second(java.sql.Time d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.SECOND);
+    public static Integer second(java.sql.Time d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.SECOND));
     }
 
     /**
@@ -1429,8 +1490,14 @@ public class Library {
      * @return an integer representing the week of the year from the given
      *      date value
      */
-    public static int week(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.WEEK_OF_YEAR);
+    public static Integer week(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.WEEK_OF_YEAR));
     }
 
     /**
@@ -1441,8 +1508,14 @@ public class Library {
      * @return an integer value representing the year from the given
      *      date value
      */
-    public static int year(java.sql.Date d) {
-        return HsqlDateTime.getDateTimePart(d, Calendar.YEAR);
+    public static Integer year(java.sql.Date d) {
+
+        if (d == null) {
+            return null;
+        }
+
+        return ValuePool.getInt(HsqlDateTime.getDateTimePart(d,
+                Calendar.YEAR));
     }
 
     // date calculations.
@@ -1909,13 +1982,13 @@ public class Library {
                 }
                 case dayofmonth :
                 case day : {
-                    return ValuePool.getInt(dayofmonth((Date) params[0]));
+                    return dayofmonth((Date) params[0]);
                 }
                 case dayofweek : {
-                    return ValuePool.getInt(dayofweek((Date) params[0]));
+                    return dayofweek((Date) params[0]);
                 }
                 case dayofyear : {
-                    return ValuePool.getInt(dayofyear((Date) params[0]));
+                    return dayofyear((Date) params[0]);
                 }
                 case difference : {
                     return ValuePool.getInt(difference((String) params[0],
@@ -1940,7 +2013,7 @@ public class Library {
                     return hexToRaw((String) params[0]);
                 }
                 case hour : {
-                    return ValuePool.getInt(hour((Time) params[0]));
+                    return hour((Time) params[0]);
                 }
                 case identity : {
                     return null;
@@ -1980,7 +2053,7 @@ public class Library {
                     return ltrim((String) params[0]);
                 }
                 case minute : {
-                    return ValuePool.getInt(minute((Time) params[0]));
+                    return minute((Time) params[0]);
                 }
                 case mod : {
                     return ValuePool.getInt(
@@ -1989,7 +2062,7 @@ public class Library {
                         ((Number) params[1]).intValue()));
                 }
                 case month : {
-                    return ValuePool.getInt(month((Date) params[0]));
+                    return month((Date) params[0]);
                 }
                 case monthname : {
                     return ValuePool.getString(monthname((Date) params[0]));
@@ -2008,7 +2081,7 @@ public class Library {
                     return piValue;
                 }
                 case quarter : {
-                    return ValuePool.getInt(quarter((Date) params[0]));
+                    return quarter((Date) params[0]);
                 }
                 case rand : {
                     return new Double(rand((Integer) params[0]));
@@ -2040,7 +2113,7 @@ public class Library {
                     return rtrim((String) params[0]);
                 }
                 case second : {
-                    return ValuePool.getInt(second((Time) params[0]));
+                    return second((Time) params[0]);
                 }
                 case sign : {
                     return ValuePool.getInt(
@@ -2075,10 +2148,10 @@ public class Library {
                     return null;
                 }
                 case week : {
-                    return ValuePool.getInt(week((Date) params[0]));
+                    return week((Date) params[0]);
                 }
                 case year : {
-                    return ValuePool.getInt(year((Date) params[0]));
+                    return year((Date) params[0]);
                 }
                 case isReadOnlyDatabaseFiles : {
                     return null;
