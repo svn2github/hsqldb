@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.70 2004/06/07 15:42:10 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.71 2004/06/07 18:43:47 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.70 $
+ * @version $Revision: 1.71 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.70 $".substring("$Revision: ".length(),
-                "$Revision: 1.70 $".length() - 2);
+        revnum = "$Revision: 1.71 $".substring("$Revision: ".length(),
+                "$Revision: 1.71 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -129,18 +129,25 @@ public class SqlFile {
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n";
     final private static String BUFFER_HELP_TEXT =
-        "BUFFER Commands (only available for interactive use).\n"
-        + "In place of \"3\" below, you can use nothing for the previous command, or\n"
-        + "an integer \"X\" to indicate the Xth previous command.\n\n"
-        + "    :?          Help\n"
-        + "    :a [text]   Enter append mode with contents of buffer as current command\n"
-        + "    :l          List current contents of buffer\n"
-        + "    :s/from/to/ Substitute \"to\" for all occurrences of \"from\"\n"
-        + "                ('$'s in \"from\" and \"to\" represent line breaks)\n"
-        + "                (use \":s/from//\" to delete 'from' strings)\n"
-        + "                ('/' can actually be any char which occurs in\n"
-        + "                 neither \"to\" nor \"from\")\n"
-        + "    :;          Execute current buffer as an SQL Statement\n"
+        "BUFFER Commands (only available for interactive use).\n\n"
+        + "    :?                Help\n"
+        + "    :;                Execute current buffer as an SQL Statement\n"
+        + "    :a [text]         Enter append mode with a copy of the buffer\n"
+        + "    :l                List current contents of buffer\n"
+        + "    :s/from/to        Substitute \"to\" for first occurrence of \"from\"\n"
+        + "    :s/from/to/[i;g2] Substitute \"to\" for occurrence(s) of \"from\"\n"
+        + "                from:  '$'s represent line breaks\n"
+        + "                to:    If empty, from's will be deleted.\n"
+        + "                       '$'s represent line breaks\n"
+        + "                       Do not terminate with ';' (use ';' switch below)\n"
+        + "                /:     Can actually be any char which occurs in\n"
+        + "                       neither \"to\" string nor \"from\" string.\n"
+        + "                SUBSTITUTION MODE SWITCHES:\n"
+        + "                       i:  case Insensitive\n"
+        + "                       ;:  execute immediately after substitution\n"
+        + "                       g:  Global (substitute all occurrences of \"from\" string)\n"
+        + "                       2:  Narrows substitution to specified buffer line number\n"
+        + "                           (Use any line number in place of '2')\n"
     ;
     final private static String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
@@ -166,17 +173,17 @@ public class SqlFile {
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
-        + "    * VARNAME =                   Unset variable\n"
-        + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n\n"
+        + "    * VARNAME =                   Unset variable (note space before =)\n"
+        + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n"
         + "    * foreach VARNAME ([val1...]) Repeat the following PL block with \n"
-        + "                                  given variable value each time\n"
-        + "    * if (log expr)               Execute following PL block only if expr true\n"
-        + "    * while (log expr)            Repeat following PL block while expr true\n"
+        + "                                  given variable value each time.\n"
+        + "    * if (logical expr)           Execute following PL block only if expr true\n"
+        + "    * while (logical expr)        Repeat following PL block while expr true\n"
         + "    * end                         Ends a PL block\n\n"
         + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
         + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
         + "Use defined PL variables in logical expressions like: *VARNAME.\n"
-        + "No variable substitutions are performed until you run any '* ...' command\n"
+        + "No variable substitutions are performed if you do not run any '* ...' command\n"
         + "(other than '* ?').\n";
 
     /**
@@ -559,6 +566,16 @@ public class SqlFile {
                 return;
             case 's':
             case 'S':
+                // For now, I'm only keeping the "modified" SQL command in
+                // history.  This is because a user could make 10 modifications
+                // to a command before it is usable, and we don't want those
+                // intermediate commands cluttering up the history.
+                // Note that this behavior is inconsistent with that of :a.
+                // Should probably refactor this.
+                boolean modeIC = false;
+                boolean modeGlobal = false;
+                boolean modeExecute = false;
+                int     modeLine = 0;
                 try {
                     String       fromHist = commandFromHistory(0);
                     StringBuffer sb       = new StringBuffer(fromHist);
@@ -586,19 +603,83 @@ public class SqlFile {
                         }
                     }
                     if (toker.countTokens() > 0) {
-                        throw new BadSwitch(4);
+                        String opts = toker.nextToken("");
+                        for (int j = 0; j < opts.length(); j++) {
+                            switch(opts.charAt(j)) {
+                                case 'i':
+                                    modeIC = true;
+                                    break;
+                                case ';':
+                                    modeExecute = true;
+                                    break;
+                                case 'g':
+                                    modeGlobal = true;
+                                    break;
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9':
+                                    modeLine = Character.
+                                            digit(opts.charAt(j), 10);
+                                    break;
+                                default:
+                                    throw new BadSpecial(
+                                            "Unknown Substitution option: "
+                                            + opts.charAt(j));
+                            }
+                        }
                     }
-                    int i = fromHist.length();
-                    while ((i = fromHist.lastIndexOf(from, i - 1)) > -1) {
+                    if (modeIC) {
+                        fromHist = fromHist.toUpperCase();
+                        from = from.toUpperCase();
+                    }
+                    // lineStart will be either 0 or char FOLLOWING a \n.
+                    int lineStart = 0;
+                    // lineStop is the \n AFTER what we consider.
+                    int lineStop = -1;
+                    if (modeLine > 0) {
+                        for (int j = 1; j < modeLine; j++) {
+                            lineStart = fromHist.indexOf('\n', lineStart) + 1;
+                            if (lineStart < 1) {
+                                throw new BadSpecial("There are not " 
+                                        + modeLine + " lines in the buffer.");
+                            }
+                        }
+                        lineStop = fromHist.indexOf('\n', lineStart);
+                    }
+                    if (lineStop < 0) {
+                        lineStop = fromHist.length();
+                    }
+                    // System.err.println("[" 
+                    // + fromHist.substring(lineStart, lineStop) + ']');
+                    int i;
+                    if (modeGlobal) {
+                        i = lineStop;
+                        while ((i = fromHist.lastIndexOf(from, i - 1))
+                                >= lineStart) {
+                            sb.replace(i, i + from.length(), to);
+                        }
+                    } else if ((i = fromHist.indexOf(from, lineStart)) > -1
+                            && i < lineStop) {
                         sb.replace(i, i + from.length(), to);
                     }
                     statementHistory[curHist] = sb.toString();
-                    stdprintln("Current Buffer:\n" + commandFromHistory(0));
+                    stdprintln((modeExecute ? "Executing" : "Current Buffer")
+                            + ":\n" + commandFromHistory(0));
                 } catch (BadSwitch badswitch) {
                     throw new BadSpecial(
-                        "Switch syntax:  \":s/from this/to that/\".  "
+                        "Substitution syntax:  \":s/from this/to that/i;g2\".  "
                         + "Use '$' for line separations.  ["
                         + badswitch.getMessage() + ']');
+                }
+                if (modeExecute) {
+                    curCommand = commandFromHistory(0);
+                    processStatement();
                 }
                 return;
             case '?':
