@@ -34,67 +34,71 @@ package org.hsqldb.lib;
 /**
  * Provides the base HSQLDB interface for Heap ADT implementations. <p>
  *
- * In this context, a Heap is simply an ADT that allows addition of elements
- * and provides a way to remove the least element, given some
- * implementation-dependent strategy for imposing an order over
- * its elements. Typically, an HsqlHeap will be implemented as a tree-like
- * structure that recursively guarantees a <i>Heap Invariant</i>, such that
- * all nodes below a root are greater than the root, given some comparison
- * stragegy. This in turn provides the basis for an efficient implementation
- * of ADTs such PriorityQueue, since Heap operations using the typical Heap
- * implementation are in theory guaranteed to be O(log n).
+ * In this context, a Heap is simply a collection-like ADT that allows addition
+ * of elements and provides a way to remove the least element, given some
+ * implementation-dependent strategy for imposing an order over its
+ * elements. <p>
  *
+ * Typically, an HsqlHeap will be implemented as a tree-like structure that
+ * recursively guarantees a <i>Heap Invariant</i>, such that all nodes below
+ * the root are greater than the root, given some comparison stragegy. <p>
+
+ * This in turn provides the basis for an efficient implementation of ADTs such
+ * PriorityQueue, since Heap operations using the typical implementation are,
+ * in theory, guaranteed to be O(log n).
+ *
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 public interface HsqlHeap {
 
     /**
-     * Removes all of the elements from the Heap.
+     * Removes all of the elements from this Heap.
      */
     public void clear();
 
     /**
-     * Retrieves whether the Heap is empty.
+     * Retrieves whether this Heap is empty.
      */
     public boolean isEmpty();
 
     /**
-     * Retrieves whether the Heap is full.
+     * Retrieves whether this Heap is full.
      */
     public boolean isFull();
 
     /**
-     * Add the specified element to the Heap.
+     * Adds the specified element to this Heap.
      *
      * @param o The element to add
      * @throws IllegalArgumentException if the implementation does
      *      not accept elements of the supplied type (optional)
-     * throws UnsupportedOperationException if the implementation
-     *      is not currently accepting additions or the Heap is
-     *      full (optional)
+     * throws HsqlUnsupportedOperationException if the implementation
+     *      dictates that this Heap is not currently accepting additions
+     *      or that this Heap is currently full (optional)
      */
     public void add(Object o)
-    throws IllegalArgumentException, UnsupportedOperationException;
+    throws IllegalArgumentException, RuntimeException;
 
     /**
-     * Retrieves the least element from the Heap, without removing it.
+     * Retrieves the least element from this Heap, without removing it.
      *
-     * @return he least element from the heap
+     * @return the least element from this Heap
      */
     public Object peek();
 
     /**
-     * Retrieves the least element from the heap, removing it in the process.
+     * Retrieves the least element from this Heap, removing it in the process.
      *
-     * @return the least element from the heap
+     * @return the least element from this Heap
      */
     public Object remove();
 
     /**
-     * Retrieves the number of elements currently in the heap.
+     * Retrieves the number of elements currently in this Heap.
      *
-     * @return the number of elements currently in the heap
+     * @return the number of elements currently in this Heap
      */
     public int size();
 }

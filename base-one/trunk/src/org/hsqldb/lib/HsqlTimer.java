@@ -47,10 +47,11 @@ import java.util.Enumeration;
 public class HsqlTimer implements ObjectComparator {
 
     /** The priority queue for the scheduled tasks. */
-    protected final TaskQueue taskQueue;
+    protected final TaskQueue taskQueue = 
+        new TaskQueue(16, (ObjectComparator) this);
 
     /** The inner runnable that executes tasks in the background thread. */
-    protected final TaskRunner taskRunner;
+    protected final TaskRunner taskRunner = new TaskRunner();
 
     /** The background thread. */
     protected Thread taskRunnerThread;
@@ -60,7 +61,7 @@ public class HsqlTimer implements ObjectComparator {
 
     /**
      * Constructs a new HsqlTimer using the default thread factory
-     * implementations.
+     * implementation.
      */
     public HsqlTimer() {
         this(null);
@@ -75,10 +76,7 @@ public class HsqlTimer implements ObjectComparator {
      *      be used.
      */
     public HsqlTimer(ThreadFactory tf) {
-
-        taskQueue     = new TaskQueue(16, this);
-        taskRunner    = new TaskRunner();
-        threadFactory = new HsqlThreadFactory(threadFactory);
+        threadFactory = new HsqlThreadFactory(tf);
     }
 
     /**

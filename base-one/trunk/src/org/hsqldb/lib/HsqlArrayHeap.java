@@ -89,17 +89,17 @@ public class HsqlArrayHeap implements HsqlHeap {
     }
 
     public synchronized void add(Object o)
-    throws IllegalArgumentException, UnsupportedOperationException {
+    throws java.lang.IllegalArgumentException, RuntimeException {
 
         int ci;    // current index
         int pi;    // parent index
 
         if (o == null) {
-            throw new IllegalArgumentException("heap does not accept null");
+            throw new IllegalArgumentException("heap does not accept null.");
         }
 
         if (isFull()) {
-            throw new UnsupportedOperationException("heap is full.");
+            throw new RuntimeException("heap is full.");
         }
 
         if (count >= heap.length) {
@@ -317,7 +317,7 @@ public class HsqlArrayHeap implements HsqlHeap {
 
         // no handling of boundary conditions.
         // In the highly unlikely event of a rollover,
-        // in theory an exception will be thrown (negative array index in
+        // in theory, an exception will be thrown (negative array index in
         // array allocation?)
         oldheap = heap;
 
@@ -328,64 +328,64 @@ public class HsqlArrayHeap implements HsqlHeap {
     }
 
 // ------------------------------- tests ---------------------------------------
-    public static void main(String[] args) {
-
-        ObjectComparator oc = new ObjectComparator() {
-
-            public int compare(Object a, Object b) {
-
-                if (a == b) {
-                    return 0;
-                }
-
-                // null==null and smaller than any value
-                if (a == null) {
-                    if (b == null) {
-                        return 0;
-                    }
-
-                    return -1;
-                }
-
-                if (b == null) {
-                    return 1;
-                }
-
-                return ((Integer) a).intValue() - ((Integer) b).intValue();
-            }
-        };
-        HsqlHeap ah = new HsqlArrayHeap(6, oc);
-
-        System.out.println("isEmpty() : " + ah.isEmpty());
-
-        int[] ai    = new int[] {
-            3, 99, 7, 9, -42, 2, 1, 23, -7
-        };
-        int   least = Integer.MIN_VALUE;
-
-        for (int i = 0; i < ai.length; i++) {
-            System.out.println("add()     : new Integer(" + ai[i] + ")");
-            ah.add(new Integer(ai[i]));
-            System.out.println("size()    : " + ah.size());
-        }
-
-        while (ah.size() > 0) {
-            int current = ((Integer) ah.remove()).intValue();
-
-            if (current < least) {
-                throw new RuntimeException("bad heap invariant");
-            }
-
-            least = current;
-
-            System.out.println("remove()  : " + current);
-            System.out.println("size()    : " + ah.size());
-        }
-
-        System.out.println("peak() : " + ah.peek());
-        System.out.println("isEmpty() : " + ah.isEmpty());
-        System.out.println("remove()  : " + ah.remove());
-        System.out.println("size()    : " + ah.size());
-        System.out.println("isEmpty() : " + ah.isEmpty());
-    }
+//    public static void main(String[] args) {
+//
+//        ObjectComparator oc = new ObjectComparator() {
+//
+//            public int compare(Object a, Object b) {
+//
+//                if (a == b) {
+//                    return 0;
+//                }
+//
+//                // null==null and smaller than any value
+//                if (a == null) {
+//                    if (b == null) {
+//                        return 0;
+//                    }
+//
+//                    return -1;
+//                }
+//
+//                if (b == null) {
+//                    return 1;
+//                }
+//
+//                return ((Integer) a).intValue() - ((Integer) b).intValue();
+//            }
+//        };
+//        HsqlHeap ah = new HsqlArrayHeap(6, oc);
+//
+//        System.out.println("isEmpty() : " + ah.isEmpty());
+//
+//        int[] ai    = new int[] {
+//            3, 99, 7, 9, -42, 2, 1, 23, -7
+//        };
+//        int   least = Integer.MIN_VALUE;
+//
+//        for (int i = 0; i < ai.length; i++) {
+//            System.out.println("add()     : new Integer(" + ai[i] + ")");
+//            ah.add(new Integer(ai[i]));
+//            System.out.println("size()    : " + ah.size());
+//        }
+//
+//        while (ah.size() > 0) {
+//            int current = ((Integer) ah.remove()).intValue();
+//
+//            if (current < least) {
+//                throw new RuntimeException("bad heap invariant");
+//            }
+//
+//            least = current;
+//
+//            System.out.println("remove()  : " + current);
+//            System.out.println("size()    : " + ah.size());
+//        }
+//
+//        System.out.println("peak() : " + ah.peek());
+//        System.out.println("isEmpty() : " + ah.isEmpty());
+//        System.out.println("remove()  : " + ah.remove());
+//        System.out.println("size()    : " + ah.size());
+//        System.out.println("isEmpty() : " + ah.isEmpty());
+//    }
 }

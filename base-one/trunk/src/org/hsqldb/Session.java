@@ -683,7 +683,7 @@ class Session implements SessionInterface {
         Parser            parser;
         int               cmd;
         CompiledStatement cs;
-        boolean           cmdok;
+        boolean           isCmdOk;
 
         tokenizer = new Tokenizer(sql);
         parser    = new Parser(dDatabase, tokenizer, this);
@@ -691,7 +691,7 @@ class Session implements SessionInterface {
 
         // get first token and its command id
         cmd   = Token.get(token);
-        cmdok = true;
+        isCmdOk = true;
 
         switch (cmd) {
 
@@ -721,7 +721,7 @@ class Session implements SessionInterface {
                 break;
             }
             default : {
-                cmdok = false;
+                isCmdOk = false;
                 cs    = null;
 
                 break;
@@ -731,9 +731,20 @@ class Session implements SessionInterface {
         // In addition to requiring that the compilation was successful,
         // we also require that the submitted sql represents a _single_
         // valid DML statement.
-        // fredt - won't accept semicolon at the end of statement
-        if (!cmdok || tokenizer.getPosition() != tokenizer.getLength()) {
+        if (!isCmdOk) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        // fredt - now accepts semicolon and whitespace at the end of statement
+        // fredt - investigate if it should or not
+
+        while (tokenizer.getPosition() < tokenizer.getLength()) {
+
+            token = tokenizer.getString();
+
+            Trace.check(token.length() == 0 || token.equals(Token.T_SEMICOLON),
+                        Trace.UNEXPECTED_TOKEN,
+                        token);
         }
 
         // - need to be able to key cs against its sql in statement pool
