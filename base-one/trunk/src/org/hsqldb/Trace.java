@@ -207,7 +207,7 @@ public class Trace {
                             TABLE_HAS_NO_PRIMARY_KEY                  = 103,
                             VIOLATION_OF_UNIQUE_CONSTRAINT            = 104,
                             NO_DEFAULT_VALUE_FOR_COLUMN               = 105,
-                            unused106                                 = 106,
+                            NULL_VALUE_AS_BOOLEAN                     = 106,
                             DatabaseManager_getDatabase               = 107,
                             DatabaseManager_getDatabaseObject         = 108,
                             DatabaseManager_releaseSession            = 109,
@@ -439,7 +439,7 @@ public class Trace {
         "table has no primary key",                                     // DatabaseCommandInterpreter_processCreateConstraints
         "23000 Unique constraint violation",                            //
         "missing DEFAULT value on column '$$'",                         // DatabaseCommandInterpreter_checkFKColumnDefaults
-        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible",      // DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint
+        "S1000 NULL value as BOOLEAN",                                  //
         "attempt to connect while db opening /closing",                 // DatabaseManager_getDatabase
         "problem in db access count",                                   // DatabaseManager_getDatabaseObject
         "problem in db access count",                                   // DatabaseManager_releaseSession

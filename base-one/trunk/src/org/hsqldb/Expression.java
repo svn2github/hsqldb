@@ -1745,8 +1745,10 @@ public class Expression {
                 break;
             }
             case NEGATE :
-                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes1));
+                if (eArg.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes1);
+                }
 
                 dataType = eArg.dataType;
 
@@ -1770,9 +1772,10 @@ public class Expression {
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes2));
+                if (eArg.isParam && eArg2.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes2);
+                }
 
                 if (isFixedConstant()) {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
@@ -1819,9 +1822,10 @@ public class Expression {
             case SMALLER :
             case SMALLER_EQUAL :
             case NOT_EQUAL :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes3));
+                if (eArg.isParam && eArg2.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes3);
+                }
 
                 if (isFixedConditional()) {
                     exprType = test() ? TRUE
@@ -1938,8 +1942,10 @@ public class Expression {
 
             /** @todo fredt - set the correct return type */
             case COUNT :
-                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes4));
+                if (eArg.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes4);
+                }
 
                 dataType = Types.INTEGER;
                 break;
@@ -1948,8 +1954,10 @@ public class Expression {
             case MIN :
             case SUM :
             case AVG :
-                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes4));
+                if (eArg.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes4);
+                }
 
                 dataType = SetFunction.getType(exprType, eArg.dataType);
                 break;
@@ -1988,9 +1996,10 @@ public class Expression {
                 Expression case1 = eArg;
                 Expression case2 = eArg2;
 
-                Trace.check(!(case1.isParam && case2.isParam),
-                            Trace.UNRESOLVED_PARAMETER_TYPE,
-                            Trace.getMessage(Trace.Expression_resolveTypes6));
+                if (case1.isParam && case2.isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes6);
+                }
 
                 if (case1.isParam || case1.dataType == Types.NULL) {
                     case1.dataType = case2.dataType;
@@ -2012,16 +2021,13 @@ public class Expression {
 
                     // Good enough for now?
                     dataType = Types.LONGVARCHAR;
-                } else {
-                    Trace.check(
-                        case1.dataType == case2.dataType,
-                        Trace.UNRESOLVED_PARAMETER_TYPE,
-                        Trace.getMessage(
-                            Trace.Expression_resolveTypes7, true,
-                            new String[] {
+                } else if (case1.dataType != case2.dataType) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypes7,
+                                      new String[] {
                         Types.getTypeString(case1.dataType),
                         Types.getTypeString(case2.dataType)
-                    }));
+                    });
                 }
 
                 break;
@@ -2031,9 +2037,10 @@ public class Expression {
 
     void resolveTypeForLike() throws HsqlException {
 
-        Trace.check(!(eArg.isParam && eArg2.isParam),
-                    Trace.UNRESOLVED_PARAMETER_TYPE,
-                    Trace.getMessage(Trace.Expression_resolveTypeForLike));
+        if (eArg.isParam && eArg2.isParam) {
+            throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                              Trace.Expression_resolveTypeForLike);
+        }
 
         if (isFixedConditional()) {
             exprType = test() ? TRUE
@@ -2209,12 +2216,15 @@ public class Expression {
             int          len = vl.length;
 
             if (eArg.isParam) {
-                Trace.check(
-                    len > 0, Trace.UNRESOLVED_PARAMETER_TYPE,
-                    Trace.getMessage(Trace.Expression_resolveTypeForIn1));
-                Trace.check(
-                    !vl[0].isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
-                    Trace.getMessage(Trace.Expression_resolveTypeForIn2));
+                if (len <= 0) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypeForIn1);
+                }
+
+                if (vl[0].isParam) {
+                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                      Trace.Expression_resolveTypeForIn2);
+                }
 
                 Expression e  = vl[0];
                 int        dt = e.dataType;
@@ -2719,9 +2729,7 @@ public class Expression {
                 return Column.concat(leftValue, rightValue);
 
             default :
-                Trace.check(false, Trace.NEED_AGGREGATE, this.toString());
-
-                return null;    // Not reachable.
+                throw Trace.error(Trace.NEED_AGGREGATE, this.toString());
         }
     }
 
@@ -2916,16 +2924,23 @@ public class Expression {
                 Result r = eArg.subSelect.getResult(1);    // 1 is already enough
 
                 return r.rRoot != null;
+
+            case FUNCTION :
+                Object value = Column.convertObject(function.getValue(),
+                                                    Types.BOOLEAN);
+
+                if (value != null && value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue();
+                }
         }
 
-        Trace.check(eArg != null, Trace.GENERAL_ERROR);
+        if (eArg == null || eArg2 == null) {
+            throw Trace.error(Trace.NULL_VALUE_AS_BOOLEAN);
+        }
 
         int    type = eArg.dataType;
         Object o    = eArg.getValue(type);
-
-        Trace.check(eArg2 != null, Trace.GENERAL_ERROR);
-
-        Object o2 = eArg2.getValue(type);
+        Object o2   = eArg2.getValue(type);
 
         if (o == null || o2 == null) {
 /*
