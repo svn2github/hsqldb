@@ -301,18 +301,20 @@ class Column {
     int getType() {
         return colType;
     }
-    
+
     int getDIType() {
-        return colType == VARCHAR_IGNORECASE ? DITypes.VARCHAR : colType;
+        return colType == VARCHAR_IGNORECASE ? DITypes.VARCHAR
+                                             : colType;
     }
-    
+
     int getDITypeSub() {
-        
+
         if (colType == VARCHAR_IGNORECASE) {
             return DITypes.TYPE_SUB_IGNORECASE;
         } else if (isIdentity) {
             return DITypes.TYPE_SUB_IDENTITY;
         }
+
         return DITypes.TYPE_SUB_DEFAULT;
     }
 
@@ -560,6 +562,12 @@ class Column {
 
         if (a == null || b == null) {
             return null;
+        }
+
+// fredt@users - type conversion - may need to apply to other arithmetic operations too
+        if (!(a instanceof Number && b instanceof Number)) {
+            a = Column.convertObject(b, type);
+            b = Column.convertObject(b, type);
         }
 
         switch (type) {

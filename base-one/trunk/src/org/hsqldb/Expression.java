@@ -1365,10 +1365,6 @@ class Expression {
                 break;
         }
 
-// fredt@users - type conversion for multiply an other operations
-        leftValue  = Column.convertObject(leftValue, iDataType);
-        rightValue = Column.convertObject(rightValue, iDataType);
-
         switch (iType) {
 
 // tony_lai@users having >>>
