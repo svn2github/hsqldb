@@ -394,19 +394,6 @@ class Select {
         }
 
         checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
-
-        /**
-         * @todo - this test is too strict and disallows functions in ORDER BY
-         * clause
-         */
-        if (isDistinctSelect) {
-            for (int i = orderByStart; i < orderByEnd; i++) {
-                Trace.check(isSimilarIn(exprColumns[i], 0, iResultLen),
-                            Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT,
-                            exprColumns[i]);
-            }
-        }
-
         prepareSort();
     }
 
