@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.50 2004/07/06 16:49:21 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.51 2004/07/09 13:50:01 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.50 $</edition>
-        <pubdate>$Date: 2004/07/06 16:49:21 $</pubdate>
+        <edition>$Revision: 1.51 $</edition>
+        <pubdate>$Date: 2004/07/09 13:50:01 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -937,7 +937,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         script is called by
                         somebody interactively, from the SqlTool command-line, 
                         or included in another SQL file (i.e. nested).
-                    </simpara><simpara>
+                    </simpara></tip><important><simpara>
                         The default settings are usually best for people who 
                         don't want to put in any explicit \* or error handling 
                         code at all.
@@ -956,7 +956,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         your interactive shell or in the SQL files.
                         Only you know whether errors in your SQL files can
                         safely be ignored.
-                    </simpara></tip>
+                    </simpara></important>
                 </listitem></varlistentry>
             </variablelist>
         </section>
