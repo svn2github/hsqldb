@@ -82,6 +82,7 @@ import java.sql.Types;
 // thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
 // fredt@users 20020420 - patch 523880 by leptipre@users - VIEW support
 // fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
+// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
 
 /**
  *  Class declaration

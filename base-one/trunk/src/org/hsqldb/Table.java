@@ -84,8 +84,9 @@ import java.sql.Types;
 // fredt@users 20020225 - patch 1.7.0 - named constraints
 // boucherb@users 20020225 - patch 1.7.0 - multi-column primary keys
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// tony_lai@users 20020820 - patch 595099 by - user defined PK name
-// tony_lai@users 20020820 - patch 595172 by - drop constraint fix
+// tony_lai@users 20020820 - patch 595099 - user defined PK name
+// tony_lai@users 20020820 - patch 595172 - drop constraint fix
+// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
 
 /**
  *  Holds the data structures and methods for creation of a database table.

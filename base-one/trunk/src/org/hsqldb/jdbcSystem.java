@@ -34,12 +34,15 @@ package org.hsqldb;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
-// with jdk 1.1.x dummy classes are defined for classes that are only part of
-// JDBC 2. As HSQLDB does not currently support those classes with
-// any jdk (1.2.x and above), this arrangement works.
+// with jdk 1.1.x surrogate interfaces are defined for JDBC interfaces that
+// are only part of JDBC 2. As HSQLDB does not currently support those
+// interfaces classes with any jdk (1.2.x and above), this arrangement works.
+// fredt@users 20021030 - patch 1.7.2 - updates
 
 /**
  * Handles the differences between jdk 1.1.x and 1.2.x and above
@@ -60,39 +63,122 @@ class jdbcSystem {
 
 //#else
 /*
-        PrintStream newOutStream   = (value) ? System.out
+        PrintStream newOutStream = (value) ? System.out
                                            : null;
+
         DriverManager.setLogStream(newOutStream);
-
-
-
 */
 
 //#endif
     }
 }
 
+
 //#ifdef JAVA2
+
 //#else
 /*
-    class Array{
+// surrogate for java.util.Map interface
+interface Map {
+
+    int size();
+
+    boolean isEmpty();
+
+    boolean containsKey(Object key);
+
+    boolean containsValue(Object value);
+
+    Object get(Object key);
+
+    Object put(Object key, Object value);
+
+    Object remove(Object key);
+
+    void putAll(Map t);
+
+    void clear();
+
+//    public Set keySet();
+
+//    public Collection values();
+
+//    public Set entrySet();
+
+    interface Entry {
+
+        Object getKey();
+
+        Object getValue();
+
+        Object setValue(Object value);
+
+        boolean equals(Object o);
+
+        int hashCode();
     }
 
-    class Blob{
-    }
+    boolean equals(Object o);
 
-    class Clob{
-    }
+    int hashCode();
+}
 
-    class Map{
-    }
+// surrogates for java.SQL type interfaces
+interface Array {
 
-    class Ref{
-    }
+    String getBaseTypeName() throws SQLException;
 
+    int getBaseType() throws SQLException;
 
+    Object getArray() throws SQLException;
 
+    Object getArray(Map map) throws SQLException;
 
+    Object getArray(long index, int count) throws SQLException;
+
+    Object getArray(long index, int count, Map map) throws SQLException;
+
+    ResultSet getResultSet() throws SQLException;
+
+    ResultSet getResultSet(Map map) throws SQLException;
+
+    ResultSet getResultSet(long index, int count) throws SQLException;
+
+    ResultSet getResultSet(long index, int count,
+                           Map map) throws SQLException;
+}
+
+interface Blob {
+
+    long length() throws SQLException;
+
+    byte[] getBytes(long pos, int length) throws SQLException;
+
+    java.io.InputStream getBinaryStream() throws SQLException;
+
+    long position(byte pattern[], long start) throws SQLException;
+
+    long position(Blob pattern, long start) throws SQLException;
+}
+
+interface Clob {
+
+    long length() throws SQLException;
+
+    String getSubString(long pos, int length) throws SQLException;
+
+    java.io.Reader getCharacterStream() throws SQLException;
+
+    java.io.InputStream getAsciiStream() throws SQLException;
+
+    long position(String searchstr, long start) throws SQLException;
+
+    long position(Clob searchstr, long start) throws SQLException;
+}
+
+interface Ref {
+    String getBaseTypeName() throws SQLException;
+}
 */
 
 //#endif JAVA2

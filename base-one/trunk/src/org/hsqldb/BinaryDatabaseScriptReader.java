@@ -44,11 +44,12 @@ import java.sql.SQLException;
  */
 class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
-    BinaryServerRowInput rowIn = new BinaryServerRowInputTest();
+    BinaryServerRowInput rowIn;
 
     BinaryDatabaseScriptReader(Database db,
                                String file) throws SQLException, IOException {
         super(db, file);
+        rowIn = new BinaryServerRowInputTest();
     }
 
     void readAll(Session session) throws IOException, SQLException {
