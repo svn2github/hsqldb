@@ -220,6 +220,9 @@ public class Server {
 		if (!(fil.canRead()))
 		 throw new IOException("Failed to read keystore '" + fil + "'");
 	    	ClassLoader loader = getClass().getClassLoader();
+		if (loader == null)
+		 throw new IncompatibleClassChangeError(
+		  "Failed to retrieve a ClassLoader");
 		Class clsProvider = loader.loadClass("java.security.Provider");
 		Class[] caProvider = { clsProvider };
 		Object objProvider =
