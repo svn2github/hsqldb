@@ -1,4 +1,4 @@
-<!-- $Id: texttables.xml,v 1.4 2004/04/17 20:46:56 unsaved Exp $ -->
+<!-- $Id: texttables.xml,v 1.5 2004/04/21 18:01:03 unsaved Exp $ -->
 
 <chapter id='texttables-chapter'>
     <title id='texttables-title'>Text Tables</title>
@@ -7,7 +7,7 @@
         <authorgroup>
             <author>
                 <firstname>Bob</firstname><surname>Preston</surname>
-                <email>&blaineaddr;</email>
+                <!-- <email></email> -->
                 <affiliation>
                     <orgname>HSQLDB Development Group</orgname>
                 </affiliation>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/17 20:46:56 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/21 18:01:03 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
