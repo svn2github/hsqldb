@@ -69,6 +69,10 @@ insert into credits values(4,2,200);
  where accounttype=0
  group by ac.accountnr,ac.accountname
 
+--join like above but condition changed to return only one not-null item from cred table
+/*c4*/select ac.accountname,ac.accountnr, cred.amount from accounts ac 
+ left outer join credits cred on cred.accountid=ac.id and amount=200
+
 --OWNER and ACCOUNT are inner joined then outer joined with credits to show balance
 /*c3*/select own.name, ac.accountname,ac.accountnr,sum(cred.amount) from owners own
  inner join accounts ac on own.id = ac.ownerid
@@ -118,4 +122,13 @@ INSERT INTO STUDENT_TEACHER VALUES (1, 100);
   LEFT JOIN STUDENT_TEACHER MAP ON S.STUDENT_ID=MAP.STUDENT_ID
   LEFT JOIN TEACHER T ON MAP.TEACHER_ID=T.TEACHER_ID 
   AND T.TEACHER_ID IS NULL;
- 
+
+--ANOTHER OUTER WITH AND 
+create table BASE (ID integer)
+create table CHILD(ID integer, BASE_ID integer)
+insert into BASE values (1)
+insert into CHILD values (1,1)
+/*c1*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID
+/*c1*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
+/*rNULL*/select CHILD.ID,BASE.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
+

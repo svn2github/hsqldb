@@ -1135,6 +1135,10 @@ public class jdbcStatement implements java.sql.Statement {
 
         batchResultOut.setRows(null);
 
+        if (resultIn.iMode == ResultConstants.ERROR) {
+            jdbcDriver.throwError(resultIn);
+        }
+
         updateCounts = resultIn.getUpdateCounts();
 
 //#ifdef JAVA2

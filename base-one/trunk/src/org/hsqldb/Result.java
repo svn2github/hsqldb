@@ -387,6 +387,9 @@ class Result {
         significantColumns = columns;
     }
 
+    /**
+     * For BATCHEXECUTE and BATCHEXECDIRECT
+     */
     Result(int type, int types[], int id) {
 
         iMode              = type;
@@ -469,9 +472,12 @@ class Result {
 
                     break;
                 }
+                case ResultConstants.BATCHEXECUTE :
+                case ResultConstants.BATCHEXECDIRECT :
                 case ResultConstants.SQLEXECUTE :
                 case ResultConstants.SETSESSIONATTR : {
-                    if (iMode == ResultConstants.SQLEXECUTE) {
+                    if (iMode == ResultConstants.SQLEXECUTE
+                            || iMode == ResultConstants.BATCHEXECUTE) {
                         statementID = in.readIntData();
                     } else {
                         iUpdateCount = in.readIntData();
@@ -1225,11 +1231,14 @@ class Result {
 
                 break;
             }
+            case ResultConstants.BATCHEXECUTE :
+            case ResultConstants.BATCHEXECDIRECT :
             case ResultConstants.SQLEXECUTE :
             case ResultConstants.SETSESSIONATTR : {
-                out.writeIntData(iMode == ResultConstants.SQLEXECUTE
-                                 ? statementID
-                                 : iUpdateCount);
+                out.writeIntData(
+                    iMode == ResultConstants.SQLEXECUTE
+                    || iMode == ResultConstants.BATCHEXECUTE ? statementID
+                                                             : iUpdateCount);
 
                 int l = significantColumns;
 
