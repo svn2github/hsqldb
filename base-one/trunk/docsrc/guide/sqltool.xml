@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.20 2004/06/06 13:14:29 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.21 2004/06/06 17:29:21 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.20 $</edition>
-        <pubdate>$Date: 2004/06/06 13:14:29 $</pubdate>
+        <edition>$Revision: 1.21 $</edition>
+        <pubdate>$Date: 2004/06/06 17:29:21 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -679,7 +679,7 @@
                 not treat them as comments.
                 If they occur within an SQL Statment, SqlTool will pass them to
                 the database engine, and the DB engine will determine whether
-                they are parsed as comments.
+                to parse them as comments.
             </simpara>
         </section>
         <section>
