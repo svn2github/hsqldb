@@ -1,6 +1,26 @@
 Readme File
 
 
+HSQLDB 1.7.2 ALPHA_O
+
+Due to the large number of small bug fixes since the release of ALPHA_N,
+a new ALPHA_0 version is now released. 
+
+Please see the bug tracker for a list of some of the bugs that have been fixed.
+This version does not yet support prepared statements with IN(?,?) parameters.
+
+Please report any bugs or suggestions through the normal channels. Bugs with test
+cases should be posted to the bug tracker on the HSQLDB Sourceforge site.
+
+A new JDBC connection property "toupper_column_name" can be used when the application
+program submits lowercase / mixedcase column names to Result.getXXX(String column)
+methods when the names are in fact UPPERCASE as they were not quoted when the
+table was created. The default value is false. See related documentation in
+hsqldbAdvancedGuide.html on how to set this property value.
+
+The rest of the information for ALPHA_N below applies to this version too.
+
+
 HSQLDB 1.7.2 ALPHA_N
 
 
