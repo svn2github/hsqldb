@@ -31,48 +31,51 @@
 
 package org.hsqldb;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Types;
 import java.sql.SQLException;
 
 /**
- * Public interface for writing the data for a database row.
+ *  Provides methods for writing the data for a row to a
+ *  byte array. The new format of data consists of mainly binary values
+ *  and is not compatible with v.1.6.x databases.
  *
- * @author sqlbob@users (RMP)
- * @author fredt@users
- * @version 1.7.0
+ * @version  1.7.0
  */
-interface DatabaseRowOutputInterface {
+class BinaryServerRowOutputTest extends BinaryServerRowOutput {
 
-    public void writePos(int pos) throws IOException;
+    public void writeString(String s) throws IOException {
 
-    public void writeSize(int size) throws IOException;
+        int temp = count;
 
-    public void writeType(int type) throws IOException;
+        writeInt(0);
 
-    public void writeString(String value) throws IOException;
+        int writecount = StringConverter.writeUTF(s, this);
 
-    public void writeIntData(int i) throws IOException;
+//        int writecount = StringConverter.unicodeToAscii(this,s);
+        if (writecount != count - temp - 4) {
+            System.out.println("writeUTF count mismatch");
+        }
 
-    public void writeIntData(int i, int position) throws IOException;
+        writeIntData(count - temp - 4, temp);
 
-    // resets the data after copying to new byte[]
-    public byte[] toByteArray() throws IOException;
+//fredt - test undo later
+/*
+            ObjectOutputStream os = new ObjectOutputStream(this);
 
-    public void writeData(Object data[],
-                          Table t) throws IOException, SQLException;
+            os.writeObject(s);
 
-    public void writeData(int l, int types[],
-                          Object data[]) throws IOException, SQLException;
 
-    // independent of the this object, calls only a static method
-    public int getSize(CachedRow row) throws SQLException;
+*/
+/*
+        byte[] bytes = s.getBytes("utf-8");
 
-    // simply returns the byte[] buffer
-    public byte[] getBuffer();
-
-    // used with getByteArray() to get the current size
-    public int size();
-
-    // resets the byte[] buffer, ready for processing new row
-    public void reset();
+        writeInt(bytes.length);
+        write(bytes);
+*/
+    }
 }

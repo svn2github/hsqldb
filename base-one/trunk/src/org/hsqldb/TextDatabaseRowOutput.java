@@ -182,6 +182,11 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         nextSepEnd = fieldSepEnd;
     }
 
+    public void writeIntData(int i, int position) throws IOException {
+        throw new java.lang.RuntimeException(
+            "Method writeIntData(int, int) not yet implemented.");
+    }
+
 // fredt: write methods for SQL types
 // fredt@users - comment - methods used for writing each SQL type
     protected void writeFieldType(int type) throws IOException {

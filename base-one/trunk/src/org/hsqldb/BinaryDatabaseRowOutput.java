@@ -102,6 +102,19 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeInt(i);
     }
 
+    public void writeIntData(int i, int position) throws IOException {
+
+        int temp = count;
+
+        count = position;
+
+        writeInt(i);
+
+        if (count < temp) {
+            count = temp;
+        }
+    }
+
     public void writePos(int pos) throws IOException {
 
         writeInt(pos);

@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.StopWatch;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
@@ -745,7 +746,9 @@ class Database {
      */
     Result getScript(boolean drop, boolean insert, boolean cached,
                      Session session) throws SQLException {
+
         session.checkAdmin();
+
         return DatabaseScript.getScript(this, drop, insert, cached);
     }
 
@@ -778,15 +781,29 @@ class Database {
      * @throws  SQLException
      */
     private Result processScript(Tokenizer c,
-                                 Session session) throws SQLException {
+                                 Session session)
+                                 throws java.io.IOException, SQLException {
 
         String sToken = c.getString();
 
         if (c.wasValue()) {
             sToken = (String) c.getAsValue();
 
-            Log.scriptToFile(this, sToken, true, session);
+            StopWatch stopw = new StopWatch();
+            DatabaseScriptWriter sw = new DatabaseScriptWriter(this, sToken,
+                true, true);
 
+            sw.writeAll();
+            sw.close();
+            System.out.println("text script" + stopw.elapsedTime());
+
+/*
+            stopw.zero();
+            BinaryDatabaseScriptWriter bsw = new BinaryDatabaseScriptWriter(this, sToken + ".bin" ,true, true);
+            bsw.writeAll();
+            bsw.close();
+            System.out.println("binary script" + stopw.elapsedTime());
+*/
             return new Result();
         } else {
             c.back();
@@ -1640,9 +1657,11 @@ class Database {
         while (sToken.equals("ON")) {
             sToken = c.getString();
 
-            if (deleteAction == Constraint.NO_ACTION && sToken.equals("DELETE")) {
+            if (deleteAction == Constraint.NO_ACTION
+                    && sToken.equals("DELETE")) {
                 deleteAction = Constraint.CASCADE;
-            } else if (updateAction == Constraint.NO_ACTION && sToken.equals("UPDATE")) {
+            } else if (updateAction == Constraint.NO_ACTION
+                       && sToken.equals("UPDATE")) {
                 updateAction = Constraint.CASCADE;
             } else {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -2118,6 +2137,15 @@ class Database {
             int i = Integer.parseInt(c.getString());
 
             logger.setLogSize(i);
+        } else if (sToken.equals("LOGTYPE")) {
+            session.checkAdmin();
+            session.setScripting(false);
+
+            int i = Integer.parseInt(c.getString());
+
+            if (i == 0 || i == 1) {
+                logger.setLogType(i);
+            }
         } else if (sToken.equals("IGNORECASE")) {
             session.checkAdmin();
 
@@ -2817,6 +2845,19 @@ class Database {
 
             if (lLog != null) {
                 lLog.setLogSize(i);
+            }
+        }
+
+        /**
+         *  Sets the type of log, currently 0 for text (default) and
+         *  1 for binary
+         *
+         * @param  i The type
+         */
+        void setLogType(int i) throws SQLException {
+
+            if (lLog != null) {
+                lLog.setLogType(i);
             }
         }
 

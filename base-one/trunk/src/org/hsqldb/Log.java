@@ -132,20 +132,25 @@ class Log implements Runnable {
     private String                 sName;
     private Database               dDatabase;
     private Session                sysSession;
-    private Writer                 wScript;
-    private File                   scriptChecker;
-    private String                 sFileScript;
-    private String                 sFileCache;
-    private String                 sFileBackup;
-    private boolean                bRestoring;
-    private boolean                bReadOnly;
-    private int                    iLogSize;
-    private int                    iLogCount;
-    private Thread                 tRunner;
-    private volatile boolean       bNeedFlush;
-    private volatile boolean       bWriteDelay;
-    private int                    mLastId;
-    private Cache                  cCache;
+
+    // to use
+    private DatabaseScriptWriter dbScriptWriter;
+
+    // to go
+//    private Writer                 wScript;
+    private String           sFileScript;
+    private String           sFileCache;
+    private String           sFileBackup;
+    private boolean          bRestoring;
+    private boolean          bReadOnly;
+    private int              maxLogSize;
+    private int              iLogCount;
+    private int              logType;
+    private Thread           tRunner;
+    private volatile boolean bNeedFlush;
+    private volatile boolean bWriteDelay;
+    private int              mLastId;
+    private Cache            cCache;
 
 // boucherb@users - comment - FIXME
 //  boolean                  stopped;
@@ -190,7 +195,6 @@ class Log implements Runnable {
         //  - setDaemon(false) may require flush in finalization
         // CB
         // tRunner.setDaemon(false);
-
         // fredt - there are other issues, such as the tasks that need
         // to be performed when the thread dies if there are open files
         tRunner.start();
@@ -208,7 +212,7 @@ class Log implements Runnable {
                 tRunner.sleep(1000);
 
                 if (bNeedFlush) {
-                    wScript.flush();
+                    dbScriptWriter.flush();
 
                     bNeedFlush = false;
                 }
@@ -241,30 +245,32 @@ class Log implements Runnable {
      */
     boolean open() throws SQLException {
 
+        // at first this assumed to be an existing database
+        boolean retValue = false;
+
         if (Trace.TRACE) {
             Trace.trace();
         }
 
         if (!pProperties.checkFileExists()) {
             create();
-            open();
 
-            // this is a new database
-            return true;
+            retValue = true;
         }
 
         // todo: some parts are not necessary for ready-only access
         pProperties.load();
 
-        sFileScript   = sName + ".script";
-        sFileCache    = sName + ".data";
-        sFileBackup   = sName + ".backup";
-        scriptChecker = new File(sFileScript);
+        sFileScript = sName + ".script";
+        sFileCache  = sName + ".data";
+        sFileBackup = sName + ".backup";
 
         // tony_lai@users 20020820
         // Allows the user to modify log size from the properties file.
-        iLogSize = pProperties.getIntegerProperty("hsqldb.log_size",
-                iLogSize);
+        maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size",
+                0);
+        maxLogSize = maxLogSize * 1024 * 1024;
+        logType = pProperties.getIntegerProperty("hsqldb.log_type", 0);
 
         String version = pProperties.getProperty("hsqldb.compatible_version");
 
@@ -332,8 +338,11 @@ class Log implements Runnable {
 
         openScript();
 
-        // this is an existing database
-        return false;
+        if (retValue == true) {
+            this.dbScriptWriter.writeAll();
+        }
+
+        return retValue;
     }
 
     Cache getCache() throws SQLException {
@@ -406,7 +415,7 @@ class Log implements Runnable {
         // now its done completely
         pProperties.setProperty("modified", "no");
         pProperties.setProperty("version", jdbcDriver.VERSION);
-        pProperties.setProperty("hsqldb.compatible_version", "1.7.0");
+        pProperties.setProperty("hsqldb.compatible_version", "1.7.2");
         pProperties.save();
         pProperties.close();
 
@@ -444,7 +453,7 @@ class Log implements Runnable {
                 }
             }
 
-            DataFileDefrag2.updateTableIndexRoots(dDatabase.getTables(),
+            DataFileDefrag.updateTableIndexRoots(dDatabase.getTables(),
                                                   rootsArray);
         }
 
@@ -465,11 +474,33 @@ class Log implements Runnable {
      *
      * @param  mb
      */
-    void setLogSize(int mb) {
+    void setLogSize(int newsize) {
 
-        iLogSize = mb;
+        pProperties.setProperty("hsqldb.log_size", newsize);
+        maxLogSize = newsize;
 
-        pProperties.setProperty("hsqldb.log_size", iLogSize);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  mb
+     */
+    void setLogType(int type) throws SQLException {
+
+        boolean needsCheckpoint = false;
+
+        if (logType != type) {
+            needsCheckpoint = true;
+        }
+
+        logType = type;
+
+        pProperties.setProperty("hsqldb.log_type", logType);
+
+        if (needsCheckpoint) {
+            checkpoint(false);
+        }
     }
 
     /**
@@ -481,42 +512,35 @@ class Log implements Runnable {
      */
     void write(Session c, String s) throws SQLException {
 
-        if (bRestoring || s == null || s.length() == 0) {
+        if (bReadOnly || bRestoring || s == null || s.length() == 0) {
             return;
         }
 
-        if (!bReadOnly) {
-            int id = 0;
+        int id = 0;
 
-            if (c != null) {
-                id = c.getId();
+        if (c != null) {
+            id = c.getId();
+        }
+
+        if (id != mLastId) {
+            s       = "/*C" + id + "*/" + s;
+            mLastId = id;
+        }
+
+        try {
+            dbScriptWriter.writeAsciiLine(s);
+
+            if (bWriteDelay) {
+                bNeedFlush = true;
+            } else {
+                dbScriptWriter.flush();
             }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+        }
 
-            if (id != mLastId) {
-                s       = "/*C" + id + "*/" + s;
-                mLastId = id;
-            }
-
-            try {
-                writeLine(wScript, s);
-
-                if (bWriteDelay) {
-                    bNeedFlush = true;
-                } else {
-                    wScript.flush();
-                }
-            } catch (IOException e) {
-                throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
-            }
-
-            // fredt@users - todo - eliminate new File() calls
-            if (iLogSize > 0 && iLogCount++ > 100) {
-                iLogCount = 0;
-
-                if (scriptChecker.length() > iLogSize * 1024 * 1024) {
-                    checkpoint(false);
-                }
-            }
+        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+            checkpoint(false);
         }
     }
 
@@ -538,92 +562,6 @@ class Log implements Runnable {
         shutdownAllTextCaches();
         closeScript();
         pProperties.close();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  db
-     * @param  file
-     * @param  full
-     * @param  session
-     * @throws  SQLException
-     */
-    static void scriptToFile(Database db, String file, boolean full,
-                             Session session) throws SQLException {
-
-        if ((new File(file)).exists()) {
-
-            // there must be no such file; overwriting not allowed for security
-            throw Trace.error(Trace.FILE_IO_ERROR, file);
-        }
-
-        try {
-            long time = 0;
-
-            if (Trace.TRACE) {
-                time = System.currentTimeMillis();
-            }
-
-            // only ddl commands; needs not so much memory
-            Result r;
-
-            if (full) {
-
-                // no drop, no insert, and no positions for cached tables
-                r = db.getScript(false, false, false, session);
-            } else {
-
-                // no drop, no insert, but positions for cached tables
-                r = db.getScript(false, false, true, session);
-            }
-
-            Record     n = r.rRoot;
-            FileWriter w = new FileWriter(file);
-
-            while (n != null) {
-                writeLine(w, (String) n.data[0]);
-
-                n = n.next;
-            }
-
-            // inserts are done separetely to save memory
-            HsqlArrayList tables = db.getTables();
-
-            for (int i = 0; i < tables.size(); i++) {
-                Table t = (Table) tables.get(i);
-
-// cached tables have the index roots set in the ddl script
-                if ((full ||!t.isCached()) &&!t.isTemp() &&!t.isView()
-                        && (!t.isText() ||!t.isDataReadOnly())) {
-                    Index primary = t.getPrimaryIndex();
-                    Node  x       = primary.first();
-
-                    while (x != null) {
-                        writeLine(w, t.getInsertStatement(x.getData()));
-
-                        x = primary.next(x);
-                    }
-                }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-                if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
-                    HsqlStringBuffer a = new HsqlStringBuffer("SET TABLE ");
-
-                    a.append(t.getName().statementName);
-                    a.append(" READONLY TRUE");
-                    writeLine(w, a.toString());
-                }
-            }
-
-            w.close();
-
-            if (Trace.TRACE) {
-                Trace.trace(time - System.currentTimeMillis());
-            }
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, file + " " + e);
-        }
     }
 
     /**
@@ -811,8 +749,14 @@ class Log implements Runnable {
         try {
 
             // todo: use a compressed stream
-            wScript = new BufferedWriter(new FileWriter(sFileScript, true),
-                                         4096);
+            if (logType == 0) {
+                dbScriptWriter = new DatabaseScriptWriter(this.dDatabase,
+                        sFileScript, false, false);
+            } else {
+                dbScriptWriter =
+                    new BinaryDatabaseScriptWriter(this.dDatabase,
+                                                   sFileScript, false, false);
+            }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
@@ -830,10 +774,10 @@ class Log implements Runnable {
         }
 
         try {
-            if (wScript != null) {
-                wScript.close();
+            if (dbScriptWriter != null) {
+                dbScriptWriter.close();
 
-                wScript = null;
+                dbScriptWriter = null;
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
@@ -873,11 +817,19 @@ class Log implements Runnable {
                 time = System.currentTimeMillis();
             }
 
-            LineNumberReader r =
-                new LineNumberReader(new FileReader(sFileScript));
+            DatabaseScriptReader scr;
+
+            if (logType == 0) {
+                scr = new DatabaseScriptReader(this.dDatabase, sFileScript);
+            } else {
+                scr = new BinaryDatabaseScriptReader(this.dDatabase,
+                                                     sFileScript);
+            }
+
+            scr.readAll(sysSession);
 
             while (true) {
-                String s = readLine(r);
+                String s = scr.readLoggedStatement();
 
                 if (s == null) {
                     break;
@@ -921,7 +873,7 @@ class Log implements Runnable {
                 }
             }
 
-            r.close();
+            scr.close();
 
             for (int i = 0; i < session.size(); i++) {
                 current = (Session) session.get(i);
@@ -960,43 +912,26 @@ class Log implements Runnable {
         (new File(sFileScript + ".new")).delete();
 
         // script; but only positions of cached tables, not full
-        scriptToFile(dDatabase, sFileScript + ".new", full, sysSession);
-    }
+        //fredt - to do - flag for chache set index
+        try {
+            DatabaseScriptWriter scw;
 
-    /**
-     *  Method declaration
-     *
-     * @param  w
-     * @param  s
-     * @throws  IOException
-     */
+            if (logType == 0) {
+                scw = new DatabaseScriptWriter(dDatabase,
+                                               sFileScript + ".new", full,
+                                               true);
+            } else {
+                scw = new BinaryDatabaseScriptWriter(this.dDatabase,
+                                                     sFileScript + ".new",
+                                                     full, true);
+            }
 
-// fredt@users 20011120 - patch 450455 by kibu@users - optimised
-    private static final String lineSep = System.getProperty("line.separator",
-        "\n");
-
-    private static int writeLine(Writer w, String s) throws IOException {
-
-        String logLine =
-            StringConverter.unicodeToAscii(s).append(lineSep).toString();
-
-        w.write(logLine);
-
-        return logLine.length();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  r
-     * @return
-     * @throws  IOException
-     */
-    private static String readLine(LineNumberReader r) throws IOException {
-
-        String s = r.readLine();
-
-        return StringConverter.asciiToUnicode(s);
+            scw.setWriteDelay(true);
+            scw.writeAll();
+            scw.close();
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR);
+        }
     }
 
     /**

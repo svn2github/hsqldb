@@ -32,47 +32,31 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.SQLException;
 
 /**
- * Public interface for writing the data for a database row.
+ *  Provides methods for reading the data for a row from a
+ *  byte array. The format of data is that used for storage of cached
+ *  tables by v.1.6.x databases, apart from strings.
  *
- * @author sqlbob@users (RMP)
- * @author fredt@users
- * @version 1.7.0
+ * @version  1.7.0
  */
-interface DatabaseRowOutputInterface {
+class BinaryServerRowInputTest extends org.hsqldb.BinaryServerRowInput
+implements org.hsqldb.DatabaseRowInputInterface {
 
-    public void writePos(int pos) throws IOException;
+    public BinaryServerRowInputTest() throws IOException {
+        super();
+    }
 
-    public void writeSize(int size) throws IOException;
+    public String readString() throws IOException {
 
-    public void writeType(int type) throws IOException;
+        int    length = readInt();
+//        String s      = StringConverter.asciiToUnicode(buf, pos, length);
+        String s = StringConverter.readUTF(buf,pos,length);
+        pos += length;
 
-    public void writeString(String value) throws IOException;
-
-    public void writeIntData(int i) throws IOException;
-
-    public void writeIntData(int i, int position) throws IOException;
-
-    // resets the data after copying to new byte[]
-    public byte[] toByteArray() throws IOException;
-
-    public void writeData(Object data[],
-                          Table t) throws IOException, SQLException;
-
-    public void writeData(int l, int types[],
-                          Object data[]) throws IOException, SQLException;
-
-    // independent of the this object, calls only a static method
-    public int getSize(CachedRow row) throws SQLException;
-
-    // simply returns the byte[] buffer
-    public byte[] getBuffer();
-
-    // used with getByteArray() to get the current size
-    public int size();
-
-    // resets the byte[] buffer, ready for processing new row
-    public void reset();
+        return s;
+    }
 }

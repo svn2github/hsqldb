@@ -58,6 +58,19 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeInt(i);
     }
 
+    public void writeIntData(int i, int position) throws IOException {
+
+        int temp = count;
+
+        count = position;
+
+        writeInt(i);
+
+        if (count < temp) {
+            count = temp;
+        }
+    }
+
     public void writePos(int pos) throws IOException {
 
         // fredt - this value is used in 1.7.0 when reading back, for a
@@ -290,7 +303,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
                     default :
                         Trace.throwerror(Trace.FUNCTION_NOT_SUPPORTED,
-                                          Column.getTypeString(type[i]));
+                                         Column.getTypeString(type[i]));
                 }
             }
         }

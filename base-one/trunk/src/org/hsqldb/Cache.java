@@ -130,7 +130,7 @@ class Cache {
      *  Construct a new Cache object with the given database path name and
      *  the properties object to get the initial settings from.
      */
-    private void init(int scale){
+    private void init(int scale) {
 
         cacheReadonly = dDatabase.bReadOnly;
         cacheScale    = scale;
@@ -157,8 +157,8 @@ class Cache {
 
         try {
             if (newCacheType) {
-                rowIn  = new BinaryServerRowInput();
-                rowOut = new BinaryServerRowOutput();
+                rowIn  = new BinaryServerRowInputTest();
+                rowOut = new BinaryServerRowOutputTest();
             } else {
                 Class c = Class.forName("org.hsqldb.BinaryDatabaseRowInput");
 
@@ -167,8 +167,8 @@ class Cache {
                 rowOut = (DatabaseRowOutputInterface) c.newInstance();
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              "legacy db support");
+            Trace.throwerror(Trace.MISSING_SOFTWARE_MODULE,
+                             "legacy db support");
         }
     }
 
@@ -237,8 +237,8 @@ class Cache {
 
             initBuffers();
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " opening " + sName);
+            Trace.throwerror(Trace.FILE_IO_ERROR,
+                             "error " + e + " opening file " + sName);
         }
     }
 
@@ -266,8 +266,8 @@ class Cache {
                 new File(sName).delete();
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " closing " + sName);
+            Trace.throwerror(Trace.FILE_IO_ERROR,
+                             "error " + e + " closing file " + sName);
         }
     }
 
@@ -288,7 +288,7 @@ class Cache {
 
             open(true);
 
-            DataFileDefrag1 dfd = new DataFileDefrag1();
+            DataFileDefrag dfd = new DataFileDefrag();
 
             indexRoots = dfd.defrag(dDatabase, rFile, sName);
 
@@ -303,9 +303,8 @@ class Cache {
 // db set index roots
         } catch (Exception e) {
             e.printStackTrace();
-
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " defrag " + sName);
+            Trace.throwerror(Trace.FILE_IO_ERROR,
+                             "error " + e + " defrag file " + sName);
         }
 
         return indexRoots;
@@ -325,8 +324,8 @@ class Cache {
 
             rFile = null;
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " in shutdown " + sName);
+            Trace.throwerror(Trace.FILE_IO_ERROR,
+                             "error " + e + " in shutdown file " + sName);
         }
     }
 
@@ -465,8 +464,7 @@ class Cache {
             r = new CachedRow(t, rowIn);
         } catch (IOException e) {
             e.printStackTrace();
-
-            throw Trace.error(Trace.FILE_IO_ERROR, "reading: " + e);
+            Trace.throwerror(Trace.FILE_IO_ERROR, "reading file : " + e);
         }
 
         return r;
@@ -725,7 +723,7 @@ class Cache {
 
         rFile.seek(r.iPos);
         r.write(rowOut);
-        rFile.write(rowOut.getByteArray(), 0, rowOut.size());
+        rFile.write(rowOut.getBuffer(), 0, rowOut.size());
         rowOut.reset();
     }
 
@@ -742,7 +740,7 @@ class Cache {
                 saveRow(rWriter[i]);
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, "saveSorted " + e);
+            Trace.throwerror(Trace.FILE_IO_ERROR, "saveSorted " + e);
         }
     }
 

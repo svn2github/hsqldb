@@ -378,6 +378,31 @@ class Parser {
 
             try {
                 Record nd = del.rRoot;
+                Record ni = ins.rRoot;
+
+                // -- Check for updateCascade
+                while (nd != null && ni != null) {
+                    table.checkCascadeUpdate(nd.data, ni.data, cSession, col,
+                                             null, false);
+
+                    nd = nd.next;
+                    ni = ni.next;
+                }
+
+                nd = del.rRoot;
+                ni = ins.rRoot;
+
+                // -- No exception -> do the updateCascade
+                while (nd != null && ni != null) {
+                    table.checkCascadeUpdate(nd.data, ni.data, cSession, col,
+                                             null, true);
+
+                    nd = nd.next;
+                    ni = ni.next;
+                }
+
+                // -- do the delete main table
+                nd = del.rRoot;
 
                 while (nd != null) {
                     table.fireAll(TriggerDef.UPDATE_BEFORE_ROW, nd.data);
@@ -386,7 +411,8 @@ class Parser {
                     nd = nd.next;
                 }
 
-                Record ni = ins.rRoot;
+                // -- do the insert in the main table
+                ni = ins.rRoot;
 
                 while (ni != null) {
                     table.insertNoCheck(ni.data, cSession, true);
@@ -396,8 +422,8 @@ class Parser {
                     count++;
                 }
 
-                table.checkUpdate(col, del, ins);
-
+                // -- obsolete; I hope ;-)
+                //table.checkUpdate(col, del, ins);
                 ni = ins.rRoot;
 
                 while (ni != null) {
@@ -1002,7 +1028,6 @@ class Parser {
                 // tony_lai@users having support:
                 // "group by" does not allow refering to other columns alias.
                 //e = doOrderGroup(e, vcolumn);
-
                 vcolumn.add(e);
 
                 token = tTokenizer.getString();
@@ -1018,6 +1043,7 @@ class Parser {
             select.iHavingIndex    = vcolumn.size();
             select.havingCondition = parseExpression();
             token                  = tTokenizer.getString();
+
             vcolumn.add(select.havingCondition);
         }
 
@@ -1094,8 +1120,8 @@ class Parser {
      * @exception  java.sql.SQLException  Description of the Exception
      */
     private Expression checkOrderByColumns(Expression e,
-                                    HsqlArrayList vcolumn)
-                                    throws java.sql.SQLException {
+                                           HsqlArrayList vcolumn)
+                                           throws java.sql.SQLException {
 
         if (e.getType() == Expression.VALUE) {
 
@@ -1328,22 +1354,26 @@ class Parser {
     }
 
     private Expression readAggregate() throws SQLException {
-            boolean distinct = false;
-            int     type     = iToken;
 
-            read();
-            if (tTokenizer.getString().equals("DISTINCT")) {
-                distinct = true;
-            } else {
-                tTokenizer.back();
-            }
+        boolean distinct = false;
+        int     type     = iToken;
+
+        read();
+
+        if (tTokenizer.getString().equals("DISTINCT")) {
+            distinct = true;
+        } else {
+            tTokenizer.back();
+        }
 
         readThis(Expression.OPEN);
 
         Expression s = readOr();
 
         readThis(Expression.CLOSE);
+
         Expression aggregateExp = new Expression(type, s, null);
+
         aggregateExp.setDistinctAggregate(distinct);
 
         return aggregateExp;
@@ -1746,7 +1776,7 @@ class Parser {
             r.setDataType(t);
             read();
             readThis(Expression.CLOSE);
-        } else if(Expression.isAggregate(iToken)){
+        } else if (Expression.isAggregate(iToken)) {
             r = readAggregate();
         } else {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);

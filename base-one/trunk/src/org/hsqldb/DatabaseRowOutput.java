@@ -72,6 +72,8 @@ implements org.hsqldb.DatabaseRowOutputInterface {
 
     public abstract void writeIntData(int i) throws IOException;
 
+    public abstract void writeIntData(int i, int position) throws IOException;
+
     public abstract void writeString(String s) throws IOException;
 
 // fredt@users - comment - methods used for writing each SQL type
@@ -269,14 +271,14 @@ implements org.hsqldb.DatabaseRowOutputInterface {
 
     public byte[] toByteArray() {
 
-        byte ret[] = toByteArray();
+        byte ret[] = super.toByteArray();
 
         reset();
 
         return ret;
     }
 
-    public byte[] getByteArray() {
+    public byte[] getBuffer() {
         return this.buf;
     }
 }

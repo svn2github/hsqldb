@@ -113,7 +113,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // the version that created this database
         // once created, this won't change if db is used with a future version
-        setProperty("hsqldb.original_version", "1.7.1");
+        setProperty("hsqldb.original_version", "1.7.2");
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
@@ -151,6 +151,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // maximum size of .script file in megabytes
         setProperty("hsqldb.log_size", "200");
+
+        // type of logging (0 : text , 1 : binary)
+        setProperty("hsqldb.log_type", "0");
+
         setProperty("readonly", false);
         setProperty("modified", "no");
 

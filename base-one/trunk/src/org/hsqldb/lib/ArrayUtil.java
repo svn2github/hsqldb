@@ -159,6 +159,80 @@ public class ArrayUtil {
         return false;
     }
 
+    /**
+     * Return the overlap between two arrays of column indexes.
+     * Ordering of the result arrays will be the same as in array
+     * a. The method silently assumes that each index is only listed
+     * once in the two input arrays.
+     * <p>
+     * e.g.
+     * </p>
+     * <code>
+     * <table width="90%" bgcolor="lightblue">
+     * <tr><td colspane="3">The arrays</td></tr>
+     * <tr><td>int []a</td><td>=</td><td>{2,11,5,8}</td></tr>
+     * <tr><td>int []b</td><td>=</td><td>{20,8,10,11,28,12}</td></tr>
+     * <tr><td colspane="3">will result in:</td></tr>
+     * <tr><td>int []c</td><td>=</td><td>{11,8}</td></tr>
+     * </table>
+     *
+     * @param a int[]; first column indexes
+     *
+     * @param b int[]; second column indexes
+     *
+     * @return int[] common indexes or <code>null</code> if there is no overlap.
+     *
+     * @short Return the overlap between two arrays of column indexes.
+     */
+    public static int[] commonElements(int[] a, int[] b) {
+
+        int[] c = null;
+        int   n = countCommonElements(a, b);
+
+        if (n > 0) {
+            c = new int[n];
+
+            int k = 0;
+
+            for (int i = 0; i < a.length; i++) {
+                for (int j = 0; j < b.length; j++) {
+                    if (a[i] == b[j]) {
+                        c[k++] = a[i];
+                    }
+                }
+            }
+        }
+
+        return c;
+    }
+
+    /**
+     * Return the number of elements shared by two column index arrays.
+     * This method silently assumes that each element index is only listed
+     * once in each index array. Otherwise the returned number will NOT
+     * represent the number of unique indexes shared by both index array.
+     *
+     * @param a int[]; first array of column indexes.
+     *
+     * @param b int[]; second array of column indexes
+     *
+     * @return int; number of elements shared by <code>a</code> and <code>b</code>
+     */
+    public static int countCommonElements(int[] a, int[] b) {
+
+        int k = 0;
+
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < b.length; j++) {
+                if (a[i] == b[j]) {
+                    k++;
+                }
+            }
+        }
+
+        return k;
+    }
+
     public static void copyArray(int[] source, int[] dest, int count) {
         System.arraycopy(source, 0, dest, 0, count);
     }

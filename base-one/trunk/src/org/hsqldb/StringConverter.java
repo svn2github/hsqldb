@@ -74,9 +74,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.UTFDataFormatException;
 
 /**
  * Collection of static methods for converting strings between different
@@ -219,41 +223,57 @@ class StringConverter {
      * All the remaining characters in input are added to output without
      * conversion. (fredt@users)
      *
+     * @param b output stream to wite to
      * @param s Java Unicode string
      *
-     * @return encoded string in the HsqlStringBuffer
+     * @return number of bytes written out
+     *
      */
-    public static HsqlStringBuffer unicodeToAscii(String s) {
+    static int unicodeToAscii(OutputStream b, String s) throws IOException {
+
+        int count = 0;
 
         if ((s == null) || (s.length() == 0)) {
-            return new HsqlStringBuffer();
+            return 0;
         }
 
-        int              len = s.length();
-        HsqlStringBuffer b   = new HsqlStringBuffer(len + 16);
+        int len = s.length();
 
         for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
 
             if (c == '\\') {
                 if ((i < len - 1) && (s.charAt(i + 1) == 'u')) {
-                    b.append(c);          // encode the \ as unicode, so 'u' is ignored
-                    b.append("u005c");    // split so the source code is not changed...
+                    b.write(c);    // encode the \ as unicode, so 'u' is ignored
+                    b.write('u');
+                    b.write('0');
+                    b.write('0');
+                    b.write('5');
+                    b.write('c');
+
+                    count += 6;
                 } else {
-                    b.append(c);
+                    b.write(c);
+
+                    count++;
                 }
             } else if ((c >= 0x0020) && (c <= 0x007f)) {
-                b.append(c);              // this is 99%
+                b.write(c);        // this is 99%
+
+                count++;
             } else {
-                b.append("\\u");
-                b.append(HEXCHAR[(c >> 12) & 0xf]);
-                b.append(HEXCHAR[(c >> 8) & 0xf]);
-                b.append(HEXCHAR[(c >> 4) & 0xf]);
-                b.append(HEXCHAR[c & 0xf]);
+                b.write('\\');
+                b.write('u');
+                b.write(HEXCHAR[(c >> 12) & 0xf]);
+                b.write(HEXCHAR[(c >> 8) & 0xf]);
+                b.write(HEXCHAR[(c >> 4) & 0xf]);
+                b.write(HEXCHAR[c & 0xf]);
+
+                count += 6;
             }
         }
 
-        return b;
+        return count;
     }
 
 // fredt@users 20020522 - fix for 557510 - backslash bug
@@ -267,10 +287,48 @@ class StringConverter {
      * This method converts the ASCII strings in a log file back into
      * Java Unicode strings. See unicodeToAccii() above,
      *
-     * @param s logged ASCII string
+     * @param s encoded ASCII string in byte array
+     * @param offset position of first byte
+     * @param length number of bytes to use
      *
      * @return Java Unicode string
      */
+    public static String asciiToUnicode(byte[] s, int offset, int length) {
+
+        if (length == 0) {
+            return "";
+        }
+
+        char b[] = new char[length];
+        int  j   = 0;
+
+        for (int i = 0; i < length; i++) {
+            byte c = s[offset + i];
+
+            if (c == '\\' && i < length - 5) {
+                byte c1 = s[offset + i + 1];
+
+                if (c1 == 'u') {
+                    i++;
+
+                    // characters read from the should always return 0-15
+                    int k = HEXINDEX.indexOf(s[offset + (++i)]) << 12;
+
+                    k      += HEXINDEX.indexOf(s[offset + (++i)]) << 8;
+                    k      += HEXINDEX.indexOf(s[offset + (++i)]) << 4;
+                    k      += HEXINDEX.indexOf(s[offset + (++i)]);
+                    b[j++] = (char) k;
+                } else {
+                    b[j++] = (char) c;
+                }
+            } else {
+                b[j++] = (char) c;
+            }
+        }
+
+        return new String(b, 0, j);
+    }
+
     public static String asciiToUnicode(String s) {
 
         if ((s == null) || (s.indexOf("\\u") == -1)) {
@@ -306,6 +364,135 @@ class StringConverter {
         }
 
         return new String(b, 0, j);
+    }
+
+    public final static String readUTF(byte[] bytearr, int offset,
+                                       int length) throws IOException {
+
+        HsqlStringBuffer str = new HsqlStringBuffer(length);
+        int              c, char2, char3;
+        int              count = 0;
+
+        while (count < length) {
+            c = (int) bytearr[offset + count] & 0xff;
+
+            switch (c >> 4) {
+
+                case 0 :
+                case 1 :
+                case 2 :
+                case 3 :
+                case 4 :
+                case 5 :
+                case 6 :
+                case 7 :
+
+                    /* 0xxxxxxx*/
+                    count++;
+
+                    str.append((char) c);
+                    break;
+
+                case 12 :
+                case 13 :
+
+                    /* 110x xxxx   10xx xxxx*/
+                    count += 2;
+
+                    if (count > length) {
+                        throw new UTFDataFormatException();
+                    }
+
+                    char2 = (int) bytearr[offset + count - 1];
+
+                    if ((char2 & 0xC0) != 0x80) {
+                        throw new UTFDataFormatException();
+                    }
+
+                    str.append((char) (((c & 0x1F) << 6) | (char2 & 0x3F)));
+                    break;
+
+                case 14 :
+
+                    /* 1110 xxxx  10xx xxxx  10xx xxxx */
+                    count += 3;
+
+                    if (count > length) {
+                        throw new UTFDataFormatException();
+                    }
+
+                    char2 = (int) bytearr[offset + count - 2];
+                    char3 = (int) bytearr[offset + count - 1];
+
+                    if (((char2 & 0xC0) != 0x80)
+                            || ((char3 & 0xC0) != 0x80)) {
+                        throw new UTFDataFormatException();
+                    }
+
+                    str.append((char) (((c & 0x0F) << 12)
+                                       | ((char2 & 0x3F) << 6)
+                                       | ((char3 & 0x3F) << 0)));
+                    break;
+
+                default :
+
+                    /* 10xx xxxx,  1111 xxxx */
+                    throw new UTFDataFormatException();
+            }
+        }
+
+        // The number of chars produced may be less than length
+        return str.toString();
+    }
+
+    /**
+     * Writes a string to the specified DataOutput using UTF-8 encoding in a
+     * machine-independent manner.
+     * <p>
+     * First, two bytes are written to out as if by the <code>writeShort</code>
+     * method giving the number of bytes to follow. This value is the number of
+     * bytes actually written out, not the length of the string. Following the
+     * length, each character of the string is output, in sequence, using the
+     * UTF-8 encoding for the character. If no exception is thrown, the
+     * counter <code>written</code> is incremented by the total number of
+     * bytes written to the output stream. This will be at least two
+     * plus the length of <code>str</code>, and at most two plus
+     * thrice the length of <code>str</code>.
+     *
+     * @param      str   a string to be written.
+     * @param      out   destination to write to
+     * @return     The number of bytes written out.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    static int writeUTF(String str, OutputStream out) throws IOException {
+
+        int strlen = str.length();
+        int utflen = 0;
+        int c,
+            count  = 0;
+
+        for (int i = 0; i < strlen; i++) {
+            c = str.charAt(i);
+
+            if (c >= 0x0001 && c <= 0x007F) {
+                out.write(c);
+
+                count++;
+            } else if (c > 0x07FF) {
+                out.write(0xE0 | ((c >> 12) & 0x0F));
+                out.write(0x80 | ((c >> 6) & 0x3F));
+                out.write(0x80 | ((c >> 0) & 0x3F));
+
+                count += 3;
+            } else {
+                out.write(0xC0 | ((c >> 6) & 0x1F));
+                out.write(0x80 | ((c >> 0) & 0x3F));
+
+                count += 2;
+            }
+        }
+
+        return count;
     }
 
     /**

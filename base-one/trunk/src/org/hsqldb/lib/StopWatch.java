@@ -29,50 +29,50 @@
  */
 
 
-package org.hsqldb;
+/*
+ * StopWatch.java
+ */
 
-import java.io.IOException;
-import java.sql.SQLException;
+package org.hsqldb.lib;
 
 /**
- * Public interface for writing the data for a database row.
  *
- * @author sqlbob@users (RMP)
- * @author fredt@users
- * @version 1.7.0
+ * @author  Campbell Boucher-Burnet, Camco & Associates Consulting
+ * @version 1.0
  */
-interface DatabaseRowOutputInterface {
+public class StopWatch {
 
-    public void writePos(int pos) throws IOException;
+    private long startTime;
+    private long total;
+    boolean running = false;
 
-    public void writeSize(int size) throws IOException;
+    /** Creates, zeros, and starts a new StopWatch */
+    public StopWatch() {
+        zero();
+    }
 
-    public void writeType(int type) throws IOException;
+    public long elapsedTime() {
+        if (running) {
+            return  total + System.currentTimeMillis() - startTime;
+        } else {
+            return total;
+        }
+    }
 
-    public void writeString(String value) throws IOException;
+    public void zero() {
+        total = 0;
+        start();
+    }
 
-    public void writeIntData(int i) throws IOException;
+    public void start() {
+        startTime = System.currentTimeMillis();
+        running = true;
+    }
 
-    public void writeIntData(int i, int position) throws IOException;
-
-    // resets the data after copying to new byte[]
-    public byte[] toByteArray() throws IOException;
-
-    public void writeData(Object data[],
-                          Table t) throws IOException, SQLException;
-
-    public void writeData(int l, int types[],
-                          Object data[]) throws IOException, SQLException;
-
-    // independent of the this object, calls only a static method
-    public int getSize(CachedRow row) throws SQLException;
-
-    // simply returns the byte[] buffer
-    public byte[] getBuffer();
-
-    // used with getByteArray() to get the current size
-    public int size();
-
-    // resets the byte[] buffer, ready for processing new row
-    public void reset();
+    public void stop() {
+        if (running) {
+            total += System.currentTimeMillis() - startTime;
+            running = false;
+        }
+    }
 }

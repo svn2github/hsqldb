@@ -323,8 +323,8 @@ class DatabaseScript {
             if (x != null) {
                 integrity = false;
 
-                // fredt@users - comment - is this necessary?
-                // tables are in order and no rows break FK constraints
+                // fredt@users - this is necessary for forward ref FK's
+                // otherwise tables are in order and no rows break FK's
                 // addRow(r, "SET REFERENTIAL_INTEGRITY FALSE");
             }
 

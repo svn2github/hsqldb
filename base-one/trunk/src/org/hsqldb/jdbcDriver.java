@@ -123,8 +123,8 @@ public class jdbcDriver implements Driver {
     static final String sStartURL = "jdbc:hsqldb:";
     static final int    MAJOR     = 1,
                         MINOR     = 7,
-                        REVISION  = 1;
-    static final String VERSION   = "1.7.1";
+                        REVISION  = 2;
+    static final String VERSION   = "1.7.2";
     static final String PRODUCT   = "HSQL Database Engine";
 
     /**

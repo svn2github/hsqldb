@@ -797,7 +797,8 @@ class TransferDb extends DataAccessPoint {
                 }
 
                 if (DefaultVal != null) {
-                    if ((type == Types.CHAR) || (type == Types.LONGVARCHAR)) {
+                    if (type == Types.CHAR || type == Types.VARCHAR
+                            || type == Types.LONGVARCHAR) {
                         DefaultVal = "\'" + DefaultVal + "\'";
                     }
 
