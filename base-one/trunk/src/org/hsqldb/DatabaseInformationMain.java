@@ -103,15 +103,18 @@ import java.sql.DatabaseMetaData;
 class DatabaseInformationMain extends DatabaseInformation {
 
     private static final Integer      INTEGER_0 = new Integer(0);
-    UserManager                       aAccess;
-    HsqlArrayList                     tTable;
+    private UserManager                       aAccess;
+    private HsqlArrayList                     tTable;
+
+
+    // this is also used in DatabaseInformationFull
     protected static final HsqlName[] sysTableHsqlNames;
 
     static {
-        sysTableHsqlNames = new HsqlName[sysNames.length];
+        sysTableHsqlNames = new HsqlName[sysTableNames.length];
 
-        for (int i = 0; i < sysNames.length; i++) {
-            sysTableHsqlNames[i] = HsqlName.newAutoName(null, sysNames[i]);
+        for (int i = 0; i < sysTableNames.length; i++) {
+            sysTableHsqlNames[i] = HsqlName.newAutoName(null, sysTableNames[i]);
         }
     }
 
@@ -137,15 +140,15 @@ class DatabaseInformationMain extends DatabaseInformation {
     // static final String META_FIXED_PREC_SCALE="MONEY";
     // static final String META_ORDINAL_POSITION="SEQ_IN_INDEX";
     // static final String META_ASC_OR_DESC="COLLATION";
-    static final String META_SCHEM            = "SCHEM";
-    static final String META_CAT              = "CAT";
-    static final String META_COLUMN_SIZE      = "COLUMN_SIZE";
-    static final String META_BUFFER_LENGTH    = "BUFFER_LENGTH";
-    static final String META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
-    static final String META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
-    static final String META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
-    static final String META_ORDINAL_POSITION = "ORDINAL_POSITION";
-    static final String META_ASC_OR_DESC      = "ASC_OR_DESC";
+    private static final String META_SCHEM            = "SCHEM";
+    private static final String META_CAT              = "CAT";
+    private static final String META_COLUMN_SIZE      = "COLUMN_SIZE";
+    private static final String META_BUFFER_LENGTH    = "BUFFER_LENGTH";
+    private static final String META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
+    private static final String META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
+    private static final String META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
+    private static final String META_ORDINAL_POSITION = "ORDINAL_POSITION";
+    private static final String META_ASC_OR_DESC      = "ASC_OR_DESC";
 
     // supported table types
     private static final String[] tableTypes = new String[] {
@@ -166,7 +169,7 @@ class DatabaseInformationMain extends DatabaseInformation {
     Table getSystemTable(String tablename,
                          Session session) throws SQLException {
 
-        int tableId = sysTableNames.get(tablename);
+        int tableId = sysTableNamesMap.get(tablename);
 
         if (tableId == -1) {
             return null;
@@ -770,18 +773,18 @@ class DatabaseInformationMain extends DatabaseInformation {
         }
     }
 
-    static final Short importedKeyNoActionShort =
+    private static final Short importedKeyNoActionShort =
         new Short((short) DatabaseMetaData.importedKeyNoAction);
-    static final Short importedKeyCascadeShort =
+    private static final Short importedKeyCascadeShort =
         new Short((short) DatabaseMetaData.importedKeyCascade);
-    static final Short importedKeySetDefaultShort =
+    private static final Short importedKeySetDefaultShort =
         new Short((short) DatabaseMetaData.importedKeySetDefault);
-    static final Short importedKeySetNullShort =
+    private static final Short importedKeySetNullShort =
         new Short((short) DatabaseMetaData.importedKeySetNull);
-    static final Short importedKeyNotDeferrableShort =
+    private static final Short importedKeyNotDeferrableShort =
         new Short((short) DatabaseMetaData.importedKeyNotDeferrable);
 
-    Table getCrossReference(HsqlName name,
+    private Table getCrossReference(HsqlName name,
                             Session session) throws SQLException {
 
         Table t = createTable(name);

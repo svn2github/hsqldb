@@ -1489,8 +1489,9 @@ class Table {
             } else {
                 long columnId = id.longValue();
 
-                if (iIdentityId < 0 )
+                if (iIdentityId < 0) {
                     throw Trace.error(Trace.ACCESS_IS_DENIED);
+                }
 
                 if (iIdentityId < columnId) {
                     iIdentityId = columnId;
@@ -2598,6 +2599,20 @@ class Table {
 
             throw e;    // and throw error again
         }
+    }
+
+    /**
+     * Currently only for temp system tables.
+     */
+    void clearAllRows() throws SQLException {
+
+        Trace.check(isTemp, Trace.OPERATION_NOT_SUPPORTED);
+
+        for (int i = 0; i < iIndexCount; i++) {
+            getIndex(i).setRoot(null);
+        }
+
+        iIdentityId = 0;
     }
 
     void drop() throws SQLException {

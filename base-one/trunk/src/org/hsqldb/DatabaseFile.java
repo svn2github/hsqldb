@@ -73,6 +73,7 @@ import java.io.EOFException;
 import java.io.FileNotFoundException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - new method
+// fredt@users 20030111 - patch 1.7.2 by bohgammer@users - pad file before seek() beyond end
 
 /**
  *  This class provides methods for reading and writing data from a
@@ -101,7 +102,18 @@ class DatabaseFile extends RandomAccessFile {
         super.seek(newPos);
     }
 
+    /**
+     * Some JVM's do not allow seek beyon end of file, so zeros are written
+     * first in that case. Reported by bohgammer@users in Open Disucssion
+     * Forum.
+     */
     public void seek(long newPos) throws IOException {
+
+        if (length() < newPos) {
+            for (long ix = length(); ix < newPos; ix++) {
+                write(0);
+            }
+        }
 
         super.seek(newPos);
 

@@ -224,6 +224,15 @@ class Session {
     /**
      *  Method declaration
      *
+     * @return
+     */
+    User getUser() {
+        return uUser;
+    }
+
+    /**
+     *  Method declaration
+     *
      * @param  user
      */
     void setUser(User user) {

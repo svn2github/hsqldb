@@ -193,7 +193,9 @@ public class HsqlHashMap implements HsqlMap {
 
         if (key == null) {
             nullKeyExists  = true;
+            Object oldmapping = nullKeyMapping;
             nullKeyMapping = value;
+            return oldmapping;
         }
 
         return table.put(key, value);

@@ -123,40 +123,40 @@ class DatabaseInformation {
     protected static final int SYSTEM_VIEWSOURCE      = 30;
 
     // system table names strictly in order of their ids
-    protected static final String sysNames[] = {
-        "SYSTEM_BESTROWIDENTIFIER",                   //
-        "SYSTEM_CATALOGS",                            //
-        "SYSTEM_COLUMNPRIVILEGES",                    //
-        "SYSTEM_COLUMNS",                             //
-        "SYSTEM_CROSSREFERENCE",                      //
-        "SYSTEM_INDEXINFO",                           //
-        "SYSTEM_PRIMARYKEYS",                         //
-        "SYSTEM_PROCEDURECOLUMNS",                    //
-        "SYSTEM_PROCEDURES",                          //
-        "SYSTEM_SCHEMAS",                             //
-        "SYSTEM_SUPERTABLES",                         //
-        "SYSTEM_SUPERTYPES",                          //
-        "SYSTEM_TABLEPRIVILEGES",                     //
-        "SYSTEM_TABLES",                              //
-        "SYSTEM_TABLETYPES",                          //
-        "SYSTEM_TYPEINFO",                            //
-        "SYSTEM_UDTATTRIBUTES",                       //
-        "SYSTEM_UDTS",                                //
-        "SYSTEM_USERS",                               //
-        "SYSTEM_VERSIONCOLUMNS",                      //
+    protected static final String sysTableNames[] = {
+        "SYSTEM_BESTROWIDENTIFIER",    //
+        "SYSTEM_CATALOGS",             //
+        "SYSTEM_COLUMNPRIVILEGES",     //
+        "SYSTEM_COLUMNS",              //
+        "SYSTEM_CROSSREFERENCE",       //
+        "SYSTEM_INDEXINFO",            //
+        "SYSTEM_PRIMARYKEYS",          //
+        "SYSTEM_PROCEDURECOLUMNS",     //
+        "SYSTEM_PROCEDURES",           //
+        "SYSTEM_SCHEMAS",              //
+        "SYSTEM_SUPERTABLES",          //
+        "SYSTEM_SUPERTYPES",           //
+        "SYSTEM_TABLEPRIVILEGES",      //
+        "SYSTEM_TABLES",               //
+        "SYSTEM_TABLETYPES",           //
+        "SYSTEM_TYPEINFO",             //
+        "SYSTEM_UDTATTRIBUTES",        //
+        "SYSTEM_UDTS",                 //
+        "SYSTEM_USERS",                //
+        "SYSTEM_VERSIONCOLUMNS",       //
 
         // HSQLDB-specific
-        "SYSTEM_ALIASES",                             //
-        "SYSTEM_BYTECODE",                            //
-        "SYSTEM_CACHEINFO",                           //
-        "SYSTEM_CLASSPRIVILEGES",                     //
-        "SYSTEM_CONNECTIONINFO",                      //
-        "SYSTEM_PROPERTIES",                          //
-        "SYSTEM_SESSIONS",                            //
-        "SYSTEM_TRIGGERCOLUMNS",                      //
-        "SYSTEM_TRIGGERS",                            //
-        "SYSTEM_ALLTYPEINFO",                         //
-        "SYSTEM_VIEWSOURCE"                           //
+        "SYSTEM_ALIASES",              //
+        "SYSTEM_BYTECODE",             //
+        "SYSTEM_CACHEINFO",            //
+        "SYSTEM_CLASSPRIVILEGES",      //
+        "SYSTEM_CONNECTIONINFO",       //
+        "SYSTEM_PROPERTIES",           //
+        "SYSTEM_SESSIONS",             //
+        "SYSTEM_TRIGGERCOLUMNS",       //
+        "SYSTEM_TRIGGERS",             //
+        "SYSTEM_ALLTYPEINFO",          //
+        "SYSTEM_VIEWSOURCE"            //
 
         // Future use
 //        "SYSTEM_ASSERTIONS",
@@ -243,13 +243,13 @@ class DatabaseInformation {
     };
 
     // map for id lookup
-    protected static final HsqlObjectToIntMap sysTableNames;
+    protected static final HsqlObjectToIntMap sysTableNamesMap;
 
     static {
-        sysTableNames = new HsqlObjectToIntMap(47);
+        sysTableNamesMap = new HsqlObjectToIntMap(47);
 
-        for (int i = 0; i < sysNames.length; i++) {
-            sysTableNames.put(sysNames[i], i);
+        for (int i = 0; i < sysTableNames.length; i++) {
+            sysTableNamesMap.put(sysTableNames[i], i);
         }
     }
 
@@ -260,7 +260,7 @@ class DatabaseInformation {
      * Simple object-wide flag indicating that all of this object's cached
      * data is dirty.
      */
-    protected boolean dirty = true;
+    protected boolean isDirty = true;
 
     /**
      * state flag -- if true, contentful tables are to be produced, else
@@ -326,7 +326,7 @@ class DatabaseInformation {
      *
      */
     boolean isSystemTable(String name) {
-        return sysTableNames.containsKey(name);
+        return sysTableNamesMap.containsKey(name);
     }
 
     /**
@@ -363,111 +363,7 @@ class DatabaseInformation {
      * @throws SQLException if a database access error occurs
      */
     void setDirty() throws SQLException {
-        dirty = true;
-    }
-
-    /**
-     * Controls caching of the named table. <p>
-     *
-     * Note that a table with the indicated name may not be produced
-     * by this object. As a general policy, it is not stritly an error
-     * to specify such a name, but if it is specified, implementors
-     * should probably ignore the call (i.e. is should have no effect on
-     * the cache state).<p>
-     *
-     * Subclasses are free to ignore this call completely, since they may choose an
-     * implementation that does not dynamically generate and cache table content
-     * on an as-needed basis. <p>
-     *
-     * If not ignored, this call indicates to this object that cached table
-     * data for the specified table is dirty for all sessions, requiring a
-     * regeneration of the data for the indicated table only.<p>
-     *
-     * Subclasses are free to delay cache clear until next get.  However,
-     * they may have to be aware of additional methods with semantics similar to
-     * produceTable() and act accordingly.
-     *
-     * @param name of table whose data is dirty
-     * @throws SQLException if a database access error occurs
-     */
-    void setDirty(String name) throws SQLException {
-        setDirty();
-    }
-
-    /**
-     * Controls caching of the named table for the specified session. <p>
-     *
-     * Note that a table with the indicated name may not be produced
-     * by this object for the specified session. As a general policy,
-     * it is not stritly an error to specify such a name/session pair,
-     * but if it is specified, implementors should probably ignore the
-     * call (i.e. is should have no effect on the cache state).<p>
-     *
-     * Subclasses are free to ignore this call completely, since they may
-     * choose an implementation that does not dynamically generate and
-     * cache table content on an as-needed basis. <p>
-     *
-     * If not ignored, this call indicates to this object that cached table
-     * data for the specified table and session is dirty, requiring a
-     * regeneration of the data for the {table, session} pair.<p>
-     *
-     * Subclasses are free to delay cache clear until the next invokation of
-     * produceTable().  However, they may have to be aware of additional
-     * methods with semantics similar to produceTable() and act accordingly.
-     *
-     * @param name the name of the table whose cached data is dirty
-     * @param session whose cached data is dirty
-     * @throws SQLException if a database access error occurs
-     */
-    void setDirty(String name, Session session) throws SQLException {
-        setDirty(name);
-    }
-
-    /**
-     * Retrieves whether this object's entire table cache, if any,
-     * is dirty.
-     *
-     * @return true if this object's entire table cache is dirty
-     *
-     */
-    boolean isDirty() {
-        return dirty;
-    }
-
-    /**
-     * Retrieves whether the cached data, if any, of the table with the
-     * specified name is dirty.
-     *
-     * @return true if the cached data of the table with the specified name
-     * is dirty.
-     * @param name the name of the table to test
-     */
-    boolean isDirty(String name) {
-        return isDirty();
-    }
-
-    /**
-     * Retrieves whether the cached data, if any, of the table with the
-     * specified name is dirty within the context of the specified session.
-     *
-     * @return true if he cached data, if any, of the table with the
-     * specified name is dirty within the context of the specified session.
-     * @param name the name of the table to test
-     * @param session the context within which to perform the test
-     */
-    boolean isDirty(String name, Session session) {
-        return isDirty(name);
-    }
-
-    /**
-     * Retrieves whether this table producer is presently producing empty
-     * (surrogate) or contentful tables.
-     *
-     * @return true if this table producer is presently producing
-     * contentful tables, else false
-     */
-    boolean isWithContent() {
-        return withContent;
+        isDirty = true;
     }
 
     /**

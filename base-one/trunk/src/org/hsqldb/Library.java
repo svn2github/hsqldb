@@ -1756,7 +1756,7 @@ public class Library {
                 }
                 case round : {
                     return new Double(round(((Number) parms[0]).doubleValue(),
-                                            ((Number) parms[0]).intValue()));
+                                            ((Number) parms[1]).intValue()));
                 }
                 case roundMagic : {
                     return new Double(

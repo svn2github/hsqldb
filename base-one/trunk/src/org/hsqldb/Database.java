@@ -653,7 +653,7 @@ class Database {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
