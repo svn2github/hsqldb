@@ -462,8 +462,8 @@ public class Trace {
         "00000 statement is closed",                                    // SET PROPERTY "name" "value"
         "Method skipBytes() not yet implemented.",                      // DatabaseRowInput_skipBytes
         "Method readLine() not yet implemented.",                       // DatabaseRowInput_readLine
-        "",                                                             // DataFileDefrag_writeTableToDataFile
-        "",                                                             // DiskNode_writeTranslatePointer
+        "S1000 ",                                                       // DataFileDefrag_writeTableToDataFile
+        "S1000 ",                                                       // DiskNode_writeTranslatePointer
         "null string",                                                  // 131 HsqlDateTime_null_string
         "invalid timestamp",                                            // HsqlDateTime_invalid_timestamp
         "null date",                                                    // HsqlDateTime_null_date
@@ -540,8 +540,8 @@ public class Trace {
         "parsing trigger command ",                                     // DatabaseCommandInterpreter_processCreateTrigger1
         "loading trigger class ",                                       // DatabaseCommandInterpreter_processCreateTrigger2
         "missing or zero-length savepoint name",                        // DatabaseCommandInterpreter_processSavepoint
-        "error $$ during defrag - file $$",                             // DataFielCache_defrag
-        "error $$ during shutdown - file $$",                           // DataFielCache_closeFile
+        "error $$ during defrag - file $$",                             // DataFileCache_defrag
+        "error $$ during shutdown - file $$",                           // DataFileCache_closeFile
         "error $$ reading row - file $$",                               // DataFileCache_makeRow
         "error $$ opening file - file $$",                              // DataFileCache_makeRow
         "error $$ closing file - file $$",                              // 211 DataFileCache_makeRow
@@ -595,9 +595,12 @@ public class Trace {
         code = Math.abs(code);
 
         String       mainErrorMessage = getMessage(code);
-        final String state            = mainErrorMessage.substring(0, 5);
+        String state =           "S1000";
 
-        mainErrorMessage = mainErrorMessage.substring(6);
+        if(mainErrorMessage.length() >= 5){
+            state = mainErrorMessage.substring(0, 5);
+            mainErrorMessage = mainErrorMessage.substring(6);
+        }
 
         if (subCode != 0) {
             mainErrorMessage += getMessage(Math.abs(subCode));
@@ -845,8 +848,8 @@ public class Trace {
     public static void printSystemOut(String message) {
 
         if (TRACESYSTEMOUT) {
-        System.out.println(message);
-    }
+            System.out.println(message);
+        }
     }
 
     /**
@@ -859,8 +862,8 @@ public class Trace {
     public static void printSystemOut(String message1, long message2) {
 
         if (TRACESYSTEMOUT) {
-        System.out.print(message1);
-        System.out.println(message2);
+            System.out.print(message1);
+            System.out.println(message2);
         }
     }
 

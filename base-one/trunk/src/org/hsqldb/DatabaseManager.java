@@ -81,9 +81,9 @@ public class DatabaseManager {
     static final IntKeyHashMap databaseIDMap = new IntKeyHashMap();
 
     /**
-     * Returns a vector containing the paths for all the databases.
+     * Returns a vector containing the URI (type + path) for all the databases.
      */
-    public static Vector getDatabasePaths() {
+    public static Vector getDatabaseURIs() {
 
         Vector   v  = new Vector();
         Iterator it = databaseIDMap.values().iterator();
@@ -494,21 +494,21 @@ public class DatabaseManager {
      */
     static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
-        String urlImage = url.toLowerCase();
+        String         urlImage = url.toLowerCase();
         HsqlProperties props    = new HsqlProperties();
 
         if (hasPrefix &&!urlImage.startsWith(S_URL_PREFIX)) {
             return props;
         }
 
-        int            pos   = hasPrefix ? S_URL_PREFIX.length()
-                                         : 0;
-        String         type  = null;
-        String         host;
-        int            port = 0;
-        String         database;
-        String         path;
-        boolean        isNetwork = false;
+        int     pos  = hasPrefix ? S_URL_PREFIX.length()
+                                 : 0;
+        String  type = null;
+        String  host;
+        int     port = 0;
+        String  database;
+        String  path;
+        boolean isNetwork = false;
 
         props.setProperty("url", url);
 

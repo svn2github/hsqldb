@@ -134,9 +134,8 @@ class DataFileDefrag {
         Index          index         = table.getPrimaryIndex();
 
 // erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
-        long  pos         = destFile.getFilePointer();
-        int[] pointerPair = new int[2];
-        int   count       = 0;
+        long pos   = destFile.getFilePointer();
+        int  count = 0;
 
         Trace.printSystemOut("lookup begins: " + stopw.elapsedTime());
 
@@ -145,17 +144,16 @@ class DataFileDefrag {
 
             pointerLookup.add(row.iPos, (int) pos);
 
-// erik            pos += row.storageSize / cacheFileScale;
-            pos += row.storageSize;
-
             if (count % 50000 == 0) {
 
 //                System.gc();
                 Trace.printSystemOut("pointer pair for row " + count + " "
-                                     + pointerPair[0] + " " + pointerPair[1]);
+                                     + row.iPos + " " + pos);
             }
 
-            n = index.next(n);
+// erik            pos += row.storageSize / cacheFileScale;
+            pos += row.storageSize;
+            n   = index.next(n);
         }
 
         Trace.printSystemOut(table.getName().name + " list done ",
@@ -197,6 +195,10 @@ class DataFileDefrag {
         }
 
         for (int i = 0; i < rootsArray.length; i++) {
+            if (rootsArray[i] == -1) {
+                continue;
+            }
+
             int lookupIndex = pointerLookup.find(0, rootsArray[i]);
 
             if (lookupIndex == -1) {

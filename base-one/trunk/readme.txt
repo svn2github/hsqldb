@@ -1,16 +1,15 @@
 Readme File
 
-2004.05.30
+2004.05.31 RC_6b
 
+Fixed CHECKPOINT DEFRAG bug with empty tables
 Fixed ORDER BY with HAVING
 Fixed SELECT .. INTO table issue with outer joins etc.
 Fixed issue with NOT used in WHERE clause of OUTER select
 Fixed issue with DAYOFWEEK() etc. library calls with NULL parameter
 Fixes for TRIGGER thread termination
-
-2004.05.26
-
 Fixes for minor bugs
+Updated documentation
 
 2004.05.18 RC_6a
 
