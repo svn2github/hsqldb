@@ -2159,10 +2159,10 @@ implements java.sql.PreparedStatement {
     protected void checkIsRowCount(boolean yes) throws SQLException {
 
         if (yes != isRowCount) {
-            String msg = "Statement does not generate a " + (yes ? "row count"
-                                                                 : "result set");
+            int msg = yes ? Trace.JDBC_STATEMENT_NOT_ROW_COUNT
+                          : Trace.JDBC_STATEMENT_NOT_RESULTSET;
 
-            throw jdbcDriver.sqlException(Trace.ASSERT_FAILED, msg);
+            throw jdbcDriver.sqlException(msg);
         }
     }
 

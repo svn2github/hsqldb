@@ -265,7 +265,9 @@ public class Trace extends PrintWriter {
                   TextDatabaseRowOutput_checkConvertString       = 150,
                   TextDatabaseRowOutput_checkConvertString2      = 151,
                   TextDatabaseRowOutput_writeIntData             = 152,
-                  ORDER_BY_POSITION                              = 153;
+                  ORDER_BY_POSITION                              = 153,
+                  JDBC_STATEMENT_NOT_ROW_COUNT                   = 154,
+                  JDBC_STATEMENT_NOT_RESULTSET                   = 155;
     static String MESSAGE_TAG                                    = "$$";
 
     //
@@ -423,7 +425,9 @@ public class Trace extends PrintWriter {
         "end of line characters not allowed",                                 // TextDatabaseRowOutput_checkConvertString
         "separator not allowed in unquoted string",                           // TextDatabaseRowOutput_checkConvertString2
         "Method writeIntData(int, int) not yet implemented.",                 // TextDatabaseRowOutput_writeIntData
-        "ORDER BY must be at the end of the statement"
+        "00000 ORDER BY must be at the end of the statement",
+        "00000 Statement does not generate a row count",
+        "00000 Statement does not generate a result set",
     };
 
     /** Used during tests. */

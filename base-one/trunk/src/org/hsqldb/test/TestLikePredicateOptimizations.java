@@ -86,6 +86,9 @@ public class TestLikePredicateOptimizations extends TestBase {
         sql           = "select count(*) from test where name like null";
         pstmt         = conn.prepareStatement(sql);
         rs            = pstmt.executeQuery();
+
+        rs.next();
+
         actualCount   = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
@@ -100,6 +103,9 @@ public class TestLikePredicateOptimizations extends TestBase {
         sql           = "select count(*) from test where name like ''";
         pstmt         = conn.prepareStatement(sql);
         rs            = pstmt.executeQuery();
+
+        rs.next();
+
         actualCount   = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
@@ -114,12 +120,15 @@ public class TestLikePredicateOptimizations extends TestBase {
         sql           = "select count(*) from test where name like '%'";
         pstmt         = conn.prepareStatement(sql);
         rs            = pstmt.executeQuery();
+
+        rs.next();
+
         actualCount   = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
 // --
-        sql = "select count(*) from test where left(name, 5) = 'name44'";
+        sql = "select count(*) from test where left(name, 6) = 'name44'";
         rs  = stmt.executeQuery(sql);
 
         rs.next();
@@ -136,15 +145,18 @@ public class TestLikePredicateOptimizations extends TestBase {
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
 // --
-        sql = "select count(*) from test where left(name,5) = 'name4' and right(name,1) = 4";
+        sql = "select count(*) from test where left(name,5) = 'name4' and right(name,1) = 5";
         rs = stmt.executeQuery(sql);
 
         rs.next();
 
         expectedCount = rs.getInt(1);
-        sql = "select count(*) from test where name like 'name44%4'";
+        sql           = "select count(*) from test where name like 'name4%5'";
         pstmt         = conn.prepareStatement(sql);
         rs            = pstmt.executeQuery();
+
+        rs.next();
+
         actualCount   = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);

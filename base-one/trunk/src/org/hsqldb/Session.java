@@ -154,7 +154,7 @@ class Session implements SessionInterface {
     /**
      * Closes this Session.
      */
-    public void close() {
+    public synchronized void close() {
 
         if (!isClosed) {
             synchronized (dDatabase) {
@@ -167,7 +167,7 @@ class Session implements SessionInterface {
      * Closes this Session, freeing any resources associated with it
      * and rolling back any uncommited transaction it may have open.
      */
-    void disconnect() {
+    synchronized void disconnect() {
 
         // PRE:  disconnect() is called _only_ from SessionManager
         if (isClosed) {

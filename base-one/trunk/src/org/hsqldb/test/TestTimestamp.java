@@ -77,6 +77,7 @@ public class TestTimestamp extends TestCase {
         conn.setAutoCommit(false);
     }
 
+/*
     public void testOracle() throws Exception {
 
         nameTable      = "AAA_TEST";
@@ -100,7 +101,7 @@ public class TestTimestamp extends TestCase {
 
 //        dropTestTable();
     }
-
+*/
     private void checkExceptionTableExistsOracle(SQLException e) {}
 
     private void checkExceptionTableExistsHsql(SQLException e) {

@@ -155,6 +155,9 @@ public class TestINPredicateParameterizationAndCorrelation extends TestBase {
         pstmt.setInt(6, 4);
 
         rs          = pstmt.executeQuery();
+
+        rs.next();
+
         actualCount = rs.getInt(1);
 
         assertEquals("row count: ", expectedCount, actualCount);
