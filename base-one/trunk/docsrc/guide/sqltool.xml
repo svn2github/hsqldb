@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.22 2004/06/06 18:02:43 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.23 2004/06/06 20:50:58 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.22 $</edition>
-        <pubdate>$Date: 2004/06/06 18:02:43 $</pubdate>
+        <edition>$Revision: 1.23 $</edition>
+        <pubdate>$Date: 2004/06/06 20:50:58 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -630,7 +630,7 @@
                 Notice that a command can start immediate after the comment
                 ends.
             </simpara>
-            <example><title>Valid comment example</title><programlisting>
+            <example><title>Invalid comment example</title><programlisting>
     SELECT count(*) FROM
     /* atable */
     btable;</programlisting>
