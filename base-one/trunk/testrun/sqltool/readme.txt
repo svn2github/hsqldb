@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.11 2004/07/05 00:41:13 unsaved Exp $
+$Id: readme.txt,v 1.12 2004/07/06 14:43:51 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -51,6 +51,10 @@ To do anything at all with SqlTool unit testing, you need
     the *.list files, then the *.list files in this directory use 
     relative paths for the SQL test files.
 
+
+If you're a Java coder, and you don't have a good understanding of JUnit,
+I recommend my JUnit HOWTO, available at
+    http://admc.com/blaine/howtos/junit/index.html.
 
 To run the JUnit test suite for SqlTool.
 
