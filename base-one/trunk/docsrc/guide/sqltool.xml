@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.33 2004/06/10 04:58:26 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.34 2004/06/10 12:58:08 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.33 $</edition>
-        <pubdate>$Date: 2004/06/10 04:58:26 $</pubdate>
+        <edition>$Revision: 1.34 $</edition>
+        <pubdate>$Date: 2004/06/10 12:58:08 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -1195,11 +1195,21 @@
                 (like <literal>* end foreach</literal>).
             </simpara> <caution><simpara>
                 Be aware that the PL block reader is ignorant about SQL 
-                statements and comments-- is just looks
-                for lines beginning with some PL commands.
+                statements and comments when looking for the end of the block.
+                It just looks for lines beginning with some specific PL commands.
                 Therefore, if you put a comment line before a PL statement, 
                 or if a line of a multi-line SQL statement has a line beginning
                 with a PL command, things may break.
+                </simpara> <simpara>
+                I am not saying that you shouldn't use PL commands or SQL
+                commands inside of PL blocks-- you definitely should!
+                I'm saying that in PL blocks you should not have lines inside 
+                of SQL statments or comments which could be mistaken for PL 
+                commands.
+                (Especially, "commenting out" PL end statements will not work
+                if you leave <literal>* end</literal> at the beginning of the
+                line).
+                </simpara> <simpara>
                 (This limitation will very likely be removed in a future 
                 version of SqlTool).
             </simpara></caution> <simpara>
