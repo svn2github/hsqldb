@@ -455,35 +455,17 @@ Referential Constraint 4 SET DEFAULT
         }
 
         if (constType == Constraint.CHECK) {
-            core.checkFilter.currentData = row;
-
-            if (!core.check.test()) {
-                core.checkFilter.currentRow = null;
-
-                throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,
-                                  Trace.Constraint_violation, new Object[] {
-                    constName.name, core.mainTable.tableName.name
-                });
-            }
-
-            core.checkFilter.currentData = null;
+            checkCheckConstraint(row);
 
             return;
         }
 
-        // just check for nulls
-        for (int i = 0; i < core.colLen; i++) {
-            Object o = row[core.refColArray[i]];
-
-            if (o == null) {
-
-                // if one column is null then integrity is not checked
+        if (core.mainIndex.isNull(row, core.refColArray)) {
                 return;
             }
-        }
 
         // a record must exist in the main table
-        if (core.mainIndex.find(row, core.refColArray) == null) {
+        if (core.mainIndex.findNotNull(row, core.refColArray, true) == null) {
 
             // special case: self referencing table and self referencing row
             if (core.mainTable == core.refTable) {
@@ -510,38 +492,22 @@ Referential Constraint 4 SET DEFAULT
         }
     }
 
-    /**
-     *  Check if a row in the referenced (parent) table can be deleted. Used
-     *  only for UPDATE table statements. Checks for DELETE FROM table
-     *  statements are now handled by findFkRef() to support ON DELETE
-     *  CASCADE.
-     *
-     * @param  row
-     * @throws  HsqlException
-     */
-    private void checkDelete(Object row[]) throws HsqlException {
+    private void checkCheckConstraint(Object[] row) throws HsqlException {
 
-        // must be called synchronized because of oRef
-        for (int i = 0; i < core.colLen; i++) {
-            Object o = row[core.mainColArray[i]];
+        core.checkFilter.currentData = row;
 
-            if (o == null) {
+        if (!core.check.test()) {
+            core.checkFilter.currentRow = null;
 
-                // if one column is null then integrity is not checked
-                return;
-            }
-        }
-
-        // there must be no record in the 'slave' table
-        Node node = core.refIndex.find(row, core.mainColArray);
-
-        // tony_lai@users 20020820 - patch 595156
-        if (node != null) {
-            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+            throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,
                               Trace.Constraint_violation, new Object[] {
-                core.fkName.name, core.refTable.getName().name
+                constName.name, core.mainTable.tableName.name
             });
         }
+
+        core.checkFilter.currentData = null;
+
+        return;
     }
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -570,18 +536,6 @@ Referential Constraint 4 SET DEFAULT
         if (core.refIndex.isNull(row, core.mainColArray)) {
             return null;
         }
-
-/*
-        for (int i = 0; i < core.colLen; i++) {
-            Object o = row[core.mainColArray[i]];
-
-            if (o == null) {
-
-                // if one column is null then integrity is not checked
-                return null;
-            }
-        }
-*/
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
@@ -622,17 +576,6 @@ Referential Constraint 4 SET DEFAULT
             return null;
         }
 
-/*
-        for (int i = 0; i < core.colLen; i++) {
-            Object o = row[core.refColArray[i]];
-
-            if (o == null) {
-
-                // if one column is null then integrity is not checked
-                return null;
-            }
-        }
-*/
         Node node = core.mainIndex.findNotNull(row, core.refColArray, true);
 
         // -- there has to be a valid node in the main table
@@ -656,14 +599,7 @@ Referential Constraint 4 SET DEFAULT
      * @param  inserted rows to insert
      * @throws  HsqlException
      */
-    void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws HsqlException {
-
-        if (constType == UNIQUE) {
-
-            // unique constraints are checked by the unique index
-            return;
-        }
+    void checkUpdate(Result inserted) throws HsqlException {
 
         if (constType == Constraint.CHECK) {
 
@@ -671,46 +607,12 @@ Referential Constraint 4 SET DEFAULT
             Record r = inserted.rRoot;
 
             while (r != null) {
-                checkInsert(r.data);
+                checkCheckConstraint(r.data);
 
                 r = r.next;
             }
 
             return;
-        }
-
-        if (constType == MAIN) {
-            if (!ArrayUtil.haveCommonElement(col, core.mainColArray,
-                                             core.colLen)) {
-                return;
-            }
-
-            // check deleted records
-            Record r = deleted.rRoot;
-
-            while (r != null) {
-
-                // if an identical record exists we don't have to test
-                if (core.mainIndex.find(r.data, core.mainColArray) == null) {
-                    checkDelete(r.data);
-                }
-
-                r = r.next;
-            }
-        } else if (constType == FOREIGN_KEY) {
-            if (!ArrayUtil.haveCommonElement(col, core.mainColArray,
-                                             core.colLen)) {
-                return;
-            }
-
-            // check inserted records
-            Record r = inserted.rRoot;
-
-            while (r != null) {
-                checkInsert(r.data);
-
-                r = r.next;
-            }
         }
     }
 

@@ -37,6 +37,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users
@@ -48,30 +49,43 @@ import java.util.GregorianCalendar;
  *  collection of static methods to convert Date, Time and Timestamp strings
  *  into corresponding Java objects. Also accepts SQL literals such as NOW,
  *  TODAY as valid strings and returns the current date / time / datetime.
- *  Compatible with jdk 1.1.x
+ *  Compatible with jdk 1.1.x.<p>
+ *
+ *  Was reviewed for 1.7.2 resulting in centralising all DATETIME related
+ *  operstions.<p>
+ *
+ *  HSQLDB uses the client and server's default timezone for all DATETIME
+ *  operations. It stores the DATETIME values in .log and .script files using
+ *  the default local of the server. The same values are stored as binary
+ *  UTC timestamps in .data files. If the database is trasported from one
+ *  timezone to another, then the DATETIME values in cached tables will be
+ *  handled as UTC but those in other tables will be treated as local. So
+ *  a timestamp representing 12 noon stored in Tokyo timezone will be treated
+ *  as 9 pm in London when stored in a cached table but the same value stored
+ *  in a memory table will be treated as 12 noon.
  *
  * @author  fredt@users
- * @version 1.7.0
+ * @version 1.7.2
+ * @since 1.7.0
  */
 
-/**
- * fredt - 20030103 - currently under review for 1.7.2
- * There is a fundamental SQL compatibility problem as SQL stores
- * DATETIME values as their separate fields, whereas Java stores them
- * all as a long representing milliseconds.
- * Currently, this causes issues in comparison between DATETIME values
- * if the db is accessed from different time zones.
- *
- */
 public class HsqlDateTime {
 
     /**
      * A reusable static value for today's date. Should only be accessed
      * by getToday()
      */
-    private static Date     today    = new Date(0);
+    private static Calendar today          = new GregorianCalendar();
+    private static Calendar tempCalDefault = new GregorianCalendar();
+    private static Calendar tempCalGMT =
+        new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     private static Date     tempDate = new Date(0);
-    private static Calendar tempCal  = new GregorianCalendar();
+
+    static {
+        resetToday();
+    }
+
+    final static String zerodatetime = "1970-01-01 00:00:00.000000000";
 
     /**
      *  Converts a string in JDBC timestamp escape format to a
@@ -100,14 +114,12 @@ public class HsqlDateTime {
             // fredt - treat Date as full days only
             if (s.equals("CURRENT_DATE") || s.equals("TODAY")
                     || s.equals("SYSDATE")) {
-                return new Timestamp(getToday().getTime());
+                return new Timestamp(getToday().getTimeInMillis());
             }
 
             throw new java.lang.IllegalArgumentException(
                 Trace.getMessage(Trace.HsqlDateTime_invalid_timestamp));
         }
-
-        final String zerodatetime = "1970-01-01 00:00:00.000000000";
 
         s = s + zerodatetime.substring(s.length());
 
@@ -151,7 +163,7 @@ public class HsqlDateTime {
             // fredt - treat Date as full days only
             if (s.equals("TODAY") || s.equals("CURRENT_DATE")
                     || s.equals("SYSDATE")) {
-                return getToday();
+                return new java.sql.Date(getToday().getTimeInMillis());
             }
 
             throw new java.lang.IllegalArgumentException(
@@ -183,23 +195,14 @@ public class HsqlDateTime {
         }
 
         if (s.toUpperCase().equals("CURRENT_TIME")) {
-            long time = System.currentTimeMillis() - getToday().getTime();
-
-            time = (time / 1000) * 1000;
-
-            return new Time(time);
+            return getCurrentTime();
         }
 
-        return getNormalisedTime(Time.valueOf(s));
+        return Time.valueOf(s);
     }
 
     public static Time getCurrentTime() {
-
-        long time = System.currentTimeMillis() - getToday().getTime();
-
-        time = (time / 1000) * 1000;
-
-        return new Time(time);
+        return getNormalisedTime(System.currentTimeMillis());
     }
 
     private static final String sdftPattern  = "HH:mm:ss";
@@ -255,10 +258,13 @@ public class HsqlDateTime {
             Calendar cal) throws Exception {
 
         synchronized (sdfts) {
-            sdfts.setCalendar(cal == null ? tempCal
+            sdfts.setCalendar(cal == null ? tempCalDefault
                                           : cal);
 
-            return sdfts.format(new java.util.Date(x.getTime()));
+            String s = sdfts.format(new java.util.Date(x.getTime()))
+                       + x.getNanos();
+
+            return s + zerodatetime.substring(s.length());
         }
     }
 
@@ -266,7 +272,7 @@ public class HsqlDateTime {
                                        Calendar cal) throws Exception {
 
         synchronized (sdft) {
-            sdft.setCalendar(cal == null ? tempCal
+            sdft.setCalendar(cal == null ? tempCalDefault
                                          : cal);
 
             return sdft.format(x);
@@ -277,35 +283,22 @@ public class HsqlDateTime {
                                        Calendar cal) throws Exception {
 
         synchronized (sdfd) {
-            sdfd.setCalendar(cal == null ? tempCal
+            sdfd.setCalendar(cal == null ? tempCalDefault
                                          : cal);
 
             return sdfd.format(x);
         }
     }
 
-/*
-        // experimental stuff
-        static SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
-
-        static {
-                sdfd.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-        }
-
-        static String getGMTDateString(Date x, Calendar cal) throws Exception {
-                return sdfd.format(x);
-        }
-*/
-
     /**
      * Returns the same Date Object. This object should be treated as
      * read-only.
      */
-    static Date getToday() {
+    static Calendar getToday() {
 
         long now = System.currentTimeMillis();
 
-        if (now - today.getTime() > 24 * 3600 * 1000) {
+        if (now - today.getTimeInMillis() > 24 * 3600 * 1000) {
             resetToday();
         }
 
@@ -325,6 +318,7 @@ public class HsqlDateTime {
         cal.set(Calendar.YEAR, 0);
         cal.set(Calendar.MONTH, 0);
         cal.set(Calendar.DATE, 0);
+        cal.set(Calendar.MILLISECOND, 0);
     }
 
     /**
@@ -332,27 +326,20 @@ public class HsqlDateTime {
      */
     synchronized private static void resetToday() {
 
-        //long now = System.currentTimeMillis();
-// fredt - this needs tests and review to ensure core time zone is always GMT
-//        Calendar c   = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-        Calendar c = new GregorianCalendar();
+//#ifdef JDBC3
+        // Use method directly
+        today.setTimeInMillis(System.currentTimeMillis());
 
-        //c.setTime(new Date(now));
-        resetToDate(c);
-
-        today = new Date(c.getTime().getTime());
-    }
-
-    /** @todo fredt - write the methods using Calendar */
+//#else
 /*
-    static long getTimePart(Timestamp ts) {
-        return ts.getTime();
-    }
-
-    static long getDatePart(Timestamp ts) {
-        return ts.getTime();
-    }
+        // Have to go indirect
+        tempDate.setTime(System.currentTimeMillis());
+        today.setTime(tempDate);
 */
+
+//#endif JDBC3
+        resetToDate(today);
+    }
 
     /**
      * Sets the time in the given Calendar using the given milliseconds value; wrapper method to
@@ -399,15 +386,29 @@ public class HsqlDateTime {
 //#endif JDBC3
     }
 
+    static Time getNormalisedTime(long t) {
+
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, t);
+            tempCalGMT.clear(Calendar.YEAR);
+            tempCalGMT.clear(Calendar.MONTH);
+            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
+
+            long value = getTimeInMillis(tempCalGMT);
+
+            return new Time(value);
+        }
+    }
+
     static Time getNormalisedTime(Time t) {
 
-        synchronized (tempCal) {
-            setTimeInMillis(tempCal, t.getTime());
-            tempCal.clear(Calendar.YEAR);
-            tempCal.clear(Calendar.MONTH);
-            tempCal.clear(Calendar.DAY_OF_MONTH);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, t.getTime());
+            tempCalGMT.clear(Calendar.YEAR);
+            tempCalGMT.clear(Calendar.MONTH);
+            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
 
-            long value = getTimeInMillis(tempCal);
+            long value = getTimeInMillis(tempCalGMT);
 
             return new Time(value);
         }
@@ -415,13 +416,13 @@ public class HsqlDateTime {
 
     static Time getNormalisedTime(Timestamp ts) {
 
-        synchronized (tempCal) {
-            setTimeInMillis(tempCal, ts.getTime());
-            tempCal.clear(Calendar.YEAR);
-            tempCal.clear(Calendar.MONTH);
-            tempCal.clear(Calendar.DAY_OF_MONTH);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, ts.getTime());
+            tempCalGMT.clear(Calendar.YEAR);
+            tempCalGMT.clear(Calendar.MONTH);
+            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
 
-            long value = getTimeInMillis(tempCal);
+            long value = getTimeInMillis(tempCalGMT);
 
             return new Time(value);
         }
@@ -430,14 +431,14 @@ public class HsqlDateTime {
 // clear(Calendar.HOUR_OF_DAY) won't work : http://developer.java.sun.com/developer/bugParade/bugs/4414844.html.
     static Date getNormalisedDate(Timestamp ts) {
 
-        synchronized (tempCal) {
-            setTimeInMillis(tempCal, ts.getTime());
-            tempCal.set(Calendar.HOUR_OF_DAY, 0);
-            tempCal.clear(Calendar.MINUTE);
-            tempCal.clear(Calendar.SECOND);
-            tempCal.clear(Calendar.MILLISECOND);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, ts.getTime());
+            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
+            tempCalGMT.clear(Calendar.MINUTE);
+            tempCalGMT.clear(Calendar.SECOND);
+            tempCalGMT.clear(Calendar.MILLISECOND);
 
-            long value = getTimeInMillis(tempCal);
+            long value = getTimeInMillis(tempCalGMT);
 
             return new Date(value);
         }
@@ -445,33 +446,30 @@ public class HsqlDateTime {
 
     static Date getNormalisedDate(Date d) {
 
-        synchronized (tempCal) {
-            setTimeInMillis(tempCal, d.getTime());
-            tempCal.set(Calendar.HOUR_OF_DAY, 0);
-            tempCal.clear(Calendar.MINUTE);
-            tempCal.clear(Calendar.SECOND);
-            tempCal.clear(Calendar.MILLISECOND);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, d.getTime());
+            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
+            tempCalGMT.clear(Calendar.MINUTE);
+            tempCalGMT.clear(Calendar.SECOND);
+            tempCalGMT.clear(Calendar.MILLISECOND);
 
-            long value = getTimeInMillis(tempCal);
+            long value = getTimeInMillis(tempCalGMT);
 
             return new Date(value);
         }
     }
 
-    /**
-     * use CURRENT_DATE plus the elapsed time.
-     */
     static Timestamp getNormalisedTimestamp(Time t) {
 
-        synchronized (tempCal) {
-            long value = getToday().getTime();
+        synchronized (tempCalGMT) {
+            long value = getToday().getTimeInMillis();
 
-            setTimeInMillis(tempCal, t.getTime());
-            tempCal.clear(Calendar.YEAR);
-            tempCal.clear(Calendar.MONTH);
-            tempCal.clear(Calendar.DAY_OF_MONTH);
+            setTimeInMillis(tempCalGMT, t.getTime());
+            tempCalGMT.clear(Calendar.YEAR);
+            tempCalGMT.clear(Calendar.MONTH);
+            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
 
-            value += getTimeInMillis(tempCal);
+            value += getTimeInMillis(tempCalGMT);
 
             return new Timestamp(value);
         }
@@ -479,14 +477,14 @@ public class HsqlDateTime {
 
     static Timestamp getNormalisedTimestamp(Date d) {
 
-        synchronized (tempCal) {
-            setTimeInMillis(tempCal, d.getTime());
-            tempCal.set(Calendar.HOUR_OF_DAY, 0);
-            tempCal.clear(Calendar.MINUTE);
-            tempCal.clear(Calendar.SECOND);
-            tempCal.clear(Calendar.MILLISECOND);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, d.getTime());
+            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
+            tempCalGMT.clear(Calendar.MINUTE);
+            tempCalGMT.clear(Calendar.SECOND);
+            tempCalGMT.clear(Calendar.MILLISECOND);
 
-            long value = getTimeInMillis(tempCal);
+            long value = getTimeInMillis(tempCalGMT);
 
             return new Timestamp(value);
         }
@@ -500,24 +498,10 @@ public class HsqlDateTime {
      */
     static int getDateTimePart(java.util.Date d, int part) {
 
-        synchronized (tempCal) {
-            tempCal.setTime(d);
+        synchronized (tempCalGMT) {
+            tempCalGMT.setTime(d);
 
-            return tempCal.get(part);
-        }
+            return tempCalGMT.get(part);
     }
-    /*
-    public static void main(String[] args) {
-        String tests[] = { "2000-1-1", "2000-1-1 12:13", "2000-1-1 12:13:14",
-                           "2000-1-1 12:13:14.15" };
-        for (int i = 0; i < tests.length; i++) {
-            String test = tests[i];
-            try {
-                Trace.printSystemOut("test " + test + " = " + HsqlDateTime.timestampValue(test));
-            } catch (Exception e) {
-                System.out.println(e);
             }
-        }
-    }
-*/
 }

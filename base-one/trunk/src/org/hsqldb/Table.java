@@ -2555,13 +2555,11 @@ public class Table extends BaseTable {
      * rows. (fredt)
      */
     int update(HsqlArrayList del, Result ins, int[] col,
-               Session c) throws HsqlException {
+               Session session) throws HsqlException {
 
         Record ni = ins.rRoot;
 
         for (int i = 0; i < del.size(); i++) {
-            Row row = (Row) del.get(i);
-
             enforceFieldValueLimits(ni.data, col);
             enforceCheckConstraints(ni.data);
 
@@ -2571,11 +2569,17 @@ public class Table extends BaseTable {
 
             if (database.isReferentialIntegrity()) {
                 constraintPath.clear();
-                checkCascadeUpdate(row, ni.data, c, col, null, false,
-                                   constraintPath);
+                checkCascadeUpdate((Row) del.get(i), ni.data, session, col,
+                                   null, false, constraintPath);
             }
 
             ni = ni.next;
+        }
+
+        for (int j = 0, cSize = vConstraint.size(); j < cSize; j++) {
+            Constraint c = (Constraint) vConstraint.get(j);
+
+            c.checkUpdate(ins);
         }
 
         fireAll(Trigger.UPDATE_BEFORE);
@@ -2587,9 +2591,9 @@ public class Table extends BaseTable {
 
             del.set(i, row.getData());
             constraintPath.clear();
-            checkCascadeUpdate(row, ni.data, c, col, null, true,
+            checkCascadeUpdate(row, ni.data, session, col, null, true,
                                constraintPath);
-            deleteNoCheck(row, c, true);
+            deleteNoCheck(row, session, true);
 
             ni = ni.next;
         }
@@ -2600,7 +2604,7 @@ public class Table extends BaseTable {
             Object[] data = (Object[]) del.get(i);
 
             fireAll(Trigger.UPDATE_BEFORE_ROW, data, ni.data);
-            insertNoCheck(ni.data, c, true);
+            insertNoCheck(ni.data, session, true);
             fireAll(Trigger.UPDATE_AFTER_ROW, data, ni.data);
 
             ni = ni.next;

@@ -1003,6 +1003,21 @@ public class Column {
                         return o;
                     }
 
+                    if (o instanceof java.sql.Time) {
+                        return HsqlDateTime.getTimeString((java.sql.Time) o,
+                                                          null);
+                    }
+
+                    if (o instanceof java.sql.Timestamp) {
+                        return HsqlDateTime.getTimestampString(
+                            (java.sql.Timestamp) o, null);
+                    }
+
+                    if (o instanceof java.sql.Date) {
+                        return HsqlDateTime.getDateString((java.sql.Date) o,
+                                                          null);
+                    }
+
                     if (o instanceof byte[]) {
                         return StringConverter.byteToHex((byte[]) o);
                     }
@@ -1015,6 +1030,10 @@ public class Column {
 
                     if (o instanceof java.sql.Timestamp) {
                         return HsqlDateTime.getNormalisedTime((Timestamp) o);
+                    }
+
+                    if (o instanceof String) {
+                        return HsqlDateTime.timeValue((String) o);
                     }
 
                     if (o instanceof java.sql.Date) {
@@ -1035,6 +1054,10 @@ public class Column {
                         return HsqlDateTime.getNormalisedTimestamp(
                             (java.sql.Date) o);
                     }
+
+                    if (o instanceof String) {
+                        return HsqlDateTime.timestampValue((String) o);
+                    }
                     break;
 
                 case Types.DATE :
@@ -1045,6 +1068,10 @@ public class Column {
 
                     if (o instanceof java.sql.Timestamp) {
                         return HsqlDateTime.getNormalisedDate((Timestamp) o);
+                    }
+
+                    if (o instanceof String) {
+                        return HsqlDateTime.dateValue((String) o);
                     }
 
                     if (o instanceof java.sql.Time) {

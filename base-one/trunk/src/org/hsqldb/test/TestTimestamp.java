@@ -50,7 +50,7 @@ public class TestTimestamp extends TestCase {
     Connection conn              = null;
     TimeZone   timeZone          = null;
     long       id                = 10;
-    String     checkTimestamp    = "2003-09-04 16:42:58.739";
+    String     checkTimestamp    = "2003-09-04 16:42:58";
     String     checkTimestampOra = "2003-09-04 16:42:58";
 
     public TestTimestamp(String testName) {
