@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: pkgbuild,v 1.3 2002/10/26 05:46:28 unsaved Exp $
+# $Id: pkgbuild,v 1.4 2002/10/26 14:33:44 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
@@ -58,6 +58,8 @@ while [ "$#" -gt 0 ]; do
     case "$1" in -*v*) set -x;; esac # Verbose
     shift
 done
+[ -n "$GENPROTO" ] || echo "Warning:  Using existing .proto file.
+Quit and invoke with '-p' if any component file(s) have changed."
 
 
 getent passwd hsqldb > /dev/null ||
@@ -139,28 +141,37 @@ Even if you're generating it, you have to start with an old version."
 }
 
 # Be careful if you edit this
-echonoterm "Remove old dir package '$PKGNAME'?  "
-read REPLY
-case "$REPLY" in [Yy]*)
-    echonoterm 'Removing old dir package...  '
-    rm -rf "./$PKGNAME"
-    echo Done;;
-    [Qq]*) exit 0;;
-esac
+[ -r "$PKGNAME" ] && {
+    echonoterm "Remove old dir package '$PKGNAME'?  "
+    read REPLY
+    case "$REPLY" in [Yy]*)
+    	echonoterm 'Removing old dir package...  '
+    	rm -rf "./$PKGNAME"
+    	echo Done;;
+    	[Qq]*) exit 0;;
+    esac
+}
 
 echo "Building version $VER with source base $SRCBASE"
 pkgmk -o -b $SRCBASE -d . -f $PROTOFILE || exit 1
 
-echo "ENTER to quit, Y to build stream package ${PKGNAME}-${VER}.pkg.Z:  "
+# Package file name format is the Solaris package standard:
+#   PKGNAME-ver_with_underscores-platform.pkg[.Z]
+# So, we need to convert dots to underscores in the version name
+export VER
+VER="`perl -we '$_ = $ENV{VER}; s:\.:_:g; print;'`"
+
+echonoterm  \
+ "ENTER to quit, Y to build stream package ${PKGNAME}-${VER}-solaris.pkg.Z:  "
 read REPLY
 case "$REPLY" in [Yy]*)
-    rm -f "${PKGNAME}-${VER}.pkg" "${PKGNAME}-${VER}.pkg.Z"
-    pkgtrans -os . "$PWD/${PKGNAME}-${VER}.pkg" $PKGNAME &&
+    rm -f "${PKGNAME}-${VER}-solaris.pkg" "${PKGNAME}-${VER}-solaris.pkg.Z"
+    pkgtrans -os . "$PWD/${PKGNAME}-${VER}-solaris.pkg" $PKGNAME &&
     echonoterm 'Now compressing... '
-    compress "${PKGNAME}-${VER}.pkg"
+    compress "${PKGNAME}-${VER}-solaris.pkg"
     echo 'Done
-(If there is a massage that the file is "unchanged", that just means that
-the file compression was not done because compressions results in no savings).'
+(If there is a message above that the file is "unchanged", that just means that
+the file compression was skipped because compression resulted in no savings).'
     ;;
     [Qq]*) exit 0;;
 esac
