@@ -1135,7 +1135,7 @@ implements ActionListener, WindowListener, KeyListener {
      * Method declaration
      *
      */
-    private void refreshTree() {
+    protected void refreshTree() {
 
         tTree.removeAll();
 
