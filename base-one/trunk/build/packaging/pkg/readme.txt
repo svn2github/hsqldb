@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.6 2002/11/10 21:50:34 unsaved Exp $
+$Id: readme.txt,v 1.7 2002/11/10 21:52:06 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -108,7 +108,7 @@ Example, to make and run a database server named db2...
 
     mkdir /usr/hsqldb/data/db2
     chown hsqldb:hsqldb /usr/hsqldb/data/db2
-    > /usr/hsqldb/data/db2/server.properties  # Remains owned by root
+    touch /usr/hsqldb/data/db2/server.properties  # Remains owned by root
     /etc/init.d/hsqldb start
 
 To run a hsqldb http server instead, do the same thing, but you
@@ -116,8 +116,8 @@ have to change the port if your $OWNER is not root (see the
 configuration section above).
 
     mkdir /usr/hsqldb/data/db2
-    chown -R hsqldb:hsqldb /usr/hsqldb/data/db2
-    print server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
+    chown hsqldb:hsqldb /usr/hsqldb/data/db2
+    echo server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
     /etc/init.d/hsqldb start
 
 
