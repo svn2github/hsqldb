@@ -130,7 +130,7 @@ class Cache {
      *  Construct a new Cache object with the given database path name and
      *  the properties object to get the initial settings from.
      */
-    private void init(int scale) throws SQLException {
+    private void init(int scale){
 
         cacheReadonly = dDatabase.bReadOnly;
         cacheScale    = scale;

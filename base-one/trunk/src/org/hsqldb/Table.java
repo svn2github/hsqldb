@@ -1150,7 +1150,9 @@ class Table {
                 boolean nullOK = col.isNullable() || col.isIdentity();
 
                 if (!nullOK) {
-                    throw Trace.error(Trace.TRY_TO_INSERT_NULL);
+                    Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
+                                     "column: " + col.columnName.name
+                                     + " table: " + tableName.name);
                 }
             }
         }

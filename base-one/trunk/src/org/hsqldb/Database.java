@@ -745,7 +745,8 @@ class Database {
      */
     Result getScript(boolean drop, boolean insert, boolean cached,
                      Session session) throws SQLException {
-        return DatabaseScript.getScript(this, drop, insert, cached, session);
+        session.checkAdmin();
+        return DatabaseScript.getScript(this, drop, insert, cached);
     }
 
     /**

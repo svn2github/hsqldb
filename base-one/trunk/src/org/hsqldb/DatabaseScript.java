@@ -94,16 +94,13 @@ class DatabaseScript {
      * @throws SQLException
      */
     static Result getScript(Database dDatabase, boolean bDrop,
-                            boolean bInsert, boolean bCached,
-                            Session session) throws SQLException {
+                            boolean bInsert,
+                            boolean bCached) throws SQLException {
 
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
         HsqlArrayList forwardFKSource = new HsqlArrayList();
-
-        session.checkAdmin();
-
-        Result r = new Result(1);
+        Result        r               = new Result(1);
 
         r.colType[0] = Types.VARCHAR;
         r.sTable[0]  = "SYSTEM_SCRIPT";
@@ -575,7 +572,7 @@ class DatabaseScript {
 
         if (c.getUpdateAction() != Constraint.NO_ACTION) {
             a.append(" ON UPDATE ");
-            a.append(getFKAction(c.getDeleteAction()));
+            a.append(getFKAction(c.getUpdateAction()));
         }
     }
 

@@ -428,17 +428,17 @@ implements DataInput {
     }
 
     public int skipBytes(int n) throws IOException {
-        throw new java.lang.UnsupportedOperationException(
+        throw new java.lang.RuntimeException(
             "Method skipBytes() not yet implemented.");
     }
 
     public String readLine() throws IOException {
-        throw new java.lang.UnsupportedOperationException(
+        throw new java.lang.RuntimeException(
             "Method readLine() not yet implemented.");
     }
 
     public String readUTF() throws IOException {
-        throw new java.lang.UnsupportedOperationException(
+        throw new java.lang.RuntimeException(
             "Method readUTF() not yet implemented.");
     }
 }

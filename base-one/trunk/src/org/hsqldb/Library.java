@@ -79,16 +79,18 @@ import java.util.Random;
 import java.text.SimpleDateFormat;
 
 /**
- * Class declaration
+ * Provides the HSQLDB implementation of standard Open Group SQL CLI
+ * <em>Extended Scalar Functions</em> and other public HSQLDB SQL functions.
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
 // fredt@users 20020305 - patch 1.7.0 - change to 2D string arrays
 // sqlbob@users 20020420- patch 1.7.0 - added HEXTORAW and RAWTOHEX.
-class Library {
+// boucherb@user 20020918 - doc 1.7.2 - added JavaDoc  and code comments
+// fredt@user 20021021 - doc 1.7.2 - modified JavaDoc
+public class Library {
 
     static final String sNumeric[][] = {
         {
@@ -242,12 +244,6 @@ class Library {
         }
     };
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param h
-     */
     static void register(HsqlHashMap h) {
 
         register(h, sNumeric);
@@ -256,13 +252,6 @@ class Library {
         register(h, sSystem);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param h
-     * @param s
-     */
     private static void register(HsqlHashMap h, String s[][]) {
 
         for (int i = 0; i < s.length; i++) {
@@ -272,34 +261,45 @@ class Library {
 
     private static final Random rRandom = new Random();
 
-    // NUMERIC
+    // NUMERIC FUNCTIONS
+// fredt@users 20020220 - patch 489184 by xclayl@users - thread safety
 
     /**
-     * Method declaration
+     * Returns the next pseudorandom, uniformly distributed <CODE>double</CODE> value
+     * between 0.0 and 1.0 from a single, system-wide random number generator's
+     * sequence, optionally re-seeding (and thus resetting) the generator sequence.
      *
-     *
-     * @param i
-     *
-     * @return
+     * If the seed value is <CODE>null</CODE>, then the underlying random number
+     * generator retrieves the next value in its current sequence, else the seed
+     * alters the state of the generator object so as to be in exactly the same state
+     * as if it had just been created with the seed value.
+     * @param seed an optional parameter with which to reseed the underlying
+     * pseudorandom number generator
+     * @return the next pseudorandom, uniformly distributed <CODE>double</CODE> value between
+     *      0.0 and 1.0
      */
-// fredt@users 20020220 - patch 489184 by xclayl@users - thread safety
-    public static synchronized double rand(Integer i) {
+    public static synchronized double rand(Integer seed) {
 
-        if (i != null) {
-            rRandom.setSeed(i.intValue());
+        // boucherb@users 20020918
+        // CHECKME: perhaps rRandom should be a member of Session,
+        // since otherwise connections are *not* guranteed to get the
+        // same pseudorandom sequence, given the same set of calls to this
+        // SQL function.  This makes comparitive analysis difficult.
+        // In fact, rRandom will be shared across multiple in-process
+        // database instances, so it is not even guaranteed that the
+        // sole connection to one instance will get the same sequence given
+        // the same set of calls to this SQL function.
+        if (seed != null) {
+            rRandom.setSeed(seed.intValue());
         }
 
         return rRandom.nextDouble();
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     * @param p
-     *
-     * @return
+     * Returns the absolute value of the given <code>double</code> value.
+     * @param d the number for which to determine the absolute value
+     * @return the absolute value of <code>d</code>, as a <code>double</code>
      */
     public static double abs(double d) {
         return Math.abs(d);
@@ -309,24 +309,40 @@ class Library {
     private static final double LOG10_FACTOR = 0.43429448190325183;
 
     /**
-     * Method declaration
-     *
-     *
-     * @param x
-     *
-     * @return
+     * Returns the base 10 logarithm of the given <code>double<code> value.
+     * @param x the value for which to calculate the base 10 logarithm
+     * @return the base 10 logarithm of <code>x</code>, as a <code>double</code>
      */
     public static double log10(double x) {
         return roundMagic(Math.log(x) * LOG10_FACTOR);
     }
 
     /**
-     * Method declaration
+     * Retrieves a <em>magically</em> rounded </code>double</code> value produced
+     * from the given <code>double</code> value.  This method provides special
+     * handling for numbers close to zero and performs rounding only for
+     * numbers within a specific range, returning  precisely the given value
+     * if it does not lie in this range. <p>
      *
+     * Special handling includes: <p>
      *
-     * @param d
-     *
-     * @return
+     * <UL>
+     * <LI> input in the interval -0.0000000000001..0.0000000000001 returns 0.0
+     * <LI> input outside the interval -1000000000000..1000000000000 returns
+     *      input unchanged
+     * <LI> input is converted to String form
+     * <LI> input with a <CODE>String</CODE> form length greater than 16 returns
+     *      input unchaged
+     * <LI> <CODE>String</CODE> form with last four characters of '...000x' where
+     *      x != '.' is converted to '...0000'
+     * <LI> <CODE>String</CODE> form with last four characters of '...9999' is
+     *      converted to '...999999'
+     * <LI> the <CODE>java.lang.Double.doubleValue</CODE> of the <CODE>String</CODE>
+     *      form is returned
+     * </UL>
+     * @param d the double value for which to retrieve the <em>magically</em>
+     *      rounded value
+     * @return the <em>magically</em> rounded value produced
      */
     public static double roundMagic(double d) {
 
@@ -372,48 +388,43 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     *
-     * @return
+     * Returns the cotangent of the given <code>double</code> value
+     *  expressed in radians.
+     * @param d the angle, expressed in radians
+     * @return the cotangent
      */
     public static double cot(double d) {
         return 1. / Math.tan(d);
     }
 
     /**
-     * Method declaration
+     * Returns the remainder (modulus) of the first given integer divided
+     * by the second. <p>
      *
-     *
-     * @param i1
-     * @param i2
-     *
-     * @return
+     * @param i1 the numerator
+     * @param i2 the divisor
+     * @return <code>i1</code> % <code>i2</code>, as an <code>int</code>
      */
     public static int mod(int i1, int i2) {
         return i1 % i2;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the constant value, pi.
+     * @return pi as a <code>double</code> value
      */
     public static double pi() {
         return Math.PI;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     * @param p
-     *
-     * @return
+     * Returns the given <code>double</code> value, rounded to the given
+     * <code>int</code> places right of the decimal point. If
+     * the supplied rounding place value is negative, rounding is performed
+     * to the left of the decimal point, using its magnitude (absolute value).
+     * @param d the value to be rounded
+     * @param p the rounding place value
+     * @return <code>d</code> rounded
      */
     public static double round(double d, int p) {
 
@@ -423,12 +434,12 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     *
-     * @return
+     * Returns an indicator of the sign of the given <code>double</code>
+     * value. If the value is less than zero, -1 is returned. If the value
+     * equals zero, 0 is returned. If the value is greater than zero, 1 is
+     * returned.
+     * @param d the value
+     * @return the sign of <code>d</code>
      */
     public static int sign(double d) {
 
@@ -438,13 +449,15 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     * @param p
-     *
-     * @return
+     * Returns the given <code>double</code> value, truncated to
+     * the given <code>int</code> places right of the decimal point.
+     * If the given place value is negative, the given <code>double</code>
+     * value is truncated to the left of the decimal point, using the
+     * magnitude (aboslute value) of the place value.
+     * @param d the value to truncate
+     * @param p the places left or right of the decimal point at which to
+     *          truncate
+     * @return <code>d</code>, truncated
      */
     public static double truncate(double d, int p) {
 
@@ -456,40 +469,39 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param i
-     * @param j
-     *
-     * @return
+     * Returns the bit-wise logical <em>and</em> of the given
+     * integer values.
+     * @param i the first value
+     * @param j the second value
+     * @return he bit-wise logical <em>and</em> of
+     *      <code>i</code> and <code>j</code>
      */
     public static int bitand(int i, int j) {
         return i & j;
     }
 
     /**
-     * Method declaration
+     * Returns the bit-wise logical <em>or</em> of the given
+     * integer values.
      *
-     *
-     * @param i
-     * @param j
-     *
-     * @return
+     * @param i the first value
+     * @param j the second value
+     * @return he bit-wise logical <em>and</em> of
+     *      <code>i</code> and <code>j</code>
      */
     public static int bitor(int i, int j) {
         return i | j;
     }
 
-    // STRING
+    // STRING FUNCTIONS
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
+     * Returns the Unicode code value of the leftmost character of
+     * <code>s</code> as an <code>int</code>.  This is the same as the
+     * ASCII value if the string contains only ASCII characters.
+     * @param s the <CODE>String</CODE> to evaluate
+     * @return the integer Unicode value of the
+     *    leftmost character
      */
     public static Integer ascii(String s) {
 
@@ -501,25 +513,41 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the character string corresponding to the given ASCII
+     * (or Unicode) value.
      *
+     * <b>Note:</b> <p>
      *
-     * @param code
-     *
-     * @return
+     * In some SQL CLI
+     * implementations, a <CODE>null</CODE> is returned if the range is outside 0..255.
+     * In HSQLDB, the corresponding Unicode character is returned
+     * unchecked.
+     * @param code the character code for which to return a String
+     *      representation
+     * @return the String representation of the character
      */
     public static String character(int code) {
         return String.valueOf((char) code);
     }
 
     /**
-     * Method declaration
+     * Returns a <CODE>String</CODE> object that is the result of an
+     * <em>SQL-style</em> concatenation of the given <CODE>String</CODE> objects. <p>
      *
+     * <b>Note:</b> by <em>SQL-style</em>, it is meant:
      *
-     * @param s1
-     * @param s2
-     *
-     * @return
+     * <UL>
+     * <LI> if both <CODE>String</CODE> objects are <CODE>null</CODE>, return
+     *      <CODE>null</CODE>
+     * <LI> if only one string is <CODE>null</CODE>, return the other
+     * <LI> if both <CODE>String</CODE> objects are non-null, return as a
+     *      <CODE>String</CODE> object the character sequence obtained by listing,
+     *      in left to right order, the characters of the first string followed by
+     *      the characters of the second
+     * </UL>
+     * @param s1 the first <CODE>String</CODE>
+     * @param s2 the second <CODE>String</CODE>
+     * @return <code>s1</code> concatentated with <code>s2</code>
      */
     public static String concat(String s1, String s2) {
 
@@ -539,13 +567,14 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s1
-     * @param s2
-     *
-     * @return
+     * Returns a count of the characters that do not match when comparing
+     * the 4 digit numeric SOUNDEX character sequences for the
+     * given <code>String</code> objects.  If either <code>String</code> object is
+     * <code>null</code>, zero is returned.
+     * @param s1 the first <code>String</code>
+     * @param s2 the second <code>String</code>
+     * @return the number of differences between the <code>SOUNDEX</code> of
+     *      <code>s1</code> and the <code>SOUNDEX</code> of <code>s2</code>
      */
 
 // fredt@users 20020305 - patch 460907 by fredt - soundex
@@ -571,12 +600,20 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Converts a <code>String</code> of hexidecimal digit characters to a raw
+     * binary value, represented as a <code>String</code>.<p>
      *
+     * The given <code>String</code> object must consist of a sequence of
+     * 4 digit hexidecimal character substrings.<p> If its length is not
+     * evenly divisible by 4, <code>null</code> is returned.  If any any of
+     * its 4 character subsequences cannot be parsed as a
+     * 4 digit, base 16 value, then a NumberFormatException is thrown.
      *
-     * @param s
+     * This conversion has the effect of reducing the character count 4:1.
      *
-     * @return
+     * @param s a <code>String</code> of hexidecimal digit characters
+     * @return an equivalent raw binary value, represented as a
+     *      <code>String</code>
      */
     public static String hexToRaw(String s) {
 
@@ -598,15 +635,37 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns a character sequence which is the result of writing the
+     * first <code>length<code> number of characters from the second
+     * given <code>String</code> over the first string. The start position
+     * in the first string where the characters are overwritten is given by
+     * <code>start</code>.<p>
      *
+     * <b>Note:</b> In order of precedence, boundry conditions are handled as
+     * follows:<p>
      *
-     * @param s1
-     * @param start
-     * @param length
-     * @param s2
-     *
-     * @return
+     * <UL>
+     * <LI>if either supplied <code>String</code> is null, then the other is
+     *      returned; the check starts with the first given <code>String</code>.
+     * <LI>if <code>start</code> is less than one, <code>s1</code> is returned
+     * <LI>if <code>length</code> is less than or equal to zero,
+     *     <code>s1</code> is returned
+     * <LI>if the length of <code>s2</code> is zero, <code>s1</code> is returned
+     * <LI>if <code>start</code> is greater than the length of <code>s1</code>,
+     *      <code>s1</code> is returned
+     * <LI>if <code>length</code> is such that, taken together with
+     *      <code>start</code>, the indicated interval extends
+     *      beyond the end of <code>s1</code>, then the insertion is performed
+     *      precisely as if upon a copy of <code>s1</code> extended in length
+     *      to just include the indicated interval
+     * </UL>
+     * @param s1 the <code>String</code> into which to insert <code>s2</code>
+     * @param start the position, with origin one, at which to start the insertion
+     * @param length the number of characters in <code>s1</code> to replace
+     * @param s2 the <code>String</code> to insert into <code>s1</code>
+     * @return <code>s2</code> inserted into <code>s1</code>, as indicated
+     *      by <code>start</code> and <code>length</code> and adjusted for
+     *      boundry conditions
      */
     public static String insert(String s1, int start, int length, String s2) {
 
@@ -635,12 +694,12 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
+     * Returns a copy of the given <code>String</code>, with all upper case
+     * characters converted to lower case. This uses the default Java String
+     * conversion.
+     * @param s the <code>String</code> from which to produce a lower case
+     *      version
+     * @return a lower case version of <code>s</code>
      */
     public static String lcase(String s) {
         return (s == null) ? null
@@ -648,34 +707,44 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the leftmost <code>count</code> characters from the given
+     * <code>String</code>. <p>
      *
+     * <b>Note:</b> boundry conditions are handled in the following order of
+     * precedence:
      *
-     * @param s
-     * @param i
-     *
-     * @return
+     * <UL>
+     *  <LI> if <code>s</code> is <code>null</code>, then <code>null</code>
+     *      is returned
+     *  <LI> if <code>count</code> is less than 1, then a zero-length
+     *       <code>String</code> is returned
+     *  <LI> if <code>count</code> is greater than the length of <code>s</code>,
+     *      then a copy of <code>s</code> is returned
+     * </UL>
+     * @param s the code>String</code> from which to retrieve the leftmost
+     *      characters
+     * @param count the count of leftmost characters to retrieve
+     * @return the leftmost <code>count</code> characters of <code>s</code>
      */
-    public static String left(String s, int i) {
+    public static String left(String s, int count) {
 
         if (s == null) {
             return null;
         }
 
-        return s.substring(0, ((i < 0) ? 0
-                                       : (i < s.length()) ? i
-                                                          : s.length()));
+        return s.substring(0, ((count < 0) ? 0
+                                           : (count < s.length()) ? count
+                                                                  : s.length()));
     }
 
 // fredt@users - 20020819 - patch 595854 by thomasm@users
 
     /**
-     * Method declaration
+     * Returns the number of characters in the given <code>String</code>.
+     * This includes trailing blanks.
      *
-     *
-     * @param s
-     *
-     * @return
+     * @param s the <code>String</code> for which to determine length
+     * @return the length of <code>s</code>, including trailing blanks
      */
     public static Integer length(String s) {
         return s == null ? null
@@ -683,14 +752,25 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the starting position of the first occurrence of
+     * the given <code>search</code> <code>String</code> object within
+     * the given <code>String</code> object, <code>s</code>.
      *
-     *
-     * @param search
-     * @param s
-     * @param start
-     *
-     * @return
+     * The search for the first occurrence of <code>search</code> begins with
+     * the first character position in <code>s</code>, unless the optional
+     * argument, <code>start</code>, is specified (non-null). If
+     * <code>start</code> is specified, the search begins with the character
+     * position indicated by the value of <code>start</code>, where the
+     * first character position in <code>s</code> is indicated by the value 1.
+     * If <code>search</code> is not found within <code>s</code>, the
+     * value 0 is returned.
+     * @param search the <code>String</code> occurence to find in <code>s</code>
+     * @param s the <code>String</code> within which to find the first
+     *      occurence of <code>search</code>
+     * @param start the optional character position from which to start
+     *      looking in <code>s</code>
+     * @return the one-based starting position of the first occurrence of
+     *      <code>search</code> within <code>s</code>, or 0 if not found
      */
     public static int locate(String search, String s, Integer start) {
 
@@ -706,12 +786,12 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the characters of the given <code>String</code>, with the
+     * leading spaces removed. Characters such as TAB are not removed.
      *
-     *
-     * @param s
-     *
-     * @return
+     * @param s the <code>String</code> from which to remove the leading blanks
+     * @return the characters of the given <code>String</code>, with the leading
+     *      spaces removed
      */
     public static String ltrim(String s) {
 
@@ -731,18 +811,24 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Converts a raw binary value, as represented by the given
+     * <code>String</code>, to the equivalent <code>String</code>
+     * of hexidecimal digit characters. <p>
      *
+     * This conversion has the effect of expanding the character count 1:4.
      *
-     * @param s
-     *
-     * @return
+     * @param s the raw binary value, as a <code>String</code>
+     * @return an equivalent <code>String</code> of hexidecimal digit characters
      */
     public static String rawToHex(String s) {
 
+        if (s == null) {
+            return null;
+        }
+
         char         from[] = s.toCharArray();
         String       hex;
-        StringBuffer to = new StringBuffer();
+        StringBuffer to = new StringBuffer(4 * s.length());
 
         for (int i = 0; i < from.length; i++) {
             hex = Integer.toHexString(from[i] & 0xffff);
@@ -758,13 +844,12 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns a <code>String</code> composed of the given <code>String</code>,
+     * repeated  <code>count</code> times.
      *
-     *
-     * @param s
-     * @param i
-     *
-     * @return
+     * @param s the <code>String</code> to repeat
+     * @param count the number of repetitions
+     * @return the given <code>String</code>, repeated <code>count</code> times
      */
     public static String repeat(String s, Integer count) {
 
@@ -785,14 +870,13 @@ class Library {
 // fredt@users - 20020903 - patch 1.7.1 - bug fix to allow multiple replaces
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s
-     * @param replace
-     * @param with
-     *
-     * @return
+     * Replaces all occurrences of <code>replace</code> in <code>s</code>
+     * with the <code>String</code> object: <code>with</code>
+     * @param s the target for replacement
+     * @param replace the substring(s), if any, in <code>s</code> to replace
+     * @param with the value to substitute for <code>replace</code>
+     * @return <code>s</code>, with all occurences of <code>replace</code>
+     *      replaced by <code>with</code>
      */
     public static String replace(String s, String replace, String with) {
 
@@ -827,36 +911,45 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the rightmost <code>count</code> characters of the given
+     * <code>String</code>, <code>s</code>.
      *
+     * <b>Note:</b> boundry conditions are handled in the following order of
+     * precedence:
      *
-     * @param s
-     * @param i
-     *
-     * @return
+     * <UL>
+     *  <LI> if <code>s</code> is <CODE>null</CODE>, <CODE>null</CODE> is returned
+     *  <LI> if <code>count</code> is less than one, a zero-length
+     *      <code>String</code> is returned
+     *  <LI> if <code>count</code> is greater than the length of <code>s</code>,
+     *      a copy of <code>s</code> is returned
+     * </UL>
+     * @param s the <code>String</code> from which to retrieve the rightmost
+     *      <code>count</code> characters
+     * @param count the number of rightmost characters to retrieve
+     * @return the rightmost <code>count</code> characters of <code>s</code>
      */
-    public static String right(String s, int i) {
+    public static String right(String s, int count) {
 
         if (s == null) {
             return null;
         }
 
-        i = s.length() - i;
+        count = s.length() - count;
 
-        return s.substring((i < 0) ? 0
-                                   : (i < s.length()) ? i
-                                                      : s.length());
+        return s.substring((count < 0) ? 0
+                                       : (count < s.length()) ? count
+                                                              : s.length());
     }
 
 // fredt@users 20020530 - patch 1.7.0 fredt - trim only the space character
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
+     * Returns the characters of the given <code>String</code>, with trailing
+     * spaces removed.
+     * @param s the <code>String</code> from which to remove the trailing blanks
+     * @return the characters of the given <CODE>String</CODE>, with the
+     * trailing spaces removed
      */
     public static String rtrim(String s) {
 
@@ -876,13 +969,18 @@ class Library {
 // fredt@users 20011010 - patch 460907 by fredt - soundex
 
     /**
-     * code was rewritten by fredt@users to comply with description at
-     * http://www.nara.gov/genealogy/coding.html
-     * non ASCCI characters in string are ignored
+     * Returns a four character code representing the sound of the given
+     * <code>String</code>. Non-ASCCI characters in the
+     * input <code>String</code> are ignored. <p>
      *
-     * @param s
-     *
-     * @return
+     * This method was
+     * rewritten for HSQLDB by fredt@users to comply with the description at
+     * <a href="http://www.nara.gov/genealogy/coding.html">
+     * http://www.nara.gov/genealogy/coding.html</a>.<p>
+     * @param s the <code>String</code> for which to calculate the 4 character
+     *      <code>SOUNDEX</code> value
+     * @return the 4 character <code>SOUNDEX</code> value for the given
+     *      <code>String</code>
      */
     public static String soundex(String s) {
 
@@ -939,37 +1037,39 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns a <code>String</code> consisting of <code>count</code> spaces, or
+     * <code>null</code> if <code>count</code> is less than zero. <p>
      *
-     *
-     * @param i
-     *
-     * @return
+     * @param count the number of spaces to produce
+     * @return a <code>String</code> of <code>count</code> spaces
      */
-    public static String space(int i) {
+    public static String space(int count) {
 
-        if (i < 0) {
+        if (count < 0) {
             return null;
         }
 
-        char c[] = new char[i];
+        char c[] = new char[count];
 
-        while (i > 0) {
-            c[--i] = ' ';
+        while (count > 0) {
+            c[--count] = ' ';
         }
 
         return new String(c);
     }
 
     /**
-     * Method declaration
+     * Returns the characters from the given <code>String</code>, staring at
+     * the indicated one-based <code>start</code> position and extending the
+     * (optional) indicated <code>length</code>. If <code>length</code> is not
+     * specified (is <code>null</code>), the remainder of <code>s</code> is
+     * implied.
      *
-     *
-     * @param s
-     * @param start
-     * @param length
-     *
-     * @return
+     * @param s the <code>String</code> from which to produce the indicated
+     *      substring
+     * @param start the starting position of the desired substring
+     * @param length the length of the desired substring
+     * @return the indicted substring of <code>s</code>.
      */
 
 // fredt@users 20020210 - patch 500767 by adjbirch@users - modified
@@ -1000,12 +1100,11 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
+     * Returns a copy of the given <code>String</code>, with all lower case
+     * characters converted to upper case using the default Java method.
+     * @param s the <code>String</code> from which to produce an upper case
+     *      version
+     * @return an upper case version of <code>s</code>
      */
     public static String ucase(String s) {
         return (s == null) ? null
@@ -1015,32 +1114,29 @@ class Library {
     // TIME AND DATE
 
     /**
-     * Method declaration
+     * Returns the current date as a date value.
      *
-     *
-     * @return
+     * @return a date value representing the current date
      */
     public static java.sql.Date curdate() {
         return new java.sql.Date(System.currentTimeMillis());
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the current local time as a time value.
+     * @return a time value representing the current local time
      */
     public static java.sql.Time curtime() {
         return new java.sql.Time(System.currentTimeMillis());
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     *
-     * @return
+     * Returns a character string containing the name of the day
+     * (Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday )
+     * for the day portion of the given <code>java.sql.Date</code>.
+     * @param d the date value from which to extract the day name
+     * @return the name of the day corresponding to the given
+     * <code>java.sql.Date</code>
      */
     public static String dayname(java.sql.Date d) {
 
@@ -1050,13 +1146,12 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param d
-     * @param part
-     *
-     * @return
+     * Returns an integral value representing the indicated
+     * part of the given date object, using a <code>GregorianCalendar</code>
+     * object.
+     * @param d the <CODE>Date</CODE> object from which to extract the indicated part
+     * @param part an integer code corresponding to the desired date part
+     * @return the indicated part of the given <code>java.util.Date</code> object
      */
     private static int getDateTimePart(java.util.Date d, int part) {
 
@@ -1068,13 +1163,12 @@ class Library {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param t
-     * @param part
-     *
-     * @return
+     * Returns an integral value representing the indicated
+     * part of the given time object, using a <code>GregorianCalendar</code>
+     * object.
+     * @param t the Time object from which to extract the indicated part
+     * @param part an integer code corresponding to the desired time part
+     * @return he indicated part of the given <code>java.sql.Time</code> object
      */
     private static int getTimePart(java.sql.Time t, int part) {
 
@@ -1086,48 +1180,44 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the day of the month from the given date value, as an integer
+     * value in the range of 1-31.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the day of month
+     * @return the day of the month from the given date value
      */
     public static int dayofmonth(java.sql.Date d) {
         return getDateTimePart(d, Calendar.DAY_OF_MONTH);
     }
 
     /**
-     * Method declaration
+     * Returns the day of the week from the given date value, as an integer
+     * value in the range 1-7, where 1 represents Sunday.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the day of week
+     * @return the day of the week from the given date value
      */
     public static int dayofweek(java.sql.Date d) {
         return getDateTimePart(d, Calendar.DAY_OF_WEEK);
     }
 
     /**
-     * Method declaration
+     * Returns the day of the year from the given date value, as an integer
+     * value in the range 1-366.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the day of year
+     * @return the day of the year from the given date value
      */
     public static int dayofyear(java.sql.Date d) {
         return getDateTimePart(d, Calendar.DAY_OF_YEAR);
     }
 
     /**
-     * Method declaration
+     * Returns the hour from the given time value, as an integer value in
+     * the range of 0-23.
      *
-     *
-     * @param t
-     *
-     * @return
+     * @param t the time value from which to extract the hour of day
+     * @return the hour of day from the given time value
      */
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - hour
@@ -1136,12 +1226,11 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the minute from the given time value, as integer value in
+     * the range of 0-59.
      *
-     *
-     * @param t
-     *
-     * @return
+     * @param t the time value from which to extract the minute value
+     * @return the minute value from the given time value
      */
     public static int minute(java.sql.Time t) {
         return getDateTimePart(t, Calendar.MINUTE);
@@ -1161,24 +1250,27 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the month from the given date value, as an integer value in the
+     * range of 1-12 or 0-11. <p>
      *
+     * If the sql_month database property is set <code>true</code>, then the
+     * range is 1-12, else 0-11
      *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the month value
+     * @return the month value from the given date value
      */
     public static int month(java.sql.Date d) {
         return getDateTimePart(d, Calendar.MONTH) + sql_month;
     }
 
     /**
-     * Method declaration
+     * Returns a character string containing the name of month
+     * (January, February, March, April, May, June, July, August,
+     * September, October, November, December) for the month portion of
+     * the given date value.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the month name
+     * @return a String representing the month name from the given date value
      */
     public static String monthname(java.sql.Date d) {
 
@@ -1188,58 +1280,57 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * Returns the current date and time as a timestamp value.
      *
-     *
-     * @return
+     * @return a timestamp value representing the current date and time
      */
     public static Timestamp now() {
         return new Timestamp(System.currentTimeMillis());
     }
 
     /**
-     * Method declaration
+     * Returns the quarter of the year in the given date value, as an integer
+     * value in the range of 1-4.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the quarter of the year
+     * @return an integer representing the quater of the year from the given
+     *      date value
      */
     public static int quarter(java.sql.Date d) {
         return (getDateTimePart(d, Calendar.MONTH) / 3) + 1;
     }
 
     /**
-     * Method declaration
+     * Returns the second of the given time value, as an integer value in
+     * the range of 0-59.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the second of the hour
+     * @return an integer representing the second of the hour from the
+     *      given time value
      */
     public static int second(java.sql.Time d) {
         return getDateTimePart(d, Calendar.SECOND);
     }
 
     /**
-     * Method declaration
+     * Returns the week of the year from the given date value, as an integer
+     * value in the range of 1-53.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the week of the year
+     * @return an integer representing the week of the year from the given
+     *      date value
      */
     public static int week(java.sql.Date d) {
         return getDateTimePart(d, Calendar.WEEK_OF_YEAR);
     }
 
     /**
-     * Method declaration
+     * Returns the year from the given date value, as an integer value in
+     * the range of 1-9999.
      *
-     *
-     * @param d
-     *
-     * @return
+     * @param d the date value from which to extract the year
+     * @return an integer value representing the year from the given
+     *      date value
      */
     public static int year(java.sql.Date d) {
         return getDateTimePart(d, Calendar.YEAR);
@@ -1248,68 +1339,53 @@ class Library {
     // SYSTEM
 
     /**
-     * Method declaration
+     * Returns the name of the database corresponding to this connection.
      *
-     *
-     * @param conn
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param conn the connection for which to retrieve the database name
+     * @return the name of the database for the given connection
+     * @throws SQLException if a database access error occurs
      */
     public static String database(Connection conn) throws SQLException {
-
-        Statement stat = conn.createStatement();
-        String s =
-            "SELECT Value FROM SYSTEM_CONNECTIONINFO WHERE KEY='DATABASE'";
-        ResultSet r = stat.executeQuery(s);
-
-        r.next();
-
-        return r.getString(1);
+        return ((jdbcConnection) conn).dDatabase.getName();
     }
 
     /**
-     * Method declaration
+     * Returns the user's authorization name (the user's name as known to this
+     * database).
      *
-     *
-     * @param conn
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param conn the connection for which to retrieve the user name
+     * @return the user's name as known to the database
+     * @throws SQLException if a database access error occurs
      */
     public static String user(Connection conn) throws SQLException {
-
-        Statement stat = conn.createStatement();
-        String s = "SELECT Value FROM SYSTEM_CONNECTIONINFO WHERE KEY='USER'";
-        ResultSet r    = stat.executeQuery(s);
-
-        r.next();
-
-        return r.getString(1);
+        return ((jdbcConnection) conn).cSession.getUsername();
     }
 
     /**
+     * Retrieves the last auto-generated integer indentity value used
+     * by this connection.
+     *
      * As of 1.7.1 this is a dummy function. The return value is supplied
-     * by Function.java
+     * directly by Function.java
      *
-     * @return 0
-     *
-     * @throws SQLException
+     * @return the connection's the last generated integer identity value
+     * @throws SQLException if a database access error occurs
      */
     public static int identity() throws SQLException {
         return 0;
     }
 
-    public static boolean getAutoCommit(Connection c) {
+    /**
+     * Retrieves the autocommit status of this connection.
+     *
+     * @param conn the connection for which to retrieve the last generated
+     *      integer identity value
+     * @return a boolean value representing the connection's autocommit status
+     */
+    public static boolean getAutoCommit(Connection conn) {
 
-        // hsql always creates an INTERNAL connection for
-        // such calls to Library, so this is garanteed
-        // to return the value contained by the
-        // connection's Session, for local or remote connections
         try {
-            return c.getAutoCommit();
+            return conn.getAutoCommit();
         } catch (SQLException e) {
             return false;
         }

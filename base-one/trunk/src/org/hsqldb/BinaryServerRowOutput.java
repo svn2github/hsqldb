@@ -289,8 +289,8 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
                         break;
 
                     default :
-                        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                          type[i]);
+                        Trace.throwerror(Trace.FUNCTION_NOT_SUPPORTED,
+                                          Column.getTypeString(type[i]));
                 }
             }
         }

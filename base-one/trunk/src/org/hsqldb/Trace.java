@@ -87,6 +87,13 @@ import java.io.PrintWriter;
 // trace message to System.out
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
 // tony_lai@users 20020820 - patch 595073 - Duplicated exception msg
+
+//
+// fredt - todo - 20021022 management of nested throws inside the program in
+// such a way that it is possible to return exactly the text of the error
+// thrown at a given level withou higher level messages being added and to
+// preserve the orignial erro code
+
 public class Trace extends PrintWriter {
 
     public static boolean       TRACE          = false;
@@ -412,7 +419,22 @@ public class Trace extends PrintWriter {
         }
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+    /**
+     * Method declaration
+     *
+     *
+     * @param condition
+     * @param code
+     * @param s
+     *
+     * @throws SQLException
+     */
+    static void throwerror(int code,
+                      Object add) throws SQLException {
+            throw getError(code, add);
+    }
+
+    // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // for the PrinterWriter interface
 
     /**

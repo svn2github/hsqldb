@@ -32,7 +32,6 @@
 package org.hsqldb.lib;
 
 import java.util.Hashtable;
-import java.util.HashMap;
 import java.util.Enumeration;
 
 /**

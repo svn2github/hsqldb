@@ -31,7 +31,6 @@
 
 package org.hsqldb.lib;
 
-import java.sql.SQLException;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -150,63 +149,51 @@ public class HsqlDateTime {
     private static final String sdftsPattern = "yyyy-MM-dd HH:mm:ss.";
 
     public static java.sql.Date getDate(String dateString,
-                                        Calendar cal) throws SQLException {
+                                        Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
         sdfd.setCalendar(cal);
 
-        try {
-            java.util.Date d = sdfd.parse(dateString);
+        java.util.Date d = sdfd.parse(dateString);
 
-            return new java.sql.Date(d.getTime());
-        } catch (java.text.ParseException e) {
-            throw invalidValue();
-        }
+        return new java.sql.Date(d.getTime());
     }
 
     public static Time getTime(String timeString,
-                               Calendar cal) throws SQLException {
+                               Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
 
         sdft.setCalendar(cal);
 
-        try {
-            java.util.Date d = sdft.parse(timeString);
+        java.util.Date d = sdft.parse(timeString);
 
-            return new java.sql.Time(d.getTime());
-        } catch (java.text.ParseException e) {
-            throw invalidValue();
-        }
+        return new java.sql.Time(d.getTime());
     }
 
     public static Timestamp getTimestamp(String dateString,
-                                         Calendar cal) throws SQLException {
+                                         Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
         sdfts.setCalendar(cal);
 
-        try {
-            java.util.Date d = sdfts.parse(dateString.substring(0,
-                sdftsPattern.length()));
-            String nanostring = dateString.substring(sdftsPattern.length(),
-                dateString.length());
-            java.sql.Timestamp ts = new java.sql.Timestamp(d.getTime());
+        java.util.Date d = sdfts.parse(dateString.substring(0,
+            sdftsPattern.length()));
+        String nanostring = dateString.substring(sdftsPattern.length(),
+            dateString.length());
+        java.sql.Timestamp ts = new java.sql.Timestamp(d.getTime());
 
-            ts.setNanos(Integer.parseInt(nanostring));
+        ts.setNanos(Integer.parseInt(nanostring));
 
-            return ts;
-        } catch (java.text.ParseException e) {
-            throw invalidValue();
-        }
+        return ts;
     }
 
     private static java.text.SimpleDateFormat sdfts;
 
     public static String getTimestampString(Timestamp x,
-            Calendar cal) throws SQLException {
+            Calendar cal) throws Exception {
 
         SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
@@ -217,7 +204,7 @@ public class HsqlDateTime {
     }
 
     public static String getTimeString(Time x,
-                                       Calendar cal) throws SQLException {
+                                       Calendar cal) throws Exception {
 
         final SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
 
@@ -227,17 +214,13 @@ public class HsqlDateTime {
     }
 
     public static String getDateString(Date x,
-                                       Calendar cal) throws SQLException {
+                                       Calendar cal) throws Exception {
 
         SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
         sdfd.setCalendar(cal);
 
         return sdfd.format(new java.util.Date(x.getTime()));
-    }
-
-    static private SQLException invalidValue() {
-        return org.hsqldb.Trace.error(org.hsqldb.Trace.UNEXPECTED_TOKEN);
     }
     /*
     public static void main(String[] args) {

@@ -229,7 +229,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -243,7 +243,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = true;
@@ -255,7 +255,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -269,7 +269,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = false;
@@ -281,7 +281,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -295,7 +295,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = true;
@@ -307,7 +307,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -321,7 +321,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
         } catch (Exception E) {
             System.out.println(E.getMessage());

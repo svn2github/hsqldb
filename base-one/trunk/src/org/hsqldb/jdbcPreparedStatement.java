@@ -1562,9 +1562,14 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            String dateString = HsqlDateTime.getDateString(x, cal);
+            try {
+                String dateString = HsqlDateTime.getDateString(x, cal);
 
-            setParameter(parameterIndex, Column.createSQLString(dateString));
+                setParameter(parameterIndex,
+                             Column.createSQLString(dateString));
+            } catch (Exception e) {
+                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+            }
         }
     }
 
@@ -1607,9 +1612,14 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            String dateString = HsqlDateTime.getTimeString(x, cal);
+            try {
+                String dateString = HsqlDateTime.getTimeString(x, cal);
 
-            setParameter(parameterIndex, Column.createSQLString(dateString));
+                setParameter(parameterIndex,
+                             Column.createSQLString(dateString));
+            } catch (Exception e) {
+                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+            }
         }
     }
 
@@ -1650,9 +1660,14 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            String dateString = HsqlDateTime.getTimestampString(x, cal);
+            try {
+                String dateString = HsqlDateTime.getTimestampString(x, cal);
 
-            setParameter(parameterIndex, Column.createSQLString(dateString));
+                setParameter(parameterIndex,
+                             Column.createSQLString(dateString));
+            } catch (Exception e) {
+                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+            }
         }
     }
 
@@ -2584,11 +2599,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        String dateString = getParameter(parameterIndex);
+        try {
+            String dateString = getParameter(parameterIndex);
 
-        dateString = dateString.substring(1, dateString.length() - 1);
+            dateString = dateString.substring(1, dateString.length() - 1);
 
-        return HsqlDateTime.getDate(dateString, cal);
+            return HsqlDateTime.getDate(dateString, cal);
+        } catch (Exception e) {
+            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+        }
     }
 
     /**
@@ -2628,11 +2647,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        String timeString = getParameter(parameterIndex);
+        try {
+            String timeString = getParameter(parameterIndex);
 
-        timeString = timeString.substring(1, timeString.length() - 1);
+            timeString = timeString.substring(1, timeString.length() - 1);
 
-        return HsqlDateTime.getTime(timeString, cal);
+            return HsqlDateTime.getTime(timeString, cal);
+        } catch (Exception e) {
+            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+        }
     }
 
     /**
@@ -2673,11 +2696,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        String dateString = getParameter(parameterIndex);
+        try {
+            String dateString = getParameter(parameterIndex);
 
-        dateString = dateString.substring(1, dateString.length() - 1);
+            dateString = dateString.substring(1, dateString.length() - 1);
 
-        return HsqlDateTime.getTimestamp(dateString, cal);
+            return HsqlDateTime.getTimestamp(dateString, cal);
+        } catch (Exception e) {
+            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+        }
     }
 
     /**

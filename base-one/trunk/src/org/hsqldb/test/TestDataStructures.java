@@ -120,7 +120,7 @@ public class TestDataStructures {
 
             arrayList.add(tempInt);
             linkedList.add(tempInt);
-            vector.add(tempInt);
+            vector.addElement(tempInt);
             listCommandsCalled.addElement("Add");
         }
 

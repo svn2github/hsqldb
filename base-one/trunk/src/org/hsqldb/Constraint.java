@@ -414,10 +414,11 @@ class Constraint {
         }
 
         // a record must exist in the main table
-        Trace.check(core.iMain.find(core.oMain) != null,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name + " table: "
-                    + core.tMain.getName().name);
+        if (core.iMain.find(core.oMain) == null) {
+            Trace.throwerror(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                        core.fkName.name + " table: "
+                        + core.tMain.getName().name);
+        }
     }
 
     /**

@@ -190,6 +190,9 @@ class Log implements Runnable {
         //  - setDaemon(false) may require flush in finalization
         // CB
         // tRunner.setDaemon(false);
+
+        // fredt - there are other issues, such as the tasks that need
+        // to be performed when the thread dies if there are open files
         tRunner.start();
     }
 
@@ -854,6 +857,7 @@ class Log implements Runnable {
 
         bRestoring = true;
 
+        // fredt - needed for forward referencing FK constraints
         dDatabase.setReferentialIntegrity(false);
 
         HsqlArrayList session = new HsqlArrayList();
