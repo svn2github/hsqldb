@@ -54,7 +54,7 @@ exists in a .properties file, it will switch the database to the collation for
 the current default.  
 
 Changed behaviour of transactions in the default READ UNCOMMITTED mode. A
-transcation is no longer allowed to delete or update a row that has already
+transaction is no longer allowed to delete or update a row that has already
 been updated or added by another transaction.
 
 Fixed various small bugs.
