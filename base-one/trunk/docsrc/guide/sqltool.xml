@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.40 2004/06/11 18:30:50 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.41 2004/06/11 22:29:26 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.40 $</edition>
-        <pubdate>$Date: 2004/06/11 18:30:50 $</pubdate>
+        <edition>$Revision: 1.41 $</edition>
+        <pubdate>$Date: 2004/06/11 22:29:26 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -165,6 +165,15 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</scre
         <informalexample><screen>
 java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </informalexample></para>
+        <tip><simpara>
+            If the tables of query output on your screen are all messy 
+            because of lines wrapping, the best and easiest solution
+            is usually to resize your terminal emulator window to make it
+            wider.
+            (With some terms you click &amp; drag the frame edges to resize,
+            with others you use a menu system where you can enter the number
+            of columns).
+        </simpara></tip>
     </section>
 
     <section id='auth-section'>
@@ -422,6 +431,12 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             You can invoke non-interactive and graphical interactive programs, 
             but not command-line interactive programs.
         </simpara> <simpara>
+            SqlTool executes <literal>\!</literal> programs directly, it does 
+            not run an operating system shell (this is to avoid OS-specific
+            code in SqlTool).
+            Because of this, you can give as many command-line arguments
+            as you wish, but you can't use shell wildcards or redirection.
+        </simpara> <simpara>
             The \w command can be used to store any command in your SQL 
             history to a file.
             Just restore the command to the buffer (which is the 0th
@@ -557,14 +572,18 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
     *q;
     *q WHERE mass > 200;</screen>
                 </example>
-        </para></listitem></varlistentry>
+            </para><simpara>
+                If you put variable definitions into the SQL file
+                <filename>auto.sql</filename> in your home directory, those
+                aliases/variables will always be available for interactive use.
+        </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
             See the <link linkend='pl-section' endterm='pl-title'/> section 
             below for information on using variables in other ways, and 
             information on the other PL commands and features.
         </simpara>
-        <section>SQL History</section>
+        <section><title>SQL History</title>
         <simpara>
             The SQL history shown by the \s command, and used by other commands,
             is truncated to 20 entries, since the utility comes from being 
@@ -583,20 +602,23 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
             The same applies to the editing buffer (which is element 0
             of the history).
         </simpara>
+        </section>
     </section>
 
     <section><title>Raw mode</title>
         <para>
             If for some reason you want SqlTool to process your commands as 
-            if it were reading an SQL file, i.e., without giving a startup 
-            banner or command prompts, and aborting upon failure by default, 
+            if it were reading an SQL file (i.e., no startup banner,
+            no command prompts, no Buffer/history commands, aborting upon
+            failure by default, allow blank lines with SQL statements),
             then specify a SQL filepath of "-", like
         <informalexample><screen>
     java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
         </informalexample></para><simpara>
-            You may want to do this if you are redirecting or tee-ing output 
-            to a log file, and you don't want the user-interaction messages 
-            ending up in the log file.
+            This is a good way to test what SqlTool will do when it 
+            encounters a specific command in a SQL file.
+            You <emphasis>emulate</emphasis> SQL file execution while
+            giving SqlTool commands interactively.
         </simpara>
     </section>
 
