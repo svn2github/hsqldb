@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.11 2004/04/23 15:43:58 unsaved Exp $
+# $Id: hsqldb,v 1.12 2004/04/23 16:50:41 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -108,7 +108,10 @@ case "`uname`" in
 esac
 
 # Sanity check
-[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] &&
+[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] || {
+    echo "Internal problem in init script" 1>&2
+    exit 11
+}
 
 [ $# -eq 1 ] || {
     echo "$SYNTAX_MSG" 1>&2
