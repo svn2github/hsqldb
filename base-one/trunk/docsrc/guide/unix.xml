@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.21 2004/05/18 01:41:13 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.22 2004/06/02 20:30:44 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.21 $</edition>
-        <pubdate>$Date: 2004/05/18 01:41:13 $</pubdate>
+        <edition>$Revision: 1.22 $</edition>
+        <pubdate>$Date: 2004/06/02 20:30:44 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -289,7 +289,9 @@
         </para>
         <programlisting>&sqltool.rc-cdata;</programlisting>
         <para>
-            Notice that the config file says to connect up to URL
+            We will be using the "localhost-sa" sample urlid definition from 
+            the config file.
+            The JDBC URL for this urlid is
             <literal>jdbc:hsqldb:hsql://localhost</literal>.
             That is the URL for the default database instance of a HSQLDB
             Server running on the default port of the local host.
@@ -297,14 +299,10 @@
             other servers in the 
             <link linkend='advanced-chapter' endterm='advanced-title'/>
             chapter.
-            The urlid in the sample file is <literal>localhost-sa</literal>,
-            so that's what I'll be using as urlid in the examples in this
-            chapter.
         </para> <para>
             Run <classname>SqlTool</classname>.
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool localhost-sa</screen>
-   
+    java -jar path/to/hsqldb.jar localhost-sa</screen>
         </informalexample><para>
             If you get a prompt, then all is well.
             If security is of any concern to you at all, then you should change 
@@ -327,8 +325,8 @@
             See the
             <link linkend='firstclient-appendix' endterm='firstclient-title'/>
             appendix.
-            You will need to modify your classpath to include your client
-            class(es) in addition to <filename>hsqldb.jar</filename>.
+            You will need to modify your classpath to include 
+            <filename>hsqldb.jar</filename> as well as your client class(es).
             You can also use the other HSQLDB client programs, such as
             <classname>org.hsqldb.util.DatabasManagerSwing</classname>,
             a graphical client with a similar purpose to
@@ -338,7 +336,6 @@
             including <classname>SqlTool</classname>, as long as the account 
             has read access to the <filename>hsqldb.jar</filename> file and to 
             an <filename>sqltool.rc</filename> file.
-            Remember to set and export the CLASSPATH environmental variable.
             See the <link linkend='sqltool-chapter' endterm='sqltool-title'/>
             chapter about where to put <filename>sqltool.rc</filename>, how to
             execute sql files, and other <classname>SqlTool</classname> 
@@ -397,7 +394,7 @@
             You need to connect up as SA or some other Admin user, of course.
             With SqlTool, you can run
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'shutdown;' localhost-sa</screen>
+    java -jar path/to/hsqldb.jar --noinput --sql 'shutdown;' localhost-sa</screen>
     </informalexample><para>
         You don't have to worry about stopping the
         <classname>Server</classname> because it shuts down automatically when 
@@ -413,6 +410,8 @@
             manageable.
             This section explains how to set up and use our UNIX init script.
             Our init script is only for use by root.
+            (That is not to say that the <emphasis>Server</emphasis> will run
+            as root-- it usually should not).
         </para> <para>
             The main purpose of the init script is to start up a Server with
             the database instances specified in your
