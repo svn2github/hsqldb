@@ -209,9 +209,9 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(ba);
     }
 
-    protected void writeBinary(byte[] o,
+    protected void writeBinary(Binary o,
                                int t) throws IOException, HsqlException {
-        writeByteArray(o);
+        writeByteArray(o.getBytes());
     }
 
 // fredt@users - comment - helper and conversion methods
@@ -273,15 +273,13 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.LONGVARBINARY :
                         s += getUTFsize("**");    //new format flag
                         s += 4;
-                        s += ((byte[]) o).length;
+                        s += ((Binary) o).getBytesLength();
                         break;
 
                     case Types.OTHER :
-                        JavaObject jo = (JavaObject) o;
-
                         s += getUTFsize("**");    //new format flag
                         s += 4;
-                        s += jo.getBytesLength();
+                        s += ((JavaObject) o).getBytesLength();
                     default :
                         s += getUTFsize(o.toString());
                 }

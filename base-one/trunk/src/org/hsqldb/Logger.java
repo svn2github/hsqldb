@@ -247,8 +247,8 @@ class Logger {
     }
 
     /**
-     *  Sets the type of script, currently 0 for text (default) and
-     *  1 for binary
+     *  Sets the type of script file, currently 0 for text (default)
+     *  1 for binary and 3 for compressed
      *
      * @param  i The type
      */

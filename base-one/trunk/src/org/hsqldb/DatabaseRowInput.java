@@ -186,7 +186,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
     protected abstract Object readOther() throws IOException, HsqlException;
 
-    protected abstract byte[] readBinary(int type)
+    protected abstract Binary readBinary(int type)
     throws IOException, HsqlException;
 
     /**

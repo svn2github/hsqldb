@@ -168,18 +168,18 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return new JavaObject(data,true);
     }
 
-    protected byte[] readBinary(int type) throws IOException, HsqlException {
+    protected Binary readBinary(int type) throws IOException, HsqlException {
 
         String hexstring = readString();
 
         if (hexstring.equals("**")) {
 
             // hsql - new format
-            return readByteArray();
+            return new Binary(readByteArray(),true);
         } else {
 
             // hsql - old format
-            return Column.hexToByteArray(hexstring);
+            return new Binary(Column.hexToByteArray(hexstring));
         }
     }
 }

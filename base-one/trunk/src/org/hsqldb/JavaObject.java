@@ -70,8 +70,25 @@ package org.hsqldb;
 import java.io.IOException;
 
 /**
- * Representation of an instnace of OTHER field data
+ * Representation of an instance of OTHER field data.<p>
  *
+ * Prior to 1.7.0 there were problems storing Objets of normal column types
+ * in columns of the type OTHER. In 1.7.0 changes were made to allow this,
+ * but as all the conversion took place inside the engine, it introduced a
+ * requirement for all classes for objects stored in OTHER columns to be
+ * available in the class path of the engine.<p>
+ * In 1.7.2, the introduction of real preprared statement support allows us
+ * revert to the pre 1.7.0 behaviour without the artificial limitations.<b>
+ *
+ * The classes for stored objects need not be available to open and operate
+ * on the database in general. The classes need to be available only if a
+ * conversion from one of these objects to another type is performed inside
+ * the engine while operating the database.
+ *
+ * Current limitation is that in SQL statements, values of type String
+ * (CHARACTER and related SQL types) cannot be stored in columns of type
+ * OTHER. This limitation does not exist for String values assigned to
+ * PreparedStatement variables.
  *
  * @author fredt@users
  * @version 1.7.2
@@ -80,13 +97,14 @@ import java.io.IOException;
 public class JavaObject {
 
     private byte[] data;
-
+    private Object object;
     /**
-     * This constructor is used only from classes implementing the JDBC
-     * interfaces.
+     * This constructor is from classes implementing the JDBC interfaces.<b>
+     * Inside the engine, it is used to convert a value into an object
+     * of type OTHER.
      */
     JavaObject(Object o) {
-        data = Column.serialize(o);
+        object = o;
     }
 
     /**
@@ -97,23 +115,34 @@ public class JavaObject {
      * constructor
      */
     JavaObject(byte[] data,
-               boolean fromfile) throws IOException, HsqlException {
+               boolean fromfile) {
         this.data = data;
     }
 
-    byte[] getBytes() {
+    byte[] getBytes() throws HsqlException {
+        if ( data == null ) {
+            data = Column.serialize(object);
+        }
         return data;
     }
 
-    int getBytesLength() {
+    int getBytesLength() throws HsqlException {
+        if ( data == null ) {
+            data = Column.serialize(object);
+        }
         return data.length;
     }
 
     /**
-     * This method is called only from classes implementing the JDBC
-     * interfaces.
+     * This method is called from classes implementing the JDBC
+     * interfaces. Inside the engine it is used for conversion from a value of
+     * type OTHER to another type. It will throw if the OTHER is an instance
+     * of a classe that is not available.
      */
-    Object getObject() throws IOException, HsqlException {
-        return Column.deserialize(data);
+    Object getObject() throws HsqlException {
+        if ( object == null ) {
+            object = Column.deserialize(data);
+        }
+        return object;
     }
 }

@@ -180,8 +180,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return new JavaObject(data,true);
     }
 
-    protected byte[] readBinary(int type) throws IOException, HsqlException {
-        return readByteArray();
+    protected Binary readBinary(int type) throws IOException, HsqlException {
+        return new Binary(readByteArray(),true);
     }
 
     /**

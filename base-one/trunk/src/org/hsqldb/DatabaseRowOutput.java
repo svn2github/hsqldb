@@ -139,7 +139,7 @@ implements DatabaseRowOutputInterface {
     protected abstract void writeOther(Object o)
     throws IOException, HsqlException;
 
-    protected abstract void writeBinary(byte[] o,
+    protected abstract void writeBinary(Binary o,
                                         int t)
                                         throws IOException, HsqlException;
 
@@ -243,7 +243,7 @@ implements DatabaseRowOutputInterface {
                 case Types.BINARY :
                 case Types.VARBINARY :
                 case Types.LONGVARBINARY :
-                    writeBinary((byte[]) o, t);
+                    writeBinary((Binary) o, t);
                     break;
 
                 default :

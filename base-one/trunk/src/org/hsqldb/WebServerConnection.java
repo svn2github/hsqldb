@@ -198,13 +198,13 @@ class WebServerConnection implements Runnable {
             byte[] byteArray = rowOut.getBuffer();
             int    offset    = rowOut.size() - count;
 
-            if (ArrayUtil.startWith(byteArray, offset, BYTES_POST)) {
+            if (ArrayUtil.startsWith(byteArray, offset, BYTES_POST)) {
                 method = REQUEST_TYPE_POST;
                 offset += BYTES_POST.length;
-            } else if (ArrayUtil.startWith(byteArray, offset, BYTES_GET)) {
+            } else if (ArrayUtil.startsWith(byteArray, offset, BYTES_GET)) {
                 method = REQUEST_TYPE_GET;
                 offset += BYTES_GET.length;
-            } else if (ArrayUtil.startWith(byteArray, offset, BYTES_HEAD)) {
+            } else if (ArrayUtil.startsWith(byteArray, offset, BYTES_HEAD)) {
                 method = REQUEST_TYPE_HEAD;
                 offset += BYTES_HEAD.length;
             } else {
@@ -270,7 +270,7 @@ class WebServerConnection implements Runnable {
             // be returned
             byte[] byteArray = rowOut.getBuffer();
 
-            if (!ArrayUtil.startWith(byteArray, offset, BYTES_CONTENT)) {
+            if (!ArrayUtil.startsWith(byteArray, offset, BYTES_CONTENT)) {
                 throw new Exception();
             }
 

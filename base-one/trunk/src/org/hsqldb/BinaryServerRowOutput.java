@@ -216,13 +216,13 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(jo.getBytes());
     }
 
-    protected void writeBinary(byte[] o,
+    protected void writeBinary(Binary o,
                                int t) throws IOException, HsqlException {
-        writeByteArray(o);
+        writeByteArray(o.getBytes());
     }
 
 // fredt@users - comment - helper and conversion methods
-    protected void writeByteArray(byte b[]) throws IOException {
+    protected void writeByteArray(byte[] b) throws IOException {
         writeInt(b.length);
         write(b, 0, b.length);
     }

@@ -874,14 +874,19 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                i = compareTo((byte[]) a, (byte[]) b);
+                if (a instanceof Binary && b instanceof Binary) {
+                    i = compareTo(((Binary) a).getBytes(),
+                                  ((Binary) b).getBytes());
+                } else {
+                    throw Trace.error(Trace.INVALID_CONVERSION, type);
+                }
                 break;
 
             case Types.OTHER :
                 return 0;
 
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.INVALID_CONVERSION, type);
         }
 
         return (i > 0) ? 1
@@ -1118,30 +1123,38 @@ class Column {
                 case Types.BINARY :
                 case Types.VARBINARY :
                 case Types.LONGVARBINARY :
-                    if (o instanceof byte[]) {
+                    if (o instanceof Binary) {
                         return o;
+                    } else if (o instanceof byte[]) {
+                        return new Binary((byte[]) o);
+                    } else if (o instanceof JavaObject) {
+                        o = ((JavaObject) o).getObject();
+                        if ( o instanceof byte[] ){
+                            return new Binary((byte[])o);
+                        }
+                    } else if (o instanceof String) {
+                        return new Binary(StringConverter.hexToByte((String) o));
                     }
-                    break;
+                    throw Trace.error(Trace.INVALID_CONVERSION, type);
+
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
-                /*
-                     Prior to 1.7.0 there were problems storing Objets of normal column types
-                     in columns of the type OTHER. In 1.7.0 changes were made to allow this,
-                     but as all the conversion took place inside the engine, it introduced a
-                     requirement for all classes stored in OTHER columns to be available in the
-                     class path of the engine.
-                     In 1.7.2, the introduction of real preprared statement support allows us
-                     to revert to the pre 1.7.0 behaviour without the artificial limitations.
-                 */
                 case Types.OTHER :
                     if (o instanceof JavaObject) {
                         return o;
+                    } else if (o instanceof String) {
+                        return new JavaObject(StringConverter.hexToByte((String) o),true);
                     }
 
                     return new JavaObject(o);
 
                 default :
+            }
+            if ( o instanceof JavaObject ) {
+
+                o = ((JavaObject)o).getObject();
+                return convertObject(o,type);
             }
 
             return convertString(o.toString(), type);
@@ -1213,9 +1226,7 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-
             case Types.OTHER :
-
             default :
                 throw Trace.error(Trace.INVALID_CONVERSION, type);
         }
@@ -1256,8 +1267,13 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
+                if (!(o instanceof Binary)) {
+                    throw Trace.error(Trace.INVALID_CONVERSION);
+                }
+
                 return StringConverter.toQuotedString(
-                    StringConverter.byteToHex((byte[]) o), '\'', false);
+                    StringConverter.byteToHex(((Binary) o).getBytes()), '\'',
+                    false);
 
             case Types.OTHER :
                 if (!(o instanceof JavaObject)) {

@@ -107,9 +107,8 @@ class Function {
      * Constructs a new Function object with the given function call name
      * and using the specified Session context. <p>
      *
-     * The call name is the fully qualified name of a static Java method, as
-     * opposed to the method's canonical signature.  That is, the name
-     * is of the form "package.class.method."  This implies that Java
+     * The call name is the fully qualified name of a static Java method, in
+     * the form "package.class.method."  This implies that Java
      * methods with the same fully qualified name but different signatures
      * cannot be used properly as HSQLDB SQL functions or stored procedures.
      * For instance, it is impossible to call both System.getProperty(String)
@@ -283,7 +282,11 @@ class Function {
                 // null argument for primitive datatype: don't call
                 return null;
             }
-
+            if ( o instanceof JavaObject ){
+                o = ((JavaObject)o).getObject();
+            } else if (o instanceof Binary){
+                o = ((Binary)o).getBytes();
+            }
             oArg[i] = o;
         }
 
@@ -294,9 +297,13 @@ class Function {
                     + cSession.getDatabase().sqlMonth);
             }
 
-            return (fID >= 0) ? Library.invoke(fID, oArg)
+            Object ret = (fID >= 0) ? Library.invoke(fID, oArg)
                               : mMethod.invoke(null, oArg);
 
+            if ( ret instanceof byte[] || ret instanceof Object ){
+                ret = Column.convertObject(ret,iReturnType);
+            }
+            return ret;
 // boucherb@users - patch 1.7.2 - better function invocation error reporting
         } catch (Throwable t) {
             String s = sFunction;

@@ -862,7 +862,7 @@ public class jdbcResultSet implements ResultSet {
             return ((String) x).getBytes();
         }
 
-        x = getColumnInType(--columnIndex, Types.BINARY);
+        x = getColumnInType(columnIndex, Types.BINARY);
 
         return (byte[]) x;
     }
@@ -1764,9 +1764,9 @@ public class jdbcResultSet implements ResultSet {
                 return ((JavaObject) o).getObject();
             } catch (HsqlException e) {
                 throw jdbcDriver.sqlException(Trace.error(Trace.SERIALIZATION_FAILURE));
-            } catch (IOException e) {
-                throw jdbcDriver.sqlException(Trace.error(Trace.SERIALIZATION_FAILURE));
             }
+        } else if (o instanceof Binary) {
+            return ((Binary) o).getBytes();
         } else {
             return o;
         }

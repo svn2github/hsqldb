@@ -314,9 +314,9 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(ba);
     }
 
-    protected void writeBinary(byte[] o,
+    protected void writeBinary(Binary o,
                                int t) throws IOException, HsqlException {
-        writeByteArray(o);
+        writeByteArray(o.getBytes());
     }
 
     public int getSize(CachedRow r) throws HsqlException {

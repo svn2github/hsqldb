@@ -522,7 +522,7 @@ class Types {
         typeNames.put(Types.LONGVARBINARY, "LONGVARBINARY");
         typeNames.put(Types.OTHER, "OBJECT");
 
-        //
+        // java class names used internally for each type
 /*
         javaTypeNames = new IntValueHashMap(23, 1);
 

@@ -255,6 +255,13 @@ class TestSelf {
         }
     }
 
+    static byte[] b1   = {
+        0, 1, -128, 44, 12
+    };
+    static byte   b2[] = {
+        10, 127
+    };
+
     static void testTabProfile(Connection cConnection, boolean persistent) {
 
         Statement sStatement = null;
@@ -281,12 +288,12 @@ class TestSelf {
             // prepared statements
             s = "create table TabProfile(id int primary key,"
                 + "car char,won bit,licence varbinary,"
-                + "name char,sex char,chance double,birthday date)";
+                + "name char,sex char,chance double,birthday date,temp char)";
 
             sStatement.execute(s);
 
             s = "insert into TabProfile values ( ?, ?, ?, ?,"
-                + "'\"John\" the bird''s best friend', 'M',?,?)";
+                + "'\"John\" the bird''s best friend', 'M',?,?,'')";
 
             PreparedStatement p = cConnection.prepareStatement(s);
 
@@ -294,11 +301,6 @@ class TestSelf {
             p.setInt(1, 10);
             p.setString(2, "Matchcartoon");
             p.setBoolean(3, true);
-
-            byte[] b1 = {
-                0, 1, -128, 44, 12
-            };
-
             p.setBytes(4, b1);
             p.setDouble(5, 50.5);
             p.setNull(6, Types.DATE);
@@ -322,22 +324,91 @@ class TestSelf {
             // fredt@users - who designed the java.util.Calendar API?
             p.setDate(6, new Date(cal.getTime().getTime()));
             p.executeUpdate();
+            readTabProfileTest(sStatement);
 
-            s = "select * from TabProfile where id=-2";
+            byte[]  b2n;
+            byte[] b1n;
+            boolean mismatch;
+
+            s = "select \"org.hsqldb.lib.ArrayUtil.startsWith\"(licence,0, ?) "
+                + "from TabProfile";
+            p = cConnection.prepareStatement(s);
+
+            p.setBytes(1, b2);
+
+            r = p.executeQuery();
+
+            r.next();
+
+            boolean boo1 = r.getBoolean(1);
+
+            r.next();
+
+            boolean boo2 = r.getBoolean(1);
+
+            // test boo1 != boo2
+
+/** @todo fredt - nested procedure call doesn't parse  */
+/*
+            s = "select \"org.hsqldb.lib.StringConverter.hexToByte\""
+                + "(\"org.hsqldb.lib.StringConverter.byteToHex\"(car)) "
+                + "from TabProfile";
             r = sStatement.executeQuery(s);
 
             r.next();
 
-            if (!r.getString(2).equals("\"Birdie\"'s car ?")) {
-                throw new Exception("Unicode error.");
+            b1n = r.getBytes(1);
+
+            r.next();
+
+            b1n = r.getBytes(1);
+*/
+
+/** @todo fredt - alias does not resolve */
+/*
+            s = "select \"org.hsqldb.lib.StringConverter.byteToHex\"(car) temp, " +
+                "\"org.hsqldb.lib.StringConverter.hexToByte\"(temp) "
+                + "from TabProfile";
+            r = sStatement.executeQuery(s);
+
+            r.next();
+
+            b1n = r.getBytes(2);
+
+            r.next();
+
+            b1n = r.getBytes(2);
+*/
+            s = "update tabprofile set temp = \"org.hsqldb.lib.StringConverter.byteToHex\"(licence)";
+
+            sStatement.executeUpdate(s);
+
+            s = "select \"org.hsqldb.lib.StringConverter.hexToByte\"(temp) "
+                + "from TabProfile order by id desc";
+            r = sStatement.executeQuery(s);
+
+            r.next();
+
+            b1n = r.getBytes(1);
+
+            for (int i = 0; i < b1n.length; i++) {
+                if (b1[i] != b1n[i]) {
+                    mismatch = true;
+                }
             }
 
-            r.close();
+            r.next();
 
-            s = "drop table TabProfile";
+            b2n = r.getBytes(1);
 
-            sStatement.execute(s);
+            for (int i = 0; i < b2n.length; i++) {
+                if (b2[i] != b2n[i]) {
+                    mismatch = true;
+                }
+            }
 
+//            s = "drop table TabProfile";
+//            sStatement.execute(s);
             s = "create table obj(id int,o object)";
 
             sStatement.execute(s);
@@ -381,9 +452,8 @@ class TestSelf {
                 throw new Exception("Object data error: int[]");
             }
 
-            s = "drop table obj";
-
-            sStatement.execute(s);
+//            s = "drop table obj";
+//            sStatement.execute(s);
             sStatement.close();
         } catch (Exception e) {
             print("");
@@ -393,6 +463,42 @@ class TestSelf {
         }
     }
 
+    static void readTabProfileTest (Statement sStatement) throws Exception{
+            String s = "select * from TabProfile where id=-2";
+            ResultSet r = sStatement.executeQuery(s);
+
+            r.next();
+
+            if (!r.getString(2).equals("\"Birdie\"'s car ?")) {
+                throw new Exception("Unicode error.");
+            }
+
+            boolean mismatch = false;
+            byte[]  b2n      = r.getBytes(4);
+
+            for (int i = 0; i < b2n.length; i++) {
+                if (b2[i] != b2n[i]) {
+                    mismatch = true;
+                }
+            }
+
+            r.close();
+
+            s = "select * from TabProfile where id=10";
+            r = sStatement.executeQuery(s);
+
+            r.next();
+
+            byte[] b1n = r.getBytes(4);
+
+            for (int i = 0; i < b1n.length; i++) {
+                if (b1[i] != b1n[i]) {
+                    mismatch = true;
+                }
+            }
+
+            r.close();
+    }
     static void testMarotest(Connection cConnection, boolean persistent) {
 
         Statement sStatement = null;
@@ -634,6 +740,8 @@ class TestSelf {
                 cConnection = DriverManager.getConnection(url, user,
                         password);
                 sStatement = cConnection.createStatement();
+                readTabProfileTest(sStatement);
+
             }
 
             start = System.currentTimeMillis();

@@ -333,7 +333,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return new JavaObject(data,true);
     }
 
-    protected byte[] readBinary(int type) throws IOException, HsqlException {
+    protected Binary readBinary(int type) throws IOException, HsqlException {
 
         String s = readString();
 
@@ -341,7 +341,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             return null;
         }
 
-        return Column.hexToByteArray(s);
+        return new Binary(Column.hexToByteArray(s), true);
     }
 
     int getLineNumber() {

@@ -165,7 +165,7 @@ public class ArrayUtil {
      * Handles both addition and removal of rows
      */
     public static void adjustArray(int code, Object data, int usedElements,
-                            int index, int count) {
+                                   int index, int count) {
 
         if (index >= usedElements) {
             return;
@@ -447,10 +447,10 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns true if a contains all elements of b in sequential order from
-     * position start.
+     * Returns true if a from position start contains all elements of b in
+     * sequential order.
      */
-    public static boolean startWith(byte[] a, int start, byte b[]) {
+    public static boolean startsWith(byte[] a, int start, byte b[]) {
         return countSameElements(a, start, b) == b.length;
     }
 
