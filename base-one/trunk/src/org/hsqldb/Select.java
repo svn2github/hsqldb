@@ -93,41 +93,32 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class Select {
 
-    boolean                       isPreProcess;
-    boolean                       isDistinctSelect;
-    boolean                       isAggregated;
-    private boolean               isGrouped;
-    private HashSet               groupColumnNames;
-    private int                   aggregateCount;
-    TableFilter                   tFilter[];
-    Expression                    eCondition;           // null means no condition
-    Expression                    havingCondition;      // null means none
-    Expression                    eColumn[];            // 'result', 'group' and 'order' columns
-    int                           iResultLen;           // number of columns that are 'result'
-    int                           iGroupLen;            // number of columns that are 'group'
-    int                           iHavingIndex = -1;    // -1 means no having
-    int                           iOrderLen;            // number of columns that are 'order'
-    Select                        sUnion;               // null means no union select
-    HsqlName                      sIntoTable;           // null means not select..into
-    int                           intoType = Table.MEMORY_TABLE;
-    boolean                       isIntoTableQuoted;
-    int                           iUnionType;
-    static final int              NOUNION    = 0,
-                                  UNION      = 1,
-                                  UNIONALL   = 2,
-                                  INTERSECT  = 3,
-                                  EXCEPT     = 4;
-    int                           limitStart = 0;       // set only by the LIMIT keyword
-    int                           limitCount = 0;       // set only by the LIMIT keyword
-    private Result.ResultMetaData resultMetaData;
-
-    /**
-     * Set to preprocess mode
-     *
-     */
-    void setPreProcess() {
-        isPreProcess = true;
-    }
+    boolean               isDistinctSelect;
+    boolean               isAggregated;
+    private boolean       isGrouped;
+    private HashSet       groupColumnNames;
+    private int           aggregateCount;
+    TableFilter           tFilter[];
+    Expression            eCondition;           // null means no condition
+    Expression            havingCondition;      // null means none
+    Expression            eColumn[];            // 'result', 'group' and 'order' columns
+    int                   iResultLen;           // number of columns that are 'result'
+    int                   iGroupLen;            // number of columns that are 'group'
+    int                   iHavingIndex = -1;    // -1 means no having
+    int                   iOrderLen;            // number of columns that are 'order'
+    Select                sUnion;               // null means no union select
+    HsqlName              sIntoTable;           // null means not select..into
+    int                   intoType = Table.MEMORY_TABLE;
+    boolean               isIntoTableQuoted;
+    int                   iUnionType;
+    static final int      NOUNION    = 0,
+                          UNION      = 1,
+                          UNIONALL   = 2,
+                          INTERSECT  = 3,
+                          EXCEPT     = 4;
+    int                   limitStart = 0;       // set only by the LIMIT keyword
+    int                   limitCount = 0;       // set only by the LIMIT keyword
+    Result.ResultMetaData resultMetaData;
 
     /**
      * Experimental.
@@ -569,7 +560,7 @@ class Select {
         boolean       outerused[] = new boolean[filter];
         int           level       = 0;
 
-        while (level >= 0 &&!isPreProcess) {
+        while (level >= 0) {
 
             // perform a join
             TableFilter t = tFilter[level];
@@ -895,16 +886,9 @@ class Select {
     // Used only by toString()
     private void preProcess() {
 
-        boolean oldPreProcess;
-
-        oldPreProcess = isPreProcess;
-        isPreProcess  = true;
-
         try {
             getResult(1);
         } catch (HsqlException e) {}
-
-        isPreProcess = oldPreProcess;
     }
 
     Result describeResult() {

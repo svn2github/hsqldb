@@ -594,7 +594,7 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Finds the first node that is larger or equal to the given one
      *
      *
      * @param value
@@ -606,14 +606,6 @@ class Index {
      */
     Node findFirst(Object value, int compare) throws HsqlException {
 
-        boolean check = compare == Expression.BIGGER
-                        || compare == Expression.EQUAL
-                        || compare == Expression.BIGGER_EQUAL;
-
-        if (!check) {
-            Trace.doAssert(false, "Index.findFirst");
-        }
-
         Node x     = root;
         int  iTest = 1;
 
@@ -621,6 +613,16 @@ class Index {
             iTest = 0;
         }
 
+/*
+        // this method returns the correct node only with the following conditions
+        boolean check = compare == Expression.BIGGER
+                        || compare == Expression.EQUAL
+                        || compare == Expression.BIGGER_EQUAL;
+
+        if (!check) {
+            Trace.doAssert(false, "Index.findFirst");
+        }
+*/
         while (x != null) {
             boolean t =
                 Column.compare(value, x.getData()[colIndex_0], colType_0)
@@ -645,10 +647,26 @@ class Index {
             }
         }
 
+/*
         while (x != null
                 && Column.compare(value, x.getData()[colIndex_0], colType_0)
                    >= iTest) {
             x = next(x);
+        }
+*/
+        while (x != null) {
+            int result = Column.compare(value, x.getData()[colIndex_0],
+                                        colType_0);
+
+            if (result >= iTest) {
+                x = next(x);
+            } else {
+                if (result < 0) {
+                    x = null;
+                }
+
+                break;
+            }
         }
 
         return x;

@@ -120,6 +120,13 @@ class Parser {
     private int       iType;
     private int       iToken;
 
+    //
+    private int           subQueryLevel = 0;
+    private Stack         subQueryStack;
+    private HsqlArrayHeap subQueryHeap;
+    private static final String pamsg =
+        "It is ambiguous to specify a parameter marker ";
+
     /**
      *  Constructor declaration
      *
@@ -180,47 +187,52 @@ class Parser {
         return columns;
     }
 
-    SubQuery parseSubquery(boolean isView) throws HsqlException {
+    SubQuery parseSubquery(Table table, boolean resolveAll,
+                           int predicateType) throws HsqlException {
 
-        HsqlException se;
-        Select        s;
-        SubQuery      sq;
+        subQueryLevel++;
+
+        SubQuery sq         = new SubQuery();
+        boolean  isResolved = true;
+        Select   s          = null;
+
+        if (table == null) {
+            s             = parseSelect(false);
+            isResolved    = s.resolveAll(resolveAll);
+            sq.level      = subQueryLevel;
+            sq.select     = s;
+            sq.isResolved = isResolved;
+        }
+
+        subQueryLevel--;
+
+        if (!isResolved) {
+            return sq;
+        }
+
+        if (table == null) {
+
+            // it's not a problem that this table has not a unique name
+            table = new Table(
+                database,
+                database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
+                Table.SYSTEM_SUBQUERY, 0);
+
+            table.addColumns(s);
+
+            int[] pcol = predicateType == Expression.IN ? new int[]{ 0 }
+                                                        : null;
+
+            table.createPrimaryKey(pcol);
+        }
+
+        sq.table = table;
 
         if (subQueryHeap == null) {
             subQueryHeap = new HsqlArrayHeap(8, new SubQuery());
         }
 
-        if (subQueryStack == null) {
-            subQueryStack = new Stack();
-        }
-
-        subQueryLevel++;
-
-        se        = null;
-        s         = null;
-        sq        = new SubQuery();
-        sq.level  = subQueryLevel;
-        sq.isView = isView;
-
-        subQueryStack.push(sq);
-
-        try {
-            s = parseSelect(false);
-        } catch (HsqlException e) {
-            se = e;
-        }
-
-        if (se != null) {
-            throw se;
-        }
-
-        subQueryStack.pop();
-
-        sq.select = s;
-
         subQueryHeap.add(sq);
-
-        subQueryLevel--;
 
         return sq;
     }
@@ -735,100 +747,34 @@ class Parser {
 
         String      token = tokenizer.getString();
         Table       t     = null;
-        Select      s     = null;
         SubQuery    sq;
         TableFilter tf;
+        String      sAlias = null;
 
         if (token.equals(Token.T_OPENBRACKET)) {
             tokenizer.getThis(Token.T_SELECT);
 
-            sq = parseSubquery(false);
+            // fredt - not correlated - a joined subquery table must resolve fully
+            sq = parseSubquery(null, true, Expression.QUERY);
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
 
-            s = sq.select;
-
-            // fredt - not correlated - a joined subquery table must resolve fully
-            s.resolveAll(true);
-
-            // it's not a problem that this table has not a unique name
-            t = new Table(
-                database,
-                database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
-                Table.SYSTEM_TABLE, 0);
-            sq.table = t;
-
-            t.addColumns(s);
-            t.createPrimaryKey();
+            t = sq.table;
         } else {
             tokenizer.checkUnexpectedParam("parametric table identifier");
 
             t = database.getTable(token, session);
 
-            boolean checkSelectPriv = !isParsingView();
+            session.check(t.getName(), UserManager.SELECT);
 
-            if (checkSelectPriv) {
-                session.check(t.getName(), UserManager.SELECT);
-            }
-
-// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
             if (t.isView()) {
-                String Viewname    = token;
-                int    CurrentPos  = tokenizer.getPosition();
-                int    sLength     = tokenizer.getLength();
-                int    TokenLength = token.length();
-                int    NewCurPos   = CurrentPos;
-
-                token = tokenizer.getString();
-
-                if (token.equals(Token.T_AS)) {
-                    Viewname  = tokenizer.getName();
-                    NewCurPos = tokenizer.getPosition();
-                } else if (tokenizer.wasName()) {
-                    Viewname  = token;
-                    NewCurPos = tokenizer.getPosition();
-                } else {
-                    tokenizer.back();
-                }
-
-                String sLeft = tokenizer.getPart(0, CurrentPos - TokenLength);
-                String       sRight = tokenizer.getPart(NewCurPos, sLength);
-                View         v         = (View) t;
-                String       sView     = v.getStatement();
-                StringBuffer sFromView = new StringBuffer(128);
-
-                sFromView.append(sLeft);
-                sFromView.append('(');
-                sFromView.append(sView);
-                sFromView.append(") ");
-                sFromView.append(Viewname);
-                sFromView.append(sRight);
-                tokenizer.setString(sFromView.toString(),
-                                    CurrentPos - TokenLength + 1);
-                tokenizer.getThis(Token.T_SELECT);
-
-                sq = parseSubquery(true);
-
-                tokenizer.getThis(Token.T_CLOSEBRACKET);
-
-                s = sq.select;
-
-                // fredt - not correlated
-                s.resolveAll(true);
-
-                // it's not a problem that this table has not a unique name
-                t = new Table(
-                    database,
-                    database.nameManager.newHsqlName(
-                        "SYSTEM_SUBQUERY", false), Table.SYSTEM_TABLE, 0);
-                sq.table = t;
-
-                t.addColumns(s);
-                t.createPrimaryKey();
+                sq = parseSubquery(((View) t).workingTable, true,
+                                   Expression.QUERY);
+                sq.select = ((View) t).viewSelect;
+                t         = sq.table;
+                sAlias    = token;
             }
         }
-
-        String sAlias = null;
 
         token = tokenizer.getString();
 
@@ -999,9 +945,10 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                Select     select      = parseSelect(false);
-                boolean    subresolved = select.resolveAll(false);
-                Expression s           = new Expression(select);
+                SubQuery sq = parseSubquery(null, false, Expression.EXISTS);
+                Select   select = sq.select;
+                Expression s = new Expression(select, sq.table,
+                                              !sq.isResolved);
 
                 read();
                 readThis(Expression.CLOSE);
@@ -1133,10 +1080,13 @@ class Parser {
         Expression b = null;
 
         if (iToken == Expression.SELECT) {
-            Select  select      = parseSelect(false);
-            boolean subresolved = select.resolveAll(false);
+            SubQuery sq     = parseSubquery(null, false, Expression.IN);
+            Select   select = sq.select;
 
-            b = new Expression(select);
+            // until we support rows in IN predicates
+            Trace.check(select.iResultLen == 1, Trace.SINGLE_COLUMN_EXPECTED);
+
+            b = new Expression(select, sq.table, !sq.isResolved);
 
             read();
         } else {
@@ -1277,11 +1227,13 @@ class Parser {
                 read();
 
                 if (iToken == Expression.OPEN) {
-                    boolean checkPrivs = !isParsingView();
-                    Function f = new Function(name, database.getAlias(name),
-                                              session, checkPrivs);
-                    int len = f.getArgCount();
-                    int i   = 0;
+                    String javaName = database.getAlias(name);
+
+                    session.check(javaName, UserManager.ALL);
+
+                    Function f   = new Function(name, javaName, session);
+                    int      len = f.getArgCount();
+                    int      i   = 0;
 
                     read();
 
@@ -1351,19 +1303,6 @@ class Parser {
                 r = new Expression(Types.NULL, null, true);
 
                 parameters.add(r);
-
-                // NOTE:
-                // Currently unused, but may be required for future work.
-                // Eventually, we may also wish to build a list of the
-                // parameters that apply only to a particular subquery
-                if (subQueryStack != null &&!subQueryStack.isEmpty()) {
-                    SubQuery sq = (SubQuery) subQueryStack.peek();
-
-                    sq.hasParams = true;
-
-                    // or maybe eventually sq.addParameter(r);
-                }
-
                 read();
 
                 break;
@@ -1373,7 +1312,7 @@ class Parser {
 
                 select.resolve();
 
-                r = new Expression(select);
+                r = new Expression(select, null, true);
 
                 read();
 
@@ -1624,7 +1563,7 @@ class Parser {
 
                 // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
                 Function f = new Function(name, database.getAlias(name),
-                                          session, false);
+                                          session);
 
                 f.setArgument(0, readOr());
                 readThis(Expression.CLOSE);
@@ -1673,8 +1612,7 @@ class Parser {
 
                 // name argument is OK for now for CHECK constraints
                 Function f = new Function(Token.T_TRIM,
-                                          "org.hsqldb.Library.trim", session,
-                                          false);
+                                          "org.hsqldb.Library.trim", session);
 
                 f.setArgument(0, readOr());
                 f.setArgument(1, trim);
@@ -1692,7 +1630,7 @@ class Parser {
 
                 Function f = new Function(Token.T_POSITION,
                                           "org.hsqldb.Library.position",
-                                          session, false);
+                                          session);
 
                 f.setArgument(0, readTerm());
                 readThis(Expression.IN);
@@ -1712,7 +1650,7 @@ class Parser {
                 // OK for now for CHECK search conditions
                 Function f = new Function(Token.T_SUBSTRING,
                                           "org.hsqldb.Library.substring",
-                                          session, false);
+                                          session);
 
                 f.setArgument(0, readTerm());
 
@@ -2310,20 +2248,9 @@ class Parser {
         return cs;
     }
 
-    private int           subQueryLevel = 0;
-    private Stack         subQueryStack;
-    private HsqlArrayHeap subQueryHeap;
-    private static final String pamsg =
-        "It is ambiguous to specify a parameter marker ";
-
     static void checkParamAmbiguity(boolean b,
                                     String msg) throws HsqlException {
         Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg, msg);
-    }
-
-    boolean isParsingView() {
-        return subQueryStack != null &&!subQueryStack.isEmpty()
-               && ((SubQuery) subQueryStack.peek()).isView;
     }
 
 // --

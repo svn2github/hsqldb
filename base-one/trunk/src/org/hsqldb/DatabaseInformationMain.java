@@ -251,33 +251,6 @@ class DatabaseInformationMain extends DatabaseInformation {
     }
 
     /**
-     * Adds to the specified <code>Table</code> object a non-primary
-     * <code>Index</code> object on the specified columns, having the specified
-     * uniqueness property. <p>
-     *
-     * @param t the table to which to add the specified index
-     * @param indexName the simple name of the index
-     * @param cols zero-based array of column numbers specifying the columns
-     *      to include in the index
-     * @throws HsqlException if there is a problem adding the specified index
-     *      to the specified table
-     */
-    protected final void addIndex(Table t, String indexName,
-                                  int[] cols) throws HsqlException {
-
-        HsqlName name;
-
-        if (indexName == null || cols == null) {
-
-            // do nothing
-        } else {
-            name = ns.findOrCreateHsqlName(indexName, indexNameMap);
-
-            t.createIndex(cols, name, false, false, false);
-        }
-    }
-
-    /**
      * Retrieves an enumeration over all of the tables in this database.
      * This means all user tables, views, system tables, system views,
      * including temporary and text tables. <p>
@@ -759,11 +732,6 @@ class DatabaseInformationMain extends DatabaseInformation {
                 0, 8, 9, 10, 1
             }, false);
 
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 8 });
-            addIndex(t, null, new int[]{ 9 });
-            addIndex(t, null, new int[]{ 10 });
-
             return t;
         }
 
@@ -968,11 +936,6 @@ class DatabaseInformationMain extends DatabaseInformation {
                 3, 6, 5, 4, 2, 1, 0
             }, false);
 
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
             return t;
         }
 
@@ -1065,13 +1028,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 1, 2, 16, 0
             }, false);
-
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-
-            //addIndex(t, null, new int[]{1});
-            addIndex(t, null, new int[]{ 2 });
-            addIndex(t, null, new int[]{ 3 });
 
             return t;
         }
@@ -1222,21 +1178,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 4, 5, 6, 8, 11
             }, false);
-
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-            addIndex(t, null, new int[]{ 3 });
-
-            //addIndex(t, null, new int[]{4});
-            addIndex(t, null, new int[]{ 5 });
-            addIndex(t, null, new int[]{ 6 });
-            addIndex(t, null, new int[]{ 7 });
-
-            // fast lookup by FK_NAME or PK_NAME
-            addIndex(t, null, new int[]{ 11 });
-            addIndex(t, null, new int[]{ 12 });
 
             return t;
         }
@@ -1494,14 +1435,6 @@ class DatabaseInformationMain extends DatabaseInformation {
                 3, 6, 5, 7, 4
             }, false);
 
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            //addIndex(t, null, new int[]{3});
-            addIndex(t, null, new int[]{ 5 });
-
             return t;
         }
 
@@ -1659,15 +1592,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 3, 2, 1, 0
             }, false);
-
-            // fast lookups for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            //addIndex(t, null, new int[]{3});
-            // fast lookup by pk name
-            addIndex(t, null, new int[]{ 5 });
 
             return t;
         }
@@ -1835,14 +1759,6 @@ class DatabaseInformationMain extends DatabaseInformation {
                 1, 2, 13, 14, 0
             }, false);
 
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            // fast join with SYSTEM_PROCEDURES
-            addIndex(t, null, new int[]{ 13 });
-
             return t;
         }
 
@@ -1914,14 +1830,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 1, 2, 9, 0
             }, false);
-
-            // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            // fast join with SYSTEM_PROCEDURECOLUMNS
-            addIndex(t, null, new int[]{ 9 });
 
             return t;
         }
@@ -2031,13 +1939,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 1, 2, 5, 4, 3, 0
             }, false);
-
-            // fast lookup by (table,grantee)
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-
-            //addIndex(t, null, new int[]{2},false);
-            addIndex(t, null, new int[]{ 4 });
 
             return t;
         }
@@ -2185,12 +2086,6 @@ class DatabaseInformationMain extends DatabaseInformation {
             t.createPrimaryKey(null, new int[] {
                 3, 1, 2, 0
             }, false);
-
-            // fast lookup by table ident
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-            addIndex(t, null, new int[]{ 3 });
 
             return t;
         }

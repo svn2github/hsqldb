@@ -1364,15 +1364,6 @@ extends org.hsqldb.DatabaseInformationMain {
                 0, 1, 2, 3, 4, 5, 6, 7, 8
             }, false);
 
-            // fast lookup by trigger ident
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            // fast lookup by table ident
-            addIndex(t, null, new int[]{ 3 });
-            addIndex(t, null, new int[]{ 4 });
-            addIndex(t, null, new int[]{ 5 });
-
             return t;
         }
 
@@ -1462,16 +1453,6 @@ extends org.hsqldb.DatabaseInformationMain {
             t.createPrimaryKey(null, new int[] {
                 3, 1, 2, 0
             }, false);
-
-            // fast lookup by trigger ident
-            addIndex(t, null, new int[]{ 0 });
-            addIndex(t, null, new int[]{ 1 });
-            addIndex(t, null, new int[]{ 2 });
-
-            // fast lookup by table ident
-            addIndex(t, null, new int[]{ 5 });
-            addIndex(t, null, new int[]{ 6 });
-            addIndex(t, null, new int[]{ 8 });
 
             return t;
         }
@@ -1878,12 +1859,6 @@ extends org.hsqldb.DatabaseInformationMain {
             t.createPrimaryKey(null, new int[] {
                 1, 2, 0
             }, false);
-
-            // fast lookup by view ident
-            addIndex(t, null, new int[]{ 0 });
-
-            //addIndex(t, null, new int[]{1});
-            addIndex(t, null, new int[]{ 2 });
 
             return t;
         }

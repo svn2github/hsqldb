@@ -44,7 +44,9 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class View extends Table {
 
-    String sStatement;
+    Table          workingTable;
+    Select         viewSelect;
+    private String sStatement;
 
     View(Database db, HsqlName name) throws HsqlException {
 
@@ -54,25 +56,26 @@ class View extends Table {
         isReadOnly = true;
     }
 
-    void addColumns(Result result) throws HsqlException {
+    void addColumns(Result.ResultMetaData metadata,
+                    int columns) throws HsqlException {
 
-        for (int i = 0; i < result.getColumnCount(); i++) {
-            String name = result.metaData.sTable[i];
+        for (int i = 0; i < columns; i++) {
+            String name = metadata.sTable[i];
             Table  t    = database.findUserTable(name);
 
             if (t != null && t.isTemp()) {
                 throw Trace.error(Trace.TABLE_NOT_FOUND);
             }
 
-            if (result.metaData.sLabel[i] == null) {
+            if (metadata.sLabel[i] == null) {
 
                 // fredt - this does not guarantee the uniqueness of column
                 // names but addColumns() will throw if names are not unique.
-                result.metaData.sLabel[i] = "COL_" + String.valueOf(i);
+                metadata.sLabel[i] = "COL_" + String.valueOf(i);
             }
         }
 
-        super.addColumns(result);
+        super.addColumns(metadata, columns);
 
         iVisibleColumns = iColumnCount;
     }
@@ -101,6 +104,17 @@ class View extends Table {
         } while (str.length() != 0 || t.wasValue());
 
         sStatement = s.substring(0, position).trim();
+
+        // create the working table
+        t.reset(sStatement);
+        t.getThis(Token.T_SELECT);
+
+        Parser p = new Parser(this.database, t,
+                              database.sessionManager.getSysSession());
+        SubQuery sq = p.parseSubquery(null, true, Expression.QUERY);
+
+        workingTable = sq.table;
+        viewSelect   = sq.select;
     }
 
     String getStatement() {

@@ -413,9 +413,6 @@ public class jdbcResultSet implements ResultSet {
     /** Properties of this ResultSet's parent Connection. */
     private HsqlProperties connProperties;
 
-    /** Compatibility flag to use uppercase version of column names */
-    private boolean toUpperColumnName;
-
     /**
      * The Statement that generated this result. <p>
      */
@@ -1776,14 +1773,8 @@ public class jdbcResultSet implements ResultSet {
         for (int i = 0; i < iColumnCount; i++) {
             String name = rResult.metaData.sLabel[i];
 
-            if (toUpperColumnName) {
-                if (columnName.equalsIgnoreCase(name)) {
-                    return i + 1;
-                }
-            } else {
-                if (columnName.equals(name)) {
-                    return i + 1;
-                }
+            if (columnName.equalsIgnoreCase(name)) {
+                return i + 1;
             }
         }
 
@@ -5379,8 +5370,6 @@ public class jdbcResultSet implements ResultSet {
             iUpdateCount = -1;
             rResult      = r;
             iColumnCount = r.getColumnCount();
-            toUpperColumnName =
-                connProperties.isPropertyTrue("toupper_column_name");
         }
 
         bWasNull = false;

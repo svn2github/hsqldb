@@ -1405,9 +1405,10 @@ class DatabaseCommandInterpreter {
         String   token;
         int      logposition;
         HsqlName viewHsqlName;
-        Result   result;
-        Parser   parser;
-        Select   select;
+
+//        Result   result;
+        Parser parser;
+        Select select;
 
         token       = tokenizer.getName();
         logposition = tokenizer.getPartMarker();
@@ -1425,21 +1426,23 @@ class DatabaseCommandInterpreter {
         parser = new Parser(database, tokenizer, session);
 
         try {
-            select = parser.parseSelect(false);
+
+            // parse as UNION and do not accept ORDER BY
+            select = parser.parseSelect(true);
 
             if (select.sIntoTable != null) {
                 throw (Trace.error(Trace.TABLE_NOT_FOUND));
             }
 
-            select.setPreProcess();
+            select.prepareResult();
 
-            result = select.getResult(1);
+//            result = select.getResult(1);
         } catch (HsqlException e) {
             throw e;
         }
 
         view.setStatement(tokenizer.getLastPart());
-        view.addColumns(result);
+        view.addColumns(select.resultMetaData, select.iResultLen);
         session.commit();
         database.linkTable(view);
         tokenizer.setPartMarker(logposition);
@@ -2785,7 +2788,7 @@ class DatabaseCommandInterpreter {
             ? new TextTable(database, intoHsqlName, intoType, sid)
             : new Table(database, intoHsqlName, intoType, sid);
 
-        t.addColumns(r);
+        t.addColumns(r.metaData, r.getColumnCount());
         t.createPrimaryKey();
         database.linkTable(t);
 
@@ -2799,7 +2802,7 @@ class DatabaseCommandInterpreter {
 
                 t.setDataSource(txtSrc, false, session);
                 logTableDDL(t);
-                t.insertNoCheck(r, session);
+                t.insertIntoTable(r, session);
             } catch (HsqlException e) {
                 database.dropTable(intoName, false, false, session);
 
@@ -2809,7 +2812,7 @@ class DatabaseCommandInterpreter {
             logTableDDL(t);
 
             // SELECT .. INTO can't fail because of constraint violation
-            t.insertNoCheck(r, session);
+            t.insertIntoTable(r, session);
         }
 
         uc              = new Result(ResultConstants.UPDATECOUNT);

@@ -270,7 +270,8 @@ public class Trace extends PrintWriter {
      JDBC_STATEMENT_NOT_RESULTSET                   = 155,
      AMBIGUOUS_COLUMN_REFERENCE                     = 156,
      CHECK_CONSTRAINT_VIOLATION                     = 157,
-     JDBC_RESULTSET_IS_CLOSED                       = 158;
+     JDBC_RESULTSET_IS_CLOSED                       = 158,
+     SINGLE_COLUMN_EXPECTED                         = 159;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -434,7 +435,8 @@ public class Trace extends PrintWriter {
         "00000 Statement does not generate a row count",
         "00000 Statement does not generate a result set",
         "S0022 ambiguous Column reference",                                   //
-        "23000 Check constraint violation", "S1000 ResultSet is closed"
+        "23000 Check constraint violation", "S1000 ResultSet is closed",      //
+        "37000 Single column select required in IN predicate",                //
     };
 
     /** Used during tests. */

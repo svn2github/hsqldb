@@ -281,11 +281,6 @@ public class jdbcDriver implements Driver {
         p.required = false;
         p.choices  = choices;
         pinfo[3]   = p;
-        p          = new DriverPropertyInfo("toupper_column_name", null);
-        p.value    = info.getProperty("toupper_column_name");
-        p.required = false;
-        p.choices  = choices;
-        pinfo[4]   = p;
 
         return pinfo;
     }

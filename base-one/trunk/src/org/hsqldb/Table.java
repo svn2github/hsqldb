@@ -104,12 +104,13 @@ class Table {
 
     // types of table
     static final int SYSTEM_TABLE    = 0;
-    static final int TEMP_TABLE      = 1;
-    static final int MEMORY_TABLE    = 2;
-    static final int CACHED_TABLE    = 3;
-    static final int TEMP_TEXT_TABLE = 4;
-    static final int TEXT_TABLE      = 5;
-    static final int VIEW            = 6;
+    static final int SYSTEM_SUBQUERY = 1;
+    static final int TEMP_TABLE      = 2;
+    static final int MEMORY_TABLE    = 3;
+    static final int CACHED_TABLE    = 4;
+    static final int TEMP_TEXT_TABLE = 5;
+    static final int TEXT_TABLE      = 6;
+    static final int VIEW            = 7;
 
 // boucherb@users - added in antcipation of special (not created via SQL) system
 // view objects to implement a SQL9n or 200n INFORMATION_SCHEMA
@@ -184,6 +185,7 @@ class Table {
 
         switch (type) {
 
+            case SYSTEM_SUBQUERY :
             case SYSTEM_TABLE :
                 isTemp = true;
                 break;
@@ -491,17 +493,15 @@ class Table {
      * @param  result
      * @throws  HsqlException
      */
-    void addColumns(Result result) throws HsqlException {
+    void addColumns(Result.ResultMetaData metadata,
+                    int columns) throws HsqlException {
 
-        int colCount = result.getColumnCount();
-
-        for (int i = 0; i < colCount; i++) {
-            Column column =
-                new Column(database.nameManager
-                    .newHsqlName(result.metaData.sLabel[i], result.metaData
-                        .isLabelQuoted[i]), true, result.metaData
-                            .colType[i], result.metaData.colSize[i], result
-                            .metaData.colScale[i], false, 0, false, null);
+        for (int i = 0; i < columns; i++) {
+            Column column = new Column(
+                database.nameManager.newHsqlName(
+                    metadata.sLabel[i], metadata.isLabelQuoted[i]), true,
+                        metadata.colType[i], metadata.colSize[i],
+                        metadata.colScale[i], false, 0, false, null);
 
             addColumn(column);
         }
@@ -915,23 +915,21 @@ class Table {
      * @return
      * @throws  HsqlException
      */
-    Index getIndexForColumn(int column) throws HsqlException {
+    Index getIndexForColumn(int column) {
 
         int i = bestIndexForColumn[column];
 
-        return i == -1 ? null
-                       : getIndex(i);
-/*
-        for (int i = 0; i < iIndexCount; i++) {
-            Index h = getIndex(i);
-            int[] cols = h.getColumns();
-            if (cols[0] == column) {
-                return h;
-            }
+        if (i == -1 && tableType == Table.SYSTEM_SUBQUERY
+                || tableType == Table.SYSTEM_TABLE) {
+            try {
+                createIndex(new int[]{ column }, null, false, false, false);
+
+                i = bestIndexForColumn[column];
+            } catch (Exception e) {}
         }
 
-        return null;
-*/
+        return i == -1 ? null
+                       : getIndex(i);
     }
 
     /**
@@ -1617,26 +1615,35 @@ class Table {
     /**
      * Multi-row insert method. Used for SELECT ... INTO tablename queries
      * also for creating temporary tables from subqueries. These tables are
-     * new, empty tables with no constraints, triggers
+     * new, empty tables, with no constraints, triggers
      * column default values, column size enforcement whatsoever.
+     * The exception is for IN query tables where there is a primary key.
+     *
      *
      * Not used for INSERT INTO .... SELECT ... FROM queries
      */
-    void insertNoCheck(Result result, Session c) throws HsqlException {
+    void insertIntoTable(Result result, Session c) throws HsqlException {
 
-        // if violation of constraints can occur, insert must be rolled back
-        // outside of this function!
-        Record r   = result.rRoot;
-        int    len = result.getColumnCount();
+        Record  r   = result.rRoot;
+        int     len = result.getColumnCount();
+        boolean log = !isTemp &&!isText && database.logger.hasLog();
 
         while (r != null) {
-            Object row[] = getNewRow();
+            Object data[] = getNewRow();
 
             for (int i = 0; i < len; i++) {
-                row[i] = r.data[i];
+                data[i] = r.data[i];
             }
 
-            insertNoCheck(row, c, true);
+            try {
+                Row row = Row.newRow(this, data);
+
+                indexRow(row);
+
+                if (log) {
+                    database.logger.writeToLog(c, this, data);
+                }
+            } catch (HsqlException e) {}
 
             r = r.next;
         }

@@ -222,8 +222,10 @@ class Expression {
     private boolean      isFixedConstantValueList;
     private boolean      isFixedConstantValueListChecked;
 
-    // QUERY (correlated subquery)
-    Select subSelect;
+    // QUERY
+    Select  subSelect;
+    boolean isCorrelated;                //correlated subquery
+    Table   subTable;                    // if not correlated
 
     // FUNCTION
     private Function function;
@@ -284,7 +286,7 @@ class Expression {
     }
 
     /**
-     * Copy Constructor
+     * Copy Constructor. Used by TableFilter to move a condition to a filter.
      * @param e source expression
      */
     Expression(Expression e) {
@@ -307,9 +309,12 @@ class Expression {
      * Creates a new QUERY expression
      * @param s
      */
-    Expression(Select s) {
-        exprType  = QUERY;
-        subSelect = s;
+    Expression(Select s, Table t, boolean correlated) {
+
+        exprType     = QUERY;
+        subSelect    = s;
+        subTable     = t;
+        isCorrelated = correlated;
     }
 
     /**
@@ -1411,10 +1416,10 @@ class Expression {
     }
 
     /**
-     * Resolve the table names for columns
+     * Resolve the table names for columns and throws if a column remains
+     * unresolved.
      *
-     *
-     * @param f
+     * @param fa
      *
      * @throws HsqlException
      */
@@ -1454,6 +1459,7 @@ class Expression {
                                         columnName);
                                 }
 
+                                //
                                 found = true;
                             } else {
                                 return;
@@ -1618,8 +1624,6 @@ class Expression {
                 // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
                 if (subSelect != null) {
-
-//                    subSelect.resolve();
                     subSelect.resolve(f, false);
                 }
                 break;
@@ -1656,12 +1660,6 @@ class Expression {
 
         if (eArg2 != null) {
             eArg2.resolveTypes();
-        }
-
-// temp fix to allow leaf Expression objects to be resolved removed
-        if (dataType != Types.NULL) {
-
-//            return;
         }
 
         switch (exprType) {
@@ -2482,10 +2480,15 @@ class Expression {
                        : Boolean.FALSE;
 
             case EXISTS :
-                Result r = eArg.subSelect.getResult(1);    // 1 is already enough
+                if (eArg.isCorrelated) {
+                    Result r = eArg.subSelect.getResult(1);    // 1 is already enough
 
-                return r.rRoot != null ? Boolean.TRUE
-                                       : Boolean.FALSE;
+                    return r.rRoot == null ? Boolean.FALSE
+                                           : Boolean.TRUE;
+                } else {
+                    return subTable.isEmpty() ? Boolean.FALSE
+                                              : Boolean.TRUE;
+                }
         }
 
         // handle comparisons
@@ -2865,6 +2868,7 @@ class Expression {
 // fredt - in the future testValueList can be turned into a join query
 // boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
 //                  and correlated IN list expressions
+// fredt - catch type conversion exception due to narrowing
     private boolean testValueList(Object o,
                                   int datatype) throws HsqlException {
 
@@ -2874,7 +2878,11 @@ class Expression {
 
         if (exprType == VALUELIST) {
             if (datatype != this.dataType) {
-                o = Column.convertObject(o, this.dataType);
+                try {
+                    o = Column.convertObject(o, this.dataType);
+                } catch (HsqlException e) {
+                    return false;
+                }
             }
 
             if (!isFixedConstantValueListChecked) {
@@ -2923,6 +2931,17 @@ class Expression {
         } else if (exprType == QUERY) {
 
             /** @todo fredt - convert to join */
+            if (subTable != null) {
+                try {
+                    o = Column.convertObject(o, subTable.getColumnTypes()[0]);
+                } catch (HsqlException e) {
+                    return false;
+                }
+
+                return subTable.getPrimaryIndex().findFirst(
+                    o, Expression.EQUAL) != null;
+            }
+
             Result r = subSelect.getResult(0);
 
             // fredt - reduce the size if possible
@@ -2931,8 +2950,10 @@ class Expression {
             Record n    = r.rRoot;
             int    type = r.metaData.colType[0];
 
-            if (datatype != type) {
+            try {
                 o = Column.convertObject(o, type);
+            } catch (HsqlException e) {
+                return false;
             }
 
             while (n != null) {

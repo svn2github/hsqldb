@@ -372,11 +372,18 @@ final class CompiledStatement {
         for (int i = 0; i < subqueries.length; i++) {
             sq = subqueries[i];
 
-            Table  t = sq.table;
-            Select s = sq.select;
-            Result r = s.getResult(0);
+            Table t = sq.table;
 
-            t.insertNoCheck(r, null);
+            // a VIEW working table contents are filled only once and reused
+            if (!t.isEmpty()) {
+                continue;
+            }
+
+            Select s = sq.select;
+            Result r = s.getResult(sq.isExistsPredicate ? 1
+                                                        : 0);
+
+            t.insertIntoTable(r, null);
         }
     }
 

@@ -150,8 +150,7 @@ class Function {
      *      construction does not have the right to evaluate
      *      this Function.
      */
-    Function(String name, String fqn, Session session,
-             boolean checkPrivs) throws HsqlException {
+    Function(String name, String fqn, Session session) throws HsqlException {
 
         this.name = name;
         cSession  = session;
@@ -163,10 +162,6 @@ class Function {
         Trace.check(i != -1, Trace.UNEXPECTED_TOKEN, fqn);
 
         String classname = fqn.substring(0, i);
-
-        if (checkPrivs) {
-            session.check(classname, UserManager.ALL);
-        }
 
         mMethod = (Method) methodCache.get(fqn);
 
