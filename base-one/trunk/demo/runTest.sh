@@ -47,6 +47,8 @@ pre_main
 #
 # let's go
 #
+    mkdir -p $dbhome/data
+    cp TestSelf*.txt $dbhome/data
     cd $dbhome/data
     exec "$jdkhome/bin/java" $thread_flag -classpath "$cp" $jargs "org.hsqldb.test.$@"
 # and we exit.
