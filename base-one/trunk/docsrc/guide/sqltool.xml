@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.55 2004/07/16 05:09:04 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.56 2004/07/18 03:48:55 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.55 $</edition>
-        <pubdate>$Date: 2004/07/16 05:09:04 $</pubdate>
+        <edition>$Revision: 1.56 $</edition>
+        <pubdate>$Date: 2004/07/18 03:48:55 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -445,6 +445,12 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 then only items which contain the given substring (in the object
                 name or schema name) will be listed.
                 The substring test is case-insensitive.
+                </simpara><simpara>
+                I do intent to change "\ds" to "\dS".
+                I would do it right now if the SqlTool code weren't going
+                production in two days.
+                The reason is, I want \ds for listing either Sequences (like
+                psql) or Synonyms.
             </simpara>
             </listitem></varlistentry>
             <varlistentry><term>\d objectname</term><listitem><simpara>
