@@ -157,7 +157,7 @@ final class DIProcedureInfo {
                 break;
             }
             case Types.TINYINT :
-            case Types.BIT : {
+            case Types.BOOLEAN : {
                 size = 1;
 
                 break;
@@ -349,8 +349,8 @@ final class DIProcedureInfo {
         typeMap.put(Long.TYPE, type);
         typeMap.put(Long.class, type);
 
-        // BIT
-        type = ValuePool.getInt(Types.BIT);
+        // BOOLEAN
+        type = ValuePool.getInt(Types.BOOLEAN);
 
         typeMap.put(Boolean.TYPE, type);
         typeMap.put(Boolean.class, type);

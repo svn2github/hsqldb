@@ -136,7 +136,6 @@ public final class DITypeInfo {
                 // but wrapped by org.hsqldb.JavaObject
                 return "java.lang.Object";
 
-            case Types.BIT :
             case Types.BOOLEAN :
                 return "java.lang.Boolean";
 
@@ -294,7 +293,6 @@ public final class DITypeInfo {
             case Types.BIGINT :
                 return 20;                   // precision + "-".length();
 
-            case Types.BIT :
             case Types.BOOLEAN :
                 return 5;                    // Math.max("true".length(),"false".length);
 
@@ -468,10 +466,6 @@ public final class DITypeInfo {
 
         String key = this.getTypeName();
 
-        if (typeSub == Types.TYPE_SUB_IDENTITY) {
-            key = key.replace(' ', '_');
-        }
-
         return BundleHandler.getString(hnd_local_names, key);
     }
 
@@ -592,10 +586,7 @@ public final class DITypeInfo {
      * @return the DatabaseMetaData nullability code for the type.
      */
     public Integer getNullability() {
-
-        return (typeSub == Types.TYPE_SUB_IDENTITY)
-               ? ValuePool.getInt(DatabaseMetaData.columnNoNulls)
-               : ValuePool.getInt(DatabaseMetaData.columnNullable);
+        return ValuePool.getInt(DatabaseMetaData.columnNullable);
     }
 
     /**
@@ -649,7 +640,6 @@ public final class DITypeInfo {
             case Types.BIGINT :
                 return ValuePool.getInt(19);
 
-            case Types.BIT :
             case Types.BOOLEAN :
                 return ValuePool.getInt(1);
 
@@ -723,10 +713,6 @@ public final class DITypeInfo {
 
         String key = this.getTypeName();
 
-        if (typeSub == Types.TYPE_SUB_IDENTITY) {
-            key = key.replace(' ', '_');
-        }
-
         return BundleHandler.getString(hnd_remarks, key);
     }
 
@@ -775,7 +761,6 @@ public final class DITypeInfo {
             case Types.BINARY :
                 return ValuePool.getInt(Types.SQL_BLOB);         // fredt- was SQL_BIT_VARYING
 
-            case Types.BIT :
             case Types.BOOLEAN :
                 return ValuePool.getInt(Types.SQL_BOOLEAN);      // SQL_BOOLEAN
 
@@ -938,7 +923,6 @@ public final class DITypeInfo {
             case Types.VARBINARY :
                 return "[B";
 
-            case Types.BIT :
             case Types.BOOLEAN :
                 return "boolean";
 
@@ -1032,15 +1016,10 @@ public final class DITypeInfo {
                 return "ARRAY";
 
             case Types.BIGINT :
-                return (typeSub == Types.TYPE_SUB_IDENTITY)
-                       ? "BIGINT IDENTITY"
-                       : "BIGINT";
+                return "BIGINT";
 
             case Types.BINARY :
                 return "BINARY";
-
-            case Types.BIT :
-                return "BIT";
 
             case Types.BLOB :
                 return "BLOB";
@@ -1073,9 +1052,7 @@ public final class DITypeInfo {
                 return "FLOAT";
 
             case Types.INTEGER :
-                return (typeSub == Types.TYPE_SUB_IDENTITY)
-                       ? "INTEGER IDENTITY"
-                       : "INTEGER";
+                return "INTEGER";
 
             case Types.JAVA_OBJECT :
                 return "JAVA_OBJECT";
@@ -1157,12 +1134,9 @@ public final class DITypeInfo {
             case Types.REAL :
             case Types.SMALLINT :
             case Types.TINYINT :
-                return Boolean.FALSE;
-
             case Types.BIGINT :
             case Types.INTEGER :
-                return ValuePool.getBoolean(typeSub
-                                            == Types.TYPE_SUB_IDENTITY);
+                return Boolean.FALSE;
 
             default :
                 return null;

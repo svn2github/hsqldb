@@ -251,7 +251,6 @@ implements RowOutputInterface {
                     writeDecimal((BigDecimal) o);
                     break;
 
-                case Types.BIT :
                 case Types.BOOLEAN :
                     writeBit((Boolean) o);
                     break;

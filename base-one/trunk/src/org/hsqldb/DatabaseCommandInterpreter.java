@@ -202,8 +202,11 @@ class DatabaseCommandInterpreter {
                 CompiledStatement cStatement =
                     parser.compileSelectStatement(false);
 
-                if ( cStatement.parameters.length != 0){
-                    Trace.doAssert(false, Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                if (cStatement.parameters.length != 0) {
+                    Trace.doAssert(
+                        false,
+                        Trace.getMessage(
+                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 if (cStatement.select.sIntoTable == null) {
@@ -221,8 +224,11 @@ class DatabaseCommandInterpreter {
                 CompiledStatement cStatement =
                     parser.compileInsertStatement();
 
-                if ( cStatement.parameters.length != 0){
-                    Trace.doAssert(false, Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                if (cStatement.parameters.length != 0) {
+                    Trace.doAssert(
+                        false,
+                        Trace.getMessage(
+                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
@@ -233,8 +239,11 @@ class DatabaseCommandInterpreter {
                 CompiledStatement cStatement =
                     parser.compileUpdateStatement();
 
-                if ( cStatement.parameters.length != 0){
-                    Trace.doAssert(false, Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                if (cStatement.parameters.length != 0) {
+                    Trace.doAssert(
+                        false,
+                        Trace.getMessage(
+                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
@@ -245,8 +254,11 @@ class DatabaseCommandInterpreter {
                 CompiledStatement cStatement =
                     parser.compileDeleteStatement();
 
-                if ( cStatement.parameters.length != 0){
-                    Trace.doAssert(false, Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                if (cStatement.parameters.length != 0) {
+                    Trace.doAssert(
+                        false,
+                        Trace.getMessage(
+                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
@@ -256,8 +268,11 @@ class DatabaseCommandInterpreter {
             case Token.CALL : {
                 CompiledStatement cStatement = parser.compileCallStatement();
 
-                if ( cStatement.parameters.length != 0){
-                    Trace.doAssert(false, Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                if (cStatement.parameters.length != 0) {
+                    Trace.doAssert(
+                        false,
+                        Trace.getMessage(
+                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
@@ -958,7 +973,7 @@ class DatabaseCommandInterpreter {
     public static void checkBooleanDefault(String s,
                                            int type) throws HsqlException {
 
-        if (type != Types.BIT || s == null) {
+        if (type != Types.BOOLEAN || s == null) {
             return;
         }
 
@@ -1911,7 +1926,7 @@ class DatabaseCommandInterpreter {
                 Trace.check(isboolean || isintegral, Trace.ACCESS_IS_DENIED,
                             token);
 
-                Object value = tokenizer.getInType(isboolean ? Types.BIT
+                Object value = tokenizer.getInType(isboolean ? Types.BOOLEAN
                                                              : Types.INTEGER);
 
                 p.setProperty(token, value.toString().toLowerCase());

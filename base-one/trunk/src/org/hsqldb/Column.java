@@ -257,8 +257,6 @@ public class Column {
 
         if (colType == Types.VARCHAR_IGNORECASE) {
             return Types.TYPE_SUB_IGNORECASE;
-        } else if (isIdentity) {
-            return Types.TYPE_SUB_IDENTITY;
         }
 
         return Types.TYPE_SUB_DEFAULT;
@@ -727,8 +725,7 @@ public class Column {
                 } else {
                     return 0;
                 }
-            case Types.BOOLEAN :
-            case Types.BIT : {
+            case Types.BOOLEAN : {
                 boolean boola = ((Boolean) a).booleanValue();
                 boolean boolb = ((Boolean) b).booleanValue();
 
@@ -966,7 +963,6 @@ public class Column {
                     break;
 
                 case Types.BOOLEAN :
-                case Types.BIT :
                     if (o instanceof java.lang.Boolean) {
                         return (Boolean) o;
                     }
@@ -1172,7 +1168,6 @@ public class Column {
                 return new BigDecimal(s);
 
             case Types.BOOLEAN :
-            case Types.BIT :
                 return org.hsqldb.lib.BooleanConverter.getBoolean(s);
 
             case Types.BINARY :

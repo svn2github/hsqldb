@@ -251,8 +251,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
                 ditype     = Types.VARCHAR;
                 ditype_sub = Types.TYPE_SUB_IGNORECASE;
-            } else if (cmd.isAutoIncrement) {
-                ditype_sub = Types.TYPE_SUB_IDENTITY;
             } else {
                 ditype_sub = Types.TYPE_SUB_DEFAULT;
             }
@@ -423,7 +421,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * Those wishing to determine the auto-increment status of a table column
      * in isolation from ResultSetMetaData can do so by inspecting the
-     * corresponding value of the SYSTEM_COLUMNS.IS_IDENTITY BIT column which
+     * corresponding value of the SYSTEM_COLUMNS.IS_IDENTITY BOOLEAN column which
      * is also currently included (in a fashion proprietary to HSQLDB) as the
      * last column of the jdbcDatabaseMetaData.getColumns() result.
      *

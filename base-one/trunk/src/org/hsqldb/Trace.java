@@ -69,7 +69,9 @@ package org.hsqldb;
 
 import java.io.PrintWriter;
 import java.sql.DriverManager;
+
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+
 /**
  * handles creation and reporting of error messages and throwing HsqlException
  *
@@ -571,8 +573,9 @@ public class Trace extends PrintWriter {
 
     static {
         try {
-            TRACE          = TRACE || Boolean.getBoolean("hsqldb.trace");
-            TRACESYSTEMOUT = TRACESYSTEMOUT || Boolean.getBoolean("hsqldb.tracesystemout");
+            TRACE = TRACE || Boolean.getBoolean("hsqldb.trace");
+            TRACESYSTEMOUT = TRACESYSTEMOUT
+                             || Boolean.getBoolean("hsqldb.tracesystemout");
         } catch (Exception e) {}
     }
 
@@ -998,13 +1001,17 @@ public class Trace extends PrintWriter {
      * Returns the stack trace for doAssert()
      */
     private static String getStackTrace() {
+
         try {
             Exception e = new TraceException();
+
             throw e;
-        } catch (Exception e1){
+        } catch (Exception e1) {
             HsqlByteArrayOutputStream os = new HsqlByteArrayOutputStream();
-            PrintWriter pw = new PrintWriter(os,true);
+            PrintWriter               pw = new PrintWriter(os, true);
+
             e1.printStackTrace(pw);
+
             return os.toString();
         }
     }
@@ -1126,8 +1133,7 @@ public class Trace extends PrintWriter {
                          String error) throws HsqlException {
 
         if (!condition) {
-
-            if (error == null){
+            if (error == null) {
                 error = "";
             }
 

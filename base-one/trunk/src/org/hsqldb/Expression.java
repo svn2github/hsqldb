@@ -1821,13 +1821,13 @@ public class Expression {
                     }
                 }
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
                 break;
 
             case LIKE :
                 resolveTypeForLike();
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
                 break;
 
             case AND : {
@@ -1846,15 +1846,15 @@ public class Expression {
                     eArg2    = null;
                 } else {
                     if (eArg.isParam) {
-                        eArg.dataType = Types.BIT;
+                        eArg.dataType = Types.BOOLEAN;
                     }
 
                     if (eArg2.isParam) {
-                        eArg2.dataType = Types.BIT;
+                        eArg2.dataType = Types.BOOLEAN;
                     }
                 }
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
 
                 break;
             }
@@ -1874,15 +1874,15 @@ public class Expression {
                     eArg2    = null;
                 } else {
                     if (eArg.isParam) {
-                        eArg.dataType = Types.BIT;
+                        eArg.dataType = Types.BOOLEAN;
                     }
 
                     if (eArg2.isParam) {
-                        eArg2.dataType = Types.BIT;
+                        eArg2.dataType = Types.BOOLEAN;
                     }
                 }
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
 
                 break;
             }
@@ -1892,23 +1892,23 @@ public class Expression {
                                       : FALSE;
                     eArg     = null;
                 } else if (eArg.isParam) {
-                    eArg.dataType = Types.BIT;
+                    eArg.dataType = Types.BOOLEAN;
                 }
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
                 break;
 
             case IN :
                 resolveTypeForIn();
 
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
                 break;
 
             case EXISTS :
 
                 // NOTE: no such thing as a param arg if expression is EXISTS
                 // Also, cannot detect if result is fixed value
-                dataType = Types.BIT;
+                dataType = Types.BOOLEAN;
                 break;
 
             /** @todo fredt - set the correct return type */
@@ -1953,7 +1953,7 @@ public class Expression {
 
                     // condition is a paramter marker,
                     // as in casewhen(?, v1, v1)
-                    eArg.dataType = Types.BIT;
+                    eArg.dataType = Types.BOOLEAN;
                 }
 
                 dataType = eArg2.dataType;

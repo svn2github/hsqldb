@@ -216,7 +216,7 @@ final class DITableInfo {
 
                 break;
             }
-            case Types.BIT : {
+            case Types.BOOLEAN : {
                 size = 1;
 
                 break;

@@ -385,6 +385,12 @@ class DatabaseInformationMain extends DatabaseInformation {
             case SYSTEM_ALLTYPEINFO :
                 return SYSTEM_ALLTYPEINFO();
 
+            case SYSTEM_CHECK_CONSTRAINTS :
+                return SYSTEM_CHECK_CONSTRAINTS();
+
+            case SYSTEM_SEQUENCES :
+                return SYSTEM_SEQUENCES();
+
             default :
                 return null;
         }
@@ -422,7 +428,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_USAGE_PRIVILEGES] =
             sysTableSessionDependent[SYSTEM_TABLE_CONSTRAINTS] =
             sysTableSessionDependent[SYSTEM_CHECK_COLUMN_USAGE] =
-            sysTableSessionDependent[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE] =
+            sysTableSessionDependent[SYSTEM_CHECK_ROUTINE_USAGE] =
             sysTableSessionDependent[SYSTEM_CHECK_TABLE_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_COLUMN_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =
@@ -736,7 +742,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
             addColumn(t, "NULLABLE", Types.SMALLINT, false);         // not null
-            addColumn(t, "IN_KEY", Types.BIT, false);                // not null
+            addColumn(t, "IN_KEY", Types.BOOLEAN, false);            // not null
 
             // order: SCOPE
             // for unique:  TABLE_CAT, TABLE_SCHEM, TABLE_NAME, COLUMN_NAME
@@ -1403,7 +1409,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * TABLE_CAT        VARCHAR   table's catalog
      * TABLE_SCHEM      VARCHAR   simple name of table's schema
      * TABLE_NAME       VARCHAR   simple name of the table using the index
-     * NON_UNIQUE       BIT       can index values be non-unique?
+     * NON_UNIQUE       BOOLEAN   can index values be non-unique?
      * INDEX_QUALIFIER  VARCHAR   catalog in which the index is defined
      * INDEX_NAME       VARCHAR   simple name of the index
      * TYPE             SMALLINT  index type: { Clustered | Hashed | Other }
@@ -1430,7 +1436,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);           // NOT NULL
-            addColumn(t, "NON_UNIQUE", Types.BIT, false);               // NOT NULL
+            addColumn(t, "NON_UNIQUE", Types.BOOLEAN, false);           // NOT NULL
             addColumn(t, "INDEX_QUALIFIER", Types.VARCHAR);
             addColumn(t, "INDEX_NAME", Types.VARCHAR);
             addColumn(t, "TYPE", Types.SMALLINT, false);                // NOT NULL
@@ -2053,7 +2059,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *                                      "DERIVED" | NULL } (not implemented)
      * HSQLDB_TYPE               VARCHAR   HSQLDB-specific type:
      *                                     {"MEMORY" | "CACHED" | "TEXT" | ...}
-     * READ_ONLY                 BIT       TRUE if table is read-only,
+     * READ_ONLY                 BOOLEAN   TRUE if table is read-only,
      *                                     else FALSE.
      * </pre> <p>
      *
@@ -2090,7 +2096,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             // extended
             // ------------------------------------------------------------
             addColumn(t, "HSQLDB_TYPE", Types.VARCHAR);
-            addColumn(t, "READ_ONLY", Types.BIT, false);         // not null
+            addColumn(t, "READ_ONLY", Types.BOOLEAN, false);     // not null
 
             // ------------------------------------------------------------
             // order TABLE_TYPE, TABLE_SCHEM and TABLE_NAME
@@ -2242,15 +2248,15 @@ class DatabaseInformationMain extends DatabaseInformation {
      *                              create parameter keywords.
      *                              - for human consumption only
      * NULLABLE           SMALLINT  {No Nulls | Nullable | Unknown}
-     * CASE_SENSITIVE     BIT       case-sensitive in collations/comparisons?
+     * CASE_SENSITIVE     BOOLEAN   case-sensitive in collations/comparisons?
      * SEARCHABLE         SMALLINT  {None | Char (Only WHERE .. LIKE) |
      *                               Basic (Except WHERE .. LIKE) |
      *                               Searchable (All forms)}
-     * UNSIGNED_ATTRIBUTE BIT       {TRUE  (unsigned) | FALSE (signed) |
+     * UNSIGNED_ATTRIBUTE BOOLEAN   {TRUE  (unsigned) | FALSE (signed) |
      *                               NULL (non-numeric or not applicable)}
-     * FIXED_PREC_SCALE   BIT       {TRUE (fixed) | FALSE (variable) |
+     * FIXED_PREC_SCALE   BOOLEAN   {TRUE (fixed) | FALSE (variable) |
      *                               NULL (non-numeric or not applicable)}
-     * AUTO_INCREMENT     BIT       automatic unique value generated for
+     * AUTO_INCREMENT     BOOLEAN   automatic unique value generated for
      *                              inserts and updates when no value or
      *                              NULL specified?
      * LOCAL_TYPE_NAME    VARCHAR   localized name of data type;
@@ -2289,11 +2295,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
             addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
             addColumn(t, "NULLABLE", Types.SMALLINT);
-            addColumn(t, "CASE_SENSITIVE", Types.BIT);
+            addColumn(t, "CASE_SENSITIVE", Types.BOOLEAN);
             addColumn(t, "SEARCHABLE", Types.SMALLINT);
-            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BIT);
-            addColumn(t, "FIXED_PREC_SCALE", Types.BIT);
-            addColumn(t, "AUTO_INCREMENT", Types.BIT);
+            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BOOLEAN);
+            addColumn(t, "FIXED_PREC_SCALE", Types.BOOLEAN);
+            addColumn(t, "AUTO_INCREMENT", Types.BOOLEAN);
             addColumn(t, "LOCAL_TYPE_NAME", Types.VARCHAR);
             addColumn(t, "MINIMUM_SCALE", Types.SMALLINT);
             addColumn(t, "MAXIMUM_SCALE", Types.SMALLINT);
@@ -2348,15 +2354,15 @@ class DatabaseInformationMain extends DatabaseInformation {
      *                              create parameter keywords.
      *                              - for human consumption only
      * NULLABLE           SMALLINT  { No Nulls | Nullable | Unknown }
-     * CASE_SENSITIVE     BIT       case-sensitive in collations/comparisons?
+     * CASE_SENSITIVE     BOOLEAN   case-sensitive in collations/comparisons?
      * SEARCHABLE         SMALLINT  { None | Char (Only WHERE .. LIKE) |
      *                                Basic (Except WHERE .. LIKE) |
      *                                Searchable (All forms) }
-     * UNSIGNED_ATTRIBUTE BIT       { TRUE  (unsigned) | FALSE (signed) |
+     * UNSIGNED_ATTRIBUTE BOOLEAN   { TRUE  (unsigned) | FALSE (signed) |
      *                                NULL (non-numeric or not applicable) }
-     * FIXED_PREC_SCALE   BIT       { TRUE (fixed) | FALSE (variable) |
+     * FIXED_PREC_SCALE   BOOLEAN   { TRUE (fixed) | FALSE (variable) |
      *                                NULL (non-numeric or not applicable) }
-     * AUTO_INCREMENT     BIT       automatic unique value generated for
+     * AUTO_INCREMENT     BOOLEAN   automatic unique value generated for
      *                              inserts and updates when no value or
      *                              NULL specified?
      * LOCAL_TYPE_NAME    VARCHAR   Localized name of data type;
@@ -2370,8 +2376,8 @@ class DatabaseInformationMain extends DatabaseInformation {
      * NUM_PREC_RADIX     INTEGER   numeric base w.r.t # of digits reported
      *                              in PRECISION column (typically 10)
      * INTERVAL_PRECISION INTEGER   interval leading precision (not implemented)
-     * AS_TAB_COL         BIT       type supported as table column?
-     * AS_PROC_COL        BIT       type supported as procedure column?
+     * AS_TAB_COL         BOOLEAN   type supported as table column?
+     * AS_PROC_COL        BOOLEAN   type supported as procedure column?
      * MAX_PREC_ACT       BIGINT    like PRECISION unless value would be
      *                              truncated using INTEGER
      * MIN_SCALE_ACT      INTEGER   like MINIMUM_SCALE unless value would be
@@ -2379,14 +2385,14 @@ class DatabaseInformationMain extends DatabaseInformation {
      * MAX_SCALE_ACT      INTEGER   like MAXIMUM_SCALE unless value would be
      *                              truncated using SMALLINT
      * COL_ST_CLS_NAME    VARCHAR   Java Class FQN of in-memory representation
-     * COL_ST_IS_SUP      BIT       is COL_ST_CLS_NAME supported under the
+     * COL_ST_IS_SUP      BOOLEAN   is COL_ST_CLS_NAME supported under the
      *                              hosting JVM and engine build option?
      * STD_MAP_CLS_NAME   VARCHAR   Java class FQN of standard JDBC mapping
-     * STD_MAP_IS_SUP     BIT       Is STD_MAP_CLS_NAME supported under the
+     * STD_MAP_IS_SUP     BOOLEAN   Is STD_MAP_CLS_NAME supported under the
      *                              hosting JVM?
      * CST_MAP_CLS_NAME   VARCHAR   Java class FQN of HSQLDB-provided JDBC
      *                              interface representation
-     * CST_MAP_IS_SUP     BIT       is CST_MAP_CLS_NAME supported under the
+     * CST_MAP_IS_SUP     BOOLEAN   is CST_MAP_CLS_NAME supported under the
      *                              hosting JVM and engine build option?
      * MCOL_JDBC          INTEGER   maximum character octet length representable
      *                              via JDBC interface
@@ -2420,11 +2426,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
             addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
             addColumn(t, "NULLABLE", Types.SMALLINT);
-            addColumn(t, "CASE_SENSITIVE", Types.BIT);
+            addColumn(t, "CASE_SENSITIVE", Types.BOOLEAN);
             addColumn(t, "SEARCHABLE", Types.SMALLINT);
-            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BIT);
-            addColumn(t, "FIXED_PREC_SCALE", Types.BIT);
-            addColumn(t, "AUTO_INCREMENT", Types.BIT);
+            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BOOLEAN);
+            addColumn(t, "FIXED_PREC_SCALE", Types.BOOLEAN);
+            addColumn(t, "AUTO_INCREMENT", Types.BOOLEAN);
             addColumn(t, "LOCAL_TYPE_NAME", Types.VARCHAR);
             addColumn(t, "MINIMUM_SCALE", Types.SMALLINT);
             addColumn(t, "MAXIMUM_SCALE", Types.SMALLINT);
@@ -2442,7 +2448,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             //-------------------------------------------
             // level of support
             //-------------------------------------------
-            addColumn(t, "AS_TAB_COL", Types.BIT);
+            addColumn(t, "AS_TAB_COL", Types.BOOLEAN);
 
             // for instance, some executable methods take Connection
             // or return non-serializable Object such as ResultSet, neither
@@ -2451,7 +2457,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             // Also, triggers take Object[] row, which we show as ARRAY
             // presently, although STRUCT would probably be better in the
             // future, as the row can actually contain mixed data types.
-            addColumn(t, "AS_PROC_COL", Types.BIT);
+            addColumn(t, "AS_PROC_COL", Types.BOOLEAN);
 
             //-------------------------------------------
             // actual values for attributes that cannot be represented
@@ -2465,20 +2471,20 @@ class DatabaseInformationMain extends DatabaseInformation {
             // how do we store this internally as a column value?
             //-------------------------------------------
             addColumn(t, "COL_ST_CLS_NAME", Types.VARCHAR);
-            addColumn(t, "COL_ST_IS_SUP", Types.BIT);
+            addColumn(t, "COL_ST_IS_SUP", Types.BOOLEAN);
 
             //-------------------------------------------
             // what is the standard Java mapping for the type?
             //-------------------------------------------
             addColumn(t, "STD_MAP_CLS_NAME", Types.VARCHAR);
-            addColumn(t, "STD_MAP_IS_SUP", Types.BIT);
+            addColumn(t, "STD_MAP_IS_SUP", Types.BOOLEAN);
 
             //-------------------------------------------
             // what, if any, custom mapping do we provide?
             // (under the current build options and hosting VM)
             //-------------------------------------------
             addColumn(t, "CST_MAP_CLS_NAME", Types.VARCHAR);
-            addColumn(t, "CST_MAP_IS_SUP", Types.BIT);
+            addColumn(t, "CST_MAP_IS_SUP", Types.BOOLEAN);
 
             //-------------------------------------------
             // what is the max representable and actual
@@ -2673,7 +2679,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_USERS]);
 
             addColumn(t, "USER", Types.VARCHAR, false);
-            addColumn(t, "ADMIN", Types.BIT, false);
+            addColumn(t, "ADMIN", Types.BOOLEAN, false);
 
             // order: USER
             // true PK
@@ -2699,6 +2705,300 @@ class DatabaseInformationMain extends DatabaseInformation {
             row[1] = ValuePool.getBoolean(user.isAdmin());
 
             t.insert(row, null);
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;
+    }
+
+    /**
+     * The SYSTEM_CHECK_CONSTRAINTS table has one row for each domain
+     * constraint, table check constraint, and assertion. <p>
+     *
+     * <b>Definition:</b><p>
+     *
+     * <pre>
+     * CREATE TABLE SYSTEM_CHECK_CONSTRAINTS (
+     *      CONSTRAINT_CATALOG  VARCHAR NULL,
+     *      CONSTRAINT_SCHEMA   VARCHAR NULL,
+     *      CONSTRAINT_NAME     VARCHAR NOT NULL,
+     *      CHECK_CLAUSE        VARCHAR NOT NULL,
+     *
+     *      UNIQUE ( CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME )
+     * )
+     * </pre>
+     *
+     * <b>Description:</b><p>
+     *
+     * <ol>
+     * <li> The values of CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA and
+     *      CONSTRAINT_NAME are the catalog name, unqualified schema name,
+     *      and qualified identifier, respectively, of the constraint being
+     *      described. <p>
+     *
+     * <li> Case: <p>
+     *
+     *      <table>
+     *          <tr>
+     *               <td valign="top" halign="left">a)</td>
+     *               <td> If the character representation of the
+     *                    &lt;search condition&gt; contained in the
+     *                    &lt;check constraint definition&gt;,
+     *                    &lt;domain constraint definition&gt;, or
+     *                    &lt;assertion definition&gt; that defined
+     *                    the check constraint being described can be
+     *                    represented without truncation, then the
+     *                    value of CHECK_CLAUSE is that character
+     *                    representation. </td>
+     *          </tr>
+     *          <tr>
+     *              <td align="top" halign="left">b)</td>
+     *              <td>Otherwise, the value of CHECK_CLAUSE is the
+     *                  null value.</td>
+     *          </tr>
+     *      </table>
+     * </ol>
+     */
+    Table SYSTEM_CHECK_CONSTRAINTS() throws HsqlException {
+
+        Table t = sysTables[SYSTEM_CHECK_CONSTRAINTS];
+
+        if (t == null) {
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_CHECK_CONSTRAINTS]);
+
+            addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
+            addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);
+            addColumn(t, "CONSTRAINT_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "CHECK_CLAUSE", Types.VARCHAR, false);       // not null
+
+            // false PK, as FKTABLE_CAT, FKTABLE_SCHEM and/or FK_NAME
+            // may be null
+            t.createPrimaryKey(null, new int[] {
+                0, 1, 2
+            }, false);
+
+            return t;
+        }
+
+        // calculated column values
+        // Intermediate holders
+        Iterator      tables;
+        Table         table;
+        HsqlArrayList tableConstraints;
+        int           constraintCount;
+        Constraint    constraint;
+        HsqlArrayList constraintList;
+        Object[]      row;
+
+        // column number mappings
+        final int icons_cat    = 0;
+        final int icons_schem  = 1;
+        final int icons_name   = 2;
+        final int icons_clause = 3;
+
+        tables         = database.getTables().iterator();
+        constraintList = new HsqlArrayList();
+
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
+
+            if (!isAccessibleTable(table)) {
+                continue;
+            }
+
+            tableConstraints = table.getConstraints();
+            constraintCount  = tableConstraints.size();
+
+            for (int i = 0; i < constraintCount; i++) {
+                constraint = (Constraint) tableConstraints.get(i);
+
+                if (constraint.getType() == Constraint.CHECK) {
+                    constraintList.add(constraint);
+                }
+            }
+        }
+
+        for (int i = 0; i < constraintList.size(); i++) {
+            row              = t.getNewRow();
+            constraint       = (Constraint) constraintList.get(i);
+            table            = constraint.getMain();
+            row[icons_cat]   = ns.getCatalogName(table);
+            row[icons_schem] = ns.getSchemaName(table);
+            row[icons_name]  = constraint.constName.name;
+
+            try {
+                row[icons_clause] = constraint.core.check.getDDL();
+            } catch (Exception e) {}
+
+            t.insert(row, session);
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;
+    }
+
+    /**
+     * The SYSTEM_SEQUENCES table has one row for each external sequence
+     * generator. <p>
+     *
+     * <b>Definition:</b> <p>
+     *
+     * <pre>
+     * CREATE TABLE SYSTEM_SEQUENCES (
+     *      SEQUENCE_CATALOG     VARCHAR NULL,
+     *      SEQUENCE_SCHEMA      VARCHAR NULL,
+     *      SEQUENCE_NAME        VARCHAR NOT NULL,
+     *      DTD_IDENTIFIER       VARCHAR NOT NULL,
+     *      MAXIMUM_VALUE        VARCHAR NOT NULL,
+     *      MINIMUM_VALUE        VARCHAR NOT NULL,
+     *      INCREMENT            VARCHAR NOT NULL,
+     *      CYCLE_OPTION         VARCHAR NOT NULL,
+     *      START_WITH           VARCHAR NOT NULL,
+     *
+     *      CHECK(CYCLE_OPTION IN('YES', 'NO')),
+     *
+     *      CHECK(CAST(START_WITH AS BIGINT)
+     *          BETWEEN CAST(MINIMUM_VALUE AS BIGINT)
+     *              AND CAST(MAXIMUM_VALUE AS BIGINT)),
+     *
+     *      UNIQUE(SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME)
+     * )
+     * </pre>
+     *
+     * <b>DESCRIPTION:</b><p>
+     *
+     * <ol>
+     * <li> The values of SEQUENCE_CATALOG, SEQUENCE_SCHEMA, and
+     *      SEQUENCE_NAME are the catalog name, unqualified schema name,
+     *      and qualified identifier, respectively, of the sequence generator
+     *      being described. <p>
+     *
+     * <li> The values of SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME, and
+     *      DTD_IDENTIFIER are the values of OBJECT_CATALOG, OBJECT_SCHEMA,
+     *      OBJECT_NAME, and DTD_IDENTIFIER, respectively, of the row in
+     *      DATA_TYPE_DESCRIPTOR (not yet implemented) that describes the data
+     *      type of the sequence generator. <p>
+     *
+     * <li> The values of MAXIMUM_VALUE, MINIMUM_VALUE, and INCREMENT are the
+     *      character representations of maximum value, minimum value,
+     *      and increment, respectively, of the sequence generator being
+     *      described. <p>
+     *
+     * <li> The values of CYCLE_OPTION have the following meanings: <p>
+     *
+     *      <table border cellpadding="3">
+     *          <tr>
+     *              <td nowrap>YES</td>
+     *              <td nowrap>The cycle option of the sequence generator
+     *                         is CYCLE.</td>
+     *          <tr>
+     *              <td nowrap>NO</td>
+     *              <td nowrap>The cycle option of the sequence generator is
+     *                         NO CYCLE.</td>
+     *          </tr>
+     *      </table> <p>
+     *
+     * <li> The value of START_WITH is HSQLDB-specific (not in the SQL 200n
+     *      spec).  <p>
+     *
+     *      It is the character representation of the START WITH clause
+     *      value that would be required to recreate or ALTER RESET START WITH
+     *      the described SEQUENCE, such that its behaviour would be identical
+     *      to that exhibited at the instant this table is materialized in the
+     *      session context. <p>
+     *
+     *      In short, this is the character representation of value that
+     *      would be generated by NEXT VALUE FOR at the instant this table
+     *      is materialized in session context. <p>
+     *
+     */
+    Table SYSTEM_SEQUENCES() throws HsqlException {
+
+        Table t = sysTables[SYSTEM_SEQUENCES];
+
+        if (t == null) {
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_SEQUENCES]);
+
+            addColumn(t, "SEQUENCE_CATALOG", Types.VARCHAR);
+            addColumn(t, "SEQUENCE_SCHEMA", Types.VARCHAR);
+            addColumn(t, "SEQUENCE_NAME", Types.VARCHAR, true);     // not null
+            addColumn(t, "DTD_IDENTIFIER", Types.VARCHAR, true);    // not null
+            addColumn(t, "MAXIMUM_VALUE", Types.VARCHAR, true);     // not null
+            addColumn(t, "MINIMUM_VALUE", Types.VARCHAR, true);     // not null
+            addColumn(t, "INCREMENT", Types.VARCHAR, true);         // not null
+            addColumn(t, "CYCLE_OPTION", Types.VARCHAR, true);      // not null
+
+            // HSQLDB-specific
+            addColumn(t, "START_WITH", Types.VARCHAR, true);        // not null
+
+            // order SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
+            // false PK, as SCHEMA and/or CATALOG may be null
+            t.createPrimaryKey(null, new int[] {
+                0, 1, 2
+            }, false);
+
+            return t;
+        }
+
+        //
+        final int iseq_cat    = 0;
+        final int iseq_schem  = 1;
+        final int iseq_name   = 2;
+        final int iseq_dtdid  = 3;
+        final int iseq_max    = 4;
+        final int iseq_min    = 5;
+        final int iseq_incr   = 6;
+        final int iseq_cycopt = 7;
+        final int iseq_start  = 8;
+
+        //
+        final String min = ValuePool.getString("0");
+        final String intMax =
+            ValuePool.getString(String.valueOf(Integer.MAX_VALUE));
+
+        // 19 is longer than max value pool string length (15)
+        final String longMax     = String.valueOf(Long.MAX_VALUE);
+        final String cycleOption = ValuePool.getString("NO");
+
+        //
+        Iterator       it;
+        Object[]       row;
+        String         sequenceName;
+        NumberSequence sequence;
+        int            dataType;
+
+        it = database.sequenceManager.sequenceMap.values().iterator();
+
+        while (it.hasNext()) {
+            row              = t.getNewRow();
+            sequence         = (NumberSequence) it.next();
+            dataType         = sequence.getType();
+            sequenceName     = sequence.getName().name;
+            row[iseq_name]   = sequenceName;
+            row[iseq_dtdid]  = Types.getTypeString(dataType);
+            row[iseq_min]    = min;
+            row[iseq_incr]   = String.valueOf(sequence.getIncrement());
+            row[iseq_cycopt] = cycleOption;
+            row[iseq_start]  = String.valueOf(sequence.peek());
+
+            switch (dataType) {
+
+                case Types.INTEGER : {
+                    row[iseq_max] = intMax;
+
+                    break;
+                }
+                case Types.BIGINT :
+                default : {
+                    row[iseq_max] = longMax;
+
+                    break;
+                }
+            }
+
+            t.insert(row, session);
         }
 
         t.setDataReadOnly(true);

@@ -242,7 +242,6 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
                     o = readTimestamp();
                     break;
 
-                case Types.BIT :
                 case Types.BOOLEAN :
                     o = readBit();
                     break;

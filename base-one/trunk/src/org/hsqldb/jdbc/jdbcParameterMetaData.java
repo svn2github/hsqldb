@@ -304,8 +304,6 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         if (t == Types.VARCHAR_IGNORECASE) {
             t  = Types.VARCHAR;
             ts = Types.TYPE_SUB_IGNORECASE;
-        } else if (isIdentity[param]) {
-            ts = Types.TYPE_SUB_IDENTITY;
         } else {
             ts = Types.TYPE_SUB_DEFAULT;
         }

@@ -483,9 +483,9 @@ public class Session implements SessionInterface {
 
         try {
             database.logger.writeToLog(this,
-                                        Token.T_ROLLBACK + " " + Token.T_TO
-                                        + " " + Token.T_SAVEPOINT + " "
-                                        + name);
+                                       Token.T_ROLLBACK + " " + Token.T_TO
+                                       + " " + Token.T_SAVEPOINT + " "
+                                       + name);
         } catch (HsqlException e) {}
     }
 
@@ -716,8 +716,8 @@ public class Session implements SessionInterface {
 
         parser.reset(sql);
 
-        token   = tokenizer.getString();
-        cmd     = Token.get(token);
+        token = tokenizer.getString();
+        cmd   = Token.get(token);
 
         switch (cmd) {
 
@@ -761,13 +761,13 @@ public class Session implements SessionInterface {
         // fredt - now accepts semicolon and whitespace at the end of statement
         // fredt - investigate if it should or not for prepared statements
         if (cs.type != cs.DDL) {
-        while (tokenizer.getPosition() < tokenizer.getLength()) {
-            token = tokenizer.getString();
+            while (tokenizer.getPosition() < tokenizer.getLength()) {
+                token = tokenizer.getString();
 
-            if (token.length() != 0 &&!token.equals(Token.T_SEMICOLON)) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                if (token.length() != 0 &&!token.equals(Token.T_SEMICOLON)) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
             }
-        }
         }
 
         // - need to be able to key cs against its sql in statement pool
@@ -918,8 +918,8 @@ public class Session implements SessionInterface {
     private Result performPostExecute(Result r) {
 
         try {
-            if (database != null){
-            database.sequenceManager.logSequences(this, database.logger);
+            if (database != null) {
+                database.sequenceManager.logSequences(this, database.logger);
             }
 
             return r;

@@ -425,6 +425,9 @@ implements java.sql.PreparedStatement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <B>HSQLDB-Specific Information:</B> <p>
+     *
+     * HSQLDB 1.7.2 uses the BOOLEAN type instead of BIT. <p>
      * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
@@ -1677,7 +1680,7 @@ implements java.sql.PreparedStatement {
 
         super(c, type);
 
-        sql                   = c.nativeSQL(sql);
+        sql = c.nativeSQL(sql);
 
         resultOut.setResultType(ResultConstants.SQLPREPARE);
         resultOut.setMainString(sql);

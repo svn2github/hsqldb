@@ -311,7 +311,7 @@ public class RowOutputBinary extends RowOutputBase {
                         }
                         break;
 
-                    case Types.BIT :
+                    case Types.BOOLEAN :
                         s += 1;
                         break;
 

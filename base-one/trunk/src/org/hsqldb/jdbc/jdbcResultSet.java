@@ -592,7 +592,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean getBoolean(int columnIndex) throws SQLException {
 
-        Object o = getColumnInType(columnIndex, Types.BIT);
+        Object o = getColumnInType(columnIndex, Types.BOOLEAN);
 
         return o == null ? false
                          : ((Boolean) o).booleanValue();

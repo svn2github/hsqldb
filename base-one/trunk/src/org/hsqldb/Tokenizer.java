@@ -525,7 +525,7 @@ public class Tokenizer {
                 return Types.DECIMAL;
 
             case BOOLEAN :
-                return Types.BIT;
+                return Types.BOOLEAN;
 
             case DATE :
                 return Types.DATE;

@@ -138,20 +138,14 @@ extends org.hsqldb.DatabaseInformationMain {
             case SYSTEM_TEXTTABLES :
                 return SYSTEM_TEXTTABLES();
 
-            case SYSTEM_SEQUENCES :
-                return SYSTEM_SEQUENCES();
-
             case SYSTEM_USAGE_PRIVILEGES :
                 return SYSTEM_USAGE_PRIVILEGES();
-
-            case SYSTEM_CHECK_CONSTRAINTS :
-                return SYSTEM_CHECK_CONSTRAINTS();
 
             case SYSTEM_CHECK_COLUMN_USAGE :
                 return SYSTEM_CHECK_COLUMN_USAGE();
 
-            case SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE :
-                return SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE();
+            case SYSTEM_CHECK_ROUTINE_USAGE :
+                return SYSTEM_CHECK_ROUTINE_USAGE();
 
             case SYSTEM_CHECK_TABLE_USAGE :
                 return SYSTEM_CHECK_TABLE_USAGE();
@@ -1049,9 +1043,9 @@ extends org.hsqldb.DatabaseInformationMain {
      * SESSION_ID         INTEGER   session identifier
      * CONNECTED          TIMESTAMP time at which session was created
      * USER_NAME          VARCHAR   db user name of current session user
-     * IS_ADMIN           BIT       is session user an admin user?
-     * AUTOCOMMIT         BIT       is session in autocommit mode?
-     * READONLY           BIT       is session in read-only mode?
+     * IS_ADMIN           BOOLEAN   is session user an admin user?
+     * AUTOCOMMIT         BOOLEAN   is session in autocommit mode?
+     * READONLY           BOOLEAN   is session in read-only mode?
      * MAXROWS            INTEGER   session's MAXROWS setting
      * LAST_IDENTITY      INTEGER   last identity value used by this session
      * TRANSACTION_SIZE   INTEGER   # of undo items in current transaction
@@ -1071,9 +1065,9 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "SESSION_ID", Types.INTEGER, false);
             addColumn(t, "CONNECTED", Types.TIMESTAMP, false);
             addColumn(t, "USER_NAME", Types.VARCHAR, false);
-            addColumn(t, "IS_ADMIN", Types.BIT, false);
-            addColumn(t, "AUTOCOMMIT", Types.BIT, false);
-            addColumn(t, "READONLY", Types.BIT, false);
+            addColumn(t, "IS_ADMIN", Types.BOOLEAN, false);
+            addColumn(t, "AUTOCOMMIT", Types.BOOLEAN, false);
+            addColumn(t, "READONLY", Types.BOOLEAN, false);
             addColumn(t, "MAXROWS", Types.INTEGER, false);
 
             // Note: some sessions may have a NULL LAST_IDENTITY value
@@ -1230,10 +1224,10 @@ extends org.hsqldb.DatabaseInformationMain {
      * FIELD_SEPARATOR           VARCHAR   default field separator
      * VARCHAR_SEPARATOR         VARCAHR   varchar field separator
      * LONGVARCHAR_SEPARATOR     VARCHAR   longvarchar field separator
-     * IS_IGNORE_FIRST           BIT       ignores first line of file?
-     * IS_QUOTED                 BIT       fields are quoted if necessary?
-     * IS_ALL_QUOTED             BIT       all fields are quoted?
-     * IS_DESC                   BIT       read rows starting at end of file?
+     * IS_IGNORE_FIRST           BOOLEAN   ignores first line of file?
+     * IS_QUOTED                 BOOLEAN   fields are quoted if necessary?
+     * IS_ALL_QUOTED             BOOLEAN   all fields are quoted?
+     * IS_DESC                   BOOLEAN   read rows starting at end of file?
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing the text attributes
@@ -1257,10 +1251,10 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "FIELD_SEPARATOR", Types.VARCHAR);
             addColumn(t, "VARCHAR_SEPARATOR", Types.VARCHAR);
             addColumn(t, "LONGVARCHAR_SEPARATOR", Types.VARCHAR);
-            addColumn(t, "IS_IGNORE_FIRST", Types.BIT);
-            addColumn(t, "IS_ALL_QUOTED", Types.BIT);
-            addColumn(t, "IS_QUOTED", Types.BIT);
-            addColumn(t, "IS_DESC", Types.BIT);
+            addColumn(t, "IS_IGNORE_FIRST", Types.BOOLEAN);
+            addColumn(t, "IS_ALL_QUOTED", Types.BOOLEAN);
+            addColumn(t, "IS_QUOTED", Types.BOOLEAN);
+            addColumn(t, "IS_DESC", Types.BOOLEAN);
 
             // ------------------------------------------------------------
             t.createPrimaryKey();
@@ -1834,7 +1828,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *                              corresponding &lt;view descriptor&gt;.
      * CHECK_OPTION     VARCHAR     {"CASCADED" | "LOCAL" | "NONE"}
      * IS_UPDATABLE     VARCHAR     {"YES" | "NO"}
-     * VALID            BIT         TRUE: VIEW_DEFINITION currently represents
+     * VALID            BOOLEAN     TRUE: VIEW_DEFINITION currently represents
      *                              a valid &lt;query expression&gt.
      *                              FALSE: VIEW_DEFINITION cannot currently be
      *                              parsed to a valid &lt;query expression&gt;.
@@ -1864,7 +1858,7 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "VIEW_DEFINITION", Types.VARCHAR, true);    // not null
             addColumn(t, "CHECK_OPTION", Types.VARCHAR, true);       // not null
             addColumn(t, "IS_UPDATABLE", Types.VARCHAR, true);       // not null
-            addColumn(t, "VALID", Types.BIT, true);                  // not null
+            addColumn(t, "VALID", Types.BOOLEAN, true);              // not null
 
             // order TABLE_NAME
             // added for unique: TABLE_SCHEMA, TABLE_CATALOG
@@ -2156,173 +2150,6 @@ extends org.hsqldb.DatabaseInformationMain {
     }
 
     /**
-     * The SYSTEM_SEQUENCES table has one row for each external sequence
-     * generator. <p>
-     *
-     * <b>Definition:</b> <p>
-     *
-     * <pre>
-     * CREATE TABLE SYSTEM_SEQUENCES (
-     *      SEQUENCE_CATALOG     VARCHAR NULL,
-     *      SEQUENCE_SCHEMA      VARCHAR NULL,
-     *      SEQUENCE_NAME        VARCHAR NOT NULL,
-     *      DTD_IDENTIFIER       VARCHAR NOT NULL,
-     *      MAXIMUM_VALUE        VARCHAR NOT NULL,
-     *      MINIMUM_VALUE        VARCHAR NOT NULL,
-     *      INCREMENT            VARCHAR NOT NULL,
-     *      CYCLE_OPTION         VARCHAR NOT NULL,
-     *      START_WITH           VARCHAR NOT NULL,
-     *
-     *      CHECK(CYCLE_OPTION IN('YES', 'NO')),
-     *
-     *      CHECK(CAST(START_WITH AS BIGINT)
-     *          BETWEEN CAST(MINIMUM_VALUE AS BIGINT)
-     *              AND CAST(MAXIMUM_VALUE AS BIGINT)),
-     *
-     *      UNIQUE(SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME)
-     * )
-     * </pre>
-     *
-     * <b>DESCRIPTION:</b><p>
-     *
-     * <ol>
-     * <li> The values of SEQUENCE_CATALOG, SEQUENCE_SCHEMA, and
-     *      SEQUENCE_NAME are the catalog name, unqualified schema name,
-     *      and qualified identifier, respectively, of the sequence generator
-     *      being described. <p>
-     *
-     * <li> The values of SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME, and
-     *      DTD_IDENTIFIER are the values of OBJECT_CATALOG, OBJECT_SCHEMA,
-     *      OBJECT_NAME, and DTD_IDENTIFIER, respectively, of the row in
-     *      DATA_TYPE_DESCRIPTOR (not yet implemented) that describes the data
-     *      type of the sequence generator. <p>
-     *
-     * <li> The values of MAXIMUM_VALUE, MINIMUM_VALUE, and INCREMENT are the
-     *      character representations of maximum value, minimum value,
-     *      and increment, respectively, of the sequence generator being
-     *      described. <p>
-     *
-     * <li> The values of CYCLE_OPTION have the following meanings: <p>
-     *
-     *      <table border cellpadding="3">
-     *          <tr>
-     *              <td nowrap>YES</td>
-     *              <td nowrap>The cycle option of the sequence generator
-     *                         is CYCLE.</td>
-     *          <tr>
-     *              <td nowrap>NO</td>
-     *              <td nowrap>The cycle option of the sequence generator is
-     *                         NO CYCLE.</td>
-     *          </tr>
-     *      </table> <p>
-     *
-     * <li> The value of START_WITH is HSQLDB-specific (not in the SQL 200n
-     *      spec).  <p>
-     *
-     *      It is the character representation of the START WITH clause
-     *      value that would be required to recreate or ALTER RESET START WITH
-     *      the described SEQUENCE, such that its behaviour would be identical
-     *      to that exhibited at the instant this table is materialized in the
-     *      session context. <p>
-     *
-     *      In short, this is the character representation of value that
-     *      would be generated by NEXT VALUE FOR at the instant this table
-     *      is materialized in session context. <p>
-     *
-     */
-    Table SYSTEM_SEQUENCES() throws HsqlException {
-
-        Table t = sysTables[SYSTEM_SEQUENCES];
-
-        if (t == null) {
-            t = createBlankTable(sysTableHsqlNames[SYSTEM_SEQUENCES]);
-
-            addColumn(t, "SEQUENCE_CATALOG", Types.VARCHAR);
-            addColumn(t, "SEQUENCE_SCHEMA", Types.VARCHAR);
-            addColumn(t, "SEQUENCE_NAME", Types.VARCHAR, true);     // not null
-            addColumn(t, "DTD_IDENTIFIER", Types.VARCHAR, true);    // not null
-            addColumn(t, "MAXIMUM_VALUE", Types.VARCHAR, true);     // not null
-            addColumn(t, "MINIMUM_VALUE", Types.VARCHAR, true);     // not null
-            addColumn(t, "INCREMENT", Types.VARCHAR, true);         // not null
-            addColumn(t, "CYCLE_OPTION", Types.VARCHAR, true);      // not null
-
-            // HSQLDB-specific
-            addColumn(t, "START_WITH", Types.VARCHAR, true);        // not null
-
-            // order SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
-            // false PK, as SCHEMA and/or CATALOG may be null
-            t.createPrimaryKey(null, new int[] {
-                0, 1, 2
-            }, false);
-
-            return t;
-        }
-
-        //
-        final int iseq_cat    = 0;
-        final int iseq_schem  = 1;
-        final int iseq_name   = 2;
-        final int iseq_dtdid  = 3;
-        final int iseq_max    = 4;
-        final int iseq_min    = 5;
-        final int iseq_incr   = 6;
-        final int iseq_cycopt = 7;
-        final int iseq_start  = 8;
-
-        //
-        final String min = ValuePool.getString("0");
-        final String intMax =
-            ValuePool.getString(String.valueOf(Integer.MAX_VALUE));
-
-        // 19 is longer than max value pool string length (15)
-        final String longMax     = String.valueOf(Long.MAX_VALUE);
-        final String cycleOption = ValuePool.getString("NO");
-
-        //
-        Iterator       it;
-        Object[]       row;
-        String         sequenceName;
-        NumberSequence sequence;
-        int            dataType;
-
-        it = database.sequenceManager.sequenceMap.values().iterator();
-
-        while (it.hasNext()) {
-            row              = t.getNewRow();
-            sequence         = (NumberSequence) it.next();
-            dataType         = sequence.getType();
-            sequenceName     = sequence.getName().name;
-            row[iseq_name]   = sequenceName;
-            row[iseq_dtdid]  = Types.getTypeString(dataType);
-            row[iseq_min]    = min;
-            row[iseq_incr]   = String.valueOf(sequence.getIncrement());
-            row[iseq_cycopt] = cycleOption;
-            row[iseq_start]  = String.valueOf(sequence.peek());
-
-            switch (dataType) {
-
-                case Types.INTEGER : {
-                    row[iseq_max] = intMax;
-
-                    break;
-                }
-                case Types.BIGINT :
-                default : {
-                    row[iseq_max] = longMax;
-
-                    break;
-                }
-            }
-
-            t.insert(row, session);
-        }
-
-        t.setDataReadOnly(true);
-
-        return t;
-    }
-
-    /**
      * The SYSTEM_USAGE_PRIVILEGES table has one row for each usage privilege
      * descriptor. <p>
      *
@@ -2449,133 +2276,6 @@ extends org.hsqldb.DatabaseInformationMain {
             + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' from  SYSTEM_SEQUENCES");
 
         t.insert(rs, session);
-        t.setDataReadOnly(true);
-
-        return t;
-    }
-
-    /**
-     * The SYSTEM_CHECK_CONSTRAINTS table has one row for each domain
-     * constraint, table check constraint, and assertion. <p>
-     *
-     * <b>Definition:</b><p>
-     *
-     * <pre>
-     * CREATE TABLE SYSTEM_CHECK_CONSTRAINTS (
-     *      CONSTRAINT_CATALOG  VARCHAR NULL,
-     *      CONSTRAINT_SCHEMA   VARCHAR NULL,
-     *      CONSTRAINT_NAME     VARCHAR NOT NULL,
-     *      CHECK_CLAUSE        VARCHAR NOT NULL,
-     *
-     *      UNIQUE ( CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME )
-     * )
-     * </pre>
-     *
-     * <b>Description:</b><p>
-     *
-     * <ol>
-     * <li> The values of CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA and
-     *      CONSTRAINT_NAME are the catalog name, unqualified schema name,
-     *      and qualified identifier, respectively, of the constraint being
-     *      described. <p>
-     *
-     * <li> Case: <p>
-     *
-     *      <table>
-     *          <tr>
-     *               <td valign="top" halign="left">a)</td>
-     *               <td> If the character representation of the
-     *                    &lt;search condition&gt; contained in the
-     *                    &lt;check constraint definition&gt;,
-     *                    &lt;domain constraint definition&gt;, or
-     *                    &lt;assertion definition&gt; that defined
-     *                    the check constraint being described can be
-     *                    represented without truncation, then the
-     *                    value of CHECK_CLAUSE is that character
-     *                    representation. </td>
-     *          </tr>
-     *          <tr>
-     *              <td align="top" halign="left">b)</td>
-     *              <td>Otherwise, the value of CHECK_CLAUSE is the
-     *                  null value.</td>
-     *          </tr>
-     *      </table>
-     * </ol>
-     */
-    Table SYSTEM_CHECK_CONSTRAINTS() throws HsqlException {
-
-        Table t = sysTables[SYSTEM_CHECK_CONSTRAINTS];
-
-        if (t == null) {
-            t = createBlankTable(sysTableHsqlNames[SYSTEM_CHECK_CONSTRAINTS]);
-
-            addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
-            addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);
-            addColumn(t, "CONSTRAINT_NAME", Types.VARCHAR, false);    // not null
-            addColumn(t, "CHECK_CLAUSE", Types.VARCHAR, false);       // not null
-
-            // false PK, as FKTABLE_CAT, FKTABLE_SCHEM and/or FK_NAME
-            // may be null
-            t.createPrimaryKey(null, new int[] {
-                0, 1, 2
-            }, false);
-
-            return t;
-        }
-
-        // calculated column values
-        // Intermediate holders
-        Iterator      tables;
-        Table         table;
-        HsqlArrayList tableConstraints;
-        int           constraintCount;
-        Constraint    constraint;
-        HsqlArrayList constraintList;
-        Object[]      row;
-
-        // column number mappings
-        final int icons_cat    = 0;
-        final int icons_schem  = 1;
-        final int icons_name   = 2;
-        final int icons_clause = 3;
-
-        tables         = database.getTables().iterator();
-        constraintList = new HsqlArrayList();
-
-        while (tables.hasNext()) {
-            table = (Table) tables.next();
-
-            if (!isAccessibleTable(table)) {
-                continue;
-            }
-
-            tableConstraints = table.getConstraints();
-            constraintCount  = tableConstraints.size();
-
-            for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) tableConstraints.get(i);
-
-                if (constraint.getType() == Constraint.CHECK) {
-                    constraintList.add(constraint);
-                }
-            }
-        }
-
-        for (int i = 0; i < constraintList.size(); i++) {
-            row              = t.getNewRow();
-            constraint       = (Constraint) constraintList.get(i);
-            table            = constraint.getMain();
-            row[icons_cat]   = ns.getCatalogName(table);
-            row[icons_schem] = ns.getSchemaName(table);
-            row[icons_name]  = constraint.constName.name;
-
-            try {
-                row[icons_clause] = constraint.core.check.getDDL();
-            } catch (Exception e) {}
-
-            t.insert(row, session);
-        }
-
         t.setDataReadOnly(true);
 
         return t;
@@ -2750,7 +2450,7 @@ extends org.hsqldb.DatabaseInformationMain {
     }
 
     /**
-     * The CHECK_CONSTRAINT_ROUTINE_USAGE base table has one row for each
+     * The CHECK_ROUTINE_USAGE base table has one row for each
      * SQL-invoked routine identified as the subject routine of either a
      * &lt;routine invocation&gt;, a &lt;method reference&gt;, a
      * &lt;method invocation&gt;, or a &lt;static method invocation&gt;
@@ -2760,7 +2460,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * <b>Definition:</b> <p>
      *
      * <pre>
-     * CREATE TABLE SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE (
+     * CREATE TABLE SYSTEM_CHECK_ROUTINE_USAGE (
      *      CONSTRAINT_CATALOG      VARCHAR NULL,
      *      CONSTRAINT_SCHEMA       VARCHAR NULL,
      *      CONSTRAINT_NAME         VARCHAR NOT NULL,
@@ -2775,7 +2475,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * <b>Description:</b> <p>
      *
      * <ol>
-     * <li> The CHECK_CONSTRAINT_ROUTINE_USAGE table has one row for each
+     * <li> The CHECK_ROUTINE_USAGE table has one row for each
      *      SQL-invoked routine R identified as the subject routine of either a
      *      &lt;routine invocation&gt;, a &lt;method reference&gt;, a &lt;method
      *      invocation&gt;, or a &lt;static method invocation&gt; contained in
@@ -2794,13 +2494,13 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * </ol>
      */
-    Table SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE() throws HsqlException {
+    Table SYSTEM_CHECK_ROUTINE_USAGE() throws HsqlException {
 
-        Table t = sysTables[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE];
+        Table t = sysTables[SYSTEM_CHECK_ROUTINE_USAGE];
 
         if (t == null) {
             t = createBlankTable(
-                sysTableHsqlNames[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE]);
+                sysTableHsqlNames[SYSTEM_CHECK_ROUTINE_USAGE]);
 
             addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
             addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);

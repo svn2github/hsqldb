@@ -713,7 +713,7 @@ public class Database {
         tw.dropIndex(indexname);
     }
 
-    public SessionManager getSessionManager() {
+    SessionManager getSessionManager() {
         return sessionManager;
     }
 

@@ -109,13 +109,6 @@ public class Types {
     public static final int BINARY = -2;
 
     /**
-     * <P>The constant in the Java programming language, sometimes referred
-     * to as a type code, that identifies the generic SQL type
-     * <code>BIT</code>.
-     */
-    public static final int BIT = -7;
-
-    /**
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>BLOB</code>.
@@ -330,14 +323,6 @@ public class Types {
     public static final int TYPE_SUB_DEFAULT = 1;
 
     /**
-     * The IDENTITY type sub-identifier. This indicates that an HSQLDB type
-     * with this sub-type, if supported, is the closest thing HSQLDB offerers
-     * to the JDBC/SQL200n type, except that it also provides autoincrement
-     * behaviour
-     */
-    public static final int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
-
-    /**
      * The IGNORECASE type sub-identifier. This indicates that an HSQLDB type
      * with this sub-type, if supported,  is the closest thing HSQLDB offerers
      * to the JDBC/SQL200n type, except that case is ignored in comparisons
@@ -355,11 +340,7 @@ public class Types {
         }, {
             BIGINT, TYPE_SUB_DEFAULT
         }, {
-            BIGINT, TYPE_SUB_IDENTITY
-        }, {
             BINARY, TYPE_SUB_DEFAULT
-        }, {
-            BIT, TYPE_SUB_DEFAULT
         }, {
             BLOB, TYPE_SUB_DEFAULT
         }, {
@@ -382,8 +363,6 @@ public class Types {
             FLOAT, TYPE_SUB_DEFAULT
         }, {
             INTEGER, TYPE_SUB_DEFAULT
-        }, {
-            INTEGER, TYPE_SUB_IDENTITY
         }, {
             JAVA_OBJECT, TYPE_SUB_DEFAULT
         }, {
@@ -541,9 +520,10 @@ public class Types {
         typeAliases.put("DECIMAL", Types.DECIMAL);
         typeAliases.put("java.math.BigDecimal", Types.DECIMAL);
         typeAliases.put("NUMERIC", Types.NUMERIC);
-        typeAliases.put("BIT", Types.BIT);
-        typeAliases.put("boolean", Types.BIT);
-        typeAliases.put("java.lang.Boolean", Types.BIT);
+        typeAliases.put("BIT", Types.BOOLEAN);
+        typeAliases.put("BOOLEAN", Types.BOOLEAN);
+        typeAliases.put("boolean", Types.BOOLEAN);
+        typeAliases.put("java.lang.Boolean", Types.BOOLEAN);
         typeAliases.put("TINYINT", Types.TINYINT);
         typeAliases.put("byte", Types.TINYINT);
         typeAliases.put("java.lang.Byte", Types.TINYINT);
@@ -577,7 +557,7 @@ public class Types {
         typeNames.put(Types.DATE, "DATE");
         typeNames.put(Types.TIME, "TIME");
         typeNames.put(Types.DECIMAL, "DECIMAL");
-        typeNames.put(Types.BIT, "BIT");
+        typeNames.put(Types.BOOLEAN, "BOOLEAN");
         typeNames.put(Types.TINYINT, "TINYINT");
         typeNames.put(Types.SMALLINT, "SMALLINT");
         typeNames.put(Types.BIGINT, "BIGINT");
