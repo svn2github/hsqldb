@@ -36,9 +36,8 @@ import java.sql.ResultSet;
 class jdbcStubs {}
 
 //#ifdef JAVA2
-/*
-*/
 //#else
+/*
 // surrogate for java.util.Map interface
 interface Map {
 
@@ -140,5 +139,6 @@ interface Clob {
 interface Ref {
     String getBaseTypeName() throws HsqlException;
 }
+*/
 
 //#endif JAVA2
