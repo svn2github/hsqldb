@@ -92,6 +92,8 @@ import org.hsqldb.store.ValuePool;
  *
  * @version  1.7.2
  */
+
+/** @todo fredt - move error and assert string literals to Trace */
 class Session implements SessionInterface {
 
     private Database       dDatabase;

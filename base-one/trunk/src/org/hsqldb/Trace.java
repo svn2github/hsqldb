@@ -272,7 +272,12 @@ public class Trace extends PrintWriter {
      CHECK_CONSTRAINT_VIOLATION                     = 157,
      JDBC_RESULTSET_IS_CLOSED                       = 158,
      SINGLE_COLUMN_EXPECTED                         = 159,
-     TOKEN_REQUIRED                                 = 160;
+     TOKEN_REQUIRED                                 = 160,
+     Logger_checkFilesInJar                         = 161,
+     Logger_checkFilesInJar1                        = 162,
+     Logger_checkFilesInJar2                        = 163,
+     TRIGGER_ALREADY_EXISTS                         = 164,
+     ASSERT_DIRECT_EXEC_WITH_PARAM                  = 165;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -438,7 +443,10 @@ public class Trace extends PrintWriter {
         "S0022 ambiguous Column reference",                                   //
         "23000 Check constraint violation", "S1000 ResultSet is closed",      //
         "37000 Single column select required in IN predicate",                //
-        " $$, requires $$",                                                    // Tokenizer.getThis()
+        " $$, requires $$",                                                   // Tokenizer.getThis()
+        "path is null", "file does not exist: ", "wrong resource protocol: ",
+        "S0002 Trigger already exists",
+        "S0000 direct execute with param count > 0",
     };
 
     /** Used during tests. */
@@ -521,6 +529,10 @@ public class Trace extends PrintWriter {
      */
     static HsqlException error(int code, final Object[] add) {
         return error(code, 0, add);
+    }
+
+    static HsqlException error(int code, int code2, Object add) {
+        return getError(code, getMessage(code2) + add);
     }
 
     /**
@@ -666,30 +678,6 @@ public class Trace extends PrintWriter {
      */
     public static HsqlException error(int code, int i) {
         return getError(code, String.valueOf(i));
-    }
-
-    /**
-     *     Throws exception if assertion fails
-     *
-     *     @param boolean condition
-     *
-     * @throws HsqlException
-     */
-    static void doAssert(boolean condition) throws HsqlException {
-        doAssert(condition, null, null);
-    }
-
-    /**
-     *     Throws exception if assertion fails
-     *
-     *     @param boolean condition
-     *     @param String error
-     *
-     * @throws HsqlException
-     */
-    static void doAssert(boolean condition,
-                         String error) throws HsqlException {
-        doAssert(condition, error, null);
     }
 
     /**
@@ -1018,30 +1006,32 @@ public class Trace extends PrintWriter {
      * Throws exception if assertion fails
      *
      * @param boolean condition
-     * @param String error1
-     * @param int error2
-     *
      * @throws HsqlException
      */
-    static void doAssert(boolean condition, String error1,
-                         int error2) throws HsqlException {
-
-        if (!condition) {
-            doAssert(condition, error1, String.valueOf(error2));
-        }
+    static void doAssert(boolean condition) throws HsqlException {
+        doAssert(condition, null);
     }
 
     /**
      * Throws exception if assertion fails
      *
      * @param boolean condition
-     * @param String error1
-     * @param String error2
-     *
+     * @param String error
      * @throws HsqlException
      */
-    static void doAssert(boolean condition, String error1,
-                         String error2) throws HsqlException {
+    static void doAssert(boolean condition, int code) throws HsqlException {
+        doAssert(condition, getMessage(code));
+    }
+
+    /**
+     * Throws exception if assertion fails
+     *
+     * @param boolean condition
+     * @param String error
+     * @throws HsqlException
+     */
+    static void doAssert(boolean condition,
+                         String error) throws HsqlException {
 
         if (!condition) {
             if (TRACE) {
@@ -1050,12 +1040,8 @@ public class Trace extends PrintWriter {
 
             String add = "";
 
-            if (error1 != null) {
-                add += error1;
-            }
-
-            if (error2 != null) {
-                add += error2;
+            if (error != null) {
+                add += error;
             }
 
             throw getError(ASSERT_FAILED, add.length() > 0 ? add

@@ -867,10 +867,6 @@ class Result {
         }
 
         rTail = n;
-
-        Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.removeDuplicates iSize =",
-                       iSize);
     }
 
     /**
@@ -919,10 +915,6 @@ class Result {
         }
 
         rTail = last;
-
-        Trace.doAssert(
-            (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeSecond iSize =", iSize);
     }
 
     /**
@@ -977,10 +969,6 @@ class Result {
         }
 
         rTail = last;
-
-        Trace.doAssert(
-            (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeDifference iSize =", iSize);
     }
 
     /**
@@ -1062,10 +1050,6 @@ class Result {
 
         rRoot = target[0];
         rTail = targetlast[0];
-
-        Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.sortResult iSize =",
-                       iSize);
     }
 
     /**

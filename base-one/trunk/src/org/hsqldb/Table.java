@@ -100,6 +100,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *
  * @version 1.7.0
  */
+
+/** @todo fredt - move error and assert string literals to Trace */
 class Table {
 
     // types of table
@@ -916,7 +918,7 @@ class Table {
      *  Used in TableFilter to get an index for the column
      *
      * @param  column
-     * @return
+     * @return index
      * @throws  HsqlException
      */
     Index getIndexForColumn(int column) {
@@ -934,6 +936,32 @@ class Table {
 
         return i == -1 ? null
                        : getIndex(i);
+    }
+
+    /**
+     *  Used for TableFilter to get an index for the columns
+     *
+     * @param  column
+     * @return index
+     * @throws  HsqlException
+     */
+    Index getIndexForColumns(boolean[] columnCheck) {
+
+        Index indexChoice = null;
+        int   colCount    = 0;
+
+        for (int i = 0; i < vIndex.size(); i++) {
+            Index index = (Index) vIndex.get(i);
+            boolean result = ArrayUtil.containsAllTrueElements(columnCheck,
+                index.colCheck);
+
+            if (result && index.getVisibleColumns() > colCount) {
+                colCount    = index.getVisibleColumns();
+                indexChoice = index;
+            }
+        }
+
+        return indexChoice;
     }
 
     /**

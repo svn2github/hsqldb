@@ -102,6 +102,9 @@ public class TestCacheSize {
     int bigrows   = 40000;
     int smallrows = 0xfff;
 
+    // if the extra table needs to be created and filled up
+    boolean multikeytable = true;
+
     //
     String     user;
     String     password;
@@ -180,6 +183,12 @@ public class TestCacheSize {
         String filler =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String mddl1 = "DROP TABLE test2 IF EXISTS;";
+        String mddl2 = "CREATE " + tableType
+                       + " TABLE test2( id1 INT, id2 INT,"
+                       + " firstname VARCHAR, " + " lastname VARCHAR, "
+                       + " zip INTEGER, " + " filler VARCHAR, "
+                       + " PRIMARY KEY (id1,id2) ); ";
 
         try {
             System.out.println("Connecting");
@@ -228,9 +237,20 @@ public class TestCacheSize {
                 System.out.println("temp table");
             }
 
+            if (multikeytable) {
+                sStatement.execute(mddl1);
+                sStatement.execute(mddl2);
+                System.out.println("multi key table");
+            }
+
 //            sStatement.execute("CREATE INDEX idx3 ON tempTEST (zip);");
             System.out.println("Setup time: " + sw.elapsedTime());
             fillUpBigTable(filler, randomgen);
+
+            if (multikeytable) {
+                fillUpMultiTable(filler, randomgen);
+            }
+
             sw.zero();
 
             if (shutdown) {
@@ -308,6 +328,58 @@ public class TestCacheSize {
 //            sStatement.execute("DROP TABLE temptest;");
 //            sStatement.execute(ddl7);
         System.out.println("Total insert: " + i);
+        System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / (sw.elapsedTime() + 1)));
+    }
+
+    private void fillUpMultiTable(String filler,
+                                  Random randomgen) throws SQLException {
+
+        StopWatch sw = new StopWatch();
+        int       i;
+        PreparedStatement ps = cConnection.prepareStatement(
+            "INSERT INTO test2 (id1, id2, firstname,lastname,zip,filler) VALUES (?,?,?,?,?,?)");
+
+        ps.setString(3, "Julia");
+        ps.setString(4, "Clancy");
+
+        int id1 = 0;
+
+        for (i = 0; i < bigrows; i++) {
+            int id2 = randomgen.nextInt(Integer.MAX_VALUE);
+
+            if (i % 1000 == 0) {
+                id1 = randomgen.nextInt(Integer.MAX_VALUE);
+            }
+
+            ps.setInt(1, id1);
+            ps.setInt(2, id2);
+            ps.setInt(5, randomgen.nextInt(smallrows));
+
+            long nextrandom   = randomgen.nextLong();
+            int  randomlength = (int) nextrandom & 0x7f;
+
+            if (randomlength > filler.length()) {
+                randomlength = filler.length();
+            }
+
+            String varfiller = filler.substring(0, randomlength);
+
+            ps.setString(6, nextrandom + varfiller);
+
+            try {
+                ps.execute();
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+
+            if (reportProgress && (i + 1) % 10000 == 0) {
+                System.out.println("Insert " + (i + 1) + " : "
+                                   + sw.elapsedTime());
+            }
+        }
+
+        System.out.println("Multi Key Total insert: " + i);
         System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
     }

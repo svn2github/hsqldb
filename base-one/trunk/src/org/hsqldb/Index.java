@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -95,8 +96,9 @@ class Index {
 
     // fields
     private final HsqlName indexName;
-    private final int      colIndex[];
-    private final int      colType[];
+    final boolean[]        colCheck;
+    private final int[]    colIndex;
+    private final int[]    colType;
     private final boolean  isUnique;                 // DDL uniqueness
     boolean                isConstraint;
     boolean                isForward;
@@ -120,7 +122,7 @@ class Index {
      */
     Index(HsqlName name, Table table, int column[], int type[],
             boolean unique, boolean constraint, boolean forward,
-            int visibleColumns) {
+            int visColumns) {
 
         indexName           = name;
         colIndex            = column;
@@ -130,8 +132,11 @@ class Index {
         isForward           = forward;
         colIndex_0          = colIndex[0];
         colType_0           = colType[0];
-        this.visibleColumns = visibleColumns;
+        visibleColumns = visColumns;
         isExact             = colIndex.length == visibleColumns;
+        colCheck       = table.getNewColumnCheckList();
+
+        ArrayUtil.intIndexesToBooleanArray(colIndex, colCheck);
     }
 
     /**

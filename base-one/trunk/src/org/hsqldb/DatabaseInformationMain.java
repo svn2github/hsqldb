@@ -113,6 +113,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
+
+/** @todo fredt - move Trace.doAssert() literals to Trace */
 class DatabaseInformationMain extends DatabaseInformation {
 
     // HsqlName objects for the system tables

@@ -199,7 +199,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileSelectStatement(cs);
 
                 Trace.doAssert(cs.parameters.length == 0,
-                               "direct execute with param count > 0");
+                               Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 if (cs.select.sIntoTable == null) {
                     result = session.sqlExecuteCompiledNoPreChecks(cs);
@@ -214,7 +214,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileInsertStatement(cs);
 
                 Trace.doAssert(cs.parameters.length == 0,
-                               "direct execute with param count > 0");
+                               Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
@@ -223,7 +223,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileUpdateStatement(cs);
 
                 Trace.doAssert(cs.parameters.length == 0,
-                               "direct execute with param count > 0");
+                               Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
@@ -232,7 +232,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileDeleteStatement(cs);
 
                 Trace.doAssert(cs.parameters.length == 0,
-                               "direct execute with param count > 0");
+                               Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
@@ -241,7 +241,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileCallStatement(cs);
 
                 Trace.doAssert(cs.parameters.length < 1,
-                               "direct execute with param count > 0");
+                               Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
@@ -1175,7 +1175,7 @@ class DatabaseCommandInterpreter {
 
             if (newcolumn.isPrimaryKey()) {
                 Trace.check(pkCols == null, Trace.SECOND_PRIMARY_KEY,
-                            "column ", colIndex);
+                            newcolumn.columnName.name);
 
                 pkCols = new int[]{ colIndex };
             }
@@ -2294,18 +2294,13 @@ class DatabaseCommandInterpreter {
     private void checkTriggerExists(String triggerName,
                                     boolean yes) throws HsqlException {
 
-        boolean exists;
-        int     code;
+        boolean exists = database.triggerNameList.containsName(triggerName);
 
-        exists = database.triggerNameList.containsName(triggerName);
-
-        // TODO: we need a code: Trace.TRIGGER_ALREADY_EXISTS
         if (exists != yes) {
-            if (yes) {
-                Trace.doAssert(false, triggerName, " trigger not found");
-            } else {
-                Trace.doAssert(false, triggerName, " trigger exists");
-            }
+            int code = yes ? Trace.TRIGGER_NOT_FOUND
+                           : Trace.TRIGGER_ALREADY_EXISTS;
+
+            throw Trace.error(code, triggerName);
         }
     }
 

@@ -92,6 +92,8 @@ import org.hsqldb.store.ValuePool;
  *
  * @version 1.7.0
  */
+
+/** @todo fredt - move error and assert string literals to Trace */
 class Tokenizer {
 
     private static final int NO_TYPE   = 0,

@@ -67,8 +67,12 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.ArrayUtil;
+
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
+// fredt@users 20031026 - patch 1.7.2 - more efficient findfirst - especially for multi-column equijoins
+// implemented optimisations similart to patch 465542 by hjbush@users
 
 /**
  * This class iterates over table rows to select the rows that fulfil join
@@ -93,9 +97,16 @@ class TableFilter {
 
     //
     Expression eAnd;
-    boolean    isOuterJoin;
-    Object     currentData[];
-    Row        currentRow;
+
+    //
+    boolean      isOuterJoin;                      // table joined with OUTER JOIN
+    boolean      isAssigned;                       // conditions have been assigned to this
+    boolean      isMultiFindFirst;                 // findFirst() uses multi-column index
+    Expression[] findFirstExpressions;             // expressions for column values
+
+    //
+    Object currentData[];
+    Row    currentRow;
 
     // addendum to the result of findFirst() and next() with isOuterJoin==true
     // when the result is false, it indicates if a non-join condition caused the failure
@@ -272,11 +283,41 @@ class TableFilter {
      *
      * @throws HsqlException
      */
-    void setCondition(Expression e) throws HsqlException {
+    void setConditions(Expression condition) throws HsqlException {
+
+        setCondition(condition);
+
+        if (filterIndex == null) {
+            filterIndex = filterTable.getPrimaryIndex();
+        }
+
+        if (filterIndex.getVisibleColumns() == 1 || eStart == null
+                || eAnd == null || eStart.exprType != Expression.EQUAL) {
+            return;
+        }
+
+        boolean[]    check    = filterTable.getNewColumnCheckList();
+        Expression[] expr     = new Expression[check.length];
+        int          colindex = eStart.getArg().getColumnNr();
+
+        check[colindex] = true;
+        expr[colindex]  = eStart.getArg2();
+
+        eAnd.getEquiJoinColumns(this, check, expr);
+
+        if (ArrayUtil.containsAllTrueElements(check, filterIndex.colCheck)) {
+            isMultiFindFirst     = true;
+            findFirstExpressions = expr;
+        }
+    }
+
+    private void setCondition(Expression e) throws HsqlException {
 
         int        type = e.getType();
         Expression e1   = e.getArg();
         Expression e2   = e.getArg2();
+
+        this.isAssigned = true;
 
         if (type == Expression.AND) {
             setCondition(e1);
@@ -355,7 +396,7 @@ class TableFilter {
 
             case CONDITION_START_END : {
 
-                // candidate for both start & end
+                // candidate for both start and end
                 if ((eStart != null) || (eEnd != null)) {
                     addAndCondition(e);
 
@@ -406,6 +447,7 @@ class TableFilter {
      * @return true if row was found
      */
     boolean findFirst() throws HsqlException {
+
         nonJoinIsNull  = false;
         isCurrentOuter = false;
 
@@ -413,8 +455,21 @@ class TableFilter {
             filterIndex = filterTable.getPrimaryIndex();
         }
 
-        if (eStart == null) {
-            currentNode = eEnd == null ?  filterIndex.first() : filterIndex.findFirstNotNull();
+        if (this.isMultiFindFirst) {
+            Object[] data = filterTable.getNewRow();
+
+            for (int i = 0; i < findFirstExpressions.length; i++) {
+                Expression e = findFirstExpressions[i];
+
+                if (e != null) {
+                    data[i] = e.getValue(e.getDataType());
+                }
+            }
+
+            currentNode = filterIndex.find(data);
+        } else if (eStart == null) {
+            currentNode = eEnd == null ? filterIndex.first()
+                                       : filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
             Object o    = eStart.getArg2().getValue(type);

@@ -369,15 +369,23 @@ class Logger {
         URL    url;
         String sScript;
 
-        Trace.check(path != null, Trace.FILE_IO_ERROR, "path is null");
+        if (path == null) {
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.Logger_checkFilesInJar);
+        }
 
         sScript = path + ".script";
         url     = getClass().getResource(sScript);
 
-        Trace.check(url != null, Trace.FILE_IO_ERROR, sScript,
-                    " does not exist");
-        Trace.check("jar".equalsIgnoreCase(url.getProtocol()),
-                    Trace.ACCESS_IS_DENIED, "wrong resource protocol: ",
-                    url.getProtocol());
+        if (url == null) {
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.Logger_checkFilesInJar1, sScript);
+        }
+
+        if (!"jar".equalsIgnoreCase(url.getProtocol())) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED,
+                              Trace.Logger_checkFilesInJar2,
+                              url.getProtocol());
+        }
     }
 }

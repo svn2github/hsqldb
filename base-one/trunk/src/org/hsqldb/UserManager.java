@@ -87,6 +87,8 @@ import org.hsqldb.store.ValuePool;
  * @version  1.7.2
  * @see  User
  */
+
+/** @todo fredt - move assert string literals to Trace */
 class UserManager {
 
     /** Flag required to SELECT from a table. */

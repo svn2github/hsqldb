@@ -150,47 +150,73 @@ class Select {
      */
     void resolve() throws HsqlException {
 
+        resolveTables();
+        resolveTypes();
+        setFilterConditions();
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @throws HsqlException
+     */
+    void resolveTables() throws HsqlException {
+
         int len = tFilter.length;
 
         for (int i = 0; i < len; i++) {
-            resolve(tFilter[i], true);
+            resolveTables(tFilter[i]);
+        }
+    }
+
+    /**
+     * Sets the types of all the expressions that have so far resolved.
+     *
+     * @throws HsqlException
+     */
+    void resolveTypes() throws HsqlException {
+
+        int len = eColumn.length;
+
+        for (int i = 0; i < len; i++) {
+            eColumn[i].resolveTypes();
+        }
+
+        if (eCondition != null) {
+            eCondition.resolveTypes();
         }
     }
 
     /**
      * Resolves the tables for all the Expression in the Select object
      * if it is possible to do so with the given TableFilter.
-     * Sets the types of all the expressions that have so far resolved.
      *
      * @param f
-     * @param ownfilter
      *
      * @throws HsqlException
      */
-    void resolve(TableFilter f, boolean ownfilter) throws HsqlException {
+    void resolveTables(TableFilter f) throws HsqlException {
 
         int len = eColumn.length;
 
         for (int i = 0; i < len; i++) {
-
-//            eColumn[i].resolve(f);
             eColumn[i].resolveTables(f);
-            eColumn[i].resolveTypes();
         }
 
-// fredt - moved codition resolution after column resolution
         if (eCondition != null) {
-
-//            eCondition.resolve(f);
             eCondition.resolveTables(f);
-            eCondition.resolveTypes();
+        }
+    }
 
-            if (f != null && ownfilter) {
+    void setFilterConditions() throws HsqlException {
 
-                // the table filter tries to get as many conditions as
-                // possible but only if it belongs to this query
-                f.setCondition(eCondition);
-            }
+        if (eCondition == null) {
+            return;
+        }
+
+        for (int i = 0; i < tFilter.length; i++) {
+            tFilter[i].setConditions(eCondition);
         }
     }
 
@@ -221,6 +247,7 @@ class Select {
      *
      * @throws HsqlException
      */
+/*
     void removeFilters() throws HsqlException {
 
         int len = eColumn.length;
@@ -233,6 +260,7 @@ class Select {
             eCondition.removeFilters();
         }
     }
+*/
 
     /**
      * Method declaration

@@ -91,6 +91,8 @@ import org.hsqldb.store.ValuePool;
  *
  * @version    1.7.2
  */
+
+/** @todo fredt - move error and assert string literals to Trace */
 class Expression {
 
     // leaf types
@@ -222,9 +224,9 @@ class Expression {
     private boolean      isFixedConstantValueList;
     private boolean      isFixedConstantValueListChecked;
 
-    // QUERY
+    // QUERY - in single value selects, IN or EXISTS predicates
     Select  subSelect;
-    boolean isCorrelated;                //correlated subquery
+    boolean isCorrelated;                // correlated subquery
     Table   subTable;                    // if not correlated
 
     // FUNCTION
@@ -1513,6 +1515,7 @@ class Expression {
     /**
      * Removes table filter resolution from an Expression tree.
      */
+/*
     void removeFilters() throws HsqlException {
 
         if (eArg != null) {
@@ -1553,6 +1556,41 @@ class Expression {
                 break;
 
             default :
+        }
+    }
+*/
+    void getEquiJoinColumns(TableFilter filter, boolean[] columns,
+                            Expression[] elist) {
+
+        if (eArg != null) {
+            eArg.getEquiJoinColumns(filter, columns, elist);
+        }
+
+        if (eArg2 != null) {
+            eArg2.getEquiJoinColumns(filter, columns, elist);
+        }
+
+        if (exprType == EQUAL) {
+            if (eArg.tableFilter == eArg2.tableFilter) {
+                return;
+            }
+
+            // an elist element may be set more than once - OK
+            if (eArg.tableFilter == filter) {
+                if (eArg2.exprType == COLUMN || eArg2.exprType == VALUE) {
+                    columns[eArg.columnIndex] = true;
+                    elist[eArg.columnIndex]   = eArg2;
+                }
+
+                return;
+            }
+
+            if (eArg2.tableFilter == filter) {
+                if (eArg.exprType == COLUMN || eArg.exprType == VALUE) {
+                    columns[eArg2.columnIndex] = true;
+                    elist[eArg2.columnIndex]   = eArg;
+                }
+            }
         }
     }
 
@@ -1613,12 +1651,10 @@ class Expression {
 
             case QUERY :
 
-                // fredt - subselects are resolved once when they are created
-                // the subselect condition gets resolved here
                 // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
                 if (subSelect != null) {
-                    subSelect.resolve(f, false);
+                    subSelect.resolveTables(f);
                 }
                 break;
 
@@ -1665,6 +1701,8 @@ class Expression {
                 break;
 
             case QUERY : {
+                subSelect.resolveTypes();
+
                 dataType = subSelect.eColumn[0].dataType;
 
                 break;
@@ -2139,7 +2177,7 @@ class Expression {
                 return true;
 
             case COLUMN :
-                return tableFilter != null;
+                return tableFilter != null && tableFilter.isAssigned;
 
             case QUERY :
                 return true;

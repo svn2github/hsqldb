@@ -48,6 +48,8 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
+
+/** @todo fredt - move Trace.doAssert() literals to Trace */
 final class DIProcedureInfo {
 
     private Class         clazz;

@@ -189,10 +189,9 @@ final class CompiledStatement {
         if (deleteCondition != null) {
             condition = new Expression(deleteCondition);
 
-//            condition.resolve(tf);
             condition.resolveTables(tf);
             condition.resolveTypes();
-            tf.setCondition(condition);
+            tf.setConditions(condition);
         }
 
         setParameters(parameters);
@@ -240,10 +239,9 @@ final class CompiledStatement {
         if (updateCondition != null) {
             condition = new Expression(updateCondition);
 
-//            condition.resolve(tf);
             condition.resolveTables(tf);
             condition.resolveTypes();
-            tf.setCondition(condition);
+            tf.setConditions(condition);
         }
 
         setParameters(parameters);

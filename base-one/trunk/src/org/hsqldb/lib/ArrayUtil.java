@@ -499,6 +499,38 @@ public class ArrayUtil {
     }
 
     /**
+     * Set elements of arrb true if their indexes appear in arrb.
+     */
+    public static void intIndexesToBooleanArray(int[] arra, boolean[] arrb) {
+
+        int k = 0;
+
+        for (int i = 0; i < arra.length; i++) {
+            if (arra[i] < arrb.length) {
+                arrb[arra[i]] = true;
+            }
+        }
+    }
+
+    /**
+     * Return true if for each true element in arrb, the corresponding
+     * element in arra is true
+     */
+    public static boolean containsAllTrueElements(boolean[] arra,
+            boolean[] arrb) {
+
+        int k = 0;
+
+        for (int i = 0; i < arra.length; i++) {
+            if (arrb[i] &&!arra[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Returns true if arra from position start contains all elements of arrb
      * in sequential order.
      */

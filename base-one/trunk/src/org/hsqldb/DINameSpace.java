@@ -49,6 +49,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
+
+/** @todo fredt - move Trace.doAssert() literals to Trace */
 final class DINameSpace {
 
     /** The Database for which the name space functionality is provided */
@@ -864,7 +866,11 @@ final class DINameSpace {
         int             listSize;
 
         pTypes     = new Class[] {
-            String.class, String.class, Object[].class
+            Integer.TYPE,      // trigger type
+            String.class,      // trigger name
+            String.class,      // table name
+            Object[].class,    // old row
+            Object[].class     // new row
         };
         methodList = new HsqlArrayList();
         tableList  = database.getTables();

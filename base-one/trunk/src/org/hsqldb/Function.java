@@ -395,6 +395,7 @@ class Function {
      * @throws HsqlException if there is a problem resolving a parameter
      * against the specified TableFilter
      */
+/*
     void removeFilters() throws HsqlException {
 
         Expression e;
@@ -407,6 +408,7 @@ class Function {
             }
         }
     }
+*/
 
     /**
      * Checks the Expresion parameters to this Function object against the
