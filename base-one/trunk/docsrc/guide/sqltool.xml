@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.3 2004/04/14 22:36:31 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.4 2004/04/17 22:52:26 unsaved Exp $ -->
 
 <chapter>
     <title>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.3 $</edition>
-        <pubdate>$Date: 2004/04/14 22:36:31 $</pubdate>
+        <edition>$Revision: 1.4 $</edition>
+        <pubdate>$Date: 2004/04/17 22:52:26 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -20,6 +20,7 @@
             <keyword>JDBC</keyword>
         </keywordset>
     </chapterinfo>
+
     <section>
         <title>Purpose</title>
         <para>
@@ -33,6 +34,7 @@
             which ships with hsqldb version 1.7.2.
         </para>
     </section>
+
     <section>
         <title>The Bare Minimum You Need to Know to Run SqlTool</title>
         <titleabbrev>The Bare Minimum</titleabbrev>
@@ -112,6 +114,7 @@
         java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </informalexample>
     </section>
+
     <section id='auth-section'>
         <title id='auth-title'>Authentication Setup</title>
         <para>
@@ -193,6 +196,7 @@
             in the configuration file.
         </para>
     </section>
+
     <section>
         <title>Interactive</title>
         <para>
@@ -361,6 +365,8 @@
                 would remove all occurrences of "this".
             </para></listitem></varlistentry>
         </variablelist>
+    </section>
+
     <section><title>Raw mode</title>
         <para>
             If for some reason you want SqlTool to process your commands as 
@@ -375,7 +381,7 @@
             ending up in the log file.
         </para>
     </section>
-    </section>
+
     <section id='nonint-section'>
         <title id='nonint-title'>Non-Interactive</title>
         <para>
@@ -388,35 +394,36 @@
             scripts.
         </para>
         <section><title>Giving SQL on the Command Line</title>
-        <para>
-            If you just have a couple SQL commands to run, you can run them 
-            directly from the comand-line or from a shell script without an 
-            SQL file, like this.
-        </para><informalexample><screen>
+            <para>
+                If you just have a couple SQL commands to run, you can run them 
+                directly from the comand-line or from a shell script without an 
+                SQL file, like this.
+            </para><informalexample><screen>
     java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid</screen>
-        </informalexample><para>
-            Since SqlTool executes SQL statements only when a statement line 
-            is terminated with ";", you can only execute more than one SQL 
-            statement this way if your OS shell has some mechanism to pass 
-            linebreaks in arguments through to the target program.
-            With any Bourne-compatible shell, you can include linebreaks in 
-            the SQL statements like this.
-        </para><informalexample><screen>
+            </informalexample><para>
+                Since SqlTool executes SQL statements only when a statement 
+                line is terminated with ";", you can only execute more than one 
+                SQL statement this way if your OS shell has some mechanism to 
+                pass linebreaks in arguments through to the target program.
+                With any Bourne-compatible shell, you can include linebreaks in 
+                the SQL statements like this.
+            </para><informalexample><screen>
     java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
         SQL statement number one;
         SQL statement
             number two;
         SQL statement three;
     ' urlid</screen>
-        </informalexample><para>
-        If you don't give the <literal>--noinput</literal> switch, then after 
-            executing the given statements, an interactive session will be 
-            started.
-        </para><para>
-        The <emphasis>--sql</emphasis> switch is very useful for setting shell 
-        variables to the output of SQL Statements, like this.
-        </para>
-        <informalexample><programlisting>
+            </informalexample><para>
+                If you don't give the <literal>--noinput</literal> switch, then 
+                after executing the given statements, an interactive session 
+                will be started.
+            </para><para>
+                The <emphasis>--sql</emphasis> switch is very useful for 
+                setting shell variables to the output of SQL Statements, like 
+                this.
+            </para>
+            <informalexample><programlisting>
     # A shell script
     USERCOUNT=`java org.hsqldb.util.SqlTool --noinput --sql 'select count(*) from usertbl;' urlid` || {
         # Handle the SqlTool error
@@ -424,120 +431,125 @@
     echo "There are $USERCOUNT users registered in the database."
     [ "$USECOUNT" -gt 3 ] &amp;&amp; {   # If there are more than 3 users registered
         # Some conditional shell scripting</programlisting></informalexample>
-    </section>
-    <section><title>SQL Files</title>
-        <para>
-            Just give paths to sql text file(s) on the command line after 
-            the <emphasis>urlid</emphasis>.
-        </para><para>
-            Often, you will want to redirect output to a file, like
-        </para><informalexample><screen>
+        </section>
+        <section><title>SQL Files</title>
+            <para>
+                Just give paths to sql text file(s) on the command line after 
+                the <emphasis>urlid</emphasis>.
+            </para><para>
+                Often, you will want to redirect output to a file, like
+            </para><informalexample><screen>
     java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.sql 2>&amp;1</screen>
-        </informalexample><para>
-            (Skip the "2>&amp;1" if you're on Windows).
-        </para><para>
-            If you are viewing this document as an HTML document, then you can
-            right click on <ulink url='sample.sql'>this link</ulink>
-            to download a sample sql file.
-            (If you have a good web browser, you can view it now by left
-            clicking on it).
-            The sample contains SQL as well as Special Commands making good
-            use of the Special Commands documented below.
-        </para><para>
-            If you want your SQL scripts optimally compatible among multiple 
-            databases, then don't use any Special Commands.
-            (If you do this, you will probably want a command-line option to
-            turn on continue-upon-error behavior.
-            As I say below, email me if you need this).
-        </para>
-    </section>
-    <section><title>Comments</title>
-        <para>
-            You can use comments of the form
-            <literal>/* An sql comment */</literal>
-            inside or outside of SQL Statements.
-            You can also use <literal>--</literal> style SQL comments.
-            <literal>/*...*/</literal> comments that are not intertwined 
-            with non-comment SQL, and <literal>--</literal> always, are sent 
-            to the database.
-            Stand-alone <literal>/*...*/</literal> comments are just dropped, 
-            to avoid unnecessary network traffic and cluttering of command 
-            history.
-        </para>
-    </section>
-    <section><title>Special Commands and Buffer Commands in SQL Files</title>
-        <para>
-            Don't use Buffer Commands in your sql files, because they won't 
-            work.
-            Buffer Commands are for interactive use only.
-        </para><para>
-            Most Special Commands won't work in sql files, but the following 
-            not only work, but were designed for use in sql files.
-        </para>
-        <variablelist>
-            <varlistentry><term>\p [line to print]</term><listitem><para>
-                Print the given string to stdout
-            </para></listitem></varlistentry>
-            <varlistentry><term>\H</term><listitem><para>
-                Toggle HTML output mode.
-                If you redirect output to a file, this can make query output 
-                much easier to view.  For example,
-                </para><informalexample><screen>
+            </informalexample><para>
+                (Skip the "2>&amp;1" if you're on Windows).
+            </para><para>
+                If you are viewing this document as an HTML document, then you 
+                can right click on <ulink url='sample.sql'>this link</ulink>
+                to download a sample sql file.
+                (If you have a good web browser, you can view it now by left
+                clicking on it).
+                The sample contains SQL as well as Special Commands making good
+                use of the Special Commands documented below.
+            </para><para>
+                If you want your SQL scripts optimally compatible among 
+                multiple databases, then don't use any Special Commands.
+                (If you do this, you will probably want a command-line option 
+                to turn on continue-upon-error behavior.
+                As I say below, email me if you need this).
+            </para>
+        </section>
+        <section><title>Comments</title>
+            <para>
+                You can use comments of the form
+                <literal>/* An sql comment */</literal>
+                inside or outside of SQL Statements.
+                You can also use <literal>--</literal> style SQL comments.
+                <literal>/*...*/</literal> comments that are not intertwined 
+                with non-comment SQL, and <literal>--</literal> always, are 
+                sent to the database.
+                Stand-alone <literal>/*...*/</literal> comments are just 
+                dropped, to avoid unnecessary network traffic and cluttering of 
+                command history.
+            </para>
+        </section>
+        <section>
+            <title>Special Commands and Buffer Commands in SQL Files</title>
+            <para>
+                Don't use Buffer Commands in your sql files, because they won't 
+                work.
+                Buffer Commands are for interactive use only.
+            </para><para>
+                Most Special Commands won't work in sql files, but the 
+                following not only work, but were designed for use in sql files.
+            </para>
+            <variablelist>
+                <varlistentry><term>\p [line to print]</term><listitem><para>
+                    Print the given string to stdout
+                </para></listitem></varlistentry>
+                <varlistentry><term>\H</term><listitem><para>
+                    Toggle HTML output mode.
+                    If you redirect output to a file, this can make query 
+                    output much easier to view.
+                    For example,
+                    </para><informalexample><screen>
     java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
-                </informalexample><para>
-            </para></listitem></varlistentry>
-            <varlistentry><term>\* [true|false]</term><listitem><para>
-                A "true" setting tells SqlTool to continue when errors are 
-                encountered.
-                The default for interactive use is to continue upon error, 
-                but the default for non-interactive use is to abort upon error.
-                With database setup scripts, I usually find it convenient to 
-                set "true" before deleting tables (so that things will 
-                continue if the tables aren't there), then set it back to 
-                false so that real errors are caught.
-                </para><para>
-                (I'm considering adding another command-line option to allow 
-                setting the initial continue-on-error behavior that way, 
-                because sql scripts written for other databases usually 
-                assume continue-on-error since most databases don't give you 
-                any ability to abort upon error.  Let me know if you need this 
-                ability.)
-            </para></listitem></varlistentry>
-        </variablelist>
-    </section>
-    <section><title>Getting Interactive Functionality with SQL Files</title>
-        <para>
-            Some script developers may run into cases where they want to run
-            with sql files but they want SqlTool's interactive behavior.  For
-            example, they may want to do command recall in the sql file, or 
-            they may want to log SqlTool's command-line prompts (which are 
-            not printed in non-interactive mode).
-            In this case, do not give the sql file(s) as an argument to 
-            SqlTool, but pipe them in instead, like
-        </para><informalexample><screen>
+                    </informalexample><para>
+                </para></listitem></varlistentry>
+                <varlistentry><term>\* [true|false]</term><listitem><para>
+                    A "true" setting tells SqlTool to continue when errors are 
+                    encountered.
+                    The default for interactive use is to continue upon error, 
+                    but the default for non-interactive use is to abort upon 
+                    error.
+                    With database setup scripts, I usually find it convenient 
+                    to set "true" before deleting tables (so that things will 
+                    continue if the tables aren't there), then set it back to 
+                    false so that real errors are caught.
+                    </para><para>
+                    (I'm considering adding another command-line option to 
+                    allow setting the initial continue-on-error behavior that 
+                    way, because sql scripts written for other databases 
+                    usually assume continue-on-error since most databases don't 
+                    give you any ability to abort upon error.
+                    Let me know if you need this ability.)
+                </para></listitem></varlistentry>
+            </variablelist>
+        </section>
+        <section><title>Getting Interactive Functionality with SQL Files</title>
+            <para>
+                Some script developers may run into cases where they want to 
+                run with sql files but they want SqlTool's interactive behavior.
+                For example, they may want to do command recall in the sql file,
+                or they may want to log SqlTool's command-line prompts (which 
+                are not printed in non-interactive mode).
+                In this case, do not give the sql file(s) as an argument to 
+                SqlTool, but pipe them in instead, like
+            </para><informalexample><screen>
     java org.hsqldb.util.SqlTool urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
-        </informalexample><para>
-            or
-        </para><informalexample><screen>
+            </informalexample><para>
+                or
+            </para><informalexample><screen>
     cat filepath1.sql... |
     java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
-        </informalexample>
-    </section>
-    <section id='charencoding-section'><title id='charencoding-title'>
-            Character Encoding</title>
-        <para>
-            SqlTool defaults to the US-ASCII character set (for reading).
-            You can use another character set by setting the system property 
-            <literal>sqltool.charset</literal>, like
-        </para><informalexample><screen>
+            </informalexample>
+        </section>
+        <section id='charencoding-section'><title id='charencoding-title'>
+                Character Encoding</title>
+            <para>
+                SqlTool defaults to the US-ASCII character set (for reading).
+                You can use another character set by setting the system 
+                property <literal>sqltool.charset</literal>, like
+            </para><informalexample><screen>
     java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...</screen>
-        </informalexample><para>
-            You can also set this per urlid in the SqlTool configuration file.
-            See the <link linkend='auth-section' endterm='auth-title'/>
-            section about that.
-        </para>
+            </informalexample><para>
+                You can also set this per urlid in the SqlTool configuration 
+                file.
+                See the <link linkend='auth-section' endterm='auth-title'/>
+                section about that.
+            </para>
+        </section>
     </section>
-    </section>
+
     <section>
         <title>Web Application</title>
         <para>

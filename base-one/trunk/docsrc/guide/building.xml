@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: building.xml,v 1.1 2004/04/19 20:27:37 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='buiding-title'>Building Hsqldb version 1.7.2</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/19 20:27:37 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -25,6 +25,7 @@
             documentation.
         </para></legalnotice>
     </appendixinfo>
+
    <section>
         <title>Purpose</title>
         <para>
@@ -35,9 +36,8 @@
             features supported with this JDK, you should rebuild the jar with 
             Ant (or with the supplied batch files if you are on Window).
         </para>
-This text is based on HypersonicSQL documentation, updated to reflect the latest version of HSQLDB
-   <section>
    </section>
+   <section>
         <title>Building with Ant, from the Apache Jakarta Project</title>
         <titleabbrev>Building with Ant</titleabbrev>
         <para>
@@ -63,8 +63,8 @@ This text is based on HypersonicSQL documentation, updated to reflect the latest
                     Follow the directions for your platform.
                 </para></listitem>
             </itemizedlist>
-        <section>
         </section>
+        <section>
             <title>Building Hsqldb with Ant</title>
             <para>
                 Once you have unpacked the zip package for hsqldb, under the 
