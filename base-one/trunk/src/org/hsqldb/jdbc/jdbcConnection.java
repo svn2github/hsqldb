@@ -2509,6 +2509,10 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
+        if (isInternal) {
+            return ((Session) sessionProxy).getInternalConnectionURL();
+        }
+
         return connProperties.getProperty("url");
     }
 
