@@ -1,8 +1,11 @@
 Readme File
 
-2004.02.21
+2004.02.22
 
-Fixes various reported bugs.
+Fixed issue with single value selects in UPDATE and SELECT statements.
+Fixed issue with Turkish Locale.
+Fixed issue with compiled statements.
+Fixed various other reported bugs.
 
 Constraint names must be unique within each database.
 

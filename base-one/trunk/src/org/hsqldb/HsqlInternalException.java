@@ -32,60 +32,16 @@
 package org.hsqldb;
 
 /**
- * Class encapsulating all exceptions that can be thrown within the engine.
- * Instances are used to create instances of  java.sql.SQLException and returned
- * to JDBC callers.
+ * A subclass of HsqlException that can be caught while processing queries
+ * and acted upon.
  *
  * @author fredt@users
- * @version 1.7.2
+ *
+ * @verison 1.7.2
  * @since 1.7.2
  */
-public class HsqlException extends Exception {
-
-    String message;
-    String state;
-    int    code;
-
-    /**
-     * @param message String
-     * @param state XOPEN / SQL code for exceptoin
-     * @param code number code in HSQLDB
-     */
-    public HsqlException(String message, String state, int code) {
-
-        this.message = message;
-        this.state   = state;
-        this.code    = code;
-    }
-
-    /**
-     * @param r containing the members
-     */
-    public HsqlException(Result r) {
-
-        this.message = r.getMainString();
-        this.state   = r.getSubString();
-        this.code    = r.getStatementID();
-    }
-
-    /**
-     * @return message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * @return SQL State
-     */
-    public String getSQLState() {
-        return state;
-    }
-
-    /**
-     * @return vendor specific error code
-     */
-    public int getErrorCode() {
-        return code;
+class HsqlInternalException extends HsqlException {
+    HsqlInternalException(HsqlException e) {
+        super(e.message,e.state,e.code);
     }
 }

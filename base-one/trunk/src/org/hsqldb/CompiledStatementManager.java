@@ -74,6 +74,7 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  * @since 1.7.2
  * @version 1.7.2
  */
+
 final class CompiledStatementManager {
 
     /**

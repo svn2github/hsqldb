@@ -337,56 +337,36 @@ final class CompiledStatementExecutor {
         if (filter.findFirst()) {
             int[]         colmap    = cs.columnMap;    // column map
             Expression[]  colvalues = cs.columnValues;
-            Expression    cve;
-            Expression    c = cs.condition;            // update condition
-            int           ci;                          // column index
+            Expression    condition = cs.condition;    // update condition
             int           len = colvalues.length;
-            Object[]      ni;
             HsqlArrayList del  = new HsqlArrayList();
             Result        ins  = new Result(ResultConstants.UPDATECOUNT);
             int           size = table.getColumnCount();
 
-            len = colmap.length;
-
             int[] coltypes = table.getColumnTypes();
 
-            if (c == null) {
                 do {
+                if (condition == null || condition.test()) {
+                    try {
                     Row row = filter.currentRow;
 
-                    del.add(row);
-
-                    ni = table.getNewRow();
+                        Object[] ni = table.getNewRow();
 
                     System.arraycopy(row.getData(), 0, ni, 0, size);
 
                     for (int i = 0; i < len; i++) {
-                        ci     = colmap[i];
+                            int ci = colmap[i];
                         ni[ci] = colvalues[i].getValue(coltypes[ci]);
                     }
 
-                    ins.add(ni);
-                } while (filter.next());
-            } else {
-                do {
-                    if (c.test()) {
-                        Row row = filter.currentRow;
-
                         del.add(row);
 
-                        ni = table.getNewRow();
-
-                        System.arraycopy(row.getData(), 0, ni, 0, size);
-
-                        for (int i = 0; i < len; i++) {
-                            ci     = colmap[i];
-                            ni[ci] = colvalues[i].getValue(coltypes[ci]);
-                        }
-
                         ins.add(ni);
+                    } catch (HsqlInternalException e){
+
+                        }
                     }
                 } while (filter.next());
-            }
 
             session.beginNestedTransaction();
 

@@ -97,7 +97,6 @@ class Select {
     boolean               isAggregated;
     private boolean       isGrouped;
     private HashSet       groupColumnNames;
-    private int           aggregateCount;
     TableFilter           tFilter[];
     Expression            limitCondition;
     Expression            queryCondition;       // null means no condition
@@ -277,12 +276,21 @@ class Select {
         int    size = r.getSize();
         int    len  = r.getColumnCount();
 
-        Trace.check(size == 1 && len == 1, Trace.SINGLE_VALUE_EXPECTED);
-
+        if ( size == 1 && len == 1){
         Object o = r.rRoot.data[0];
 
         return r.metaData.colType[0] == type ? o
                                              : Column.convertObject(o, type);
+    }
+
+        HsqlException e = Trace.error(Trace.SINGLE_VALUE_EXPECTED);
+
+        if ( size == 0 && len == 1){
+            throw new HsqlInternalException(e);
+        }
+
+        throw  e;
+
     }
 
     /**
@@ -642,14 +650,13 @@ class Select {
 
             // apply condition
             if (queryCondition == null || queryCondition.test()) {
+                try {
                 Object row[] = new Object[len];
 
                 // gets the group by column values first.
                 for (int i = gResult.groupBegin; i < gResult.groupEnd; i++) {
                     row[i] = exprColumns[i].getValue();
                 }
-
-                row = gResult.addRow(row);
 
                 // Get all other values
                 for (int i = 0; i < gResult.groupBegin; i++) {
@@ -664,8 +671,13 @@ class Select {
                              : exprColumns[i].getValue();
                 }
 
+                    row = gResult.addRow(row);
+
                 if (gResult.size() >= limitcount) {
                     break;
+                    }
+                } catch (HsqlInternalException e){
+                    continue;
                 }
             }
         }
