@@ -92,6 +92,10 @@ class CachedRow extends Row {
     int              storageSize;
     private boolean  bChanged;
 
+
+    CachedRow(){
+
+    }
     /**
      *  Constructor declaration
      *
@@ -118,6 +122,36 @@ class CachedRow extends Row {
         bChanged = true;
 
         t.putRow(this);
+    }
+    /**
+     *  constructor when read from cache
+     *
+     * @param  t
+     * @param  in
+     * @exception  IOException   Description of the Exception
+     * @exception  SQLException  Description of the Exception
+     */
+    CachedRow(Table t,
+              DatabaseRowInputInterface in) throws IOException, SQLException {
+
+        tTable      = t;
+        iPos        = in.getPos();
+        storageSize = in.getSize();
+
+        int index = t.getIndexCount();
+
+        nPrimaryNode = Node.newNode(this, in, 0, t);
+
+        Node n = nPrimaryNode;
+
+        for (int i = 1; i < index; i++) {
+            n.nNext = Node.newNode(this, in, i, t);
+            n       = n.nNext;
+        }
+
+        oData = in.readData(tTable.getColumnTypes());
+
+        Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
     }
 
     void setPos(int pos) {
@@ -268,40 +302,4 @@ class CachedRow extends Row {
         return rNext;
     }
 
-    /**
-     *  constructor when read from cache
-     *
-     * @param  t
-     * @param  in
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
-     */
-    CachedRow(Table t,
-              DatabaseRowInputInterface in) throws IOException, SQLException {
-
-        tTable      = t;
-        iPos        = in.getPos();
-        storageSize = in.getSize();
-
-        int index = t.getIndexCount();
-
-        nPrimaryNode = Node.newNode(this, in, 0, t);
-
-        Node n = nPrimaryNode;
-
-        if (t.getIndexType() == Index.POINTER_INDEX) {
-            ((PointerNode) nPrimaryNode).setNextKey(in.getNextPos());
-        }
-
-        for (int i = 1; i < index; i++) {
-            n.nNext = Node.newNode(this, in, i, t);
-            n       = n.nNext;
-        }
-
-        oData = in.readData(tTable.getColumnTypes());
-
-        if (tTable.isIndexCached()) {
-            Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
-        }
-    }
 }

@@ -58,7 +58,7 @@ public class TestTextTables {
     protected String url = "jdbc:hsqldb:";
 
 //    protected String filepath = ".";
-    protected String filepath = "/hsql/testtext/test";
+    protected String filepath = "/hsql/tt";
     String           user;
     String           password;
     Statement        sStatement;
@@ -117,7 +117,7 @@ public class TestTextTables {
      */
     public void testFillUp() {
 
-        int    bigrows   = 200;
+        int    bigrows   = 100000;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"

@@ -91,12 +91,11 @@ class TextTable extends org.hsqldb.Table {
 
                 setIndexRoots(roots);
 
-                // fredt - moved here from TableFilter
                 // build the indexes
-                Node readAll = this.getPrimaryIndex().getRoot();
+                CachedDataRow row = (CachedDataRow) getRow(0, null);
 
-                while (readAll != null) {
-                    readAll = readAll.getRight();
+                while (row != null) {
+                    row = (CachedDataRow) getRow(row.nextPos, null);
                 }
             } catch (SQLException e) {
                 if (!dataSource.equals(source) || isDesc != isReversed
@@ -198,26 +197,17 @@ class TextTable extends org.hsqldb.Table {
         return (new TextTable(dDatabase, tableName, tableType, ownerSession));
     }
 
-    void indexRow(Row r, boolean inserted) throws SQLException {
+    void indexRow(Row r, boolean inserted,
+                  Node primarynode) throws SQLException {
 
         if (inserted) {
-            super.indexRow(r, true);
+            super.indexRow(r, true, null);
         } else {
-            Node n       = r.getNextNode(null);
-            Node primary = getPrimaryIndex().insertUncached(n);
-
-            if (primary == n) {
-
-                // Not already indexed.
-                n = r.getNextNode(n);
-
-                for (int i = 1; n != null; i++) {
-                    getIndex(i).insertUncached(n);
-
-                    n = r.getNextNode(n);
-                }
+            if (primarynode == null) {
+                ((CachedDataRow) r).setNewNodes();
+                super.indexRow(r, true, null);
             } else {
-                r.setPrimaryNode(primary);
+                ((CachedDataRow) r).setPrimaryNode(primarynode);
             }
         }
     }
@@ -265,5 +255,10 @@ class TextTable extends org.hsqldb.Table {
 
     void drop() throws SQLException {
         openCache("", false, false);
+    }
+
+    void setIndexRoots(String s) throws java.sql.SQLException {
+
+        // do nothing
     }
 }

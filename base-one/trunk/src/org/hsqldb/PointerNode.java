@@ -71,7 +71,7 @@ import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 
 /**
  *  Text table node implementation.<br>
@@ -84,10 +84,10 @@ import java.io.IOException;
  */
 class PointerNode extends MemoryNode {
 
-    private int   iId;    // id of Index for this Node
+    private int   iId;     // id of Index for this Node
     private int   iData = NO_POS;
     private Table tTable;
-    private int   iRight = NO_POS;
+    Node          nKey;    // node of key / primary index for this row
 
     PointerNode(CachedRow r, int id) {
 
@@ -99,13 +99,14 @@ class PointerNode extends MemoryNode {
         } else {
             iData = r.iPos;
         }
+
+        nKey = r.nPrimaryNode;
     }
 
     void delete() {
 
         iBalance = -2;
         nLeft    = nRight = nParent = null;
-        iRight   = 0;
         tTable   = null;
     }
 
@@ -133,70 +134,19 @@ class PointerNode extends MemoryNode {
             return null;
         }
 
-        return tTable.getRow(iData);
+        return tTable.getRow(iData, nKey);
     }
 
-    private Node findNode(int pos, int id) throws SQLException {
+    private Node findNode(int pos) throws SQLException {
 
         Node ret = null;
-        Row  r   = tTable.getRow(pos);
+        Row  r   = tTable.getRow(pos, nKey);
 
         if (r != null) {
-            ret = r.getNode(id);
+            ret = r.getNode(iId);
         }
 
         return ret;
-    }
-
-    Node getRight() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (nRight != null) {
-            return nRight;
-        }
-
-        if (iRight == NO_POS) {
-            return null;
-        }
-
-        return findNode(iRight, iId);
-    }
-
-    /**
-     *  Used with PointerNode objects only
-     *
-     * @param  pos file offset of node
-     */
-    Node getRightPointer() throws SQLException {
-        return nRight;
-    }
-
-    void setRight(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        iRight = NO_POS;
-        nRight = n;
-    }
-
-    /**
-     *  Used at construction
-     *
-     * @param  i file offset
-     */
-    void setNextKey(int i) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        iRight = i;
-        nRight = null;
     }
 
     Object[] getData() throws SQLException {

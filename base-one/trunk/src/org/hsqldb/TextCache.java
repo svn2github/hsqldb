@@ -507,7 +507,7 @@ class TextCache extends org.hsqldb.Cache {
             if (complete) {
                 rowIn.setSource(buffer.toString(), pos);
 
-                r = new CachedRow(t, rowIn);
+                r = new CachedDataRow(t, rowIn);
             }
         } catch (Exception e) {
             e.printStackTrace();

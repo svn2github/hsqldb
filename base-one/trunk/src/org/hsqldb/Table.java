@@ -757,7 +757,7 @@ class Table {
             Row r = null;
 
             if (p != -1) {
-                r = cCache.getRow(p, this);
+                r = cCache.getRow(p, this, null);
             }
 
             Node f = null;
@@ -1307,7 +1307,7 @@ class Table {
             nextId++;
         }
 
-        indexRow(r, true);
+        indexRow(r, true, null);
 
         if (c != null) {
             c.setLastIdentity(iIdentityId);
@@ -1937,10 +1937,10 @@ class Table {
      * @return
      * @throws  SQLException
      */
-    Row getRow(int pos) throws SQLException {
+    Row getRow(int pos,Node primaryNode) throws SQLException {
 
         if (isCached) {
-            return (cCache.getRow(pos, this));
+            return (cCache.getRow(pos, this, primaryNode));
         }
 
         return null;
@@ -1962,7 +1962,7 @@ class Table {
         }
     }
 
-    void indexRow(Row r, boolean inserted) throws SQLException {
+    void indexRow(Row r, boolean inserted, Node primarynode) throws SQLException {
 
         if (inserted) {
             int i = 0;

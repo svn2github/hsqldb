@@ -477,7 +477,7 @@ class Cache {
      * Reads a Row object from this Cache that corresponds to the
      * (pos) file offset in .data file.
      */
-    CachedRow getRow(int pos, Table t) throws SQLException {
+    CachedRow getRow(int pos, Table t, Node n) throws SQLException {
 
         // HJB-2001-06-21
         int       k     = (pos >> 3) & multiplierMask;
@@ -490,6 +490,7 @@ class Cache {
 
             if (p == pos) {
                 r.iLastAccess = iCurrentAccess++;
+
                 return r;
             } else if (((p >> 3) & multiplierMask) != k) {    // HJB-2001-06-21
                 break;
@@ -523,10 +524,10 @@ class Cache {
             rData[(r.iPos >> 3) & multiplierMask] = r;
             rFirst                                = r;
 
-            t.indexRow(r, false);
+            t.indexRow(r, false, n);
+
             r.iLastAccess = iCurrentAccess++;
         }
-
 
         return r;
     }

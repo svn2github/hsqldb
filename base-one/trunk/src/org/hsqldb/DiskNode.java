@@ -170,16 +170,16 @@ class DiskNode extends Node {
             return null;
         }
 
-        return tTable.getRow(iData);
+        return tTable.getRow(iData, null);
     }
 
-    private Node findNode(int pos, int id) throws SQLException {
+    private Node findNode(int pos) throws SQLException {
 
         Node ret = null;
-        Row  r   = tTable.getRow(pos);
+        Row  r   = tTable.getRow(pos, null);
 
         if (r != null) {
-            ret = r.getNode(id);
+            ret = r.getNode(iId);
         }
 
         return ret;
@@ -195,7 +195,7 @@ class DiskNode extends Node {
             return (null);
         }
 
-        return (findNode(iLeft, iId));
+        return (findNode(iLeft));
     }
 
     void setLeft(Node n) throws SQLException {
@@ -223,7 +223,7 @@ class DiskNode extends Node {
             return null;
         }
 
-        return (findNode(iRight, iId));
+        return (findNode(iRight));
     }
 
     /**
@@ -260,7 +260,7 @@ class DiskNode extends Node {
             return null;
         }
 
-        return findNode(iParent, iId);
+        return findNode(iParent);
     }
 
     boolean isRoot() {

@@ -275,55 +275,6 @@ class Index {
         balance(x, way);
     }
 
-// fredt - only used by text tables
-    Node insertUncached(Node i) throws SQLException {
-
-        Object  data[]  = i.getData();
-        Node    n       = root,
-                x       = n;
-        boolean way     = true;
-        int     compare = -1;
-
-        while (true) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
-            if (n == null) {
-                if (x == null) {
-                    root = i;
-
-                    return (i);
-                }
-
-                set(x, way, i);
-
-                break;
-            }
-
-            x       = n;
-            compare = compareRow(data, x.getData());
-
-            if (compare == 0) {
-                return (n);
-            }
-
-            way = (compare < 0);
-
-// fredt
-/*
-            n   = (way) ? x.nLeft
-                        : x.nRight;
-*/
-            n = (way) ? x.getLeft()
-                      : x.getRightPointer();
-        }
-
-        balance(x, way);
-
-        return i;
-    }
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
     private void balance(Node x, boolean way) throws SQLException {
 

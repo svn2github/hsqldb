@@ -70,122 +70,76 @@ package org.hsqldb;
 import java.io.IOException;
 import java.sql.SQLException;
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
-
 /**
- * Base class for a database row object implementing rows for
- * memory resident tables and TEXT tables.<p>
+ * Implementation of rows for tables with memory resident indexes and
+ * disk-based data, such as TEXT tables.<p>
  *
- * A Row object references a linked list consisting of Node objects
- * (one Node per index on the table), and an Object[] containing references
- * to the field values for the row.
- *
- * Subclass CachedRow implements rows for CACHED tables.
- *
- * @version 1.7.1
+ * @version 1.7.2
  */
-class Row {
+class CachedDataRow extends CachedRow {
 
-    protected Object oData[];
-    protected Node   nPrimaryNode;
-
+    int              nextPos = NO_POS;
     /**
-     *  Factory method instantiates a Row based on table type.
-     */
-    static Row newRow(Table t, Object o[]) throws SQLException {
-
-        if (t.isText()){
-            return new CachedDataRow(t,o);
-        } else if (t.isCached()) {
-            return new CachedRow(t, o);
-        } else {
-            return new Row(t, o);
-        }
-    }
-
-    Row() {}
-
-    /**
-     *  Constructor for memory Row
+     *  Constructor for new rows
      *
      * @param  t
      * @param  o
      * @exception  SQLException  Description of the Exception
      */
-    Row(Table t, Object o[]) throws SQLException {
+    CachedDataRow(Table t, Object o[]) throws SQLException {
 
-        int index = t.getIndexCount();
+        super(t, o);
 
-        nPrimaryNode = Node.newNode(this, 0, t);
+        int         index = tTable.getIndexCount();
+        Node n     = nPrimaryNode;
+
+        while (n != null) {
+            ((PointerNode)n).nKey = nPrimaryNode;
+            n      = n.nNext;
+        }
+    }
+
+    /**
+     *  constructor when read from cache
+     *
+     * @param  t
+     * @param  in
+     * @exception  IOException   Description of the Exception
+     * @exception  SQLException  Description of the Exception
+     */
+    CachedDataRow(Table t,
+                  DatabaseRowInputInterface in)
+                  throws IOException, SQLException {
+
+        tTable      = t;
+        iPos        = in.getPos();
+        storageSize = in.getSize();
+        oData       = in.readData(tTable.getColumnTypes());
+        nextPos = in.getNextPos();
+    }
+
+    void setNewNodes() {
+
+        int index = tTable.getIndexCount();
+
+        nPrimaryNode = Node.newNode(this, 0, tTable);
 
         Node n = nPrimaryNode;
 
         for (int i = 1; i < index; i++) {
-            n.nNext = Node.newNode(this, i, t);
+            n.nNext = Node.newNode(this, i, tTable);
             n       = n.nNext;
         }
 
-        oData = o;
+        n = nPrimaryNode;
+
+        while (n != null) {
+            ((PointerNode)n).nKey = nPrimaryNode;
+            n      = n.nNext;
+        }
     }
-/*
+
     void setPrimaryNode(Node primary) {
         nPrimaryNode = primary;
-    }
-*/
-    /**
-     * Get the node for a given index.
-     *
-     * @param  index
-     * @return the node
-     */
-    Node getNode(int index) {
-
-        Node n = nPrimaryNode;
-
-        while (index-- > 0) {
-            n = n.nNext;
-        }
-
-        return n;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @return
-     */
-    Node getNextNode(Node n) {
-
-        if (n == null) {
-            n = nPrimaryNode;
-        } else {
-            n = n.nNext;
-        }
-
-        return (n);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    Object[] getData() {
-        return oData;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
-    void delete() throws SQLException {
-
-        Record.memoryRecords++;
-
-        oData        = null;
-        nPrimaryNode = null;
     }
 }
