@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.9 2004/04/03 21:11:51 unsaved Exp $
+# $Id: hsqldb,v 1.10 2004/04/04 00:20:08 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -43,7 +43,8 @@
 
 # SETUP
 # (1) Place this where init scripts belong for your kind of UNIX.  
-# See the 'THISDIR' setting below for exactly where.
+# The most common locations are  /etc/init.d, /etc/rc.d/init.d, 
+# /usr/local/etc/rc.d.
 # (2) Set up the config file according to the comments in the file
 # hsqldb.cfg.sample in the bin directory of your hsqldb distribution.
 # See the setting for CFGFILE below for exactly where you need to place this 
@@ -77,7 +78,17 @@
 
 set +u
 
-SYNTAX_MSG='SYNTAX:  /path/to/this/script/hsqldb start|stop|restart|status'
+# This is only used for recursive invocations.
+# Will not necessarily be set correctly at system bootup invocations
+# (where it is sometimes invoked like "sh... /path/to/hsqldb start"),
+# but, in those cases there will be no recursion.
+INVOC_PATH=`dirname "$0"` || {
+    echo "'dirname' failed" 1>&2
+    exit 2
+}
+[ -n "$INVOC_PATH" ] && INVOC_PATH="${INVOC_PATH}/"
+
+SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 
 # Time to allow for java process to die, if it's not able to start up,
 # And for it to shutdown after it receives the last SQL "shutdown" command.
@@ -97,37 +108,36 @@ case "`uname`" in
         # and that don't have a link directly in /etc.  If so, make a sym
         # link from /etc/init.d to your real init.d directory.
         # (This is the case with very old versions of RedHat).
-        THISDIR=/etc/init.d
     ;;
     FreeBSD)
         CFGFILE=/usr/local/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
-        THISDIR=/usr/local/etc/rc.d
     ;;
     SunOS)
         CFGFILE=/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
-        THISDIR=/etc/init.d
     ;;
     *)
         CFGFILE=/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
-        THISDIR=/etc/init.d
     ;;
 esac
 
 # Sanity check
 [ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] &&
-[ -n "$THISDIR" ] || {
-    echo "Internal problem in init script" 1>&2
-    exit 11
-}
 
 [ $# -eq 1 ] || {
     echo "$SYNTAX_MSG" 1>&2
+    exit 4
+}
+
+# It would be nice to permit some uses, like "status" by non-root users,
+# but for now our goal is a superuser init script.
+[ -w / ] || {   # Very portable, but perhaps not perfect, test for superuser.
+    echo "Only 'root' may use this init script" 1>&2
     exit 4
 }
 
@@ -150,11 +160,11 @@ BSDCFG=
 COMMAND="$1"; shift
 
 [ -r "$CFGFILE" ] || {
-    echo "Unable to read config file '$CFGFILE'"
+    echo "Unable to read config file '$CFGFILE'" 1>&2
     exit 2
 }
 [ -f "$CFGFILE" ] || {
-    echo "'$CFGFILE' is not a regular file"
+    echo "'$CFGFILE' is not a regular file" 1>&2
     exit 2
 }
 HSQLDB_OWNER=
@@ -167,7 +177,7 @@ SHUTDOWN_URLIDS=
 [ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] &&
 [ -n "$SHUTDOWN_URLIDS" ] || {
     echo "Config file '$CFGFILE' does not set one or more of following variables
-    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, SHUTDOWN_URLIDS"
+    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, SHUTDOWN_URLIDS" 1>&2
     exit 2
 }
 [ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
@@ -218,7 +228,7 @@ HSQLDB_PID=
     kill -0 "$HSQLDB_PID" > /dev/null 2>&1 || {
         echo 'Removing stale pid file'
         rm -f "$PIDFILE" || {
-            echo "Failed to remove pid file '$PIDFILE'"
+            echo "Failed to remove pid file '$PIDFILE'" 1>&2
             exit 6
         }
         HSQLDB_PID=
@@ -239,7 +249,7 @@ running with pid $HSQLDB_PID."
     ;;
     start)
         [ -n "$HSQLDB_PID" ] && {
-        echo "There is already a hsqldb server running with pid $HSQLDB_PID."
+        echo "There is already a hsqldb server running with pid $HSQLDB_PID." 1>&2
             exit 1
         }
         if [ -n "$HSQLDB_OWNER" ]; then
@@ -276,7 +286,7 @@ running with pid $HSQLDB_PID."
         # but regardless of why, the pid file does not contain a valid pid.
         kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
             rm -f "$PIDFILE"
-    echo "Failed to start an org.hsqldb.Server.  See log file at '$LOGFILE'."
+echo "Failed to start an org.hsqldb.Server.  See log file at '$LOGFILE'." 1>&2
             exit 1
         }
         echo "org.hsqldb.Server started with pid `cat $PIDFILE`"
@@ -284,7 +294,7 @@ running with pid $HSQLDB_PID."
     ;;
     stop)
         [ -n "$HSQLDB_PID" ] || {
-            echo "I don't know of any running hsqldb server."
+            echo "I don't know of any running hsqldb server." 1>&2
             exit 1
         }
         AUTH_FILE_SWITCH=
@@ -319,8 +329,8 @@ running with pid $HSQLDB_PID."
         exit 0
     ;;
     restart)
-        "$THISDIR"/hsqldb stop || exit $?
-        exec "$THISDIR"/hsqldb start
+        "${INVOC_PATH}"hsqldb stop || exit $?
+        exec "${INVOC_PATH}"/hsqldb start
     ;;
     *)
         echo "$SYNTAX_MSG" 1>&2
