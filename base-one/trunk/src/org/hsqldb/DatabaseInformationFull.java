@@ -682,7 +682,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         row    = t.getNewRow();
         row[0] = "DATABASE_READONLY";
-        row[1] = database.bReadOnly ? "TRUE"
+        row[1] = database.databaseReadOnly ? "TRUE"
                                     : "FALSE";
 
         t.insert(row, null);

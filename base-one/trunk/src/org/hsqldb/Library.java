@@ -1463,7 +1463,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static boolean isReadOnlyDatabase(Connection c) {
-        return ((jdbcConnection) c).dDatabase.bReadOnly;
+        return ((jdbcConnection) c).dDatabase.databaseReadOnly;
     }
 
 /*

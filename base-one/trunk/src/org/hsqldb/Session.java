@@ -260,11 +260,20 @@ class Session {
     }
 
     /**
-     *
+     * This is used for reading - writing to existing tables.
      * @throws  SQLException
      */
     void checkReadWrite() throws SQLException {
         Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
+    }
+
+    /**
+     * This is used for creating new database objects such as tables.
+     * @throws  SQLException
+     */
+    void checkDDLWrite() throws SQLException {
+        Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
+        Trace.check(!dDatabase.filesReadOnly, Trace.DATABASE_IS_READONLY);
     }
 
     /**
@@ -458,7 +467,12 @@ class Session {
      *
      * @param  readonly
      */
-    void setReadOnly(boolean readonly) {
+    void setReadOnly(boolean readonly) throws SQLException {
+
+        if (!readonly && dDatabase.databaseReadOnly) {
+            throw Trace.error(Trace.DATABASE_IS_READONLY);
+        }
+
         isReadOnly = readonly;
     }
 
@@ -468,7 +482,7 @@ class Session {
      * @return
      */
     boolean isReadOnly() {
-        return isReadOnly || dDatabase.bReadOnly;
+        return isReadOnly;
     }
 
     /**

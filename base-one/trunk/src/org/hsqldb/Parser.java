@@ -136,7 +136,7 @@ class Parser {
         } else {
 
             // session level user rights
-            cSession.checkReadWrite();
+            cSession.checkDDLWrite();
 
 // fredt@users 20020215 - patch 497872 by Nitin Chauhan
 // to require column labels in SELECT INTO TABLE

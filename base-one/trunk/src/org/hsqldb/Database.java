@@ -129,7 +129,13 @@ class Database {
 
 // ----------------------------------------------------------------------------
     Logger                         logger;
-    boolean                        bReadOnly;
+    boolean                        databaseReadOnly;    // all tables are readonly
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
+    /** true means that all file based table will automaticly become readonly */
+    boolean                        filesReadOnly;       // cached tables are readonly
+// ----------------------------------------------------------------------------
+
     boolean                        sqlEnforceSize;
     private boolean                bShutdown;
     private HsqlHashMap            hAlias;
@@ -404,7 +410,7 @@ class Database {
 
         User user = aAccess.getUser(username.toUpperCase(),
                                     password.toUpperCase());
-        Session session = newSession(user, bReadOnly);
+        Session session = newSession(user, databaseReadOnly);
 
         logger.writeToLog(session,
                           "CONNECT USER " + username + " PASSWORD \""
@@ -673,8 +679,32 @@ class Database {
      *  database will result in throwing a SQLException.
      */
     void setReadOnly() {
-        bReadOnly = true;
+        databaseReadOnly = true;
+        filesReadOnly = true;
     }
+
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
+    /**
+     * Puts this Database object in a special read-only mode that only
+     * affects file bases tables such as cached or text tables.
+     * After this call all tables that use a file based format will automaticly
+     * be set to read-only modus.
+     * All changes that are done to memory based tables (e.g. Temp-Tables or
+     * normall Memory-Tables will <b>NOT</b> be stored or updated in the script
+     * file.
+     * This mode is speciall for all uses on read-only media but with the need
+     * of using Temp-Tables for queries or not persistent changes.
+     */
+    void setFilesReadOnly() {
+        filesReadOnly = true;
+    }
+
+    boolean isFilesReadOnly() {
+        return filesReadOnly;
+    }
+
+// ----------------------------------------------------------------------------
 
     /**
      *  Retrieves a HsqlArrayList containing references to all non-system
@@ -925,6 +955,7 @@ class Database {
             }
         } else {
             session.checkAdmin();
+            session.checkDDLWrite();
             session.setScripting(true);
         }
 
@@ -1958,7 +1989,7 @@ class Database {
     private Result processAlter(Tokenizer c,
                                 Session session) throws SQLException {
 
-        session.checkReadWrite();
+        session.checkDDLWrite();
         session.checkAdmin();
         session.setScripting(true);
 
@@ -2167,7 +2198,7 @@ class Database {
     private Result processDrop(Tokenizer c,
                                Session session) throws SQLException {
 
-        session.checkReadWrite();
+        session.checkDDLWrite();
         session.checkAdmin();
         session.setScripting(true);
 
@@ -2253,7 +2284,7 @@ class Database {
     private Result processGrantOrRevoke(Tokenizer c, Session session,
                                         boolean grant) throws SQLException {
 
-        session.checkReadWrite();
+        session.checkDDLWrite();
         session.checkAdmin();
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -2352,7 +2383,7 @@ class Database {
         switch (commandSet.get(sToken)) {
 
             case PASSWORD : {
-                session.checkReadWrite();
+                session.checkDDLWrite();
                 session.setPassword(c.getStringToken());
 
                 break;
@@ -2365,6 +2396,7 @@ class Database {
             }
             case LOGSIZE : {
                 session.checkAdmin();
+                session.checkDDLWrite();
 
                 int i = Integer.parseInt(c.getString());
 
@@ -2374,6 +2406,7 @@ class Database {
             }
             case LOGTYPE : {
                 session.checkAdmin();
+                session.checkDDLWrite();
                 session.setScripting(false);
 
                 int i = Integer.parseInt(c.getString());
@@ -2386,6 +2419,7 @@ class Database {
             }
             case IGNORECASE : {
                 session.checkAdmin();
+                session.checkDDLWrite();
 
                 bIgnoreCase = processTrueOrFalse(c);
 
@@ -2408,7 +2442,7 @@ class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // support for SET TABLE <table> READONLY [TRUE|FALSE]
 // sqlbob@users 20020427 support for SET TABLE <table> SOURCE "file" [DESC]
-                session.checkReadWrite();
+                session.checkDDLWrite();
 
                 Table t = getTable(c.getString(), session);
 
@@ -2462,9 +2496,8 @@ class Database {
                 break;
             }
             case REFERENTIAL_INTEGRITY : {
-
-                // fredt - no longer checking for misspelt form
                 session.checkAdmin();
+                session.checkDDLWrite();
 
                 bReferentialIntegrity = processTrueOrFalse(c);
 
@@ -2472,6 +2505,7 @@ class Database {
             }
             case WRITE_DELAY : {
                 session.checkAdmin();
+                session.checkDDLWrite();
 
                 int    delay = 0;
                 String s     = c.getString();
@@ -2687,7 +2721,7 @@ class Database {
                                      Session session) throws SQLException {
 
         session.checkAdmin();
-        session.checkReadWrite();
+        session.checkDDLWrite();
 
         boolean defrag = false;
         String  token  = c.getString();

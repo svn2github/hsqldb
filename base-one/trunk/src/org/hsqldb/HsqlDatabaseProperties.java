@@ -166,6 +166,11 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("readonly", false);
         setProperty("modified", "no");
 
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
+        setProperty("hsqldb.files_readonly", false);
+// ----------------------------------------------------------------------------
+
         // the property "version" is also set to the current version
         //
         // the following properties can be set by the user as defaults for

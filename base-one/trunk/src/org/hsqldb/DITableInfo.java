@@ -82,7 +82,7 @@ final class DITableInfo implements DITypes {
 
     Integer getBRIScope() {
 
-        return (table.dDatabase.bReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
+        return (table.dDatabase.databaseReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
                ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
                : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
     }

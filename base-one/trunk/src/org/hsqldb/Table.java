@@ -239,6 +239,15 @@ class Table {
         for (int vi = 0; vi < TriggerDef.numTrigs(); vi++) {
             vTrigs[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
         }
+
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
+        // Changing the mode of the table if necessary
+        if (db.isFilesReadOnly() && checkTableFileBased())
+        {
+            this.isReadOnly = true;
+        }
+// ----------------------------------------------------------------------------
     }
 
     boolean equals(String other, Session c) {
@@ -284,9 +293,25 @@ class Table {
         }
     }
 
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
     void setDataReadOnly(boolean value) throws SQLException {
+        // Changing the Read-Only mode for the table is only allowed if the
+        // the database can realize it.
+        if (dDatabase.isFilesReadOnly() && checkTableFileBased() && !value)
+        {
+            throw Trace.error(Trace.DATA_IS_READONLY);
+        }
         isReadOnly = value;
     }
+
+    /** Text or Chached Tables are normally file based
+     */
+    boolean checkTableFileBased() {
+        return isCached | isText;
+    }
+
+// ----------------------------------------------------------------------------
 
     int getOwnerSessionId() {
         return ownerSessionId;

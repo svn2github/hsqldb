@@ -223,7 +223,7 @@ class Cache {
      */
     private void init() {
 
-        cacheReadonly = dDatabase.bReadOnly;
+        cacheReadonly = dDatabase.filesReadOnly;
         cacheLength   = 1 << cacheScale;
 
         // HJB-2001-06-21: use different smaller size for the writer

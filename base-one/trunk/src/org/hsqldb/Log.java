@@ -140,7 +140,7 @@ class Log implements Runnable {
     private String                 sFileBackup;
     private String                 sFileLog;
     private boolean                bRestoring;
-    private boolean                bReadOnly;
+    private boolean                filesReadOnly;
 
     // metadata visibilty when not private
     int            maxLogSize;
@@ -258,7 +258,7 @@ class Log implements Runnable {
         pProperties.setProperty("hsqldb.version", jdbcDriver.VERSION);
 
         if (pProperties.isPropertyTrue("readonly")) {
-            bReadOnly = true;
+            filesReadOnly = true;
 
             dDatabase.setReadOnly();
 
@@ -286,6 +286,32 @@ class Log implements Runnable {
 
             return false;
         }
+
+// ----------------------------------------------------------------------------
+// akede@users - 1.7.2 patch Files readonly
+        if (pProperties.isPropertyTrue("hsqldb.files_readonly")) {
+            filesReadOnly = true;               // The log should be read only
+
+            // The database kept in read/write mode
+            //dDatabase.setReadOnly();
+            // Sets all file based tables automaticlly to read-only
+            dDatabase.setFilesReadOnly();
+
+            if (cCache != null) {
+                cCache.open(true);
+            }
+
+            reopenAllTextCaches();
+
+            bRestoring = true;
+
+            ScriptRunner.runScript(dDatabase, sFileScript, logType);
+
+            bRestoring = false;
+
+            return false;
+        }
+// ----------------------------------------------------------------------------
 
         boolean needbackup = false;
         String  state      = pProperties.getProperty("modified");
@@ -359,7 +385,7 @@ class Log implements Runnable {
         if (cCache == null) {
             cCache = new Cache(sFileCache, this.dDatabase);
 
-            cCache.open(bReadOnly);
+            cCache.open(filesReadOnly);
         }
 
         return cCache;
@@ -386,7 +412,7 @@ class Log implements Runnable {
 
         boolean needsbackup = false;
 
-        if (bReadOnly) {
+        if (filesReadOnly) {
             return;
         }
 
@@ -522,7 +548,7 @@ class Log implements Runnable {
      */
     void write(Session c, String s) throws SQLException {
 
-        if (bReadOnly || bRestoring || s == null || s.length() == 0) {
+        if (filesReadOnly || bRestoring || s == null || s.length() == 0) {
             return;
         }
 
@@ -731,7 +757,7 @@ class Log implements Runnable {
             c = new TextCache(source, dDatabase);
         }
 
-        c.open(readOnlyData || bReadOnly);
+        c.open(readOnlyData || filesReadOnly);
         textCacheList.put(tablename, c);
 
         return c;
