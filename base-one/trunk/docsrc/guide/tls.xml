@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.4 2004/04/21 18:01:03 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.5 2004/04/22 03:06:27 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/21 18:01:03 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -33,7 +33,11 @@
         <itemizedlist>
             <title>Hsqldb TLS Support Requirements</title>
             <listitem><para>
-                Java 2.x and up
+                Sun Java 2.x and up.
+                (This is probably possible with IBM's Java, but I don't think
+                anybody has attempted to run HSQLDB with TLS under IBM's Java, 
+                and I'm sure that nobody in the HSQLDB Development Group has
+                documented how to set up the environment).
             </para></listitem> <listitem><para>
                 If Java 2.x or 3.x, then you will need need to
                 <link linkend='jsse-section'>install JSSE</link>.
