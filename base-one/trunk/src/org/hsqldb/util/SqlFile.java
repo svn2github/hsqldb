@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.42 2004/02/21 20:19:49 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.43 2004/02/22 18:04:52 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.42 $
+ * @version $Revision: 1.43 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -222,6 +222,7 @@ public class SqlFile {
         String trimmedCommand;
         String trimmedInput;
         String deTerminated;
+        String commentTestString;
 
         continueOnError = interactive;
 
@@ -348,6 +349,11 @@ public class SqlFile {
                     }
 
                     if (deTerminated == null) {
+                        commentTestString = stringBuffer.toString().trim();
+                        if (commentTestString.startsWith("/*") &&
+                                commentTestString.endsWith("*/")) {
+                            stringBuffer.setLength(0);
+                        }
                         continue;
                     }
 
