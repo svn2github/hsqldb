@@ -184,7 +184,7 @@ class Table {
         database             = db;
         sqlEnforceSize       = db.sqlEnforceSize;
         sqlEnforceStrictSize = db.sqlEnforceStrictSize;
-        identitySequence = new NumberSequence(null, db.firstIdentity, 1,
+        identitySequence = new NumberSequence(null, 0, 1,
                                               Types.BIGINT);
         rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
 
@@ -1040,18 +1040,6 @@ class Table {
         s.append(identitySequence.peek());
 
         return s.toString();
-    }
-
-    /**
-     *  Currently used for text tables.
-     */
-    void setIndexRootsNull() {
-
-        for (int i = 0; i < iIndexCount; i++) {
-            getIndex(i).setRoot(null);
-        }
-
-        identitySequence.reset(database.firstIdentity);
     }
 
     /**
@@ -2807,9 +2795,12 @@ class Table {
     /**
      * Currently only for temp system tables.
      */
-    void clearAllRows() throws HsqlException {
-        Trace.check(isTemp, Trace.OPERATION_NOT_SUPPORTED);
-        setIndexRootsNull();
+    void clearAllRows() {
+        for (int i = 0; i < iIndexCount; i++) {
+            getIndex(i).setRoot(null);
+        }
+
+        identitySequence.reset();
     }
 
     void drop() throws HsqlException {

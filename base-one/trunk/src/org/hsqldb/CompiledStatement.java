@@ -359,7 +359,7 @@ final class CompiledStatement {
     void dematerializeSubQueries() {
 
         for (int i = 0; i < subqueries.length; i++) {
-            subqueries[i].table.setIndexRootsNull();
+            subqueries[i].table.clearAllRows();
 
             subqueries[i].isMaterialised = false;
         }

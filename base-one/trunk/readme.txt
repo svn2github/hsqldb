@@ -1,5 +1,9 @@
 Readme File
 
+
+2003.02.02
+Bug fixes and enhancements
+
 2003.01.31
 Bug fixes and enhancements
 

@@ -80,7 +80,7 @@ class TextTable extends org.hsqldb.Table {
 
         cache = null;
 
-        setIndexRootsNull();
+        clearAllRows();
 
         // Open new cache:
         if (dataSourceNew.length() > 0) {

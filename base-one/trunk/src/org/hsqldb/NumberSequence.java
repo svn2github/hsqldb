@@ -43,8 +43,11 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 public class NumberSequence {
 
     private HsqlName name;
+    // original start value - used in CREATE and ALTER commands
+    private long     startValue;
+    // present value
     private long     currValue;
-    private long     markValue;
+    // last value
     private long     lastValue;
     private long     increment;
     private int      dataType;
@@ -55,7 +58,7 @@ public class NumberSequence {
     NumberSequence(HsqlName name, long value, long increment, int type) {
 
         this.name      = name;
-        currValue      = markValue = lastValue = value;
+        startValue = currValue   = lastValue = value;
         this.increment = increment;
         dataType       = type;
     }
@@ -106,19 +109,12 @@ public class NumberSequence {
     }
 
     /**
-     * marks current value for a future reset()
-     */
-    void mark() {
-        markValue = currValue;
-    }
-
-    /**
-     * reset to marked value, works in conjunction with mark()
+     * reset to start value, works in conjunction with mark()
      */
     void reset() {
 
         // no change if called before getValue() or called twice
-        currValue = markValue;
+        lastValue = currValue = startValue;
     }
 
     /**
@@ -129,7 +125,7 @@ public class NumberSequence {
     }
 
     /**
-     * true if since one or more values were retreived since the last resetWasUsed
+     * true if one or more values were retreived since the last resetWasUsed
      */
     boolean wasUsed() {
         return lastValue != currValue;
@@ -146,11 +142,11 @@ public class NumberSequence {
      * reset to new initial value
      */
     void reset(long value) {
-        markValue = currValue = value;
+        startValue = currValue = lastValue = value;
     }
 
     void reset(long value, long increment) {
-        markValue      = currValue = lastValue = value;
+        reset(value);
         this.increment = increment;
     }
 

@@ -717,7 +717,7 @@ class DatabaseCommandInterpreter {
     private Column processCreateColumn(Table t) throws HsqlException {
 
         boolean isIdentity        = false;
-        long    identityStart     = 0;
+        long    identityStart     = database.firstIdentity;
         long    identityIncrement = 1;
         boolean isPrimaryKey      = false;
         String  columnName;
