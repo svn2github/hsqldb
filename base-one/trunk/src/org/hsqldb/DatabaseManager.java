@@ -151,6 +151,10 @@ public class DatabaseManager {
     static Session getSession(String type, String path,
                               int sessionId) throws HsqlException {
 
+        if (path == null) {
+            return null;
+        }
+
         Database db = lookupDatabaseObject(type, path);
 
         return db.sessionManager.getSession(sessionId);

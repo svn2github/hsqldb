@@ -1582,41 +1582,42 @@ class DatabaseCommandInterpreter {
             case Token.ADD : {
                 HsqlName cname = null;
 
-                if (tokenizer.isGetThis(Token.T_COLUMN)) {
-                    processAlterTableAddColumn(t);
-
-                    return;
-                }
-
                 if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
                     token = tokenizer.getName();
-                    cname = database.nameManager.newHsqlName(token,
-                            tokenizer.wasQuotedIdentifier());
                 }
 
+                cname = database.nameManager.newHsqlName(token,
+                        tokenizer.wasQuotedIdentifier());
                 token = tokenizer.getString();
 
                 switch (Token.get(token)) {
 
-                    case Token.FOREIGN : {
+                    case Token.FOREIGN :
                         tokenizer.getThis(Token.T_KEY);
                         processAlterTableAddForeignKeyConstraint(t, cname);
 
                         return;
-                    }
-                    case Token.UNIQUE : {
+
+                    case Token.UNIQUE :
                         processAlterTableAddUniqueConstraint(t, cname);
 
                         return;
-                    }
-                    case Token.CHECK : {
+
+                    case Token.CHECK :
                         processAlterTableAddCheckConstraint(t, cname);
 
                         return;
-                    }
-                    default : {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                    }
+
+                    default :
+                        if (cname != null) {
+                            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                        }
+
+                        tokenizer.back();
+                    case Token.COLUMN :
+                        processAlterTableAddColumn(t);
+
+                        return;
                 }
             }
             case Token.DROP : {
@@ -1624,19 +1625,17 @@ class DatabaseCommandInterpreter {
 
                 switch (Token.get(token)) {
 
-                    case Token.CONSTRAINT : {
+                    case Token.CONSTRAINT :
                         processAlterTableDropConstraint(t);
 
                         return;
-                    }
-                    case Token.COLUMN : {
+
+                    default :
+                        tokenizer.back();
+                    case Token.COLUMN :
                         processAlterTableDropColumn(t);
 
                         return;
-                    }
-                    default : {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                    }
                 }
             }
             case Token.ALTER : {

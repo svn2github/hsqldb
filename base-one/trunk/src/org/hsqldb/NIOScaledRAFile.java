@@ -64,7 +64,9 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
-        if (super.length() > (1 << 29)) {
+        if (super.length() > (1 << 30)) {
+            Trace.printSystemOut("Initiatiated without nio");
+
             return;
         }
 
@@ -128,6 +130,9 @@ class NIOScaledRAFile extends ScaledRAFile {
                                           : FileChannel.MapMode.READ_WRITE, 0,
                                           newSize);
         } catch (Exception e) {
+            Trace.printSystemOut("NIO enlargeBuffer() failed:  " + newSize);
+            super.seek(position);
+
             isNio   = false;
             buffer  = null;
             channel = null;
@@ -150,8 +155,12 @@ class NIOScaledRAFile extends ScaledRAFile {
             return;
         }
 
-        if (newPos >= bufferLength) {
-            enlargeBuffer(newPos, 0);
+        if (newPos == bufferLength) {
+            Trace.printSystemOut("Seek to buffer length " + newPos);
+        }
+
+        if (newPos > bufferLength) {
+            enlargeBuffer(newPos, 4);
 
             if (!isNio) {
                 super.seek(newPos);

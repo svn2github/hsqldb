@@ -238,8 +238,8 @@ public class DataFileCache extends Cache {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
 
+//            e.printStackTrace();
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.DataFileCache_defrag, new Object[] {
                 e, sName

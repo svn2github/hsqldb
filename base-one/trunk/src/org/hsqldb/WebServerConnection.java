@@ -351,7 +351,10 @@ class WebServerConnection implements Runnable {
                                                server.dbPath[dbIndex],
                                                resultIn.sessionID);
 
-                resultOut = session.execute(resultIn);
+                resultOut =
+                    session == null
+                    ? new Result(Trace.error(Trace.DATABASE_NOT_EXISTS), null)
+                    : session.execute(resultIn);
             }
 
 //

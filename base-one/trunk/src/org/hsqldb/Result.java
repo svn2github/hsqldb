@@ -691,11 +691,15 @@ public class Result {
     }
 
     /**
-     *  Method declaration
+     *  Append Result argument to this.
      *
      * @param  a
      */
     void append(Result a) {
+
+        if (a.rRoot == null) {
+            return;
+        }
 
         if (rRoot == null) {
             rRoot = a.rRoot;

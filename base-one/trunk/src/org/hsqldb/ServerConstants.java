@@ -89,5 +89,5 @@ public interface ServerConstants {
     // web server page defaults
     String SC_DEFAULT_WEB_MIME = "text/html";
     String SC_DEFAULT_WEB_PAGE = "index.html";
-    String SC_DEFAULT_WEB_ROOT = "./";
+    String SC_DEFAULT_WEB_ROOT = ".";
 }

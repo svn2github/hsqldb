@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.15 2004/07/01 21:22:41 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.16 2004/07/01 23:20:33 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.15 $</edition>
-    <pubdate>$Date: 2004/07/01 21:22:41 $</pubdate>
+    <edition>$Revision: 1.16 $</edition>
+    <pubdate>$Date: 2004/07/01 23:20:33 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -112,7 +112,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
     <section id="alter_table-section">
         <title id="alter_table-title">ALTER TABLE<footnoteref linkend='posthyper'/></title>
         <programlisting>
-ALTER TABLE &lt;tablename&gt; ADD COLUMN &lt;columnname&gt; <link linkend='datatypes-section'>Datatype</link> [(columnSize[,precision])]
+ALTER TABLE &lt;tablename&gt; ADD [COLUMN] &lt;columnname&gt; <link linkend='datatypes-section'>Datatype</link> [(columnSize[,precision])]
 [DEFAULT &lt;defaultValue&gt; [NOT NULL]] [BEFORE &lt;existingcolumn&gt;];</programlisting>
         <para>
             Adds the column to the end of the column list.
@@ -129,7 +129,7 @@ ALTER TABLE &lt;tablename&gt; ADD COLUMN &lt;columnname&gt; <link linkend='datat
 			non-standard feature which is likely to change in the future.
         </para>
         <informalexample><programlisting>
-    ALTER TABLE &lt;tablename&gt; DROP COLUMN &lt;columnname&gt;;</programlisting>
+    ALTER TABLE &lt;tablename&gt; DROP [COLUMN] &lt;columnname&gt;;</programlisting>
         </informalexample>
         <para>
             Drops the column from the table.
