@@ -1,18 +1,18 @@
 <html lang="en">
 <head>
-<title>SQLTOOL HOWTO</title>
+<title>SqlTool HOWTO</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="SQLTOOL HOWTO">
-<meta name="generator" content="makeinfo 4.5">
+<meta name="description" content="SqlTool HOWTO">
+<meta name="generator" content="makeinfo 4.3">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
 </head>
 <body>
-<h1 class="settitle">SQLTOOL HOWTO</h1>
+<h1 class="settitle">SqlTool HOWTO</h1>
 
 <div class="contents">
 <h2>Table of Contents</h2>
 <ul>
-<li><a name="toc_Top" href="#Top">SQLTOOL HOWTO</a>
+<li><a name="toc_Top" href="#Top">SqlTool HOWTO</a>
 <li><a name="toc_Intro" href="#Intro">Introduction</a>
 <li><a name="toc_BareBones" href="#BareBones">The Bare Minimum You Need to Know to Run SqlTool</a>
 <li><a name="toc_Auth" href="#Auth">Authentication</a>
@@ -25,6 +25,7 @@
 </li></ul>
 <li><a name="toc_SQLFiles" href="#SQLFiles">SQL Files</a>
 <li><a name="toc_Webapp" href="#Webapp">Web Application</a>
+<li><a name="toc_Encoding" href="#Encoding">Character Encoding</a>
 </li></ul>
 </div>
 
@@ -32,19 +33,16 @@
 <div class="node">
 <p><hr>
 Node:<a name="Top">Top</a>,
+Next:<a rel="next" accesskey="n" href="#Intro">Intro</a>,
 Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <br>
 </div>
 
-<h2 class="unnumbered">SQLTOOL HOWTO</h2>
+<h2 class="unnumbered">SqlTool HOWTO</h2>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.9 $
-
-<p>The software which is referred to in this document and which is hosted
-on the admc.com web site, is distributed for free according to the Gnu
-Public License.
+$Revision: 1.10 $
 
      <dl>
 <dt><strong>Split-up HTML</strong>
@@ -66,6 +64,7 @@ of with a web browser, and without losing the linking features).
 <li><a accesskey="4" href="#Interactive">Interactive</a>:  Interactive
 <li><a accesskey="5" href="#SQLFiles">SQLFiles</a>:  SQL Files
 <li><a accesskey="6" href="#Webapp">Webapp</a>:  Web Application
+<li><a accesskey="7" href="#Encoding">Encoding</a>:  Character Encoding
 </ul>
 
 <div class="node">
@@ -401,6 +400,7 @@ or
 <div class="node">
 <p><hr>
 Node:<a name="Webapp">Webapp</a>,
+Next:<a rel="next" accesskey="n" href="#Encoding">Encoding</a>,
 Previous:<a rel="previous" accesskey="p" href="#SQLFiles">SQLFiles</a>,
 Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
@@ -415,6 +415,39 @@ I already have a war that does a similar thing with a different technology.
 So, email me at
 <a href="mailto:blaine.simpson@admc.com?subject=sqltool-war">blaine.simpson@admc.com</a>
 if you would like me to assemble a war like this.
+
+<div class="node">
+<p><hr>
+Node:<a name="Encoding">Encoding</a>,
+Previous:<a rel="previous" accesskey="p" href="#Webapp">Webapp</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Character Encoding</h2>
+
+<p>Stdin or sql files are read in in the method
+org.hsqldb.util.SqlFile.execute(). 
+The lines are read in, specifically, by doing BufferedReader.readLine()'s
+on a BufferedReader created with either
+<pre class="example">         new BufferedReader(new InputStreamReader(System.in))
+     </pre>
+or
+<pre class="example">         new BufferedReader(new InputStreamReader(new FileInputStream(file)))
+     </pre>
+My understanding is that a BufferedReader reads bytes from the source and
+converts them to characters using the local character encoding.
+
+<p>I don't use sql files to work with non-ASCII data, so I don't know
+what would happen if the SQL file were to contain characters that your
+local encoding does not understand. 
+I would think that it would just pass them through as-is, but since
+the hsqldb ScriptTool also uses BufferedReaders and some users have
+problems with this, they are not just passed through. 
+Many people understand character encoding far better than I do. 
+If somebody can explain this better than me, or can suggest a way to
+read which avoids these encoding problems, please email me at
+<a href="mailto:blaine.simpson@admc.com?subject=sqltool-encoding">blaine.simpson@admc.com</a>.
 
 </body></html>
 
