@@ -64,7 +64,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
-        if (super.length() > (1 << 30)) {
+        if (super.length() > (1L << 30)) {
             Trace.printSystemOut("Initiatiated without nio");
 
             return;
@@ -74,9 +74,6 @@ class NIOScaledRAFile extends ScaledRAFile {
         channel = file.getChannel();
 
         enlargeBuffer(super.length(), 0);
-
-        isNio = true;
-
         Trace.printSystemOut("NIO file instance created. mode:  " + mode);
     }
 
@@ -86,7 +83,7 @@ class NIOScaledRAFile extends ScaledRAFile {
         long bufsize;
 
         for (int scale = 20; ; scale++) {
-            bufsize = 1 << scale;
+            bufsize = 1L << scale;
 
             if (bufsize > Integer.MAX_VALUE) {
                 bufsize = Integer.MAX_VALUE;
@@ -121,7 +118,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         Trace.printSystemOut("NIO next enlargeBuffer():  " + newSize);
 
-        if (bufferLength > 1 << 24) {
+        if (bufferLength > 1L << 24) {
             System.gc();
         }
 
