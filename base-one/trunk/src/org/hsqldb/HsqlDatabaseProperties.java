@@ -46,11 +46,15 @@ import org.hsqldb.lib.HashSet;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private static HashSet fullyProtectedProperties = new HashSet();
-    private static HashSet setProtectedProperties   = new HashSet();
-    private static HashSet booleanProperties        = new HashSet();
-    private static HashSet integralProperties       = new HashSet();
-    private static HashSet stringProperties         = new HashSet();
+    // db files modified
+    public static final int FILES_NOT_MODIFIED       = 0;
+    public static final int FILES_MODIFIED           = 1;
+    public static final int FILES_MODIFIED_NEW       = 2;
+    private static HashSet  fullyProtectedProperties = new HashSet();
+    private static HashSet  setProtectedProperties   = new HashSet();
+    private static HashSet  booleanProperties        = new HashSet();
+    private static HashSet  integralProperties       = new HashSet();
+    private static HashSet  stringProperties         = new HashSet();
 
     static {
 
@@ -371,5 +375,32 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setDatabaseVariables();
 
         return value;
+    }
+
+    public void setDBModified(int mode) throws HsqlException {
+
+        String value = "no";
+
+        if (mode == FILES_MODIFIED) {
+            value = "yes";
+        } else if (mode == FILES_MODIFIED_NEW) {
+            value = "yes-new-files";
+        }
+
+        setProperty("modified", value);
+        save();
+    }
+
+    public int getDBModified() throws HsqlException {
+
+        String value = getProperty("modified");
+
+        if ("yes".equals(value)) {
+            return FILES_MODIFIED;
+        } else if ("yes-new-files".equals(value)) {
+            return FILES_MODIFIED_NEW;
+        }
+
+        return FILES_NOT_MODIFIED;
     }
 }

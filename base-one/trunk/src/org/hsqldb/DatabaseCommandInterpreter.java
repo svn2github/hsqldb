@@ -1006,20 +1006,16 @@ class DatabaseCommandInterpreter {
             return tcList;
         }
 
-        int i = 0;
-
         while (true) {
-            token = tokenizer.getString();
-
             HsqlName cname = null;
 
-            i++;
-
-            if (token.equals(Token.T_CONSTRAINT)) {
-                cname = database.nameManager.newHsqlName(tokenizer.getName(),
+            if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
+                token = tokenizer.getName();
+                cname = database.nameManager.newHsqlName(token,
                         tokenizer.wasQuotedIdentifier());
-                token = tokenizer.getString();
             }
+
+            token = tokenizer.getString();
 
             switch (Token.get(token)) {
 
@@ -1584,10 +1580,10 @@ class DatabaseCommandInterpreter {
 
                 if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
                     token = tokenizer.getName();
+                    cname = database.nameManager.newHsqlName(token,
+                            tokenizer.wasQuotedIdentifier());
                 }
 
-                cname = database.nameManager.newHsqlName(token,
-                        tokenizer.wasQuotedIdentifier());
                 token = tokenizer.getString();
 
                 switch (Token.get(token)) {

@@ -89,6 +89,7 @@ class SequenceManager {
 
             if (seq.wasUsed()) {
                 logger.writeSequenceStatement(c, seq);
+                seq.resetWasUsed();
             }
         }
 

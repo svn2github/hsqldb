@@ -276,14 +276,14 @@ class Log {
         }
 
         boolean needbackup = false;
-        String  state      = pProperties.getProperty("modified");
+        int     state      = pProperties.getDBModified();
 
         try {
-            if (state.equals("yes-new-files")) {
+            if (state == HsqlDatabaseProperties.FILES_MODIFIED_NEW) {
                 FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
                 FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
                 FileUtil.delete(sFileLog);
-            } else if (state.equals("yes")) {
+            } else if (state == HsqlDatabaseProperties.FILES_MODIFIED) {
 
                 // recovering after a crash (or forgot to close correctly)
                 restoreBackup();
@@ -292,8 +292,7 @@ class Log {
             }
         } catch (IOException e) {}
 
-        pProperties.setProperty("modified", "yes");
-        pProperties.save();
+        pProperties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED);
 
         if (cCache != null) {
             cCache.open(false);
@@ -306,8 +305,8 @@ class Log {
 
             if (needbackup) {
                 close(false, true);
-                pProperties.setProperty("modified", "yes");
-                pProperties.save();
+                pProperties.setDBModified(
+                    HsqlDatabaseProperties.FILES_MODIFIED);
 
                 if (cCache != null) {
                     cCache.open(false);
@@ -383,8 +382,7 @@ class Log {
         }
 
         // we have the new files
-        pProperties.setProperty("modified", "yes-new-files");
-        pProperties.save();
+        pProperties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED_NEW);
 
         try {
 
@@ -398,7 +396,7 @@ class Log {
         } catch (IOException e) {}
 
         // now its done completely
-        pProperties.setProperty("modified", "no");
+        pProperties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
         pProperties.setProperty("version", org.hsqldb.jdbc.jdbcUtil.VERSION);
         pProperties.setProperty("hsqldb.compatible_version", "1.7.2");
         pProperties.save();
@@ -438,8 +436,7 @@ class Log {
 
         // close as normal
         close(false, !defrag);
-        pProperties.setProperty("modified", "yes");
-        pProperties.save();
+        pProperties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED);
 
         if (!defrag && cCache != null) {
             cCache.open(false);
