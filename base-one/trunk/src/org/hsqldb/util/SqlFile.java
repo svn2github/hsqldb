@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.8 2004/01/20 19:13:00 unsaved Exp $
+ * $Id: SqlFile.java,v 1.9 2004/01/20 19:16:27 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -180,9 +180,11 @@ public class SqlFile {
                 }
             }
             if (trimmedCommand.length() == 0) {
-                setHist(buffer.toString());
-                buffer.setLength(0);
-                psStd.println("Buffer stored into history then cleared");
+                if (interactive) {
+                    setHist(buffer.toString());
+                    buffer.setLength(0);
+                    psStd.println("Buffer stored into history then cleared");
+                }
                 continue;
             }
             deTerminated = deTerminated(inputLine);
@@ -194,7 +196,7 @@ public class SqlFile {
                 if (curCommand.trim().length() == 0) {
                     throw new SQLException("Empty SQL Statement");
                 }
-                setHist(curCommand);
+                if (interactive) setHist(curCommand);
                 processStatement(conn, psStd);
             } catch (SQLException se) {
                 psErr.println("SQL Error at '"
