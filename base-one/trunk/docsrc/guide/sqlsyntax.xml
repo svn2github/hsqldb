@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.18 2004/07/15 18:52:03 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.19 2004/08/09 17:10:11 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.18 $</edition>
-    <pubdate>$Date: 2004/07/15 18:52:03 $</pubdate>
+    <edition>$Revision: 1.19 $</edition>
+    <pubdate>$Date: 2004/08/09 17:10:11 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -77,7 +77,7 @@
     <section id="alter_index-section">
         <title id="alter_index-title">ALTER INDEX<footnote id='posthyper'>
             <para>
-                These features were added by HSQL Development Group on or after
+                These features were added by HSQL Development Group since
                 April 2001
             </para>
         </footnote></title>
@@ -223,9 +223,6 @@ CHECKPOINT [DEFRAG<footnoteref linkend="posthyper"/>];</programlisting>
             If DEFRAG is specified, this command also shrinks the .data file to 
             its minimal size.
         </para> <para>
-            In the current version DEFRAG is not allowed if 
-            <classname>java.nio</classname> is used.
-        </para> <para>
             See also:
             <link linkend='shutdown-section' endterm='shutdown-title'/>,
             <link linkend='set_logsize-section' endterm='set_logsize-title'/>.
@@ -349,7 +346,7 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                     <title>Allowed Default Values in Column Definitions</title>
                     <listitem><para>
                         For character column, a single-quoted string or NULL.
-						The only SQL function that can be used is CURRRENT_USER.
+						The only SQL function that can be used is CURRENT_USER.
                     </para></listitem> <listitem><para>
                         For datetime columns, a single-quoted DATE, TIME or 
                         TIMESTAMP value or NULL. Or a datetime SQL function
@@ -390,7 +387,11 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
     [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}]<footnoteref linkend="posthyper"/> |
     CHECK(&lt;search condition&gt;)<footnoteref linkend="posthyper"/></programlisting>
                 </listitem>
-            </varlistentry>
+                <para>
+                    Both ON DELETE and ON UPDATE clauses can be used in a single
+					foreign key definition.
+                </para>            
+			</varlistentry>
             <varlistentry><term>search condition</term>
                 <listitem><para>
                     A search condition is similar to the set of conditions in a 
@@ -401,7 +402,9 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                     Sample table definitions with CHECK constraints are in 
                     <!-- Would be nice to link to this, but there's no copy
                          under the doc directory. -->
-                    <literal>TestSelfCheckConstraints.txt</literal>.
+                    <literal>TestSelfCheckConstraints.txt</literal>. This file
+					is in the /hsqldb/testrun/hsqldb/ directory of the 
+					zip.
                 </para></listitem>
             </varlistentry>
             <varlistentry><term>General syntax limitations</term>
@@ -412,7 +415,7 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                     with other databases.
                     With character types (CHARACTER and VARCHAR) these are 
                     enforced only if the database property,
-                    sql.enforce_strict_size has be set to true.
+                    sql.enforce_strict_size has beeen set to true.
                 </para><para>
                     NOT NULL constraints can be part of the column definition 
                     only.
@@ -687,7 +690,8 @@ DROP TABLE &lt;table&gt; [IF EXISTS];</programlisting>
         <para>
             Removes a table, the data and indexes from the database.
             When IF EXIST is used, the statement returns without an error even 
-            if the table does not exist.  
+            if the table does not exist. Will fail if the table has been 
+			reference by a foreign key or a view.
         </para> <para>
             See also:
             <link linkend='create_table-section' endterm='create_table-title'/>.
@@ -747,7 +751,7 @@ ON { table | CLASS "package.class" } TO { username | PUBLIC };</programlisting>
             be used.
             Examples:
         </para> <informalexample><programlisting>
-    GRANT SELECT ON Test TO GUEST
+    GRANT SELECT ON Test TO GUEST;
     GRANT ALL ON CLASS "java.lang.String" TO PUBLIC;</programlisting>
         </informalexample><para>
             Only an administrator do this. 
@@ -820,8 +824,8 @@ SCRIPT ['file'];</programlisting>
             Creates an SQL script describing the database.
             If the file is not specified, a result set containing only the DDL 
             script is returned.
-            If the file is specified then this file is saved on the machine 
-            where the database files are located.
+            If the file is specified then this file is saved with the path
+			relative to the machine where the database engine is located.
         </para> <para>
             Only an administrator may do this. 
         </para>
@@ -830,13 +834,13 @@ SCRIPT ['file'];</programlisting>
     <section id="select-section">
         <title id="select-title">SELECT<footnoteref linkend='posthyper'/></title>
         <programlisting>
-SELECT [{LIMIT n m | TOP m}<footnoteref linkend="posthyper"/>][DISTINCT|ALL]
+SELECT [{LIMIT n m | TOP m}<footnoteref linkend="posthyper"/>][ALL | DISTINCT]
 { selectExpression | table.* | * } [, ...]
 [INTO [CACHED | TEMP  | TEXT]<footnoteref linkend="posthyper"/> newTable]
 FROM tableList
 [WHERE <link linkend='expression-section'>Expression</link>]
 [GROUP BY Expression [, ...]]
-[{ UNION [ALL | DISTINCT] | {MINUS | EXCEPT} | INTERSECT } selectStatement]
+[{ UNION [ALL | DISTINCT] | {MINUS [DISTINCT] | EXCEPT [DISTINCT] } | INTERSECT [DISTINCT] } selectStatement]
 [ORDER BY orderExpression [, ...]];</programlisting>
 
         <para>
@@ -856,7 +860,7 @@ FROM tableList
             </varlistentry>
             <varlistentry><term>selectExpression</term>
                 <listitem><programlisting>
-    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} ([DISTINCT|ALL]<footnoteref linkend="posthyper"/>] Expression) } [[AS] label]</programlisting>
+    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} ([ALL | DISTINCT]<footnoteref linkend="posthyper"/>] Expression) } [[AS] label]</programlisting>
                 <para>
                     If DISTINCT is specified, only one instance of several 
                     equivalent values is used in the aggregate function.
@@ -890,9 +894,9 @@ FROM tableList
 			  are possible. Each SELECT is then treated as a term, and the 
 			  set operation as an operator in an expression. The expression is
                     evaluated from left to right but INTERSECT takes 
-                    precedence over the rest of the operators and applied first.
-                    You can use parentheses around any SELECT pairs to change the
-                    evaluation order.
+                    precedence over the rest of the operators and is applied first.
+                    You can use parentheses around any number of SELECT statements 
+					to change the evaluation order.
                 </para><para>
                     NOT NULL constraints can be part of the column definition 
                     only.
@@ -1957,10 +1961,10 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
         </varlistentry>
         <varlistentry><term>name</term>
             <listitem><para>
-                The character set for identifiers (names) in HSQLDB is Unicode. 
+                The character set for quoted identifiers (names) in HSQLDB is Unicode. 
             </para><para>
                 A unquoted identifier (name) starts with a letter and is 
-                followed by any number of letters or digits.
+                followed by any number of ASCII letters or digits.
                 When an SQL statement is issued, any lowercase characters in 
                 unquoted identifiers are converted to uppercase.
                 Because of this, unquoted names are in fact ALL UPPERCASE when 
@@ -1996,7 +2000,10 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             </para><informalexample><programlisting>
     SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
     SELECT &quot;LEFT&quot;(COL1, 2) FROM MYTABLE;</programlisting>
-            </informalexample><para>
+            </informalexample><para>Although HSQLDB 1.7.2 does not force
+			    unquoted identifiers to contain only ASCII characters, the
+				use of non-ASCII characters in these identifiers does not 
+				comply with SQL standards.
                 Portability between different JRE locales could be an issue 
                 when accented characters (or extended unicode characters) are 
                 used in unquoted identifiers.
@@ -2038,7 +2045,7 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <para>
                 When specifying default values for date / time columns in 
                 CREATE TABLE statements, or in SELECT,INSERT, and UPDATE 
-                statements, special SQL functions: CURRANT_USER,
+                statements, special SQL functions:
 				NOW, SYSDATE, TODAY, CURRENT_TIMESTAMP, 
                 CURRENT_TIME and CURRENT_DATE (case independent) can 
                 be used. NOW is used for TIME and TIMESTAMP columns, TODAY is 
@@ -2060,7 +2067,8 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
         Any number of commands may be combined.
         With combined commands,  ';' (semicolon) must be used at the end of 
         each command to ensure data integrity, despite the fact that the 
-        program may not return an error when it is not used. 
+        engine may understand the end of commands and not return an error
+		when a semicolon is not used. 
     </para>
 </section>
 </chapter>

@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.17 2004/07/15 17:41:12 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.18 2004/08/09 17:10:10 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.17 $</edition>
-        <pubdate>$Date: 2004/07/15 17:41:12 $</pubdate>
+        <edition>$Revision: 1.18 $</edition>
+        <pubdate>$Date: 2004/08/09 17:10:10 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -49,8 +49,8 @@
             <link linkend='sql_issues-chapter' endterm='sql_issues-title'/>
             chapter.
             Details and examples of how to connect via JDBC are provided in our
-            <ulink url='../src/org/hsqldb/jdbc/jdbcConnection'>JavaDoc for
-            <literal>jdbcConnection.html</literal></ulink>.
+            <ulink url='../src/org/hsqldb/jdbc/jdbcConnection.html'>JavaDoc for
+            <literal>jdbcConnection</literal></ulink>.
         </para><para>
             Version 1.7.2 introduces a uniform method of distinguishing between
             different types of connection, alongside new capabilities to
@@ -1176,12 +1176,16 @@
                 not take place during the backup.
                 It is more efficient to perform the backup immediately after a
                 CHECKPOINT.
-                The *.data file can be excluded from the backup (the *.backup
-                file will be used to replace this file if the full backup is
-                restored).
+                The *.data file can be excluded from the backup. In this case,
+				when restoring,	a dummy *.data file is needed which can be an
+				empty, 0 length	file. The engine will expand the *.backup
+                file to replace this dummy file if the backup is
+                restored. If the *.data file is not backed up, the *.properties
+				file may have to be modified to	ensure it contain modified=yes
+				instead of modified=no prior to restoration.
                 If a backup immediately follows a checkpoint, then the *.log
-                file can also be excluded, limiting the significant files to
-                *.properties, *.script, *.data and *.backup.
+                file can also be excluded, reducing the significant files to
+                *.properties, *.script and *.backup.
                 Normal backup methods, such as archiving the files in a
                 compressed bundle can be used.
             </para>

@@ -1,4 +1,4 @@
-<!-- $Id: texttables.xml,v 1.7 2004/06/09 13:00:41 fredt Exp $ -->
+<!-- $Id: texttables.xml,v 1.8 2004/06/09 14:01:17 unsaved Exp $ -->
 
 <chapter id='texttables-chapter'>
     <title id='texttables-title'>Text Tables</title>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/06/09 13:00:41 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/06/09 14:01:17 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
@@ -192,7 +192,7 @@
                 <varlistentry><term>\\</term>
                     <listitem><para>backslash</para></listitem>
                 </varlistentry>
-                <varlistentry><term>\u###</term>
+                <varlistentry><term>\u####</term>
                     <listitem><para>a Unicode character specified in hexadecimal</para></listitem>
                 </varlistentry>
             </variablelist>
