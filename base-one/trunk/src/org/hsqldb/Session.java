@@ -918,7 +918,9 @@ public class Session implements SessionInterface {
     private Result performPostExecute(Result r) {
 
         try {
+            if (database != null){
             database.sequenceManager.logSequences(this, database.logger);
+            }
 
             return r;
         } catch (Exception e) {
