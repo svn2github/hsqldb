@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: pkgbuild,v 1.2 2002/10/14 18:31:35 unsaved Exp $
+# $Id: pkgbuild,v 1.3 2002/10/26 05:46:28 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
@@ -125,7 +125,7 @@ Even if you're generating it, you have to start with an old version."
     (cd $SRCBASE && pkgproto '.=$VERDIR') >> $PROTOFILE
     perl -ni.safe -we '
 	next if m:^\s*\S\s+none\s+\$VERDIR/classes:;
-	next if m:^\s*\S\s+none\s+\$VERDIR/src:;
+	#next if m:^\s*\S\s+none\s+\$VERDIR/src:; Keep SOURCE!
 	next if m:^[^#]*build/packaging:;
     	next if m:^[^#]*[/ ]CVS:;
 	next if m:/lib/hsqldb\.jar\b:;
