@@ -357,6 +357,10 @@ class Database {
         filesReadOnly = true;
     }
 
+    boolean isFilesReadOnly() {
+        return filesReadOnly;
+    }
+
 // ----------------------------------------------------------------------------
     boolean isFilesInJar() {
         return filesInJar;

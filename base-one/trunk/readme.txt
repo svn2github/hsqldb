@@ -2,6 +2,45 @@ Readme File
 
 
 leading to HSQLDB 1.7.2 ALPHA_N
+2003.07.29
+
+- enhancements to aggregate functions: aggregates of different numeric
+types are now supported
+
+SUM returns a BIGINT for TINYINT, SMALLINT and INTEGER columns. It
+returns a DECIMAL for BIGINT columns (scale 0) and DECIMAL columns 
+scale equals to that of the column).
+
+AVG returns the same type as the column.
+
+- aggregates with GROUP BY do not return any rows if table is empty
+
+OLDER ENHANCEMENTS NOT PREVIOUSLY REPORTED
+
+- IDENTITY columns can now be of BIGINT type:
+
+CREATE TABLE <name> (<column> BIGINT IDENTITY, ...)
+
+- With contributed patch, TEXT TABLES encoding of the source file can
+now be set. UTF-8 and other encodings can be used.
+
+- Two new options for databases: files_read_only and files_in_jar
+were added based on submitted patches.
+
+- files_read_only
+
+If the property files_read_only=true is set in the database 
+.properties file, no attempt is made to write the changes to data to
+file. Default, memory tables can be read/write.
+
+- files in jar
+
+The files_in_jar option allows database files to be distributed
+in the application jar. The url for this mode is in the form of:
+
+jdbc:hsqldb:hsql:res:<path in jar>
+
+The database can be readonly or files_read_only
 
 2003.07.09
 
@@ -22,7 +61,7 @@ available on the JDBC client's path.
 usage to varying degrees depending on the contents of database
 tables and speeds up the database in most cases.
 
-- a new property, ifexists={true|false? can be specified for connections
+- a new property, ifexists={true|false} can be specified for connections
 to in-process databases. The default is false and corresponds to
 current behaviour. if set true, the connection is opened only if
 the database files have already been created -- otherwise no new database
@@ -44,10 +83,12 @@ connections and multiple databases within the same JVM
 
 
 
-NB: NEW CONVENTIONS FOR URL'S AND .properties FILES
+NEW CONVENTIONS FOR URL'S AND .properties FILES
+
+Each HSQLDB server or webserver can now serve up to 10 different databases.
 
 The server.properties and webserver.properties method for defining the
-database has changed. The following properties should be used:
+databases has changed. The following properties should be used:
 
 server.database.0   path_of_the_first_database
 server.dbname.0 alias_for_the_first_database
@@ -56,7 +97,7 @@ Up to 10 databases can be defined but they must start from 0
 
 The same applies to command line arguments for Server and WebServer.
 
-The urls for connecting to servers should have the name of the database
+The urls for connecting to servers should have the alias of the database
 at the end.
 
 For example, to connect to the HSQL protocol server on the localhost use:
@@ -64,17 +105,17 @@ For example, to connect to the HSQL protocol server on the localhost use:
 jdbc:hsqldb:hsql://localhost/alias_for_the_database
 
 where alias_for_the_database is the same string as defined in
-server.properties.
+server.properties as server.dbnam.n
 
 The default for server.dbname.0 is "" (empty string) so that
-the old URL types continue to work.
+old URL types continue to work.
 
 Multiple memory-only database are supported by the use of:
 
 jdbc:hsqldb:mem:alias_for_the_first_database
 jdbc:hsqldb:mem:alias_for_the_second_database
 
-Example: jdbc:hsqldb:mem:db1 jdbc:hsqldb:mem:mydb
+Examples: jdbc:hsqldb:mem:db1 jdbc:hsqldb:mem:mydb
 
 The conneciton type, 'file', can be used for file database
 connections. example below:
@@ -132,7 +173,7 @@ various patches and fixes
 abnormal shutdown
 -fixes old issues with SAVEPOINT names
 -enhances TEXT table handling and reporting of errors in
-CSV (source) filrs
+CSV (source) files
 
 
 HSQLDB 1.7.2 ALPHA_K

@@ -111,7 +111,6 @@ class TableFilter {
     TableFilter(Table t, String alias, boolean outerjoin) {
 
         tTable     = t;
-        iIndex     = null;
         sAlias     = (alias != null) ? alias
                                      : t.getName().name;
         bOuterJoin = outerjoin;
@@ -320,7 +319,7 @@ class TableFilter {
         int   i     = e1.getColumnNr();
         Index index = tTable.getIndexForColumn(i);
 
-        if ((index == null) || ((iIndex != index) && (iIndex != null))) {
+        if (index == null || (iIndex != index && iIndex != null)) {
             addAndCondition(e);
 
             return;
@@ -406,11 +405,11 @@ class TableFilter {
             oCurrentData = nCurrent.getData();
             currentRow   = nCurrent.getRow();
 
-            if (!test(eEnd)) {
+            if (!(eEnd == null || eEnd.test() )) {
                 break;
             }
 
-            if (test(eAnd)) {
+            if (eAnd == null || eAnd.test() ) {
                 return true;
             }
 
@@ -424,7 +423,7 @@ class TableFilter {
         if (bOuterJoin) {
             return eAnd == null ? true
                                 : andtested ? false
-                                            : test(eAnd);
+                                            : eAnd.test();
         }
 
         return false;
@@ -450,11 +449,11 @@ class TableFilter {
             oCurrentData = nCurrent.getData();
             currentRow   = nCurrent.getRow();
 
-            if (!test(eEnd)) {
+            if (!(eEnd == null || eEnd.test() )) {
                 break;
             }
 
-            if (test(eAnd)) {
+            if (eAnd == null || eAnd.test() ) {
                 return true;
             }
 
@@ -486,25 +485,6 @@ class TableFilter {
         }
 
         e.setTrue();
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     *
-     * @return
-     *
-     * @throws HsqlException
-     */
-    private boolean test(Expression e) throws HsqlException {
-
-        if (e == null) {
-            return true;
-        }
-
-        return e.test();
     }
 
 // boucheb@users 20030415 - added for debugging support
