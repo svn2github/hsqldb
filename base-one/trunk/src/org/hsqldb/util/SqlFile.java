@@ -44,12 +44,15 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.Iterator;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.55 2004/06/05 02:41:39 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.56 2004/06/05 03:03:28 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.55 $
+ * @version $Revision: 1.56 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -96,6 +99,7 @@ public class SqlFile {
     private Connection curConn          = null;
     private String[]   statementHistory = new String[10];
     private boolean    htmlMode         = false;
+    private HashMap    userVars         = null;
 
     // Ascii field separator blanks
     final private static int SEP_LEN = 2;
@@ -105,18 +109,21 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.55 $".substring("$Revision: ".length(),
-                "$Revision: 1.55 $".length() - 2);
+        revnum = "$Revision: 1.56 $".substring("$Revision: ".length(),
+                "$Revision: 1.56 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
-        + "\"\\q\" to quit, \"\\?\" lists Special Commands, "
-        + "\":?\" lists Buffer/Editing commands.\n\n"
+        + "    \"\\q\" to quit.\n"
+        + "    \"\\?\" lists Special Commands.\n"
+        + "    \":?\" lists Buffer/Editing commands.\n"
+        + "    \"*?\" lists PL commands (including alias commands).\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
+        + "PROCEDURAL LANGUAGE commands begin with '* ' and end when you hit ENTER.\n"
         + "All other lines comprise SQL Statements.\n"
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
@@ -153,6 +160,13 @@ public class SqlFile {
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n" + "    \\-3\n" + "    :;\n";
+    final private static String PL_HELP_TEXT =
+        "PROCESS LANGUAGE Commands.\n"
+        + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
+        + "    * VARNAME =                   Unset variable\n"
+        + "    * list                        List values of all variables\n\n"
+        + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
+        + "You may omit the {}'s only if *VARNAME is the very first word of a command.\n";
 
     /**
      * Interpret lines of input file as SQL Statements, Comments,
@@ -165,9 +179,11 @@ public class SqlFile {
      *                       Special commands are enabled, and
      *                       continueOnError defaults to true.
      */
-    SqlFile(File inFile, boolean inInteractive) throws IOException {
+    public SqlFile(File inFile, boolean inInteractive, HashMap inVars)
+    throws IOException {
         file        = inFile;
         interactive = inInteractive;
+        userVars = inVars;
 
         if (file != null &&!file.canRead()) {
             throw new IOException("Can't read SQL file '" + file + "'");
@@ -179,8 +195,8 @@ public class SqlFile {
      *
      * @see #SqlFile(File,boolean)
      */
-    SqlFile(boolean inInteractive) throws IOException {
-        this(null, inInteractive);
+    public SqlFile(boolean inInteractive, HashMap inVars) throws IOException {
+        this(null, inInteractive, inVars);
     }
 
     /**
@@ -287,6 +303,10 @@ public class SqlFile {
                     // could be called up above if a Special processing
                     // executes a SQL command from history.
                     if (stringBuffer.length() == 0) {
+                        if (trimmedInput.startsWith("*?")) {
+                            stdprintln(PL_HELP_TEXT);
+                            continue;
+                        }
                         if (trimmedInput.startsWith("/*")) {
                             postCommentIndex = 
                                 trimmedInput.indexOf("*/", 2) + 2;
@@ -307,6 +327,21 @@ public class SqlFile {
                         // This is just to filter out useless newlines at
                         // beginning of commands.
                         if (trimmedInput.length() == 0) {
+                            continue;
+                        }
+                        if (trimmedInput.startsWith("* ")) {
+                            try {
+                                processPL(trimmedInput.substring(1));
+                            } catch (BadSpecial bs) {
+                                errprintln("Error at '" + ((file == null)
+                                        ? "stdin"
+                                        : file.toString()
+                                ) + "' line " + curLinenum + ":\n\""
+                                  + inputLine + "\"\n" + bs.getMessage());
+                                if (!continueOnError) {
+                                    throw new SqlToolError(bs);
+                                }
+                            }
                             continue;
                         }
                         if (trimmedInput.charAt(0) == '\\') {
@@ -542,6 +577,9 @@ public class SqlFile {
         if (inString.length() < 1) {
             throw new BadSpecial("Null special command");
         }
+        if (plMode && userVars != null && userVars.size() > 0) {
+            inString = dereference(inString);
+        }
         StringTokenizer toker = new StringTokenizer(inString);
         arg1 = toker.nextToken();
 
@@ -590,7 +628,8 @@ public class SqlFile {
                     throw new BadSpecial("You must supply an SQL file name");
                 }
                 try {
-                    (new SqlFile(new File(other), false)).execute(curConn);
+                    (new SqlFile(new File(other), false, userVars)).
+                            execute(curConn);
                 } catch (Exception e) {
                     throw new BadSpecial(
                             "Failed to execute SQL from file '" + other + "':  "
@@ -670,6 +709,82 @@ public class SqlFile {
                 return;
         }
         throw new BadSpecial("Unknown Special Command");
+    }
+
+    /**
+     * Deference PL variables.
+     *
+     * @throws SQLException  This is really an inappropriate exception
+     * type.  Only using it because I don't have time to do things properly.
+     */
+    private String dereference(String inString) throws SQLException {
+        String varName, varValue;
+        StringBuffer expandBuffer = new StringBuffer(inString);
+        int b, e; // begin and end
+
+        if (inString.charAt(0) == '*') {
+            Iterator it = userVars.keySet().iterator();
+            while (it.hasNext()) {
+                varName = (String) it.next();
+                if (inString.equals("*" + varName)) {
+                    return (String) userVars.get(varName);
+                }
+                if (inString.startsWith("*" + varName + ' ')
+                        || inString.startsWith("*" + varName + '\t')) {
+                    expandBuffer.replace(0, varName.length() + 1, 
+                            (String) userVars.get(varName));
+                    return expandBuffer.toString();
+                }
+            }
+            return inString;
+        }
+        String s;
+        while (true) {
+            s = expandBuffer.toString();
+            if ((b = s.indexOf("*{")) < 0
+                    || ((e = s.indexOf('}', b + 2)) < 0)) {
+                break;
+            }
+            varName = s.substring(b + 2, e);
+            if (!userVars.containsKey(varName)) {
+                throw new SQLException("Use of unset PL variable: "
+                        + varName);
+            }
+            expandBuffer.replace(b, e + 1, (String) userVars.get(varName));
+        }
+        return expandBuffer.toString();
+    }
+
+    private boolean plMode = true;
+
+    /**
+     * Process a Process Language Command.
+     *
+     * @param inString Complete command, less the leading '\' character.
+     * @throws BadSpecial Runtime error()
+     */
+    private void processPL(String inString)
+    throws BadSpecial {
+        if (inString.length() < 1) {
+            throw new BadSpecial("Null PL command");
+        }
+        StringTokenizer toker = new StringTokenizer(inString);
+        String arg1 = toker.nextToken();
+        if (arg1.equals("list")) {
+            if (toker.countTokens() > 0) {
+                throw new BadSpecial("PL comand 'list' takes no args");
+            }
+            stdprintln(new TreeMap(userVars).toString());
+            return;
+        }
+        if ((toker.countTokens() == 0) || !toker.nextToken().equals("=")) {
+            throw new BadSpecial("Unknown PL command (2)");
+        }
+        if (toker.countTokens() == 0) {
+            userVars.remove(arg1);
+        } else {
+            userVars.put(arg1, toker.nextToken("").trim());
+        }
     }
 
     /**
@@ -798,7 +913,10 @@ public class SqlFile {
     private void processStatement() throws SQLException {
         Statement statement = curConn.createStatement();
 
-        statement.execute(curCommand);
+        statement.execute(
+                (plMode && userVars != null && userVars.size() > 0)
+                ? dereference(curCommand)
+                : curCommand);
         displayResultSet(statement, statement.getResultSet(), null, null,
                          null);
     }
