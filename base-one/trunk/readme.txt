@@ -1,6 +1,10 @@
 Readme File
 
 
+2004.03.14
+
+Bug fixes for LIKE with default local and ALTER TABLE with CHECK
+
 2004.03.13 RC_3
 
 Various bug fixes.

@@ -389,6 +389,10 @@ Referential Constraint 4 SET DEFAULT
     void replaceTable(Table oldt, Table newt, int colindex,
                       int adjust) throws HsqlException {
 
+        if (constType == Constraint.CHECK) {
+            return;
+        }
+
         if (oldt == core.mainTable) {
             core.mainTable = newt;
             core.mainIndex =
@@ -396,11 +400,6 @@ Referential Constraint 4 SET DEFAULT
             core.mainColArray =
                 ArrayUtil.toAdjustedColumnArray(core.mainColArray, colindex,
                                                 adjust);
-
-            if (constType == Constraint.CHECK) {
-
-//                core.check.
-            }
         }
 
         if (oldt == core.refTable) {

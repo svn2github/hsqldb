@@ -328,7 +328,7 @@ class Like {
         String s = getStartsWith();
 
         return s == null ? null
-                         : s.concat("\uffff'");
+                         : s.concat("\uffff");
     }
 
     public String toString() {

@@ -442,7 +442,7 @@ public class HsqlDateTime {
     public static Timestamp getNormalisedTimestamp(Time t) {
 
         synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT,System.currentTimeMillis());
+            setTimeInMillis(tempCalGMT, System.currentTimeMillis());
             resetToDate(tempCalGMT);
 
             long value = tempCalGMT.getTimeInMillis() + t.getTime();

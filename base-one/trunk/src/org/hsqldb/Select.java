@@ -577,7 +577,8 @@ class Select {
      * Check if all the column names used in the given expression are defined
      * in the given defined column names.
      */
-    boolean allColumnsAreDefinedIn(Expression exp, HashSet definedColumns) {
+    static boolean allColumnsAreDefinedIn(Expression exp,
+                                          HashSet definedColumns) {
 
         HashSet colNames = new HashSet();
 

@@ -1089,7 +1089,7 @@ public class Expression {
 
     /**
      * Collect column name used in this expression.
-     * @return if a column name is used in this expression
+     * @return true if a column name is used in this expression
      */
     boolean collectColumnName(HashSet columnNames) {
 
@@ -1516,7 +1516,8 @@ public class Expression {
     }
 
     /**
-     * Workaround for CHECK constraints.
+     * Workaround for CHECK constraints. We don't want optimisation so we
+     * flag all LIKE expressions as already optimised.
      */
     void setLikeOptimised() throws HsqlException {
 
@@ -2112,35 +2113,56 @@ public class Expression {
                 return;
             }
 
+            boolean between = false;
+            boolean like    = false;
+            boolean larger  = false;
+
             if (likeObject.isEquivalentToBetweenPredicate()) {
 
                 // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abc' || max_collation_char
-                Expression eArgOld = eArg;
-                Expression eFirst = new Expression(Types.VARCHAR,
-                                                   likeObject.getRangeLow());
-                Expression eLast = new Expression(Types.VARCHAR,
-                                                  likeObject.getRangeHigh());
-
-                eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
-                eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
-                exprType = AND;
-
-                //
-                likeObject = null;
+                larger  = Column.sql_compare_in_locale;
+                between = !larger;
+                like    = larger;
             } else if (likeObject
                     .isEquivalentToBetweenPredicateAugmentedWithLike()) {
 
                 // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abc' || max_collation_char AND X LIKE 'abc%...'
+                larger  = Column.sql_compare_in_locale;
+                between = !larger;
+                like    = true;
+            }
+
+            if (between == false && larger == false) {
+                return;
+            }
+
                 Expression eFirst = new Expression(Types.VARCHAR,
                                                    likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
                                                   likeObject.getRangeHigh());
+
+            if (between &&!like) {
+                Expression eArgOld = eArg;
+
+                eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
+                eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
+                exprType = AND;
+                likeObject = null;
+            } else if (between && like) {
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
                 Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
 
                 eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
                 eArg2.likeObject = likeObject;
                 eArg             = new Expression(AND, gte, lte);
+                exprType         = AND;
+                likeObject       = null;
+            } else if (larger) {
+                Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
+
+                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
+                eArg2.likeObject = likeObject;
+                eArg             = gte;
                 exprType         = AND;
                 likeObject       = null;
             }

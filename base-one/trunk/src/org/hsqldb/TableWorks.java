@@ -379,11 +379,17 @@ class TableWorks {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
+        /**
+         * @todo fredt - view checks - replace with check for column
+         * being in a view and rebuild view
+         */
+
         // only allow add column at the end if referenced in a view
         if (colindex != table.getColumnCount()) {
             table.database.checkTableIsInView(table);
         }
 
+        /** @todo fredt - check constraint columns */
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
         tn.moveData(table, colindex, adjust);

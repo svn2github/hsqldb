@@ -584,7 +584,7 @@ public class Column {
 // fredt@users 20020130 - patch 505356 by daniel_fiser@users
 // modified for performance and made optional
     private static Collator i18nCollator          = Collator.getInstance();
-    private static boolean  sql_compare_in_locale = false;
+    static boolean          sql_compare_in_locale = false;
 
     static void setCompareInLocal(boolean value) {
         sql_compare_in_locale = value;

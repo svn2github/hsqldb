@@ -588,7 +588,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Match two columns arrays for length and type of coluns
+     * Match two columns arrays for length and type of columns
      *
      * @param col column array from this Table
      * @param other the other Table object
