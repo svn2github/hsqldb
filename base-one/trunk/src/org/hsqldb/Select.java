@@ -99,9 +99,10 @@ class Select {
     private HashSet       groupColumnNames;
     private int           aggregateCount;
     TableFilter           tFilter[];
-    Expression            eCondition;           // null means no condition
+    Expression            limitCondition;
+    Expression            queryCondition;       // null means no condition
     Expression            havingCondition;      // null means none
-    Expression            eColumn[];            // 'result', 'group' and 'order' columns
+    Expression            exprColumns[];        // 'result', 'group' and 'order' columns
     int                   iResultLen;           // number of columns that are 'result'
     int                   iGroupLen;            // number of columns that are 'group'
     int                   iHavingIndex = -1;    // -1 means no having
@@ -111,13 +112,13 @@ class Select {
     int                   intoType = Table.MEMORY_TABLE;
     boolean               isIntoTableQuoted;
     int                   iUnionType;
-    static final int      NOUNION    = 0,
-                          UNION      = 1,
-                          UNIONALL   = 2,
-                          INTERSECT  = 3,
-                          EXCEPT     = 4;
-    int                   limitStart = 0;       // set only by the LIMIT keyword
-    int                   limitCount = 0;       // set only by the LIMIT keyword
+    static final int      NOUNION   = 0,
+                          UNION     = 1,
+                          UNIONALL  = 2,
+                          INTERSECT = 3,
+                          EXCEPT    = 4;
+    private int           limitStart;           // set only by the LIMIT keyword
+    private int           limitCount;           // set only by the LIMIT keyword
     Result.ResultMetaData resultMetaData;
 
     /**
@@ -132,10 +133,10 @@ class Select {
         HashMap aliasMap = new HashMap();
 
         for (int i = 0; i < iResultLen; i++) {
-            String alias = eColumn[i].getAlias();
+            String alias = exprColumns[i].getAlias();
 
             if (alias != null) {
-                aliasMap.put(alias, eColumn[i]);
+                aliasMap.put(alias, exprColumns[i]);
             }
         }
 
@@ -177,14 +178,14 @@ class Select {
      */
     void resolveTypes() throws HsqlException {
 
-        int len = eColumn.length;
+        int len = exprColumns.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].resolveTypes();
+            exprColumns[i].resolveTypes();
         }
 
-        if (eCondition != null) {
-            eCondition.resolveTypes();
+        if (queryCondition != null) {
+            queryCondition.resolveTypes();
         }
     }
 
@@ -198,25 +199,25 @@ class Select {
      */
     void resolveTables(TableFilter f) throws HsqlException {
 
-        int len = eColumn.length;
+        int len = exprColumns.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].resolveTables(f);
+            exprColumns[i].resolveTables(f);
         }
 
-        if (eCondition != null) {
-            eCondition.resolveTables(f);
+        if (queryCondition != null) {
+            queryCondition.resolveTables(f);
         }
     }
 
     void setFilterConditions() throws HsqlException {
 
-        if (eCondition == null) {
+        if (queryCondition == null) {
             return;
         }
 
         for (int i = 0; i < tFilter.length; i++) {
-            tFilter[i].setConditions(eCondition);
+            tFilter[i].setConditions(queryCondition);
         }
     }
 
@@ -229,14 +230,14 @@ class Select {
     boolean checkResolved(boolean check) throws HsqlException {
 
         boolean result = true;
-        int     len    = eColumn.length;
+        int     len    = exprColumns.length;
 
         for (int i = 0; i < len; i++) {
-            result = result && eColumn[i].checkResolved(check);
+            result = result && exprColumns[i].checkResolved(check);
         }
 
-        if (eCondition != null) {
-            result = result && eCondition.checkResolved(check);
+        if (queryCondition != null) {
+            result = result && queryCondition.checkResolved(check);
         }
 
         return result;
@@ -297,11 +298,11 @@ class Select {
             groupColumnNames = new HashSet();
 
             for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
-                eColumn[i].collectColumnName(groupColumnNames);
+                exprColumns[i].collectColumnName(groupColumnNames);
             }
         }
 
-        int len = eColumn.length;
+        int len = exprColumns.length;
 
         resultMetaData = new Result.ResultMetaData(len);
 
@@ -315,7 +316,7 @@ class Select {
         int orderByEnd   = orderByStart + iOrderLen;
 
         for (int i = 0; i < len; i++) {
-            Expression e = eColumn[i];
+            Expression e = exprColumns[i];
 
             rmd.colType[i]  = e.getDataType();
             rmd.colSize[i]  = e.getColumnSize();
@@ -327,14 +328,15 @@ class Select {
 
             Trace.check(
                 (i < groupByStart) || (i >= groupByEnd)
-                || eColumn[i].canBeInGroupBy(), Trace.INVALID_GROUP_BY,
-                                                eColumn[i]);
-            Trace.check((i != iHavingIndex) || eColumn[i].isConditional(),
-                        Trace.INVALID_HAVING, eColumn[i]);
+                || exprColumns[i].canBeInGroupBy(), Trace.INVALID_GROUP_BY,
+                    exprColumns[i]);
+            Trace.check(
+                (i != iHavingIndex) || exprColumns[i].isConditional(),
+                Trace.INVALID_HAVING, exprColumns[i]);
             Trace.check(
                 (i < orderByStart) || (i >= orderByEnd)
-                || eColumn[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
-                                                eColumn[i]);
+                || exprColumns[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
+                    exprColumns[i]);
 
             if (i < iResultLen) {
                 rmd.sLabel[i]        = e.getAlias();
@@ -362,9 +364,9 @@ class Select {
 
         if (isDistinctSelect) {
             for (int i = orderByStart; i < orderByEnd; i++) {
-                Trace.check(isSimilarIn(eColumn[i], 0, iResultLen),
+                Trace.check(isSimilarIn(exprColumns[i], 0, iResultLen),
                             Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT,
-                            eColumn[i]);
+                            exprColumns[i]);
             }
         }
     }
@@ -378,7 +380,14 @@ class Select {
  * Chnages made to apply LIMIT only to the containing SELECT
  * so they can be used as part of UNION and other set operations
  */
-    private int getLimitCount(int maxrows) {
+    private int getLimitCount(int maxrows) throws HsqlException {
+
+        limitStart = limitCondition == null ? 0
+                                            : ((Integer) limitCondition
+                                            .getArg().getValue()).intValue();
+        limitCount = limitCondition == null ? 0
+                                            : ((Integer) limitCondition
+                                            .getArg2().getValue()).intValue();
 
         if (maxrows == 0) {
             maxrows = limitCount;
@@ -419,9 +428,7 @@ class Select {
             prepareResult();
         }
 
-        Result r = new Result(resultMetaData);
-
-        buildResult(r, getLimitCount(maxrows));
+        Result r = buildResult(getLimitCount(maxrows));
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -475,13 +482,13 @@ class Select {
 
                 // fredt - when a union, use the visible select columns for sort comparison
                 // also whenever a column alias is used
-                if (eColumn[i].orderColumnIndex != -1) {
-                    colindex = eColumn[i].orderColumnIndex;
+                if (exprColumns[i].orderColumnIndex != -1) {
+                    colindex = exprColumns[i].orderColumnIndex;
                 }
 
                 order[j] = colindex;
-                way[j]   = eColumn[i].isDescending() ? -1
-                                                     : 1;
+                way[j]   = exprColumns[i].isDescending() ? -1
+                                                         : 1;
             }
 
             r.sortResult(order, way);
@@ -501,7 +508,7 @@ class Select {
             HsqlArrayList colExps = new HsqlArrayList();
 
             for (int i = start; i < end; i++) {
-                eColumn[i].collectInGroupByExpressions(colExps);
+                exprColumns[i].collectInGroupByExpressions(colExps);
             }
 
             for (int i = 0, size = colExps.size(); i < size; i++) {
@@ -546,7 +553,7 @@ class Select {
     private boolean isSimilarIn(Expression exp, int start, int end) {
 
         for (int i = start; i < end; i++) {
-            if (exp.similarTo(eColumn[i])) {
+            if (exp.similarTo(exprColumns[i])) {
                 return true;
             }
         }
@@ -580,10 +587,11 @@ class Select {
     }
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
-    private void buildResult(Result r, int limitcount) throws HsqlException {
+    private Result buildResult(int limitcount) throws HsqlException {
 
+        Result        r           = new Result(resultMetaData);
         GroupedResult gResult     = new GroupedResult(this, r);
-        final int     len         = eColumn.length;
+        final int     len         = exprColumns.length;
         final int     filter      = tFilter.length;
         boolean       first[]     = new boolean[filter];
         boolean       outerused[] = new boolean[filter];
@@ -633,27 +641,27 @@ class Select {
             }
 
             // apply condition
-            if (eCondition == null || eCondition.test()) {
+            if (queryCondition == null || queryCondition.test()) {
                 Object row[] = new Object[len];
 
                 // gets the group by column values first.
                 for (int i = gResult.groupBegin; i < gResult.groupEnd; i++) {
-                    row[i] = eColumn[i].getValue();
+                    row[i] = exprColumns[i].getValue();
                 }
 
                 row = gResult.addRow(row);
 
                 // Get all other values
                 for (int i = 0; i < gResult.groupBegin; i++) {
-                    row[i] = isAggregated && eColumn[i].isAggregate()
-                             ? eColumn[i].updateAggregatingValue(row[i])
-                             : eColumn[i].getValue();
+                    row[i] = isAggregated && exprColumns[i].isAggregate()
+                             ? exprColumns[i].updateAggregatingValue(row[i])
+                             : exprColumns[i].getValue();
                 }
 
                 for (int i = gResult.groupEnd; i < len; i++) {
-                    row[i] = isAggregated && eColumn[i].isAggregate()
-                             ? eColumn[i].updateAggregatingValue(row[i])
-                             : eColumn[i].getValue();
+                    row[i] = isAggregated && exprColumns[i].isAggregate()
+                             ? exprColumns[i].updateAggregatingValue(row[i])
+                             : exprColumns[i].getValue();
                 }
 
                 if (gResult.size() >= limitcount) {
@@ -673,8 +681,8 @@ class Select {
 
             if (isAggregated) {
                 for (int i = 0; i < len; i++) {
-                    if (eColumn[i].isAggregate()) {
-                        row[i] = eColumn[i].getAggregatedValue(row[i]);
+                    if (exprColumns[i].isAggregate()) {
+                        row[i] = exprColumns[i].getAggregatedValue(row[i]);
                     }
                 }
             }
@@ -689,6 +697,8 @@ class Select {
                 }
             }
         }
+
+        return r;
     }
 
     /**
@@ -703,7 +713,7 @@ class Select {
         //limitStart;
         //limitCount;
         for (int i = 0; i < iResultLen; i++) {
-            sb.append(eColumn[i].getDDL());
+            sb.append(exprColumns[i].getDDL());
 
             if (i < iResultLen - 1) {
                 sb.append(',');
@@ -744,7 +754,7 @@ class Select {
         sb.append(' ').append(Token.T_GROUP).append(' ');
 
         for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
-            sb.append(eColumn[i].getDDL());
+            sb.append(exprColumns[i].getDDL());
 
             if (i < iResultLen + iGroupLen - 1) {
                 sb.append(',');
@@ -754,8 +764,9 @@ class Select {
         // if has HAVING
         sb.append(' ').append(Token.T_HAVING).append(' ');
 
-        for (int i = iHavingIndex; i < iHavingIndex + eColumn.length; i++) {
-            sb.append(eColumn[i].getDDL());
+        for (int i = iHavingIndex; i < iHavingIndex + exprColumns.length;
+                i++) {
+            sb.append(exprColumns[i].getDDL());
 
             if (i < iResultLen + iGroupLen - 1) {
                 sb.append(',');
@@ -793,7 +804,7 @@ class Select {
         sb.append(' ').append(Token.T_ORDER).append(Token.T_BY).append(' ');
 
         for (int i = orderByStart; i < orderByEnd; i++) {
-            sb.append(eColumn[i].getDDL());
+            sb.append(exprColumns[i].getDDL());
 
             if (i < iResultLen + iGroupLen - 1) {
                 sb.append(',');
@@ -855,18 +866,18 @@ class Select {
             sb.append("into table=[").append(sIntoTable.name).append("]\n");
         }
 
-        sb.append("start=[").append(limitStart).append("]\n");
-        sb.append("limit=[").append(limitCount).append("]\n");
+        sb.append("start=[").append(limitCondition.getArg()).append("]\n");
+        sb.append("limit=[").append(limitCondition.getArg2()).append("]\n");
         sb.append("isDistinctSelect=[").append(isDistinctSelect).append(
             "]\n");
         sb.append("isGrouped=[").append(isGrouped).append("]\n");
         sb.append("isAggregated=[").append(isAggregated).append("]\n");
         sb.append("columns=[");
 
-        int columns = eColumn.length - iOrderLen;
+        int columns = exprColumns.length - iOrderLen;
 
         for (int i = 0; i < columns; i++) {
-            sb.append(eColumn[i]);
+            sb.append(exprColumns[i]);
         }
 
         sb.append("\n]\n");
@@ -879,7 +890,7 @@ class Select {
         }
 
         sb.append("]\n");
-        sb.append("eCondition=[").append(eCondition).append("]\n");
+        sb.append("eCondition=[").append(queryCondition).append("]\n");
         sb.append("havingCondition=[").append(havingCondition).append("]\n");
         sb.append("groupColumns=[").append(groupColumnNames).append("]\n");
 
@@ -930,7 +941,7 @@ class Select {
         rmd = r.metaData;
 
         for (int i = 0; i < iResultLen; i++) {
-            e                    = eColumn[i];
+            e                    = exprColumns[i];
             rmd.colType[i]       = e.getDataType();
             rmd.colSize[i]       = e.getColumnSize();
             rmd.colScale[i]      = e.getColumnScale();

@@ -2750,7 +2750,7 @@ class DatabaseCommandInterpreter {
 
         // fredt@users 20020215 - patch 497872 by Nitin Chauhan
         // to require column labels in SELECT INTO TABLE
-        eColumn  = select.eColumn;
+        eColumn  = select.exprColumns;
         colCount = eColumn.length;
 
         for (int i = 0; i < colCount; i++) {

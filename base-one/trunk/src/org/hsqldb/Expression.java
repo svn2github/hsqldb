@@ -227,8 +227,8 @@ class Expression {
 
     // QUERY - in single value selects, IN or EXISTS predicates
     Select  subSelect;
-    boolean isCorrelated;                // correlated subquery
-    Table   subTable;                    // if not correlated
+    boolean isCorrelated;                     // correlated subquery
+    Table   subTable;                         // if not correlated
 
     // FUNCTION
     private Function function;
@@ -241,19 +241,19 @@ class Expression {
     private String      schema;
     private String      tableName;
     private String      columnName;
-    private TableFilter tableFilter;     // null if not yet resolved
-    TableFilter         outerFilter;     // defined if this is part of an OUTER JOIN condiiton tree
+    private TableFilter tableFilter;          // null if not yet resolved
+    TableFilter         outerFilter;          // defined if this is part of an OUTER JOIN condiiton tree
 
     //
     private int     columnIndex;
     private boolean columnQuoted;
     private int     columnSize;
     private int     columnScale;
-    private String  columnAlias;         // if it is a column of a select column list
+    private String  columnAlias;              // if it is a column of a select column list
     private boolean aliasQuoted;
 
     //
-    private boolean isDescending;        // if it is a column in a order by
+    private boolean isDescending;             // if it is a column in a order by
     int             orderColumnIndex = -1;    // when it is a column index in an order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
@@ -1707,7 +1707,7 @@ class Expression {
             case QUERY : {
                 subSelect.resolveTypes();
 
-                dataType = subSelect.eColumn[0].dataType;
+                dataType = subSelect.exprColumns[0].dataType;
 
                 break;
             }
@@ -3123,14 +3123,14 @@ class Expression {
 
         Select s = new Select();
 
-        s.eColumn    = new Expression[1];
-        s.eColumn[0] = new Expression(VALUE, Boolean.TRUE);
-        s.tFilter    = new TableFilter[1];
-        s.tFilter[0] = new TableFilter(t, null, false);
+        s.exprColumns    = new Expression[1];
+        s.exprColumns[0] = new Expression(VALUE, Boolean.TRUE);
+        s.tFilter        = new TableFilter[1];
+        s.tFilter[0]     = new TableFilter(t, null, false);
 
         Expression condition = new Expression(NOT, e, null);
 
-        s.eCondition = condition;
+        s.queryCondition = condition;
 
         s.resolveAll(true);
 

@@ -226,7 +226,7 @@ class Parser {
                 Table.SYSTEM_SUBQUERY, 0);
 
             for (int i = 0; i < s.iResultLen; i++) {
-                String colname = s.eColumn[i].getAlias();
+                String colname = s.exprColumns[i].getAlias();
 
                 if (colname == null || colname.length() == 0) {
 
@@ -234,7 +234,7 @@ class Parser {
                     // names but addColumns() will throw if names are not unique.
                     colname = "COL_" + String.valueOf(i + 1);
 
-                    s.eColumn[i].setAlias(colname, false);
+                    s.exprColumns[i].setAlias(colname, false);
                 }
             }
 
@@ -425,7 +425,7 @@ class Parser {
             token        = tokenizer.getString();
         }
 
-        select.eCondition = condition;
+        select.queryCondition = condition;
 
         if (token.equals(Token.T_GROUP)) {
             tokenizer.getThis(Token.T_BY);
@@ -527,9 +527,9 @@ class Parser {
 
         int len = vcolumn.size();
 
-        select.eColumn = new Expression[len];
+        select.exprColumns = new Expression[len];
 
-        vcolumn.toArray(select.eColumn);
+        vcolumn.toArray(select.exprColumns);
 
         return select;
     }
@@ -544,36 +544,54 @@ class Parser {
 // fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
     private void parseLimit(Select select) throws HsqlException {
 
-        String token = tokenizer.getString();
+        String     token = tokenizer.getString();
+        Expression e1;
+        Expression e2;
+        boolean    islimit = false;
 
         if (token.equals(Token.T_LIMIT)) {
-            String limStart = tokenizer.getString();
-            String limEnd   = tokenizer.getString();
+            read();
 
-            try {
-                select.limitStart = Integer.parseInt(limStart);
-                select.limitCount = Integer.parseInt(limEnd);
-            } catch (NumberFormatException ex) {
+            e1      = readTerm();
+            e2      = readTerm();
+            islimit = true;
 
-                // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE,
-                                  Trace.Parser_parseLimit1);
-            }
+            tokenizer.back();
         } else if (token.equals(Token.T_TOP)) {
-            String limEnd = tokenizer.getString();
+            read();
 
-            try {
-                select.limitStart = 0;
-                select.limitCount = Integer.parseInt(limEnd);
-            } catch (NumberFormatException ex) {
+            e1 = new Expression(Types.INTEGER, ValuePool.getInt(0));
+            e2 = readTerm();
 
-                // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE,
-                                  Trace.Parser_parseLimit2);
-            }
+            tokenizer.back();
         } else {
             tokenizer.back();
+
+            return;
         }
+
+        if ((e1.getType() == Expression.VALUE && e1.getDataType() == Types
+                .INTEGER && ((Integer) e1.getValue()).intValue() >= 0) || e1
+                    .isParam()) {
+            if ((e2.getType() == Expression.VALUE && e2.getDataType() == Types
+                    .INTEGER && ((Integer) e1.getValue())
+                    .intValue() >= 0) || e2.isParam()) {
+
+                // necessary for params
+                e1.setDataType(Types.INTEGER);
+                e2.setDataType(Types.INTEGER);
+
+                select.limitCondition = new Expression(Expression.LIMIT, e1,
+                                                       e2);
+
+                return;
+            }
+        }
+
+        int messageid = islimit ? Trace.Parser_parseLimit1
+                                : Trace.Parser_parseLimit2;
+
+        throw Trace.error(Trace.WRONG_DATA_TYPE, messageid);
     }
 
     private void parseOrderBy(Select select,
@@ -738,7 +756,7 @@ class Parser {
             Expression found = e;
 
             for (int i = 0, size = vcolumn.size(); i < size; i++) {
-                Expression colexpr = (Expression) vcolumn.get(i);
+                Expression colexpr  = (Expression) vcolumn.get(i);
                 String     colalias = colexpr.getDefinedAlias();
 
                 if (s.equals(colalias)
@@ -751,7 +769,7 @@ class Parser {
                                           s);
                     }
 
-                    found                    = colexpr;
+                    found = colexpr;
 
                     // set this for use in sorting
                     found.orderColumnIndex = i;

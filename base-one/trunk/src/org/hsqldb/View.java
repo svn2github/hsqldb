@@ -123,7 +123,8 @@ class View extends Table {
                 metadata.sLabel[i]        = name.name;
                 metadata.isLabelQuoted[i] = name.isNameQuoted;
 
-                viewSelect.eColumn[i].setAlias(name.name, name.isNameQuoted);
+                viewSelect.exprColumns[i].setAlias(name.name,
+                                                   name.isNameQuoted);
                 workingTable.renameColumn(workingTable.getColumn(i),
                                           name.name, name.isNameQuoted);
             }

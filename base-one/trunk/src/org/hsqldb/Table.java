@@ -524,7 +524,7 @@ class Table {
         int colCount = select.iResultLen;
 
         for (int i = 0; i < colCount; i++) {
-            Expression e = select.eColumn[i];
+            Expression e = select.exprColumns[i];
             Column column = new Column(
                 database.nameManager.newHsqlName(
                     e.getAlias(), e.isAliasQuoted()), true, e.getDataType(),

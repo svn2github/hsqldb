@@ -1431,10 +1431,10 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
 
             // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
-            // added for unique: INDEX_QUALIFIER
+            // added for unique: INDEX_QUALIFIER, TABLE_NAME
             // false PK, as INDEX_QUALIFIER may be null
             t.createPrimaryKey(null, new int[] {
-                3, 6, 5, 7, 4
+                3, 6, 5, 7, 4, 2
             }, false);
 
             return t;

@@ -57,12 +57,6 @@ import org.hsqldb.lib.StopWatch;
  *
  * DatabaseScriptReader and its subclasses read back the data at startup time.
  *
- * todo: this class will be enhanced or extended to support the following:<p>
- *
- * periodic flushing of data according to a property<br>
- * constant backup of *.script file data<br>
- * optional encryption / compression of data<br>
- *
  * @author fredt@users
  * @version 1.7.2
  * @since 1.7.2

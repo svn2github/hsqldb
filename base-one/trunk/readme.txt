@@ -3,6 +3,10 @@ Readme File
 
 2003.11.23
 
+Added support for LIMIT ? ? and TOP ?
+
+2003.11.23
+
 Fixed reported bugs including order by with UNION.
 
 Added support for aggregate functions in CASEWHEN, IFNULL, etc.
@@ -253,12 +257,12 @@ CREATE TABLE <name> (<column> BIGINT IDENTITY, ...)
 - With contributed patch, TEXT TABLES encoding of the source file can
 now be specified. UTF-8 and other encodings can be used.
 
-- Two new options for databases: files_read_only and files_in_jar
+- Two new options for databases: files_readonly and files_in_jar
 were added based on submitted patches.
 
 FILE READ-ONLY
 
-If the property files_read_only=true is set in the database 
+If the property files_readonly=true is set in the database 
 .properties file, no attempt is made to write the changes to data to
 file. Default, memory tables can be read/write but TEXT and CACHED
 tables are treated as read-only.
@@ -274,7 +278,7 @@ jdbc:hsqldb:res:<path in jar>
 The URL type 'res' determines that the path that follows is a path
 into the JAR.
 
-The database can be readonly or files_read_only, depending on the
+The database can be readonly or files_readonly, depending on the
 value set in .properties file.
 
 2003.07.09
