@@ -85,7 +85,7 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  All ServerConnection objects are listed in a Set in server
  *  and removed by this class when closed.<p>
  *
- *  When the datbase or server is shutdown, the signalClose() method is called
+ *  When the database or server is shutdown, the signalClose() method is called
  *  for all current ServerConnection instances. This will call the private
  *  close() method unless the ServerConnection thread itself has caused the
  *  shutdown. In this case, the keepAlive flag is set to false, allowing the
@@ -93,14 +93,15 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  the client.
  *  (fredt@users)<p>
  *
- * @version 1.7.2
+ * @version 1.8.0
  */
 class ServerConnection implements Runnable {
 
     boolean                      keepAlive;
     private String               user;
+    private String               password;
     int                          dbID;
-    private Session              session;
+    private volatile Session     session;
     private Socket               socket;
     private Server               server;
     private DataInputStream      dataInput;
@@ -191,8 +192,9 @@ class ServerConnection implements Runnable {
                 int dbIndex = ArrayUtil.find(server.dbAlias,
                                              resultIn.subSubString);
 
-                dbID = server.dbID[dbIndex];
-                user = resultIn.getMainString();
+                dbID     = server.dbID[dbIndex];
+                user     = resultIn.getMainString();
+                password = resultIn.getSubString();
 
                 if (!server.isSilent()) {
                     server.printWithThread(mThread
@@ -240,7 +242,13 @@ class ServerConnection implements Runnable {
 
                     server.printRequest(mThread, resultIn);
 
-                    Result resultOut = session.execute(resultIn);
+                    Result resultOut;
+
+                    if (resultIn.mode == ResultConstants.HSQLRESETSESSION) {
+                        resultOut = resetSession();
+                    } else {
+                        resultOut = session.execute(resultIn);
+                    }
 
                     Result.write(resultOut, rowOut, dataOutput);
                     rowOut.setBuffer(mainBuffer);
@@ -258,6 +266,34 @@ class ServerConnection implements Runnable {
 
             close();
         }
+    }
+
+    /**
+     * Used by pooled connections to close the existing SQL session and open
+     * a new one.
+     */
+    private Result resetSession() {
+
+        Result resultOut;
+
+        if (!server.isSilent()) {
+            server.printWithThread(mThread + ":trying to connect user "
+                                   + user);
+        }
+
+        try {
+            session.close();
+
+            session = DatabaseManager.newSession(dbID, user, password);
+            resultOut            = new Result(ResultConstants.UPDATECOUNT);
+            resultOut.databaseID = session.getDatabase().databaseID;
+            resultOut.sessionID  = session.getId();
+        } catch (HsqlException e) {
+            session   = null;
+            resultOut = new Result(e, null);
+        }
+
+        return resultOut;
     }
 
     /**

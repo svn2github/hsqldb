@@ -450,6 +450,13 @@ public class Session implements SessionInterface {
     }
 
     /**
+     * No-op in this implementation
+     */
+    public void resetSession() throws HsqlException {
+        throw new HsqlException("","",0);
+    }
+
+    /**
      *  Implements a transaction SAVEPOINT. A new SAVEPOINT with the
      *  name of an existing one replaces the old SAVEPOINT.
      *

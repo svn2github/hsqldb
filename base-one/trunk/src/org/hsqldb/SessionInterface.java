@@ -65,4 +65,6 @@ public interface SessionInterface {
     void rollback() throws HsqlException;
 
     int getId();
+
+    void resetSession() throws HsqlException;
 }

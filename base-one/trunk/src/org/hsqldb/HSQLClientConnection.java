@@ -62,7 +62,7 @@ public class HSQLClientConnection implements SessionInterface {
     protected RowOutputBinary rowOut;
     protected RowInputBinary  rowIn;
     private Result            resultOut;
-    private final int         sessionID;
+    private int               sessionID;
 
 //
     String  host;
@@ -271,6 +271,32 @@ public class HSQLClientConnection implements SessionInterface {
 
     public int getId() {
         return sessionID;
+    }
+
+    /**
+     * Used by pooled connections to reset the server-side session to a new
+     * one. In case of failure, the connection is closed.
+     *
+     * When the Connection.close() method is called, a pooled connection calls
+     * this method instead of HSQLClientConnection.close(). It can then
+     * reuse the HSQLClientConnection object with no further initialisation.
+     *
+     */
+    public void resetSession() throws HsqlException {
+
+        Result login    = new Result(ResultConstants.HSQLRESETSESSION);
+        Result resultIn = execute(login);
+
+        if (resultIn.mode == ResultConstants.ERROR) {
+            isClosed = true;
+
+            closeConnection();
+
+            throw Trace.error(resultIn);
+        }
+
+        sessionID  = resultIn.sessionID;
+        databaseID = resultIn.databaseID;
     }
 
     protected void write(Result r) throws IOException, HsqlException {

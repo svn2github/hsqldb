@@ -17,9 +17,24 @@ LIMIT L [OFFSET O]
 
 It is now possible to use LIMIT combined with ORDER BY in subqueries and
 SELECT statements in brackets that are terms of UNION and other set operations.
+An ORDER BY or LIMIT clause applies to the complete result of the UNION and
+other set operations or alternatively to one of its components depending on
+how parentheses are used. In the first example the scope is the second SELECT,
+while in the second query, the scope is the result of the UNION.
+
+SELECT ... FROM ... UNION 
+(SELECT ... FROM ... ORDER BY .. LIMIT)
+
+SELECT ... FROM ... UNION 
+SELECT ... FROM ... ORDER BY .. LIMIT
 
 
-Support for ALL(SELECT ....)
+Support for ORDER BY, LIMIT and OFFSET in CREATE VIEW statements
+
+Support for ALL(SELECT ....) with comparison operators: =, >, <, <>, >=, <=
+Example:
+
+SELECT ... WHERE <value expression> >= ALL(SELECT ...) 
 
 Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
