@@ -15,6 +15,13 @@ insert into y values(4, 1);
 /*r1*/ select count(*) from y inner join x on (x.a = y.a);
 /*r4*/ select count(*) from y left outer join x on (x.a = y.a);
 
+create index idx1 on y(a);
+create index idx2 on x(a);
+
+/*r1*/ select count(*) from x inner join y on (x.a = y.a);
+/*r2*/ select count(*) from x left outer join y on (x.a = y.a);
+/*r1*/ select count(*) from y inner join x on (x.a = y.a);
+/*r4*/ select count(*) from y left outer join x on (x.a = y.a);
 
 --MULTIPLE OUTER -- GROUPED
 --OWNERS are possible account owners
@@ -192,4 +199,57 @@ INSERT INTO propertyvalue VALUES (2, 'title', 'Bar');
  (SELECT id, value FROM propertyvalue WHERE name = 'title') AS title
  ON id.id = title.id
  WHERE title.value != 'Foo'
+
+--bug #1018584
+
+drop table a if exists;
+drop table b if exists;
+create table a (aid int, id int);
+create table b (bid int, aid int);
+insert into a (aid,id) values (1,1);
+insert into a (aid,id) values (2,1);
+insert into a (aid,id) values (3,2);
+insert into a (aid,id) values (4,2);
+insert into b (bid,aid) values (1,1);
+insert into b (bid,aid) values (2,1);
+/*c0*/select * from b left outer join a on b.aId = a.aId where Id =10;
+create index idx_test on a (ID);
+/*c0*/select * from b left outer join a on b.aId = a.aId where Id =10;
+/*c2*/select * from b left outer join a on b.aId = a.aId and Id =10;
+
+--bug #1027143
+
+drop table testc if exists;
+drop table testb if exists;
+drop table testa if exists;
+create table testa (oid int, name varchar(20));
+create table testb (oid int, name varchar(20), a_oid int);
+
+insert into testa (oid, name) values(1, 'first');
+insert into testa (oid, name) values(2, 'second');
+insert into testa (oid, name) values(3, 'third');
+insert into testa (oid, name) values(4, 'fourth');
+insert into testb (oid, name, a_oid) values(21,'first', 1);
+insert into testb (oid, name, a_oid) values(22,'second', null);
+insert into testb (oid, name, a_oid) values(23,'third', 2);
+insert into testb (oid, name, a_oid) values(24,'fourth', null);
+insert into testb (oid, name, a_oid) values(25,'fifth', 3);
+insert into testb (oid, name, a_oid) values(26,'sixth', null);
+
+/*r
+ 1,first,21,first,1
+ 2,second,23,third,2
+ 3,third,25,fifth,3
+ 4,fourth,NULL,NULL,NULL
+*/ select * from testa a LEFT OUTER JOIN testb b ON a.oid = b.a_oid
+
+create index idx3 on testb(a_oid)
+
+/*r
+ 1,first,21,first,1
+ 2,second,23,third,2
+ 3,third,25,fifth,3
+ 4,fourth,NULL,NULL,NULL
+*/ select * from testa a LEFT OUTER JOIN testb b ON a.oid = b.a_oid
+
 

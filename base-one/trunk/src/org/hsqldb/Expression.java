@@ -3041,7 +3041,7 @@ public class Expression {
 
             if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
                 if (isInJoin) {
-                    if (eArg.tableFilter.isCurrentOuter || o == null) {
+                    if (eArg.tableFilter.isCurrentOuter && o == null) {
                         return true;
                     }
                 } else {

@@ -98,17 +98,17 @@ class Select {
     boolean               isAggregated;
     private boolean       isGrouped;
     private HashSet       groupColumnNames;
-    TableFilter           tFilter[];
+    TableFilter[]         tFilter;
     Expression            limitCondition;
     Expression            queryCondition;       // null means no condition
     Expression            havingCondition;      // null means none
-    Expression            exprColumns[];        // 'result', 'group' and 'order' columns
+    Expression[]          exprColumns;          // 'result', 'group' and 'order' columns
     int                   iResultLen;           // number of columns that are 'result'
     int                   iGroupLen;            // number of columns that are 'group'
     int                   iHavingIndex = -1;    // -1 means no having
     int                   iOrderLen;            // number of columns that are 'order'
-    int                   sortOrder[];
-    int                   sortDirection[];
+    int[]                 sortOrder;
+    int[]                 sortDirection;
     HsqlName              sIntoTable;           // null means not select..into
     int                   intoType = Table.MEMORY_TABLE;
     boolean               isIntoTableQuoted;

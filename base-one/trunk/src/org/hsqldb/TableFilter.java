@@ -315,7 +315,7 @@ class TableFilter {
         Expression e1   = e.getArg();
         Expression e2   = e.getArg2();
 
-        this.isAssigned = true;
+        isAssigned = true;
 
         if (type == Expression.AND) {
             setCondition(e1);
@@ -336,6 +336,11 @@ class TableFilter {
         if (e1.getFilter() == this && e2.getFilter() == this) {
             conditionType = CONDITION_UNORDERED;
         } else if (e1.getFilter() == this) {
+            if (!e.isInJoin && isOuterJoin) {
+
+                // do not use a where condition on the second table in outer joins
+                return;
+            }
 
             // ok include this
         } else if ((e2.getFilter() == this)

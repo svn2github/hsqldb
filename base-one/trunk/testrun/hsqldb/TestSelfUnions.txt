@@ -1,3 +1,6 @@
+drop table a if exists;
+drop table b if exists;
+drop table c if exists;
 CREATE TABLE A(ID INTEGER NOT NULL)
 CREATE TABLE B(ID INTEGER NOT NULL)
 CREATE TABLE C(ID INTEGER NOT NULL)
