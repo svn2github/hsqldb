@@ -72,6 +72,9 @@ import java.io.File;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.ObjectComparator;
+import org.hsqldb.lib.UnifiedTable;
+import org.hsqldb.lib.StopWatch;
 
 // fredt@users 20011220 - patch 437174 by hjbusch@users - cache update
 // most changes and comments by HJB are kept unchanged
@@ -150,21 +153,22 @@ class Cache {
     boolean fileModified;
 
     // outside access to all below allowed only for metadata
-    int               cacheScale;
-    int               cacheSizeScale;
-    int               cacheFileScale;
-    int               cachedRowPadding = 8;
-    int               cachedRowType    = DatabaseRowOutput.CACHED_ROW_160;
-    int               cacheLength;
-    int               writerLength;
-    int               maxCacheSize;            // number of Rows
-    long              maxCacheBytes;           // number of bytes
-    int               multiplierMask;
-    private CachedRow rData[];
-    private CachedRow rWriter[];
+    int                         cacheScale;
+    int                         cacheSizeScale;
+    int                         cacheFileScale;
+    int                         cachedRowPadding = 8;
+    int cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
+    int                         cacheLength;
+    int                         writerLength;
+    int                         maxCacheSize;     // number of Rows
+    long                        maxCacheBytes;    // number of bytes
+    int                         multiplierMask;
+    private CachedRowComparator rowComparator;
+    private CachedRow[]         rowTable;
+    private CachedRow[]         rData;
 
     // file format fields
-    static final int FREE_POS_POS     = 16;    // where iFreePos is saved
+    static final int FREE_POS_POS     = 16;       // where iFreePos is saved
     static final int INITIAL_FREE_POS = 32;
 
     // variable fields
@@ -174,8 +178,8 @@ class Cache {
 
 // ---------------------------------------------------
     //
-    private CachedRow        rFirst;           // must point to one of rData[]
-    private CachedRow        rLastChecked;     // can be any row
+    private CachedRow        rFirst;              // must point to one of rData[]
+    private CachedRow        rLastChecked;        // can be any row
     private static final int MAX_FREE_COUNT = 1024;
 
     // outside access allowed to all below only for metadata
@@ -186,6 +190,9 @@ class Cache {
     // reusable input / output streams
     DatabaseRowInputInterface  rowIn;
     DatabaseRowOutputInterface rowOut;
+
+    // for testing
+    StopWatch sw;
 
     Cache(String name, Database db) throws SQLException {
 
@@ -233,15 +240,15 @@ class Cache {
         maxCacheSize   = cacheLength * 3;
         maxCacheBytes  = cacheLength * cacheSizeScale;
         multiplierMask = cacheLength - 1;
+        rowComparator  = new CachedRowComparator();
+        rowTable       = new CachedRow[maxCacheSize];
         rData          = new CachedRow[cacheLength];
-        rWriter        = new CachedRow[cacheReadonly ? 0
-                                                     : writerLength];    // HJB-2001-06-21
-        rFirst       = null;
-        rLastChecked = null;
-        iFreePos     = 0;
-        fRoot        = null;
-        iFreeCount   = 0;
-        iCacheSize   = 0;
+        rFirst         = null;
+        rLastChecked   = null;
+        iFreePos       = 0;
+        fRoot          = null;
+        iFreeCount     = 0;
+        iCacheSize     = 0;
     }
 
     private void initBuffers() throws SQLException {
@@ -305,7 +312,9 @@ class Cache {
         try {
             rFile.seek(FREE_POS_POS);
             rFile.writeInteger(iFreePos);
-            saveAll();
+            saveAllNew();
+
+//            saveAll();
             rFile.close();
 
             rFile = null;
@@ -433,7 +442,9 @@ class Cache {
         fileModified = true;
 
         if (iCacheSize >= maxCacheSize) {
-            cleanUp();
+            cleanUpNew();
+
+//            cleanUp();
         }
 
         setStorageSize(r);
@@ -570,7 +581,9 @@ class Cache {
         }
 
         if (iCacheSize >= maxCacheSize) {
-            cleanUp();
+            cleanUpNew();
+
+//            cleanUp();
         }
 
         //-- makeRow in text tables may change iPos because of blank lines
@@ -639,6 +652,12 @@ class Cache {
      */
     private void cleanUp() throws SQLException {
 
+        if (sw == null) {
+            sw = new StopWatch();
+        }
+
+        sw.start();
+
         int count  = 0;
         int j      = 0;
         int jlimit = iCacheSize / 6;
@@ -663,10 +682,10 @@ class Cache {
                 // getWorst() in some cases returns the same row many times
 
                 /**
-                 *  for (int i=0;i<count;i++) { if (rWriter[i]==r) { r=null;
-                 *  break; } } if (r!=null) { rWriter[count++] = r; }
+                 *  for (int i=0;i<count;i++) { if (rowTable[i]==r) { r=null;
+                 *  break; } } if (r!=null) { rowTable[count++] = r; }
                  */
-                rWriter[count++] = r;
+                rowTable[count++] = r;
             } else {
 
                 // here we can't remove roots
@@ -683,14 +702,77 @@ class Cache {
         for (int i = 0; i < count; i++) {
 
             // here we can't remove roots
-            CachedRow r = rWriter[i];
+            CachedRow r = rowTable[i];
 
             if (!r.isRoot()) {
                 remove(r);
             }
 
-            rWriter[i] = null;
+            rowTable[i] = null;
         }
+
+        sw.stop();
+    }
+
+    /**
+     * Reduces the number of rows held in this Cache object. <p>
+     *
+     * Cleanup is done by checking the accessCount of the Rows and removing
+     * some of those that have been accessed less recently.
+     *
+     */
+    private void cleanUpNew() throws SQLException {
+
+        if (sw == null) {
+            sw = new StopWatch();
+        }
+
+        sw.start();
+
+        // put all rows in the array
+        for (int i = 0; i < iCacheSize; i++) {
+            rowTable[i] = rFirst;
+            rFirst      = rFirst.rNext;
+        }
+
+        // sort by access count
+        rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
+        sw.mark();
+        sort(rowTable, rowComparator, 0, iCacheSize - 1);
+
+//        System.out.println(sw.currentElapsedTimeToMessage("new cleanup method sort :"));
+        // sort by file position
+        int removecount = iCacheSize / 3;
+
+        rowComparator.setType(rowComparator.COMPARE_POSITION);
+        sort(rowTable, rowComparator, 0, removecount - 1);
+
+        for (int i = 0; i < removecount; i++) {
+            CachedRow r = rowTable[i];
+
+            try {
+                if (r.hasChanged()) {
+                    saveRow(r);
+                }
+
+                if (!r.isRoot()) {
+                    remove(r);
+                }
+            } catch (Exception e) {
+                Trace.throwerror(Trace.FILE_IO_ERROR, "SaveRow " + e);
+            }
+
+            rowTable[i] = null;
+        }
+
+        for (int i = removecount; i < rowTable.length; i++) {
+            rowTable[i] = null;
+        }
+
+        resetAccessCount();
+        sw.stop();
+
+//        System.out.println(sw.currentElapseTimeToMessage("new cleanup method clean "));
     }
 
     /**
@@ -824,6 +906,12 @@ class Cache {
      */
     protected void saveAll() throws SQLException {
 
+        if (sw == null) {
+            sw = new StopWatch();
+        }
+
+        System.out.println(sw.elapsedTimeToMessage("total cleanup time"));
+
         if (rFirst == null) {
             return;
         }
@@ -840,7 +928,7 @@ class Cache {
                 }
 
                 if (r.hasChanged()) {
-                    rWriter[count++] = r;
+                    rowTable[count++] = r;
                 }
 
                 r = r.rNext;
@@ -853,7 +941,52 @@ class Cache {
             saveSorted(count);
 
             for (int i = 0; i < count; i++) {
-                rWriter[i] = null;
+                rowTable[i] = null;
+            }
+        }
+    }
+
+    /**
+     * Writes out all modified cached Rows.
+     */
+    protected void saveAllNew() throws SQLException {
+
+        if (sw == null) {
+            sw = new StopWatch();
+        }
+
+        System.out.println(sw.elapsedTimeToMessage("total cleanup time"));
+
+        if (rFirst == null) {
+            return;
+        }
+
+        int j = 0;
+
+        for (int i = 0; i < iCacheSize; i++) {
+            if (rFirst.hasChanged) {
+                rowTable[j++] = rFirst;
+            }
+
+            rFirst = rFirst.rNext;
+        }
+
+        // sort by file position
+        rowComparator.setType(rowComparator.COMPARE_POSITION);
+
+        if (j != 0) {
+            sort(rowTable, rowComparator, 0, j - 1);
+        }
+
+        for (int i = 0; i < j; i++) {
+            CachedRow r = (CachedRow) rowTable[i];
+
+            try {
+                saveRow(r);
+
+                rowTable[i] = null;
+            } catch (Exception e) {
+                Trace.throwerror(Trace.FILE_IO_ERROR, "SaveRow " + e);
             }
         }
     }
@@ -874,16 +1007,17 @@ class Cache {
     }
 
     /**
-     * Writes out the first count rWriter Rows in iPos
+     * Writes out the first count rowTable Rows in iPos
      * sorted order.
      */
     private void saveSorted(int count) throws SQLException {
 
-        sort(rWriter, 0, count - 1);
+        rowComparator.setType(rowComparator.COMPARE_POSITION);
+        sort(rowTable, rowComparator, 0, count - 1);
 
         try {
             for (int i = 0; i < count; i++) {
-                saveRow(rWriter[i]);
+                saveRow(rowTable[i]);
             }
         } catch (Exception e) {
             Trace.throwerror(Trace.FILE_IO_ERROR, "saveSorted " + e);
@@ -895,23 +1029,23 @@ class Cache {
      * the contained Row objects' iPos (file offset) values.
      *
      */
-    private static final void sort(CachedRow w[], int l,
-                                   int r) throws SQLException {
+    private static final void sort(Object w[], ObjectComparator comparator,
+                                   int l, int r) throws SQLException {
 
-        int i;
-        int j;
-        int p;
+        int    i;
+        int    j;
+        Object p;
 
         while (r - l > 10) {
             i = (r + l) >> 1;
 
-            if (w[l].iPos > w[r].iPos) {
+            if (comparator.compare(w[l], w[r]) > 0) {
                 swap(w, l, r);
             }
 
-            if (w[i].iPos < w[l].iPos) {
+            if (comparator.compare(w[i], w[l]) < 0) {
                 swap(w, l, i);
-            } else if (w[i].iPos > w[r].iPos) {
+            } else if (comparator.compare(w[i], w[r]) > 0) {
                 swap(w, i, r);
             }
 
@@ -919,7 +1053,7 @@ class Cache {
 
             swap(w, i, j);
 
-            p = w[j].iPos;
+            p = w[j];
             i = l;
 
             while (true) {
@@ -927,11 +1061,11 @@ class Cache {
                     Trace.stop();
                 }
 
-                while (w[++i].iPos < p) {
+                while (comparator.compare(w[++i], p) < 0) {
                     ;
                 }
 
-                while (w[--j].iPos > p) {
+                while (comparator.compare(w[--j], p) > 0) {
                     ;
                 }
 
@@ -943,7 +1077,7 @@ class Cache {
             }
 
             swap(w, i, r - 1);
-            sort(w, l, i - 1);
+            sort(w, comparator, l, i - 1);
 
             l = i + 1;
         }
@@ -953,9 +1087,9 @@ class Cache {
                 Trace.stop();
             }
 
-            CachedRow t = w[i];
+            Object t = w[i];
 
-            for (j = i - 1; j >= l && w[j].iPos > t.iPos; j--) {
+            for (j = i - 1; j >= l && comparator.compare(w[j], t) > 0; j--) {
                 w[j + 1] = w[j];
             }
 
@@ -966,9 +1100,9 @@ class Cache {
     /**
      * Swaps the a'th and b'th elements of the specified Row array.
      */
-    private static void swap(CachedRow w[], int a, int b) {
+    private static void swap(Object w[], int a, int b) {
 
-        CachedRow t = w[a];
+        Object t = w[a];
 
         w[a] = w[b];
         w[b] = t;
@@ -979,5 +1113,39 @@ class Cache {
      */
     int getFreePos() {
         return iFreePos;
+    }
+
+    class CachedRowComparator implements ObjectComparator {
+
+        final int   COMPARE_LAST_ACCESS = 0;
+        final int   COMPARE_POSITION    = 1;
+        final int   COMPARE_SIZE        = 2;
+        private int compareType;
+
+        CachedRowComparator() {}
+
+        void setType(int type) {
+            compareType = type;
+        }
+
+        public int compare(Object a, Object b) {
+
+            switch (compareType) {
+
+                case COMPARE_LAST_ACCESS :
+                    return ((CachedRow) a).iLastAccess
+                           - ((CachedRow) b).iLastAccess;
+
+                case COMPARE_POSITION :
+                    return ((CachedRow) a).iPos - ((CachedRow) b).iPos;
+
+                case COMPARE_SIZE :
+                    return ((CachedRow) a).storageSize
+                           - ((CachedRow) b).storageSize;
+
+                default :
+                    return 0;
+            }
+        }
     }
 }

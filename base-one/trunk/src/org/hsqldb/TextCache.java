@@ -280,7 +280,7 @@ class TextCache extends Cache {
         }
 
         try {
-            saveAll();
+            saveAllNew();
 
             boolean empty = (rFile.length() <= NL.length());
 

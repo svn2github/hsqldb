@@ -68,7 +68,7 @@ public class TestCacheSize {
     // prameters
     boolean reportProgress  = false;
     boolean cachedTable     = true;
-    int     cacheScale      = 14;
+    int     cacheScale      = 10;
     int     logType         = 3;
     int     writeDelay      = 60;
     boolean indexZip        = true;

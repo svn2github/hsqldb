@@ -36,7 +36,12 @@ import java.util.Hashtable;
 
 // fredt@users - patch 1.7.2 - added support for Object storage and row removal
 // also changes so that no new object is created for each search.
-// any Object can be stored but currently only String columns are searchable
+//
+// Object storage has been enhanced. Any Object can be stored in the array.
+// Columns with string objects are searchable by default.
+// For other objects an implementation of the ObjectComparator interface
+// should be passed to this class for each column that needs to be sorted or
+// searched
 
 /**
  * Provides a reflection-based abstraction of Java array objects, allowing
@@ -95,8 +100,7 @@ public class UnifiedTable {
         classCodeMap.put(Double.class, new Integer(OBJ_CLASS_CODE_DOUBLE));
         classCodeMap.put(String.class, new Integer(OBJ_CLASS_CODE_STRING));
 */
-        classCodeMap.put(Object.class,
-                         new Integer(OBJ_CLASS_CODE_OBJECT));
+        classCodeMap.put(Object.class, new Integer(OBJ_CLASS_CODE_OBJECT));
     }
 
     protected SingleCellComparator getSingleCellComparator(int targetColumn) {
@@ -125,20 +129,27 @@ public class UnifiedTable {
                 return new PrimDoubleCellComparator(targetColumn);
 
             default :
-                return new PrimStringCellComparator(targetColumn);
+                if (comparatorArray[targetColumn] == null) {
+                    comparatorArray[targetColumn] =
+                        new PrimObjectCellComparator(
+                            targetColumn, new DefaultStringComparator());
+                }
+
+                return comparatorArray[targetColumn];
         }
     }
 
-    private Class         cellType;
-    private int           cellTypeCode;
-    private int           columns;
-    private int           initRows;
-    private int           growth;
-    private Object        tableData;
-    private int           rowAvailable = 0;
-    private int           rowCount     = 0;
-    private RowComparator rowComparator;
-    private boolean       ascending;
+    private Class                      cellType;
+    private int                        cellTypeCode;
+    private int                        columns;
+    private int                        initRows;
+    private int                        growth;
+    private Object                     tableData;
+    private int                        rowAvailable = 0;
+    private int                        rowCount     = 0;
+    private RowComparator              rowComparator;
+    private boolean                    ascending;
+    private PrimObjectCellComparator[] comparatorArray;
 
     public UnifiedTable(Class cellType, int columns) {
         this(cellType, columns, 128);
@@ -157,6 +168,20 @@ public class UnifiedTable {
         this.growth   = growth;
         tableData     = Array.newInstance(cellType, initRows * columns);
         rowAvailable  = initRows;
+
+        if (cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
+            comparatorArray = new PrimObjectCellComparator[columns];
+        }
+    }
+
+    public void SetComparator(ObjectComparator objectCompare, int column) {
+
+        if (cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
+            if (comparatorArray[column] == null) {
+                comparatorArray[column] = new PrimObjectCellComparator(column,
+                        objectCompare);
+            } else {}
+        }
     }
 
     public void addRow(Object rowData) {
@@ -175,7 +200,7 @@ public class UnifiedTable {
         rowCount = 0;
     }
 
-    public void setCount(int count){
+    public void setCount(int count) {
         rowCount = count;
     }
 
@@ -204,6 +229,7 @@ public class UnifiedTable {
     public void sort(int targetColumn, boolean ascending) {
 
         rowComparator  = getSingleCellComparator(targetColumn);
+        rowComparator.reset();
         this.ascending = ascending;
 
         fastQuickSort();
@@ -212,6 +238,7 @@ public class UnifiedTable {
     public void sort(int[] targetColumns, boolean ascending) {
 
         rowComparator  = new MultiCellsComparator(targetColumns);
+        rowComparator.reset();
         this.ascending = ascending;
 
         fastQuickSort();
@@ -395,6 +422,84 @@ public class UnifiedTable {
     }
 
 // fredt - support for removal as well as addition
+    void clearArray(int from, int to) {
+
+        switch (cellTypeCode) {
+
+            case PRIM_CLASS_CODE_BYTE : {
+                byte[] array = (byte[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_CHAR : {
+                byte[] array = (byte[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_SHORT : {
+                short[] array = (short[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_INT : {
+                int[] array = (int[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_LONG : {
+                long[] array = (long[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_FLOAT : {
+                float[] array = (float[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            case PRIM_CLASS_CODE_DOUBLE : {
+                double[] array = (double[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = 0;
+                }
+
+                return;
+            }
+            default : {
+                Object[] array = (Object[]) tableData;
+
+                while (--to >= from) {
+                    array[to] = null;
+                }
+
+                return;
+            }
+        }
+    }
 
     /**
      * Handles both addition and removal of rows
@@ -430,7 +535,10 @@ public class UnifiedTable {
                 System.arraycopy(tableData, source, data, target, size);
             }
 
-            // after removing rows, leave the phantom rows at the end
+            // leave the phantom rows at the end if not Objects
+            if (rows < 0 && cellTypeCode == OBJ_CLASS_CODE_OBJECT) {
+                clearArray(newCount * columns, rowCount * columns);
+            }
         }
 
         tableData = data;
@@ -569,6 +677,11 @@ public class UnifiedTable {
     interface RowComparator {
 
         /**
+         * called when the array is sorted to update the information
+         */
+        void reset();
+
+        /**
          * Check if row indexed i is less than row indexed j.
          */
         abstract boolean lessThan(int i, int j);
@@ -609,9 +722,10 @@ public class UnifiedTable {
         private byte   mySearchTarget;
 
         PrimByteCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (byte[]) tableData;
         }
 
@@ -662,9 +776,10 @@ public class UnifiedTable {
         private char   mySearchTarget;
 
         PrimCharCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (char[]) tableData;
         }
 
@@ -716,9 +831,10 @@ public class UnifiedTable {
         private short   mySearchTarget;
 
         PrimShortCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (short[]) tableData;
         }
 
@@ -769,9 +885,10 @@ public class UnifiedTable {
         private int   mySearchTarget;
 
         PrimIntCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (int[]) tableData;
         }
 
@@ -822,9 +939,10 @@ public class UnifiedTable {
         private long   mySearchTarget;
 
         PrimLongCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (long[]) tableData;
         }
 
@@ -875,9 +993,10 @@ public class UnifiedTable {
         private float   mySearchTarget;
 
         PrimFloatCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (float[]) tableData;
         }
 
@@ -928,9 +1047,10 @@ public class UnifiedTable {
         private double   mySearchTarget;
 
         PrimDoubleCellComparator(int targetColumn) {
-
             super(targetColumn);
+        }
 
+        public void reset() {
             myTableData = (double[]) tableData;
         }
 
@@ -975,15 +1095,33 @@ public class UnifiedTable {
         }
     }
 
-    class PrimStringCellComparator extends SingleCellComparator {
+    class PrimObjectCellComparator extends SingleCellComparator {
 
-        private Object[]   myTableData;
-        private String mySearchTarget;
+        private Object[] myTableData;
+        private Object   mySearchTarget;
+        ObjectComparator objectCompare;
 
-        PrimStringCellComparator(int targetColumn) {
+        PrimObjectCellComparator(int targetColumn) {
 
             super(targetColumn);
 
+            objectCompare = new DefaultStringComparator();
+        }
+
+        PrimObjectCellComparator(int targetColumn,
+                                 ObjectComparator objectCompare) {
+
+            super(targetColumn);
+
+            myTableData        = (Object[]) tableData;
+            this.objectCompare = objectCompare;
+        }
+
+        void setObjectComparator(ObjectComparator objectCompare) {
+            this.objectCompare = objectCompare;
+        }
+
+        public void reset() {
             myTableData = (Object[]) tableData;
         }
 
@@ -991,8 +1129,8 @@ public class UnifiedTable {
          * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
-            return compare(
-                (String) myTableData[i * columns + targetColumn], (String) myTableData[j * columns + targetColumn]) < 0;
+            return objectCompare.compare(
+                myTableData[i * columns + targetColumn], myTableData[j * columns + targetColumn]) < 0;
         }
 
         /**
@@ -1001,8 +1139,8 @@ public class UnifiedTable {
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
-            return compare(
-                (String) myTableData[i * columns + targetColumn], mySearchTarget) < 0;
+            return objectCompare.compare(
+                myTableData[i * columns + targetColumn], mySearchTarget) < 0;
         }
 
         /**
@@ -1011,37 +1149,15 @@ public class UnifiedTable {
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
-            return compare(
-                (String) myTableData[i * columns + targetColumn], mySearchTarget) > 0;
-        }
-
-        private int compare(String a, String b) {
-
-            if (a == b) {
-                return 0;
-            }
-
-            // null==null and smaller than any value
-            if (a == null) {
-                if (b == null) {
-                    return 0;
-                }
-
-                return -1;
-            }
-
-            if (b == null) {
-                return 1;
-            }
-
-            return a.compareTo(b);
+            return objectCompare.compare(
+                myTableData[i * columns + targetColumn], mySearchTarget) > 0;
         }
 
         /**
          * Sets the target object in a search operation.
          */
         public void setSearchTarget(Object target) {
-            mySearchTarget = (String) target;
+            mySearchTarget = target;
         }
     }
 
@@ -1054,8 +1170,16 @@ public class UnifiedTable {
             cellComparators = new SingleCellComparator[targetColumns.length];
 
             for (int i = 0; i < targetColumns.length; i++) {
-                cellComparators[i] =
+                cellComparators[targetColumns[i]] =
                     getSingleCellComparator(targetColumns[i]);
+            }
+        }
+
+        public void reset() {
+
+            for (int i = 0; i < cellComparators.length; i++) {
+                if ( cellComparators[i] != null)
+                    cellComparators[i].reset();
             }
         }
 
@@ -1113,6 +1237,36 @@ public class UnifiedTable {
             for (int c = 0; c < cellComparators.length; c++) {
                 cellComparators[c].setSearchTarget(Array.get(targets, c));
             }
+        }
+    }
+
+    /**
+     * This interface is used for the compare method for Objects
+     * stored in a column.
+     */
+
+    public class DefaultStringComparator implements ObjectComparator {
+
+        public int compare(Object a, Object b) {
+
+            if (a == b) {
+                return 0;
+            }
+
+            // null==null and smaller than any value
+            if (a == null) {
+                if (b == null) {
+                    return 0;
+                }
+
+                return -1;
+            }
+
+            if (b == null) {
+                return 1;
+            }
+
+            return a.toString().compareTo(b);
         }
     }
 
@@ -1188,6 +1342,24 @@ public class UnifiedTable {
         }
 
         System.out.println("Search time: " + sw.elapsedTime() + " size: "
+                           + size);
+
+        int[] longarr = new int[0x100000];
+
+        for (int i = 0; i < longarr.length; i++) {
+            longarr[i] = (int) Math.random();
+        }
+
+        sw.zero();
+        java.util.Arrays.sort(longarr);
+        System.out.println("Sort time: " + sw.elapsedTime() + " size: "
+                           + size);
+
+        longarr[50000] = (int) Math.random();
+
+        sw.zero();
+        java.util.Arrays.sort(longarr);
+        System.out.println("Re-sort time: " + sw.elapsedTime() + " size: "
                            + size);
     }
 }

@@ -430,33 +430,18 @@ class Tokenizer {
                 // fredt - this returns unsigned values which are later negated.
                 // as a result Integer.MIN_VALUE or Long.MIN_VALUE are promoted
                 // to a wider type.
-                if (sToken.length() < 10) {
-                    return new Integer(sToken);
-                }
-
-                if (sToken.length() == 10) {
+                if (sToken.length() < 11) {
                     try {
                         return new Integer(sToken);
                     } catch (Exception e1) {
-                        iType = LONG;
-
-                        return new Long(sToken);
                     }
                 }
 
-                if (sToken.length() < 19) {
-                    iType = LONG;
-
-                    return new Long(sToken);
-                }
-
-                if (sToken.length() == 19) {
+                if (sToken.length() < 20) {
                     try {
+                        iType = LONG;
                         return new Long(sToken);
                     } catch (Exception e2) {
-                        iType = DECIMAL;
-
-                        return new BigDecimal(sToken);
                     }
                 }
 
