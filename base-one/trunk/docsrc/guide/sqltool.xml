@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.45 2004/06/19 13:17:50 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.46 2004/07/01 18:05:25 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.45 $</edition>
-        <pubdate>$Date: 2004/06/19 13:17:50 $</pubdate>
+        <edition>$Revision: 1.46 $</edition>
+        <pubdate>$Date: 2004/07/01 18:05:25 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.37 of SqlTool and
-            1.82 of SqlFile (the latter is the class which does most of the
+            1.83 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -1396,10 +1396,11 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             how to run SqlTool (like with what arguments) and what
             output to expect (i.e. the test criteria).
             You can run tests without JUnit, or you can make a JUnit
-            wrapper in the normal fashion, but any SQL test file can
+            wrapper in the normal fashion.  Any SQL test file can
             be added to our JUnit SqlTool test suite by just adding
-            one line of code to 
-            <classname>org.hsqldb.test.TestSqlTool.java</classname>.
+            the SQL file name and description to the 
+            <filename>testrun/sqltool/*.list</filename> file for the 
+            desired JUnit test method.
         </simpara> <simpara>
             (The SqlTool unit tests require java 1.4).
         </simpara>
