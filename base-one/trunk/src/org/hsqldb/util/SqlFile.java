@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.14 2004/01/21 16:23:24 unsaved Exp $
+ * $Id: SqlFile.java,v 1.15 2004/01/21 18:17:18 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -86,7 +86,7 @@ public class SqlFile {
           "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
-        + "another integer \"X\" to indicate the Xth previous command.\n"
+        + "an integer \"X\" to indicate the Xth previous command.\n"
         + "    \\?                   Help\n"
         + " !!!\\! [command to run]  * Shell out\n"
         + "    \\p [line to print]   Print string to stdout\n"
