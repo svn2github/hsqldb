@@ -1039,6 +1039,12 @@ class Column {
                     if (o instanceof java.lang.Number) {
                         return convertToInt(o);
                     }
+
+                    if (o instanceof java.lang.Boolean) {
+                        return ValuePool.getInt(((Boolean) o).booleanValue()
+                                                ? 1
+                                                : 0);
+                    }
                     break;
 
                 case Types.BIGINT :

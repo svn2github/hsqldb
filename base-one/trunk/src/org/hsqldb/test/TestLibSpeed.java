@@ -229,7 +229,7 @@ public class TestLibSpeed {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    mapLookup.get(sNumeric[r][0]);
+                    mapLookup.get(sNumeric[r][0],0);
 
                     dummy += r;
                 }

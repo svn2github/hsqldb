@@ -469,7 +469,7 @@ class Session implements SessionInterface {
         for (; it.hasNext(); ) {
             Object key = it.next();
 
-            if (savepoints.get(key) >= index) {
+            if (savepoints.get(key, -1) >= index) {
                 it.remove();
             }
         }

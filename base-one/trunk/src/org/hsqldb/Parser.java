@@ -70,6 +70,7 @@ package org.hsqldb;
 import java.util.NoSuchElementException;
 import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.IntValueHashMap;
@@ -593,7 +594,7 @@ class Parser {
      * @return                            Description of the Return Value
      * @exception  java.sql.HsqlException  Description of the Exception
      */
-    private Expression checkOrderByColumns(Expression e,
+    private static Expression checkOrderByColumns(Expression e,
                                            HsqlArrayList vcolumn)
                                            throws HsqlException {
 
