@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.1 2004/02/19 20:54:14 unsaved Exp $
+# $Id: hsqldb,v 1.2 2004/02/19 21:29:02 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -41,9 +41,19 @@
 # pidfile: /var/run/hsqldb.pid
 # config: /etc/sysconfig/hsqldb
 
+# SETUP
+# First, you have to place this where init scripts belong for your kind
+# of UNIX.  
+# See the 'THISDIR' setting below for exactly where.
+#
+# If using a BSD variant, you must set "enable_hsqldb" to "YES" in
+# /etc/rc.conf.
+# For good UNIXes that use System V style init, you must set up hard links 
+# or soft links manually or with management tools or Gui's, or with 
+# "chkconfig".
+
 # N.b.  Being a system script, this script does not use inherited variables.
 # If you want to adjust a setting, edit the config file.
-
 
 # Strategy of this init script is to avoid shell-specific functionality,
 # and use only lowest-common-denominator Bourne capabilities.
@@ -52,26 +62,51 @@
 # Since some Bourne shells don't support shell functions at all, we don't
 # even define any local functions.
 
+# This scripts starts up an org.hsqldb.Server instance, not an
+# org.hsqldb.WebServer instance.  If you have a genuine need for this
+# script to accommodate WebServer, email me.
+
+#  -- blaine.simpson@admc.com
+
+set +u
+
 SYNTAX_MSG='SYNTAX:  /path/to/this/script/hsqldb start|stop|restart|status'
 
 CFGFILE=
 LOGFILE=
 PIDFILE=
+BASEDIR=
+AUTH_FILE=
 case "`uname`" in
     Linux)
         CFGFILE=/etc/sysconfig/hsqldb
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
+        THISDIR=/etc/rc.d/init.d
+    ;;
+    FreeBSD)
+        CFGFILE=/usr/local/etc/hsqldb.cfg
+        LOGFILE=/var/log/hsqldb.log
+        PIDFILE=/var/run/hsqldb.pid
+        THISDIR=/usr/local/etc/rc.d
+    ;;
+    SunOS)
+        CFGFILE=/etc/hsqldb.cfg
+        LOGFILE=/var/log/hsqldb.log
+        PIDFILE=/etc/hsqldb.pid
+        THISDIR=/etc/init.d
     ;;
     *)
         CFGFILE=/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
+        THISDIR=/etc/init.d
     ;;
 esac
 
 # Sanity check
-[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] || {
+[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] &&
+[ -n "$THISDIR" ] || {
     echo "Internal problem in init script" 1>&2
     exit 11
 }
@@ -111,13 +146,37 @@ HSQLDB_OWNER=
 JAVA_HOME=
 HSQLDB_HOME=
 SERVER_HOME=
-URLIDS=
+SHUTDOWN_URLIDS=
 . "$CFGFILE"
 # Validate that config file sets all required variables.
 [ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] &&
-[ -n "$URLIDS" ] || {
+[ -n "$SHUTDOWN_URLIDS" ] || {
     echo "Config file '$CFGFILE' does not set one or more of following variables
-    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, URLIDS"
+    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, SHUTDOWN_URLIDS"
+    exit 2
+}
+[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
+    echo "A *_HOME variables set in '$CFGFILE' is set to a non-directory." 1>&2
+    exit 2
+}
+[ -f "$SERVER_HOME"/server.properties ] || {
+    echo "'$SERVER_HOME' doesn't contain a server.properties file" 1>&2
+    exit 2
+}
+[ -r "$SERVER_HOME"/server.properties ] || {
+    echo "'$SERVER_HOME/server.properties' isn't readable" 1>&2
+    exit 2
+}
+[ -f "$HSQLDB_HOME"/lib/hsqldb.jar ] || {
+    echo "'$HSQLDB_HOME/lib' doesn't contain hsqldb.jar" 1>&2
+    exit 2
+}
+[ -r "$HSQLDB_HOME"/lib/hsqldb.jar ] || {
+    echo "'$HSQLDB_HOME/lib/hsqldb.jar' isn't readable" 1>&2
+    exit 2
+}
+[ -x "$JAVA_HOME"/bin/java ] || {
+    echo "No Java executable found at '$JAVA_HOME/bin/java'" 1>&2
     exit 2
 }
 
@@ -153,11 +212,81 @@ HSQLDB_PID=
 }
 
 case "$COMMAND" in
+    status)
+        [ -n "$HSQLDB_PID" ] || {
+            echo "I don't know of any running hsqldb server."
+            exit 0
+        }
+        echo "There is an hsqldb server based at $HSQLDB_HOME
+running with pid $HSQLDB_PID."
+        # I would give a nice ps command here, were ps not so damned 
+        # OS-specific.
+    ;;
     start)
-        echo "I am here"
+        [ -n "$HSQLDB_PID" ] && {
+        echo "There is already a hsqldb server running with pid $HSQLDB_PID."
+            exit 1
+        }
+        [ -n "$HSQLDB_OWNER" ] && {
+            touch "$PIDFILE" || {
+                echo "Failed to create pid file" 1>&2
+                exit 1
+            }
+            chown "$HSQLDB_OWNER" "$PIDFILE" || {
+                echo "Failed to chown pid file to '$HSQLDB_OWNER'" 1>&2
+                exit 1
+            }
+            # Some OSes choke if there are newlines in this string.
+            nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > $PIDFILE && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
+            exit 0
+        }
+        print $$ > "$PIDFILE" || {
+            echo "Failed to write pid to pid file" 1>&2
+            exit 1
+        }
+        cd "$SERVER_HOME" || {
+            echo "Failed to cd to '$SERVER_HOME'" 1>&2
+            exit 1
+        }
+        
+        #exec nohup "exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
+        echo POSTTTT
     ;;
     stop)
-        echo "Haven't done STOP yet"
+        [ -n "$HSQLDB_PID" ] || {
+            echo "I don't know of any running hsqldb server."
+            exit 1
+        }
+        AUTH_FILE_SWITCH=
+        # N.b., there will be a problem if there are special characters or
+        # spaces inside of $AUTH_FILE.
+        [ -n "$AUTH_FILE" ] && AUTH_FILE_SWITCH="--rcfile $AUTH_FILE"
+        databases="`echo $MVAR | wc -w`"
+        echo "$database databases to shut down..."
+        # Some shell implementations don't allow substitution on arg 0,
+        # so, we'll set the search path.
+        PATH="$JAVA_HOME/bin:$PATH"
+        # Might as well set CLASSPATH too, for a cleaner command.
+        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        export CLASSPATH
+        export PATH   # Required only for some funny init environments.
+        ERRORS=
+        for urlid in $SHUTDOWN_URLIDS; do
+            THISONEFAILED=
+            echo "Shutting down database instance '$urlid'..."
+            java org.hsqldb.util.SqlTool $AUTH_FILE_SWITCH --noinput \
+                    --sql 'shutdown;' $urlid || THISONEFAILED=1
+            if [ -n "$THISONEFAILED" ]; then
+                ERRORS=1
+            else
+                echo 'done.'
+            fi
+        done
+        [ -n "$ERRORS" ] || rm -f "$PIDFILE"
+    ;;
+    restart)
+        "$THISDIR"/hsqldb stop || exit $?
+        exec "$THISDIR"/hsqldb start
     ;;
     *)
         echo "$SYNTAX_MSG" 1>&2
