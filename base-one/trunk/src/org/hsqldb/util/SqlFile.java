@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.58 2004/06/05 05:54:11 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.59 2004/06/05 06:53:00 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.58 $
+ * @version $Revision: 1.59 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,17 +109,17 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.58 $".substring("$Revision: ".length(),
-                "$Revision: 1.58 $".length() - 2);
+        revnum = "$Revision: 1.59 $".substring("$Revision: ".length(),
+                "$Revision: 1.59 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
-        + "    \"\\q\" to quit.\n"
-        + "    \"\\?\" lists Special Commands.\n"
-        + "    \":?\" lists Buffer/Editing commands.\n"
-        + "    \"*?\" lists PL commands (including alias commands).\n\n"
+        + "    \"\\q\"  to quit.\n"
+        + "    \"\\?\"  lists Special Commands.\n"
+        + "    \":?\"  lists Buffer/Editing commands.\n"
+        + "    \"* ?\" lists PL commands (including alias commands).\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
@@ -161,12 +161,18 @@ public class SqlFile {
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n" + "    \\-3\n" + "    :;\n";
     final private static String PL_HELP_TEXT =
-        "PROCEDURAL LANGUAGE Commands.\n"
+        "PROCEDURAL LANGUAGE Commands.  Must have one space after '*'.\n"
+        + "    * ?                           Help\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
         + "    * VARNAME =                   Unset variable\n"
         + "    * list                        List values of all variables\n\n"
+        + "    * foreach VARNAME [val1...]   Repeat the following PL block with \n"
+        + "                                  given variable value each time\n"
+        + "    * end                         Ends a PL block\n\n"
         + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
-        + "You may omit the {}'s only if *VARNAME is the very first word of a command.\n";
+        + "You may omit the {}'s only if *VARNAME is the very first word of a command.\n"
+        + "No variable substitutions are performed until you run any '* ...' command\n"
+        + "(other than '* ?').\n";
 
     /**
      * Interpret lines of input file as SQL Statements, Comments,
@@ -304,10 +310,6 @@ public class SqlFile {
                     // could be called up above if a Special processing
                     // executes a SQL command from history.
                     if (stringBuffer.length() == 0) {
-                        if (trimmedInput.startsWith("*?")) {
-                            stdprintln(PL_HELP_TEXT);
-                            continue;
-                        }
                         if (trimmedInput.startsWith("/*")) {
                             postCommentIndex = 
                                 trimmedInput.indexOf("*/", 2) + 2;
@@ -332,7 +334,7 @@ public class SqlFile {
                         }
                         if (trimmedInput.startsWith("* ")) {
                             try {
-                                processPL(trimmedInput.substring(1));
+                                processPL(trimmedInput.substring(2));
                             } catch (BadSpecial bs) {
                                 errprintln("Error at '" + ((file == null)
                                         ? "stdin"
@@ -770,6 +772,10 @@ public class SqlFile {
     throws BadSpecial, SqlToolError {
         if (inString.length() < 1) {
             throw new BadSpecial("Null PL command");
+        }
+        if (inString.charAt(0) == '?') {
+            stdprintln(PL_HELP_TEXT);
+            return;
         }
         StringTokenizer toker = new StringTokenizer(inString);
         String arg1 = toker.nextToken();
