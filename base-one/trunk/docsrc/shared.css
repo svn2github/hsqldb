@@ -34,6 +34,7 @@ span.term a      {
 div.caption      { font-size: 80%; }
 div.important    { background: yellow; }
 div.warning      { background: red; }
+div.caution      { background: #ffb573; }
 
 pre.programlisting { background-color: silver; padding: 5px; }
 pre.screen         { background-color: #BDC6DE; padding: 5px; }
