@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.1 2004/04/21 02:04:56 unsaved Exp $ -->
+<!-- $Id: testutility.xml,v 1.2 2004/04/21 02:13:49 unsaved Exp $ -->
 
 <appendix>
     <title>HSQLDB Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/21 02:04:56 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/21 02:13:49 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -15,18 +15,19 @@
     <para>
         The <literal>org.hsqldb.test</literal> package contains a number of 
         tests for various functions of the database engine.
-        Among these, the TestSelf class performs the tests that are based 
-        on scripts.
+        Among these, the <literal>TestSelf</literal> class performs the tests 
+        that are based on scripts.
         To run the tests, you should compile the
         <filename>hsqldbtest.jar</filename> target with Ant.
     </para> <para>
-        For TestSelf, a batch file is provided in the demo directory.
+        For <literal>TestSelf</literal>, a batch file is provided in the demo 
+        directory.
         To start the application in Windows, type:
     </para><screen>
     runtest TestSelf</screen>
     <para>
-        The new version of TestSelf runs multiple SQL test files to test 
-        different SQL operations of the database.
+        The new version of <literal>TestSelf</literal> runs multiple SQL test 
+        files to test different SQL operations of the database.
         All files in the working directory with names matching
         TestSelf*.txt are processed in alphabetical order.
     </para> <para>
@@ -34,7 +35,7 @@
         queries.
         The format of the TestSelf*.txt file is simple text, with some 
         indentation and prefixes in the form of Java-style comments.
-        These prefixes indicate what the expected result should be.
+        The prefixes indicate what the expected result should be.
     </para> <itemizedlist>
         <listitem><para>
             Comment lines must start with -- and are ignored
@@ -42,49 +43,27 @@
             Lines starting with spaces are the continuation of the previous 
             line
         </para></listitem><listitem><para>
-            Line prefixes indicate:
-            </para><variablelist>
-                <varlistentry>
-                    <term>/*c&lt;rows&gt;*/</term>
-                    <listitem><para>
-                        ResultSet is expected with &lt;rows> column count
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>/*u &lt;count&gt;*/</term>
-                    <listitem><para>
-                        An update count, &lt;count> is expected
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>/*e*/</term>
-                    <listitem><para>
-                        An erro should occur when executing the statement
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>/* r &lt;string1>,&lt;string2>*/</term>
-                    <listitem><para>
-                        Single-row ResultSet is expected with &lt;string1>,
-                        &lt;string2> results in the single row
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>/*r...</term>
-                        <listitem><programlisting>
+            SQL statements with no prefix are simply executed.
+        </para></listitem><listitem><para><emphasis>
+            The remaining items in this list examplify use of the available
+            command line-prefixes.
+        </emphasis></para></listitem><listitem><informalexample><programlisting>
+/*c&lt;rows&gt;*/ SQL statement returning column count of &lt;rows&gt;</programlisting>
+        </informalexample></listitem><listitem><informalexample><programlisting>
+/*u &lt;count&gt;*/ SQL statement returning an update count equal to &lt;count&gt;</programlisting>
+        </informalexample></listitem><listitem><informalexample><programlisting>
+/*e*/ SQL statement that should produce an error when executing</programlisting>
+        </informalexample></listitem><listitem><informalexample><programlisting>
+/* r &lt;string1&gt;,&lt;string2&gt; SQL statement returning a single row ResultSet equal to the specified value</programlisting>
+        </informalexample></listitem><listitem><informalexample><programlisting>
 /*r
-&lt;string1>,&lt;string2>
-&lt;string1>,&lt;string2>
-&lt;string1>,&lt;string2>
-*/</programlisting>
-                    <para>
-                        Multiple row ResultSet is expected with the 
-                        specified values (note the indentation) SQL 
-                        statements with no prefix are simply executed.
-                    </para></listitem>
-                </varlistentry>
-            </variablelist>
-        </listitem>
+    &lt;string1&gt;,&lt;string2&gt;
+    &lt;string1&gt;,&lt;string2&gt;
+    &lt;string1&gt;,&lt;string2&gt;
+*/ SQL statement returning a multiple row ResultSet equal to the specified values</programlisting>
+            </informalexample><para>
+                (note that the result set lines are indented).
+        </para></listitem>
     </itemizedlist>
     <para>
         See the TestSelf*.txt files for actual examples.
