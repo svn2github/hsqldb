@@ -50,6 +50,11 @@ public class TestDatabaseMetaData extends TestBase {
         int               updateCount;
 
         try {
+            pstmt = conn.prepareStatement("DROP TABLE t1 IF EXISTS");
+
+            pstmt.executeUpdate();
+            pstmt.close();
+
             pstmt = conn.prepareStatement(
                 "CREATE TABLE t1 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
@@ -58,7 +63,7 @@ public class TestDatabaseMetaData extends TestBase {
             assertTrue("expected update count of zero", updateCount == 0);
 
             DatabaseMetaData dbmd = conn.getMetaData();
-            ResultSet rs = dbmd.getTables(null, null, null,
+            ResultSet rs = dbmd.getTables(null, null, "T1",
                                           new String[]{ "TABLE" });
             ArrayList tablesarr = new ArrayList();
             int       i;
@@ -71,7 +76,7 @@ public class TestDatabaseMetaData extends TestBase {
             }
 
             rs.close();
-            assertTrue("expected table count of 1", i == 1);
+            assertTrue("expected table t1 count of 1", i == 1);
 
             Iterator it = tablesarr.iterator();
 
@@ -92,6 +97,11 @@ public class TestDatabaseMetaData extends TestBase {
                 rs.close();
             }
 
+            pstmt = conn.prepareStatement("DROP TABLE t_1 IF EXISTS");
+
+            pstmt.executeUpdate();
+            pstmt.close();
+
             pstmt = conn.prepareStatement(
                 "CREATE TABLE t_1 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
@@ -109,7 +119,7 @@ public class TestDatabaseMetaData extends TestBase {
             }
 
             rs.close();
-            assertTrue("expected table count of 1", i == 1);
+            assertTrue("expected table t_1 count of 1", i == 1);
             conn.close();
         } catch (Exception e) {
             assertTrue("unable to prepare or execute DDL", false);

@@ -73,9 +73,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // user defined boolean properties
         String[] booleanPropertiesNames = {
-            "hsqldb.schemas", "hsqldb.catalogs", "sql.enforce_size",
-            "sql.enforce_strict_size", "textdb.quoted", "textdb.all_quoted",
-            "textdb.ignore_first",
+            "hsqldb.nio_data_file", "hsqldb.schemas", "hsqldb.catalogs",
+            "sql.enforce_size", "sql.enforce_strict_size", "textdb.quoted",
+            "textdb.all_quoted", "textdb.ignore_first",
         };
 
         booleanProperties.addAll(booleanPropertiesNames);
@@ -187,6 +187,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("hsqldb.first_identity", "0");
         setProperty("readonly", false);
         setProperty("modified", "no");
+
+        // initial method of data file access
+        setProperty("hsqldb.nio_data_file", true);
 
         // the property "version" is also set to the current version
         //

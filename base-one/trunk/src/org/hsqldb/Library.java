@@ -76,6 +76,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
+import java.util.Locale;
 
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
@@ -96,10 +97,10 @@ import org.hsqldb.store.ValuePool;
  */
 public class Library {
 
-    static final SimpleDateFormat daynameFormat =
-        new SimpleDateFormat("EEEE");
+    static final SimpleDateFormat daynameFormat = new SimpleDateFormat("EEEE",
+        Locale.ENGLISH);
     static final SimpleDateFormat monthnameFormat =
-        new SimpleDateFormat("MMMM");
+        new SimpleDateFormat("MMMM", Locale.ENGLISH);
     static final StringBuffer daynameBuffer   = new StringBuffer();
     static final StringBuffer monthnameBuffer = new StringBuffer();
     static final FieldPosition monthPosition =
@@ -1242,40 +1243,6 @@ public class Library {
     }
 
     /**
-     * Returns an integral value representing the indicated
-     * part of the given date object, using a <code>GregorianCalendar</code>
-     * object.
-     * @param d the <code>Date</code> object from which to extract the indicated part
-     * @param part an integer code corresponding to the desired date part
-     * @return the indicated part of the given <code>java.util.Date</code> object
-     */
-    static int getDateTimePart(java.util.Date d, int part) {
-
-        Calendar c = new GregorianCalendar();
-
-        c.setTime(d);
-
-        return c.get(part);
-    }
-
-    /**
-     * Returns an integral value representing the indicated
-     * part of the given time object, using a <code>GregorianCalendar</code>
-     * object.
-     * @param t the Time object from which to extract the indicated part
-     * @param part an integer code corresponding to the desired time part
-     * @return he indicated part of the given <code>java.sql.Time</code> object
-     */
-    private static int getTimePart(java.sql.Time t, int part) {
-
-        Calendar c = new GregorianCalendar();
-
-        c.setTime(t);
-
-        return c.get(part);
-    }
-
-    /**
      * Returns the day of the month from the given date value, as an integer
      * value in the range of 1-31.
      *
@@ -1283,7 +1250,7 @@ public class Library {
      * @return the day of the month from the given date value
      */
     public static int dayofmonth(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.DAY_OF_MONTH);
+        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_MONTH);
     }
 
     /**
@@ -1294,7 +1261,7 @@ public class Library {
      * @return the day of the week from the given date value
      */
     public static int dayofweek(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.DAY_OF_WEEK);
+        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_WEEK);
     }
 
     /**
@@ -1305,7 +1272,7 @@ public class Library {
      * @return the day of the year from the given date value
      */
     public static int dayofyear(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.DAY_OF_YEAR);
+        return HsqlDateTime.getDateTimePart(d, Calendar.DAY_OF_YEAR);
     }
 
     /**
@@ -1318,7 +1285,7 @@ public class Library {
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - hour
     public static int hour(java.sql.Time t) {
-        return getDateTimePart(t, Calendar.HOUR_OF_DAY);
+        return HsqlDateTime.getDateTimePart(t, Calendar.HOUR_OF_DAY);
     }
 
     /**
@@ -1329,7 +1296,7 @@ public class Library {
      * @return the minute value from the given time value
      */
     public static int minute(java.sql.Time t) {
-        return getDateTimePart(t, Calendar.MINUTE);
+        return HsqlDateTime.getDateTimePart(t, Calendar.MINUTE);
     }
 
     /**
@@ -1343,7 +1310,7 @@ public class Library {
      * @return the month value from the given date value
      */
     public static int month(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.MONTH) + 1;
+        return HsqlDateTime.getDateTimePart(d, Calendar.MONTH) + 1;
     }
 
     /**
@@ -1357,7 +1324,7 @@ public class Library {
      */
     synchronized public static String monthname(java.sql.Date d) {
 
-        daynameBuffer.setLength(0);
+        monthnameBuffer.setLength(0);
 
         return monthnameFormat.format(d, monthnameBuffer,
                                       monthPosition).toString();
@@ -1381,7 +1348,7 @@ public class Library {
      *      date value
      */
     public static int quarter(java.sql.Date d) {
-        return (getDateTimePart(d, Calendar.MONTH) / 3) + 1;
+        return (HsqlDateTime.getDateTimePart(d, Calendar.MONTH) / 3) + 1;
     }
 
     /**
@@ -1393,7 +1360,7 @@ public class Library {
      *      given time value
      */
     public static int second(java.sql.Time d) {
-        return getDateTimePart(d, Calendar.SECOND);
+        return HsqlDateTime.getDateTimePart(d, Calendar.SECOND);
     }
 
     /**
@@ -1405,7 +1372,7 @@ public class Library {
      *      date value
      */
     public static int week(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.WEEK_OF_YEAR);
+        return HsqlDateTime.getDateTimePart(d, Calendar.WEEK_OF_YEAR);
     }
 
     /**
@@ -1417,7 +1384,7 @@ public class Library {
      *      date value
      */
     public static int year(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.YEAR);
+        return HsqlDateTime.getDateTimePart(d, Calendar.YEAR);
     }
 
     // SYSTEM

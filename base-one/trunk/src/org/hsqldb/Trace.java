@@ -227,7 +227,7 @@ public class Trace extends PrintWriter {
      DatabaseRowOutput_newDatabaseRowOutput        = 112,
      DatabaseScriptReader_readDDL                  = 113,
      DatabaseScriptReader_readExistingData         = 114,
-     Function_Function                             = 115,
+     Message_Pair                                  = 115,
      HsqlDatabaseProperties_load                   = 116,
      HsqlDatabaseProperties_save                   = 117,
      jdbcDatabaseMetaData_getBestRowIdentifier     = 118,
@@ -441,15 +441,15 @@ public class Trace extends PrintWriter {
         "22003 Type Conversion not supported",    //
 
         //--- wsonic
-        "table $$ row count error : $$ read, needed $$",    // BinaryDatabaseScriptReader_readExistingData
-        "wrong data for insert operation",    // BinaryDatabaseScriptReader_readTableInit
-        "SaveRow $$",    // Cache_cleanUp
-        "SaveRow $$",    // Cache_saveAll
+        " table $$ row count error : $$ read, needed $$",    // BinaryDatabaseScriptReader_readExistingData
+        " wrong data for insert operation",    // BinaryDatabaseScriptReader_readTableInit
+        " SaveRow $$",    // Cache_cleanUp
+        " SaveRow $$",    // Cache_saveAll
         " $$ table: $$",    // Constraint_checkInsert
         " $$ table: $$",    // Database_dropTable
         "duplicate column in list",    // DatabaseCommandInterpreter_processColumnList
         "table has no primary key",    // DatabaseCommandInterpreter_processCreateConstraints
-        "$$ has no primary key",    // DatabaseCommandInterpreter_processCreateFK
+        " $$ has no primary key",    // DatabaseCommandInterpreter_processCreateFK
         "missing DEFAULT value on column '$$'",    // DatabaseCommandInterpreter_checkFKColumnDefaults
         "only ON UPDATE NO ACTION and ON DELETE CASCADE possible",                                                              // DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint
         "attempt to connect while db opening /closing",    // DatabaseManager_getDatabase

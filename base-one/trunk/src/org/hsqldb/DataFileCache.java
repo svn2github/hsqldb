@@ -97,8 +97,13 @@ public class DataFileCache extends Cache {
                 exists = true;
             }
 
+            boolean isNio = this.dDatabase.getProperties().isPropertyTrue(
+                "hsqldb.nio_data_file");
+            int fileType = isNio ? ScaledRAFile.DATA_FILE_NIO
+                                 : ScaledRAFile.DATA_FILE_RAF;
+
             rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
-                                                 ScaledRAFile.DATA_FILE_NIO);
+                                                 fileType);
 
             if (exists) {
                 rFile.seek(FREE_POS_POS);
@@ -120,6 +125,8 @@ public class DataFileCache extends Cache {
             }
 
             initBuffers();
+
+            fileModified = false;
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_open,
                               new Object[] {

@@ -171,7 +171,7 @@ class Function {
                 classinstance = Class.forName(classname);
             } catch (Exception e) {
                 throw Trace.error(Trace.ERROR_IN_FUNCTION,
-                                  Trace.Function_Function, new Object[] {
+                                  Trace.Message_Pair, new Object[] {
                     classname, e
                 });
             }

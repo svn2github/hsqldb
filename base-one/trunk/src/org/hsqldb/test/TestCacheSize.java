@@ -84,7 +84,7 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 12;
+    int    cacheScale = 15;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,7 +102,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 100000;
+    int bigrows   = 1700000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -136,7 +136,7 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 400);
+                sStatement.execute("SET LOGSIZE " + 0);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
                 props.load();
@@ -380,7 +380,7 @@ public class TestCacheSize {
             try {
                 ps.execute();
             } catch (SQLException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
 
             if (reportProgress && (i + 1) % 10000 == 0) {
@@ -443,7 +443,7 @@ public class TestCacheSize {
             cConnection.close();
             System.out.println("Closed database: " + sw.elapsedTime());
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -473,7 +473,9 @@ public class TestCacheSize {
                                        + (i * 1000 / (sw.elapsedTime() + 1)));
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Select random zip " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
@@ -494,7 +496,9 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Select random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
@@ -515,7 +519,9 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Select random zip from zip table " + i
                            + " rows : " + sw.elapsedTime() + " rps: "
@@ -546,7 +552,9 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Update with random zip " + i
                            + " UPDATE commands, " + count + " rows : "
@@ -571,7 +579,9 @@ public class TestCacheSize {
                                        + (i * 1000 / (sw.elapsedTime() + 1)));
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "

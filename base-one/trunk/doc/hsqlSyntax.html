@@ -936,7 +936,7 @@ This command should not be used as the routine method of closing the database.</
    
   <tr>
 	   
-    <td><font>BIT</font></td>
+    <td><font>BOOLEAN | BIT</font></td>
     <td><font>as Java type</font></td>
     <td><font>"boolean" | "java.lang.Boolean"</font></td>
   </tr>
@@ -1118,7 +1118,7 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   </font>
   INSERT(s,start,len,s2) (returns a string where len number of characters beginning at start has been replaced by s2) <br>
   LCASE(s) (converts s to lower case) <br>
-  LEFT(s,count) (returns the leftmost count of characters of s) <br>
+  LEFT(s,count) (returns the leftmost count of characters of s) - requires double quoting - use SUBSTRING() instead <br>
   LENGTH(s) (returns the number of characters in s) <br>
   LOCATE(search,s,[start]) (returns the first index (1=left, 0=not found) where search is found in s, starting at start) <br>
   LTRIM(s) (removes all leading blanks in s) <br>
@@ -1139,8 +1139,8 @@ This complies with SQL standards by throwing an exception if an attempt is made 
 
 <p> <b>Date / Time</b> <br>
    <br>
-  CURDATE() (returns the current date) <br>
-  CURTIME() (returns the current time) <br>
+  CURDATE() (returns the current date)  - use CURRENT_DATE instead<br>
+  CURTIME() (returns the current time)  - use CURRENT_TIME instead<br>
   DAYNAME(date) (returns the name of the day) <br>
   DAYOFMONTH(date) (returns the day of the month (1-31)) <br>
   DAYOFWEEK(date) (returns the day of the week (1 means Sunday)) <br>
@@ -1149,11 +1149,17 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   MINUTE(time) (returns the minute (0-59)) <br>
   MONTH(date) (returns the month (1-12)) <br>
   MONTHNAME(date) (returns the name of the month) <br>
-  NOW() (returns the current date and time as a timestamp) <br>
+  NOW() (returns the currentte and time as a timestamp) - use CURRENT_TIMESTAMP instead<br>
   QUARTER(date) (returns the quarter (1-4)) <br>
   SECOND(time) (returns the second (0-59)) <br>
   WEEK(date) (returns the week of this year (1-53) <br>
   YEAR(date) (returns the year) 
+<p>CURRENT_DATE (returns the current date)<br>
+  CURRENT_TIME (returns the current time)<br>
+<p>
+  CURRENT_TIMESTAMP
+  (returns the current timestamp)<br>
+  <br>
 
 <p> <b>System / Connection</b> <br>
    <br>
@@ -1163,8 +1169,9 @@ This complies with SQL standards by throwing an exception if an attempt is made 
 
 <p> <b>System</b> <br>
    <br>
-  IFNULL(exp,value) (if exp is null, value is returned else exp) <br>
-  CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) <br>
+  IFNULL(exp,value) (if exp is null, value is returned else exp)  - use COALESCE() instead<br>
+  CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) - use CASE WHEN instead
+<p>
   CONVERT(term,type) (converts exp to another data type) <br>
   CAST(term AS type) (converts exp to another data type) 
 <p><font color="#cc0000">COALESCE(expr1,expr2,expr3,...) <font color="#000000">(if expr1 is not null then it is returned else, expr2 is evaluated and if not null it is returned and so on..) <br>
@@ -1200,7 +1207,7 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   | value [NOT] LIKE value [ESCAPE] value } 
 
 <p>value: <br>
-  [ + | - ] { term [ { + | - | * | / } term ] <br>
+  [ + | - ] { term [ { + | - | * | / | || } term ] <br>
   | ( condition ) <br>
   | <a href="#List">function</a> ( [parameter] [,...] ) <br>
   | selectStatement giving one value 
@@ -1218,6 +1225,7 @@ This complies with SQL standards by throwing an exception if an attempt is made 
    Strings in HSQLDB are Unicode
 strings.
  A string starts and ends with a single ' (singlequote). In a string started with ' (singlequote) use '' (two singlequotes) to create a ' (singlequote).
+<p>String contatenation should be performed with the standard SQL operator || rather than the non-standard + operator.
 <p>The 
   LIKE keyword uses '%' to match any (including 0) number of characters, and '_' to match 
   exactly one character. To search for '%' or '_' itself an escape character must also be specified  using the ESCAPE clause.
@@ -1233,10 +1241,11 @@ An important implication of this is the for accessing columns names via JDBC Dat
   mixed-case table and column names. Example: CREATE TABLE "Address" ("Nr" INTEGER,"Name" 
   VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address";
 <p>The equivalent quoted identifier can be used for an unquoted identifer by converting the identifier to all uppercase and quoting it. For example, if a table  name is defined as  Address2 (unquoted), it can be referred to by its  quoted form, &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers should not be confused with SQL strings.
-<p>Quoting can sometimes be used for identifiers or aliases when there is an ambiguity. For example:
+<p>Quoting can sometimes be used for identifiers,  aliases or functions when there is an ambiguity. For example:
 
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
-<p>Portability between different JRE locales is an issue when accented characters (or extended unicode characters) are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
+<p>SELECT &quot;LEFT&quot;(COL1, 2) FROM MYTABLE;
+<p>Portability between different JRE locales could be an issue when accented characters (or extended unicode characters) are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary not be expected in different locales. It is recommended that accented characters are used only in quoted identifiers.
 <p>When using JDBC DatabaseMetaData methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#cc0000">(a change from 1.6.1 and previous versions)</font>.
 <p>values: <br>
   A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd (see java.sql.Date). 
@@ -1247,7 +1256,7 @@ An important implication of this is the for accessing columns names via JDBC Dat
   <br>
   
 
-<p>When specifying default values for date / time columns  in CREATE TABLE statements, or in SELECT,INSERT, and  UPDATE statements, special values<font color="#cc0000"> NOW,</font><font color="#cc0000" > TODAY, CURRENT_TIMESTAMP, SYSDATE, CURRENT_TIME and CURRENT_DATE </font>(case independent) can be used. NOW is used for TIME and TIMESTAMP columns, TODAY is used for DATE columns. The three variants CURRENT_* are SQL standard versions. Example:
+<p>When specifying default values for date / time columns  in CREATE TABLE statements, or in SELECT,INSERT, and  UPDATE statements, special values<font color="#cc0000"> NOW,</font><font color="#cc0000" > TODAY, CURRENT_TIMESTAMP, SYSDATE, CURRENT_TIME and CURRENT_DATE </font>(case independent) can be used. NOW is used for TIME and TIMESTAMP columns, TODAY is used for DATE columns. The three variants CURRENT_* are SQL standard versions and should be used in preference to others. Example:
 
 <pre> CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
  CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);  </pre>
@@ -1271,7 +1280,7 @@ An important implication of this is the for accessing columns names via JDBC Dat
   <br>
    <font color="#cc0000">Items in dark red indicate features added by HSQL Development Group since April 2001<br>
    Based on original Hypersonic documentation. Updates by Peter Hudson, Joe Maher and Fred Toussi<br>
-  Last update 2003.12.28</font>
+  Last update 2004.03.10</font>
 <p>&nbsp; 
 </font> 
 </body></html>

@@ -121,7 +121,7 @@ public class TestBug778213 extends TestBase {
             conn.close();
         }
 
-        exception = true;
+        exception = false;
         conn      = newConnection();
 
         try {
@@ -129,13 +129,13 @@ public class TestBug778213 extends TestBase {
 
             pstmt.addBatch();
         } catch (SQLException e) {
-            exception = false;
+            exception = true;
         } finally {
             conn.close();
         }
 
         if (exception) {
-            assertTrue("expected exception batching prepared DDL", false);
+            assertTrue("not expected exception batching prepared DDL", false);
         }
 
         conn = newConnection();

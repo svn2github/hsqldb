@@ -71,15 +71,15 @@ public class ScriptWriterText extends ScriptWriterBase {
         BYTES_LINE_SEP = sLineSep.getBytes();
     }
 
-    final static byte[] BYTES_INSERT_INTO = "INSERT INTO ".getBytes();
-    final static byte[] BYTES_VALUES      = " VALUES(".getBytes();
-    final static byte[] BYTES_TERM        = ")".getBytes();
-    final static byte[] BYTES_DELETE_FROM = "DELETE FROM ".getBytes();
-    final static byte[] BYTES_WHERE       = " WHERE ".getBytes();
+    final static byte[] BYTES_INSERT_INTO  = "INSERT INTO ".getBytes();
+    final static byte[] BYTES_VALUES       = " VALUES(".getBytes();
+    final static byte[] BYTES_TERM         = ")".getBytes();
+    final static byte[] BYTES_DELETE_FROM  = "DELETE FROM ".getBytes();
+    final static byte[] BYTES_WHERE        = " WHERE ".getBytes();
     final static byte[] BYTES_SEQUENCE     = "ALTER SEQUENCE ".getBytes();
     final static byte[] BYTES_SEQUENCE_MID = " RESTART WITH ".getBytes();
-    final static byte[] BYTES_C_ID_INIT   = "/*C".getBytes();
-    final static byte[] BYTES_C_ID_TERM   = "*/".getBytes();
+    final static byte[] BYTES_C_ID_INIT    = "/*C".getBytes();
+    final static byte[] BYTES_C_ID_TERM    = "*/".getBytes();
 
     public ScriptWriterText(Database db, String file,
                             boolean includeCachedData,
@@ -106,7 +106,10 @@ public class ScriptWriterText extends ScriptWriterBase {
             outDescriptor = fos.getFD();
             fileStreamOut = fos;
         } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, outFile);
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
+                              new Object[] {
+                e.getMessage(), outFile
+            });
         }
     }
 

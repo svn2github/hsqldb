@@ -105,7 +105,7 @@ class ScaledRAFile {
      * first in that case. Reported by bohgammer@users in Open Disucssion
      * Forum.
      */
-    public void seek(long position) throws IOException {
+    void seek(long position) throws IOException {
 
         if (file.length() < position) {
             file.seek(file.length());
@@ -118,39 +118,31 @@ class ScaledRAFile {
         file.seek(position);
     }
 
-    public long getFilePointer() throws IOException {
+    long getFilePointer() throws IOException {
         return (file.getFilePointer() + scale - 1) / scale;
     }
 
-    public int read() throws IOException {
+    int read() throws IOException {
         return file.read();
     }
 
-    public void read(byte[] b) throws IOException {
-        read(b, 0, b.length);
-    }
-
-    public void read(byte[] b, int offset, int length) throws IOException {
+    void read(byte[] b, int offset, int length) throws IOException {
         file.readFully(b, offset, length);
     }
 
-    public int readInt() throws IOException {
+    int readInt() throws IOException {
         return file.readInt();
     }
 
-    public void write(byte[] b) throws IOException {
-        write(b, 0, b.length);
-    }
-
-    public void write(byte[] b, int off, int len) throws IOException {
+    void write(byte[] b, int off, int len) throws IOException {
         file.write(b, off, len);
     }
 
-    public void writeInt(int i) throws IOException {
+    void writeInt(int i) throws IOException {
         file.writeInt(i);
     }
 
-    public void close() throws IOException {
+    void close() throws IOException {
         file.close();
     }
 }

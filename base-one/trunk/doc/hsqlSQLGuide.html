@@ -140,7 +140,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   either as the boolean type or as strings  when used from JDBC. This type of column can also be initialised 
   using values of any numeric type. In this case <code>0</code> is translated to <code>false</code> 
   and any other value such as 1 is translated to <code>true</code>. </p>
-<h4>HANDLING OF JAVA OBJECTS</h4>
+<h4>STORAGE AND HANDLING OF JAVA OBJECTS</h4>
 <p>In version 1.7.2 this support has improved and any serializable JAVA Object can be inserted directly into 
   a column of type  OTHER using any variation of <code>PreparedStatement.setObject()</code> methods.</p>
 <p>For comparison purposes and in indexes, any two Java Objects are considered 
@@ -149,7 +149,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <p>The engine does not return errors when normal column values are assigned to Java Object columns (for example assigning an INTEGER or STRING to such a column with an SQL statement such as <code>UPDATE mytable SET objectcol = intcol WHERE ...</code>) but this is highly likely to be disallowed  in future. So please use columns of type OTHER only to store your objects and nothing else.</p>
 <h4>TYPE SIZE, PRECISION AND SCALE</h4>
 <p>Prior to 1.7.2, all table column type definitions with a column size, precision or scale qualifier were accepted and ignored. In version 1.7.2, such qualifiers  must conform to the SQL standards. For example INTEGER(8) is no longer acceptable.</p>
-<p>In 1.7.2, the qualifiers are still ignored unless you set a database property. <code>SET PROPERTY &quot;sql.enforce_strice_size&quot; TRUE </code>will enforce sizes for CHARACTER or VARCHAR columns and pad any strings when inserting or updating a CHARACTER column. The qualifiers are still ignored for DECIMAL and DOUBLE numeric types.</p>
+<p>In 1.7.2, the qualifiers are still ignored unless you set a database property. <code>SET PROPERTY &quot;sql.enforce_strict_size&quot; TRUE </code>will enforce sizes for CHARACTER or VARCHAR columns and pad any strings when inserting or updating a CHARACTER column. The qualifiers are still ignored for DECIMAL and DOUBLE numeric types.</p>
 <p>Please note that casting a value to a qualified CHARACTER type will not result in truncation or padding as you might expect. So you cannot rely on a test such as <code>CAST (mycol AS VARCHAR(2)) = 'xy'</code> to find the values beginning with 'xy'. Use <code> SUBSTRING(mycol FROM 1 FOR 2)</code> instead.</p>
 <p>&nbsp;</p>
 <h3>SEQUENCES AND IDENTITY</h3>
@@ -190,7 +190,10 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   uncommitted at the time of shutdown, is part committed (to the state at CHECKPOINT) at the next startup. It is recommended not to use 
   the CHECKPOINT command when there are any uncommitted transactions.</p>
 <p>&nbsp;</p>
-<p>Author: Fred Toussi - 14 July 2002 - updated 12 February 2004</p>
+<h3>NEW FEATURES AND CHANGES</h3>
+<p>In 1.7.2 many enhancements have been made for better SQL support. These are listed in <a href="hsqlSyntax.html">hsqlSyntax.html</a> and in  <a href="changelog_1_7_2.txt">changelog_1_7_2.txt</a>. Functions and expressions such as SUBSTRING(), NULLIF(), COALESCE(), CASE ... WHEN .. ELSE etc. are among them. Other enhancements may not be very obvious in the documentation but can result in changes of behaviour from previous versions. Most significant among these are handling of NULL values in joins (null columns are no longer joined) and OUTER joins (the results are now correct). You should test your applications with the new version to ensure they do not rely on past incorrect behaviour of the engine. The engine will evolve in future versions towards full SQL standard support, so it is best not to rely on any non-standard feature of the current version.</p>
+<p>&nbsp;</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 09 March 2004</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

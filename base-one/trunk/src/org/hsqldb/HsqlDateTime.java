@@ -491,6 +491,21 @@ public class HsqlDateTime {
             return new Timestamp(value);
         }
     }
+
+    /**
+     * Returns the indicated part of the given <code>java.util.Date</code> object.
+     * @param d the <code>Date</code> object from which to extract the indicated part
+     * @param part an integer code corresponding to the desired date part
+     * @return the indicated part of the given <code>java.util.Date</code> object
+     */
+    static int getDateTimePart(java.util.Date d, int part) {
+
+        synchronized (tempCal) {
+            tempCal.setTime(d);
+
+            return tempCal.get(part);
+        }
+    }
     /*
     public static void main(String[] args) {
         String tests[] = { "2000-1-1", "2000-1-1 12:13", "2000-1-1 12:13:14",

@@ -98,8 +98,6 @@ public class DatabaseScript {
 
         r.metaData.sTable[0] = "SYSTEM_SCRIPT";
 
-        StringBuffer a;
-
         // sequences
         /*
         CREATE SEQUENCE <name>
@@ -111,8 +109,7 @@ public class DatabaseScript {
 
         for (int i = 0, sSize = seqmap.size(); i < sSize; i++) {
             NumberSequence seq = (NumberSequence) seqmap.get(i);
-
-            a = new StringBuffer(128);
+            StringBuffer   a   = new StringBuffer(128);
 
             a.append(Token.T_CREATE).append(' ');
             a.append(Token.T_SEQUENCE).append(' ');
@@ -140,7 +137,7 @@ public class DatabaseScript {
                 continue;
             }
 
-            a = new StringBuffer(128);
+            StringBuffer a = new StringBuffer(128);
 
             getTableDDL(dDatabase, t, i, forwardFK, forwardFKSource, a);
             addRow(r, a.toString());
@@ -180,6 +177,8 @@ public class DatabaseScript {
 
             // readonly for TEXT tables only
             if (t.isText() && t.isDataReadOnly()) {
+                a = new StringBuffer(64);
+
                 a.append(Token.T_SET).append(' ').append(
                     Token.T_TABLE).append(' ');
                 a.append(t.getName().statementName);
@@ -212,9 +211,8 @@ public class DatabaseScript {
 
         // forward referencing foreign keys
         for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
-            Constraint c = (Constraint) forwardFK.get(i);
-
-            a = new StringBuffer(128);
+            Constraint   c = (Constraint) forwardFK.get(i);
+            StringBuffer a = new StringBuffer(128);
 
             a.append(Token.T_ALTER).append(' ').append(Token.T_TABLE).append(
                 ' ');
@@ -268,9 +266,8 @@ public class DatabaseScript {
             Table t = (Table) tTable.get(i);
 
             if (t.isView()) {
-                View v = (View) tTable.get(i);
-
-                a = new StringBuffer(128);
+                View         v = (View) tTable.get(i);
+                StringBuffer a = new StringBuffer(128);
 
                 a.append(Token.T_CREATE).append(' ').append(
                     Token.T_VIEW).append(' ');

@@ -1,5 +1,11 @@
 Readme File
 
+
+2004.03.11
+
+Various bug fixes.
+
+
 2004.02.22 RC_2
 
 Release Candidate 2 for HSQLDB version 1.7.2 includes almost all of the features of the release

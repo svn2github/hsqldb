@@ -49,9 +49,9 @@ import org.hsqldb.jdbc.jdbcResultSet;
  */
 final class CompiledStatementExecutor {
 
-    private Session  session;
-    private Result   updateResult;
-    private Result   emptyResult;
+    private Session session;
+    private Result  updateResult;
+    private Result  emptyResult;
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -235,6 +235,7 @@ final class CompiledStatementExecutor {
         int       len = cm.length;
         Object[]  row;
         int       count;
+        boolean   success = false;
 
         session.beginNestedTransaction();
 
@@ -256,15 +257,10 @@ final class CompiledStatementExecutor {
                 rc      = rc.next;
             }
 
-            count = t.insert(r, session);
-
-            session.endNestedTransaction(false);
-        } catch (HsqlException he) {
-
-            // insert failed (violation of primary key)
-            session.endNestedTransaction(true);
-
-            throw he;
+            count   = t.insert(r, session);
+            success = true;
+        } finally {
+            session.endNestedTransaction(!success);
         }
 
         updateResult.iUpdateCount = count;
@@ -338,44 +334,42 @@ final class CompiledStatementExecutor {
             int[]         colmap    = cs.columnMap;    // column map
             Expression[]  colvalues = cs.columnValues;
             Expression    condition = cs.condition;    // update condition
-            int           len = colvalues.length;
-            HsqlArrayList del  = new HsqlArrayList();
-            Result        ins  = new Result(ResultConstants.UPDATECOUNT);
-            int           size = table.getColumnCount();
-            int[] coltypes = table.getColumnTypes();
+            int           len       = colvalues.length;
+            HsqlArrayList del       = new HsqlArrayList();
+            Result        ins       = new Result(ResultConstants.UPDATECOUNT);
+            int           size      = table.getColumnCount();
+            int[]         coltypes  = table.getColumnTypes();
+            boolean       success   = false;
 
-                do {
+            do {
                 if (condition == null || condition.test()) {
                     try {
-                    Row row = filter.currentRow;
-                        Object[] ni = table.getNewRow();
+                        Row      row = filter.currentRow;
+                        Object[] ni  = table.getNewRow();
 
-                    System.arraycopy(row.getData(), 0, ni, 0, size);
+                        System.arraycopy(row.getData(), 0, ni, 0, size);
 
-                    for (int i = 0; i < len; i++) {
+                        for (int i = 0; i < len; i++) {
                             int ci = colmap[i];
 
-                        ni[ci] = colvalues[i].getValue(coltypes[ci]);
-                    }
+                            ni[ci] = colvalues[i].getValue(coltypes[ci]);
+                        }
 
                         del.add(row);
                         ins.add(ni);
                     } catch (HsqlInternalException e) {}
-                    }
-                } while (filter.next());
+                }
+            } while (filter.next());
 
             session.beginNestedTransaction();
 
             try {
-                count = table.update(del, ins, colmap, session);
-
-                session.endNestedTransaction(false);
-            } catch (HsqlException se) {
+                count   = table.update(del, ins, colmap, session);
+                success = true;
+            } finally {
 
                 // update failed (constraint violation)
-                session.endNestedTransaction(true);
-
-                throw se;
+                session.endNestedTransaction(!success);
             }
         }
 

@@ -1742,6 +1742,15 @@ public class Expression {
                 break;
 
             case ADD :
+
+                // concat using + operator
+                if (Types.isCharacterType(eArg.dataType)
+                        || Types.isCharacterType(eArg2.dataType)) {
+                    exprType = Expression.CONCAT;
+                    dataType = Types.VARCHAR;
+
+                    break;
+                }
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :

@@ -2122,37 +2122,37 @@ class Parser {
         clearParameters();
         tokenizer.getThis(Token.T_INTO);
 
-        HsqlArrayList cNames;
-        boolean[]     ccl;
-        int[]         cm;
+        HsqlArrayList columnNames;
+        boolean[]     columnCheckList;
+        int[]         columnMap;
         int           len;
         String        token = tokenizer.getString();
-        Table         t     = database.getTable(token, session);
+        Table         table = database.getTable(token, session);
 
-        checkTableWriteAccess(t, UserManager.INSERT);
+        checkTableWriteAccess(table, UserManager.INSERT);
 
-        token  = tokenizer.getString();
-        cNames = null;
-        ccl    = null;
-        cm     = t.getColumnMap();
-        len    = t.getColumnCount();
+        token           = tokenizer.getString();
+        columnNames     = null;
+        columnCheckList = null;
+        columnMap       = table.getColumnMap();
+        len             = table.getColumnCount();
 
         if (token.equals(Token.T_OPENBRACKET)) {
-            cNames = getColumnNames(database, tokenizer, false);
+            columnNames = getColumnNames(database, tokenizer, false);
 
-            if (cNames.size() > len) {
+            if (columnNames.size() > len) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            len = cNames.size();
-            ccl = t.getNewColumnCheckList();
-            cm  = new int[len];
+            len             = columnNames.size();
+            columnCheckList = table.getNewColumnCheckList();
+            columnMap       = new int[len];
 
             for (int i = 0; i < len; i++) {
-                int ci = t.getColumnNr((String) cNames.get(i));
+                int ci = table.getColumnNr((String) columnNames.get(i));
 
-                cm[i]   = ci;
-                ccl[ci] = true;
+                columnMap[i]        = ci;
+                columnCheckList[ci] = true;
             }
 
             token = tokenizer.getString();
@@ -2161,18 +2161,23 @@ class Parser {
         if (token.equals(Token.T_VALUES)) {
             Expression[] acve = new Expression[len];
 
-            getInsertColumnValueExpressions(t, acve, len);
+            getInsertColumnValueExpressions(table, acve, len);
 
-            CompiledStatement cs = new CompiledStatement(t, cm, acve, ccl,
-                getParameters());
+            CompiledStatement cs = new CompiledStatement(table, columnMap,
+                acve, columnCheckList, getParameters());
 
             cs.subqueries = getSortedSubqueries();
 
             return cs;
         } else if (token.equals(Token.T_SELECT)) {
             Select select = parseSelect(false);
-            CompiledStatement cs = new CompiledStatement(t, cm, ccl, select,
-                getParameters());
+
+            if (len != select.iResultLen) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+
+            CompiledStatement cs = new CompiledStatement(table, columnMap,
+                columnCheckList, select, getParameters());
 
             cs.subqueries = getSortedSubqueries();
 
@@ -2230,7 +2235,7 @@ class Parser {
         if (!tokenizer.isGetThis(Token.T_SET)) {
             alias = tokenizer.getIdentifier();
 
-        tokenizer.getThis(Token.T_SET);
+            tokenizer.getThis(Token.T_SET);
         }
 
         ciList  = new HsqlArrayList();

@@ -1543,9 +1543,6 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
             case Token.INDEX : {
                 processAlterIndex();
 
@@ -1565,6 +1562,9 @@ class DatabaseCommandInterpreter {
                 processAlterUser();
 
                 break;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
         }
     }
@@ -1587,47 +1587,48 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
             case Token.RENAME : {
                 processAlterTableRename(t);
 
                 return;
             }
             case Token.ADD : {
+                HsqlName cname = null;
+
+                if (tokenizer.isGetThis(Token.T_COLUMN)) {
+                    processAlterTableAddColumn(t);
+
+                    return;
+                }
+
+                if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
+                    token = tokenizer.getName();
+                    cname = database.nameManager.newHsqlName(token,
+                            tokenizer.wasQuotedIdentifier());
+                }
+
                 token = tokenizer.getString();
 
                 switch (Token.get(token)) {
 
-                    case Token.CONSTRAINT : {
-                        processAlterTableAddConstraint(t);
-
-                        return;
-                    }
                     case Token.FOREIGN : {
                         tokenizer.getThis(Token.T_KEY);
-                        processAlterTableAddForeignKeyConstraint(t, null);
+                        processAlterTableAddForeignKeyConstraint(t, cname);
 
                         return;
                     }
                     case Token.UNIQUE : {
-                        processAlterTableAddUniqueConstraint(t, null);
+                        processAlterTableAddUniqueConstraint(t, cname);
 
                         return;
                     }
                     case Token.CHECK : {
-                        processAlterTableAddCheckConstraint(t, null);
+                        processAlterTableAddCheckConstraint(t, cname);
 
                         return;
                     }
                     default : {
-                        tokenizer.back();
-                    }
-                    case Token.COLUMN : {
-                        processAlterTableAddColumn(t);
-
-                        return;
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                     }
                 }
             }
@@ -1641,19 +1642,24 @@ class DatabaseCommandInterpreter {
 
                         return;
                     }
-                    default : {
-                        tokenizer.back();
-                    }
                     case Token.COLUMN : {
                         processAlterTableDropColumn(t);
 
                         return;
+                    }
+                    default : {
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                     }
                 }
             }
             case Token.ALTER : {
                 tokenizer.getThis(Token.T_COLUMN);
                 processAlterColumn(t);
+
+                return;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
         }
     }
@@ -1673,9 +1679,6 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
             case Token.RENAME : {
                 tokenizer.getThis(Token.T_TO);
                 processAlterColumnRename(t, column);
@@ -1696,6 +1699,11 @@ class DatabaseCommandInterpreter {
 
                 t.setDefaultString(columnIndex,
                                    processCreateDefaultValue(iType, iLen));
+
+                return;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
         }
     }
@@ -1752,9 +1760,6 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
             case Token.INDEX : {
                 processDropIndex();
 
@@ -1782,6 +1787,9 @@ class DatabaseCommandInterpreter {
                 processDropTable(isview);
 
                 break;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
         }
     }
@@ -1901,9 +1909,6 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
             case Token.PROPERTY : {
                 HsqlDatabaseProperties p;
 
@@ -2082,6 +2087,9 @@ class DatabaseCommandInterpreter {
                 database.logger.setWriteDelay(delay);
 
                 break;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
         }
     }
@@ -2526,48 +2534,6 @@ class DatabaseCommandInterpreter {
         tableWorks.addOrDropColumn(column, colindex, 1);
 
         return;
-    }
-
-    /**
-     * Responsible for handling tail of
-     * ALTER TABLE ADD CONSTRAINT ... DDL.
-     *
-     * @param t to which to add the constraint
-     * @throws HsqlException
-     */
-    private void processAlterTableAddConstraint(Table t)
-    throws HsqlException {
-
-        String   token;
-        HsqlName cname;
-
-        token = tokenizer.getName();
-        cname = database.nameManager.newHsqlName(token,
-                tokenizer.wasQuotedIdentifier());
-        token = tokenizer.getString();
-
-        switch (Token.get(token)) {
-
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
-            case Token.FOREIGN : {
-                tokenizer.getThis(Token.T_KEY);
-                processAlterTableAddForeignKeyConstraint(t, cname);
-
-                return;
-            }
-            case Token.UNIQUE : {
-                processAlterTableAddUniqueConstraint(t, cname);
-
-                return;
-            }
-            case Token.CHECK : {
-                processAlterTableAddCheckConstraint(t, cname);
-
-                return;
-            }
-        }
     }
 
     /**

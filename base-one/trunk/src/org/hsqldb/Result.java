@@ -452,8 +452,9 @@ public class Result {
                     break;
 
                 case ResultConstants.SQLEXECDIRECT :
-                    statementID = in.readIntData();
-                    mainString  = in.readString();
+                    iUpdateCount = in.readIntData();
+                    statementID  = in.readIntData();
+                    mainString   = in.readString();
                     break;
 
                 case ResultConstants.ERROR :
@@ -490,12 +491,8 @@ public class Result {
                 case ResultConstants.BATCHEXECDIRECT :
                 case ResultConstants.SQLEXECUTE :
                 case ResultConstants.SETSESSIONATTR : {
-                    if (iMode == ResultConstants.SQLEXECUTE
-                            || iMode == ResultConstants.BATCHEXECUTE) {
-                        statementID = in.readIntData();
-                    } else {
-                        iUpdateCount = in.readIntData();
-                    }
+                    iUpdateCount = in.readIntData();
+                    statementID  = in.readIntData();
 
                     int l = in.readIntData();
 
@@ -1158,6 +1155,7 @@ public class Result {
                 break;
 
             case ResultConstants.SQLEXECDIRECT :
+                out.writeIntData(iUpdateCount);
                 out.writeIntData(statementID);          // currently unused
                 out.writeString(mainString);
                 break;
@@ -1194,10 +1192,8 @@ public class Result {
             case ResultConstants.BATCHEXECDIRECT :
             case ResultConstants.SQLEXECUTE :
             case ResultConstants.SETSESSIONATTR : {
-                out.writeIntData(
-                    iMode == ResultConstants.SQLEXECUTE
-                    || iMode == ResultConstants.BATCHEXECUTE ? statementID
-                                                             : iUpdateCount);
+                out.writeIntData(iUpdateCount);
+                out.writeIntData(statementID);
 
                 int l = significantColumns;
 

@@ -121,7 +121,12 @@ class DiskNode extends Node {
         }
 
         if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
+
+            // fredt - assert not correct - row can be deleted from one index but
+            // not yet deleted from other indexes while the process of finding
+            // the node is in progress which may require saving the row
+            // to make way for new rows in the cache and loading it back
+            // Trace.doAssert(iBalance != -2);
         }
     }
 
@@ -312,7 +317,12 @@ class DiskNode extends Node {
     void write(RowOutputInterface out) throws IOException, HsqlException {
 
         if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
+
+            // fredt - assert not correct - row can be deleted from one index but
+            // not yet deleted from other indexes while the process of finding
+            // the node is in progress which may require saving the row
+            // to make way for new rows in the cache
+            // Trace.doAssert(iBalance != -2);
         }
 
         out.writeIntData(iBalance);

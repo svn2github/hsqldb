@@ -71,10 +71,9 @@ public class TestTimestamp extends TestCase {
 
         Class.forName("org.hsqldb.jdbcDriver");
 
-        conn = DriverManager.getConnection(
-            "jdbc:hsqldb:hsql://localhost/yourtest", "sa", "");
+//        conn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/yourtest", "sa", "");
+        conn = DriverManager.getConnection("jdbc:hsqldb:mem:.", "sa", "");
 
-//        conn = DriverManager.getConnection("jdbc:hsqldb:mem:.", "sa", "");
         conn.setAutoCommit(false);
     }
 

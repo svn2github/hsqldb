@@ -64,6 +64,8 @@ public class TestINPredicateParameterizationAndCorrelation extends TestBase {
         int               expectedCount;
         String            sql;
 
+        stmt.execute("drop table test if exists");
+
         sql = "create table test(id int)";
 
         stmt.execute(sql);

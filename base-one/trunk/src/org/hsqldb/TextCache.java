@@ -279,7 +279,7 @@ public class TextCache extends DataFileCache {
                     buf = ignoredFirst.getBytes();
                 }
 
-                rFile.write(buf);
+                rFile.write(buf, 0, buf.length);
 
                 iFreePos = ignoredFirst.length();
             }
