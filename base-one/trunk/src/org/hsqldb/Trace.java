@@ -172,7 +172,20 @@ public class Trace extends PrintWriter {
                                 INVALID_HAVING                      = 69,
                                 INVALID_ORDER_BY                    = 70,
                                 INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
-                                INVALIC_CHARACTER_ENCODING          = 72;
+				// N.b.  Typo in following line:
+                                INVALIC_CHARACTER_ENCODING          = 72,
+                                NO_CLASSLOADER_FOR_TLS              = 73,
+                                NO_JSSE                             = 74,
+                                NO_SSLSOCKETFACTORY_METHOD          = 75,
+                                UNEXPECTED_EXCEPTION                = 76,
+                                TLS_ERROR                           = 77,
+                                MISSING_TLS_METHOD                  = 78,
+                                TLS_SECURITY_ERROR                  = 79,
+                                NO_TLS_DATA                         = 80,
+                                NO_PRINCIPAL                        = 81,
+                                INCOMPLETE_CERTIFICATE              = 82,
+                                TLS_HOSTNAME_MISMATCH               = 83,
+                                KEYSTORE_PROBLEM                    = 84;
     private static String[]     sDescription                        = {
         "NOT USED", "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
@@ -224,6 +237,18 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
         "37000 invalid character encoding",
+        "08000 reserved for NO_CLASSLOADER_FOR_TLS",
+        "08000 reserved for NO_JSSE",
+        "08000 reserved for NO_SSLSOCKETFACTORY_METHOD",
+        "08000 reserved for UNEXPECTED_EXCEPTION",
+        "08000 reserved for TLS_ERROR",
+        "08000 reserved for MISSING_TLS_METHOD",
+        "08000 reserved for TLS_SECURITY_ERROR",
+        "08000 reserved for NO_TLS_DATA",
+        "08000 reserved for NO_PRINCIPAL",
+        "08000 reserved for INCOMPLETE_CERTIFICATE",
+        "08000 reserved for TLS_HOSTNAME_MISMATCH",
+        "08000 reserved for KEYSTORE_PROBLEM",
     };
 
     static {
