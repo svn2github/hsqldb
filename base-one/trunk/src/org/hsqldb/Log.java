@@ -67,9 +67,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -88,6 +85,11 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.StopWatch;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to move operations on the database.properties files to new
@@ -100,8 +102,9 @@ import java.util.zip.InflaterInputStream;
 // *.properties file, all database files should be in the same folder as the
 // *.properties file
 // tony_lai@users 20020820 - export hsqldb.log_size to .properties file
-// tony_lai@users 20020820 - modification to shutdown compact process to save memory usage
+// tony_lai@users 20020820 - changes to shutdown compact to save memory
 // fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
+// fredt@users 20021208 - ongoing revamp
 
 /**
  *  This class is responsible for most file handling. An HSQLDB database
@@ -133,7 +136,6 @@ class Log implements Runnable {
     private HsqlDatabaseProperties pProperties;
     private String                 sName;
     private Database               dDatabase;
-    private Session                sysSession;
     private DatabaseScriptWriter   dbScriptWriter;
     private String                 sFileScript;
     private String                 sFileCache;
@@ -148,6 +150,9 @@ class Log implements Runnable {
     private int                    mLastId;
     private Cache                  cCache;
 
+    // used for tracing
+    private StopWatch defaultTimer = new StopWatch();
+
     /**
      *  Constructor declaration
      *
@@ -156,10 +161,9 @@ class Log implements Runnable {
      * @param  name
      * @exception  SQLException  Description of the Exception
      */
-    Log(Database db, Session system, String name) throws SQLException {
+    Log(Database db, String name) throws SQLException {
 
         dDatabase   = db;
-        sysSession  = system;
         sName       = name;
         pProperties = db.getProperties();
         tRunner     = new Thread(this, "HSQLDB " + jdbcDriver.VERSION);
@@ -180,7 +184,8 @@ class Log implements Runnable {
                 // todo: try to do Cache.cleanUp() here, too
             } catch (Exception e) {
 
-                // ignore exceptions; may be InterruptedException or IOException
+                // ignore exceptions
+                // may be InterruptedException or IOException
             }
         }
     }
@@ -205,18 +210,12 @@ class Log implements Runnable {
      */
     boolean open() throws SQLException {
 
-        // at first this is assumed to be an existing database
-        boolean retValue = false;
-
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-        if (!pProperties.checkFileExists()) {
-            create();
-
-            retValue = true;
-        }
+        // create properties file if not exits and report if new file
+        boolean newdb = pProperties.createFile();
 
         // todo: some parts are not necessary for ready-only access
         pProperties.load();
@@ -252,8 +251,9 @@ class Log implements Runnable {
             }
 
             reopenAllTextCaches();
-            runScript();
-
+            bRestoring = true;
+            ScriptRunner.runScript(dDatabase, sFileScript, logType);
+            bRestoring = false;
             return false;
         }
 
@@ -261,10 +261,10 @@ class Log implements Runnable {
         String  state      = pProperties.getProperty("modified");
 
         if (state.equals("yes-new-files")) {
-            renameNewToCurrent(sFileScript);
-            renameNewToCurrent(sFileBackup);
+            FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
+            FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
         } else if (state.equals("yes")) {
-            if (isAlreadyOpen()) {
+            if (pProperties.isFileOpen()) {
                 throw Trace.error(Trace.DATABASE_ALREADY_IN_USE);
             }
 
@@ -282,8 +282,9 @@ class Log implements Runnable {
         }
 
         reopenAllTextCaches();
-        runScript();
-
+        bRestoring = true;
+        ScriptRunner.runScript(dDatabase, sFileScript, logType);
+        bRestoring = false;
         if (needbackup) {
             close(false);
             pProperties.setProperty("modified", "yes");
@@ -298,11 +299,11 @@ class Log implements Runnable {
 
         openScript();
 
-        if (retValue == true) {
-            this.dbScriptWriter.writeAll();
+        if (newdb == true) {
+            dbScriptWriter.writeAll();
         }
 
-        return retValue;
+        return newdb;
     }
 
     Cache getCache() throws SQLException {
@@ -360,8 +361,8 @@ class Log implements Runnable {
         pProperties.save();
 
         // old files can be removed and new files renamed
-        renameNewToCurrent(sFileScript);
-        renameNewToCurrent(sFileBackup);
+        FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
+        FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
 
         // now its done completely
         pProperties.setProperty("modified", "no");
@@ -376,8 +377,8 @@ class Log implements Runnable {
             stop();
 
             // delete the .data so then a new file is created
-            (new File(sFileCache)).delete();
-            (new File(sFileBackup)).delete();
+            FileUtil.delete(sFileCache);
+            FileUtil.delete(sFileBackup);
 
             // tony_lai@users 20020820
             // The database re-open and close has been moved to
@@ -510,71 +511,6 @@ class Log implements Runnable {
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  file
-     */
-    private void renameNewToCurrent(String file) {
-
-        // even if it crashes here, recovering is no problem
-        File newFile = new File(file + ".new");
-
-        if (newFile.exists()) {
-
-            // if we have a new file
-            // delete the old (maybe already deleted)
-            File oldFile = new File(file);
-
-            oldFile.delete();
-
-            // rename the new to the current
-            newFile.renameTo(oldFile);
-        }
-    }
-
-    private void create() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(sName);
-        }
-
-        pProperties.setProperty("version", jdbcDriver.VERSION);
-        pProperties.setProperty("sql.strict_fk", true);
-        pProperties.save();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    private boolean isAlreadyOpen() throws SQLException {
-
-        // reading the last modified, wait 3 seconds, read again.
-        // if the same information was read the file was not changed
-        // and is probably, except the other process is blocked
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        File f  = new File(sName + ".lock");
-        long l1 = f.lastModified();
-
-        try {
-            Thread.sleep(3000);
-        } catch (Exception e) {}
-
-        long l2 = f.lastModified();
-
-        if (l1 != l2) {
-            return true;
-        }
-
-        return pProperties.isFileOpen();
-    }
-
-    /**
      *  Saves the *.data file as compressed *.backup.
      *
      * @throws  SQLException
@@ -583,43 +519,18 @@ class Log implements Runnable {
 
         if (Trace.TRACE) {
             Trace.trace();
-
-            // if there is no cache file then backup is not necessary
-        }
-
-        if (!(new File(sFileCache)).exists()) {
-            return;
         }
 
         try {
-            long time = 0;
-
             if (Trace.TRACE) {
-                time = System.currentTimeMillis();
+                defaultTimer.zero();
             }
 
             // create a '.new' file; rename later
-            DeflaterOutputStream f = new DeflaterOutputStream(
-                new FileOutputStream(sFileBackup + ".new"),
-                new Deflater(Deflater.BEST_SPEED), COPY_BLOCK_SIZE);
-            byte            b[] = new byte[COPY_BLOCK_SIZE];
-            FileInputStream in  = new FileInputStream(sFileCache);
-
-            while (true) {
-                int l = in.read(b, 0, COPY_BLOCK_SIZE);
-
-                if (l == -1) {
-                    break;
-                }
-
-                f.write(b, 0, l);
-            }
-
-            f.close();
-            in.close();
+            FileUtil.compressFile(sFileCache, sFileBackup + ".new");
 
             if (Trace.TRACE) {
-                Trace.trace(time - System.currentTimeMillis());
+                Trace.trace(defaultTimer.elapsedTime());
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
@@ -637,43 +548,19 @@ class Log implements Runnable {
             Trace.trace("not closed last time!");
         }
 
-        if (!(new File(sFileBackup)).exists()) {
-
-            // the backup don't exists because it was never made or is empty
-            // the cache file must be deleted in this case
-            (new File(sFileCache)).delete();
-
-            return;
-        }
+        // the cache file must be deleted anyway
+        // the backup may not exist because it was never made or is empty
+        FileUtil.delete(sFileCache);
 
         try {
-            long time = 0;
-
             if (Trace.TRACE) {
-                time = System.currentTimeMillis();
+                defaultTimer.zero();
             }
 
-            InflaterInputStream f =
-                new InflaterInputStream(new FileInputStream(sFileBackup),
-                                        new Inflater());
-            FileOutputStream cache = new FileOutputStream(sFileCache);
-            byte             b[]   = new byte[COPY_BLOCK_SIZE];
-
-            while (true) {
-                int l = f.read(b, 0, COPY_BLOCK_SIZE);
-
-                if (l == -1) {
-                    break;
-                }
-
-                cache.write(b, 0, l);
-            }
-
-            cache.close();
-            f.close();
+            FileUtil.decompressFile(sFileBackup, sFileCache);
 
             if (Trace.TRACE) {
-                Trace.trace(time - System.currentTimeMillis());
+                Trace.trace(defaultTimer.elapsedTime());
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
@@ -727,113 +614,6 @@ class Log implements Runnable {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
-     */
-    private void runScript() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        if (!(new File(sFileScript)).exists()) {
-            return;
-        }
-
-        bRestoring = true;
-
-        // fredt - needed for forward referencing FK constraints
-        dDatabase.setReferentialIntegrity(false);
-
-        HsqlArrayList session = new HsqlArrayList();
-
-        session.add(sysSession);
-
-        Session current = sysSession;
-
-        try {
-            long time = 0;
-
-            if (Trace.TRACE) {
-                time = System.currentTimeMillis();
-            }
-
-            DatabaseScriptReader scr;
-
-            scr = DatabaseScriptReader.newDatabaseScriptReader(this.dDatabase,
-                    sFileScript, logType);
-
-            scr.readAll(sysSession);
-
-            while (true) {
-                String s = scr.readLoggedStatement();
-
-                if (s == null) {
-                    break;
-                }
-
-                if (s.startsWith("/*C")) {
-                    int id = Integer.parseInt(s.substring(3, s.indexOf('*',
-                        4)));
-
-                    if (id >= session.size()) {
-                        session.setSize(id + 1);
-                    }
-
-                    current = (Session) session.get(id);
-
-                    if (current == null) {
-                        current = new Session(sysSession, id);
-
-                        session.set(id, current);
-                        dDatabase.registerSession(current);
-                    }
-
-                    s = s.substring(s.indexOf('/', 1) + 1);
-                }
-
-                if (s.length() != 0) {
-                    Result result = dDatabase.execute(s, current);
-
-                    if ((result != null) && (result.iMode == Result.ERROR)) {
-                        throw (Trace.getError(result.errorCode,
-                                              result.sError));
-                    }
-                }
-
-                if (s.equals("DISCONNECT")) {
-                    int id = current.getId();
-
-                    current = new Session(sysSession, id);
-
-                    session.set(id, current);
-                }
-            }
-
-            scr.close();
-
-            for (int i = 0; i < session.size(); i++) {
-                current = (Session) session.get(i);
-
-                if (current != null) {
-                    current.rollback();
-                }
-            }
-
-            if (Trace.TRACE) {
-                Trace.trace(time - System.currentTimeMillis());
-            }
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);
-        }
-
-        dDatabase.setReferentialIntegrity(true);
-
-        bRestoring = false;
-    }
-
-    /**
-     *  Method declaration
-     *
      * @param  full
      * @throws  SQLException
      */
@@ -841,26 +621,16 @@ class Log implements Runnable {
 
         if (Trace.TRACE) {
             Trace.trace();
-
-            // create script in '.new' file
         }
 
-        (new File(sFileScript + ".new")).delete();
+        FileUtil.delete(sFileScript + ".new");
 
         // script; but only positions of cached tables, not full
         //fredt - to do - flag for chache set index
         try {
-            DatabaseScriptWriter scw;
-
-            if (logType == 0) {
-                scw = new DatabaseScriptWriter(dDatabase,
-                                               sFileScript + ".new", full,
-                                               true);
-            } else {
-                scw = new BinaryDatabaseScriptWriter(this.dDatabase,
-                                                     sFileScript + ".new",
-                                                     full, true);
-            }
+            DatabaseScriptWriter scw =
+                DatabaseScriptWriter.newDatabaseScriptWriter(dDatabase,
+                    sFileScript + ".new", full, true, logType);
 
             scw.writeAll();
             scw.close();
@@ -869,25 +639,16 @@ class Log implements Runnable {
         }
     }
 
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    HsqlDatabaseProperties getProperties() {
-        return pProperties;
-    }
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
     private HsqlHashMap textCacheList = new HsqlHashMap();
 
-    Cache openTextCache(String table, String source, boolean readOnlyData,
+    Cache openTextCache(HsqlName tablename, String source,
+                        boolean readOnlyData,
                         boolean reversed) throws SQLException {
 
-        closeTextCache(table);
+        closeTextCache(tablename);
 
-        if (pProperties.getProperty("textdb.allow_full_path",
-                                    "false").equals("false")) {
+        if (!pProperties.isPropertyTrue("textdb.allow_full_path")) {
             if (source.indexOf("..") != -1) {
                 throw (Trace.error(Trace.ACCESS_IS_DENIED, source));
             }
@@ -900,22 +661,22 @@ class Log implements Runnable {
             }
         }
 
-        String    prefix = "textdb." + table.toLowerCase() + ".";
+        String    prefix = "textdb." + tablename.name.toLowerCase() + ".";
         TextCache c;
 
         if (reversed) {
-            c = new ReverseTextCache(source, prefix, dDatabase);
+            c = new ReverseTextCache(source, dDatabase);
         } else {
-            c = new TextCache(source, prefix, dDatabase);
+            c = new TextCache(source, dDatabase);
         }
 
         c.open(readOnlyData || bReadOnly);
-        textCacheList.put(table, c);
+        textCacheList.put(tablename, c);
 
         return (c);
     }
 
-    void closeTextCache(String table) throws SQLException {
+    void closeTextCache(HsqlName table) throws SQLException {
 
         TextCache c = (TextCache) textCacheList.remove(table);
 

@@ -39,6 +39,8 @@ import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
 import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.FileUtil;
+
 
 /**
  * Wrapper for java.util.Properties to limit values to String objects and
@@ -170,7 +172,7 @@ public class HsqlProperties {
             return false;
         }
 
-        return new File(fileName + ".properties").exists();
+        return FileUtil.exists(fileName + ".properties");
     }
 
     public void load() throws Exception {

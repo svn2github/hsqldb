@@ -50,9 +50,8 @@ class ReverseTextCache extends org.hsqldb.TextCache {
     /**
      * same as parent
      */
-    ReverseTextCache(String name, String propPrefix,
-                     Database db) throws SQLException {
-        super(name, propPrefix, db);
+    ReverseTextCache(String name, Database db) throws SQLException {
+        super(name, db);
     }
 
     /**

@@ -103,9 +103,9 @@ import java.util.Enumeration;
 // boucherb@users - doc 1.7.0 - added javadoc comments
 // tony_lai@users 20020820 - patch 595099 - use user-defined PK name
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
-// tony_lai@users 20020820 - patch 595156 - violation of Integrity constraint name
-// tony_lai@users 20020820 - patch 1.7.1 - modification to shutdown compact process to save memory usage
-// boucherb@users 20020828 - patch 1.7.1 - allow reconnect to local db that has shutdown
+// tony_lai@users 20020820 - patch 595156 - violation of constraint name
+// tony_lai@users 20020820 - changes to shutdown compact to save memory
+// boucherb@users 20020828 - allow reconnect to local db that has shutdown
 // fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
@@ -282,7 +282,7 @@ class Database {
 
             databaseProperties.setProperty("sql.strict_fk", true);
         } else {
-            newdatabase = logger.openLog(this, sysSession, sName);
+            newdatabase = logger.openLog(this, sName);
         }
 
         HsqlName.resetNumbering();
@@ -311,6 +311,10 @@ class Database {
      */
     String getName() {
         return sName;
+    }
+
+    Session getSysSession() {
+        return sysSession;
     }
 
     /**
@@ -1208,6 +1212,7 @@ class Database {
         boolean bNowait    = false;
         int     nQueueSize = TriggerDef.getDefaultQueueSize();
         String  sTrigName  = c.getName();
+        boolean namequoted = c.wasQuotedIdentifier();
         String  sWhen      = c.getString();
         String  sOper      = c.getString();
 
@@ -1266,9 +1271,9 @@ class Database {
             Class cl = Class.forName(sClassName);    // dynamically load class
 
             o = (Trigger) cl.newInstance();          // dynamically instantiate it
-            td = new TriggerDef(sTrigName, sWhen, sOper, bForEach, t, o,
-                                "\"" + sClassName + "\"", bNowait,
-                                nQueueSize);
+            td = new TriggerDef(sTrigName, namequoted, sWhen, sOper,
+                                bForEach, t, o, "\"" + sClassName + "\"",
+                                bNowait, nQueueSize);
 
             if (td.isValid()) {
                 t.addTrigger(td);
@@ -2990,10 +2995,9 @@ class Database {
          * @throws  SQLException if there is a problem, such as the case when
          *      the specified files are in use by another process
          */
-        boolean openLog(Database db, Session sys,
-                        String name) throws SQLException {
+        boolean openLog(Database db, String name) throws SQLException {
 
-            lLog = new Log(db, sys, name);
+            lLog = new Log(db, name);
 
             boolean result = lLog.open();
 
@@ -3189,18 +3193,19 @@ class Database {
         }
 
         /**
-         *  Opens the TextCache object if a Log object exists.
+         *  Opens the TextCache object.
          */
-        Cache openTextCache(String table, String source,
+        Cache openTextCache(HsqlName tablename, String source,
                             boolean readOnlyData,
                             boolean reversed) throws SQLException {
-            return lLog.openTextCache(table, source, readOnlyData, reversed);
+            return lLog.openTextCache(tablename, source, readOnlyData,
+                                      reversed);
         }
 
         /**
-         *  Closes the TextCache object if a Log object exists.
+         *  Closes the TextCache object.
          */
-        void closeTextCache(String name) throws SQLException {
+        void closeTextCache(HsqlName name) throws SQLException {
             lLog.closeTextCache(name);
         }
     }

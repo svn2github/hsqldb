@@ -592,22 +592,17 @@ class Parser {
         if (token.equals("VALUES")) {
             tTokenizer.getThis("(");
 
-            Object  row[]   = t.getNewRow();
-            boolean check[] = (vcolumns == null) ? null
-                                                 : new boolean[row.length];
-            int     i       = 0;
+            Object  row[]    = t.getNewRow();
+            boolean check[]  = (vcolumns == null) ? null
+                                                  : new boolean[row.length];
+            boolean enclosed = false;
+            int     i        = 0;
 
-            while (true) {
+            for (; i < len; i++) {
                 int colindex;
 
                 if (vcolumns == null) {
                     colindex = i;
-
-                    if (i == len) {
-
-                        // fredt will be caught in Trace.check below
-                        break;
-                    }
                 } else {
                     colindex        = t.getColumnNr((String) vcolumns.get(i));
                     check[colindex] = true;
@@ -624,8 +619,6 @@ class Parser {
                     row[colindex] = getValue(column.getType());
                 }
 
-                i++;
-
                 token = tTokenizer.getString();
 
                 if (token.equals(",")) {
@@ -633,13 +626,17 @@ class Parser {
                 }
 
                 if (token.equals(")")) {
+                    enclosed = true;
+
                     break;
                 }
 
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
 
-            Trace.check(len == i, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            if (!enclosed || i != len - 1) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
 
             if (vcolumns != null) {
                 for (i = 0; i < check.length; i++) {

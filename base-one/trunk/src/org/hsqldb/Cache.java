@@ -72,6 +72,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.FileUtil;
 
 // fredt@users 20011220 - patch 437174 by hjb@users - cache update
 // most changes and comments by HSB are kept unchanged
@@ -296,7 +297,7 @@ class Cache {
         try {
             flush();
 
-            if (new File(sName).exists() == false) {
+            if (!FileUtil.exists(sName)) {
                 return null;
             }
 

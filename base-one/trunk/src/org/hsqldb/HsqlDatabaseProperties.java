@@ -224,6 +224,23 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     }
 
     /**
+     * Creates file with defaults if it didn't exist.
+     * Returns false if file already existed.
+     */
+    public boolean createFile() throws SQLException {
+
+        if (checkFileExists()) {
+            return false;
+        }
+
+        setProperty("version", jdbcDriver.VERSION);
+        setProperty("sql.strict_fk", true);
+        save();
+
+        return true;
+    }
+
+    /**
      *  check by trying to delete the properties file this will not work if
      *  some application has the file open this is why the properties file
      *  is kept open when running ;-) todo: check if this works in all

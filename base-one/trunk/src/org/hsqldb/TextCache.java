@@ -36,6 +36,7 @@ import java.io.File;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.FileUtil;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle
@@ -101,8 +102,7 @@ class TextCache extends org.hsqldb.Cache {
      * @param  props             Description of the Parameter
      * @exception  SQLException  Description of the Exception
      */
-    TextCache(String name, String propPrefix,
-              Database db) throws SQLException {
+    TextCache(String name, Database db) throws SQLException {
 
         super("", db);
 
@@ -126,35 +126,22 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         if (fs == null) {
-            fs = translateSep(dbProps.getProperty(propPrefix + "fs"), true);
-
-            if (fs == null) {
-                fs = ",";
-            }
+            fs = ",";
         }
 
         if (vs == null) {
-            vs = dbProps.getProperty(propPrefix + "vs", fs);
-
-            if (vs != fs) {
-                vs = translateSep(vs, true);
-            }
+            vs = fs;
         }
 
         if (lvs == null) {
-            lvs = dbProps.getProperty(propPrefix + "lvs", fs);
-
-            if (lvs != fs) {
-                lvs = translateSep(lvs, true);
-            }
+            lvs = fs;
         }
 
         //-- Get boolean settings:
         String skipFirst = textSource.getAttr("ignore_first", null);
 
         if (skipFirst == null) {
-            skipFirst = dbProps.getProperty(propPrefix + "ignore_first",
-                                            "false");
+            skipFirst = "false";
         }
 
         ignoreFirst = skipFirst.equals("true");
@@ -162,15 +149,11 @@ class TextCache extends org.hsqldb.Cache {
         String quoted = textSource.getAttr("quoted", null);
 
         if (quoted == null) {
-            quoted = dbProps.getProperty(propPrefix + "quoted", "true");
+            quoted = "true";
         }
 
-        String emptyIsNull = textSource.getAttr("empty_is_null", null);
-
-        if (emptyIsNull == null) {
-            emptyIsNull = dbProps.getProperty(propPrefix + "empty_is_null",
-                                              "true");
-        }
+        boolean emptyIsNull = textSource.getAttr("empty_is_null",
+            "true").equals("true");
 
         // Get file name
         sName = textSource.source;
@@ -181,12 +164,11 @@ class TextCache extends org.hsqldb.Cache {
 
         try {
             if (quoted.equals("true")) {
-                rowIn = new QuotedTextDatabaseRowInput(
-                    fs, vs, lvs, emptyIsNull.equals("true"));
+                rowIn = new QuotedTextDatabaseRowInput(fs, vs, lvs,
+                                                       emptyIsNull);
                 rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs);
             } else {
-                rowIn = new TextDatabaseRowInput(fs, vs, lvs,
-                                                 emptyIsNull.equals("true"));
+                rowIn  = new TextDatabaseRowInput(fs, vs, lvs, emptyIsNull);
                 rowOut = new TextDatabaseRowOutput(fs, vs, lvs);
             }
         } catch (IOException e) {
@@ -342,7 +324,7 @@ class TextCache extends org.hsqldb.Cache {
             rFile = null;
 
             if (empty &&!readOnly) {
-                new File(sName).delete();
+                FileUtil.delete(sName);
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
@@ -364,7 +346,7 @@ class TextCache extends org.hsqldb.Cache {
 
                 rFile = null;
 
-                new File(sName).delete();
+                FileUtil.delete(sName);
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,

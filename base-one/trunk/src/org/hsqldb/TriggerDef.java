@@ -42,7 +42,8 @@ import org.hsqldb.lib.HsqlDeque;
  *  Realisations Ltd
  *
  * @author  Logicscope Realisations Ltd
- * @version  1.7.0 (1.0.0.3) Revision History: 1.0.0.1 First release in hsqldb 1.61
+ * @version  1.7.0 (1.0.0.3)
+ *      Revision History: 1.0.0.1 First release in hsqldb 1.61
  *      1.0.0.2 'nowait' support to prevent deadlock 1.0.0.3 multiple row
  *      queue for each trigger
  */
@@ -69,12 +70,12 @@ class TriggerDef extends Thread {
     static final int UPDATE_BEFORE_ROW = UPDATE_BEFORE + 2 * NUM_TRIGGER_OPS;
 
     // other variables
-    String  name;
-    String  when;
-    String  operation;
-    boolean forEachRow;
-    boolean nowait;                          // block or overwrite if queue full
-    int     maxRowsQueued;                   // max size of queue of pending triggers
+    HsqlName name;
+    String   when;
+    String   operation;
+    boolean  forEachRow;
+    boolean  nowait;                         // block or overwrite if queue full
+    int      maxRowsQueued;                  // max size of queue of pending triggers
 
     public static int getDefaultQueueSize() {
         return defaultQueueSize;
@@ -105,11 +106,12 @@ class TriggerDef extends Thread {
      * @param  bNowait Description of the Parameter
      * @param  nQueueSize Description of the Parameter
      */
-    public TriggerDef(String sName, String sWhen, String sOper,
-                      boolean bForEach, Table pTab, Trigger pTrig,
-                      String sFire, boolean bNowait, int nQueueSize) {
+    public TriggerDef(String sName, boolean namequoted, String sWhen,
+                      String sOper, boolean bForEach, Table pTab,
+                      Trigger pTrig, String sFire, boolean bNowait,
+                      int nQueueSize) {
 
-        name          = sName.toUpperCase();
+        name          = new HsqlName(sName, namequoted);
         when          = sWhen.toUpperCase();
         operation     = sOper.toUpperCase();
         forEachRow    = bForEach;
@@ -141,7 +143,7 @@ class TriggerDef extends Thread {
         StringBuffer a = new StringBuffer(256);
 
         a.append("CREATE TRIGGER ");
-        a.append(name);
+        a.append(name.statementName);
         a.append(" ");
         a.append(when);
         a.append(" ");
@@ -217,7 +219,7 @@ class TriggerDef extends Thread {
         while (keepGoing) {
             Object trigRow[] = pop();
 
-            trig.fire(name, table.getName().name, trigRow);
+            trig.fire(name.name, table.getName().name, trigRow);
         }
     }
 

@@ -67,142 +67,117 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlStringBuffer;
-import org.hsqldb.lib.StringConverter;
+import java.io.IOException;
+import java.io.File;
+import java.sql.SQLException;
+import org.hsqldb.lib.FileUtil;
 
-/**
- * Name of an SQL object<p>
- *
- * Methods check user defined names and issue system generated names
- * for SQL objects.<p>
- *
- * This class does not deal with the type of the SQL object for which it
- * is used.<p>
- *
- * Some names beginning with SYS_ are reserved for system generated names.
- * These are defined in isReserveName(String name) and created by the
- * makeAutoName(String type) factory method<p>
- *
- * sysNumber is used to generate system generated names. It is
- * set to the largest integer encountered in names that use the
- * SYS_xxxxxxx_INTEGER format. As the DDL is processed before any ALTER
- * command, any new system generated name will have a larger integer suffix
- * than all the existing names.
- *
- * @author fredt@users
- * @version 1.7.2
- */
-class HsqlName {
+class ScriptRunner {
 
-    String             name;
-    boolean            isNameQuoted;
-    String             statementName;
-    private final int  hashCode     = serialNumber++;
-    private static int sysNumber    = 0;
-    private static int serialNumber = 0;
+    /**
+     *  Method declaration
+     *
+     * @throws  SQLException
+     */
+    static void runScript(Database dDatabase, String sFileScript,
+                          int logType) throws SQLException {
 
-    HsqlName(String name, boolean isquoted) {
-        rename(name, isquoted);
-    }
+        if (Trace.TRACE) {
+            Trace.trace();
+        }
 
-    HsqlName(String prefix, String name, boolean isquoted) {
-        rename(prefix, name, isquoted);
-    }
-
-    static HsqlName makeAutoName(String type) {
-
-        HsqlStringBuffer sbname = new HsqlStringBuffer();
-
-        sbname.append("SYS_");
-        sbname.append(type);
-        sbname.append('_');
-        sbname.append(++sysNumber);
-
-        return new HsqlName(sbname.toString(), false);
-    }
-
-    static HsqlName makeAutoName(String type, String namepart) {
-
-        HsqlStringBuffer sbname = new HsqlStringBuffer();
-
-        sbname.append("SYS_");
-        sbname.append(type);
-        sbname.append('_');
-        sbname.append(namepart);
-        sbname.append('_');
-        sbname.append(++sysNumber);
-
-        return new HsqlName(sbname.toString(), false);
-    }
-
-    void rename(String name, boolean isquoted) {
-
-        this.name          = name;
-        this.statementName = name;
-        this.isNameQuoted  = isquoted;
-
-        if (name == null) {
+        if (!FileUtil.exists(sFileScript)) {
             return;
         }
 
-        if (isNameQuoted) {
-            statementName = StringConverter.toQuotedString(name, '"', true);
-        }
+        // fredt - needed for forward referencing FK constraints
+        dDatabase.setReferentialIntegrity(false);
 
-        if (name.startsWith("SYS_")) {
-            int index = name.lastIndexOf('_') + 1;
+        HsqlArrayList session    = new HsqlArrayList();
+        Session       sysSession = dDatabase.getSysSession();
 
-            try {
-                int temp = Integer.parseInt(name.substring(index));
+        session.add(sysSession);
 
-                if (temp > sysNumber) {
-                    sysNumber = temp;
+        Session current = sysSession;
+
+        try {
+            long time = 0;
+
+            if (Trace.TRACE) {
+                time = System.currentTimeMillis();
+            }
+
+            DatabaseScriptReader scr =
+                DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
+                    sFileScript, logType);
+
+            scr.readAll(sysSession);
+
+            while (true) {
+                String s = scr.readLoggedStatement();
+
+                if (s == null) {
+                    break;
                 }
-            } catch (NumberFormatException e) {}
+
+                if (s.startsWith("/*C")) {
+                    int id = Integer.parseInt(s.substring(3, s.indexOf('*',
+                        4)));
+
+                    if (id >= session.size()) {
+                        session.setSize(id + 1);
+                    }
+
+                    current = (Session) session.get(id);
+
+                    if (current == null) {
+                        current = new Session(sysSession, id);
+
+                        session.set(id, current);
+                        dDatabase.registerSession(current);
+                    }
+
+                    s = s.substring(s.indexOf('/', 1) + 1);
+                }
+
+                if (s.length() != 0) {
+                    Result result = dDatabase.execute(s, current);
+
+                    if ((result != null) && (result.iMode == Result.ERROR)) {
+                        throw (Trace.getError(result.errorCode,
+                                              result.sError));
+                    }
+                }
+
+                if (s.equals("DISCONNECT")) {
+                    int id = current.getId();
+
+                    current = new Session(sysSession, id);
+
+                    session.set(id, current);
+                }
+            }
+
+            scr.close();
+
+            for (int i = 0; i < session.size(); i++) {
+                current = (Session) session.get(i);
+
+                if (current != null) {
+                    current.rollback();
+                }
+            }
+
+            if (Trace.TRACE) {
+                Trace.trace(time - System.currentTimeMillis());
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);
         }
-    }
 
-    void rename(String prefix, String name, boolean isquoted) {
-
-        HsqlStringBuffer sbname = new HsqlStringBuffer(prefix);
-
-        sbname.append('_');
-        sbname.append(name);
-        rename(sbname.toString(), isquoted);
-    }
-
-    public boolean equals(HsqlName other) {
-        if (Trace.TRACE){
-            Trace.trace("HsqlName.equals()");
-        }
-        return hashCode == other.hashCode;
-    }
-
-    /**
-     * hash code for this object is its unique serial number.
-     */
-    public int hashCode() {
-        return hashCode;
-    }
-
-    /**
-     * "SYS_IDX_" is used for auto-indexes on referring FK columns or
-     * unique constraints.
-     * "SYS_PK_" is for the primary key indexes.
-     * "SYS_REF_" is for FK constraints in referenced tables
-     *
-     */
-    static boolean isReservedName(String name) {
-        return (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
-                || name.startsWith("SYS_REF_"));
-    }
-
-    boolean isReservedName() {
-        return isReservedName(name);
-    }
-
-    static void resetNumbering() {
-        sysNumber    = 0;
-        serialNumber = 0;
+        dDatabase.setReferentialIntegrity(true);
     }
 }

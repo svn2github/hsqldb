@@ -71,6 +71,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.io.File;
 import java.io.PrintWriter;
+import org.hsqldb.lib.FileUtil;
 
 /**
  * handles creation and reporting of error messages and throwing SQLException
@@ -606,7 +607,7 @@ public class Trace extends PrintWriter {
             return;
         }
 
-        if (new File("trace.stop").exists()) {
+        if (FileUtil.exists("trace.stop")) {
             printStack();
 
             throw getError(EXTERNAL_STOP, s);

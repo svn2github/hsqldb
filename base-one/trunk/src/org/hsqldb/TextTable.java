@@ -68,7 +68,7 @@ class TextTable extends org.hsqldb.Table {
 
         // Close old cache:
         if (dataSource.length() > 0) {
-            dDatabase.logger.closeTextCache(tableName.name);
+            dDatabase.logger.closeTextCache(tableName);
         }
 
         cCache = null;
@@ -82,7 +82,7 @@ class TextTable extends org.hsqldb.Table {
         // Open new cache:
         if (source.length() > 0) {
             try {
-                cCache = dDatabase.logger.openTextCache(tableName.name,
+                cCache = dDatabase.logger.openTextCache(tableName,
                         source, isRdOnly, isDesc);
 
                 // force creation of Row objects with nextPos pointers

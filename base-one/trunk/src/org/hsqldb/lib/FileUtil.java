@@ -65,144 +65,154 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.lib;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlStringBuffer;
-import org.hsqldb.lib.StringConverter;
+import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.LineNumberReader;
+import java.io.Writer;
+import java.sql.SQLException;
+import java.util.Enumeration;
 
-/**
- * Name of an SQL object<p>
- *
- * Methods check user defined names and issue system generated names
- * for SQL objects.<p>
- *
- * This class does not deal with the type of the SQL object for which it
- * is used.<p>
- *
- * Some names beginning with SYS_ are reserved for system generated names.
- * These are defined in isReserveName(String name) and created by the
- * makeAutoName(String type) factory method<p>
- *
- * sysNumber is used to generate system generated names. It is
- * set to the largest integer encountered in names that use the
- * SYS_xxxxxxx_INTEGER format. As the DDL is processed before any ALTER
- * command, any new system generated name will have a larger integer suffix
- * than all the existing names.
- *
- * @author fredt@users
- * @version 1.7.2
- */
-class HsqlName {
+//import java.util.zip.
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
-    String             name;
-    boolean            isNameQuoted;
-    String             statementName;
-    private final int  hashCode     = serialNumber++;
-    private static int sysNumber    = 0;
-    private static int serialNumber = 0;
+public class FileUtil {
 
-    HsqlName(String name, boolean isquoted) {
-        rename(name, isquoted);
-    }
+    private static final int COPY_BLOCK_SIZE = 1 << 16;
 
-    HsqlName(String prefix, String name, boolean isquoted) {
-        rename(prefix, name, isquoted);
-    }
+    public static void compressFile(String infilename,
+                                    String outfilename) throws IOException {
 
-    static HsqlName makeAutoName(String type) {
+        FileInputStream      in        = null;
+        DeflaterOutputStream f         = null;
+        boolean              completed = false;
 
-        HsqlStringBuffer sbname = new HsqlStringBuffer();
+        try {
 
-        sbname.append("SYS_");
-        sbname.append(type);
-        sbname.append('_');
-        sbname.append(++sysNumber);
+            // if there is no file
+            if (!(new File(infilename)).exists()) {
+                return;
+            }
 
-        return new HsqlName(sbname.toString(), false);
-    }
+            byte b[] = new byte[COPY_BLOCK_SIZE];
 
-    static HsqlName makeAutoName(String type, String namepart) {
+            in = new FileInputStream(infilename);
+            f = new DeflaterOutputStream(new FileOutputStream(outfilename),
+                                         new Deflater(Deflater.BEST_SPEED),
+                                         COPY_BLOCK_SIZE);
 
-        HsqlStringBuffer sbname = new HsqlStringBuffer();
+            while (true) {
+                int l = in.read(b, 0, COPY_BLOCK_SIZE);
 
-        sbname.append("SYS_");
-        sbname.append(type);
-        sbname.append('_');
-        sbname.append(namepart);
-        sbname.append('_');
-        sbname.append(++sysNumber);
-
-        return new HsqlName(sbname.toString(), false);
-    }
-
-    void rename(String name, boolean isquoted) {
-
-        this.name          = name;
-        this.statementName = name;
-        this.isNameQuoted  = isquoted;
-
-        if (name == null) {
-            return;
-        }
-
-        if (isNameQuoted) {
-            statementName = StringConverter.toQuotedString(name, '"', true);
-        }
-
-        if (name.startsWith("SYS_")) {
-            int index = name.lastIndexOf('_') + 1;
-
-            try {
-                int temp = Integer.parseInt(name.substring(index));
-
-                if (temp > sysNumber) {
-                    sysNumber = temp;
+                if (l == -1) {
+                    break;
                 }
-            } catch (NumberFormatException e) {}
+
+                f.write(b, 0, l);
+            }
+
+            completed = true;
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+
+                if (f != null) {
+                    f.close();
+                }
+
+                if (!completed) {
+                    delete(outfilename);
+                }
+            } catch (Exception e) {}
         }
     }
 
-    void rename(String prefix, String name, boolean isquoted) {
+    public static void decompressFile(String infilename,
+                                      String outfilename) throws IOException {
 
-        HsqlStringBuffer sbname = new HsqlStringBuffer(prefix);
+        InflaterInputStream f         = null;
+        FileOutputStream    outstream = null;
+        boolean             completed = false;
 
-        sbname.append('_');
-        sbname.append(name);
-        rename(sbname.toString(), isquoted);
-    }
+        try {
+            if (!(new File(infilename)).exists()) {
+                return;
+            }
 
-    public boolean equals(HsqlName other) {
-        if (Trace.TRACE){
-            Trace.trace("HsqlName.equals()");
+            f = new InflaterInputStream(new FileInputStream(infilename),
+                                        new Inflater());
+            outstream = new FileOutputStream(outfilename);
+
+            byte b[] = new byte[COPY_BLOCK_SIZE];
+
+            while (true) {
+                int l = f.read(b, 0, COPY_BLOCK_SIZE);
+
+                if (l == -1) {
+                    break;
+                }
+
+                outstream.write(b, 0, l);
+            }
+
+            completed = true;
+        } finally {
+            try {
+                if (f != null) {
+                    f.close();
+                }
+
+                if (outstream != null) {
+                    outstream.close();
+                }
+
+                if (!completed) {
+                    delete(outfilename);
+                }
+            } catch (Exception e) {}
         }
-        return hashCode == other.hashCode;
     }
 
-    /**
-     * hash code for this object is its unique serial number.
-     */
-    public int hashCode() {
-        return hashCode;
+    static public void delete(String filename) {
+
+        try {
+            (new File(filename)).delete();
+        } catch (Exception e) {}
     }
 
-    /**
-     * "SYS_IDX_" is used for auto-indexes on referring FK columns or
-     * unique constraints.
-     * "SYS_PK_" is for the primary key indexes.
-     * "SYS_REF_" is for FK constraints in referenced tables
-     *
-     */
-    static boolean isReservedName(String name) {
-        return (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
-                || name.startsWith("SYS_REF_"));
+    static public boolean exists(String filename) {
+
+        try {
+            return (new File(filename)).exists();
+        } catch (Exception e) {}
+
+        return false;
     }
 
-    boolean isReservedName() {
-        return isReservedName(name);
-    }
+    static public void renameOverwrite(String oldname, String newname) {
 
-    static void resetNumbering() {
-        sysNumber    = 0;
-        serialNumber = 0;
+        try {
+            if (exists(oldname)) {
+                delete(newname);
+
+                File file = new File(oldname);
+
+                file.renameTo(new File(newname));
+            }
+        } catch (Exception e) {}
     }
 }
