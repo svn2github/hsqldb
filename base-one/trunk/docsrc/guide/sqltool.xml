@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.16 2004/06/06 04:30:37 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.17 2004/06/06 04:35:10 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.16 $</edition>
-        <pubdate>$Date: 2004/06/06 04:30:37 $</pubdate>
+        <edition>$Revision: 1.17 $</edition>
+        <pubdate>$Date: 2004/06/06 04:35:10 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -54,10 +54,9 @@
             or you want to interactively type in SQL commands.
             If neither case applies to you, then you are looking at the wrong 
             program.
-        </simpara><simpara>
-            To run SQLTool...
         </simpara>
             <procedure>
+                <title>To run SqlTool...</title>
                 <step><simpara>
                     Copy the file <filename>sqltool.rc</filename> from the
                     directory <filename>src/org/hsqldb/sample</filename> of 
@@ -156,6 +155,49 @@
         <informalexample><screen>
     java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </informalexample></para>
+    </section>
+
+    <section>
+        <title>Using hsqlsqltool.jar</title>
+        <simpara>
+            If you do not need to connect to non-server HSQLDB URLs (i.e.,
+            you do not need to connect to URLs of the form 
+            <literal>jdbc:hsqldb:mem:*</literal> or
+            <literal>jdbc:hsqldb:file:*</literal> or
+            <literal>jdbc:hsqldb:res:*</literal>), then it will be easier
+            to set up and run SqlTool by using
+            <filename>hsqlsqltool.jar</filename> instead of 
+            <filename>hsqldb.jar</filename>.
+            If you plan to run a HSQLDB database, but not run a Server or
+            WebServer, then just skip this section and use
+            <filename>hsqldb.jar</filename>.
+        </simpara><simpara>
+            The HSQLDB distribution doesn't "come with" a pre-built 
+            <filename>hsqlsqltool.jar</filename> file.
+            However, if you will be connecting to HSQLDB Server(s)/WebServer(s),
+            environment setup and use is simplified with 
+            <filename>hsqlsqltool.jar</filename>.
+            I recommend that you either download
+            <ulink url='http://admc.com/dist/hsqlsqltool-1.7.2.jar'/>
+            (by right-clicking and downloading if you're reading this with a
+            web browser), or build the <emphasis>jarsqltool</emphasis> target, 
+            as explained in the 
+            <link linkend='building-appendix' endterm='building-title'/>
+            appendix.
+        </simpara>
+        <para>
+            To run SqlTool using a sqltool jar file, you don't need to set
+            or specify any classpath, nor any class name.  Just run
+            <example><title>Running SqlTool with a sqltool jar file</title>
+                <screen>
+    java -jar /path/to/hsqlsqltool.jar</screen>
+            </example> where <literal>/path/to/hsqlsqltool.jar</literal> is
+            the path to your hsqlsqltool.jar, whatever it may be named (for
+            example, <filename>hsqlsqltool-1.7.2.jar</filename>).
+            You can run any SqlTool command explained in this chapter by
+            subsituting <literal>java -jar /path/to/hsqlsqltool.jar</literal>
+            for <literal>java org.hsqldb.util.SqlTool</literal>.
+        </para>
     </section>
 
     <section id='auth-section'>
@@ -444,7 +486,7 @@
                     If you set a variable to an SQL statement (without the
                     terminating ";") you can then use it as an alias like
                     <literal>*VARNAME</literal>, as shown in this example.
-                <example>
+                <example id='alias-example'>
                     <title>Defining and using an alias (PL variable)</title>
                     <screen>
     * q = select count(*) from mytable
@@ -551,7 +593,7 @@
             </simpara>
             <programlisting>&sample.sql-cdata;</programlisting>
             <para>
-                You can execute this SQL file with a memory-only database with 
+                You can execute this SQL file with a Memory Only database with 
                 a command like
             <informalexample><programlisting>
     java org.hsqldb.util.SqlTool --sql "create user 'tomcat' password 'x';" mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
@@ -752,9 +794,8 @@
                     If the value of a variable is an entire SQL command, you
                     generally do not want to include the terminating ";" in
                     the value.
-                    There is an example of this in the
-                    <link linkend='int-section' endterm='int-title'/> section
-                    above.
+                    There is an example of this 
+                    <link linkend='alias-example'>above</link>.
                 </simpara></listitem> <listitem><simpara>
                     Variables are normally written like 
                     <literal>*VARNAME</literal> in logical expressions to
