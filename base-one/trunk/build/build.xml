@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- author fredt@users.sourceforge.net 2001 - 2003 -->
-<!-- additional targets by unsaved@users.sourceforge.net -->
+<!-- author fredt@users.sourceforge.net 2001 - 2004 -->
+<!-- additional targets by unsaved@users.sourceforge.net 2004 -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
@@ -442,8 +442,6 @@ examples:
                           org/hsqldb/Result$*,
                           org/hsqldb/Row*,
                           org/hsqldb/Cached*,
-                          org/hsqldb/BinaryServer*,
-                          org/hsqldb/DatabaseRow*,
                           org/hsqldb/HSQLClient*,
                           org/hsqldb/HsqlProperties*,
                           org/hsqldb/HsqlException*,
