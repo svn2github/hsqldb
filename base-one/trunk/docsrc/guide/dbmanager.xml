@@ -1,0 +1,29 @@
+<!-- $Id$ -->
+
+<appendix>
+<title>Database Manager</title>
+<appendixinfo>
+    <authorgroup>
+        <author>
+            <firstname>Fred</firstname><surname>Toussi</surname>
+            <email>&fredaddr;</email>
+            <affiliation>
+                <orgname>HSQLDB Development Group</orgname>
+            </affiliation>
+        </author>
+    </authorgroup>
+    <edition>$Revision$</edition>
+    <pubdate>$Date$</pubdate>
+    <keywordset>
+        <keyword>Hsqldb</keyword>
+        <keyword>Database</keyword>
+        <keyword>Manager</keyword>
+    </keywordset>
+</appendixinfo>
+
+<section>
+    <title>Purpose</title>
+    <para>blah</para>
+</section> 
+
+</appendix>
