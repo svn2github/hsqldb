@@ -76,7 +76,7 @@ examples:
        <mkdir dir="doc/src" />
    </target>
 
-   <target name="clean"
+   <target name="clean" depends='clean-doc'
            description="Delete the /classes directory created by ant tasks">
         <delete dir="classes"/>
    </target>
