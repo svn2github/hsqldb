@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.2 2004/02/19 21:29:02 unsaved Exp $
+# $Id: hsqldb,v 1.3 2004/02/19 23:26:37 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -240,17 +240,21 @@ running with pid $HSQLDB_PID."
             nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > $PIDFILE && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
             exit 0
         }
-        print $$ > "$PIDFILE" || {
-            echo "Failed to write pid to pid file" 1>&2
-            exit 1
-        }
         cd "$SERVER_HOME" || {
             echo "Failed to cd to '$SERVER_HOME'" 1>&2
             exit 1
         }
-        
-        #exec nohup "exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
-        echo POSTTTT
+        export JAVA_HOME
+        export HSQLDB_HOME
+        export PIDFILE
+        nohup sh -c '
+            echo $$ > "$PIDFILE" || {
+                echo "Failed to write pid to pid file" 1>&2
+                exit 1
+            }
+            exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.Server
+        ' >> "$LOGFILE" 2>&1 &
+        exit 0
     ;;
     stop)
         [ -n "$HSQLDB_PID" ] || {
