@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.9 2002/11/10 22:30:49 unsaved Exp $
+$Id: readme.txt,v 1.10 2002/11/10 22:32:35 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -104,23 +104,16 @@ be the name of the subdirectory you created, and the database
 files in that directory will (for the most part) be based on that
 name (e.g. "/usr/hsqldb-1.7.1/data/dbname.data").
 
-Example, to make and run a database server named db2...
+Since you can only run one server instance on each tcpip port, and
+since you have to be root to run a service on a port nuber < 1024,
+you will usually want to specify the tcpip listen port number.
+Example of creating and starting a new database server instance:
 
     mkdir /usr/hsqldb/data/db2
     chown hsqldb:hsqldb /usr/hsqldb/data/db2
-    touch /usr/hsqldb/data/db2/server.properties  # Remains owned by root
+    echo server.port=9009 > /usr/hsqldb/data/db2/server.properties
+    # Note that the webserver.properties file remains owned by root
     /etc/init.d/hsqldb restart
-
-To run a hsqldb http server instead, do the same thing, but use
-"webserver.properties" instead of "server.properties" and you have
-to change the port if your $OWNER is not root (see the configuration 
-section above).  Example...
-
-    mkdir /usr/hsqldb/data/db2
-    chown hsqldb:hsqldb /usr/hsqldb/data/db2
-    echo server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
-    /etc/init.d/hsqldb restart
-
 
 
 SOLARIS
