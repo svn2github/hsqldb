@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.4 2004/04/20 18:35:55 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.5 2004/04/20 22:42:13 unsaved Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/20 18:35:55 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/20 22:42:13 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -62,7 +62,7 @@
             identifier.
         </para>
         <table frame='all' tocentry='1' pgwide='1'>
-            <title>HSQLDB URL Components</title>
+            <title>Hsqldb URL Components</title>
             <tgroup cols='3' align='left'>
                 <colspec colname='c1'/>
                 <colspec colname='c2'/>
@@ -305,7 +305,7 @@
             The properties files and the settings stored in them are as follows:
         </para>
         <table frame='all' tocentry='1' pgwide='1'>
-            <title>HSQLDB Server Properties Files</title>
+            <title>Hsqldb Server Properties Files</title>
             <tgroup cols='3' align='left'>
                 <thead><row>
                     <entry>File Name</entry>

@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.5 2004/04/19 21:26:55 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.6 2004/04/20 18:35:56 unsaved Exp $ -->
 
 <chapter>
     <title>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/19 21:26:55 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -268,7 +268,7 @@
             </para></listitem></varlistentry>
             <varlistentry><term>\dt</term><listitem><para>
                 Lists available database tables.
-                Works well for Hsqldb and for Oracle.
+                Works well for HSQLDB and for Oracle.
                 Need user feedback about compatibility with other database 
                 vendors.
             </para></listitem></varlistentry>

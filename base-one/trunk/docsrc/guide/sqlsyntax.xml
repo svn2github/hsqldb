@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.4 2004/04/20 22:42:26 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.5 2004/04/20 23:00:04 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.4 $</edition>
-    <pubdate>$Date: 2004/04/20 22:42:26 $</pubdate>
+    <edition>$Revision: 1.5 $</edition>
+    <pubdate>$Date: 2004/04/20 23:00:04 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -994,7 +994,7 @@ SET TABLE &lt;tablename&gt; SOURCE &lt;file and options&gt; [DESC];</programlist
         </para><informalexample><programlisting>
     SET TABLE mytable SOURCE "myfile;fs=|;vs=.;lvs=~"</programlisting>
         </informalexample><variablelist>
-            <title>Special indicators for HSQLDB Text Table separators</title>
+            <title>Special indicators for Hsqldb Text Table separators</title>
             <varlistentry><term>\semi</term>
                 <listitem><para>semicolon</para>
             </listitem></varlistentry>
