@@ -86,7 +86,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
 // fredt@users 20021002 - patch 1.7.1 - changed notification method
-// unsaved@users 20021113 - patch 1.7.1 - SSL support
+// unsaved@users 20021113 - patch 1.7.2 - SSL support
 
 /**
  *  A web server connection is a transient object that lasts for the duration
@@ -100,16 +100,16 @@ class WebServerConnection implements Runnable {
     static final String      ENCODING = "8859_1";
     private Socket           mSocket;
     private WebServer        mServer;
-    private boolean          bTls;
-    private ClassLoader      loader                  = null;
-    private Method           methSSLSgetInputStream  = null,
-                             methSSLSgetOutputStream = null;
-    private static final int GET                     = 1,
-                             HEAD                    = 2,
-                             POST                    = 3,
-                             BAD_REQUEST             = 400,
-                             FORBIDDEN               = 403,
-                             NOT_FOUND               = 404;
+    private boolean          isTls;
+    private ClassLoader      loader                    = null;
+    private Method           SSLSgetInputStreamMethod  = null,
+                             SSLSgetOutputStreamMethod = null;
+    private static final int GET                       = 1,
+                             HEAD                      = 2,
+                             POST                      = 3,
+                             BAD_REQUEST               = 400,
+                             FORBIDDEN                 = 403,
+                             NOT_FOUND                 = 404;
 
     /**
      *  Constructor declaration
@@ -121,7 +121,7 @@ class WebServerConnection implements Runnable {
 
         mServer = server;
         mSocket = socket;
-        bTls    = bIn;
+        isTls    = bIn;
     }
 
     /**
@@ -130,7 +130,7 @@ class WebServerConnection implements Runnable {
     public void run() {
 
         try {
-            if (bTls) {
+            if (isTls) {
                 try {
                     if (loader == null) {
                         loader = getClass().getClassLoader();
@@ -141,14 +141,14 @@ class WebServerConnection implements Runnable {
                             "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
                     }
 
-                    if (methSSLSgetInputStream == null) {
-                        methSSLSgetInputStream = loader.loadClass(
+                    if (SSLSgetInputStreamMethod == null) {
+                        SSLSgetInputStreamMethod = loader.loadClass(
                             "javax.net.ssl.SSLSocket").getMethod(
                             "getInputStream", null);
                     }
 
-                    if (methSSLSgetOutputStream == null) {
-                        methSSLSgetOutputStream = loader.loadClass(
+                    if (SSLSgetOutputStreamMethod == null) {
+                        SSLSgetOutputStreamMethod = loader.loadClass(
                             "javax.net.ssl.SSLSocket").getMethod(
                             "getOutputStream", null);
                     }
@@ -165,17 +165,17 @@ class WebServerConnection implements Runnable {
             }
 
             // Assertion (would use "assert" if Java 1.4):
-            if (bTls && (methSSLSgetInputStream == null
-                         || methSSLSgetOutputStream == null)) {
+            if (isTls && (SSLSgetInputStreamMethod == null
+                         || SSLSgetOutputStreamMethod == null)) {
                 throw new VerifyError("Unexpected SSL error encountered");
             }
 
-            // At this point, if mode is SSL, then methSSL
+            // At this point, if mode is SSL, then the *Method's are set
             BufferedReader input = null;
 
             try {
-                input = new BufferedReader(new InputStreamReader((bTls
-                        ? (InputStream) methSSLSgetInputStream.invoke(mSocket,
+                input = new BufferedReader(new InputStreamReader((isTls
+                        ? (InputStream) SSLSgetInputStreamMethod.invoke(mSocket,
                             null)
                         : mSocket.getInputStream()), ENCODING));
             } catch (IllegalAccessException iae) {
@@ -319,15 +319,15 @@ class WebServerConnection implements Runnable {
             DataOutputStream output = null;
 
             // Assertion (would use "assert" if Java 1.4):
-            if (bTls && methSSLSgetOutputStream == null) {
+            if (isTls && SSLSgetOutputStreamMethod == null) {
                 throw new VerifyError("Unexpected SSL error encountered");
             }
 
             try {
                 output = new DataOutputStream(
                     new BufferedOutputStream(
-                        bTls
-                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                        isTls
+                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
                             mSocket, null)
                         : mSocket.getOutputStream()));
             } catch (IllegalAccessException iae) {
@@ -470,12 +470,12 @@ class WebServerConnection implements Runnable {
         }
 
         // No point in trying to write if SSL handshaking can't succeed
-        if (!bTls || methSSLSgetOutputStream != null) {
+        if (!isTls || SSLSgetOutputStreamMethod != null) {
             try {
                 DataOutputStream output = new DataOutputStream(
                     new BufferedOutputStream(
-                        bTls
-                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                        isTls
+                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
                             mSocket, null)
                         : mSocket.getOutputStream()));
 
@@ -510,15 +510,15 @@ class WebServerConnection implements Runnable {
                                     + "Content-Length: " + len);
             DataOutputStream output = null;
 
-            if (bTls && methSSLSgetOutputStream == null) {
+            if (isTls && SSLSgetOutputStreamMethod == null) {
                 throw new VerifyError("Unexpected SSL error encountered");
             }
 
             try {
                 output = new DataOutputStream(
                     new BufferedOutputStream(
-                        bTls
-                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                        isTls
+                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
                             mSocket, null)
                         : mSocket.getOutputStream()));
             } catch (IllegalAccessException iae) {

@@ -266,16 +266,16 @@ public class jdbcConnection implements Connection {
      *  using JRE-supplied ProtocolHandlers for WebServer.  Unfortunately
      *  the https ProtocolHandler is only available for 1.4.0 JRE, so
      *  we may end up generalizing the Server work to WebServer, and
-     *  bTls will then apply to both connection types).
+     *  isTls will then apply to both connection types).
      *
      *  (Currently only 1-way TLS is implemented)
      */
-    private boolean bTls = false;
+    private boolean isTls = false;
 
     /**
      *  Whether we have attempted to add an TLS provider for this JVM
      */
-    static private boolean bTlsProvided = false;
+    static private boolean isTlsProvided = false;
 
     /**
      *  JVM-shared SSL Socket Factory
@@ -371,55 +371,55 @@ public class jdbcConnection implements Connection {
      * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Class clsFactory = null;
+    static private Class FactoryClass = null;
 
     /**
      * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Class clsSSLSocket = null;
+    static private Class SSLSocketClass = null;
 
     /**
      * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Class clsX509 = null;
+    static private Class X590Class = null;
 
     /**
      * Class reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Class clsSession = null;
+    static private Class SessionClass = null;
 
     /**
      * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Method methCreateSocket = null;
+    static private Method CreateSocketMethod = null;
 
     /**
      * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Method methShake = null;
+    static private Method ShakeMethod = null;
 
     /**
      * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Method methGetSes = null;
+    static private Method GetSesMethod = null;
 
     /**
      * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Method methChain = null;
+    static private Method ChainMethod = null;
 
     /**
      * Method reference for dynamic TLS setup.
      * (Used only for URLs of type jdbc:hsqldb:hsqls:)
      */
-    static private Method methGetSubjDN = null;
+    static private Method GetSubjDNMethod = null;
 
 // ----------------- In-process Database Connection Attributes -------------
 
@@ -2919,7 +2919,7 @@ public class jdbcConnection implements Connection {
         sConnect  = sDatabaseName.substring(sDatabaseName.indexOf("://") + 3);
         sUser     = user;
         sPassword = password;
-        bTls      = bTlsIn;
+        isTls      = bTlsIn;
 
         reconnectHSQL();
     }
@@ -2939,11 +2939,11 @@ public class jdbcConnection implements Connection {
             String          host = st.hasMoreTokens() ? st.nextToken()
                                                       : "";
             int port = st.hasMoreTokens() ? Integer.parseInt(st.nextToken())
-                                          : (bTls ? DEFAULT_HSQLSDB_PORT
-                                                  : DEFAULT_HSQLDB_PORT);
+                                          : (isTls ? DEFAULT_HSQLSDB_PORT
+                                                   : DEFAULT_HSQLDB_PORT);
 
-            sSocket = (bTls ? newSslSocket(host, port)
-                            : (new Socket(host, port)));
+            sSocket = (isTls ? newSslSocket(host, port)
+                             : (new Socket(host, port)));
 
             sSocket.setTcpNoDelay(true);
 
@@ -3217,13 +3217,13 @@ public class jdbcConnection implements Connection {
                 "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
         }
 
-        if (!bTlsProvided) {
+        if (!isTlsProvided) {
             try {
 
                 // Providers may be added to the JSSE config file too
                 // http://java.sun.com/j2se/1.4/docs/guide/security/ +
                 //  jsse/JSSERefGuide.html#ProviderCust
-                bTlsProvided = true;
+                isTlsProvided = true;
 
                 Security
                     .addProvider((Provider) loader
@@ -3236,29 +3236,29 @@ public class jdbcConnection implements Connection {
         }
 
         try {
-            if (clsFactory == null) {
-                clsFactory =
+            if (FactoryClass == null) {
+                FactoryClass =
                     loader.loadClass("javax.net.ssl.SSLSocketFactory");
             }
 
             if (sslFactory == null) {
-                Method methGetDefault = clsFactory.getMethod("getDefault",
+                Method GetDefaultMethod = FactoryClass.getMethod("getDefault",
                     null);
 
-                sslFactory = methGetDefault.invoke(null, null);
+                sslFactory = GetDefaultMethod.invoke(null, null);
             }
 
-            if (clsSSLSocket == null) {
-                clsSSLSocket = loader.loadClass("javax.net.ssl.SSLSocket");
+            if (SSLSocketClass == null) {
+                SSLSocketClass = loader.loadClass("javax.net.ssl.SSLSocket");
             }
 
-            if (clsX509 == null) {
-                clsX509 =
+            if (X590Class == null) {
+                X590Class =
                     loader.loadClass("javax.security.cert.X509Certificate");
             }
 
-            if (clsSession == null) {
-                clsSession = loader.loadClass("javax.net.ssl.SSLSession");
+            if (SessionClass == null) {
+                SessionClass = loader.loadClass("javax.net.ssl.SSLSession");
             }
         } catch (ClassNotFoundException cnfe) {
             throw new SQLException("JSSE not installed:  " + cnfe);
@@ -3283,30 +3283,30 @@ public class jdbcConnection implements Connection {
         }
 
         try {
-            if (methCreateSocket == null) {
+            if (CreateSocketMethod == null) {
                 Class carray[] = {
                     String.class, clsInt
                 };
 
-                methCreateSocket = clsFactory.getMethod("createSocket",
+                CreateSocketMethod = FactoryClass.getMethod("createSocket",
                         carray);
             }
 
-            if (methShake == null) {
-                methShake = clsSSLSocket.getMethod("startHandshake", null);
+            if (ShakeMethod == null) {
+                ShakeMethod = SSLSocketClass.getMethod("startHandshake", null);
             }
 
-            if (methGetSes == null) {
-                methGetSes = clsSSLSocket.getMethod("getSession", null);
+            if (GetSesMethod == null) {
+                GetSesMethod = SSLSocketClass.getMethod("getSession", null);
             }
 
-            if (methChain == null) {
-                methChain = clsSession.getMethod("getPeerCertificateChain",
+            if (ChainMethod == null) {
+                ChainMethod = SessionClass.getMethod("getPeerCertificateChain",
                                                  null);
             }
 
-            if (methGetSubjDN == null) {
-                methGetSubjDN = clsX509.getMethod("getSubjectDN", null);
+            if (GetSubjDNMethod == null) {
+                GetSubjDNMethod = X590Class.getMethod("getSubjectDN", null);
             }
 
             // These first ones are not going to occur.  From the forNames.
@@ -3329,7 +3329,7 @@ public class jdbcConnection implements Connection {
         };
 
         try {
-            ssls = (Socket) methCreateSocket.invoke(sslFactory,
+            ssls = (Socket) CreateSocketMethod.invoke(sslFactory,
                     csObjectArray);
 
             /* N.b.  BEWARE:  The following handshake will hang for a long
@@ -3339,7 +3339,7 @@ public class jdbcConnection implements Connection {
              * TODO:  Start up another thread to interrupt this thread if
              * a MAX_HANDSHAKE_TIME is exceeded
              */
-            methShake.invoke(ssls, null);
+            ShakeMethod.invoke(ssls, null);
 
             // Need to unwrap the following exceptions
         } catch (InvocationTargetException ite) {
@@ -3371,7 +3371,7 @@ public class jdbcConnection implements Connection {
         Principal p = null;
 
         try {
-            Object ses = methGetSes.invoke(ssls, null);    // Throws nothing
+            Object ses = GetSesMethod.invoke(ssls, null);    // Throws nothing
 
             if (ses == null) {
                 condClose(ssls);
@@ -3381,11 +3381,11 @@ public class jdbcConnection implements Connection {
             }
 
             // throws javax.net.ssl.SSLPeerUnverifiedException
-            Object captr = methChain.invoke(ses, null);
+            Object captr = ChainMethod.invoke(ses, null);
 
             if (captr == null || (!captr.getClass().isArray())
                     ||!(captr.getClass().getComponentType().isAssignableFrom(
-                        clsX509))) {
+                        X590Class))) {
                 condClose(ssls);
 
                 throw new SQLException(
@@ -3401,7 +3401,7 @@ public class jdbcConnection implements Connection {
                     "Failed to obtain session data from TLS connection");
             }
 
-            p = (Principal) methGetSubjDN.invoke(caarray[0], null);
+            p = (Principal) GetSubjDNMethod.invoke(caarray[0], null);
 
             // Need to unwrap the following exceptions
         } catch (InvocationTargetException ite) {

@@ -109,13 +109,12 @@ import java.security.Provider;
  */
 public class WebServer extends Server {
 
-    static final String mServerName = "HSQLDB/1.7.1";
+    static final String mServerName = "HSQLDB/1.7.2";
     String              mRoot;
     String              mDefaultFile;
     char                mPathSeparatorChar;
-    boolean             bTls = false;
-    public int          _int_;    // Trick to get a Class for a primitive
-    private Method      methAccept = null;
+    boolean             isTls = false;
+    private Method      AcceptMethod = null;
 
     /**
      *  Method declaration
@@ -143,7 +142,7 @@ public class WebServer extends Server {
 
     void setProperties(HsqlProperties props) {
 
-        bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
+        isTls = (System.getProperty("javax.net.ssl.keyStore") != null);
         serverProperties = new HsqlProperties("webserver");
 
         try {
@@ -156,7 +155,7 @@ public class WebServer extends Server {
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
-        serverProperties.setPropertyIfNotExists("server.port", bTls ? "443"
+        serverProperties.setPropertyIfNotExists("server.port", isTls ? "443"
                                                                     : "80");
 
         mRoot = serverProperties.setPropertyIfNotExists("server.root", "./");
@@ -182,8 +181,8 @@ public class WebServer extends Server {
 
         try {
             int port = serverProperties.getIntegerProperty("server.port",
-                bTls ? 443
-                     : 80);
+                isTls ? 443
+                      : 80);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
@@ -193,11 +192,10 @@ public class WebServer extends Server {
             mDatabase          = new Database(database);
             socket             = null;
 
-            if (bTls) {
+            if (isTls) {
                 try {
                     Object[] oaInt = { new Integer(port) };
-                    Class[] caInt = {
-                        getClass().getField("_int_").getType() };
+                    Class[] caInt = { int.class };
                     ClassLoader loader = getClass().getClassLoader();
 
                     if (loader == null) {
@@ -218,7 +216,7 @@ public class WebServer extends Server {
                     Class SSLSSF = loader.loadClass(
                         "javax.net.ssl.SSLServerSocketFactory");
 
-                    methAccept = loader.loadClass(
+                    AcceptMethod = loader.loadClass(
                         "javax.net.ssl.SSLServerSocket").getMethod(
                         "accept", null);
                     socket = (ServerSocket) SSLSSF.getMethod(
@@ -277,9 +275,9 @@ public class WebServer extends Server {
             while (true) {
                 Socket s = null;
 
-                if (bTls) {
+                if (isTls) {
                     try {
-                        s = (Socket) methAccept.invoke(socket, null);
+                        s = (Socket) AcceptMethod.invoke(socket, null);
                     } catch (IllegalAccessException iae) {
                         throw new IOException(
                             "You do not have permission to use the needed SSL resources");
@@ -303,7 +301,7 @@ public class WebServer extends Server {
                 }
 
                 WebServerConnection c = new WebServerConnection(s, this,
-                    bTls);
+                    isTls);
 
                 thread = new Thread(c);
 

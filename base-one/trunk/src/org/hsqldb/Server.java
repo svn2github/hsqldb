@@ -127,8 +127,7 @@ public class Server {
     protected boolean      traceMessages;
     private boolean        restartOnShutdown;
     private boolean        noSystemExit;
-    boolean                bTls = false;
-    public int             _int_;    // Trick to get a Class for a primitive
+    boolean                isTls = false;
 
     /**
      * Method declaration
@@ -167,12 +166,12 @@ public class Server {
                 + " not found, using command line or default properties");
         }
 
-        bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
+        isTls = (System.getProperty("javax.net.ssl.keyStore") != null);
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port",
-                String.valueOf(bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
+                String.valueOf(isTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
                                     : jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
@@ -206,7 +205,7 @@ public class Server {
 
         try {
             int port = serverProperties.getIntegerProperty("server.port",
-                bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
+                isTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
                      : jdbcConnection.DEFAULT_HSQLDB_PORT);
             String database = serverProperties.getProperty("server.database");
 
@@ -214,7 +213,7 @@ public class Server {
             printTraceMessages();
             openDB();
 
-            if (bTls) {
+            if (isTls) {
                 try {
 
                     // We can not get here unless the property is non-null
@@ -248,8 +247,7 @@ public class Server {
                         // If not, error will be caught later
                     } catch (Exception e) {}
 
-                    Class[] caInt = {
-                        getClass().getField("_int_").getType() };
+                    Class[] caInt = { int.class };
                     Object[] oaInt = { new Integer(port) };
                     Class clsSSF =
                         loader.loadClass("javax.net.ServerSocketFactory");
