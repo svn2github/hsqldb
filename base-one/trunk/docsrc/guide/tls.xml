@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.10 2004/06/06 23:54:56 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.11 2004/06/08 05:54:23 unsaved Exp $ -->
 
 <chapter id='tls-chapter'>
     <title id='tls-title'>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2004/06/06 23:54:56 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2004/06/08 05:54:23 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -93,6 +93,10 @@
                 approved by your default trust keystores, then there is nothing 
                 else to do.
                 If not, then you need to tell Java to "trust" the server cert.
+                (It's a slight over-simplification to say that if the server
+                certificate was purchased, then you are all set;
+                if somebody "signed their own" certificate by self-signing or
+                using a private ca certificate, then you need to set up trust).
             </para> <para>
                 First, you need to obtain the cert (only the "public" part of 
                 it).

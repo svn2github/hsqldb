@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.26 2004/06/08 02:37:45 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.27 2004/06/08 05:54:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.26 $</edition>
-        <pubdate>$Date: 2004/06/08 02:37:45 $</pubdate>
+        <edition>$Revision: 1.27 $</edition>
+        <pubdate>$Date: 2004/06/08 05:54:23 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -247,6 +247,9 @@
             <varlistentry><term>truststore</term><listitem><simpara>
                 TLS trust keystore store file path as documented in the
                 <link linkend='tls-chapter' endterm='tls-title'/> chapter.
+                You usually only need to set this if the server is using a
+                non-publicly-certified certificate (like a self-signed 
+                self-ca'd cert).
             </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
