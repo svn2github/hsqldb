@@ -73,7 +73,7 @@ import org.hsqldb.lib.DoubleIntTable;
 
 public class TestHashStructures extends TestCase {
 
-    TestHashStructures(String s) {
+    public TestHashStructures(String s) {
         super(s);
     }
 
@@ -145,6 +145,9 @@ public class TestHashStructures extends TestCase {
         clearByIntIterator(uMap, hIntMap);
         compareByUIteratorInt(uMap, hIntMap);
         compareByHIteratorInt(uMap, hIntMap);
+
+        //-
+        assertTrue(true);
     }
 
     public void testHashMappedList() throws Exception {
@@ -170,6 +173,9 @@ public class TestHashStructures extends TestCase {
         populateBySerialIntKeys(uMap, hMap, testSize);
         compareByUIterator(uMap, hMap);
         compareByHIterator(uMap, hMap);
+
+        //-
+        assertTrue(true);
     }
 
     public void testDoubleIntLookup() throws Exception {
@@ -184,6 +190,9 @@ public class TestHashStructures extends TestCase {
         compareByHIteratorInt(intLookup, hIntMap);
         populateByRandomIntKeysInt(intLookup, hIntMap, testSize);
         compareByHIteratorInt(intLookup, hIntMap);
+
+        //-
+        assertTrue(true);
     }
 
     void populateBySerialIntKeys(java.util.HashMap uMap,

@@ -70,13 +70,15 @@ package org.hsqldb.test;
 import java.util.*;
 import org.hsqldb.lib.*;
 
+import junit.framework.*;
+
 /**
  * Randomly excutes methods on the HsqlList data structures and compares the
  * results with equivalent calls on the java vector class.
  *
  * @author dnordahl@users
  */
-public class TestDataStructures {
+public class TestDataStructures extends TestCase {
 
     private final static int NUMBER_OF_TEST_RUNS          = 100000;
     private final static int NUMBER_OF_ITERATIONS_PER_RUN = 80;
@@ -284,6 +286,7 @@ public class TestDataStructures {
 
                     this.printListCommandsCalled(listCommandsCalled);
 
+                    fail("test failed");
                     //System.exit(0);
                 }
 
@@ -295,6 +298,7 @@ public class TestDataStructures {
                 System.out.println("Objects returned inconsistent");
                 this.printListCommandsCalled(listCommandsCalled);
 
+                fail("test failed");
                 //System.exit(0);
             }
 
@@ -327,6 +331,7 @@ public class TestDataStructures {
         if (arrayListError || linkedListError) {
             this.printListCommandsCalled(listCommandsCalled);
             System.out.flush();
+            fail("test failed");
             System.exit(0);
         }
     }
@@ -393,9 +398,9 @@ public class TestDataStructures {
         }
 
         org.hsqldb.lib.Iterator listElements   = list.iterator();
-        Enumeration vectorElements = vector.elements();
-        Object      listObj        = null;
-        Object      vectorObj      = null;
+        Enumeration             vectorElements = vector.elements();
+        Object                  listObj        = null;
+        Object                  vectorObj      = null;
 
         while (listElements.hasNext()) {
             listObj   = listElements.next();
@@ -426,10 +431,10 @@ public class TestDataStructures {
             "After " + NUMBER_OF_TEST_RUNS + " tests of a maximum of "
             + NUMBER_OF_ITERATIONS_PER_RUN
             + " list commands each test, the list tests passed");
-        testGrowth();
+        test.testGrowth();
     }
 
-    static void testGrowth() {
+    public void testGrowth() {
 
         HsqlArrayList d = new HsqlArrayList();
 
@@ -455,8 +460,13 @@ public class TestDataStructures {
 
         org.hsqldb.lib.Iterator it = d.iterator();
 
-        for (; it.hasNext(); ) {
-            System.out.println(it.next());
+        for (int i = 0; it.hasNext(); i++ ) {
+            Integer value = (Integer) it.next();
+            System.out.println(value);
+            assertEquals (i, value.intValue());
         }
+
+        //-
+        assertEquals(12, d.size());
     }
 }

@@ -74,14 +74,48 @@ import org.hsqldb.jdbcDriver;
 
 /**
  *  Main test class, containing several JDBC and script based tests to
- *  verify correct operation of the engine.
+ *  verify correct operation of the engine.<p>
  *
- * @version 1.7.0
+ *  The tests consist of the following:
+ * <ul>
+ * <li>
+ *  Built-in tests for operations, especially those relating to JDBC.
+ *</li>
+ * <li>
+ *  Speed tests using insert / delete / update on a simple table.<p>
+ *</li>
+ * <li>
+ *  Script based SQL tests consisting of:<p>
+ *  <code>TestSelf.txt</code> : the main test script.<p>
+ *  <code>TestSelfXXXX.txt</code> : specialised test scripts that
+ *  will be run in alphabetical filename order.<p>
+ *</li>
+ * </ul>
+ *
+ *  Tests can be added by writing new scripts in the standard format described
+ *  in <code>TestSelf.txt</code> and naming the script in the correct format,
+ *  <code>TestSelfXXXX.txt</code>, where XXXX is the description of the new
+ *  test.<p>
+ *  The database can be shutdown at the end of each script (using the
+ *  SHUTDOWN command). This allows a test to be divided into two or more
+ *  scripts in order to test the persistence mechanism for both objects
+ *  created via DDL or data stored in the database. An example of this
+ *  is the set of supplied scripts, <code>TestSelfCreate.txt</code>,
+ *  <code>TestSelfModify.txt</code> and <code>TestSelfVerify.txt</code>.
+ *  (fredt@users)
+ *
+ * @version 1.7.2
  */
 class TestSelf {
 
     /**
-     *  Method declaration
+     *  This test in invoked from the command line using:
+     * <pre>
+     * TestSelf [records [-m]]
+     *
+     *</pre>
+     *
+     * -m means run the tests in-memory only
      *
      * @param  argv
      */
@@ -237,8 +271,9 @@ class TestSelf {
 
             print("Opened test script file: " + testfile.getAbsolutePath());
 
+            int startlineno = 1;
             for (int lineno = 1; ; lineno++) {
-                String line = read.readLine();
+                String line  = read.readLine();
 
                 if (line == null) {
                     break;
@@ -247,8 +282,9 @@ class TestSelf {
                 if (line.startsWith(" ")) {
                     s += line;
                 } else {
-                    test(sStatement, s, lineno);
+                    test(sStatement, s, startlineno);
 
+                    startlineno = lineno;
                     s = line;
                 }
             }
@@ -798,6 +834,10 @@ class TestSelf {
 
         String result = "";
         char   type   = ' ';
+
+        if (s.trim().length() == 0) {
+            return;
+        }
 
         if (s.startsWith("/*")) {
             type = s.charAt(2);

@@ -97,7 +97,7 @@ import org.hsqldb.resources.BundleHandler;
 
 /**
  * Server acts as a network database server and is one way of using
- * the client-server mode of HSQL Database Engine. This server
+ * the client-server mode of HSQLDB Database Engine. This server
  * can only process database queries.<p>
  * An applet or application will use only the JDBC classes to access
  * the database.<p>

@@ -36,6 +36,7 @@ import java.io.*;
 import java.sql.*;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.FileUtil;
+import java.util.Random;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -54,7 +55,11 @@ import org.hsqldb.lib.FileUtil;
  *
  * The above have improved a lot in 1.7.2
  *
+ * This test now incorporates the defunct TestTextTables
+ *
  * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.0
  */
 public class TestCacheSize {
 
@@ -224,69 +229,10 @@ public class TestCacheSize {
             }
 
 //            sStatement.execute("CREATE INDEX idx3 ON tempTEST (zip);");
-            int i;
 
-            for (i = 0; i <= smallrows; i++) {
-                sStatement.execute("INSERT INTO zip VALUES(null);");
-            }
 
-            sStatement.execute("SET REFERENTIAL_INTEGRITY "
-                               + this.refIntegrity + ";");
-
-            PreparedStatement ps = cConnection.prepareStatement(
-                "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
-
-            ps.setString(1, "Julia");
-            ps.setString(2, "Clancy");
-
-            for (i = 0; i < bigrows; i++) {
-                ps.setInt(3, randomgen.nextInt(smallrows));
-
-                long nextrandom   = randomgen.nextLong();
-                int  randomlength = (int) nextrandom & 0x7f;
-
-                if (randomlength > filler.length()) {
-                    randomlength = filler.length();
-                }
-
-                String varfiller = filler.substring(0, randomlength);
-
-                ps.setString(4, nextrandom + varfiller);
-                ps.execute();
-
-                if (reportProgress && (i + 1) % 10000 == 0) {
-                    System.out.println("Insert " + (i + 1) + " : "
-                                       + sw.elapsedTime());
-                }
-
-                // delete and add 4000 rows to introduce fragmentation
-                if (deleteWhileInsert && i != 0
-                        && i % deleteWhileInsertInterval == 0) {
-                    sStatement.execute("CALL IDENTITY();");
-
-                    ResultSet rs = sStatement.getResultSet();
-
-                    rs.next();
-
-                    int lastId = rs.getInt(1);
-
-                    sStatement.execute(
-                        "SELECT * INTO TEMP tempt FROM test WHERE id > "
-                        + (lastId - 4000) + " ;");
-                    sStatement.execute("DELETE FROM test WHERE id > "
-                                       + (lastId - 4000) + " ;");
-                    sStatement.execute(
-                        "INSERT INTO test SELECT * FROM tempt;");
-                    sStatement.execute("DROP TABLE tempt;");
-                }
-            }
-
-//            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
-//            sStatement.execute("DROP TABLE temptest;");
-//            sStatement.execute(ddl7);
-            System.out.println("Total insert: " + i);
-            System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
-                               + (i * 1000 / (sw.elapsedTime() + 1)));
+            System.out.println("Setup time: " + sw.elapsedTime());
+            fillUpBigTable(filler, randomgen);
             sw.zero();
 
             if (shutdown) {
@@ -298,6 +244,74 @@ public class TestCacheSize {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    private void fillUpBigTable(String filler, Random randomgen) throws
+        SQLException {
+        StopWatch sw = new StopWatch();
+        int i;
+
+        for (i = 0; i <= smallrows; i++) {
+            sStatement.execute("INSERT INTO zip VALUES(null);");
+        }
+
+        sStatement.execute("SET REFERENTIAL_INTEGRITY "
+                           + this.refIntegrity + ";");
+
+        PreparedStatement ps = cConnection.prepareStatement(
+            "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
+
+        ps.setString(1, "Julia");
+        ps.setString(2, "Clancy");
+
+        for (i = 0; i < bigrows; i++) {
+            ps.setInt(3, randomgen.nextInt(smallrows));
+
+            long nextrandom   = randomgen.nextLong();
+            int  randomlength = (int) nextrandom & 0x7f;
+
+            if (randomlength > filler.length()) {
+                randomlength = filler.length();
+            }
+
+            String varfiller = filler.substring(0, randomlength);
+
+            ps.setString(4, nextrandom + varfiller);
+            ps.execute();
+
+            if (reportProgress && (i + 1) % 10000 == 0) {
+                System.out.println("Insert " + (i + 1) + " : "
+                                   + sw.elapsedTime());
+            }
+
+            // delete and add 4000 rows to introduce fragmentation
+            if (deleteWhileInsert && i != 0
+                    && i % deleteWhileInsertInterval == 0) {
+                sStatement.execute("CALL IDENTITY();");
+
+                ResultSet rs = sStatement.getResultSet();
+
+                rs.next();
+
+                int lastId = rs.getInt(1);
+
+                sStatement.execute(
+                    "SELECT * INTO TEMP tempt FROM test WHERE id > "
+                    + (lastId - 4000) + " ;");
+                sStatement.execute("DELETE FROM test WHERE id > "
+                                   + (lastId - 4000) + " ;");
+                sStatement.execute(
+                    "INSERT INTO test SELECT * FROM tempt;");
+                sStatement.execute("DROP TABLE tempt;");
+            }
+        }
+
+//            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
+//            sStatement.execute("DROP TABLE temptest;");
+//            sStatement.execute(ddl7);
+        System.out.println("Total insert: " + i);
+        System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / (sw.elapsedTime() + 1)));
     }
 
     protected void tearDown() {}
