@@ -81,6 +81,7 @@ import java.io.LineNumberReader;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.*;
 
 //import java.util.zip.
 import java.util.zip.Deflater;
@@ -335,7 +336,7 @@ class Log implements Runnable {
     Cache getCache() throws SQLException {
 
         if (cCache == null) {
-            cCache = new Cache(sFileCache, pProperties);
+            cCache = new Cache(sFileCache, this.dDatabase);
 
             cCache.open(bReadOnly);
         }
@@ -426,7 +427,23 @@ class Log implements Runnable {
      *
      * @throws  SQLException
      */
-    void checkpoint() throws SQLException {
+    void checkpoint(boolean defrag) throws SQLException {
+
+        if (defrag) {
+            ArrayList rootsArray = cCache.defrag();
+
+            for (int i = 0; i < rootsArray.size(); i++) {
+                int[] roots = (int[]) rootsArray.get(i);
+
+                if (roots != null) {
+                    Trace.printSystemOut(
+                        org.hsqldb.lib.StringUtil.getList(roots, " ", ""));
+                }
+            }
+
+            DataFileDefrag2.updateTableIndexRoots(dDatabase.getTables(),
+                                                  rootsArray);
+        }
 
         close(false);
         pProperties.setProperty("modified", "yes");
@@ -494,7 +511,7 @@ class Log implements Runnable {
                 iLogCount = 0;
 
                 if (scriptChecker.length() > iLogSize * 1024 * 1024) {
-                    checkpoint();
+                    checkpoint(false);
                 }
             }
         }
@@ -1013,9 +1030,9 @@ class Log implements Runnable {
         TextCache c;
 
         if (reversed) {
-            c = new ReverseTextCache(source, prefix, pProperties);
+            c = new ReverseTextCache(source, prefix, dDatabase);
         } else {
-            c = new TextCache(source, prefix, pProperties);
+            c = new TextCache(source, prefix, dDatabase);
         }
 
         c.open(readOnlyData || bReadOnly);

@@ -72,7 +72,7 @@ import java.sql.SQLException;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
 // fredt@users 20020320 - doc 1.7.0 - update
-// tony_lai@users 20020820 - patch 595156 by tlai@users -  violation of Integrity constraint name
+// tony_lai@users 20020820 - patch 595156 - violation of Integrity constraint name
 
 /**
  *  Implementation of a table constraint with references to the indexes used

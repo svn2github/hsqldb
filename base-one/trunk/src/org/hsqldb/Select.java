@@ -67,8 +67,11 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Enumeration;
 
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
@@ -81,22 +84,24 @@ import java.sql.Types;
  */
 class Select {
 
-    boolean          isPreProcess;
-    boolean          isDistinctSelect;
-    private boolean  isDistinctAggregate;
-    private boolean  isAggregated;
-    private boolean  isGrouped;
-    private Object[] aggregateRow;
-    private int      aggregateCount;
-    TableFilter      tFilter[];
-    Expression       eCondition;         // null means no condition
-    Expression       havingCondition;    // null means none
-    Expression       eColumn[];          // 'result', 'group' and 'order' columns
-    int              iResultLen;         // number of columns that are 'result'
-    int              iGroupLen;          // number of columns that are 'group'
-    int              iOrderLen;          // number of columns that are 'order'
-    Select           sUnion;             // null means no union select
-    HsqlName         sIntoTable;         // null means not select..into
+    boolean             isPreProcess;
+    boolean             isDistinctSelect;
+    boolean             isAggregated;
+    private boolean     isGrouped;
+    private HsqlHashMap groupColumnNames;
+    private int         aggregateCount;
+    TableFilter         tFilter[];
+    Expression          eCondition;         // null means no condition
+    Expression          havingCondition;    // null means none
+    Expression          eColumn[];          // 'result', 'group' and 'order' columns
+    int                 iResultLen;         // number of columns that are 'result'
+    int                 iGroupLen;          // number of columns that are 'group'
+
+    // tony_lai@users having
+    int      iHavingIndex = -1;             // -1 means no having
+    int      iOrderLen;                     // number of columns that are 'order'
+    Select   sUnion;                        // null means no union select
+    HsqlName sIntoTable;                    // null means not select..into
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // type and logging attributes of sIntotable
@@ -112,8 +117,8 @@ class Select {
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m
-    int limitStart = 0;                  // set only by the LIMIT keyword
-    int limitCount = 0;                  // set only by the LIMIT keyword
+    int limitStart = 0;                     // set only by the LIMIT keyword
+    int limitCount = 0;                     // set only by the LIMIT keyword
 
     /**
      * Set to preprocess mode
@@ -242,12 +247,25 @@ class Select {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
 
-        if (iGroupLen > 0) {    // has been set in Parser
-            isGrouped = true;
-        }
+        int    len          = eColumn.length;
+        Result r            = new Result(len);
+        int    groupByStart = iResultLen;
+        int    groupByEnd   = groupByStart + iGroupLen;
 
-        int    len = eColumn.length;
-        Result r   = new Result(len);
+        // tony_lai@users having
+//        int    orderByStart = groupByEnd;
+        int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
+                                             : groupByEnd;
+        int orderByEnd   = orderByStart + iOrderLen;
+
+        if (iGroupLen > 0) {    // has been set in Parser
+            isGrouped        = true;
+            groupColumnNames = new HsqlHashMap();
+
+            for (int i = groupByStart; i < groupByEnd; i++) {
+                eColumn[i].collectColumnName(groupColumnNames);
+            }
+        }
 
         for (int i = 0; i < len; i++) {
             Expression e = eColumn[i];
@@ -258,16 +276,34 @@ class Select {
 
             if (e.isAggregate()) {
                 isAggregated = true;
-
-                if (!isGrouped && e.isDistinctAggregate()) {
-                    isDistinctAggregate = true;
-                }
             }
+
+            Trace.check(
+                (i < groupByStart) || (i >= groupByEnd)
+                || eColumn[i].canBeInGroupBy(), Trace.INVALID_GROUP_BY,
+                                                eColumn[i]);
+            Trace.check((i != iHavingIndex) || eColumn[i].isConditional(),
+                        Trace.INVALID_HAVING, eColumn[i]);
+            Trace.check(
+                (i < orderByStart) || (i >= orderByEnd)
+                || eColumn[i].canBeInOrderBy(), Trace.INVALID_ORDER_BY,
+                                                eColumn[i]);
         }
 
-//        Object aggregateRow[] = null;
-        if (isAggregated) {
-            aggregateRow = new Object[len];
+        checkAggregateOrGroupByColumns(0, iResultLen);
+
+        if (iHavingIndex >= 0) {
+            checkAggregateOrGroupByColumns(iHavingIndex, iHavingIndex + 1);
+        }
+
+        checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
+
+        if (isDistinctSelect) {
+            for (int i = orderByStart; i < orderByEnd; i++) {
+                Trace.check(isSimilarIn(eColumn[i], 0, iResultLen),
+                            Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT,
+                            eColumn[i]);
+            }
         }
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
@@ -287,8 +323,7 @@ class Select {
 
         boolean issimplemaxrows = false;
 
-        if (maxrows != 0 && isDistinctSelect == false
-                && isDistinctAggregate == false && isGrouped == false
+        if (maxrows != 0 && isDistinctSelect == false && isGrouped == false
                 && sUnion == null && iOrderLen == 0) {
             issimplemaxrows = true;
         }
@@ -297,25 +332,6 @@ class Select {
                                          : Integer.MAX_VALUE;
 
         buildResult(r, limitcount);
-
-        if (isAggregated &&!isGrouped &&!isDistinctAggregate) {
-            addAggregateRow(r, aggregateRow, len, aggregateCount);
-        } else if (isGrouped) {
-            groupResult(r);
-        } else if (isDistinctAggregate) {
-            r.removeDuplicates();
-            buildDistinctAggregates(r);
-
-            for (int i = 0; i < len; i++) {
-                Expression e = eColumn[i];
-
-                e.setDistinctAggregate(false);
-
-                r.colType[i]  = e.getDataType();
-                r.colSize[i]  = e.getColumnSize();
-                r.colScale[i] = e.getColumnScale();
-            }
-        }
 
         // the result is maybe bigger (due to group and order by)
         // but don't tell this anybody else
@@ -377,91 +393,104 @@ class Select {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param row
-     * @param n
-     * @param len
-     *
-     * @throws SQLException
+     * Check result columns for aggregate or group by violation.
+     * <p>
+     * If any result column is aggregated, then all result columns need to be
+     * aggregated, unless it is included in the group by clause.
      */
-    private void updateAggregateRow(Object row[], Object n[],
-                                    int len) throws SQLException {
+    private void checkAggregateOrGroupByColumns(int start,
+            int end) throws SQLException {
 
-        for (int i = 0; i < len; i++) {
-            int type = eColumn[i].getDataType();
+        HsqlArrayList colExps = new HsqlArrayList();
 
-            switch (eColumn[i].getType()) {
+        for (int i = start; i < end; i++) {
+            eColumn[i].collectInGroupByExpressions(colExps);
 
-                case Expression.DIST_COUNT :
-                    Integer increment = (n[i] == null) ? Expression.INTEGER_0
-                                                       : Expression.INTEGER_1;
+//            Trace.check(inAggregateOrGroupByClause(eColumn[i]),
+//                Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, eColumn[i]);
+        }
 
-                    row[i] = Column.sum(row[i], increment, Types.INTEGER);
-                    break;
+        for (int i = 0, vLen = colExps.size(); i < vLen; i++) {
+            Expression exp = (Expression) colExps.get(i);
 
-                case Expression.COUNT :
-                case Expression.AVG :
-                case Expression.SUM :
-                    row[i] = Column.sum(row[i], n[i], type);
-                    break;
-
-                case Expression.MIN :
-                    row[i] = Column.min(row[i], n[i], type);
-                    break;
-
-                case Expression.MAX :
-                    row[i] = Column.max(row[i], n[i], type);
-                    break;
-
-                default :
-                    row[i] = n[i];
-                    break;
-            }
+            Trace.check(inAggregateOrGroupByClause(exp),
+                        Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, exp);
         }
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param x
-     * @param row
-     * @param len
-     * @param count
-     *
-     * @throws SQLException
+     * Check if the given expression is acceptable in a select that may
+     * include aggregate function and/or group by clause.
+     * <p>
+     * The expression is acceptable if:
+     * <UL>
+     * <LI>The select does not containt any aggregate function;
+     * <LI>The expression itself can be included in an aggregate select;
+     * <LI>The expression is defined in the group by clause;
+     * <LI>All the columns in the expression are defined in the group by clause;
+     * </UL)
      */
-    private void addAggregateRow(Result x, Object row[], int len,
-                                 int count) throws SQLException {
+    private boolean inAggregateOrGroupByClause(Expression exp) {
 
-        for (int i = 0; i < len; i++) {
-            int t = eColumn[i].getType();
+        if ((!isAggregated) || exp.canBeInAggregate()) {
+            return true;
+        }
 
-            if (t == Expression.AVG) {
-                row[i] = Column.avg(row[i], eColumn[i].getDataType(), count);
-            } else if (t == Expression.COUNT) {
+        if (!isGrouped) {
+            return false;
+        }
 
-                // this fixes the problem with count(*) on a empty table
-                if (row[i] == null) {
-                    row[i] = Expression.INTEGER_0;
-                }
+        return isSimilarIn(exp, iResultLen, iResultLen + iGroupLen)
+               || allColumnsAreDefinedIn(exp, groupColumnNames);
+    }
+
+    /**
+     * Check if the given expression is similar to any of the eColumn
+     * expressions within the given range.
+     */
+    private boolean isSimilarIn(Expression exp, int start, int end) {
+
+        for (int i = start; i < end; i++) {
+            if (exp.similarTo(eColumn[i])) {
+                return true;
             }
         }
 
-        x.add(row);
+        return false;
+    }
+
+    /**
+     * Check if all the column names used in the given expression is defined
+     * in the given defined column names.
+     */
+    boolean allColumnsAreDefinedIn(Expression exp,
+                                   HsqlHashMap definedColumns) {
+
+        HsqlHashMap colNames = new HsqlHashMap();
+
+        exp.collectAllColumnNames(colNames);
+
+        if ((colNames.size() > 0) && (definedColumns == null)) {
+            return false;
+        }
+
+        for (Enumeration e = colNames.keys(); e.hasMoreElements(); ) {
+            if (!definedColumns.containsValue(e.nextElement())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void buildResult(Result r, int limitcount) throws SQLException {
 
-        int     len     = eColumn.length;
-        int     count   = 0;
-        int     filter  = tFilter.length;
-        boolean first[] = new boolean[filter];
-        int     level   = 0;
-        boolean addtoaggregate = isAggregated &&!isGrouped
-                                 &&!isDistinctAggregate;
+        GroupedResult gResult = new GroupedResult(this, r);
+        int           len     = eColumn.length;
+        int           count   = 0;
+        int           filter  = tFilter.length;
+        boolean       first[] = new boolean[filter];
+        int           level   = 0;
 
         while (level >= 0 &&!isPreProcess) {
             TableFilter t = tFilter[level];
@@ -491,105 +520,71 @@ class Select {
             if (eCondition == null || eCondition.test()) {
                 Object row[] = new Object[len];
 
-                for (int i = 0; i < len; i++) {
+                // gets the group by column values first.
+                for (int i = gResult.groupBegin; i < gResult.groupEnd; i++) {
                     row[i] = eColumn[i].getValue();
                 }
 
-                count++;
+                row = gResult.addRow(row);
 
-// fredt@users 20010701 - patch for bug 416144 416146 430615 by fredt
-                if (addtoaggregate) {
-                    updateAggregateRow(aggregateRow, row, len);
-                } else {
-                    r.add(row);
+                // Get all other values
+                for (int i = 0; i < gResult.groupBegin; i++) {
+                    row[i] = isAggregated && eColumn[i].isAggregate()
+                             ? eColumn[i].getAggregatingValue(row[i])
+                             : eColumn[i].getValue();
+                }
 
-                    if (count >= limitcount) {
-                        break;
-                    }
+                for (int i = gResult.groupEnd; i < len; i++) {
+                    row[i] = isAggregated && eColumn[i].isAggregate()
+                             ? eColumn[i].getAggregatingValue(row[i])
+                             : eColumn[i].getValue();
                 }
             }
         }
 
-        if (addtoaggregate) {
-            aggregateCount = count;
+// tony_lai@users having
+/*
+        if(isAggregated) {
+            if(gResult.getRowCount() == 0)
+                gResult.addRow(new Object[len]);
+            for(Enumeration e=gResult.groups.keys(); e.hasMoreElements();) {
+                GroupedResult.ResultGroup group = (GroupedResult.ResultGroup)
+                    e.nextElement();
+                for (int i = 0; i < len; i++) {
+                    if(eColumn[i].isAggregate())
+                        group.row[i] = eColumn[i].getAggregatedValue(
+                            group.row[i]);
+                }
+            }
         }
-    }
-
-    private void groupResult(Result r) throws SQLException {
-
-        int len     = eColumn.length;
-        int count   = 0;
-        int order[] = new int[iGroupLen];
-        int way[]   = new int[iGroupLen];
-
-        for (int i = iResultLen, j = 0; j < iGroupLen; i++, j++) {
-            order[j] = i;
-            way[j]   = 1;
+*/
+        if ((isAggregated) && (gResult.results.size() == 0)) {
+            gResult.addRow(new Object[len]);
         }
 
-        r.sortResult(order, way);
+        for (Enumeration e =
+                gResult.results.elements(); e.hasMoreElements(); ) {
+            Object[] row = (Object[]) e.nextElement();
 
-        Record n = r.rRoot;
-        Result x = new Result(len);
-
-        do {
-            Object row[] = new Object[len];
-
-            count = 0;
-
-            boolean newgroup = false;
-
-            while (n != null && newgroup == false) {
-                count++;
-
-// fredt@users 20020215 - patch 476650 by johnhobs@users - GROUP BY aggregates
-                for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
-                    if (n.next == null) {
-                        newgroup = true;
-                    } else if (Column.compare(
-                            n.data[i], n.next.data[i], r.colType[i]) != 0) {
-
-                        // can't use .equals because 'null' is also one group
-                        newgroup = true;
+            if (isAggregated) {
+                for (int i = 0; i < len; i++) {
+                    if (eColumn[i].isAggregate()) {
+                        row[i] = eColumn[i].getAggregatedValue(row[i]);
                     }
                 }
-
-                updateAggregateRow(row, n.data, len);
-
-                n = n.next;
             }
 
-// fredt@users 20020320 - patch 476650 by fredt - empty GROUP BY
-            if (isAggregated || count > 0) {
-                addAggregateRow(x, row, len, count);
+            if (iHavingIndex >= 0) {
+
+                // The test value, either aggregate or not, is set already.
+                // Does not add the row that does not satisfy the HAVING
+                // condition.
+                if (!((Boolean) row[iHavingIndex]).booleanValue()) {
+                    continue;
+                }
             }
-        } while (n != null);
 
-        r.setRows(x);
-    }
-
-    private void buildDistinctAggregates(Result r) throws SQLException {
-
-        int    len   = eColumn.length;
-        int    count = 0;
-        Record n     = r.rRoot;
-        Result x     = new Result(len);
-        Object row[] = new Object[len];
-
-        count = 0;
-
-        while (n != null) {
-            count++;
-
-            updateAggregateRow(row, n.data, len);
-
-            n = n.next;
+            r.add(row);
         }
-
-        if (isAggregated || count > 0) {
-            addAggregateRow(x, row, len, count);
-        }
-
-        r.setRows(x);
     }
 }

@@ -47,26 +47,10 @@ import java.sql.SQLException;
  */
 class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
-    int                           storageSize;
-    private ByteArrayOutputStream byteOut = (ByteArrayOutputStream) out;
+    int storageSize;
 
-    /**
-     *  Constructor used for a Result row
-     *
-     * @exception  IOException when an IO error is encountered
-     */
-    public BinaryServerRowOutput() throws IOException {
-        super(new ByteArrayOutputStream());
-    }
-
-    /**
-     *  Constructor used for persistent storage of a Table row
-     *
-     * @param  size no of bytes of storage used
-     * @exception  IOException when an IO error is encountered
-     */
-    public BinaryServerRowOutput(int size) throws IOException {
-        super(new ByteArrayOutputStream(size));
+    public BinaryServerRowOutput() {
+        super();
     }
 
 // fredt@users - comment - methods for writing column type, name and data size
@@ -76,9 +60,12 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void writePos(int pos) throws IOException {
 
+        // fredt - this value is used in 1.7.0 when reading back, for a
+        // 'data integrity' check
+        // will remove once compatibility is no longer necessary
         writeInt(pos);
 
-        for (; byteOut.size() < storageSize; ) {
+        for (; count < storageSize; ) {
             this.write(0);
         }
     }
@@ -102,22 +89,13 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         write(bytes);
     }
 
-    public byte[] toByteArray() throws IOException {
-
-        byte ret[] = byteOut.toByteArray();
-
-        byteOut.reset();
-
-        return (ret);
-    }
-
 // fredt@users - comment - methods used for writing each SQL type
     protected void writeFieldType(int type) throws IOException {
-        writeByte(1);
+        write(1);
     }
 
     protected void writeNull(int type) throws IOException {
-        writeByte(0);
+        write(0);
     }
 
     protected void writeChar(String s, int t) throws IOException {
@@ -164,7 +142,8 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeBit(Boolean o) throws IOException, SQLException {
-        writeBoolean(o.booleanValue());
+        write(o.booleanValue() ? 1
+                               : 0);
     }
 
     protected void writeDate(java.sql.Date o)
@@ -208,7 +187,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @return  size of byte array
      * @exception  SQLException When data is inconsistent
      */
-    public static int getSize(CachedRow row) throws SQLException {
+    public int getSize(CachedRow row) throws SQLException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();

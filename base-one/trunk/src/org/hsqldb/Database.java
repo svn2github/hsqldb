@@ -100,9 +100,9 @@ import java.util.Enumeration;
 // fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
 // fredt@users 20020405 - patch 1.7.0 by fredt - other ALTER TABLE statements
 // boucherb@users - added javadoc comments
-// tony_lai@users 20020820 - patch 595099 by tlai@users - use user define PK name
-// tony_lai@users 20020820 - patch 595073 by tlai@users - duplicated exception msg
-// tony_lai@users 20020820 - patch 595156 by tlai@users - violation of Integrity constraint name
+// tony_lai@users 20020820 - patch 595099 - use user define PK name
+// tony_lai@users 20020820 - patch 595073 - duplicated exception msg
+// tony_lai@users 20020820 - patch 595156 - violation of Integrity constraint name
 // tony_lai@users 20020820 - patch 1.7.1 - modification to shutdown compact process to save memory usage
 // boucherb@users 20020828 - patch 1.7.1 - allow reconnect to local db that has shutdown
 // fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
@@ -520,7 +520,7 @@ class Database {
                         break;
 
                     case CHECKPOINT :
-                        rResult = processCheckpoint(session);
+                        rResult = processCheckpoint(c, session);
                         break;
 
                     case SEMICOLON :
@@ -2365,11 +2365,21 @@ class Database {
      * @return
      * @throws  SQLException
      */
-    private Result processCheckpoint(Session session) throws SQLException {
+    private Result processCheckpoint(Tokenizer c,
+                                     Session session) throws SQLException {
 
         session.checkAdmin();
         session.checkReadWrite();
-        logger.checkpoint();
+
+        boolean defrag = false;
+        String  token  = c.getString();
+
+        // fredt - todo - catch misspelt qualifiers here and elsewhere
+        if (token.equals("DEFRAG")) {
+            defrag = true;
+        }
+
+        logger.checkpoint(defrag);
 
         return new Result();
     }
@@ -2670,6 +2680,10 @@ class Database {
                 case 1 :
                     lLog.close(true);
                     break;
+
+                case 2 :
+                    lLog.close(false);
+                    break;
             }
 
             lLog = null;
@@ -2767,10 +2781,10 @@ class Database {
          * @throws  SQLException if there is a problem checkpointing the
          *      database
          */
-        private void checkpoint() throws SQLException {
+        private void checkpoint(boolean mode) throws SQLException {
 
             if (lLog != null) {
-                lLog.checkpoint();
+                lLog.checkpoint(mode);
             }
         }
 

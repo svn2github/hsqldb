@@ -69,8 +69,8 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -115,12 +115,11 @@ class Expression {
                      EXISTS        = 31;
 
     // aggregate functions
-    static final int COUNT      = 40,
-                     SUM        = 41,
-                     MIN        = 42,
-                     MAX        = 43,
-                     AVG        = 44,
-                     DIST_COUNT = 45;
+    static final int COUNT = 40,
+                     SUM   = 41,
+                     MIN   = 42,
+                     MAX   = 43,
+                     AVG   = 44;
 
     // system functions
     static final int IFNULL   = 60,
@@ -128,19 +127,63 @@ class Expression {
                      CASEWHEN = 62;
 
     // temporary used during paring
-    static final int PLUS         = 100,
-                     OPEN         = 101,
-                     CLOSE        = 102,
-                     SELECT       = 103,
-                     COMMA        = 104,
-                     STRINGCONCAT = 105,
-                     BETWEEN      = 106,
-                     CAST         = 107,
-                     END          = 108;
-    private int      iType;
+    static final int         PLUS         = 100,
+                             OPEN         = 101,
+                             CLOSE        = 102,
+                             SELECT       = 103,
+                             COMMA        = 104,
+                             STRINGCONCAT = 105,
+                             BETWEEN      = 106,
+                             CAST         = 107,
+                             END          = 108;
+    static final HsqlHashMap typeNames    = new HsqlHashMap();
+
+    static {
+        typeNames.put(new Integer(VALUE), "VALUE");
+        typeNames.put(new Integer(COLUMN), "COLUMN");
+        typeNames.put(new Integer(QUERY), "QUERY");
+        typeNames.put(new Integer(TRUE), "TRUE");
+        typeNames.put(new Integer(VALUELIST), "VALUELIST");
+        typeNames.put(new Integer(ASTERIX), "*");
+        typeNames.put(new Integer(FUNCTION), "FUNCTION");
+        typeNames.put(new Integer(NEGATE), "NEGATE");
+        typeNames.put(new Integer(ADD), "ADD");
+        typeNames.put(new Integer(SUBTRACT), "SUBTRACT");
+        typeNames.put(new Integer(MULTIPLY), "MULTIPLY");
+        typeNames.put(new Integer(DIVIDE), "DIVIDE");
+        typeNames.put(new Integer(CONCAT), "CONCAT");
+        typeNames.put(new Integer(NOT), "NOT");
+        typeNames.put(new Integer(EQUAL), "EQUAL");
+        typeNames.put(new Integer(BIGGER_EQUAL), "BIGGER_EQUAL");
+        typeNames.put(new Integer(BIGGER), "BIGGER");
+        typeNames.put(new Integer(SMALLER), "SMALLER");
+        typeNames.put(new Integer(SMALLER_EQUAL), "SMALLER_EQUAL");
+        typeNames.put(new Integer(NOT_EQUAL), "NOT_EQUAL");
+        typeNames.put(new Integer(LIKE), "LIKE");
+        typeNames.put(new Integer(AND), "AND");
+        typeNames.put(new Integer(OR), "OR");
+        typeNames.put(new Integer(IN), "IN");
+        typeNames.put(new Integer(EXISTS), "EXISTS");
+        typeNames.put(new Integer(COUNT), "COUNT");
+        typeNames.put(new Integer(SUM), "SUM");
+        typeNames.put(new Integer(MIN), "MIN");
+        typeNames.put(new Integer(MAX), "MAX");
+        typeNames.put(new Integer(AVG), "AVG");
+        typeNames.put(new Integer(IFNULL), "IFNULL");
+        typeNames.put(new Integer(CONVERT), "CONVERT");
+        typeNames.put(new Integer(CASEWHEN), "CASEWHEN");
+    }
+
+    private static final int AGGREGATE_SELF  = -1;
+    private static final int AGGREGATE_NONE  = 0;
+    private static final int AGGREGATE_LEFT  = 1;
+    private static final int AGGREGATE_RIGHT = 2;
+    private static final int AGGREGATE_BOTH  = 3;
+    private int              iType;
 
     // nodes
     private Expression eArg, eArg2;
+    private int        aggregateSpec = AGGREGATE_NONE;
 
     // VALUE, VALUELIST
     private Object      oData;
@@ -201,6 +244,8 @@ class Expression {
         cLikeEscape = e.cLikeEscape;
         sSelect     = e.sSelect;
         fFunction   = e.fFunction;
+
+        checkAggregate();
     }
 
     /**
@@ -253,6 +298,8 @@ class Expression {
         iType = type;
         eArg  = e;
         eArg2 = e2;
+
+        checkAggregate();
     }
 
     /**
@@ -301,6 +348,59 @@ class Expression {
         oData     = o;
     }
 
+    private void checkAggregate() {
+
+        if (isAggregate(iType)) {
+            aggregateSpec = AGGREGATE_SELF;
+        } else {
+            aggregateSpec = AGGREGATE_NONE;
+
+            if ((eArg != null) && eArg.isAggregate()) {
+                aggregateSpec += AGGREGATE_LEFT;
+            }
+
+            if ((eArg2 != null) && eArg2.isAggregate()) {
+                aggregateSpec += AGGREGATE_RIGHT;
+            }
+        }
+    }
+
+    public String toString() {
+
+        StringBuffer buf = new StringBuffer(typeNames.get(new Integer(iType))
+                                            + " ");
+
+        switch (iType) {
+
+            case FUNCTION :
+                buf.append(fFunction);
+                break;
+
+            case VALUE :
+                buf.append("=" + oData);
+                break;
+
+            case QUERY :
+                buf.append(sSelect);
+                break;
+
+            case COLUMN :
+                buf.append(sColumn);
+                break;
+
+            default :
+                if (eArg != null) {
+                    buf.append(" arg1=[" + eArg + "]");
+                }
+
+                if (eArg2 != null) {
+                    buf.append(" arg2=[" + eArg2 + "]");
+                }
+        }
+
+        return buf.toString();
+    }
+
     /**
      * Method declaration
      *
@@ -330,25 +430,238 @@ class Expression {
     }
 
     /**
-     * Method declaration
+     * Check if the given expression defines similar operation as this
+     * expression.
+     */
+    public boolean similarTo(Expression exp) {
+
+        if (exp == null) {
+            return false;
+        }
+
+        if (exp == this) {
+            return true;
+        }
+
+        return (iType == exp.iType) && similarTo(eArg, exp.eArg)
+               && similarTo(eArg2, exp.eArg2) && equals(oData, exp.oData)
+               && equals(hList, exp.hList) && iDataType == exp.iDataType
+               && equals(sSelect, exp.sSelect)
+               && equals(fFunction, exp.fFunction)
+               && cLikeEscape == exp.cLikeEscape
+               && equals(sTable, exp.sTable) && equals(sColumn, exp.sColumn)
+               && iDataType == exp.iDataType;
+    }
+
+    static boolean equals(Object o1, Object o2) {
+        return (o1 == null) ? o2 == null
+                            : o1.equals(o2);
+    }
+
+    static boolean similarTo(Expression e1, Expression e2) {
+        return (e1 == null) ? e2 == null
+                            : e1.similarTo(e2);
+    }
+
+    /**
+     * Check if this expression can be included in a group by clause.
+     * <p>
+     * It can, if itself is a column expression, and it is not an aggregate
+     * expression.
+     */
+    boolean canBeInGroupBy() {
+        return isColumn() && (!(isAggregate()));
+    }
+
+    /**
+     * Check if this expression can be included in an order by clause.
+     * <p>
+     * It can, if itself is a column expression.
+     */
+    boolean canBeInOrderBy() {
+        return isColumn() || isAggregate();
+    }
+
+    /**
+     * Check if this expression defines at least one column.
+     * <p>
+     * It is, if itself is a column expression, or any the argument
+     * expressions is a column expression.
+     */
+    boolean isColumn() {
+
+        switch (iType) {
+
+            case COLUMN :
+                return true;
+
+            case NEGATE :
+                return eArg.isColumn();
+
+            case ADD :
+            case SUBTRACT :
+            case MULTIPLY :
+            case DIVIDE :
+            case CONCAT :
+                return eArg.isColumn() || eArg2.isColumn();
+        }
+
+        return false;
+    }
+
+    /**
+     * Collect column name used in this expression.
+     * @return if a column name is used in this expression
+     */
+    boolean collectColumnName(HsqlHashMap columnNames) {
+
+        if (iType == COLUMN) {
+            columnNames.put(sColumn, sColumn);
+        }
+
+        return iType == COLUMN;
+    }
+
+    /**
+     * Collect all column names used in this expression or any of nested
+     * expression.
+     */
+    void collectAllColumnNames(HsqlHashMap columnNames) {
+
+        if (!collectColumnName(columnNames)) {
+            if (eArg != null) {
+                eArg.collectAllColumnNames(columnNames);
+            }
+
+            if (eArg2 != null) {
+                eArg2.collectAllColumnNames(columnNames);
+            }
+        }
+    }
+
+    /**
+     * Check if this expression defines a constant value.
+     * <p>
+     * It is, if itself is a constant value expression, or all the argument
+     * expressions define constant values.
+     */
+    boolean isConstant() {
+
+        switch (iType) {
+
+            case VALUE :
+                return true;
+
+            case NEGATE :
+                return eArg.isConstant();
+
+            case ADD :
+            case SUBTRACT :
+            case MULTIPLY :
+            case DIVIDE :
+            case CONCAT :
+                return eArg.isConstant() && eArg2.isConstant();
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this expression can be included as a result column in an
+     * aggregated select statement.
+     * <p>
+     * It can, if itself is an aggregate expression, or it results a constant
+     * value.
+     */
+    boolean canBeInAggregate() {
+        return isAggregate() || isConstant();
+    }
+
+    /**
+     *  Method declaration
      *
      *
-     * @return
+     *  @return
      */
     boolean isAggregate() {
-        return isAggregate(iType);
+        return aggregateSpec != AGGREGATE_NONE;
+    }
+
+    /**
+     *  Method declaration
+     *
+     *
+     *  @return
+     */
+    boolean isSelfAggregate() {
+        return aggregateSpec == AGGREGATE_SELF;
     }
 
     static boolean isAggregate(int type) {
 
         if ((type == COUNT) || (type == MAX) || (type == MIN)
-                || (type == SUM) || (type == AVG) || (type == DIST_COUNT)) {
+                || (type == SUM) || (type == AVG)) {
             return true;
         }
 
-        // todo: recurse eArg and eArg2; maybe they are grouped.
-        // grouping 'correctly' would be quite complex
         return false;
+    }
+
+// tony_lai@users having
+
+    /**
+     *  Checks for conditional expression.
+     *
+     *
+     *  @return
+     */
+    boolean isConditional() {
+
+        switch (iType) {
+
+            case TRUE :
+            case EQUAL :
+            case BIGGER_EQUAL :
+            case BIGGER :
+            case SMALLER :
+            case SMALLER_EQUAL :
+            case NOT_EQUAL :
+            case LIKE :
+            case IN :
+            case EXISTS :
+                return true;
+
+            case NOT :
+                return eArg.isConditional();
+
+            case AND :
+            case OR :
+                return eArg.isConditional() && eArg2.isConditional();
+
+            default :
+                return false;
+        }
+    }
+
+    /**
+     * Collects all expressions that must be in the GROUP BY clause, for a
+     * grouped select statement.
+     */
+    void collectInGroupByExpressions(HsqlArrayList colExps) {
+
+        if (!(isConstant() || isSelfAggregate())) {
+            if (isColumn()) {
+                colExps.add(this);
+            } else {
+                if (eArg != null) {
+                    eArg.collectInGroupByExpressions(colExps);
+                }
+
+                if (eArg2 != null) {
+                    eArg2.collectInGroupByExpressions(colExps);
+                }
+            }
+        }
     }
 
     /**
@@ -380,6 +693,10 @@ class Expression {
         aliasQuoted = isquoted;
     }
 
+    String getDefinedAlias() {
+        return sAlias;
+    }
+
     /**
      * Method declaration
      *
@@ -402,11 +719,16 @@ class Expression {
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
 // return column name for aggregates without alias
-        if (isAggregate()) {
-            return eArg.getColumnName();
+        if (eArg != null) {
+            String name = eArg.getColumnName();
+
+            if (!"".equals(name)) {
+                return name;
+            }
         }
 
-        return "";
+        return eArg2 == null ? ""
+                             : eArg2.getAlias();
     }
 
     /**
@@ -425,11 +747,16 @@ class Expression {
             return columnQuoted;
         }
 
-        if (isAggregate()) {
-            return eArg.columnQuoted;
+        if (eArg != null) {
+            String name = eArg.getColumnName();
+
+            if (!"".equals(name)) {
+                return eArg.columnQuoted;
+            }
         }
 
-        return false;
+        return eArg2 == null ? false
+                             : eArg2.columnQuoted;
     }
 
     /**
@@ -603,10 +930,6 @@ class Expression {
                 iDataType = Types.INTEGER;
                 break;
 
-            case DIST_COUNT :
-                if (eArg.iType == ASTERIX) {
-                    iDataType = Types.INTEGER;
-                }
             case MAX :
             case MIN :
             case SUM :
@@ -625,8 +948,6 @@ class Expression {
                 break;
         }
     }
-
-// fredt@users 20021012 - patch 1.7.1 by hofhansl@users - use index with negate
 
     /**
      * Method declaration
@@ -748,24 +1069,13 @@ class Expression {
     /**
      * Method declaration
      *
-     * @return
-     */
-    boolean isDistinctAggregate() {
-        return isDistinctAggregate;
-    }
-
-    /**
-     * Method declaration
-     *
      * @param type
      */
     void setDistinctAggregate(boolean type) {
 
-        isDistinctAggregate = type;
+        isDistinctAggregate = type && (eArg.iType != ASTERIX);
 
-        if (iType == COUNT || iType == DIST_COUNT) {
-            iType     = type ? DIST_COUNT
-                             : COUNT;
+        if (iType == COUNT) {
             iDataType = type ? iDataType
                              : Types.INTEGER;
         }
@@ -853,6 +1163,270 @@ class Expression {
      *
      * @throws SQLException
      */
+    Object getAggregatedValue(Object currValue) throws SQLException {
+
+        if (!isAggregate()) {
+            return currValue;
+        }
+
+        switch (iType) {
+
+            case COUNT :
+                return currValue == null ? INTEGER_0
+                                         : ((AggregatingValue) currValue)
+                                             .currentValue;
+
+            case MAX :
+            case MIN :
+            case SUM :
+                return currValue == null ? null
+                                         : ((AggregatingValue) currValue)
+                                             .currentValue;
+
+            case AVG :
+                return currValue == null ? null
+                                         : Column.avg(
+                                             ((AggregatingValue) currValue)
+                                                 .currentValue, iDataType,
+                                                     ((AggregatingValue) currValue)
+                                                         .acceptedValueCount);
+
+            case NEGATE :
+                return Column.negate(eArg.getAggregatedValue(currValue),
+                                     iDataType);
+
+            case CONVERT :
+                return Column.convertObject(
+                    eArg.getAggregatedValue(currValue), iDataType);
+        }
+
+        Object leftValue  = null,
+               rightValue = null;
+
+        switch (aggregateSpec) {
+
+            case AGGREGATE_LEFT :
+                leftValue  = eArg.getAggregatedValue(currValue);
+                rightValue = eArg2 == null ? null
+                                           : eArg2.getValue(eArg.iDataType);
+                break;
+
+            case AGGREGATE_RIGHT :
+                leftValue  = eArg == null ? null
+                                          : eArg.getValue(eArg2.iDataType);
+                rightValue = eArg2.getAggregatedValue(currValue);
+                break;
+
+            case AGGREGATE_BOTH :
+                if (currValue == null) {
+                    currValue = new Object[2];
+                }
+
+                leftValue =
+                    eArg.getAggregatedValue(((Object[]) currValue)[0]);
+                rightValue =
+                    eArg2.getAggregatedValue(((Object[]) currValue)[1]);
+                break;
+        }
+
+        switch (iType) {
+
+// tony_lai@users having >>>
+            case TRUE :
+                return Boolean.TRUE;
+
+            case NOT :
+                Trace.doAssert(eArg2 == null, "Expression.test");
+
+                return new Boolean(!((Boolean) leftValue).booleanValue());
+
+            case AND :
+                return new Boolean(((Boolean) leftValue).booleanValue()
+                                   && ((Boolean) rightValue).booleanValue());
+
+            case OR :
+                return new Boolean(((Boolean) leftValue).booleanValue()
+                                   || ((Boolean) rightValue).booleanValue());
+
+            case LIKE :
+
+                // todo: now for all tests a new 'like' object required!
+                String s = (String) Column.convertObject(rightValue,
+                    Types.VARCHAR);
+                int type = eArg.iDataType;
+                Like l = new Like(s, cLikeEscape,
+                                  type == Column.VARCHAR_IGNORECASE);
+                String c = (String) Column.convertObject(leftValue,
+                    Types.VARCHAR);
+
+                return l.compare(c) ? Boolean.TRUE
+                                    : Boolean.FALSE;
+
+            case IN :
+                return eArg2.testValueList(leftValue, eArg.iDataType)
+                       ? Boolean.TRUE
+                       : Boolean.FALSE;
+
+            case EXISTS :
+                Result r = eArg.sSelect.getResult(1);    // 1 is already enough
+
+                return r.rRoot != null ? Boolean.TRUE
+                                       : Boolean.FALSE;
+
+// tony_lai@users having <<<
+            case ADD :
+                return Column.add(leftValue, rightValue, iDataType);
+
+            case SUBTRACT :
+                return Column.subtract(leftValue, rightValue, iDataType);
+
+            case MULTIPLY :
+                return Column.multiply(leftValue, rightValue, iDataType);
+
+            case DIVIDE :
+                return Column.divide(leftValue, rightValue, iDataType);
+
+            case CONCAT :
+                return Column.concat(leftValue, rightValue);
+
+// tony_lai@users having >>>
+        }
+
+        int valueType = eArg.isColumn() ? eArg.iDataType
+                                        : eArg2.iDataType;
+        int result    = Column.compare(leftValue, rightValue, valueType);
+
+        switch (iType) {
+
+            case EQUAL :
+                return result == 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
+
+            case BIGGER :
+                return result > 0 ? Boolean.TRUE
+                                  : Boolean.FALSE;
+
+            case BIGGER_EQUAL :
+                return result >= 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
+
+            case SMALLER_EQUAL :
+                return result <= 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
+
+            case SMALLER :
+                return result < 0 ? Boolean.TRUE
+                                  : Boolean.FALSE;
+
+            case NOT_EQUAL :
+                return result != 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
+
+            default :
+                Trace.check(false, Trace.NEED_AGGREGATE, this.toString());
+
+                return null;    // Not reachable.
+        }
+
+// tony_lai@users having <<<
+    }
+
+    Object getSelfAggregatingValue(Object currValue) throws SQLException {
+
+        AggregatingValue aggValue =
+            AggregatingValue.getAggregatingValue(currValue,
+                isDistinctAggregate);
+        Object newValue = eArg.iType == ASTERIX ? INTEGER_1
+                                                : eArg.getValue();
+
+        if (aggValue.isValueAcceptable(newValue)) {
+            switch (iType) {
+
+                case COUNT :
+                    aggValue.currentValue = Column.sum(aggValue.currentValue,
+                                                       newValue == null
+                                                       ? INTEGER_0
+                                                       : INTEGER_1, iDataType);
+                    break;
+
+                case AVG :
+                case SUM :
+                    aggValue.currentValue = Column.sum(aggValue.currentValue,
+                                                       newValue, iDataType);
+                    break;
+
+                case MAX :
+                    aggValue.currentValue = Column.max(aggValue.currentValue,
+                                                       newValue, iDataType);
+                    break;
+
+                case MIN :
+                    aggValue.currentValue = Column.min(aggValue.currentValue,
+                                                       newValue, iDataType);
+                    break;
+            }
+        }
+
+        return aggValue;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     *
+     * @throws SQLException
+     */
+    Object getAggregatingValue(Object currValue) throws SQLException {
+
+        if (!isAggregate()) {
+            return getValue();
+        }
+
+        if (aggregateSpec == AGGREGATE_SELF) {
+            return getSelfAggregatingValue(currValue);
+        }
+
+        Object leftCurrValue  = currValue;
+        Object rightCurrValue = currValue;
+
+        if (aggregateSpec == AGGREGATE_BOTH) {
+            if (currValue == null) {
+                currValue = new Object[2];
+            }
+
+            leftCurrValue  = ((Object[]) currValue)[0];
+            rightCurrValue = ((Object[]) currValue)[1];
+        }
+
+        if (eArg.isAggregate()) {
+            leftCurrValue = eArg.getAggregatingValue(leftCurrValue);
+        }
+
+        if (eArg2.isAggregate()) {
+            rightCurrValue = eArg2.getAggregatingValue(rightCurrValue);
+        }
+
+        switch (aggregateSpec) {
+
+            case AGGREGATE_LEFT :
+                currValue = leftCurrValue;
+                break;
+
+            case AGGREGATE_RIGHT :
+                currValue = rightCurrValue;
+                break;
+
+            case AGGREGATE_BOTH :
+                ((Object[]) currValue)[0] = leftCurrValue;
+                ((Object[]) currValue)[1] = rightCurrValue;
+                break;
+        }
+
+        return currValue;
+    }
+
     Object getValue() throws SQLException {
 
         switch (iType) {
@@ -874,28 +1448,6 @@ class Expression {
 
             case NEGATE :
                 return Column.negate(eArg.getValue(iDataType), iDataType);
-
-            case COUNT :
-
-                // count(*): sum(1); count(col): sum(col<>null)
-                if (eArg.iType == ASTERIX) {
-                    return INTEGER_1;
-                }
-
-                if (eArg.getValue() == null) {
-                    return INTEGER_0;
-                } else {
-                    return INTEGER_1;
-                }
-            case DIST_COUNT :
-                if (eArg.iType == ASTERIX) {
-                    return INTEGER_1;
-                }
-            case MAX :
-            case MIN :
-            case SUM :
-            case AVG :
-                return eArg.getValue();
 
             case EXISTS :
                 return new Boolean(test());

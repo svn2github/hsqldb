@@ -44,20 +44,19 @@ import java.sql.Types;
  */
 class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
-    protected String              fieldSep;
-    protected String              varSep;
-    protected String              longvarSep;
-    private boolean               fieldSepEnd;
-    private boolean               varSepEnd;
-    private boolean               longvarSepEnd;
-    private String                nextSep = "";
-    private boolean               nextSepEnd;
-    private ByteArrayOutputStream byteOut = (ByteArrayOutputStream) out;
+    protected String fieldSep;
+    protected String varSep;
+    protected String longvarSep;
+    private boolean  fieldSepEnd;
+    private boolean  varSepEnd;
+    private boolean  longvarSepEnd;
+    private String   nextSep = "";
+    private boolean  nextSepEnd;
 
     public TextDatabaseRowOutput(String fieldSep, String varSep,
                                  String longvarSep) throws IOException {
 
-        super(new ByteArrayOutputStream());
+        super();
 
         skipSystemId = true;
 
@@ -295,8 +294,19 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         }
     }
 
-//
-    public byte[] toByteArray() throws IOException {
+    public int getSize(CachedRow r) throws SQLException {
+
+        try {
+            writeData(r.getData(), r.getTable());
+        } catch (IOException e) {
+            throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
+        }
+
+        return size();
+    }
+
+    //
+    public byte[] toByteArray() {
 
         if (nextSepEnd) {
             writeBytes(nextSep);
@@ -307,10 +317,10 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         writeBytes(TextCache.NL);
 
-        byte ret[] = byteOut.toByteArray();
+        byte ret[] = toByteArray();
 
-        byteOut.reset();
+        reset();
 
-        return (ret);
+        return ret;
     }
 }

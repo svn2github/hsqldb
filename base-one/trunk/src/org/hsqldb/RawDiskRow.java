@@ -67,173 +67,132 @@
 
 package org.hsqldb;
 
-import java.io.RandomAccessFile;
+import java.sql.SQLException;
 import java.io.IOException;
-import java.io.EOFException;
-import java.io.FileNotFoundException;
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - new method
+import java.io.RandomAccessFile;
+import java.util.HashMap;
+import org.hsqldb.lib.UnifiedTable;
 
 /**
- *  This class provides methods for reading and writing data from a
- *  database file such as that used for storing a cached table.
+ *  Wrapper for disk image of CathecRow and its CachedNodes used for direct
+ *  file defragmentation and housekeeping tasks. Corresponds to the disk data
+ *  for a database row, including Row and its Node objects.
  *
- * @version  1.7.0
+ *  Designed so that each object is reusable for many rows.
+ *
+ * @version    1.7.2
+ * @author     frest@users
  */
-class DatabaseFile extends RandomAccessFile {
+class RawDiskRow {
 
-    protected byte in[];
-    protected long pos;
-    protected int  index;
-    protected int  count;
-    final boolean  readOnly;
+    int           storageSize;
+    RawDiskNode[] diskNodes  = new RawDiskNode[0];
+    int           indexCount = 0;    // count of utilised elements of diskNodes
+    byte[]        rowData    = new byte[0];
+    int           rowDataLength;
+    long          filePosition;
 
-    DatabaseFile(String name, String mode,
-                 int inSize) throws FileNotFoundException, IOException {
+    void write(DatabaseFile file) throws IOException {
 
-        super(name, mode);
+        writeNodes(file);
+        file.write(rowData, 0,
+                   storageSize - 4 - indexCount * RawDiskNode.storageSize);
 
-        readOnly = mode.equals("r");
-        in       = new byte[inSize];
+//        file.writeInteger((int) filePosition);
     }
 
-    protected void realSeek(long newPos) throws IOException {
-        super.seek(newPos);
+    void write(RandomAccessFile file) throws IOException {
+
+        writeNodes(file);
+        file.write(rowData, 0,
+                   storageSize - 4 - indexCount * RawDiskNode.storageSize);
+
+// sort this one out
+//        file.writeInt((int) filePosition);
     }
 
-    public void seek(long newPos) throws IOException {
+    void writeNodes(DatabaseFile file) throws IOException {
 
-        super.seek(newPos);
+        file.writeInteger(storageSize);
 
-        pos   = newPos;
-        index = count = 0;
+        for (int i = 0; i < indexCount; i++) {
+            diskNodes[i].write(file);
+        }
     }
 
-    public void readSeek(long newPos) throws IOException {
+    void writeNodes(RandomAccessFile file) throws IOException {
 
-        if (in == null) {
-            seek(newPos);
-        } else if (newPos != pos) {
-            index += (int) (newPos - pos);
+        file.writeInt(storageSize);
 
-            if ((index < 0) || (index > count)) {
-                seek(newPos);
-            } else {
-                pos = newPos;
+        for (int i = 0; i < indexCount; i++) {
+            diskNodes[i].write(file);
+        }
+
+// sort this one out
+//        file.writeInteger((int) filePosition);
+    }
+
+    void read(DatabaseFile file, int indcount) throws IOException {
+
+        readNodes(file, indcount);
+
+        // fredt change to size of raw node
+        file.read(rowData, 0,
+                  storageSize - 4 - indcount * RawDiskNode.storageSize);
+    }
+
+    void readNodes(DatabaseFile file, int indcount) throws IOException {
+
+        filePosition = file.pos;
+        indexCount   = indcount;
+
+        if (indexCount > diskNodes.length) {
+            diskNodes = new RawDiskNode[indexCount];
+
+            for (int i = 0; i < indexCount; i++) {
+                diskNodes[i] = new RawDiskNode();
             }
         }
-    }
 
-    public int read() throws IOException {
+        storageSize = file.readInteger();
 
-        if (in == null) {
-            return (super.read());
+        for (int i = 0; i < indexCount; i++) {
+            diskNodes[i].read(file);
         }
 
-        if (index == count) {
-            index = 0;
-            count = super.read(in);
+        if (storageSize > rowData.length) {
+            rowData = new byte[storageSize];
+        }
+    }
 
-            if (count == -1) {
-                count = 0;
+    void readNodes(RandomAccessFile file, int indcount) throws IOException {
+
+        filePosition = file.getFilePointer();
+        indexCount   = indcount;
+
+        if (indexCount > diskNodes.length) {
+            diskNodes = new RawDiskNode[indexCount];
+
+            for (int i = 0; i < indexCount; i++) {
+                diskNodes[i] = new RawDiskNode();
             }
         }
 
-        if (index == count) {
-            return (-1);
+        storageSize = file.readInt();
+
+        for (int i = 0; i < indexCount; i++) {
+            diskNodes[i].read(file);
         }
 
-        pos++;
-
-        return (in[index++] & 0xff);
-    }
-
-    public int read(byte[] b) throws IOException {
-
-        int i = 0;
-        int next;
-
-        for (; i < b.length; i++) {
-            next = read();
-
-            if (next == -1) {
-                return (-1);
-            }
-
-            b[i] = (byte) next;
+        if (storageSize > rowData.length) {
+            rowData = new byte[storageSize];
         }
-
-        return i;
     }
 
-// fredt@users - patch 1.7.2 - method added
-    public int read(byte[] b, int offset, int length) throws IOException {
+    void replacePointers(UnifiedTable lookup) throws SQLException {
 
-        int i = 0;
-        int next;
-
-        for (; i < length; i++) {
-            next = read();
-
-            if (next == -1) {
-                return (-1);
-            }
-
-            b[offset + i] = (byte) next;
+        for (int i = 0; i < indexCount; i++) {
+            diskNodes[i].replacePointers(lookup);
         }
-
-        return i;
-    }
-
-    //-- readInt is final.
-    public int readInteger() throws IOException {
-
-        int ret = 0;
-        int next;
-
-        for (int i = 0; i < 4; i++) {
-            next = read();
-
-            if (next == -1) {
-                throw (new EOFException());
-            }
-
-            ret <<= 8;
-            ret += (next & 0xff);
-        }
-
-        return ret;
-    }
-
-    public void write(byte[] b) throws IOException {
-
-        index = count = 0;
-        pos   += b.length;
-
-        super.write(b);
-    }
-
-    public void write(byte[] b, int off, int len) throws IOException {
-
-        index = count = 0;
-        pos   += len;
-
-        super.write(b, off, len);
-    }
-
-    //-- writeInt is final.
-    public void writeInteger(int i) throws IOException {
-
-        index = count = 0;
-        pos   += 4;
-
-        writeInt(i);
-    }
-
-    public void close() throws IOException {
-
-        super.close();
-
-        in = null;
     }
 }

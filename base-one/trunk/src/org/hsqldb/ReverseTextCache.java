@@ -49,18 +49,11 @@ import java.util.*;
 class ReverseTextCache extends org.hsqldb.TextCache {
 
     /**
-     *  The cache constructor sets up the initial parameters of the cache
-     *  object, setting the name used for the file, etc.
-     *
-     * @param  name              of database file
-     * @param  cacheScale        (scale of memory cache)
-     * @param  propPrefix        prefix for relevant properties
-     * @param  props             Description of the Parameter
-     * @exception  SQLException  Description of the Exception
+     * same as parent
      */
     ReverseTextCache(String name, String propPrefix,
-                     HsqlDatabaseProperties props) throws SQLException {
-        super(name, propPrefix, props);
+                     Database db) throws SQLException {
+        super(name, propPrefix, db);
     }
 
     /**

@@ -68,8 +68,10 @@
 package org.hsqldb;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.DataInput;
 import java.io.DataInputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -85,35 +87,38 @@ import java.sql.Types;
  * @author fredt@users
  * @version 1.7.0
  */
-abstract class DatabaseRowInput extends DataInputStream {
+abstract class DatabaseRowInput extends ByteArrayInputStream
+implements DataInput {
 
     static final int NO_POS  = -1;
-    protected int    pos     = NO_POS;
+    protected int    filePos = NO_POS;
     protected int    nextPos = NO_POS;
     protected int    size;
 
     // the last column is a SYSTEM_ID that has to be created at read time
     protected boolean makeSystemId = false;
 
-    public DatabaseRowInput(InputStream in) {
-        super(in);
+    public DatabaseRowInput() {
+        this(new byte[4]);
     }
 
-    public DatabaseRowInput(byte bin[], int pos) throws IOException {
+    /**
+     * Constructor takes a complete row
+     */
+    public DatabaseRowInput(byte[] buf) {
 
-        this(new ByteArrayInputStream(bin));
+        super(buf);
 
-        this.pos = pos;
-        size     = bin.length;
+        size = buf.length;
     }
 
     public int getPos() throws IOException {
 
-        if (pos == NO_POS) {
+        if (filePos == NO_POS) {
             throw (new IOException("No position specified"));
         }
 
-        return (pos);
+        return (filePos);
     }
 
     public int getNextPos() throws IOException {
@@ -126,17 +131,17 @@ abstract class DatabaseRowInput extends DataInputStream {
     }
 
     public int getSize() {
-        return (size);
+        return size;
     }
 
-    // this group is used for node and type data
+// fredt@users - comment - methods used for node and type data
     public abstract int readIntData() throws IOException;
 
     public abstract int readType() throws IOException;
 
     public abstract String readString() throws IOException;
 
-    // read methods for SQL types
+// fredt@users - comment - methods used for SQL types
     protected abstract boolean checkNull() throws IOException;
 
     protected abstract String readChar(int type)
@@ -170,6 +175,126 @@ abstract class DatabaseRowInput extends DataInputStream {
 
     protected abstract byte[] readBinary(int type)
     throws IOException, SQLException;
+
+// fredt@users - comment - methods used for reading java primitive types
+    public final void readFully(byte b[]) throws IOException {
+        readFully(b, 0, b.length);
+    }
+
+    public final void readFully(byte b[], int off,
+                                int len) throws IOException {
+
+        if (len < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        int n = 0;
+
+        while (n < len) {
+            int count = read(b, off + n, len - n);
+
+            if (count < 0) {
+                throw new EOFException();
+            }
+
+            n += count;
+        }
+    }
+
+    public final boolean readBoolean() throws IOException {
+
+        int ch = read();
+
+        if (ch < 0) {
+            throw new EOFException();
+        }
+
+        return (ch != 0);
+    }
+
+    public final byte readByte() throws IOException {
+
+        int ch = read();
+
+        if (ch < 0) {
+            throw new EOFException();
+        }
+
+        return (byte) ch;
+    }
+
+    public final int readUnsignedByte() throws IOException {
+
+        int ch = read();
+
+        if (ch < 0) {
+            throw new EOFException();
+        }
+
+        return ch;
+    }
+
+    public final short readShort() throws IOException {
+
+        int ch1 = read();
+        int ch2 = read();
+
+        if ((ch1 | ch2) < 0) {
+            throw new EOFException();
+        }
+
+        return (short) ((ch1 << 8) + (ch2 << 0));
+    }
+
+    public final int readUnsignedShort() throws IOException {
+
+        int ch1 = read();
+        int ch2 = read();
+
+        if ((ch1 | ch2) < 0) {
+            throw new EOFException();
+        }
+
+        return (ch1 << 8) + (ch2 << 0);
+    }
+
+    public final char readChar() throws IOException {
+
+        int ch1 = read();
+        int ch2 = read();
+
+        if ((ch1 | ch2) < 0) {
+            throw new EOFException();
+        }
+
+        return (char) ((ch1 << 8) + (ch2 << 0));
+    }
+
+    public final int readInt() throws IOException {
+
+        int ch1 = read();
+        int ch2 = read();
+        int ch3 = read();
+        int ch4 = read();
+
+        if ((ch1 | ch2 | ch3 | ch4) < 0) {
+            throw new EOFException();
+        }
+
+        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+    }
+
+    public final long readLong() throws IOException {
+        return ((long) (readInt()) << 32) + (readInt() & 0xFFFFFFFFL);
+    }
+
+    public final float readFloat() throws IOException {
+        return Float.intBitsToFloat(readInt());
+    }
+
+    public final double readDouble() throws IOException {
+        return Double.longBitsToDouble(readLong());
+    }
 
     /**
      *  reads row data from a stream using the JDBC types in colTypes
@@ -275,5 +400,45 @@ abstract class DatabaseRowInput extends DataInputStream {
         }
 
         return data;
+    }
+
+    /**
+     *  Used to reset the row, ready for a new row to be read into the byte[]
+     *
+     */
+    public void resetRow(int filepos, int rowsize) throws IOException {
+
+        reset();
+
+        if (buf.length < rowsize) {
+            buf = new byte[rowsize];
+        }
+
+        filePos = filepos;
+        size    = count = rowsize;
+        pos     = 4;
+        buf[0]  = (byte) ((rowsize >>> 24) & 0xFF);
+        buf[1]  = (byte) ((rowsize >>> 16) & 0xFF);
+        buf[2]  = (byte) ((rowsize >>> 8) & 0xFF);
+        buf[3]  = (byte) ((rowsize >>> 0) & 0xFF);
+    }
+
+    public byte[] getBuffer() {
+        return buf;
+    }
+
+    public int skipBytes(int n) throws IOException {
+        throw new java.lang.UnsupportedOperationException(
+            "Method skipBytes() not yet implemented.");
+    }
+
+    public String readLine() throws IOException {
+        throw new java.lang.UnsupportedOperationException(
+            "Method readLine() not yet implemented.");
+    }
+
+    public String readUTF() throws IOException {
+        throw new java.lang.UnsupportedOperationException(
+            "Method readUTF() not yet implemented.");
     }
 }

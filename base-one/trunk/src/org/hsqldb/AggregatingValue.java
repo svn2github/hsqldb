@@ -31,35 +31,58 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-import java.sql.SQLException;
+import org.hsqldb.lib.HsqlHashMap;
 
 /**
- * Public interface for reading the data for a database row.
+ * This class is used by aggregate calculation as a temporary aggregating
+ * value holder, especially for nest aggregate calculation such as
+ * "count(column1) + 3" or "count(column1) + count(column2)"
+ * in a group by selection.
  *
- * @author sqlbob@users (RMP)
- * @author fredt@users
- * @version 1.7.0
+ * @author  Tony Lai
+ * @see     GroupedResult
+ * @see     Expression
+ * @since   1.7.0+
  */
-interface DatabaseRowInputInterface {
+class AggregatingValue {
 
-    public int getPos() throws IOException;
+    private static Object nullValue = new Object();
+    private HsqlHashMap   distinctValues;
+    Object                currentValue;
+    int                   acceptedValueCount;
 
-    public int getNextPos() throws IOException;
+    static AggregatingValue getAggregatingValue(Object currValue,
+            boolean distinct) {
+        return currValue == null ? new AggregatingValue(distinct)
+                                 : (AggregatingValue) currValue;
+    }
 
-    public int getSize();
+    AggregatingValue(boolean distinct) {
 
-    public int readType() throws IOException;
+        if (distinct) {
+            distinctValues = new HsqlHashMap();
+        }
+    }
 
-    public String readString() throws IOException;
+    boolean isValueAcceptable(Object newValue) {
 
-    public int readIntData() throws IOException;
+        if (distinctValues == null) {
+            acceptedValueCount++;
 
-    public int available() throws IOException;
+            return true;
+        }
 
-    public Object[] readData(int[] colTypes) throws IOException, SQLException;
+        Object checkValue = (newValue == null) ? nullValue
+                                               : newValue;
 
-    public void resetRow(int pos, int size) throws IOException;
+        if (distinctValues.containsValue(checkValue)) {
+            return false;
+        }
 
-    public byte[] getBuffer();
+        distinctValues.put(checkValue, checkValue);
+
+        acceptedValueCount++;
+
+        return true;
+    }
 }

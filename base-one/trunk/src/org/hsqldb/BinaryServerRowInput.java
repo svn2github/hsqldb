@@ -46,12 +46,12 @@ import java.sql.SQLException;
 class BinaryServerRowInput extends org.hsqldb.DatabaseRowInput
 implements org.hsqldb.DatabaseRowInputInterface {
 
-    public BinaryServerRowInput(byte bin[]) throws IOException {
-        super(bin, NO_POS);
+    public BinaryServerRowInput() throws IOException {
+        super();
     }
 
-    public BinaryServerRowInput(byte bin[], int pos) throws IOException {
-        super(bin, pos);
+    public BinaryServerRowInput(byte buf[]) throws IOException {
+        super(buf);
     }
 
     byte[] readByteArray() throws IOException {

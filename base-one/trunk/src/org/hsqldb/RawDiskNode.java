@@ -67,173 +67,94 @@
 
 package org.hsqldb;
 
-import java.io.RandomAccessFile;
+import org.hsqldb.lib.UnifiedTable;
+import java.sql.SQLException;
 import java.io.IOException;
-import java.io.EOFException;
-import java.io.FileNotFoundException;
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - new method
+import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 /**
- *  This class provides methods for reading and writing data from a
- *  database file such as that used for storing a cached table.
+ *  Wrapper for disk image of CachedNode used for direct file defragmentation
+ *  and housekeeping tasks. Corresponds to the disk data for a DiskNode
+ *  object.
  *
- * @version  1.7.0
+ *  Designed so that the object can be reused for many rows.
+ *
+ * @version    1.7.2
+ * @author     frest@users
  */
-class DatabaseFile extends RandomAccessFile {
+class RawDiskNode {
 
-    protected byte in[];
-    protected long pos;
-    protected int  index;
-    protected int  count;
-    final boolean  readOnly;
+    int              iBalance;
+    int              iLeft;
+    int              iRight;
+    int              iParent;
+    final static int storageSize = 16;
 
-    DatabaseFile(String name, String mode,
-                 int inSize) throws FileNotFoundException, IOException {
+    void write(DatabaseFile file) throws IOException {
 
-        super(name, mode);
-
-        readOnly = mode.equals("r");
-        in       = new byte[inSize];
+        file.writeInteger(iBalance);
+        file.writeInteger(iLeft);
+        file.writeInteger(iRight);
+        file.writeInteger(iParent);
     }
 
-    protected void realSeek(long newPos) throws IOException {
-        super.seek(newPos);
+    void write(RandomAccessFile file) throws IOException {
+
+        file.writeInt(iBalance);
+        file.writeInt(iLeft);
+        file.writeInt(iRight);
+        file.writeInt(iParent);
     }
 
-    public void seek(long newPos) throws IOException {
+    void read(DatabaseFile file) throws IOException {
 
-        super.seek(newPos);
-
-        pos   = newPos;
-        index = count = 0;
+        iBalance = file.readInteger();
+        iLeft    = file.readInteger();
+        iRight   = file.readInteger();
+        iParent  = file.readInteger();
     }
 
-    public void readSeek(long newPos) throws IOException {
+    void read(RandomAccessFile file) throws IOException {
 
-        if (in == null) {
-            seek(newPos);
-        } else if (newPos != pos) {
-            index += (int) (newPos - pos);
-
-            if ((index < 0) || (index > count)) {
-                seek(newPos);
-            } else {
-                pos = newPos;
-            }
-        }
+        iBalance = file.readInt();
+        iLeft    = file.readInt();
+        iRight   = file.readInt();
+        iParent  = file.readInt();
     }
 
-    public int read() throws IOException {
+    void replacePointers(UnifiedTable lookup) throws SQLException {
 
-        if (in == null) {
-            return (super.read());
-        }
+        int lookupIndex;
 
-        if (index == count) {
-            index = 0;
-            count = super.read(in);
+        if (iLeft != 0) {
+            lookupIndex = lookup.search(iLeft);
 
-            if (count == -1) {
-                count = 0;
-            }
-        }
-
-        if (index == count) {
-            return (-1);
-        }
-
-        pos++;
-
-        return (in[index++] & 0xff);
-    }
-
-    public int read(byte[] b) throws IOException {
-
-        int i = 0;
-        int next;
-
-        for (; i < b.length; i++) {
-            next = read();
-
-            if (next == -1) {
-                return (-1);
+            if (lookupIndex == -1) {
+                throw new SQLException();
             }
 
-            b[i] = (byte) next;
+            iLeft = lookup.getIntCell(lookupIndex, 1);
         }
 
-        return i;
-    }
+        if (iRight != 0) {
+            lookupIndex = lookup.search(iRight);
 
-// fredt@users - patch 1.7.2 - method added
-    public int read(byte[] b, int offset, int length) throws IOException {
-
-        int i = 0;
-        int next;
-
-        for (; i < length; i++) {
-            next = read();
-
-            if (next == -1) {
-                return (-1);
+            if (lookupIndex == -1) {
+                throw new SQLException();
             }
 
-            b[offset + i] = (byte) next;
+            iRight = lookup.getIntCell(lookupIndex, 1);
         }
 
-        return i;
-    }
+        if (iParent != 0) {
+            lookupIndex = lookup.search(iParent);
 
-    //-- readInt is final.
-    public int readInteger() throws IOException {
-
-        int ret = 0;
-        int next;
-
-        for (int i = 0; i < 4; i++) {
-            next = read();
-
-            if (next == -1) {
-                throw (new EOFException());
+            if (lookupIndex == -1) {
+                throw new SQLException();
             }
 
-            ret <<= 8;
-            ret += (next & 0xff);
+            iParent = lookup.getIntCell(lookupIndex, 1);
         }
-
-        return ret;
-    }
-
-    public void write(byte[] b) throws IOException {
-
-        index = count = 0;
-        pos   += b.length;
-
-        super.write(b);
-    }
-
-    public void write(byte[] b, int off, int len) throws IOException {
-
-        index = count = 0;
-        pos   += len;
-
-        super.write(b, off, len);
-    }
-
-    //-- writeInt is final.
-    public void writeInteger(int i) throws IOException {
-
-        index = count = 0;
-        pos   += 4;
-
-        writeInt(i);
-    }
-
-    public void close() throws IOException {
-
-        super.close();
-
-        in = null;
     }
 }

@@ -33,7 +33,7 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
-// tony_lai@users 20020820 - patch 595099 by tlai@users use user define PK name
+// tony_lai@users 20020820 - patch 595099 - user define PK name
 
 /**
  *  Class declaration

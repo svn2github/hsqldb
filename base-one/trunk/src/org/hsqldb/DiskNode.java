@@ -354,4 +354,34 @@ class DiskNode extends Node {
         out.writeIntData((iParent == NO_POS) ? 0
                                              : iParent);
     }
+
+    void writeTranslate(DatabaseRowOutputInterface out,
+                        org.hsqldb.lib.UnifiedTable lookup)
+                        throws IOException, SQLException {
+
+        out.writeIntData(iBalance);
+        writeTranslatePointer(iLeft, out, lookup);
+        writeTranslatePointer(iRight, out, lookup);
+        writeTranslatePointer(iParent, out, lookup);
+    }
+
+    private void writeTranslatePointer(int pointer,
+                                       DatabaseRowOutputInterface out,
+                                       org.hsqldb.lib.UnifiedTable lookup)
+                                       throws IOException, SQLException {
+
+        int newPointer = 0;
+
+        if (pointer != Node.NO_POS) {
+            int i = lookup.search(pointer);
+
+            if (i == -1) {
+                throw new SQLException();
+            }
+
+            newPointer = lookup.getIntCell(i, 1);
+        }
+
+        out.writeIntData(newPointer);
+    }
 }

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -46,8 +47,8 @@ import java.sql.Types;
 class BinaryDatabaseRowInput extends org.hsqldb.DatabaseRowInput
 implements org.hsqldb.DatabaseRowInputInterface {
 
-    public BinaryDatabaseRowInput(byte bin[], int pos) throws IOException {
-        super(bin, pos);
+    public BinaryDatabaseRowInput() throws IOException {
+        super();
     }
 
     public int readType() throws IOException {
@@ -59,7 +60,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     public String readString() throws IOException {
-        return readUTF();
+        return DataInputStream.readUTF(this);
     }
 
     private String readNumericString() throws IOException {

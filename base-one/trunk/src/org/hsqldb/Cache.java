@@ -69,7 +69,11 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
+
+//
+import java.util.ArrayList;
 
 // fredt@users 20011220 - patch 437174 by hjb@users - cache update
 // most changes and comments by HSB are kept unchanged
@@ -86,56 +90,53 @@ import java.sql.SQLException;
  */
 class Cache {
 
-    private HsqlDatabaseProperties props;
-    private boolean                newCacheType;
-    private final int              cacheLength;
-    private final int              writerLength;
-    private final int              maxCacheSize;
-    private final int              multiplierMask;
-    private CachedRow              rData[];
-    private CachedRow              rWriter[];
-    private CachedRow              rFirst;             // must point to one of rData[]
-    private CachedRow              rLastChecked;       // can be any row
+    // pre openning fields
+    private Database                 dDatabase;
+    protected HsqlDatabaseProperties dbProps;
+    protected String                 sName;
 
-    // sqlbob@users - changed visibility for children.
-    protected String         sName;
-    protected int            iFreePos;
-    protected DatabaseFile   rFile;
-    private static final int FREE_POS_POS     = 16;    // where iFreePos is saved
-    private static final int INITIAL_FREE_POS = 32;
-    private static final int MAX_FREE_COUNT   = 1024;
-    private CacheFree        fRoot;
-    private int              iFreeCount;
-    private int              iCacheSize;
+    // post openning constant fields
+    boolean           cacheReadonly;
+    private int       cacheScale;
+    private boolean   newCacheType;
+    private int       cacheLength;
+    private int       writerLength;
+    private int       maxCacheSize;
+    private int       multiplierMask;
+    private CachedRow rData[];
+    private CachedRow rWriter[];
+
+    // file format fields
+    static final int FREE_POS_POS     = 16;    // where iFreePos is saved
+    static final int INITIAL_FREE_POS = 32;
+
+    // variable fields
+    protected DatabaseFile rFile;
+    protected int          iFreePos;
+
+    //
+    private CachedRow        rFirst;           // must point to one of rData[]
+    private CachedRow        rLastChecked;     // can be any row
+    private static final int MAX_FREE_COUNT = 1024;
+
+    //
+    private CacheFree fRoot;
+    private int       iFreeCount;
+    private int       iCacheSize;
+
+    // reusable input / output streams
+    DatabaseRowInputInterface  rowIn;
+    DatabaseRowOutputInterface rowOut;
 
     /**
      *  Construct a new Cache object with the given database path name and
      *  the properties object to get the initial settings from.
      */
-    Cache(String name, HsqlDatabaseProperties props) {
+    private void init(int scale) throws SQLException {
 
-        this.props = props;
-
-        int cacheScale = 0;
-
-        try {
-            cacheScale = props.getIntegerProperty("hsqldb.cache_scale", 0);
-        } catch (NumberFormatException e) {
-            Trace.printSystemOut(
-                "bad value for hsqldb.cache_scale in properties file");
-        }
-
-        if (cacheScale == 0) {
-
-            // HJB-2001-06-21: use larger cache size
-            cacheScale = 15;
-        } else if (cacheScale < 8) {
-            cacheScale = 8;
-        } else if (cacheScale > 16) {
-            cacheScale = 16;
-        }
-
-        cacheLength = 1 << cacheScale;
+        cacheReadonly = dDatabase.bReadOnly;
+        cacheScale    = scale;
+        cacheLength   = 1 << cacheScale;
 
         // HJB-2001-06-21: use different smaller size for the writer
         writerLength = cacheLength - 3;
@@ -143,9 +144,64 @@ class Cache {
         // HJB-2001-06-21: let the cache be larger than the array
         maxCacheSize   = cacheLength * 3;
         multiplierMask = cacheLength - 1;
-        sName          = name;
         rData          = new CachedRow[cacheLength];
-        rWriter        = new CachedRow[writerLength];    // HJB-2001-06-21
+        rWriter        = new CachedRow[cacheReadonly ? 0
+                                                     : writerLength];    // HJB-2001-06-21
+        rFirst       = null;
+        rLastChecked = null;
+        iFreePos     = 0;
+        fRoot        = null;
+        iFreeCount   = 0;
+        iCacheSize   = 0;
+    }
+
+    private void initBuffers() throws SQLException {
+
+        try {
+            if (newCacheType) {
+                rowIn  = new BinaryServerRowInput();
+                rowOut = new BinaryServerRowOutput();
+            } else {
+                Class c = Class.forName("org.hsqldb.BinaryDatabaseRowInput");
+
+                rowIn  = (DatabaseRowInputInterface) c.newInstance();
+                c      = Class.forName("org.hsqldb.BinaryDatabaseRowOutput");
+                rowOut = (DatabaseRowOutputInterface) c.newInstance();
+            }
+        } catch (Exception e) {
+            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
+                              "legacy db support");
+        }
+    }
+
+    Cache(String name, Database db) throws SQLException {
+
+        sName     = name;
+        dDatabase = db;
+        dbProps   = db.getProperties();
+
+        int cacheScale = 0;
+
+        try {
+
+            // HJB-2001-06-21: use larger cache size
+            cacheScale = dbProps.getIntegerProperty("hsqldb.cache_scale", 15);
+
+            if (cacheScale < 8) {
+                cacheScale = 8;
+
+                throw new NumberFormatException();
+            } else if (cacheScale > 16) {
+                cacheScale = 16;
+
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            Trace.printSystemOut(
+                "bad value for hsqldb.cache_scale in properties file");
+        }
+
+        init(cacheScale);
     }
 
     /**
@@ -171,15 +227,17 @@ class Cache {
             } else {
                 iFreePos = INITIAL_FREE_POS;
 
-                props.setProperty("hsqldb.cache_version", "1.7.0");
+                dbProps.setProperty("hsqldb.cache_version", "1.7.0");
             }
 
-            String cacheVersion = props.getProperty("hsqldb.cache_version",
+            String cacheVersion = dbProps.getProperty("hsqldb.cache_version",
                 "1.6.0");
 
             if (cacheVersion.equals("1.7.0")) {
                 newCacheType = true;
             }
+
+            initBuffers();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               "error " + e + " opening " + sName);
@@ -192,7 +250,7 @@ class Cache {
      */
     void flush() throws SQLException {
 
-        if (rFile == null) {
+        if (rFile == null || rFile.readOnly) {
             return;
         }
 
@@ -200,12 +258,11 @@ class Cache {
             rFile.seek(FREE_POS_POS);
             rFile.writeInteger(iFreePos);
             saveAll();
-
-            boolean empty = (rFile.length() < INITIAL_FREE_POS);
-
             rFile.close();
 
             rFile = null;
+
+            boolean empty = new File(sName).length() < INITIAL_FREE_POS;
 
             if (empty) {
                 new File(sName).delete();
@@ -214,6 +271,46 @@ class Cache {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               "error " + e + " closing " + sName);
         }
+    }
+
+    /**
+     *  Writes out all cached data and the free position to this
+     *  object's database file and then closes the file.
+     */
+    ArrayList defrag() throws SQLException {
+
+        ArrayList indexRoots = null;
+
+        try {
+            flush();
+
+            if (new File(sName).exists() == false) {
+                return null;
+            }
+
+            open(true);
+
+            DataFileDefrag1 dfd = new DataFileDefrag1();
+
+            indexRoots = dfd.defrag(dDatabase, rFile, sName);
+
+            closeFile();
+            Trace.printSystemOut("closed source");
+            new File(sName).delete();
+            new File(sName + ".new").renameTo(new File(sName));
+            init(cacheScale);
+            open(cacheReadonly);
+            Trace.printSystemOut("opened new file");
+
+// db set index roots
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              "error " + e + " defrag " + sName);
+        }
+
+        return indexRoots;
     }
 
     /**
@@ -272,14 +369,9 @@ class Cache {
 
         // 32 bytes overhead for each index + iSize, iPos
         Table t    = r.getTable();
-        int   size = 8 + 32 * t.getIndexCount();
+        int   size = 8 + 16 * t.getIndexCount();
 
-        if (newCacheType) {
-            size += BinaryServerRowOutput.getSize(r);
-        } else {
-            size += BinaryDatabaseRowOutput.getSize(r);
-        }
-
+        size          += rowOut.getSize(r);
         size          = ((size + 7) / 8) * 8;    // align to 8 byte blocks
         r.storageSize = size;
     }
@@ -367,20 +459,12 @@ class Cache {
         try {
             rFile.readSeek(pos);
 
-            int  size     = rFile.readInteger();
-            byte buffer[] = new byte[size];
+            int size = rFile.readInteger();
 
-            rFile.read(buffer);
+            rowIn.resetRow(pos, size);
+            rFile.read(rowIn.getBuffer(), 4, size - 4);
 
-            DatabaseRowInputInterface in;
-
-            if (newCacheType) {
-                in = new BinaryServerRowInput(buffer, pos);
-            } else {
-                in = new BinaryDatabaseRowInput(buffer, pos);
-            }
-
-            r = new CachedRow(t, in);
+            r = new CachedRow(t, rowIn);
         } catch (IOException e) {
             e.printStackTrace();
 
@@ -642,17 +726,9 @@ class Cache {
     protected void saveRow(CachedRow r) throws IOException, SQLException {
 
         rFile.seek(r.iPos);
-
-        DatabaseRowOutputInterface out;
-
-        if (newCacheType) {
-            out = new BinaryServerRowOutput(r.storageSize);
-        } else {
-            out = new BinaryDatabaseRowOutput(r.storageSize);
-        }
-
-        r.write(out);
-        rFile.write(out.toByteArray());
+        r.write(rowOut);
+        rFile.write(rowOut.getByteArray(), 0, rowOut.size());
+        rowOut.reset();
     }
 
     /**

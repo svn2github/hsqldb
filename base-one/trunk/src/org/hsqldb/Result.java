@@ -75,7 +75,7 @@ import java.sql.SQLException;
 // methods for set operations moved here from Select.java
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // rewrite of LIMIT n m to apply to each select statement separately
-// tony_lai@users 20020820 - patch 595073 by tlai@users - duplicated exception msg
+// tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 
 /**
  *  Class declaration

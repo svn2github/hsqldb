@@ -71,7 +71,7 @@ import java.sql.SQLException;
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
 // a number of changes to support this feature
-// tony_lai@users 20020820 - patch 595052 by tlai@users - better error message
+// tony_lai@users 20020820 - patch 595052 - better error message
 
 /**
  * Index class declaration

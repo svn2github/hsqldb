@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -47,14 +48,19 @@ import java.sql.Types;
  * @author fredt@users
  * @version 1.7.0
  */
-abstract class DatabaseRowOutput extends DataOutputStream
+abstract class DatabaseRowOutput extends ByteArrayOutputStream
 implements org.hsqldb.DatabaseRowOutputInterface {
 
     // the last column in a table is a SYSTEM_ID that should not be written to file
     protected boolean skipSystemId = false;
 
-    public DatabaseRowOutput(OutputStream out) throws IOException {
-        super(out);
+    /**
+     *  Constructor used for result sets and persistent storage of a Table row
+     *
+     * @exception  IOException when an IO error is encountered
+     */
+    public DatabaseRowOutput() {
+        super();
     }
 
 // fredt@users - comment - methods for writing column type, name and data size
@@ -109,6 +115,49 @@ implements org.hsqldb.DatabaseRowOutputInterface {
     protected abstract void writeBinary(byte[] o,
                                         int t)
                                         throws IOException, SQLException;
+
+// fredt@users - comment - methods used for writing java primitive types
+    public final void writeShort(int v) {
+        write((v >>> 8) & 0xFF);
+        write((v >>> 0) & 0xFF);
+    }
+
+    public final void writeInt(int v) {
+
+        write((v >>> 24) & 0xFF);
+        write((v >>> 16) & 0xFF);
+        write((v >>> 8) & 0xFF);
+        write((v >>> 0) & 0xFF);
+    }
+
+    public final void writeLong(long v) {
+
+        write((int) (v >>> 56) & 0xFF);
+        write((int) (v >>> 48) & 0xFF);
+        write((int) (v >>> 40) & 0xFF);
+        write((int) (v >>> 32) & 0xFF);
+        write((int) (v >>> 24) & 0xFF);
+        write((int) (v >>> 16) & 0xFF);
+        write((int) (v >>> 8) & 0xFF);
+        write((int) (v >>> 0) & 0xFF);
+    }
+
+    public final void writeBytes(String s) {
+
+        int len = s.length();
+
+        for (int i = 0; i < len; i++) {
+            write((byte) s.charAt(i));
+        }
+    }
+
+    public final void writeFloat(float v) {
+        writeInt(Float.floatToIntBits(v));
+    }
+
+    public final void writeDouble(double v) {
+        writeLong(Double.doubleToLongBits(v));
+    }
 
     /**
      *  This method is called to write data for a table
@@ -216,5 +265,18 @@ implements org.hsqldb.DatabaseRowOutputInterface {
                     throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, t);
             }
         }
+    }
+
+    public byte[] toByteArray() {
+
+        byte ret[] = toByteArray();
+
+        reset();
+
+        return ret;
+    }
+
+    public byte[] getByteArray() {
+        return this.buf;
     }
 }

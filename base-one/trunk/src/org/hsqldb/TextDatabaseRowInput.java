@@ -72,7 +72,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                                 String longvarSep,
                                 boolean emptyIsNull) throws IOException {
 
-        super(new ByteArrayInputStream(new byte[0]));
+        super(new byte[0]);
 
         makeSystemId = true;
 
@@ -103,12 +103,12 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
     public void setSource(String text, int pos) {
 
-        this.text = text.substring(0, text.indexOf('\n'));
-        textLen   = this.text.length();
-        this.pos  = pos;
-        size      = text.length();
-        nextPos   = pos + size;
-        next      = 0;
+        this.text    = text.substring(0, text.indexOf('\n'));
+        textLen      = this.text.length();
+        this.filePos = pos;
+        size         = text.length();
+        nextPos      = pos + size;
+        next         = 0;
 
         line++;
 
@@ -389,7 +389,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         text    = "";
         textLen = 0;
-        pos     = 0;
+        filePos = 0;
         size    = 0;
         nextPos = 0;
         next    = 0;

@@ -53,6 +53,7 @@ interface DatabaseRowOutputInterface {
 
     public void writeIntData(int i) throws IOException;
 
+    // resets the data after copying to new byte[]
     public byte[] toByteArray() throws IOException;
 
     public void writeData(Object data[],
@@ -60,4 +61,16 @@ interface DatabaseRowOutputInterface {
 
     public void writeData(int l, int types[],
                           Object data[]) throws IOException, SQLException;
+
+    // independent of the this object, calls only a static method
+    public int getSize(CachedRow row) throws SQLException;
+
+    // simply returns the byte[] buffer
+    public byte[] getByteArray();
+
+    // used with getByteArray() to get the current size
+    public int size();
+
+    // resets the byte[] buffer, ready for processing new row
+    public void reset();
 }

@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle
@@ -99,9 +100,9 @@ class TextCache extends org.hsqldb.Cache {
      * @exception  SQLException  Description of the Exception
      */
     TextCache(String name, String propPrefix,
-              HsqlDatabaseProperties props) throws SQLException {
+              Database db) throws SQLException {
 
-        super("", props);
+        super("", db);
 
         TextSource textSource = new TextSource(name);
 
@@ -120,7 +121,7 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         if (fs == null) {
-            fs = translateSep(props.getProperty(propPrefix + "fs"), true);
+            fs = translateSep(dbProps.getProperty(propPrefix + "fs"), true);
 
             if (fs == null) {
                 fs = ",";
@@ -128,7 +129,7 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         if (vs == null) {
-            vs = props.getProperty(propPrefix + "vs", fs);
+            vs = dbProps.getProperty(propPrefix + "vs", fs);
 
             if (vs != fs) {
                 vs = translateSep(vs, true);
@@ -136,7 +137,7 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         if (lvs == null) {
-            lvs = props.getProperty(propPrefix + "lvs", fs);
+            lvs = dbProps.getProperty(propPrefix + "lvs", fs);
 
             if (lvs != fs) {
                 lvs = translateSep(lvs, true);
@@ -147,8 +148,8 @@ class TextCache extends org.hsqldb.Cache {
         String skipFirst = textSource.getAttr("ignore_first", null);
 
         if (skipFirst == null) {
-            skipFirst = props.getProperty(propPrefix + "ignore_first",
-                                          "false");
+            skipFirst = dbProps.getProperty(propPrefix + "ignore_first",
+                                            "false");
         }
 
         ignoreFirst = skipFirst.equals("true");
@@ -156,14 +157,14 @@ class TextCache extends org.hsqldb.Cache {
         String quoted = textSource.getAttr("quoted", null);
 
         if (quoted == null) {
-            quoted = props.getProperty(propPrefix + "quoted", "true");
+            quoted = dbProps.getProperty(propPrefix + "quoted", "true");
         }
 
         String emptyIsNull = textSource.getAttr("empty_is_null", null);
 
         if (emptyIsNull == null) {
-            emptyIsNull = props.getProperty(propPrefix + "empty_is_null",
-                                            "true");
+            emptyIsNull = dbProps.getProperty(propPrefix + "empty_is_null",
+                                              "true");
         }
 
         // Get file name
@@ -395,18 +396,7 @@ class TextCache extends org.hsqldb.Cache {
     }
 
     protected void setStorageSize(CachedRow r) throws SQLException {
-
-        int size;
-
-        try {
-            out.writeData(r.getData(), r.getTable());
-
-            size = out.toByteArray().length;
-        } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
-        }
-
-        r.storageSize = size;
+        r.storageSize = out.getSize(r);
     }
 
     protected CachedRow makeRow(int pos, Table t) throws SQLException {

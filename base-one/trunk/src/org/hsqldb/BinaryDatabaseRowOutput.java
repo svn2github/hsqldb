@@ -67,8 +67,8 @@
 
 package org.hsqldb;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.DataOutputStream;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -81,17 +81,8 @@ import java.sql.Types;
  */
 class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
-    int                           storageSize;
-    private ByteArrayOutputStream byteOut = (ByteArrayOutputStream) out;
-
-    /**
-     *  Constructor used for a Result row
-     *
-     * @exception  IOException when an IO error is encountered
-     */
-    public BinaryDatabaseRowOutput() throws IOException {
-        super(new ByteArrayOutputStream());
-    }
+    int              storageSize;
+    DataOutputStream dout;
 
     /**
      *  Constructor used for persistent storage of a Table row
@@ -99,8 +90,11 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @param  size no of bytes of storage used
      * @exception  IOException when an IO error is encountered
      */
-    public BinaryDatabaseRowOutput(int size) throws IOException {
-        super(new ByteArrayOutputStream(size));
+    public BinaryDatabaseRowOutput() {
+
+        super();
+
+        dout = new DataOutputStream(this);
     }
 
 // fredt@users - comment - methods for writing column type, name and data size
@@ -112,7 +106,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         writeInt(pos);
 
-        for (; byteOut.size() < storageSize; ) {
+        for (; count < storageSize; ) {
             this.write(0);
         }
     }
@@ -129,16 +123,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     public void writeString(String s) throws IOException {
-        writeUTF(s);
-    }
-
-    public byte[] toByteArray() throws IOException {
-
-        byte ret[] = byteOut.toByteArray();
-
-        byteOut.reset();
-
-        return (ret);
+        dout.writeUTF(s);
     }
 
 // fredt@users - comment - methods used for writing each SQL type
@@ -151,7 +136,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeChar(String s, int t) throws IOException {
-        writeUTF(s);
+        dout.writeUTF(s);
     }
 
     //fredt: REAL, TINYINT and SMALLINT are written in the old format
@@ -232,7 +217,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @return  size of byte array
      * @exception  SQLException When data is inconsistent
      */
-    public static int getSize(CachedRow row) throws SQLException {
+    public int getSize(CachedRow row) throws SQLException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
