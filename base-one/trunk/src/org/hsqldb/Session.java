@@ -167,6 +167,10 @@ public class Session implements SessionInterface {
         if (!isClosed) {
             synchronized (database) {
                 database.sessionManager.processDisconnect(this);
+
+                try {
+                    database.logger.writeToLog(this, Token.T_DISCONNECT);
+                } catch (HsqlException e) {}
             }
         }
     }

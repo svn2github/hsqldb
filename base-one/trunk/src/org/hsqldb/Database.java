@@ -712,10 +712,6 @@ public class Database {
      */
     public void finalize() {
 
-        if (Trace.TRACE) {
-            Trace.trace(this + ".finalize(): state: " + getStateString());
-        }
-
         if (getState() != DATABASE_ONLINE) {
             return;
         }
@@ -723,9 +719,6 @@ public class Database {
         try {
             close(CLOSEMODE_IMMEDIATELY);
         } catch (HsqlException e) {    // it's too late now
-            if (Trace.TRACE) {
-                Trace.trace(e.toString());
-            }
         }
     }
 
@@ -947,8 +940,8 @@ public class Database {
         View[] views = getViewsWithTable(table, null);
 
         if (views != null) {
-                throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
-                                  views[0].getName().name);
+            throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
+                              views[0].getName().name);
         }
     }
 
@@ -961,10 +954,10 @@ public class Database {
         View[] views = getViewsWithTable(table, column);
 
         if (views != null) {
-                throw Trace.error(Trace.COLUMN_IS_REFERENCED,
-                                  views[0].getName().name);
-            }
+            throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+                              views[0].getName().name);
         }
+    }
 
     /**
      * Returns an array of views that reference the specified table or

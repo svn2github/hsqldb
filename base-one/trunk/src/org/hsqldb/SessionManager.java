@@ -133,8 +133,7 @@ public class SessionManager {
     }
 
     /**
-     *  Handles the work requested by specified Session as a result of
-     *  having issued the DISCONNECT SQL statement.
+     *  Removes the session from management and disconnects.
      *
      * @param  session to disconnect
      * @return the result of disconnecting the specified Session

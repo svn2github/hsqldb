@@ -173,8 +173,8 @@ public abstract class ScriptWriterBase {
                 fileStreamOut.flush();
                 outDescriptor.sync();
             } catch (IOException e) {
-                Trace.printSystemOut("flush() or sync() error: ",
-                                     e.getMessage());
+                Trace.printSystemOut("flush() or sync() error: "
+                                     + e.getMessage());
             }
 
             Trace.printSystemOut("file sync: ", sw.elapsedTime());

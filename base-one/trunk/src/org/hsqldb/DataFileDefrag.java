@@ -55,7 +55,7 @@ class DataFileDefrag {
 
     StopWatch stopw = new StopWatch();
 
-    HsqlArrayList defrag(Database db, ScaledRAFile sourcenotused,
+    HsqlArrayList defrag(Database db,
                          String filename) throws IOException, HsqlException {
 
         Trace.printSystemOut("Defrag Transfer begins");
@@ -81,7 +81,7 @@ class DataFileDefrag {
                 rootsList.add(null);
             }
 
-            Trace.printSystemOut(t.getName().name, " complete");
+            Trace.printSystemOut(t.getName().name + " complete");
         }
 
 // erik        no change
@@ -206,7 +206,7 @@ class DataFileDefrag {
             rootsArray[i] = pointerLookup.get(lookupIndex, 1);
         }
 
-        Trace.printSystemOut(table.getName().name, " : table converted");
+        Trace.printSystemOut(table.getName().name + " : table converted");
 
         return rootsArray;
     }

@@ -101,13 +101,7 @@ implements HandshakeCompletedListener {
                 p   = (Provider) Class.forName(cls).newInstance();
 
                 Security.addProvider(p);
-            } catch (Exception e) {
-
-                // e.printStackTrace();
-                if (Trace.TRACE) {
-                    Trace.trace(e.toString());
-                }
-            }
+            } catch (Exception e) {}
         }
     }
 
@@ -140,14 +134,11 @@ implements HandshakeCompletedListener {
             .createServerSocket(port);
 
         if (Trace.TRACE) {
-            Trace.trace("[" + this + "]: createServerSocket()");
-            Trace.trace("capabilities for " + ss + ":");
-            Trace.trace("----------------------------");
+            Trace.printSystemOut("[" + this + "]: createServerSocket()");
+            Trace.printSystemOut("capabilities for " + ss + ":");
+            Trace.printSystemOut("----------------------------");
             dump("supported cipher suites", ss.getSupportedCipherSuites());
             dump("enabled cipher suites", ss.getEnabledCipherSuites());
-
-//            dump("supported protocols", ss.getSupportedProtocols());
-//            dump("enabled protocols", ss.getEnabledProtocols());
         }
 
         return ss;
@@ -173,14 +164,11 @@ implements HandshakeCompletedListener {
             .createServerSocket(port, 128, addr);
 
         if (Trace.TRACE) {
-            Trace.trace("[" + this + "]: createServerSocket()");
-            Trace.trace("capabilities for " + ss + ":");
-            Trace.trace("----------------------------");
+            Trace.printSystemOut("[" + this + "]: createServerSocket()");
+            Trace.printSystemOut("capabilities for " + ss + ":");
+            Trace.printSystemOut("----------------------------");
             dump("supported cipher suites", ss.getSupportedCipherSuites());
             dump("enabled cipher suites", ss.getEnabledCipherSuites());
-
-//            dump("supported protocols", ss.getSupportedProtocols());
-//            dump("enabled protocols", ss.getEnabledProtocols());
         }
 
         return ss;
@@ -188,14 +176,14 @@ implements HandshakeCompletedListener {
 
     private static final void dump(String title, String[] as) {
 
-        Trace.trace(title);
-        Trace.trace("----------------------------");
+        Trace.printSystemOut(title);
+        Trace.printSystemOut("----------------------------");
 
         for (int i = 0; i < as.length; i++) {
-            Trace.trace(String.valueOf(as[i]));
+            Trace.printSystemOut(String.valueOf(as[i]));
         }
 
-        Trace.trace("----------------------------");
+        Trace.printSystemOut("----------------------------");
     }
 
     /**
@@ -380,16 +368,18 @@ implements HandshakeCompletedListener {
             socket  = evt.getSocket();
             session = evt.getSession();
 
-            Trace.trace("SSL handshake completed:");
-            Trace.trace("------------------------------------------------");
-            Trace.trace("socket:      : " + socket);
-            Trace.trace("cipher suite : " + session.getCipherSuite());
+            Trace.printSystemOut("SSL handshake completed:");
+            Trace.printSystemOut(
+                "------------------------------------------------");
+            Trace.printSystemOut("socket:      : " + socket);
+            Trace.printSystemOut("cipher suite : "
+                                 + session.getCipherSuite());
 
-//            Trace.trace("protocol     : " + session.getProtocol());
             sessionId = StringConverter.byteToHex(session.getId());
 
-            Trace.trace("session id   : " + sessionId);
-            Trace.trace("------------------------------------------------");
+            Trace.printSystemOut("session id   : " + sessionId);
+            Trace.printSystemOut(
+                "------------------------------------------------");
         }
     }
 }

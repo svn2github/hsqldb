@@ -338,7 +338,8 @@ public class Column {
                 return ValuePool.getLong(longa + longb);
             }
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                  Types.getTypeString(type));
         }
     }
 
@@ -400,7 +401,8 @@ public class Column {
                 return ValuePool.getLong(-((Number) a).longValue());
 
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                  Types.getTypeString(type));
         }
     }
 
@@ -461,7 +463,8 @@ public class Column {
                 return ValuePool.getLong(longa * longb);
             }
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                  Types.getTypeString(type));
         }
     }
 
@@ -522,7 +525,8 @@ public class Column {
                                     : ValuePool.getLong(longa / longb);
             }
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                  Types.getTypeString(type));
         }
     }
 
@@ -577,7 +581,8 @@ public class Column {
                 return ValuePool.getLong(longa - longb);
             }
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                  Types.getTypeString(type));
         }
     }
 
@@ -740,7 +745,8 @@ public class Column {
                     i = compareTo(((Binary) a).getBytes(),
                                   ((Binary) b).getBytes());
                 } else {
-                    throw Trace.error(Trace.INVALID_CONVERSION, type);
+                    throw Trace.error(Trace.INVALID_CONVERSION,
+                                      Types.getTypeString(type));
                 }
                 break;
 
@@ -748,7 +754,8 @@ public class Column {
                 return 0;
 
             default :
-                throw Trace.error(Trace.INVALID_CONVERSION, type);
+                throw Trace.error(Trace.INVALID_CONVERSION,
+                                  Types.getTypeString(type));
         }
 
         return (i == 0) ? 0
@@ -1037,7 +1044,8 @@ public class Column {
                     }
 
                     if (o instanceof java.sql.Date) {
-                        throw Trace.error(Trace.INVALID_CONVERSION, type);
+                        throw Trace.error(Trace.INVALID_CONVERSION,
+                                          Types.getTypeString(type));
                     }
                     break;
 
@@ -1075,7 +1083,8 @@ public class Column {
                     }
 
                     if (o instanceof java.sql.Time) {
-                        throw Trace.error(Trace.INVALID_CONVERSION, type);
+                        throw Trace.error(Trace.INVALID_CONVERSION,
+                                          Types.getTypeString(type));
                     }
                     break;
 
@@ -1098,7 +1107,8 @@ public class Column {
                             StringConverter.hexToByte((String) o), false);
                     }
 
-                    throw Trace.error(Trace.INVALID_CONVERSION, type);
+                    throw Trace.error(Trace.INVALID_CONVERSION,
+                                      Types.getTypeString(type));
 
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
                 case Types.OTHER :
@@ -1204,7 +1214,8 @@ public class Column {
             case Types.LONGVARBINARY :
             case Types.OTHER :
             default :
-                throw Trace.error(Trace.INVALID_CONVERSION, type);
+                throw Trace.error(Trace.INVALID_CONVERSION,
+                                  Types.getTypeString(type));
         }
     }
 

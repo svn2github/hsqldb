@@ -204,7 +204,7 @@ public class DataFileCache extends Cache {
 
             DataFileDefrag dfd = new DataFileDefrag();
 
-            indexRoots = dfd.defrag(dDatabase, rFile, sName);
+            indexRoots = dfd.defrag(dDatabase, sName);
 
             closeFile();
             Trace.printSystemOut("closed old cache");

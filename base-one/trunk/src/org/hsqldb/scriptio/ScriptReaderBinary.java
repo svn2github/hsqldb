@@ -176,8 +176,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
         if (checkOp != ScriptWriterBase.INSERT) {
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                              Trace.BinaryDatabaseScriptReader_readTableInit,
-                              null);
+                              Trace.BinaryDatabaseScriptReader_readTableInit);
         }
 
         return s;

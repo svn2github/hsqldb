@@ -316,13 +316,11 @@ class DatabaseInformation {
                 if (impl != null) {
                     break;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception e) {}
+        }
 
-                if (Trace.TRACE) {
-                    Trace.trace(e.getMessage());
-                }
-            }
+        if (impl == null) {
+            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE);
         }
 
         return impl;

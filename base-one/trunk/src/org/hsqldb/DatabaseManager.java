@@ -229,8 +229,7 @@ public class DatabaseManager {
                 // it is here simply as a placeholder for future development
                 case Database.DATABASE_OPENING :
                     throw Trace.error(Trace.DATABASE_ALREADY_IN_USE,
-                                      Trace.DatabaseManager_getDatabase,
-                                      null);
+                                      Trace.DatabaseManager_getDatabase);
             }
         }
 
@@ -278,8 +277,8 @@ public class DatabaseManager {
     private static synchronized Database lookupDatabaseObject(String type,
             String path) throws HsqlException {
 
-        Object   key = path;
-        HashMap  databaseMap;
+        Object  key = path;
+        HashMap databaseMap;
 
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
@@ -645,10 +644,6 @@ public class DatabaseManager {
 
         if ((Record.gcFrequency > 0)
                 && (Record.memoryRecords > Record.gcFrequency)) {
-            if (Trace.TRACE) {
-                Trace.trace("gc at " + Record.memoryRecords);
-            }
-
             Record.memoryRecords = 0;
 
             System.gc();

@@ -78,11 +78,8 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
  * @version 1.7.0
  */
 
-// fredt@users 20020130 - patch 476694 by velichko@users - savepoints
-// additions in different parts to support savepoint transactions
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - error reporting
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - setting trace
-// the system property hsqldb.trace == true is now used for setting tracing on
 // the system property hsqldb.tracesystemout == true is now used for printing
 // trace message to System.out
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
@@ -90,19 +87,18 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
 // fredt@users 20021230 - patch 488118 by xclay@users - allow multithreading
 // wondersonic@users 20031005 - moved string literal messages to Trace with new methods
 // nitin chauhan 20031005 - moved concatenated string in asserts and checks to Trace with new methods
+// fredt@users 20040322 - removed unused code - class is a collection of static methods now
 //
 // fredt - todo - 20021022 management of nested throws inside the program in
 // such a way that it is possible to return exactly the text of the error
 // thrown at a given level withou higher level messages being added and to
 // preserve the orignial erro code
-public class Trace extends PrintWriter {
+public class Trace {
 
     public static boolean       TRACE          = false;
     public static boolean       TRACESYSTEMOUT = false;
     public static final boolean STOP           = false;
     public static final boolean DOASSERT       = true;
-    private static final Trace  tTracer        = new Trace();
-    private static String       sTrace;
 
     //
     public static final int    //
@@ -592,7 +588,8 @@ public class Trace extends PrintWriter {
      *
      * @return an <code>HsqlException</code>
      */
-    static HsqlException error(int code, int subCode, final Object[] add) {
+    public static HsqlException error(int code, int subCode,
+                                      final Object[] add) {
 
         // in case of negative code
         code = Math.abs(code);
@@ -652,8 +649,12 @@ public class Trace extends PrintWriter {
         return error(code, 0, add);
     }
 
-    public static HsqlException error(int code, int code2, Object add) {
+    public static HsqlException error(int code, int code2, String add) {
         return error(code, getMessage(code2) + add);
+    }
+
+    public static HsqlException error(int code, int code2) {
+        return error(code, getMessage(code2));
     }
 
     /**
@@ -796,19 +797,6 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param code
-     * @param i
-     *
-     * @return
-     */
-    public static HsqlException error(int code, int i) {
-        return error(code, String.valueOf(i));
-    }
-
-    /**
      *     Throws exception if condition is false
      *
      *     @param boolean condition
@@ -850,75 +838,6 @@ public class Trace extends PrintWriter {
         throw error(code, add);
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// for the PrinterWriter interface
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param c
-     */
-    public void println(char c[]) {
-
-        synchronized (Trace.class) {
-            String s = new String(c);
-
-            if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
-                    && (s.indexOf("hsqldb") != -1)) {
-                int i = s.indexOf('.');
-
-                if (i != -1) {
-                    s = s.substring(i + 1);
-                }
-
-                i = s.indexOf('(');
-
-                if (i != -1) {
-                    s = s.substring(0, i);
-                }
-
-                sTrace = s;
-            }
-        }
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-    public void println(String s) {
-
-        synchronized (Trace.class) {
-            if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
-                    && (s.indexOf("hsqldb") != -1)) {
-                int i = s.indexOf('.');
-
-                if (i != -1) {
-                    s = s.substring(i + 1);
-                }
-
-                i = s.indexOf('(');
-
-                if (i != -1) {
-                    s = s.substring(0, i);
-                }
-
-                sTrace = s;
-            }
-        }
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-    public void write(String s) {
-        ;
-    }
-
-    /**
-     * Constructor declaration
-     *
-     */
-    Trace() {
-        super(System.out);
-    }
-
     /**
      * Used to print messages to System.out
      *
@@ -941,70 +860,12 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * Used to print messages to System.out
-     *
-     *
-     * @param message message to print
-     */
-    public static void printSystemOut(String message1, String message2) {
-        System.out.print(message1);
-        System.out.println(message2);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param l
-     */
-    static void trace(long l) {
-        traceCaller(String.valueOf(l));
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param i
-     */
-    static void trace(int i) {
-        traceCaller(String.valueOf(i));
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     */
-    static void trace(String s) {
-        traceCaller(s);
-    }
-
-// fredt@users 20010701 - patch 418014 by deforest@users
-
-    /**
-     *  With trace enabled, it is sometimes hard to figure out
-     *  what a true exception is versus an exception generated
-     *  by the tracing engine. These two methods define
-     *  specialized versions Exceptions that are thrown during
-     *  tracing so you can more easily differentiate between a
-     *  Exception and a TraceException.
-     */
-    static class TraceException extends Exception {
-
-        TraceException() {
-            super("Trace");
-        }
-    }
-
-    /**
      * Returns the stack trace for doAssert()
      */
     private static String getStackTrace() {
 
         try {
-            Exception e = new TraceException();
+            Exception e = new Exception();
 
             throw e;
         } catch (Exception e1) {
@@ -1014,32 +875,6 @@ public class Trace extends PrintWriter {
             e1.printStackTrace(pw);
 
             return os.toString();
-        }
-    }
-
-    static class TraceCallerException extends Exception {
-
-        TraceCallerException() {
-            super("TraceCaller");
-        }
-    }
-
-    private static synchronized void traceCaller(String s) {
-
-        Exception e = new TraceCallerException();
-
-        sTrace = "";
-
-        e.printStackTrace(tTracer);
-
-        s = sTrace + "\t" + s;
-
-// fredt@users 20010701 - patch 418014 by deforest@users
-// trace to System.out is handy if only trace messages of hsql are required
-        if (TRACESYSTEMOUT) {
-            System.out.println(s);
-        } else {
-            DriverManager.println(s);
         }
     }
 

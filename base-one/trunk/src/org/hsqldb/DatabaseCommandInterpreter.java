@@ -131,15 +131,10 @@ class DatabaseCommandInterpreter {
         Parser parser;
         Result result;
         String token;
-        String part;
         int    cmd;
         Logger logger;
 
         DatabaseManager.gc();
-
-        if (Trace.TRACE) {
-            Trace.trace(sql);
-        }
 
         result = null;
         cmd    = Token.UNKNOWNTOKEN;
@@ -539,7 +534,7 @@ class DatabaseCommandInterpreter {
             if (list.size() != set.size()) {
                 throw Trace.error(
                     Trace.COLUMN_ALREADY_EXISTS,
-                    Trace.DatabaseCommandInterpreter_processColumnList, null);
+                    Trace.DatabaseCommandInterpreter_processColumnList);
             }
 
             token = tokenizer.getString();
@@ -1093,10 +1088,9 @@ class DatabaseCommandInterpreter {
                             mainConst.core.mainColArray;
 
                         if (tempConst.core.refColArray == null) {
-                            throw Trace.error(
-                                Trace.INDEX_NOT_FOUND,
-                                Trace.DatabaseCommandInterpreter_processCreateConstraints,
-                                null);
+                            throw Trace
+                                .error(Trace.INDEX_NOT_FOUND, Trace
+                                    .DatabaseCommandInterpreter_processCreateConstraints);
                         }
                     }
 

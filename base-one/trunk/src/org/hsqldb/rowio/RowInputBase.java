@@ -75,8 +75,7 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              Trace.DatabaseRowInput_newDatabaseRowInput,
-                              null);
+                              Trace.DatabaseRowInput_newDatabaseRowInput);
         }
     }
 
@@ -257,7 +256,8 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
                     break;
 
                 default :
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                      Types.getTypeString(type));
             }
 
             data[i] = o;

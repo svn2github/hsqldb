@@ -76,8 +76,7 @@ implements RowOutputInterface {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
-                              Trace.DatabaseRowOutput_newDatabaseRowOutput,
-                              null);
+                              Trace.DatabaseRowOutput_newDatabaseRowOutput);
         }
     }
 
@@ -278,7 +277,8 @@ implements RowOutputInterface {
                     break;
 
                 default :
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, t);
+                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                      Types.getTypeString(t));
             }
         }
     }

@@ -77,6 +77,7 @@ import java.util.*;
 // avoid moving blank lines which would be interpreted as code change by CVS
 // fredt@users 20021118 - patch 1.7.2 - no-change, no-save fix
 // if the file contents do not change, do not save a new version of file
+// fredt@users 20040322 - removed unused profiling code
 
 /**
  * Modifies the source code to support different JDK or profile settings. <p>
@@ -109,7 +110,6 @@ public class CodeSwitcher {
     private Vector           vSwitchOn;
     private Vector           vSwitchOff;
     private Vector           vSwitches;
-    private boolean          bAdd, bRemove;
     private static final int MAX_LINELENGTH = 82;
 
     /**
@@ -134,17 +134,9 @@ public class CodeSwitcher {
             String p = a[i];
 
             if (p.startsWith("+")) {
-                if (p.length() == 1) {
-                    s.bAdd = true;
-                } else {
-                    s.vSwitchOn.addElement(p.substring(1));
-                }
+                s.vSwitchOn.addElement(p.substring(1));
             } else if (p.startsWith("-")) {
-                if (p.length() == 1) {
-                    s.bRemove = true;
-                } else {
-                    s.vSwitchOff.addElement(p.substring(1));
-                }
+                s.vSwitchOff.addElement(p.substring(1));
             } else {
                 s.addDir(p);
 
@@ -181,11 +173,7 @@ public class CodeSwitcher {
                          + "Example: java CodeSwitcher +JAVA2 .\n"
                          + "This example switches on code labeled JAVA2\n"
                          + "in all *.java files in the current directory\n"
-                         + "and all subdirectories.\n"
-                         + "java CodeSwitcher + .\n"
-                         + "Adds test code to the code.\n"
-                         + "java CodeSwitcher - .\n"
-                         + "Removed test code from the code.\n");
+                         + "and all subdirectories.\n");
     }
 
     /**
@@ -213,18 +201,8 @@ public class CodeSwitcher {
 
             String file = (String) vList.elementAt(i);
 
-            if (bAdd || bRemove) {
-                int maxlen = testFile(file);
-
-                if (bAdd &&!bRemove) {
-                    addTest(file, maxlen);
-                } else {
-                    removeTest(file);
-                }
-            } else {
-                if (!processFile(file)) {
-                    System.out.println("in file " + file + " !");
-                }
+            if (!processFile(file)) {
+                System.out.println("in file " + file + " !");
             }
         }
 
@@ -263,256 +241,6 @@ public class CodeSwitcher {
                 addDir(path + File.separatorChar + list[i]);
             }
         }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param name
-     */
-    void removeTest(String name) {
-
-        File f    = new File(name);
-        File fnew = new File(name + ".new");
-
-        try {
-            LineNumberReader read  = new LineNumberReader(new FileReader(f));
-            FileWriter       write = new FileWriter(fnew);
-
-            while (true) {
-                String line = read.readLine();
-
-                if (line == null) {
-                    break;
-                }
-
-                if (line.startsWith("Profile.visit(")) {
-                    int s = line.indexOf(';');
-
-                    line = line.substring(s + 1);
-                }
-
-                write.write(line + ls);
-            }
-
-            read.close();
-            write.flush();
-            write.close();
-
-            File fbak = new File(name + ".bak");
-
-            fbak.delete();
-            f.renameTo(fbak);
-
-            File fcopy = new File(name);
-
-            fnew.renameTo(fcopy);
-            fbak.delete();
-        } catch (Exception e) {
-            printError(e.getMessage());
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param name
-     * @param maxline
-     */
-    void addTest(String name, int maxline) {
-
-        File   f    = new File(name);
-        File   fnew = new File(name + ".new");
-        String key  = name;
-
-        key = key.replace('\\', '.');
-
-        try {
-            LineNumberReader read = new LineNumberReader(new FileReader(f));
-            FileWriter       write    = new FileWriter(fnew);
-            int              l        = 0;
-            boolean          longline = false;
-
-            while (true) {
-                String line = read.readLine();
-
-                if (line == null) {
-                    break;
-                }
-
-                if (line.startsWith(" ")) {
-                    int spaces = 0;
-
-                    for (; spaces < line.length(); spaces++) {
-                        if (line.charAt(spaces) != ' ') {
-                            break;
-                        }
-                    }
-
-                    if (spaces > 3 && testLine(line) &&!longline) {
-                        line = "org.hsqldb.test.Profile.visit(\"" + key
-                               + "\"," + l + "," + maxline + ");" + line;
-
-                        l++;
-                    } else if (isLongline(line)) {
-                        longline = true;
-                    } else {
-                        longline = false;
-                    }
-                }
-
-                write.write(line + ls);
-            }
-
-            read.close();
-            write.flush();
-            write.close();
-
-            File fbak = new File(name + ".bak");
-
-            fbak.delete();
-            f.renameTo(fbak);
-
-            File fcopy = new File(name);
-
-            fnew.renameTo(fcopy);
-            fbak.delete();
-        } catch (Exception e) {
-            printError(e.getMessage());
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param name
-     *
-     * @return
-     */
-    int testFile(String name) {
-
-        File f = new File(name);
-
-        try {
-            LineNumberReader read = new LineNumberReader(new FileReader(f));
-            int              l        = 1,
-                             maxline  = 0;
-            boolean          longline = false;
-
-            while (true) {
-                String line = read.readLine();
-
-                if (line == null) {
-                    break;
-                }
-
-                if (line.length() > MAX_LINELENGTH
-                        &&!line.startsWith("org.hsqldb.test.Profile.")) {
-                    System.out.println("long line in " + name + " at line "
-                                       + l);
-                }
-
-                if (line.startsWith(" ")) {
-                    int spaces = 0;
-
-                    for (; spaces < line.length(); spaces++) {
-                        if (line.charAt(spaces) != ' ') {
-                            break;
-                        }
-                    }
-
-                    if (spaces > 3 && testLine(line) &&!longline) {
-                        maxline++;
-                    } else if (isLongline(line)) {
-                        longline = true;
-                    } else {
-                        longline = false;
-                    }
-
-                    String s = line.substring(spaces);
-
-                    if (s.startsWith("if(")) {
-                        if (!s.endsWith(" {")) {
-                            System.out.println("if( without { in " + name
-                                               + " at line " + l);
-                        }
-                    } else if (s.startsWith("} else if(")) {
-                        if (!s.endsWith(" {")) {
-                            System.out.println("} else if without { in "
-                                               + name + " at line " + l);
-                        }
-                    } else if (s.startsWith("while(")) {
-                        if (!s.endsWith(" {")) {
-                            System.out.println("while( without { in " + name
-                                               + " at line " + l);
-                        }
-                    } else if (s.startsWith("switch(")) {
-                        if (!s.endsWith(" {")) {
-                            System.out.println("switch( without { in " + name
-                                               + " at line " + l);
-                        }
-                    } else if (s.startsWith("do ")) {
-                        if (!s.endsWith(" {")) {
-                            System.out.println("do without { in " + name
-                                               + " at line " + l);
-                        }
-                    }
-                }
-
-                l++;
-            }
-
-            read.close();
-
-            return maxline;
-        } catch (Exception e) {
-            printError(e.getMessage());
-        }
-
-        return -1;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param line
-     *
-     * @return
-     */
-    boolean testLine(String line) {
-
-        if (!line.endsWith(";")) {
-            return false;
-        }
-
-        if (line.trim().startsWith("super(")) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
-     */
-    boolean isLongline(String s) {
-
-        char c = s.charAt(s.length() - 1);
-
-        if (",(+-&|".indexOf(c) >= 0) {
-            return true;
-        }
-
-        return false;
     }
 
     /**

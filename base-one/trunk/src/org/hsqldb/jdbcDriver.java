@@ -304,10 +304,6 @@ public class jdbcDriver implements Driver {
     static {
         try {
             DriverManager.registerDriver(new jdbcDriver());
-        } catch (Exception e) {
-            if (Trace.TRACE) {
-                Trace.trace(e.getMessage());
-            }
-        }
+        } catch (Exception e) {}
     }
 }

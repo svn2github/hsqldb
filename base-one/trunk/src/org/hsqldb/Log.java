@@ -157,8 +157,7 @@ class Log {
     private Cache  cCache;
 
     // used for tracing
-    private StopWatch              defaultTimer = new StopWatch();
-    private static final HsqlTimer timer        = DatabaseManager.getTimer();
+    private static final HsqlTimer timer = DatabaseManager.getTimer();
 
     /**
      *  Constructor declaration
@@ -611,15 +610,7 @@ class Log {
         } catch (IOException e) {}
 
         try {
-            if (Trace.TRACE) {
-                defaultTimer.zero();
-            }
-
             ZipUnzipFile.decompressFile(sFileBackup, sFileCache);
-
-            if (Trace.TRACE) {
-                Trace.trace(defaultTimer.elapsedTime());
-            }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
         }
