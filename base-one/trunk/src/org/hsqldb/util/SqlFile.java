@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.78 2004/06/10 16:02:27 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.79 2004/06/16 20:37:10 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.78 $
+ * @version $Revision: 1.79 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -130,8 +130,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.78 $".substring("$Revision: ".length(),
-                "$Revision: 1.78 $".length() - 2);
+        revnum = "$Revision: 1.79 $".substring("$Revision: ".length(),
+                "$Revision: 1.79 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -1753,7 +1753,9 @@ public class SqlFile {
                         condlPrint("<TD>" + headerArray[i] + "</TD>", true);
                         condlPrint(((i > 0) ? spaces(2) : "")
                                 + pad(headerArray[i], maxWidth[i],
-                                rightJust[i]), false);
+                                rightJust[i],
+                                    (i < headerArray.length-1 || rightJust[i])
+                                ), false);
                     }
                     condlPrintln("\n" + PRE_TR + "</TR>", true);
                     condlPrintln("", false);
@@ -1773,8 +1775,9 @@ public class SqlFile {
                     for (int j = 0; j < fieldArray.length; j++) {
                         condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
                         condlPrint(((j > 0) ? spaces(2) : "")
-                                            + pad(fieldArray[j], maxWidth[j],
-                                            rightJust[j]), false);
+                                + pad(fieldArray[j], maxWidth[j], rightJust[j],
+                                    (j < fieldArray.length-1 || rightJust[j])),
+                                false);
                     }
                     condlPrintln("\n" + PRE_TR + "</TR>", true);
                     condlPrintln("", false);
@@ -1856,7 +1859,10 @@ public class SqlFile {
      * @param rightJustify  True to right justify, false to left justify.
      */
     static private String pad(String inString, int fulllen,
-                              boolean rightJustify) {
+                              boolean rightJustify, boolean doPad) {
+        if (!doPad) {
+            return inString;
+        }
         int len = fulllen - inString.length();
         if (len < 1) {
             return inString;
@@ -1985,7 +1991,9 @@ public class SqlFile {
         for (int i = 0; i < headerArray.length; i++) {
             condlPrint("<TD>" + headerArray[i] + "</TD>", true);
             condlPrint(((i > 0) ? spaces(2) : "")
-                    + pad(headerArray[i], maxWidth[i], rightJust[i]), false);
+                    + pad(headerArray[i], maxWidth[i], rightJust[i],
+                                    (i < headerArray.length-1 || rightJust[i])),
+                    false);
         }
         condlPrintln("\n" + PRE_TR + "</TR>", true);
         condlPrintln("", false);
@@ -2004,7 +2012,9 @@ public class SqlFile {
             for (int j = 0; j < fieldArray.length; j++) {
                 condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
                 condlPrint(((j > 0) ? spaces(2) : "")
-                        + pad(fieldArray[j], maxWidth[j], rightJust[j]), false);
+                        + pad(fieldArray[j], maxWidth[j], rightJust[j],
+                                    (j < fieldArray.length-1 || rightJust[j])),
+                        false);
             }
             condlPrintln("\n" + PRE_TR + "</TR>", true);
             condlPrintln("", false);
