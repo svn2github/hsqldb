@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.7 2004/01/20 17:38:09 unsaved Exp $
+ * $Id: SqlFile.java,v 1.8 2004/01/20 19:13:00 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -73,8 +73,6 @@ public class SqlFile {
         "-----------------------------------------------------------------";
 
     final private static String BANNER =
-"********   N.b. I have updated this explanations, but the behavior of\n" +
-"           command termination has not been fixed yet.   ***********\n\n" +
             "SqlFile processor.  Enter \"\\?\" for help, \"\\q\" to quit.\n"
        + "REMEMBER TO TERMINATE EVERY SQL STATEMENT WITH EITHER\n"
        + "    ';' AT THE END OF A LINE in order to execute it\n"
@@ -102,7 +100,7 @@ public class SqlFile {
         + "    \\s\n"
         + "    \\-3\n"
         + "    \\e\n"
-        + "    ;\n";
+        + "    ;";
 
     /**
      * @param inFile  inFile of null means to read stdin.
