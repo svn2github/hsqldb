@@ -33,12 +33,12 @@ package org.hsqldb;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - modified
 // minor changes to support the new HsqlServerProperties class
+// boucherb@users 20030501 - Server now implements HsqlSocketRequestHandler
 
 /**
  * HsqlServerFactory
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
 public class HsqlServerFactory {
 
@@ -56,7 +56,10 @@ public class HsqlServerFactory {
 
         server.setProperties(props);
         server.openDB();
+        server.setState(ServerConstants.SERVER_ONLINE);
 
-        return new HsqlSocketRequestHandlerImpl(server);
+        // Server now implementes HsqlSocketRequestHandler,
+        // so there's really no need for HsqlSocketRequestHandlerImpl
+        return (HsqlSocketRequestHandler) server;
     }
 }
