@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.41 2004/06/11 22:29:26 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.42 2004/06/14 22:25:30 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.41 $</edition>
-        <pubdate>$Date: 2004/06/11 22:29:26 $</pubdate>
+        <edition>$Revision: 1.42 $</edition>
+        <pubdate>$Date: 2004/06/14 22:25:30 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.37 of SqlTool and
-            1.78 of SqlFile (the latter is the class which does most of the
+            1.81 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -1030,7 +1030,22 @@ java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
             The right way to handle errors is to check the SqlTool exit status.
             (The described error-handling behavior can be modified with
             SqlTool command-line switches and Special Commands).
-        </simpara>
+        </simpara> <warning><simpara>
+            Remember that \o <emphasis>appends</emphasis> to the named file.
+            If you want a new file, then use a new file name or remove the
+            targe file ahead of time.
+        </simpara></warning><tip><simpara>
+            So that I don't end up with a bunch of junk in my report file, I
+            usually leave \o off while I perfect my SQL.  With \o off,
+            I perfect the SQL query until it produces on my screen exactly
+            what I want saved to file.
+            At this point I turn on \o and run ":;" to repeat the last SQL
+            command.
+            If I have several complex queries to run, I turn \o off and
+            repeat until I'm finished.
+            (Every time you turn \o on, it will append to the file, just
+            like we need).
+        </simpara></tip>
     </section>
 
     <section id='pl-section'>
@@ -1350,6 +1365,30 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             <link linkend='baremin-section' endterm='baremin-title'/> section,
             but use your hsqlsqltool jar file in place of
             <filename>hsqldb.jar</filename>.
+        </simpara>
+    </section>
+
+    <section>
+        <title>Unit Testing SqlTool</title>
+        <simpara>
+            A unit testing framework is in place.
+            This assures the robustness of SqlTool.
+            See the file <filename>testrun/sqltool/readme.txt</filename>
+            for instructions on running, modifying, or creating unit
+            tests.
+            To create a new unit test, you create a SQL file and embed
+            metacommands in the SQL file inside of comments.
+            The metacommands tell the test harness
+            (<classname>org.hsqldb.test.SqlToolHarness</classname>)
+            how to run SqlTool (like with what arguments) and what
+            output to expect (i.e. the test criteria).
+            You can run tests without JUnit, or you can make a JUnit
+            wrapper in the normal fashion, but any SQL test file can
+            be added to our JUnit SqlTool test suite by just adding
+            one line of code to 
+            <classname>org.hsqldb.test.TestSqlTool.java</classname>.
+        </simpara> <simpara>
+            (The SqlTool unit tests require java 1.4).
         </simpara>
     </section>
 </chapter>
