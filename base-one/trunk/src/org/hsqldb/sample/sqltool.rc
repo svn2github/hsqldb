@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.4 2004/06/10 00:14:22 unsaved Exp $
+# $Id: sqltool.rc,v 1.5 2004/06/11 04:54:24 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -26,7 +26,7 @@ username sa
 password
 
 
-
+###########################################################################
 # Template for a urlid for an Oracle database.
 # You will need to put the oracle.jdbc.OracleDriver class into your 
 # classpath.
@@ -44,6 +44,33 @@ password
 #username blaine
 #password secretpassword
 #driver oracle.jdbc.OracleDriver
+###########################################################################
+
+
+###########################################################################
+# Template for a urlid for a Postgresql database.
+# You will need to put the org.postgresql.Driver class into your 
+# classpath.
+# The postgresql jar will be named postgresql.jar (if you built Postgresql 
+# from source), or something like pg73b1jdbc3.jar or jdbc7.2x-1.2.jar.
+# You can obtain it from a client or server Postgresql installation, or 
+# download it from http://jdbc.postgresql.org/download.html.
+# Notice that the jar file names (other than "postgresql.jar") contain both
+# the target Postgresql server version and the client-side JDBC level (which
+# is determined by your client-side Java version, as explained at
+# http://jdbc.postgresql.org/download.html).
+# Since you need to add to the classpath, you can't invoke SqlTool with
+# the jar switch, like "java -jar .../hsqldb.jar..." or 
+# "java -jar .../hsqlsqltool.jar...".
+# Put both the HSQLDB jar and the Postgresql jar in your classpath (and
+# export!) and run something like "java org.hsqldb.util.SqlTool...".
+
+#urlid commerce
+#url jdbc:postgresql://dbsvr2/commercedb
+#username blaine
+#password obscured
+#driver org.postgresql.Driver
+###########################################################################
 
 
 
