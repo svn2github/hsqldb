@@ -428,7 +428,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_USAGE_PRIVILEGES] =
             sysTableSessionDependent[SYSTEM_TABLE_CONSTRAINTS] =
             sysTableSessionDependent[SYSTEM_CHECK_COLUMN_USAGE] =
-            sysTableSessionDependent[SYSTEM_CHECK_ROUTINE_USAGE] =
+            sysTableSessionDependent[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE] =
             sysTableSessionDependent[SYSTEM_CHECK_TABLE_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_COLUMN_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =

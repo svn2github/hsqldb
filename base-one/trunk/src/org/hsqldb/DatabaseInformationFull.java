@@ -144,8 +144,8 @@ extends org.hsqldb.DatabaseInformationMain {
             case SYSTEM_CHECK_COLUMN_USAGE :
                 return SYSTEM_CHECK_COLUMN_USAGE();
 
-            case SYSTEM_CHECK_ROUTINE_USAGE :
-                return SYSTEM_CHECK_ROUTINE_USAGE();
+            case SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE :
+                return SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE();
 
             case SYSTEM_CHECK_TABLE_USAGE :
                 return SYSTEM_CHECK_TABLE_USAGE();
@@ -2494,13 +2494,13 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * </ol>
      */
-    Table SYSTEM_CHECK_ROUTINE_USAGE() throws HsqlException {
+    Table SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE() throws HsqlException {
 
-        Table t = sysTables[SYSTEM_CHECK_ROUTINE_USAGE];
+        Table t = sysTables[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE];
 
         if (t == null) {
             t = createBlankTable(
-                sysTableHsqlNames[SYSTEM_CHECK_ROUTINE_USAGE]);
+                sysTableHsqlNames[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE]);
 
             addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
             addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);
