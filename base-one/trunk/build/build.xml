@@ -551,8 +551,8 @@ examples:
         <if><not><uptodate targetfile='docwork/${book}/cdata/.status'>
             <!-- Mappers don't work for shit with multiple patterns.
             Therefore, have to use a timestamp file.  -->
-            <srcfiles
-                 dir='docsrc/${book}' includes='*.java, *.txt, *.ksh'/>
+            <srcfiles dir='docsrc/${book}'
+                      includes='*.java, *.txt, *.ksh, *.properties, *.rc'/>
         </uptodate></not><then>
             <!-- This copies files matching the fileset below to the docwork
                  dir w/ data so that DocBook may entity include them.
@@ -561,7 +561,7 @@ examples:
             <pathconvert property='_virginfiles' targetos='unix' pathsep='|'
                          setonempty='false'> <path>
                  <fileset dir='docsrc/${book}'
-                          includes='*.java, *.txt, *.ksh'/>
+                          includes='*.java, *.txt, *.ksh, *.properties, *.rc'/>
             </path> </pathconvert>
             <if><isset property='_virginfiles'/><then>
                 <foreach list='${_virginfiles}' param='vfile' inheritall='false'
