@@ -67,17 +67,12 @@
 
 package org.hsqldb;
 
-import java.util.NoSuchElementException;
+import java.util.Stack;
 import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.lib.ObjectComparator;
-import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
-import java.util.Stack;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
@@ -998,12 +993,10 @@ class Parser {
 
                         checkParamAmbiguity(
                             !(l.getArg().isParam() && l.getArg2().isParam()),
-                            "for both the first and second operands of a "
-                            + "BETWEEN comparison predicate");
+                            "for both the first and second operands of a BETWEEN comparison predicate");
                         checkParamAmbiguity(
                             !(h.getArg().isParam() && h.getArg2().isParam()),
-                            "for both the first and third operands of a "
-                            + "BETWEEN comparison predicate");
+                            "for both the first and third operands of a BETWEEN comparison predicate");
 
                         a = new Expression(Expression.AND, l, h);
 
@@ -2031,7 +2024,7 @@ class Parser {
 
             len = cNames.size();
             ccl = t.getNewColumnCheckList();
-            cm  = t.getNewColumnMap();
+            cm  = new int[len];
 
             for (int i = 0; i < len; i++) {
                 ci      = t.getColumnNr((String) cNames.get(i));
@@ -2181,7 +2174,7 @@ class Parser {
 
     static void checkParamAmbiguity(boolean b,
                                     String msg) throws HsqlException {
-        Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg + msg);
+        Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg, msg);
     }
 
     boolean isParsingView() {

@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.lang.reflect.Constructor;
-import java.util.NoSuchElementException;
 import org.hsqldb.lib.IntValueHashMap;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance

@@ -31,13 +31,10 @@
 
 package org.hsqldb;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.sql.Timestamp;
 import org.hsqldb.lib.HsqlTimer;
@@ -460,7 +457,7 @@ public class LockFile {
 
         trace("startHeartbeat(): entered.");
 
-        if (timerTask == null || timer.isCancelled(timerTask)) {
+        if (timerTask == null || HsqlTimer.isCancelled(timerTask)) {
             r = new HeartbeatRunner();
 
             // now, periodic at HEARTBEAT_INTERVAL, running this, fixed rate
@@ -480,8 +477,8 @@ public class LockFile {
 
         trace(mn + "entered");
 
-        if (timerTask != null &&!timer.isCancelled(timerTask)) {
-            timer.cancel(timerTask);
+        if (timerTask != null &&!HsqlTimer.isCancelled(timerTask)) {
+            HsqlTimer.cancel(timerTask);
 
             timerTask = null;
         }

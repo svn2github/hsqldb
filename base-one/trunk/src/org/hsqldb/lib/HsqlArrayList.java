@@ -32,8 +32,6 @@
 package org.hsqldb.lib;
 
 import java.lang.reflect.Array;
-import java.util.Enumeration;
-import java.util.NoSuchElementException;
 
 /**
  * Intended as an asynchronous alternative to Vector.  Use HsqlLinkedList

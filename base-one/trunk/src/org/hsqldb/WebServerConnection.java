@@ -70,7 +70,6 @@ package org.hsqldb;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
@@ -127,7 +126,7 @@ class WebServerConnection implements Runnable {
     static final byte[] BYTES_POST       = "POST".getBytes();
     static final byte[] BYTES_CONTENT    = "Content-Length: ".getBytes();
     static final byte[] BYTES_WHITESPACE = new byte[] {
-        ' ', '\t'
+        (byte) ' ', (byte) '\t'
     };
 
     // default mime type mappings
@@ -141,7 +140,7 @@ class WebServerConnection implements Runnable {
      * @param socket the network socket on which WebServer communication
      *      takes place
      * @param server the WebServer instance to which the object
-     *      represents a connection 
+     *      represents a connection
      */
     WebServerConnection(Socket socket, WebServer server) {
         this.server = server;
@@ -451,7 +450,7 @@ class WebServerConnection implements Runnable {
 
         if (addInfo) {
             sb.append("Allow: GET, HEAD, POST\nMIME-Version: 1.0\r\n");
-            sb.append("Server: ").append(server.serverName).append("\r\n");
+            sb.append("Server: ").append(Server.serverName).append("\r\n");
         }
 
         if (mimeType != null) {
@@ -480,19 +479,19 @@ class WebServerConnection implements Runnable {
 
             case HttpURLConnection.HTTP_BAD_REQUEST :
                 msg = getHead(HEADER_BAD_REQUEST, false, null, 0);
-                msg += BundleHandler.getString(server.bundleHandle,
+                msg += BundleHandler.getString(WebServer.webBundleHandle,
                                                "BAD_REQUEST");
                 break;
 
             case HttpURLConnection.HTTP_NOT_FOUND :
                 msg = getHead(HEADER_NOT_FOUND, false, null, 0);
-                msg += BundleHandler.getString(server.bundleHandle,
+                msg += BundleHandler.getString(WebServer.webBundleHandle,
                                                "NOT_FOUND");
                 break;
 
             case HttpURLConnection.HTTP_FORBIDDEN :
                 msg = getHead(HEADER_FORBIDDEN, false, null, 0);
-                msg += BundleHandler.getString(server.bundleHandle,
+                msg += BundleHandler.getString(WebServer.webBundleHandle,
                                                "FORBIDDEN");
                 break;
 

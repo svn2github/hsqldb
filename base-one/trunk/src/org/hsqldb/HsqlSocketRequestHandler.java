@@ -44,5 +44,5 @@ public interface HsqlSocketRequestHandler {
 
     public void handleConnection(final Socket socket);
 
-    void closeAllServerConnections();
+    void signalCloseAllServerConnections();
 }

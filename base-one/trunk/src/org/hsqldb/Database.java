@@ -70,7 +70,6 @@ package org.hsqldb;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.StopWatch;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
@@ -180,7 +179,9 @@ class Database {
         sPath = path;
 
         if (sType == DatabaseManager.S_RES) {
-            setFilesInJar();
+            filesInJar    = true;
+            filesReadOnly = true;
+            ifexists      = true;
         }
 
         // does not need to be done more than once
@@ -263,7 +264,7 @@ class Database {
 
             dInfo.setWithContent(true);
         } catch (Throwable e) {
-            logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
+            logger.closeLog(Database.CLOSEMODE_IMMEDIATELY);
             logger.releaseLock();
             clearStructures();
             setState(DATABASE_SHUTDOWN);
@@ -387,12 +388,6 @@ class Database {
 // ----------------------------------------------------------------------------
     boolean isFilesInJar() {
         return filesInJar;
-    }
-
-    /** Setter for fileInJar attribute */
-    private void setFilesInJar() {
-        filesInJar    = true;
-        filesReadOnly = true;
     }
 
     /**
@@ -748,7 +743,7 @@ class Database {
         logger.closeLog(closemode);
 
         try {
-            if (closemode == CLOSEMODE_COMPACT) {
+            if (closemode == CLOSEMODE_COMPACT &&!filesReadOnly) {
                 reopen();
                 setState(DATABASE_CLOSING);
                 logger.closeLog(CLOSEMODE_NORMAL);

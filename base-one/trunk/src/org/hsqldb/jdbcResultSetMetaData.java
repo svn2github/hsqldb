@@ -67,16 +67,10 @@
 
 package org.hsqldb;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSetMetaData;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.StopWatch;
-import org.hsqldb.store.ValuePool;
 
 /** <!-- start generic documentation -->
  * An object that can be used to get information about the types
@@ -1262,11 +1256,13 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             sb.append(i + 1);
             sb.append('=');
             sb.append(columnMetaData[i]);
-            sb.append(',');
-            sb.append(' ');
+
+            if (i + 1 < columnCount) {
+                sb.append(',');
+                sb.append(' ');
+            }
         }
 
-        sb.setLength(sb.length() - 2);
         sb.append('\n');
         sb.append(']');
 

@@ -67,12 +67,10 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntKeyHashMap;
 import java.io.IOException;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
-import org.hsqldb.store.ValuePool;
 
 class ScriptRunner {
 

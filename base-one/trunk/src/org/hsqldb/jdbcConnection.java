@@ -67,31 +67,15 @@
 
 package org.hsqldb;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.net.URL;
-import java.net.URLConnection;
-import java.sql.*;     // for Savepoint
+import java.sql.*;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.Hashtable;
-import java.util.StringTokenizer;
-import java.net.MalformedURLException;
-import java.util.Properties;
-import java.util.*;    // for Map
-import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.StringConverter;
+import java.util.*;
 import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
@@ -2447,6 +2431,9 @@ public class jdbcConnection implements Connection {
         if (password == null) {
             password = "";
         }
+
+        user     = user.toUpperCase();
+        password = password.toUpperCase();
 
         try {
             if (connType == DatabaseManager.S_FILE

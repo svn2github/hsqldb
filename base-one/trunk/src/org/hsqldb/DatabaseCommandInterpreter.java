@@ -188,7 +188,7 @@ class DatabaseCommandInterpreter {
     private Result executePart(int cmd, String token,
                                Parser parser) throws Throwable {
 
-        Result result = this.emptyResult;
+        Result result = emptyResult;
 
         switch (cmd) {
 
@@ -1134,7 +1134,7 @@ class DatabaseCommandInterpreter {
 
             if (newcolumn.isPrimaryKey()) {
                 Trace.check(pkCols == null, Trace.SECOND_PRIMARY_KEY,
-                            "column " + colIndex);
+                            "column ", colIndex);
 
                 pkCols = new int[]{ colIndex };
             }
@@ -2248,10 +2248,9 @@ class DatabaseCommandInterpreter {
         // TODO: we need a code: Trace.TRIGGER_ALREADY_EXISTS
         if (exists != yes) {
             if (yes) {
-                Trace.doAssert(false,
-                               " trigger " + triggerName + " not found");
+                Trace.doAssert(false, triggerName, " trigger not found");
             } else {
-                Trace.doAssert(false, " trigger " + triggerName + " exists");
+                Trace.doAssert(false, triggerName, " trigger exists");
             }
         }
     }

@@ -130,17 +130,21 @@ public final class jdbcColumnMetaData {
 
         fields = getClass().getFields();
 
-        for (int i = 0; i < fields.length; i++) {
+        int len = fields.length;
+
+        for (int i = 0; i < len; i++) {
             field = fields[i];
 
             sb.append(field.getName());
             sb.append('=');
             sb.append(field.get(this));
-            sb.append(',');
-            sb.append(' ');
+
+            if (i + 1 < len) {
+                sb.append(',');
+                sb.append(' ');
+            }
         }
 
-        sb.setLength(sb.length() - 2);
         sb.append(']');
 
         return sb.toString();

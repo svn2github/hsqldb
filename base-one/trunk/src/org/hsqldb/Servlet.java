@@ -70,11 +70,8 @@ package org.hsqldb;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.DataInputStream;
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20020130 - patch 475586 by wreissen@users
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping

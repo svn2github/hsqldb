@@ -68,9 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.HsqlNameManager.HsqlName;
 

@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.io.File;
-import java.net.Socket;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -139,24 +138,11 @@ public class WebServer extends Server {
      * Handle to resource bundle providing i18n for things like
      * HTTP error pages.
      */
-    int bundleHandle;
+    static int webBundleHandle = BundleHandler.getBundleHandle("webserver",
+        null);
 
     public WebServer() {
-
         super(ServerConstants.SC_PROTOCOL_HTTP);
-
-        ClassLoader cl = null;
-
-        try {
-            cl = getClass().getClassLoader();
-        } catch (Exception e) {
-
-            // resource bundle search will be limited to
-            // BundleHandler class loader and / or 
-            // system class loader.
-        }
-
-        bundleHandle = BundleHandler.getBundleHandle("webserver", cl);
     }
 
     /**
@@ -204,5 +190,108 @@ public class WebServer extends Server {
 
         server.setProperties(props);
         server.start();
+    }
+
+    /**
+     * Retrieves the default port that this Server will try to use in the
+     * abscence of an explicitly specified one, given the specified
+     * value for whether or not to use secure sockets.
+     *
+     * @param isTls if true, retrieve the default port when using secure
+     *      sockets, else the default port when using plain sockets
+     * @return the default port used in the abscence of an explicit
+     *      specification.
+     */
+    public int getDefaultPort(boolean isTls) {
+        return isTls ? ServerConstants.SC_DEFAULT_HTTPS_SERVER_PORT
+                     : ServerConstants.SC_DEFAULT_HTTP_SERVER_PORT;
+    }
+
+    /**
+     * Retrieves the path that will be used by default if a null or zero-length
+     * path is specified to putPropertiesFromFile().  This path does not
+     * include the '.properties' file extention, which is implicit.
+     *
+     * @return The path that will be used by default if null is specified to
+     *      putPropertiesFromFile()
+     *
+     * @jmx.managed-attribute
+     *  access="read-only"
+     *  description="Read by putPropertiesFromFile()"
+     */
+    public String getDefaultPropertiesPath() {
+        return (new File("webserver")).getAbsolutePath();
+    }
+
+    /**
+     * Retrieves the name of the web page served when no page is specified.
+     * This attribute is relevant only when server protocol is HTTP(S).
+     *
+     * @return the name of the web page served when no page is specified
+     *
+     * @jmx.managed-attribute
+     *  access="read-write"
+     *  description="Used when server protocol is HTTP(S)"
+     */
+    public String getDefaultWebPage() {
+        return serverProperties.getProperty(
+            ServerConstants.SC_KEY_WEB_DEFAULT_PAGE);
+    }
+
+    /**
+     * Retrieves a String object describing the command line and
+     * properties options for this Server.
+     *
+     * @return the command line and properties options help for this Server
+     */
+    public String getHelpString() {
+        return BundleHandler.getString(serverBundleHandle, "webserver.help");
+    }
+
+    /**
+     * Retrieves this server's product name.  <p>
+     *
+     * Typically, this will be something like: "HSQLDB xxx server".
+     *
+     * @return the product name of this server
+     *
+     * @jmx.managed-attribute
+     *  access="read-only"
+     *  description="Of Server"
+     */
+    public String getProductName() {
+        return "HSQLDB web server";
+    }
+
+    /**
+     * Retrieves a string respresentaion of the network protocol
+     * this server offers, typically one of 'HTTP', HTTPS', 'HSQL' or 'HSQLS'.
+     *
+     * @return string respresentation of this server's protocol
+     *
+     * @jmx.managed-attribute
+     *  access="read-only"
+     *  description="Used to handle connections"
+     */
+    public String getProtocol() {
+        return isTls() ? "HTTPS"
+                       : "HTTP";
+    }
+
+    /**
+     * Retrieves the root context (directory) from which web content
+     * is served.  This property is relevant only when the server
+     * protocol is HTTP(S).  Although unlikely, it may be that in the future
+     * other contexts, such as jar urls may be supported, so that pages can
+     * be served from the contents of a jar or from the JVM class path.
+     *
+     * @return the root context (directory) from which web content is served
+     *
+     * @jmx.managed-attribute
+     *  access="read-write"
+     *  description="Context (directory)"
+     */
+    public String getWebRoot() {
+        return serverProperties.getProperty(ServerConstants.SC_KEY_WEB_ROOT);
     }
 }

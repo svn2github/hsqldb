@@ -71,9 +71,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
@@ -261,7 +259,7 @@ class UserManager {
                     boolean admin) throws HsqlException {
 
         // boucherb@users 20020815 - patch assert nn name
-        Trace.doAssert(name != null, "null is name");
+        Trace.doAssert(name != null, "name is null");
 
         // TODO:
         // checkComplexity(password);
@@ -334,7 +332,7 @@ class UserManager {
 
         User u = get(name);
 
-        Trace.check(u != null, Trace.USER_NOT_FOUND);
+        Trace.check(u != null, Trace.USER_NOT_FOUND, name);
         u.checkPassword(password);
 
         return u;

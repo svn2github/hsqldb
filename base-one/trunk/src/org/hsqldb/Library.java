@@ -69,19 +69,14 @@ package org.hsqldb;
 
 import java.sql.Timestamp;
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.text.SimpleDateFormat;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
-import org.hsqldb.store.ValuePool;
-import org.hsqldb.lib.IntValueHashMap;
 import java.sql.Date;
 import java.sql.Time;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Random;
+import java.text.SimpleDateFormat;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function

@@ -282,11 +282,10 @@ final class DIProcedureInfo {
 
                 for (int i = 0; i < len; i++) {
                     sb.append(parmTypes[i].getName());
-                    sb.append(',');
-                }
 
-                if (len > 0) {
-                    sb.setLength(sb.length() - 1);
+                    if (i + 1 < len) {
+                        sb.append(',');
+                    }
                 }
 
                 sb.append(')');

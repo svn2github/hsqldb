@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.Iterator;
 

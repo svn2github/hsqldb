@@ -211,8 +211,9 @@ final class CompiledStatement {
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
-        this.checkColumns = checkColumns;
-        tf                = new TableFilter(targetTable, null, false);
+
+        //this.checkColumns = checkColumns;
+        tf = new TableFilter(targetTable, null, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];

@@ -33,17 +33,10 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.StringTokenizer;
 import java.net.Socket;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.ArrayUtil;
 
 /**

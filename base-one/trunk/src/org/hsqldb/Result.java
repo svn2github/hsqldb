@@ -96,7 +96,7 @@ class Result {
     private int significantColumns;
 
     // type of result
-    int     iMode;
+    int iMode;
 
 //    boolean isMulti;
     // database ID
@@ -525,7 +525,7 @@ class Result {
                         case ResultConstants.SQL_ATTR_SAVEPOINT_NAME :
                             mainString = in.readString();    // savepoint name
 
-                        //  case ResultConstants.SQL_ATTR_AUTO_IPD : 
+                        //  case ResultConstants.SQL_ATTR_AUTO_IPD :
                         //      - always true
                         //  default: throw - case never happens
                     }
@@ -559,7 +559,7 @@ class Result {
         Result out;
         Result pack;
 
-        out              = new Result(ResultConstants.MULTI);
+        out = new Result(ResultConstants.MULTI);
 
 //        out.isMulti      = true;
         pack             = new Result(ResultConstants.PREPARE_ACK);
@@ -864,8 +864,8 @@ class Result {
         rTail = n;
 
         Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.removeDuplicates iSize ="
-                       + iSize);
+                       "rTail not correct in Result.removeDuplicates iSize =",
+                       iSize);
     }
 
     void removeSecond(Result minus) throws HsqlException {
@@ -921,7 +921,7 @@ class Result {
 
         Trace.doAssert(
             (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeSecond iSize =" + iSize);
+            "rTail not correct in Result.removeSecond iSize =", iSize);
     }
 
     void removeDifferent(Result r2) throws HsqlException {
@@ -983,7 +983,7 @@ class Result {
 
         Trace.doAssert(
             (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeDifference iSize =" + iSize);
+            "rTail not correct in Result.removeDifference iSize =", iSize);
     }
 
     /**
@@ -1067,8 +1067,8 @@ class Result {
         rTail = targetlast[0];
 
         Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.sortResult iSize ="
-                       + iSize);
+                       "rTail not correct in Result.sortResult iSize =",
+                       iSize);
     }
 
     /**
@@ -1171,19 +1171,6 @@ class Result {
 
         switch (iMode) {
 
-// SQLGETSESSIONINFO does not implement spec semantics, table 15, 5Wd 200n FCD
-//
-// Information Type                   | Code  | Data Type     | <general value specification>
-// -----------------------------------+-------+---------------+----------------------------------------------                
-// CURRENT USER                        47      CHARACTER(L)    USER and CURRENT_USER
-// CURRENT DEFAULT TRANSFORM GROUP     20004   CHARACTER(L)    CURRENT_DEFAULT_TRANSFORM_GROUP
-// CURRENT PATH                        20005   CHARACTER(L)    CURRENT_PATH
-// CURRENT ROLE                        20006   CHARACTER(L)    CURRENT_ROLE
-// SESSION USER                        20007   CHARACTER(L)    SESSION_USER
-// SYSTEM USER                         20008   CHARACTER(L)    SYSTEM_USER
-// Where L is the implementation-defined maximum length of the corresponding <general value specification>.
-//
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
             case ResultConstants.GETSESSIONATTR :
             case ResultConstants.SQLDISCONNECT :
             case ResultConstants.SQLSTARTTRAN :
@@ -1308,10 +1295,6 @@ class Result {
     void readMultiResult(DatabaseRowInputInterface in)
     throws HsqlException, IOException {
 
-//        isMulti = true;
-        // Why do we need both?  Currently, the iMode of a MUTLI result
-        // is useless. Why not just use the iMode to indicate a MUTLI?
-//        iMode      = in.readIntData();
         iMode      = ResultConstants.MULTI;
         databaseID = in.readIntData();
         sessionID  = in.readIntData();
@@ -1333,10 +1316,6 @@ class Result {
         int startPos = out.size();
 
         out.writeSize(0);
-
-        // Why do we need both?  Currently, the iMode of a MUTLI result
-        // is useless. Why not just use the iMode to indicate a MUTLI?
-//        out.writeIntData(ResultConstants.MULTI);
         out.writeIntData(iMode);
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
@@ -1480,7 +1459,7 @@ class Result {
         iUpdateCount = type;
     }
 
-    /** @todo fred - check this reporposing */
+    /** @todo fred - check this repurposing */
     int[] getUpdateCounts() {
         return metaData.colType;
     }

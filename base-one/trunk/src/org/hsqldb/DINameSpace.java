@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Enumeration;
 import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;

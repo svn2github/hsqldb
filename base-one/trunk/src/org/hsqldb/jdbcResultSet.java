@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;     // for Array, Blob, Clob, Ref
 import java.sql.SQLException;
@@ -1797,11 +1796,13 @@ public class jdbcResultSet implements ResultSet {
             String name = rResult.metaData.sLabel[i];
 
             if (toUpperColumnName) {
-                name = name.toUpperCase();
-            }
-
-            if (columnName.equals(name)) {
-                return i + 1;
+                if (columnName.equalsIgnoreCase(name)) {
+                    return i + 1;
+                }
+            } else {
+                if (columnName.equals(name)) {
+                    return i + 1;
+                }
             }
         }
 

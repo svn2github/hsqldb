@@ -37,7 +37,6 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users

@@ -35,7 +35,6 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Method;
-import org.hsqldb.lib.Iterator;
 
 // boucherb@users 200307?? - patch 1.7.2
 // TODO:
@@ -57,16 +56,16 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /** The numeric data type codes of the parameters. */
     int[] types;
-    
+
     /** Parameter mode values */
     int[] modes;
-    
+
     /** whether param is assigned directly to identity column */
     boolean[] isIdentity;
-    
+
     /** nullability code for site to which param is bound */
     int[] nullability;
-    
+
     /**
      * The fully-qualified name of the Java class whose instances should
      * be passed to the method PreparedStatement.setObject. <p>
@@ -80,30 +79,30 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      * and transport objects whose class is not in the standard mapping.
      */
     String[] classNames;
-    int parameterCount;
+    int      parameterCount;
 
     /**
      * Creates a new instance of jdbcParameterMetaData
      * @param types The numeric data type codes of the parameters
      */
     jdbcParameterMetaData(Result r) throws SQLException {
-        
-        String   msg;
+
+        String                msg;
         Result.ResultMetaData rmd;
-        
+
         if (r == null) {
             msg = "r is null";
 
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        rmd = r.metaData;
+        rmd            = r.metaData;
         types          = rmd.colType;
         parameterCount = types.length;
         nullability    = rmd.nullability;
         isIdentity     = rmd.isIdentity;
         classNames     = rmd.sClassName;
-        modes          = rmd.paramMode;                
+        modes          = rmd.paramMode;
     }
 
     /**
@@ -138,7 +137,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public String getParameterClassName(int param) throws SQLException {
 
         checkRange(param);
-        
+
         return classNames[--param];
     }
 
@@ -183,12 +182,12 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     public int getParameterType(int param) throws SQLException {
 
         int t;
-        
+
         checkRange(param);
 
         t = types[--param];
-        
-        return t == Types.VARCHAR_IGNORECASE ? Types.VARCHAR 
+
+        return t == Types.VARCHAR_IGNORECASE ? Types.VARCHAR
                                              : t;
     }
 
@@ -290,27 +289,27 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
         return b != null &&!b.booleanValue() &&!isIdentity[param];
     }
-    
+
     private void setupTypeInfo(int param) {
 
         int t;
         int ts;
-        
+
         t = types[param];
-        
+
         if (t == Types.VARCHAR_IGNORECASE) {
-            t = Types.VARCHAR;
+            t  = Types.VARCHAR;
             ts = Types.TYPE_SUB_IGNORECASE;
         } else if (isIdentity[param]) {
             ts = Types.TYPE_SUB_IDENTITY;
         } else {
             ts = Types.TYPE_SUB_DEFAULT;
         }
-        
+
         ti.setTypeCode(t);
-        ti.setTypeSub(ts);        
+        ti.setTypeSub(ts);
     }
-    
+
     public String toString() {
 
         try {
@@ -322,27 +321,29 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     private String toStringImpl() throws Exception {
 
-        StringBuffer  sb;
-        Method[]      methods;
-        Method        method;
-        int           count;
-        
+        StringBuffer sb;
+        Method[]     methods;
+        Method       method;
+        int          count;
+
         sb = new StringBuffer();
-        
+
         sb.append(super.toString());
-                
-        count   = getParameterCount();
-        
+
+        count = getParameterCount();
+
         if (count == 0) {
             sb.append("[parameterCount=0]");
 
             return sb.toString();
         }
-        
+
         methods = getClass().getDeclaredMethods();
-        
+
         sb.append('[');
-        
+
+        int len = methods.length;
+
         for (int i = 0; i < count; i++) {
             sb.append('\n');
             sb.append("    parameter_");
@@ -350,32 +351,36 @@ public class jdbcParameterMetaData implements ParameterMetaData {
             sb.append('=');
             sb.append('[');
 
-            for (int j = 0; j < methods.length; j++) {
+            for (int j = 0; j < len; j++) {
                 method = methods[j];
 
                 if (!Modifier.isPublic(method.getModifiers())) {
                     continue;
                 }
-                
+
                 if (method.getParameterTypes().length != 1) {
                     continue;
                 }
 
                 sb.append(method.getName());
                 sb.append('=');
-                sb.append(method.invoke(this, 
+                sb.append(method.invoke(this,
                                         new Object[]{ new Integer(i + 1) }));
+
+                if (j + 1 < len) {
+                    sb.append(',');
+                    sb.append(' ');
+                }
+            }
+
+            sb.append(']');
+
+            if (i + 1 < count) {
                 sb.append(',');
                 sb.append(' ');
             }
-
-            sb.setLength(sb.length() - 2);
-            sb.append(']');
-            sb.append(',');
-            sb.append(' ');
         }
 
-        sb.setLength(sb.length() - 2);
         sb.append('\n');
         sb.append(']');
 

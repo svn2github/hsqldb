@@ -82,8 +82,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         String[] protectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
             "hsqldb.original_version", "hsqldb.script_format",
-            "hsqldb.files_readonly", "hsqldb.files_in_jar", "readonly",
-            "modified", "sql.compare_in_locale"
+            "hsqldb.files_readonly", "readonly", "modified",
+            "sql.compare_in_locale"
         };
 
         protectedProperties.addAll(protectedPropertiesNames);

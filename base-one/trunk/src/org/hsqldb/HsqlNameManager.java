@@ -134,7 +134,7 @@ class HsqlNameManager {
 
         private HsqlName(HsqlNameManager man) {
             manager  = man;
-            hashCode = manager.serialNumber++;
+            hashCode = HsqlNameManager.serialNumber++;
         }
 
         private HsqlName(HsqlNameManager man, String name,

@@ -68,20 +68,12 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.math.BigDecimal;
-import java.sql.*;     // for Array, Blob, Clob, Ref
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
+import java.sql.*;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.*;    // for Map
 import java.util.Calendar;
-import java.util.Vector;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
@@ -1288,16 +1280,13 @@ implements java.sql.PreparedStatement {
     public synchronized void addBatch() throws SQLException {
 
 // boucherb@users 20030801 - method implemented
-        Object[] bpValues;
-        int      len;
-
         checkClosed();
 
-        len      = parameterValues.length;
-        bpValues = new Object[len];
+        int      len      = parameterValues.length;
+        Object[] bpValues = new Object[len];
 
         System.arraycopy(parameterValues, 0, bpValues, 0, len);
-        batch.add(bpValues);
+        batchResultOut.add(bpValues);
     }
 
     /**
@@ -2130,6 +2119,8 @@ implements java.sql.PreparedStatement {
 
         resultOut = new Result(ResultConstants.SQLEXECUTE, parameterTypes,
                                statementID);
+        batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
+                                    parameterTypes, statementID);
 
         // for toString()
         this.sql = sql;

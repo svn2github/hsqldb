@@ -686,8 +686,8 @@ class Types {
             }
         }
 
-        Trace.check(type != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE,
-                    msg + name);
+        Trace.check(type != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE, msg,
+                    name);
 
         return type;
     }

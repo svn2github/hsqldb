@@ -93,16 +93,18 @@ public class StringUtil {
      */
     public static String getList(String[] s, String separator, String quote) {
 
-        StringBuffer b = new StringBuffer(s.length * 16);
+        int          len = s.length;
+        StringBuffer b   = new StringBuffer(len * 16);
 
-        for (int i = 0; i < s.length; i++) {
+        for (int i = 0; i < len; i++) {
             b.append(quote);
             b.append(s[i]);
             b.append(quote);
-            b.append(separator);
-        }
 
-        b.setLength(b.length() - separator.length());
+            if (i + 1 < len) {
+                b.append(separator);
+            }
+        }
 
         return b.toString();
     }
@@ -125,16 +127,18 @@ public class StringUtil {
      */
     public static String getList(int[] s, String separator, String quote) {
 
-        StringBuffer b = new StringBuffer(s.length * 8);
+        int          len = s.length;
+        StringBuffer b   = new StringBuffer(len * 8);
 
-        for (int i = 0; i < s.length; i++) {
+        for (int i = 0; i < len; i++) {
             b.append(quote);
             b.append(s[i]);
             b.append(quote);
-            b.append(separator);
-        }
 
-        b.setLength(b.length() - separator.length());
+            if (i + 1 < len) {
+                b.append(separator);
+            }
+        }
 
         return b.toString();
     }
@@ -161,16 +165,18 @@ public class StringUtil {
     public static String getList(String[][] s, String separator,
                                  String quote) {
 
-        StringBuffer b = new StringBuffer(s.length * 16);
+        int          len = s.length;
+        StringBuffer b   = new StringBuffer(len * 16);
 
-        for (int i = 0; i < s.length; i++) {
+        for (int i = 0; i < len; i++) {
             b.append(quote);
             b.append(s[i][0]);
             b.append(quote);
-            b.append(separator);
-        }
 
-        b.setLength(b.length() - separator.length());
+            if (i + 1 < len) {
+                b.append(separator);
+            }
+        }
 
         return b.toString();
     }

@@ -74,8 +74,6 @@ import java.io.File;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlStringBuffer;
-import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
@@ -226,7 +224,7 @@ class Log {
 
         bRestoring = true;
 
-        if (FileUtil.exists(sFileScript)) {
+        if (dDatabase.filesInJar || FileUtil.exists(sFileScript)) {
             try {
                 DatabaseScriptReader scr =
                     DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
@@ -348,7 +346,7 @@ class Log {
     void stop() {
 
         if (timerTask != null) {
-            timer.cancel(timerTask);
+            HsqlTimer.cancel(timerTask);
 
             timerTask = null;
         }

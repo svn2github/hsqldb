@@ -287,12 +287,11 @@ public class HsqlArrayHeap implements HsqlHeap {
 
         for (int i = 0; i < count; i++) {
             sb.append(heap[i]);
-            sb.append(',');
-            sb.append(' ');
-        }
 
-        if (count > 0) {
-            sb.setLength(sb.length() - 2);
+            if (i + 1 < count) {
+                sb.append(',');
+                sb.append(' ');
+            }
         }
 
         sb.append(']');

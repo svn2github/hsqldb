@@ -98,6 +98,17 @@ public interface ResultConstants {
      */
     int GETSESSIONATTR = HSQL_API_BASE + 7;
 
+    /**
+     * Indicates that the Result object encapsulates a batch of statements
+     */
+    int BATCHEXECDIRECT = HSQL_API_BASE + 8;
+
+    /**
+     * Indicates that the Result object encapsulates a batch of prepared
+     * statement parameter values
+     */
+    int BATCHEXECUTE = HSQL_API_BASE + 9;
+
     /** The offset at which the standard SQL API Result mode values start. */
     int SQL_API_BASE = 0x00010000;
 

@@ -70,7 +70,6 @@ package org.hsqldb;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.SQLWarning;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
@@ -171,11 +170,12 @@ public class jdbcStatement implements java.sql.Statement {
     /** The result set type obtained by executing this statement. */
     protected int rsType = jdbcResultSet.TYPE_FORWARD_ONLY;
 
-    /** Used by this statement to communicate sqlExecDirect requests. */
+    /** Used by this statement to communicate non-batched requests. */
     protected Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
 
-    /** Use by this statement to hold batch execution data */
-    protected Result batch = new Result(ResultConstants.DATA);
+    /** Use by this statement to communicate batched execution requests */
+    protected Result batchResultOut =
+        new Result(ResultConstants.BATCHEXECDIRECT);
 
     /** Whether the parent connection is to a network server instance. */
     protected final boolean isNetConn;
@@ -291,11 +291,11 @@ public class jdbcStatement implements java.sql.Statement {
             return;
         }
 
-        batch      = null;
-        connection = null;
-        resultIn   = null;
-        resultOut  = null;
-        isClosed   = true;
+        batchResultOut = null;
+        connection     = null;
+        resultIn       = null;
+        resultOut      = null;
+        isClosed       = true;
     }
 
     //----------------------------------------------------------------------
@@ -1011,7 +1011,7 @@ public class jdbcStatement implements java.sql.Statement {
             sql = connection.nativeSQL(sql);
         }
 
-        batch.add(new Object[]{ sql });
+        batchResultOut.add(new Object[]{ sql });
     }
 
     /**
@@ -1039,7 +1039,7 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public void clearBatch() throws SQLException {
         checkClosed();
-        batch.setRows(null);
+        batchResultOut.setRows(null);
     }
 
     /**
@@ -1120,26 +1120,20 @@ public class jdbcStatement implements java.sql.Statement {
         checkClosed();
         connection.clearWarningsNoCheck();
 
-        if (batch.getSize() == 0) {
+        if (batchResultOut.getSize() == 0) {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                           "Empty batch");
         }
 
-        resultOut.setRows(batch);
-
-        he = null;
-
         try {
-            resultIn = connection.sessionProxy.execute(resultOut);
+            resultIn = connection.sessionProxy.execute(batchResultOut);
         } catch (HsqlException e) {
-            he = e;
+            batchResultOut.setRows(null);
+
+            throw jdbcDriver.sqlException(e);
         }
 
-        resultOut.setRows(null);
-
-        if (he != null) {
-            throw jdbcDriver.sqlException(he);
-        }
+        batchResultOut.setRows(null);
 
         updateCounts = resultIn.getUpdateCounts();
 

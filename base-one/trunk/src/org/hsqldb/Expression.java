@@ -1153,9 +1153,9 @@ class Expression {
                 break;
             }
             case NEGATE :
-                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for a parameter marker to be "
-                            + " the operand of a unary negation operation");
+                Trace.check(
+                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for a parameter marker to be the operand of a unary negation operation");
 
                 iDataType = eArg.iDataType;
 
@@ -1170,10 +1170,10 @@ class Expression {
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both operands of a binary "
-                            + "aritmetic operator to be parameter markers");
+                Trace.check(
+                    !(eArg.isParam && eArg2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both operands of a binary aritmetic operator to be parameter markers");
 
                 if (isFixedConstant()) {
                     iDataType = Column.getCombinedNumberType(eArg.iDataType,
@@ -1220,10 +1220,10 @@ class Expression {
             case SMALLER :
             case SMALLER_EQUAL :
             case NOT_EQUAL :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both expressions of a "
-                            + "comparison-predicate to be parameter markers");
+                Trace.check(
+                    !(eArg.isParam && eArg2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both expressions of a comparison-predicate to be parameter markers");
 
                 if (isFixedConditional()) {
                     iType = test() ? TRUE
@@ -1248,10 +1248,10 @@ class Expression {
                 break;
 
             case LIKE :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both expressions of a LIKE "
-                            + "comparison-predicate to be parameter markers");
+                Trace.check(
+                    !(eArg.isParam && eArg2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers");
 
                 if (isFixedConditional()) {
                     iType = test() ? TRUE
@@ -1322,8 +1322,7 @@ class Expression {
             case COUNT :
                 Trace.check(
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for a parameter marker to be the "
-                    + "argument of a set-function-reference");
+                    "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
 
                 iDataType = Types.INTEGER;
                 break;
@@ -1334,8 +1333,7 @@ class Expression {
             case AVG :
                 Trace.check(
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for a parameter marker to be the "
-                    + "argument of a set-function-reference");
+                    "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
 
                 iDataType = SetFunction.getType(iType, eArg.iDataType);
                 break;
@@ -1352,10 +1350,10 @@ class Expression {
                 break;
 
             case IFNULL :
-                Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both operands of an IFNULL "
-                            + "operation to be parameter markers");
+                Trace.check(
+                    !(eArg.isParam && eArg2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both operands of an IFNULL operation to be parameter markers");
 
                 if ((eArg.isFixedConstant() || eArg.isFixedConditional())
                         && (eArg2.isFixedConstant()
@@ -1380,8 +1378,7 @@ class Expression {
                     Trace.check(
                         !(eArg.iDataType == Types.NULL && eArg.iDataType == Types.NULL),
                         Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both operands of an IFNULL "
-                        + "operation to be of type NULL");
+                        "it is ambiguous for both operands of an IFNULL operation to be of type NULL");
 
                     if (Types.isNumberType(eArg.iDataType)
                             && Types.isNumberType(eArg2.iDataType)) {
@@ -1403,10 +1400,9 @@ class Expression {
                         Trace.check(
                             eArg.iDataType == eArg2.iDataType,
                             Trace.COLUMN_TYPE_MISMATCH,
-                            "the output data type of an IFNULL operation is "
-                            + "currently ambiguous when the input types are "
-                            + Types.getTypeString(eArg.iDataType) + " and "
-                            + Types.getTypeString(eArg.iDataType));
+                            "the output data type of an IFNULL operation is currently ambiguous when the input types are ",
+                            Types.getTypeString(eArg.iDataType), " and ",
+                            Types.getTypeString(eArg.iDataType));
                     }
                 }
                 break;
@@ -1434,11 +1430,10 @@ class Expression {
                 Expression case1 = eArg2.eArg;
                 Expression case2 = eArg2.eArg2;
 
-                Trace.check(!(case1.isParam && case2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both the second and third "
-                            + "operands of a CASEWHEN operation to be"
-                            + "parameter markers");
+                Trace.check(
+                    !(case1.isParam && case2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both the second and third operands of a CASEWHEN operation to be parameter markers");
 
                 if (case1.isParam || case1.iDataType == Types.NULL) {
                     case1.iDataType = case2.iDataType;
@@ -1449,8 +1444,7 @@ class Expression {
                 Trace.check(
                     !(case1.iDataType == Types.NULL && case2.iDataType == Types.NULL),
                     Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the second and third "
-                    + "operands of a CASEWHEN operation to be" + "NULL");
+                    "it is ambiguous for both the second and third operands of a CASEWHEN operation to be NULL");
 
                 if (Types.isNumberType(case1.iDataType)
                         && Types.isNumberType(case2.iDataType)) {
@@ -1474,10 +1468,9 @@ class Expression {
                     Trace.check(
                         case1.iDataType == case2.iDataType,
                         Trace.COLUMN_TYPE_MISMATCH,
-                        "the output data type of a CASEWHEN operation is currently  "
-                        + "ambiguous when the operand types are "
-                        + Types.getTypeString(case1.iDataType) + " and "
-                        + Types.getTypeString(case2.iDataType));
+                        "the output data type of a CASEWHEN operation is currently ambiguous when the operand types are ",
+                        Types.getTypeString(case1.iDataType), " and ",
+                        Types.getTypeString(case2.iDataType));
                 }
                 break;
         }
@@ -1778,7 +1771,8 @@ class Expression {
                 return Boolean.FALSE;
 
             case NOT :
-                Trace.doAssert(eArg2 == null, "Expression.test");
+                Trace.doAssert(eArg2 == null,
+                               "Expression.getAggregatedValue.NOT");
 
                 return ((Boolean) leftValue).booleanValue() ? Boolean.FALSE
                                                             : Boolean.TRUE;

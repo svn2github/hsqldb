@@ -528,58 +528,47 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * Method declaration
+     *     Throws exception if assertion fails
      *
-     *
-     * @param condition
+     *     @param boolean condition
      *
      * @throws HsqlException
      */
     static void doAssert(boolean condition) throws HsqlException {
-        doAssert(condition, null);
+        doAssert(condition, null, null);
     }
 
     /**
-     * Method declaration
+     *     Throws exception if assertion fails
      *
-     *
-     * @param condition
-     * @param error
+     *     @param boolean condition
+     *     @param String error
      *
      * @throws HsqlException
      */
     static void doAssert(boolean condition,
                          String error) throws HsqlException {
-
-        if (!condition) {
-            if (TRACE) {
-                printStack();
-            }
-
-            throw getError(ASSERT_FAILED, error);
-        }
+        doAssert(condition, error, null);
     }
 
     /**
-     * Method declaration
+     *     Throws exception if condition is false
      *
-     *
-     * @param condition
-     * @param code
+     *     @param boolean condition
+     *     @param int code
      *
      * @throws HsqlException
      */
     static void check(boolean condition, int code) throws HsqlException {
-        check(condition, code, null);
+        check(condition, code, null, null, null, null);
     }
 
     /**
-     * Method declaration
+     *     Throws exception if condition is false
      *
-     *
-     * @param condition
-     * @param code
-     * @param add
+     *     @param boolean condition
+     *     @param int code
+     *     @param Object add
      *
      * @throws HsqlException
      */
@@ -811,5 +800,164 @@ public class Trace extends PrintWriter {
                 new Object[] {
             "tablename", new Integer(3), new Integer(2)
         }));
+    }
+
+    /**
+     * Throws exception if condition is false
+     *
+     * @param boolean condition
+     * @param int code
+     * @param String add1
+     * @param int add2
+     *
+     * @throws HsqlException
+     */
+    static void check(boolean condition, int code, String add1,
+                      int add2) throws HsqlException {
+
+        if (!condition) {
+            check(condition, code, add1, String.valueOf(add2), null, null);
+        }
+    }
+
+    /**
+     * Throws exception if condition is false
+     *
+     * @param boolean condition
+     * @param int code
+     * @param String add1
+     * @param String add2
+     *
+     * @throws HsqlException
+     */
+    static void check(boolean condition, int code, String add1,
+                      String add2) throws HsqlException {
+        check(condition, code, add1, add2, null, null);
+    }
+
+    /**
+     * Throws exception if condition is false
+     *
+     * @param boolean condition
+     * @param int code
+     * @param String add1
+     * @param String add2
+     * @param String add3
+     *
+     * @throws HsqlException
+     */
+    static void check(boolean condition, int code, String add1, String add2,
+                      String add3) throws HsqlException {
+        check(condition, code, add1, add2, add3, null);
+    }
+
+    /**
+     * Throws exception if condition is false
+     *
+     * @param boolean condition
+     * @param int code
+     * @param String add1
+     * @param String add2
+     * @param String add3
+     * @param String add4
+     *
+     * @throws HsqlException
+     */
+    static void check(boolean condition, int code, String add1, String add2,
+                      String add3, String add4) throws HsqlException {
+
+        if (!condition) {
+            String add = "";
+
+            if (add1 != null) {
+                add += add1;
+            }
+
+            if (add2 != null) {
+                add += add2;
+            }
+
+            if (add3 != null) {
+                add += add3;
+            }
+
+            if (add4 != null) {
+                add += add4;
+            }
+
+            throw getError(code, add.length() > 0 ? add
+                                                  : null);
+        }
+    }
+
+    /**
+     * Throws exception if assertion fails
+     *
+     * @param boolean condition
+     * @param String error1
+     * @param int error2
+     *
+     * @throws HsqlException
+     */
+    static void doAssert(boolean condition, String error1,
+                         int error2) throws HsqlException {
+
+        if (!condition) {
+            doAssert(condition, error1, String.valueOf(error2));
+        }
+    }
+
+    /**
+     * Throws exception if assertion fails
+     *
+     * @param boolean condition
+     * @param String error1
+     * @param String error2
+     *
+     * @throws HsqlException
+     */
+    static void doAssert(boolean condition, String error1,
+                         String error2) throws HsqlException {
+
+        if (!condition) {
+            if (TRACE) {
+                printStack();
+            }
+
+            String add = "";
+
+            if (error1 != null) {
+                add += error1;
+            }
+
+            if (error2 != null) {
+                add += error2;
+            }
+
+            throw getError(ASSERT_FAILED, add.length() > 0 ? add
+                                                           : null);
+        }
+    }
+
+    /**
+     * Used to print messages to System.out
+     *
+     *
+     * @param message message to print
+     */
+    static void printSystemOut(String message1, long message2) {
+        System.out.print(message1);
+        System.out.println(message2);
+    }
+
+    /**
+     * Used to print messages to System.out
+     *
+     *
+     * @param message message to print
+     */
+    static void printSystemOut(String message1, String message2) {
+        System.out.print(message1);
+        System.out.println(message2);
     }
 }

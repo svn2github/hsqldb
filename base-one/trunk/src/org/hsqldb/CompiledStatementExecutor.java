@@ -31,10 +31,7 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.StopWatch;
-import org.hsqldb.lib.StringUtil;
 
 /**
  * Provides execution of CompiledStatement objects. <p>

@@ -31,7 +31,6 @@
 
 package org.hsqldb.lib;
 
-import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 /**

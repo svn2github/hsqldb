@@ -33,9 +33,7 @@ package org.hsqldb;
 
 import java.io.*;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlStringBuffer;
-import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.StopWatch;
 
 /**
@@ -182,11 +180,11 @@ class DatabaseScriptWriter {
                 return;
             }
 
-            Trace.printSystemOut("file sync interval: " + sw.elapsedTime());
+            Trace.printSystemOut("file sync interval: ", sw.elapsedTime());
             sw.zero();
             fileStreamOut.flush();
             outDescriptor.sync();
-            Trace.printSystemOut("file sync: " + sw.elapsedTime());
+            Trace.printSystemOut("file sync: ", sw.elapsedTime());
             sw.zero();
 
             needsSync = false;

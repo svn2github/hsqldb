@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import org.hsqldb.lib.ObjectComparator;
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ArrayCounter;
 import org.hsqldb.lib.Sort;

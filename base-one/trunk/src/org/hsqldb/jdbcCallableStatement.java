@@ -34,8 +34,6 @@ package org.hsqldb;
 import java.sql.*;
 import java.math.*;
 import java.util.*;
-import java.io.*;
-import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
 

@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.*;
-import java.net.URL;
 import org.hsqldb.lib.StringConverter;
 
 /**

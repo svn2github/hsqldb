@@ -75,7 +75,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -93,8 +92,8 @@ import org.hsqldb.resources.BundleHandler;
 // see the comments in ServerConnection.java
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
 // boucherb@users 20030510-14 - 1.7.2 - SSL support moved to factory interface
-// boucherb@users 20030510-14 - 1.7.2 - general rewite for thread safety
-// non-blocking start()/stop(), service control, JavaBean API, etc.
+// boucherb@users 20030510-14 - 1.7.2 - service control, JavaBean API
+// fredt@users 20030916 - 1.7.2 - review and simplification
 
 /**
  * The HSQLDB HSQL protocol network database server. <p>
@@ -233,7 +232,7 @@ public class Server implements HsqlSocketRequestHandler {
 
 //
     static final String serverName = "HSQLDB/1.7.2";
-    private static final int hnd_messages =
+    protected static final int serverBundleHandle =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
 //
@@ -247,28 +246,19 @@ public class Server implements HsqlSocketRequestHandler {
 //  Currently unused
     private int maxConnections;
 
-//    
+//
     protected String            serverId;
     protected int               serverProtocol;
-    protected ThreadGroup       serverThreadGroup;
     protected ThreadGroup       serverConnectionThreadGroup;
     protected HsqlSocketFactory socketFactory;
     protected ServerSocket      socket;
 
 //
-    private volatile Thread serverThread;
-    private volatile Thread      statusThread;    // more robust start/stop/restart
-    private volatile Throwable   serverError;
-    private volatile int         serverState;
-    private volatile PrintWriter logWriter;
-    private volatile PrintWriter errWriter;
-    private final Object    serverState_mutex  = new Object();
-    private final Object         serverThread_mutex = new Object();
-    private final Object    serverError_mutex  = new Object();
-    private final Object         statusThread_mutex = new Object();
-    private final Object    socket_mutex       = new Object();
-    private final Object    logWriter_mutex    = new Object();
-    private final Object    errWriter_mutex    = new Object();
+    private Thread       serverThread;
+    private Throwable    serverError;
+    private volatile int serverState;
+    private PrintWriter  logWriter;
+    private PrintWriter  errWriter;
 
 //
 
@@ -285,9 +275,9 @@ public class Server implements HsqlSocketRequestHandler {
          * @param tg The thread group
          * @param name The thread name
          */
-        ServerThread(ThreadGroup tg, String name) {
+        ServerThread(String name) {
 
-            super(tg, name);
+            super(name);
 
             setName(name + '@' + Integer.toString(hashCode(), 16));
         }
@@ -298,23 +288,6 @@ public class Server implements HsqlSocketRequestHandler {
         public void run() {
             Server.this.run();
             trace("ServerThread.run() exited");
-        }
-        }
-
-    /**
-     * A specialized Thread inner class that sleeps forever until
-     * interrupted.  This forms the basis for notification of
-     * threads waiting for startup or shutdown to finish.
-     */
-    private static class StatusThread extends Thread {
-
-        public void run() {
-
-            try {
-                while (true) {
-                    sleep(Long.MAX_VALUE);
-                }
-            } catch (InterruptedException e) {}
         }
     }
 
@@ -398,49 +371,17 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Checks if this Server object is or is not running and throws if the
-     * current state does not match the specified value.
-     *
-     * @param running if true, ensure the server is running, else ensure the
-     *      server is not running
-     * @throws RuntimeException if the supplied value does not match the
-     *      current running status
-     */
-    public void checkRunning(boolean running) throws RuntimeException {
-
-        int     state;
-        boolean error;
-
-        trace("checkRunning(" + running + ") entered");
-
-        state = getState();
-        error = (running && state != ServerConstants.SERVER_STATE_ONLINE)
-                || (!running
-                    && state != ServerConstants.SERVER_STATE_SHUTDOWN);
-
-        if (error) {
-            String msg = "server is " + (running ? "not "
-                                                 : "") + "running";
-
-            throw new RuntimeException(msg);
-        }
-
-        trace("checkRunning(" + running + ") exited");
-    }
-
-    /**
      * Closes all connections to this Server.
      *
      * @jmx.managed-operation
      *  impact="ACTION"
      *  description="Closes all open connections"
      */
-    public synchronized void closeAllServerConnections() {
+    public synchronized void signalCloseAllServerConnections() {
 
-        ServerConnection sc;
-        Iterator         it;
+        Iterator it;
 
-        trace("closeAllServerConnections() entered");
+        trace("signalCloseAllServerConnections() entered");
 
         synchronized (serverConnSet) {
 
@@ -449,25 +390,21 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         for (; it.hasNext(); ) {
-            sc = (ServerConnection) it.next();
+            ServerConnection sc = (ServerConnection) it.next();
 
             trace("Closing " + sc);
 
-            // also removes the connection from serverConnSet
+            // also removes all but one connection from serverConnSet
             sc.signalClose();
         }
 
-        trace("closeAllServerConnections() exited");
+        trace("signalCloseAllServerConnections() exited");
     }
 
     protected void finalize() throws Throwable {
 
-        // Same as stop() but without the reporting 
-        synchronized (serverThread_mutex) {
-            if (serverThread != null) {
-                setRestartOnShutdown(false);
-                releaseServerSocket();
-            }
+        if (serverThread != null) {
+            releaseServerSocket();
         }
     }
 
@@ -530,19 +467,8 @@ public class Server implements HsqlSocketRequestHandler {
      *      specification.
      */
     public int getDefaultPort(boolean isTls) {
-
-        switch (serverProtocol) {
-
-            case ServerConstants.SC_PROTOCOL_HTTP : {
-                return isTls ? ServerConstants.SC_DEFAULT_HTTPS_SERVER_PORT
-                             : ServerConstants.SC_DEFAULT_HTTP_SERVER_PORT;
-            }
-            case ServerConstants.SC_PROTOCOL_HSQL :
-            default : {
-                return isTls ? ServerConstants.SC_DEFAULT_HSQLS_SERVER_PORT
-                             : ServerConstants.SC_DEFAULT_HSQL_SERVER_PORT;
-            }
-        }
+        return isTls ? ServerConstants.SC_DEFAULT_HSQLS_SERVER_PORT
+                     : ServerConstants.SC_DEFAULT_HSQL_SERVER_PORT;
     }
 
     /**
@@ -558,17 +484,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Read by putPropertiesFromFile()"
      */
     public String getDefaultPropertiesPath() {
-
-        switch (serverProtocol) {
-
-            case ServerConstants.SC_PROTOCOL_HTTP : {
-                return (new File("webserver")).getAbsolutePath();
-            }
-            case ServerConstants.SC_PROTOCOL_HSQL :
-            default : {
-                return (new File("server")).getAbsolutePath();
-            }
-        }
+        return (new File("server")).getAbsolutePath();
     }
 
     /**
@@ -582,13 +498,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Used when server protocol is HTTP(S)"
      */
     public String getDefaultWebPage() {
-
-        if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
-            return "[IGNORED]";
-        }
-
-        return serverProperties.getProperty(
-            ServerConstants.SC_KEY_WEB_DEFAULT_PAGE);
+        return "[IGNORED]";
     }
 
     /**
@@ -598,21 +508,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @return the command line and properties options help for this Server
      */
     public String getHelpString() {
-
-        String key;
-
-        switch (serverProtocol) {
-
-            case ServerConstants.SC_PROTOCOL_HTTP :
-                key = "webserver.help";
-                break;
-
-            case ServerConstants.SC_PROTOCOL_HSQL :
-            default :
-                key = "server.help";
-        }
-
-        return BundleHandler.getString(hnd_messages, key);
+        return BundleHandler.getString(serverBundleHandle, "server.help");
     }
 
     /**
@@ -621,10 +517,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @return the PrintWriter to which server errors are printed.
      */
     public PrintWriter getErrWriter() {
-
-        synchronized (errWriter_mutex) {
-            return errWriter;
-        }
+        return errWriter;
     }
 
     /**
@@ -633,10 +526,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @return the PrintWriter to which server messages are printed.
      */
     public PrintWriter getLogWriter() {
-
-        synchronized (logWriter_mutex) {
-            return logWriter;
-        }
+        return logWriter;
     }
 
     /**
@@ -665,17 +555,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Of Server"
      */
     public String getProductName() {
-
-        switch (serverProtocol) {
-
-            case ServerConstants.SC_PROTOCOL_HTTP : {
-                return "HSQLDB web server";
-            }
-            case ServerConstants.SC_PROTOCOL_HSQL :
-            default : {
-                return "HSQLDB server";
-            }
-        }
+        return "HSQLDB server";
     }
 
     /**
@@ -704,31 +584,8 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Used to handle connections"
      */
     public String getProtocol() {
-
-        String name;
-
-        name = "";
-
-        switch (serverProtocol) {
-
-            case ServerConstants.SC_PROTOCOL_HSQL :
-            default : {
-                name = "HSQL";
-
-                break;
-            }
-            case ServerConstants.SC_PROTOCOL_HTTP : {
-                name = "HTTP";
-
-                break;
-            }
-        }
-
-        if (isTls()) {
-            name += "S";
-        }
-
-        return name;
+        return isTls() ? "HSQLS"
+                       : "HSQL";
     }
 
     /**
@@ -741,10 +598,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Indicating last exception state"
      */
     public Throwable getServerError() {
-
-        synchronized (serverError_mutex) {
-            return serverError;
-        }
+        return serverError;
     }
 
     /**
@@ -779,10 +633,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="1:ONLINE 4:OPENING 8:CLOSING, 16:SHUTDOWN"
      */
     public int getState() {
-
-        synchronized (serverState_mutex) {
-            return serverState;
-        }
+        return serverState;
     }
 
     /**
@@ -798,38 +649,33 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public String getStateDescriptor() {
 
-        String sState;
-        int       state = getState();
-        Throwable t     = getServerError();
+        String    state;
+        Throwable t = getServerError();
 
         switch (serverState) {
 
             case ServerConstants.SERVER_STATE_SHUTDOWN :
-                sState = "SHUTDOWN";
+                state = "SHUTDOWN";
                 break;
 
             case ServerConstants.SERVER_STATE_OPENING :
-                sState = "OPENING";
+                state = "OPENING";
                 break;
 
             case ServerConstants.SERVER_STATE_CLOSING :
-                sState = "CLOSING";
+                state = "CLOSING";
                 break;
 
             case ServerConstants.SERVER_STATE_ONLINE :
-                sState = "ONLINE";
+                state = "ONLINE";
                 break;
 
             default :
-                sState = "UNKNOWN";
+                state = "UNKNOWN";
                 break;
         }
 
-        if (t != null) {
-            sState += ": " + t.toString();
-        }
-
-        return sState;
+        return state;
     }
 
     /**
@@ -846,12 +692,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Context (directory)"
      */
     public String getWebRoot() {
-
-        if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
-            return "[IGNORED]";
-        }
-
-        return serverProperties.getProperty(ServerConstants.SC_KEY_WEB_ROOT);
+        return "[IGNORED]";
     }
 
     /**
@@ -867,7 +708,6 @@ public class Server implements HsqlSocketRequestHandler {
         String   ctn;
 
         trace("handleConnection(" + s + ") entered");
-        checkRunning(true);
 
         if (!allowConnection(s)) {
             try {
@@ -885,14 +725,14 @@ public class Server implements HsqlSocketRequestHandler {
         socketFactory.configureSocket(s);
 
         if (serverProtocol == ServerConstants.SC_PROTOCOL_HSQL) {
-            r = new ServerConnection(s, this);
+            r   = new ServerConnection(s, this);
             ctn = ((ServerConnection) r).getConnectionThreadName();
 
             synchronized (serverConnSet) {
                 serverConnSet.add(r);
             }
         } else {
-            r = new WebServerConnection(s, (WebServer) this);
+            r   = new WebServerConnection(s, (WebServer) this);
             ctn = ((WebServerConnection) r).getConnectionThreadName();
         }
 
@@ -1001,8 +841,6 @@ public class Server implements HsqlSocketRequestHandler {
         HsqlProperties p;
         boolean        loaded;
 
-        checkRunning(false);
-
         if (org.hsqldb.lib.StringUtil.isEmpty(path)) {
             path = getDefaultPropertiesPath();
         } else {
@@ -1053,7 +891,6 @@ public class Server implements HsqlSocketRequestHandler {
             return;
         }
 
-        checkRunning(false);
         trace("putPropertiesFromString(): [" + s + "]");
 
         p = HsqlProperties.delimitedArgPairsToProps(s, "=", ";",
@@ -1078,8 +915,6 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public void setAddress(String address) throws RuntimeException {
 
-        checkRunning(false);
-
         if (org.hsqldb.lib.StringUtil.isEmpty(address)) {
             address = ServerConstants.SC_DEFAULT_ADDRESS;
         }
@@ -1100,7 +935,6 @@ public class Server implements HsqlSocketRequestHandler {
     public void setDatabaseName(int index,
                                 String name) throws RuntimeException {
 
-        checkRunning(false);
         trace("setDatabaseName(" + index + "," + name + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_DBNAME + "."
                                      + index, name);
@@ -1119,7 +953,6 @@ public class Server implements HsqlSocketRequestHandler {
     public void setDatabasePath(int index,
                                 String path) throws RuntimeException {
 
-        checkRunning(false);
         trace("setDatabasePath(" + index + "," + path + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_DATABASE + "."
                                      + index, path);
@@ -1134,7 +967,6 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public void setDefaultWebPage(String file) {
 
-        checkRunning(false);
         trace("setDefaultWebPage(" + file + ")");
 
         if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
@@ -1154,8 +986,6 @@ public class Server implements HsqlSocketRequestHandler {
      * @jmx.managed-operation
      */
     public void setPort(int port) throws RuntimeException {
-
-        checkRunning(false);
         trace("setPort(" + port + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_PORT, port);
     }
@@ -1166,10 +996,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param pw the PrintWriter to which server messages are logged
      */
     public void setErrWriter(PrintWriter pw) {
-
-        synchronized (errWriter_mutex) {
-            errWriter = pw;
-        }
+        errWriter = pw;
     }
 
     /**
@@ -1178,10 +1005,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param pw the PrintWriter to which server messages are logged
      */
     public void setLogWriter(PrintWriter pw) {
-
-        synchronized (logWriter_mutex) {
-            logWriter = pw;
-        }
+        logWriter = pw;
     }
 
     /**
@@ -1234,8 +1058,6 @@ public class Server implements HsqlSocketRequestHandler {
      * @jmx.managed-operation
      */
     public void setTls(boolean tls) throws RuntimeException {
-
-        checkRunning(false);
         trace("setTls(" + tls + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_TLS, tls);
     }
@@ -1265,8 +1087,6 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public void setWebRoot(String root) {
 
-        checkRunning(false);
-
         root = (new File(root)).getAbsolutePath();
 
         trace("setWebRoot(" + root + ")");
@@ -1288,8 +1108,6 @@ public class Server implements HsqlSocketRequestHandler {
 
         boolean loaded;
         String  path;
-
-        checkRunning(false);
 
         if (p != null) {
             serverProperties.addProperties(p);
@@ -1320,39 +1138,20 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public int start() {
 
-        Thread localStatusThread;
+        trace("start() entered");
 
-        synchronized (serverThread_mutex) {
-            trace("start() entered");
-
-            if (serverThread != null) {
-                trace("start(): serverThread != null; no action taken");
-
-                return getState();
-            }
-
-            // Changed to allow robust restart_on_shutdown
-            // using a thread join pattern.  Also avoids
-            // possible subtle timing problems with the
-            // old monitor.notify() pattern
-            localStatusThread = new StatusThread();
-
-            setStatusThread(localStatusThread);
-            localStatusThread.start();
-
-            serverThread = new ServerThread(serverThreadGroup,
-                                            "HSQLDB Server ");
-
-            serverThread.start();
-
-            try {
-                localStatusThread.join();
-            } catch (Throwable t) {}
-
-            trace("start() exiting");
+        if (serverThread != null) {
+            trace("start(): serverThread != null; no action taken");
 
             return getState();
         }
+
+        serverThread = new ServerThread("HSQLDB Server ");
+
+        serverThread.start();
+        trace("start() exiting");
+
+        return getState();
     }
 
     /**
@@ -1373,35 +1172,18 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public int stop() {
 
-        Thread localStatusThread;
+        trace("stop() entered");
 
-        synchronized (serverThread_mutex) {
-            trace("stop() entered");
-
-            if (serverThread == null) {
-                trace("stop() serverThread is null; no action taken");
-
-                return getState();
-            }
-
-            // Changed to to allow robust restart_on_shutdown
-            // using a thread join pattern.  Also avoids
-            // possible subtle timing problems with the
-            // older monitor.notify() pattern
-            localStatusThread = new StatusThread();
-
-            setStatusThread(localStatusThread);
-            localStatusThread.start();
-            releaseServerSocket();
-
-            try {
-                localStatusThread.join();
-            } catch (Throwable t) {}
-
-            trace("stop() exiting");
+        if (serverThread == null) {
+            trace("stop() serverThread is null; no action taken");
 
             return getState();
         }
+
+        releaseServerSocket();
+        trace("stop() exiting");
+
+        return getState();
     }
 
     /**
@@ -1427,12 +1209,11 @@ public class Server implements HsqlSocketRequestHandler {
         serverState      = ServerConstants.SERVER_STATE_SHUTDOWN;
         serverConnSet    = new HashSet();
         serverId         = toString();
-        serverId          = serverId.substring(serverId.lastIndexOf('.') + 1);
+        serverId         = serverId.substring(serverId.lastIndexOf('.') + 1);
         serverProtocol   = protocol;
         serverProperties = newDefaultProperties();
-        serverThreadGroup = new ThreadGroup(serverId);
-        logWriter = new PrintWriter(System.out);
-        errWriter         = new PrintWriter(System.err);
+        logWriter        = new PrintWriter(System.out);
+        errWriter        = new PrintWriter(System.err);
 
         javaSystem.setLogToSystem(isTrace());
     }
@@ -1442,11 +1223,8 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param state the new value
      */
-    protected final void setState(int state) {
-
-        synchronized (serverState_mutex) {
-            serverState = state;
-        }
+    protected final synchronized void setState(int state) {
+        serverState = state;
     }
 
 // Package visibility for related classes and intefaces
@@ -1486,8 +1264,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     final synchronized void releaseDatabase(int id) {
 
-        Iterator         it;
-        ServerConnection sc;
+        Iterator it;
 
         trace("releaseDatabase(" + id + ") entered");
 
@@ -1501,16 +1278,15 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         synchronized (serverConnSet) {
-
-            // snapshot
             it = new WrapperIterator(serverConnSet.toArray(null));
         }
 
         while (it.hasNext()) {
-            sc = (ServerConnection) it.next();
+            ServerConnection sc = (ServerConnection) it.next();
 
             if (sc.dbID == id) {
                 sc.signalClose();
+                serverConnSet.remove(sc);
             }
         }
 
@@ -1523,13 +1299,13 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param msg The message to print
      */
-    final void print(String msg) {
+    final synchronized void print(String msg) {
 
-        synchronized (logWriter_mutex) {
-            if (logWriter != null) {
-                logWriter.println("[" + serverId + "]: " + msg);
-                logWriter.flush();
-            }
+        PrintWriter writer = logWriter;
+
+        if (writer != null) {
+            writer.println("[" + serverId + "]: " + msg);
+            writer.flush();
         }
     }
 
@@ -1545,11 +1321,11 @@ public class Server implements HsqlSocketRequestHandler {
         String          resource;
         StringTokenizer st;
 
-        if (hnd_messages < 0) {
+        if (serverBundleHandle < 0) {
             return;
         }
 
-        resource = BundleHandler.getString(hnd_messages, key);
+        resource = BundleHandler.getString(serverBundleHandle, key);
 
         if (resource == null) {
             return;
@@ -1568,13 +1344,11 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param t the Throwable whose stack trace is to be printed
      */
-    final void printStackTrace(Throwable t) {
+    final synchronized void printStackTrace(Throwable t) {
 
-        synchronized (errWriter_mutex) {
-            if (errWriter != null) {
-                t.printStackTrace(errWriter);
-                errWriter.flush();
-            }
+        if (errWriter != null) {
+            t.printStackTrace(errWriter);
+            errWriter.flush();
         }
     }
 
@@ -1609,15 +1383,15 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param msg the message to print
      */
-    final void printError(String msg) {
+    final synchronized void printError(String msg) {
 
-        synchronized (errWriter_mutex) {
-            if (errWriter != null) {
-                errWriter.print("[" + serverId + "]: ");
-                errWriter.print("[" + Thread.currentThread() + "]: ");
-                errWriter.println(msg);
-                errWriter.flush();
-            }
+        PrintWriter writer = errWriter;
+
+        if (writer != null) {
+            writer.print("[" + serverId + "]: ");
+            writer.print("[" + Thread.currentThread() + "]: ");
+            writer.println(msg);
+            writer.flush();
         }
     }
 
@@ -1649,20 +1423,20 @@ public class Server implements HsqlSocketRequestHandler {
             return;
         }
 
-            StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
 
-            sb.append(cid);
-            sb.append(':');
+        sb.append(cid);
+        sb.append(':');
 
-            switch (r.iMode) {
+        switch (r.iMode) {
 
-                case ResultConstants.SQLPREPARE : {
+            case ResultConstants.SQLPREPARE : {
                 sb.append("SQLCLI:SQLPREPARE ");
-                    sb.append(r.getMainString());
+                sb.append(r.getMainString());
 
-                    break;
-                }
-                case ResultConstants.SQLEXECDIRECT : {
+                break;
+            }
+            case ResultConstants.SQLEXECDIRECT : {
                 if (r.getSize() < 2) {
                     sb.append(r.getMainString());
                 } else {
@@ -1677,74 +1451,74 @@ public class Server implements HsqlSocketRequestHandler {
                     }
                 }
 
-                    break;
-                }
-                case ResultConstants.SQLEXECUTE : {
+                break;
+            }
+            case ResultConstants.SQLEXECUTE : {
                 sb.append("SQLCLI:SQLEXECUTE:");
 
                 if (r.getSize() > 1) {
                     sb.append("BATCHMODE:");
                 }
 
-                    sb.append(r.getStatementID());
+                sb.append(r.getStatementID());
 
-                    break;
-                }
-                case ResultConstants.SQLFREESTMT : {
+                break;
+            }
+            case ResultConstants.SQLFREESTMT : {
                 sb.append("SQLCLI:SQLFREESTMT:");
-                    sb.append(r.getStatementID());
+                sb.append(r.getStatementID());
 
-                    break;
-                }
-                case ResultConstants.GETSESSIONATTR : {
+                break;
+            }
+            case ResultConstants.GETSESSIONATTR : {
                 sb.append("HSQLCLI:GETSESSIONATTR");
 
-                    break;
-                }
-                case ResultConstants.SETSESSIONATTR : {
+                break;
+            }
+            case ResultConstants.SETSESSIONATTR : {
                 sb.append("HSQLCLI:SETSESSIONATTR:");
-                    sb.append("AUTOCOMMIT ");
-                    sb.append(r.rRoot.data[Session.INFO_AUTOCOMMIT]);
+                sb.append("AUTOCOMMIT ");
+                sb.append(r.rRoot.data[Session.INFO_AUTOCOMMIT]);
                 sb.append(" CONNECTION_READONLY ");
-                    sb.append(r.rRoot.data[Session.INFO_CONNECTION_READONLY]);
+                sb.append(r.rRoot.data[Session.INFO_CONNECTION_READONLY]);
 
-                    break;
-                }
-                case ResultConstants.SQLENDTRAN : {
+                break;
+            }
+            case ResultConstants.SQLENDTRAN : {
                 sb.append("SQLCLI:SQLENDTRAN:");
 
-                    switch (r.getEndTranType()) {
+                switch (r.getEndTranType()) {
 
-                        case ResultConstants.COMMIT :
+                    case ResultConstants.COMMIT :
                         sb.append("COMMIT");
-                            break;
+                        break;
 
-                        case ResultConstants.ROLLBACK :
+                    case ResultConstants.ROLLBACK :
                         sb.append("ROLLBACK");
-                            break;
+                        break;
 
-                        case ResultConstants.SAVEPOINT_NAME_RELEASE :
+                    case ResultConstants.SAVEPOINT_NAME_RELEASE :
                         sb.append("SAVEPOINT_NAME_RELEASE ");
-                            sb.append(r.getMainString());
-                            break;
+                        sb.append(r.getMainString());
+                        break;
 
-                        case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
+                    case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
                         sb.append("SAVEPOINT_NAME_ROLLBACK ");
-                            sb.append(r.getMainString());
-                            break;
+                        sb.append(r.getMainString());
+                        break;
 
-                        default :
-                            sb.append(r.getEndTranType());
-                    }
-
-                    break;
+                    default :
+                        sb.append(r.getEndTranType());
                 }
-                case ResultConstants.SQLSTARTTRAN : {
+
+                break;
+            }
+            case ResultConstants.SQLSTARTTRAN : {
                 sb.append("SQLCLI:SQLSTARTTRAN");
 
-                    break;
-                }
-                case ResultConstants.SQLDISCONNECT : {
+                break;
+            }
+            case ResultConstants.SQLDISCONNECT : {
                 sb.append("SQLCLI:SQLDISCONNECT");
 
                 break;
@@ -1765,24 +1539,17 @@ public class Server implements HsqlSocketRequestHandler {
                     }
                 }
 
-                    break;
-                }
-                default : {
-                sb.append("SQLCLI:MODE:");
-                    sb.append(r.iMode);
-
-                    break;
-                }
+                break;
             }
+            default : {
+                sb.append("SQLCLI:MODE:");
+                sb.append(r.iMode);
 
-            print(sb.toString());
+                break;
+            }
         }
 
-    private final Thread getStatusThread() {
-
-        synchronized (statusThread_mutex) {
-            return statusThread;
-        }
+        print(sb.toString());
     }
 
     /**
@@ -1828,33 +1595,13 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Unblocks the thread, if any, that is blocked in start() or stop(),
-     * waiting to join statusThread.
-     */
-    private final void notifyStartOrStopThread() {
-
-        trace("notifyStartOrStopThread() entered");
-
-        try {
-            getStatusThread().interrupt();
-        } catch (Throwable t) {
-
-            //
-        } finally {
-            setStatusThread(null);
-        }
-
-        trace("notifyStartOrStopThread() exited");
-    }
-
-    /**
      * Opens this server's database instances.
      *
      * @throws HsqlException if a database access error occurs
      */
     final void openDatabases() throws HsqlException {
 
-        StopWatch sw;
+        StopWatch      sw;
         String[]       dblist;
         Enumeration    enum;
         int            maxindex;
@@ -1894,27 +1641,27 @@ public class Server implements HsqlSocketRequestHandler {
 
         ArrayUtil.copyArray(dblist, dbAlias, maxindex + 1);
 
-            for (int i = 0; i < dbAlias.length; i++) {
-                dbURL = DatabaseManager.parseURL(getDatabasePath(i), false);
-                dbPath[i] = dbURL.getProperty("database");
-                dbType[i] = dbURL.getProperty("connection_type");
+        for (int i = 0; i < dbAlias.length; i++) {
+            dbURL     = DatabaseManager.parseURL(getDatabasePath(i), false);
+            dbPath[i] = dbURL.getProperty("database");
+            dbType[i] = dbURL.getProperty("connection_type");
 
-                trace("Opening database: [" + dbType[i] + dbPath[i] + "]");
+            trace("Opening database: [" + dbType[i] + dbPath[i] + "]");
 
-                sw = new StopWatch();
+            sw = new StopWatch();
 
             int id = DatabaseManager.getDatabase(dbType[i], dbPath[i], this);
 
             sw.stop();
 
-                dbID[i] = id;
+            dbID[i] = id;
 
             String msg = "Database [index=" + i + ", id=" + id + ", " + "db="
                          + dbType[i] + dbPath[i] + ", alias=" + dbAlias[i]
                          + "] opened sucessfully";
 
-                print(sw.elapsedTimeToMessage(msg));
-            }
+            print(sw.elapsedTimeToMessage(msg));
+        }
 
         trace("openDatabases() exiting");
     }
@@ -2018,51 +1765,21 @@ public class Server implements HsqlSocketRequestHandler {
 
         trace("releaseServerSocket() entered");
 
-        synchronized (socket_mutex) {
-            if (socket != null) {
-                trace("Releasing server socket: [" + socket + "]");
-                setState(ServerConstants.SERVER_STATE_CLOSING);
+        if (socket != null) {
+            trace("Releasing server socket: [" + socket + "]");
+            setState(ServerConstants.SERVER_STATE_CLOSING);
 
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    printError("Exception closing server socket");
-                    printError("releaseServerSocket(): " + e);
-                }
-
-                socket = null;
+            try {
+                socket.close();
+            } catch (IOException e) {
+                printError("Exception closing server socket");
+                printError("releaseServerSocket(): " + e);
             }
+
+            socket = null;
         }
 
         trace("releaseServerSocket() exited");
-    }
-
-    private final void restart() {
-
-        Thread oldStatusThread;
-        Thread localStatusThread;
-
-        trace("restart() entered");
-
-        oldStatusThread   = getStatusThread();
-        localStatusThread = new StatusThread();
-
-        setStatusThread(localStatusThread);
-        localStatusThread.start();
-
-        serverThread = new ServerThread(serverThreadGroup, "HSQLDB Server ");
-
-        serverThread.start();
-
-        try {
-            localStatusThread.join();
-        } catch (Throwable t) {}
-        finally {
-            setStatusThread(oldStatusThread);
-            notifyStartOrStopThread();
-        }
-
-        trace("restart() exited");
     }
 
     /**
@@ -2075,7 +1792,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     private final void run() {
 
-        StopWatch sw;
+        StopWatch   sw;
         ThreadGroup tg;
         String      tgName;
 
@@ -2105,7 +1822,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         tgName = "HSQLDB Connections @"
                  + Integer.toString(serverThread.hashCode(), 16);
-        tg = new ThreadGroup(serverThreadGroup, tgName);
+        tg = new ThreadGroup(tgName);
 
         tg.setDaemon(false);
 
@@ -2130,7 +1847,6 @@ public class Server implements HsqlSocketRequestHandler {
         // a valid hosted database set, so its OK to start
         // listeneing for connections.
         setState(ServerConstants.SERVER_STATE_ONLINE);
-        notifyStartOrStopThread();
         print(sw.elapsedTimeToMessage("Startup sequence completed"));
         printServerOnlineMessage();
 
@@ -2152,29 +1868,12 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Sets the status thread that is interrupted by notifyStartOrStopThread()
-     * to unblock a thread in start() or stop() trying join the status thread
-     * corresponding to the operation.
-     *
-     * @param t The new value for the status thread
-     */
-    private final void setStatusThread(Thread t) {
-
-        synchronized (statusThread_mutex) {
-            statusThread = t;
-        }
-    }
-
-    /**
      * Sets this Server's last encountered error state.
      *
      * @param t The new value for the server error
      */
     private final void setServerError(Throwable t) {
-
-        synchronized (serverError_mutex) {
-            serverError = t;
-        }
+        serverError = t;
     }
 
     /**
@@ -2185,8 +1884,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     private final void shutdown(boolean error) {
 
-        StopWatch   sw;
-        ThreadGroup tg;
+        StopWatch sw;
 
         trace("shutdown() entered");
 
@@ -2194,7 +1892,6 @@ public class Server implements HsqlSocketRequestHandler {
 
         print("Initiating shutdown sequence...");
         releaseServerSocket();
-        closeAllServerConnections();
         DatabaseManager.deRegisterServer(this);
 
         for (int i = 0; i < dbPath.length; i++) {
@@ -2203,22 +1900,13 @@ public class Server implements HsqlSocketRequestHandler {
 
         // Be nice and let applications exit if there are no
         // running connection threads
-        tg = serverConnectionThreadGroup;
-
-        if (tg != null) {
-            if (!tg.isDestroyed()) {
-                for (int i = 0; i < 16; i++) {
+        if (serverConnectionThreadGroup != null) {
+            if (!serverConnectionThreadGroup.isDestroyed()) {
+                for (int i = 0; serverConnectionThreadGroup.activeCount() > 0;
+                        i++) {
                     int count;
 
                     try {
-                        count = tg.activeCount();
-
-                        trace(tg.getName() + ".activeCount: " + count);
-
-                        if (count == 0) {
-                            break;
-                        }
-
                         wait(100);
                     } catch (Exception e) {
 
@@ -2227,29 +1915,23 @@ public class Server implements HsqlSocketRequestHandler {
                 }
 
                 try {
-                    tg.destroy();
-                    trace(tg.getName() + " destroyed");
+                    serverConnectionThreadGroup.destroy();
+                    trace(serverConnectionThreadGroup.getName()
+                          + " destroyed");
                 } catch (Throwable t) {
-                    trace(tg.getName() + " not destroyed");
+                    trace(serverConnectionThreadGroup.getName()
+                          + " not destroyed");
                     trace(t.toString());
-                    }
                 }
-
-            serverConnectionThreadGroup = null;
             }
 
-        if (!error && isRestartOnShutdown()) {
-            restart();
-            trace("shutdown() exited");
-
-            return;
+            serverConnectionThreadGroup = null;
         }
 
         serverThread = null;
 
         setState(ServerConstants.SERVER_STATE_SHUTDOWN);
         print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
-        notifyStartOrStopThread();
 
         if (isNoSystemExit()) {
             printWithTimestamp("SHUTDOWN : System.exit() was not called");
@@ -2275,7 +1957,8 @@ public class Server implements HsqlSocketRequestHandler {
      * @param key for message
      */
     protected static void printHelp(String key) {
-        Trace.printSystemOut(BundleHandler.getString(hnd_messages, key));
+        Trace.printSystemOut(BundleHandler.getString(serverBundleHandle,
+                key));
     }
 
     /**

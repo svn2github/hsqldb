@@ -87,11 +87,11 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         int val = Integer.parseInt(readNumericString());
 
-        return org.hsqldb.store.ValuePool.getInt(val);
+        return ValuePool.getInt(val);
     }
 
     protected Integer readInteger() throws IOException, HsqlException {
-        return org.hsqldb.store.ValuePool.getInt(readInt());
+        return ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, HsqlException {
@@ -99,7 +99,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 //        return Long.valueOf(readNumericString());
         long l = Long.parseLong(readNumericString());
 
-        return org.hsqldb.store.ValuePool.getLong(l);
+        return ValuePool.getLong(l);
     }
 
     protected Double readReal(int type) throws IOException, HsqlException {

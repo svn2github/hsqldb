@@ -67,11 +67,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.StopWatch;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -96,22 +94,22 @@ import org.hsqldb.store.ValuePool;
  */
 class Session implements SessionInterface {
 
-    private Database        dDatabase;
-    private User            uUser;
-    private HsqlArrayList   tTransaction;
-    private boolean         isAutoCommit;
-    private boolean         isNestedTransaction;
-    private boolean         isNestedOldAutoCommit;
-    private int             nestedOldTransIndex;
-    private boolean         isReadOnly;
-    private int             currentMaxRows;
-    private int             sessionMaxRows;
-    private Number          iLastIdentity = ValuePool.getInt(0);
-    private boolean         isClosed;
-    private int             iId;
+    private Database       dDatabase;
+    private User           uUser;
+    private HsqlArrayList  tTransaction;
+    private boolean        isAutoCommit;
+    private boolean        isNestedTransaction;
+    private boolean        isNestedOldAutoCommit;
+    private int            nestedOldTransIndex;
+    private boolean        isReadOnly;
+    private int            currentMaxRows;
+    private int            sessionMaxRows;
+    private Number         iLastIdentity = ValuePool.getInt(0);
+    private boolean        isClosed;
+    private int            iId;
     private HashMappedList savepoints;
-    private boolean         script;
-    private jdbcConnection  intConnection;
+    private boolean        script;
+    private jdbcConnection intConnection;
     final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
@@ -393,11 +391,11 @@ class Session implements SessionInterface {
                 dDatabase.logger.writeToLog(this, Token.T_COMMIT);
             } catch (HsqlException e) {}
 
-        tTransaction.clear();
+            tTransaction.clear();
         }
 
-            savepoints.clear();
-        }
+        savepoints.clear();
+    }
 
     /**
      * Rolls back any uncommited transaction this Session may have open.
@@ -421,11 +419,11 @@ class Session implements SessionInterface {
                 dDatabase.logger.writeToLog(this, Token.T_ROLLBACK);
             } catch (HsqlException e) {}
 
-        tTransaction.clear();
+            tTransaction.clear();
         }
 
-            savepoints.clear();
-        }
+        savepoints.clear();
+    }
 
     /**
      *  Implements a transaction SAVEPOINT. A new SAVEPOINT with the
@@ -809,13 +807,16 @@ class Session implements SessionInterface {
             switch (type) {
 
                 case ResultConstants.SQLEXECUTE : {
-                    return cmd.getSize() > 1 ? sqlExecuteBatch(cmd)
-                                             : sqlExecute(cmd);
+                    return sqlExecute(cmd);
+                }
+                case ResultConstants.BATCHEXECUTE : {
+                    return sqlExecuteBatch(cmd);
                 }
                 case ResultConstants.SQLEXECDIRECT : {
-                    return cmd.getSize() > 0 ? sqlExecuteBatchDirect(cmd)
-                                             : sqlExecuteDirectNoPreChecks(
-                                                 cmd.getMainString());
+                    return sqlExecuteDirectNoPreChecks(cmd.getMainString());
+                }
+                case ResultConstants.BATCHEXECDIRECT : {
+                    return sqlExecuteBatchDirect(cmd);
                 }
                 case ResultConstants.SQLPREPARE : {
                     return sqlPrepare(cmd.getMainString(),

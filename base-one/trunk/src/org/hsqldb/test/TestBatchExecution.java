@@ -174,6 +174,7 @@ public class TestBatchExecution {
         println("shutting down database");
         stmnt.execute(shutdown_sql);
         println("---------------------------------------");
+        test2();
     }
 
     public static void test(int runs) throws Exception {
@@ -201,7 +202,7 @@ public class TestBatchExecution {
         updateStmnt = conn.prepareStatement(update_sql);
         selectStmnt = conn.prepareStatement(select_sql);
         deleteStmnt = conn.prepareStatement(delete_sql);
-        callStmnt   = conn.prepareStatement(call_sql);
+        callStmnt   = conn.prepareCall(call_sql);
 
         println("---------------------------------------");
         println(sw.elapsedTimeToMessage("statements prepared"));
@@ -230,7 +231,7 @@ public class TestBatchExecution {
         sw.zero();
 
         // do the test loop forever
-        for (int i = 0; i < runs; i++) {
+        for (int i = 0; i < 1; i++) {
             println("---------------------------------------");
 
             // inserts
@@ -257,6 +258,60 @@ public class TestBatchExecution {
             sw.zero();
             callStmnt.executeBatch();
             printCommandStats(sw, "calls  ");
+        }
+    }
+
+    public static void test2() {
+
+        try {
+            Class.forName("org.hsqldb.jdbcDriver");
+
+            Connection con = DriverManager.getConnection("jdbc:hsqldb:.",
+                "sa", "");
+
+            System.out.println("con=" + con);
+
+            Statement stmt = con.createStatement();
+
+            try {
+                stmt.executeUpdate("drop table ttt");
+            } catch (Exception e) {}
+
+            stmt.executeUpdate("create table ttt (id integer)");
+
+            PreparedStatement prep =
+                con.prepareStatement("INSERT INTO ttt (id) VALUES (?)");
+
+            con.setAutoCommit(false);
+
+            for (int i = 1; i <= 4;
+                    i++)    // [2, 3, 4]
+            {
+                prep.clearParameters();
+                prep.setInt(1, i);
+                prep.addBatch();
+                System.out.println("executeBatch() for " + i);
+                prep.executeBatch();
+                con.commit();
+
+                // prep.clearBatch(); // -> java.lang.NullPointerException
+                // at org.hsqldb.Result.getUpdateCounts(Unknown Source)
+            }
+
+            prep.close();
+
+            // see what we got
+            ResultSet rs = stmt.executeQuery("select * from ttt");
+
+            while (rs.next()) {
+                System.out.println("id = " + rs.getInt(1));
+            }
+
+            System.out.println("bye.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.math.BigDecimal;
-import java.util.NoSuchElementException;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;

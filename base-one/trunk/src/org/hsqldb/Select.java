@@ -523,14 +523,7 @@ class Select {
             boolean     outerfound;
 
             if (!first[level]) {
-                if (level != 0 && outerused[level - 1]) {
-
-                    // don't attempt to find if the left side was outer and returned nulls
-                    found           = false;
-                    t.nonJoinIsNull = false;
-                } else {
-                    found = t.findFirst();
-                }
+                found = t.findFirst();
 
                 // if outer join, and no inner result, get next outer row
                 // nonJoinIsNull disallows getting the next outer row in some circumstances

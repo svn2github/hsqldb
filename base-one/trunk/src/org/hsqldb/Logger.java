@@ -377,10 +377,10 @@ class Logger {
         sScript = path + ".script";
         url     = getClass().getResource(sScript);
 
-        Trace.check(url != null, Trace.FILE_IO_ERROR,
-                    "non-existent resource: " + sScript);
+        Trace.check(url != null, Trace.FILE_IO_ERROR, sScript,
+                    " does not exist");
         Trace.check("jar".equalsIgnoreCase(url.getProtocol()),
-                    Trace.ACCESS_IS_DENIED,
-                    "wrong resource protocol: " + url);
+                    Trace.ACCESS_IS_DENIED, "wrong resource protocol: ",
+                    url.getProtocol());
     }
 }

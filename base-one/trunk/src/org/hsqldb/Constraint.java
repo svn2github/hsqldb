@@ -511,7 +511,7 @@ Referential Constraint 4 SET DEFAULT
 
         // tony_lai@users 20020820 - patch 595156
         Trace.check(node == null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name + " table: " + core.tRef.getName().name);
+                    core.fkName.name, " table: ", core.tRef.getName().name);
     }
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -559,8 +559,8 @@ Referential Constraint 4 SET DEFAULT
         // tony_lai@users 20020820 - patch 595156
         // sebastian@scienion -- check wether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
         Trace.check(node == null || findfirst,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name + " table: " + core.tRef.getName().name);
+                    Trace.INTEGRITY_CONSTRAINT_VIOLATION, core.fkName.name,
+                    " table: ", core.tRef.getName().name);
 
         return node;
     }
@@ -598,7 +598,7 @@ Referential Constraint 4 SET DEFAULT
         // -- there has to be a valid node in the main table
         // --
         Trace.check(node != null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name + " table: " + core.tRef.getName().name);
+                    core.fkName.name, " table: ", core.tRef.getName().name);
 
         return node;
     }

@@ -34,7 +34,6 @@ package org.hsqldb;
 //import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.DoubleIntTable;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
 
@@ -80,7 +79,7 @@ class DataFileDefrag {
                 rootsList.add(null);
             }
 
-            Trace.printSystemOut(t.getName().name + " complete");
+            Trace.printSystemOut(t.getName().name, " complete");
         }
 
 // erik        no change
@@ -100,7 +99,7 @@ class DataFileDefrag {
             }
         }
 
-        System.out.println("Transfer complete: " + stopw.elapsedTime());
+        Trace.printSystemOut("Transfer complete: ", stopw.elapsedTime());
 
         return rootsList;
     }
@@ -157,8 +156,8 @@ class DataFileDefrag {
             n = index.next(n);
         }
 
-        System.out.println(table.getName().name + " list done "
-                           + stopw.elapsedTime());
+        Trace.printSystemOut(table.getName().name + " list done ",
+                             stopw.elapsedTime());
 
         count = 0;
 
@@ -205,7 +204,7 @@ class DataFileDefrag {
             rootsArray[i] = pointerLookup.get(lookupIndex, 1);
         }
 
-        Trace.printSystemOut(table.getName().name + " : table converted");
+        Trace.printSystemOut(table.getName().name, " : table converted");
 
         return rootsArray;
     }

@@ -565,7 +565,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             return null;
         }
 
-        tableIndex = this.getSysTableID(name);
+        tableIndex = getSysTableID(name);
         t          = sysTables[tableIndex];
 
         // fredt - any system table that is not supported will be null here

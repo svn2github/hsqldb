@@ -32,7 +32,6 @@
 package org.hsqldb.lib;
 
 import java.util.Date;
-import java.util.Enumeration;
 
 /**
  * Provides facility for threads to schedule tasks for future execution in a

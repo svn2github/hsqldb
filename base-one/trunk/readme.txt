@@ -1,5 +1,16 @@
 Readme File
 
+2003.09.17
+
+HSQLDB 1.7.2 ALPHA_P
+
+Apart from the bugs and limitations of PreparedStatement, all the bugs reported since
+the release of ALPHA_O have been fixed in this alpha version. Some minor enhancements
+have been made to increase compatibility with OpenOffice.org applications.
+
+In addition, it is now possible to execute triggers in the main execution thread.
+This allows uses for triggers that were not possible before.
+
 
 HSQLDB 1.7.2 ALPHA_O
 

@@ -163,11 +163,11 @@ abstract class BaseMemoryNode extends Node {
             return true;
         }
 
-        if (Trace.DOASSERT) {
-            Trace.doAssert(getParent() != null);
-        }
-
         Node parent = getParent();
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(parent != null);
+        }
 
         return equals(parent.getLeft());
     }
