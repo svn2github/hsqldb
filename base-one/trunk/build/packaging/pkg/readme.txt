@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.4 2002/10/26 05:46:28 unsaved Exp $
+$Id: readme.txt,v 1.5 2002/10/29 16:42:17 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -107,8 +107,8 @@ name (e.g. "/usr/hsqldb-1.7.1/data/dbname.data").
 Example, to make and run a database server named db2...
 
     mkdir /usr/hsqldb/data/db2
-    > /usr/hsqldb/data/db2/server.properties
-    chown -R hsqldb:hsqldb /usr/hsqldb/data/db2
+    chown hsqldb:hsqldb /usr/hsqldb/data/db2
+    > /usr/hsqldb/data/db2/server.properties  # Remains owned by root
     /etc/init.d/hsqldb start
 
 To run a hsqldb http server instead, do the same thing, but you
