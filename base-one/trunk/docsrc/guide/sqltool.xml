@@ -1,8 +1,8 @@
-<!-- $Id: sqltool.xml,v 1.23 2004/06/06 20:50:58 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.24 2004/06/06 22:54:16 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
-    <subtitle>SqlTool Manual and HOWTO</subtitle>
+    <subtitle>SqlTool Manual</subtitle>
     <chapterinfo>
         <author>
             <firstname>Blaine</firstname><surname>Simpson</surname>
@@ -11,11 +11,11 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.23 $</edition>
-        <pubdate>$Date: 2004/06/06 20:50:58 $</pubdate>
+        <edition>$Revision: 1.24 $</edition>
+        <pubdate>$Date: 2004/06/06 22:54:16 $</pubdate>
         <keywordset>
+            <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
-            <keyword>HOWTO</keyword>
             <keyword>SQL</keyword>
             <keyword>JDBC</keyword>
         </keywordset>
@@ -40,7 +40,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.33 of SqlTool and
-            1.69 of SqlFile (the latter is the class which does most of the
+            1.74 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both version when you run SqlTool
             interactively.
@@ -370,6 +370,11 @@
                 "\-3".
                 That command will be written to the buffer so that you can 
                 execute it or edit it using buffer commands.
+                </simpara><simpara>
+                (You can append a semicolon to a recall command in order
+                to execute the recalled buffer immediately, like "\-3;".
+                This is actually just a shortcut for running the Special
+                Command "\-3" and the Buffer Command ":;".)
             </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
@@ -385,12 +390,20 @@
         <simpara>
             Be aware that the <literal>\!</literal> Special Command does
             not work for external programs that read from standard input.
-            You can not run graphical interactive programs, but not
+            You can non-interactive and graphical interactive programs, but not
             command-line interactive programs.
         </simpara>
         <variablelist><title>Buffer Commands</title>
             <varlistentry><term>:?</term><listitem><simpara>
                 help
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>:;</term><listitem><simpara>
+                Executes the SQL statement in the current buffer against the 
+                database.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>:l</term><listitem><simpara>
+                (This is a lower case L).
+                List the current contents of the buffer.
             </simpara></listitem></varlistentry>
             <varlistentry><term>:a</term><listitem><simpara>
                 Enter append mode with the contents of the buffer as the 
@@ -399,60 +412,101 @@
                 in the buffer.
                 Whatever line you type next will be appended to the SQL 
                 Statement.
-                You can, of course, execute the command by terminating a 
-                line with ";", or send it back to the buffer by entering a 
-                blank line.
+                You can execute the command by terminating a line with ";",
+                or send it back to the buffer by entering a blank line.
+                </simpara><simpara>
+                You can, optionally, put a string after the :a, in which
+                case this text will be appended and you will remain in
+                append mode.
+                (Unless the text ends with ';', in which case the resultant
+                statement will be executed immediately).
             </simpara></listitem></varlistentry>
-            <varlistentry><term>:l</term><listitem><simpara>
-                List the current contents of the buffer.
-            </simpara></listitem></varlistentry>
-            <varlistentry><term>:;</term><listitem><simpara>
-                Executes the current buffer against the database.
-            </simpara></listitem></varlistentry>
-            <varlistentry><term>:s/from string/to string/</term><listitem><para>
-                Edits the current buffer.
+            <varlistentry>
+                <term>:s/from string/to string/switches</term>
+                <listitem>
+                <simpara>
+                This is the primary command for SqlTool command editing-- 
+                it operates upon the current buffer.
+                The "to string" and the "switches" are both optional.
+                To start with, I'll discuss the use and behavior if you don't
+                supply any substitution mode switches.
+                </simpara>
+                <para>
                 Don't use "/" if it occurs in either "from string" or "to 
                 string".
                 You can use any character that you want in place of "/", but 
-                it must not occur in the from or to strings.
+                it must not occur in the <emphasis>from</emphasis> or 
+                <emphasis>to</emphasis> strings.
                 Example
                 <informalexample><screen>
     :s@from string@to string@</screen>
                 </informalexample></para><simpara>
-                All occurrences of the "from string" are substituted with "to 
-                string".
-                If the SQL Statement is multi-line, the substitution will 
-                happen to all lines.
-                (This easily be changed to accommondate editing only specific 
-                lines of the buffer-- let me know if that would be useful to 
-                you).
+                The <emphasis>to</emphasis> string is substituted for the first 
+                occurrence of the (case-specific)<emphasis>from</emphasis>
+                string.
+                The replacement will consider the entire SQL statement, even
+                if it is a multi-line statement.
                 </simpara><para>
-                All occurrences of "$" in the "from string" and the "to string" 
-                are treated as line breaks.
-                For example, "from string" of
+                All occurrences of "$" in the <emphasis>from</emphasis> string
+                and the <emphasis>to</emphasis> string are treated as line 
+                breaks.
+                For example, <emphasis>from</emphasis> string of
                 "<literal>*$FROM mytable</literal>" would 
                 actually look for occurrences of
                 <informalexample><screen>
-    "*
-     FROM mytable"</screen>
+     *
+     FROM mytable</screen>
                 </informalexample></para><para>
-                This is very useful, as it permits you to append to or prefix 
-                to specific lines within a multi-line SQL Statement, like
+                Here is a another meaningful example using $.
                 <informalexample><screen>
     :s/e)$/e) WHERE col1 is not null$/</screen>
                 </informalexample></para><simpara>
                 This command appends
-                "<emphasis>WHERE col1 is not null</emphasis>" to the 
+                "<literal>WHERE col1 is not null</literal>" to the 
                 line(s) which end with "e)".
                 </simpara><para>
-                The "to string" may be empty, in which case, occurrences of 
-                the "from string" are just deleted.  For example
+                The <emphasis>to</emphasis> string may be empty, in which case, 
+                occurrences of the <emphasis>from</emphasis> string are just 
+                deleted.  For example
                 <informalexample><screen>
     :s/this//</screen>
                 </informalexample></para><simpara>
-                would remove all occurrences of "this".
-            </simpara></listitem></varlistentry>
+                would remove the first occurrence of "this".
+                (With the "g" substitution mode switch, as explained below,
+                it would remove all occurrences of "this").
+                </simpara><simpara>
+                Don't end a <emphasis>to</emphasis> string with ";" in attempt to make a SQL
+                statement execute.
+                There is a substitution mode switch to use for that purpose.
+                </simpara><para>
+                You can use any combination of the substitution mode switches.
+                <itemizedlist>
+                    <listitem><para>
+                        Use "i" to make the searches for 
+                        <emphasis>from</emphasis> string case insensitive.
+                    </para></listitem> <listitem><para>
+                        Use "g" to substitute globally, i.e., for all 
+                        occurrences of <emphasis>from</emphasis> string which 
+                        are found in the text under consideration.
+                    </para></listitem> <listitem><para>
+                        Use ";" to execute the command immediately after the
+                        substitution is performed.
+                    </para></listitem> <listitem><para>
+                        Use an integer (from 1 to 9) to narrow the text under
+                        consideration to a specific line of a multi-line
+                        buffer.
+                    </para></listitem>
+                </itemizedlist>
+            </para>
+            <simpara>
+                The substitution facility doesn't support any regular
+                expressions at all.
+                When we stop supporting Java versions older than 1.4, I'll
+                start supporting regular expressions and other advanced
+                string manipulation functions.
+            </simpara> </listitem></varlistentry>
         </variablelist>
+
         <variablelist><title>Essential PL Command</title>
             <varlistentry><term>* VARNAME = value</term><listitem><simpara>
                 Set the value of a variable.
