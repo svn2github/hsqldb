@@ -1,6 +1,6 @@
 Readme File
 
-HSQLDB 1.7.2 ALPHA_G
+HSQLDB 1.7.2 ALPHA_H
 
 2002.12.11
 
