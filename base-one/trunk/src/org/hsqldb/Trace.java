@@ -69,7 +69,7 @@ package org.hsqldb;
 
 import java.io.PrintWriter;
 import java.sql.DriverManager;
-
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 /**
  * handles creation and reporting of error messages and throwing HsqlException
  *
@@ -95,13 +95,12 @@ import java.sql.DriverManager;
 // preserve the orignial erro code
 public class Trace extends PrintWriter {
 
-    public static boolean       TRACE          = true;
-    public static boolean       TRACESYSTEMOUT = true;
+    public static boolean       TRACE          = false;
+    public static boolean       TRACESYSTEMOUT = false;
     public static final boolean STOP           = false;
     public static final boolean DOASSERT       = true;
     private static final Trace  tTracer        = new Trace();
     private static String       sTrace;
-    private static int          iStop = 0;
 
     //
     public static final int    //
@@ -572,8 +571,8 @@ public class Trace extends PrintWriter {
 
     static {
         try {
-            TRACE          = Boolean.getBoolean("hsqldb.trace");
-            TRACESYSTEMOUT = Boolean.getBoolean("hsqldb.tracesystemout");
+            TRACE          = TRACE || Boolean.getBoolean("hsqldb.trace");
+            TRACESYSTEMOUT = TRACESYSTEMOUT || Boolean.getBoolean("hsqldb.tracesystemout");
         } catch (Exception e) {}
     }
 
@@ -995,11 +994,19 @@ public class Trace extends PrintWriter {
         }
     }
 
-    private static void printStack() {
-
-        Exception e = new TraceException();
-
-        e.printStackTrace();
+    /**
+     * Returns the stack trace for doAssert()
+     */
+    private static String getStackTrace() {
+        try {
+            Exception e = new TraceException();
+            throw e;
+        } catch (Exception e1){
+            HsqlByteArrayOutputStream os = new HsqlByteArrayOutputStream();
+            PrintWriter pw = new PrintWriter(os,true);
+            e1.printStackTrace(pw);
+            return os.toString();
+        }
     }
 
     static class TraceCallerException extends Exception {
@@ -1026,17 +1033,6 @@ public class Trace extends PrintWriter {
         } else {
             DriverManager.println(s);
         }
-    }
-
-    public static void main(String[] args) {
-
-        System.out.println(
-            Trace.error(
-                Trace.ERROR_IN_SCRIPT_FILE,
-                Trace.BinaryDatabaseScriptReader_readExistingData,
-                new Object[] {
-            "tablename", new Integer(3), new Integer(2)
-        }));
     }
 
     /**
@@ -1126,33 +1122,18 @@ public class Trace extends PrintWriter {
      * @param String error
      * @throws HsqlException
      */
-    static void doAssert(boolean condition, int code) throws HsqlException {
-        doAssert(condition, getMessage(code));
-    }
-
-    /**
-     * Throws exception if assertion fails
-     *
-     * @param boolean condition
-     * @param String error
-     * @throws HsqlException
-     */
     static void doAssert(boolean condition,
                          String error) throws HsqlException {
 
         if (!condition) {
-            if (TRACE) {
-                printStack();
+
+            if (error == null){
+                error = "";
             }
 
-            String add = "";
+            error += getStackTrace();
 
-            if (error != null) {
-                add += error;
-            }
-
-            throw error(ASSERT_FAILED, add.length() > 0 ? add
-                                                        : null);
+            throw error(ASSERT_FAILED, error);
         }
     }
 }
