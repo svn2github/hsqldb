@@ -302,9 +302,11 @@ class WebServerConnection implements Runnable {
 
             if (resultIn.iMode == ResultConstants.SQLCONNECT) {
                 try {
+                    int dbIndex = ArrayUtil.find(server.dbAlias,
+                                                 resultIn.subSubString);
                     Session session =
-                        DatabaseManager.newSession(server.dbType[0],
-                                                   server.dbPath[0],
+                        DatabaseManager.newSession(server.dbType[dbIndex],
+                                                   server.dbPath[dbIndex],
                                                    resultIn.getMainString(),
                                                    resultIn.getSubString(),
                                                    true);
@@ -314,10 +316,17 @@ class WebServerConnection implements Runnable {
                 } catch (HsqlException e) {
                     resultOut = new Result(e.getMessage(), e.getSQLState(),
                                            e.getErrorCode());
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    resultOut = new Result(
+                        Trace.getMessage(Trace.DATABASE_NOT_EXISTS), null,
+                        Trace.DATABASE_NOT_EXISTS);
                 }
             } else {
-                Session session = DatabaseManager.getSession(server.dbType[0],
-                    server.dbPath[0], resultIn.sessionID);
+                int dbIndex = resultIn.databaseID;
+                Session session =
+                    DatabaseManager.getSession(server.dbType[dbIndex],
+                                               server.dbPath[dbIndex],
+                                               resultIn.sessionID);
 
                 resultOut = session.execute(resultIn);
             }

@@ -768,7 +768,7 @@ class Session implements SessionInterface {
                     return sqlPrepare(cmd.getMainString());
 
                 case ResultConstants.SQLFREESTMT :
-                    return sqlFreeStatement(cmd.getIDCode());
+                    return sqlFreeStatement(cmd.getStatementID());
 
                 case ResultConstants.SQLGETSESSIONINFO :
                     return getAttributes();
@@ -879,7 +879,7 @@ class Session implements SessionInterface {
         int[]             updateCounts;
         int               count;
 
-        csid = cmd.getIDCode();
+        csid = cmd.getStatementID();
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
@@ -976,7 +976,7 @@ class Session implements SessionInterface {
         CompiledStatement cs;
         Expression[]      parameters;
 
-        csid  = cmd.getIDCode();
+        csid  = cmd.getStatementID();
         pvals = cmd.getParameterData();
 
 //        ptypes = cmd.getParameterTypes();

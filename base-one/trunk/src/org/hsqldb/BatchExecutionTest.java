@@ -71,7 +71,7 @@ public class BatchExecutionTest implements Types {
     static void checkResult(Result r) throws Exception {
 
         if (r.iMode == ResultConstants.ERROR) {
-            throw Trace.error(r.idCode, r.mainString);
+            throw Trace.error(r.getStatementID(), r.getMainString());
         }
     }
 
@@ -117,7 +117,7 @@ public class BatchExecutionTest implements Types {
         o         = new Result(ResultConstants.SQLEXECUTE);
         o.colType = types;
 
-        o.setIDCode(r.getIDCode());
+        o.setStatementID(r.getStatementID());
         println("prepared: " + sql);
 
         return o;

@@ -73,6 +73,7 @@ import java.io.DataInputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
@@ -95,6 +96,7 @@ import java.net.Socket;
 class ServerConnection implements Runnable {
 
     private String          user;
+    int                     dbIndex;
     private Session         session;
     private Socket          mSocket;
     private Server          mServer;
@@ -119,7 +121,8 @@ class ServerConnection implements Runnable {
         synchronized (ServerConnection.class) {
             mThread = mCurrentThread++;
         }
-        synchronized(mServer.serverConnSet){
+
+        synchronized (mServer.serverConnSet) {
             mServer.serverConnSet.add(this);
         }
     }
@@ -135,7 +138,7 @@ class ServerConnection implements Runnable {
             mSocket.close();
         } catch (IOException e) {}
 
-        synchronized(mServer.serverConnSet){
+        synchronized (mServer.serverConnSet) {
             mServer.serverConnSet.remove(this);
         }
     }
@@ -161,13 +164,23 @@ class ServerConnection implements Runnable {
             Result resultOut;
 
             try {
+                dbIndex = ArrayUtil.find(mServer.dbAlias,
+                                         resultIn.subSubString);
+
                 mServer.trace(mThread + ":trying to connect user " + user);
-                c = DatabaseManager.newSession(mServer.dbType[0], mServer.dbPath[0], resultIn.getMainString(),
-                                              resultIn.getSubString(),true);
+
+                c = DatabaseManager.newSession(mServer.dbType[dbIndex],
+                                               mServer.dbPath[dbIndex],
+                                               resultIn.getMainString(),
+                                               resultIn.getSubString(), true);
                 resultOut = new Result(ResultConstants.UPDATECOUNT);
             } catch (HsqlException e) {
                 resultOut = new Result(e.getMessage(), e.getSQLState(),
                                        e.getErrorCode());
+            } catch (ArrayIndexOutOfBoundsException e) {
+                resultOut =
+                    new Result(Trace.getMessage(Trace.DATABASE_NOT_EXISTS),
+                               null, Trace.DATABASE_NOT_EXISTS);
             }
 
             HSQLClientConnection.write(resultOut, rowOut, dataOutput);

@@ -66,6 +66,7 @@ interface ServerConstants {
     String  SC_KEY_ADDRESS                = SC_KEY_PREFIX + ".address";
     String SC_KEY_AUTORESTART_SERVER = SC_KEY_PREFIX + ".restart_on_shutdown";
     String  SC_KEY_DATABASE               = SC_KEY_PREFIX + ".database";
+    String  SC_KEY_DBNAME                 = SC_KEY_PREFIX + ".dbname";
     String  SC_KEY_NO_SYSTEM_EXIT         = SC_KEY_PREFIX + ".no_system_exit";
     String  SC_KEY_PORT                   = SC_KEY_PREFIX + ".port";
     String  SC_KEY_SILENT                 = SC_KEY_PREFIX + ".silent";

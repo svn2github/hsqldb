@@ -64,6 +64,26 @@ public class ArrayUtil {
     }
 
     /**
+     *  Basic find for small arrays.
+     */
+    public static int find(Object array[], Object object) {
+
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == object) {
+
+                // hadles both nulls
+                return i;
+            }
+
+            if (object != null && object.equals(array[i])) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
      * Returns true if a and be contain the same set of integers, not
      * necessarily in the same order. This implies the arrays are of the same
      * length.
@@ -276,9 +296,8 @@ public class ArrayUtil {
      * Returns true if a contains all elements of b in sequential order from
      * position start.
      */
-
     public static boolean startWith(byte[] a, int start, byte b[]) {
-        return countSameElements(a,start,b) == b.length;
+        return countSameElements(a, start, b) == b.length;
     }
 
     /**
@@ -299,6 +318,7 @@ public class ArrayUtil {
                     continue mainloop;
                 }
             }
+
             break;
         }
 
@@ -320,13 +340,14 @@ public class ArrayUtil {
                 if (a[i] == b[j]) {
                     break mainloop;
                 }
-
             }
+
             k++;
         }
 
         return k;
     }
+
     /**
      * Convenience wrapper for System.arraycopy()
      */

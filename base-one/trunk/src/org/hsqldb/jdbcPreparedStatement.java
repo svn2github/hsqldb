@@ -410,8 +410,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         }
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.mainString, resultIn.subString,
-                                   resultIn.idCode);
+            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+                                   resultIn.getStatementID());
         }
 
         return resultIn.iMode == ResultConstants.DATA ? true
@@ -487,8 +487,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             throw new SQLException(
                 "executeUpdate() cannot be used with this statement");
         } else if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.mainString, resultIn.subString,
-                                   resultIn.idCode);
+            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+                                   resultIn.getStatementID());
         }
 
         return resultIn.getUpdateCount();

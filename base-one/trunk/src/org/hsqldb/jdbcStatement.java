@@ -235,8 +235,8 @@ public class jdbcStatement implements java.sql.Statement {
             throw new SQLException(
                 "executeUpdate() cannot be used with this statement");
         } else if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.mainString, resultIn.subString,
-                                   resultIn.idCode);
+            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+                                   resultIn.getStatementID());
         }
 
         return resultIn.getUpdateCount();
@@ -1629,7 +1629,7 @@ public class jdbcStatement implements java.sql.Statement {
             if (resultIn.iMode == ResultConstants.ERROR) {
                 throw new HsqlException(resultIn.getMainString(),
                                         resultIn.getSubString(),
-                                        resultIn.getIDCode());
+                                        resultIn.getStatementID());
             }
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);

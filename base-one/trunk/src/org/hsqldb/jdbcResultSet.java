@@ -5613,7 +5613,7 @@ public class jdbcResultSet implements ResultSet {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            throw (Trace.getError(r.errorCode, r.sError));
-            throw new SQLException(r.mainString, null, r.idCode);
+            throw new SQLException(r.getMainString(), null, r.getStatementID());
         } else {
             iUpdateCount = -1;
             rResult      = r;

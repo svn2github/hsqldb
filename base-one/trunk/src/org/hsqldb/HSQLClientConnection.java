@@ -75,6 +75,7 @@ public class HSQLClientConnection implements SessionInterface {
     String  path;
     String  database;
     boolean isTLS;
+    int     databaseID;
 
     HSQLClientConnection(String host, int port, String path, String database,
                          boolean isTLS, String user,
@@ -92,6 +93,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         login.mainString = user;
         login.subString  = password;
+        login.subSubString = database;
 
         initConnection(host, port, isTLS);
 
@@ -104,6 +106,7 @@ public class HSQLClientConnection implements SessionInterface {
         }
 
         sessionID = resultIn.sessionID;
+        databaseID = resultIn.databaseID;
     }
 
     /**
@@ -163,6 +166,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         try {
             r.sessionID = sessionID;
+            r.databaseID = databaseID;
 
             write(r);
 
@@ -210,7 +214,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         if (in.iMode == ResultConstants.ERROR) {
             throw new HsqlException(in.getMainString(), in.getSubString(),
-                                    in.getIDCode());
+                                    in.getStatementID());
         }
     }
 

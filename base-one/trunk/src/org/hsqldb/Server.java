@@ -78,10 +78,9 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
-
-//import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.resources.BundleHandler;
@@ -144,11 +143,10 @@ public class Server implements HsqlSocketRequestHandler {
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
 //-------------------------------- package -------------------------------------
-    HashSet serverConnSet;
-
-//    Database       mDatabase;
-    String[]       dbType = new String[1];
-    String[]       dbPath = new String[1];
+    HashSet        serverConnSet;
+    String[]       dbAlias = new String[1];
+    String[]       dbType  = new String[1];
+    String[]       dbPath  = new String[1];
     HsqlProperties serverProperties;
 
 //------------------------------- protected ------------------------------------
@@ -354,9 +352,9 @@ public class Server implements HsqlSocketRequestHandler {
      *  access="read-write"
      *  description="For hosted database"
      */
-    public String getDatabasePath(int i) {
+    public String getDatabasePath(int index) {
         return serverProperties.getProperty(ServerConstants.SC_KEY_DATABASE
-                                            + "." + i);
+                                            + "." + index);
     }
 
     /**
@@ -879,11 +877,13 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @jmx.managed-operation
      */
-    public void setDatabasePath(String path) throws RuntimeException {
+    public void setDatabasePath(int index,
+                                String path) throws RuntimeException {
 
         checkRunning(false);
         trace("setDatabasePath(): " + path);
-        serverProperties.setProperty(ServerConstants.SC_KEY_DATABASE, path);
+        serverProperties.setProperty(ServerConstants.SC_KEY_DATABASE + "."
+                                     + index, path);
     }
 
     /**
@@ -1033,6 +1033,30 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         javaSystem.setLogToSystem(isTrace());
+
+        String[]    dblist   = new String[10];
+        Enumeration enum     = serverProperties.getProperties().keys();
+        int         maxindex = 0;
+
+        try {
+            for (int i = 0; enum.hasMoreElements(); ) {
+                String key = (String) enum.nextElement();
+
+                if (key.startsWith("server.dbname.")) {
+                    String number = key.substring("server.dbname.".length());
+                    int    dbnumber = Integer.parseInt(number);
+
+                    maxindex         = dbnumber < maxindex ? maxindex
+                                                           : dbnumber;
+                    dblist[dbnumber] = serverProperties.getProperty(key);
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            /** @todo this should display an error */
+        }
+
+        dbAlias = new String[maxindex + 1];
+        ArrayUtil.copyArray(dblist,dbAlias,maxindex + 1);
     }
 
     /**
@@ -1152,13 +1176,8 @@ public class Server implements HsqlSocketRequestHandler {
 // etc. that may need to make calls back here.
 
     /**
-     * Notifies this server that something of interest has happend. <p>
-     *
-     * This is a callback method used by server connection objects.
-     * Currently, the only thing of interest is when a connection
-     * closes; if a connection closes and the database is detected
-     * to be shut down, then this server and all of its connections
-     * are shut down also.
+     * This is called from org.hsqldb.DatabaseManager when a database is
+     * shutdown. Currently this shuts the whole server down.
      *
      * @param action a code indicating what has happend
      */
@@ -1166,16 +1185,10 @@ public class Server implements HsqlSocketRequestHandler {
 
         trace("notifiy() entered");
 
-        // only (action == SC_CONNECTION_CLOSED) is used
         if (action != ServerConstants.SC_DATABASE_SHUTDOWN) {
             return;
         }
 
-/*
-        if (mDatabase == null ||!mDatabase.isShutdown()) {
-            return;
-        }
-*/
         releaseServerSocket();
         trace("notifiy() exiting");
     }
@@ -1301,6 +1314,7 @@ public class Server implements HsqlSocketRequestHandler {
                       ServerConstants.SC_DEFAULT_ADDRESS);
         p.setProperty(ServerConstants.SC_KEY_DATABASE + "." + 0,
                       ServerConstants.SC_DEFAULT_DATABASE);
+        p.setProperty(ServerConstants.SC_KEY_DBNAME + "." + 0, "");
         p.setProperty(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
                       ServerConstants.SC_DEFAULT_NO_SYSTEM_EXIT);
 
@@ -1348,7 +1362,7 @@ public class Server implements HsqlSocketRequestHandler {
         trace("openDB() entered");
 
         synchronized (mDatabase_mutex) {
-            for (int i = 0; i < dbPath.length; i++) {
+            for (int i = 0; i < dbAlias.length; i++) {
                 HsqlProperties dbURL =
                     DatabaseManager.parseURL(getDatabasePath(i), false);
 
