@@ -203,15 +203,17 @@ class Parser {
             Table  table;
             Select s = null;
 
+            sq            = new SubQuery();
+
             subQueryLevel++;
 
-            s = parseSelect(false);
+            s             = parseSelect(false);
+            sq.level      = subQueryLevel;
 
             subQueryLevel--;
 
             boolean isResolved = s.resolveAll(resolveAll);
 
-            sq            = new SubQuery();
             sq.select     = s;
             sq.isResolved = isResolved;
 
@@ -1965,8 +1967,9 @@ class Parser {
 
         // order matters: we want deepest subqueries first, since higher
         // level select table filters depend on the content of lower level
-        // ones.  In general, order at depth n in tree is inconsequential,
-        // hence the use of heap ADT, v.s. a full tree.
+        // ones.
+        // views are materialised first, in order of use depth
+        // other subqueries are then materialised in order of use depth
         for (int i = 0; i < size; i++) {
             subqueries[i] = (SubQuery) subQueryHeap.remove();
         }

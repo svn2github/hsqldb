@@ -87,6 +87,8 @@ import org.hsqldb.lib.FileUtil;
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
 // tony_lai@users 20020820 - patch 595073 - Duplicated exception msg
 // fredt@users 20021230 - patch 488118 by xclay@users - allow multithreading
+// wondersonic@users 20031005 - moved string literal messages to Trace with new methods
+// nitin chauhan 20031005 - moved concatenated string in asserts and checks to Trace with new methods
 //
 // fredt - todo - 20021022 management of nested throws inside the program in
 // such a way that it is possible to return exactly the text of the error
@@ -288,8 +290,8 @@ public class Trace extends PrintWriter {
      TEXT_TABLE_SOURCE_VALUE_MISSING                = 173,
      TEXT_TABLE_SOURCE_SEPARATOR                    = 174,
      UNSUPPORTED_PARAM_CLASS                        = 175,
-     JDBC_NULL_STREAM                               = 176
-    ;
+     JDBC_NULL_STREAM                               = 176,
+     INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT        = 177;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -466,6 +468,7 @@ public class Trace extends PrintWriter {
         "$$ in table: $$", "no file name specified for source",
         "no value for: ", "zero length separator",
         "Unsupported parameter/return value class: ", "input stream is null",
+        "23000 Integrity constraint violation - no parent",
     };
 
     /** Used during tests. */

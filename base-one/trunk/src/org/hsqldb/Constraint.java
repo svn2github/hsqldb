@@ -515,7 +515,7 @@ Referential Constraint 4 SET DEFAULT
                 }
             }
 
-            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT,
                               Trace.Constraint_violation, new Object[] {
                 core.fkName.name, core.mainTable.getName().name
             });
@@ -645,7 +645,7 @@ Referential Constraint 4 SET DEFAULT
         // -- there has to be a valid node in the main table
         // --
         if (node == null) {
-            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT,
                               Trace.Constraint_violation, new Object[] {
                 core.fkName.name, core.refTable.getName().name
             });

@@ -656,16 +656,23 @@ class Database {
     /**
      * Drops the index with the specified name from this database.
      * @param indexname the name of the index to drop
+     * @param  ifExists if true and if the Index to drop does not exist, fail
+     *      silently, else throw
      * @param session the execution context
      * @throws HsqlException if the index does not exist, the session lacks the permission
      *        or the operation violates database integrity
      */
-    void dropIndex(String indexname, Session session) throws HsqlException {
+    void dropIndex(String indexname, boolean ifExists,
+                   Session session) throws HsqlException {
 
         Table t = findUserTableForIndex(indexname, session);
 
         if (t == null) {
-            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
+            if (ifExists) {
+                return;
+            } else {
+                throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
+            }
         }
 
         t.checkDropIndex(indexname, null);

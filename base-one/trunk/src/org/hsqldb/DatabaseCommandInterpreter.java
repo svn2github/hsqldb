@@ -97,6 +97,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users 20030425 - refactoring DDL into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
+// wondersonic@users 20031205 - IF EXISTS support for DROP INDEX
 class DatabaseCommandInterpreter {
 
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
@@ -2644,8 +2645,21 @@ class DatabaseCommandInterpreter {
     }
 
     private void processDropIndex() throws HsqlException {
+
+        String  indexName = tokenizer.getString();
+        String  token     = tokenizer.getString();
+        boolean ifExists  = false;
+
+        if (token.equals(Token.T_IF)) {
+            tokenizer.getThis(Token.T_EXISTS);
+
+            ifExists = true;
+        } else {
+            tokenizer.back();
+        }
+
         session.checkDDLWrite();
-        database.dropIndex(tokenizer.getName(), session);
+        database.dropIndex(indexName, ifExists, session);
     }
 
     private Result processExplainPlan() throws IOException, HsqlException {
