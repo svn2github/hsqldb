@@ -54,11 +54,14 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
-    protected static boolean JARFILE =
-        Boolean.getBoolean("hsqldb.files_in_jar");
-    private static Method savePropsMethod = null;
+    protected static boolean JARFILE         = false;
+    private static Method    savePropsMethod = null;
 
     static {
+        try {
+            JARFILE = Boolean.getBoolean("hsqldb.files_in_jar");
+        } catch (Exception e) {}
+
         try {
             savePropsMethod = java.util.Properties.class.getMethod("store",
                     new Class[] {

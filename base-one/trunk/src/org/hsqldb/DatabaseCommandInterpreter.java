@@ -2533,8 +2533,14 @@ class DatabaseCommandInterpreter implements DITypes {
     static final Result emptyResult = new Result();
 
     // -Dorg.hsqldb.Parser.shadow=true|false
-    static final boolean compile =
-        !Boolean.getBoolean("org.hsqldb.Parser.shadow");
+    static boolean compile = true;
+
+    static {
+        try {
+            compile = !Boolean.getBoolean("org.hsqldb.Parser.shadow");
+        } catch (Exception e) {}
+    }
+
     TableWorks        tableWorks = new TableWorks(null);
     Tokenizer         tokenizer  = new Tokenizer();
     CompiledStatement cs         = new CompiledStatement();
