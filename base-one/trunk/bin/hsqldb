@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.27 2004/06/11 18:40:45 unsaved Exp $
+# $Id: hsqldb,v 1.28 2004/07/15 17:50:56 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -313,7 +313,7 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec '$JAVA_EXECUTABLE' $SERVER_JVMARGS $TLS_SWITCHES -classpath '${SERVER_ADDL_CLASSPATH}${HSQLDB_JAR_PATH}' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
+            nohup su "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec '$JAVA_EXECUTABLE' $SERVER_JVMARGS $TLS_SWITCHES -classpath '${SERVER_ADDL_CLASSPATH}${HSQLDB_JAR_PATH}' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
