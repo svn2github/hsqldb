@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.23 2004/04/11 16:51:13 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.24 2004/04/12 19:49:11 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,12 +51,14 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.23 $
+ * @version $Revision: 1.24 $
  * @author Blaine Simpson
  */
 public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
     static private Connection   conn;
+    // N.b. the following is static!
+    static private boolean noexit;   // Whether System.exit() may be called.
     final static private String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/sqltool.rc";
 
@@ -197,14 +199,56 @@ public class SqlTool {
     /** Utility object for internal use. */
     private static BadCmdline bcl = new BadCmdline();
 
+    /** Nested class for external callers of SqlTool.main() */
+    public static class SqlToolException extends Exception {
+        public SqlToolException() { super(); }
+        public SqlToolException(String s) { super(s); }
+    }
+
+    /**
+     * Exit the main() method by either throwing an exception or exiting JVM.
+     *
+     * Call return() right after you call this method, because this method
+     * will not exit if (noexit is true && retval == 0).
+     */
+    static private void exitMain(int retval) throws SqlToolException {
+        exitMain(retval, null);
+    }
+
+    /**
+     * Exit the main() method by either throwing an exception or exiting JVM.
+     *
+     * Call return() right after you call this method, because this method
+     * will not exit if (noexit is true && retval == 0).
+     */
+    static private void exitMain(int retval, String msg)
+    throws SqlToolException {
+        if (noexit) {
+            if (retval == 0) {
+                return;
+            } else if (msg == null) {
+                throw new SqlToolException();
+            } else {
+                throw new SqlToolException(msg);
+            }
+        } else {
+            if (msg != null) {
+                ((retval == 0) ? System.out : System.err).println(msg);
+            }
+            System.exit(retval);
+        }
+    }
+
     /**
      * Connect to a JDBC Database and execute the commands given on
      * stdin or in SQL file(s).
      * Like most main methods, this is not intended to be thread-safe.
      *
      * @param arg  Run "java... org.hsqldb.util.SqlTool --help" for syntax.
+     * @throws SqlToolException May be thrown only if the system property
+     *                          'sqltool.noexit' is set (to anything).
      */
-    public static void main(String arg[]) {
+    public static void main(String arg[]) throws SqlToolException {
         /*
          * The big picture is, we parse input args; load a ConnectData;
          * get a JDBC Connection with the ConnectData; instantiate and
@@ -222,6 +266,7 @@ public class SqlTool {
         boolean interactive = false;
         boolean noinput     = false;
 
+        noexit = System.getProperty("sqltool.noexit") != null;
         try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
                 i++;
@@ -229,8 +274,8 @@ public class SqlTool {
                     break;    // "--"
                 }
                 if (arg[i].substring(2).equals("help")) {
-                    System.out.println(SYNTAX_MESSAGE);
-                    System.exit(0);
+                    exitMain(0, SYNTAX_MESSAGE);
+                    return;
                 }
                 if (arg[i].substring(2).equals("list")) {
                     listMode = true;
@@ -283,9 +328,9 @@ public class SqlTool {
                     fw.flush();
                     fw.close();
                 } catch (IOException ioe) {
-                    System.err.println(
+                    exitMain(4, 
                         "Failed to write given sql to temp file: " + ioe);
-                    System.exit(4);
+                    return;
                 }
             }
             interactive = (arg.length <= i + 1);
@@ -303,20 +348,20 @@ public class SqlTool {
                 }
             }
         } catch (BadCmdline bcl) {
-            System.err.println(SYNTAX_MESSAGE);
-            System.exit(2);
+            exitMain(2, SYNTAX_MESSAGE);
+            return;
         }
         ConnectData conData = null;
         try {
             conData = new ConnectData(rcFile, targetDb);
         } catch (Exception e) {
-            System.err.println(
-                "Failed to retrieve connection info for database '"
+            exitMain(1, "Failed to retrieve connection info for database '"
                 + targetDb + "': " + e.getMessage());
-            System.exit(1);
+            return;
         }
         if (listMode) {
-            System.exit(0);
+            exitMain(0);
+            return;
         }
         if (debug) {
             conData.report();
@@ -341,11 +386,11 @@ public class SqlTool {
             conn = DriverManager.getConnection(conData.url, conData.username,
                                                conData.password);
         } catch (Exception e) {
-            System.err.println("Failed to get a connection to " + conData.url
-                               + ".  " + e.getMessage());
             //e.printStackTrace();
-            // Let's not continuing as if nothing is wrong.
-            throw new RuntimeException(e.getMessage());
+            // Let's not continue as if nothing is wrong.
+            exitMain(10, "Failed to get a connection to " + conData.url
+                   + ".  " + e.getMessage());
+            return;
         }
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
@@ -370,8 +415,8 @@ public class SqlTool {
             try {
                 conn.close();
             } catch (Exception e) {}
-            System.err.println(ioe.getMessage());
-            System.exit(2);
+            exitMain(2, ioe.getMessage());
+            return;
         }
         int retval = 0;    // Value we will return via System.exit().
         try {
@@ -396,6 +441,7 @@ public class SqlTool {
                 "Error occurred while trying to remove temp file '" + tmpFile
                 + "'");
         }
-        System.exit(retval);
+        exitMain(retval);
+        return;
     }
 }
