@@ -9,12 +9,12 @@ utilities. The largest size (hsqldbtest.jar) includes some test
 classes as well. You need the JUnit jar in the /lib directory in
 order to build and run the test classes.
 
-A Jar file for HSQLDB is provided in the .zip package. This jar
+A jar file for HSQLDB is provided in the .zip package. This jar
 contains both the database and the utilities and has been built
 with JDK 1.3.1.
 
-If you want to run HSQLDB with JRE version 1.1.x you should rebuild
-the jar.
+From version 1.7.2 you can also run this jar with JRE version 1.1.x.
+Unlike previous versions, no recompilation is necessary.
 
 The preferred method of rebuilding the jar is with Ant. After
 installing Ant on your system use the following command from the
@@ -29,7 +29,8 @@ ant jar
 
 The Ant method always builds a jar that is compatible with the
 JDK that is used by Ant and specified in the JAVA_HOME environment
-variable.
+variable. It is recommended not to use JDK 1.1.x for building the
+jar, as this version produces much larger jar sizes.
 
 Before building the hsqldbtest.jar package, you should download the
 junit.jar and put it in the /lib directory, alongside servlet.jar, 
@@ -53,10 +54,8 @@ are provided.
 
 JDK and JRE versions
 
-The JDK used for building the jar should generally be the same series
-as the target. This is because the java.sql package in each version
-(1.1.x 1.2.x 1.3.x 1.4.x) has a different set of methods
-in its public interfaces.
+You can use any recent JDK for building the jar. Use of JDK 1.3.x or
+1.4.x is recommended.
 
 Javadoc can be built with Ant and batch files.
 
