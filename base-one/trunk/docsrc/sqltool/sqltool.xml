@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: sqltool.xml,v 1.4 2004/04/12 19:36:33 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.5 2004/04/12 22:04:53 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.4 $">
-    <!ENTITY date "$Date: 2004/04/12 19:36:33 $">
+    <!ENTITY revision "$Revision: 1.5 $">
+    <!ENTITY date "$Date: 2004/04/12 22:04:53 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "sqltool">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -32,7 +32,7 @@
             <keyword>JDBC</keyword>
         </keywordset>
     </bookinfo>
-    <chapter>
+    <preface>
         <title>Introduction</title>
         <para>
             If you notice any mistakes in this document, please email me at
@@ -57,7 +57,7 @@
                 which ships with hsqldb version 1.7.2.
             </para>
         </section>
-    </chapter>
+    </preface>
     <chapter>
         <title>The Bare Minimum You Need to Know to Run SqlTool</title>
         <para>
