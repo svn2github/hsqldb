@@ -128,4 +128,11 @@ class DataAccessPoint {
             throw new DataAccessPointException(e.getMessage());
         }
     }
+
+    /**
+     * @return Returns the helper.
+     */
+    public TransferHelper getHelper() {
+        return helper;
+    }
 }

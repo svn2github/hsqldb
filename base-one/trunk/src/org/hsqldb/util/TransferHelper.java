@@ -166,4 +166,16 @@ class TransferHelper {
     void beginDataTransfer() {}
 
     void endDataTransfer() {}
+
+    String fixupColumnDefRead(String aTableName, ResultSetMetaData meta,
+                              String columnType, ResultSet columnDesc,
+                              int columnIndex) throws SQLException {
+        return columnType;
+    }
+
+    String fixupColumnDefWrite(String aTableName, ResultSetMetaData meta,
+                               String columnType, ResultSet columnDesc,
+                               int columnIndex) throws SQLException {
+        return columnType;
+    }
 }

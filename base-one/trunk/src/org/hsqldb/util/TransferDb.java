@@ -33,7 +33,6 @@ package org.hsqldb.util;
 
 import java.sql.*;
 import java.util.*;
-import java.io.*;
 
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - enhancements
 // sqlbob@users 20020401 - patch 1.7.0 - reengineering
@@ -198,10 +197,21 @@ class TransferDb extends DataAccessPoint {
         try {
             destPrep = conn.prepareStatement(statement);
 
-            int i = 0;
+            int   i = 0;
+            int   tmpLength;
+            int   len      = r.getColumnCount();
+            int[] tmpTypes = null;
 
             while (r.next()) {
-                transferRow(r, destPrep);
+                if (tmpTypes == null) {
+                    tmpTypes = new int[len + 1];
+
+                    for (int j = 1; j <= len; j++) {
+                        tmpTypes[i] = r.getColumnType(j);
+                    }
+                }
+
+                transferRow(r, destPrep, len, tmpTypes);
 
                 if (iMaxRows != 0 && i == iMaxRows) {
                     break;
@@ -224,20 +234,14 @@ class TransferDb extends DataAccessPoint {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param type
-     * @param r
-     * @param p
-     *
-     * @throws SQLException
-     */
+/*
     private void transferRow(TransferResultSet r,
                              PreparedStatement p)
                              throws DataAccessPointException, SQLException {
-
+        // TODO
+        // what is this never used variable for?
+        // looks like missing debug flags because constructing these strings consumes a lot
+        // of time
         String sLast = "";
 
         if (p != null) {
@@ -275,7 +279,7 @@ class TransferDb extends DataAccessPoint {
 
         sLast = "";
     }
-
+*/
     Vector getSchemas() throws DataAccessPointException {
 
         Vector    ret    = new Vector();
@@ -798,11 +802,14 @@ class TransferDb extends DataAccessPoint {
 
                 if (DefaultVal != null) {
                     if (type == Types.CHAR || type == Types.VARCHAR
-                            || type == Types.LONGVARCHAR) {
+                            || type == Types.LONGVARCHAR
+                            || type == Types.BINARY || type == Types.DATE
+                            || type == Types.TIME
+                            || type == Types.TIMESTAMP) {
                         DefaultVal = "\'" + DefaultVal + "\'";
                     }
 
-                    datatype += " Default " + DefaultVal;
+                    datatype += " DEFAULT " + DefaultVal;
                 }
 
                 if (rsmdata_NoNulls) {
@@ -877,5 +884,54 @@ class TransferDb extends DataAccessPoint {
 
             conn = null;
         }
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param type
+     * @param r
+     * @param p
+     *
+     * @throws SQLException
+     */
+    private void transferRow(TransferResultSet r, PreparedStatement p,
+                             int len,
+                             int[] types)
+                             throws DataAccessPointException, SQLException {
+
+        for (int i = 1; i <= len; i++) {
+            int    t = types[i];
+            Object o = r.getObject(i);
+
+            if (o == null) {
+                if (p != null) {
+                    p.setNull(i, t);
+                }
+            } else {
+                o = helper.convertColumnValue(o, i, t);
+
+                p.setObject(i, o);
+            }
+        }
+
+        if (p != null) {
+            p.execute();
+        }
+    }
+
+    /**
+     * @return Returns the meta.
+     */
+    public DatabaseMetaData getMeta() {
+        return meta;
+    }
+
+    /**
+     * @return Returns the conn.
+     */
+    public Connection getConn() {
+        return conn;
     }
 }
