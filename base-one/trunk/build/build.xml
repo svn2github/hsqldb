@@ -15,6 +15,7 @@ usage:
    ant -help          display ant help screen
    ant help           display this message
    ant jar            build the default hsqldb.jar
+   ant jarclient      build the hsqljdbc.jar
    ant jarmain        build the hsqldbmain.jar (no utilities)
    ant jarmin         build the hsqldbmin.jar (no servers)
    ant jartest        build the hsqldbtest.jar (default plus test classes)
@@ -25,6 +26,7 @@ usage:
 
    ant -Dnoswing=true jarmain   exclude swing classes
    hsqldb.jar     : default dirstibution jar
+   hsqljdbc.jar   : JDBC driver only (no support for memory-only mode)
    hsqldbmain.jar : no utility programs
    hsqldbmin.jar  : no utility or server programs
    hsqldbtest.jar : all including test classes
@@ -357,6 +359,70 @@ example:
          <exclude name="org/hsqldb/Ref.class"/>
          <exclude name="org/hsqldb/Map.class"/>
       </jar>
+    </target>
+
+    <target name="jarclient" depends="classes14">
+        <jar jarfile="lib/hsqljdbc.jar">
+            <!-- including 'org/hsqldb/jdbc*' just to be safe -->
+            <fileset dir='classes'
+                includes='org/hsqldb/lib/ArrayUtil*,
+                          org/hsqldb/lib/AsciiStringInputStream*,
+                          org/hsqldb/lib/BaseList*,
+                          org/hsqldb/lib/Collection*,
+                          org/hsqldb/lib/Hash*,
+                          org/hsqldb/lib/HsqlArray*,
+                          org/hsqldb/lib/HsqlByte*,
+                          org/hsqldb/lib/HsqlHeap*,
+                          org/hsqldb/lib/HsqlList**,
+                          org/hsqldb/lib/HsqlThreadFactory*,
+                          org/hsqldb/lib/HsqlTimer*,
+                          org/hsqldb/lib/InOutUtil*,
+                          org/hsqldb/lib/IntKeyHashMap*,
+                          org/hsqldb/lib/IntValueHashMap*,
+                          org/hsqldb/lib/Iterator*,
+                          org/hsqldb/lib/ObjectComparator*,
+                          org/hsqldb/lib/Set*,
+                          org/hsqldb/lib/StringConverter*,
+                          org/hsqldb/lib/StringInputStream*,
+                          org/hsqldb/lib/ThreadFactory*,
+                          org/hsqldb/store/BaseHashMap*,
+                          org/hsqldb/store/HashIndex*,
+                          org/hsqldb/store/ValuePool*,
+                          org/hsqldb/Binary.*,
+                          org/hsqldb/BinaryServer*,
+                          org/hsqldb/Cache$CachedRowComparator**,
+                          org/hsqldb/Cache.*,
+                          org/hsqldb/Cached*,
+                          org/hsqldb/Compiled*,
+                          org/hsqldb/Database.*,
+                          org/hsqldb/DatabaseInformation.*,
+                          org/hsqldb/DatabaseManager*,
+                          org/hsqldb/DatabaseObjectNames*,
+                          org/hsqldb/DatabaseRow*,
+                          org/hsqldb/HSQLClientConnection*,
+                          org/hsqldb/HsqlClient*,
+                          org/hsqldb/HsqlDatabaseProperties*,
+                          org/hsqldb/HsqlDateTime*,
+                          org/hsqldb/HsqlException*,
+                          org/hsqldb/HsqlNameManager*,
+                          org/hsqldb/HsqlProperties*,
+                          org/hsqldb/HsqlSocketFactory*,
+                          org/hsqldb/HTTPClientConnection*,
+                          org/hsqldb/jdbc*,
+                          org/hsqldb/Library*,
+                          org/hsqldb/Record*,
+                          org/hsqldb/Result$*,
+                          org/hsqldb/Result.*,
+                          org/hsqldb/Row*,
+                          org/hsqldb/Session*,
+                          org/hsqldb/Table.*,
+                          org/hsqldb/TableWorks*,
+                          org/hsqldb/TextTable*,
+                          org/hsqldb/Tokenizer*,
+                          org/hsqldb/Trace*,
+                          org/hsqldb/User*,
+                          org/hsqldb/View*'/>
+        </jar>
     </target>
 
     <target name="javadoc" depends="preparedoc">
