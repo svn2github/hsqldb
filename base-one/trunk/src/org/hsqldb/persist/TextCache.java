@@ -392,10 +392,11 @@ public class TextCache extends DataFileCache {
     // sqlbob -- Allow line breaks in quoted fields.
     protected boolean readObject(int pos) throws IOException {
 
-        ByteArray buffer    = new ByteArray(80);
-        boolean   blank     = true;
-        boolean   complete  = false;
-        int       termCount = 0;
+        ByteArray    buffer    = new ByteArray(80);
+        boolean      blank     = true;
+        boolean      complete  = false;
+        int          termCount = 0;
+        RowInputText textIn    = (RowInputText) rowIn;
 
         try {
             int c;
@@ -448,20 +449,17 @@ public class TextCache extends DataFileCache {
                         }
 
                         //-- Ignore blanks
-                        if (!blank) {
-                            complete = true;
-
-                            break;
-                        } else {
+                        if (blank) {
                             pos += buffer.length() + termCount;
 
                             buffer.setLength(0);
-
-                            blank = true;
-
-                            ((RowInputText) rowIn).skippedLine();
+                            textIn.skippedLine();
 
                             continue;
+                        } else {
+                            complete = true;
+
+                            break;
                         }
                     }
                 } else if (termCount == 1) {

@@ -49,7 +49,7 @@ public class RowInputTextQuoted extends RowInputText {
     private static final int NORMAL_FIELD   = 0;
     private static final int NEED_END_QUOTE = 1;
     private static final int FOUND_QUOTE    = 2;
-    char[]                   qtext;
+    private char[]           qtext;
 
     public RowInputTextQuoted(String fieldSep, String varSep,
                               String longvarSep, boolean allQuoted) {
@@ -60,7 +60,7 @@ public class RowInputTextQuoted extends RowInputText {
 
         super.setSource(text, pos);
 
-        qtext = this.text.toCharArray();
+        qtext = text.toCharArray();
     }
 
     protected String getField(String sep, int sepLen,

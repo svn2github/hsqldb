@@ -96,6 +96,7 @@ import org.hsqldb.resources.BundleHandler;
 // boucherb@users 20030510-14 - 1.7.2 - service control, JavaBean API
 // fredt@users 20030916 - 1.7.2 - review, simplification and multiple DB's
 // fredt@users 20040320 - 1.7.2 - review and correction
+// fredt@users 20050225 - 1.8.0 - minor corrections
 
 /**
  * The HSQLDB HSQL protocol network database server. <p>
@@ -1251,6 +1252,8 @@ public class Server implements HsqlSocketRequestHandler {
             return previousState;
         }
 
+        setState(ServerConstants.SERVER_STATE_OPENING);
+
         serverThread = new ServerThread("HSQLDB Server ");
 
         serverThread.start();
@@ -1970,7 +1973,6 @@ public class Server implements HsqlSocketRequestHandler {
 
         sw = new StopWatch();
 
-        setState(ServerConstants.SERVER_STATE_OPENING);
         setServerError(null);
 
         try {

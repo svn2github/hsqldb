@@ -6,6 +6,38 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.02.25 towards 1.8.0.RC9
+
+Fixed unreported bug in revovery when first column contains null.
+Fixed unreported issue with possible PK and FK name duplication
+Fixed reported bug in recovery when there is no primary key.
+Fixed reported issue with deleting self referencing row (with foreign key).
+Fixed reported issue with illegal user names
+Fixed jdk 1.3 compilation issues
+Applied submitted patche to Server
+
+The database property sql.enforce_strict_size=true has now a wider effect
+Previously CHAR /VARCHAR lengths could be checked and padding performed only when
+inserting / updating rows. Added support for CHAR(n), varchar(n), NUMERIC(p,s) 
+and DECIMAL(p,s) including SQL standard cast and convert semantics.  
+Explicit CAST(c AS VARCHAR(2)) will always truncate the string. Explicit 
+CAST(n AS NUMERIC(p,s)) will always perform the conversion or throw if n is out of bounds. 
+All other implicit and explicit conversions to CHAR(n) and VARCHAR(n) are subject to 
+SQL standard rules.
+ 
+
+Bob has improved support for text tables further, to save and restore the first line
+header of a CSV file when ignore_first is specified.
+
+When embedded in OOo, several defaults and properties are set automatically:
+
+CREATE TABLE ... defaults to CREATE CACHED TABLE ...
+hsqldb.cache_scale=13
+hsqldb.cache_size_scale=8
+hsqldb.enforce_strict_size=true
+SET WRITE DELAY 2
+
+
 2005.02.11 1.8.0.RC8
 
 Fixed minor bugs

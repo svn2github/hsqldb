@@ -73,6 +73,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
 
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan - reordering for speed
 // fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
 // fredt@users 20020215 - patch 1.7.0 by fredt - SQL standard quoted identifiers
 // fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
@@ -100,6 +101,7 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 200403xx - patch 1.7.2 - added support for prepared SELECT INTO
 // boucherb@users 200403xx - doc 1.7.2 - some
 // thomasm@users 20041001 - patch 1.7.3 - BOOLEAN undefined handling
+// fredt@users 20050220 - patch 1.8.0 - CAST with precision / scale
 /* todo: fredt - implement remaining numeric value functions (SQL92 6.6)
  *
  * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
@@ -1482,48 +1484,7 @@ class Parser {
         switch (iToken) {
 
             case Expression.COLUMN : {
-                String name = sToken;
-
-                r = new Expression(sTable, sToken);
-
-                read();
-
-                if (iToken == Expression.OPEN) {
-                    String   javaName = database.getJavaName(name);
-                    Function f        = new Function(name, javaName, false);
-
-                    session.check(javaName, UserManager.ALL);
-
-                    int len = f.getArgCount();
-                    int i   = 0;
-
-                    read();
-
-                    if (iToken != Expression.CLOSE) {
-                        while (true) {
-                            f.setArgument(i++, readOr());
-
-                            if (iToken != Expression.COMMA) {
-                                break;
-                            }
-
-                            read();
-                        }
-                    }
-
-                    readThis(Expression.CLOSE);
-
-                    // TODO: Maybe allow AS <alias> here
-                    r = new Expression(f);
-                } else {
-                    String javaName = (String) simpleFunctions.get(name);
-
-                    if (javaName != null) {
-                        Function f = new Function(name, javaName, true);
-
-                        r = new Expression(f);
-                    }
-                }
+                r = readColumnExpression();
 
                 break;
             }
@@ -1595,385 +1556,240 @@ class Parser {
 
                 break;
             }
-            case Expression.CONCAT : {
-                int type = iToken;
+            case Expression.CONCAT :
+                return readConcatExpression();
 
-                read();
-                readThis(Expression.OPEN);
+            case Expression.CASEWHEN :
+                return readCaseWhenExpression();
 
-                r = readOr();
+            case Expression.CASE :
+                return readCaseExpression();
 
-                readThis(Expression.COMMA);
+            case Expression.NULLIF :
+                return readNullIfExpression();
 
-                r = new Expression(type, r, readOr());
-
-                readThis(Expression.CLOSE);
-
-                break;
-            }
-            case Expression.CASEWHEN : {
-                int type = iToken;
-
-                read();
-                readThis(Expression.OPEN);
-
-                r = readOr();
-
-                readThis(Expression.COMMA);
-
-                Expression thenelse = readOr();
-
-                readThis(Expression.COMMA);
-
-                // thenelse part is never evaluated; only init
-                thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
-                                          readOr());
-                r = new Expression(type, r, thenelse);
-
-                readThis(Expression.CLOSE);
-
-                break;
-            }
-            case Expression.CASE : {
-                int        type      = Expression.CASEWHEN;
-                Expression predicand = null;
-
-                read();
-
-                if (iToken != Expression.WHEN) {
-                    predicand = readOr();
-                }
-
-                Expression leaf = null;
-
-                while (true) {
-                    Expression casewhen = parseCaseWhen(predicand);
-
-                    if (r == null) {
-                        r = casewhen;
-                    } else {
-                        leaf.setRightExpression(casewhen);
-                    }
-
-                    leaf = casewhen.getRightExpression();
-
-                    if (iToken != Expression.WHEN) {
-                        break;
-                    }
-                }
-
-                if (iToken == Expression.ELSE) {
-                    readThis(Expression.ELSE);
-
-                    Expression elsexpr = readOr();
-
-                    leaf.setRightExpression(elsexpr);
-                }
-
-                readThis(Expression.ENDWHEN);
-
-                break;
-            }
-            case Expression.NULLIF : {
-
-                // turn into a CASEWHEN
-                read();
-                readThis(Expression.OPEN);
-
-                r = readOr();
-
-                readThis(Expression.COMMA);
-
-                Expression thenelse =
-                    new Expression(Expression.ALTERNATIVE,
-                                   new Expression(Types.NULL, null), r);
-
-                r = new Expression(Expression.EQUAL, r, readOr());
-                r = new Expression(Expression.CASEWHEN, r, thenelse);
-
-                readThis(Expression.CLOSE);
-
-                break;
-            }
             case Expression.COALESCE :
-            case Expression.IFNULL : {
+            case Expression.IFNULL :
+                return readCoalesceExpression();
 
-                // turn into a CASEWHEN
-                read();
-                readThis(Expression.OPEN);
+            case Expression.SEQUENCE :
+                return readSequenceExpression();
 
-                Expression leaf = null;
+            case Expression.CAST :
+            case Expression.CONVERT :
+                return readCastExpression();
 
+            case Expression.EXTRACT :
+                return readExtractExpression();
+
+            case Expression.TRIM :
+                return readTrimExpression();
+
+            case Expression.POSITION :
+                return readPositionExpression();
+
+            case Expression.SUBSTRING :
+                return readSubstringExpression();
+
+            default :
+                if (Expression.isAggregate(iToken)) {
+                    return readAggregate();
+                } else {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                }
+        }
+
+        return r;
+    }
+
+    /**
+     * reads a CASE .. WHEN expression
+     */
+    Expression readCaseExpression() throws HsqlException {
+
+        int        type      = Expression.CASEWHEN;
+        Expression r         = null;
+        Expression predicand = null;
+
+        read();
+
+        if (iToken != Expression.WHEN) {
+            predicand = readOr();
+        }
+
+        Expression leaf = null;
+
+        while (true) {
+            Expression casewhen = parseCaseWhen(predicand);
+
+            if (r == null) {
+                r = casewhen;
+            } else {
+                leaf.setRightExpression(casewhen);
+            }
+
+            leaf = casewhen.getRightExpression();
+
+            if (iToken != Expression.WHEN) {
+                break;
+            }
+        }
+
+        if (iToken == Expression.ELSE) {
+            readThis(Expression.ELSE);
+
+            Expression elsexpr = readOr();
+
+            leaf.setRightExpression(elsexpr);
+        }
+
+        readThis(Expression.ENDWHEN);
+
+        return r;
+    }
+
+    /**
+     * Reads part of a CASE .. WHEN  expression
+     */
+    private Expression parseCaseWhen(Expression r) throws HsqlException {
+
+        readThis(Expression.WHEN);
+
+        Expression condition;
+
+        if (r == null) {
+            condition = readOr();
+        } else {
+            condition = new Expression(Expression.EQUAL, r, readOr());
+        }
+
+        readThis(Expression.THEN);
+
+        Expression current = readOr();
+        Expression alternatives = new Expression(Expression.ALTERNATIVE,
+            current, new Expression(Types.NULL, null));
+        Expression casewhen = new Expression(Expression.CASEWHEN, condition,
+                                             alternatives);
+
+        return casewhen;
+    }
+
+    /**
+     * reads a CASEWHEN expression
+     */
+    private Expression readCaseWhenExpression() throws HsqlException {
+
+        int        type = iToken;
+        Expression r    = null;
+
+        read();
+        readThis(Expression.OPEN);
+
+        r = readOr();
+
+        readThis(Expression.COMMA);
+
+        Expression thenelse = readOr();
+
+        readThis(Expression.COMMA);
+
+        // thenelse part is never evaluated; only init
+        thenelse = new Expression(Expression.ALTERNATIVE, thenelse, readOr());
+        r        = new Expression(type, r, thenelse);
+
+        readThis(Expression.CLOSE);
+
+        return r;
+    }
+
+    /**
+     * Reads a CAST or CONVERT expression
+     */
+    private Expression readCastExpression() throws HsqlException {
+
+        read();
+        readThis(Expression.OPEN);
+
+        Expression r = readOr();
+
+        if (iToken == Expression.CONVERT) {
+            readThis(Expression.COMMA);
+        } else {
+            readThis(Expression.AS);
+        }
+
+        int t = Types.getTypeNr(sToken);
+        int p = 0;
+        int s = 0;
+
+        if (Types.acceptsPrecisionCreateParam(t)
+                && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+            p = tokenizer.getInt();
+
+            if (Types.acceptsScaleCreateParam(t)
+                    && tokenizer.isGetThis(Token.T_COMMA)) {
+                s = tokenizer.getInt();
+            }
+
+            tokenizer.getThis(Token.T_CLOSEBRACKET);
+        }
+
+        if (r.isParam()) {
+            r.setDataType(t);
+        }
+
+        r = new Expression(Expression.CONVERT, r, t, p, s);
+
+        read();
+        readThis(Expression.CLOSE);
+
+        return r;
+    }
+
+    /**
+     * reads a Column or Function expression
+     */
+    private Expression readColumnExpression() throws HsqlException {
+
+        String     name = sToken;
+        Expression r    = new Expression(sTable, name);
+
+        read();
+
+        if (iToken == Expression.OPEN) {
+            String   javaName = database.getJavaName(name);
+            Function f        = new Function(name, javaName, false);
+
+            session.check(javaName, UserManager.ALL);
+
+            int len = f.getArgCount();
+            int i   = 0;
+
+            read();
+
+            if (iToken != Expression.CLOSE) {
                 while (true) {
-                    Expression current = readOr();
-                    Expression condition = new Expression(Expression.IS_NULL,
-                                                          current, null);
-                    Expression alternatives =
-                        new Expression(Expression.ALTERNATIVE,
-                                       new Expression(Types.NULL, null),
-                                       current);
-                    Expression casewhen = new Expression(Expression.CASEWHEN,
-                                                         condition,
-                                                         alternatives);
+                    f.setArgument(i++, readOr());
 
-                    if (r == null) {
-                        r = casewhen;
-                    } else {
-                        leaf.setLeftExpression(casewhen);
-                    }
-
-                    leaf = alternatives;
-
-                    if (iToken == Expression.CLOSE) {
-                        readThis(Expression.CLOSE);
-
+                    if (iToken != Expression.COMMA) {
                         break;
                     }
 
-                    readThis(Expression.COMMA);
-                }
-
-                break;
-            }
-            case Expression.SEQUENCE : {
-                tokenizer.getThis(Token.T_VALUE);
-                tokenizer.getThis(Token.T_FOR);
-
-                String name = tokenizer.getIdentifier();
-
-                tokenizer.getString();
-
-                NumberSequence sequence =
-                    (NumberSequence) database.sequenceManager.getSequence(
-                        name);
-
-                Trace.check(sequence != null, Trace.SEQUENCE_NOT_FOUND);
-
-                r = new Expression(sequence);
-
-                break;
-            }
-            case Expression.CONVERT : {
-                int type = iToken;
-
-                read();
-                readThis(Expression.OPEN);
-
-                r = readOr();
-
-                readThis(Expression.COMMA);
-
-                int t = Types.getTypeNr(sToken);
-                int p = 0;
-                int s = 0;
-
-                if (Types.acceptsPrecisionCreateParam(t)
-                        && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-                    p = tokenizer.getInt();
-
-                    if (Types.acceptsScaleCreateParam(t)
-                            && tokenizer.isGetThis(Token.T_COMMA)) {
-                        s = tokenizer.getInt();
-                    }
-
-                    tokenizer.getThis(Token.T_CLOSEBRACKET);
-                }
-
-                if (r.isParam()) {
-                    r.setDataType(t);
-                }
-
-                r = new Expression(Expression.CONVERT, r, t, p, s);
-
-                read();
-                readThis(Expression.CLOSE);
-
-                break;
-            }
-            case Expression.CAST : {
-                read();
-                readThis(Expression.OPEN);
-
-                r = readOr();
-
-                readThis(Expression.AS);
-
-                int t = Types.getTypeNr(sToken);
-
-                // For now, parse but ignore precision and scale
-                // TODO: definitely validate values (e.g. check non-neg) and
-                //       maybe even enforce in Expression.getValue(), incl.
-                //       trim, pad, throw on overflow, etc.
-                int p = 0;
-                int s = 0;
-
-                if (Types.acceptsPrecisionCreateParam(t)
-                        && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-                    p = tokenizer.getInt();
-
-                    if (Types.acceptsScaleCreateParam(t)
-                            && tokenizer.isGetThis(Token.T_COMMA)) {
-                        s = tokenizer.getInt();
-                    }
-
-                    tokenizer.getThis(Token.T_CLOSEBRACKET);
-                }
-
-                if (r.isParam()) {
-                    r.setDataType(t);
-                }
-
-                r = new Expression(Expression.CONVERT, r, t, p, s);
-
-                read();
-                readThis(Expression.CLOSE);
-
-                break;
-            }
-            case Expression.EXTRACT : {
-                read();
-                readThis(Expression.OPEN);
-
-                String name = sToken;
-
-                // must be an accepted identifier
-                if (!Expression.SQL_EXTRACT_FIELD_NAMES.contains(name)) {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-
-                readToken();
-                readThis(Expression.FROM);
-
-                // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
-                Function f = new Function(name, database.getJavaName(name),
-                                          false);
-
-                f.setArgument(0, readOr());
-                readThis(Expression.CLOSE);
-
-                r = new Expression(f);
-
-                break;
-            }
-            case Expression.TRIM : {
-                read();
-                readThis(Expression.OPEN);
-
-                String type = sToken;
-
-                if (Expression.SQL_TRIM_SPECIFICATION.contains(type)) {
                     read();
-                } else {
-                    type = Token.T_BOTH;
                 }
+            }
 
-                String trimstr;
+            readThis(Expression.CLOSE);
 
-                if (sToken.length() == 1) {
-                    trimstr = sToken;
+            // TODO: Maybe allow AS <alias> here
+            r = new Expression(f);
+        } else {
+            String javaName = (String) simpleFunctions.get(name);
 
-                    read();
-                } else {
-                    trimstr = " ";
-                }
-
-                readThis(Expression.FROM);
-
-                Expression trim = new Expression(Types.CHAR, trimstr);
-                Expression leading;
-                Expression trailing;
-
-                if (type.equals(Token.T_LEADING)) {
-                    leading  = new Expression(true);
-                    trailing = new Expression(false);
-                } else if (type.equals(Token.T_TRAILING)) {
-                    leading  = new Expression(false);
-                    trailing = new Expression(true);
-                } else {
-                    leading = trailing = new Expression(true);
-                }
-
-                // name argument is OK for now for CHECK constraints
-                Function f = new Function(Token.T_TRIM,
-                                          "org.hsqldb.Library.trim", false);
-
-                f.setArgument(0, readOr());
-                f.setArgument(1, trim);
-                f.setArgument(2, leading);
-                f.setArgument(3, trailing);
-                readThis(Expression.CLOSE);
+            if (javaName != null) {
+                Function f = new Function(name, javaName, true);
 
                 r = new Expression(f);
-
-                break;
-            }
-            case Expression.POSITION : {
-                read();
-                readThis(Expression.OPEN);
-
-                Function f = new Function(Token.T_POSITION,
-                                          "org.hsqldb.Library.position",
-                                          false);
-
-                f.setArgument(0, readTerm());
-                readThis(Expression.IN);
-                f.setArgument(1, readOr());
-                readThis(Expression.CLOSE);
-
-                r = new Expression(f);
-
-                break;
-            }
-            case Expression.SUBSTRING : {
-                boolean commas = false;
-
-                read();
-                readThis(Expression.OPEN);
-
-                // OK for now for CHECK search conditions
-                Function f = new Function(Token.T_SUBSTRING,
-                                          "org.hsqldb.Library.substring",
-                                          false);
-
-                f.setArgument(0, readTerm());
-
-                if (iToken == Expression.FROM) {
-                    readThis(Expression.FROM);
-                } else {
-                    readThis(Expression.COMMA);
-
-                    commas = true;
-                }
-
-                f.setArgument(1, readOr());
-
-                Expression count = null;
-
-                if (!commas && iToken == Expression.FOR) {
-                    readThis(Expression.FOR);
-
-                    count = readTerm();
-                } else if (commas && iToken == Expression.COMMA) {
-                    readThis(Expression.COMMA);
-
-                    count = readTerm();
-                }
-
-                f.setArgument(2, count);
-                readThis(Expression.CLOSE);
-
-                r = new Expression(f);
-
-                break;
-            }
-            default : {
-                if (Expression.isAggregate(iToken)) {
-                    r = readAggregate();
-                } else {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-
-                break;
             }
         }
 
@@ -1981,7 +1797,257 @@ class Parser {
     }
 
     /**
-     *  Parses and returns a DEFAULT clause expression.
+     * reads a CONCAT expression
+     */
+    private Expression readConcatExpression() throws HsqlException {
+
+        int type = iToken;
+
+        read();
+        readThis(Expression.OPEN);
+
+        Expression r = readOr();
+
+        readThis(Expression.COMMA);
+
+        r = new Expression(type, r, readOr());
+
+        readThis(Expression.CLOSE);
+
+        return r;
+    }
+
+    /**
+     * Reads a NULLIF expression
+     */
+    private Expression readNullIfExpression() throws HsqlException {
+
+        // turn into a CASEWHEN
+        read();
+        readThis(Expression.OPEN);
+
+        Expression r = readOr();
+
+        readThis(Expression.COMMA);
+
+        Expression thenelse = new Expression(Expression.ALTERNATIVE,
+                                             new Expression(Types.NULL, null),
+                                             r);
+
+        r = new Expression(Expression.EQUAL, r, readOr());
+        r = new Expression(Expression.CASEWHEN, r, thenelse);
+
+        readThis(Expression.CLOSE);
+
+        return r;
+    }
+
+    /**
+     * Reads a COALESE or IFNULL expression
+     */
+    private Expression readCoalesceExpression() throws HsqlException {
+
+        Expression r = null;
+
+        // turn into a CASEWHEN
+        read();
+        readThis(Expression.OPEN);
+
+        Expression leaf = null;
+
+        while (true) {
+            Expression current = readOr();
+            Expression condition = new Expression(Expression.IS_NULL,
+                                                  current, null);
+            Expression alternatives = new Expression(Expression.ALTERNATIVE,
+                new Expression(Types.NULL, null), current);
+            Expression casewhen = new Expression(Expression.CASEWHEN,
+                                                 condition, alternatives);
+
+            if (r == null) {
+                r = casewhen;
+            } else {
+                leaf.setLeftExpression(casewhen);
+            }
+
+            leaf = alternatives;
+
+            if (iToken == Expression.CLOSE) {
+                readThis(Expression.CLOSE);
+
+                break;
+            }
+
+            readThis(Expression.COMMA);
+        }
+
+        return r;
+    }
+
+    /**
+     * Reads an EXTRACT expression
+     */
+    private Expression readExtractExpression() throws HsqlException {
+
+        read();
+        readThis(Expression.OPEN);
+
+        String name = sToken;
+
+        // must be an accepted identifier
+        if (!Expression.SQL_EXTRACT_FIELD_NAMES.contains(name)) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+        }
+
+        readToken();
+        readThis(Expression.FROM);
+
+        // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
+        Function f = new Function(name, database.getJavaName(name), false);
+
+        f.setArgument(0, readOr());
+        readThis(Expression.CLOSE);
+
+        return new Expression(f);
+    }
+
+    /**
+     * Reads a POSITION expression
+     */
+    private Expression readPositionExpression() throws HsqlException {
+
+        read();
+        readThis(Expression.OPEN);
+
+        Function f = new Function(Token.T_POSITION,
+                                  "org.hsqldb.Library.position", false);
+
+        f.setArgument(0, readTerm());
+        readThis(Expression.IN);
+        f.setArgument(1, readOr());
+        readThis(Expression.CLOSE);
+
+        return new Expression(f);
+    }
+
+    /**
+     * Reads a SUBSTRING expression
+     */
+    private Expression readSubstringExpression() throws HsqlException {
+
+        boolean commas = false;
+
+        read();
+        readThis(Expression.OPEN);
+
+        // OK for now for CHECK search conditions
+        Function f = new Function(Token.T_SUBSTRING,
+                                  "org.hsqldb.Library.substring", false);
+
+        f.setArgument(0, readTerm());
+
+        if (iToken == Expression.FROM) {
+            readThis(Expression.FROM);
+        } else {
+            readThis(Expression.COMMA);
+
+            commas = true;
+        }
+
+        f.setArgument(1, readOr());
+
+        Expression count = null;
+
+        if (!commas && iToken == Expression.FOR) {
+            readThis(Expression.FOR);
+
+            count = readTerm();
+        } else if (commas && iToken == Expression.COMMA) {
+            readThis(Expression.COMMA);
+
+            count = readTerm();
+        }
+
+        f.setArgument(2, count);
+        readThis(Expression.CLOSE);
+
+        return new Expression(f);
+    }
+
+    private Expression readSequenceExpression() throws HsqlException {
+
+        tokenizer.getThis(Token.T_VALUE);
+        tokenizer.getThis(Token.T_FOR);
+
+        String name = tokenizer.getIdentifier();
+
+        tokenizer.getString();
+
+        NumberSequence sequence =
+            (NumberSequence) database.sequenceManager.getSequence(name);
+
+        Trace.check(sequence != null, Trace.SEQUENCE_NOT_FOUND);
+
+        return new Expression(sequence);
+    }
+
+    /**
+     * Reads a TRIM expression
+     */
+    private Expression readTrimExpression() throws HsqlException {
+
+        read();
+        readThis(Expression.OPEN);
+
+        String type = sToken;
+
+        if (Expression.SQL_TRIM_SPECIFICATION.contains(type)) {
+            read();
+        } else {
+            type = Token.T_BOTH;
+        }
+
+        String trimstr;
+
+        if (sToken.length() == 1) {
+            trimstr = sToken;
+
+            read();
+        } else {
+            trimstr = " ";
+        }
+
+        readThis(Expression.FROM);
+
+        Expression trim = new Expression(Types.CHAR, trimstr);
+        Expression leading;
+        Expression trailing;
+
+        if (type.equals(Token.T_LEADING)) {
+            leading  = new Expression(true);
+            trailing = new Expression(false);
+        } else if (type.equals(Token.T_TRAILING)) {
+            leading  = new Expression(false);
+            trailing = new Expression(true);
+        } else {
+            leading = trailing = new Expression(true);
+        }
+
+        // name argument is OK for now for CHECK constraints
+        Function f = new Function(Token.T_TRIM, "org.hsqldb.Library.trim",
+                                  false);
+
+        f.setArgument(0, readOr());
+        f.setArgument(1, trim);
+        f.setArgument(2, leading);
+        f.setArgument(3, trailing);
+        readThis(Expression.CLOSE);
+
+        return new Expression(f);
+    }
+
+    /**
+     *  Reads a DEFAULT clause expression.
      */
     Expression readDefaultClause(int dataType) throws HsqlException {
 
@@ -2037,37 +2103,11 @@ class Parser {
         throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
     }
 
-    Expression parseCaseWhen(Expression r) throws HsqlException {
-
-        readThis(Expression.WHEN);
-
-        Expression condition;
-
-        if (r == null) {
-            condition = readOr();
-        } else {
-            condition = new Expression(Expression.EQUAL, r, readOr());
-        }
-
-        readThis(Expression.THEN);
-
-        Expression current = readOr();
-        Expression alternatives = new Expression(Expression.ALTERNATIVE,
-            current, new Expression(Types.NULL, null));
-        Expression casewhen = new Expression(Expression.CASEWHEN, condition,
-                                             alternatives);
-
-        return casewhen;
-    }
-
     /**
      *  Method declaration
      *
      * @throws  HsqlException
      */
-
-// fredt@users 20020130 - patch 497872 by Nitin Chauhan
-// reordering for speed
     private void read() throws HsqlException {
 
         sToken = tokenizer.getString();
