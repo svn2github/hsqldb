@@ -72,6 +72,7 @@ import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.ArrayCounter;
 
 // fredt@users 20011220 - patch 437174 by hjbusch@users - cache update
 // most changes and comments by HJB are kept unchanged
@@ -132,7 +133,8 @@ abstract class Cache {
     final static int CACHE_TYPE_REVERSE_TEXT = 2;
 
     // cached row access counter
-    static int iCurrentAccess = 0;
+    int currentAccessCount;
+    int firstAccessCount;
 
     // pre openning fields
     protected Database dDatabase;
@@ -160,13 +162,13 @@ abstract class Cache {
     int                         cachedRowPadding = 8;
     int cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
     int                         cacheLength;
-    int                         writerLength;
     int                         maxCacheSize;     // number of Rows
     long                        maxCacheBytes;    // number of bytes
     int                         multiplierMask;
     private CachedRowComparator rowComparator;
     private CachedRow[]         rowTable;
     private CachedRow[]         rData;
+    private int[]               accessCount;
 
     // file format fields
     static final int FREE_POS_POS     = 16;       // where iFreePos is saved
@@ -194,6 +196,9 @@ abstract class Cache {
     // for testing
     StopWatch saveAllTimer = new StopWatch(false);
     StopWatch makeRowTimer = new StopWatch(false);
+    StopWatch sortTimer    = new StopWatch(false);
+    int       makeRowCount = 0;
+    int       saveRowCount = 0;
 
     static Cache newCache(String name, Database db,
                           int type) throws HsqlException {
@@ -249,14 +254,12 @@ abstract class Cache {
         cacheReadonly = dDatabase.filesReadOnly;
         cacheLength   = 1 << cacheScale;
 
-        // HJB-2001-06-21: use different smaller size for the writer
-        writerLength = cacheLength - 3;
-
         // HJB-2001-06-21: let the cache be larger than the array
         maxCacheSize   = cacheLength * 3;
         maxCacheBytes  = cacheLength * cacheSizeScale;
         multiplierMask = cacheLength - 1;
         rowComparator  = new CachedRowComparator();
+        accessCount    = new int[maxCacheSize];
         rowTable       = new CachedRow[maxCacheSize];
         rData          = new CachedRow[cacheLength];
         rFirst         = null;
@@ -307,7 +310,7 @@ abstract class Cache {
 
         setStorageSize(r);
 
-        r.iLastAccess = iCurrentAccess++;
+        r.iLastAccess = currentAccessCount++;
 
         int i = setFilePos(r);
 
@@ -351,7 +354,7 @@ abstract class Cache {
         CachedRow r = getRow(pos);
 
         if (r != null) {
-            r.iLastAccess = iCurrentAccess++;
+            r.iLastAccess = currentAccessCount++;
 
             return r;
         }
@@ -386,7 +389,7 @@ abstract class Cache {
 
             rData[k]      = r;
             rFirst        = r;
-            r.iLastAccess = iCurrentAccess++;
+            r.iLastAccess = currentAccessCount++;
         }
 
         return r;
@@ -430,30 +433,42 @@ abstract class Cache {
      */
     private void cleanUp() throws HsqlException {
 
-        // put all rows in the array
-        for (int i = 0; i < iCacheSize; i++) {
-            rowTable[i] = rFirst;
-            rFirst      = rFirst.rNext;
+        // put access count in the array
+        for (int i = 0; i < maxCacheSize; i++) {
+            accessCount[i] = rFirst.iLastAccess;
+            rFirst         = rFirst.rNext;
         }
 
-        // sort by access count
-        rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
-        sort(rowTable, rowComparator, 0, iCacheSize - 1);
+        int minAccess = ArrayCounter.rank(accessCount, maxCacheSize / 8,
+                                          firstAccessCount,
+                                          currentAccessCount, 10);
 
-        // sort by file position
-        int removecount = iCacheSize / 3;
+        firstAccessCount = minAccess;
+        // put all low rows in the array
+        int removecount = 0;
+
+        for (int i = 0; i < iCacheSize; i++) {
+            if (rFirst.iLastAccess < minAccess) {
+                rowTable[removecount++] = rFirst;
+            }
+
+            rFirst = rFirst.rNext;
+        }
 
         rowComparator.setType(rowComparator.COMPARE_POSITION);
+        sortTimer.start();
         sort(rowTable, rowComparator, 0, removecount - 1);
+        sortTimer.stop();
+        saveAllTimer.start();
 
         for (int i = 0; i < removecount; i++) {
             CachedRow r = rowTable[i];
 
             try {
                 if (r.hasChanged()) {
-                    saveAllTimer.start();
                     saveRow(r);
-                    saveAllTimer.stop();
+
+                    saveRowCount++;
                 }
 
                 if (!r.isRoot()) {
@@ -466,6 +481,68 @@ abstract class Cache {
 
             rowTable[i] = null;
         }
+
+        saveAllTimer.stop();
+
+        for (int i = 0; i < removecount; i++) {
+            rowTable[i] = null;
+        }
+
+        resetAccessCount();
+    }
+
+    /**
+     * Reduces the number of rows held in this Cache object. <p>
+     *
+     * Cleanup is done by checking the accessCount of the Rows and removing
+     * the third of the rows that have been accessed less recently.
+     *
+     */
+    private void cleanUpOld() throws HsqlException {
+
+        // put all rows in the array
+        for (int i = 0; i < iCacheSize; i++) {
+            rowTable[i] = rFirst;
+            rFirst      = rFirst.rNext;
+        }
+
+        // sort by access count
+        rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
+        sortTimer.start();
+        sort(rowTable, rowComparator, 0, iCacheSize - 1);
+        sortTimer.stop();
+
+        // sort by file position
+        int removecount = iCacheSize / 4;
+
+        rowComparator.setType(rowComparator.COMPARE_POSITION);
+        sortTimer.start();
+        sort(rowTable, rowComparator, 0, removecount - 1);
+        sortTimer.stop();
+        saveAllTimer.start();
+
+        for (int i = 0; i < removecount; i++) {
+            CachedRow r = rowTable[i];
+
+            try {
+                if (r.hasChanged()) {
+                    saveRow(r);
+
+                    saveRowCount++;
+                }
+
+                if (!r.isRoot()) {
+                    remove(r);
+                }
+            } catch (Exception e) {
+                throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_cleanUp,
+                                  new Object[]{ e });
+            }
+
+            rowTable[i] = null;
+        }
+
+        saveAllTimer.stop();
 
         for (int i = removecount; i < rowTable.length; i++) {
             rowTable[i] = null;
@@ -586,11 +663,12 @@ abstract class Cache {
      */
     private void resetAccessCount() throws HsqlException {
 
-        if (iCurrentAccess < Integer.MAX_VALUE / 2) {
+        if (currentAccessCount < Integer.MAX_VALUE / 2) {
             return;
         }
 
-        iCurrentAccess >>= 8;
+        currentAccessCount >>= 8;
+        firstAccessCount >>= 8;
 
         int i = iCacheSize;
 
@@ -648,6 +726,10 @@ abstract class Cache {
         System.out.println(
             makeRowTimer.elapsedTimeToMessage(
                 "Cache.makeRow total row load time"));
+        System.out.println("Cache.makeRow total row load count = "
+                           + makeRowCount);
+        System.out.println(
+            sortTimer.elapsedTimeToMessage("Cache.sort total time"));
     }
 
     abstract protected void saveRow(CachedRow r)

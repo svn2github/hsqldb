@@ -144,6 +144,7 @@ example:
          <exclude name="org/hsqldb/jdbcParameterMetaData.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/NIOLockFile.java"/>
+         <exclude name="org/hsqldb/NIOScaledRAFile.java"/>
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
          <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
@@ -170,6 +171,7 @@ example:
       <include name="org/hsqldb/jdbcDataSource*.java"/>
       <include name="org/hsqldb/jdbcParameterMetaData.java"/>
       <include name="org/hsqldb/NIOLockFile.java"/>
+      <include name="org/hsqldb/NIOScaledRAFile.java"/>
       </javac>
    </target>
 

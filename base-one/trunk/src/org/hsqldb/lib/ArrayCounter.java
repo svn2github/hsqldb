@@ -91,7 +91,7 @@ public class ArrayCounter {
      * the maximum age of a given number of people. With the example array
      * given in countSegments, rank(array, 6000, 18, 65) will return an age
      * value between 18-64 (inclusive) and the count of all people aged between
-     * 18 and and the returned value(exclusive) will be less than or equal
+     * 18 and the returned value(exclusive) will be less than or equal
      * 6000.
      *
      */

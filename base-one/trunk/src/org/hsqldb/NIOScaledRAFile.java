@@ -53,25 +53,30 @@ class NIOScaledRAFile extends ScaledRAFile {
     long             fileLength;
     int              INITIAL_FILE_LENGTH = 0x100000;
 
-    NIOScaledRAFile(String name, boolean mode,
+    public NIOScaledRAFile(String name, boolean mode,
                     int multiplier)
                     throws FileNotFoundException, IOException {
 
         super(name, mode, multiplier);
 
         channel = file.getChannel();
-        buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0,
-                             INITIAL_FILE_LENGTH);
+
         fileLength = INITIAL_FILE_LENGTH;
+
+        enlargeBuffer( file.length());
     }
 
     private void enlargeBuffer(long newPos) throws IOException {
 
         System.out.println("NIO next enlargeBuffer()");
 
-        int position = buffer.position();
+        int position = 0;
 
-        buffer.force();
+        if ( buffer != null ) {
+            position = buffer.position();
+
+            buffer.force();
+        }
 
         while (fileLength < newPos) {
             fileLength *= 2;

@@ -457,7 +457,8 @@ extends org.hsqldb.DatabaseInformationMain {
             row[ifree_pos]      = ValuePool.getInt(cache.iFreePos);
             row[imax_cache_sz]  = ValuePool.getInt(cache.maxCacheSize);
             row[imult_mask]     = Integer.toHexString(cache.multiplierMask);
-            row[iwriter_length] = ValuePool.getInt(cache.writerLength);
+// now obsolete
+            row[iwriter_length] = ValuePool.getInt(0);
 
             t.insert(row, session);
         }

@@ -62,7 +62,7 @@ class DataFileDefrag {
         HsqlArrayList tTable    = db.getTables();
 
 // erik        to specify scale;
-        ScaledRAFile dest = new ScaledRAFile(filename + ".new", false, 1);
+        ScaledRAFile dest = ScaledRAFile.newScaledRAFile(filename + ".new", false, 1, ScaledRAFile.DATA_FILE_NIO );
 
 // erik        desl.seek(Cache.INITIAL_FREE_POS / cacheFileScale);
         dest.seek(Cache.INITIAL_FREE_POS);
