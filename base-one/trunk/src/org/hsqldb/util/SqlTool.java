@@ -42,7 +42,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.34 2004/06/08 05:08:05 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.35 2004/06/08 13:59:24 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.34 $
+ * @version $Revision: 1.35 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -65,8 +65,8 @@ public class SqlTool {
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.34 $".substring("$Revision: ".length(),
-                "$Revision: 1.34 $".length() - 2);
+        revnum = "$Revision: 1.35 $".substring("$Revision: ".length(),
+                "$Revision: 1.35 $".length() - 2);
     }
 
     /**
@@ -539,6 +539,8 @@ public class SqlTool {
             // We just need to return an appropriate error status.
         } catch (SqlToolError ste) {
             retval = 2;
+        // Should not be handling SQLExceptions here!  SqlFile should handle
+        // them.
         } catch (SQLException se) {
             retval = 1;
         } finally {

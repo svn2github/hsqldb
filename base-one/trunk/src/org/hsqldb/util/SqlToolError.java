@@ -31,6 +31,12 @@
 
 package org.hsqldb.util;
 
+/**
+ * Exceptions thrown by the SqlTool system externally to SqlFile.
+ * (As opposed to the nested Exceptions within those classes).
+ * This class is misnamed, because it is not only errors.
+ * When there is time, this file and class should be renamed.
+ */
 public class SqlToolError extends Exception {
 
     public SqlToolError(Exception e) {
@@ -39,5 +45,9 @@ public class SqlToolError extends Exception {
 
     public SqlToolError(String s) {
         super(s);
+    }
+
+    public SqlToolError() {
+        super();
     }
 }

@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.73 2004/06/07 21:46:54 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.74 2004/06/07 22:46:21 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.73 $
+ * @version $Revision: 1.74 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,14 +109,14 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.73 $".substring("$Revision: ".length(),
-                "$Revision: 1.73 $".length() - 2);
+        revnum = "$Revision: 1.74 $".substring("$Revision: ".length(),
+                "$Revision: 1.74 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
-        + "    \\q    to quit.\n"
+        + "    \\q    to Fuit.\n"
         + "    \\?    lists Special Commands.\n"
         + "    :?    lists Buffer/Editing commands.\n"
         + "    * ?   lists PL commands (including alias commands).\n\n"
@@ -168,24 +168,32 @@ public class SqlFile {
         + "    \\s                   * Show previous commands (i.e. command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
-        + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
+        + "    \\q [abort message]   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
         ;
     final private static String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
         + "    * VARNAME =                   Unset variable (note space before =)\n"
+        + "    * VARNAME ~                   Set variable value to the value of the very\n"
+        + "                                  next SQL statement executed (see details\n"
+        + "                                  at the bottom of this listing).\n"
         + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n"
-        + "    * foreach VARNAME ([val1...]) Repeat the following PL block with \n"
-        + "                                  given variable value each time.\n"
+        + "    * foreach VARNAME ([val1...]) Repeat the following PL block with the\n"
+        + "                                  variable set to each value in turn.\n"
         + "    * if (logical expr)           Execute following PL block only if expr true\n"
         + "    * while (logical expr)        Repeat following PL block while expr true\n"
-        + "    * end                         Ends a PL block\n\n"
-        + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
+        + "    * end foreach|if|while        Ends a PL block\n"
+        + "    * break [foreach|if|while|file] Exits a PL block or file early\n"
+        + "    * continue [foreach|while]    Exits a PL block iteration early\n"
+        + "Use PL variables (which you have set) like: *{VARNAME}.\n"
         + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
-        + "Use defined PL variables in logical expressions like: *VARNAME.\n"
-        + "No variable substitutions are performed if you do not run any '* ...' command\n"
-        + "(other than '* ?').\n";
+        + "Use defined PL variables in logical expressions like: *VARNAME.\n\n"
+        + "* VARNAME ~ sets the variable value according to the very next SQL statement:\n"
+        + "    Query:  The value of the first field of the first row returned\n"
+        + "    other:  Return status of the command (for updates this will be\n"
+        + "            the number of rows updated).\n"
+    ;
 
     /**
      * Interpret lines of input file as SQL Statements, Comments,
@@ -240,6 +248,8 @@ public class SqlFile {
         execute(conn, System.out, System.err, new Boolean(coeOverride));
     }
 
+    // So we can tell how to handle quit and break commands.
+    public  boolean     recursed     = false;
     private String      curCommand   = null;
     private int         curLinenum   = -1;
     private int         curHist      = -1;
@@ -378,9 +388,6 @@ public class SqlFile {
                         if (trimmedInput.charAt(0) == '\\') {
                             try {
                                 processSpecial(trimmedInput.substring(1));
-                            } catch (QuitNow qn) {
-                                gracefulExit = true;
-                                return;
                             } catch (BadSpecial bs) {
                                 errprintln("Error at '" + ((file == null)
                                         ? "stdin"
@@ -448,6 +455,36 @@ public class SqlFile {
                     if (!continueOnError) {
                         throw se;
                     }
+                } catch (BreakException be) {
+                    String msg = be.getMessage();
+                    if ((!recursed) && (msg != null && !msg.equals("file"))) {
+                        errprintln("Unsatisfied break statement"
+                                + ((msg == null) ? "" : (" (type " + msg
+                                + ')')) + '.');
+                    } else {
+                        gracefulExit = true;
+                    }
+                    if (recursed || !continueOnError) {
+                        throw be;
+                    }
+                } catch (ContinueException ce) {
+                    String msg = ce.getMessage();
+                    if (!recursed) {
+                        errprintln("Unsatisfied continue statement"
+                                + ((msg == null) ? "" : (" (type " + msg 
+                                + ')')) + '.');
+                    } else {
+                        gracefulExit = true;
+                    }
+                    if (recursed || !continueOnError) {
+                        throw ce;
+                    }
+                } catch (QuitNow qn) {
+                    throw qn;
+                } catch (SqlToolError ste) {
+                    if ((!recursed) && !continueOnError) {
+                        throw ste;
+                    }
                 }
                 stringBuffer.setLength(0);
             }
@@ -457,8 +494,21 @@ public class SqlFile {
                         "Unterminated input:  [" + stringBuffer + ']');
             }
             gracefulExit = true;
+        } catch (QuitNow qn) {
+            gracefulExit = qn.getMessage() == null;
+            if ((!recursed) && !gracefulExit) {
+                errprintln("Aborting: " + qn.getMessage());
+            }
+            if (recursed || !gracefulExit) {
+                throw qn;
+            }
+            return;
         } finally {
             closeQueryOutputStream();
+            if (fetchingVar != null) {
+                errprintln("PL variable setting incomplete:  " + fetchingVar);
+                gracefulExit = false;
+            }
             if (br != null) {
                 br.close();
             }
@@ -500,8 +550,47 @@ public class SqlFile {
 
     /**
      * Utility nested Exception class for internal use.
+     * This must extend SqlToolError because it has to percolate up from
+     * recursions of SqlTool.execute(), yet SqlTool.execute() is public
+     * and external users should not declare (or expect!) QuitNows to be
+     * thrown.
+     * SqlTool.execute() on throws a QuitNow if it is in a recursive call.
      */
-    private class QuitNow extends Exception {}
+    private class QuitNow extends SqlToolError {
+        public QuitNow(String s) {
+            super(s);
+        }
+
+        public QuitNow() {
+            super();
+        }
+    }
+
+    /**
+     * Utility nested Exception class for internal use.
+     * Very similar to QuitNow.
+     */
+    private class BreakException extends SqlToolError {
+        public BreakException() {
+            super();
+        }
+        public BreakException(String s) {
+            super(s);
+        }
+    }
+
+    /**
+     * Utility nested Exception class for internal use.
+     * Very similar to QuitNow.
+     */
+    private class ContinueException extends SqlToolError {
+        public ContinueException() {
+            super();
+        }
+        public ContinueException(String s) {
+            super(s);
+        }
+    }
 
     /**
      * Utility nested Exception class for internal use.
@@ -703,7 +792,7 @@ public class SqlFile {
      * @throws QuitNot Command execution (but not the JVM!) should stop
      */
     private void processSpecial(String inString)
-    throws BadSpecial, QuitNow, SQLException {
+    throws BadSpecial, QuitNow, SQLException, SqlToolError {
         int    index = 0;
         int    special;
         String arg1,
@@ -723,6 +812,9 @@ public class SqlFile {
         }
         switch (arg1.charAt(0)) {
             case 'q':
+                if (other != null) {
+                    throw new QuitNow(other);
+                }
                 throw new QuitNow();
             case 'H':
                 htmlMode = !htmlMode;
@@ -794,8 +886,18 @@ public class SqlFile {
                     throw new BadSpecial("You must supply an SQL file name");
                 }
                 try {
-                    (new SqlFile(new File(other), false, userVars)).
-                            execute(curConn, continueOnError);
+                    SqlFile sf = new SqlFile(new File(other), false, userVars);
+                    sf.recursed = true;
+                    sf.execute(curConn, continueOnError);
+                } catch (ContinueException ce) {
+                    throw ce;
+                } catch (BreakException be) {
+                    String beMessage = be.getMessage();
+                    if (beMessage != null && !beMessage.equals("file")) {
+                        throw be;
+                    }
+                } catch (QuitNow qe) {
+                    throw qe;
                 } catch (Exception e) {
                     throw new BadSpecial(
                             "Failed to execute SQL from file '" + other + "':  "
@@ -938,6 +1040,8 @@ public class SqlFile {
     }
 
     private boolean plMode = false;
+    //  PL variable name currently awaiting query output.
+    private String fetchingVar = null;
 
     /**
      * Process a Process Language Command.
@@ -964,6 +1068,40 @@ public class SqlFile {
         // If user runs any PL command, we turn PL mode on.
         plMode = true;
         if (userVars == null) userVars = new HashMap();
+        if (arg1.equals("end")) {
+            throw new BadSpecial("PL end statements may only occur inside of "
+                    + "a PL block");
+        }
+        if (arg1.equals("continue")) {
+            if (toker.hasMoreTokens()) {
+                String s = toker.nextToken("").trim();
+                if (s.equals("foreach") || s.equals("while"))  {
+                    throw new ContinueException(s);
+                } else {
+                    throw new BadSpecial("Bad continue statement."
+                            + "You may use no argument or one of 'foreach', "
+                            + "'while'");
+                }
+            }
+            throw new ContinueException();
+        }
+        if (arg1.equals("break")) {
+            if (toker.hasMoreTokens()) {
+                String s = toker.nextToken("").trim();
+                if (s.equals("foreach")
+                        || s.equals("if")
+                        || s.equals("while")
+                        || s.equals("file")
+                )  {
+                    throw new BreakException(s);
+                } else {
+                    throw new BadSpecial("Bad break statement."
+                            + "You may use no argument or one of 'foreach', "
+                            + "'if', 'while', 'file'");
+                }
+            }
+            throw new BreakException();
+        }
         if (arg1.equals("list")) {
             if (toker.countTokens() == 0) {
                 stdprintln(new TreeMap(userVars).toString());
@@ -991,22 +1129,37 @@ public class SqlFile {
             File tmpFile = null;
             String varVal;
             try {
-                tmpFile = plBlockFile();
+                tmpFile = plBlockFile("foreach");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
             String origval = (String) userVars.get(varName);
             try {
+                SqlFile sf;
                 for (int i = 0; i < values.length; i++) {
-                    varVal = values[i];
-                    userVars.put(varName, varVal);
-                    (new SqlFile(tmpFile, false, userVars)).
-                            execute(curConn, continueOnError);
+                    try {
+                        varVal = values[i];
+                        userVars.put(varName, varVal);
+                        sf = new SqlFile(tmpFile, false, userVars);
+                        sf.recursed = true;
+                        sf.execute(curConn, continueOnError);
+                    } catch (ContinueException ce) {
+                        String ceMessage = ce.getMessage();
+                        if (ceMessage != null && !ceMessage.equals("foreach")) {
+                            throw ce;
+                        }
+                    }
                 }
+            } catch (BreakException be) {
+                String beMessage = be.getMessage();
+                if (beMessage != null && !beMessage.equals("foreach")) {
+                    throw be;
+                }
+            } catch (QuitNow qe) {
+                throw qe;
             } catch (Exception e) {
-                throw new BadSpecial(
-                        "Failed to execute SQL from PL block.  "
+                throw new BadSpecial("Failed to execute SQL from PL block.  "
                         + e.getMessage());
             }
             if (origval == null) {
@@ -1034,18 +1187,28 @@ public class SqlFile {
                     parenExpr.length() - 1));
             File tmpFile = null;
             try {
-                tmpFile = plBlockFile();
+                tmpFile = plBlockFile("if");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
             try {
                 if (eval(values)) {
-                    (new SqlFile(tmpFile, false, userVars)).
-                        execute(curConn, continueOnError);
+                    SqlFile sf = new SqlFile(tmpFile, false, userVars);
+                    sf.recursed = true;
+                    sf.execute(curConn, continueOnError);
                 }
+            } catch (BreakException be) {
+                String beMessage = be.getMessage();
+                if (beMessage == null || !beMessage.equals("if")) {
+                    throw be;
+                }
+            } catch (ContinueException ce) {
+                throw ce;
+            } catch (QuitNow qe) {
+                throw qe;
             } catch (BadSpecial bs) {
-                throw new BadSpecial("Malformatted PL while command (3): "
+                throw new BadSpecial("Malformatted PL if command (3): "
                         + bs);
             } catch (Exception e) {
                 throw new BadSpecial(
@@ -1072,16 +1235,32 @@ public class SqlFile {
                     parenExpr.length() - 1));
             File tmpFile = null;
             try {
-                tmpFile = plBlockFile();
+                tmpFile = plBlockFile("while");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
             try {
+                SqlFile sf;
                 while (eval(values)) {
-                    (new SqlFile(tmpFile, false, userVars)).
-                            execute(curConn, continueOnError);
+                    try {
+                        sf = new SqlFile(tmpFile, false, userVars);
+                        sf.recursed = true;
+                        sf.execute(curConn, continueOnError);
+                    } catch (ContinueException ce) {
+                        String ceMessage = ce.getMessage();
+                        if (ceMessage != null && !ceMessage.equals("while")) {
+                            throw ce;
+                        }
+                    }
                 }
+            } catch (BreakException be) {
+                String beMessage = be.getMessage();
+                if (beMessage != null && !beMessage.equals("while")) {
+                    throw be;
+                }
+            } catch (QuitNow qe) {
+                throw qe;
             } catch (BadSpecial bs) {
                 throw new BadSpecial("Malformatted PL while command (3): "
                         + bs);
@@ -1097,14 +1276,31 @@ public class SqlFile {
             }
             return;
         }
-        if ((toker.countTokens() == 0) || !toker.nextToken().equals("=")) {
+        if (toker.countTokens() < 1) {
+            throw new BadSpecial("Unknown PL command (1)");
+        }
+        String operator = toker.nextToken();
+        if (operator.length() != 1) {
             throw new BadSpecial("Unknown PL command (2)");
         }
-        if (toker.countTokens() == 0) {
-            userVars.remove(arg1);
-        } else {
-            userVars.put(arg1, toker.nextToken("").trim());
+        switch (operator.charAt(0)) {
+            case '~':
+                if (toker.countTokens() > 0) {
+                    throw new BadSpecial(
+                            "PL ~ set command takes no other args");
+                }
+                userVars.remove(arg1);
+                fetchingVar = arg1;
+                return;
+            case '=':
+                if (toker.countTokens() == 0) {
+                    userVars.remove(arg1);
+                } else {
+                    userVars.put(arg1, toker.nextToken("").trim());
+                }
+                return;
         }
+        throw new BadSpecial("Unknown PL command (3)");
     }
 
     /* 
@@ -1121,8 +1317,9 @@ public class SqlFile {
      * new SqlFile.execute() with a mode whereby commands are written 
      * to a separate history but not executed.
      */
-    private File plBlockFile() throws IOException, SqlToolError {
+    private File plBlockFile(String type) throws IOException, SqlToolError {
         String s;
+        StringTokenizer toker;
 
         File tmpFile = File.createTempFile("sqltool-", ".sql");
         PrintWriter pw = new PrintWriter(
@@ -1132,10 +1329,30 @@ public class SqlFile {
                 + ". " + getClass().getName() + " PL block. */\n");
         while (true) {
             s = br.readLine();
-            if (s == null)
-                throw new SqlToolError("Unterminated PL lbock");
-            if (s.trim().equals("* end")) {
-                break;
+            if (s == null) {
+                errprintln("Unterminated '" + type + "' PL block");
+                throw new SqlToolError("Unterminated '" + type + "' PL block");
+            }
+            toker = new StringTokenizer(s);
+            if (toker.countTokens() > 1 && toker.nextToken().equals("*")
+                    && toker.nextToken().equals("end")) {
+                if (toker.countTokens() < 1) {
+                    errprintln("PL end statement requires arg of "
+                            + "'foreach' or 'if' or 'while' (1)");
+                    throw new SqlToolError("PL end statement requires arg of "
+                            + "'foreach' or 'if' or 'while' (1)");
+                }
+                String inType = toker.nextToken();
+                if (inType.equals(type)) {
+                    break;
+                }
+                if ((!inType.equals("foreach")) && (!inType.equals("if"))
+                        && (!inType.equals("while"))) {
+                    errprintln("PL end statement requires arg of "
+                            + "'foreach' or 'if' or 'while' (2)");
+                    throw new SqlToolError("PL end statement requires arg of "
+                            + "'foreach' or 'if' or 'while' (2)");
+                }
             }
             pw.println(s);
         }
@@ -1379,6 +1596,10 @@ public class SqlFile {
                     insi       = -1;
                     for (int i = 1; i <= cols; i++) {
                         val = r.getString(i);
+                        if (fetchingVar != null) {
+                            userVars.put(fetchingVar, val);
+                            fetchingVar = null;
+                        }
                         if (requireVals != null && requireVals.length >= i
                                 && requireVals[i - 1] != null) {
                             ok = false;
@@ -1467,6 +1688,10 @@ public class SqlFile {
                 condlPrintln("<HR>", true);
                 break;
             default :
+                if (fetchingVar != null) {
+                    userVars.put(fetchingVar, Integer.toString(updateCount));
+                    fetchingVar = null;
+                }
                 if (updateCount != 0) {
                     stdprintln(Integer.toString(updateCount) + " row"
                              + ((updateCount == 1) ? "" : "s") + " updated");
@@ -1708,41 +1933,45 @@ public class SqlFile {
     private boolean eval(String[] inTokens) throws BadSpecial {
         // dereference *VARNAME variables.
         // N.b. we work with a "copy" of the tokens.
-        String[] tokens = new String[inTokens.length];
+        boolean negate = inTokens.length > 0 && inTokens[0].equals("!");
+        String[] tokens = new String[negate
+                                            ? (inTokens.length - 1)
+                                            : inTokens.length];
         for (int i = 0; i < tokens.length; i++) {
-            tokens[i] = (inTokens[i].length() > 1
-                    && inTokens[i].charAt(0) == '*')
-                          ? ((String) userVars.get(inTokens[i].substring(1)))
-                          : inTokens[i];
+            tokens[i] = (inTokens[i + (negate ? 1 : 0)].length() > 1
+                    && inTokens[i + (negate ? 1 : 0)].charAt(0) == '*')
+                          ? ((String) userVars.get(
+                                  inTokens[i + (negate ? 1 : 0)].substring(1)))
+                          : inTokens[i + (negate ? 1 : 0)];
             if (tokens[i] == null) {
                 tokens[i] = "";
             }
         }
         if (tokens.length == 1) {
-            return (tokens[0].length() > 0 && !tokens[0].equals("0"));
+            return (tokens[0].length() > 0 && !tokens[0].equals("0")) ^ negate;
         }
         if (tokens.length == 3) {
             if (tokens[1].equals("==")) {
-                return tokens[0].equals(tokens[2]);
+                return tokens[0].equals(tokens[2]) ^ negate;
             }
             if (tokens[1].equals("!=") 
                 || tokens[1].equals("<>") 
                 || tokens[1].equals("><")) {
-                return !tokens[0].equals(tokens[2]);
+                return (!tokens[0].equals(tokens[2])) ^ negate;
             }
             if (tokens[1].equals(">")) {
-                return tokens[0].length() > tokens[2].length()
+                return (tokens[0].length() > tokens[2].length()
                     || (
                             (tokens[0].length() == tokens[2].length())
                             && tokens[0].compareTo(tokens[2]) > 0
-                    );
+                    )) ^ negate;
             }
             if (tokens[1].equals("<")) {
-                return tokens[2].length() > tokens[0].length()
+                return (tokens[2].length() > tokens[0].length()
                     || (
                             (tokens[2].length() == tokens[0].length())
                             && tokens[2].compareTo(tokens[0]) > 0
-                    );
+                    )) ^ negate;
             }
         }
         throw new BadSpecial("Unrecognized logical operation");
