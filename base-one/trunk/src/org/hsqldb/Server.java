@@ -126,7 +126,7 @@ public class Server {
     protected boolean      traceMessages;
     private boolean        restartOnShutdown;
     private boolean        noSystemExit;
-    boolean                bSsl = false;
+    boolean                bTls = false;
     public int             _int_;  // Trick to get a Class for a primitive
 
     /**
@@ -164,12 +164,12 @@ public class Server {
                 "server.properties"
                 + " not found, using command line or default properties");
         }
-	bSsl = (System.getProperty("javax.net.ssl.keyStore") != null);
+	bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port", String.valueOf(
-          bSsl ?  jdbcConnection.DEFAULT_HSQLSDB_PORT :
+          bTls ?  jdbcConnection.DEFAULT_HSQLSDB_PORT :
 	   jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
@@ -204,7 +204,7 @@ public class Server {
         try {
             int    port     =
                 serverProperties.getIntegerProperty("server.port",
-                 bSsl ? jdbcConnection.DEFAULT_HSQLSDB_PORT :
+                 bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT :
                     jdbcConnection.DEFAULT_HSQLDB_PORT
 		);
             String database = serverProperties.getProperty("server.database");
@@ -213,7 +213,7 @@ public class Server {
             printTraceMessages();
             openDB();
 
-	    if (bSsl) try {
+	    if (bTls) try {
 	    	// We can not get here unless the property is non-null
 	    	File fil = new File(
 		 System.getProperty("javax.net.ssl.keyStore"));
@@ -230,10 +230,9 @@ public class Server {
 		Security.addProvider((Provider) 
 		 loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
 		 newInstance());
-		} catch(Exception e) {
-		    // User may have some other Provider loaded.
-		    // If not, error will be caught later
-		}
+		 // User may have some other Provider loaded.
+		 // If not, error will be caught later
+		} catch(Exception e) { }
 		Class[] caInt = { getClass().getField("_int_").getType() };
 		Object[] oaInt = { new Integer(port) };
 		Class clsSSF =
@@ -252,11 +251,12 @@ public class Server {
             	throw new Exception(
 	    	 "You do not have permission to use the needed SSL resources");
 	    } catch (ClassNotFoundException cnfe) {
-	    	throw new Exception("JSSE not installed:  " + cnfe);
+	    	throw new ClassNotFoundException("JSSE not installed");
 	    } catch (NoSuchMethodException nsme) {
 	    	throw new Exception(
 	  	 "Failed to find an SSL method even though JSSE " +
 		 "is installed:\n" + nsme);
+	    // Need to unwrap the following exceptions
 	    } catch (InvocationTargetException ite) {
 	    	Throwable t = ite.getTargetException();
 		if (t.toString().endsWith("no SSL Server Sockets"))
