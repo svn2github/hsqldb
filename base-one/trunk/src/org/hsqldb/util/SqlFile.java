@@ -53,7 +53,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.83 2004/07/04 15:27:31 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.84 2004/07/05 12:56:34 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.83 $
+ * @version $Revision: 1.84 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -131,8 +131,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.83 $".substring("$Revision: ".length(),
-                "$Revision: 1.83 $".length() - 2);
+        revnum = "$Revision: 1.84 $".substring("$Revision: ".length(),
+                "$Revision: 1.84 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -180,7 +180,7 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d[tv*sa]            List names of Tbls/Views/all/System Tbls/Aliases\n"
+        + "    \\d{tv*sa} [substr]   List names of Tbls/Views/all/System Tbls/Aliases\n"
         + "    \\d OBJECTNAME        Describe table or view\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -871,7 +871,7 @@ public class SqlFile {
                 return;
             case 'd':
                 if (arg1.length() == 2) {
-                    listTables(arg1.charAt(1));
+                    listTables(arg1.charAt(1), other);
                     return;
                 }
                 if (arg1.length() == 1 && other != null) {
@@ -1539,7 +1539,7 @@ public class SqlFile {
     /** Column numbering starting at 1. */
     static private final int[][] listMDTableCols = {
         { 2, 3 },        // Default
-        { 3 },    // HSQLDB
+        { 3 },           // HSQLDB
         { 2, 3 },        // Oracle
     };
 
@@ -1547,7 +1547,8 @@ public class SqlFile {
      * Lists available database tables.
      * This method needs work.  See the implementation comments.
      */
-    private void listTables(char c) throws SQLException, BadSpecial {
+    private void listTables(char c, String filter)
+    throws SQLException, BadSpecial {
         int[]                     listSet       = null;
         String[] types = null;
         java.sql.DatabaseMetaData md            = curConn.getMetaData();
@@ -1584,7 +1585,8 @@ public class SqlFile {
         } else {
             listSet   = listMDTableCols[DEFAULT_ELEMENT];
         }
-        displayResultSet(null, md.getTables(null, null, null, types), listSet);
+        displayResultSet(null, md.getTables(null, null, null, types), listSet,
+                filter);
     }
 
     /**
@@ -1604,7 +1606,7 @@ public class SqlFile {
         possiblyUncommitteds.set(true);
 
         statement.execute(plMode ? dereference(curCommand, true) : curCommand);
-        displayResultSet(statement, statement.getResultSet(), null);
+        displayResultSet(statement, statement.getResultSet(), null, null);
     }
 
     /**
@@ -1617,12 +1619,13 @@ public class SqlFile {
      * @param r         The ResultSet to display.
      * @param incCols   Optional list of which columns to include (i.e., if
      *                  given, then other columns will be skipped).
-     * @param requireVals  Require one of these Strings in the corresponding
-     *                  field, or skip the record.
+     * @param incFilter Optional case-insensitive substring.
+     *                  Rows are skipped which to not contain this substring.
      */
     private void displayResultSet(Statement statement, ResultSet r,
-                                  int[] incCols)
+                                  int[] incCols, String inFilter)
     throws SQLException {
+        String filter = ((inFilter == null) ? null : inFilter.toUpperCase());
         int updateCount =
                 (statement == null) ? -1 : statement.getUpdateCount();
 
@@ -1680,10 +1683,12 @@ public class SqlFile {
                         }
                     }
                 }
+                boolean filteredOut;
                 EACH_ROW:
                 while (r.next()) {
                     fieldArray = new String[incCount];
                     insi       = -1;
+                    filteredOut = filter != null;
                     for (int i = 1; i <= cols; i++) {
                         val = r.getString(i);
                         if (fetchingVar != null) {
@@ -1701,6 +1706,10 @@ public class SqlFile {
                                 continue;
                             }
                         }
+                        if (filter != null
+                                && val.toUpperCase().indexOf(filter) > -1) {
+                            filteredOut = false;
+                        }
                         fieldArray[++insi] = r.wasNull()
                                 ? (htmlMode ? "<I>null</I>" : "null") : val;
                         if (htmlMode) {
@@ -1710,7 +1719,7 @@ public class SqlFile {
                             maxWidth[insi] = fieldArray[insi].length();
                         }
                     }
-                    rows.add(fieldArray);
+                    if (!filteredOut) rows.add(fieldArray);
                 }
                 // STEP 2: DISPLAY DATA
                 condlPrintln("<TABLE border='1'>", true);
