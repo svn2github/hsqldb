@@ -1,5 +1,5 @@
 /*
-    $Id: sample.sql,v 1.1 2004/04/11 04:45:47 unsaved Exp $
+    $Id: sample.sql,v 1.1 2004/06/02 20:32:05 unsaved Exp $
     Examplifies use of SqlTool.
     PCTASK Table creation
 */
@@ -43,3 +43,5 @@ INSERT INTO pctask (name, description, url) VALUES (
     'task one', 'Description for task 1', 'http://cnn.com');
 INSERT INTO pctasklist (host, tasksequence, pctask) VALUES (
     'admc-masq', 101, SELECT id FROM pctask WHERE name = 'task one');
+
+commit;
