@@ -1528,6 +1528,23 @@ class Database {
                             }
                         }
 
+                        if (tempConst.updateAction == Constraint.SET_DEFAULT
+                                || tempConst.deleteAction
+                                   == Constraint.SET_DEFAULT) {
+                            for (int j = 0; j < tempConst.localCol.length;
+                                    j++) {
+                                if (t.getColumn(tempConst.localCol[j])
+                                        .getDefaultString() == null) {
+                                    throw Trace.error(
+                                        Trace.COLUMN_TYPE_MISMATCH,
+                                        "missing DEFAULT value on column '"
+                                        + t.getColumn(
+                                            tempConst.localCol[j]).columnName
+                                                .name + "'");
+                                }
+                            }
+                        }
+
                         t.checkColumnsMatch(tempConst.localCol,
                                             tempConst.expTable,
                                             tempConst.expCol);
@@ -1652,7 +1669,10 @@ class Database {
 
         sToken = c.getString();
 
-// fredt@users 20020305 - patch 1.7.0 - cascading deletes
+        // -- In a while loop we parse a maximium of two
+        // -- "ON" statements following the foreign key
+        // -- definition this can be
+        // -- ON [UPDATE|DELETE] [CASCADE|SET [NULL|DEFAULT]]
         int deleteAction = Constraint.NO_ACTION;
         int updateAction = Constraint.NO_ACTION;
 
@@ -1661,15 +1681,43 @@ class Database {
 
             if (deleteAction == Constraint.NO_ACTION
                     && sToken.equals("DELETE")) {
-                deleteAction = Constraint.CASCADE;
+                sToken = c.getString();
+
+                if (sToken.equals("SET")) {
+                    sToken = c.getString();
+
+                    if (sToken.equals("DEFAULT")) {
+                        deleteAction = Constraint.SET_DEFAULT;
+                    } else if (sToken.equals("NULL")) {
+                        deleteAction = Constraint.SET_NULL;
+                    } else {
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    }
+                } else if (sToken.equals("CASCADE")) {
+                    deleteAction = Constraint.CASCADE;
+                } else {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                }
             } else if (updateAction == Constraint.NO_ACTION
                        && sToken.equals("UPDATE")) {
-                updateAction = Constraint.CASCADE;
+                sToken = c.getString();
+
+                if (sToken.equals("SET")) {
+                    sToken = c.getString();
+
+                    if (sToken.equals("DEFAULT")) {
+                        updateAction = Constraint.SET_DEFAULT;
+                    } else if (sToken.equals("NULL")) {
+                        updateAction = Constraint.SET_NULL;
+                    } else {
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    }
+                } else if (sToken.equals("CASCADE")) {
+                    updateAction = Constraint.CASCADE;
+                }
             } else {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
             }
-
-            c.getThis("CASCADE");
 
             sToken = c.getString();
         }

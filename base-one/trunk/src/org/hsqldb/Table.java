@@ -80,13 +80,14 @@ import java.sql.Types;
 // fredt@users 20020225 - patch 1.7.0 - restructuring
 // some methods moved from Database.java, some rewritten
 // changes to several methods
-// fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
+// fredt@users 20020225 - patch 1.7.0 - ON DELETE CASCADE
 // fredt@users 20020225 - patch 1.7.0 - named constraints
 // boucherb@users 20020225 - patch 1.7.0 - multi-column primary keys
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595099 - user defined PK name
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
-// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
+// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
+// kloska@users 20021112 - PATCH 1.7.2 - ON DELETE SET NULL | SET DEFAULT
 
 /**
  *  Holds the data structures and methods for creation of a database table.
@@ -1259,9 +1260,13 @@ class Table {
      *  Method is called recursively on a tree of tables from the current one
      *  until no referring foreign-key table is left. In the process, if a
      *  non-cascading foreign-key referring table contains data, an exception
-     *  is thrown. Parameter delete indicates whether to delete referring
-     *  rows. The method is called first to check if the row can be deleted,
-     *  then to delete the row and all the referring rows. (fredt@users)
+     *  is thrown. Parameter doIt indicates whether to delete refering rows.
+     *  The method is called first to check if the row can be deleted, then to
+     *  delete the row and all the refering rows.<p>
+     *
+     *  Support added for SET NULL and SET DEFAULT by kloska@users involves
+     *  switching to checkCascadeUpdate(,,,,) when these rules are encountered
+     *  in the a table.(fredt@users)
      *
      * @param  row
      * @param  session
@@ -1269,7 +1274,7 @@ class Table {
      * @throws  SQLException
      */
     void checkCascadeDelete(Object[] row, Session session,
-                            boolean delete) throws SQLException {
+                            boolean doIt) throws SQLException {
 
         for (int i = 0; i < vConstraint.size(); i++) {
             Constraint c = (Constraint) vConstraint.get(i);
@@ -1292,29 +1297,69 @@ class Table {
             boolean hasref =
                 reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
 
-            if (delete == false && hasref == false) {
+            // fredt - todo - to avoid infinite recursion on same table FK's
+            // if (reftable == this) we don't need to go further and can return ??
+            if (doIt == false && hasref == false) {
                 return;
             }
 
-            Index    refindex      = c.getRefIndex();
-            int      maincolumns[] = c.getMainColumns();
-            Object[] mainobjects   = new Object[maincolumns.length];
+            // -- result set for records to be inserted if this is
+            // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
+            Result   ri          = new Result();
+            Index    refindex    = c.getRefIndex();
+            int      m_columns[] = c.getMainColumns();
+            int      r_columns[] = c.getRefColumns();
+            Object[] m_objects   = new Object[m_columns.length];
 
-            ArrayUtil.copyColumnValues(row, maincolumns, mainobjects);
+            ArrayUtil.copyColumnValues(row, m_columns, m_objects);
 
             // walk the index for all the nodes that reference delnode
             for (Node n = refnode;
                     refindex.comparePartialRowNonUnique(
-                        mainobjects, n.getData()) == 0; ) {
+                        m_objects, n.getData()) == 0; ) {
 
                 // get the next node before n is deleted
                 Node nextn = refindex.next(n);
 
-                if (hasref) {
-                    reftable.checkCascadeDelete(n.getData(), session, delete);
+                // -- if the constraint is an 'SET [DEFAULT|NULL]' constraint we have to remember
+                // -- a new record to be inserted after deleting the current. We also have to
+                // -- switch over to the 'checkCascadeUpdate' method afterwords
+                if (c.getDeleteAction() == Constraint.SET_NULL
+                        || c.getDeleteAction() == Constraint.SET_DEFAULT) {
+                    Object[] rnd = reftable.getNewRow();
+
+                    System.arraycopy(n.getData(), 0, rnd, 0, rnd.length);
+
+                    if (c.getDeleteAction() == Constraint.SET_NULL) {
+                        for (int j = 0; j < r_columns.length; j++) {
+                            rnd[r_columns[j]] = null;
+                        }
+                    } else {
+                        for (int j = 0; j < r_columns.length; j++) {
+                            rnd[r_columns[j]] =
+                                Column.convertObject(reftable
+                                    .getColumn(r_columns[j])
+                                    .getDefaultString(), reftable
+                                    .getColumn(r_columns[j]).getType());
+                        }
+                    }
+
+                    if (hasref) {
+                        reftable.checkCascadeUpdate(n.getData(), rnd,
+                                                    session, r_columns, null,
+                                                    doIt);
+                    }
+
+                    if (doIt) {
+                        ri.add(rnd);
+                    }
+                } else if (hasref) {
+                    // fredt - todo - to avoid infinite recursion on same table
+                    // check here if n refers to same row ??
+                    reftable.checkCascadeDelete(n.getData(), session, doIt);
                 }
 
-                if (delete) {
+                if (doIt) {
                     reftable.deleteNoRefCheck(n.getData(), session);
 
                     //  foreign key referencing own table
@@ -1329,43 +1374,51 @@ class Table {
 
                 n = nextn;
             }
+
+            if (doIt) {
+                Record r = ri.rRoot;
+
+                while (r != null) {
+                    reftable.insertNoCheck(r.data, session, true);
+
+                    r = r.next;
+                }
+            }
         }
     }
 
     /**
-     * Check or perform an update cascade operation on a single row.
-     * Check or cascade an update (delete/insert) operation.
-     * The method takes a pair of rows (new data,old data) and checks if
-     * <code>Constraints</code> permit the update operation.
-     * A boolean arguement determines if the operation should
-     * realy take place or if we just have to check for constraint violation.
+     * Check or perform and update cascade operation on a single row.
+     *   Check or cascade an update (delete/insert) operation.
+     *   The method takes a pair of rows (new data,old data) and checks
+     *   if <code>Constraints</code> permit the update operation.
+     *   A boolean arguement determines if the operation should
+     *   realy take place or if we just have to check for constraint violation.
      *
      *
      *
-     * @param orow Object[]; old row data to be deleted.
+     *   @param orow Object[]; old row data to be deleted.
+     *   @param nrow Object[]; new row data to be inserted.
+     *   @param session Session; current database session
+     *   @param cols int[]; indices of the columns actually changed.
+     *   @param ref Table; This should be initialized to <code>null</code> when the
+     *   method is called from the 'outside'. During recursion this will be the
+     *   current table (i.e. <code>this</code>) to indicate from where we came.
+     *   Foreign keys to this table do not have to be checked since they have
+     *   triggered the update and are valid <i>per definitionem</i>.
      *
-     * @param nroe Object[]; new roe data to be inserted.
+     *   @param update boolean; if true the update will take place. Otherwise
+     *   we just check for referential integrity.
      *
-     * @param session Session; current database session
+     *   @see #checkCascadeDelete(Object[],Session,boolean)
      *
-     * @param cols int[]; indices of the columns actually changed.
+     *   @short Check or perform and update cascade operation on a single row.
      *
-     * @param ref Table; This should be initialized to <code>null</code> when
-     * the method is called from the 'outside'. During recursion this will be
-     * the current table (i.e. <code>this</code>) to indicate from where we
-     * came. Foreign keys to this table do not have to be checked since they
-     * have triggered the update and are valid <i>per definitionem</i>.
      *
-     * @param update boolean; if true the update will take place.
-     *
-     * @short Check or perform and update cascade operation on a single row.
      */
     void checkCascadeUpdate(Object[] orow, Object[] nrow, Session session,
                             int[] cols, Table ref,
                             boolean update) throws SQLException {
-
-        // -- common indexes of the changed columns and the main/ref constraint
-        int[] common;
 
         // -- We iterate through all constraints associated with this table
         // --
@@ -1382,31 +1435,40 @@ class Table {
                 // --     the referential integrity is guaranteed to be valid.
                 // --
                 if (ref == null || c.getMain() != ref) {
+
+                    // -- common indexes of the changed columns and the main/ref constraint
+                    int[] common;
+
                     if ((common = ArrayUtil.commonElements(
                             cols, c.getRefColumns())) == null) {
+
+                        // -- Table::checkCascadeUpdate -- NO common cols; reiterating
                         continue;
                     }
 
                     Node n = c.findMainRef(nrow);
-                } else if (ref != null) {
-
-                    // System.err.println(" ## Table::checkCascadeUpdate -- skipping FK ref to '" + ref.getName().name + "'; we came from there");
                 }
             } else if (c.getType() == Constraint.MAIN && c.getRef() != null) {
 
                 // -- (2) If it happens to be a main constraint we check if the slave
                 // --     table holds any records refering to the old contents. If so
-                // --     the constraint has to suppert an 'on update' action or we
+                // --     the constraint has to support an 'on update' action or we
                 // --     throw an exception (all via a call to Constraint.findFkRef).
                 // --
                 // -- if there are no common columns between the reference constraint
                 // -- and the changed columns we reiterate.
+                int[] common;
+
                 if ((common = ArrayUtil.commonElements(
                         cols, c.getMainColumns())) == null) {
+
+                    // -- NO common cols between; reiterating
                     continue;
                 }
 
-                Node refnode = c.findFkRef(orow, false);
+                int  m_columns[] = c.getMainColumns();
+                int  r_columns[] = c.getRefColumns();
+                Node refnode     = c.findFkRef(orow, false);
 
                 if (refnode == null) {
 
@@ -1416,19 +1478,17 @@ class Table {
 
                 Table reftable = c.getRef();
 
-                // shortcut when deltable has no imported constraint
+                // -- shortcut when update table has no imported constraint
                 boolean hasref =
                     reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
-                Index    refindex      = c.getRefIndex();
-                int      maincolumns[] = c.getMainColumns();
-                int      refcolumns[]  = c.getRefColumns();
-                Object[] mainobjects   = new Object[maincolumns.length];
-                Object[] refobjects    = new Object[refcolumns.length];
+                Index    refindex    = c.getRefIndex();
+                Object[] mainobjects = new Object[m_columns.length];
+                Object[] refobjects  = new Object[r_columns.length];
 
-                ArrayUtil.copyColumnValues(orow, maincolumns, mainobjects);
-                ArrayUtil.copyColumnValues(nrow, refcolumns, refobjects);
+                ArrayUtil.copyColumnValues(orow, m_columns, mainobjects);
+                ArrayUtil.copyColumnValues(nrow, r_columns, refobjects);
 
-                // walk the index for all the nodes that reference update node
+                // -- walk the index for all the nodes that reference update node
                 Result ri = new Result();
 
                 for (Node n = refnode;
@@ -1441,12 +1501,44 @@ class Table {
 
                     System.arraycopy(n.getData(), 0, rnd, 0, rnd.length);
 
-                    for (int j = 0; j < maincolumns.length; j++) {
-                        rnd[refcolumns[j]] = nrow[maincolumns[j]];
-                    }
+                    // -- Depending on the type constraint we are dealing with we have to
+                    // -- fill up the forign key of the current record with different values
+                    // -- And handle the insertion procedure differently.
+                    if (c.getUpdateAction() == Constraint.SET_NULL) {
 
-                    reftable.checkCascadeUpdate(n.getData(), rnd, session,
-                                                common, this, update);
+                        // -- set null; we do not have to check referential integrity any further
+                        // -- since we are setting <code>null</code> values
+                        for (int j = 0; j < r_columns.length; j++) {
+                            rnd[r_columns[j]] = null;
+                        }
+                    } else if (c.getUpdateAction()
+                               == Constraint.SET_DEFAULT) {
+
+                        // -- set default; we check referential integrity with ref==null; since we manipulated
+                        // -- the values and referential integrity is no longer guaranteed to be valid
+                        for (int j = 0; j < r_columns.length; j++) {
+                            rnd[r_columns[j]] =
+                                Column.convertObject(reftable
+                                    .getColumn(r_columns[j])
+                                    .getDefaultString(), reftable
+                                    .getColumn(r_columns[j]).getType());
+                        }
+
+                        reftable.checkCascadeUpdate(n.getData(), rnd,
+                                                    session, r_columns, null,
+                                                    update);
+                    } else {
+
+                        // -- cascade; standard recursive call. We inherit values from the foreign key
+                        // -- table therefor we set ref==this.
+                        for (int j = 0; j < m_columns.length; j++) {
+                            rnd[r_columns[j]] = nrow[m_columns[j]];
+                        }
+
+                        reftable.checkCascadeUpdate(n.getData(), rnd,
+                                                    session, common, this,
+                                                    update);
+                    }
 
                     if (update) {
                         ri.add(rnd);
