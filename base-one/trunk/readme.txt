@@ -1,10 +1,10 @@
 Readme File
 
-2002.10.18
+2002.10.30
 
-HSQLDB 1.7.2 ALPHA_F
+HSQLDB 1.7.2 ALPHA_G
 
-CVS hsqldb-dev module tag: hsqldb_1_7_2_ALPHA_F
+CVS hsqldb-dev module tag: HEAD data: 2002.10.30
 
 Strictly for developers. This is alpha software featuring developments
 leading to version 1.7.2.
@@ -30,5 +30,15 @@ database engine, including:
 I have implemented the new feature, CHECKPOINT DEFRAG to defragment a
 *.data file without shutting down the engine, in two different versions,
 taking advantage of the above improvements.
+
+I have implemented binary logging of MEMORY table inserts in the *.script 
+file, resulting in much smaller startup and shutdown times with large 
+memory tables. Use SET LOGTYPE {0|1} to set the log type to text (0) or
+binary (1). This performs a checkpoint if the type needs changing.
+
+Also further performance optimisations resulting in faster CACHED table
+operations have been made.
+
+Sebastian has implemented ON UPDATE CASCADE support for foreign keys.
 
 Fred Toussi (fredt@users)
