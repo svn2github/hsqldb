@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.24 2004/06/11 20:56:50 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.25 2004/06/30 05:01:51 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -13,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.24 $</edition>
-        <pubdate>$Date: 2004/06/11 20:56:50 $</pubdate>
+        <edition>$Revision: 1.25 $</edition>
+        <pubdate>$Date: 2004/06/30 05:01:51 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -566,7 +566,7 @@
                 If you are using a UNIX variant that has 
                 <filename>/etc/rc.conf</filename> or 
                 <filename>/etc/rc.conf.local</filename> (like BSD variants
-                and Gentoo), you must set "enable_hsqldb" to "YES" in either
+                and Gentoo), you must set "hsqldb_enable" to "YES" in either
                 of those files.
                 (Just run <literal>cd /etc; ls rc.conf rc.conf.local</literal>
                 to see if you have one of these files).
