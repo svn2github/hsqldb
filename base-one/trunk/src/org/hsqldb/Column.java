@@ -715,13 +715,8 @@ public class Column {
                     return 0;
                 }
             case Types.TIME :
-                if (((Time) a).after((Time) b)) {
-                    return 1;
-                } else if (((Time) a).before((Time) b)) {
-                    return -1;
-                } else {
-                    return 0;
-                }
+                return HsqlDateTime.compare((Time) a, (Time) b);
+
             case Types.TIMESTAMP :
                 if (((Timestamp) a).after((Timestamp) b)) {
                     return 1;

@@ -76,7 +76,9 @@ public class HsqlDateTime {
      */
     private static Calendar today          = new GregorianCalendar();
     private static Calendar tempCalDefault = new GregorianCalendar();
-    private static Calendar tempCalGMT =
+    private static Calendar tempCalGMT1 =
+        new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    private static Calendar tempCalGMT2 =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     private static Date tempDate = new Date(0);
 
@@ -198,6 +200,21 @@ public class HsqlDateTime {
         }
 
         return Time.valueOf(s);
+    }
+
+    static int compare(Time a, Time b) throws HsqlException {
+
+        if (a.getTime() == b.getTime()) {
+            return 0;
+        }
+
+        synchronized (tempCalGMT1) {
+            tempCalGMT1.setTime(a);
+            tempCalGMT2.setTime(b);
+
+            return tempCalGMT1.after(tempCalGMT2) ? 1
+                : -1;
+        }
     }
 
     public static Time getCurrentTime() {
@@ -356,8 +373,10 @@ public class HsqlDateTime {
 //#else
 /*
         // Have to go indirect
-        tempDate.setTime(millis);
-        cal.setTime(tempDate);
+        synchronized(tempDate){
+            tempDate.setTime(millis);
+            cal.setTime(tempDate);
+        }
 */
 
 //#endif JDBC3
@@ -387,11 +406,11 @@ public class HsqlDateTime {
 
     public static Time getNormalisedTime(long t) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, t);
-            resetToTime(tempCalGMT);
+        synchronized (tempCalGMT1) {
+            setTimeInMillis(tempCalGMT1, t);
+            resetToTime(tempCalGMT1);
 
-            long value = getTimeInMillis(tempCalGMT);
+            long value = getTimeInMillis(tempCalGMT1);
 
             return new Time(value);
         }
@@ -441,11 +460,11 @@ public class HsqlDateTime {
 
     public static Timestamp getNormalisedTimestamp(Time t) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, System.currentTimeMillis());
-            resetToDate(tempCalGMT);
+        synchronized (tempCalGMT1) {
+            setTimeInMillis(tempCalGMT1, System.currentTimeMillis());
+            resetToDate(tempCalGMT1);
 
-            long value = getTimeInMillis(tempCalGMT) + t.getTime();
+            long value = getTimeInMillis(tempCalGMT1) + t.getTime();
 
             return new Timestamp(value);
         }

@@ -84,7 +84,7 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 16;
+    int    cacheScale = 12;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,7 +102,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 1280000;
+    int bigrows   = 120000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -433,6 +433,15 @@ public class TestCacheSize {
             System.out.println("Time to count: " + sw.elapsedTime());
             checkSelects();
             checkUpdates();
+            checkSelects();
+            sw.zero();
+            sStatement.execute("SELECT count(*) from TEST where zip > -1");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
             sw.zero();
 
             if (shutdown) {

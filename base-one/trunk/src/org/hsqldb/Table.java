@@ -2876,6 +2876,8 @@ public class Table extends BaseTable {
                 getIndex(i).delete(n);
             }
 
+            r = r.getUpdatedRow();
+
             r.delete();
 
             throw e;    // and throw error again

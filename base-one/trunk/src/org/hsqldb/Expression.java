@@ -1959,7 +1959,7 @@ public class Expression {
                 // NOTE: both iDataType for this expr and for eArg (if isParm)
                 // are already set in Parser during read
                 if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
-                    valueData = getValue(dataType);
+                    valueData = getValue();
                     exprType  = VALUE;
                     eArg      = null;
                 }
