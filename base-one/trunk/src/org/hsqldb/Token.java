@@ -124,6 +124,7 @@ class Token {
     static final String T_NOT                   = "NOT";
     static final String T_NOWAIT                = "NOWAIT";
     static final String T_NULL                  = "NULL";
+    static final String T_NULLIF                = "NULLIF";
     static final String T_ON                    = "ON";
     static final String T_ORDER                 = "ORDER";
     static final String T_OUTER                 = "OUTER";
@@ -149,6 +150,7 @@ class Token {
     static final String T_SET                   = "SET";
     static final String T_SHUTDOWN              = "SHUTDOWN";
     static final String T_SOURCE                = "SOURCE";
+    static final String T_SUBSTRING             = "SUBSTRING";
     static final String T_TABLE                 = "TABLE";
     static final String T_TEMP                  = "TEMP";
     static final String T_TEXT                  = "TEXT";

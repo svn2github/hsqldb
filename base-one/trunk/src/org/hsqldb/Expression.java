@@ -143,7 +143,8 @@ class Expression {
                      EXTRACT   = 63,
                      POSITION  = 64,
                      TRIM      = 65,
-                     SUBSTRING = 66;
+                     SUBSTRING = 66,
+                     NULLIF    = 67;
 
     // temporary used during paring
     static final int PLUS         = 100,

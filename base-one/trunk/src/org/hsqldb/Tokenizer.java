@@ -142,10 +142,11 @@ class Tokenizer {
             "GROUP", "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",
 
             /* "LEFT" ,*/
-            "LIKE", "MAX", "MIN", /* "NULL", */ "NOT", "ON", "ORDER", "OR",
-            "OUTER", "POSITION", "PRIMARY", "SELECT", "SET", "SUBSTRING",
-            "SUM", "TO", "TRIM", /* "TRUE",*/ "UNIQUE", "UNION", "VALUES",
-            "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS", "CALL", "HAVING"
+            "LIKE", "MAX", "MIN", /* "NULL", */ "NULLIF", "NOT", "ON",
+            "ORDER", "OR", "OUTER", "POSITION", "PRIMARY", "SELECT", "SET",
+            "SUBSTRING", "SUM", "TO", "TRIM", /* "TRUE",*/ "UNIQUE", "UNION",
+            "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS", "CALL",
+            "HAVING"
         };
 
         for (int i = 0; i < keyword.length; i++) {

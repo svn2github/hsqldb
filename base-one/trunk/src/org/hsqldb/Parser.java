@@ -1322,6 +1322,27 @@ class Parser {
 
                 break;
             }
+            case Expression.NULLIF : {
+
+                // turn into a CASEWHEN
+                read();
+                readThis(Expression.OPEN);
+
+                r = readOr();
+
+                readThis(Expression.COMMA);
+
+                Expression thenelse =
+                    new Expression(Expression.CASEWHEN,
+                                   new Expression(Types.NULL, null), r);
+
+                r = new Expression(Expression.EQUAL, r, readOr());
+                r = new Expression(Expression.CASEWHEN, r, thenelse);
+
+                readThis(Expression.CLOSE);
+
+                break;
+            }
             case Expression.CONVERT : {
                 int type = iToken;
 
@@ -1472,9 +1493,35 @@ class Parser {
                 Function f = new Function("org.hsqldb.Library.position",
                                           session, false);
 
-                f.setArgument(0, this.readTerm());
+                f.setArgument(0, readTerm());
                 readThis(Expression.IN);
                 f.setArgument(1, readOr());
+                readThis(Expression.CLOSE);
+
+                r = new Expression(f);
+
+                break;
+            }
+            case Expression.SUBSTRING : {
+                read();
+                readThis(Expression.OPEN);
+
+                Function f = new Function("org.hsqldb.Library.substring",
+                                          session, false);
+
+                f.setArgument(0, readTerm());
+                readThis(Expression.FROM);
+                f.setArgument(1, readOr());
+
+                Expression count = null;
+
+                if (sToken.equals(Token.T_FOR)) {
+                    readTerm();
+
+                    count = readTerm();
+                }
+
+                f.setArgument(2, count);
                 readThis(Expression.CLOSE);
 
                 r = new Expression(f);
@@ -1561,12 +1608,14 @@ class Parser {
                 case Expression.MAX :
                 case Expression.AVG :
                 case Expression.IFNULL :
+                case Expression.NULLIF :
                 case Expression.CONVERT :
                 case Expression.CAST :
                 case Expression.CASEWHEN :
                 case Expression.CONCAT :
                 case Expression.EXTRACT :
                 case Expression.POSITION :
+                case Expression.SUBSTRING :
                 case Expression.FROM :
                 case Expression.END :
                 case Expression.PARAM :
@@ -1632,6 +1681,7 @@ class Parser {
         tokenSet.put("MAX", Expression.MAX);
         tokenSet.put("AVG", Expression.AVG);
         tokenSet.put("IFNULL", Expression.IFNULL);
+        tokenSet.put("NULLIF", Expression.NULLIF);
         tokenSet.put("CONVERT", Expression.CONVERT);
         tokenSet.put("CAST", Expression.CAST);
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
@@ -1640,6 +1690,7 @@ class Parser {
         tokenSet.put(Token.T_POSITION, Expression.POSITION);
         tokenSet.put(Token.T_FROM, Expression.FROM);
         tokenSet.put(Token.T_TRIM, Expression.TRIM);
+        tokenSet.put(Token.T_SUBSTRING, Expression.SUBSTRING);
         tokenSet.put("IS", Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }
