@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.21 2004/06/06 17:29:21 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.22 2004/06/06 18:02:43 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.21 $</edition>
-        <pubdate>$Date: 2004/06/06 17:29:21 $</pubdate>
+        <edition>$Revision: 1.22 $</edition>
+        <pubdate>$Date: 2004/06/06 18:02:43 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -27,7 +27,7 @@
             This document explains how to use SqlTool, the main purpose of
             which is to read your SQL text file or stdin, and execute the SQL 
             commands therein against a JDBC database.
-            There are also many features to both facilite interactive 
+            There are also many features to both facilitate interactive use
             (such as command-line editing and aliases), and to facilitate
             automation (such as file inclusion and scripting variables).
         </simpara><simpara>
@@ -36,13 +36,16 @@
             I have not yet tested these commands on Windows, and I doubt
             whether the quoting will work just like this (though it is
             possible).
+            SqlTool is still a very useful tool even if you have no quoting
+            capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.68 of SqlFile, but I
-            expect it to accurately describe SqlTool for some number of
-            versions past 1.68.
-            (SqlFile is the Java class where most of the SqlTool functionality
-            is implemented.  The SqlTool startup banner shows the SqlFile
-            version number).
+            This document is now updated for version 1.33 of SqlTool and
+            1.69 of SqlFile (the latter is the class which does most of the
+            work for SqlTool).
+            The startup banner will report both version when you run SqlTool
+            interactively.
+            I expect this version of this document to accurately describe 
+            SqlTool for some unknown number of versions into the future.
         </simpara>
     </section>
 
@@ -71,40 +74,42 @@
                     (the sa password is blank when new HSQLDB database 
                     instances are created).
                     Edit the file if you need to change the target Server URL, 
-                    username, password, character set, or JDBD driver,
+                    username, password, character set, or JDBC driver,
                     as documented in the 
                     <link linkend='auth-section' endterm='auth-title'/> section.
                 </simpara></step><step><simpara>
-                    Set up your CLASSPATH to include the classes
-                    <classname>org.hsqldb.util.SqlTool</classname>,
-                    <classname>org.hsqldb.util.SqlFile</classname>, and the 
-                    JDBC driver that you want to use.  If you are using a 
-                    HSQLDB database, this is most easily accomplished by
-                    setting (and exporting) CLASSPATH to the path to 
-                    <filename>hsqldb.jar </filename> (which lives in the 
-                    <filename>lib</filename> subdirectory of the HSQLDB 
-                    distribution).  (You can, of course, use a classpath 
-                    argument to java instead of setting your CLASSPATH 
-                    variable).
+                    Find out where your hsqldb.jar file resides.
+                    It typically resides at
+<emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>
+                    where <emphasis role='bold'>HSQLDB_HOME</emphasis> is the
+                    base directory of your HSQLDB software installation.
+                    For this reason, I'm going to use 
+                    "$HSQLDB_HOME/lib/hsqldb.jar" as the path to
+                    <filename>hsqldb.jar</filename> for my examples, but 
+                    understand that you need to use the actual path to your
+                    own <filename>hsqldb.jar</filename> file.
                 </simpara></step><step><para>
                     Run 
                 <informalexample><screen>
-    java org.hsqldb.util.SqlTool --help</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --help</screen>
                 </informalexample>
                     to see what command-line arguments are available.
+                    Note that you don't need to worry about setting the 
+                    CLASSPATH when you use the <literal>-jar</literal> switch
+                    to <filename>java</filename>.
                     Assuming that you set up your SqlTool configuration file 
                     at the default location and you want to use the HSQLDB 
-                    JDBC driver, you will want to run either
+                    JDBC driver, you will want to run something like
                 <informalexample><screen>
-    java org.hsqldb.util.SqlTool mem</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar mem</screen>
                 </informalexample>
                     for interactive use, or
                 <informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' mem</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</screen>
                     </informalexample>
                     or
                     <informalexample><screen>
-    java org.hsqldb.util.SqlTool mem filepath1.sql...</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar mem filepath1.sql...</screen>
                     </informalexample>
                     where <literal>mem</literal> is an
                     <emphasis>urlid</emphasis>,
@@ -145,58 +150,20 @@
             time that you run SqlTool interactively and without the
             <literal>--noAutoFile</literal> switch.
         </simpara> <para>
-            To use a JDBC Driver other than the HSQLDB driver, you must put 
-            the jar/zip file in the classpath (as explained in number 2 above), 
+            To use a JDBC Driver other than the HSQLDB driver, you can't use
+            the <literal>-jar</literal> switch because you need to modify the
+            classpath.
+            You must add the hsqldb.jar file and your JDBC driver classes to
+            yoru classpath,
             and you must tell SqlTool what the JDBC driver class name is.
             The latter can be accomplished by either using the "--driver" 
             switch, or setting "driver" in your config file.
             The <link linkend='auth-section' endterm='auth-title'/> section.
-            explains the second method.  Here's an example of the first method.
+            explains the second method.  Here's an example of the first method
+            (after you have set the classpath appropriately).
         <informalexample><screen>
     java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </informalexample></para>
-    </section>
-
-    <section>
-        <title>Using hsqlsqltool.jar</title>
-        <simpara>
-            If you will only connect to "server" HSQLDB URLs (i.e., URLs 
-            like <literal>jdbc:hsqldb:hsql</literal> + something or
-            <literal>jdbc:hsqldb:http</literal> + something)
-            then it will be easier to set up and run SqlTool by using 
-            <filename>hsqlsqltool.jar</filename> instead of 
-            <filename>hsqldb.jar</filename>.
-            If you need to use some other kind of HSQLDB URL, or a JDBC driver
-            other than the HSQLDB JDBC Driver, then just skip this section and 
-            use <filename>hsqldb.jar</filename>.
-        </simpara><simpara>
-            The HSQLDB distribution doesn't "come with" a pre-built 
-            <filename>hsqlsqltool.jar</filename> file.
-            I recommend that you either download the Java 1.4 jar at
-            <ulink url='http://admc.com/dist/hsqlsqltool-1.7.2.jar'/>
-            (by right-clicking and downloading if you're reading this with a
-            web browser), or build the <emphasis>jarsqltool</emphasis> target, 
-            as explained in the 
-            <link linkend='building-appendix' endterm='building-title'/>
-            appendix.
-        </simpara>
-        <para>
-            To run SqlTool using a sqltool jar file, you don't need to set
-            or specify any classpath, nor any class name.  Just run
-            <example><title>Running SqlTool with a sqltool jar file</title>
-                <screen>
-    java -jar /path/to/hsqlsqltool.jar</screen>
-            </example> where <literal>/path/to/hsqlsqltool.jar</literal> is
-            the path to your hsqlsqltool.jar, whatever it may be named (for
-            example, <filename>hsqlsqltool-1.7.2.jar</filename>).
-            You can run any SqlTool command explained in this chapter by
-            subsituting <literal>java -jar /path/to/hsqlsqltool.jar</literal>
-            for <literal>java org.hsqldb.util.SqlTool</literal>.
-            (With the understanding that the sample "mem" urlid won't work,
-            and you can only use the HSQLDB JDBC driver, since you can't
-            modify the classpath when using the <literal>-jar</literal> switch
-            for <filename>java</filename>.
-        </para>
     </section>
 
     <section id='auth-section'>
@@ -224,7 +191,7 @@
             with a phoney urlid and it will tell you where it expects the 
             configuration file to be.
         <informalexample><screen>
-    java org.hsqldb.util.SqlTool x</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar x</screen>
         </informalexample></para><para>
             The config file consists of stanza(s) like this:
         <informalexample><screen>
@@ -294,16 +261,16 @@
             You run SqlTool interactively by specifying no SQL filepaths on 
             the SqlTool command line.  Like this.
         <informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
         </informalexample></para><simpara>
             If it starts up and connects to the database (as specified in your
             SqlTool configuration file as explained in the
             <link linkend='auth-section' endterm='auth-title'/> section),
             executes the SQL file <filename>auto.sql</filename> from your
             home directory (if there is one), then displays a
-            banner showing the SqlFile version number and describing the 
-            different command types that you can give, as well as commands to 
-            list all of the specific commands available to you.
+            banner showing the SqlTool and SqlFile version numbers and 
+            describing the different command types that you can give, as well 
+            as commands to list all of the specific commands available to you.
         </simpara><simpara>
             You exit your session by using the "\q" special command or ending 
             input (like with Ctrl-D or Ctrl-Z).
@@ -516,7 +483,7 @@
             banner or command prompts, and aborting upon failure by default, 
             then specify a SQL filepath of "-", like
         <informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid -</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
         </informalexample></para><simpara>
             You may want to do this if you are redirecting or tee-ing output 
             to a log file, and you don't want the user-interaction messages 
@@ -527,8 +494,8 @@
     <section id='nonint-section'>
         <title id='nonint-title'>Non-Interactive</title>
         <simpara>
-            Read the <emphasis>Interactive</emphasis> section if you have not 
-            already, 
+            Read the <link linkend='int-section' endterm='int-title'/>
+            section if you have not already, 
             because much of what is in this section builds upon that.
             Even if your plans are to run SqlTool non-interactively, you 
             should really learn to run it interactively because it's such a 
@@ -545,7 +512,7 @@
                 directly from the comand-line or from a shell script without an 
                 SQL file, like this.
             <informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</screen>
             </informalexample></para><para>
                 Since SqlTool executes SQL statements only when a statement 
                 line is terminated with ";", you can only execute more than one 
@@ -554,7 +521,7 @@
                 With any Bourne-compatible shell, you can include linebreaks in 
                 the SQL statements like this.
             <informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid
         SQL statement number one;
         SQL statement
             number two;
@@ -570,7 +537,7 @@
                 this.
             <informalexample><programlisting>
     # A shell script
-    USERCOUNT=`java org.hsqldb.util.SqlTool --noinput --sql 'select count(*) from usertbl;' urlid` || {
+    USERCOUNT=`java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'select count(*) from usertbl;' urlid` || {
         # Handle the SqlTool error
     }
     echo "There are $USERCOUNT users registered in the database."
@@ -585,7 +552,7 @@
             </simpara><para>
                 Often, you will want to redirect output to a file, like
             <informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.sql 2>&amp;1</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
             </informalexample></para><simpara>
                 (Skip the "2>&amp;1" if you're on Windows).
             </simpara><simpara>
@@ -604,7 +571,7 @@
                 You can execute this SQL file with a Memory Only database with 
                 a command like
             <informalexample><programlisting>
-    java org.hsqldb.util.SqlTool --sql "create user 'tomcat' password 'x';" mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar  --sql "create user 'tomcat' password 'x';" mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
             </informalexample>
             </para><simpara>
                 (The <literal>--sql "create..."</literal> arguments create an
@@ -615,7 +582,7 @@
             <title>Optimally Compatible SQL Files</title>
             <simpara>
                 If you want your SQL scripts optimally compatible among other
-                SQL tools, then don't use any Special or PL Commands
+                SQL tools, then don't use any Special or PL Commands.
                 SqlTool has default behavior which I think is far superior to 
                 the other SQL tools, but you will have to disable these 
                 defaults in order to be behavior-compatible.
@@ -706,15 +673,20 @@
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>\H</term><listitem><para>
                     Toggle HTML output mode.
-                    If you redirect output to a file, this can make query 
-                    output much easier to view.
+                    If you redirect output to a file, this can make a long
+                    session log much easier to view.
+                    This will HTML-ify the entire session.
                     For example,
                     <informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
                     </informalexample>
+                    (See the
+                    <link linkend='report-section' endterm='report-title'/> 
+                    section about how to easily store just the query output
+                    to file.)
                 </para></listitem></varlistentry>
                 <varlistentry><term>\a [true|false]</term><listitem><simpara>
-                    This turns on and off JDBC transaction autocommits.
+                    This turns on and off SQL transaction autocommits.
                     Auto-commit defaults to false, but you can change that
                     behavior by using the <literal>--autoCommit</literal>
                     command-line switch.
@@ -746,12 +718,12 @@
                 In this case, do not give the sql file(s) as an argument to 
                 SqlTool, but pipe them in instead, like
             <informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
             </informalexample>
                 or
             <informalexample><screen>
     cat filepath1.sql... |
-    java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
             </informalexample>
             </para>
         </section>
@@ -762,7 +734,7 @@
                 You can use another character set by setting the system 
                 property <property>sqltool.charset</property>, like
             <informalexample><screen>
-    java -Dsqltool.charset=UTF-8 org.hsqldb.util.SqlTool urlid filepath1.sql...</screen>
+    java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
             </informalexample></para><simpara>
                 You can also set this per urlid in the SqlTool configuration 
                 file.
@@ -899,7 +871,7 @@
        grantwrite.sql
 
        Run SqlTool like this:
-           java org.hsqldb.util.SqlTool -setvar USER=debbie grantwrite.sql
+           java -jar path/to/hsqldb.jar -setvar USER=debbie grantwrite.sql
      */
     GRANT all ON book TO *{USER};
     GRANT all ON category TO *{USER};</programlisting>
@@ -979,5 +951,48 @@
                 blocks will change as expected.
             </simpara>
         </section>
+    </section>
+
+    <section>
+        <title>Using hsqlsqltool.jar</title>
+        <simpara>
+            This section is only for those users who want to use SqlTool
+            but without the over heard of hsqldb.jar.
+        </simpara><simpara>
+            If you do not need to directly use JDBC URLs like
+            <literal>jdbc:hsqldb:mem:</literal> + something,
+            <literal>jdbc:hsqldb:file:</literal> + something, or
+            <literal>jdbc:hsqldb:res:</literal> + something,
+            then you can use <filename>hsqlsqltool.jar</filename> in place of
+            the much larger <filename>hsqldb.jar</filename> file.
+            <filename>hsqlsqltool.jar</filename> will work for all JDBC
+            databases other than HSQLDB Memory-only and In-process databases
+            (the latter are fine if you access them via a HSQLB Server or
+            WebServer).
+            You will have to supply the JDBC driver for non-HSQLDB URLs.
+        </simpara><simpara>
+            The HSQLDB distribution doesn't "come with" a pre-built 
+            <filename>hsqlsqltool.jar</filename> file.
+            I recommend that you either download the Java 1.4 jar at
+            <ulink url='http://admc.com/dist/hsqlsqltool-1.7.2.jar'/>
+            (by right-clicking and downloading if you're reading this with a
+            web browser), or build the <emphasis>jarsqltool</emphasis> target, 
+            as explained in the 
+            <link linkend='building-appendix' endterm='building-title'/>
+            appendix.
+        </simpara> <simpara>
+            If you are using the HSQLDB JDBC driver (i.e., you're connecting
+            up to a URL like jdbc:hsqldb:hsql + something or
+            jdbc:hsqldb:http + something), you run SqlTool exactly as with
+            hsqldb.jar except you use the file path to your hsqlsqltool.jar
+            file (for example, <filename>hsqlsqltool-1.7.2.jar</filename>)
+            instead of the path to hsqldb.jar.
+        </simpara> <simpara>
+            If you are using a non-HSQLDB JDBC driver, follow the instructions
+            at the end of the
+            <link linkend='baremin-section' endterm='baremin-title'/> section,
+            but use your hsqlsqltool jar file in place of
+            <filename>hsqldb.jar</filename>.
+        </simpara>
     </section>
 </chapter>
