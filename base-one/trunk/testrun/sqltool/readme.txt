@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.9 2004/06/16 18:58:13 unsaved Exp $
+$Id: readme.txt,v 1.10 2004/07/04 18:10:01 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -12,7 +12,7 @@ To do anything at all with SqlTool unit testing, you need
         User Guide).  (If you are actively developing, you could alternatively
         run "build test" and work with the /classes branch instead of a jar).
 
-    Set your search path so that a Java 1.4 "java" executable gets run.
+    Your search path set so that a Java 1.4 "java" executable gets run.
 
         The tests will not work if you give a path to "java" to run
         the test programs, because the test program itself invokes java
@@ -20,13 +20,16 @@ To do anything at all with SqlTool unit testing, you need
 
             /usr/java/j2sdk1.4.2_02/bin/java org.hsqldb.test.SqlTool...
 
-    Set (and export if your shell supports that) the shell environmental
-    variable "CLASSPATH" to include hsqsldbtest.jar (or the HSQLDB 
-    "classes" subdirectory).  The tests will not work if you supply a
+    Shell environmental variable "CLASSPATH" set (and export if your shell 
+    supports that) to include hsqldbtest.jar (or the HSQLDB "classes" 
+    subdirectory).  The tests will not work if you supply a
     java classpath switch, for the exact same reason described for the
     previous item.
+    (When time permits, the test harness should set the new classpath 
+    according to the system property java.class.path.  This will get
+    rid of the OS-specific requirement).
 
-    IF you are running JUnit tests (iėe., running a JUnit test manually
+    IF you are running JUnit tests (ie., running a JUnit test manually
     or invoking TestSqlTool), then you also need to put the junit.jar 
     file into your classpath.
 
@@ -39,12 +42,14 @@ To do anything at all with SqlTool unit testing, you need
     really need meaty data in the database.  In that case, it may make
     sense to set up another urlid and supply a (non-test) SQL file in
     this directory which will populate that database.  I don't have time
-    right now to figure out how to document these dependencies,so just
+    right now to figure out how to document these dependencies, so just
     set up the "mem" urlid for now.
 
-    Run the tests from this directory.  This is just so that simple
-    relative paths can be used for the various files that live in this
-    directory.
+    Run the tests from this directory.  This is only because it has
+    been more convenient to use relative filepaths in various places.
+    org.hsqldb.tst.TestSqlTool uses relative filepaths to find and load
+    the *.list files, then the *.list files in this directory use 
+    relative paths for the SQL test files.
 
 
 To run the JUnit test suite for SqlTool.
@@ -110,3 +115,15 @@ Regexes
     This would match lines anywhere in stdout of the SqlTool run
     which end with a word + whitespace + "something bad" (case
     insensitive) + optional whitespace.
+
+
+JUnit integration
+
+    The class org.hsqldb.tst.TestSqlTool is a JUnit test suite.
+    It invokes one test method corresponding to each *.list file
+    in this directory.  The file testSQL.list, for example, lists 
+    the SQL test files that are executed and tested for the JUnit 
+    test method "testSQL".  If, for any reason, you want to run
+    a different set of SQL files for the "testSQL" JUnit test
+    (e.g., you add a test or remove a test), then just edit the
+    file testSQL.list accordingly.
