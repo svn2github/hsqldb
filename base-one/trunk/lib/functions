@@ -1,7 +1,7 @@
 
 # Bourne shell (and compatible) script, to be "source".
 
-# $Id$
+# $Id: functions,v 1.2 2002/10/25 22:31:48 unsaved Exp $
 
 # functions used by the hsqldb Linux scripts
 #
@@ -281,3 +281,14 @@ pre_main()
 	build_cp ${dbhome}
 	#build_jdk_cp
 } # pre_main()
+
+NewerThan() {
+    # Must use this in place of the shell "-nt" expression test, because
+    # -nt is very non-portable (e.g. not available in SunOS sh).
+    [ "$#" -eq 2 ] || {
+    	echo "SYNTAX:  NewerThan file/1 file/2" 1>&2
+    	return 1
+    }
+    _LINE1_=`ls -1 -d -t "$1" "$2" 2> /dev/null | head -1`
+    [ "$_LINE1_" = "$1" ]
+}
