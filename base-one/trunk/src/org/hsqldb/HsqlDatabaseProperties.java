@@ -232,6 +232,12 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
 
+        version = getProperty("version");
+
+        if (version.charAt(2) == '6') {
+            setProperty("hsqldb.cache_version", "1.6.0");
+        }
+
         // change to the current version
         setProperty("hsqldb.version", jdbcDriver.VERSION);
         setSystemVariables();

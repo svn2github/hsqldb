@@ -306,6 +306,10 @@ class Logger {
         boolean locked;
         String  msg;
 
+        if (lf != null) {
+            return;
+        }
+
         lf     = LockFile.newLockFile(path + ".lck");
         locked = false;
         msg    = "";

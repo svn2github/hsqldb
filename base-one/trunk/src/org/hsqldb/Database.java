@@ -211,22 +211,32 @@ class Database {
     }
 
     /**
-     * Opens this database.  The database should be opened after construction,
-     * or reopened by the close(int closemode) method during a
-     * "shutdown compact".
+     * Opens this database.  The database should be opened after construction.
      *
      * @see #close(int closemode)
      * @throws HsqlException if a database access error occurs
      */
     synchronized void open() throws HsqlException {
 
-        User sysUser;
-
         if (!isShutdown()) {
             return;
         }
 
         setState(DATABASE_OPENING);
+        reopen();
+    }
+
+    /**
+     * Opens this database.  The database should be opened after construction.
+     * or reopened by the close(int closemode) method during a
+     * "shutdown compact".
+     *
+     * @throws HsqlException if a database access error occurs
+     */
+    void reopen() throws HsqlException {
+
+        User sysUser;
+
         compiledStatementManager.reset();
 
         tTable                = new HsqlArrayList();
@@ -240,7 +250,6 @@ class Database {
         dInfo = DatabaseInformation.newDatabaseInformation(this);
 
         if (sType != DatabaseManager.S_MEM) {
-            databaseProperties.load();
             logger.openLog(this);
         }
 
@@ -705,7 +714,7 @@ class Database {
             // Doing so the instances of Log and other objects are no longer
             // referenced, and therefore can be garbage collected if necessary.
             if (closemode == CLOSEMODE_COMPACT) {
-                open();
+                reopen();
                 logger.closeLog(0);
             }
         } catch (Throwable t) {
