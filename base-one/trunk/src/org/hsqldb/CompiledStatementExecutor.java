@@ -39,11 +39,10 @@ import org.hsqldb.lib.StringUtil;
  * Provides execution of CompiledStatement objects.
  *
  * If multiple threads access a CompiledStatementExecutor concurrently,
- * and at least one of the threads calls an executeXXX method other than
- * execute(CompiledStatement cs), it must be synchronized externally,
- * relative to both this object's Session and the Session's Database.
- * Internally, this is accomplished by synchronizing on the Session
- * object's Database object.
+ * and at least one of the threads calls an executeXXX method, 
+ * it must be synchronized externally, relative to both this object's Session 
+ * and the Session's Database. Internally, this is accomplished by 
+ * synchronizing on the Session object's Database object.
  *
  * @author  boucherb@users.sourceforge.net
  * @vesrion 1.7.2
@@ -77,25 +76,23 @@ public class CompiledStatementExecutor {
      * @param cs any valid CompiledStatement
      */
     Result execute(CompiledStatement cs) {
+        Result result;
 
         DatabaseManager.gc();
-
-        // can be made more granular later, e.g. table-level locking
-        synchronized (database) {
-            Result result = null;
-
-            try {
-                result = executeImpl(cs);
-            } catch (Throwable t) {
-                result = new Result(t, cs.sql);
-            }
-
-            if (result == null) {
-                result = emptyResult;
-            }
-
-            return result;
+        
+        result = null;
+        
+        try {
+            result = executeImpl(cs);
+        } catch (Throwable t) {
+            result = new Result(t, cs.sql);
         }
+        
+        if (result == null) {
+            result = emptyResult;
+        }
+        
+        return result;
     }
 
     /**

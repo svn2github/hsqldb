@@ -174,9 +174,7 @@ public class CompiledStatement {
 
         clearAll();
 
-        this.targetTable = targetTable;
-
-        setParameters(parameters);
+        this.targetTable = targetTable;        
 
         tf = new TableFilter(targetTable, null, false);
 
@@ -186,6 +184,8 @@ public class CompiledStatement {
             condition.resolve(tf);
             tf.setCondition(condition);
         }
+        
+        setParameters(parameters);
 
         type = DELETE;
     }
@@ -208,16 +208,22 @@ public class CompiledStatement {
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
-        this.checkColumns = checkColumns;
-
-        setParameters(parameters);
+        this.checkColumns = checkColumns;        
 
         tf = new TableFilter(targetTable, null, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
-
-            cve.resolve(tf);
+            
+            // CHECKME:  expressions are resolved previously in
+            // Parser.getColumnValueExpressions.  Can this cause problems
+            // for some types of expressions?  What about column values
+            // derived from (correlated) subqueries?
+            if (cve.isParam()) {
+                cve.setDataType(targetTable.getColumn(columnMap[i]).getType());
+            } else {
+                cve.resolve(tf);
+            }
         }
 
         if (updateCondition != null) {
@@ -226,6 +232,8 @@ public class CompiledStatement {
             condition.resolve(tf);
             tf.setCondition(condition);
         }
+        
+        setParameters(parameters);
 
         type = UPDATE;
     }
@@ -241,15 +249,25 @@ public class CompiledStatement {
      */
     void setAsInsertValues(Table targetTable, int[] columnMap,
                            Expression[] columnValues, boolean[] checkColumns,
-                           Expression[] parameters) {
+                           Expression[] parameters) throws HsqlException {
 
         clearAll();
 
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.checkColumns = checkColumns;
-        this.columnValues = columnValues;
-
+        this.columnValues = columnValues;        
+        
+        for (int i = 0; i < columnValues.length; i++) {
+            Expression cve = columnValues[i];
+            
+            // If its not a param, its already been resolved in 
+            // Parser.getColumnValueExpressions
+            if (cve.isParam()) {
+                cve.setDataType(targetTable.getColumn(columnMap[i]).getType());
+            }
+        }
+        
         setParameters(parameters);
 
         type = INSERT_VALUES;
@@ -304,9 +322,11 @@ public class CompiledStatement {
      * @param expression
      * @param parameters
      */
-    void setAsCall(Expression expression, Expression[] parameters) {
+    void setAsCall(Expression expression, Expression[] parameters) throws HsqlException {
 
         this.expression = expression;
+        
+        expression.resolve(null);
 
         setParameters(parameters);
 
@@ -320,7 +340,7 @@ public class CompiledStatement {
         int[] types = new int[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
-            types[i] = parameters[i].getType();
+            types[i] = parameters[i].getDataType();
         }
 
         this.paramTypes = types;
@@ -358,6 +378,7 @@ public class CompiledStatement {
 
             case SELECT : {
                 sb.append(select.toString());
+                appendParms(sb).append('\n');
                 appendSubqueries(sb);
 
                 return sb.toString();
@@ -388,6 +409,7 @@ public class CompiledStatement {
                 sb.append('[').append('\n');
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
+                appendCondition(sb);
                 sb.append(tf).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
@@ -398,6 +420,7 @@ public class CompiledStatement {
                 sb.append("DELETE");
                 sb.append('[').append('\n');
                 appendTable(sb).append('\n');
+                appendCondition(sb);
                 sb.append(tf).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
@@ -409,7 +432,7 @@ public class CompiledStatement {
 
                 sb.append("CALL");
                 sb.append('[');
-                sb.append(expression);
+                sb.append(expression).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -462,10 +485,6 @@ public class CompiledStatement {
 
     private StringBuffer appendParms(StringBuffer sb) {
 
-        if (parameters == null || parameters.length == 0) {
-            return sb;
-        }
-
         sb.append("PARAMETERS=[");
 
         for (int i = 0; i < parameters.length; i++) {
@@ -476,5 +495,11 @@ public class CompiledStatement {
         sb.append(']');
 
         return sb;
+    }
+    
+    private StringBuffer appendCondition(StringBuffer sb) {
+      return condition== null
+        ? sb.append("CONDITION[]\n")
+        : sb.append("CONDITION[").append(condition).append("]\n");
     }
 }

@@ -302,6 +302,7 @@ example:
     <target name="jar" depends="classes14,util,swing">
         <jar jarfile="lib/hsqldb.jar"
              basedir="classes"
+             compress="true"
          >
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>

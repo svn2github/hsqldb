@@ -536,7 +536,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                     break;
 
                 default :
-                    parameters[i] = Column.serializeToString(parameters[i]);
+                    parameters[i] = Column.convertObject(parameters[i],
+                                                         types[i]);
+//                    parameters[i] = Column.serializeToString(parameters[i]);
             }
         }
     }

@@ -91,6 +91,7 @@ import org.hsqldb.lib.StringUtil;
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
 // fredt@users 20021228 - patch 1.7.2 - refactoring
+// boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
 
 /**
  *  Class declaration
@@ -122,281 +123,6 @@ class Parser {
         cSession   = session;
     }
 
-// No longer required; moved to DatabaseCommandInterpreter
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  HsqlException
-     */
-//    Result processSelect() throws HsqlException {
-//
-//        Select select = parseSelect();
-//
-//        if (select.sIntoTable == null) {
-//            return select.getResult(cSession.getMaxRows());
-//        } else {
-//
-//            // session level user rights
-//            cSession.checkDDLWrite();
-//
-//// fredt@users 20020215 - patch 497872 by Nitin Chauhan
-//// to require column labels in SELECT INTO TABLE
-//            for (int i = 0; i < select.eColumn.length; i++) {
-//                if (select.eColumn[i].getAlias().length() == 0) {
-//                    throw Trace.error(Trace.LABEL_REQUIRED);
-//                }
-//            }
-//
-//            if (dDatabase.findUserTable(select.sIntoTable.name, cSession)
-//                    != null) {
-//                throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
-//                                  select.sIntoTable.name);
-//            }
-//
-//            Result r = select.getResult(0);
-//
-//// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-//            Table t;
-//
-//            if (select.intoType == Table.TEXT_TABLE) {
-//                t = new TextTable(dDatabase, select.sIntoTable,
-//                                  select.intoType, cSession.getId());
-//            } else {
-//                t = new Table(dDatabase, select.sIntoTable, select.intoType,
-//                              cSession.getId());
-//            }
-//
-//            t.addColumns(r);
-//            t.createPrimaryKey();
-//            dDatabase.linkTable(t);
-//
-//// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-//            if (select.intoType == Table.TEXT_TABLE) {
-//                try {
-//
-//                    // Use default lowercase name "<table>.csv" (with invalid
-//                    // char's converted to underscores):
-//                    String src =
-//                        StringUtil.toLowerSubset(select.sIntoTable.name, '_')
-//                        + ".csv";
-//
-//                    t.setDataSource(src, false, cSession);
-//                    logTableDDL(t);
-//                    t.insertNoCheck(r, cSession);
-//                } catch (HsqlException e) {
-//                    dDatabase.dropTable(select.sIntoTable.name, false, false,
-//                                        cSession);
-//
-//                    throw (e);
-//                }
-//            } else {
-//                logTableDDL(t);
-//
-//                // SELECT .. INTO can't fail because of constraint violation
-//                t.insertNoCheck(r, cSession);
-//            }
-//
-//            int i = r.getSize();
-//
-//            r              = new Result();
-//            r.iUpdateCount = i;
-//
-//            return r;
-//        }
-//    }
-// No longer required; moved to DatabaseCommandInterpreter
-//    /**
-//     *  Logs the DDL for a table created with INTO.
-//     *  Uses three dummy arguments for getTableDDL() as the new table has no
-//     *  FK constraints.
-//     *
-//     * @throws  HsqlException
-//     */
-//    void logTableDDL(Table t) throws HsqlException {
-//
-//        if (t.isTemp()) {
-//            return;
-//        }
-//
-//        HsqlStringBuffer tableDDL = new HsqlStringBuffer();
-//
-//        DatabaseScript.getTableDDL(dDatabase, t, 0, null, null, tableDDL);
-//
-//        String sourceDDL = DatabaseScript.getDataSource(t);
-//
-//        dDatabase.logger.writeToLog(cSession, tableDDL.toString());
-//
-//        if (sourceDDL != null) {
-//            dDatabase.logger.writeToLog(cSession, sourceDDL);
-//        }
-//    }
-// No longer required; refactored as Parser.compileCallStatement() and
-// CompiledStatementExecutor.executeCallStatement()
-//    /**
-//     *  Method declaration
-//     *
-//     * @return
-//     * @throws  HsqlException
-//     */
-//    Result processCall() throws HsqlException {
-//
-//        Expression e = parseExpression();
-//
-//        e.resolve(null);
-//
-//        int    type = e.getDataType();
-//        Object o    = e.getValue();
-//
-//// boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
-//// return Results as Object, where object is Result or jdbcResultSet.
-//        if (o instanceof Result) {
-//            return (Result) o;
-//        }
-//
-//        if (o instanceof jdbcResultSet) {
-//            return ((jdbcResultSet) o).rResult;
-//        }
-//
-//// --------------------------------------------------------------------------
-//        Result r = new Result(1);
-//
-//        r.sTable[0]  = "";
-//        r.colType[0] = type;
-//        r.sLabel[0]  = "";
-//        r.sName[0]   = "";
-//
-//        Object row[] = new Object[1];
-//
-//        row[0] = o;
-//
-//        r.add(row);
-//
-//        return r;
-//    }
-// No longer required; refactored as Parser.compileUpdateStatement() and
-// CompiledStatementExecutor.executeUpdateStatement()
-//    /**
-//     *  Method declaration
-//     *
-//     * @return
-//     * @throws  HsqlException
-//     */
-//    Result processUpdate() throws HsqlException {
-//
-//        String token = tTokenizer.getString();
-//
-//        tTokenizer.checkUnexpectedParam("parametric table identifier");
-//
-//        Table table = dDatabase.getTable(token, cSession);
-//
-//        checkTableWriteAccess(table, UserManager.UPDATE);
-//
-//        TableFilter filter = new TableFilter(table, null, false);
-//
-//        tTokenizer.getThis("SET");
-//
-//        HsqlArrayList vColumn = new HsqlArrayList();
-//        HsqlArrayList eColumn = new HsqlArrayList();
-//        int           len     = 0;
-//
-//        token = null;
-//
-//        do {
-//            len++;
-//
-//            int i = table.getColumnNr(tTokenizer.getString());
-//
-//            vColumn.add(new Integer(i));
-//            tTokenizer.getThis("=");
-//
-//            Expression e = parseExpression();
-//
-//            e.resolve(filter);
-//            eColumn.add(e);
-//
-//            token = tTokenizer.getString();
-//        } while (token.equals(","));
-//
-//        Expression eCondition = null;
-//
-//        if (token.equals("WHERE")) {
-//            eCondition = parseExpression();
-//
-//            eCondition.resolve(filter);
-//            filter.setCondition(eCondition);
-//        } else {
-//            tTokenizer.back();
-//        }
-//
-//        Expression exp[] = new Expression[len];
-//
-//        eColumn.toArray(exp);
-//
-//        int col[]  = new int[len];
-//        int type[] = new int[len];
-//
-//        //int csize[] = new int[len];
-//        for (int i = 0; i < len; i++) {
-//            col[i] = ((Integer) vColumn.get(i)).intValue();
-//
-//            Column column = table.getColumn(col[i]);
-//
-//            type[i] = column.getType();
-//
-//            //csize[i] = column.getSize();
-//        }
-//
-//        int count = 0;
-//
-//        if (filter.findFirst()) {
-//
-////            Result del  = new Result();    // don't need column count and so on
-////            Result ins  = new Result();
-//            HsqlLinkedList del  = new HsqlLinkedList();
-//            Result         ins  = new Result();
-//            int            size = table.getColumnCount();
-//
-//            do {
-//                if (eCondition == null || eCondition.test()) {
-//                    Row row = filter.currentRow;
-//
-//                    del.add(row);
-//
-//                    Object ni[] = table.getNewRow();
-//
-//                    System.arraycopy(row.getData(), 0, ni, 0, size);
-//
-//                    for (int i = 0; i < len; i++) {
-//                        ni[col[i]] = exp[i].getValue(type[i]);
-//                    }
-//
-//                    ins.add(ni);
-//                }
-//            } while (filter.next());
-//
-//            cSession.beginNestedTransaction();
-//
-//            try {
-//                count = table.update(del, ins, col, cSession);
-//
-//                cSession.endNestedTransaction(false);
-//            } catch (HsqlException e) {
-//
-//                // update failed (constraint violation)
-//                cSession.endNestedTransaction(true);
-//
-//                throw e;
-//            }
-//        }
-//
-//        Result r = new Result();
-//
-//        r.iUpdateCount = count;
-//
-//        return r;
-//    }
     void checkTableWriteAccess(Table table,
                                int userRight) throws HsqlException {
 
@@ -415,170 +141,6 @@ class Parser {
         table.checkDataReadOnly();
     }
 
-// No longer required; refactored as Parser.compileDeleteStatement() and
-// CompiledStatementExecutor.executeDeleteStatement()
-//    /**
-//     *  Method declaration
-//     *
-//     * @return
-//     * @throws  HsqlException
-//     */
-//    Result processDelete() throws HsqlException {
-//
-//        tTokenizer.getThis("FROM");
-//
-//        String token = tTokenizer.getString();
-//
-//        tTokenizer.checkUnexpectedParam("parametric table identifier");
-//
-//        Table table = dDatabase.getTable(token, cSession);
-//
-//        checkTableWriteAccess(table, UserManager.DELETE);
-//
-//        TableFilter filter = new TableFilter(table, null, false);
-//
-//        token = tTokenizer.getString();
-//
-//        Expression eCondition = null;
-//
-//        if (token.equals("WHERE")) {
-//            eCondition = parseExpression();
-//
-//            eCondition.resolve(filter);
-//            filter.setCondition(eCondition);
-//        } else {
-//            tTokenizer.back();
-//        }
-//
-//        int count = 0;
-//
-//        if (filter.findFirst()) {
-//
-////            Result del = new Result();    // don't need column count and so on
-//            HsqlLinkedList del = new HsqlLinkedList();
-//
-//            do {
-//                if (eCondition == null || eCondition.test()) {
-//
-////                    del.add(filter.oCurrentData);
-//                    del.add(filter.currentRow);
-//                }
-//            } while (filter.next());
-//
-//            count = table.delete(del, cSession);
-//        }
-//
-//        Result r = new Result();
-//
-//        r.iUpdateCount = count;
-//
-//        return r;
-//    }
-// No longer required; refactored as Parser.compileInsertStatement() and
-// CompiledStatementExecutor.executeInsertStatement()
-//    /**
-//     *  Method declaration
-//     *
-//     * @return
-//     * @throws  HsqlException
-//     */
-//    Result processInsert() throws HsqlException {
-//
-//        tTokenizer.getThis("INTO");
-//
-//        String token = tTokenizer.getString();
-//
-//        tTokenizer.checkUnexpectedParam("parametric table identifier");
-//
-//        Table t = dDatabase.getTable(token, cSession);
-//
-//        checkTableWriteAccess(t, UserManager.INSERT);
-//
-//        token = tTokenizer.getString();
-//
-//        HsqlArrayList colnames       = null;
-//        boolean       checkcolumns[] = null;
-//        int           columnmap[]    = t.getColumnMap();
-//        int           len            = t.getColumnCount();
-//
-//        if (token.equals("(")) {
-//            colnames = getColumnNames();
-//
-//            if (colnames.size() > len) {
-//                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-//            }
-//
-//            len          = colnames.size();
-//            checkcolumns = t.getNewColumnCheckList();
-//            columnmap    = t.getNewColumnMap();
-//
-//            for (int i = 0; i < len; i++) {
-//                int colindex = t.getColumnNr((String) colnames.get(i));
-//
-//                columnmap[i]           = colindex;
-//                checkcolumns[colindex] = true;
-//            }
-//
-//            token = tTokenizer.getString();
-//        }
-//
-//        int count = 0;
-//
-//        if (token.equals("VALUES")) {
-//            Object row[] = t.getNewRow(checkcolumns);
-//
-//            getColumnValues(t, row, columnmap, len);
-//            t.insert(row, cSession);
-//
-//            count = 1;
-//        } else if (token.equals("SELECT")) {
-//            int[]  columntypes = t.getColumnTypes();
-//            Result result      = processSelect();
-//            Record r           = result.rRoot;
-//
-//            Trace.check(len == result.getColumnCount(),
-//                        Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-//            cSession.beginNestedTransaction();
-//
-//            try {
-//                while (r != null) {
-//                    Object row[] = t.getNewRow(checkcolumns);
-//
-//                    for (int i = 0; i < len; i++) {
-//                        int j = columnmap[i];
-//
-//                        if (columntypes[j] != result.colType[i]) {
-//                            row[j] = Column.convertObject(r.data[i],
-//                                                          columntypes[j]);
-//                        } else {
-//                            row[j] = r.data[i];
-//                        }
-//                    }
-//
-//                    r.data = row;
-//                    r      = r.next;
-//                }
-//
-//                count = t.insert(result, cSession);
-//
-//                cSession.endNestedTransaction(false);
-//            } catch (HsqlException e) {
-//
-//                // insert failed (violation of primary key)
-//                cSession.endNestedTransaction(true);
-//
-//                throw e;
-//            }
-//        } else {
-//            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-//        }
-//
-//        Result r = new Result();
-//
-//        r.iUpdateCount = count;
-//
-//        return r;
-//    }
     HsqlArrayList getColumnNames() throws HsqlException {
 
         HsqlArrayList columns = new HsqlArrayList();
@@ -646,10 +208,12 @@ class Parser {
 
         HsqlException se;
         Select        s;
+        int           parameterCount;
 
         se                = null;
         s                 = null;
         isParsingSubquery = true;
+        parameterCount    = parameters.size();
 
         subQueryLevel++;
 
@@ -665,6 +229,9 @@ class Parser {
             throw se;
         }
 
+        Trace.doAssert(parameterCount == parameters.size(),
+                       "subqueries with parameters not yet supported");
+
         SubQuery sq = new SubQuery();
 
         sq.level  = subQueryLevel;
@@ -674,7 +241,6 @@ class Parser {
 
         subQueryLevel--;
 
-        //System.out.println("subQueryHeap: " + subQueryHeap);
         return s;
     }
 
@@ -739,6 +305,8 @@ class Parser {
         do {
             Expression e = parseExpression();
 
+            checkParamAmbiguity(!e.isParam(), "as a SELECT list item");
+
             token = tTokenizer.getString();
 
             if (token.equals(Token.T_AS)) {
@@ -779,6 +347,8 @@ class Parser {
                 select.sIntoTable =
                     new HsqlName(token, tTokenizer.wasQuotedIdentifier());
             }
+
+            tTokenizer.checkUnexpectedParam("parametric table identifier");
 
             token = tTokenizer.getString();
         }
@@ -911,6 +481,8 @@ class Parser {
             do {
                 Expression e = parseExpression();
 
+                checkParamAmbiguity(!e.isParam(), "as a GROUP BY list item");
+
                 // tony_lai@users having support:
                 // "group by" does not allow refering to other columns alias.
                 //e = doOrderGroup(e, vcolumn);
@@ -940,6 +512,8 @@ class Parser {
 
             do {
                 Expression e = parseExpression();
+
+                checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
 
                 e     = checkOrderByColumns(e, vcolumn);
                 token = tTokenizer.getString();
@@ -1075,14 +649,14 @@ class Parser {
             t.addColumns(r);
 
             // TODO:
-            // We loose / do not exploit index info here.
+            // We lose / do not exploit index info here.
             // Look at what, if any, indexes the query might benefit from
             // and create or carry them across here if it might speed up
             // subsequent access.
             t.createPrimaryKey();
 
             // TODO:  this should be delayed until CompiledStatement is evaulated
-            // subquery creation can't fail because constraint violation
+            // NOTE: subquery creation can't fail because constraint violation
             t.insertNoCheck(r, cSession);
         } else {
             tTokenizer.checkUnexpectedParam("parametric table identifier");
@@ -1142,7 +716,7 @@ class Parser {
                 t.addColumns(r);
 
                 // TODO:
-                // We loose / do not exploit index info here.
+                // We lose / do not exploit index info here.
                 // Look at what, if any, indexes the query might benefit from
                 // and create or carry them across here if it might speed up
                 // subsequent access.
@@ -1156,6 +730,9 @@ class Parser {
 
         String sAlias = null;
 
+// TODO:  maybe check for unexpected param as alias?
+// Not very important, but there still is a distinction
+// i.e. "?" is a valid alias, but ? is, in essence, a reserved word
         token = tTokenizer.getString();
 
         if (token.equals(Token.T_AS)) {
@@ -1203,8 +780,11 @@ class Parser {
      */
     private Object getValue(int type) throws HsqlException {
 
-        Expression r = parseExpression();
+        int        paramCount = parameters.size();
+        Expression r          = parseExpression();
 
+        Trace.doAssert(paramCount == parameters.size(),
+                       "expression has unbound parameters");
         r.resolve(null);
 
         return r.getValue(type);
@@ -1382,6 +962,15 @@ class Parser {
                             new Expression(Expression.SMALLER_EQUAL, a,
                                            readConcat());
 
+                        checkParamAmbiguity(
+                            !(l.getArg().isParam() && l.getArg2().isParam()),
+                            "for both the first and second operands of a "
+                            + "BETWEEN comparison predicate");
+                        checkParamAmbiguity(
+                            !(h.getArg().isParam() && h.getArg2().isParam()),
+                            "for both the first and third operands of a "
+                            + "BETWEEN comparison predicate");
+
                         a = new Expression(Expression.AND, l, h);
 
                         break;
@@ -1404,6 +993,9 @@ class Parser {
                             HsqlArrayList v = new HsqlArrayList();
 
                             while (true) {
+
+                                // part of bigger IN list TODO:
+                                // allow parametric list items
                                 tTokenizer.checkUnexpectedParam(
                                     "parametric IN list item");
 
@@ -1594,12 +1186,18 @@ class Parser {
 
                 r = new Expression(type, readTerm(), null);
 
+                checkParamAmbiguity(!r.getArg().isParam(),
+                                    "as the operand of a unary – operation");
+
                 break;
             }
             case Expression.PLUS : {
                 read();
 
                 r = readTerm();
+
+                checkParamAmbiguity(!r.isParam(),
+                                    "as the operand of a unary + operation");
 
                 break;
             }
@@ -1624,7 +1222,7 @@ class Parser {
                 break;
             }
             case Expression.PARAM : {
-                r = new Expression(Types.NULL, null);
+                r = new Expression(Types.NULL, null, true);
 
                 parameters.add(r);
                 read();
@@ -1696,6 +1294,10 @@ class Parser {
 
                 int t = Column.getTypeNr(sToken);
 
+                if (r.isParam()) {
+                    r.setDataType(t);
+                }
+
                 r = new Expression(type, r, null);
 
                 r.setDataType(t);
@@ -1715,6 +1317,10 @@ class Parser {
                 read();
 
                 int t = Column.getTypeNr(sToken);
+
+                if (r.isParam()) {
+                    r.setDataType(t);
+                }
 
                 r = new Expression(Expression.CONVERT, r, null);
 
@@ -1882,16 +1488,23 @@ class Parser {
 
     Expression[] getParameters() {
 
+// TODO:  when Parser is reusable (maybe even before?) this should be
+// a destructive get (i.e. clears the parameters) so as to allow earier
+// garbage collection and avoid memory leaks.
+// Currently, parsers are created, used and thrown away immediately, typically
+// in method scope, so this is not really a big an issue for now.
         return parameters.size() == 0 ? noParameters
                                       : (Expression[]) parameters.toArray(
                                           new Expression[parameters.size()]);
+
+//      parameters.clear();
     }
 
     void clearParameters() {
         parameters.clear();
     }
 
-    // destructive get, but that's OK
+    // destructive get, but that's OK (preferred, actually)
     SubQuery[] getSubqueries() {
 
         SubQuery[] subqueries;
@@ -1926,18 +1539,27 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        if (Token.T_CALL.equals(token)) {
-            return compileCallStatement(cs);
-        } else if (Token.T_DELETE.equals(token)) {
-            return compileDeleteStatement(cs);
-        } else if (Token.T_INSERT.equals(token)) {
-            return compileInsertStatement(cs);
-        } else if (Token.T_UPDATE.equals(token)) {
-            return compileUpdateStatement(cs);
-        } else if (Token.T_SELECT.equals(token)) {
-            return compileSelectStatement(cs);
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        int id = Token.get(token);
+
+        switch (id) {
+
+            case Token.CALL :
+                return compileCallStatement(cs);
+
+            case Token.DELETE :
+                return compileDeleteStatement(cs);
+
+            case Token.INSERT :
+                return compileInsertStatement(cs);
+
+            case Token.UPDATE :
+                return compileUpdateStatement(cs);
+
+            case Token.SELECT :
+                return compileSelectStatement(cs);
+
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
     }
 
@@ -2021,6 +1643,10 @@ class Parser {
         for (; i < len; i++) {
             cve = parseExpression();
 
+// boucherb@users 20030705
+// CHECKME:  Is it always correct / desirable to resolve the expressions
+// here?  Or are there some cases where resolution should be delayed.
+// See, for instance, CompiledStatement.setAsUpdate().
             cve.resolve(null);
 
             acve[i] = cve;
@@ -2157,8 +1783,11 @@ class Parser {
     CompiledStatement compileUpdateStatement(CompiledStatement cs)
     throws HsqlException {
 
-        String        token;
-        Table         table;
+        String token;
+        Table  table;
+
+// todo: this would be more efficient as either a primitive list or
+// an IntKeyIntValueHashMap
         HsqlArrayList ciList;
         HsqlArrayList cveList;
         int           len;
@@ -2246,6 +1875,14 @@ class Parser {
         public int compare(Object a, Object b) {
             return ((SubQuery) b).level - ((SubQuery) a).level;
         }
+    }
+
+    private static final String pamsg =
+        "It is ambiguous to specify a parameter marker ";
+
+    static void checkParamAmbiguity(boolean b,
+                                    String msg) throws HsqlException {
+        Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg + msg);
     }
 
 // --

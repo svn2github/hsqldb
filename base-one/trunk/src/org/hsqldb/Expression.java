@@ -128,6 +128,8 @@ class Expression {
                      MIN   = 42,
                      MAX   = 43,
                      AVG   = 44;
+// TODO: Standard Deviation and maybe some other statistical aggregate functions
+//                   STDDEV  = 45;
 
     // system functions
     static final int IFNULL   = 60,
@@ -189,6 +191,10 @@ class Expression {
     static final Integer INTEGER_0 = new Integer(0);
     static final Integer INTEGER_1 = new Integer(1);
 
+    // PARAM
+
+    private boolean isParam;
+
     /**
      * Creates a new FUNCTION expression
      * @param f
@@ -245,7 +251,7 @@ class Expression {
     }
 
     /**
-     * Creates a new binary operation expression
+     * Creates a new binary (or unary) operation expression
      *
      * @param type operator type
      * @param e operand 1
@@ -308,6 +314,18 @@ class Expression {
         oData     = o;
     }
 
+    /**
+     * Creates a new (possibly PARAM) VALUE expression
+     *
+     * @param datatype initial datatype
+     * @param o initial value
+     * @param isParam true if this is to be a PARAM VALUE expression
+     */
+    Expression(int datatype, Object o, boolean isParam) {
+        this(datatype, o);
+        this.isParam = isParam;
+    }
+
     private void checkAggregate() {
 
         if (isAggregate(iType)) {
@@ -356,8 +374,17 @@ class Expression {
                 return buf.toString();
 
             case VALUE :
+
+                if (isParam) {
+                    buf.append("PARAM ");
+                }
+
                 buf.append("VALUE = ");
                 buf.append(oData);
+
+                if (isParam) {
+                    buf.append(", TYPE = " + Column.getTypeString(iDataType));
+                }
 
                 return buf.toString();
 
@@ -494,6 +521,8 @@ class Expression {
 
             case CONVERT :
                 buf.append("CONVERT ");
+                buf.append(Column.getTypeString(iDataType));
+                buf.append(' ');
                 break;
 
             case CASEWHEN :
@@ -983,6 +1012,10 @@ class Expression {
      */
     void resolve(TableFilter f) throws HsqlException {
 
+        if(isParam) {
+            return;
+        }
+
         if ((f != null) && (iType == COLUMN)) {
             String tableName = f.getName();
 
@@ -1030,7 +1063,7 @@ class Expression {
             fFunction.resolve(f);
         }
 
-        if (iDataType != 0) {
+        if (iDataType != Types.NULL) {
             return;
         }
 
@@ -1045,6 +1078,10 @@ class Expression {
                 break;
 
             case NEGATE :
+                Trace.check(!eArg.isParam,
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for a parameter marker to be " +
+                            " the operand of a unary negation operation");
                 iDataType = eArg.iDataType;
                 break;
 
@@ -1053,6 +1090,17 @@ class Expression {
             case MULTIPLY :
             case DIVIDE :
 
+                 Trace.check(!(eArg.isParam && eArg2.isParam),
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for both operands of a binary " +
+                        "aritmentic operator to be parameter markers");
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = eArg2.iDataType;
+                 } else if(eArg2.isParam) {
+                     eArg2.iDataType = eArg.iDataType;
+                 }
+
 // fredt@users 20011010 - patch 442993 by fredt
                 iDataType = Column.getCombinedNumberType(eArg.iDataType,
                         eArg2.iDataType, iType);
@@ -1060,24 +1108,105 @@ class Expression {
 
             case CONCAT :
                 iDataType = Types.VARCHAR;
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = Types.VARCHAR;
+                 }
+
+                 if(eArg2.isParam) {
+                     eArg2.iDataType = Types.VARCHAR;
+                 }
                 break;
 
-            case NOT :
+
             case EQUAL :
             case BIGGER_EQUAL :
             case BIGGER :
             case SMALLER :
             case SMALLER_EQUAL :
             case NOT_EQUAL :
+
+                 Trace.check(!(eArg.isParam && eArg2.isParam),
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for both expressions of a " +
+                        "comparison-predicate to be parameter markers");
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = eArg2.iDataType;
+                 } else if(eArg2.isParam) {
+                     eArg2.iDataType = eArg.iDataType;
+                 }
+
+                 iDataType = Types.BIT;
+
+                 break;
+
             case LIKE :
+
+                 Trace.check(!(eArg.isParam && eArg2.isParam),
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for both expressions of a LIKE " +
+                        "comparison-predicate to be parameter markers");
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = Types.VARCHAR;
+                 } else if(eArg2.isParam) {
+                     eArg2.iDataType = Types.VARCHAR;
+                 }
+
+                 iDataType = Types.BIT;
+
+                 break;
+
             case AND :
             case OR :
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = Types.BIT;
+                 }
+
+                 if(eArg2.isParam) {
+                     eArg2.iDataType = Types.BIT;
+                 }
+
+                 iDataType = Types.BIT;
+
+                 break;
+
+            case NOT :
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = Types.BIT;
+                 }
+
+                 iDataType = Types.BIT;
+
+                 break;
+
             case IN :
+
+                 if (eArg.isParam) {
+                    eArg.iDataType = eArg2.iDataType;
+                 }
+
+                 iDataType = Types.BIT;
+
+                 break;
+
             case EXISTS :
+
+                // note: no such thing as a param arg if expression is EXISTS
+
                 iDataType = Types.BIT;
                 break;
 
             case COUNT :
+
+                 Trace.check(!eArg.isParam,
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for a parameter marker to be the " +
+                        "argument of a set-function-reference");
+
                 iDataType = Types.INTEGER;
                 break;
 
@@ -1085,17 +1214,173 @@ class Expression {
             case MIN :
             case SUM :
             case AVG :
+
+                 Trace.check(!eArg.isParam,
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for a parameter marker to be the " +
+                        "argument of a set-function-reference");
+
                 iDataType = eArg.iDataType;
                 break;
 
             case CONVERT :
 
-                // it is already set
+                // iDataType for this and for eArg (if isParm)
+                // is already set in Parser
+
                 break;
 
             case IFNULL :
-            case CASEWHEN :
+
+                 Trace.check(!(eArg.isParam && eArg2.isParam),
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for both operands of an IFNULL " +
+                        "operation to be parameter markers");
+
+                 if (eArg.isParam) {
+                     eArg.iDataType = eArg2.iDataType;
+                 } else if(eArg2.isParam) {
+                     eArg2.iDataType = eArg.iDataType;
+                 }
+
+                 // checkme: fishy...
+                 // if eArg.getValue() != null, then this.getValue(this.iType)
+                 // might try to make an unecessary (even disallowed) conversion?
                 iDataType = eArg2.iDataType;
+                break;
+
+            case CASEWHEN :
+
+                if (eArg2.eArg == null) {
+                    // We use CASEWHEN as both parent and leaf type.
+                    // In the parent, eArg is the condition, and eArg2 is
+                    // the leaf, also tagged as type CASEWHEN, but its eArg is
+                    // case 1 (how to get the value when the condition in
+                    // the parent evaluates to true) and its eArg2 is case 2
+                    // (how to get the value when the condition in
+                    // the parent evaluates to true)
+                    break;
+                }
+
+                if (eArg.isParam) {
+                    // condition is a paramter marker,
+                    // as in casewhen(?, v1, v1)
+                    eArg.iDataType = Types.BIT;
+                }
+
+                Expression case1 = eArg2.eArg;
+                Expression case2 = eArg2.eArg2;
+
+                Trace.check(!(case1.isParam && case2.isParam),
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "it is ambiguous for both the second and third " +
+                        "operands of a CASEWHEN operation to be parameter "+
+                        "markers");
+
+                if (case1.isParam) {
+                    iDataType = case2.iDataType;
+                    case1.iDataType = iDataType;
+                } else if (case2.isParam) {
+                    iDataType = case1.iDataType;
+                    case2.iDataType = iDataType;
+                } else {
+                    // boucherb@users 20030705
+                    //
+                    // CHECKME:
+                    //
+                    // - Did this ever work properly?
+                    //
+                    // - Does it matter?
+                    //
+                    //   Well, in general, the output of a CASEWHEN (indeed,
+                    //   any expression) is automatically cast or converted to
+                    //   the correct type (or fails in the process) when
+                    //   performing inserts, updates, comparisons, arithmetic
+                    //   operations, etc.,  so it was not absolutely crucial
+                    //   for this to be strictly correct (completely
+                    //   unambiguous) before parametric statements became
+                    //   a reality.
+                    //
+                    //   However, the answer is now: Yes, since it may be
+                    //   required to determine a param expression's data type
+                    //   by inference.
+                    //
+                    //    Example:
+                    //
+                    //       ... WHERE ? = CASEWHEN(condition, expr1, expr2)
+                    //
+                    //    If expr1 and expr2 have different data types, then
+                    //    how to infer the data type of the paramter marker?
+                    //    Maybe it should be illegal for expr1 and expr2 to
+                    //    have "incompatible" data types?  Maybe not?
+                    //    For instance, although is is legal, does this really
+                    //    make sense:
+                    //
+                    //    UPDATE T SET C1 = CASEWHEN(condition, 'hello', 1)
+                    //
+                    //    OTOH, if it is strictly disallowed, then something
+                    //    like this (silly but easy to understand) example is
+                    //    prohibited, yet could make sense:
+                    //
+                    //    UPDATE T SET C1 = CAST(CASEWHEN(c, '2', 1) AS VARCHAR)
+                    //
+                    //    OTOOH ;-), its just as easy to require:
+                    //
+                    //    UPDATE T SET C1 = CASEWHEN(c, '2', CAST(1 AS VARCHAR))
+                    //
+                    //    So maybe imposing a restriction that both cases of a
+                    //    CASEWHEN must have the same data type is not that bad
+                    //    an idea.  Thoughts?
+                    /* fredt -
+                          ... WHERE ? = CASEWHEN(condition, expr1, expr2)
+                          this must require both expr1 and expr2 to have the
+                          same type as otherwise the context is ambiguous
+
+                          UPDATE T SET C1 = CASEWHEN(condition, 'hello', 1)
+                          type of the expression must be the the same as C1 so
+                          it should be resolved in the context of
+                          C1 = expression
+
+                          UPDATE T SET C1 = CASEWHEN(c, '2', CAST(1 AS VARCHAR))
+                          this is the form that should be accepted if instead
+                          of '2' there was a ?
+
+                         in normal statements, there is no need to require both
+                         arguments to CASEWHEN to have the same type, but in
+                         parameterized statemnents they should
+                    */
+                    //
+                    // TODO:
+                    //
+                    // Either enforce that both cases must be the same
+                    // data type or perhaps think about the the implications
+                    // of a more flexible policy, something like:
+                    //
+                    // 1.) Column.combinedNumberType if both case1 and case2
+                    //     have number data types
+                    //
+                    // 2.) The data type shared by case1 and case2, if they have
+                    //     the same type
+                    //
+                    // 3.) Throw if not 1 or 2.), or, worst case, set as the
+                    //     more flexible (wider) of the two data types, when
+                    //     case1 and case2 do not share the same type.
+                    //
+                    //     Of course, the big qeustion is:
+                    //
+                    //          What is more flexible type?
+
+                    // NO:
+                    // AFAICT, under both the old and current resolution
+                    // scheme, this will always be zero, which is the same as
+                    // Types.NULL, which I really doubt this is what we want.
+                    // iDataType = eArg2.iDataType;
+
+                    // best effort until CHECKME/TODO is resolved
+                    iDataType = (case1.iDataType == Types.NULL)
+                        ? case2.iDataType
+                        : case1.iDataType;
+                }
                 break;
         }
     }
@@ -1658,7 +1943,10 @@ class Expression {
 
                 // must be comparisation
                 // todo: make sure it is
-                return new Boolean(test());
+                // boucherb@users 20030704 - ack!
+                // a new Boolean for each test is a _huge_ waste
+                // return new Boolean(test());
+                return test() ? Boolean.TRUE : Boolean.FALSE;
         }
     }
 
@@ -1887,7 +2175,12 @@ class Expression {
 //-------------------------------------------------------------------
     void bind(Object o, int type) throws HsqlException {
         oData     = o;
-        iDataType = type;
+        // TODO:  now that PARAM expressions are resolved to their
+        // correct data type, this stuff needs to be cleaned up
+        // depends on client and protocol, so I leave the first stages
+        // to you, Fred.  Basically, we either do not need this sig
+        // any more, of the semantics should change
+        //iDataType = type;
     }
 
 //-------------------------------------------------------------------
@@ -1897,4 +2190,7 @@ class Expression {
     }
 
 //-------------------------------------------------------------------
+    boolean isParam() {
+        return isParam;
+    }
 }

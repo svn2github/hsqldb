@@ -347,10 +347,17 @@ class Function {
      * against the specified TableFilter
      */
     void resolve(TableFilter f) throws HsqlException {
+        int i;
+        
+        i = bConnection ? 1 : 0;
 
-        for (int i = 0; i < iArgCount; i++) {
-            if (eArg[i] != null) {
-                eArg[i].resolve(f);
+        for (; i < iArgCount; i++) {
+            if (eArg[i] != null) {                
+                if (eArg[i].isParam()) {
+                    eArg[i].setDataType(iArgType[i]);
+                } else {
+                    eArg[i].resolve(f);
+                }
             }
         }
     }
