@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.22 2004/05/16 21:28:30 unsaved Exp $
+# $Id: hsqldb,v 1.23 2004/06/01 01:25:40 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -179,18 +179,22 @@ COMMAND="$1"; shift
 }
 HSQLDB_OWNER=
 JAVA_HOME=
-HSQLDB_HOME=
+HSQLDB_JAR_PATH=
 SERVER_HOME=
 SHUTDOWN_URLIDS=
 . "$CFGFILE"
 # Validate that config file sets all required variables.
-[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
+[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_JAR_PATH" ] && [ -n "$SERVER_HOME" ] || {
     echo "Config file '$CFGFILE' does not set one or more of following variables
-    JAVA_HOME, HSQLDB_HOME, SERVER_HOME" 1>&2
+    JAVA_HOME, HSQLDB_JAR_PATH, SERVER_HOME" 1>&2
     exit 2
 }
-[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
+[ -d "$JAVA_HOME" ] && [ -d "$SERVER_HOME" ] || {
     echo "A *_HOME variables set in '$CFGFILE' is set to a non-directory." 1>&2
+    exit 2
+}
+[ -f "$HSQLDB_JAR_PATH" ] || {
+    echo "HSQLDB_JAR_PATH in '$CFGFILE' is set to a non-file." 1>&2
     exit 2
 }
 
@@ -210,12 +214,8 @@ esac
     echo "'$PROPERTY_FILE' isn't readable" 1>&2
     exit 2
 }
-[ -f "$HSQLDB_HOME"/lib/hsqldb.jar ] || {
-    echo "'$HSQLDB_HOME/lib' doesn't contain hsqldb.jar" 1>&2
-    exit 2
-}
-[ -r "$HSQLDB_HOME"/lib/hsqldb.jar ] || {
-    echo "'$HSQLDB_HOME/lib/hsqldb.jar' isn't readable" 1>&2
+[ -r "$HSQLDB_JAR_PATH" ] || {
+    echo "'$HSQLDB_JAR_PATH' isn't readable" 1>&2
     exit 2
 }
 [ -x "$JAVA_HOME"/bin/java ] || {
@@ -260,7 +260,7 @@ case "$COMMAND" in
             echo "I don't know of any running hsqldb server."
             exit 0
         }
-        echo "There is an hsqldb server based at $HSQLDB_HOME
+        echo "There is an hsqldb server loaded from $HSQLDB_JAR_PATH
 running with pid $HSQLDB_PID."
         # I would give a nice ps command here, were ps not so damned 
         # OS-specific.
@@ -273,7 +273,7 @@ running with pid $HSQLDB_PID."
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
         # Might as well set CLASSPATH too, for a cleaner command.
-        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
         exec java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
@@ -301,14 +301,14 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_JAR_PATH' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
                 exit 1
             }
             export JAVA_HOME
-            export HSQLDB_HOME
+            export HSQLDB_JAR_PATH
             export PIDFILE
             export TLS_SWITCHES
             export SERVER_JVMARGS
@@ -318,7 +318,7 @@ running with pid $HSQLDB_PID."
                     echo "Failed to write pid to pid file" 1>&2
                     exit 1
                 }
-                exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
+                exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_JAR_PATH"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
         sleep $SU_ECHO_SECS  # Make sure bg commands have time to echo pid.
@@ -331,7 +331,7 @@ running with pid $HSQLDB_PID."
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
         # Might as well set CLASSPATH too, for a cleaner command.
-        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
         # There are many reasons why we could fail to read the pid file,
@@ -381,7 +381,7 @@ See log file '$LOGFILE'." 1>&2
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
         # Might as well set CLASSPATH too, for a cleaner command.
-        CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
+        CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
         java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
