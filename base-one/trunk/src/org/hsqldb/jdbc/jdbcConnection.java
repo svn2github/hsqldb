@@ -478,7 +478,7 @@ public class jdbcConnection implements Connection {
      * @see #createStatement(int,int)
      * @see #createStatement(int,int,int)
      */
-    public Statement createStatement() throws SQLException {
+    public synchronized Statement createStatement() throws SQLException {
 
         checkClosed();
 
@@ -536,7 +536,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs <p>
      * @see #prepareStatement(String,int,int)
      */
-    public PreparedStatement prepareStatement(String sql)
+    public synchronized PreparedStatement prepareStatement(String sql)
     throws SQLException {
 
         PreparedStatement stmt;
@@ -595,7 +595,8 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs <p>
      * @see #prepareCall(String,int,int)
      */
-    public CallableStatement prepareCall(String sql) throws SQLException {
+    public synchronized CallableStatement prepareCall(String sql)
+    throws SQLException {
 
         CallableStatement stmt;
 
@@ -686,7 +687,8 @@ public class jdbcConnection implements Connection {
      * @return the native form of this statement
      * @throws SQLException if a database access error occurs <p>
      */
-    public String nativeSQL(final String sql) throws SQLException {
+    public synchronized String nativeSQL(final String sql)
+    throws SQLException {
 
         // boucherb@users 20030405
         // FIXME: does not work properly for nested escapes
@@ -900,7 +902,8 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      * @see #getAutoCommit
      */
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
+    public synchronized void setAutoCommit(boolean autoCommit)
+    throws SQLException {
 
         checkClosed();
 
@@ -918,7 +921,7 @@ public class jdbcConnection implements Connection {
      * @exception  SQLException Description of the Exception
      * @see  #setAutoCommit
      */
-    public boolean getAutoCommit() throws SQLException {
+    public synchronized boolean getAutoCommit() throws SQLException {
 
         checkClosed();
 
@@ -958,7 +961,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit
      */
-    public void commit() throws SQLException {
+    public synchronized void commit() throws SQLException {
 
         checkClosed();
 
@@ -998,7 +1001,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit
      */
-    public void rollback() throws SQLException {
+    public synchronized void rollback() throws SQLException {
 
         checkClosed();
 
@@ -1101,7 +1104,7 @@ public class jdbcConnection implements Connection {
      * @throws SQLException if a database access error occurs
      * @see jdbcDatabaseMetaData
      */
-    public DatabaseMetaData getMetaData() throws SQLException {
+    public synchronized DatabaseMetaData getMetaData() throws SQLException {
 
         checkClosed();
 
@@ -1154,7 +1157,8 @@ public class jdbcConnection implements Connection {
      * @param readonly The new readOnly value
      * @exception SQLException if a database access error occurs
      */
-    public void setReadOnly(boolean readonly) throws SQLException {
+    public synchronized void setReadOnly(boolean readonly)
+    throws SQLException {
 
         checkClosed();
 
@@ -1171,7 +1175,7 @@ public class jdbcConnection implements Connection {
      * @return  true if connection is read-only and false otherwise
      * @exception  SQLException if a database access error occurs
      */
-    public boolean isReadOnly() throws SQLException {
+    public synchronized boolean isReadOnly() throws SQLException {
 
         try {
             return sessionProxy.isReadOnly();
@@ -1200,7 +1204,7 @@ public class jdbcConnection implements Connection {
      *     Connection object's database) in which to work (Ignored)
      * @throws SQLException if a database access error occurs <p>
      */
-    public void setCatalog(String catalog) throws SQLException {
+    public synchronized void setCatalog(String catalog) throws SQLException {
         checkClosed();
     }
 
@@ -1223,7 +1227,7 @@ public class jdbcConnection implements Connection {
      *     For HSQLDB, this is always null.
      * @exception SQLException Description of the Exception
      */
-    public String getCatalog() throws SQLException {
+    public synchronized String getCatalog() throws SQLException {
 
         checkClosed();
 
@@ -1264,7 +1268,8 @@ public class jdbcConnection implements Connection {
      * @see jdbcDatabaseMetaData#supportsTransactionIsolationLevel
      * @see #getTransactionIsolation
      */
-    public void setTransactionIsolation(int level) throws SQLException {
+    public synchronized void setTransactionIsolation(int level)
+    throws SQLException {
 
         checkClosed();
 
@@ -1302,7 +1307,7 @@ public class jdbcConnection implements Connection {
      * @see jdbcDatabaseMetaData#supportsTransactionIsolationLevel
      * @see #setTransactionIsolation setTransactionIsolation
      */
-    public int getTransactionIsolation() throws SQLException {
+    public synchronized int getTransactionIsolation() throws SQLException {
 
         checkClosed();
 
@@ -1341,7 +1346,7 @@ public class jdbcConnection implements Connection {
      *     this method is called on a closed connection <p>
      * @see SQLWarning
      */
-    public SQLWarning getWarnings() throws SQLException {
+    public synchronized SQLWarning getWarnings() throws SQLException {
 
         checkClosed();
 
@@ -1371,7 +1376,7 @@ public class jdbcConnection implements Connection {
      *
      * @exception SQLException if a database access error occurs <p>
      */
-    public void clearWarnings() throws SQLException {
+    public synchronized void clearWarnings() throws SQLException {
 
         checkClosed();
 
@@ -1440,18 +1445,15 @@ public class jdbcConnection implements Connection {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *  for jdbcConnection)
      */
-    public Statement createStatement(int type,
-                                     int concurrency) throws SQLException {
-
-        Statement stmt;
+    public synchronized Statement createStatement(int type,
+            int concurrency) throws SQLException {
 
         checkClosed();
 
         type        = xlateRSType(type);
         concurrency = xlateRSConcurrency(concurrency);
-        stmt        = new jdbcStatement(this, type);
 
-        return stmt;
+        return new jdbcStatement(this, type);
     }
 
     /**
@@ -1501,10 +1503,8 @@ public class jdbcConnection implements Connection {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *  for jdbcConnection)
      */
-    public PreparedStatement prepareStatement(String sql, int type,
-            int concurrency) throws SQLException {
-
-        PreparedStatement stmt;
+    public synchronized PreparedStatement prepareStatement(String sql,
+            int type, int concurrency) throws SQLException {
 
         checkClosed();
 
@@ -1512,9 +1512,7 @@ public class jdbcConnection implements Connection {
         concurrency = xlateRSConcurrency(concurrency);
 
         try {
-            stmt = new jdbcPreparedStatement(this, sql, type);
-
-            return stmt;
+            return new jdbcPreparedStatement(this, sql, type);
         } catch (HsqlException e) {
             throw jdbcUtil.sqlException(e);
         }
@@ -1564,11 +1562,8 @@ public class jdbcConnection implements Connection {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      * for jdbcConnection)
      */
-    public CallableStatement prepareCall(String sql, int resultSetType,
-                                         int resultSetConcurrency)
-                                         throws SQLException {
-
-        CallableStatement stmt;
+    public synchronized CallableStatement prepareCall(String sql,
+            int resultSetType, int resultSetConcurrency) throws SQLException {
 
         checkClosed();
 
@@ -1576,9 +1571,7 @@ public class jdbcConnection implements Connection {
         resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
 
         try {
-            stmt = new jdbcCallableStatement(this, sql, resultSetType);
-
-            return stmt;
+            return new jdbcCallableStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
             throw jdbcUtil.sqlException(e);
         }
@@ -1608,7 +1601,7 @@ public class jdbcConnection implements Connection {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *     for jdbcConnection)
      */
-    public Map getTypeMap() throws SQLException {
+    public synchronized Map getTypeMap() throws SQLException {
 
         checkClosed();
 
@@ -1643,7 +1636,7 @@ public class jdbcConnection implements Connection {
      *     for jdbcConnection)
      * @see #getTypeMap
      */
-    public void setTypeMap(Map map) throws SQLException {
+    public synchronized void setTypeMap(Map map) throws SQLException {
 
         checkClosed();
 
@@ -1682,10 +1675,11 @@ public class jdbcConnection implements Connection {
      *     supported
      * @see #getHoldability
      * @see ResultSet
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public void setHoldability(int holdability) throws SQLException {
+    public synchronized void setHoldability(int holdability)
+    throws SQLException {
 
         checkClosed();
 
@@ -1721,10 +1715,10 @@ public class jdbcConnection implements Connection {
      * @throws SQLException if a database access occurs
      * @see #setHoldability
      * @see ResultSet
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public int getHoldability() throws SQLException {
+    public synchronized int getHoldability() throws SQLException {
 
         checkClosed();
 
@@ -1749,6 +1743,8 @@ public class jdbcConnection implements Connection {
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
+     * Use setSavepoint(String name) instead <p>
+     *
      * </div> <!-- end release-specific documentation -->
      *
      * @return the new <code>Savepoint</code> object
@@ -1757,10 +1753,10 @@ public class jdbcConnection implements Connection {
      *     auto-commit mode
      * @see jdbcSavepoint
      * @see java.sql.Savepoint
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public Savepoint setSavepoint() throws SQLException {
+    public synchronized Savepoint setSavepoint() throws SQLException {
 
         checkClosed();
 
@@ -1785,13 +1781,13 @@ public class jdbcConnection implements Connection {
      *
      * @see jdbcSavepoint
      * @see java.sql.Savepoint
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public Savepoint setSavepoint(String name) throws SQLException {
+    public synchronized Savepoint setSavepoint(String name)
+    throws SQLException {
 
-        jdbcSavepoint sp;
-        Result        req;
+        Result req;
 
         checkClosed();
 
@@ -1809,9 +1805,7 @@ public class jdbcConnection implements Connection {
             jdbcUtil.throwError(e);
         }
 
-        sp = new jdbcSavepoint(name, this);
-
-        return sp;
+        return new jdbcSavepoint(name, this);
     }
 
 //#endif JDBC3
@@ -1834,10 +1828,11 @@ public class jdbcConnection implements Connection {
      * @see jdbcSavepoint
      * @see java.sql.Savepoint
      * @see #rollback
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public void rollback(Savepoint savepoint) throws SQLException {
+    public synchronized void rollback(Savepoint savepoint)
+    throws SQLException {
 
         String        msg;
         jdbcSavepoint sp;
@@ -1862,10 +1857,10 @@ public class jdbcConnection implements Connection {
         }
 
 // fredt - might someone call this with a Savepoint from a different driver???
-//        if (!(savepoint instanceof jdbcSavepoint)) {
-//            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
-//            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-//        }
+        if (!(savepoint instanceof jdbcSavepoint)) {
+            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
+
         sp = (jdbcSavepoint) savepoint;
 
         if (this != sp.connection) {
@@ -1905,10 +1900,11 @@ public class jdbcConnection implements Connection {
      *
      * @see jdbcSavepoint
      * @see java.sql.Savepoint
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+    public synchronized void releaseSavepoint(Savepoint savepoint)
+    throws SQLException {
 
         String        msg;
         jdbcSavepoint sp;
@@ -1922,10 +1918,16 @@ public class jdbcConnection implements Connection {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
+// fredt - might someone call this with a Savepoint from a different driver???
+        if (!(savepoint instanceof jdbcSavepoint)) {
+            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
+
         sp = (jdbcSavepoint) savepoint;
 
         if (this != sp.connection) {
-            msg = savepoint + " was not issued on this connection";
+            msg = savepoint.getSavepointName()
+                  + " was not issued on this connection";
 
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
@@ -1988,24 +1990,20 @@ public class jdbcConnection implements Connection {
      *     the given parameters are not <code>ResultSet</code>
      *     constants indicating type, concurrency, and holdability
      * @see ResultSet
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public Statement createStatement(int resultSetType,
-                                     int resultSetConcurrency,
-                                     int resultSetHoldability)
-                                     throws SQLException {
-
-        Statement stmt;
+    public synchronized Statement createStatement(int resultSetType,
+            int resultSetConcurrency,
+            int resultSetHoldability) throws SQLException {
 
         checkClosed();
 
         resultSetType        = xlateRSType(resultSetType);
         resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
         resultSetHoldability = xlateRSHoldability(resultSetHoldability);
-        stmt                 = new jdbcStatement(this, resultSetType);
 
-        return stmt;
+        return new jdbcStatement(this, resultSetType);
     }
 
 //#endif JDBC3
@@ -2062,14 +2060,12 @@ public class jdbcConnection implements Connection {
      *     the given parameters are not <code>ResultSet</code>
      *     constants indicating type, concurrency, and holdability
      * @see ResultSet
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public PreparedStatement prepareStatement(String sql, int resultSetType,
-            int resultSetConcurrency,
+    public synchronized PreparedStatement prepareStatement(String sql,
+            int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
-
-        PreparedStatement stmt;
 
         checkClosed();
 
@@ -2078,9 +2074,7 @@ public class jdbcConnection implements Connection {
         resultSetHoldability = xlateRSHoldability(resultSetHoldability);
 
         try {
-            stmt = new jdbcPreparedStatement(this, sql, resultSetType);
-
-            return stmt;
+            return new jdbcPreparedStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
             throw jdbcUtil.sqlException(e);
         }
@@ -2139,15 +2133,12 @@ public class jdbcConnection implements Connection {
      *     the given parameters are not <code>ResultSet</code>
      *     constants indicating type, concurrency, and holdability
      * @see ResultSet
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public CallableStatement prepareCall(String sql, int resultSetType,
-                                         int resultSetConcurrency,
-                                         int resultSetHoldability)
-                                         throws SQLException {
-
-        CallableStatement stmt;
+    public synchronized CallableStatement prepareCall(String sql,
+            int resultSetType, int resultSetConcurrency,
+            int resultSetHoldability) throws SQLException {
 
         checkClosed();
 
@@ -2156,9 +2147,7 @@ public class jdbcConnection implements Connection {
         resultSetHoldability = xlateRSHoldability(resultSetHoldability);
 
         try {
-            stmt = new jdbcCallableStatement(this, sql, resultSetType);
-
-            return stmt;
+            return new jdbcCallableStatement(this, sql, resultSetType);
         } catch (HsqlException e) {
             throw jdbcUtil.sqlException(e);
         }
@@ -2216,10 +2205,10 @@ public class jdbcConnection implements Connection {
      *     the given parameter is not a <code>Statement</code>
      *     constant indicating whether auto-generated keys should be
      *     returned
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public PreparedStatement prepareStatement(String sql,
+    public synchronized PreparedStatement prepareStatement(String sql,
             int autoGeneratedKeys) throws SQLException {
 
         checkClosed();
@@ -2281,10 +2270,10 @@ public class jdbcConnection implements Connection {
      *     returning the auto-generated keys designated by the given
      *     array of column indexes
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public PreparedStatement prepareStatement(String sql,
+    public synchronized PreparedStatement prepareStatement(String sql,
             int columnIndexes[]) throws SQLException {
 
         checkClosed();
@@ -2346,10 +2335,10 @@ public class jdbcConnection implements Connection {
      *     returning the auto-generated keys designated by the given
      *     array of column names
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.4, HSQLDB 1.7
+     * @since JDK 1.4, HSQLDB 1.7.2
      */
 //#ifdef JDBC3
-    public PreparedStatement prepareStatement(String sql,
+    public synchronized PreparedStatement prepareStatement(String sql,
             String columnNames[]) throws SQLException {
 
         checkClosed();
@@ -2505,7 +2494,7 @@ public class jdbcConnection implements Connection {
      * @return the database connection url with which this object was
      *      constructed
      */
-    String getURL() throws SQLException {
+    synchronized String getURL() throws SQLException {
 
         checkClosed();
 

@@ -196,6 +196,10 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result in = execute(resultOut);
 
+        if (in.iMode == ResultConstants.ERROR) {
+            throw Trace.error(in);
+        }
+
         return in.rRoot.data[id];
     }
 
