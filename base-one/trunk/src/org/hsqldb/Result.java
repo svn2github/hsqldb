@@ -68,8 +68,10 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import org.hsqldb.lib.Iterator;
+import java.io.OutputStream;
+import java.io.DataInputStream;
 import java.util.NoSuchElementException;
+import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
@@ -1228,6 +1230,47 @@ class Result {
         }
 
         out.writeIntData(out.size(), startPos);
+    }
+
+    /**
+     * Convenience method for writing, shared by Server side.
+     */
+    static void write(Result r, DatabaseRowOutputInterface rowout,
+                      OutputStream dataout)
+                      throws IOException, HsqlException {
+
+        rowout.reset();
+        r.write(rowout);
+        dataout.write(rowout.getOutputStream().getBuffer(), 0,
+                      rowout.getOutputStream().size());
+        dataout.flush();
+    }
+
+    /**
+     * Convenience method for reading, shared by Server side.
+     */
+    static Result read(DatabaseRowInputInterface rowin,
+                       DataInputStream datain)
+                       throws IOException, HsqlException {
+
+        int length = datain.readInt();
+
+        rowin.resetRow(0, length);
+
+        byte[] byteArray = rowin.getBuffer();
+        int    offset    = 4;
+
+        for (; offset < length; ) {
+            int count = datain.read(byteArray, offset, length - offset);
+
+            if (count < 0) {
+                throw new IOException();
+            }
+
+            offset += count;
+        }
+
+        return new Result(rowin);
     }
 
 // boucerb@users 20030513

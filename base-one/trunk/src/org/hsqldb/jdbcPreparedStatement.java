@@ -1420,7 +1420,8 @@ implements java.sql.PreparedStatement {
         int     inType;
         boolean searchPool;
 
-        o = (x == null) ? null : x.getObject();
+        o = (x == null) ? null
+                        : x.getObject();
 
         if (o == null) {
             inType     = Types.NULL;
@@ -1998,7 +1999,6 @@ implements java.sql.PreparedStatement {
     public ParameterMetaData getParameterMetaData() throws SQLException {
 
 // boucherb@users 20030801 - method implemented
-
         checkClosed();
 
         if (pmd == null) {

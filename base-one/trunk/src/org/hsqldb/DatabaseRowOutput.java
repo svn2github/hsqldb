@@ -156,10 +156,6 @@ implements DatabaseRowOutputInterface {
                                         int t)
                                         throws IOException, HsqlException;
 
-    public void setSystemId(boolean flag) {
-        skipSystemId = flag;
-    }
-
     /**
      *  This method is called to write data for a table
      *
@@ -171,11 +167,7 @@ implements DatabaseRowOutputInterface {
                           Table t) throws IOException, HsqlException {
 
         int[] types = t.getColumnTypes();
-        int   l     = types.length;
-
-        if (skipSystemId) {
-            l--;
-        }
+        int   l     = types.length - 1;
 
         writeData(l, types, data, null, false);
     }

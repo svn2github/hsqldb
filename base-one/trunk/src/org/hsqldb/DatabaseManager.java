@@ -62,6 +62,7 @@ import java.io.File;
  */
 class DatabaseManager {
 
+    // Garbage Collection
     static void gc() {
 
         if ((Record.gcFrequency > 0)
@@ -76,20 +77,32 @@ class DatabaseManager {
         }
     }
 
-    //
+    // Timer
     private static HsqlTimer timer = new HsqlTimer();
 
     static HsqlTimer getTimer() {
         return timer;
     }
 
-    //
-    static int             dbIDCounter;
-    static HashMap         memDatabaseMap    = new HashMap();
-    static HashMap         fileDatabaseMap   = new HashMap();
-    static HashMap         resDatabaseMap    = new HashMap();
-    static IntValueHashMap databaseAccessMap = new IntValueHashMap();
-    static IntKeyHashMap   databaseIDMap     = new IntKeyHashMap();
+    // Database and Server registry
+
+    /** provides unique ID's for the Databases currently in registry */
+    private static int dbIDCounter;
+
+    /** name to Database mapping for mem: databases */
+    private static HashMap memDatabaseMap = new HashMap();
+
+    /** File to Database mapping for file: databases */
+    private static HashMap fileDatabaseMap = new HashMap();
+
+    /** File to Database mapping for res: databases */
+    private static HashMap resDatabaseMap = new HashMap();
+
+    /** Database to current number of Sessions, including those in queue */
+    private static IntValueHashMap databaseAccessMap = new IntValueHashMap();
+
+    /** id number to Database for Databases currently in registry */
+    private static IntKeyHashMap databaseIDMap = new IntKeyHashMap();
 
     /**
      * Used by server to open a new session
@@ -99,13 +112,14 @@ class DatabaseManager {
 
         Database db = (Database) databaseIDMap.get(dbID);
 
+        addAccessCount(db);
+
         return db.connect(user, password);
     }
 
     /**
      * Used by in-process connections and by Servlet
      */
-
     static Session newSession(String type, String path, String user,
                               String password,
                               boolean ifexists) throws HsqlException {
@@ -193,10 +207,12 @@ class DatabaseManager {
                     db.open();
                     break;
 
-                // This state will be reached if a database is being shutdown
-                // by a thread and in the meantime another thread attempt
-                // to connect to the db. The threads could belong to different
-                // server instances or be in-process.
+                // This state will be currently not be as Database.Close() is
+                // called while a lock is held on the database.
+                // If we remove the lock from this method and a database is
+                // being shutdown by a thread and in the meantime another thread
+                // attempts to connect to the db. The threads could belong to
+                // different server instances or be in-process.
                 case Database.DATABASE_CLOSING :
 
                 // this case will not be reached as the state is set and
@@ -260,6 +276,18 @@ class DatabaseManager {
         return db;
     }
 
+    static void addAccessCount(Database db) throws HsqlException {
+
+        int accessCount = databaseAccessMap.get(db, Integer.MIN_VALUE);
+
+        if (accessCount == Integer.MIN_VALUE) {
+            throw Trace.error(Trace.GENERAL_ERROR,
+                              Trace.DatabaseManager_getDatabaseObject, null);
+        }
+
+        databaseAccessMap.put(db, ++accessCount);
+    }
+
     /**
      * Looks up database of a given type and path in the registry. Returns
      * null if there is none.
@@ -284,18 +312,19 @@ class DatabaseManager {
     }
 
     /**
-     * Not used. Reduces the accessCount of a database
+     * Reduces the accessCount of a database when a session is closed.
      */
-    static synchronized void releaseAccessCount(Database database)
-    throws HsqlException {
+    static synchronized void releaseAccessCount(Database database) {
 
         int accessCount = databaseAccessMap.get(database, Integer.MIN_VALUE);
 
+        /*
+         // debug code
         if (accessCount == Integer.MIN_VALUE || accessCount == 0) {
             throw Trace.error(Trace.GENERAL_ERROR,
                               Trace.DatabaseManager_releaseSession, null);
         }
-
+        */
         databaseAccessMap.put(database, --accessCount);
     }
 
@@ -336,9 +365,12 @@ class DatabaseManager {
             databaseMap = memDatabaseMap;
         }
 
-        databaseIDMap.remove(dbID);
-        databaseMap.remove(key);
-        databaseAccessMap.remove(database);
+        IntValueHashMap accessMap = databaseAccessMap;
+        if (databaseAccessMap.get(database, 0) == 0) {
+            databaseIDMap.remove(dbID);
+            databaseMap.remove(key);
+            databaseAccessMap.remove(database);
+        }
 
         if (databaseAccessMap.isEmpty()) {
             ValuePool.resetPool();
@@ -410,6 +442,22 @@ class DatabaseManager {
                               db.databaseID);
             }
         }
+    }
+
+    private static boolean isServerDB(Database db) {
+
+        Iterator it = serverMap.keySet().iterator();
+
+        for (; it.hasNext(); ) {
+            Server  server    = (Server) it.next();
+            HashSet databases = (HashSet) serverMap.get(server);
+
+            if (databases.contains(db)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -42,9 +42,6 @@ package org.hsqldb;
  */
 interface SessionInterface {
 
-/** @todo fredt - used in Library only - to factor out */
-    Session getSession();
-
     Result execute(Result r) throws HsqlException;
 
     void close();

@@ -202,9 +202,6 @@ class Database {
 
         logger                   = new Logger();
         compiledStatementManager = new CompiledStatementManager(this);
-        databaseProperties       = new HsqlDatabaseProperties(this);
-
-        databaseProperties.load();
     }
 
     /**
@@ -236,6 +233,9 @@ class Database {
         try {
             User sysUser;
 
+            databaseProperties = new HsqlDatabaseProperties(this);
+
+            databaseProperties.load();
             compiledStatementManager.reset();
 
             tTable                = new HsqlArrayList();
@@ -259,19 +259,33 @@ class Database {
             }
 
             dInfo.setWithContent(true);
-        } catch (HsqlException e) {
-            logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
-            setState(DATABASE_SHUTDOWN);
-
-            throw e;
         } catch (Throwable e) {
             logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
+            logger.releaseLock();
+            clearStructures();
             setState(DATABASE_SHUTDOWN);
 
-            throw Trace.error(Trace.GENERAL_ERROR, e.toString());
+            if (!(e instanceof HsqlException)) {
+                e = Trace.error(Trace.GENERAL_ERROR, e.toString());
+            }
+
+            throw (HsqlException) e;
         }
 
         setState(DATABASE_ONLINE);
+    }
+
+    void clearStructures() {
+
+        isNew           = false;
+        tTable          = null;
+        userManager     = null;
+        hAlias          = null;
+        nameManager     = null;
+        triggerNameList = null;
+        indexNameList   = null;
+        sessionManager  = null;
+        dInfo           = null;
     }
 
     /**
@@ -724,6 +738,8 @@ class Database {
         HsqlException he = null;
 
         setState(DATABASE_CLOSING);
+        sessionManager.closeAllSessions();
+        sessionManager.clearAll();
 
         // fredt - impact of possible error conditions in closing the log
         // should be investigated for the CLOSEMODE_COMPACT mode
@@ -746,6 +762,7 @@ class Database {
         classLoader = null;
 
         logger.releaseLock();
+        clearStructures();
         setState(DATABASE_SHUTDOWN);
 
         // fredt - this should change to avoid removing a db from the

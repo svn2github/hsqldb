@@ -48,13 +48,13 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
 
         rowOut = new BinaryServerRowOutput();
 
-        rowOut.setSystemId(true);
+//        rowOut.setSystemId(true);
     }
 
     protected void writeSingleColumnResult(Result r)
     throws IOException, HsqlException {
 
-        HSQLClientConnection.write(r, rowOut, fileStreamOut);
+        Result.write(r, rowOut, fileStreamOut);
 /*
         binaryOut.reset();
         binaryOut.writeSize(0);

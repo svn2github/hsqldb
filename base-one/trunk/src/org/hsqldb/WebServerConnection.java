@@ -301,8 +301,8 @@ class WebServerConnection implements Runnable {
     void processQuery(InputStream inStream) {
 
         try {
-            Result resultIn = HSQLClientConnection.read(rowIn,
-                new DataInputStream(inStream));
+            Result resultIn = Result.read(rowIn,
+                                          new DataInputStream(inStream));
 
             //
             Result resultOut;

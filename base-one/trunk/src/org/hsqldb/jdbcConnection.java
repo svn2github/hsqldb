@@ -1781,6 +1781,7 @@ public class jdbcConnection implements Connection {
 
         if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
             String msg = "ResultSet holdability: " + holdability;
+
             throw jdbcDriver.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
         }
     }
@@ -2036,6 +2037,7 @@ public class jdbcConnection implements Connection {
                                      int resultSetConcurrency,
                                      int resultSetHoldability)
                                      throws SQLException {
+
         Statement stmt;
 
         checkClosed();
@@ -2194,6 +2196,7 @@ public class jdbcConnection implements Connection {
                                          int resultSetConcurrency,
                                          int resultSetHoldability)
                                          throws SQLException {
+
         CallableStatement stmt;
 
         checkClosed();

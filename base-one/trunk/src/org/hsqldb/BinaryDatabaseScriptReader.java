@@ -55,13 +55,14 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
     protected void readDDL(Session session)
     throws IOException, HsqlException {
+        rowIn.setSystemId(false);
         readSingleColumnResult(session);
     }
 
     protected void readSingleColumnResult(Session session)
     throws IOException, HsqlException {
 
-        Result r = HSQLClientConnection.read(rowIn, dataStreamIn);
+        Result r = Result.read(rowIn, dataStreamIn);
 /*
         readRow(rowIn, 0, dataStreamIn);
         Result r = new Result(rowIn);
@@ -80,6 +81,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
     protected void readExistingData(Session session)
     throws IOException, HsqlException {
+
+        rowIn.setSystemId(true);
 
         // wsoni variable i never accessed!
         //for (int i = 0; ; i++) {

@@ -101,7 +101,7 @@ public class HTTPClientConnection extends HSQLClientConnection {
         }
 
         //
-        Result resultIn = read(rowIn, dataInput);
+        Result resultIn = Result.read(rowIn, dataInput);
 
         return resultIn;
     }

@@ -1489,8 +1489,10 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(int parameterIndex) throws SQLException {
+
         checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1559,7 +1561,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setNull(String parameterName, int sqlType) throws SQLException {
+    public void setNull(String parameterName,
+                        int sqlType) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1593,7 +1596,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setBoolean(String parameterName, boolean x) throws SQLException {
+    public void setBoolean(String parameterName,
+                           boolean x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1797,7 +1801,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setDouble(String parameterName, double x) throws SQLException {
+    public void setDouble(String parameterName,
+                          double x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1869,7 +1874,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setString(String parameterName, String x) throws SQLException {
+    public void setString(String parameterName,
+                          String x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2246,7 +2252,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setObject(String parameterName, Object x) throws SQLException {
+    public void setObject(String parameterName,
+                          Object x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2289,7 +2296,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setCharacterStream(String parameterName, java.io.Reader reader,
+    public void setCharacterStream(String parameterName,
+                                   java.io.Reader reader,
                                    int length) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
@@ -2957,7 +2965,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public BigDecimal getBigDecimal(String parameterName) throws SQLException {
+    public BigDecimal getBigDecimal(String parameterName)
+    throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */

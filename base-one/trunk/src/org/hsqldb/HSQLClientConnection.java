@@ -272,57 +272,16 @@ public class HSQLClientConnection implements SessionInterface {
     }
 
     protected void write(Result r) throws IOException, HsqlException {
-        write(r, rowOut, dataOutput);
+        Result.write(r, rowOut, dataOutput);
     }
 
     protected Result read() throws IOException, HsqlException {
 
-        Result r = read(rowIn, dataInput);
+        Result r = Result.read(rowIn, dataInput);
 
         rowOut.setBuffer(mainBuffer);
         rowIn.resetRow(mainBuffer.length);
 
         return r;
-    }
-
-    /**
-     * Convenience method for writing, shared by Server side.
-     */
-    static void write(Result r, DatabaseRowOutputInterface rowout,
-                      OutputStream dataout)
-                      throws IOException, HsqlException {
-
-        rowout.reset();
-        r.write(rowout);
-        dataout.write(rowout.getOutputStream().getBuffer(), 0,
-                      rowout.getOutputStream().size());
-        dataout.flush();
-    }
-
-    /**
-     * Convenience method for reading, shared by Server side.
-     */
-    static Result read(DatabaseRowInputInterface rowin,
-                       DataInputStream datain)
-                       throws IOException, HsqlException {
-
-        int length = datain.readInt();
-
-        rowin.resetRow(0, length);
-
-        byte[] byteArray = rowin.getBuffer();
-        int    offset    = 4;
-
-        for (; offset < length; ) {
-            int count = datain.read(byteArray, offset, length - offset);
-
-            if (count < 0) {
-                throw new IOException();
-            }
-
-            offset += count;
-        }
-
-        return new Result(rowin);
     }
 }

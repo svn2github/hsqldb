@@ -279,7 +279,7 @@ abstract class Cache {
         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
 
-        rowOut.setSystemId(true);
+//        rowOut.setSystemId(true);
         rowIn.setSystemId(true);
 
         rowStoreExtra = rowOut instanceof BinaryServerRowOutput

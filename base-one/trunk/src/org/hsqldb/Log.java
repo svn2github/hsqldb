@@ -222,6 +222,29 @@ class Log {
         }
     }
 
+    void readScript() throws HsqlException {
+
+        bRestoring = true;
+
+        if (FileUtil.exists(sFileScript)) {
+            try {
+                DatabaseScriptReader scr =
+                    DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
+                        sFileScript, scriptFormat);
+
+                scr.readAll(dDatabase.sessionManager.getSysSession());
+                scr.close();
+            } catch (IOException e) {
+                throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+            }
+        }
+
+        ScriptRunner.runScript(dDatabase, sFileLog,
+                               DatabaseScriptWriter.SCRIPT_TEXT_170);
+
+        bRestoring = false;
+    }
+
     /**
      * When opening a database, the hsqldb.compatible_version property is
      * used to determine if this version of the engine is equal to or greater
@@ -250,22 +273,7 @@ class Log {
             }
 
             reopenAllTextCaches();
-
-            bRestoring = true;
-
-            try {
-                DatabaseScriptReader scr =
-                    DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                        sFileScript, scriptFormat);
-
-                scr.readAll(dDatabase.sessionManager.getSysSession());
-                scr.close();
-            } catch (IOException e) {
-
-                // must throw here
-            }
-
-            bRestoring = false;
+            readScript();
 
             return;
         }
@@ -299,35 +307,20 @@ class Log {
 
         reopenAllTextCaches();
 
-        bRestoring = true;
+        if (!dDatabase.isNew) {
+            readScript();
 
-        try {
-            DatabaseScriptReader scr =
-                DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                    sFileScript, scriptFormat);
+            if (needbackup) {
+                close(false, true);
+                pProperties.setProperty("modified", "yes");
+                pProperties.save();
 
-            scr.readAll(dDatabase.sessionManager.getSysSession());
-            scr.close();
-        } catch (IOException e) {
+                if (cCache != null) {
+                    cCache.open(false);
+                }
 
-            // must throw here
-        }
-
-        ScriptRunner.runScript(dDatabase, sFileLog,
-                               DatabaseScriptWriter.SCRIPT_TEXT_170);
-
-        bRestoring = false;
-
-        if (needbackup) {
-            close(false, true);
-            pProperties.setProperty("modified", "yes");
-            pProperties.save();
-
-            if (cCache != null) {
-                cCache.open(false);
+                reopenAllTextCaches();
             }
-
-            reopenAllTextCaches();
         }
 
         openLog();
@@ -666,6 +659,8 @@ class Log {
      * @throws  HsqlException
      */
     private void writeScript(boolean full) throws HsqlException {
+
+        System.out.println("writeScript");
 
         if (Trace.TRACE) {
             Trace.trace();

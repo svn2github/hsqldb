@@ -454,56 +454,58 @@ public class TestDataStructures extends TestCase {
     }
 
     public void testSpeed() {
-        randomGenerator    = new Random(System.currentTimeMillis());
-        int TEST_RUNS = 100000;
-        int LOOP_COUNT = 1000;
-        HsqlArrayList  arrayList  = new HsqlArrayList(TEST_RUNS);
-        ArrayList      utilArrayList = new ArrayList(TEST_RUNS);
-        Vector         vector     = new Vector(TEST_RUNS);
 
-        Integer value = new Integer(randomGenerator.nextInt());
-        Integer INT_0 = new Integer(0);
-        StopWatch sw = new StopWatch();
+        randomGenerator = new Random(System.currentTimeMillis());
+
+        int           TEST_RUNS     = 100000;
+        int           LOOP_COUNT    = 1000;
+        HsqlArrayList arrayList     = new HsqlArrayList(TEST_RUNS);
+        ArrayList     utilArrayList = new ArrayList(TEST_RUNS);
+        Vector        vector        = new Vector(TEST_RUNS);
+        Integer       value         = new Integer(randomGenerator.nextInt());
+        Integer       INT_0         = new Integer(0);
+        StopWatch     sw            = new StopWatch();
+
         System.out.println(sw.currentElapsedTimeToMessage("time"));
 
-        for (int i = 0; i < TEST_RUNS; i++){
+        for (int i = 0; i < TEST_RUNS; i++) {
             arrayList.add(INT_0);
         }
 
-        for (int i = 0; i < TEST_RUNS; i++){
-            for (int j = 0; j < LOOP_COUNT; j++){
-                arrayList.set(i,INT_0);
+        for (int i = 0; i < TEST_RUNS; i++) {
+            for (int j = 0; j < LOOP_COUNT; j++) {
+                arrayList.set(i, INT_0);
             }
-
         }
+
         System.out.println(sw.currentElapsedTimeToMessage("time"));
         sw.zero();
 
-        for (int i = 0; i < TEST_RUNS; i++){
+        for (int i = 0; i < TEST_RUNS; i++) {
             utilArrayList.add(INT_0);
         }
 
-        for (int i = 0; i < TEST_RUNS; i++){
-            for (int j = 0; j < LOOP_COUNT; j++){
-                utilArrayList.set(i,INT_0);
+        for (int i = 0; i < TEST_RUNS; i++) {
+            for (int j = 0; j < LOOP_COUNT; j++) {
+                utilArrayList.set(i, INT_0);
             }
         }
+
         System.out.println(sw.currentElapsedTimeToMessage("time"));
         sw.zero();
-        for (int i = 0; i < TEST_RUNS; i++){
+
+        for (int i = 0; i < TEST_RUNS; i++) {
             vector.addElement(INT_0);
         }
-        for (int i = 0; i < TEST_RUNS; i++){
-            for (int j = 0; j < LOOP_COUNT; j++){
+
+        for (int i = 0; i < TEST_RUNS; i++) {
+            for (int j = 0; j < LOOP_COUNT; j++) {
                 vector.setElementAt(INT_0, i);
             }
         }
+
         System.out.println(sw.currentElapsedTimeToMessage("time"));
-
-
-
     }
-
 
     public static void main(String[] args) {
 
@@ -524,5 +526,4 @@ public class TestDataStructures extends TestCase {
             + " list commands each test, the list tests passed");
         test.testGrowth();
     }
-
 }

@@ -160,7 +160,7 @@ class DatabaseScriptWriter {
 
         rowOut = new TextLogRowOutput();
 
-        rowOut.setSystemId(true);
+//        rowOut.setSystemId(true);
     }
 
     /**

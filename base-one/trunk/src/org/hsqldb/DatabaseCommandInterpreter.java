@@ -2043,10 +2043,7 @@ class DatabaseCommandInterpreter {
             tokenizer.back();
         }
 
-        database.sessionManager.closeAllSessions();
-        database.sessionManager.clearAll();
         database.close(closemode);
-        database.sessionManager.processDisconnect(session);
     }
 
     /**

@@ -125,10 +125,12 @@ class DataFileDefrag {
                                ScaledRAFile destFile)
                                throws IOException, HsqlException {
 
-        BinaryServerRowOutput rowOut        = new BinaryServerRowOutput();
-        DoubleIntTable        pointerLookup = new DoubleIntTable(1000000);
-        int[]                 rootsArray    = table.getIndexRootsArray();
-        Index                 index         = table.getPrimaryIndex();
+        BinaryServerRowOutput rowOut = new BinaryServerRowOutput();
+
+//        rowOut.setSystemId(true);
+        DoubleIntTable pointerLookup = new DoubleIntTable(1000000);
+        int[]          rootsArray    = table.getIndexRootsArray();
+        Index          index         = table.getPrimaryIndex();
 
 // erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
         long  pos         = destFile.getFilePointer();

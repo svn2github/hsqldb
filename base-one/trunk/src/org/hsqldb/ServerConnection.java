@@ -176,7 +176,7 @@ class ServerConnection implements Runnable {
                 new BufferedInputStream(socket.getInputStream()));
             dataOutput = new BufferedOutputStream(socket.getOutputStream());
 
-            Result resultIn = HSQLClientConnection.read(rowIn, dataInput);
+            Result resultIn = Result.read(rowIn, dataInput);
             Result resultOut;
 
             try {
@@ -203,7 +203,7 @@ class ServerConnection implements Runnable {
                     resultIn.subSubString);
             }
 
-            HSQLClientConnection.write(resultOut, rowOut, dataOutput);
+            Result.write(resultOut, rowOut, dataOutput);
 
             return;
         } catch (Exception e) {
@@ -228,14 +228,13 @@ class ServerConnection implements Runnable {
         if (session != null) {
             try {
                 while (keepAlive) {
-                    Result resultIn = HSQLClientConnection.read(rowIn,
-                        dataInput);
+                    Result resultIn = Result.read(rowIn, dataInput);
 
                     server.trace(mThread + ":" + resultIn.getMainString());
 
                     Result resultOut = session.execute(resultIn);
 
-                    HSQLClientConnection.write(resultOut, rowOut, dataOutput);
+                    Result.write(resultOut, rowOut, dataOutput);
                     rowOut.setBuffer(mainBuffer);
                     rowIn.resetRow(mainBuffer.length);
                 }

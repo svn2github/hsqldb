@@ -56,8 +56,6 @@ interface DatabaseRowOutputInterface {
 
     public void writeIntData(int i, int position) throws IOException;
 
-    public void setSystemId(boolean flag);
-
     public void writeData(Object[] data,
                           Table t) throws IOException, HsqlException;
 

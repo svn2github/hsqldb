@@ -161,11 +161,13 @@ public class DataFileCache extends Cache {
 
         close();
 
-        // if *.data file was deleted because it was empty
+        // return here if *.data file was deleted because it was empty
         if (!FileUtil.exists(sName)) {
             init();
             open(cacheReadonly);
-            Trace.printSystemOut("opened chache");
+            Trace.printSystemOut("opened empty chache");
+
+            return;
         }
 
         HsqlArrayList indexRoots = null;

@@ -239,7 +239,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             // fredt@users - the servlet container, Resin does not return all
             // the bytes with one call to input.read(b,0,len) when len > 8192
             // bytes, the loop in the next method handles this
-            Result resultIn = HSQLClientConnection.read(rowIn, inStream);
+            Result resultIn = Result.read(rowIn, inStream);
             Result resultOut;
 
             if (resultIn.iMode == ResultConstants.SQLCONNECT) {

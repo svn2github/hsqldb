@@ -60,7 +60,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         super();
 
-        setSystemId(true);
+//        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   "ASCII");
     }
@@ -71,7 +71,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         super();
 
-        setSystemId(true);
+//        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   encoding);
     }

@@ -2080,7 +2080,9 @@ class Table {
 
                         // fredt - we avoid infinite recursion on the fk's referencing the same table
                         // but chained rows can result in very deep recursion and StackOverflowError
-                        row = row == null ? null : row.getUpdatedRow();
+                        row = row == null ? null
+                                          : row.getUpdatedRow();
+
                         if (n.getRow() != row) {
                             reftable.checkCascadeDelete(n.getRow(), session,
                                                         doIt, path);
@@ -2705,10 +2707,10 @@ class Table {
         }
     }
 
-    void registerRow(Row r) {
+    void registerRow(CachedRow r) {
 
-        if (isCached && cache != null && needsRowID) {
-            r.getData()[iVisibleColumns] = new Integer(((CachedRow) r).iPos);
+        if (needsRowID) {
+            r.getData()[iVisibleColumns] = new Integer(r.iPos);
         }
     }
 
