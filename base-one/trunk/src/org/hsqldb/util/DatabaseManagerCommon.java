@@ -76,6 +76,7 @@ import java.io.*;
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 // nickferguson@users 20021005 - patch 1.7.1 - enhancements
+// fredt@users 20021012 - patch 1.7.1 - changes to test database DDL
 
 /**
  * Common code in Swing and AWT versions of DatabaseManager

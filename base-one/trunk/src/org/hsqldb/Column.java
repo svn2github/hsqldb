@@ -1334,19 +1334,7 @@ class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                if (((Double) o).doubleValue() == Double.NEGATIVE_INFINITY) {
-                    return "-1e0/0";
-                }
-
-                if (((Double) o).doubleValue() == Double.POSITIVE_INFINITY) {
-                    return "1e0/0";
-                }
-
-                if (((Double) o).isNaN()) {
-                    return "0e0/0e0";
-                }
-
-                return o.toString();
+                return createSQLString(((Number) o).doubleValue());
 
             case Types.DATE :
             case Types.TIME :
@@ -1373,6 +1361,30 @@ class Column {
             default :
                 return o.toString();
         }
+    }
+
+    static String createSQLString(double x) throws SQLException {
+
+        if (x == Double.NEGATIVE_INFINITY) {
+            return "-1E0/0";
+        }
+
+        if (x == Double.POSITIVE_INFINITY) {
+            return "1E0/0";
+        }
+
+        if (Double.isNaN(x)) {
+            return "0E0/0E0";
+        }
+
+        String s = Double.toString(x);
+
+        // ensure the engine treats the value as a DOUBLE, not DECIMAL
+        if (s.indexOf('E') < 0) {
+            s = s.concat("E0");
+        }
+
+        return s;
     }
 
     /**

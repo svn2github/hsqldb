@@ -577,8 +577,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to 1.6.1, HSQLDB did not handle Java positive/negative Infinity or
-     * NaN <code>float</code> values properly.  Starting with 1.7.0,
-     * these values are converted to SQL <code>NULL</code>.
+     * NaN <code>float</code> values properly.  With 1.7.0,
+     * these values are converted to SQL <code>NULL</code>. With 1.7.1 these
+     * values are sent to the database.
      * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
@@ -587,12 +588,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
 
 // fredt@users 20020325 - patch 448691 NaN by fredt
+// fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setFloat(int parameterIndex, float x) throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace();
         }
 
+        setParameter(parameterIndex, Column.createSQLString(x));
+/*
         if (Float.isInfinite(x) || Float.isNaN(x)) {
             setNull(parameterIndex);
         } else {
@@ -605,6 +609,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
             setParameter(parameterIndex, s);
         }
+*/
     }
 
     /**
@@ -619,8 +624,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to 1.6.1, HSQLDB did not handle Java positive/negative Infinity or
-     * NaN <code>double</code> values properly.  Starting with 1.7.0,
-     * these values are converted to SQL <code>NULL</code>.
+     * NaN <code>float</code> values properly.  With 1.7.0,
+     * these values are converted to SQL <code>NULL</code>. With 1.7.1 these
+     * values are sent to the database.
      * </span>
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
@@ -629,12 +635,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
 
 // fredt@users 20020325 - patch 448691 NaN by fredt
+// fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setDouble(int parameterIndex, double x) throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace();
         }
 
+        setParameter(parameterIndex, Column.createSQLString(x));
+/*
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             setNull(parameterIndex);
         } else {
@@ -647,6 +656,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
             setParameter(parameterIndex, s);
         }
+*/
     }
 
     /**

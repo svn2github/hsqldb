@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Hashtable;
 
 /**
@@ -80,6 +81,7 @@ import java.util.Hashtable;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
+// fredt@users 20021013 - patch 1.7.1 - ignore non-static methods
 class Function {
 
     private Session          cSession;
@@ -99,7 +101,7 @@ class Function {
      * Constructs a new Function object with the given function call name
      * and using the specified Session context. <p>
      *
-     * The call name is the fully qualified name of a Java method, as
+     * The call name is the fully qualified name of a static Java method, as
      * opposed to the method's canonical signature.  That is, the name
      * is of the form "package.class.method."  This implies that Java
      * methods with the same fully qualified name but different signatures
@@ -112,7 +114,7 @@ class Function {
      * Class indicated in the FQN, hiding all other methods with the same
      * FQN. <p>
      *
-     * The function FQN must match at least one Java method FQN in the
+     * The function FQN must match at least one static Java method FQN in the
      * specified class or construction cannot procede and a SQLException is
      * thrown. <p>
      *
@@ -165,11 +167,11 @@ class Function {
             for (i = 0; i < method.length; i++) {
                 Method m = method[i];
 
-                if (m.getName().equals(methodname)) {
-                    Trace.check(mMethod == null, Trace.UNKNOWN_FUNCTION,
-                                methodname);
-
+                if (m.getName().equals(methodname)
+                        && Modifier.isStatic(m.getModifiers())) {
                     mMethod = m;
+
+                    break;
                 }
             }
 
