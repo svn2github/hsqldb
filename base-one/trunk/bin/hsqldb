@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.23 2004/06/01 01:25:40 unsaved Exp $
+# $Id: hsqldb,v 1.24 2004/06/06 19:19:32 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -83,7 +83,7 @@ INVOC_PATH=`dirname "$0"` || {
 }
 [ -n "$INVOC_PATH" ] && INVOC_PATH="${INVOC_PATH}/"
 
-SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
+SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|stopcompact|restart|restartcmpacted|status"
 
 # Allow this much time for background su command to start up and echo pid.
 # (0 works for moderately fast servers).
@@ -110,6 +110,7 @@ LOGFILE=
 PIDFILE=
 BASEDIR=
 AUTH_FILE=
+SHUTDOWN_OPTION=
 case "`uname`" in
     Linux)
         CFGFILE=/etc/sysconfig/hsqldb
@@ -367,7 +368,8 @@ running with pid $HSQLDB_PID."
 See log file '$LOGFILE'." 1>&2
         exit 1
     ;;
-    stop)
+    stop|stopcompact)
+        [ "$COMMAND" = stopcompact ] && SHUTDOWN_OPTION='compact'
         [ -n "$HSQLDB_PID" ] || {
             echo "I don't know of any running hsqldb server." 1>&2
             exit 1
@@ -386,7 +388,8 @@ See log file '$LOGFILE'." 1>&2
         export PATH   # Required only for some funny init environments.
         java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
-            org.hsqldb.util.SqlToolSprayer 'shutdown;' $SHUTDOWN_URLIDS
+            org.hsqldb.util.SqlToolSprayer "shutdown ${SHUTDOWN_OPTION};" \
+            $SHUTDOWN_URLIDS
         sleep $MAX_TERMINATE_SECS  # Give the JVM a sec. or 2 to fully exit.
         kill -0 "$HSQLDB_PID" > /dev/null 2>&1 && {
             echo "WARNING:  hsqldb is still running!" 1>&2
@@ -396,11 +399,13 @@ See log file '$LOGFILE'." 1>&2
             echo "Failed to remove pid file '$PIDFILE'" 1>&2
             exit 1
         }
-        echo "Successful shutdown (for the $TARGET_CLASS process)!"
+        echo "Successful shutdown ${SHUTDOWN_OPTION} (for the $TARGET_CLASS process)!"
         exit 0
     ;;
-    restart)
-        "${INVOC_PATH}"hsqldb stop || exit $?
+    restart|restartcompacted)
+        STOP_COMMAND=stop
+        [ "$COMMAND" = restartcompacted ] && STOP_COMMAND=stopcompact
+        "${INVOC_PATH}"hsqldb $STOP_COMMAND || exit $?
         exec "${INVOC_PATH}"/hsqldb start
     ;;
     *)
