@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.26 2004/05/19 14:49:46 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.27 2004/05/26 09:05:50 fredt Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.26 $">
-    <!ENTITY date "$Date: 2004/05/19 14:49:46 $">
+    <!ENTITY revision "$Revision: 1.27 $">
+    <!ENTITY date "$Date: 2004/05/26 09:05:50 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/&docbasename;">
@@ -33,6 +33,8 @@
     <!ENTITY sqltool.rc-cdata SYSTEM "../../docwork/guide/cdata/sqltool.rc">
     <!ENTITY sample-hsqldb.cfg-cdata
              SYSTEM "../../docwork/guide/cdata/sample-hsqldb.cfg">
+    <!ENTITY sample.sql-cdata
+             SYSTEM "../../docwork/guide/cdata/sample.sql">
 ]>
     
 <book>
@@ -96,7 +98,9 @@
     <appendix id='firstclient-appendix'>
         <title id='firstclient-title'>First JDBC Client Example</title>
         <para>
-            You can download this file at <ulink url='Testdb.java'/>.
+            There is a copy of <filename>Testdb.java</filename> in the
+            directory <filename>src/org/hsqldb/sample</filename> of your
+            HSQLDB distribution.
         </para>
         <example>
             <title>JDBC Client source code example</title>

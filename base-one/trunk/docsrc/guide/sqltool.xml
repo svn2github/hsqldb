@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.10 2004/05/13 02:39:44 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.11 2004/05/13 20:19:08 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2004/05/13 02:39:44 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2004/05/13 20:19:08 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -48,7 +48,10 @@
         </para>
             <procedure>
                 <step><para>
-                    Copy <ulink url='sqltool.rc'/> to your home directory and
+                    Copy the file <filename>sqltool.rc</filename> from the
+                    directory <filename>src/org/hsqldb/sample</filename> of 
+                    your HSQLDB distribution
+                    to your home directory and
                     secure access to it if your home directory is accessible
                     to anybody else.
                     This file will work as-is for a Memory Only database
@@ -133,7 +136,9 @@
             or <emphasis>config</emphasis> file, I mean an SqlTool 
             configuration file (aka SqlTool RC file).
         </para><para>
-            Here is a <ulink url='sqltool.rc'>sample sqltool.rc file</ulink>.
+            There is a sample <filename>sqltool.rc</filename> file in the
+            directory <filename>src/org/hsqldb/sample</filename> of your
+            HSQLDB distribution.
         </para><para>
             You can put this file anywhere you want to, and specify the 
             location to SqlTool by using the "--rcfile" argument.
@@ -454,13 +459,24 @@
             </informalexample><para>
                 (Skip the "2>&amp;1" if you're on Windows).
             </para><para>
-                If you are viewing this document as an HTML document, then you 
-                can right click on <ulink url='sample.sql'>this link</ulink>
-                to download a sample sql file.
-                (If you have a good web browser, you can view it now by left
-                clicking on it).
-                The sample contains SQL as well as Special Commands making good
+                You can use the following SQL file,
+                <filename>sample.sql</filename>, which resides in the
+                <filename>src/org/hsqldb/sample</filename> directory of your
+                HSQLDB distribution.
+                It contains SQL as well as Special Commands making good
                 use of the Special Commands documented below.
+            </para>
+            <programlisting>&sample.sql-cdata;</programlisting>
+            <para>
+                You can execute this SQL file with a memory-only database with 
+                a command like
+            </para>
+            <informalexample><programlisting>
+    java org.hsqldb.util.SqlTool --sql "create user 'tomcat' password 'x';" mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
+            </informalexample>
+            <para>
+                (The <literal>--sql "create..."</literal> arguments create an
+                account which the script uses).
             </para><para>
                 If you want your SQL scripts optimally compatible among 
                 multiple databases, then don't use any Special Commands.
@@ -481,6 +497,13 @@
                 Stand-alone <literal>/*...*/</literal> comments are just 
                 dropped, to avoid unnecessary network traffic and cluttering of 
                 command history.
+            </para> <para>
+                (I've noticed recently that there is some bug where
+                <literal>/*...*/</literal> comments aren't working right in
+                some situations.
+                If you figure out the exact situation when this problem occurs,
+                please post using the HSQLDB Sourceforge bug/forum/list
+                facilities and I'll fix it.)
             </para>
         </section>
         <section>

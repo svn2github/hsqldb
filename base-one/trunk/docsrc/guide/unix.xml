@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.20 2004/05/17 13:08:18 fredt Exp $ -->
+<!-- $Id: unix.xml,v 1.21 2004/05/18 01:41:13 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.20 $</edition>
-        <pubdate>$Date: 2004/05/17 13:08:18 $</pubdate>
+        <edition>$Revision: 1.21 $</edition>
+        <pubdate>$Date: 2004/05/18 01:41:13 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -237,9 +237,9 @@
                 </para>
             </step><step><para>
                 Become the <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
-                Download this <ulink url='sample-server.properties'>
-                sample <filename>server.properties</filename> file</ulink> to
-                <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
+                Copy the sample file 
+                <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sample-server.properties</filename>
+                to the <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory and rename it to 
                 <filename>server.properties</filename>.
             </para>
@@ -280,7 +280,9 @@
     <section>
         <title>Accessing your Database</title>
         <para>
-            Download this sample <ulink url='sqltool.rc'/> file to the
+            Copy the file
+            <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sqltool.rc</filename>
+            to the
             <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
             Use <literal>chmod</literal> to make the file readable and
             writable only to <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
@@ -458,9 +460,9 @@
             </para></step> <step><para>
                 Look at the init script and see what the value of CFGFILE is
                 for your UNIX platform.
-                You need to copy this
-                <ulink url='sample-hsqldb.cfg'>sample config file</ulink> to
-                that location.
+                You need to copy the sample config file
+                <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sample-hsqldb.cfg</filename>
+                to that location.
                 Edit the config file according to the instructions in it.
                 </para>
                 <programlisting>&sample-hsqldb.cfg-cdata;</programlisting>
