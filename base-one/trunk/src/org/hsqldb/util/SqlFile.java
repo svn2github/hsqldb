@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.27 2004/02/07 14:32:02 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.28 2004/02/13 22:26:14 unsaved Exp $ */
 
 /**
  * Definitions.
@@ -85,7 +85,7 @@ public class SqlFile {
         + "All other lines comprise SQL Statements.\n"
         + "SQL Statement lines ending with ';' cause the current Statement to be executed.\n"
         + "SQL Statements consisting of only /* SQL comment */ are not executed, therefore\n"
-        + "you can comment scripts like \"/* This is a comment */; \"\n";
+        + "you can comment scripts like \"/* This is a comment */;\"\n";
     final private static String HELP_TEXT =
         "**********    SPECIAL COMMANDS MARKED !!! DO NOT WORK YET!!!  *******\n"
         + "SPECIAL Commands.\n"
@@ -501,12 +501,21 @@ public class SqlFile {
 
         int[] listTableCols = { 3 };
         java.sql.DatabaseMetaData md = curConn.getMetaData();
+        String dbProductName = md.getDatabaseProductName();
+        //System.err.println("DB NAME = (" + dbProductName + ')');
 
-//System.err.println("DB NAME = (" + md.getDatabaseProductName() + ')');
+        // Database-specific table filtering.
+        String excludePrefix = null;
+        if (dbProductName.indexOf("HSQL") > -1) {
+            excludePrefix = "SYSTEM_";
+        } else if (dbProductName.indexOf("Oracle") > -1) {
+        } else {
+            // Don't know the DB, so use no filter.
+        }
 
         displayResultSet(
             null, md.getTables(null, null, null, null),
-            listTableCols, "SYSTEM_");
+            listTableCols, excludePrefix);
     }
 
     private void processStatement() throws SQLException {
