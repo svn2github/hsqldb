@@ -1796,9 +1796,10 @@ public class Server implements HsqlSocketRequestHandler {
                 try {
                     int dbnum = Integer.parseInt(key.substring(prefixLen));
 
-                    maxindex      = dbnum < maxindex ? maxindex
-                                                     : dbnum;
-                    dblist[dbnum] = serverProperties.getProperty(key);
+                    maxindex = dbnum < maxindex ? maxindex
+                                                : dbnum;
+                    dblist[dbnum] =
+                        serverProperties.getProperty(key).toLowerCase();
                 } catch (NumberFormatException e1) {
                     printWithThread("dblist: " + e1.toString());
                 }

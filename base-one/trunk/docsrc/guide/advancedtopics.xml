@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.14 2004/06/18 13:04:04 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.15 2004/06/19 17:21:39 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.14 $</edition>
-        <pubdate>$Date: 2004/06/18 13:04:04 $</pubdate>
+        <edition>$Revision: 1.15 $</edition>
+        <pubdate>$Date: 2004/06/19 17:21:39 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -164,7 +164,7 @@
                     The host and port specify the IP address or host name of
                     the server and an optional port number.
                     The database to connect to is specified by an alias.
-                    This alias is defined in the
+                    This alias is a lowercase string defined in the
                     <filename>server.properties</filename> file to refer to an
                     actual database on the file system of the  server or a
                     transient, in-memory database on the server.
@@ -385,7 +385,7 @@
                     <row>
                         <entry><property>server.dbname.0</property></entry>
                         <entry><literal>&quot;&quot;</literal></entry>
-                        <entry>server alias for the first database file</entry>
+                        <entry>lowercase server alias for the first database file</entry>
                     </row>
                     <row>
                         <entry><property>server.urlid.0</property></entry>
@@ -416,7 +416,7 @@
                 simultaneously.
                 The <property>server.database.0</property> property defines the
                 filename / path whereas the <property>server.dbname.0</property>
-                defines the alias used by clients to connect to that database.
+                defines the lowercase alias used by clients to connect to that database.
                 The digit 0 is incremented for the second database and so on.
                 Values for the <property>server.database.{0-9}</property>
                 property can use the <literal>mem:</literal>,
@@ -725,7 +725,7 @@
                         <entry namest='c1' nameend='c3'> <para>
                             The value is the size in megabytes that the
                             <literal>.log</literal> file can reach before an
-                            automatic checkpoint occurs. A checkpoint and 
+                            automatic checkpoint occurs. A checkpoint and
 							rewrites the <literal>.script</literal> file and
 							clears the <literal>.log</literal> file.
                             The value can be changed via the <literal>SET
