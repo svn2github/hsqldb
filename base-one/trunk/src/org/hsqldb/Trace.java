@@ -301,26 +301,41 @@ public class Trace extends PrintWriter {
 
     // reserved slots to 200
     //
-    static String MESSAGE_TAG                                      = "$$";
-    static int    INTERNAL_unknown_internal_statement_type         = 201,
+    public static final int INTERNAL_unknown_internal_statement_type = 201,
                   INTERNAL_session_operation_not_supported         = 202,
                   INTERNAL_ivalid_compiled_statement_id            = 203,
-                  DatabaseCommandInterpreter_processCreateTrigger1 = 204,
-                  DatabaseCommandInterpreter_processCreateTrigger2 = 205,
+                            DatabaseCommandInterpreter_processCreateTrigger1 =
+                                204,
+                            DatabaseCommandInterpreter_processCreateTrigger2 =
+                                205,
                   DatabaseCommandInterpreter_processSavepoint      = 206,
                   DataFileCache_defrag                             = 207,
                   DataFileCache_closeFile                          = 208,
                   DataFileCache_makeRow                            = 209,
                   DataFileCache_open                               = 210,
-                  DataFileCache_close                              = 211
-    ;
+                            DataFileCache_close                         = 211,
+                            Expression_resolveTypes1                    = 212,
+                            Expression_resolveTypes2                    = 213,
+                            Expression_resolveTypes3                    = 214,
+                            Expression_resolveTypes4                    = 215,
+                            Expression_resolveTypes5                    = 216,
+                            Expression_resolveTypes6                    = 217,
+                            Expression_resolveTypes7                    = 218,
+                            Expression_resolveTypeForLike               = 219,
+                            Expression_resolveTypeForIn1                = 220,
+                            Expression_resolveTypeForIn2                = 221,
+                            Session_execute                             = 222,
+                            Session_sqlExecuteDirect                    = 223,
+                            Session_sqlExecuteCompiled                  = 224;
+    static String           MESSAGE_TAG = "$$";
 
     //
     private static final String[] sDescription = {
         "NOT USED",                                                           //
         "08001 The database is already in use by another process",
-        "08003 Connection is closed",                                         //
-        "08003 Connection is broken", "08003 The database is shutdown",       //
+        "08003 Connection is closed",       //                                                                                    //
+        "08003 Connection is broken",      //
+        "08003 The database is shutdown",                     //
         "21000 Column count does not match",                                  //
         "22012 Division by zero",                                             //
         "22019 Invalid escape character",                                     //
@@ -370,7 +385,8 @@ public class Trace extends PrintWriter {
         "S1000 ResultSet was set to forward only",                            //
         "S0003 View already exists",                                          //
         "S0004 View not found",                                               //
-        "S0005 Not a View", "S0005 Not a Table",
+        "S0005 Not a View",    //
+        "S0005 Not a Table",    //
         "S0011 Attempt to drop or rename a system index",
         "S0021 Column types do not match",                                    //
         "s0021 Column constraints are not acceptable",
@@ -388,11 +404,12 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in ORDER BY clause",                                 //
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",    //
         "S1000 Out of Memory",                                                //
-        "S1000 This operation is not supported", "22019 Invalid identifier",
+        "S1000 This operation is not supported",  //
+        "22019 Invalid identifier",               //
         "22019 Invalid TEXT table source string",                             //
         "S1000 bad TEXT table source file - line number: $$ $$",
         "23000 negative value not allowed for identity column",
-        "S1000 error in script file",                                         //
+        "S1000 error in script file",          //                                                                            //                                                                                     //
         "37000 NULL in value list",                                           //
         "08000 socket creation error",                                        //
         "37000 invalid character encoding",                                   //
@@ -442,7 +459,8 @@ public class Trace extends PrintWriter {
         "connection is closed",                                               // jdbcResultSetMetaData_jdbcResultSetMetaData_3
         "37000 an index is required on table $$, column $$",                  // TableFilter_findFirst
         "37000 there is an index on the column to be removed",                // Table_moveDefinition
-        "22001 string too long", "00000 quoted identifier required",          // SET PROPERTY "name" "value"
+        "22001 string too long",    //
+        "00000 quoted identifier required",    // SET PROPERTY "name" "value"
         "00000 statement is closed",                                          // SET PROPERTY "name" "value"
         "Method skipBytes() not yet implemented.",                            // DatabaseRowInput_skipBytes
         "Method readLine() not yet implemented.",                             // DatabaseRowInput_readLine
@@ -487,7 +505,8 @@ public class Trace extends PrintWriter {
         "TOP n",                                                              // Parser_parseLimit2
         "S0011 primary or unique constraint required on the columns of the main table",
         "$$ in table: $$", "no file name specified for source",
-        "no value for: ", "zero length separator",
+        "no value for: ",                                                                                                       //
+        "zero length separator",    //
         "Unsupported parameter/return value class: ", "input stream is null",
         "23000 Integrity constraint violation - no parent",
         "No position specified",                                              // DatabaseRowInput_getPos
@@ -524,6 +543,19 @@ public class Trace extends PrintWriter {
         "error $$ reading row - file $$",                                     //DataFielCache_makeRow
         "error $$ opening file - file $$",                                    //DataFielCache_makeRow
         "error $$ closing file - file $$",                                    //DataFielCache_makeRow
+        "it is ambiguous for a parameter marker to be the operand of a unary negation operation",                               // Expression_resolveTypes1
+        "it is ambiguous for both operands of a binary aritmetic operator to be parameter markers",                             // Expression_resolveTypes2
+        "it is ambiguous for both expressions of a comparison-predicate to be parameter markers",                               // Expression_resolveTypes3
+        "it is ambiguous for a parameter marker to be the argument of a set-function-reference",                                // Expression_resolveTypes4
+        "it is ambiguous for a parameter marker to be the argument of a set-function-reference",                                // Expression_resolveTypes5
+        "it is ambiguous for both the alternative operands of a CASE operation to be parameter markers",                        // Expression_resolveTypes6
+        "the output data type of a CASE operation is ambiguous when the alternative operand types are $$ and $$",               // Expression_resolveTypes7
+        "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers",                          // Expression_resolveTypeForLike
+        "it is ambiguous for the expression of an IN operation to be a parameter marker when the value list is empty",          // Expression_resolveTypeForIn1
+        "it is ambiguous for both the expression and the first value list entry of an IN operation to be parameter markers",    // Expression_resolveTypeForIn2
+        "Session is closed",    // Session_execute
+        "Session is closed",    // Session_sqlExecuteDirect
+        "Session is closed",    // Session_sqlExecuteCompiled
     };
 
     /** Used during tests. */

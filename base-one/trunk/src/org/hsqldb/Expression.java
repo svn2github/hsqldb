@@ -1712,9 +1712,8 @@ class Expression {
                 break;
             }
             case NEGATE :
-                Trace.check(
-                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for a parameter marker to be the operand of a unary negation operation");
+                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.getMessage(Trace.Expression_resolveTypes1));
 
                 dataType = eArg.dataType;
 
@@ -1729,10 +1728,9 @@ class Expression {
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :
-                Trace.check(
-                    !(eArg.isParam && eArg2.isParam),
+                Trace.check(!(eArg.isParam && eArg2.isParam),
                     Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both operands of a binary aritmetic operator to be parameter markers");
+                            Trace.getMessage(Trace.Expression_resolveTypes2));
 
                 if (isFixedConstant()) {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
@@ -1779,10 +1777,9 @@ class Expression {
             case SMALLER :
             case SMALLER_EQUAL :
             case NOT_EQUAL :
-                Trace.check(
-                    !(eArg.isParam && eArg2.isParam),
+                Trace.check(!(eArg.isParam && eArg2.isParam),
                     Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both expressions of a comparison-predicate to be parameter markers");
+                            Trace.getMessage(Trace.Expression_resolveTypes3));
 
                 if (isFixedConditional()) {
                     exprType = test() ? TRUE
@@ -1895,9 +1892,8 @@ class Expression {
 
             /** @todo fredt - set the correct return type */
             case COUNT :
-                Trace.check(
-                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
+                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.getMessage(Trace.Expression_resolveTypes4));
 
                 dataType = Types.INTEGER;
                 break;
@@ -1906,9 +1902,8 @@ class Expression {
             case MIN :
             case SUM :
             case AVG :
-                Trace.check(
-                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
+                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.getMessage(Trace.Expression_resolveTypes5));
 
                 dataType = SetFunction.getType(exprType, eArg.dataType);
                 break;
@@ -1947,10 +1942,9 @@ class Expression {
                 Expression case1 = eArg;
                 Expression case2 = eArg2;
 
-                Trace.check(
-                    !(case1.isParam && case2.isParam),
+                Trace.check(!(case1.isParam && case2.isParam),
                     Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the alternative operands of a CASE operation to be parameter markers");
+                            Trace.getMessage(Trace.Expression_resolveTypes6));
 
                 if (case1.isParam || case1.dataType == Types.NULL) {
                     case1.dataType = case2.dataType;
@@ -1976,9 +1970,12 @@ class Expression {
                     Trace.check(
                         case1.dataType == case2.dataType,
                         Trace.COLUMN_TYPE_MISMATCH,
-                        "the output data type of a CASE operation is ambiguous when the alternative operand types are ",
-                        Types.getTypeString(case1.dataType), " and ",
-                        Types.getTypeString(case2.dataType));
+                        Trace.getMessage(
+                            Trace.Expression_resolveTypes7, true,
+                            new String[] {
+                        Types.getTypeString(case1.dataType),
+                        Types.getTypeString(case2.dataType)
+                    }));
                 }
 
                 break;
@@ -1988,9 +1985,9 @@ class Expression {
 
     void resolveTypeForLike() throws HsqlException {
 
-        Trace.check(
-            !(eArg.isParam && eArg2.isParam), Trace.COLUMN_TYPE_MISMATCH,
-            "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers");
+        Trace.check(!(eArg.isParam && eArg2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    Trace.getMessage(Trace.Expression_resolveTypeForLike));
 
         if (isFixedConditional()) {
             exprType = test() ? TRUE
@@ -2145,10 +2142,10 @@ class Expression {
             if (eArg.isParam) {
                 Trace.check(
                     vl.length > 0, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for the expression of an IN operation to be a parameter marker when the value list is empty");
+                    Trace.getMessage(Trace.Expression_resolveTypeForIn1));
                 Trace.check(
                     !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the expression and the first value list entry of an IN operation to be parameter markers");
+                    Trace.getMessage(Trace.Expression_resolveTypeForIn2));
 
                 Expression e  = vl[0];
                 int        dt = e.dataType;

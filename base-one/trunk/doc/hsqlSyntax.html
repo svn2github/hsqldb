@@ -213,11 +213,10 @@ shrinks the data file.
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CREATE</b> [UNIQUE] <b>INDEX</b> &lt;index&gt; <b>ON</b> &lt;table&gt; (&lt;column&gt; [, ...]) ;
+<b>CREATE</b> [UNIQUE] <b>INDEX</b> &lt;index&gt; <b>ON</b> &lt;table&gt; (&lt;column&gt; [, ...]) [DESC];
 </font>
 <p><font face="Arial">Creates an index on one or more columns in a table. <br>
-  Creating an index on searched columns may improve performance. 
-</font>
+  Creating an index on searched columns may improve performance. The qualifier DESC can be present for compatibility with other databases but it has no effect.</font>
 <p><font face="Arial">See also: <a href="#CREATE_TABLE">CREATE TABLE</a>, <a href="#DROP INDEX">DROP 
   INDEX</a> 
 </font>
@@ -427,7 +426,7 @@ The SELECT statement in a VIEW definition should return columns with distinct na
 </font>
 <p><font face="Arial">Closes this connection. It is not required to call this command when using 
   the JDBC interface: it is called automatically when the connection is closed. 
-  After disconnecting, it is not possible to execute other queries (also not CONNECT) 
+  After disconnecting, it is not possible to execute other queries (including CONNECT) 
   with this connection. 
 </font>
 <p><font face="Arial">See also: <a href="#CONNECT">CONNECT</a> 
@@ -437,7 +436,7 @@ The SELECT statement in a VIEW definition should return columns with distinct na
 </font>
 <hr>
 <font face="Arial"><br>
-<b>DROP INDEX</b> index ;
+<b>DROP INDEX</b> index [IF EXISTS] ;
 </font>
 <p><font face="Arial">Removes the specified index from the database. 
 </font>
@@ -761,8 +760,9 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
 This command should not be used as the routine method of closing the database.</font>
 <p><font face="Arial" size="2">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operation shrinks all files 
   to the minimum size.</font>
-<p><font face="Arial, Helvetica" size="2">SHUTDOWN SCRIPT  is similar to SHUTDOWN COMPACT but after writing the script and deleting the existing files, it does not rewrite the .data and text table files. After SHUTDOWN SCRIPT, only the .script and .properties file remain. At the next startup, these files are processed and the .data and .backup files are created.<br>
-  This command produces a full script of the database which can be edited for special purposes.
+<p><font face="Arial, Helvetica" size="2">SHUTDOWN SCRIPT  is similar to SHUTDOWN COMPACT but after writing the script and deleting the existing files, it does not rewrite the .data and text table files. After SHUTDOWN SCRIPT, only the .script and .properties file remain. At the next startup, these files are processed and the .data and .backup files are created. This command in effect performs part of the job of SHUTDOWN COMPACT, leaving the other part to be performed automatically at the next startup.<br>
+   
+  This command produces a full script of the database which can be edited for special purposes prior to the next startup.
   </font>
 <p><font face="Arial" size="2">
   Only an administrator may use the SHUTDOWN command.</font>
@@ -913,7 +913,7 @@ In practice, objects of up to a megabyte in size have been successfully used in 
   is not portable. 
 </font>
 <p> <font face="Arial, Helvetica, sans-serif" size="2">In HSQLDB, when defining CHAR and VARCHAR columns,  the SIZE argument is optional and defaults to 0. If any other size is specified, it is stored in the database definition but is not enforeced by default. Once you have created the database (before adding data), you can add a database property value to enforce the sizes:</font>
-<p><font face="Arial, Helvetica, sans-serif" size="2">SET PROPERTY &quot;sql.enforce_strict_size&quot; &quot;true&quot;</font>
+<p><font face="Arial, Helvetica, sans-serif" size="2">SET PROPERTY &quot;sql.enforce_strict_size&quot; true</font>
 <p><font face="Arial, Helvetica, sans-serif" size="2">This  will  enforce the specified size and pad CHAR fields with spaces to fill the size.
 This complies with SQL standards by throwing an exception if an attempt is made to insert a string longer than the maximum size.
 </font>
@@ -1107,23 +1107,23 @@ strings.</font>
 </font> A string s<font face="Arial">tarts and ends with a single ' (singlequote). In a string started with ' (singlequote) use '' (two singlequotes) to create a ' (singlequote).</font>
 <p><font face="Arial">The 
   LIKE keyword uses '%' to match any (including 0) number of characters, and '_' to match 
-  exactly one character. To search for '%' itself, '\%' must be used, for '_' 
-  use '\_'; or any other escaping character may be set using the ESCAPE clause.</font>
+  exactly one character. To search for '%' or '_' itself an escape character must also be specified </font><font face="Arial, Helvetica" size="2"><font face="Arial"> using the ESCAPE clause.</font>
+</font>For example, if the backslash is the escaping character<font face="Arial">, '\%' and '\_' can be used to find the '%' and '_' characters themselves. For example,  SELECT .... LIKE '\_%' ESCAPE '\' will find the strings beginning with an underscore.</font>
 <p><font face="Arial">name: <br>
   </font><font face="Arial, Helvetica" size="2"><font face="Arial"> The character set for identifiers (names) in HSQLDB is Unicode.</font></font>
 <p><font face="Arial">A unquoted identifier (name) starts with a letter and is followed by any number of letters or digits. 
   </font><font face="Arial, Helvetica" size="2"><font face="Arial"> When an SQL statement is issued, any </font></font>l<font face="Arial">owercase characters in </font><font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica" size="2"><font face="Arial">unquoted identifiers </font></font></font><font face="Arial">are converted to uppercase. 
   Because of this, unquoted names are in fact ALL UPPERCASE when used in SQL statements.</font>
-An important implication of this is the for accessing columns or aliases via JDBC: the internal form, which is the ALL UPPERCASE must be used if the column name or the alias was not quoted in the CREATE TABLE statement.
+An important implication of this is the for accessing columns names via JDBC DatabaseMetaData: the internal form, which is the ALL UPPERCASE must be used if the column name  was not quoted in the CREATE TABLE statement.
 <p><font face="Arial">Quoted identifiers can be used as names (for tables, columns, constraints or indexes). Quoted identifiers start and end with " </font><font face="Arial, Helvetica" size="2"><font face="Arial">(one doublequote)</font></font><font face="Arial">. A quoted identifier can contain any Unicode character, including space. In a quoted 
   identifier use "" (two doublequotes) to create a " (one doublequote). With quoted identifiers it is possible to create 
   mixed-case table and column names. Example: CREATE TABLE "Address" ("Nr" INTEGER,"Name" 
   VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address";</font>
 <p><font face="Arial">The equivalent quoted identifier can be used for an unquoted identifer by converting the identifier to all uppercase and quoting it. For example, if a table  name is defined as  Address2 (unquoted), it can be referred to by its  quoted form, &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers should not be confused with SQL strings.</font>
-<p><font face="Arial">Quoting can sometimes be used for identifiers when there is an ambiguity. For example:</font>
+<p><font face="Arial">Quoting can sometimes be used for identifiers or aliases when there is an ambiguity. For example:</font>
 
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
-<p>Portability between different JRE locales is an issue when accented characters are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
+<p>Portability between different JRE locales is an issue when accented characters (or extended unicode characters) are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
 <p>When using JDBC DatabaseMetaData methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
 <p><font face="Arial">values: <br>
   A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd (see java.sql.Date). 
@@ -1158,7 +1158,7 @@ An important implication of this is the for accessing columns or aliases via JDB
   <br>
    <font color="#FF0000">Items in red indicate features added by HSQL Development Group since April 2001<br>
    Based on original Hypersonic documentation. Updates by Peter Hudson, Joe Maher and Fred Toussi<br>
-  Last update 2003.10.15
+  Last update 2003.12.15
   </font></font>
 <p>&nbsp; 
 </font> 

@@ -796,7 +796,7 @@ class Session implements SessionInterface {
             }
 
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        "Session is closed");
+                        Trace.getMessage(Trace.Session_execute));
         } catch (Throwable t) {
             return new Result(t, null);
         }
@@ -919,7 +919,7 @@ class Session implements SessionInterface {
             }
 
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        "Session is closed");
+                        Trace.getMessage(Trace.Session_sqlExecuteDirect));
 
             synchronized (dDatabase) {
                 Trace.check(!dDatabase.isShutdown(),
@@ -950,7 +950,7 @@ class Session implements SessionInterface {
             }
 
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        "Session is closed");
+                        Trace.getMessage(Trace.Session_sqlExecuteCompiled));
 
             synchronized (dDatabase) {
                 Trace.check(!dDatabase.isShutdown(),

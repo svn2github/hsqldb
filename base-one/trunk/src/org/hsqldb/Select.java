@@ -866,8 +866,13 @@ class Select {
             sb.append("into table=[").append(sIntoTable.name).append("]\n");
         }
 
-        sb.append("start=[").append(limitCondition.getArg()).append("]\n");
-        sb.append("limit=[").append(limitCondition.getArg2()).append("]\n");
+        if (limitCondition != null) {
+            sb.append("start=[").append(limitCondition.getArg()).append(
+                "]\n");
+            sb.append("limit=[").append(limitCondition.getArg2()).append(
+                "]\n");
+        }
+
         sb.append("isDistinctSelect=[").append(isDistinctSelect).append(
             "]\n");
         sb.append("isGrouped=[").append(isGrouped).append("]\n");

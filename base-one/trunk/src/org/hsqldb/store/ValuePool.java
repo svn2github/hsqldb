@@ -123,13 +123,15 @@ public class ValuePool {
         return doublePool.getOrAddDouble(val);
     }
 
-    public static synchronized String getString(String val) {
+    public static String getString(String val) {
 
         if (val == null || val.length() > maxStringLength) {
             return val;
         }
 
+        synchronized (stringPool) {
         return stringPool.getOrAddString(val);
+    }
     }
 
     public static synchronized java.sql.Date getDate(long val) {
