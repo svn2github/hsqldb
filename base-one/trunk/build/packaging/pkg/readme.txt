@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.1 2002/10/12 01:15:46 unsaved Exp $
+$Id: readme.txt,v 1.2 2002/10/12 01:40:47 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -110,6 +110,36 @@ configuration section above).
     print server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
     chown -R hsqldb:hsqldb /usr/hsqldb/data/db2
     /etc/init.d/hsqldb start
+
+
+
+SOLARIS
+
+    To install the Solaris package
+
+	uncompress hsqldb1.2.3.pkg.Z
+	pkgadd -n hsqldb1.2.3.pkg HSQLhsqldb
+
+    To install to an install base other than /usr, make an Admin
+    file (like copy /var/sadm/install/admin/default) and set
+    "basedir" whatever you want, then specify the Admin file to
+    pkgadd with -a.
+
+	pkgadd -na file.admin hsqldb1.2.3.pkg HSQLhsqldb
+
+
+    MULTIPLE INSTANCES
+
+    You can install multiple instances of HSQLhsqldb, as long as
+    the version is unique.  If you want more than one copy of the
+    same version, then you will have to copy files manually because
+    Solaris doesn't permit that.  If pkgadd refuses to let you 
+    install an additional package even though the version is 
+    unique, then you probably need to set the Admin file variable
+    "instance" to "unique".
+
+    If you don't understand what I say about Admin files,  run
+    "man pkgadd" and "man -s 4 admin".
 
 
 Blaine
