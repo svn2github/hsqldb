@@ -143,10 +143,10 @@ class Like {
      *
      * @return
      */
-    boolean compare(Object o) {
+    Boolean compare(Object o) {
 
         if (o == null) {
-            return iLen == 0;
+            return null;
         }
 
         String s = o.toString();
@@ -155,7 +155,8 @@ class Like {
             s = s.toUpperCase();
         }
 
-        return compareAt(s, 0, 0, s.length());
+        return compareAt(s, 0, 0, s.length()) ? Boolean.TRUE
+                                              : Boolean.FALSE;
     }
 
     /**

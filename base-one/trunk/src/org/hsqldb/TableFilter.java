@@ -328,6 +328,14 @@ final class TableFilter {
             return;
         }
 
+        if (type == Expression.OR && isOuterJoin && e.isInJoin
+                && e.outerFilter == this) {
+            addAndCondition(e);
+            e.setTrue();
+
+            return;
+        }
+
         int conditionType = toConditionType(type);
 
         if (conditionType == CONDITION_NONE) {

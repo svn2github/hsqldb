@@ -344,6 +344,17 @@ class Constraint {
         return false;
     }
 
+    boolean hasColumn(int colIndex) {
+
+        if (constType == MAIN) {
+            return ArrayUtil.find(core.mainColArray, colIndex) != -1;
+        } else if (constType == FOREIGN_KEY) {
+            return ArrayUtil.find(core.mainColArray, colIndex) != -1;
+        }
+
+        return false;
+    }
+
 // fredt@users 20020225 - patch 1.7.0 by fredt - duplicate constraints
 
     /**

@@ -129,9 +129,6 @@ public class Table extends BaseTable {
 // boucherb@users - for future implementation of SQL standard INFORMATION_SCHEMA
     static final int SYSTEM_VIEW = 8;
 
-    // name of the column added to tables without primary key
-    static final String DEFAULT_PK = "";
-
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
     public HashMappedList columnList;                 // columns in table
@@ -640,27 +637,14 @@ public class Table extends BaseTable {
 // fredt@users 20020405 - patch 1.7.0 by fredt - DROP and CREATE INDEX bug
 
     /**
-     * DROP INDEX and CREATE INDEX on non empty tables both recreate the table
-     * and the data to reflect the new indexing structure. The new structure
-     * should be reflected in the DDL script, otherwise if a
-     * SHUTDOWN IMMEDIATELY occures, the following will happen:<br>
-     *
-     * <ul>
-     * <li>If the table is cached, the index roots will be different from what
-     *     is specified in SET INDEX ROOTS. <p>
-     *
-     * <li>If the table is memory, the old index will be used until the script
-     *     reaches drop index etc. and data is recreated again. <p>
-     *
-     * <ul>
-     *
-     * The fix avoids scripting the row insert and delete ops. <p>
-     *
      * Constraints that need removing are removed outside this method.<br>
-     * withoutindex is the name of an index to be removed <br>
-     * adjust {-1 | 0 | +1} indicates if a column {removed | no change | added}
+     * withoutindex is the name of an index to be removed, in which case
+     * no change is made to columns <br>
+     * When withoutindex is null,  adjust {-1 | 0 | +1} indicates if a
+     * column is {removed | replaced | added}
+     *
      */
-    Table moveDefinition(String withoutindex, Column newcolumn, int colindex,
+    Table moveDefinition(String withoutIndex, Column newColumn, int colIndex,
                          int adjust) throws HsqlException {
 
         Table tn = duplicate();
@@ -668,9 +652,15 @@ public class Table extends BaseTable {
         // loop beyond the end in order to be able to add a column to the end
         // of the list
         for (int i = 0; i < columnCount + 1; i++) {
-            if (i == colindex) {
-                if (adjust > 0) {
-                    tn.addColumn(newcolumn);
+            if (i == colIndex) {
+                if (adjust == 0) {
+                    if (newColumn != null) {
+                        tn.addColumn(newColumn);
+
+                        continue;
+                    }
+                } else if (adjust > 0) {
+                    tn.addColumn(newColumn);
                 } else if (adjust < 0) {
                     continue;
                 }
@@ -689,10 +679,8 @@ public class Table extends BaseTable {
 
         if (primarykey != null) {
             int[] newpk = ArrayUtil.toAdjustedColumnArray(primarykey,
-                colindex, adjust);
+                colIndex, adjust);
 
-            // fredt - we don't drop pk column
-            // although we _can_ drop single column pk wih no fk reference
             if (primarykey.length != newpk.length) {
                 throw Trace.error(Trace.DROP_PRIMARY_KEY);
             } else {
@@ -708,12 +696,12 @@ public class Table extends BaseTable {
         for (int i = 1; i < getIndexCount(); i++) {
             Index idx = getIndex(i);
 
-            if (withoutindex != null
-                    && idx.getName().name.equals(withoutindex)) {
+            if (withoutIndex != null
+                    && idx.getName().name.equals(withoutIndex)) {
                 continue;
             }
 
-            Index newidx = tn.createAdjustedIndex(idx, colindex, adjust);
+            Index newidx = tn.createAdjustedIndex(idx, colIndex, adjust);
 
             if (newidx == null) {
 
@@ -827,6 +815,23 @@ public class Table extends BaseTable {
                     throw Trace.error(Trace.COLUMN_IS_REFERENCED,
                                       c.getName());
                 }
+            }
+        }
+    }
+
+    /**
+     * Used for retype column. Checks whether column is in an FK or is
+     * referenced by an FK
+     */
+    void checkColumnInFKConstraint(String colname) throws HsqlException {
+
+        int colIndex = getColumnNr(colname);
+
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
+
+            if (c.hasColumn(colIndex)) {
+                throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName());
             }
         }
     }
@@ -1653,10 +1658,10 @@ public class Table extends BaseTable {
                   int adjust) throws HsqlException {
 
         Object colvalue = null;
+        Column column   = null;
 
-        if (adjust > 0) {
-            Column column = getColumn(colindex);
-
+        if (adjust >= 0 && colindex != -1) {
+            column   = getColumn(colindex);
             colvalue = column.getDefaultValue(session);
         }
 
@@ -1666,6 +1671,13 @@ public class Table extends BaseTable {
             Row      row  = it.next();
             Object[] o    = row.getData();
             Object[] data = getEmptyRowData();
+
+            if (adjust == 0 && colindex != -1) {
+                colvalue = Column.convertObject(o[colindex],
+                                                column.getType(),
+                                                column.getSize(),
+                                                column.getScale());
+            }
 
             ArrayUtil.copyAdjustArray(o, data, colvalue, colindex, adjust);
             updateIdentityValue(data);

@@ -6,6 +6,27 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.02.09 1.8.0.RC9
+
+Fixed reported bug with NOT LIKE and null values
+Fixed reported bug with OR conditions in OUTER JOIN
+Fixed reported bug with duplicated closing of prepared statements
+
+Support for the res: connection protocol (database files in a jar) has been
+extended to allow CACHED tables.
+
+Support for converting type, nullability, identity and PK attributes of a column
+
+ALTER TABLE <mytable> ALTER COLUMN <mycol> <column definition>
+
+<column definition> has the same syntax as normal column definition. The new
+column definition replaces the old one, so it is possible to add/remove a
+DEFAULT, a NOT NULL constraint, and IDENTITY definition, or a single column
+PRIMARY KEY. If there is a multi-column primary key on the table, no change
+to the primary key is allowed with this command. 
+
+
+
 2005.02.02 1.8.0.RC9
 
 Fixed unreported bug in recovery when first column contains null.

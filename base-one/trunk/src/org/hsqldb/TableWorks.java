@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
@@ -195,14 +196,13 @@ class TableWorks {
             newindex = table.createIndex(col, name, unique, constraint,
                                          forward);
         } else {
-            Table tn = table.moveDefinition(null, null,
-                                            table.getColumnCount(), 0);
+            Table tn = table.moveDefinition(null, null, -1, 0);
 
             newindex = tn.createIndexStructure(col, name, unique, constraint,
                                                forward);
 
-            tn.moveData(session, table, table.getColumnCount(), 0);
-            tn.updateConstraintsTables(table, table.getColumnCount(), 0);
+            tn.moveData(session, table, -1, 0);
+            tn.updateConstraintsTables(table, -1, 0);
 
             int index = table.database.getTableIndex(table);
 
@@ -239,8 +239,8 @@ class TableWorks {
 
         Table tn = table.moveDefinitionPK(name, cols);
 
-        tn.moveData(session, table, table.getColumnCount(), 0);
-        tn.updateConstraintsTables(table, table.getColumnCount(), 0);
+        tn.moveData(session, table, -1, 0);
+        tn.updateConstraintsTables(table, -1, 0);
 
         int index = table.database.getTableIndex(table);
 
@@ -348,11 +348,10 @@ class TableWorks {
         if (table.isIndexingMutable()) {
             table.dropIndex(indexname);
         } else {
-            Table tn = table.moveDefinition(indexname, null,
-                                            table.getColumnCount(), 0);
+            Table tn = table.moveDefinition(indexname, null, -1, 0);
 
-            tn.moveData(session, table, table.getColumnCount(), 0);
-            tn.updateConstraintsTables(table, table.getColumnCount(), 0);
+            tn.moveData(session, table, -1, 0);
+            tn.updateConstraintsTables(table, -1, 0);
 
             int i = table.database.getTableIndex(table);
 
@@ -367,19 +366,19 @@ class TableWorks {
 
     /**
      *
-     * @param  column
+     * @param  column is null if adjust is -1
      * @param  colindex
-     * @param  adjust +1 or -1
+     * @param  adjust +1, 0 -1
      * @throws  HsqlException
      */
-    void addOrDropColumn(Column column, int colindex,
-                         int adjust) throws HsqlException {
+    void addDropRetypeColumn(Column column, int colindex,
+                             int adjust) throws HsqlException {
 
         if (table.isText()) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
-        if (adjust == -1) {
+        if (adjust == -1 || adjust == 0) {
             table.database.checkColumnIsInView(
                 table.getName().name,
                 table.getColumn(colindex).columnName.name);
@@ -466,5 +465,114 @@ class TableWorks {
         }
 
         table.database.constraintNameList.removeName(name);
+    }
+
+    void reTypeColumn(Column oldCol, Column newCol) throws HsqlException {
+
+        boolean notallowed = false;
+        int     oldtype    = oldCol.getType();
+        int     newtype    = newCol.getType();
+
+        switch (newtype) {
+
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
+            case Types.OTHER :
+            case Types.JAVA_OBJECT :
+                notallowed = !table.isEmpty();
+        }
+
+        switch (oldtype) {
+
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
+            case Types.OTHER :
+            case Types.JAVA_OBJECT :
+                notallowed = !table.isEmpty();
+                break;
+
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+            case Types.BIGINT :
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                switch (newtype) {
+
+                    case Types.DATE :
+                    case Types.TIME :
+                    case Types.TIMESTAMP :
+                        notallowed = !table.isEmpty();
+                    default :
+                }
+                break;
+
+            case Types.DATE :
+            case Types.TIME :
+            case Types.TIMESTAMP :
+                switch (newtype) {
+
+                    case Types.TINYINT :
+                    case Types.SMALLINT :
+                    case Types.INTEGER :
+                    case Types.BIGINT :
+                    case Types.REAL :
+                    case Types.FLOAT :
+                    case Types.DOUBLE :
+                    case Types.NUMERIC :
+                    case Types.DECIMAL :
+                        notallowed = !table.isEmpty();
+                    default :
+                }
+                break;
+        }
+
+        if (notallowed) {
+            throw Trace.error(Trace.INVALID_CONVERSION);
+        }
+
+        int colindex = table.getColumnNr(oldCol.columnName.name);
+
+        if (table.getPrimaryKey().length > 1) {
+
+            // if there is a multi-column PK, do not change the PK attributes
+            if (newCol.isIdentity()) {
+                throw Trace.error(Trace.SECOND_PRIMARY_KEY);
+            }
+
+            newCol.setPrimaryKey(oldCol.isPrimaryKey());
+
+            if (ArrayUtil.find(table.getPrimaryKey(), colindex) != -1) {
+                newCol.setNullable(false);
+            }
+        }
+
+        table.database.checkColumnIsInView(
+            table.getName().name, table.getColumn(colindex).columnName.name);
+        table.checkColumnInCheckConstraint(
+            table.getColumn(colindex).columnName.name);
+        table.checkColumnInFKConstraint(oldCol.columnName.name);
+        checkConvertColDataType(oldCol, newCol);
+        addDropRetypeColumn(newCol, colindex, 0);
+    }
+
+    void checkConvertColDataType(Column oldCol,
+                                 Column newCol) throws HsqlException {
+
+        int         colindex = table.getColumnNr(oldCol.columnName.name);
+        RowIterator it       = table.rowIterator(null);
+
+        while (it.hasNext()) {
+            Row    row = it.next();
+            Object o   = row.getData()[colindex];
+
+            Column.convertObject(o, newCol.getType(), newCol.getSize(),
+                                 newCol.getScale());
+        }
     }
 }

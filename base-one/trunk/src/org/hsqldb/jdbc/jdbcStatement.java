@@ -122,7 +122,7 @@ import org.hsqldb.Types;
  *
  * @author boucherb@users
  * @author fredt@user
- * @version 1.7.2
+ * @version 1.8.0
  * @see jdbcConnection#createStatement
  * @see jdbcResultSet
  */
@@ -133,7 +133,7 @@ public class jdbcStatement implements Statement {
      * object now explicitly closes all of its open jdbcXXXStatement objects
      * when it is closed.
      */
-    boolean isClosed;
+    volatile boolean isClosed;
 
     /** Is escape processing enabled? */
     private boolean isEscapeProcessing = true;
@@ -258,7 +258,7 @@ public class jdbcStatement implements Statement {
      *
      * @exception SQLException if a database access error occurs
      */
-    public void close() throws SQLException {
+    public synchronized void close() throws SQLException {
 
         if (isClosed) {
             return;
@@ -1533,7 +1533,7 @@ public class jdbcStatement implements Statement {
     /**
      * Retrieves whether this statement is closed.
      */
-    boolean isClosed() {
+    synchronized boolean isClosed() {
         return isClosed;
     }
 

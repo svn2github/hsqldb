@@ -2332,14 +2332,8 @@ public class Expression {
             exprType   = EQUAL;
             eArg2 = new Expression(Types.VARCHAR, likeObject.getRangeLow());
             likeObject = null;
-        } else if (likeObject.isEquivalentToNotNullPredicate()) {
-
-            // X LIKE '%' <=>  X IS NOT NULL
-            exprType   = NOT;
-            eArg       = new Expression(IS_NULL, eArg, null);
-            eArg2      = null;
-            likeObject = null;
-        } else {
+        } else if (likeObject.isEquivalentToNotNullPredicate()) {}
+        else {
             if (eArg.exprType != Expression.COLUMN) {
 
                 // Then we are done here, since range predicates are
@@ -2873,8 +2867,7 @@ public class Expression {
                 String c = (String) Column.convertObject(leftValue,
                     Types.VARCHAR);
 
-                return likeObject.compare(c) ? Boolean.TRUE
-                                             : Boolean.FALSE;
+                return likeObject.compare(c);
 
             case IN :
                 return eArg2.testValueList(session, leftValue);
@@ -3200,8 +3193,7 @@ public class Expression {
 
                 String c = (String) eArg.getValue(session, Types.VARCHAR);
 
-                return likeObject.compare(c) ? Boolean.TRUE
-                                             : Boolean.FALSE;
+                return likeObject.compare(c);
 
             case IN :
                 return eArg2.testValueList(session, eArg.getValue(session));

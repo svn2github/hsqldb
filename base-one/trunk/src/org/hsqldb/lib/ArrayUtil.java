@@ -788,7 +788,7 @@ public class ArrayUtil {
      *  colindex is not copied. If adjust is +1 that element is filled with
      *  the Object addition. All the rest of the elements in source are
      *  shifted left or right accordingly when they are copied. If adjust is 0
-     *  only elements up to colindex are copied.
+     *  the addition is copied over the element at colindex.
      *
      *  No checks are perfomed on array sizes and an exception is thrown
      *  if they are not consistent with the other arguments.
@@ -799,10 +799,23 @@ public class ArrayUtil {
 
         int length = Array.getLength(source);
 
+        if (colindex < 0) {
+            System.arraycopy(source, 0, dest, 0, length);
+
+            return;
+        }
+
         System.arraycopy(source, 0, dest, 0, colindex);
 
         if (adjust == 0) {
-            return;
+            int endcount = length - colindex - 1;
+
+            Array.set(dest, colindex, addition);
+
+            if (endcount > 0) {
+                System.arraycopy(source, colindex + 1, dest, colindex + 1,
+                                 endcount);
+            }
         } else if (adjust < 0) {
             int endcount = length - colindex - 1;
 

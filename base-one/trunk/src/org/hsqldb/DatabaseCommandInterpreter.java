@@ -752,36 +752,40 @@ class DatabaseCommandInterpreter {
 // --
     }
 
+    private Column processCreateColumn() throws HsqlException {
+
+        String  token      = tokenizer.getString();
+        String  columnName = token;
+        boolean isQuoted   = tokenizer.wasQuotedIdentifier();
+        HsqlName hsqlName = database.nameManager.newHsqlName(columnName,
+            isQuoted);
+
+        return processCreateColumn(hsqlName);
+    }
+
     /**
      *  Responsible for handling the creation of table columns during the
      *  process of executing CREATE TABLE DDL statements.
      *
-     *  @param  t target table
+     *  @param  hsqlName name of the column
      *  @return a Column object with indicated attributes
      *  @throws  HsqlException
      */
-    private Column processCreateColumn(Table t) throws HsqlException {
+    private Column processCreateColumn(HsqlName hsqlName)
+    throws HsqlException {
 
         boolean    isIdentity        = false;
         long       identityStart     = database.firstIdentity;
         long       identityIncrement = 1;
         boolean    isPrimaryKey      = false;
-        String     columnName;
-        boolean    isQuoted;
         String     typeName;
         int        type;
         int        length      = 0;
         int        scale       = 0;
         boolean    isNullable  = true;
         Expression defaultExpr = null;
-        String     token       = tokenizer.getString();
+        String     token;
 
-        columnName = token;
-
-        Trace.check(!columnName.equals(Table.DEFAULT_PK),
-                    Trace.COLUMN_ALREADY_EXISTS, columnName);
-
-        isQuoted = tokenizer.wasQuotedIdentifier();
         typeName = tokenizer.getString();
         type     = Types.getTypeNr(typeName);
 
@@ -891,10 +895,9 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, Token.T_DEFAULT);
         }
 
-        return new Column(
-            database.nameManager.newHsqlName(columnName, isQuoted),
-            isNullable, type, length, scale, isIdentity, identityStart,
-            identityIncrement, isPrimaryKey, defaultExpr);
+        return new Column(hsqlName, isNullable, type, length, scale,
+                          isIdentity, identityStart, identityIncrement,
+                          isPrimaryKey, defaultExpr);
     }
 
     /**
@@ -1179,7 +1182,7 @@ class DatabaseCommandInterpreter {
                 break;
             }
 
-            Column newcolumn = processCreateColumn(t);
+            Column newcolumn = processCreateColumn();
 
             t.addColumn(newcolumn);
 
@@ -1699,9 +1702,19 @@ class DatabaseCommandInterpreter {
                 return;
             }
             default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                tokenizer.back();
+                processAlterColumnType(t, column);
             }
         }
+    }
+
+    private void processAlterColumnType(Table table,
+                                        Column oldCol) throws HsqlException {
+
+        Column     newCol = processCreateColumn(oldCol.columnName);
+        TableWorks tw     = new TableWorks(session, table);
+
+        tw.reTypeColumn(oldCol, newCol);
     }
 
     /**
@@ -2534,7 +2547,7 @@ class DatabaseCommandInterpreter {
 
         String token;
         int    colindex = t.getColumnCount();
-        Column column   = processCreateColumn(t);
+        Column column   = processCreateColumn();
 
         checkAddColumn(t, column);
 
@@ -2551,7 +2564,7 @@ class DatabaseCommandInterpreter {
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.addOrDropColumn(column, colindex, 1);
+        tableWorks.addDropRetypeColumn(column, colindex, 1);
 
         return;
     }
@@ -2578,7 +2591,7 @@ class DatabaseCommandInterpreter {
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.addOrDropColumn(null, colindex, -1);
+        tableWorks.addDropRetypeColumn(null, colindex, -1);
     }
 
     /**

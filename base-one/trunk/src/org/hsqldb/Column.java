@@ -203,6 +203,14 @@ public class Column {
         return newCol;
     }
 
+    void setType(Column other) {
+
+        isNullable = other.isNullable;
+        colType    = other.colType;
+        colSize    = other.colSize;
+        colScale   = other.colScale;
+    }
+
     /**
      *  Is this the identity column in the table.
      *
@@ -1692,7 +1700,7 @@ public class Column {
      * @param  type java.sql.Types int for a numeric type
      * @return relative width
      */
-    private static int getNumTypeWidth(int type) {
+    static int getNumTypeWidth(int type) {
 
         switch (type) {
 

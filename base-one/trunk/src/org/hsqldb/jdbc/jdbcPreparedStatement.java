@@ -2134,7 +2134,7 @@ implements PreparedStatement {
      *
      * @throws SQLException if a database access error occurs
      */
-    public void close() throws SQLException {
+    public synchronized void close() throws SQLException {
 
         if (isClosed()) {
             return;
