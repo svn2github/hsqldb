@@ -74,12 +74,13 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.text.SimpleDateFormat;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.ValuePool;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.IntValueHashMap;
 import java.sql.Date;
 import java.sql.Time;
 
@@ -250,9 +251,9 @@ public class Library {
         }
     };
 
-    static HsqlHashMap getAliasMap() {
+    static HashMap getAliasMap() {
 
-        HsqlHashMap h = new HsqlHashMap(83, 1);
+        HashMap h = new HashMap(83, 1);
 
         register(h, sNumeric);
         register(h, sString);
@@ -262,7 +263,7 @@ public class Library {
         return h;
     }
 
-    private static void register(HsqlHashMap h, String s[][]) {
+    private static void register(HashMap h, String s[][]) {
 
         for (int i = 0; i < s.length; i++) {
             h.put(s[i][0], s[i][1]);
@@ -1745,7 +1746,7 @@ public class Library {
     static final int                year                      = 56;
     static final int                getCDColumnMetaData       = 57;
     static final int                isReadOnlyDatabaseFiles   = 58;
-    static final HsqlObjectToIntMap functionMap = new HsqlObjectToIntMap(117);
+    private static final IntValueHashMap functionMap = new IntValueHashMap(117);
     static final Double             piValue = new Double(Library.pi());
 
     static {
@@ -2050,7 +2051,7 @@ public class Library {
     static int functionID(String fname) {
 
         return fname.startsWith(prefix)
-               ? functionMap.get(fname.substring(prefixLength))
+               ? functionMap.get(fname.substring(prefixLength), -1)
                : -1;
     }
 }

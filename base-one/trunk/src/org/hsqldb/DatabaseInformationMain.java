@@ -34,14 +34,13 @@ package org.hsqldb;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashSet;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ValuePool;
-import org.hsqldb.lib.HsqlEnumeration;
-import org.hsqldb.lib.CompositeEnumeration;
+import org.hsqldb.lib.WrapperIterator;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -133,19 +132,19 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected final Table[] sysTables = new Table[sysTableNames.length];
 
     /** Set: { names of system tables that are not to be cached } */
-    protected static final HsqlHashSet nonCachedTablesSet;
+    protected static final HashSet nonCachedTablesSet;
 
     /**
      * Map: simple <code>Column</code> name <code>String</code> object =>
      * <code>HsqlName</code> object.
      */
-    protected static final HsqlHashMap columnNameMap;
+    protected static final HashMap columnNameMap;
 
     /**
      * Map: simple <code>Index</code> name <code>String</code> object =>
      * <code>HsqlName</code> object.
      */
-    protected static final HsqlHashMap indexNameMap;
+    protected static final HashMap indexNameMap;
 
     /**
      * The <code>Session</code> object under consideration in the current
@@ -162,9 +161,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected DINameSpace ns;
 
     static {
-        columnNameMap      = new HsqlHashMap();
-        indexNameMap       = new HsqlHashMap();
-        nonCachedTablesSet = new HsqlHashSet();
+        columnNameMap      = new HashMap();
+        indexNameMap       = new HashMap();
+        nonCachedTablesSet = new HashSet();
         sysTableHsqlNames  = new HsqlName[sysTableNames.length];
 
         for (int i = 0; i < sysTableNames.length; i++) {
@@ -288,9 +287,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return an enumeration over all of the tables in this database
      */
-    protected final Enumeration allTables() {
-        return new CompositeEnumeration(database.getTables().elements(),
-                                        new HsqlEnumeration(sysTables, true));
+    protected final Iterator allTables() {
+        return new WrapperIterator(database.getTables().iterator(),
+                                   new WrapperIterator(sysTables, true));
     }
 
     /**
@@ -437,7 +436,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // flag the Session-dependent cached tables
         sysTableSessionDependent[SYSTEM_ALIASES] =
             sysTableSessionDependent[SYSTEM_CLASSPRIVILEGES] =
-            sysTableSessionDependent[SYSTEM_BESTROWIDENTIFIER]=
+            sysTableSessionDependent[SYSTEM_BESTROWIDENTIFIER] =
             sysTableSessionDependent[SYSTEM_COLUMNPRIVILEGES] =
             sysTableSessionDependent[SYSTEM_COLUMNS] =
             sysTableSessionDependent[SYSTEM_CROSSREFERENCE] =
@@ -445,7 +444,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             sysTableSessionDependent[SYSTEM_PRIMARYKEYS] =
             sysTableSessionDependent[SYSTEM_PROCEDURES] =
             sysTableSessionDependent[SYSTEM_PROCEDURECOLUMNS] =
-            sysTableSessionDependent[SYSTEM_TABLEPRIVILEGES]=
+            sysTableSessionDependent[SYSTEM_TABLEPRIVILEGES] =
             sysTableSessionDependent[SYSTEM_TABLES] =
             sysTableSessionDependent[SYSTEM_TRIGGERCOLUMNS] =
             sysTableSessionDependent[SYSTEM_TRIGGERS] =
@@ -567,7 +566,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return null;
         }
 
-        tableIndex = sysTableNamesMap.get(name);
+        tableIndex = this.getSysTableID(name);
         t          = sysTables[tableIndex];
 
         // fredt - any system table that is not supported will be null here
@@ -598,8 +597,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             }
         }
 
-        int oldSessionId = sysTableSessions[tableIndex];
-        boolean tableValid = oldSessionId != -1;
+        int     oldSessionId = sysTableSessions[tableIndex];
+        boolean tableValid   = oldSessionId != -1;
 
         // user has changed and table is user-dependent
         if (session.getId() != oldSessionId
@@ -818,7 +817,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         //        - column sequence in index (constraint)?
         //-------------------------------------------
         // Intermediate holders
-        Enumeration    tables;
+        Iterator       tables;
         Table          table;
         DITableInfo    ti;
         int[]          cols;
@@ -846,11 +845,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         tables = p.isPropertyTrue("hsqldb.system_table_bri") ? allTables()
                                                              : database
                                                              .getTables()
-                                                                 .elements();
+                                                                 .iterator();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (table.isView() ||!isAccessibleTable(table)) {
                 continue;
@@ -926,14 +925,14 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        Object[]    row;
-        Enumeration catalogs;
+        Object[] row;
+        Iterator catalogs;
 
         catalogs = ns.enumCatalogNames();
 
-        while (catalogs.hasMoreElements()) {
+        while (catalogs.hasNext()) {
             row    = t.getNewRow();
-            row[0] = (String) catalogs.nextElement();
+            row[0] = (String) catalogs.next();
 
             t.insert(row, session);
         }
@@ -1122,7 +1121,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         // intermediate holders
         int         columnCount;
-        Enumeration tables;
+        Iterator    tables;
         Table       table;
         Object[]    row;
         DITableInfo ti;
@@ -1153,8 +1152,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         ti     = new DITableInfo();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (!isAccessibleTable(table)) {
                 continue;
@@ -1297,7 +1296,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         Integer deferrability;
 
         // Intermediate holders
-        Enumeration   tables;
+        Iterator      tables;
         Table         table;
         Table         fkTable;
         Table         pkTable;
@@ -1333,7 +1332,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // 2.) make all system tables static
         // 3.) implement way to re-resolve references after a cache clear
         // Initialization
-        tables = database.getTables().elements();
+        tables = database.getTables().iterator();
         pkInfo = new DITableInfo();
         fkInfo = new DITableInfo();
 
@@ -1351,8 +1350,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // relative to the session of the calling context
         fkConstraintsList = new HsqlArrayList();
 
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (!isAccessibleTable(table)) {
                 continue;
@@ -1561,7 +1560,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         String  filterCondition;
 
         // Intermediate holders
-        Enumeration    tables;
+        Iterator       tables;
         Table          table;
         int            indexCount;
         int[]          cols;
@@ -1591,11 +1590,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         p  = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_indexinfo")
                  ? allTables()
-                 : database.getTables().elements();
+                 : database.getTables().iterator();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (table.isView() ||!isAccessibleTable(table)) {
                 continue;
@@ -1721,7 +1720,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         String primaryKeyName;
 
         // Intermediate holders
-        Enumeration    tables;
+        Iterator       tables;
         Table          table;
         Object[]       row;
         Index          index;
@@ -1743,10 +1742,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         p  = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_primarykeys")
                  ? allTables()
-                 : database.getTables().elements();
+                 : database.getTables().iterator();
 
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (table.isView()) {
                 continue;
@@ -2003,16 +2002,16 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        Enumeration schemas;
-        Object[]    row;
+        Iterator schemas;
+        Object[] row;
 
         // Initialization
         schemas = ns.enumVisibleSchemaNames(session);
 
         // Do it.
-        while (schemas.hasMoreElements()) {
+        while (schemas.hasNext()) {
             row    = t.getNewRow();
-            row[0] = schemas.nextElement();
+            row[0] = schemas.next();
             row[1] = ns.getCatalogName(row[0]);
 
             t.insert(row, session);
@@ -2094,7 +2093,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         HsqlArrayList users;
         User          user;
         HsqlArrayList tablePrivileges;
-        Enumeration   tables;
+        Iterator      tables;
         Table         table;
         HsqlName      accessKey;
         Object[]      row;
@@ -2114,8 +2113,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         tables      = allTables();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table     = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table     = (Table) tables.next();
             accessKey = table.getName();
 
             // Only show table grants if session user is admin, has some
@@ -2215,8 +2214,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             // extended
             // ------------------------------------------------------------
             addColumn(t, "HSQLDB_TYPE", VARCHAR);
-            addColumn(t, "READ_ONLY", BIT, false);          // not null
-
+            addColumn(t, "READ_ONLY", BIT, false);         // not null
 
             // ------------------------------------------------------------
             // order TABLE_TYPE, TABLE_SCHEM and TABLE_NAME
@@ -2236,7 +2234,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         }
 
         // intermediate holders
-        Enumeration tables;
+        Iterator    tables;
         Table       table;
         Object      row[];
         HsqlName    accessKey;
@@ -2249,12 +2247,14 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         final int itable_name  = 2;
         final int itable_type  = 3;
         final int iremark      = 4;
+
         // jdbc 3
-        final int itype_cat    = 5;
-        final int itype_schem  = 6;
-        final int itype_name   = 7;
-        final int isref_cname  = 8;
-        final int iref_gen     = 9;
+        final int itype_cat   = 5;
+        final int itype_schem = 6;
+        final int itype_name  = 7;
+        final int isref_cname = 8;
+        final int iref_gen    = 9;
+
         // hsqldb ext
         final int ihsqldb_type = 10;
         final int iread_only   = 11;
@@ -2264,8 +2264,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         ti     = new DITableInfo();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (!isAccessibleTable(table)) {
                 continue;

@@ -68,10 +68,10 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import java.util.Enumeration;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashSet;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HashMap;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
@@ -102,7 +102,7 @@ class User {
     private boolean isSys;
 
     /** map with database object identifier keys and access privileges values */
-    private HsqlHashMap rightsMap;
+    private HashMap rightsMap;
 
     /** user name. */
     private String sName;
@@ -133,7 +133,7 @@ class User {
      */
     User(String name, String password, boolean admin, User pub) {
 
-        rightsMap = new HsqlHashMap();
+        rightsMap = new HashMap();
         sName     = name;
 
         setPassword(password);
@@ -171,7 +171,7 @@ class User {
      *      UserManager: {SELECT, INSERT, UPDATE and DELETE}.
      * </UL>
      */
-    HsqlHashMap getRights() {
+    HashMap getRights() {
 
         // necessary to create the script
         return rightsMap;
@@ -354,21 +354,21 @@ class User {
      * @since HSQLDB 1.7.2
      *
      */
-    HsqlHashSet getGrantedClassNames(boolean andToPublic) {
+    HashSet getGrantedClassNames(boolean andToPublic) {
 
-        HsqlHashMap rights;
-        HsqlHashSet out;
-        HsqlHashSet pub;
+        HashMap rights;
+        HashSet out;
+        HashSet pub;
         Object      key;
         Integer     right;
-        Enumeration e;
+        Iterator i;
 
         rights = rightsMap;
-        out    = new HsqlHashSet();
-        e      = rightsMap.keys();
+        out    = new HashSet();
+        i      = rightsMap.keySet().iterator();
 
-        while (e.hasMoreElements()) {
-            key = e.nextElement();
+        while (i.hasNext()) {
+            key = i.next();
 
             if (key instanceof String) {
                 right = (Integer) rights.get(key);
@@ -381,10 +381,10 @@ class User {
 
         if (andToPublic && uPublic != null) {
             rights = uPublic.rightsMap;
-            e      = rights.keys();
+            i      = rights.keySet().iterator();
 
-            while (e.hasMoreElements()) {
-                key = e.nextElement();
+            while (i.hasNext()) {
+                key = i.next();
 
                 if (key instanceof String) {
                     right = (Integer) rights.get(key);

@@ -68,8 +68,8 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlIntKeyHashMap;
-import java.util.Enumeration;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.Iterator;
 
 /**
  * Container that maintains a map of session id's to Session objects.
@@ -79,14 +79,14 @@ public class SessionManager {
 
     int                       sessionIdCount;
     private HsqlArrayList     sessionList = new HsqlArrayList();
-    private HsqlIntKeyHashMap sessionMap  = new HsqlIntKeyHashMap();
+    private IntKeyHashMap sessionMap  = new IntKeyHashMap();
     Session                   sysSession;
 
 // TODO:
 //
 // Eliminate the Database-centric nature of SessionManager.
 // e.g. Sessions should be able to migrate from one Database instance
-// to another using session control language moderated by 
+// to another using session control language moderated by
 // SessionManager interacting with HsqlRuntime (a.k.a. Connection.setCatalog()).
 // Possibly, make SessionManager an attribute of HsqlRuntime, rather than of
 // Database.
@@ -99,18 +99,18 @@ public class SessionManager {
         sysSession = newSession(db, sysUser, false);
     }
 
-// TODO:  
+// TODO:
 //
 // It should be possible to create an initially 'disconnected' Session that
 // can execute general commands using a SessionCommandInterpreter.
-//    
+//
 // EXAMPLES: Open a Session to start a Server, add/remove
-//           databases hosted by an existing Server, connect to a 
+//           databases hosted by an existing Server, connect to a
 //           Database...
 //
 // REQUIRES:  HsqlRuntime auth scheme independent of any particular
-//            Database instance 
-//            e.g. provide service to use /etc/passwd and /etc/groups, 
+//            Database instance
+//            e.g. provide service to use /etc/passwd and /etc/groups,
 //                 JAAS-plugin, etc.
 
     /**
@@ -133,7 +133,7 @@ public class SessionManager {
         return s;
     }
 
-// TODO:  
+// TODO:
 // sig change should be either:  getSysSession(Database) or getSysSession(dbID)
 
     /**
@@ -145,8 +145,8 @@ public class SessionManager {
         return sysSession;
     }
 
-// TODO:  
-// sig change should be either:  closeAllSessions(Database) or closeAllSessions(dbID)    
+// TODO:
+// sig change should be either:  closeAllSessions(Database) or closeAllSessions(dbID)
 
     /**
      * Closes all Sessions registered with this SessionManager.
@@ -154,10 +154,10 @@ public class SessionManager {
     void closeAllSessions() {
 
         // don't disconnect system user; need it to save database
-        Enumeration en = sessionMap.elements();
+        Iterator it = sessionMap.values().iterator();
 
-        for (; en.hasMoreElements(); ) {
-            Session s = (Session) en.nextElement();
+        for (; it.hasNext(); ) {
+            Session s = (Session) it.next();
 
             if (s != sysSession) {
                 s.disconnect();
@@ -204,10 +204,10 @@ public class SessionManager {
         Session       observed;
         boolean       isObserverAdmin = session.isAdmin();
         int           observerId      = session.getId();
-        Enumeration   en              = sessionMap.elements();
+        Iterator it              = sessionMap.values().iterator();
 
-        for (; en.hasMoreElements(); ) {
-            observed = (Session) en.nextElement();
+        for (; it.hasNext(); ) {
+            observed = (Session) it.next();
 
             if (observed == null) {
 

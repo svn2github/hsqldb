@@ -32,7 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 
 /**
  * This class is used for grouping select results, especially for select
@@ -67,7 +67,7 @@ class GroupedResult {
     int           groupBegin;
     int           groupEnd;
     boolean       isGrouped;
-    HsqlHashMap   groups = new HsqlHashMap();
+    HashMap       groups = new HashMap();
     ResultGroup   currGroup;
 
     GroupedResult(Select select, Result result) {

@@ -42,7 +42,7 @@ import java.util.NoSuchElementException;
  * @author jcpeck@users
  * @version 05/24/2002
  */
-public class HsqlLinkedList implements HsqlList {
+public class HsqlLinkedList extends BaseList implements HsqlList {
 
     /**
      * A reference to the head of the list.  It is a dummy head (that is, the
@@ -52,7 +52,6 @@ public class HsqlLinkedList implements HsqlList {
 
     /** A reference to the tail of the list */
     private Node last;
-    private int  elementCount;
 
     /**
      * Creates a new instance of HsqlLinkedList.
@@ -186,61 +185,6 @@ public class HsqlLinkedList implements HsqlList {
      */
     public final int size() {
         return elementCount;
-    }
-
-    /**
-     * Returns an Enumeration of the elements of the list.  The Enumerator will
-     * NOT throw a concurrent modification exception if the list is changed
-     * between calls to nextElement().
-     */
-    public Enumeration elements() {
-
-        Enumeration enum = new Enumeration() {
-
-            private Node pointer = first;
-
-            public Object nextElement() {
-
-                if (!hasMoreElements()) {
-                    throw new NoSuchElementException("Enumeration complete");
-                }
-
-                pointer = pointer.next;
-
-                return pointer.data;
-            }
-
-            public boolean hasMoreElements() {
-                return (pointer.next != null);
-            }
-        };
-
-        return enum;
-    }
-
-    public String toString() {
-
-        StringBuffer sb = new StringBuffer(32);
-
-        sb.append("HsqlLinkedList : size=");
-        sb.append(elementCount);
-        sb.append(' ');
-        sb.append('[');
-
-        Enumeration enum = elements();
-
-        while (enum.hasMoreElements()) {
-            sb.append(enum.nextElement());
-
-            if (enum.hasMoreElements()) {
-                sb.append(',');
-                sb.append(' ');
-            }
-        }
-
-        sb.append(']');
-
-        return sb.toString();
     }
 
     /**

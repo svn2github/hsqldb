@@ -33,7 +33,8 @@ package org.hsqldb;
 
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import java.util.NoSuchElementException;
+import org.hsqldb.lib.IntValueHashMap;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherB@users 20020305 - completed inheritance work, including final access
@@ -90,8 +91,8 @@ class DatabaseInformation {
 
 // boucherb@users 20030305 - brought in line with SQL 200n
     protected static final int SYSTEM_VIEWS = 30;
-    
-// boucherb@users 20030403 - isolated and improved text table reporting    
+
+// boucherb@users 20030403 - isolated and improved text table reporting
     protected static final int SYSTEM_TEXTTABLES = 31;
 
     /** system table names strictly in order of their ids */
@@ -132,7 +133,7 @@ class DatabaseInformation {
 // boucherb@users 20030305 - brought in line with SQL 200n
         "SYSTEM_VIEWS",
 
-// boucherb@users 20030403 - isolated and improved text table reporting         
+// boucherb@users 20030403 - isolated and improved text table reporting
         "SYSTEM_TEXTTABLES"
 
         // Future use
@@ -220,19 +221,23 @@ class DatabaseInformation {
     };
 
     /** Map: table name => table id */
-    protected static final HsqlObjectToIntMap sysTableNamesMap;
+    protected static final IntValueHashMap sysTableNamesMap;
 
     static {
-        sysTableNamesMap = new HsqlObjectToIntMap(47);
+        sysTableNamesMap = new IntValueHashMap(47);
 
         for (int i = 0; i < sysTableNames.length; i++) {
             sysTableNamesMap.put(sysTableNames[i], i);
         }
     }
 
+    static int getSysTableID(String token) {
+        return sysTableNamesMap.get(token, -1);
+    }
+
     /** Database for which to produce tables */
     protected final Database database;
-    
+
     /**
      * Simple object-wide flag indicating that all of this object's cached
      * data is dirty.
@@ -346,7 +351,7 @@ class DatabaseInformation {
     final void setDirty() {
         isDirty = true;
     }
-    
+
     /**
      * Switches this table producer between producing empty (surrogate)
      * or contentful tables. <p>

@@ -37,7 +37,6 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 import org.hsqldb.lib.HsqlTimer;

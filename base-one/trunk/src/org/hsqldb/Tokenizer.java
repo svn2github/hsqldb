@@ -70,8 +70,9 @@ package org.hsqldb;
 import java.sql.Types;
 import java.sql.SQLException;
 import java.math.BigDecimal;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import java.util.NoSuchElementException;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.IntValueHashMap;
 
 // fredt@users 20020218 - patch 455785 by hjbusch@users - large DECIMAL inserts
 // also Long.MIM_VALUE (bug 473388) inserts - applied to different parts
@@ -110,29 +111,29 @@ class Tokenizer {
                              NULL      = 13;
 
     // used only internally
-    private static final int   QUOTED_IDENTIFIER = 14,
-                               REMARK_LINE       = 15,
-                               REMARK            = 16;
-    private String             sCommand;
-    private int                iLength;
-    private Object             oValue;
-    private int                iIndex;
-    private int                tokenIndex;
-    private int                nextTokenIndex;
-    private int                beginIndex;
-    private int                iType;
-    private String             sToken;
-    private String             sLongNameFirst;
-    private String             sLongNameLast;
-    private boolean            bWait;
-    private static HsqlHashMap hKeyword;
-    static HsqlObjectToIntMap  valueTokens;
+    private static final int QUOTED_IDENTIFIER = 14,
+                             REMARK_LINE       = 15,
+                             REMARK            = 16;
+    private String           sCommand;
+    private int              iLength;
+    private Object           oValue;
+    private int              iIndex;
+    private int              tokenIndex;
+    private int              nextTokenIndex;
+    private int              beginIndex;
+    private int              iType;
+    private String           sToken;
+    private String           sLongNameFirst;
+    private String           sLongNameLast;
+    private boolean          bWait;
+    private static HashMap   hKeyword;
+    static IntValueHashMap   valueTokens;
 
     static {
 
         // both maps are used as sets only
         // literals not allowed as table / column names
-        hKeyword = new HsqlHashMap(67);
+        hKeyword = new HashMap(67);
 
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
@@ -149,7 +150,7 @@ class Tokenizer {
         }
 
         // literals that are values
-        valueTokens = new HsqlObjectToIntMap(17);
+        valueTokens = new IntValueHashMap(17);
 
         valueTokens.put("NULL", NULL);
         valueTokens.put("TRUE", BOOLEAN);
@@ -699,7 +700,7 @@ class Tokenizer {
                     } else {
 
                         // if in value list then it is a value
-                        int type = valueTokens.get(sToken);
+                        int type = valueTokens.get(sToken, -1);
 
                         if (type != -1) {
                             iType = type;
@@ -914,16 +915,16 @@ class Tokenizer {
     }
 
 // boucherb@users - patch 1.7.2 - convenience method to allow parser to perform
-// atomic test and throw in places where parameter tokens are illegal, i.e. 
+// atomic test and throw in places where parameter tokens are illegal, i.e.
 // column lists items, table list items, as aliases, etc.
 
     /**
-     * A check for whether or not a parameter token ('?') is unexpected  
+     * A check for whether or not a parameter token ('?') is unexpected
      * in the current tokenizing context
      *
-     * @param msg to display in exception if check determines 
-     * @throws SQLException if current token string value is '?' and the 
-     * class of the token is not SPECIAL 
+     * @param msg to display in exception if check determines
+     * @throws SQLException if current token string value is '?' and the
+     * class of the token is not SPECIAL
      */
     void checkUnexpectedParam(String msg) throws SQLException {
 

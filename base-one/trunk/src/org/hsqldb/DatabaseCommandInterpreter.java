@@ -72,7 +72,7 @@ import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
@@ -153,7 +153,7 @@ class DatabaseCommandInterpreter implements DITypes {
                     continue;
                 }
 
-                // TODO:  build up list of Results in session context 
+                // TODO:  build up list of Results in session context
                 // RE:    ability to gen/retrieve multiple result sets
                 // EX:    session.addResult(executePart(cmd, token, parser));
                 result = executePart(cmd, token, parser);
@@ -465,13 +465,13 @@ class DatabaseCommandInterpreter implements DITypes {
     private int[] processColumnList(Table t) throws SQLException {
 
         HsqlArrayList list;
-        HsqlHashSet   set;
+        HashSet       set;
         String        token;
         int           col[];
         int           size;
 
         list = new HsqlArrayList();
-        set  = new HsqlHashSet();
+        set  = new HashSet();
 
         tokenizer.getThis("(");
 

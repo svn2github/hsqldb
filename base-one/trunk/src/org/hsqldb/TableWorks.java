@@ -69,7 +69,7 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
@@ -92,7 +92,7 @@ class TableWorks {
     Table getTable() {
         return table;
     }
-// boucherb@users 20030402 - patch 1.7.2 added for reuse of TableWorks object 
+// boucherb@users 20030402 - patch 1.7.2 added for reuse of TableWorks object
 // under command interpreter support
     void setTable(Table table) {
         this.table = table;
@@ -358,7 +358,7 @@ class TableWorks {
 
         int         j    = table.getConstraintIndex(name);
         Constraint  c    = table.getConstraint(name);
-        HsqlHashMap cmap = new HsqlHashMap();
+        HashMap cmap = new HashMap();
 
         cmap.put(c, c);
 

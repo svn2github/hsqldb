@@ -85,7 +85,7 @@ class MemoryNode extends BaseMemoryNode {
      *
      * @param  r
      */
-    MemoryNode(Row r) {
+    public MemoryNode(Row r) {
         rData = r;
     }
 

@@ -31,7 +31,6 @@
 
 package org.hsqldb.lib;
 
-import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
@@ -43,17 +42,17 @@ import java.util.NoSuchElementException;
  * but does not shrink when it gets empty.
  *
  * @author fredt@users
- * @version 1.7.0
+ * @version 1.7.2
+ * @since 1.7.0
  */
-public class HsqlDeque {
+public class HsqlDeque extends BaseList implements HsqlList {
 
     private Object[] list;
     private int      firstindex = 0;                   // index of first list element
     private int      endindex   = 0;                   // index of last list element + 1
 
     // can grow to fill list
-    // if usedsize == 0 then firstindex == endindex
-    private int       usedsize                 = 0;    // current number of elements
+    // if elementCount == 0 then firstindex == endindex
     private final int DEFAULT_INITIAL_CAPACITY = 10;
 
     public HsqlDeque() {
@@ -61,12 +60,12 @@ public class HsqlDeque {
     }
 
     public int size() {
-        return usedsize;
+        return elementCount;
     }
 
     public Object getFirst() throws NoSuchElementException {
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             throw new NoSuchElementException();
         }
 
@@ -75,7 +74,7 @@ public class HsqlDeque {
 
     public Object getLast() throws NoSuchElementException {
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             throw new NoSuchElementException();
         }
 
@@ -87,6 +86,14 @@ public class HsqlDeque {
         int index = getInternalIndex(i);
 
         return list[index];
+    }
+
+    public Object remove(int i) {
+        throw new java.lang.RuntimeException();
+    }
+
+    public void add(int i, Object o) throws IndexOutOfBoundsException {
+        throw new java.lang.RuntimeException();
     }
 
     public Object set(int i, Object o) throws IndexOutOfBoundsException {
@@ -101,7 +108,7 @@ public class HsqlDeque {
 
     public Object removeFirst() throws NoSuchElementException {
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             throw new NoSuchElementException();
         }
 
@@ -110,9 +117,9 @@ public class HsqlDeque {
         list[firstindex] = null;
 
         firstindex++;
-        usedsize--;
+        elementCount--;
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             firstindex = endindex = 0;
         } else if (firstindex == list.length) {
             firstindex = 0;
@@ -123,7 +130,7 @@ public class HsqlDeque {
 
     public Object removeLast() throws NoSuchElementException {
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             throw new NoSuchElementException();
         }
 
@@ -133,9 +140,9 @@ public class HsqlDeque {
 
         list[endindex] = null;
 
-        usedsize--;
+        elementCount--;
 
-        if (usedsize == 0) {
+        if (elementCount == 0) {
             firstindex = endindex = 0;
         } else if (endindex == 0) {
             endindex = list.length;
@@ -163,7 +170,7 @@ public class HsqlDeque {
 
         list[endindex] = o;
 
-        usedsize++;
+        elementCount++;
         endindex++;
 
         return true;
@@ -189,27 +196,23 @@ public class HsqlDeque {
 
         list[firstindex] = o;
 
-        usedsize++;
+        elementCount++;
 
         return true;
     }
 
     public void clear() {
 
-        firstindex = endindex = usedsize = 0;
+        firstindex = endindex = elementCount = 0;
 
         for (int i = 0; i < list.length; i++) {
             list[i] = null;
         }
     }
 
-    public boolean isEmpty() {
-        return usedsize == 0;
-    }
-
     private int getInternalIndex(int i) throws IndexOutOfBoundsException {
 
-        if (i < 0 || i >= usedsize) {
+        if (i < 0 || i >= elementCount) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -222,33 +225,9 @@ public class HsqlDeque {
         return index;
     }
 
-// based on code by dnordahl@users
-    public Enumeration elements() {
-
-        Enumeration enum = new Enumeration() {
-
-            private int currentIndex = 0;
-
-            public Object nextElement() {
-
-                if (!hasMoreElements()) {
-                    throw new NoSuchElementException("Enumeration complete");
-                }
-
-                return get(currentIndex++);
-            }
-
-            public boolean hasMoreElements() {
-                return usedsize > currentIndex;
-            }
-        };
-
-        return enum;
-    }
-
     private void resetCapacity() {
 
-        if (usedsize < list.length) {
+        if (elementCount < list.length) {
             return;
         }
 
@@ -263,14 +242,14 @@ public class HsqlDeque {
         newList = null;
 
         if (endindex <= firstindex) {
-            int tail = firstindex + usedsize - endindex;
+            int tail = firstindex + elementCount - endindex;
 
             for (int i = 0; i < endindex; i++) {
                 list[tail + i] = list[i];
                 list[i]        = null;
             }
 
-            endindex = firstindex + usedsize;
+            endindex = firstindex + elementCount;
         }
     }
 /*
@@ -319,10 +298,10 @@ public class HsqlDeque {
 
         System.out.println();
 
-        Enumeration en = d.elements();
+        Iterator it = d.iterator();
 
-        for (; en.hasMoreElements(); ) {
-            System.out.println(en.nextElement());
+        for (; it.hasNext(); ) {
+            System.out.println(it.next());
         }
     }
 */

@@ -68,9 +68,9 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 import java.sql.SQLException;
-import java.util.Enumeration;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m
@@ -92,7 +92,7 @@ class Select {
     boolean             isDistinctSelect;
     boolean             isAggregated;
     private boolean     isGrouped;
-    private HsqlHashMap groupColumnNames;
+    private HashMap groupColumnNames;
     private int         aggregateCount;
     TableFilter         tFilter[];
     Expression          eCondition;           // null means no condition
@@ -239,9 +239,9 @@ class Select {
             checkResolved();
         }
 
-// -------------------------------Start Prefix ---------------------------------     
-// TODO: Clean up the whole approach to setting up Select state variables, 
-// (re)resoving expression trees, (re) parameterizing expression trees         
+// -------------------------------Start Prefix ---------------------------------
+// TODO: Clean up the whole approach to setting up Select state variables,
+// (re)resoving expression trees, (re) parameterizing expression trees
         if (sUnion != null && sUnion.iResultLen != iResultLen) {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
@@ -258,7 +258,7 @@ class Select {
 
         if (iGroupLen > 0) {                         // has been set in Parser
             isGrouped        = true;
-            groupColumnNames = new HsqlHashMap();    // TODO size !!
+            groupColumnNames = new HashMap();    // TODO size !!
 
             for (int i = groupByStart; i < groupByEnd; i++) {
                 eColumn[i].collectColumnName(groupColumnNames);
@@ -329,7 +329,7 @@ class Select {
         int limitcount = issimplemaxrows ? limitStart + maxrows
                                          : Integer.MAX_VALUE;
 
-//------------------------------- End Prefix -----------------------------------                                      
+//------------------------------- End Prefix -----------------------------------
         buildResult(r, limitcount);
 
         // the result is maybe bigger (due to group and order by)
@@ -469,9 +469,9 @@ class Select {
      * in the given defined column names.
      */
     boolean allColumnsAreDefinedIn(Expression exp,
-                                   HsqlHashMap definedColumns) {
+                                   HashMap definedColumns) {
 
-        HsqlHashMap colNames = new HsqlHashMap();    // TODO size !!
+        HashMap colNames = new HashMap();    // TODO size !!
 
         exp.collectAllColumnNames(colNames);
 
@@ -479,10 +479,10 @@ class Select {
             return false;
         }
 
-        Enumeration e = colNames.keys();
+        Iterator i = colNames.keySet().iterator();
 
-        while (e.hasMoreElements()) {
-            if (!definedColumns.containsValue(e.nextElement())) {
+        while (i.hasNext()) {
+            if (!definedColumns.containsValue(i.next())) {
                 return false;
             }
         }
@@ -556,10 +556,10 @@ class Select {
             gResult.addRow(new Object[len]);
         }
 
-        Enumeration e = gResult.results.elements();
+        Iterator it = gResult.results.iterator();
 
-        while (e.hasMoreElements()) {
-            Object[] row = (Object[]) e.nextElement();
+        while (it.hasNext()) {
+            Object[] row = (Object[]) it.next();
 
             if (isAggregated) {
                 for (int i = 0; i < len; i++) {
@@ -693,12 +693,12 @@ class Select {
         return sb.toString();
     }
 
-// NOTES: boucherb@users.sourceforge.net 20030601    
+// NOTES: boucherb@users.sourceforge.net 20030601
 // setTrue()  is bad.  It is a destructive operation that
 // affects the ability to resolve an expression more than once.
 // The related methods below are useful only for now and only for toString()
 // under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
-// In the future, this all needs to be changed around to 
+// In the future, this all needs to be changed around to
 // support clean reparameterization and reresolution of
 // expression trees.
     // Used only be toString()

@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HashSet;
 
 /**
  * Manages a .properties file for a database.
@@ -77,8 +77,8 @@ import org.hsqldb.lib.HsqlHashSet;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private static HsqlHashSet protectedProperties      = new HsqlHashSet();
-    private static String[]    protectedPropertiesNames = {
+    private static HashSet  protectedProperties      = new HashSet();
+    private static String[] protectedPropertiesNames = {
         "version", "hsqldb.compatible_version", "hsqldb.cache_version",
         "hsqldb.original_version", "hsqldb.log_type", "hsqldb.files_readonly",
         "hsqldb.files_in_jar", "readonly", "modified", "sql.compare_in_locale"

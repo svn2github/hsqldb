@@ -197,6 +197,7 @@ public final class HsqlStringBuffer {
     }
 
     /** Insert another HsqlStringBuffer into the current string buffer */
+/*
     public HsqlStringBuffer insert(int pos, HsqlStringBuffer sBuf) {
 
         checkInsertPosition(pos);
@@ -208,7 +209,7 @@ public final class HsqlStringBuffer {
 
         return this;
     }
-
+*/
     /**
      * Gives the contents of the string buffer as a String without being
      * encapsulated in single quotes
@@ -223,6 +224,7 @@ public final class HsqlStringBuffer {
     /**
      * Returns the contents of the string buffer in single quotes.
      */
+/*
     public String toQuotedString() {
 
         data[0] = data[charCount + BEGINNING_OFFSET] = '\'';
@@ -234,10 +236,11 @@ public final class HsqlStringBuffer {
 
         return str;
     }
-
+*/
     /**
      * Returns false if the object being compared is not a HsqlStringBuffer.
      */
+/*
     public boolean equals(Object obj) {
 
         if (!(obj instanceof HsqlStringBuffer)) {
@@ -262,7 +265,7 @@ public final class HsqlStringBuffer {
             return true;
         }
     }
-
+*/
     /**
      * Compares the current HsqlStringBuffer to another returning results consistent with
      * String.compareTo
@@ -307,6 +310,7 @@ public final class HsqlStringBuffer {
      * Allows HsqlStringBuffer to be used by data structures requiring implementation of
      * Comparable such as maps.
      */
+/*
     public int compareTo(Object obj) {
 
         if (obj instanceof HsqlStringBuffer) {
@@ -317,7 +321,7 @@ public final class HsqlStringBuffer {
             throw new ClassCastException("Unsupported comparison attempted");
         }
     }
-
+*/
     /**
      * Returns the length of the buffer not including the empty slots for the
      * optional single quotes.
@@ -439,7 +443,7 @@ public final class HsqlStringBuffer {
     public HsqlStringBuffer append(long l) {
         return append(Long.toString(l));
     }
-
+/*
     public HsqlStringBuffer append(double db) {
         return append(Double.toString(db));
     }
@@ -481,7 +485,7 @@ public final class HsqlStringBuffer {
         return insert(pos, b ? "true"
                              : "false");
     }
-
+*/
 //fredt@users temp methods - no tests - no error checks or proper interface and throw check against StringBuffer
     public char charAt(int pos) {
         return data[pos + BEGINNING_OFFSET];
@@ -507,6 +511,7 @@ public final class HsqlStringBuffer {
 // fredt - no check etc.
 
     /** Creates a new instance of HsqlStringBuffer from part of another */
+/*
     public HsqlStringBuffer(char[] ch, int pos, int len) {
 
         reporter.initCounter++;
@@ -516,7 +521,7 @@ public final class HsqlStringBuffer {
 
         append(ch, pos, len);
     }
-
+*/
     public HsqlStringBuffer append(char[] str, int offset, int len) {
 
         makeRoom(charCount, len);

@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 import java.io.IOException;
 import java.sql.SQLException;
 import org.hsqldb.lib.FileUtil;
@@ -94,7 +94,7 @@ class ScriptRunner {
             return;
         }
 
-        HsqlHashMap sessionMap = new HsqlHashMap();
+        HashMap sessionMap = new HashMap();
         Session     sysSession = database.sessionManager.getSysSession();
         Session     current    = sysSession;
         database.setReferentialIntegrity(false);

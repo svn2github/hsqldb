@@ -41,7 +41,7 @@ import java.util.NoSuchElementException;
  * @author dnordahl@users
  * @version 6/11/2002
  */
-public class HsqlArrayList implements HsqlList {
+public class HsqlArrayList extends BaseList implements HsqlList {
 
 //fredt@users
     private static Reporter reporter = new Reporter();
@@ -69,14 +69,12 @@ public class HsqlArrayList implements HsqlList {
     private static final int   DEFAULT_INITIAL_CAPACITY = 10;
     private static final float DEFAULT_RESIZE_FACTOR    = 2.0f;
     private Object[]           elementData;
-    private int                elementCount;
 
     /** Creates a new instance of HsqlArrayList */
     public HsqlArrayList() {
 
         reporter.initCounter++;
 
-        elementCount = 0;
         elementData  = new Object[DEFAULT_INITIAL_CAPACITY];
     }
 
@@ -229,6 +227,7 @@ public class HsqlArrayList implements HsqlList {
      * NOT throw a concurrent modification exception if the list is modified
      * during the enumeration.
      */
+/*
     public Enumeration elements() {
 
         Enumeration enum = new Enumeration() {
@@ -253,7 +252,7 @@ public class HsqlArrayList implements HsqlList {
 
         return enum;
     }
-
+*/
     /** Trims the array to be the same size as the number of elements. */
     public void trim() {
 
@@ -271,37 +270,7 @@ public class HsqlArrayList implements HsqlList {
         newArray    = null;
     }
 
-    /** Returns a string representation */
-    public String toString() {
-
-        StringBuffer sb = new StringBuffer(32);
-
-        sb.append("HsqlArrayList : size=");
-        sb.append(elementCount);
-        sb.append(' ');
-        sb.append('[');
-
-        Enumeration enum = elements();
-
-        while (enum.hasMoreElements()) {
-            sb.append(enum.nextElement());
-
-            if (enum.hasMoreElements()) {
-                sb.append(',');
-                sb.append(' ');
-            }
-        }
-
-        sb.append(']');
-
-        return sb.toString();
-    }
-
     // fredt@users - no tests etc.
-    public boolean isEmpty() {
-        return elementCount == 0;
-    }
-
     public void clear() {
 
         for (int i = 0; i < elementCount; i++) {
@@ -326,19 +295,21 @@ public class HsqlArrayList implements HsqlList {
         }
     }
 
-// fredt@users - temp - straight copy from java.util.ArrayList
+// fredt@users
+
+    /**
+     * Copies all elements of the list to a[]. It is assumed a[] is of the
+     * correct type. If a[] is too small, a new Object[] is returned. If
+     * a[] is larger, only the list elements are copied. Differs from the
+     * implementation in java.util.ArrayList in the last two aspects.
+     */
     public Object[] toArray(Object a[]) {
 
         if (a.length < elementCount) {
-            a = (Object[]) java.lang.reflect.Array.newInstance(
-                a.getClass().getComponentType(), elementCount);
+            a = new Object[elementCount];
         }
 
         System.arraycopy(elementData, 0, a, 0, elementCount);
-
-        if (a.length > elementCount) {
-            a[elementCount] = null;
-        }
 
         return a;
     }

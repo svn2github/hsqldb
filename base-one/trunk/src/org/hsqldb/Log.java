@@ -70,11 +70,11 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
-import java.util.Enumeration;
 
 //import java.util.zip.
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
@@ -628,10 +628,10 @@ class Log {
             HsqlArrayList sessions =
                 dDatabase.sessionManager.listVisibleSessions(
                     dDatabase.sessionManager.getSysSession());
-            Enumeration en = sessions.elements();
+            Iterator it = sessions.iterator();
 
-            for (; en.hasMoreElements(); ) {
-                Session session = (Session) en.nextElement();
+            for (; it.hasNext(); ) {
+                Session session = (Session) it.next();
 
                 if (session.getAutoCommit() == false) {
                     dbScriptWriter.writeLogStatement(
@@ -683,7 +683,7 @@ class Log {
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
-    private HsqlHashMap textCacheList = new HsqlHashMap();
+    private HashMap textCacheList = new HashMap();
 
     Cache openTextCache(HsqlName tablename, String source,
                         boolean readOnlyData,
@@ -729,34 +729,34 @@ class Log {
 
     void closeAllTextCaches(boolean compact) throws SQLException {
 
-        Enumeration e = textCacheList.elements();
+        Iterator it = textCacheList.values().iterator();
 
-        while (e.hasMoreElements()) {
+        while (it.hasNext()) {
             if (compact) {
-                ((TextCache) e.nextElement()).purge();
+                ((TextCache) it.next()).purge();
             } else {
-                ((TextCache) e.nextElement()).flush();
+                ((TextCache) it.next()).flush();
             }
         }
     }
 
     void reopenAllTextCaches() throws SQLException {
 
-        Enumeration e = textCacheList.elements();
+        Iterator it = textCacheList.values().iterator();
 
-        while (e.hasMoreElements()) {
-            ((TextCache) e.nextElement()).reopen();
+        while (it.hasNext()) {
+            ((TextCache) it.next()).reopen();
         }
     }
 
     void shutdownAllTextCaches() throws SQLException {
 
-        Enumeration e = textCacheList.elements();
+        Iterator it = textCacheList.values().iterator();
 
-        while (e.hasMoreElements()) {
-            ((TextCache) e.nextElement()).closeFile();
+        while (it.hasNext()) {
+            ((TextCache) it.next()).closeFile();
         }
 
-        textCacheList = new HsqlHashMap();
+        textCacheList = new HashMap();
     }
 }

@@ -69,11 +69,12 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.NoSuchElementException;
 import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.StringUtil;
 
@@ -233,7 +234,7 @@ class Parser {
 //            dDatabase.logger.writeToLog(cSession, sourceDDL);
 //        }
 //    }
-// No longer required; refactored as Parser.compileCallStatement() and 
+// No longer required; refactored as Parser.compileCallStatement() and
 // CompiledStatementExecutor.executeCallStatement()
 //    /**
 //     *  Method declaration
@@ -276,7 +277,7 @@ class Parser {
 //
 //        return r;
 //    }
-// No longer required; refactored as Parser.compileUpdateStatement() and 
+// No longer required; refactored as Parser.compileUpdateStatement() and
 // CompiledStatementExecutor.executeUpdateStatement()
 //    /**
 //     *  Method declaration
@@ -416,7 +417,7 @@ class Parser {
         table.checkDataReadOnly();
     }
 
-// No longer required; refactored as Parser.compileDeleteStatement() and 
+// No longer required; refactored as Parser.compileDeleteStatement() and
 // CompiledStatementExecutor.executeDeleteStatement()
 //    /**
 //     *  Method declaration
@@ -475,7 +476,7 @@ class Parser {
 //
 //        return r;
 //    }
-// No longer required; refactored as Parser.compileInsertStatement() and 
+// No longer required; refactored as Parser.compileInsertStatement() and
 // CompiledStatementExecutor.executeInsertStatement()
 //    /**
 //     *  Method declaration
@@ -1059,7 +1060,7 @@ class Parser {
         TableFilter tf;
 
         // TODO: - delay s.getResult until CompiledStatement is evaulated
-        //       - subquery might have parameters 
+        //       - subquery might have parameters
         if (token.equals(Token.T_OPENBRACKET)) {
             tTokenizer.getThis(Token.T_SELECT);
 
@@ -1145,8 +1146,8 @@ class Parser {
                 // TODO:
                 // We loose / do not exploit index info here.
                 // Look at what, if any, indexes the query might benefit from
-                // and create or carry them across here if it might speed up 
-                // subsequent access.               
+                // and create or carry them across here if it might speed up
+                // subsequent access.
                 t.createPrimaryKey();
 
                 // TODO:  this should be delayed until CompiledStatement is evaulated
@@ -1407,7 +1408,15 @@ class Parser {
                             while (true) {
                                 tTokenizer.checkUnexpectedParam(
                                     "parametric IN list item");
-                                v.add(getValue(Types.VARCHAR));
+
+                                Object value = getValue(Types.VARCHAR);
+
+                                if (value == null) {
+                                    throw Trace.error(
+                                        Trace.NULL_IN_VALUE_LIST);
+                                }
+
+                                v.add(value);
                                 read();
 
                                 if (iToken != Expression.COMMA) {
@@ -1762,7 +1771,7 @@ class Parser {
         } else if (sToken.length() == 0) {
             iToken = Expression.END;
         } else {
-            iToken = tokenSet.get(sToken);
+            iToken = tokenSet.get(sToken, -1);
 
             if (iToken == -1) {
                 iToken = Expression.END;
@@ -1827,7 +1836,7 @@ class Parser {
         }
     }
 
-    private static HsqlObjectToIntMap tokenSet = new HsqlObjectToIntMap(37);
+    private static IntValueHashMap tokenSet = new IntValueHashMap(37);
 
     static {
         tokenSet.put(",", Expression.COMMA);

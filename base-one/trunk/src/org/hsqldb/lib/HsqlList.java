@@ -37,6 +37,8 @@ package org.hsqldb.lib;
  * two.
  *
  * @author dnordahl@users
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public interface HsqlList {
 
@@ -50,7 +52,9 @@ public interface HsqlList {
 
     public Object set(int index, Object element);
 
+    public boolean isEmpty();
+
     public int size();
 
-    public java.util.Enumeration elements();
+    public Iterator iterator();
 }

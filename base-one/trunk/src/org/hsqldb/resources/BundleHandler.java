@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.ValuePool;
 
 /** A ResourceBundle helper class. <p>
@@ -54,7 +54,7 @@ public final class BundleHandler {
     /** The Locale used internally to fetch resource bundles. */
     private static Locale           _locale          = Locale.getDefault();
     /** Map:  Integer object handle => <code>ResourceBundle</code> object. */
-    private static HsqlHashMap      _bundleHandleMap = new HsqlHashMap();
+    private static HashMap      _bundleHandleMap = new HashMap();
     /** List whose elements are <code>ResourceBundle</code> objects */
     private static HsqlArrayList    _bundleList      = new HsqlArrayList();
     /** The resource path prefix of the <code>ResourceBundle</code> objects

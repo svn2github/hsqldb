@@ -36,10 +36,10 @@ import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashSet;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.ValuePool;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
@@ -204,10 +204,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         String objType;
 
         // Intermediate holders
-        HsqlHashMap hAliases;
-        Enumeration aliases;
-        Object[]    row;
-        int         pos;
+        HashMap  hAliases;
+        Iterator aliases;
+        Object[] row;
+        int      pos;
 
         // Column number mappings
         final int ialias_object_type  = 0;
@@ -220,13 +220,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         // Initialization
         hAliases = database.getAlias();
-        aliases  = hAliases.keys();
+        aliases  = hAliases.keySet().iterator();
         objType  = "ROUTINE";
 
         // Do it.
-        while (aliases.hasMoreElements()) {
+        while (aliases.hasNext()) {
             row     = t.getNewRow();
-            alias   = (String) aliases.nextElement();
+            alias   = (String) aliases.next();
             objName = (String) hAliases.get(alias);
 
             // must have class grant to see method call aliases
@@ -251,12 +251,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         // must have create/alter table rights to see domain aliases
         if (session.isAdmin()) {
-            aliases = Column.hTypes.keys();
+            Iterator typeAliases = Column.hTypes.keySet().iterator();
+
             objType = "DOMAIN";
 
-            while (aliases.hasMoreElements()) {
+            while (typeAliases.hasNext()) {
                 row   = t.getNewRow();
-                alias = (String) aliases.nextElement();
+                alias = (String) typeAliases.next();
 
                 Integer tn = (Integer) Column.hTypes.get(alias);
 
@@ -371,16 +372,16 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             return t;
         }
 
-        Cache       cache;
-        Object[]    row;
-        HsqlHashSet cacheSet;
-        Enumeration caches;
-        Enumeration tables;
-        Table       table;
-        CacheFree   cacheFree;
-        int         iFreeBytes;
-        int         iLargestFreeItem;
-        long        lSmallestFreeItem;
+        Cache     cache;
+        Object[]  row;
+        HashSet   cacheSet;
+        Iterator  caches;
+        Iterator  tables;
+        Table     table;
+        CacheFree cacheFree;
+        int       iFreeBytes;
+        int       iLargestFreeItem;
+        long      lSmallestFreeItem;
 
         // column number mappings
         final int icache_class   = 0;
@@ -398,13 +399,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         final int iwriter_length = 12;
 
         // Initialization
-        cacheSet = new HsqlHashSet();
+        cacheSet = new HashSet();
 
         // dynamic system tables are never cached
-        tables = database.getTables().elements();
+        tables = database.getTables().iterator();
 
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (table.isCached() && isAccessibleTable(table)) {
                 cache = table.cCache;
@@ -415,11 +416,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             }
         }
 
-        caches = cacheSet.elements();
+        caches = cacheSet.iterator();
 
         // Do it.
-        while (caches.hasMoreElements()) {
-            cache             = (Cache) caches.nextElement();
+        while (caches.hasNext()) {
+            cache             = (Cache) caches.next();
             row               = t.getNewRow();
             cacheFree         = new CacheFree();
             iFreeBytes        = 0;
@@ -529,7 +530,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         // intermediate holders
         UserManager   um;
         HsqlArrayList users;
-        Enumeration   classNames;
+        Iterator      classNames;
         User          granteeUser;
         Object[]      row;
 
@@ -553,15 +554,15 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             granteeName = granteeUser.getName();
             isGrantable = granteeUser.isAdmin() ? "YES"
                                                 : "NO";
-            classNames  = granteeUser.getGrantedClassNames(false).elements();
+            classNames  = granteeUser.getGrantedClassNames(false).iterator();
 
 // boucherb@users 20030305 - TODO completed.
 // "EXECUTE" is closest to correct (from: SQL 200n ROUTINE_PRIVILEGES)
 // There is nothing even like CLASS_PRIVILEGES table under SQL 200n spec.
             privilege = "EXECUTE";
 
-            while (classNames.hasMoreElements()) {
-                clsName         = (String) classNames.nextElement();
+            while (classNames.hasNext()) {
+                clsName         = (String) classNames.next();
                 clsCat          = ns.getCatalogName(clsName);
                 clsSchem        = ns.getSchemaName(clsName);
                 row             = t.getNewRow();
@@ -583,8 +584,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 // There is nothing even like CLASS_PRIVILEGES table under SQL 200n spec.
             privilege = "TRIGGER";
 
-            while (classNames.hasMoreElements()) {
-                clsName         = (String) classNames.nextElement();
+            while (classNames.hasNext()) {
+                clsName         = (String) classNames.next();
                 clsCat          = ns.getCatalogName(clsName);
                 clsSchem        = ns.getSchemaName(clsName);
                 row             = t.getNewRow();
@@ -1240,7 +1241,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         }
 
         // intermediate holders
-        Enumeration tables;
+        Iterator    tables;
         Table       table;
         Object      row[];
         DITableInfo ti;
@@ -1261,11 +1262,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         final int iid          = 11;
 
         // Initialization
-        tables = database.getTables().elements();
+        tables = database.getTables().iterator();
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (!table.isText() ||!isAccessibleTable(table)) {
                 continue;
@@ -1476,7 +1477,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         String triggerBody;
 
         // Intermediate holders
-        Enumeration     tables;
+        Iterator        tables;
         Table           table;
         HsqlArrayList[] vTrigs;
         HsqlArrayList   triggerList;
@@ -1502,7 +1503,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         final int itrigger_body      = 15;
 
         // Initialization
-        tables = database.getTables().elements();
+        tables = database.getTables().iterator();
 
         // these are the only values supported, currently
         actionType       = "CALL";
@@ -1512,8 +1513,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         whenClause       = null;
 
         // Do it.
-        while (tables.hasMoreElements()) {
-            table  = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table  = (Table) tables.next();
             vTrigs = table.vTrigs;
 
             // faster test first
@@ -1869,25 +1870,25 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             return t;
         }
 
-        Parser      parser;
-        String      defn;
-        Select      select;
-        Tokenizer   tokenizer;
-        Enumeration tables;
-        Table       table;
-        Object[]    row;
-        final int   icat   = 0;
-        final int   ischem = 1;
-        final int   iname  = 2;
-        final int   idefn  = 3;
-        final int   icopt  = 4;
-        final int   iiupd  = 5;
-        final int   ivalid = 6;
+        Parser    parser;
+        String    defn;
+        Select    select;
+        Tokenizer tokenizer;
+        Iterator  tables;
+        Table     table;
+        Object[]  row;
+        final int icat   = 0;
+        final int ischem = 1;
+        final int iname  = 2;
+        final int idefn  = 3;
+        final int icopt  = 4;
+        final int iiupd  = 5;
+        final int ivalid = 6;
 
-        tables = database.getTables().elements();
+        tables = database.getTables().iterator();
 
-        while (tables.hasMoreElements()) {
-            table = (Table) tables.nextElement();
+        while (tables.hasNext()) {
+            table = (Table) tables.next();
 
             if (!table.isView() ||!isAccessibleTable(table)) {
                 continue;
@@ -1997,7 +1998,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         HsqlArrayList aliasList;
         Object[]      info;
         Method        method;
-        Enumeration   methods;
+        Iterator      methods;
         Object[]      row;
         DITypeInfo    ti;
 
@@ -2011,8 +2012,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         ti.setTypeSub(TYPE_SUB_DEFAULT);
 
         // Do it.
-        while (methods.hasMoreElements()) {
-            info             = (Object[]) methods.nextElement();
+        while (methods.hasNext()) {
+            info             = (Object[]) methods.next();
             method           = (Method) info[0];
             aliasList        = (HsqlArrayList) info[1];
             procedureCatalog = ns.getCatalogName(method);
@@ -2107,7 +2108,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         // intermediate holders
         String        alias;
         HsqlArrayList aliasList;
-        Enumeration   methods;
+        Iterator      methods;
         Object[]      methodInfo;
         Method        method;
         String        methodOrigin;
@@ -2117,8 +2118,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         methods = ns.enumAllAccessibleMethods(session, true);    //and aliases
 
         // Do it.
-        while (methods.hasMoreElements()) {
-            methodInfo   = (Object[]) methods.nextElement();
+        while (methods.hasNext()) {
+            methodInfo   = (Object[]) methods.next();
             method       = (Method) methodInfo[0];
             aliasList    = (HsqlArrayList) methodInfo[1];
             methodOrigin = (String) methodInfo[2];
@@ -2369,7 +2370,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        String      defn;
 //        Select      select;
 //        Tokenizer   tokenizer;
-//        Enumeration tables;
+//        Iterator tables;
 //        Table       table;
 //        Object[]    row;
 //
@@ -2382,10 +2383,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        final int   itname  = 5;
 //        final int   itcname = 6;
 //
-//        tables = database.getTables().elements();
+//        tables = database.getTables().iterator();
 //
-//        while (tables.hasMoreElements()) {
-//            table = (Table) tables.nextElement();
+//        while (tables.hasNext()) {
+//            table = (Table) tables.next();
 //
 //            if (!table.isView()) {
 //                continue;
@@ -2414,10 +2415,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //
 //                expr.collectAllTableColumns(tableColumns);
 //
-//                Enumeration e = tableColumns.keys();
+//                Iterator e = tableColumns.keys();
 //
-//                while (e.hasMoreElements()) {
-//                    tname = (String) e.nextElement();
+//                while (e.hasNext()) {
+//                    tname = (String) e.next();
 //                    tcat = ns.getCatalogName(tname);
 //                    tschem = null;
 //                    if ("SYSTEM_SUBQUERY".equals(tname)) {
@@ -2429,9 +2430,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //
 //                        }
 //                    }
-//                    Enumeration columns = ((HsqlHashSet)tableColumns.get(tname)).elements();
+//                    Iterator columns = ((HashSet)tableColumns.get(tname)).iterator();
 //
-//                    while (columns.hasMoreElements()) {
+//                    while (columns.hasNext()) {
 //
 //                        row = t.getNewRow();
 //
@@ -2441,7 +2442,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //                        row[itcat] = tcat;
 //                        row[itschem] = tschem;
 //                        row[itname] = tname;
-//                        row[itcname] = (String) columns.nextElement();
+//                        row[itcname] = (String) columns.next();
 //
 //                        t.insert(row,session);
 //
@@ -2488,7 +2489,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        String      defn;
 //        Select      select;
 //        Tokenizer   tokenizer;
-//        Enumeration tables;
+//        Iterator tables;
 //        Table       table;
 //        Object[]    row;
 //
@@ -2500,10 +2501,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        final int   isschem = 4;
 //        final int   isname  = 5;
 //
-//        tables = database.getTables().elements();
+//        tables = database.getTables().iterator();
 //
-//        while (tables.hasMoreElements()) {
-//            table = (Table) tables.nextElement();
+//        while (tables.hasNext()) {
+//            table = (Table) tables.next();
 //
 //            if (!table.isView()) {
 //                continue;
@@ -2528,15 +2529,15 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //
 //                Expression expr = new Expression(select);
 //
-//                HsqlHashSet routineNames = new HsqlHashSet();
+//                HashSet routineNames = new HashSet();
 //
 //                expr.collectAllRoutineNames(routineNames);
 //
-//                Enumeration e = routineNames.elements();
+//                Iterator e = routineNames.iterator();
 //
-//                while (e.hasMoreElements()) {
+//                while (e.hasNext()) {
 //
-//                    sname = (String) e.nextElement();
+//                    sname = (String) e.next();
 //                    scat = ns.getCatalogName(sname);
 //                    sschem = ns.getSchemaName(ns.classForMethodFQN(sname));
 //
@@ -2592,7 +2593,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        String      defn;
 //        Select      select;
 //        Tokenizer   tokenizer;
-//        Enumeration tables;
+//        Iterator tables;
 //        Table       table;
 //        Object[]    row;
 //
@@ -2604,10 +2605,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        final int   itschem = 4;
 //        final int   itname  = 5;
 //
-//        tables = database.getTables().elements();
+//        tables = database.getTables().iterator();
 //
-//        while (tables.hasMoreElements()) {
-//            table = (Table) tables.nextElement();
+//        while (tables.hasNext()) {
+//            table = (Table) tables.next();
 //
 //            if (!table.isView()) {
 //                continue;
@@ -2636,10 +2637,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //
 //                expr.collectAllTableColumns(tableColumns);
 //
-//                Enumeration e = tableColumns.keys();
+//                Iterator e = tableColumns.keys();
 //
-//                while (e.hasMoreElements()) {
-//                    tname = (String) e.nextElement();
+//                while (e.hasNext()) {
+//                    tname = (String) e.next();
 //                    tcat = ns.getCatalogName(tname);
 //                    tschem = null;
 //                    if ("SYSTEM_SUBQUERY".equals(tname)) {
@@ -2675,7 +2676,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 // PATCH FOR:
 // Expression.java
 // EXPERIMENTAL SUPPORT FOR VIEW USAGE SYSTEM TABLES
-// import org.hsqldb.lib.HsqlHashSet;
+// import org.hsqldb.lib.HashSet;
 // boucherb@users - support for view usage system tables
 // EXPERIMENTAL:  NONE OF THESE ARE REALLY WORKABLE UNTIL WE STOP USING
 // AN INVISIBLE INTERMEDAIATE "SYSTEM_SUBQUERY" TABLE TO ROLL UP SUBQUERIES
@@ -2684,9 +2685,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //    boolean collectTableColumn(HsqlHashMap tableNames) {
 //        //System.out.println("Processing: " + this);
 //        if (iType == COLUMN) {
-//            HsqlHashSet s = (HsqlHashSet) tableNames.get(sTable);
+//            HashSet s = (HashSet) tableNames.get(sTable);
 //            if (s == null) {
-//                s = new HsqlHashSet();
+//                s = new HashSet();
 //                tableNames.put(sTable,s);
 //            }
 //            s.add(sColumn);
@@ -2729,7 +2730,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        }
 //    }
 //
-//    boolean collectRoutineName(HsqlHashSet routineNames) {
+//    boolean collectRoutineName(HashSet routineNames) {
 //        //System.out.println("Processing: " + this);
 //
 //        if (iType == QUERY || iType == SELECT) {
@@ -2763,7 +2764,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        return false;
 //    }
 //
-//    void collectAllRoutineNames(HsqlHashSet routineNames) {
+//    void collectAllRoutineNames(HashSet routineNames) {
 //        if (!collectRoutineName(routineNames)) {
 //            if (eArg != null) {
 //                eArg.collectAllRoutineNames(routineNames);

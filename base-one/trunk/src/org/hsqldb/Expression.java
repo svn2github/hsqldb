@@ -69,9 +69,9 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Enumeration;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -159,10 +159,10 @@ class Expression {
     private int        aggregateSpec = AGGREGATE_NONE;
 
     // VALUE, VALUELIST
-    Object              oData;
-    private HsqlHashMap hList;
-    private boolean     hListIsUpper;
-    private int         iDataType;
+    Object          oData;
+    private HashMap hList;
+    private boolean hListIsUpper;
+    private int     iDataType;
 
     // QUERY (correlated subquery)
     Select sSelect;
@@ -237,7 +237,7 @@ class Expression {
 
         int size = v.size();
 
-        hList = new HsqlHashMap(size);
+        hList = new HashMap(size);
 
         for (int i = 0; i < size; i++) {
             Object o = v.get(i);
@@ -538,12 +538,12 @@ class Expression {
         iDataType = type;
     }
 
-// NOTES: boucherb@users.sourceforge.net 20030601    
+// NOTES: boucherb@users.sourceforge.net 20030601
 // setTrue()  is bad.  It is a destructive operation that
 // affects the ability to resolve an expression more than once.
 // the related methods below are useful only for now and only for toString()
 // under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
-// In the future, this all needs to be changed around to 
+// In the future, this all needs to be changed around to
 // support clean reparameterization and reresolution of
 // expression trees.
     int oldIType = -1;
@@ -656,7 +656,7 @@ class Expression {
      * Collect column name used in this expression.
      * @return if a column name is used in this expression
      */
-    boolean collectColumnName(HsqlHashMap columnNames) {
+    boolean collectColumnName(HashMap columnNames) {
 
         if (iType == COLUMN) {
             columnNames.put(sColumn, sColumn);
@@ -669,7 +669,7 @@ class Expression {
      * Collect all column names used in this expression or any of nested
      * expression.
      */
-    void collectAllColumnNames(HsqlHashMap columnNames) {
+    void collectAllColumnNames(HashMap columnNames) {
 
         if (!collectColumnName(columnNames)) {
             if (eArg != null) {
@@ -1816,11 +1816,11 @@ class Expression {
 
             if (o != null && datatype == Column.VARCHAR_IGNORECASE) {
                 if (!hListIsUpper) {
-                    HsqlHashMap newMap = new HsqlHashMap(hList.size(), 1);
-                    Enumeration en     = hList.keys();
+                    HashMap  newMap = new HashMap(hList.size(), 1);
+                    Iterator it     = hList.keySet().iterator();
 
-                    while (en.hasMoreElements()) {
-                        Object key = en.nextElement();
+                    while (it.hasNext()) {
+                        Object key = it.next();
 
                         newMap.put(key.toString().toUpperCase(),
                                    this.INTEGER_1);

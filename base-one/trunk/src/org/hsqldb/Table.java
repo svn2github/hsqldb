@@ -69,10 +69,10 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Enumeration;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
@@ -1257,7 +1257,7 @@ class Table {
      * @throws  SQLException if index is used in a constraint
      */
     void checkDropIndex(String indexname,
-                        HsqlHashMap ignore) throws SQLException {
+                        HashMap ignore) throws SQLException {
 
         Index index = this.getIndex(indexname);
 
@@ -2210,22 +2210,22 @@ class Table {
      */
     int delete(HsqlLinkedList del, Session c) throws SQLException {
 
-        Enumeration en    = del.elements();
+        Iterator it    = del.iterator();
         int         count = 0;
         Row         r;
 
-        while (en.hasMoreElements()) {
-            r = (Row) en.nextElement();
+        while (it.hasNext()) {
+            r = (Row) it.next();
 
             delete(r, c, false);
         }
 
         fireAll(TriggerDef.DELETE_BEFORE);
 
-        en = del.elements();
+        it = del.iterator();
 
-        while (en.hasMoreElements()) {
-            r = (Row) en.nextElement();
+        while (it.hasNext()) {
+            r = (Row) it.next();
 
             delete(r, c, true);
         }
@@ -2390,11 +2390,11 @@ class Table {
     int update(HsqlLinkedList del, Result ins, int[] col,
                Session c) throws SQLException {
 
-        Enumeration en = del.elements();
+        Iterator it = del.iterator();
         Record      ni = ins.rRoot;
 
-        while (en.hasMoreElements() && ni != null) {
-            Row row = (Row) en.nextElement();
+        while (it.hasNext() && ni != null) {
+            Row row = (Row) it.next();
 
             enforceFieldValueLimits(ni.data, col);
 
@@ -2408,11 +2408,11 @@ class Table {
 
         fireAll(TriggerDef.UPDATE_BEFORE);
 
-        en = del.elements();
+        it = del.iterator();
         ni = ins.rRoot;
 
-        while (en.hasMoreElements() && ni != null) {
-            Row row = (Row) en.nextElement();
+        while (it.hasNext() && ni != null) {
+            Row row = (Row) it.next();
 
             update(row, ni.data, col, c, true);
 

@@ -36,7 +36,7 @@ import java.util.StringTokenizer;
 
 /** Provides a collection of convenience methods for processing and
  * creating objects with <code>String</code> value components.
- * @version 1.7.0
+ * @version 1.7.2
  * @since HSQLDB 1.7.0
  * @author fredt@users
  * @author boucherb@users.sourceforge.net
@@ -175,5 +175,14 @@ public class StringUtil {
         b.setLength(b.length() - separator.length());
 
         return b.toString();
+    }
+
+    public static void appendPair(StringBuffer b, String s1, String s2,
+                                  String separator, String terminator) {
+
+        b.append(s1);
+        b.append(separator);
+        b.append(s2);
+        b.append(terminator);
     }
 }

@@ -31,7 +31,7 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 
 /**
  * This class is used by aggregate calculation as a temporary aggregating
@@ -47,7 +47,7 @@ import org.hsqldb.lib.HsqlHashMap;
 class AggregatingValue {
 
     private static Object nullValue = new Object();
-    private HsqlHashMap   distinctValues;
+    private HashMap       distinctValues;
     Object                currentValue;
     int                   acceptedValueCount;
 
@@ -60,7 +60,7 @@ class AggregatingValue {
     AggregatingValue(boolean distinct) {
 
         if (distinct) {
-            distinctValues = new HsqlHashMap();
+            distinctValues = new HashMap();
         }
     }
 

@@ -178,7 +178,7 @@ public class TestHSB {
 
                     tempString = "";
                     break;
-
+/*
                 case INSERT_HSB :
                     tempString   = getRandomString("");
                     tempHSB      = new HsqlStringBuffer(tempString);
@@ -202,7 +202,7 @@ public class TestHSB {
 
                     tempString = "";
                     break;
-
+*/
                 case COMPARE_TO_HSB :
                     commandsCalled.addElement("Compare To HSB");
 
@@ -272,8 +272,9 @@ public class TestHSB {
                         equalsTrue = false;
                     }
                     break;
-
+/*
                 case TO_QUOTED_STRING :
+
                     commandsCalled.addElement("To quoted string");
 
                     if (!hsb.toQuotedString().equals('\'' + jsb.toString()
@@ -281,7 +282,7 @@ public class TestHSB {
                         equalsTrue = false;
                     }
                     break;
-
+*/
                 default :
                     continue;
             }

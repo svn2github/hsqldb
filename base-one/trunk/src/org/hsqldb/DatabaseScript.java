@@ -71,7 +71,8 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlStringBuffer;
 
 /**
@@ -208,12 +209,12 @@ class DatabaseScript {
         }
 
         // aliases
-        HsqlHashMap h       = dDatabase.getAlias();
-        HsqlHashMap builtin = Library.getAliasMap();
-        Enumeration e       = h.keys();
+        HashMap  h       = dDatabase.getAlias();
+        HashMap  builtin = Library.getAliasMap();
+        Iterator e       = h.keySet().iterator();
 
-        while (e.hasMoreElements()) {
-            String alias  = (String) e.nextElement();
+        while (e.hasNext()) {
+            String alias  = (String) e.next();
             String java   = (String) h.get(alias);
             String biJava = (String) builtin.get(alias);
 
@@ -558,16 +559,16 @@ class DatabaseScript {
                 addRow(r, a.toString());
             }
 
-            HsqlHashMap rights = u.getRights();
+            HashMap rights = u.getRights();
 
             if (rights == null) {
                 continue;
             }
 
-            Enumeration e = rights.keys();
+            Iterator e = rights.keySet().iterator();
 
-            while (e.hasMoreElements()) {
-                Object object = e.nextElement();
+            while (e.hasNext()) {
+                Object object = e.next();
                 int    right  = ((Integer) (rights.get(object))).intValue();
 
                 a = new HsqlStringBuffer(64);

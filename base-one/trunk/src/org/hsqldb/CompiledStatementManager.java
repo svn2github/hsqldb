@@ -31,9 +31,9 @@
 
 package org.hsqldb;
 
-import java.util.Enumeration;
 import java.util.Hashtable;
-import org.hsqldb.lib.HsqlIntKeyHashMap;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.ValuePool;
 
 /**
@@ -56,10 +56,10 @@ public class CompiledStatementManager {
     Hashtable sqlMap;
 
     /** Map: compiled statment id (int) => CompiledStatement object. */
-    HsqlIntKeyHashMap csidMap;
+    IntKeyHashMap csidMap;
 
     /** Map: Session id (int) => Map: compiled statement id (int) => SCN (Long); */
-    HsqlIntKeyHashMap validationMap;
+    IntKeyHashMap validationMap;
 
     /**
      * Monotonically increasing counter used to assign unique ids to compiled
@@ -77,8 +77,8 @@ public class CompiledStatementManager {
 
         this.database = database;
         sqlMap        = new Hashtable();
-        csidMap       = new HsqlIntKeyHashMap();
-        validationMap = new HsqlIntKeyHashMap();
+        csidMap       = new IntKeyHashMap();
+        validationMap = new IntKeyHashMap();
         next_cs_id    = 0;
     }
 
@@ -116,13 +116,13 @@ public class CompiledStatementManager {
      */
     private long setSCN(int csid, int sid, long scn) {
 
-        HsqlIntKeyHashMap scsMap;
-        Long              oldscn;
+        IntKeyHashMap scsMap;
+        Long          oldscn;
 
-        scsMap = (HsqlIntKeyHashMap) validationMap.get(sid);
+        scsMap = (IntKeyHashMap) validationMap.get(sid);
 
         if (scsMap == null) {
-            scsMap = new HsqlIntKeyHashMap();
+            scsMap = new IntKeyHashMap();
 
             validationMap.put(sid, scsMap);
         }
@@ -146,10 +146,10 @@ public class CompiledStatementManager {
      */
     private long getSCN(int csid, int sid) {
 
-        HsqlIntKeyHashMap scsMap;
-        Long              scn;
+        IntKeyHashMap scsMap;
+        Long          scn;
 
-        scsMap = (HsqlIntKeyHashMap) validationMap.get(sid);
+        scsMap = (IntKeyHashMap) validationMap.get(sid);
 
         if (scsMap == null) {
             return Long.MIN_VALUE;
@@ -300,10 +300,10 @@ public class CompiledStatementManager {
     synchronized boolean freeStatement(int csid, int sid) {
 
         CompiledStatement cs;
-        HsqlIntKeyHashMap scsMap;
+        IntKeyHashMap     scsMap;
 
         cs     = (CompiledStatement) csidMap.get(csid);
-        scsMap = (HsqlIntKeyHashMap) validationMap.get(sid);
+        scsMap = (IntKeyHashMap) validationMap.get(sid);
 
         if (cs == null || scsMap == null || scsMap.remove(csid) == null) {
             return false;
@@ -331,21 +331,21 @@ public class CompiledStatementManager {
      */
     synchronized void processDisconnect(int sid) {
 
-        HsqlIntKeyHashMap scsMap;
+        IntKeyHashMap     scsMap;
         CompiledStatement cs;
         int               csid;
-        Enumeration       e;
+        Iterator          i;
 
-        scsMap = (HsqlIntKeyHashMap) validationMap.remove(sid);
+        scsMap = (IntKeyHashMap) validationMap.remove(sid);
 
         if (scsMap == null) {
             return;
         }
 
-        e = scsMap.keys();
+        i = scsMap.keySet().iterator();
 
-        while (e.hasMoreElements()) {
-            csid = ((Integer) e.nextElement()).intValue();
+        while (i.hasNext()) {
+            csid = i.nextInt();
             cs   = (CompiledStatement) csidMap.get(csid);
 
             cs.use--;

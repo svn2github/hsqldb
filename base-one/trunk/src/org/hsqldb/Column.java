@@ -75,8 +75,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.math.BigDecimal;
-import java.util.Hashtable;
 import java.text.Collator;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
@@ -129,7 +129,7 @@ class Column {
 
     // lookup for types
 // boucherb@users - access changed for metadata 1.7.2
-    static Hashtable hTypes;
+    static HashMap hTypes;
 
 // --------------------------------------------------
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
@@ -162,7 +162,7 @@ class Column {
     private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
 
     static {
-        hTypes = new Hashtable(67, 1);
+        hTypes = new HashMap(67, 1);
 
         hTypes.put("INTEGER", new Integer(Types.INTEGER));
         hTypes.put("INT", new Integer(Types.INTEGER));

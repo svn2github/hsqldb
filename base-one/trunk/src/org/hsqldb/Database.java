@@ -69,10 +69,9 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StopWatch;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
@@ -144,7 +143,7 @@ class Database {
     int     firstIdentity;
 
 //    private boolean                bShutdown;
-    private HsqlHashMap            hAlias;
+    private HashMap            hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
     SessionManager                 sessionManager;
@@ -447,9 +446,9 @@ class Database {
      *  Retrieves a map from Java method-call name aliases to the
      *  fully-qualified names of the Java methods themsleves.
      *
-     * @return  a map in the form of a HsqlHashMap
+     * @return  a map in the form of a HashMap
      */
-    HsqlHashMap getAlias() {
+    HashMap getAlias() {
         return hAlias;
     }
 
@@ -841,7 +840,7 @@ class Database {
         Table       toDrop            = null;
         int         dropIndex         = -1;
         int         refererIndex      = -1;
-        Enumeration constraints       = null;
+        Iterator constraints       = null;
         Constraint  currentConstraint = null;
         Table       refTable          = null;
         boolean     isRef             = false;
@@ -868,10 +867,10 @@ class Database {
             }
         }
 
-        constraints = toDrop.getConstraints().elements();
+        constraints = toDrop.getConstraints().iterator();
 
-        while (constraints.hasMoreElements()) {
-            currentConstraint = (Constraint) constraints.nextElement();
+        while (constraints.hasNext()) {
+            currentConstraint = (Constraint) constraints.next();
 
             if (currentConstraint.getType() != Constraint.MAIN) {
                 continue;
@@ -1027,13 +1026,13 @@ class Database {
 // when we start implementing various levels of read consistency.
 // This will require either a change in the .data file format and
 // changes to in-memory row representation, or changes only to
-// in-memory row representation along with pinning all dependency 
+// in-memory row representation along with pinning all dependency
 // rows in memory until dependent transactions are committed or
 // rolled back.  Index scans will have to be changed to
 // ignore rows that are not in transaction or statement scn
-// scope (are not commited), and undo buffer items will have 
+// scope (are not commited), and undo buffer items will have
 // to be tagged for similar purposes.
-// --------------------------------- 
+// ---------------------------------
     CompiledStatementManager compiledStatementManager;
     private final Object     scn_mutex     = new Object();
     private long             scn           = 0;

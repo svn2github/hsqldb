@@ -32,10 +32,13 @@
 package org.hsqldb.test;
 
 import org.hsqldb.lib.UnifiedTable;
-import org.hsqldb.lib.HsqlHashSet;
-import org.hsqldb.lib.HsqlIntKeyIntValueHashMap;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.IntKeyIntValueHashMap;
+import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.IntegerPool;
 import org.hsqldb.lib.StopWatch;
+import java.util.NoSuchElementException;
 
 public class TestLibSpeed {
 
@@ -98,13 +101,12 @@ public class TestLibSpeed {
     };
     static UnifiedTable uniTableSet = new UnifiedTable(Object.class, 1,
         sNumeric.length);
-    static HsqlHashSet hashSet = new HsqlHashSet();
+    static HashSet hashSet = new HashSet();
     static UnifiedTable uniTableLookup = new UnifiedTable(int.class, 2,
         sNumeric.length);
-    static HsqlIntKeyIntValueHashMap hashLookup =
-        new HsqlIntKeyIntValueHashMap();
-    static HsqlObjectToIntMap mapLookup =
-        new HsqlObjectToIntMap(sNumeric.length);
+    static IntKeyIntValueHashMap hashLookup = new IntKeyIntValueHashMap();
+    static IntValueHashMap mapLookup = new IntValueHashMap(sNumeric.length);
+    static IntKeyHashMap         hashObjectLookup = new IntKeyHashMap();
 
     static {
         java.util.Random randomgen = new java.util.Random();
@@ -117,6 +119,7 @@ public class TestLibSpeed {
             hashSet.add(sNumeric[i][0]);
             uniTableSet.setCell(i, 0, sNumeric[i][0]);
             hashLookup.put(randomgen.nextInt(sNumeric.length), i);
+            hashObjectLookup.put(i, new Integer(i));
 
             row[0] = randomgen.nextInt(sNumeric.length);
             row[1] = i;
@@ -150,7 +153,7 @@ public class TestLibSpeed {
                 }
             }
 
-            System.out.println("HsqlHashSet contains " + sw.elapsedTime());
+            System.out.println("HashSet contains " + sw.elapsedTime());
             sw.zero();
 
             for (int j = 0; j < 100000; j++) {
@@ -186,14 +189,27 @@ public class TestLibSpeed {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    hashLookup.get(r);
+                    hashLookup.get(r, -1);
 
                     dummy += r;
                 }
             }
 
-            System.out.println("HsqlIntToIntHashMap Lookup "
+            System.out.println("IntToIntHashMap Lookup with array "
                                + sw.elapsedTime());
+            sw.zero();
+
+            for (int j = 0; j < 100000; j++) {
+                for (int i = 0; i < sNumeric.length; i++) {
+                    int r = randomgen.nextInt(sNumeric.length);
+
+                    hashObjectLookup.get(r);
+
+                    dummy += r;
+                }
+            }
+
+            System.out.println("IntKeyHashMap Lookup " + sw.elapsedTime());
             sw.zero();
 
             for (int j = 0; j < 100000; j++) {
@@ -232,6 +248,51 @@ public class TestLibSpeed {
             }
 
             System.out.println("emptyOp " + sw.elapsedTime());
+            System.out.println("IntKeyHashMap Lookup " + sw.elapsedTime());
+            sw.zero();
+
+            for (int j = 0; j < 100000; j++) {
+                for (int i = 0; i < sNumeric.length; i++) {
+                    int r = randomgen.nextInt(sNumeric.length);
+
+                    uniTableLookup.search(r);
+
+                    dummy += r;
+                }
+            }
+
+            System.out.println("UnifiedTable Lookup " + sw.elapsedTime());
+            sw.zero();
+
+            System.out.println("Object Cache Test " + sw.elapsedTime());
+
+            Integer testValue = new Integer(-1);
+            IntegerPool hm = new IntegerPool(1000000,1,true);
+            for (int j = 0; j < 10000000; j++) {
+                int r = randomgen.nextInt(1000000);
+
+                Integer h = hm.get(r);
+                if (h.equals(testValue)){
+                    System.out.println("Never prints this");
+                }
+
+            }
+
+            System.out.println("Handle 10,000,000 Integers " + sw.elapsedTime());
+            sw.zero();
+
+            hm = new IntegerPool(1000000,1,true);
+            for (int j = 0; j < 10000000; j++) {
+                int r = randomgen.nextInt(1000000);
+
+                Integer h = new Integer(j);
+                if (h.equals(testValue)){
+                    System.out.println("Never prints this");
+                }
+            }
+
+            System.out.println("emptyOp " + sw.elapsedTime());
+            sw.zero();
         }
     }
 

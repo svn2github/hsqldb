@@ -79,7 +79,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.resources.BundleHandler;
@@ -94,16 +94,16 @@ import org.hsqldb.resources.BundleHandler;
 //                                      - refactoring and xdoclet tags
 //                                        toward MBean interface
 //                                      - use HsqlRuntime registration
-//                                      - public method invocations are 
+//                                      - public method invocations are
 //                                        thread-safe
-//                                      - added non-blocking start()/stop() 
-//                                        service control methods 
-//                                      - settable InetAddress spec. 
+//                                      - added non-blocking start()/stop()
+//                                        service control methods
+//                                      - settable InetAddress spec.
 //                                        for ServerSocket host address
 //                                      - server implements HsqlSocketRequestHandler
 //                                      - stub for hosts allow / deny
 //                                      - stub for pluggable protocol adaptors
-//                                        
+//
 
 /**
  * Server acts as a network database server and is one way of using
@@ -243,7 +243,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         props = HsqlProperties.argArrayToProps(args, SC_KEY_PREFIX);
 
         // Standard behaviour when started from the command line
-        // is to halt the VM when the server shuts down.  This may, of 
+        // is to halt the VM when the server shuts down.  This may, of
         // course, be overridden by whatever, if any, security policy
         // is in place.
         props.setPropertyIfNotExists(SC_KEY_NO_SYSTEM_EXIT, "false");
@@ -672,7 +672,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
             return;
         }
 
-        // Maybe set up socket options, SSL 
+        // Maybe set up socket options, SSL
         // Session tracing/callbacks, etc.
         socketFactory.configureSocket(s);
 
@@ -1142,7 +1142,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
     }
 
 // ---------------------------------- package methods --------------------------
-// Package visibility for related classes and interfaces, 
+// Package visibility for related classes and interfaces,
 // such as HsqlRuntime, XXXServerConnection and HsqlSocketRequestHandlerImpl,
 // etc. that may need to make calls back here.
 
@@ -1504,7 +1504,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         try {
 
             // Faster init first:
-            // It is huge waste to fully open a database, only 
+            // It is huge waste to fully open a database, only
             // to find that the socket address is already in use
             openServerSocket();
         } catch (Exception e) {
@@ -1539,8 +1539,8 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
             return;
         }
 
-        // At this point, we have a valid server socket and 
-        // an open database, so its OK to start listenting 
+        // At this point, we have a valid server socket and
+        // an open database, so its OK to start listenting
         // for connections.
         setState(SERVER_ONLINE);
         notifyStatus();
@@ -1612,7 +1612,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         trace("waitForStatus() exited");
     }
 
-// --------------------------- static utility methods --------------------------    
+// --------------------------- static utility methods --------------------------
 
     /**
      * Prints message for the specified key, without any special
@@ -1647,11 +1647,11 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
 
         InetAddress   addr;
         InetAddress[] addrs;
-        HsqlHashSet   set;
+        HashSet   set;
         Vector        out;
         StringBuffer  sb;
 
-        set = new HsqlHashSet();
+        set = new HashSet();
         out = new Vector();
 
         try {

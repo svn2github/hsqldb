@@ -68,11 +68,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import java.sql.SQLException;
-import java.util.Enumeration;
+import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -404,7 +404,7 @@ class UserManager {
      * {@link #listRightNames listRightNames}
      *
      */
-    static final HsqlHashMap hRightsLists = new HsqlHashMap();
+    static final HashMap hRightsLists = new HashMap();
 
     /**
      * Retrieves the list of right names represented by the right flags
@@ -530,15 +530,15 @@ class UserManager {
      *        to the elements of this collection
      *
      */
-    HsqlHashSet getGrantedClassNames() {
+    HashSet getGrantedClassNames() {
 
         int         size;
         User        user;
-        HsqlHashSet out;
-        Enumeration e;
+        HashSet out;
+        Iterator e;
 
         size = uUser.size();
-        out  = new HsqlHashSet();
+        out  = new HashSet();
 
         for (int i = 0; i < size; i++) {
             user = (User) uUser.get(i);
@@ -547,10 +547,10 @@ class UserManager {
                 continue;
             }
 
-            e = user.getGrantedClassNames(false).elements();
+            e = user.getGrantedClassNames(false).iterator();
 
-            while (e.hasMoreElements()) {
-                out.add(e.nextElement());
+            while (e.hasNext()) {
+                out.add(e.next());
             }
         }
 

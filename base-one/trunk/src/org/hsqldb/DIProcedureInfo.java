@@ -37,7 +37,7 @@ import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
@@ -51,19 +51,19 @@ import org.hsqldb.resources.BundleHandler;
  */
 final class DIProcedureInfo implements DITypes {
 
-    private Class             clazz;
-    private Class[]           colClasses;
-    private int[]             colTypes;
-    private int               colOffset;
-    private int               colCount;
-    private boolean           colsResolved;
-    private String            csig;
-    private String            fqn;
-    private int               hnd_remarks;
-    private Method            method;
-    private String            sig;
-    private DINameSpace       nameSpace;
-    private final HsqlHashMap typeMap = new HsqlHashMap();
+    private Class         clazz;
+    private Class[]       colClasses;
+    private int[]         colTypes;
+    private int           colOffset;
+    private int           colCount;
+    private boolean       colsResolved;
+    private String        csig;
+    private String        fqn;
+    private int           hnd_remarks;
+    private Method        method;
+    private String        sig;
+    private DINameSpace   nameSpace;
+    private final HashMap typeMap = new HashMap();
 
     public DIProcedureInfo(DINameSpace ns) throws SQLException {
         setNameSpace(ns);

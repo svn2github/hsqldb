@@ -35,11 +35,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import org.hsqldb.lib.CompositeEnumeration;
-import org.hsqldb.lib.HsqlEnumeration;
+import org.hsqldb.lib.WrapperIterator;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 
 /**
  * Provides catalog and schema name related definitions and functionality,
@@ -56,18 +56,18 @@ final class DINameSpace {
     private Database database;
 
 // NO:   Properties are not initialized until log open, but DatabaseInformation
-//       must be constructed before this happens to provide at least 
+//       must be constructed before this happens to provide at least
 //       structurally complete (if not contentful) system tables, just in case
-//       there are views referencing them.  Better just to check the 
+//       there are views referencing them.  Better just to check the
 //       database properties each time, as we might decide to introduce SQL
 //       syntax to allow these values to change at runtime.  New methods,
-//       isReportCatalogs() and isReportSchemas() have been introduced to do 
-//       this.    
-// TODO: Make this more efficient.  It seems like we've gone back a step, 
-//       since hitting the database properties object for every row of almost 
-//       every system table seems like a big waste of CPU.  Consider messaging 
-//       this object any time there is a change instead?  
-//    
+//       isReportCatalogs() and isReportSchemas() have been introduced to do
+//       this.
+// TODO: Make this more efficient.  It seems like we've gone back a step,
+//       since hitting the database properties object for every row of almost
+//       every system table seems like a big waste of CPU.  Consider messaging
+//       this object any time there is a change instead?
+//
 //    /** controls reporting of Catalog */
 //    private boolean reportCatalogs;
 //
@@ -82,7 +82,7 @@ final class DINameSpace {
      * support of the expected SQL CLI scalar functions and other core
      * HSQLDB SQL functions and stored procedures. <p>
      */
-    private static HsqlHashSet builtin = new HsqlHashSet();
+    private static HashSet builtin = new HashSet();
 
     /** The <code>DEFINITION_SCHEMA</code> schema name. */
     static final String DEFN_SCHEMA = "DEFINITION_SCHEMA";
@@ -149,8 +149,9 @@ final class DINameSpace {
 
         Trace.doAssert(database != null, "database is null");
 
-        this.database  = database;
-// NO:  This is too early        
+        this.database = database;
+
+// NO:  This is too early
 //        p              = database.getProperties();
 //        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs");
 //        reportSchemas  = p.isPropertyTrue("hsqldb.schemas");
@@ -214,9 +215,9 @@ final class DINameSpace {
      *      visible catalogs, relative to this object's database.
      * @throws SQLException never (reserved for future use)
      */
-    Enumeration enumCatalogNames() throws SQLException {
-        return isReportCatalogs() ? new HsqlEnumeration(database.getName())
-                                  : new HsqlEnumeration();
+    Iterator enumCatalogNames() throws SQLException {
+        return isReportCatalogs() ? new WrapperIterator(database.getName())
+                                  : new WrapperIterator();
     }
 
     /**
@@ -228,9 +229,9 @@ final class DINameSpace {
      *      system schemas
      * @throws SQLException never (reserved for future use)
      */
-    Enumeration enumSysSchemaNames() throws SQLException {
-        return isReportSchemas() ? sysSchemas.elements()
-                                 : new HsqlEnumeration();
+    Iterator enumSysSchemaNames() throws SQLException {
+        return isReportSchemas() ? sysSchemas.iterator()
+                                 : new WrapperIterator();
     }
 
     /**
@@ -244,14 +245,14 @@ final class DINameSpace {
      * @param session The context in which to provide the enumeration
      * @throws SQLException if a database access error occurs
      */
-    Enumeration enumVisibleSchemaNames(Session session) throws SQLException {
+    Iterator enumVisibleSchemaNames(Session session) throws SQLException {
 
         HsqlArrayList users;
         HsqlArrayList userNames;
         UserManager   userManager;
 
         if (!isReportSchemas() || session == null) {
-            return new HsqlEnumeration();
+            return new WrapperIterator();
         }
 
         userManager = database.getUserManager();
@@ -264,8 +265,8 @@ final class DINameSpace {
             userNames.add(u.getName());
         }
 
-        return new CompositeEnumeration(enumSysSchemaNames(),
-                                        userNames.elements());
+        return new WrapperIterator(enumSysSchemaNames(),
+                                   userNames.iterator());
     }
 
     /**
@@ -280,7 +281,7 @@ final class DINameSpace {
      *      specified map
      * @see HsqlName
      */
-    HsqlName findOrCreateHsqlName(String s, HsqlHashMap map) {
+    HsqlName findOrCreateHsqlName(String s, HashMap map) {
 
         HsqlName name = (HsqlName) map.get(s);
 
@@ -374,11 +375,11 @@ final class DINameSpace {
      *
      * @return The requested map
      */
-    HsqlHashMap getInverseAliasMap() {
+    HashMap getInverseAliasMap() {
 
-        HsqlHashMap   mapIn;
-        HsqlHashMap   mapOut;
-        Enumeration   keys;
+        HashMap       mapIn;
+        HashMap       mapOut;
+        Iterator      keys;
         Object        key;
         Object        value;
         HsqlArrayList keyList;
@@ -389,11 +390,11 @@ final class DINameSpace {
         // faster for our  purposes here, without appreciably
         // slowing down Database
         mapIn  = database.getAlias();
-        mapOut = new HsqlHashMap();
-        keys   = mapIn.keys();
+        mapOut = new HashMap();
+        keys   = mapIn.keySet().iterator();
 
-        while (keys.hasMoreElements()) {
-            key     = keys.nextElement();
+        while (keys.hasNext()) {
+            key     = keys.next();
             value   = mapIn.get(key);
             keyList = (HsqlArrayList) mapOut.get(value);
 
@@ -710,8 +711,8 @@ final class DINameSpace {
      * @throws SQLException if a database access error occurs
      *
      */
-    Enumeration enumRoutineMethods(String className,
-                                   boolean andAliases) throws SQLException {
+    Iterator enumRoutineMethods(String className,
+                                boolean andAliases) throws SQLException {
 
         Class         clazz;
         Method[]      methods;
@@ -720,7 +721,7 @@ final class DINameSpace {
         Object[]      info;
         HsqlArrayList aliasList;
         HsqlArrayList methodList;
-        HsqlHashMap   invAliasMap;
+        HashMap       invAliasMap;
 
         invAliasMap = andAliases ? getInverseAliasMap()
                                  : null;
@@ -728,7 +729,7 @@ final class DINameSpace {
         try {
             clazz = classForName(className);
         } catch (ClassNotFoundException e) {
-            return new HsqlEnumeration();
+            return new WrapperIterator();
         }
 
         // we are interested in inherited methods too,
@@ -766,7 +767,7 @@ final class DINameSpace {
         }
 
         // return the enumeration
-        return methodList.elements();
+        return methodList.iterator();
     }
 
     /**
@@ -786,19 +787,18 @@ final class DINameSpace {
      *        potentially be invoked) by actions upon this object's database
      *        by the specified <code>User</code>.
      */
-    Enumeration enumAccessibleTriggerClassNames(User user)
-    throws SQLException {
+    Iterator enumAccessibleTriggerClassNames(User user) throws SQLException {
 
         Table           table;
         Class           clazz;
-        HsqlHashSet     classSet;
+        HashSet         classSet;
         TriggerDef      triggerDef;
         HsqlArrayList[] triggerLists;
         HsqlArrayList   triggerList;
         HsqlArrayList   tableList;
         int             listSize;
 
-        classSet  = new HsqlHashSet();
+        classSet  = new HashSet();
         tableList = database.getTables();
 
         for (int i = 0; i < tableList.size(); i++) {
@@ -838,7 +838,7 @@ final class DINameSpace {
             }
         }
 
-        return classSet.elements();
+        return classSet.iterator();
     }
 
     /**
@@ -860,7 +860,7 @@ final class DINameSpace {
      * @param session The context in which to produce the enumeration
      * @throws SQLException if a database access error occurs.
      */
-    Enumeration enumAccessibleTriggerMethods(Session session)
+    Iterator enumAccessibleTriggerMethods(Session session)
     throws SQLException {
 
         Table           table;
@@ -868,7 +868,7 @@ final class DINameSpace {
         String          className;
         Method          method;
         HsqlArrayList   methodList;
-        HsqlHashSet     dupCheck;
+        HashSet         dupCheck;
         Class[]         pTypes;
         TriggerDef      triggerDef;
         HsqlArrayList[] triggerLists;
@@ -881,7 +881,7 @@ final class DINameSpace {
         };
         methodList = new HsqlArrayList();
         tableList  = database.getTables();
-        dupCheck   = new HsqlHashSet();
+        dupCheck   = new HashSet();
 
         for (int i = 0; i < tableList.size(); i++) {
             table = (Table) tableList.get(i);
@@ -935,7 +935,7 @@ final class DINameSpace {
             }
         }
 
-        return methodList.elements();
+        return methodList.iterator();
     }
 
     /**
@@ -952,26 +952,26 @@ final class DINameSpace {
      *      elements are to be generated.
      * @throws SQLException if a database access error occurs
      */
-    Enumeration enumAllAccessibleMethods(Session session,
-                                         boolean andAliases)
-                                         throws SQLException {
+    Iterator enumAllAccessibleMethods(Session session,
+                                      boolean andAliases)
+                                      throws SQLException {
 
-        Enumeration out;
-        Enumeration classNames;
-        Enumeration methods;
-        String      className;
+        Iterator out;
+        Iterator classNames;
+        Iterator methods;
+        String   className;
 
-        out        = new HsqlEnumeration();
-        classNames = session.getGrantedClassNames(true).elements();
+        out        = new WrapperIterator();
+        classNames = session.getGrantedClassNames(true).iterator();
 
-        while (classNames.hasMoreElements()) {
-            className = (String) classNames.nextElement();
+        while (classNames.hasNext()) {
+            className = (String) classNames.next();
             methods   = enumRoutineMethods(className, andAliases);
-            out       = new CompositeEnumeration(out, methods);
+            out       = new WrapperIterator(out, methods);
         }
 
-        return new CompositeEnumeration(
-            out, enumAccessibleTriggerMethods(session));
+        return new WrapperIterator(out,
+                                   enumAccessibleTriggerMethods(session));
     }
 
     /**
@@ -985,20 +985,20 @@ final class DINameSpace {
     HsqlArrayList listVisibleSessions(Session session) {
         return database.sessionManager.listVisibleSessions(session);
     }
-    
-    /** 
+
+    /**
      * Retrieves whether this object is reporting catalog qualifiers.
      * @return true if this object is reporting catalog qualifiers, else false.
-     */    
+     */
     boolean isReportCatalogs() {
-       return database.getProperties().isPropertyTrue("hsqldb.catalogs"); 
+        return database.getProperties().isPropertyTrue("hsqldb.catalogs");
     }
-    
-    /** 
+
+    /**
      * Retrieves whether this object is reporting schema qualifiers.
      * @return true if this object is reporting schema qualifiers, else false.
-     */    
+     */
     boolean isReportSchemas() {
-        return database.getProperties().isPropertyTrue("hsqldb.schemas"); 
+        return database.getProperties().isPropertyTrue("hsqldb.schemas");
     }
 }

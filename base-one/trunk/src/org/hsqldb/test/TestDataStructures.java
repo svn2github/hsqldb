@@ -392,13 +392,13 @@ public class TestDataStructures {
             return false;
         }
 
-        Enumeration listElements   = list.elements();
+        org.hsqldb.lib.Iterator listElements   = list.iterator();
         Enumeration vectorElements = vector.elements();
         Object      listObj        = null;
         Object      vectorObj      = null;
 
-        while (listElements.hasMoreElements()) {
-            listObj   = listElements.nextElement();
+        while (listElements.hasNext()) {
+            listObj   = listElements.next();
             vectorObj = vectorElements.nextElement();
 
             if (!listObj.equals(vectorObj)) {
@@ -453,10 +453,10 @@ public class TestDataStructures {
             System.out.println(d.get(i));
         }
 
-        Enumeration en = d.elements();
+        org.hsqldb.lib.Iterator it = d.iterator();
 
-        for (; en.hasMoreElements(); ) {
-            System.out.println(en.nextElement());
+        for (; it.hasNext(); ) {
+            System.out.println(it.next());
         }
     }
 }
