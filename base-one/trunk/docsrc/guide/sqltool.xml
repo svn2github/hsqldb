@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.19 2004/06/06 09:01:14 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.20 2004/06/06 13:14:29 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.19 $</edition>
-        <pubdate>$Date: 2004/06/06 09:01:14 $</pubdate>
+        <edition>$Revision: 1.20 $</edition>
+        <pubdate>$Date: 2004/06/06 13:14:29 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -37,18 +37,18 @@
             whether the quoting will work just like this (though it is
             possible).
         </simpara><simpara>
-            This document is now updated for version 1.67 of SqlFile, but I
+            This document is now updated for version 1.68 of SqlFile, but I
             expect it to accurately describe SqlTool for some number of
-            versions past 1.67.
+            versions past 1.68.
             (SqlFile is the Java class where most of the SqlTool functionality
             is implemented.  The SqlTool startup banner shows the SqlFile
             version number).
         </simpara>
     </section>
 
-    <section>
+    <section id='baremin-section'>
         <title>The Bare Minimum You Need to Know to Run SqlTool</title>
-        <titleabbrev>The Bare Minimum</titleabbrev>
+        <titleabbrev id='baremin-title'>The Bare Minimum</titleabbrev>
         <simpara>
             If you want to use SqlTool, then you either have an SQL text file, 
             or you want to interactively type in SQL commands.
@@ -142,7 +142,7 @@
         </simpara> <simpara>
             If you put a file named <filename>auto.sql</filename> into your
             home directory, this file will be executed automatically every
-            time you run SqlTool, unless you give the 
+            time that you run SqlTool interactively and without the
             <literal>--noAutoFile</literal> switch.
         </simpara> <para>
             To use a JDBC Driver other than the HSQLDB driver, you must put 
@@ -160,24 +160,19 @@
     <section>
         <title>Using hsqlsqltool.jar</title>
         <simpara>
-            If you do not need to connect to non-server HSQLDB URLs (i.e.,
-            you do not need to connect to URLs of the form 
-            <literal>jdbc:hsqldb:mem:*</literal> or
-            <literal>jdbc:hsqldb:file:*</literal> or
-            <literal>jdbc:hsqldb:res:*</literal>), then it will be easier
-            to set up and run SqlTool by using
+            If you will only connect to "server" HSQLDB URLs (i.e., URLs 
+            like <literal>jdbc:hsqldb:hsql</literal> + something or
+            <literal>jdbc:hsqldb:http</literal> + something)
+            then it will be easier to set up and run SqlTool by using 
             <filename>hsqlsqltool.jar</filename> instead of 
             <filename>hsqldb.jar</filename>.
-            If you plan to run a HSQLDB database, but not run a Server or
-            WebServer, then just skip this section and use
-            <filename>hsqldb.jar</filename>.
+            If you need to use some other kind of HSQLDB URL, or a JDBC driver
+            other than the HSQLDB JDBC Driver, then just skip this section and 
+            use <filename>hsqldb.jar</filename>.
         </simpara><simpara>
             The HSQLDB distribution doesn't "come with" a pre-built 
             <filename>hsqlsqltool.jar</filename> file.
-            However, if you will be connecting to HSQLDB Server(s)/WebServer(s),
-            environment setup and use is simplified with 
-            <filename>hsqlsqltool.jar</filename>.
-            I recommend that you either download
+            I recommend that you either download the Java 1.4 jar at
             <ulink url='http://admc.com/dist/hsqlsqltool-1.7.2.jar'/>
             (by right-clicking and downloading if you're reading this with a
             web browser), or build the <emphasis>jarsqltool</emphasis> target, 
@@ -291,6 +286,11 @@
     <section id='int-section'>
         <title id='int-title'>Interactive</title>
         <para>
+            Do read the
+            <link linkend='baremin-section' endterm='baremin-title'/>
+            section before you read this section.
+        </para>
+        <para>
             You run SqlTool interactively by specifying no SQL filepaths on 
             the SqlTool command line.  Like this.
         <informalexample><screen>
@@ -299,7 +299,9 @@
             If it starts up and connects to the database (as specified in your
             SqlTool configuration file as explained in the
             <link linkend='auth-section' endterm='auth-title'/> section),
-            you will be shown a banner describing the 
+            executes the SQL file <filename>auto.sql</filename> from your
+            home directory (if there is one), then displays a
+            banner showing the SqlFile version number and describing the 
             different command types that you can give, as well as commands to 
             list all of the specific commands available to you.
         </simpara><simpara>
@@ -407,9 +409,11 @@
             This chapter documents only the <emphasis>essential</emphasis> 
             Special Commands, but n.b. that there are other useful Special 
             Commands which you can list by running <literal>\?</literal>.
-            (You can, for example, list the available tables, list table
-            columns, execute external commands, execute SQL from external 
-            SQL files, and save your interactive SQL commands to files).
+            (You can, for example, execute SQL from external SQL files, and 
+            save your interactive SQL commands to files).
+            The <link linkend='report-section' endterm='report-title'/> section 
+            explains how to use the "\o" and "\H" special commands to generate
+            reports.
         </simpara>
         <simpara>
             Be aware that the <literal>\!</literal> Special Command does
@@ -619,9 +623,18 @@
                 These switches provide compatibilty at the cost of poor 
                 control and error detection.
                 <itemizedlist>
-                    <listitem><para>--noAutoFile</para></listitem>
-                    <listitem><para>--autoCommit</para></listitem>
-                    <listitem><para>--continueOnErr</para></listitem>
+                    <listitem>
+                        <simpara>
+                            --continueOnErr
+                        </simpara> <simpara>
+                            The output will still contain error messages about
+                            everything that SqlTool doesn't like
+                            (malformatted commands, SQL command failures, 
+                            empty SQL commands), but SqlTool will continue to
+                            run.
+                        </simpara>
+                    </listitem>
+                    <listitem><simpara>--autoCommit</simpara></listitem>
                 </itemizedlist>
             </para><simpara>
                 You don't have to worry about accidental expansion of 
@@ -681,7 +694,8 @@
             </simpara>
             <variablelist>
                 <varlistentry><term>\p [text to print]</term><listitem><simpara>
-                    Print the given string to stdout
+                    Print the given string to stdout.
+                    Just give "\p" alone to print a blank line.
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>\i /path/to/file.sql</term><listitem><simpara>
                     Include another SQL file at this location.
@@ -756,6 +770,69 @@
                 section about that.
             </simpara>
         </section>
+    </section>
+
+    <section id='report-section'>
+        <title id='report-title'>Generating Text or HTML Reports</title>
+        <simpara>
+            This section is about making a file containing the output of 
+            database queries.
+            You can generate reports by using operating system facilities
+            such as redirection, tee, and cutting and pasting.
+            But it is much easier to use the "\o" and "\H" special commands.
+        </simpara> <procedure>
+            <title>Writing query output to an external file</title>
+            <step><simpara>
+                By default, everthing will be done in plain text.
+                If you want your report to be in HTML format, then give the
+                special command <literal>\H</literal>.
+                If you do so, you will probably want to use filenames with an
+                suffix of ".html" or ".htm" instead of ".txt" in the next step.
+            </simpara></step> <step><simpara>
+                Run the command <literal>\o path/to/reportfile.txt</literal>.
+                From this point on, output from your queries will be appended
+                to the specified file.
+                This output will be in addition to the normal output to your
+                screen or standard output.
+                (I.e. another <emphasis>copy</emphasis> of the output is
+                generated.
+                This way you can continue to monitor or use output as usual as
+                the report is generated.)
+            </simpara></step> <step><simpara>
+                When you want SqlTool to stop writing to the file, run
+                <literal>\o</literal> (or just quit SqlTool if you have no 
+                other work to do).
+            </simpara></step> <step><simpara>
+                If you turned on HTML mode with <literal>\H</literal> before,
+                you can run <literal>\H</literal> again to turn it back off,
+                if you wish.
+            </simpara></step>
+        </procedure>
+        <simpara>
+            It is not just the output of "SELECT" statements that will make
+            it into the report file, but
+            <itemizedlist>
+                <title>Kinds of output that get teed to \o files</title>
+                <listitem><simpara>
+                    Output of SELECT statements.
+                </simpara></listitem> <listitem><simpara>
+                    Output of "\dt" and "\d TABLENAME" Special Commands.
+                </simpara></listitem> <listitem><simpara>
+                    Output of "\p" Special Commands.
+                    You will want to use this to add titles, and perhaps
+                    spacing, for the output of individual queries.
+                </simpara></listitem>
+            </itemizedlist>
+            Other output will go to your screen or stdout, but will not make
+            it into the report file.
+            Be aware that no error messages will go into the report file.
+            If SqlTool is run non-interactively (including if you give any
+            SQL file(s) on the command line), SqlTool will abort with an error
+            status if errors are encountered.
+            The right way to handle errors is to check the SqlTool exit status.
+            (The described error-handling behavior can be modified with
+            SqlTool command-line switches and Special Commands).
+        </simpara>
     </section>
 
     <section id='pl-section'>
