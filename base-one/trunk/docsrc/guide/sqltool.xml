@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.47 2004/07/05 12:54:19 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.48 2004/07/05 13:06:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.47 $</edition>
-        <pubdate>$Date: 2004/07/05 12:54:19 $</pubdate>
+        <edition>$Revision: 1.48 $</edition>
+        <pubdate>$Date: 2004/07/05 13:06:23 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -382,11 +382,11 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             <varlistentry><term>\q</term><listitem><simpara>
                 quit
             </simpara></listitem></varlistentry>
-            <varlistentry><term>\dt</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\dv</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\d*</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\ds</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\da</term><listitem><para>
+            <varlistentry><term>\dt [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\dv [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\d* [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\ds [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\da [filter_substring]</term><listitem><para>
                 Lists available table-like objects of the given type.
                 <itemizedlist>
                     <listitem><simpara>t: non-system Tableѕ</simpara></listitem>
@@ -395,7 +395,15 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                     <listitem><simpara>s: System tableѕ</simpara></listitem>
                     <listitem><simpara>a: database SQL Aliases</simpara></listitem>
                 </itemizedlist>
-            </para></listitem></varlistentry>
+                If your database supports schemas, then the schema name will
+                also be listed.
+                </para><simpara>
+                If you supply an optional <emphasis>filter substring</emphasis>,
+                then only items which contain the given substring (in the object
+                name or schema name) will be listed.
+                The substring test is case-insensitive.
+            </simpara>
+            </listitem></varlistentry>
             <varlistentry><term>\d objectname</term><listitem><simpara>
                 Lists names of all columns in the specified table or view.
                 </simpara><tip><simpara>
