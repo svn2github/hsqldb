@@ -50,17 +50,17 @@ public class ValuePool {
     static ValuePoolHashMap datePool;
 
     //
-    static final int[]        defaultPoolLookupSize = new int[] {
+    static final int[] defaultPoolLookupSize  = new int[] {
         10000, 10000, 10000, 10000, 10000, 10000
     };
-    static final int          defaultSizeFactor     = 2;
+    static final int   defaultSizeFactor      = 2;
+    static final int   defaultMaxStringLength = 16;
 
-    static final int defaultMaxStringLength = 16;
     //
     static ValuePoolHashMap[] poolList;
+
     //
     static int maxStringLength;
-
 
     //
     static {
@@ -68,12 +68,14 @@ public class ValuePool {
     }
 
     private static void initPool() {
+
         int sizeArray[] = defaultPoolLookupSize;
-        int sizeFactor = defaultSizeFactor;
+        int sizeFactor  = defaultSizeFactor;
 
         synchronized (ValuePool.class) {
             maxStringLength = defaultMaxStringLength;
-            poolList  = new ValuePoolHashMap[6];
+            poolList        = new ValuePoolHashMap[6];
+
             for (int i = 0; i < poolList.length; i++) {
                 int size = sizeArray[i];
 
@@ -93,7 +95,8 @@ public class ValuePool {
     public static void resetPool(int[] sizeArray, int sizeFactor) {
 
         for (int i = 0; i < poolList.length; i++) {
-            poolList[i].resetCapacity(sizeArray[i] * sizeFactor, BaseHashMap.PURGE_HALF);
+            poolList[i].resetCapacity(sizeArray[i] * sizeFactor,
+                                      BaseHashMap.PURGE_HALF);
         }
     }
 

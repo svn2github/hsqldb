@@ -39,7 +39,6 @@ package org.hsqldb.lib;
  * @version 1.7.2
  * @since 1.7.2
  */
-
 public class ArrayCounter {
 
     /**
@@ -55,21 +54,27 @@ public class ArrayCounter {
      * last segment will be smaller that the rest.
      *
      */
-    public static int[] countSegments(int[] array, int segments, int min, int max){
+    public static int[] countSegments(int[] array, int segments, int min,
+                                      int max) {
+
         int counts[] = new int[segments];
-        int interval = calcInterval(segments,min,max);
-        int index = 0;
-        int element = 0;
-        if ( interval <= 0 ) {
+        int interval = calcInterval(segments, min, max);
+        int index    = 0;
+        int element  = 0;
+
+        if (interval <= 0) {
             return null;
         }
 
-        for (int i = 0; i <array.length; i++){
+        for (int i = 0; i < array.length; i++) {
             element = array[i];
+
             if (element < min || element >= max) {
                 continue;
             }
+
             index = (element - min) / interval;
+
             counts[index]++;
         }
 
@@ -90,36 +95,44 @@ public class ArrayCounter {
      * 6000.
      *
      */
-    public static int rank(int[] array, int count, int min, int max, int margin){
-        final int segments = 256;
-        int elementCount = 0;
-        int currentMax = max;
+    public static int rank(int[] array, int count, int min, int max,
+                           int margin) {
 
-        for (;;){
-            int[] counts = countSegments(array, segments,min,currentMax);
-            int interval = calcInterval( segments, min,currentMax);
-            if ( counts == null ) {
+        final int segments     = 256;
+        int       elementCount = 0;
+        int       currentMax   = max;
+
+        for (;;) {
+            int[] counts   = countSegments(array, segments, min, currentMax);
+            int   interval = calcInterval(segments, min, currentMax);
+
+            if (counts == null) {
                 return min;
             }
 
-            for (int i= 0; i < counts.length; i++){
-                if (elementCount + counts[i] < count){
+            for (int i = 0; i < counts.length; i++) {
+                if (elementCount + counts[i] < count) {
                     elementCount += counts[i];
-                    min += interval;
+                    min          += interval;
                 } else {
-                   break;
+                    break;
                 }
             }
+
             if (elementCount + margin >= count) {
-                 return min;
+                return min;
             }
-            currentMax = min + interval < max ? min + interval : max;
+
+            currentMax = min + interval < max ? min + interval
+                                              : max;
         }
     }
 
-    static int calcInterval(int segments, int min, int max){
-        int partSegment = ((max - min) % (segments)) == 0 ? 0 : 1;
+    static int calcInterval(int segments, int min, int max) {
+
+        int partSegment = ((max - min) % (segments)) == 0 ? 0
+                                                          : 1;
+
         return ((max - min) / segments) + partSegment;
     }
-
 }

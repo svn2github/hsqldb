@@ -1424,6 +1424,7 @@ class Column {
 
             return ValuePool.getLong(val);
         }
+
         throw Trace.error(Trace.INVALID_CONVERSION);
     }
 
@@ -1435,7 +1436,8 @@ class Column {
             BigDecimal bd     = (BigDecimal) o;
             int        signum = bd.signum();
             BigDecimal bo     = new BigDecimal(val + signum);
-            double test = bo.doubleValue();
+            double     test   = bo.doubleValue();
+
             if (bo.compareTo(bd) != signum) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
@@ -1443,6 +1445,7 @@ class Column {
 
         return ValuePool.getDouble(Double.doubleToLongBits(val));
     }
+
 // fredt@users 20020408 - patch 442993 by fredt - arithmetic expressions
 
     /**

@@ -76,15 +76,19 @@ class HashIndex {
      * @param capacity
      */
     void reset(int hashTableSize, int capacity) {
+
         int[] newHT = new int[hashTableSize];
         int[] newLT = new int[capacity];
+
         // allocate memory before assigning
         hashTable = newHT;
         linkTable = newLT;
+
         resetTables();
     }
 
-    void resetTables(){
+    void resetTables() {
+
         int   to       = hashTable.length;
         int[] intArray = hashTable;
 
@@ -92,8 +96,8 @@ class HashIndex {
             intArray[to] = -1;
         }
 
-        newNodePointer = 0;
-        elementCount   = 0;
+        newNodePointer       = 0;
+        elementCount         = 0;
         reclaimedNodePointer = -1;
     }
 
@@ -101,7 +105,8 @@ class HashIndex {
      * Reset the index as empty.
      */
     void clear() {
-        int to       = linkTable.length;
+
+        int   to       = linkTable.length;
         int[] intArray = linkTable;
 
         while (--to >= 0) {

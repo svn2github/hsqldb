@@ -250,15 +250,21 @@ public class HSQLClientConnection implements SessionInterface {
     }
 
     public void commit() throws HsqlException {
+
         resultOut.setResultType(ResultConstants.SQLENDTRAN);
+
         resultOut.iUpdateCount = ResultConstants.COMMIT;
+
         resultOut.setMainString("");
         execute(resultOut);
     }
 
     public void rollback() throws HsqlException {
+
         resultOut.setResultType(ResultConstants.SQLENDTRAN);
+
         resultOut.iUpdateCount = ResultConstants.ROLLBACK;
+
         resultOut.setMainString("");
         execute(resultOut);
     }

@@ -179,8 +179,8 @@ abstract class Cache {
 
 // ---------------------------------------------------
     //
-    private CachedRow        rFirst;              // must point to one of rData[]
-    private CachedRow        rLastChecked;        // can be any row
+    private CachedRow rFirst;                     // must point to one of rData[]
+    private CachedRow rLastChecked;               // can be any row
 
     // outside access allowed to all below only for metadata
     CacheFree fRoot;
@@ -269,9 +269,13 @@ abstract class Cache {
     }
 
     abstract void open(boolean readonly) throws HsqlException;
+
     abstract void flush() throws HsqlException;
+
     abstract HsqlArrayList defrag() throws HsqlException;
+
     abstract void closeFile() throws HsqlException;
+
     abstract void free(CachedRow r) throws HsqlException;
 
     /**
@@ -335,7 +339,9 @@ abstract class Cache {
     }
 
     abstract int setFilePos(CachedRow r) throws HsqlException;
-    abstract protected CachedRow makeRow(int pos, Table t) throws HsqlException;
+
+    abstract protected CachedRow makeRow(int pos,
+                                         Table t) throws HsqlException;
 
     /**
      * Reads a Row object from this Cache that corresponds to the
@@ -645,7 +651,8 @@ abstract class Cache {
         }
     }
 
-    abstract protected void saveRow(CachedRow r) throws IOException, HsqlException;
+    abstract protected void saveRow(CachedRow r)
+    throws IOException, HsqlException;
 
     /**
      * FastQSorts the [l,r] partition of the specfied array of Rows, based on
