@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.16 2004/01/21 18:18:13 unsaved Exp $
+ * $Id: SqlFile.java,v 1.17 2004/01/21 18:18:58 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -44,6 +44,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
 
 /**
  * Definitions.
@@ -68,9 +69,13 @@ public class SqlFile {
     private String contPrompt    = "  +> ";
     private Connection curConn = null;
     private String[] statementHistory = new String[10];
+    private boolean htmlMode = false;
 
+    final private static int SEP_LEN = 2;  // Ascii field separator blanks
     final private static String DIVIDER =
         "-----------------------------------------------------------------";
+    final private static String SPACES =
+        "                                                                 ";
 
     final private static String BANNER =
             "SqlFile processor.  Enter \"\\?\" to list Special Commands, "
@@ -90,6 +95,7 @@ public class SqlFile {
         + "    \\?                   Help\n"
         + " !!!\\! [command to run]  * Shell out\n"
         + "    \\p [line to print]   Print string to stdout\n"
+        + "    \\H                   Toggle HTML output mode\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands\n"
         + "    \\-[3]                * reload a previous command for appending\n"
@@ -281,6 +287,10 @@ public class SqlFile {
         switch (inString.charAt(0)) {
             case 'q':
                 throw new QuitNow();
+            case 'H':
+                htmlMode = !htmlMode;
+                psStd.println("htmlMode is set to: " + htmlMode);
+                break;
             case 'p':
                 if (other == null) psStd.println();
                 else psStd.println(other);
@@ -340,6 +350,13 @@ public class SqlFile {
         }
     }
 
+    private void lonePrintln(String s) {
+        psStd.println(htmlMode
+                ? ("<P>" + s + "</P>")
+                : s
+        );
+    }
+
     /**
      * Most of this code taken directly from ScriptTool.java
      *
@@ -355,47 +372,127 @@ public class SqlFile {
 
         statement.execute(curCommand);
         ResultSet r = statement.getResultSet();
-        int       updateCount = statement.getUpdateCount();
+        int updateCount = statement.getUpdateCount();
 
         switch (updateCount) {
             case -1:
                 if (r == null) {
-                    psStd.println("No result");
+                    lonePrintln("No result");
                     break;
                 }
                 ResultSetMetaData m      = r.getMetaData();
                 int               col    = m.getColumnCount();
-                StringBuffer      strbuf = new StringBuffer();
                 String val;
                 StringBuffer dividerBuffer = new StringBuffer();
+                ArrayList rows = new ArrayList();
+                String[] headerArray = null;
+                String[] fieldArray;
+                int[] maxWidth = new int[col];
+
+                if (!htmlMode) {
+                    for (int i = 0; i < maxWidth.length; i++) maxWidth[i] = 0;
+                }
                 if (col > 1) {
+                    headerArray = new String[col];
                     for (int i = 1; i <= col; i++) {
-                        val = m.getColumnLabel(i);
-                        strbuf.append(val + '\t');
-                        dividerBuffer.append(divider(val.length()) + '\t');
+                        headerArray[i - 1] = m.getColumnLabel(i);
+                        if (htmlMode) continue;
+                        if (headerArray[i - 1].length() > maxWidth[i - 1])
+                            maxWidth[i - 1] = headerArray[i - 1].length();
                     }
-                    strbuf = strbuf.append("\n"
-                            + dividerBuffer.toString() + '\n');
                 }
                 while (r.next()) {
+                    fieldArray = new String[col];
                     for (int i = 1; i <= col; i++) {
-                        strbuf = strbuf.append(r.getString(i) + '\t');
-                        if (r.wasNull()) {
-                            strbuf = strbuf.append("(null)\t");
-                        }
+                        val = r.getString(i);
+                        fieldArray[i - 1] = r.wasNull() ?
+                                (htmlMode ? "<I>null</I>" : "null") : val;
+                        if (htmlMode) continue;
+                        if (fieldArray[i - 1].length() > maxWidth[i - 1])
+                            maxWidth[i - 1] = fieldArray[i - 1].length();
                     }
-                    strbuf.append('\n');
+                    rows.add(fieldArray);
                 }
-                psStd.print(strbuf.toString());
+                StringBuffer sb = new StringBuffer();
+                if (htmlMode) psStd.println("<TABLE border='1'>");
+                if (headerArray != null) {
+                    if (htmlMode) psStd.print(htmlRow(COL_HEAD) + '\n'
+                            + PRE_TD);
+                    for (int i = 0; i < headerArray.length; i++) {
+                        psStd.print(htmlMode
+                                ? ("<TD>" + headerArray[i] + "</TD>")
+                                : (((i > 0) ? spaces(2) : "")
+                                    + pad(headerArray[i], maxWidth[i], false))
+                        );
+                    }
+                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+                    if (!htmlMode) {
+                        for (int i = 0; i < headerArray.length; i++) {
+                            psStd.print(((i > 0) ? spaces(2) : "")
+                                    + divider(maxWidth[i]));
+                        }
+                        psStd.println();
+                    }
+                }
+                for (int i = 0; i < rows.size(); i++) {
+                    if (htmlMode) psStd.print(htmlRow(
+                            ((i % 2) == 0) ? COL_EVEN : COL_ODD)
+                            + '\n' + PRE_TD);
+                    fieldArray = (String[]) rows.get(i);
+                    for (int j = 0; j < fieldArray.length; j++) {
+                        psStd.print(htmlMode
+                            ? ("<TD>" + fieldArray[j] + "</TD>")
+                            : (((j > 0) ? spaces(2) : "")
+                                    + pad(fieldArray[j], maxWidth[j],
+                                            false))
+                        );
+                    };
+                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+                }
+                if (htmlMode) psStd.println("</TABLE>");
                 break;
             default:
-                psStd.println("Updated row(s):  " + updateCount);
+                lonePrintln(((updateCount == 0) ? "no" 
+                            : Integer.toString(updateCount))
+                        + "row" + ((updateCount == 1) ? "" : "s") + "updated");
                 break;
         }
     }
 
-    private String divider(int len) {
+    final static private int
+        COL_HEAD = 0,
+        COL_ODD = 1,
+        COL_EVEN = 2
+    ;
+    static private final String PRE_TR = spaces(4);
+    static private final String PRE_TD = spaces(8);
+    static private String htmlRow(int colType) {
+        switch (colType) {
+            case COL_HEAD:
+                return PRE_TR + "<TR style='font-weight: bold;'>";
+            case COL_ODD:
+                return PRE_TR + "<TR style='background: #94d6ef; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
+            case COL_EVEN:
+                return PRE_TR + "<TR style='background: silver; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
+        }
+        return null;
+    }
+
+    static private String divider(int len) {
         return (len > DIVIDER.length()) ? DIVIDER : DIVIDER.substring(0, len);
+    }
+
+    static private String spaces(int len) {
+        return (len > SPACES.length()) ? SPACES : SPACES.substring(0, len);
+    }
+
+    static private String pad(String inString, int fulllen,
+            boolean rightJustify) {
+        int len = fulllen - inString.length();
+        if (len < 1) return inString;
+        String pad = spaces(len);
+        return ((rightJustify ? pad : "") + inString
+                + (rightJustify ? "" : pad));
     }
 
     private void showHistory() {
