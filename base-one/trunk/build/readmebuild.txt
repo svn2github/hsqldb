@@ -1,6 +1,6 @@
 Build instructions for HSQLDB 1.7.2
 
-
+These instructions have been updated for Release 5 of 1.7.2
 
 A jar file for HSQLDB is provided in the /lib directory of the 
 .zip package. This jar contains both the database and the 
@@ -9,9 +9,20 @@ utilities and has been built with JDK 1.4.2.
 The supplied jar can be used with JRE version 1.4.x., and 1.5.x.
 It cannot be used with older version or JRE.
 
+JDK and JRE versions
+
 For use with JRE 1.1.x, 1.2.x or 1.3.x recompilation is necessary.
 For all the older versions, always use JDK 1.3.x to build the jar.
-The result will run under 1.1.x and 1.2.x. 
+The default build with JDK 1.3.x is not compatible to run under
+1.1. If you require this compatibility, you should use the following
+ant command prior to the build:
+ant switchtodeprecatedjava
+The jar compiled after this switch will run under JRE 1.3 too, but
+they use some deprecated JDK 1.1 methods.
+
+To switch back to non-deprecated code, use:
+ant switchoffdeprecatedjava
+
 
 The source files
 
@@ -43,19 +54,11 @@ test classes.
 Run "ant explainjars" to see a summary of the contents of the different
 pre-defined jar targets.
 
-
-
-JDK and JRE versions
-
-You can use any recent JDK for building the jar. Use of JDK 1.3.x is
-recommended for the widest compatibility.
-
 Javadoc can be built with Ant and batch files.
 
 The JDK used for the build has a marginal effect on the size.
 Newer JDK's support more JDBC methods and classes, resulting in
-slightly larger jars. JDK 1.1 is not as advanced as the newer ones
-and produces larger class files.
+slightly larger jars.
 
 JDK 1.1.x
 
