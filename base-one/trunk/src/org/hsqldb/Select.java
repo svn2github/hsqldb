@@ -517,25 +517,25 @@ class Select {
                 if (level != 0 && outer[level - 1]) {
 
                     // don't attempt to find if the left side was outer and returned nulls
-                    found = false;
+                    found           = false;
+                    t.nonJoinIsNull = false;
                 } else {
                     found = t.findFirst();
                 }
 
-                // if outer join and retured null, test the condition
+                // if outer join, and no inner result, get next outer row
+                // nonJoinIsNull disallows getting the next outer row in some circumstances
                 outer[level] = outerfound = t.isOuterJoin &&!found
                                             &&!outer[level]
-                                            && (t.eAnd == null
-                                                || t.eAnd.test());
+                                            &&!t.nonJoinIsNull
+                                            && t.nextOuter();
                 first[level] = found;
             } else {
                 found = t.next();
-
-                // if outer join and retured null, test the condition
                 outer[level] = outerfound = t.isOuterJoin &&!found
                                             &&!first[level] &&!outer[level]
-                                            && (t.eAnd == null
-                                                || t.eAnd.test());
+                                            &&!t.nonJoinIsNull
+                                            && t.nextOuter();
                 first[level] = found;
             }
 

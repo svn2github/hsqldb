@@ -3,6 +3,19 @@ Readme File
 
 leading to HSQLDB 1.7.2 ALPHA_N
 
+2003.08.11
+
+REWRITE OF LEFT OUTER JOIN SUPPORT
+
+- Complete rewrite of join processing abolishes the requirement for 
+an index on any joined columns. All expressions with AND are supported
+in the join condition (ON ....)
+
+IMPROVEMENTS IN ON DELETE CASCADE
+
+- Self referencing foreign keys and multiple foreign keys now support
+ON DELETE CASCADE.
+
 2003.08.02
 
 NIO ACCESS FOR .data FILES

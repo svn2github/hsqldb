@@ -393,12 +393,7 @@ class Parser {
                 vfilter.add(parseTableFilter(true));
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addCondition(condition, parseExpression());
-
-//                System.out.print(condition);
-                if (!condition.canBeInOuterJoin()) {
-                    throw Trace.error(Trace.OUTER_JOIN_CONDITION);
-                }
+                condition = addConditionOuter(condition, parseExpression());
             } else if (token.equals(Token.T_INNER)) {
                 tokenizer.getThis(Token.T_JOIN);
                 vfilter.add(parseTableFilter(false));
@@ -783,6 +778,15 @@ class Parser {
         } else {
             return new Expression(Expression.AND, e1, e2);
         }
+    }
+
+    private Expression addConditionOuter(Expression e1,
+                                         Expression e2) throws HsqlException {
+
+        if (!e2.setForOuterJoin()) {
+            throw Trace.error(Trace.OUTER_JOIN_CONDITION);
+        }
+        return addCondition(e1,e2);
     }
 
     /**

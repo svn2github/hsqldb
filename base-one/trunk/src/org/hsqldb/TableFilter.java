@@ -70,8 +70,8 @@ package org.hsqldb;
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
 
 /**
- * This class performs a join between two tables, or a self-join, using
- * indexes if they are availabe.
+ * This class iterates over table elements to perform a join between two
+ * tables, or a self-join, using indexes if they are availabe.
  *
  * @version 1.7.2
  */
@@ -81,7 +81,7 @@ class TableFilter {
     static final int CONDITION_UNORDERED = 0;      // not candidate for eStart or eEnd
     static final int   CONDITION_START_END = 1;    // candidate for eStart and eEnd
     static final int   CONDITION_START     = 2;    // candidate for eStart
-    static final int   CONDITION_END       = 3;    // ccandidate for eEnd
+    static final int   CONDITION_END       = 3;    // candidate for eEnd
     private Table      tTable;
     Select             sSelect;
     private String     sAlias;
@@ -90,11 +90,18 @@ class TableFilter {
     private Object     oEmptyData[];
     private Expression eStart, eEnd;
 
-    // these are package public to improve performance
+    //
     Expression eAnd;
     boolean    isOuterJoin;
     Object     oCurrentData[];
     Row        currentRow;
+
+    // addendum to the result of findFirst() and next() with isOuterJoin==true
+    // when the result is false, it indicates if a non-join condition caused the failure
+    boolean nonJoinIsNull;
+
+    // indicates current data is empty data produced for an outer join
+    boolean isCurrentOuter;
 
     /**
      * Constructor declaration
@@ -378,8 +385,6 @@ class TableFilter {
      */
     boolean findFirst() throws HsqlException {
 
-        boolean andtested = false;
-
         if (iIndex == null) {
             iIndex = tTable.getPrimaryIndex();
         }
@@ -401,12 +406,14 @@ class TableFilter {
                 break;
             }
 
+            nonJoinIsNull  = false;
+            isCurrentOuter = false;
+
             if (eAnd == null || eAnd.test()) {
                 return true;
             }
 
-            andtested = true;
-            nCurrent  = iIndex.next(nCurrent);
+            nCurrent = iIndex.next(nCurrent);
         }
 
         oCurrentData = oEmptyData;
@@ -435,6 +442,9 @@ class TableFilter {
                 break;
             }
 
+            nonJoinIsNull  = false;
+            isCurrentOuter = false;
+
             if (eAnd == null || eAnd.test()) {
                 return true;
             }
@@ -446,6 +456,16 @@ class TableFilter {
         currentRow   = null;
 
         return false;
+    }
+
+    boolean nextOuter() throws HsqlException {
+
+        nonJoinIsNull  = false;
+        isCurrentOuter = true;
+        oCurrentData   = oEmptyData;
+        currentRow     = null;
+
+        return eAnd == null || eAnd.test();
     }
 
     /**

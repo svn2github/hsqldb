@@ -189,12 +189,15 @@ class Expression {
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
-    private boolean      isDistinctAggregate;
-    static final Integer INTEGER_0 = ValuePool.getInt(0);
-    static final Integer INTEGER_1 = ValuePool.getInt(1);
+    private boolean isDistinctAggregate;
 
     // PARAM
     private boolean isParam;
+
+    // does Expression stem from a JOIN <table> ON <expression> (only set for OUTER joins)
+    private boolean      isInJoin;
+    static final Integer INTEGER_0 = ValuePool.getInt(0);
+    static final Integer INTEGER_1 = ValuePool.getInt(1);
 
     /**
      * Creates a new FUNCTION expression
@@ -527,6 +530,10 @@ class Expression {
             case CASEWHEN :
                 buf.append("CASEWHEN ");
                 break;
+        }
+
+        if (isInJoin) {
+            buf.append(" join");
         }
 
         if (eArg != null) {
@@ -1972,7 +1979,7 @@ class Expression {
 
             default :
 
-                // must be comparisation
+                // must be comparion
                 // todo: make sure it is
                 // boucherb@users 20030704 - ack!
                 // a new Boolean for each test is a _huge_ waste
@@ -2040,14 +2047,22 @@ class Expression {
         if (o == null || o2 == null) {
 
 // fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
-            if (iType == EQUAL && eArg.tFilter != null
-                    && eArg2.tFilter != null) {
+            boolean result = testNull(o, o2, iType);
 
-                // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
-                return eArg.tFilter.isOuterJoin;
+            if (eArg.tFilter.isCurrentOuter) {
+                if (eArg.isInJoin || eArg2.isInJoin) {
+
+                    // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
+                    return true;
+                }
+            } else {
+
+                // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
+                eArg.tFilter.nonJoinIsNull =
+                    !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
             }
 
-            return testNull(o, o2, iType);
+            return result;
         }
 
         int result = Column.compare(o, o2, type);
@@ -2197,14 +2212,14 @@ class Expression {
      * the query) for the existence of any OR clause which is not permitted
      * in OUTER joins in HSQLDB.<p>
      *
-     * There are still expressions (e.g. arithmetic) that should not be used
-     * in an OUTER join because they change it into an inner join but which
-     * are not caught by this method.(fredt@users)
+     * Sets isInJoin for all expressions in the tree.(fredt@users)
      */
-    boolean canBeInOuterJoin() {
+    boolean setForOuterJoin() {
+
+        isInJoin = true;
 
         if (eArg2 != null) {
-            if (eArg2.canBeInOuterJoin() == false) {
+            if (eArg2.setForOuterJoin() == false) {
                 return false;
             }
         }
