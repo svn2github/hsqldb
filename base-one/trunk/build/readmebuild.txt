@@ -1,38 +1,28 @@
 Build instructions for HSQLDB 1.7.2
 
 
+
 A jar file for HSQLDB is provided in the /lib directory of the 
 .zip package. This jar contains both the database and the 
-utilities and has been built with JDK 1.3.1. (#RELEASE VERSION)
+utilities and has been built with JDK 1.4.2.
 
-The supplied jar can be used with JRE version 1.1.x., 1.2.x,
-1.3.x and 1.4.x. No recompilation is necessary.
+The supplied jar can be used with JRE version 1.4.x., and 1.5.x.
+It cannot be used with older version or JRE.
 
-Possible reasons to rebuild the jar are:
-
-(a) Rebuild with JDK 1.4 to gain cccess to JDBC 3 methods and 
-classes such as Savepoint and ParameterMetaData. Also to
-speed up large databases with CACHED tables via the nio classes.
-An HSQLDB jar built with JDK 1.4 cannot be used with older JRE
-versions.
-
-(b) Rebuild with any JDK to reduce the size of the jar for small
-devices or for better download speed.
-
-(c) Rebuild to work around known compatibility issues with
-certain non-standard JDK's.
-
+For use with JRE 1.1.x, 1.2.x or 1.3.x recompilation is necessary.
+For all the older versions, always use JDK 1.3.x to build the jar.
+The result will run under 1.1.x and 1.2.x. 
 
 The source files
 
 The source files are supplied in a state that is compatible with
-JDK 1.3. Features that are specific to JDK 1.4 are enclosed in 
-comments containing preprocessor directives.
+JDK 1.4. 
 
 The org.hsqldb.util.CodeSwitcher class can process
 the source files and make them compatible with a given JDK by
 removing or adding comments from blocks of code. This procedure
 is invoked with the supplied build scripts.
+
 
 
 Different jar sizes
@@ -104,10 +94,10 @@ A set of MSDOS batch files is also provided. These produce only
 the default jar size. The path and classpath variables for the JDK
 should of course be set before running any of the batch files.
 
-If you are compiling for JDK's other than 1.2.x or 1.3.x, you should
-use the appropriate switchtoJDK11.bat or switchtoJDK14.bat to adapt
+If you are compiling for JDK's other than 1.4.x, you should
+use the appropriate switchtoJDK11.bat or switchtoJDK12.bat to adapt
 the source files to the target JDK before running the appropriate
-buildJDK11.bat or buildJDK14.bat
+buildJDK11.bat or buildJDK12.bat
 
 
 fredt@users

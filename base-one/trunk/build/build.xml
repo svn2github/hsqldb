@@ -225,6 +225,7 @@ examples:
       >
          <include name="org/hsqldb/util/**"/>
          <exclude name="org/hsqldb/util/*Swing.java"/>
+         <exclude name="org/hsqldb/util/TableSorter.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">
       <fileset dir="${src}/org/hsqldb/util">
@@ -241,6 +242,7 @@ examples:
                  optimize="${build.optimize}"
        >
       <include name="org/hsqldb/util/*Swing.java"/>
+      <include name="org/hsqldb/util/TableSorter.java"/>
       </javac>
    </target>
 
