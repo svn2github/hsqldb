@@ -1,6 +1,6 @@
 #!/bin/sh +u
 
-# $Id$
+# $Id: settargetjre.sh,v 1.1 2002/12/06 16:59:20 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -62,12 +62,12 @@ Failout() {
 # of our new target version.  That's because, depending on what version
 # we are coming from, we may need to clean up stuff from other tagged files.
 TARGET_SRCFILES='
-    jdbcStubs.java
-    jdbcConnection.java
-    jdbcDatabaseMetaData.java
-    jdbcPreparedStatement.java
-    jdbcResultSet.java
-    jdbcStatement.java
+    jdbc/jdbcStubs.java
+    jdbc/jdbcConnection.java
+    jdbc/jdbcDatabaseMetaData.java
+    jdbc/jdbcPreparedStatement.java
+    jdbc/jdbcResultSet.java
+    jdbc/jdbcStatement.java
 '
 [ -n "$TARGET_SRCFILES" ] || exit 0   # Nothing to do
 CS_LABELS=
