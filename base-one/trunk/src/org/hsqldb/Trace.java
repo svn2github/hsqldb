@@ -276,6 +276,45 @@ public class Trace extends PrintWriter {
     }
 
     /**
+     * compose error message by inserting the strings in the add parameters
+     * in placeholders within the error message
+     */
+
+    static HsqlException error(int code, String[] add) {
+
+        code = Math.abs(code);
+
+        String       s         = getMessage(code);
+
+        String state = s.substring(0, 5);
+        s = s.substring(6);
+        StringBuffer sb        = new StringBuffer(s.length() + 32);
+        int          lastIndex = 0;
+        int          escIndex  = s.length();
+
+        if (add != null) {
+            for (int i = 0;i < add.length; i++) {
+                escIndex = s.indexOf("$$");
+
+                if (escIndex == -1) {
+                    escIndex = s.length();
+
+                    break;
+                }
+
+                sb.append(s.substring(lastIndex, escIndex));
+                sb.append(add[i]);
+
+                lastIndex = escIndex + "$$".length();
+            }
+        }
+
+        sb.append(s.substring(lastIndex, escIndex));
+
+        return new HsqlException(sb.toString(), state, -code);
+    }
+
+    /**
      * Method declaration
      *
      *
