@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.9 2004/01/20 19:16:27 unsaved Exp $
+ * $Id: SqlFile.java,v 1.10 2004/01/20 19:27:10 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -188,8 +188,13 @@ public class SqlFile {
                 continue;
             }
             deTerminated = deTerminated(inputLine);
-            if (buffer.length() > 0) buffer.append('\n');
-            buffer.append((deTerminated == null) ? inputLine : deTerminated);
+            // A null terminal line (i.e., /\s*;\s*$/) is never useful.
+            if (!trimmedCommand.equals(";")) {
+                if (buffer.length() > 0) buffer.append('\n');
+                buffer.append((deTerminated == null)
+                        ? inputLine
+                        : deTerminated);
+            }
             if (deTerminated == null) continue;
             try {
                 curCommand = buffer.toString();
@@ -326,19 +331,26 @@ public class SqlFile {
     }
 
     private void showHistory() {
-        int ctr = 0;
+        int ctr = -1;
         String s;
-        for (int i = curHist; i >= 0; i--) {
-            s = statementHistory[i];
-            if (s == null) return;
-            psStd.println(Integer.toString(++ctr)
-                    + "  **********************************************\n" + s);
-        }
-        for (int i = 9; i >= curHist; i--) {
-            s = statementHistory[i];
-            if (s == null) return;
-            psStd.println(Integer.toString(++ctr)
-                    + "  **********************************************\n" + s);
+        String[] reversedList = new String[statementHistory.length];
+        try {
+            for (int i = curHist; i >= 0; i--) {
+                s = statementHistory[i];
+                if (s == null) return;
+                reversedList[++ctr] = s;
+            }
+            for (int i = 9; i >= curHist; i--) {
+                s = statementHistory[i];
+                if (s == null) return;
+                reversedList[++ctr] = s;
+            }
+        } finally {
+            for (int i = ctr; i >= 0; i--) {
+                psStd.println("-" + (i + 1)
+                        + "  **********************************************\n"
+                        + reversedList[i]);
+            }
         }
     }
 
