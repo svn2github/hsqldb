@@ -392,10 +392,11 @@ class Log {
         } catch (IOException e) {}
 
         // now its done completely
-        pProperties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
         pProperties.setProperty("version", org.hsqldb.jdbc.jdbcUtil.VERSION);
         pProperties.setProperty("hsqldb.compatible_version", "1.7.2");
-        pProperties.save();
+
+        // this one last to save the props
+        pProperties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
 
         if (compact) {
             try {

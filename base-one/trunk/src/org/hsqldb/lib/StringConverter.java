@@ -84,9 +84,10 @@ import java.io.UTFDataFormatException;
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 public class StringConverter {
 
-    private static final byte HEXCHAR[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
-        'e', 'f'
+    private static final byte HEXBYTES[] = {
+        (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4',
+        (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9',
+        (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f'
     };
     private static final String HEXINDEX = "0123456789abcdef0123456789ABCDEF";
 
@@ -166,8 +167,8 @@ public class StringConverter {
         for (int i = 0, j = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
 
-            s[j++] = (char) HEXCHAR[c >> 4 & 0xf];
-            s[j++] = (char) HEXCHAR[c & 0xf];
+            s[j++] = (char) HEXBYTES[c >> 4 & 0xf];
+            s[j++] = (char) HEXBYTES[c & 0xf];
         }
 
         return new String(s);
@@ -188,8 +189,8 @@ public class StringConverter {
         for (int i = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
 
-            o[from++] = HEXCHAR[c >> 4 & 0xf];
-            o[from++] = HEXCHAR[c & 0xf];
+            o[from++] = HEXBYTES[c >> 4 & 0xf];
+            o[from++] = HEXBYTES[c & 0xf];
         }
     }
 
@@ -312,10 +313,10 @@ public class StringConverter {
             } else {
                 b.write('\\');
                 b.write('u');
-                b.write(HEXCHAR[(c >> 12) & 0xf]);
-                b.write(HEXCHAR[(c >> 8) & 0xf]);
-                b.write(HEXCHAR[(c >> 4) & 0xf]);
-                b.write(HEXCHAR[c & 0xf]);
+                b.write(HEXBYTES[(c >> 12) & 0xf]);
+                b.write(HEXBYTES[(c >> 8) & 0xf]);
+                b.write(HEXBYTES[(c >> 4) & 0xf]);
+                b.write(HEXBYTES[c & 0xf]);
 
                 count += 6;
             }

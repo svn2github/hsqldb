@@ -1954,6 +1954,8 @@ class Parser {
                 read();
 
                 if (iToken == Expression.VALUE) {
+                    oData = Column.convertObject(oData, dataType);
+
                     return new Expression(exprType,
                                           new Expression(dataType, oData),
                                           null);
@@ -1970,6 +1972,8 @@ class Parser {
 
                     return new Expression(f);
                 }
+
+                oData = Column.convertObject(oData, dataType);
 
                 return new Expression(dataType, oData);
             }
