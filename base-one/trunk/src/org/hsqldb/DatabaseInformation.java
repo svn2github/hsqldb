@@ -67,11 +67,11 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.sql.DatabaseMetaData;
-import java.util.Hashtable;
-import java.util.Vector;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // applied to different parts
@@ -101,7 +101,7 @@ class DatabaseInformation {
 
     private Database             dDatabase;
     private UserManager          aAccess;
-    private Vector               tTable;
+    private HsqlArrayList        tTable;
     private static final Integer INTEGER_0 = new Integer(0);
 
     /**
@@ -112,7 +112,8 @@ class DatabaseInformation {
      * @param tables
      * @param access
      */
-    DatabaseInformation(Database db, Vector tables, UserManager access) {
+    DatabaseInformation(Database db, HsqlArrayList tables,
+                        UserManager access) {
 
         dDatabase = db;
         tTable    = tables;
@@ -129,36 +130,36 @@ class DatabaseInformation {
     // static final String META_FIXED_PREC_SCALE="MONEY";
     // static final String META_ORDINAL_POSITION="SEQ_IN_INDEX";
     // static final String META_ASC_OR_DESC="COLLATION";
-    static final String      META_SCHEM            = "SCHEM";
-    static final String      META_CAT              = "CAT";
-    static final String      META_COLUMN_SIZE      = "COLUMN_SIZE";
-    static final String      META_BUFFER_LENGTH    = "BUFFER_LENGTH";
-    static final String      META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
-    static final String      META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
-    static final String      META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
-    static final String      META_ORDINAL_POSITION = "ORDINAL_POSITION";
-    static final String      META_ASC_OR_DESC      = "ASC_OR_DESC";
-    private static Hashtable sysTableNames;
-    private static final int SYSTEM_PROCEDURES        = 1;
-    private static final int SYSTEM_PROCEDURECOLUMNS  = 2;
-    private static final int SYSTEM_TABLES            = 3;
-    private static final int SYSTEM_SCHEMAS           = 4;
-    private static final int SYSTEM_CATALOGS          = 5;
-    private static final int SYSTEM_TABLETYPES        = 6;
-    private static final int SYSTEM_COLUMNS           = 7;
-    private static final int SYSTEM_COLUMNPRIVILEGES  = 8;
-    private static final int SYSTEM_TABLEPRIVILEGES   = 9;
-    private static final int SYSTEM_BESTROWIDENTIFIER = 10;
-    private static final int SYSTEM_VERSIONCOLUMNS    = 11;
-    private static final int SYSTEM_PRIMARYKEYS       = 12;
-    private static final int SYSTEM_IMPORTEDKEYS      = 13;
-    private static final int SYSTEM_EXPORTEDKEYS      = 14;
-    private static final int SYSTEM_CROSSREFERENCE    = 15;
-    private static final int SYSTEM_TYPEINFO          = 16;
-    private static final int SYSTEM_INDEXINFO         = 17;
-    private static final int SYSTEM_UDTS              = 18;
-    private static final int SYSTEM_CONNECTIONINFO    = 19;
-    private static final int SYSTEM_USERS             = 20;
+    static final String        META_SCHEM            = "SCHEM";
+    static final String        META_CAT              = "CAT";
+    static final String        META_COLUMN_SIZE      = "COLUMN_SIZE";
+    static final String        META_BUFFER_LENGTH    = "BUFFER_LENGTH";
+    static final String        META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
+    static final String        META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
+    static final String        META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
+    static final String        META_ORDINAL_POSITION = "ORDINAL_POSITION";
+    static final String        META_ASC_OR_DESC      = "ASC_OR_DESC";
+    private static HsqlHashMap sysTableNames;
+    private static final int   SYSTEM_PROCEDURES        = 1;
+    private static final int   SYSTEM_PROCEDURECOLUMNS  = 2;
+    private static final int   SYSTEM_TABLES            = 3;
+    private static final int   SYSTEM_SCHEMAS           = 4;
+    private static final int   SYSTEM_CATALOGS          = 5;
+    private static final int   SYSTEM_TABLETYPES        = 6;
+    private static final int   SYSTEM_COLUMNS           = 7;
+    private static final int   SYSTEM_COLUMNPRIVILEGES  = 8;
+    private static final int   SYSTEM_TABLEPRIVILEGES   = 9;
+    private static final int   SYSTEM_BESTROWIDENTIFIER = 10;
+    private static final int   SYSTEM_VERSIONCOLUMNS    = 11;
+    private static final int   SYSTEM_PRIMARYKEYS       = 12;
+    private static final int   SYSTEM_IMPORTEDKEYS      = 13;
+    private static final int   SYSTEM_EXPORTEDKEYS      = 14;
+    private static final int   SYSTEM_CROSSREFERENCE    = 15;
+    private static final int   SYSTEM_TYPEINFO          = 16;
+    private static final int   SYSTEM_INDEXINFO         = 17;
+    private static final int   SYSTEM_UDTS              = 18;
+    private static final int   SYSTEM_CONNECTIONINFO    = 19;
+    private static final int   SYSTEM_USERS             = 20;
 
     // supported table types
     private static final String[] tableTypes = new String[] {
@@ -166,7 +167,7 @@ class DatabaseInformation {
     };
 
     static {
-        sysTableNames = new Hashtable(37);
+        sysTableNames = new HsqlHashMap(37);
 
         String sysNames[] = {
             "SYSTEM_PROCEDURES", "SYSTEM_PROCEDURECOLUMNS", "SYSTEM_TABLES",
@@ -262,7 +263,7 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table  table = (Table) tTable.elementAt(i);
+                    Table  table = (Table) tTable.get(i);
                     Object o[]   = t.getNewRow();
 
                     o[0] = o[1] = "";
@@ -378,7 +379,7 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table       = (Table) tTable.elementAt(i);
+                    Table table       = (Table) tTable.get(i);
                     int   columnCount = table.getColumnCount();
 
                     if (table.tableType == Table.TEMP_TABLE
@@ -445,7 +446,7 @@ class DatabaseInformation {
                 /*
                  * // todo: get correct info
                  * for(int i=0;i<tTable.size();i++) {
-                 * table=(Table)tTable.elementAt(i);
+                 * table=(Table)tTable.get(i);
                  * int columns=table.getColumnCount();
                  * for(int j=0;j<columns;j++) {
                  * Object o[]=t.getNewRow();
@@ -471,7 +472,7 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.elementAt(i);
+                    Table table = (Table) tTable.get(i);
 
                     if (table.tableType == Table.TEMP_TABLE
                             || table.tableType == Table.TEMP_TEXT_TABLE) {
@@ -513,7 +514,7 @@ class DatabaseInformation {
                 }
             {
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.elementAt(i);
+                    Table table = (Table) tTable.get(i);
 
                     if (table.tableType == Table.VIEW) {
                         continue;
@@ -583,7 +584,7 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.elementAt(i);
+                    Table table = (Table) tTable.get(i);
 
                     if (table.tableType == Table.VIEW) {
                         continue;
@@ -691,7 +692,7 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.elementAt(i);
+                    Table table = (Table) tTable.get(i);
 
                     for (int j = 0; j < table.getIndexCount(); j++) {
                         Index index  = table.getIndex(j);
@@ -780,10 +781,10 @@ class DatabaseInformation {
                 t.addColumn("ADMIN", Types.BIT);
                 t.createPrimaryKey();
 
-                Vector v = aAccess.getUsers();
+                HsqlArrayList v = aAccess.getUsers();
 
                 for (int i = 0, vSize = v.size(); i < vSize; i++) {
-                    User u = (User) v.elementAt(i);
+                    User u = (User) v.get(i);
 
                     // todo: this is not a nice implementation
                     if (u == null) {
@@ -838,12 +839,12 @@ class DatabaseInformation {
         t.createPrimaryKey();
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table      table     = (Table) tTable.elementAt(i);
-            Vector     constVect = table.getConstraints();
-            Constraint constraint;
+            Table         table     = (Table) tTable.get(i);
+            HsqlArrayList constVect = table.getConstraints();
+            Constraint    constraint;
 
             for (int j = 0; j < constVect.size(); j++) {
-                constraint = (Constraint) constVect.elementAt(j);
+                constraint = (Constraint) constVect.get(j);
 
                 if (constraint.getType() != Constraint.FOREIGN_KEY) {
                     continue;

@@ -68,11 +68,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.StringUtil;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Vector;
-import java.util.Hashtable;
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
 // for sql standard quoted identifiers for column and table names and aliases
@@ -108,31 +108,31 @@ class Table {
     static final String DEFAULT_PK = "";
 
     // main properties
-    private Vector  vColumn;               // columns in table
-    private Vector  vIndex;                // vIndex(0) is the primary key index
-    private int[]   iPrimaryKey;           // column numbers for primary key
-    private int     iIndexCount;           // size of vIndex
-    private int     iIdentityColumn;       // -1 means no such row
-    private int     iIdentityId;           // next value of identity column
-    Vector          vConstraint;           // constrainst for the table
-    Vector          vTrigs[];              // array of trigger Vectors
-    private int[]   colTypes;              // fredt - types of columns
-    private boolean isSystem;
-    private boolean isText;
-    private boolean isView;
+    private HsqlArrayList vColumn;            // columns in table
+    private HsqlArrayList vIndex;             // vIndex(0) is the primary key index
+    private int[]         iPrimaryKey;        // column numbers for primary key
+    private int           iIndexCount;        // size of vIndex
+    private int           iIdentityColumn;    // -1 means no such row
+    private int           iIdentityId;        // next value of identity column
+    HsqlArrayList         vConstraint;        // constrainst for the table
+    HsqlArrayList         vTrigs[];           // array of trigger lists
+    private int[]         colTypes;           // fredt - types of columns
+    private boolean       isSystem;
+    private boolean       isText;
+    private boolean       isView;
 
     // properties for subclasses
-    protected int      iColumnCount;       // inclusive the hidden primary key
-    protected int      iVisibleColumns;    // exclusive of hidden primary key
+    protected int      iColumnCount;          // inclusive the hidden primary key
+    protected int      iVisibleColumns;       // exclusive of hidden primary key
     protected Database dDatabase;
     protected Cache    cCache;
-    protected HsqlName tableName;          // SQL name
+    protected HsqlName tableName;             // SQL name
     protected int      tableType;
-    protected Session  ownerSession;       // fredt - set for temp tables only
+    protected Session  ownerSession;          // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
-    protected int      indexType;          // fredt - type of index used
+    protected int      indexType;             // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -198,13 +198,13 @@ class Table {
         tableName       = name;
         iPrimaryKey     = null;
         iIdentityColumn = -1;
-        vColumn         = new Vector();
-        vIndex          = new Vector();
-        vConstraint     = new Vector();
-        vTrigs          = new Vector[TriggerDef.numTrigs()];
+        vColumn         = new HsqlArrayList();
+        vIndex          = new HsqlArrayList();
+        vConstraint     = new HsqlArrayList();
+        vTrigs          = new HsqlArrayList[TriggerDef.numTrigs()];
 
         for (int vi = 0; vi < TriggerDef.numTrigs(); vi++) {
-            vTrigs[vi] = new Vector();
+            vTrigs[vi] = new HsqlArrayList();
         }
     }
 
@@ -270,7 +270,7 @@ class Table {
      * @param  c
      */
     void addConstraint(Constraint c) {
-        vConstraint.addElement(c);
+        vConstraint.add(c);
     }
 
     /**
@@ -278,7 +278,7 @@ class Table {
      *
      * @return
      */
-    Vector getConstraints() {
+    HsqlArrayList getConstraints() {
         return vConstraint;
     }
 
@@ -300,7 +300,7 @@ class Table {
         }
 
         for (int i = 0; i < vConstraint.size(); i++) {
-            Constraint c = (Constraint) vConstraint.elementAt(i);
+            Constraint c = (Constraint) vConstraint.get(i);
 
             currentIndex = c.getMainIndex();
 
@@ -323,7 +323,7 @@ class Table {
     int getNextConstraintIndex(int from, int type) {
 
         for (int i = from; i < vConstraint.size(); i++) {
-            Constraint c = (Constraint) vConstraint.elementAt(i);
+            Constraint c = (Constraint) vConstraint.get(i);
 
             if (c.getType() == type) {
                 return i;
@@ -373,7 +373,7 @@ class Table {
         }
 
         Trace.doAssert(iPrimaryKey == null, "Table.addColumn");
-        vColumn.addElement(column);
+        vColumn.add(column);
 
         iColumnCount++;
     }
@@ -559,7 +559,7 @@ class Table {
                            int adjust) throws SQLException {
 
         for (int j = 0; j < vConstraint.size(); j++) {
-            Constraint c = (Constraint) vConstraint.elementAt(j);
+            Constraint c = (Constraint) vConstraint.get(j);
 
             c.replaceTable(to, this, colindex, adjust);
         }
@@ -619,7 +619,7 @@ class Table {
     int searchColumn(String c) {
 
         for (int i = 0; i < iColumnCount; i++) {
-            if (c.equals(((Column) vColumn.elementAt(i)).columnName.name)) {
+            if (c.equals(((Column) vColumn.get(i)).columnName.name)) {
                 return i;
             }
         }
@@ -938,7 +938,7 @@ class Table {
         }
 */
         Trace.doAssert(isEmpty(), "createIndex");
-        vIndex.addElement(newindex);
+        vIndex.add(newindex);
 
         iIndexCount++;
 
@@ -956,7 +956,7 @@ class Table {
      * @throws  SQLException if index is used in a constraint
      */
     void checkDropIndex(String indexname,
-                        Hashtable ignore) throws SQLException {
+                        HsqlHashMap ignore) throws SQLException {
 
         Index index = this.getIndex(indexname);
 
@@ -969,7 +969,7 @@ class Table {
         }
 
         for (int i = 0; i < vConstraint.size(); i++) {
-            Constraint c = (Constraint) vConstraint.elementAt(i);
+            Constraint c = (Constraint) vConstraint.get(i);
 
             if (ignore.get(c) != null) {
                 continue;
@@ -1077,7 +1077,7 @@ class Table {
 
         if (dDatabase.isReferentialIntegrity()) {
             for (int i = 0; i < vConstraint.size(); i++) {
-                Constraint v = (Constraint) vConstraint.elementAt(i);
+                Constraint v = (Constraint) vConstraint.get(i);
 
                 v.checkUpdate(col, deleted, inserted);
             }
@@ -1125,7 +1125,7 @@ class Table {
 
         if (dDatabase.isReferentialIntegrity()) {
             for (int i = 0; i < vConstraint.size(); i++) {
-                ((Constraint) vConstraint.elementAt(i)).checkInsert(row);
+                ((Constraint) vConstraint.get(i)).checkInsert(row);
             }
         }
 
@@ -1207,11 +1207,11 @@ class Table {
             return;
         }
 
-        Vector trigVec = vTrigs[trigVecIndx];
-        int    trCount = trigVec.size();
+        HsqlArrayList trigVec = vTrigs[trigVecIndx];
+        int           trCount = trigVec.size();
 
         for (int i = 0; i < trCount; i++) {
-            TriggerDef td = (TriggerDef) trigVec.elementAt(i);
+            TriggerDef td = (TriggerDef) trigVec.get(i);
 
             td.push(row);    // tell the trigger thread to fire with this row
         }
@@ -1245,7 +1245,7 @@ class Table {
                         + String.valueOf(trigDef.vectorIndx));
         }
 
-        vTrigs[trigDef.vectorIndx].addElement(trigDef);
+        vTrigs[trigDef.vectorIndx].add(trigDef);
     }
 
 // fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
@@ -1267,7 +1267,7 @@ class Table {
                             boolean delete) throws SQLException {
 
         for (int i = 0; i < vConstraint.size(); i++) {
-            Constraint c = (Constraint) vConstraint.elementAt(i);
+            Constraint c = (Constraint) vConstraint.get(i);
 
             if (c.getType() != Constraint.MAIN || c.getRef() == null) {
                 continue;
@@ -1465,7 +1465,7 @@ class Table {
     int getConstraintIndex(String s) {
 
         for (int j = 0; j < vConstraint.size(); j++) {
-            Constraint tempc = (Constraint) vConstraint.elementAt(j);
+            Constraint tempc = (Constraint) vConstraint.get(j);
 
             if (tempc.getName().name.equals(s)) {
                 return j;
@@ -1486,7 +1486,7 @@ class Table {
         int j = getConstraintIndex(s);
 
         if (j >= 0) {
-            return (Constraint) vConstraint.elementAt(j);
+            return (Constraint) vConstraint.get(j);
         } else {
             return null;
         }
@@ -1499,7 +1499,7 @@ class Table {
      * @return
      */
     Column getColumn(int i) {
-        return (Column) vColumn.elementAt(i);
+        return (Column) vColumn.get(i);
     }
 
     /**
@@ -1518,7 +1518,7 @@ class Table {
      * @return
      */
     protected Index getIndex(int i) {
-        return (Index) vIndex.elementAt(i);
+        return (Index) vIndex.get(i);
     }
 
     /**

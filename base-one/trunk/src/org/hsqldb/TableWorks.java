@@ -68,8 +68,8 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import java.util.Vector;
-import java.util.Hashtable;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 by tlai@users - drop constraint fix
@@ -222,7 +222,7 @@ class TableWorks {
 
         int index = table.dDatabase.getTableIndex(table);
 
-        table.dDatabase.getTables().setElementAt(tn, index);
+        table.dDatabase.getTables().set(index, tn);
 
         table = tn;
 
@@ -247,10 +247,10 @@ class TableWorks {
     void createUniqueConstraint(int[] col,
                                 HsqlName name) throws SQLException {
 
-        Vector constraints = table.getConstraints();
+        HsqlArrayList constraints = table.getConstraints();
 
         for (int i = 0; i < constraints.size(); i++) {
-            Constraint c = (Constraint) constraints.elementAt(i);
+            Constraint c = (Constraint) constraints.get(i);
 
             if (c.isEquivalent(col, Constraint.UNIQUE)
                     || c.getName().name.equals(name.name)) {
@@ -289,7 +289,7 @@ class TableWorks {
 
         int i = table.dDatabase.getTableIndex(table);
 
-        table.dDatabase.getTables().setElementAt(tn, i);
+        table.dDatabase.getTables().set(i, tn);
 
         table = tn;
     }
@@ -311,7 +311,7 @@ class TableWorks {
 
         int i = table.dDatabase.getTableIndex(table);
 
-        table.dDatabase.getTables().setElementAt(tn, i);
+        table.dDatabase.getTables().set(i, tn);
 
         table = tn;
     }
@@ -322,9 +322,9 @@ class TableWorks {
      */
     void dropConstraint(String name) throws SQLException {
 
-        int        j    = table.getConstraintIndex(name);
-        Constraint c    = table.getConstraint(name);
-        Hashtable  cmap = new Hashtable();
+        int         j    = table.getConstraintIndex(name);
+        Constraint  c    = table.getConstraint(name);
+        HsqlHashMap cmap = new HsqlHashMap();
 
         cmap.put(c, c);
 
@@ -388,8 +388,8 @@ class TableWorks {
                 } catch (SQLException e) {}
             }
 
-            mainTable.vConstraint.removeElementAt(k);
-            table.vConstraint.removeElementAt(j);
+            mainTable.vConstraint.remove(k);
+            table.vConstraint.remove(j);
         } else if (c.getType() == c.UNIQUE) {
 
             // throw if the index for unique constraint is shared
@@ -397,7 +397,7 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
-            table.vConstraint.removeElementAt(j);
+            table.vConstraint.remove(j);
         }
     }
 }

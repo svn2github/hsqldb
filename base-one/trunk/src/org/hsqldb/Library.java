@@ -67,6 +67,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Connection;
@@ -74,7 +75,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Hashtable;
 import java.util.Random;
 import java.text.SimpleDateFormat;
 
@@ -248,7 +248,7 @@ class Library {
      *
      * @param h
      */
-    static void register(Hashtable h) {
+    static void register(HsqlHashMap h) {
 
         register(h, sNumeric);
         register(h, sString);
@@ -263,7 +263,7 @@ class Library {
      * @param h
      * @param s
      */
-    private static void register(Hashtable h, String s[][]) {
+    private static void register(HsqlHashMap h, String s[][]) {
 
         for (int i = 0; i < s.length; i++) {
             h.put(s[i][0], s[i][1]);
@@ -670,12 +670,12 @@ class Library {
 // fredt@users - 20020819 - patch 595854 by thomasm@users
 
     /**
-     *  Method declaration
+     * Method declaration
      *
      *
-     *  @param s
+     * @param s
      *
-     *  @return
+     * @return
      */
     public static Integer length(String s) {
         return s == null ? null

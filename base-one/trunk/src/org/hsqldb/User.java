@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import java.util.Hashtable;
+import org.hsqldb.lib.HsqlHashMap;
 
 /**
  * Class declaration
@@ -78,10 +78,10 @@ import java.util.Hashtable;
  */
 class User {
 
-    private boolean   bAdministrator;
-    private Hashtable hRight;
-    private String    sName, sPassword;
-    private User      uPublic;
+    private boolean     bAdministrator;
+    private HsqlHashMap hRight;
+    private String      sName, sPassword;
+    private User        uPublic;
 
     /**
      * Constructor declaration
@@ -94,7 +94,7 @@ class User {
      */
     User(String name, String password, boolean admin, User pub) {
 
-        hRight = new Hashtable();
+        hRight = new HsqlHashMap();
         sName  = name;
 
         setPassword(password);
@@ -131,7 +131,7 @@ class User {
      *
      * @return
      */
-    Hashtable getRights() {
+    HsqlHashMap getRights() {
 
         // necessary to create the script
         return hRight;

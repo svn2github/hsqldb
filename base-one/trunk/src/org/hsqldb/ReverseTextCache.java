@@ -31,8 +31,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.*;
 
 /**
  *  Cache class declaration <P>
@@ -105,10 +107,10 @@ class ReverseTextCache extends org.hsqldb.TextCache {
         CachedRow r = null;
 
         try {
-            StringBuffer buffer   = new StringBuffer(80);
-            boolean      blank    = true;
-            boolean      complete = false;
-            int          nextPos  = 0;
+            HsqlStringBuffer buffer   = new HsqlStringBuffer(80);
+            boolean          blank    = true;
+            boolean          complete = false;
+            int              nextPos  = 0;
 
             try {
                 char rowSep = 0;

@@ -67,13 +67,14 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.sql.SQLException;
-import java.util.Vector;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 
 /**
- *  The collection (Vector) of User object instances within a specific
+ *  The collection (HsqlArrayList) of User object instances within a specific
  *  database. Methods are provided for creating, modifying and deleting
  *  users, as well as manipulating their access rights to the database
  *  objects.
@@ -83,22 +84,22 @@ import java.util.Vector;
  */
 class UserManager {
 
-    static final int SELECT = 1,
-                     DELETE = 2,
-                     INSERT = 4,
-                     UPDATE = 8,
-                     ALL    = 15;
-    private Vector   uUser;
-    private User     uPublic;
+    static final int      SELECT = 1,
+                          DELETE = 2,
+                          INSERT = 4,
+                          UPDATE = 8,
+                          ALL    = 15;
+    private HsqlArrayList uUser;
+    private User          uPublic;
 
     /**
-     *  Creates a new Vector to contain the User object instances, as well
+     *  Creates a new HsqlArrayList to contain the User object instances, as well
      *  as creating an initial PUBLIC user, with no password.
      *
      * @throws  SQLException
      */
     UserManager() throws SQLException {
-        uUser   = new Vector();
+        uUser   = new HsqlArrayList();
         uPublic = createUser("PUBLIC", null, false);
     }
 
@@ -140,7 +141,7 @@ class UserManager {
             return null;
         }
 
-        StringBuffer b = new StringBuffer();
+        HsqlStringBuffer b = new HsqlStringBuffer();
 
         if ((right & SELECT) != 0) {
             b.append("SELECT,");
@@ -180,7 +181,7 @@ class UserManager {
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan
 // changes to loops for speed, also applied to similar loops below
         for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
-            User u = (User) uUser.elementAt(i);
+            User u = (User) uUser.get(i);
 
             if ((u != null) && u.getName().equals(name)) {
                 throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
@@ -189,14 +190,14 @@ class UserManager {
 
         User u = new User(name, password, admin, uPublic);
 
-        uUser.addElement(u);
+        uUser.add(u);
 
         return u;
     }
 
     /**
      *  This method is used to drop a user. Since we are using a vector to
-     *  hold the User objects, we must iterate through the Vector looking
+     *  hold the User objects, we must iterate through the HsqlArrayList looking
      *  for the name. The user object is currently set to null, and all
      *  access rights revoked. <P>
      *
@@ -211,13 +212,13 @@ class UserManager {
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
         for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
-            User u = (User) uUser.elementAt(i);
+            User u = (User) uUser.get(i);
 
             if ((u != null) && u.getName().equals(name)) {
 
                 // todo: find a better way. Problem: removeElementAt would not
                 // work correctly while others are connected
-                uUser.setElementAt(null, i);
+                uUser.set(i, null);
                 u.revokeAll();    // in case the user is referenced in another way
 
                 return;
@@ -259,12 +260,12 @@ class UserManager {
     }
 
     /**
-     *  This method is used to access the entire Vector of User objects for
+     *  This method is used to access the entire HsqlArrayList of User objects for
      *  this database.
      *
-     * @return  The Vector of our User objects
+     * @return  The HsqlArrayList of our User objects
      */
-    Vector getUsers() {
+    HsqlArrayList getUsers() {
         return uUser;
     }
 
@@ -303,7 +304,7 @@ class UserManager {
     private User get(String name) throws SQLException {
 
         for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
-            User u = (User) uUser.elementAt(i);
+            User u = (User) uUser.get(i);
 
             if ((u != null) && u.getName().equals(name)) {
                 return u;

@@ -67,6 +67,8 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlStringBuffer;
+
 /**
  * Name of an SQL object<p>
  *
@@ -102,7 +104,7 @@ class HsqlName {
 
     public static HsqlName makeAutoName(String type) {
 
-        StringBuffer sbname = new StringBuffer();
+        HsqlStringBuffer sbname = new HsqlStringBuffer();
 
         sbname.append("SYS_");
         sbname.append(type);
@@ -114,7 +116,7 @@ class HsqlName {
 
     public static HsqlName makeAutoName(String type, String namepart) {
 
-        StringBuffer sbname = new StringBuffer();
+        HsqlStringBuffer sbname = new HsqlStringBuffer();
 
         sbname.append("SYS_");
         sbname.append(type);
@@ -155,7 +157,7 @@ class HsqlName {
 
     public void rename(String prefix, String name, boolean isquoted) {
 
-        StringBuffer sbname = new StringBuffer(prefix);
+        HsqlStringBuffer sbname = new HsqlStringBuffer(prefix);
 
         sbname.append('_');
         sbname.append(name);

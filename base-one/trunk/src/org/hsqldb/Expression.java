@@ -69,8 +69,8 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Hashtable;
-import java.util.Vector;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlArrayList;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -143,10 +143,10 @@ class Expression {
     private Expression eArg, eArg2;
 
     // VALUE, VALUELIST
-    private Object    oData;
-    private Hashtable hList;
-    private boolean   hListHasNull;
-    private int       iDataType;
+    private Object      oData;
+    private HsqlHashMap hList;
+    private boolean     hListHasNull;
+    private int         iDataType;
 
     // QUERY (correlated subquery)
     private Select sSelect;
@@ -220,17 +220,17 @@ class Expression {
      *
      * @param v
      */
-    Expression(Vector v) {
+    Expression(HsqlArrayList v) {
 
         iType     = VALUELIST;
         iDataType = Types.VARCHAR;
 
         int len = v.size();
 
-        hList = new Hashtable(len, 1);
+        hList = new HsqlHashMap(len);
 
         for (int i = 0; i < len; i++) {
-            Object o = v.elementAt(i);
+            Object o = v.get(i);
 
             if (o != null) {
                 hList.put(o, this.INTEGER_1);
@@ -627,6 +627,7 @@ class Expression {
     }
 
 // fredt@users 20021012 - patch 1.7.1 by hofhansl@users - use index with negate
+
     /**
      * Method declaration
      *

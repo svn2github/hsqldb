@@ -67,6 +67,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -78,8 +81,6 @@ import java.io.LineNumberReader;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
 
 //import java.util.zip.
 import java.util.zip.Deflater;
@@ -567,10 +568,10 @@ class Log implements Runnable {
             }
 
             // inserts are done separetely to save memory
-            Vector tables = db.getTables();
+            HsqlArrayList tables = db.getTables();
 
             for (int i = 0; i < tables.size(); i++) {
-                Table t = (Table) tables.elementAt(i);
+                Table t = (Table) tables.get(i);
 
 // cached tables have the index roots set in the ddl script
                 if ((full ||!t.isCached()) &&!t.isTemp() &&!t.isView()
@@ -587,7 +588,7 @@ class Log implements Runnable {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
                 if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
-                    StringBuffer a = new StringBuffer("SET TABLE ");
+                    HsqlStringBuffer a = new HsqlStringBuffer("SET TABLE ");
 
                     a.append(t.getName().statementName);
                     a.append(" READONLY TRUE");
@@ -838,9 +839,9 @@ class Log implements Runnable {
 
         dDatabase.setReferentialIntegrity(false);
 
-        Vector session = new Vector();
+        HsqlArrayList session = new HsqlArrayList();
 
-        session.addElement(sysSession);
+        session.add(sysSession);
 
         Session current = sysSession;
 
@@ -869,12 +870,12 @@ class Log implements Runnable {
                         session.setSize(id + 1);
                     }
 
-                    current = (Session) session.elementAt(id);
+                    current = (Session) session.get(id);
 
                     if (current == null) {
                         current = new Session(sysSession, id);
 
-                        session.setElementAt(current, id);
+                        session.set(id, current);
                         dDatabase.registerSession(current);
                     }
 
@@ -895,14 +896,14 @@ class Log implements Runnable {
 
                     current = new Session(sysSession, id);
 
-                    session.setElementAt(current, id);
+                    session.set(id, current);
                 }
             }
 
             r.close();
 
             for (int i = 0; i < session.size(); i++) {
-                current = (Session) session.elementAt(i);
+                current = (Session) session.get(i);
 
                 if (current != null) {
                     current.rollback();
@@ -987,7 +988,7 @@ class Log implements Runnable {
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
-    private Hashtable textCacheList = new Hashtable();
+    private HsqlHashMap textCacheList = new HsqlHashMap();
 
     Cache openTextCache(String table, String source, boolean readOnlyData,
                         boolean reversed) throws SQLException {
@@ -1059,6 +1060,6 @@ class Log implements Runnable {
             ((TextCache) e.nextElement()).closeFile();
         }
 
-        textCacheList = new Hashtable();
+        textCacheList = new HsqlHashMap();
     }
 }

@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 
 /**
@@ -72,10 +73,10 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
         try {
             field++;
 
-            StringBuffer ret   = new StringBuffer();
-            boolean      done  = false;
-            int          state = NORMAL_FIELD;
-            int          end   = -1;
+            HsqlStringBuffer ret   = new HsqlStringBuffer();
+            boolean          done  = false;
+            int              state = NORMAL_FIELD;
+            int              end   = -1;
 
             if (!isEnd) {
                 end = text.indexOf(sep, next);

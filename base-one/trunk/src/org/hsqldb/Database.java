@@ -67,11 +67,11 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -109,40 +109,40 @@ import java.util.Vector;
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 class Database {
 
-    private String                 sName;
-    private UserManager            aAccess;
-    private Vector                 tTable;
-    private DatabaseInformation    dInfo;
-    Logger                         logger;
-    boolean                        bReadOnly;
-    private boolean                bShutdown;
-    private Hashtable              hAlias;
-    private boolean                bIgnoreCase;
-    private boolean                bReferentialIntegrity;
-    private Vector                 cSession;
-    private HsqlDatabaseProperties databaseProperties;
-    private Session                sysSession;
-    private static final int       CALL       = 1;
-    private static final int       CHECKPOINT = 2;
-    private static final int       COMMIT     = 3;
-    private static final int       CONNECT    = 4;
-    private static final int       CREATE     = 5;
-    private static final int       DELETE     = 6;
-    private static final int       DISCONNECT = 7;
-    private static final int       DROP       = 8;
-    private static final int       GRANT      = 9;
-    private static final int       INSERT     = 10;
-    private static final int       REVOKE     = 11;
-    private static final int       ROLLBACK   = 12;
-    private static final int       SAVEPOINT  = 13;
-    private static final int       SCRIPT     = 14;
-    private static final int       SELECT     = 15;
-    private static final int       SET        = 16;
-    private static final int       SHUTDOWN   = 17;
-    private static final int       UPDATE     = 18;
-    private static final int       SEMICOLON  = 19;
-    private static final int       ALTER      = 20;
-    private static final Hashtable hCommands  = new Hashtable(37);
+    private String                   sName;
+    private UserManager              aAccess;
+    private HsqlArrayList            tTable;
+    private DatabaseInformation      dInfo;
+    Logger                           logger;
+    boolean                          bReadOnly;
+    private boolean                  bShutdown;
+    private HsqlHashMap              hAlias;
+    private boolean                  bIgnoreCase;
+    private boolean                  bReferentialIntegrity;
+    private HsqlArrayList            cSession;
+    private HsqlDatabaseProperties   databaseProperties;
+    private Session                  sysSession;
+    private static final int         CALL       = 1;
+    private static final int         CHECKPOINT = 2;
+    private static final int         COMMIT     = 3;
+    private static final int         CONNECT    = 4;
+    private static final int         CREATE     = 5;
+    private static final int         DELETE     = 6;
+    private static final int         DISCONNECT = 7;
+    private static final int         DROP       = 8;
+    private static final int         GRANT      = 9;
+    private static final int         INSERT     = 10;
+    private static final int         REVOKE     = 11;
+    private static final int         ROLLBACK   = 12;
+    private static final int         SAVEPOINT  = 13;
+    private static final int         SCRIPT     = 14;
+    private static final int         SELECT     = 15;
+    private static final int         SET        = 16;
+    private static final int         SHUTDOWN   = 17;
+    private static final int         UPDATE     = 18;
+    private static final int         SEMICOLON  = 19;
+    private static final int         ALTER      = 20;
+    private static final HsqlHashMap hCommands  = new HsqlHashMap(37);
 
     static {
         hCommands.put("ALTER", new Integer(ALTER));
@@ -198,10 +198,10 @@ class Database {
     // tony_lai@users 20020820
     private void open() throws SQLException {
 
-        tTable                = new Vector();
+        tTable                = new HsqlArrayList();
         aAccess               = new UserManager();
-        cSession              = new Vector();
-        hAlias                = new Hashtable();
+        cSession              = new HsqlArrayList();
+        hAlias                = new HsqlHashMap();
         logger                = new Logger();
         bReferentialIntegrity = true;
 
@@ -300,7 +300,7 @@ class Database {
         int id   = size;
 
         for (int i = 0; i < size; i++) {
-            if (cSession.elementAt(i) == null) {
+            if (cSession.get(i) == null) {
                 id = i;
 
                 break;
@@ -334,7 +334,7 @@ class Database {
             cSession.setSize(id + 1);
         }
 
-        cSession.setElementAt(session, id);
+        cSession.set(id, session);
     }
 
     /**
@@ -567,13 +567,13 @@ class Database {
     }
 
     /**
-     *  Retrieves a Vector containing references to all registered non-system
+     *  Retrieves a HsqlArrayList containing references to all registered non-system
      *  tables and views. This includes all tables and views registered with
      *  this Database object via a call to {@link #linkTable linkTable}.
      *
-     * @return  a Vector of all registered non-system tables and views
+     * @return  a HsqlArrayList of all registered non-system tables and views
      */
-    Vector getTables() {
+    HsqlArrayList getTables() {
         return tTable;
     }
 
@@ -610,9 +610,9 @@ class Database {
      *  Retrieves a map from Java method-call name aliases to the
      *  fully-qualified names of the Java methods themsleves.
      *
-     * @return  a map in the form of a Hashtable
+     * @return  a map in the form of a HsqlHashMap
      */
-    Hashtable getAlias() {
+    HsqlHashMap getAlias() {
         return hAlias;
     }
 
@@ -699,7 +699,7 @@ class Database {
     Table findUserTable(String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (t.equals(name)) {
                 return t;
@@ -713,7 +713,7 @@ class Database {
     Table findUserTable(String name, Session session) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (t.equals(name, session)) {
                 return t;
@@ -756,7 +756,7 @@ class Database {
      * @throws  SQLException if there is a problem
      */
     void linkTable(Table t) throws SQLException {
-        tTable.addElement(t);
+        tTable.add(t);
     }
 
     /**
@@ -930,15 +930,15 @@ class Database {
     private int[] processColumnList(Tokenizer c,
                                     Table t) throws SQLException {
 
-        Vector    v = new Vector();
-        Hashtable h = new Hashtable();
+        HsqlArrayList v = new HsqlArrayList();
+        HsqlHashMap   h = new HsqlHashMap();
 
         c.getThis("(");
 
         while (true) {
             String colname = c.getName();
 
-            v.addElement(colname);
+            v.add(colname);
             h.put(colname, colname);
 
             String sToken = c.getString();
@@ -962,7 +962,7 @@ class Database {
         int col[] = new int[s];
 
         for (int i = 0; i < s; i++) {
-            col[i] = t.getColumnNr((String) v.elementAt(i));
+            col[i] = t.getColumnNr((String) v.get(i));
         }
 
         return col;
@@ -1046,7 +1046,7 @@ class Database {
     private Table findTableForIndex(String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (t.getIndex(name) != null) {
                 return t;
@@ -1057,7 +1057,7 @@ class Database {
     }
 
     /**
-     *  Retrieves the index of a table or view in the Vector that contains
+     *  Retrieves the index of a table or view in the HsqlArrayList that contains
      *  these objects for a Database.
      *
      * @param  table the Table object
@@ -1066,7 +1066,7 @@ class Database {
     int getTableIndex(Table table) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (t == table) {
                 return i;
@@ -1434,14 +1434,14 @@ class Database {
 // HSQLDB relies on primary index to be the first one defined
 // and needs original or system added primary key before any non-unique index
 // is created
-            Vector tempConstraints = new Vector();
+            HsqlArrayList tempConstraints = new HsqlArrayList();
             TempConstraint tempConst = new TempConstraint(null,
                 primarykeycolumn, null, null, Constraint.MAIN, false);
 
 // tony_lai@users 20020820 - patch 595099
             HsqlName pkName = null;
 
-            tempConstraints.addElement(tempConst);
+            tempConstraints.add(tempConst);
 
             if (constraint) {
                 int i = 0;
@@ -1467,7 +1467,7 @@ class Database {
 
                         int col[] = processColumnList(c, t);
                         TempConstraint mainConst =
-                            (TempConstraint) tempConstraints.elementAt(0);
+                            (TempConstraint) tempConstraints.get(0);
 
                         Trace.check(mainConst.localCol == null,
                                     Trace.SECOND_PRIMARY_KEY);
@@ -1485,7 +1485,7 @@ class Database {
                                                        Constraint.UNIQUE,
                                                        false);
 
-                        tempConstraints.addElement(tempConst);
+                        tempConstraints.add(tempConst);
                     } else if (sToken.equals("FOREIGN")) {
                         c.getThis("KEY");
 
@@ -1493,7 +1493,7 @@ class Database {
 
                         if (tempConst.expCol == null) {
                             TempConstraint mainConst =
-                                (TempConstraint) tempConstraints.elementAt(0);
+                                (TempConstraint) tempConstraints.get(0);
 
                             tempConst.expCol = mainConst.localCol;
 
@@ -1506,7 +1506,7 @@ class Database {
                         t.checkColumnsMatch(tempConst.localCol,
                                             tempConst.expTable,
                                             tempConst.expCol);
-                        tempConstraints.addElement(tempConst);
+                        tempConstraints.add(tempConst);
                     }
 
                     sToken = c.getString();
@@ -1534,7 +1534,7 @@ class Database {
 // also, duplicate indexes can be avoided if we choose to in the future but
 // currently we have to accept them to stay compatible with existing cached
 // tables that include them
-            tempConst = (TempConstraint) tempConstraints.elementAt(0);
+            tempConst = (TempConstraint) tempConstraints.get(0);
 
 // tony_lai@users 20020820 - patch 595099
             t.createPrimaryKey(pkName, tempConst.localCol);
@@ -1542,7 +1542,7 @@ class Database {
             boolean logDDL = false;
 
             for (int i = 1; i < tempConstraints.size(); i++) {
-                tempConst = (TempConstraint) tempConstraints.elementAt(i);
+                tempConst = (TempConstraint) tempConstraints.get(i);
 
                 if (tempConst.type == Constraint.UNIQUE) {
                     TableWorks tw = new TableWorks(t);
@@ -1693,7 +1693,7 @@ class Database {
         v.setStatement(c.getLastPart());
         v.addColumns(rResult);
         session.commit();
-        tTable.addElement(v);
+        tTable.add(v);
         c.setPartMarker(logposition);
     }
 
@@ -2063,7 +2063,7 @@ class Database {
 
         if (!session.isClosed()) {
             session.disconnect();
-            cSession.setElementAt(null, session.getId());
+            cSession.set(session.getId(), null);
         }
 
         return new Result();
@@ -2343,14 +2343,14 @@ class Database {
 
         // don't disconnect system user; need it to save database
         for (int i = 1, tsize = cSession.size(); i < tsize; i++) {
-            Session d = (Session) cSession.elementAt(i);
+            Session d = (Session) cSession.get(i);
 
             if (d != null) {
                 d.disconnect();
             }
         }
 
-        cSession.removeAllElements();
+        cSession.clear();
         close(closemode);
         processDisconnect(session);
 
@@ -2380,10 +2380,10 @@ class Database {
     void dropTempTables(Session ownerSession) {
 
         for (int i = 0; i < tTable.size(); i++) {
-            Table toDrop = (Table) tTable.elementAt(i);
+            Table toDrop = (Table) tTable.get(i);
 
             if (toDrop.isTemp() && toDrop.getOwnerSession() == ownerSession) {
-                tTable.removeElementAt(i);
+                tTable.remove(i);
             }
         }
     }
@@ -2438,7 +2438,7 @@ class Database {
         boolean     isSelfRef         = false;
 
         for (int i = 0; i < tTable.size(); i++) {
-            toDrop = (Table) tTable.elementAt(i);
+            toDrop = (Table) tTable.get(i);
 
             if (toDrop.equals(name, session) && (isView == toDrop.isView())) {
                 dropIndex = i;
@@ -2476,7 +2476,7 @@ class Database {
                 // cover the case where the referencing table
                 // may have already been dropped
                 for (int k = 0; k < tTable.size(); k++) {
-                    if (refTable.equals(tTable.elementAt(k))) {
+                    if (refTable.equals(tTable.get(k))) {
                         refererIndex = k;
 
                         break;
@@ -2497,7 +2497,7 @@ class Database {
             toDrop.setDataSource("", false, session);
         }
 
-        tTable.removeElementAt(dropIndex);
+        tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
     }
 
@@ -2515,16 +2515,16 @@ class Database {
     void removeExportedKeys(Table toDrop) {
 
         for (int i = 0; i < tTable.size(); i++) {
-            Vector constraintvector =
-                ((Table) tTable.elementAt(i)).getConstraints();
+            HsqlArrayList constraintvector =
+                ((Table) tTable.get(i)).getConstraints();
 
             for (int j = constraintvector.size() - 1; j >= 0; j--) {
                 Constraint currentConstraint =
-                    (Constraint) constraintvector.elementAt(j);
+                    (Constraint) constraintvector.get(j);
                 Table refTable = currentConstraint.getRef();
 
                 if (toDrop == refTable) {
-                    constraintvector.removeElementAt(j);
+                    constraintvector.remove(j);
                 }
             }
         }
@@ -2546,20 +2546,20 @@ class Database {
 
         // look in each trigger list of each type of trigger for each table
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t        = (Table) tTable.elementAt(i);
+            Table t        = (Table) tTable.get(i);
             int   numTrigs = TriggerDef.numTrigs();
 
             for (int tv = 0; tv < numTrigs; tv++) {
-                Vector v = t.vTrigs[tv];
+                HsqlArrayList v = t.vTrigs[tv];
 
                 for (int tr = v.size() - 1; tr >= 0; tr--) {
-                    TriggerDef td = (TriggerDef) v.elementAt(tr);
+                    TriggerDef td = (TriggerDef) v.get(tr);
 
                     if (td.name.equals(name)) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
                         session.setScripting(!td.table.isTemp());
-                        v.removeElementAt(tr);
+                        v.remove(tr);
 
                         found = true;
 

@@ -67,10 +67,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Vector;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users - made optional
 // changes applied to different parts of this method
@@ -86,7 +86,7 @@ import java.util.Vector;
 /**
  *  Class declaration
  *
- * @version    1.7.0
+ *@version    1.7.0
  */
 class Parser {
 
@@ -281,9 +281,9 @@ class Parser {
 
         tTokenizer.getThis("SET");
 
-        Vector vColumn = new Vector();
-        Vector eColumn = new Vector();
-        int    len     = 0;
+        HsqlArrayList vColumn = new HsqlArrayList();
+        HsqlArrayList eColumn = new HsqlArrayList();
+        int           len     = 0;
 
         token = null;
 
@@ -292,13 +292,13 @@ class Parser {
 
             int i = table.getColumnNr(tTokenizer.getString());
 
-            vColumn.addElement(new Integer(i));
+            vColumn.add(new Integer(i));
             tTokenizer.getThis("=");
 
             Expression e = parseExpression();
 
             e.resolve(filter);
-            eColumn.addElement(e);
+            eColumn.add(e);
 
             token = tTokenizer.getString();
         } while (token.equals(","));
@@ -319,14 +319,14 @@ class Parser {
 
         Expression exp[] = new Expression[len];
 
-        eColumn.copyInto(exp);
+        eColumn.toArray(exp);
 
         int col[]   = new int[len];
         int type[]  = new int[len];
         int csize[] = new int[len];
 
         for (int i = 0; i < len; i++) {
-            col[i] = ((Integer) vColumn.elementAt(i)).intValue();
+            col[i] = ((Integer) vColumn.get(i)).intValue();
 
             Column column = table.getColumn(col[i]);
 
@@ -520,15 +520,15 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        Vector vcolumns = null;
+        HsqlArrayList vcolumns = null;
 
         if (token.equals("(")) {
-            vcolumns = new Vector();
+            vcolumns = new HsqlArrayList();
 
             int i = 0;
 
             while (true) {
-                vcolumns.addElement(tTokenizer.getString());
+                vcolumns.add(tTokenizer.getString());
 
                 i++;
 
@@ -576,7 +576,7 @@ class Parser {
                         break;
                     }
                 } else {
-                    colindex = t.getColumnNr((String) vcolumns.elementAt(i));
+                    colindex        = t.getColumnNr((String) vcolumns.get(i));
                     check[colindex] = true;
                 }
 
@@ -638,7 +638,7 @@ class Parser {
                 if (vcolumns == null) {
                     j = i;
                 } else {
-                    j = t.getColumnNr((String) vcolumns.elementAt(i));
+                    j = t.getColumnNr((String) vcolumns.get(i));
                 }
 
                 col[i]  = j;
@@ -821,7 +821,7 @@ class Parser {
         }
 
         // parse column list
-        Vector vcolumn = new Vector();
+        HsqlArrayList vcolumn = new HsqlArrayList();
 
         do {
             Expression e = parseExpression();
@@ -839,7 +839,7 @@ class Parser {
                 token = tTokenizer.getString();
             }
 
-            vcolumn.addElement(e);
+            vcolumn.add(e);
         } while (token.equals(","));
 
         if (token.equals("INTO")) {
@@ -877,9 +877,9 @@ class Parser {
         Expression condition = null;
 
         // parse table list
-        Vector vfilter = new Vector();
+        HsqlArrayList vfilter = new HsqlArrayList();
 
-        vfilter.addElement(parseTableFilter(false));
+        vfilter.add(parseTableFilter(false));
 
         while (true) {
             token = tTokenizer.getString();
@@ -893,7 +893,7 @@ class Parser {
 
                 Trace.check(token.equals("JOIN"), Trace.UNEXPECTED_TOKEN,
                             token);
-                vfilter.addElement(parseTableFilter(true));
+                vfilter.add(parseTableFilter(true));
                 tTokenizer.getThis("ON");
 
 // thertz@users 20020320 - patch 473613 - outer join condition bug
@@ -905,12 +905,12 @@ class Parser {
                                          parseOuterJoinCondition());
             } else if (token.equals("INNER")) {
                 tTokenizer.getThis("JOIN");
-                vfilter.addElement(parseTableFilter(false));
+                vfilter.add(parseTableFilter(false));
                 tTokenizer.getThis("ON");
 
                 condition = addCondition(condition, parseExpression());
             } else if (token.equals(",")) {
-                vfilter.addElement(parseTableFilter(false));
+                vfilter.add(parseTableFilter(false));
             } else {
                 break;
             }
@@ -921,7 +921,7 @@ class Parser {
         int         len      = vfilter.size();
         TableFilter filter[] = new TableFilter[len];
 
-        vfilter.copyInto(filter);
+        vfilter.toArray(filter);
 
         select.tFilter = filter;
 
@@ -929,7 +929,7 @@ class Parser {
         len = vcolumn.size();
 
         for (int i = 0; i < len; i++) {
-            Expression e = (Expression) (vcolumn.elementAt(i));
+            Expression e = (Expression) (vcolumn.get(i));
 
             if (e.getType() == Expression.ASTERIX) {
                 int    current = i;
@@ -954,7 +954,7 @@ class Parser {
                             f.getName(), table.getColumn(c).columnName.name,
                             table.getColumn(c).columnName.isNameQuoted);
 
-                        vcolumn.insertElementAt(ins, current++);
+                        vcolumn.add(current++, ins);
 
                         // now there is one element more to parse
                         len++;
@@ -966,7 +966,7 @@ class Parser {
                 // minus the asterix element
                 len--;
 
-                vcolumn.removeElementAt(current);
+                vcolumn.remove(current);
             } else if (e.getType() == Expression.COLUMN) {
                 if (e.getTableName() == null) {
                     for (int filterIndex = 0; filterIndex < filter.length;
@@ -1001,7 +1001,7 @@ class Parser {
 
                 e = doOrderGroup(e, vcolumn);
 
-                vcolumn.addElement(e);
+                vcolumn.add(e);
 
                 token = tTokenizer.getString();
 
@@ -1043,7 +1043,7 @@ class Parser {
                     token = tTokenizer.getString();
                 }
 
-                vcolumn.addElement(e);
+                vcolumn.add(e);
 
                 len++;
             } while (token.equals(","));
@@ -1054,7 +1054,7 @@ class Parser {
         len            = vcolumn.size();
         select.eColumn = new Expression[len];
 
-        vcolumn.copyInto(select.eColumn);
+        vcolumn.toArray(select.eColumn);
 
         if (token.equals("UNION")) {
             token = tTokenizer.getString();
@@ -1096,7 +1096,7 @@ class Parser {
      * @exception  java.sql.SQLException  Description of the Exception
      */
     private Expression doOrderGroup(Expression e,
-                                    Vector vcolumn)
+                                    HsqlArrayList vcolumn)
                                     throws java.sql.SQLException {
 
         if (e.getType() == Expression.VALUE) {
@@ -1105,7 +1105,7 @@ class Parser {
             if (e.getDataType() == Types.INTEGER) {
                 int i = ((Integer) e.getValue()).intValue();
 
-                e = (Expression) vcolumn.elementAt(i - 1);
+                e = (Expression) vcolumn.get(i - 1);
             }
         } else if (e.getType() == Expression.COLUMN
                    && e.getTableName() == null) {
@@ -1114,7 +1114,7 @@ class Parser {
             String s = e.getColumnName();
 
             for (int i = 0, vSize = vcolumn.size(); i < vSize; i++) {
-                Expression ec = (Expression) vcolumn.elementAt(i);
+                Expression ec = (Expression) vcolumn.get(i);
 
                 if (s.equals(ec.getAlias())) {
                     e = ec;
@@ -1481,10 +1481,10 @@ class Parser {
                 } else {
                     tTokenizer.back();
 
-                    Vector v = new Vector();
+                    HsqlArrayList v = new HsqlArrayList();
 
                     while (true) {
-                        v.addElement(getValue(Types.VARCHAR));
+                        v.add(getValue(Types.VARCHAR));
                         read();
 
                         if (iToken != Expression.COMMA) {

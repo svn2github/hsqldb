@@ -67,10 +67,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Hashtable;
-import java.util.Vector;
 import java.util.Enumeration;
 
 /**
@@ -97,9 +97,9 @@ class DatabaseScript {
                             boolean bInsert, boolean bCached,
                             Session session) throws SQLException {
 
-        Vector tTable          = dDatabase.getTables();
-        Vector forwardFK       = new Vector();
-        Vector forwardFKSource = new Vector();
+        HsqlArrayList tTable          = dDatabase.getTables();
+        HsqlArrayList forwardFK       = new HsqlArrayList();
+        HsqlArrayList forwardFKSource = new HsqlArrayList();
 
         session.checkAdmin();
 
@@ -113,7 +113,7 @@ class DatabaseScript {
         StringBuffer a;
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             if (t.isTemp() || t.isView()) {
@@ -180,11 +180,11 @@ class DatabaseScript {
             int numTrigs = TriggerDef.numTrigs();
 
             for (int tv = 0; tv < numTrigs; tv++) {
-                Vector trigVec = t.vTrigs[tv];
-                int    trCount = trigVec.size();
+                HsqlArrayList trigVec = t.vTrigs[tv];
+                int           trCount = trigVec.size();
 
                 for (int k = 0; k < trCount; k++) {
-                    a = ((TriggerDef) trigVec.elementAt(k)).toBuf();
+                    a = ((TriggerDef) trigVec.get(k)).toBuf();
 
                     addRow(r, a.toString());
                 }
@@ -192,7 +192,7 @@ class DatabaseScript {
         }
 
         for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
-            Constraint c = (Constraint) forwardFK.elementAt(i);
+            Constraint c = (Constraint) forwardFK.get(i);
 
             a = new StringBuffer(128);
 
@@ -204,17 +204,17 @@ class DatabaseScript {
         }
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (bCached && t.isCached()) {
-                addRow(r, getIndexRootsDDL((Table) tTable.elementAt(i)));
+                addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
             }
         }
 
-        Vector uv = dDatabase.getUserManager().getUsers();
+        HsqlArrayList uv = dDatabase.getUserManager().getUsers();
 
         for (int i = 0, vSize = uv.size(); i < vSize; i++) {
-            User u = (User) uv.elementAt(i);
+            User u = (User) uv.get(i);
 
             // todo: this is not a nice implementation
             if (u == null) {
@@ -240,7 +240,7 @@ class DatabaseScript {
                 addRow(r, a.toString());
             }
 
-            Hashtable rights = u.getRights();
+            HsqlHashMap rights = u.getRights();
 
             if (rights == null) {
                 continue;
@@ -272,7 +272,7 @@ class DatabaseScript {
             addRow(r, "SET IGNORECASE TRUE");
         }
 
-        Hashtable   h = dDatabase.getAlias();
+        HsqlHashMap h = dDatabase.getAlias();
         Enumeration e = h.keys();
 
         while (e.hasMoreElements()) {
@@ -290,10 +290,10 @@ class DatabaseScript {
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (t.isView()) {
-                View v = (View) tTable.elementAt(i);
+                View v = (View) tTable.get(i);
 
                 if (bDrop) {
                     addRow(r, "DROP VIEW " + v.getName().name);
@@ -311,7 +311,7 @@ class DatabaseScript {
         }
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.elementAt(i);
+            Table t = (Table) tTable.get(i);
 
             if (bInsert == false || t.isTemp() || t.isView()
                     || (t.isCached &&!bCached)
@@ -370,7 +370,8 @@ class DatabaseScript {
     }
 
     static void getTableDDL(Database dDatabase, Table t, int i,
-                            Vector forwardFK, Vector forwardFKSource,
+                            HsqlArrayList forwardFK,
+                            HsqlArrayList forwardFKSource,
                             StringBuffer a) throws SQLException {
 
         a.append("CREATE ");
@@ -446,10 +447,10 @@ class DatabaseScript {
             getColumnList(t, pk, pk.length, a);
         }
 
-        Vector v = t.getConstraints();
+        HsqlArrayList v = t.getConstraints();
 
         for (int j = 0, vSize = v.size(); j < vSize; j++) {
-            Constraint c = (Constraint) v.elementAt(j);
+            Constraint c = (Constraint) v.get(j);
 
             if (c.getType() == Constraint.UNIQUE) {
                 a.append(",CONSTRAINT ");
@@ -470,8 +471,8 @@ class DatabaseScript {
                         forwardFKSource.setSize(i + 1);
                     }
 
-                    forwardFKSource.setElementAt(c, i);
-                    forwardFK.addElement(c);
+                    forwardFKSource.set(i, c);
+                    forwardFK.add(c);
                 } else {
                     a.append(',');
                     getFKStatement(c, a);

@@ -67,9 +67,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
-import java.util.Hashtable;
-import java.util.Vector;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
@@ -87,7 +87,7 @@ class Session {
 
     private Database       dDatabase;
     private User           uUser;
-    private Vector         tTransaction;
+    private HsqlArrayList  tTransaction;
     private boolean        bAutoCommit;
     private boolean        bNestedTransaction;
     private boolean        bNestedOldAutoCommit;
@@ -97,7 +97,7 @@ class Session {
     private int            iLastIdentity;
     private boolean        bClosed;
     private int            iId;
-    private Hashtable      hSavepoints;
+    private HsqlHashMap    hSavepoints;
     private boolean        script;
     private jdbcConnection intConnection;
 
@@ -135,10 +135,10 @@ class Session {
         iId          = id;
         dDatabase    = db;
         uUser        = user;
-        tTransaction = new Vector();
+        tTransaction = new HsqlArrayList();
         bAutoCommit  = autocommit;
         bReadOnly    = db.bReadOnly || readonly;
-        hSavepoints  = new Hashtable();
+        hSavepoints  = new HsqlHashMap();
     }
 
     /**
@@ -276,7 +276,7 @@ class Session {
         if (!bAutoCommit) {
             Transaction t = new Transaction(true, table, row);
 
-            tTransaction.addElement(t);
+            tTransaction.add(t);
         }
     }
 
@@ -292,7 +292,7 @@ class Session {
         if (!bAutoCommit) {
             Transaction t = new Transaction(false, table, row);
 
-            tTransaction.addElement(t);
+            tTransaction.add(t);
         }
     }
 
@@ -315,7 +315,7 @@ class Session {
      * @throws  SQLException
      */
     void commit() throws SQLException {
-        tTransaction.removeAllElements();
+        tTransaction.clear();
         hSavepoints.clear();
     }
 
@@ -327,12 +327,12 @@ class Session {
     void rollback() throws SQLException {
 
         for (int i = tTransaction.size() - 1; i >= 0; i--) {
-            Transaction t = (Transaction) tTransaction.elementAt(i);
+            Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();
         }
 
-        tTransaction.removeAllElements();
+        tTransaction.clear();
         hSavepoints.clear();
     }
 
@@ -361,10 +361,10 @@ class Session {
         Trace.check(idx != null, Trace.SAVEPOINT_NOT_FOUND, name);
 
         for (int i = tTransaction.size() - 1; i >= idx.intValue(); i--) {
-            Transaction t = (Transaction) tTransaction.elementAt(i);
+            Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();
-            tTransaction.removeElementAt(i);
+            tTransaction.remove(i);
         }
 
         hSavepoints.remove(name);
@@ -400,7 +400,7 @@ class Session {
         if (rollback) {
             for (int i = tTransaction.size() - 1; i >= iNestedOldTransIndex;
                     i--) {
-                Transaction t = (Transaction) tTransaction.elementAt(i);
+                Transaction t = (Transaction) tTransaction.get(i);
 
                 t.rollback();
             }

@@ -84,7 +84,7 @@ class TriggerDef extends Thread {
     Table                table;
     Trigger              trig;
     String               fire;
-    int                  vectorIndx;     // index into Vector[]
+    int                  vectorIndx;     // index into HsqlArrayList[]
 
     //protected boolean busy;               // firing trigger in progress
     protected HsqlDeque pendingQueue;    // row triggers pending
@@ -172,9 +172,9 @@ class TriggerDef extends Thread {
      *  SqlToIndex method declaration <P>
      *
      *  Given the SQL creating the trigger, say what the index to the
-     *  Vector[] is
+     *  HsqlArrayList[] is
      *
-     * @return  index to the Vector[]
+     * @return  index to the HsqlArrayList[]
      */
     public int SqlToIndex() {
 

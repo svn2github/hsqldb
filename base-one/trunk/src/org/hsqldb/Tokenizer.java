@@ -67,10 +67,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlHashMap;
 import java.sql.Types;
 import java.sql.SQLException;
 import java.math.BigDecimal;
-import java.util.Hashtable;
 
 // fredt@users 20020218 - patch 455785 by hjbusch@users - large DECIMAL inserts
 // also Long.MIM_VALUE (bug 473388) inserts - applied to different parts
@@ -101,25 +101,25 @@ class Tokenizer {
                              DECIMAL   = 8;
 
     // used only internally
-    private static final int QUOTED_IDENTIFIER = 9,
-                             REMARK_LINE       = 10,
-                             REMARK            = 11;
-    private String           sCommand;
-    private int              iLength;
-    private Object           oValue;
-    private int              iIndex;
-    private int              tokenIndex;
-    private int              nextTokenIndex;
-    private int              beginIndex;
-    private int              iType;
-    private String           sToken;
-    private String           sLongNameFirst;
-    private String           sLongNameLast;
-    private boolean          bWait;
-    private static Hashtable hKeyword;
+    private static final int   QUOTED_IDENTIFIER = 9,
+                               REMARK_LINE       = 10,
+                               REMARK            = 11;
+    private String             sCommand;
+    private int                iLength;
+    private Object             oValue;
+    private int                iIndex;
+    private int                tokenIndex;
+    private int                nextTokenIndex;
+    private int                beginIndex;
+    private int                iType;
+    private String             sToken;
+    private String             sLongNameFirst;
+    private String             sLongNameLast;
+    private boolean            bWait;
+    private static HsqlHashMap hKeyword;
 
     static {
-        hKeyword = new Hashtable(67);
+        hKeyword = new HsqlHashMap(67);
 
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",

@@ -67,6 +67,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -141,8 +142,8 @@ class StringConverter {
      */
     static String byteToHex(byte b[]) {
 
-        int          len = b.length;
-        StringBuffer s   = new StringBuffer(len * 2);
+        int              len = b.length;
+        HsqlStringBuffer s   = new HsqlStringBuffer(len * 2);
 
         for (int i = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
@@ -201,7 +202,7 @@ class StringConverter {
     }
 
 // fredt@users 20011120 - patch 450455 by kibu@users - modified
-// method return type changed to StringBuffer with spare
+// method return type changed to HsqlStringBuffer with spare
 // space for end-of-line characters -- to reduce String concatenation
 
     /**
@@ -220,16 +221,16 @@ class StringConverter {
      *
      * @param s Java Unicode string
      *
-     * @return encoded string in the StringBuffer
+     * @return encoded string in the HsqlStringBuffer
      */
-    public static StringBuffer unicodeToAscii(String s) {
+    public static HsqlStringBuffer unicodeToAscii(String s) {
 
         if ((s == null) || (s.length() == 0)) {
-            return new StringBuffer();
+            return new HsqlStringBuffer();
         }
 
-        int          len = s.length();
-        StringBuffer b   = new StringBuffer(len + 16);
+        int              len = s.length();
+        HsqlStringBuffer b   = new HsqlStringBuffer(len + 16);
 
         for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
@@ -364,8 +365,8 @@ class StringConverter {
             return "NULL";
         }
 
-        int          l = s.length();
-        StringBuffer b = new StringBuffer(l + 16).append(quotechar);
+        int              l = s.length();
+        HsqlStringBuffer b = new HsqlStringBuffer(l + 16).append(quotechar);
 
         for (int i = 0; i < l; i++) {
             char c = s.charAt(i);

@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 
 /**
@@ -49,8 +50,8 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
 
         if ((s.indexOf('\"') != -1)
                 || ((sep.length() > 0) && (s.indexOf(sep) != -1))) {
-            int          len    = s.length();
-            StringBuffer quoted = new StringBuffer(len + 3);    //-- at least 3.
+            int              len    = s.length();
+            HsqlStringBuffer quoted = new HsqlStringBuffer(len + 3);    //-- at least 3.
 
             quoted.append('\"');
 
@@ -88,8 +89,8 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
 
     private String addQuotes(byte b[], String sep) {
 
-        StringBuffer quoted = new StringBuffer(b.length + 2);
-        char         ch;
+        HsqlStringBuffer quoted = new HsqlStringBuffer(b.length + 2);
+        char             ch;
 
         //-- Always quote (just in case its needed for unprintable chars).
         quoted.append('\"');
