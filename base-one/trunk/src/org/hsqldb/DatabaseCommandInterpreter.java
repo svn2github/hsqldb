@@ -276,10 +276,12 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
             case Token.CONNECT :
                 processConnect();
                 database.setMetaDirty(null);
+                session.setScripting(true);
                 break;
 
             case Token.DISCONNECT :
                 processDisconnect();
+                session.setScripting(true);
                 break;
 
             case Token.SCRIPT :
