@@ -49,7 +49,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.54 2004/06/04 01:59:32 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.55 2004/06/05 02:41:39 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +85,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.54 $
+ * @version $Revision: 1.55 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -103,17 +103,24 @@ public class SqlFile {
         "-----------------------------------------------------------------";
     final private static String SPACES =
         "                                                                 ";
-    final private static String BANNER =
-        "SqlFile processor.  Enter \"\\q\" to quit,\n"
-        + "    \"\\?\" to list Special Commands, "
-        + "\":?\" to list Buffer/Editing commands\n\n"
+    private static String revnum = null;
+    static {
+        revnum = "$Revision: 1.55 $".substring("$Revision: ".length(),
+                "$Revision: 1.55 $".length() - 2);
+    }
+    private static String BANNER =
+        "SqlFile processor v. " + revnum + ".\n"
+        + "Distribution is permitted under the terms of the HSQLDB license.\n"
+        + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
+        + "\"\\q\" to quit, \"\\?\" lists Special Commands, "
+        + "\":?\" lists Buffer/Editing commands.\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
-        + "An empty line within an SQL Statement moves it into the buffer.\n"
+        + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
         + "All other lines comprise SQL Statements.\n"
-        + "SQL Statement lines ending with ';' cause the current Statement to be executed.\n"
-        + "SQL Statements consisting of only /* SQL comment */ are not executed, therefore\n"
-        + "    you can comment scripts like \"/* This is a comment */;\"\n";
+        + "  SQL Statements are terminated by either a blank line (which moves the\n"
+        + "  statement into the buffer without executing) or a line ending with ';'\n"
+        + "  (which executes the statement).\n";
     final private static String BUFFER_HELP_TEXT =
         "BUFFER Commands (only available for interactive use).\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
