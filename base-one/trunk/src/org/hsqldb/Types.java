@@ -885,13 +885,11 @@ class Types {
             return isBinaryType(t2);
         }
 
-// if (isNumberType(t1)) is a tautology at this point
         switch (t1) {
 
             case TINYINT : {
                 switch (t2) {
 
-//                  case TINYINT : // covered by t1 == t2
                     case SMALLINT :
                     case INTEGER :
                         return true;
@@ -903,7 +901,6 @@ class Types {
             case SMALLINT : {
                 switch (t2) {
 
-//                  case SMALLINT : // covered by t1 == t2
                     case INTEGER :
                         return true;
 

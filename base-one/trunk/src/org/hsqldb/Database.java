@@ -230,21 +230,23 @@ class Database {
      * @throws HsqlException if a database access error occurs
      */
     void reopen() throws HsqlException {
+
         setState(DATABASE_OPENING);
+
         try {
             User sysUser;
 
             compiledStatementManager.reset();
 
-            tTable = new HsqlArrayList();
-            userManager = new UserManager();
-            hAlias = Library.getAliasMap();
-            nameManager = new HsqlNameManager();
-            triggerNameList = new DatabaseObjectNames();
-            indexNameList = new DatabaseObjectNames();
+            tTable                = new HsqlArrayList();
+            userManager           = new UserManager();
+            hAlias                = Library.getAliasMap();
+            nameManager           = new HsqlNameManager();
+            triggerNameList       = new DatabaseObjectNames();
+            indexNameList         = new DatabaseObjectNames();
             bReferentialIntegrity = true;
-            sysUser = userManager.createSysUser(this);
-            sessionManager = new SessionManager(this, sysUser);
+            sysUser               = userManager.createSysUser(this);
+            sessionManager        = new SessionManager(this, sysUser);
             dInfo = DatabaseInformation.newDatabaseInformation(this);
 
             if (sType != DatabaseManager.S_MEM) {
@@ -260,12 +262,15 @@ class Database {
         } catch (HsqlException e) {
             logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
             setState(DATABASE_SHUTDOWN);
+
             throw e;
-        } catch (Throwable e){
+        } catch (Throwable e) {
             logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
             setState(DATABASE_SHUTDOWN);
+
             throw Trace.error(Trace.GENERAL_ERROR, e.toString());
         }
+
         setState(DATABASE_ONLINE);
     }
 
@@ -725,7 +730,6 @@ class Database {
         logger.closeLog(closemode);
 
         try {
-
             if (closemode == CLOSEMODE_COMPACT) {
                 reopen();
                 setState(DATABASE_CLOSING);

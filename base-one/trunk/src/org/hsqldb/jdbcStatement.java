@@ -223,10 +223,10 @@ public class jdbcStatement implements java.sql.Statement {
 
         // boucherb@users
         // NOTE:
-        // This method is synchronized since resultIn is an instance attribute 
+        // This method is synchronized since resultIn is an instance attribute
         // and thus it is theoretically possible that a race condition occurs
         // in which a different thread executes fetchResult(sql), replacing
-        // resultIn before it gets assigned propery to the new result set.        
+        // resultIn before it gets assigned propery to the new result set.
         checkClosed();
         connection.clearWarningsNoCheck();
         fetchResult(sql);
@@ -597,7 +597,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB never produces warnings and
+     * Up to and including 1.7.2, HSQLDB never produces Statement warnings and
      * always returns null.<p>
      *
      * </span>
@@ -629,7 +629,8 @@ public class jdbcStatement implements java.sql.Statement {
      * <B>HSQLDB-Specific Information:</B> <p>
      *
      * Up to and including HSQLDB 1.7.2, <code>SQLWarning</code> objects are
-     * never produced, and calls to this method are simply ignored. <p>
+     * never produced for Statement Objects, and calls to this method are
+     * simply ignored. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -720,7 +721,7 @@ public class jdbcStatement implements java.sql.Statement {
         // in which a different thread executes fetchResult(sql), replacing
         // resultIn after this methods call to fetchResult but before it
         // calculates and returns the value of
-        // resultIn.iMode == ResultConstants.DATA.        
+        // resultIn.iMode == ResultConstants.DATA.
         checkClosed();
         connection.clearWarningsNoCheck();
         fetchResult(sql);
@@ -754,10 +755,10 @@ public class jdbcStatement implements java.sql.Statement {
 
         // boucherb@users
         // NOTE:
-        // synchronized since another thread can theoretically replace 
+        // synchronized since another thread can theoretically replace
         // resultIn between the test
         // resultIn.iMode == ResultConstants.DATA and the construction
-        // of the jdbcResultSet.        
+        // of the jdbcResultSet.
         checkClosed();
 
         return resultIn == null || resultIn.iMode != ResultConstants.DATA
@@ -1240,8 +1241,8 @@ public class jdbcStatement implements java.sql.Statement {
     public synchronized Connection getConnection() throws SQLException {
 
         // NOTE:  synchronized, since otherwise, in theory, another thread
-        //        could call close() concurrently, wherin a race condition 
-        //        causes connection to be set null between the call to 
+        //        could call close() concurrently, wherin a race condition
+        //        causes connection to be set null between the call to
         //        checkClosed and actually returning connection.
         checkClosed();
 
@@ -1699,7 +1700,7 @@ public class jdbcStatement implements java.sql.Statement {
         // the connection because we use sqlExecDirect, not sqlPrepare
         // and then sqlExecute.
         // Hence, isDisconnect is only used here to avoid removal from the
-        // parent connection's open statement HashSet (it will be nulled 
+        // parent connection's open statement HashSet (it will be nulled
         // soon after this call anyway if the parent jdbcConnection is
         // disconnecting).
         // jdbcPreparedStatement, however, overrides this
@@ -1721,7 +1722,7 @@ public class jdbcStatement implements java.sql.Statement {
 
         // This is OK:
         // Despite setting this null, getConnection() will never return null
-        // since it is now synchronized and calls checkClosed before 
+        // since it is now synchronized and calls checkClosed before
         // returning connection
         connection = null;
         resultIn   = null;

@@ -86,19 +86,16 @@
 </table>
 <p>&nbsp;</p>
 <h4>Connection properties</h4>
-<p> Each new  JDBC Connection to a database can specify connection properties. The properties <code>user</code> and <code>password</code> are always required. In 1.7.2 the following optional property can also be used.</p>
+<p> Each new  JDBC Connection to a database can specify connection properties. The properties <code>user</code> and <code>password</code> are always required. In 1.7.2 the following optional properties can also be used.</p>
 <p>Connection properties are specified either by establishing the connection via the:</p>
 <pre>DriverManager.<b>getConnection</b> (String url, Properties info); </pre>
 <p>method call. Or the property can be appended to the full Connection URL. </p>
 <table border cellspacing=1 cellpadding=9 width=750>
-   
-   
-   
   <tr> 
       
     <td width="33%" valign="TOP"> 
          
-      <pre>jdbc.get_column_name </pre>
+      <pre>get_column_name </pre>
     </td>
     <td width="33%" valign="TOP"> 
          
@@ -110,7 +107,6 @@
       
     </td>
   </tr>
-   
   <tr> 
       
     <td valign="TOP" colspan=3> 
@@ -119,7 +115,38 @@
         c)</code> returns the underlying column name</p>
       <p>When false, the above method returns the same value as <code>ResultSet.getColumnLabel(int 
         column)</code> Example below:
-      <p><code>jdbc:hsqldb:hsql://localhost/enrollments;jdbc.get_column_name=false</code>
+      <p><code>jdbc:hsqldb:hsql://localhost/enrollments;get_column_name=false</code>
+    </td>
+  </tr>
+  
+  
+   
+   
+   
+  <tr> 
+      
+    <td width="33%" valign="TOP"> 
+         
+      <pre>ifexists</pre>
+    </td>
+    <td width="33%" valign="TOP"> 
+         
+      <pre>false</pre>
+    </td>
+    <td width="33%" valign="TOP"> 
+         
+      <p>connect only if database already exists
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td valign="TOP" colspan=3> 
+         
+      <p>Has an effect only with <code>mem:</code> and <code>file:</code> database. When true, will not create a new database if one does not already exist for the URL</p>
+      <p>When false (the default),  a new <code>mem:</code> or <code>file:</code> database will be created if it does not exist. 
+      <p>Setting the property to true is useful when troubleshooting as no database is created if the URL is malformed. Example below:
+      <p><code>jdbc:hsqldb:file:enrollments;ifexists=true</code>
     </td>
   </tr>
 </table>

@@ -1287,16 +1287,8 @@ class Parser {
 
                 break;
             }
-            case Expression.COALESCE :
-            case Expression.IFNULL :
             case Expression.CONCAT : {
-                int type;
-
-                if (iToken == Expression.COALESCE) {
-                    type = Expression.IFNULL;
-                } else {
-                    type = iToken;
-                }
+                int type = iToken;
 
                 read();
                 readThis(Expression.OPEN);
@@ -1385,6 +1377,28 @@ class Parser {
                                    new Expression(Types.NULL, null), r);
 
                 r = new Expression(Expression.EQUAL, r, readOr());
+                r = new Expression(Expression.CASEWHEN, r, thenelse);
+
+                readThis(Expression.CLOSE);
+
+                break;
+            }
+            case Expression.COALESCE :
+            case Expression.IFNULL : {
+
+                // turn into a CASEWHEN
+                read();
+                readThis(Expression.OPEN);
+
+                r = readOr();
+
+                readThis(Expression.COMMA);
+
+                Expression thenelse = new Expression(Expression.CASEWHEN,
+                                                     readOr(), r);
+
+                r = new Expression(Expression.EQUAL, r,
+                                   new Expression(Types.NULL, null));
                 r = new Expression(Expression.CASEWHEN, r, thenelse);
 
                 readThis(Expression.CLOSE);

@@ -311,9 +311,7 @@ import org.hsqldb.lib.HashSet;
  *
  * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
  * <b>&lt;url&gt;</b> has different semantics than the
- * <b>'jdbc:hsqldb:file:&lt;path&gt;'</b> form. The semantics are essentially
- * those offered previously by setting the system property
- * <b>'files_in_jar'</b> true (now deprecated), which are in turn similar to
+ * <b>'jdbc:hsqldb:file:&lt;path&gt;'</b> form. The semantics are similar to
  * those of a <b>'files_read_only'</b> database, but with some additional
  * points to consider. <p>
  *
@@ -959,10 +957,7 @@ public class jdbcConnection implements Connection {
      * successfully calling this method now also removes all
      * Savepoints from this connection's {@link Session Session}. <p>
      *
-     * Up to 1.6.1, HSQLDB did not support Savepoints in
-     * transactions, named or anonymous. <p>
-     *
-     * As of 1.7.0, HSQLDB supports an arbitrary number of named
+     * HSQLDB supports an arbitrary number of named
      * Savepoints per transaction and allows explicitly rolling back
      * to any one of them. At this time, HSQLDB does not support
      * anonymous Savepoints. However, this feature <i>is</i> slated
@@ -1085,7 +1080,7 @@ public class jdbcConnection implements Connection {
      */
     public synchronized void close() throws SQLException {
 
-        // Changed to synchronized above because 
+        // Changed to synchronized above because
         // we would not want a sessionProxy.close()
         // operation to occur concurrently with a
         // statementXXX.executeXXX operation.
@@ -1416,9 +1411,6 @@ public class jdbcConnection implements Connection {
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * Up to and including 1.7.1, HSQLDB never produces warnings,
-     * always returns null.<p>
      *
      * Starting with 1.7.2, HSQLDB produces warnings whenever a createStatement(),
      * prepareStatement() or prepareCall() invocation requests an unsupported

@@ -2087,15 +2087,17 @@ class Expression {
                 return false;
             }
 
-            if (eArg.tFilter.isCurrentOuter) {
-                if (eArg.isInJoin || eArg2.isInJoin) {
-                    return true;
-                }
-            } else {
+            if (eArg.tFilter != null) {
+                if (eArg.tFilter.isCurrentOuter) {
+                    if (eArg.isInJoin || eArg2.isInJoin) {
+                        return true;
+                    }
+                } else {
 
-                // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
-                eArg.tFilter.nonJoinIsNull =
-                    !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
+                    // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
+                    eArg.tFilter.nonJoinIsNull =
+                        !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
+                }
             }
 
             return testNull(o, o2, iType);
