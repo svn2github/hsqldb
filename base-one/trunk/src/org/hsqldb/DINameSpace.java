@@ -33,12 +33,13 @@ package org.hsqldb;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import org.hsqldb.lib.WrapperIterator;
-import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlArrayList;
+
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.WrapperIterator;
 
 /**
  * Provides catalog and schema name related definitions and functionality,

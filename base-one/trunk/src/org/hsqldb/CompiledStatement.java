@@ -41,22 +41,22 @@ import org.hsqldb.store.ValuePool;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class CompiledStatement {
+public final class CompiledStatement {
 
-    static final int UNKNOWN = 0;
+    public static final int UNKNOWN = 0;
 
     // enumeration of allowable CompiledStatement types
-    static final int INSERT_VALUES = 1;
-    static final int INSERT_SELECT = 2;
-    static final int UPDATE        = 3;
-    static final int DELETE        = 4;
-    static final int SELECT        = 5;
-    static final int CALL          = 6;
+    static final int        INSERT_VALUES = 1;
+    static final int        INSERT_SELECT = 2;
+    static final int        UPDATE        = 3;
+    static final int        DELETE        = 4;
+    static final int        SELECT        = 5;
+    public static final int CALL          = 6;
 
     // enumeration of catagories
-    static final int DML = 7;
-    static final int DQL = 8;
-    static final int DDL = 9;
+    public static final int DML = 7;
+    public static final int DQL = 8;
+    static final int        DDL = 9;
 
     /** target table for INSERT_XXX, UPDATE and DELETE */
     Table targetTable;

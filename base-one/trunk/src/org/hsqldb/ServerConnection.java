@@ -70,10 +70,13 @@ package org.hsqldb;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
+
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.rowio.RowInputBinary;
+import org.hsqldb.rowio.RowOutputBinary;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
@@ -108,8 +111,8 @@ class ServerConnection implements Runnable {
     private int             mThread;
     static final int        BUFFER_SIZE = 0x1000;
     final byte[]            mainBuffer  = new byte[BUFFER_SIZE];
-    BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
-    BinaryServerRowInput    rowIn       = new BinaryServerRowInput(rowOut);
+    RowOutputBinary         rowOut      = new RowOutputBinary(BUFFER_SIZE);
+    RowInputBinary          rowIn       = new RowInputBinary(rowOut);
     Thread                  runnerThread;
 
     /**

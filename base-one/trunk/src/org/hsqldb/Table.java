@@ -67,15 +67,13 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.HsqlLinkedList;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users - made optional
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
@@ -105,17 +103,17 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 
 /** @todo fredt - move error and assert string literals to Trace */
-class Table {
+public class Table extends BaseTable {
 
     // types of table
-    static final int SYSTEM_TABLE    = 0;
-    static final int SYSTEM_SUBQUERY = 1;
-    static final int TEMP_TABLE      = 2;
-    static final int MEMORY_TABLE    = 3;
-    static final int CACHED_TABLE    = 4;
-    static final int TEMP_TEXT_TABLE = 5;
-    static final int TEXT_TABLE      = 6;
-    static final int VIEW            = 7;
+    public static final int SYSTEM_TABLE    = 0;
+    public static final int SYSTEM_SUBQUERY = 1;
+    public static final int TEMP_TABLE      = 2;
+    public static final int MEMORY_TABLE    = 3;
+    public static final int CACHED_TABLE    = 4;
+    public static final int TEMP_TEXT_TABLE = 5;
+    public static final int TEXT_TABLE      = 6;
+    public static final int VIEW            = 7;
 
 // boucherb@users - added in antcipation of special (not created via SQL) system
 // view objects to implement a SQL9n or 200n INFORMATION_SCHEMA
@@ -126,7 +124,7 @@ class Table {
 
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
-    HashMappedList        vColumn;                    // columns in table
+    public HashMappedList vColumn;                    // columns in table
     private HsqlArrayList vIndex;                     // vIndex(0) is the primary key index
     int[]                 iPrimaryKey;                // column numbers for primary key
     int                   iIndexCount;                // size of vIndex
@@ -184,9 +182,8 @@ class Table {
         database             = db;
         sqlEnforceSize       = db.sqlEnforceSize;
         sqlEnforceStrictSize = db.sqlEnforceStrictSize;
-        identitySequence = new NumberSequence(null, 0, 1,
-                                              Types.BIGINT);
-        rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
+        identitySequence     = new NumberSequence(null, 0, 1, Types.BIGINT);
+        rowIdSequence        = new NumberSequence(null, 0, 1, Types.BIGINT);
 
         switch (type) {
 
@@ -279,12 +276,16 @@ class Table {
         return (tableName.name.equals(other));
     }
 
-    final boolean isText() {
+    public final boolean isText() {
         return isText;
     }
 
-    final boolean isTemp() {
+    public final boolean isTemp() {
         return isTemp;
+    }
+
+    public final boolean isReadOnly() {
+        return isReadOnly;
     }
 
     final boolean isSystem() {
@@ -299,7 +300,11 @@ class Table {
         return indexType;
     }
 
-    final boolean isDataReadOnly() {
+    public final int getTableType() {
+        return tableType;
+    }
+
+    public final boolean isDataReadOnly() {
         return isReadOnly;
     }
 
@@ -541,7 +546,7 @@ class Table {
      *
      * @return
      */
-    HsqlName getName() {
+    public HsqlName getName() {
         return tableName;
     }
 
@@ -714,7 +719,7 @@ class Table {
      *
      * @return
      */
-    int getColumnCount() {
+    public int getColumnCount() {
         return iVisibleColumns;
     }
 
@@ -792,6 +797,10 @@ class Table {
     int[] getPrimaryKey() {
         return (iPrimaryKey[0] == iVisibleColumns) ? null
                                                    : iPrimaryKey;
+    }
+
+    public boolean hasPrimaryKey() {
+        return !(iPrimaryKey[0] == iVisibleColumns);
     }
 
     int[] getBestRowIdentifiers() {
@@ -1702,11 +1711,12 @@ class Table {
 
     /**
      *  Low level method for row insert.
+     *  Is used when reading db scripts.
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    void insertNoCheck(Object row[], Session c,
-                       boolean log) throws HsqlException {
+    public void insertNoCheck(Object row[], Session c,
+                              boolean log) throws HsqlException {
 
         // this is necessary when rebuilding from the *.script but not
         // for transaction rollback
@@ -2699,7 +2709,7 @@ class Table {
      *
      * @return
      */
-    int[] getColumnTypes() {
+    public int[] getColumnTypes() {
         return colTypes;
     }
 
@@ -2796,6 +2806,7 @@ class Table {
      * Currently only for temp system tables.
      */
     void clearAllRows() {
+
         for (int i = 0; i < iIndexCount; i++) {
             getIndex(i).setRoot(null);
         }

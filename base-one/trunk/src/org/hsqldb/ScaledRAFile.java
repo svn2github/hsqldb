@@ -31,10 +31,10 @@
 
 package org.hsqldb;
 
-import java.lang.reflect.Constructor;
-import java.io.RandomAccessFile;
-import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.reflect.Constructor;
 
 // fredt@users 20030111 - patch 1.7.2 by bohgammer@users - pad file before seek() beyond end
 

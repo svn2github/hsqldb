@@ -33,6 +33,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20021205 - path 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
@@ -64,8 +67,7 @@ class CachedDataRow extends CachedRow {
      *  the Nodes is made separetly.
      */
     CachedDataRow(Table t,
-                  DatabaseRowInputInterface in)
-                  throws IOException, HsqlException {
+                  RowInputInterface in) throws IOException, HsqlException {
 
         tTable      = t;
         iPos        = in.getPos();
@@ -115,8 +117,7 @@ class CachedDataRow extends CachedRow {
      *  to true when changes are made to the Nodes. (Nodes are in-memory).
      *  The only time this is used is when a new Row is added to the Caches.
      */
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, HsqlException {
+    void write(RowOutputInterface out) throws IOException, HsqlException {
 
         out.writeSize(storageSize);
         out.writeData(oData, tTable);

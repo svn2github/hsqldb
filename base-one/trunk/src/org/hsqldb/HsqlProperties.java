@@ -34,14 +34,15 @@ package org.hsqldb;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
-import org.hsqldb.lib.FileUtil;
+
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.FileUtil;
 
 /**
  * Wrapper for java.util.Properties to limit values to Specific types and

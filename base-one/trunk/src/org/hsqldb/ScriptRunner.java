@@ -67,12 +67,14 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.IntKeyHashMap;
 import java.io.IOException;
-import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.StopWatch;
 
-class ScriptRunner {
+import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.StopWatch;
+import org.hsqldb.scriptio.ScriptReaderBase;
+
+public class ScriptRunner {
 
     /**
      *  This is used to read the *.log file and manage any necessary
@@ -80,11 +82,11 @@ class ScriptRunner {
      *
      * @throws  HsqlException
      */
-    static void runScript(Database database, String scriptFilename,
-                          int logType) throws HsqlException {
+    public static void runScript(Database database, String scriptFilename,
+                                 int logType) throws HsqlException {
 
         try {
-            if (database.filesInJar) {
+            if (database.isFilesInJar()) {
                 if (ScriptRunner.class.getClassLoader().getResource(
                         scriptFilename) == null) {
                     return;
@@ -95,16 +97,15 @@ class ScriptRunner {
         } catch (IOException e) {}
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
-        Session       sysSession = database.sessionManager.getSysSession();
+        Session sysSession = database.getSessionManager().getSysSession();
         Session       current    = sysSession;
 
         database.setReferentialIntegrity(false);
 
         try {
             StopWatch sw = new StopWatch();
-            DatabaseScriptReader scr =
-                DatabaseScriptReader.newDatabaseScriptReader(database,
-                    scriptFilename, logType);
+            ScriptReaderBase scr = ScriptReaderBase.newScriptReader(database,
+                scriptFilename, logType);
 
             while (true) {
                 String s = scr.readLoggedStatement();
@@ -120,7 +121,8 @@ class ScriptRunner {
                     current = (Session) sessionMap.get(id);
 
                     if (current == null) {
-                        current = database.sessionManager.newSession(database,
+                        current =
+                            database.getSessionManager().newSession(database,
                                 sysSession.getUser(), false);
 
                         sessionMap.put(id, current);
@@ -143,17 +145,13 @@ class ScriptRunner {
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());
-                        Trace.printSystemOut(result.mainString);
+                        Trace.printSystemOut(result.getMainString());
                     }
                 }
             }
 
             scr.close();
-            database.sessionManager.closeAllSessions();
-
-            if (Trace.TRACE) {
-                Trace.trace("restore time: " + sw.elapsedTime());
-            }
+            database.getSessionManager().closeAllSessions();
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.Generic_reading_file_error, new Object[] {

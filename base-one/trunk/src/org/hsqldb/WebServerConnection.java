@@ -70,16 +70,19 @@ package org.hsqldb;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.Socket;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import org.hsqldb.resources.BundleHandler;
-import org.hsqldb.lib.InOutUtil;
+import java.net.Socket;
+
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.InOutUtil;
+import org.hsqldb.resources.BundleHandler;
+import org.hsqldb.rowio.RowInputBinary;
+import org.hsqldb.rowio.RowOutputBinary;
 
 // fredt@users 20021002 - patch 1.7.1 - changed notification method
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
@@ -117,8 +120,8 @@ class WebServerConnection implements Runnable {
     private static final String HEADER_NOT_FOUND = "HTTP/1.0 404 Not Found";
     private static final String HEADER_FORBIDDEN = "HTTP/1.0 403 Forbidden";
     static final int            BUFFER_SIZE      = 256;
-    BinaryServerRowOutput rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
-    BinaryServerRowInput        rowIn = new BinaryServerRowInput(rowOut);
+    RowOutputBinary             rowOut = new RowOutputBinary(BUFFER_SIZE);
+    RowInputBinary              rowIn            = new RowInputBinary(rowOut);
 
     //
     static final byte[] BYTES_GET        = "GET".getBytes();

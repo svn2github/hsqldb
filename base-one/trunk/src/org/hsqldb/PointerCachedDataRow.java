@@ -33,6 +33,8 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowInputInterface;
+
 // fredt@users 20021205 - path 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
@@ -53,7 +55,7 @@ class PointerCachedDataRow extends CachedDataRow {
      *  the first time.
      */
     PointerCachedDataRow(Table t,
-                         DatabaseRowInputInterface in)
+                         RowInputInterface in)
                          throws IOException, HsqlException {
 
         super(t, in);

@@ -31,14 +31,10 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
+import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.security.PrivilegedAction;
-import java.security.AccessController;
-import java.lang.reflect.Method;
 
 /**
  * NIO version or DatabaseFile.This class is used only for storing a CACHED

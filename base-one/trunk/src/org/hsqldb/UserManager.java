@@ -67,11 +67,11 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;

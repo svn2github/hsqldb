@@ -67,8 +67,8 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -78,14 +78,15 @@ import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HashSet;
+
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
-import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.lib.WrapperIterator;
+import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0
@@ -588,7 +589,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Of Server"
      */
     public String getProductVersion() {
-        return jdbcDriver.VERSION;
+        return org.hsqldb.jdbc.jdbcUtil.VERSION;
     }
 
     /**

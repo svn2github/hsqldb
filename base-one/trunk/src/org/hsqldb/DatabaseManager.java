@@ -31,16 +31,15 @@
 
 package org.hsqldb;
 
+import java.util.Vector;
+
 import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.store.ValuePool;
-import java.util.Vector;
-import java.io.File;
 
 /**
  * Multifunction class with all static methods.<p>
@@ -62,7 +61,7 @@ import java.io.File;
  * @version 1.7.2
  * @since 1.7.2
  */
-class DatabaseManager {
+public class DatabaseManager {
 
     // Database and Server registry
 
@@ -135,9 +134,10 @@ class DatabaseManager {
      */
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
-    static Session newSession(String type, String path, String user,
-                              String password, boolean ifexists,
-                              HsqlProperties props) throws HsqlException {
+    public static Session newSession(String type, String path, String user,
+                                     String password, boolean ifexists,
+                                     HsqlProperties props)
+                                     throws HsqlException {
 
         Database db = getDatabase(type, path, ifexists, props);
 
@@ -628,16 +628,16 @@ class DatabaseManager {
         return props;
     }
 
-    static final String S_DOT        = ".";
-    static final String S_MEM        = "mem:";
-    static final String S_FILE       = "file:";
-    static final String S_RES        = "res:";
-    static final String S_ALIAS      = "alias:";
-    static final String S_HSQL       = "hsql://";
-    static final String S_HSQLS      = "hsqls://";
-    static final String S_HTTP       = "http://";
-    static final String S_HTTPS      = "https://";
-    static final String S_URL_PREFIX = "jdbc:hsqldb:";
+    static final String        S_DOT        = ".";
+    public static final String S_MEM        = "mem:";
+    public static final String S_FILE       = "file:";
+    public static final String S_RES        = "res:";
+    public static final String S_ALIAS      = "alias:";
+    public static final String S_HSQL       = "hsql://";
+    public static final String S_HSQLS      = "hsqls://";
+    public static final String S_HTTP       = "http://";
+    public static final String S_HTTPS      = "https://";
+    public static final String S_URL_PREFIX = "jdbc:hsqldb:";
 
 /*
     public static void main(String[] argv) {

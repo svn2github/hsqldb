@@ -67,8 +67,8 @@
 
 package org.hsqldb;
 
-import java.sql.DriverManager;
 import java.io.PrintWriter;
+import java.sql.DriverManager;
 
 /**
  * handles creation and reporting of error messages and throwing HsqlException
@@ -645,11 +645,11 @@ public class Trace extends PrintWriter {
      *
      * @return an <code>HsqlException</code>
      */
-    static HsqlException error(int code, final Object[] add) {
+    public static HsqlException error(int code, final Object[] add) {
         return error(code, 0, add);
     }
 
-    static HsqlException error(int code, int code2, Object add) {
+    public static HsqlException error(int code, int code2, Object add) {
         return error(code, getMessage(code2) + add);
     }
 
@@ -662,7 +662,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static HsqlException error(int code, Object add) {
+    public static HsqlException error(int code, Object add) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         code = Math.abs(code);
@@ -826,8 +826,8 @@ public class Trace extends PrintWriter {
      *
      * @throws HsqlException
      */
-    static void check(boolean condition, int code,
-                      Object add) throws HsqlException {
+    public static void check(boolean condition, int code,
+                             Object add) throws HsqlException {
 
         if (!condition) {
             throw error(code, add);
@@ -922,7 +922,7 @@ public class Trace extends PrintWriter {
      *
      * @param message message to print
      */
-    static void printSystemOut(String message) {
+    public static void printSystemOut(String message) {
         System.out.println(message);
     }
 
@@ -932,7 +932,7 @@ public class Trace extends PrintWriter {
      *
      * @param message message to print
      */
-    static void printSystemOut(String message1, long message2) {
+    public static void printSystemOut(String message1, long message2) {
         System.out.print(message1);
         System.out.println(message2);
     }
@@ -943,7 +943,7 @@ public class Trace extends PrintWriter {
      *
      * @param message message to print
      */
-    static void printSystemOut(String message1, String message2) {
+    public static void printSystemOut(String message1, String message2) {
         System.out.print(message1);
         System.out.println(message2);
     }

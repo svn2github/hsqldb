@@ -67,11 +67,14 @@
 
 package org.hsqldb;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.DataInputStream;
 import java.util.NoSuchElementException;
+
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputInterface;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
@@ -84,10 +87,10 @@ import org.hsqldb.lib.Iterator;
  *
  * @version    1.7.2
  */
-class Result {
+public class Result {
 
     // record list
-    Record         rRoot;
+    public Record  rRoot;
     private Record rTail;
     private int    iSize;
 
@@ -95,7 +98,7 @@ class Result {
     private int significantColumns;
 
     // type of result
-    int iMode;
+    public int iMode;
 
 //    boolean isMulti;
     // database ID
@@ -115,35 +118,35 @@ class Result {
     int statementID;
 
     // max rows (out) or update count (in)
-    int            iUpdateCount;
-    ResultMetaData metaData;
+    int                   iUpdateCount;
+    public ResultMetaData metaData;
 
-    static class ResultMetaData {
+    public static class ResultMetaData {
 
         // always resolved
-        String  sLabel[];
-        String  sTable[];
-        String  sName[];
-        boolean isLabelQuoted[];
-        int     colType[];
-        int     colSize[];
-        int     colScale[];
+        public String  sLabel[];
+        public String  sTable[];
+        public String  sName[];
+        public boolean isLabelQuoted[];
+        public int     colType[];
+        public int     colSize[];
+        public int     colScale[];
 
         // extra attrs, sometimes resolved
-        String    sCatalog[];
-        String    sSchema[];
-        int       nullability[];
-        boolean   isIdentity[];
-        boolean[] isWritable;
-        int       paramMode[];
+        public String    sCatalog[];
+        public String    sSchema[];
+        public int       nullability[];
+        public boolean   isIdentity[];
+        public boolean[] isWritable;
+        public int       paramMode[];
 
         // It's possible to do better than java.lang.Object
         // for type OTHER if the expression generating the value
         // is of type FUNCTION.  This applies to result set columns
         // whose value is the result of a SQL function call and
         // especially to the arguments and return value of a CALL
-        String  sClassName[];
-        boolean isParameterDescription;
+        public String sClassName[];
+        boolean       isParameterDescription;
 
         ResultMetaData() {}
 
@@ -173,7 +176,7 @@ class Result {
             sClassName    = new String[columns];
         }
 
-        int[] getParameterTypes() {
+        public int[] getParameterTypes() {
             return colType;
         }
 
@@ -189,7 +192,7 @@ class Result {
             isWritable[i]  = (in & 0x00000020) != 0;
         }
 
-        private void writeTableColumnAttrs(DatabaseRowOutputInterface out,
+        private void writeTableColumnAttrs(RowOutputInterface out,
                                            int i)
                                            throws IOException, HsqlException {
 
@@ -254,7 +257,7 @@ class Result {
             return out;
         }
 
-        private void readTableColumnAttrs(DatabaseRowInputInterface in,
+        private void readTableColumnAttrs(RowInputInterface in,
                                           int i)
                                           throws IOException, HsqlException {
 
@@ -269,8 +272,7 @@ class Result {
             sSchema[i]  = in.readString();
         }
 
-        void read(DatabaseRowInputInterface in)
-        throws HsqlException, IOException {
+        void read(RowInputInterface in) throws HsqlException, IOException {
 
             int l = in.readIntData();
 
@@ -297,7 +299,7 @@ class Result {
             }
         }
 
-        void write(DatabaseRowOutputInterface out,
+        void write(RowOutputInterface out,
                    int colCount) throws HsqlException, IOException {
 
             out.writeIntData(colCount);
@@ -337,7 +339,7 @@ class Result {
     /**
      *  General constructor
      */
-    Result(int type) {
+    public Result(int type) {
 
         iMode = type;
 
@@ -402,7 +404,7 @@ class Result {
     /**
      * For BATCHEXECUTE and BATCHEXECDIRECT
      */
-    Result(int type, int types[], int id) {
+    public Result(int type, int types[], int id) {
 
         iMode              = type;
         metaData           = new ResultMetaData();
@@ -417,7 +419,7 @@ class Result {
      * @param  b
      * @exception  HsqlException  Description of the Exception
      */
-    Result(DatabaseRowInputInterface in) throws HsqlException {
+    Result(RowInputInterface in) throws HsqlException {
 
         try {
             iMode = in.readIntData();
@@ -598,7 +600,7 @@ class Result {
         return r;
     }
 
-    static Result newFreeStmtRequest(int statementID) {
+    public static Result newFreeStmtRequest(int statementID) {
 
         Result r = new Result(ResultConstants.SQLFREESTMT);
 
@@ -618,7 +620,7 @@ class Result {
         return out;
     }
 
-    static Result newReleaseSavepointRequest(String name) {
+    public static Result newReleaseSavepointRequest(String name) {
 
         Result out;
 
@@ -630,7 +632,7 @@ class Result {
         return out;
     }
 
-    static Result newRollbackToSavepointRequest(String name) {
+    public static Result newRollbackToSavepointRequest(String name) {
 
         Result out;
 
@@ -642,7 +644,7 @@ class Result {
         return out;
     }
 
-    static Result newSetSavepointRequest(String name) {
+    public static Result newSetSavepointRequest(String name) {
 
         Result out;
 
@@ -659,7 +661,7 @@ class Result {
      *
      * @return
      */
-    int getSize() {
+    public int getSize() {
         return iSize;
     }
 
@@ -677,7 +679,7 @@ class Result {
      *
      * @return
      */
-    int getColumnCount() {
+    public int getColumnCount() {
         return significantColumns;
     }
 
@@ -713,6 +715,17 @@ class Result {
         }
     }
 
+    public void clear() {
+
+        rRoot = null;
+        rTail = null;
+        iSize = 0;
+    }
+
+    public boolean isEmpty() {
+        return rRoot == null;
+    }
+
     /**
      *  Method declaration
      *
@@ -736,7 +749,7 @@ class Result {
      *
      * @param  d
      */
-    void add(Object d[]) {
+    public void add(Object d[]) {
 
         Record r = new Record();
 
@@ -1105,8 +1118,7 @@ class Result {
         return 0;
     }
 
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, HsqlException {
+    void write(RowOutputInterface out) throws IOException, HsqlException {
 
 //        if (isMulti) {
         if (iMode == ResultConstants.MULTI) {
@@ -1249,7 +1261,7 @@ class Result {
         out.writeIntData(out.size(), startPos);
     }
 
-    void readMultiResult(DatabaseRowInputInterface in)
+    void readMultiResult(RowInputInterface in)
     throws HsqlException, IOException {
 
         iMode      = ResultConstants.MULTI;
@@ -1267,7 +1279,7 @@ class Result {
         }
     }
 
-    private void writeMulti(DatabaseRowOutputInterface out)
+    private void writeMulti(RowOutputInterface out)
     throws IOException, HsqlException {
 
         int startPos = out.size();
@@ -1292,9 +1304,9 @@ class Result {
     /**
      * Convenience method for writing, shared by Server side.
      */
-    static void write(Result r, DatabaseRowOutputInterface rowout,
-                      OutputStream dataout)
-                      throws IOException, HsqlException {
+    public static void write(Result r, RowOutputInterface rowout,
+                             OutputStream dataout)
+                             throws IOException, HsqlException {
 
         rowout.reset();
         r.write(rowout);
@@ -1306,9 +1318,9 @@ class Result {
     /**
      * Convenience method for reading, shared by Server side.
      */
-    static Result read(DatabaseRowInputInterface rowin,
-                       DataInputStream datain)
-                       throws IOException, HsqlException {
+    public static Result read(RowInputInterface rowin,
+                              DataInputStream datain)
+                              throws IOException, HsqlException {
 
         int length = datain.readInt();
 
@@ -1330,11 +1342,8 @@ class Result {
         return new Result(rowin);
     }
 
-// boucerb@users 20030513
-// ------------------- patch 1.7.2 --------------------
-
 /** @todo fredt - move the messages to Trace.java */
-    Result(Throwable t, String statement) {
+    public Result(Throwable t, String statement) {
 
         iMode = ResultConstants.ERROR;
 
@@ -1374,7 +1383,7 @@ class Result {
         subSubString = "";
     }
 
-    int getStatementID() {
+    public int getStatementID() {
         return statementID;
     }
 
@@ -1382,23 +1391,23 @@ class Result {
         statementID = id;
     }
 
-    String getMainString() {
+    public String getMainString() {
         return mainString;
     }
 
-    void setMainString(String sql) {
+    public void setMainString(String sql) {
         mainString = sql;
     }
 
-    String getSubString() {
+    public String getSubString() {
         return subString;
     }
 
-    void setMaxRows(int count) {
+    public void setMaxRows(int count) {
         this.iUpdateCount = count;
     }
 
-    int getUpdateCount() {
+    public int getUpdateCount() {
         return iUpdateCount;
     }
 
@@ -1419,7 +1428,7 @@ class Result {
     }
 
     /** @todo fred - check this repurposing */
-    int[] getUpdateCounts() {
+    public int[] getUpdateCounts() {
         return metaData.colType;
     }
 
@@ -1428,7 +1437,7 @@ class Result {
                                : rRoot.data;
     }
 
-    void setParameterData(Object[] data) {
+    public void setParameterData(Object[] data) {
 
         if (rRoot == null) {
             rRoot = new Record();
@@ -1440,19 +1449,19 @@ class Result {
         iSize      = 1;
     }
 
-    void setResultType(int type) {
+    public void setResultType(int type) {
         iMode = type;
     }
 
-    void setStatementType(int type) {
+    public void setStatementType(int type) {
         iUpdateCount = type;
     }
 
-    int getStatementType() {
+    public int getStatementType() {
         return iUpdateCount;
     }
 
-    Iterator iterator() {
+    public Iterator iterator() {
         return new ResultIterator();
     }
 

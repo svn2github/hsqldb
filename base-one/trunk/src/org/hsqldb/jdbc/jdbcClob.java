@@ -29,10 +29,15 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
-import java.sql.*;
 import java.io.StringReader;
+import java.sql.Clob;
+import java.sql.SQLException;
+
+import org.hsqldb.HsqlException;
+import org.hsqldb.Result;
+import org.hsqldb.Trace;
 import org.hsqldb.lib.AsciiStringInputStream;
 
 /**
@@ -121,9 +126,9 @@ public class jdbcClob implements Clob {
 
             return data.substring((int) pos, end);
         } catch (HsqlException he) {
-            throw jdbcDriver.sqlException(he);
+            throw jdbcUtil.sqlException(he);
         } catch (Throwable t) {
-            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
                     null)));
         }
     }
@@ -158,9 +163,9 @@ public class jdbcClob implements Clob {
             return pos >= 0 ? pos + 1
                             : -1;
         } catch (HsqlException he) {
-            throw jdbcDriver.sqlException(he);
+            throw jdbcUtil.sqlException(he);
         } catch (Throwable t) {
-            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
                     null)));
         }
     }
@@ -214,9 +219,9 @@ public class jdbcClob implements Clob {
         } catch (SQLException e) {
             throw e;
         } catch (HsqlException he) {
-            throw jdbcDriver.sqlException(he);
+            throw jdbcUtil.sqlException(he);
         } catch (Throwable t) {
-            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
                     null)));
         }
     }
@@ -237,7 +242,7 @@ public class jdbcClob implements Clob {
      *
      */
     public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     /**
@@ -257,7 +262,7 @@ public class jdbcClob implements Clob {
      *
      */
     public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     /**
@@ -278,7 +283,7 @@ public class jdbcClob implements Clob {
      *
      */
     public int setString(long pos, String str) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     /**
@@ -302,7 +307,7 @@ public class jdbcClob implements Clob {
      */
     public int setString(long pos, String str, int offset,
                          int len) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     /**
@@ -350,9 +355,9 @@ public class jdbcClob implements Clob {
                 data = data.substring(0, (int) len);
             }
         } catch (HsqlException he) {
-            throw jdbcDriver.sqlException(he);
+            throw jdbcUtil.sqlException(he);
         } catch (Throwable t) {
-            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+            throw jdbcUtil.sqlException(new HsqlException(new Result(t,
                     null)));
         }
     }

@@ -69,6 +69,8 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20021205 - path 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
@@ -181,6 +183,5 @@ abstract class BaseMemoryNode extends Node {
         return n == this;
     }
 
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, HsqlException {}
+    void write(RowOutputInterface out) throws IOException, HsqlException {}
 }

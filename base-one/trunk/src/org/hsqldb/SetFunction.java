@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
 import org.hsqldb.lib.HashSet;
 
 /**

@@ -67,12 +67,10 @@
 
 package org.hsqldb;
 
-import java.util.Stack;
-import org.hsqldb.lib.HsqlArrayHeap;
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
 // fredt@users 20020215 - patch 1.7.0 by fredt - SQL standard quoted identifiers

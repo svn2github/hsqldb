@@ -67,15 +67,16 @@
 
 package org.hsqldb;
 
-import java.sql.Timestamp;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.FieldPosition;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
-import java.text.SimpleDateFormat;
-import java.text.FieldPosition;
+
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
@@ -105,7 +106,7 @@ public class Library {
         new FieldPosition(SimpleDateFormat.MONTH_FIELD);
     static final FieldPosition dayPosition =
         new FieldPosition(SimpleDateFormat.DAY_OF_WEEK_FIELD);
-    static final String sNumeric[][] = {
+    public static final String sNumeric[][] = {
         {
             "ABS", "org.hsqldb.Library.abs"
         }, {
@@ -165,7 +166,7 @@ public class Library {
 
 // fredt@users 20010701 - patch 418023 by deforest@users
 // the definition for SUBSTR was added
-    static final String sString[][]   = {
+    public static final String sString[][]   = {
         {
             "ASCII", "org.hsqldb.Library.ascii"
         }, {
@@ -222,7 +223,7 @@ public class Library {
             "UPPER", "org.hsqldb.Library.ucase"
         }
     };
-    static final String sTimeDate[][] = {
+    public static final String sTimeDate[][] = {
         {
             "CURDATE", "org.hsqldb.Library.curdate"
         }, {
@@ -257,7 +258,7 @@ public class Library {
             "YEAR", "org.hsqldb.Library.year"
         }
     };
-    static final String sSystem[][]   = {
+    public static final String sSystem[][]   = {
         {
             "DATABASE", "org.hsqldb.Library.database"
         }, {

@@ -67,9 +67,10 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashSet;
+import org.hsqldb.jdbc.jdbcConnection;
 import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -94,7 +95,7 @@ import org.hsqldb.store.ValuePool;
  */
 
 /** @todo fredt - move error and assert string literals to Trace */
-class Session implements SessionInterface {
+public class Session implements SessionInterface {
 
     private Database       dDatabase;
     private User           uUser;
@@ -249,7 +250,7 @@ class Session implements SessionInterface {
      *
      * @return this Session's User object
      */
-    User getUser() {
+    public User getUser() {
         return uUser;
     }
 
@@ -906,35 +907,7 @@ class Session implements SessionInterface {
         }
     }
 
-    /**
-     * Directly executes all of the sql statements in the list
-     * represented by the sql argument string.
-     *
-     * @param sql a sql string
-     * @return the result of the last sql statement in the list
-     */
-    synchronized Result sqlExecuteDirect(String sql) {
-
-        try {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(!isNestedTransaction);
-            }
-
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        Trace.getMessage(Trace.Session_sqlExecuteDirect));
-
-            synchronized (dDatabase) {
-                Trace.check(!dDatabase.isShutdown(),
-                            Trace.DATABASE_IS_SHUTDOWN);
-
-                return dbCommandInterpreter.execute(sql);
-            }
-        } catch (Throwable t) {
-            return new Result(t, null);
-        }
-    }
-
-    Result sqlExecuteDirectNoPreChecks(String sql) {
+    public Result sqlExecuteDirectNoPreChecks(String sql) {
         return dbCommandInterpreter.execute(sql);
     }
 

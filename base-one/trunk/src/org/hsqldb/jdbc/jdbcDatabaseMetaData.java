@@ -65,13 +65,18 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.hsqldb.Trace;
+import org.hsqldb.Library;
+import org.hsqldb.Column;
 
 // to Campbell: please NB the following comments in the original code
 // fredt@users 20020225 - comment - slight error
@@ -419,6 +424,7 @@ import java.sql.SQLException;
  *
  * </span>
  * <!-- end release-specific documentation -->
+ * @author boucherb@users
  * @version 1.7.2
  * @see DatabaseInformation
  * @see DatabaseInformationMain
@@ -757,7 +763,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverName() throws SQLException {
-        return jdbcDriver.PRODUCT + " Driver";
+        return jdbcUtil.PRODUCT + " Driver";
     }
 
     /**
@@ -767,7 +773,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverVersion() throws SQLException {
-        return jdbcDriver.VERSION;
+        return jdbcUtil.VERSION;
     }
 
     /**
@@ -776,7 +782,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver major version
      */
     public int getDriverMajorVersion() {
-        return jdbcDriver.MAJOR;
+        return jdbcUtil.MAJOR;
     }
 
     /**
@@ -785,7 +791,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver minor version number
      */
     public int getDriverMinorVersion() {
-        return jdbcDriver.MINOR;
+        return jdbcUtil.MINOR;
     }
 
     /**
@@ -3757,7 +3763,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default :
-                throw jdbcDriver.sqlException(
+                throw jdbcUtil.sqlException(
                     Trace.ASSERT_FAILED,
                     Trace.jdbcDatabaseMetaData_getBestRowIdentifier, null);
         }
@@ -5459,7 +5465,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // TODO: fredt@users we don't really. Need to review the codes.
         // Which do we support, if any? Probably X/OPEN, if any. Must check.
         // boucherb@users 20020426
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
 //#endif JDBC3

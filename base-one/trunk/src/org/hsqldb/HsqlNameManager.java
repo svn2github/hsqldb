@@ -123,12 +123,12 @@ class HsqlNameManager {
         serialNumber = 0;
     }
 
-    static class HsqlName {
+    public static class HsqlName {
 
         HsqlNameManager   manager;
-        String            name;
+        public String     name;
         boolean           isNameQuoted;
-        String            statementName;
+        public String     statementName;
         private final int hashCode;
 
         private HsqlName(HsqlNameManager man) {

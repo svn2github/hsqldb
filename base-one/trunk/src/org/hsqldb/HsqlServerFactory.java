@@ -31,7 +31,7 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
+import org.hsqldb.jdbc.jdbcUtil;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - modified
 // minor changes to support the new HsqlServerProperties class
@@ -61,7 +61,7 @@ public class HsqlServerFactory {
         try {
             server.openDatabases();
         } catch (HsqlException e) {
-            throw jdbcDriver.sqlException(e);
+            throw jdbcUtil.sqlException(e);
         }
 
         server.setState(ServerConstants.SERVER_STATE_ONLINE);

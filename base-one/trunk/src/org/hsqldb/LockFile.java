@@ -31,12 +31,13 @@
 
 package org.hsqldb;
 
-import java.lang.reflect.Method;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
 import java.sql.Timestamp;
+
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 

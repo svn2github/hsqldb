@@ -67,15 +67,13 @@
 
 package org.hsqldb;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
-import java.util.Calendar;
-import org.hsqldb.lib.HsqlArrayList;
+
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
@@ -197,8 +195,7 @@ class Function {
 
         cReturnClass = mMethod.getReturnType();
 
-        if (cReturnClass.equals(org.hsqldb.Result.class)
-                || cReturnClass.equals(org.hsqldb.jdbcResultSet.class)) {
+        if (cReturnClass.equals(org.hsqldb.Result.class)) {
 
             // For now, people can write stored procedures with
             // descriptor having above return types to indicate

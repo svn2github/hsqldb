@@ -70,7 +70,6 @@ package org.hsqldb;
 /**
  * Class declaration
  *
- *
  * @version 1.7.0
  */
 class Transaction {

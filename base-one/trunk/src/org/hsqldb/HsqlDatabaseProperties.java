@@ -76,19 +76,19 @@ import org.hsqldb.lib.HashSet;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private static HashSet protectedProperties = new HashSet();
-    private static HashSet booleanProperties   = new HashSet();
-    private static HashSet integralProperties  = new HashSet();
+    private static HashSet nonSetProperties   = new HashSet();
+    private static HashSet booleanProperties  = new HashSet();
+    private static HashSet integralProperties = new HashSet();
 
     static {
-        String[] protectedPropertiesNames = {
+        String[] nonSetPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
             "hsqldb.log_size", "hsqldb.original_version",
             "hsqldb.script_format", "hsqldb.files_readonly", "readonly",
             "modified", "sql.compare_in_locale"
         };
 
-        protectedProperties.addAll(protectedPropertiesNames);
+        nonSetProperties.addAll(nonSetPropertiesNames);
 
         String[] booleanPropertiesNames = {
             "hsqldb.schemas", "hsqldb.catalogs", "sql.enforce_size",
@@ -242,7 +242,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
 
         if (!exists) {
-            setProperty("version", jdbcDriver.VERSION);
+            setProperty("version", org.hsqldb.jdbc.jdbcUtil.VERSION);
             setProperty("hsqldb.cache_version", "1.7.0");
             setProperty("hsqldb.compatible_version", "1.7.2");
             save();
@@ -253,7 +253,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         String version = getProperty("hsqldb.compatible_version");
 
         // do not open if the database belongs to a later (future) version
-        int check = version.substring(0, 5).compareTo(jdbcDriver.VERSION);
+        int check = version.substring(0, 5).compareTo(
+            org.hsqldb.jdbc.jdbcUtil.VERSION);
 
         Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
 
@@ -264,7 +265,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
 
         // change to the current version
-        setProperty("hsqldb.version", jdbcDriver.VERSION);
+        setProperty("hsqldb.version", org.hsqldb.jdbc.jdbcUtil.VERSION);
         setSystemVariables();
         setDatabaseVariables();
 
@@ -306,8 +307,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
     }
 
-    boolean isProtected(String property) {
-        return protectedProperties.contains(property);
+    boolean isSetPropertyAllowed(String property) {
+        return !nonSetProperties.contains(property);
     }
 
     boolean isBoolean(String property) {

@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import java.math.BigDecimal;
+
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
@@ -94,7 +95,7 @@ import org.hsqldb.store.ValuePool;
  */
 
 /** @todo fredt - move error and assert string literals to Trace */
-class Tokenizer {
+public class Tokenizer {
 
     private static final int NO_TYPE   = 0,
                              NAME      = 1,
@@ -187,7 +188,7 @@ class Tokenizer {
 
     Tokenizer() {}
 
-    Tokenizer(String s) {
+    public Tokenizer(String s) {
 
         sCommand = s;
         iLength  = s.length();
@@ -427,7 +428,7 @@ class Tokenizer {
      *
      * @throws HsqlException
      */
-    String getString() throws HsqlException {
+    public String getString() throws HsqlException {
 
         getToken();
 

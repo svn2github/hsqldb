@@ -67,10 +67,10 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.Iterator;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.

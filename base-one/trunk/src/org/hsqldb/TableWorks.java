@@ -67,9 +67,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashSet;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
@@ -300,7 +300,7 @@ class TableWorks {
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION);
         }
 
-        // workaround is here to ensure no subselects etc. are in condition
+        // getDDL() is here to ensure no subselects etc. are in condition
         e.getDDL();
         table.addConstraint(c);
     }

@@ -68,10 +68,16 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import org.hsqldb.lib.ObjectComparator;
-import org.hsqldb.lib.StopWatch;
+
 import org.hsqldb.lib.ArrayCounter;
+import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.Sort;
+import org.hsqldb.lib.StopWatch;
+import org.hsqldb.rowio.RowInputBase;
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputBase;
+import org.hsqldb.rowio.RowOutputBinary;
+import org.hsqldb.rowio.RowOutputInterface;
 
 // fredt@users 20011220 - patch 437174 by hjbusch@users - cache update
 // most changes and comments by HJB are kept unchanged
@@ -172,7 +178,7 @@ abstract class Cache {
     int                         cacheSizeScale;
     int                         cacheFileScale;
     int                         cachedRowPadding = 8;
-    int cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
+    int                         cachedRowType = RowOutputBase.CACHED_ROW_160;
     int                         rowStoreExtra;
     int                         cacheLength;
     int                         maxCacheSize;     // number of Rows
@@ -204,8 +210,8 @@ abstract class Cache {
     int       iCacheSize;
 
     // reusable input / output streams
-    DatabaseRowInputInterface  rowIn;
-    DatabaseRowOutputInterface rowOut;
+    RowInputInterface  rowIn;
+    RowOutputInterface rowOut;
 
     // for testing
     StopWatch saveAllTimer = new StopWatch(false);
@@ -270,13 +276,13 @@ abstract class Cache {
 
     protected void initBuffers() throws HsqlException {
 
-        rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
-        rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
+        rowOut = RowOutputBase.newRowOutput(cachedRowType);
+        rowIn  = RowInputBase.newRowInput(cachedRowType);
 
 //        rowOut.setSystemId(true);
         rowIn.setSystemId(true);
 
-        rowStoreExtra = rowOut instanceof BinaryServerRowOutput
+        rowStoreExtra = rowOut instanceof RowOutputBinary
                         ? ROW_STORE_EXTRA_170
                         : ROW_STORE_EXTRA_160;
     }

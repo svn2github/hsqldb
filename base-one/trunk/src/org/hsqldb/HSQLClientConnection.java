@@ -31,13 +31,16 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-import java.io.DataInputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.rowio.RowInputBinary;
+import org.hsqldb.rowio.RowOutputBinary;
 
 /**
  * Base remote session proxy implementation. Uses instances of Result to
@@ -52,16 +55,16 @@ import org.hsqldb.lib.ArrayUtil;
 /** @todo fredt - manage the size of rowIn / rowOut buffer */
 public class HSQLClientConnection implements SessionInterface {
 
-    static final int                BUFFER_SIZE = 0x1000;
-    final byte[]                    mainBuffer  = new byte[BUFFER_SIZE];
-    private boolean                 isClosed;
-    private Socket                  socket;
-    protected OutputStream          dataOutput;
-    protected DataInputStream       dataInput;
-    protected BinaryServerRowOutput rowOut;
-    protected BinaryServerRowInput  rowIn;
-    private Result                  resultOut;
-    private final int               sessionID;
+    static final int          BUFFER_SIZE = 0x1000;
+    final byte[]              mainBuffer  = new byte[BUFFER_SIZE];
+    private boolean           isClosed;
+    private Socket            socket;
+    protected OutputStream    dataOutput;
+    protected DataInputStream dataInput;
+    protected RowOutputBinary rowOut;
+    protected RowInputBinary  rowIn;
+    private Result            resultOut;
+    private final int         sessionID;
 
 //
     String  host;
@@ -71,9 +74,9 @@ public class HSQLClientConnection implements SessionInterface {
     boolean isTLS;
     int     databaseID;
 
-    HSQLClientConnection(String host, int port, String path, String database,
-                         boolean isTLS, String user,
-                         String password) throws HsqlException {
+    public HSQLClientConnection(String host, int port, String path,
+                                String database, boolean isTLS, String user,
+                                String password) throws HsqlException {
 
         this.host     = host;
         this.port     = port;
@@ -109,8 +112,8 @@ public class HSQLClientConnection implements SessionInterface {
      */
     private void initStructures() {
 
-        rowOut    = new BinaryServerRowOutput(mainBuffer);
-        rowIn     = new BinaryServerRowInput(rowOut);
+        rowOut    = new RowOutputBinary(mainBuffer);
+        rowIn     = new RowInputBinary(rowOut);
         resultOut = new Result(ResultConstants.DATA, 7);
         resultOut.metaData.sName = resultOut.metaData.sLabel =
             resultOut.metaData.sTable = new String[] {

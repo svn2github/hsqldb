@@ -29,45 +29,54 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
-import java.io.IOException;
-import org.hsqldb.lib.StringConverter;
+import java.sql.SQLException;
+
+import org.hsqldb.HsqlException;
+import org.hsqldb.Result;
+import org.hsqldb.Trace;
 
 /**
- * This class quotes strings only if they contain the quote character or
- * the separator for the field. The quote character is doubled.
- * @author sqlbob@users (RMP)
- * @version 1.7.0
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
  */
-class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
+public class jdbcUtil {
 
-    public QuotedTextDatabaseRowOutput(String fieldSep, String varSep,
-                                       String longvarSep,
-                                       boolean allQuoted) throws IOException {
-        super(fieldSep, varSep, longvarSep, allQuoted);
+    public static final int    MAJOR    = 1,
+                               MINOR    = 7,
+                               REVISION = 2;
+    public static final String VERSION  = "1.7.2";
+    public static final String PRODUCT  = "HSQL Database Engine";
+
+    static final void throwError(HsqlException e) throws SQLException {
+        throw new SQLException(e.getMessage(), e.getSQLState(),
+                               e.getErrorCode());
     }
 
-    public QuotedTextDatabaseRowOutput(String fieldSep, String varSep,
-                                       String longvarSep, boolean allQuoted,
-                                       String encoding) throws IOException {
-        super(fieldSep, varSep, longvarSep, allQuoted, encoding);
+    static final void throwError(Result r) throws SQLException {
+        throw new SQLException(r.getMainString(), r.getSubString(),
+                               r.getStatementID());
     }
 
-    protected String checkConvertString(String s,
-                                        String sep) throws IOException {
-
-        if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            throw new IOException(
-                Trace.getMessage(
-                    Trace.QuotedTextDatabaseRowOutput_checkConvertString));
-        }
-
-        if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1
-                || (sep.length() > 0 && s.indexOf(sep) != -1)) {
-            s = StringConverter.toQuotedString(s, '\"', true);
-        }
-
-        return s;
+    public static final SQLException sqlException(HsqlException e) {
+        return new SQLException(e.getMessage(), e.getSQLState(),
+                                e.getErrorCode());
     }
+
+    static final SQLException sqlException(int id) {
+        return sqlException(Trace.error(id));
+    }
+
+    static final SQLException sqlException(int id, String message) {
+        return sqlException(Trace.error(id, message));
+    }
+
+    static final SQLException sqlException(int id, int subId, Object[] add) {
+        return sqlException(Trace.error(id, subId, add));
+    }
+
+    static final SQLException notSupported =
+        sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
 }

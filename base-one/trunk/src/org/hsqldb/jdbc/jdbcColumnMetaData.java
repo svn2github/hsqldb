@@ -29,7 +29,7 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
 import java.lang.reflect.Field;
 

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.lang.reflect.Constructor;
+
 import org.hsqldb.lib.IntValueHashMap;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
@@ -93,11 +94,11 @@ class DatabaseInformation {
 // boucherb@users 20030403 - isolated and improved text table reporting
     protected static final int SYSTEM_TEXTTABLES = 31;
 
-// boucherb@users 20040107 - metadata support for sequences    
+// boucherb@users 20040107 - metadata support for sequences
     protected static final int SYSTEM_SEQUENCES        = 32;
     protected static final int SYSTEM_USAGE_PRIVILEGES = 33;
 
-// boucherb@users 20040107 - metadata support for constraints      
+// boucherb@users 20040107 - metadata support for constraints
     protected static final int SYSTEM_CHECK_CONSTRAINTS = 34;
     protected static final int SYSTEM_TABLE_CONSTRAINTS = 35;
 
@@ -153,7 +154,7 @@ class DatabaseInformation {
         // boucherb@users 20040107 - metadata support for sequences - SQL 200n
         "SYSTEM_SEQUENCES", "SYSTEM_USAGE_PRIVILEGES",
 
-        // boucherb@users 20040107 - metadata support for constraints - SQL 200n  
+        // boucherb@users 20040107 - metadata support for constraints - SQL 200n
         "SYSTEM_CHECK_CONSTRAINTS", "SYSTEM_TABLE_CONSTRAINTS",
 
         // boucherb@users 20040107 - metadata support for usage - SQL 200n

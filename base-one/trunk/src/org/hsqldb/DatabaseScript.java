@@ -67,19 +67,19 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Script generation.
  *
  * @version 1.7.2
  */
-class DatabaseScript {
+public class DatabaseScript {
 
     /**
      * Returns the DDL and all other statements for the database excluding
@@ -89,7 +89,7 @@ class DatabaseScript {
      *
      * This class should not have any dependencies on metadata reporting.
      */
-    static Result getScript(Database dDatabase, boolean bCached) {
+    public static Result getScript(Database dDatabase, boolean bCached) {
 
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();

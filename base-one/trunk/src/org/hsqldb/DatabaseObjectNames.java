@@ -31,8 +31,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.*;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.Iterator;
 
 /**
  * Transitional container for object names that are unique across the

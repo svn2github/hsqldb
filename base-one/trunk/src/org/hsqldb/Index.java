@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
 

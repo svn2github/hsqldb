@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.util.Hashtable;
+
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.store.ValuePool;

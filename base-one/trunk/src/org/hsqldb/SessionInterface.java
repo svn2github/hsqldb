@@ -40,7 +40,7 @@ package org.hsqldb;
  * @version 1.7.2
  * @since 1.7.2
  */
-interface SessionInterface {
+public interface SessionInterface {
 
     Result execute(Result r) throws HsqlException;
 

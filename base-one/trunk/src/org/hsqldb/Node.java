@@ -69,6 +69,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
@@ -107,7 +110,7 @@ abstract class Node {
         }
     }
 
-    static final Node newNode(Row r, DatabaseRowInputInterface in, int id,
+    static final Node newNode(Row r, RowInputInterface in, int id,
                               Table t) throws IOException, HsqlException {
 
         switch (t.getIndexType()) {
@@ -195,7 +198,7 @@ abstract class Node {
     /**
      *  Writes out the node in an implementation dependent way.
      */
-    abstract void write(DatabaseRowOutputInterface out)
+    abstract void write(RowOutputInterface out)
     throws IOException, HsqlException;
 
     boolean isDeleted() {

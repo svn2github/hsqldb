@@ -29,12 +29,13 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
 import java.io.ByteArrayInputStream;
-import java.io.OutputStream;
 import java.io.InputStream;
-import java.sql.*;
+import java.io.OutputStream;
+import java.sql.Blob;
+import java.sql.SQLException;
 
 /**
  * @author james house jhouse@part.net
@@ -45,7 +46,7 @@ public class jdbcBlob implements Blob {
 
     private byte[] blobData;
 
-    jdbcBlob(byte[] data) {
+    public jdbcBlob(byte[] data) {
         this.blobData = data;
     }
 
@@ -76,27 +77,27 @@ public class jdbcBlob implements Blob {
     }
 
     public long position(Blob pattern, long start) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     public long position(byte[] pattern, long start) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes, int offset,
                         int len) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     public OutputStream setBinaryStream(long pos) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 
     public void truncate(long len) throws SQLException {
-        throw jdbcDriver.notSupported;
+        throw jdbcUtil.notSupported;
     }
 }

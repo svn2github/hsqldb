@@ -70,10 +70,9 @@ package org.hsqldb;
 /**
  * Record class declaration
  *
- *
  * @version 1.7.0
  */
-class Record {
+public class Record {
 
     // variables to track rough count on object creation, to use in gc
     public static int gcFrequency;

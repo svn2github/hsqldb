@@ -33,8 +33,9 @@ package org.hsqldb;
 
 import java.sql.DatabaseMetaData;
 import java.util.Locale;
-import org.hsqldb.store.ValuePool;
+
 import org.hsqldb.resources.BundleHandler;
+import org.hsqldb.store.ValuePool;
 
 /**
  * Provides information intrinsic to each standard data type known to
@@ -46,7 +47,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DITypeInfo {
+public final class DITypeInfo {
 
     /** BundleHandler id for create params resource bundle. */
     private int hnd_create_params = -1;
@@ -75,7 +76,7 @@ final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded length, in
      *    bytes, for character types
      */
-    Integer getCharOctLen() {
+    public Integer getCharOctLen() {
         return null;
     }
 
@@ -86,7 +87,7 @@ final class DITypeInfo {
      * @return the maximum Long.MAX_VALUE bounded length, in
      *    bytes, for character types
      */
-    Long getCharOctLenAct() {
+    public Long getCharOctLenAct() {
 
         switch (type) {
 
@@ -116,7 +117,7 @@ final class DITypeInfo {
      *    instances are manufactured by HSQLDB to store
      *    table column values in memory
      */
-    String getColStClsName() {
+    public String getColStClsName() {
 
         switch (type) {
 
@@ -184,7 +185,7 @@ final class DITypeInfo {
      *    list, in DDL declaraion order, of the create
      *    parameters for the type.
      */
-    String getCreateParams() {
+    public String getCreateParams() {
 
         String names;
 
@@ -233,7 +234,7 @@ final class DITypeInfo {
      *    with the indicated name is actually implemented or
      *    available on the class path
      */
-    String getCstMapClsName() {
+    public String getCstMapClsName() {
 
         switch (type) {
 
@@ -276,7 +277,7 @@ final class DITypeInfo {
      * @return the maximum length that a String representation of
      *      the type may have
      */
-    int getMaxDisplaySize() {
+    public int getMaxDisplaySize() {
 
         switch (type) {
 
@@ -337,7 +338,7 @@ final class DITypeInfo {
      *
      * @return the data type, as an Integer.
      */
-    Integer getDataType() {
+    public Integer getDataType() {
         return ValuePool.getInt(type);
     }
 
@@ -359,7 +360,7 @@ final class DITypeInfo {
      *    types, when no scale is declared or no scale declaration
      *    is permitted
      */
-    Integer getDefaultScale() {
+    public Integer getDefaultScale() {
 
         switch (type) {
 
@@ -379,7 +380,7 @@ final class DITypeInfo {
      *
      * @return null (not implemented)
      */
-    Integer getIntervalPrecision() {
+    public Integer getIntervalPrecision() {
         return null;
     }
 
@@ -388,7 +389,7 @@ final class DITypeInfo {
      *
      * @return the character(s) prefixing a literal of this type.
      */
-    String getLiteralPrefix() {
+    public String getLiteralPrefix() {
 
         switch (type) {
 
@@ -430,7 +431,7 @@ final class DITypeInfo {
      *
      * @return the character(s) terminating a literal of this type
      */
-    String getLiteralSuffix() {
+    public String getLiteralSuffix() {
 
         switch (type) {
 
@@ -463,7 +464,7 @@ final class DITypeInfo {
      *
      * @return a localized representation of the type's name
      */
-    String getLocalName() {
+    public String getLocalName() {
 
         String key = this.getTypeName();
 
@@ -481,7 +482,7 @@ final class DITypeInfo {
      * @return the maximum Short.MAX_VALUE bounded scale supported
      *    for the type
      */
-    Integer getMaxScale() {
+    public Integer getMaxScale() {
 
         switch (type) {
 
@@ -516,7 +517,7 @@ final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded scale supported
      *    for the type
      */
-    Integer getMaxScaleAct() {
+    public Integer getMaxScaleAct() {
 
         switch (type) {
 
@@ -536,7 +537,7 @@ final class DITypeInfo {
      * @return the minumum Short.MIN_VALUE bounded scale
      *    supported for the type
      */
-    Integer getMinScale() {
+    public Integer getMinScale() {
 
         switch (type) {
 
@@ -571,7 +572,7 @@ final class DITypeInfo {
      * @return the minumum Integer.MIN_VALUE bounded scale supported
      *    for the type
      */
-    Integer getMinScaleAct() {
+    public Integer getMinScaleAct() {
 
         switch (type) {
 
@@ -590,7 +591,7 @@ final class DITypeInfo {
      *
      * @return the DatabaseMetaData nullability code for the type.
      */
-    Integer getNullability() {
+    public Integer getNullability() {
 
         return (typeSub == Types.TYPE_SUB_IDENTITY)
                ? ValuePool.getInt(DatabaseMetaData.columnNoNulls)
@@ -604,7 +605,7 @@ final class DITypeInfo {
      * @return the number base which is to be used to interpret the
      *    value reported by getPrecision()
      */
-    Integer getNumPrecRadix() {
+    public Integer getNumPrecRadix() {
 
         switch (type) {
 
@@ -631,7 +632,7 @@ final class DITypeInfo {
      * @return the maximum Integer.MAX_VALUE bounded length or
      *    precision for the type
      */
-    Integer getPrecision() {
+    public Integer getPrecision() {
 
         switch (type) {
 
@@ -702,7 +703,7 @@ final class DITypeInfo {
      * @return the maximum Long.MAX_VALUE bounded length or
      *    precision for the type
      */
-    Long getPrecisionAct() {
+    public Long getPrecisionAct() {
 
         Integer temp = getPrecision();
 
@@ -718,7 +719,7 @@ final class DITypeInfo {
      *
      * @return the localized remarks on the type.
      */
-    String getRemarks() {
+    public String getRemarks() {
 
         String key = this.getTypeName();
 
@@ -734,7 +735,7 @@ final class DITypeInfo {
      *
      * @return the DatabaseMetaData searchability code for the type
      */
-    Integer getSearchability() {
+    public Integer getSearchability() {
 
         switch (type) {
 
@@ -758,7 +759,7 @@ final class DITypeInfo {
      *
      * @return the SQL CLI data type code for the type
      */
-    Integer getSqlDataType() {
+    public Integer getSqlDataType() {
 
         // values from SQL200n SQL CLI spec, or DITypes (which in turn borrows
         // first from java.sql.Types and then SQL200n SQL CLI spec) if there
@@ -896,7 +897,7 @@ final class DITypeInfo {
      *
      * @return the SQL CLI datetime subcode for the type
      */
-    Integer getSqlDateTimeSub() {
+    public Integer getSqlDateTimeSub() {
 
         switch (type) {
 
@@ -922,7 +923,7 @@ final class DITypeInfo {
      *    primitive, class or java.sql interface mapping for
      *    the type
      */
-    String getStdMapClsName() {
+    public String getStdMapClsName() {
 
         switch (type) {
 
@@ -1010,7 +1011,7 @@ final class DITypeInfo {
      *
      * @return the data type as an int
      */
-    int getTypeCode() {
+    public int getTypeCode() {
         return type;
     }
 
@@ -1023,7 +1024,7 @@ final class DITypeInfo {
      *
      * @return the canonical data type name HSQLDB associates with the type
      */
-    String getTypeName() {
+    public String getTypeName() {
 
         switch (type) {
 
@@ -1136,7 +1137,7 @@ final class DITypeInfo {
      *
      * @return the HSQLDB data subtype as an int
      */
-    int getTypeSub() {
+    public int getTypeSub() {
         return this.typeSub;
     }
 
@@ -1145,7 +1146,7 @@ final class DITypeInfo {
      *
      * @return whether the type is an IDENTITY type.
      */
-    Boolean isAutoIncrement() {
+    public Boolean isAutoIncrement() {
 
         switch (type) {
 
@@ -1175,7 +1176,7 @@ final class DITypeInfo {
      * @return whether the type is case-sensitive in collations and
      *    comparisons.
      */
-    Boolean isCaseSensitive() {
+    public Boolean isCaseSensitive() {
 
         switch (type) {
 
@@ -1215,7 +1216,7 @@ final class DITypeInfo {
      *    and hosting JVM, HSQLDB supports storing this
      *    type in table columns
      */
-    Boolean isColStClsSupported() {
+    public Boolean isColStClsSupported() {
 
         return ValuePool.getBoolean(type == Types.NULL ? true
                                                        : getColStClsName()
@@ -1229,7 +1230,7 @@ final class DITypeInfo {
      * @return whether values of this type have a fixed
      *    precision and scale.
      */
-    Boolean isFixedPrecisionScale() {
+    public Boolean isFixedPrecisionScale() {
 
         switch (type) {
 
@@ -1258,7 +1259,7 @@ final class DITypeInfo {
      * is supported as a jdbcResultSet.getXXX return type under the current
      * HSQLDB release, class path and hosting JVM.
      */
-    Boolean isStdMapClsSupported() {
+    public Boolean isStdMapClsSupported() {
 
         // its ok to use Class.forName here instead of nameSpace.classForName,
         // because all standard map classes are loaded by the boot loader
@@ -1345,7 +1346,7 @@ final class DITypeInfo {
      *    hosting JVM, HSQLDB supports passing or receiving
      *    this type as the value of a procedure column.
      */
-    Boolean isSupportedAsPCol() {
+    public Boolean isSupportedAsPCol() {
 
         switch (type) {
 
@@ -1370,7 +1371,7 @@ final class DITypeInfo {
      *    and hosting JVM, HSQLDB supports this type
      *    as the values of a table column
      */
-    Boolean isSupportedAsTCol() {
+    public Boolean isSupportedAsTCol() {
 
         String columnTypeName;
 
@@ -1388,7 +1389,7 @@ final class DITypeInfo {
      *
      * @return whether values of this type are unsigned
      */
-    Boolean isUnsignedAttribute() {
+    public Boolean isUnsignedAttribute() {
 
         switch (type) {
 
@@ -1415,7 +1416,7 @@ final class DITypeInfo {
      * @param l the Locale object used to retrieve this object's resource
      *      bundle dependent values
      */
-    void setLocale(Locale l) {
+    public void setLocale(Locale l) {
 
         Locale oldLocale;
 
@@ -1441,7 +1442,7 @@ final class DITypeInfo {
      *
      * @param type the SQL data type code on which this object is to report
      */
-    void setTypeCode(int type) {
+    public void setTypeCode(int type) {
         this.type = type;
     }
 
@@ -1452,7 +1453,7 @@ final class DITypeInfo {
      * @param typeSub the HSQLDB data subtype code on which this object
      *      is to report
      */
-    void setTypeSub(int typeSub) {
+    public void setTypeSub(int typeSub) {
         this.typeSub = typeSub;
     }
 }

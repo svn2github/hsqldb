@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.net.URL;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // boucherb@users 20030510 - patch 1.7.2 - added cooperative file locking
 

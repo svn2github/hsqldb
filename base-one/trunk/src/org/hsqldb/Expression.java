@@ -67,10 +67,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -93,7 +91,7 @@ import org.hsqldb.store.ValuePool;
  */
 
 /** @todo fredt - move error string literals to Trace */
-class Expression {
+public class Expression {
 
     // leaf types
     static final int VALUE     = 1,
@@ -3320,10 +3318,10 @@ class Expression {
     }
 
     // parameter modes
-    static final int PARAM_UNKNOWN = 0;
-    static final int PARAM_IN      = 1;
-    static final int PARAM_IN_OUT  = 2;
-    static final int PARAM_OUT     = 4;
+    static final int        PARAM_UNKNOWN = 0;
+    public static final int PARAM_IN      = 1;
+    public static final int PARAM_IN_OUT  = 2;
+    public static final int PARAM_OUT     = 4;
 
     // result set (output column value) or parameter expression nullability
     static final int NO_NULLS         = 0;

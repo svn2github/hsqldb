@@ -31,15 +31,14 @@
 
 package org.hsqldb;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.Timestamp;
-import java.util.Hashtable;
+
 import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.store.ValuePool;
 

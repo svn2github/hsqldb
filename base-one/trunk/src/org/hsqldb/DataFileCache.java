@@ -69,9 +69,11 @@ package org.hsqldb;
 
 import java.io.File;
 import java.io.IOException;
-import org.hsqldb.lib.HsqlArrayList;
+
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.ZipUnzipFile;
+import org.hsqldb.rowio.RowOutputBase;
 
 public class DataFileCache extends Cache {
 
@@ -114,7 +116,7 @@ public class DataFileCache extends Cache {
                 "1.6.0");
 
             if (cacheVersion.equals("1.7.0")) {
-                cachedRowType = DatabaseRowOutput.CACHED_ROW_170;
+                cachedRowType = RowOutputBase.CACHED_ROW_170;
             }
 
             initBuffers();

@@ -75,6 +75,7 @@ import java.sql.Timestamp;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.Collator;
+
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
@@ -123,13 +124,13 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *
  * @version    1.7.0
  */
-class Column {
+public class Column {
 
 // --------------------------------------------------
     // DDL name, size, scale, null, identity and default values
     // most variables are final but not declared so because of a bug in
     // JDK 1.1.8 compiler
-    HsqlName                columnName;
+    public HsqlName         columnName;
     private int             colType;
     private int             colSize;
     private int             colScale;
@@ -213,7 +214,7 @@ class Column {
      *
      * @return boolean
      */
-    boolean isPrimaryKey() {
+    public boolean isPrimaryKey() {
         return isPrimaryKey;
     }
 
@@ -799,7 +800,8 @@ class Column {
      * @return result
      * @throws  HsqlException
      */
-    static Object convertObject(Object o, int type) throws HsqlException {
+    public static Object convertObject(Object o,
+                                       int type) throws HsqlException {
 
         try {
             if (o == null) {
@@ -1245,7 +1247,7 @@ class Column {
         }
     }
 
-    static String createSQLString(double x) {
+    public static String createSQLString(double x) {
 
         if (x == Double.NEGATIVE_INFINITY) {
             return "-1E0/0";
@@ -1275,7 +1277,7 @@ class Column {
      * @param  java string
      * @return quoted SQL string
      */
-    static String createSQLString(String s) {
+    public static String createSQLString(String s) {
 
         if (s == null) {
             return "NULL";
@@ -1481,7 +1483,8 @@ class Column {
      * @throws HsqlException if the specified string contains non-hexadecimal digits.
      * @return a byte array equivalent to the specified string of hexadecimal digits
      */
-    static byte[] hexToByteArray(String hexString) throws HsqlException {
+    public static byte[] hexToByteArray(String hexString)
+    throws HsqlException {
 
         try {
             return StringConverter.hexToByte(hexString);

@@ -32,10 +32,12 @@
 package org.hsqldb;
 
 //import org.hsqldb.lib.UnifiedTable;
-import org.hsqldb.lib.DoubleIntTable;
 import java.io.IOException;
+
+import org.hsqldb.lib.DoubleIntTable;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.rowio.RowOutputBinary;
 
 /**
  *  Experimental routine to defrag the *.data file.
@@ -124,7 +126,7 @@ class DataFileDefrag {
                                ScaledRAFile destFile)
                                throws IOException, HsqlException {
 
-        BinaryServerRowOutput rowOut = new BinaryServerRowOutput();
+        RowOutputBinary rowOut = new RowOutputBinary();
 
 //        rowOut.setSystemId(true);
         DoubleIntTable pointerLookup = new DoubleIntTable(1000000);

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.jdbc.jdbcResultSet;
 
 /**
  * Provides execution of CompiledStatement objects. <p>
@@ -159,14 +160,6 @@ final class CompiledStatementExecutor {
             return ((jdbcResultSet) o).rResult;
         }
 
-        // NO:
-// boucherb@users patch 1.7.x - returning values from remote data sources
-//        if (o instanceof ResultSet) {
-//            return Result.newResult((ResultSet)o);
-//        }
-//        if (o instanceof Statement) {
-//            return Result.newResult(((Statement)o));
-//        }
         r = Result.newSingleColumnResult("@0", e.getDataType());
         row                      = new Object[1];
         row[0]                   = o;

@@ -70,12 +70,14 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-import org.hsqldb.lib.ArrayUtil;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.StopWatch;
-import org.hsqldb.lib.StringUtil;
+
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.StringUtil;
+import org.hsqldb.scriptio.ScriptWriterBase;
+import org.hsqldb.scriptio.ScriptWriterText;
 
 /**
  * Provides SQL Interpreter services relative to a Session and
@@ -340,12 +342,12 @@ class DatabaseCommandInterpreter {
      */
     private Result processScript() throws IOException, HsqlException {
 
-        String               token = tokenizer.getString();
-        DatabaseScriptWriter dsw;
+        String           token = tokenizer.getString();
+        ScriptWriterText dsw;
 
         if (tokenizer.wasValue()) {
             token = (String) tokenizer.getAsValue();
-            dsw   = new DatabaseScriptWriter(database, token, true, true);
+            dsw   = new ScriptWriterText(database, token, true, true);
 
             dsw.writeAll();
             dsw.close();
@@ -1887,8 +1889,8 @@ class DatabaseCommandInterpreter {
 
                 p = database.getProperties();
 
-                Trace.check(!p.isProtected(token), Trace.ACCESS_IS_DENIED,
-                            token);
+                Trace.check(p.isSetPropertyAllowed(token),
+                            Trace.ACCESS_IS_DENIED, token);
 
                 boolean isboolean  = p.isBoolean(token);
                 boolean isintegral = p.isIntegral(token);
@@ -1934,9 +1936,8 @@ class DatabaseCommandInterpreter {
 
                 token = tokenizer.getString();
 
-                int i =
-                    ArrayUtil.find(DatabaseScriptWriter.LIST_SCRIPT_FORMATS,
-                                   token);
+                int i = ArrayUtil.find(ScriptWriterBase.LIST_SCRIPT_FORMATS,
+                                       token);
 
                 if (i == 0 || i == 1 || i == 3) {
                     database.logger.setScriptType(i);

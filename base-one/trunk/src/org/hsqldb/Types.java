@@ -67,8 +67,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.IntValueHashMap;
 
 /**
  * Defines the constants that are used to identify SQL types for HSQLDB JDBC
@@ -83,7 +83,7 @@ import org.hsqldb.lib.IntKeyHashMap;
  */
 
 /** @todo fredt - move error and assert string literals to Trace */
-class Types {
+public class Types {
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -92,28 +92,28 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int ARRAY = 2003;
+    public static final int ARRAY = 2003;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIGINT</code>.
      */
-    static final int BIGINT = -5;
+    public static final int BIGINT = -5;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BINARY</code>.
      */
-    static final int BINARY = -2;
+    public static final int BINARY = -2;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIT</code>.
      */
-    static final int BIT = -7;
+    public static final int BIT = -7;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -122,7 +122,7 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int BLOB = 2004;
+    public static final int BLOB = 2004;
 
     /**
      * The constant in the Java programming language, somtimes referred to
@@ -131,14 +131,14 @@ class Types {
      *
      * @since JDK 1.4
      */
-    static final int BOOLEAN = 16;
+    public static final int BOOLEAN = 16;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>CHAR</code>.
      */
-    static final int CHAR = 1;
+    public static final int CHAR = 1;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -147,7 +147,7 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int CLOB = 2005;
+    public static final int CLOB = 2005;
 
     /**
      * The constant in the Java programming language, somtimes referred to
@@ -155,21 +155,21 @@ class Types {
      *
      * @since JDK 1.4
      */
-    static final int DATALINK = 70;
+    public static final int DATALINK = 70;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DATE</code>.
      */
-    static final int DATE = 91;
+    public static final int DATE = 91;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DECIMAL</code>.
      */
-    static final int DECIMAL = 3;
+    public static final int DECIMAL = 3;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -178,28 +178,28 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int DISTINCT = 2001;
+    public static final int DISTINCT = 2001;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DOUBLE</code>.
      */
-    static final int DOUBLE = 8;
+    public static final int DOUBLE = 8;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>FLOAT</code>.
      */
-    static final int FLOAT = 6;
+    public static final int FLOAT = 6;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>INTEGER</code>.
      */
-    static final int INTEGER = 4;
+    public static final int INTEGER = 4;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -208,35 +208,35 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int JAVA_OBJECT = 2000;
+    public static final int JAVA_OBJECT = 2000;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARBINARY</code>.
      */
-    static final int LONGVARBINARY = -4;
+    public static final int LONGVARBINARY = -4;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARCHAR</code>.
      */
-    static final int LONGVARCHAR = -1;
+    public static final int LONGVARCHAR = -1;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NULL</code>.
      */
-    static final int NULL = 0;
+    public static final int NULL = 0;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NUMERIC</code>.
      */
-    static final int NUMERIC = 2;
+    public static final int NUMERIC = 2;
 
     /**
      * The constant in the Java programming language that indicates
@@ -244,14 +244,14 @@ class Types {
      * gets mapped to a Java object that can be accessed via
      * the methods <code>getObject</code> and <code>setObject</code>.
      */
-    static final int OTHER = 1111;
+    public static final int OTHER = 1111;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>REAL</code>.
      */
-    static final int REAL = 7;
+    public static final int REAL = 7;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -260,14 +260,14 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int REF = 2006;
+    public static final int REF = 2006;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>SMALLINT</code>.
      */
-    static final int SMALLINT = 5;
+    public static final int SMALLINT = 5;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -276,42 +276,42 @@ class Types {
      *
      * @since JDK 1.2
      */
-    static final int STRUCT = 2002;
+    public static final int STRUCT = 2002;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIME</code>.
      */
-    static final int TIME = 92;
+    public static final int TIME = 92;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIMESTAMP</code>.
      */
-    static final int TIMESTAMP = 93;
+    public static final int TIMESTAMP = 93;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TINYINT</code>.
      */
-    static final int TINYINT = -6;
+    public static final int TINYINT = -6;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARBINARY</code>.
      */
-    static final int VARBINARY = -3;
+    public static final int VARBINARY = -3;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARCHAR</code>.
      */
-    static final int VARCHAR = 12;
+    public static final int VARCHAR = 12;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
@@ -320,14 +320,14 @@ class Types {
      *
      * @since SQL 200n
      */
-    static final int XML = 137;
+    public static final int XML = 137;
 
     /**
      * The default HSQLODB type sub-identifier. This indicates that an
      * HSQLDB type with this sub-type, if supported, is the very closest
      * thing HSQLDB offerers to the JDBC/SQL200n type
      */
-    static final int TYPE_SUB_DEFAULT = 1;
+    public static final int TYPE_SUB_DEFAULT = 1;
 
     /**
      * The IDENTITY type sub-identifier. This indicates that an HSQLDB type
@@ -335,14 +335,14 @@ class Types {
      * to the JDBC/SQL200n type, except that it also provides autoincrement
      * behaviour
      */
-    static final int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
+    public static final int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
 
     /**
      * The IGNORECASE type sub-identifier. This indicates that an HSQLDB type
      * with this sub-type, if supported,  is the closest thing HSQLDB offerers
      * to the JDBC/SQL200n type, except that case is ignored in comparisons
      */
-    static final int TYPE_SUB_IGNORECASE = TYPE_SUB_DEFAULT << 2;
+    public static final int TYPE_SUB_IGNORECASE = TYPE_SUB_DEFAULT << 2;
 
     /**
      * Every (type,type-sub) combination known in the HSQLDB context.
@@ -498,7 +498,7 @@ class Types {
     static final int SQL_SCTRUCTURED = 2;
 
     // non-standard type not in JDBC or SQL CLI
-    static final int VARCHAR_IGNORECASE = 100;
+    public static final int VARCHAR_IGNORECASE = 100;
 
 // lookup for types
 // boucherb@users - access changed for metadata 1.7.2
@@ -619,7 +619,7 @@ class Types {
     /**
      * Returns SQL type string for a java.sql.Types int value
      */
-    static String getTypeString(int type) {
+    public static String getTypeString(int type) {
         return (String) typeNames.get(type);
     }
 

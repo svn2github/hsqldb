@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.io.File;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.resources.BundleHandler;
 

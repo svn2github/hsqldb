@@ -69,6 +69,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
@@ -85,7 +88,7 @@ import java.io.IOException;
  *
  * @version 1.7.2
  */
-class CachedRow extends Row {
+public class CachedRow extends Row {
 
     static final int NO_POS = -1;
     protected Table  tTable;
@@ -116,7 +119,7 @@ class CachedRow extends Row {
      *  means that once a row is created its data cannot change.
      *  (correct as of version 1_7_2_alpha_n)
      */
-    CachedRow(Table t, Object o[]) throws HsqlException {
+    public CachedRow(Table t, Object o[]) throws HsqlException {
 
         tTable = t;
 
@@ -140,9 +143,8 @@ class CachedRow extends Row {
     /**
      *  constructor when read from the disk into the Cache
      */
-    CachedRow(Table t,
-              DatabaseRowInputInterface in)
-              throws IOException, HsqlException {
+    public CachedRow(Table t,
+                     RowInputInterface in) throws IOException, HsqlException {
 
         tTable      = t;
         iPos        = in.getPos();
@@ -212,7 +214,7 @@ class CachedRow extends Row {
     /**
      * Returns the table which this Row belongs to.
      */
-    Table getTable() {
+    public Table getTable() {
         return tTable;
     }
 
@@ -255,8 +257,7 @@ class CachedRow extends Row {
      *  for each row deleted or inserted, the Nodes for several other rows
      *  will change.
      */
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, HsqlException {
+    void write(RowOutputInterface out) throws IOException, HsqlException {
 
         writeNodes(out);
 
@@ -272,7 +273,7 @@ class CachedRow extends Row {
      *  The Nodes are stored first, immediately after the row size. This
      *  methods writes this information out.
      */
-    private void writeNodes(DatabaseRowOutputInterface out)
+    private void writeNodes(RowOutputInterface out)
     throws IOException, HsqlException {
 
         out.writeSize(storageSize);

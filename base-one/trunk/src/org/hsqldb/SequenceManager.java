@@ -31,8 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HashMappedList;
 
 /**
  * @author fredt@user

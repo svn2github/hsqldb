@@ -67,18 +67,19 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 
-//import java.util.zip.
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlTimer;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ZipUnzipFile;
-import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.scriptio.ScriptReaderBase;
+import org.hsqldb.scriptio.ScriptWriterBase;
+import org.hsqldb.scriptio.ScriptWriterText;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to move operations on the database.properties files to new
@@ -137,7 +138,7 @@ class Log {
     private HsqlDatabaseProperties pProperties;
     private String                 sName;
     private Database               dDatabase;
-    private DatabaseScriptWriter   dbScriptWriter;
+    private ScriptWriterText       dbScriptWriter;
     private String                 sFileScript;
     private String                 sFileCache;
     private String                 sFileBackup;
@@ -227,9 +228,9 @@ class Log {
 
         try {
             if (dDatabase.filesInJar || FileUtil.exists(sFileScript)) {
-                DatabaseScriptReader scr =
-                    DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                        sFileScript, scriptFormat);
+                ScriptReaderBase scr =
+                    ScriptReaderBase.newScriptReader(dDatabase, sFileScript,
+                                                     scriptFormat);
 
                 scr.readAll(dDatabase.sessionManager.getSysSession());
                 scr.close();
@@ -239,7 +240,7 @@ class Log {
         }
 
         ScriptRunner.runScript(dDatabase, sFileLog,
-                               DatabaseScriptWriter.SCRIPT_TEXT_170);
+                               ScriptWriterBase.SCRIPT_TEXT_170);
 
         bRestoring = false;
     }
@@ -259,7 +260,7 @@ class Log {
         maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
         maxLogSize = maxLogSize * 1024 * 1024;
         scriptFormat = pProperties.getIntegerProperty("hsqldb.script_format",
-                DatabaseScriptWriter.SCRIPT_TEXT_170);
+                ScriptWriterBase.SCRIPT_TEXT_170);
         filesReadOnly = dDatabase.filesReadOnly;;
         sFileScript   = sName + ".script";
         sFileLog      = sName + ".log";
@@ -401,7 +402,7 @@ class Log {
 
         // now its done completely
         pProperties.setProperty("modified", "no");
-        pProperties.setProperty("version", jdbcDriver.VERSION);
+        pProperties.setProperty("version", org.hsqldb.jdbc.jdbcUtil.VERSION);
         pProperties.setProperty("hsqldb.compatible_version", "1.7.2");
         pProperties.save();
 
@@ -609,10 +610,8 @@ class Log {
     private void openLog() throws HsqlException {
 
         try {
-            dbScriptWriter =
-                DatabaseScriptWriter.newDatabaseScriptWriter(this.dDatabase,
-                    sFileLog, false, false,
-                    DatabaseScriptWriter.SCRIPT_TEXT_170);
+            dbScriptWriter = new ScriptWriterText(dDatabase, sFileLog, false,
+                                                  false);
 
             dbScriptWriter.setWriteDelay(writeDelay);
 
@@ -664,9 +663,8 @@ class Log {
 
         // script; but only positions of cached tables, not full
         //fredt - to do - flag for chache set index
-        DatabaseScriptWriter scw =
-            DatabaseScriptWriter.newDatabaseScriptWriter(dDatabase,
-                sFileScript + ".new", full, true, scriptFormat);
+        ScriptWriterBase scw = ScriptWriterBase.newScriptWriter(dDatabase,
+            sFileScript + ".new", full, true, scriptFormat);
 
         scw.writeAll();
         scw.close();

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.IOException;
+
 import org.hsqldb.lib.InOutUtil;
 
 /**
@@ -46,9 +47,9 @@ public class HTTPClientConnection extends HSQLClientConnection {
 
     final static String ENCODING = "8859_1";
 
-    HTTPClientConnection(String host, int port, String path, String database,
-                         boolean isTLS, String user,
-                         String password) throws HsqlException {
+    public HTTPClientConnection(String host, int port, String path,
+                                String database, boolean isTLS, String user,
+                                String password) throws HsqlException {
         super(host, port, path, database, isTLS, user, password);
     }
 

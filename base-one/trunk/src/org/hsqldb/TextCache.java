@@ -32,11 +32,15 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.io.EOFException;
 import java.io.UnsupportedEncodingException;
-import org.hsqldb.lib.HsqlByteArrayOutputStream;
+
 import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.rowio.RowInputText;
+import org.hsqldb.rowio.RowInputTextQuoted;
+import org.hsqldb.rowio.RowOutputText;
+import org.hsqldb.rowio.RowOutputTextQuoted;
+import org.hsqldb.scriptio.ScriptWriterText;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle
@@ -50,22 +54,22 @@ import org.hsqldb.lib.StringConverter;
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
 
 /** @todo fredt - file error messages to Trace */
-class TextCache extends DataFileCache {
+public class TextCache extends DataFileCache {
 
     //state of Cache
-    protected boolean              isIndexingSource;
-    public static final String     NL = System.getProperty("line.separator");
-    String                         fs;
-    String                         vs;
-    String                         lvs;
-    String                         stringEncoding;
-    protected boolean              readOnly;
-    protected TextDatabaseRowInput rowIn;
-    protected boolean              isQuoted;
-    protected boolean              isAllQuoted;
-    protected boolean              ignoreFirst;
-    protected String               ignoredFirst = NL;
-    protected Table                table;
+    protected boolean          isIndexingSource;
+    public static final String NL = System.getProperty("line.separator");
+    String                     fs;
+    String                     vs;
+    String                     lvs;
+    String                     stringEncoding;
+    protected boolean          readOnly;
+    protected RowInputText     rowIn;
+    protected boolean          isQuoted;
+    protected boolean          isAllQuoted;
+    protected boolean          ignoreFirst;
+    protected String           ignoredFirst = NL;
+    protected Table            table;
 
     /**
      *  The source string for a cached table is evaluated and the parameters
@@ -144,14 +148,13 @@ class TextCache extends DataFileCache {
 
         try {
             if (isQuoted || isAllQuoted) {
-                rowIn = new QuotedTextDatabaseRowInput(fs, vs, lvs,
-                                                       isAllQuoted);
-                rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs,
-                        isAllQuoted, stringEncoding);
+                rowIn = new RowInputTextQuoted(fs, vs, lvs, isAllQuoted);
+                rowOut = new RowOutputTextQuoted(fs, vs, lvs, isAllQuoted,
+                                                 stringEncoding);
             } else {
-                rowIn = new TextDatabaseRowInput(fs, vs, lvs, false);
-                rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false,
-                                                   stringEncoding);
+                rowIn = new RowInputText(fs, vs, lvs, false);
+                rowOut = new RowOutputText(fs, vs, lvs, false,
+                                           stringEncoding);
             }
         } catch (IOException e) {
 
@@ -364,7 +367,7 @@ class TextCache extends DataFileCache {
         if (storeOnInsert &&!isIndexingSource) {
             int pos = r.iPos;
             int length = r.storageSize
-                         - DatabaseScriptWriter.BYTES_LINE_SEP.length;
+                         - ScriptWriterText.BYTES_LINE_SEP.length;
 
             rowOut.reset();
 
@@ -372,7 +375,7 @@ class TextCache extends DataFileCache {
 
             try {
                 out.fill(' ', length);
-                out.write(DatabaseScriptWriter.BYTES_LINE_SEP);
+                out.write(ScriptWriterText.BYTES_LINE_SEP);
                 rFile.seek(pos);
                 rFile.write(out.getBuffer(), 0, out.size());
             } catch (IOException e) {

@@ -43,14 +43,17 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 public class NumberSequence {
 
     private HsqlName name;
+
     // original start value - used in CREATE and ALTER commands
-    private long     startValue;
+    private long startValue;
+
     // present value
-    private long     currValue;
+    private long currValue;
+
     // last value
-    private long     lastValue;
-    private long     increment;
-    private int      dataType;
+    private long lastValue;
+    private long increment;
+    private int  dataType;
 
     /**
      * constructor with initial value and increment;
@@ -58,7 +61,7 @@ public class NumberSequence {
     NumberSequence(HsqlName name, long value, long increment, int type) {
 
         this.name      = name;
-        startValue = currValue   = lastValue = value;
+        startValue     = currValue = lastValue = value;
         this.increment = increment;
         dataType       = type;
     }
@@ -146,7 +149,9 @@ public class NumberSequence {
     }
 
     void reset(long value, long increment) {
+
         reset(value);
+
         this.increment = increment;
     }
 

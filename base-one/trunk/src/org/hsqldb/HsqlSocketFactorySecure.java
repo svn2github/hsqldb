@@ -32,14 +32,14 @@
 package org.hsqldb;
 
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
-import javax.security.cert.X509Certificate;
+
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLServerSocket;
@@ -47,6 +47,8 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.security.cert.X509Certificate;
+
 import org.hsqldb.lib.StringConverter;
 
 /**

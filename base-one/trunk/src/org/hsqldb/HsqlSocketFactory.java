@@ -34,8 +34,8 @@ package org.hsqldb;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * Base class for producing the Socket objects used by HSQLDB.

@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-
 /**
  * Representation of an instance of OTHER field data.<p>
  *
@@ -79,7 +77,7 @@ public class JavaObject {
      * fromfile is a marker argument to fully distinguish this from the other
      * constructor
      */
-    JavaObject(byte[] data, boolean fromfile) {
+    public JavaObject(byte[] data, boolean fromfile) {
         this.data = data;
     }
 
@@ -88,7 +86,7 @@ public class JavaObject {
      * Inside the engine, it is used to convert a value into an object
      * of type OTHER.
      */
-    JavaObject(Object o, boolean serialise) throws HsqlException {
+    public JavaObject(Object o, boolean serialise) throws HsqlException {
 
         if (serialise) {
             data = Column.serialize(o);
@@ -97,7 +95,7 @@ public class JavaObject {
         }
     }
 
-    byte[] getBytes() throws HsqlException {
+    public byte[] getBytes() throws HsqlException {
 
         if (data == null) {
             data = Column.serialize(object);
@@ -106,7 +104,7 @@ public class JavaObject {
         return data;
     }
 
-    int getBytesLength() throws HsqlException {
+    public int getBytesLength() throws HsqlException {
 
         if (data == null) {
             data = Column.serialize(object);
@@ -121,7 +119,7 @@ public class JavaObject {
      * type OTHER to another type. It will throw if the OTHER is an instance
      * of a classe that is not available.
      */
-    Object getObject() throws HsqlException {
+    public Object getObject() throws HsqlException {
 
         if (object == null) {
             object = Column.deserialize(data);

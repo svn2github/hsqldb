@@ -37,7 +37,6 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Locale;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users
@@ -64,7 +63,7 @@ import java.util.Locale;
  * if the db is accessed from different time zones.
  *
  */
-class HsqlDateTime {
+public class HsqlDateTime {
 
     /**
      * A reusable static value for today's date. Should only be accessed
@@ -120,7 +119,7 @@ class HsqlDateTime {
      * @param  nano nanoseconds
      * @return  Timestamp object
      */
-    static Timestamp timestampValue(long time, int nano) {
+    public static Timestamp timestampValue(long time, int nano) {
 
         Timestamp ts = new Timestamp(time);
 
@@ -139,7 +138,7 @@ class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd</code>
      */
-    static Date dateValue(String s) {
+    public static Date dateValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException(
@@ -176,7 +175,7 @@ class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>hh:mm:ss</code>
      */
-    static Time timeValue(String s) {
+    public static Time timeValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException(
@@ -243,8 +242,8 @@ class HsqlDateTime {
     static SimpleDateFormat sdft  = new SimpleDateFormat(sdftPattern);
     static SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
-    static String getTimestampString(Timestamp x,
-                                     Calendar cal) throws Exception {
+    public static String getTimestampString(Timestamp x,
+            Calendar cal) throws Exception {
 
         synchronized (sdfts) {
             sdfts.setCalendar(cal == null ? tempCal
@@ -254,7 +253,8 @@ class HsqlDateTime {
         }
     }
 
-    static String getTimeString(Time x, Calendar cal) throws Exception {
+    public static String getTimeString(Time x,
+                                       Calendar cal) throws Exception {
 
         synchronized (sdft) {
             sdft.setCalendar(cal == null ? tempCal
@@ -264,7 +264,8 @@ class HsqlDateTime {
         }
     }
 
-    static String getDateString(Date x, Calendar cal) throws Exception {
+    public static String getDateString(Date x,
+                                       Calendar cal) throws Exception {
 
         synchronized (sdfd) {
             sdfd.setCalendar(cal == null ? tempCal
@@ -302,7 +303,7 @@ class HsqlDateTime {
         return today;
     }
 
-    static void resetToDate(Calendar cal) {
+    public static void resetToDate(Calendar cal) {
 
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
@@ -310,7 +311,7 @@ class HsqlDateTime {
         cal.set(Calendar.MILLISECOND, 0);
     }
 
-    static void resetToTime(Calendar cal) {
+    public static void resetToTime(Calendar cal) {
 
         cal.set(Calendar.YEAR, 0);
         cal.set(Calendar.MONTH, 0);

@@ -165,7 +165,7 @@ class Row {
      * primary index, an extra internal field is included in the last
      * position of this array.
      */
-    Object[] getData() {
+    public Object[] getData() {
         return oData;
     }
 

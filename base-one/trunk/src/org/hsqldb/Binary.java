@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.IOException;
+
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.ArrayUtil;
 
@@ -53,7 +54,7 @@ public class Binary {
      * This constructor is used only from classes implementing the JDBC
      * interfaces.
      */
-    Binary(byte[] data) {
+    public Binary(byte[] data) {
         this.data = data;
     }
 
@@ -64,15 +65,15 @@ public class Binary {
      * fromfile is a marker argument to fully distinguish this from the other
      * constructor
      */
-    Binary(byte[] data, boolean fromfile) throws IOException {
+    public Binary(byte[] data, boolean fromfile) throws IOException {
         this.data = data;
     }
 
-    byte[] getBytes() {
+    public byte[] getBytes() {
         return data;
     }
 
-    int getBytesLength() {
+    public int getBytesLength() {
         return data.length;
     }
 

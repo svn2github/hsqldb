@@ -69,11 +69,10 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.Properties;
+
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
@@ -113,7 +112,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *
  * @version  1.7.2
  */
-class Database {
+public class Database {
 
     int            databaseID;
     private String sType;
@@ -254,7 +253,7 @@ class Database {
             databaseProperties.load();
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
-            // overload file database properties with any passed on URL line
+            // overload file database properties with any passed on URL line // todo fred - do not store password etc
             if (urlProperties != null) {
                 for (Enumeration e = urlProperties.propertyNames();
                         e.hasMoreElements(); ) {
@@ -413,8 +412,7 @@ class Database {
         return filesReadOnly;
     }
 
-// ----------------------------------------------------------------------------
-    boolean isFilesInJar() {
+    public boolean isFilesInJar() {
         return filesInJar;
     }
 
@@ -425,7 +423,7 @@ class Database {
      *
      * @return  a HsqlArrayList of all registered non-system tables and views
      */
-    HsqlArrayList getTables() {
+    public HsqlArrayList getTables() {
         return tTable;
     }
 
@@ -444,7 +442,7 @@ class Database {
      * @param  ref if true, this Database object enforces referential
      *      integrity, else not
      */
-    void setReferentialIntegrity(boolean ref) {
+    public void setReferentialIntegrity(boolean ref) {
         bReferentialIntegrity = ref;
     }
 
@@ -503,7 +501,7 @@ class Database {
      * @return  the user table or view, or system table
      * @throws  HsqlException if there is no such table or view
      */
-    Table getTable(String name, Session session) throws HsqlException {
+    public Table getTable(String name, Session session) throws HsqlException {
 
         Table t = findUserTable(name, session);
 
@@ -713,6 +711,10 @@ class Database {
         TableWorks tw = new TableWorks(t);
 
         tw.dropIndex(indexname);
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 
     /**

@@ -29,24 +29,25 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.jdbc;
 
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
+
 import java.util.Hashtable;
 
-// fredt@users 20020130 - patch 416437 by deforest@users
+/**
+ * @author deforest@users
+ * @version 1.7.2
+ */
 public class jdbcDataSourceFactory implements ObjectFactory {
 
-    /**
-     * getObjectInstance method comment.
-     */
     public Object getObjectInstance(Object obj, Name name, Context ctx,
                                     Hashtable env) throws Exception {
 
-        String    dsClass = "org.hsqldb.jdbcDataSource";
+        String    dsClass = "org.hsqldb.jdbc.jdbcDataSource";
         Reference ref     = (Reference) obj;
 
         if (ref.getClassName().equals(dsClass)) {

@@ -69,6 +69,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.rowio.RowInputInterface;
+import org.hsqldb.rowio.RowOutputInterface;
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
@@ -93,7 +96,7 @@ class DiskNode extends Node {
     private int   iParent = NO_POS;
     private int   iId;    // id of Index object for this Node
 
-    DiskNode(CachedRow r, DatabaseRowInputInterface in,
+    DiskNode(CachedRow r, RowInputInterface in,
              int id) throws IOException, HsqlException {
 
         iId      = id;
@@ -306,8 +309,7 @@ class DiskNode extends Node {
         return n == this;
     }
 
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, HsqlException {
+    void write(RowOutputInterface out) throws IOException, HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -330,7 +332,7 @@ class DiskNode extends Node {
                            : row.getNode(iId);
     }
 
-    void writeTranslate(DatabaseRowOutputInterface out,
+    void writeTranslate(RowOutputInterface out,
                         org.hsqldb.lib.DoubleIntTable lookup)
                         throws IOException, HsqlException {
 
@@ -340,8 +342,7 @@ class DiskNode extends Node {
         writeTranslatePointer(iParent, out, lookup);
     }
 
-    private void writeTranslatePointer(int pointer,
-                                       DatabaseRowOutputInterface out,
+    private void writeTranslatePointer(int pointer, RowOutputInterface out,
                                        org.hsqldb.lib.DoubleIntTable lookup)
                                        throws IOException, HsqlException {
 

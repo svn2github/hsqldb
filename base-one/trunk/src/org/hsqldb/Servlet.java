@@ -67,11 +67,19 @@
 
 package org.hsqldb;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.hsqldb.rowio.RowInputBinary;
+import org.hsqldb.rowio.RowOutputBinary;
 
 // fredt@users 20020130 - patch 475586 by wreissen@users
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
@@ -106,12 +114,12 @@ import java.io.PrintWriter;
  */
 public class Servlet extends javax.servlet.http.HttpServlet {
 
-    static final int      BUFFER_SIZE = 256;
-    String                dbType;
-    String                dbPath;
-    String                errorStr;
-    BinaryServerRowOutput rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
-    BinaryServerRowInput  rowIn  = new BinaryServerRowInput(rowOut);
+    static final int BUFFER_SIZE = 256;
+    String           dbType;
+    String           dbPath;
+    String           errorStr;
+    RowOutputBinary  rowOut = new RowOutputBinary(BUFFER_SIZE);
+    RowInputBinary   rowIn  = new RowInputBinary(rowOut);
 
     /**
      * Method declaration

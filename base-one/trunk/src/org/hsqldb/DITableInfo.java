@@ -31,12 +31,12 @@
 
 package org.hsqldb;
 
-import java.io.File;
 import java.sql.DatabaseMetaData;
 import java.util.Locale;
+
 import org.hsqldb.lib.FileUtil;
-import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
+import org.hsqldb.store.ValuePool;
 
 /**
  * Provides extended information about HSQLDB tables and their
