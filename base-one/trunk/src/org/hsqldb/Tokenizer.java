@@ -220,7 +220,7 @@ class Tokenizer {
     }
 
     /**
-     * Method declaration
+     * This is used solely for user name and password
      *
      *
      * @return

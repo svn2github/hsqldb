@@ -2202,7 +2202,7 @@ class Database {
     private Result processDrop(Tokenizer c,
                                Session session) throws SQLException {
 
-        session.checkDDLWrite();
+        session.checkReadWrite();
         session.checkAdmin();
         session.setScripting(true);
 
@@ -2242,18 +2242,28 @@ class Database {
                     }
                 }
 
+                Table t = findUserTable(tablename, session);
+
+                if (t != null &&!t.isTemp()) {
+                    session.checkDDLWrite();
+                }
+
                 dropTable(tablename, dropmode, isview, session);
                 break;
 
             case USER :
+                session.checkDDLWrite();
                 aAccess.dropUser(c.getStringToken());
                 break;
 
             case TRIGGER :
+                session.checkDDLWrite();
                 dropTrigger(c.getString(), session);
                 break;
 
             case INDEX :
+                session.checkDDLWrite();
+
                 String indexname = c.getName();
 
                 dropIndex(indexname, session);
