@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.10 2004/06/01 17:37:48 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.11 2004/06/04 11:26:33 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.10 $</edition>
-    <pubdate>$Date: 2004/06/01 17:37:48 $</pubdate>
+    <edition>$Revision: 1.11 $</edition>
+    <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -125,7 +125,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
             value must be specified.
         </para> <para>
             If an SQL view includes a SELECT * FROM &lt;tablename&gt; in its select
-            statement, the new columns is added to the view. This is a
+            statement, the new column is added to the view. This is a
 			non-standard feature which is likely to change in the future.
         </para>
         <informalexample><programlisting>
@@ -136,7 +136,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
             Will not work if column is part of a primary key, unique or foreign 
             key constraint.
         </para> <para>
-            This will fail if an SQL view  includes the column.
+            This will fail if an SQL view includes the column.
         </para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
@@ -148,7 +148,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
     ALTER TABLE &lt;tablename&gt; ADD [CONSTRAINT &lt;constraintname&gt;] CHECK (&lt;search condition&gt;);</programlisting>
         </informalexample>
         <para>
-            Adds a check  constraint to the table.
+            Adds a check constraint to the table.
             In the current version, a check constraint can reference only the 
             row being inserted or updated.
         </para>
@@ -1116,7 +1116,7 @@ SHUTDOWN [IMMEDIATELY | COMPACT | SCRIPT<footnoteref linkend="posthyper"/>];</pr
                     This operation shrinks all files to the minimum size.
                 </para></listitem>
             </varlistentry>
-            <varlistentry><term>SHUTDOWN COMPACT</term>
+            <varlistentry><term>SHUTDOWN SCRIPT</term>
                 <listitem><para>
                     Similar to SHUTDOWN COMPACT but after writing the script 
                     and deleting the existing files, it does not rewrite the 

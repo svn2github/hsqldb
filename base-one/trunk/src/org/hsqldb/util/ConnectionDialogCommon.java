@@ -179,28 +179,36 @@ class ConnectionDialogCommon {
 
     static HashMappedList loadRecentConnectionSettings() throws IOException {
 
-        if (recentSettings == null) {
-            String dir = getTempDir();
+        try {
+            if (recentSettings == null) {
+                String dir = getTempDir();
 
-            if (dir == null) {
-                HashMappedList list = new HashMappedList();
+                if (dir == null) {
+                    HashMappedList list = new HashMappedList();
 
-                list.add(emptySetting.getName(), emptySetting);
+                    list.add(emptySetting.getName(), emptySetting);
 
-                return list;
+                    return list;
+                }
+
+                recentSettings = new File(dir, fileName);
+
+                if (!recentSettings.exists()) {
+                    recentSettings.createNewFile();
+
+                    HashMappedList list = new HashMappedList();
+
+                    list.add(emptySetting.getName(), emptySetting);
+
+                    return list;
+                }
             }
+        } catch (Throwable e) {
+            HashMappedList list = new HashMappedList();
 
-            recentSettings = new File(dir + fileName);
+            list.add(emptySetting.getName(), emptySetting);
 
-            if (!recentSettings.exists()) {
-                recentSettings.createNewFile();
-
-                HashMappedList list = new HashMappedList();
-
-                list.add(emptySetting.getName(), emptySetting);
-
-                return list;
-            }
+            return list;
         }
 
         FileInputStream   in        = new FileInputStream(recentSettings);
@@ -258,38 +266,40 @@ class ConnectionDialogCommon {
      * @param settings ConnectionSetting[]
      * @throw IOException if something goes wrong while writing
      */
-    private static void storeRecentConnectionSettings(HashMappedList settings)
-    throws IOException {
+    private static void storeRecentConnectionSettings(
+            HashMappedList settings) {
 
-        if (recentSettings == null) {
-            String dir = getTempDir();
+        try {
+            if (recentSettings == null) {
+                String dir = getTempDir();
 
-            if (dir == null) {
+                if (dir == null) {
+                    return;
+                }
+
+                recentSettings = new File(dir, fileName);
+
+                if (!recentSettings.exists()) {
+                    recentSettings.createNewFile();
+                }
+            }
+
+            if (settings == null || settings.size() == 0) {
                 return;
             }
 
-            recentSettings = new File(dir + fileName);
+            // setup a stream to a physical file on the filesystem
+            FileOutputStream   out = new FileOutputStream(recentSettings);
+            ObjectOutputStream objStream = new ObjectOutputStream(out);
 
-            if (!recentSettings.exists()) {
-                recentSettings.createNewFile();
+            for (int i = 0; i < settings.size(); i++) {
+                objStream.writeObject(settings.get(i));
             }
-        }
 
-        if (settings == null || settings.size() == 0) {
-            return;
-        }
-
-        // setup a stream to a physical file on the filesystem
-        FileOutputStream   out       = new FileOutputStream(recentSettings);
-        ObjectOutputStream objStream = new ObjectOutputStream(out);
-
-        for (int i = 0; i < settings.size(); i++) {
-            objStream.writeObject(settings.get(i));
-        }
-
-        objStream.flush();
-        objStream.close();
-        out.close();
+            objStream.flush();
+            objStream.close();
+            out.close();
+        } catch (Throwable t) {}
     }
 
     /**
@@ -297,25 +307,27 @@ class ConnectionDialogCommon {
      */
     static void deleteRecentConnectionSettings() {
 
-        if (recentSettings == null) {
-            String dir = getTempDir();
+        try {
+            if (recentSettings == null) {
+                String dir = getTempDir();
 
-            if (dir == null) {
+                if (dir == null) {
+                    return;
+                }
+
+                recentSettings = new File(dir, fileName);
+            }
+
+            if (!recentSettings.exists()) {
+                recentSettings = null;
+
                 return;
             }
 
-            recentSettings = new File(dir + fileName);
-        }
+            recentSettings.delete();
 
-        if (!recentSettings.exists()) {
             recentSettings = null;
-
-            return;
-        }
-
-        recentSettings.delete();
-
-        recentSettings = null;
+        } catch (Throwable t) {}
     }
 
     private static String tmpdir = null;

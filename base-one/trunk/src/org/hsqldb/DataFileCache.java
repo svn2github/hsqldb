@@ -158,7 +158,7 @@ public class DataFileCache extends Cache {
 
             rFile = null;
 
-            boolean empty = new File(sName).length() < INITIAL_FREE_POS;
+            boolean empty = iFreePos == INITIAL_FREE_POS;
 
             if (empty) {
                 new File(sName).delete();

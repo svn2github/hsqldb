@@ -2075,16 +2075,26 @@ public class Expression {
                             case2.dataType, ALTERNATIVE);
                 } else if (Types.isCharacterType(case1.dataType)
                            && Types.isCharacterType(case2.dataType)) {
-
-                    // Good enough for now?
                     dataType = Types.LONGVARCHAR;
                 } else if (case1.dataType != case2.dataType) {
-                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
-                                      Trace.Expression_resolveTypes7,
-                                      new String[] {
-                        Types.getTypeString(case1.dataType),
-                        Types.getTypeString(case2.dataType)
-                    });
+                    if (case2.exprType == Expression.VALUE) {
+                        dataType = case2.dataType = case1.dataType;
+                        case2.valueData =
+                            Column.convertObject(case2.valueData, dataType);
+                    } else if (case1.exprType == Expression.VALUE) {
+                        dataType = case1.dataType = case2.dataType;
+                        case1.valueData =
+                            Column.convertObject(case1.valueData, dataType);
+                    } else {
+                        throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                                          Trace.Expression_resolveTypes7,
+                                          new String[] {
+                            Types.getTypeString(case1.dataType),
+                            Types.getTypeString(case2.dataType)
+                        });
+                    }
+                } else {
+                    dataType = case1.dataType;
                 }
 
                 break;

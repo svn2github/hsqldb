@@ -119,6 +119,10 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         Trace.printSystemOut("NIO next enlargeBuffer():  " + newSize);
 
+        if (bufferLength > 1 << 24) {
+            System.gc();
+        }
+
         try {
             buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
                                           : FileChannel.MapMode.READ_WRITE, 0,
@@ -127,6 +131,8 @@ class NIOScaledRAFile extends ScaledRAFile {
             isNio   = false;
             buffer  = null;
             channel = null;
+
+            System.gc();
 
             return;
         }
@@ -258,5 +264,6 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         Trace.printSystemOut("NIO next file.close()");
         file.close();
+        System.gc();
     }
 }

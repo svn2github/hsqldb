@@ -1,7 +1,8 @@
 Readme File
 
-2004.06.05 
+2004.06.07 
 
+Fixed reported bugs
 Minor changes
 
 2004.05.31 RC_6b
