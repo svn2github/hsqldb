@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.29 2004/06/05 14:32:05 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.30 2004/06/06 01:35:18 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.29 $
+ * @version $Revision: 1.30 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -442,7 +442,7 @@ public class SqlTool {
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
         File autoFile = null;
-        if (!noautoFile) {
+        if (interactive && !noautoFile) {
             autoFile = new File(System.getProperty("user.home") + "/auto.sql");
             if ((!autoFile.isFile()) || !autoFile.canRead()) {
                 autoFile = null;
