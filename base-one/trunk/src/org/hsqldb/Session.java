@@ -68,10 +68,11 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
+import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlHashSet;
-import org.hsqldb.lib.UnifiedTable;
+import org.hsqldb.lib.HsqlObjectToIntMap;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
@@ -87,21 +88,21 @@ import org.hsqldb.lib.UnifiedTable;
  */
 class Session {
 
-    private Database       dDatabase;
-    private User           uUser;
-    private HsqlArrayList  tTransaction;
-    private boolean        isAutoCommit;
-    private boolean        isNestedTransaction;
-    private boolean        isNestedOldAutoCommit;
-    private int            nestedOldTransIndex;
-    private boolean        isReadOnly;
-    private int            iMaxRows;
-    private Object         iLastIdentity;
-    private boolean        isClosed;
-    private int            iId;
-    private UnifiedTable   savepoints;
-    private boolean        script;
-    private jdbcConnection intConnection;
+    private Database           dDatabase;
+    private User               uUser;
+    private HsqlArrayList      tTransaction;
+    private boolean            isAutoCommit;
+    private boolean            isNestedTransaction;
+    private boolean            isNestedOldAutoCommit;
+    private int                nestedOldTransIndex;
+    private boolean            isReadOnly;
+    private int                iMaxRows;
+    private Object             iLastIdentity;
+    private boolean            isClosed;
+    private int                iId;
+    private HsqlObjectToIntMap savepoints;
+    private boolean            script;
+    private jdbcConnection     intConnection;
 
     /**
      *  closes the session.
@@ -110,16 +111,6 @@ class Session {
      */
     public void finalize() throws SQLException {
         disconnect();
-    }
-
-    /**
-     *  Constructor declaration
-     *
-     * @param  c
-     * @param  id
-     */
-    Session(Session c, int id) {
-        this(c.dDatabase, c.uUser, true, c.isReadOnly, id);
     }
 
     /**
@@ -140,9 +131,6 @@ class Session {
         tTransaction = new HsqlArrayList();
         isAutoCommit = autocommit;
         isReadOnly   = readonly;
-        savepoints   = new UnifiedTable(Object.class, 2, 4, 4);
-
-        savepoints.sort(0, true);
     }
 
     /**
@@ -340,8 +328,12 @@ class Session {
      * @throws  SQLException
      */
     void commit() throws SQLException {
+
         tTransaction.clear();
-        savepoints.clear();
+
+        if (savepoints != null) {
+            savepoints.clear();
+        }
     }
 
     void rollback() {
@@ -355,7 +347,10 @@ class Session {
         }
 
         tTransaction.clear();
-        savepoints.clear();
+
+        if (savepoints != null) {
+            savepoints.clear();
+        }
     }
 
     /**
@@ -368,16 +363,11 @@ class Session {
      */
     void savepoint(String name) throws SQLException {
 
-        int rowindex = savepoints.search(name);
-
-        if (rowindex < 0) {
-            savepoints.addRow(new Object[] {
-                name, new Integer(tTransaction.size())
-            });
-            savepoints.sort(0, true);
-        } else {
-            savepoints.setCell(rowindex, 1, new Integer(tTransaction.size()));
+        if (savepoints == null) {
+            savepoints = new HsqlObjectToIntMap(4);
         }
+
+        savepoints.put(name, tTransaction.size());
     }
 
     /**
@@ -389,29 +379,31 @@ class Session {
      */
     void rollbackToSavepoint(String name) throws SQLException {
 
-        int index = savepoints.search(name);
+        int index = -1;
+
+        if (savepoints != null) {
+            index = savepoints.get(name);
+        }
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
 
-        Integer tidx = (Integer) savepoints.getCell(index, 1);
-        int     i    = tTransaction.size();
-        int     j    = tidx.intValue();
+        int i = tTransaction.size() - 1;
 
-        while (i-- > j) {
+        for (; i >= index; i--) {
             Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback(this);
             tTransaction.remove(i);
         }
 
-        // remove all rows above tidx
-        i = savepoints.size();
+        // remove all rows above index
+        Enumeration en = savepoints.keys();
 
-        while (i-- > 0) {
-            Integer level = (Integer) savepoints.getCell(i, 1);
+        for (; en.hasMoreElements(); ) {
+            Object key = en.nextElement();
 
-            if (level.intValue() >= tidx.intValue()) {
-                savepoints.removeRow(i);
+            if (savepoints.get(key) >= index) {
+                savepoints.remove(key);
             }
         }
     }

@@ -275,7 +275,7 @@ class Log implements Runnable {
                     DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
                         sFileScript, logType);
 
-                scr.readAll(dDatabase.getSysSession());
+                scr.readAll(dDatabase.sessionManager.getSysSession());
                 scr.close();
             } catch (IOException e) {
 
@@ -290,7 +290,7 @@ class Log implements Runnable {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         if (pProperties.isPropertyTrue("hsqldb.files_readonly")) {
-            filesReadOnly = true;               // The log should be read only
+            filesReadOnly = true;    // The log should be read only
 
             // The database kept in read/write mode
             //dDatabase.setReadOnly();
@@ -311,8 +311,8 @@ class Log implements Runnable {
 
             return false;
         }
-// ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
         boolean needbackup = false;
         String  state      = pProperties.getProperty("modified");
 
@@ -347,7 +347,7 @@ class Log implements Runnable {
                 DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
                     sFileScript, logType);
 
-            scr.readAll(dDatabase.getSysSession());
+            scr.readAll(dDatabase.sessionManager.getSysSession());
             scr.close();
         } catch (IOException e) {
 
@@ -660,7 +660,7 @@ class Log implements Runnable {
 
             HsqlArrayList sessions =
                 dDatabase.sessionManager.listVisibleSessions(
-                    dDatabase.getSysSession());
+                    dDatabase.sessionManager.getSysSession());
             Enumeration en = sessions.elements();
 
             for (; en.hasMoreElements(); ) {

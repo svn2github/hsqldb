@@ -124,8 +124,12 @@ class UserManager {
      * created
      */
     UserManager() throws SQLException {
+
         uUser   = new HsqlArrayList();
         uPublic = createUser("PUBLIC", null, false);
+
+        uPublic.grant("java.lang.Math", UserManager.ALL);
+        uPublic.grant("org.hsqldb.Library", UserManager.ALL);
     }
 
     /**
@@ -567,12 +571,6 @@ class UserManager {
      *
      */
     static User createSysUser(Database database) throws SQLException {
-
-        // enforce safety - only a Database object should be allowed
-        // to create the SYS user, and only at startup
-        Trace.check(database.getSysSession() == null,
-                    Trace.USER_ALREADY_EXISTS, SYS_USER_NAME);
-
         return new User(SYS_USER_NAME, null, true, null);
     }
 }

@@ -29,7 +29,7 @@
  */
 
 
-package org.hsqldb.lib.enum;
+package org.hsqldb.lib;
 
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -37,8 +37,9 @@ import java.util.NoSuchElementException;
 /** An Enumeration that takes its elements from a specified array
  *
  */
-public final class ArrayEnumeration implements Enumeration {
+public class HsqlEnumeration implements Enumeration {
 
+    private final static Object[] emptyelements = new Object[0];
     /** the array of objects to enumerate */
     private Object[] elements;
 
@@ -49,17 +50,39 @@ public final class ArrayEnumeration implements Enumeration {
     private boolean notNull;
 
     /**
-     * Constructs a new ArrayEnumeration for specified array. <p>
+     * Constructs an empty Enumeration. <p>
+     */
+    public HsqlEnumeration() {
+        this.elements = emptyelements;
+    }
+
+    /**
+     * Constructs an Enumeration for specified array. <p>
      *
      * @param elements the array of objects to enumerate
      */
-    public ArrayEnumeration(Object[] elements) {
+    public HsqlEnumeration(Object[] elements) {
         this.elements = elements;
     }
 
-    public ArrayEnumeration(Object[] elements, boolean notnull) {
+    /**
+     * Constructs an Enumeration for not-null elements of specified array. <p>
+     *
+     * @param elements the array of objects to enumerate
+     */
+    public HsqlEnumeration(Object[] elements, boolean notnull) {
         this.elements = elements;
         notNull       = notnull;
+    }
+
+    /**
+     * Constructs a Enumeration for a singleton object
+     *
+     * @param element the single object to enumerate
+     */
+    public HsqlEnumeration(Object element) {
+        this.elements = new Object[1];
+        this.elements[0] = element;
     }
 
     /**
@@ -69,7 +92,7 @@ public final class ArrayEnumeration implements Enumeration {
      *          <code>false</code> otherwise.
      */
     public boolean hasMoreElements() {
-        
+
         if (elements == null) {
             return false;
         }
@@ -79,12 +102,12 @@ public final class ArrayEnumeration implements Enumeration {
         if (i < elements.length) {
             return true;
         } else {
-            // we are done: 
+            // we are done:
             // release elements for garbage collection
             elements = null;
             return false;
         }
-            
+
     }
 
     /**
@@ -96,10 +119,10 @@ public final class ArrayEnumeration implements Enumeration {
     public Object nextElement() {
 
         if (hasMoreElements()) {
-            return elements[i++];            
+            return elements[i++];
         }
 
         throw new NoSuchElementException();
-        
+
     }
 }

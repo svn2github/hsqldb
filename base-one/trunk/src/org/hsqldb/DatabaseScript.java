@@ -84,8 +84,10 @@ class DatabaseScript {
     /**
      * Returns the DDL and all other statements for the database excluding
      * INSERT and SET <tablename> READONLY statements.
-     * bCached indicates that SET <tablenmae> INDEX statements should be
-     * included
+     * bCached == true indicates that SET <tablenmae> INDEX statements should
+     * also be included.
+     *
+     * This class should not have any dependencies on metadata reporting.
      */
     static Result getScript(Database dDatabase, boolean bCached) {
 
@@ -209,12 +211,19 @@ class DatabaseScript {
         }
 
         // aliases
-        HsqlHashMap h = dDatabase.getAlias();
-        Enumeration e = h.keys();
+        HsqlHashMap h       = dDatabase.getAlias();
+        HsqlHashMap builtin = Library.getAliasMap();
+        Enumeration e       = h.keys();
 
         while (e.hasMoreElements()) {
-            String           alias  = (String) e.nextElement();
-            String           java   = (String) h.get(alias);
+            String alias  = (String) e.nextElement();
+            String java   = (String) h.get(alias);
+            String biJava = (String) builtin.get(alias);
+
+            if (biJava != null && biJava.equals(java)) {
+                continue;
+            }
+
             HsqlStringBuffer buffer = new HsqlStringBuffer(64);
 
             buffer.append("CREATE ALIAS ");
@@ -405,12 +414,8 @@ class DatabaseScript {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param t
-     *
-     * @return
+     * Generates the SET TABLE <tablename> SOURCE <string> statement for a
+     * text table;
      */
     static String getDataSource(Table t) {
 
@@ -437,15 +442,7 @@ class DatabaseScript {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param t
-     * @param col
-     * @param len
-     * @param a
-     *
-     * @return
+     * Generates the column definitions for a table.
      */
     private static void getColumnList(Table t, int col[], int len,
                                       HsqlStringBuffer a) {
@@ -464,13 +461,7 @@ class DatabaseScript {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param c
-     * @param a
-     *
-     * @return
+     * Generates the foreign key declaration for a given Constraint object.
      */
     private static void getFKStatement(Constraint c, HsqlStringBuffer a) {
 
@@ -499,6 +490,9 @@ class DatabaseScript {
         }
     }
 
+    /**
+     * Returns the foreign key action rule.
+     */
     private static String getFKAction(int action) {
 
         switch (action) {
@@ -518,11 +512,7 @@ class DatabaseScript {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param sql
+     * Adds a script line to the result.
      */
     private static void addRow(Result r, String sql) {
 
@@ -533,14 +523,25 @@ class DatabaseScript {
         r.add(s);
     }
 
+    /**
+     * Generates the GRANT statements for users.
+     *
+     * When views is true, generates rights for views only. Otherwise generates
+     * rights for tables and classes.
+     *
+     * Does not generate script for:
+     *
+     * grant on builtin classes to public
+     * grant select on system tables
+     *
+     */
     private static void addRightsStatements(Database dDatabase, Result r,
             boolean views) {
 
-        // rights
         HsqlStringBuffer a;
         HsqlArrayList    uv = dDatabase.getUserManager().getUsers();
 
-        for (int i = 0, vSize = uv.size(); i < vSize; i++) {
+        for (int i = 0; i < uv.size(); i++) {
             User   u    = (User) uv.get(i);
             String name = u.getName();
 
@@ -584,19 +585,22 @@ class DatabaseScript {
                         continue;
                     }
 
+                    if (object.equals("java.lang.Math")
+                            || object.equals("org.hsqldb.Library")) {
+                        continue;
+                    }
+
                     a.append("CLASS \"");
                     a.append((String) object);
                     a.append('\"');
                 } else {
 
-                    // either table != null or issystem == true
+                    // either table != null or is system table
                     Table table =
                         dDatabase.findUserTable(((HsqlName) object).name);
-                    boolean issystem = dDatabase.dInfo.isSystemTable(
-                        ((HsqlName) object).name);
 
                     // assumes all non String objects are table names
-                    if (issystem || views == table.isView()) {
+                    if (table != null && views == table.isView()) {
                         a.append(((HsqlName) object).statementName);
                     } else {
                         continue;
@@ -608,7 +612,5 @@ class DatabaseScript {
                 addRow(r, a.toString());
             }
         }
-
-        // end rights
     }
 }

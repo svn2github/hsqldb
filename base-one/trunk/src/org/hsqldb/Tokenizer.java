@@ -433,16 +433,15 @@ class Tokenizer {
                 if (sToken.length() < 11) {
                     try {
                         return new Integer(sToken);
-                    } catch (Exception e1) {
-                    }
+                    } catch (Exception e1) {}
                 }
 
                 if (sToken.length() < 20) {
                     try {
                         iType = LONG;
+
                         return new Long(sToken);
-                    } catch (Exception e2) {
-                    }
+                    } catch (Exception e2) {}
                 }
 
                 iType = DECIMAL;

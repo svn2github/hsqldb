@@ -90,7 +90,7 @@ class ScriptRunner {
         }
 
         HsqlHashMap sessionMap = new HsqlHashMap();
-        Session     sysSession = dDatabase.getSysSession();
+        Session     sysSession = dDatabase.sessionManager.getSysSession();
         Session     current    = sysSession;
 
         try {
@@ -113,11 +113,11 @@ class ScriptRunner {
                     current = (Session) sessionMap.get(id);
 
                     if (current == null) {
-                        current = dDatabase.newSession(sysSession.getUser(),
-                                                       false);
+                        current =
+                            dDatabase.sessionManager.newSession(dDatabase,
+                                sysSession.getUser(), false);
 
                         sessionMap.put(id, current);
-                        dDatabase.sessionManager.registerSession(current);
                     }
 
                     s = s.substring(s.indexOf('/', 1) + 1);

@@ -39,8 +39,8 @@ import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ValuePool;
-import org.hsqldb.lib.enum.ArrayEnumeration;
-import org.hsqldb.lib.enum.CompositeEnumeration;
+import org.hsqldb.lib.HsqlEnumeration;
+import org.hsqldb.lib.CompositeEnumeration;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -117,8 +117,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected static final HsqlName[] sysTableHsqlNames;
 
     /** Current user for each cached system table */
-    protected final Session[] sysTableSessions =
-        new Session[sysTableNames.length];
+    protected final int[] sysTableSessions =
+        new int[sysTableNames.length];
 
     /** true if the contents of a cached system table depends on the session */
     protected final boolean[] sysTableSessionDependent =
@@ -298,7 +298,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected final Enumeration allTables() {
 
         return new CompositeEnumeration(database.getTables().elements(),
-                                        new ArrayEnumeration(sysTables,
+                                        new HsqlEnumeration(sysTables,
                                             true));
     }
 
@@ -319,7 +319,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 t.clearAllRows();
             }
 
-            sysTableSessions[i] = null;
+            sysTableSessions[i] = -1;
         }
 
         isDirty = false;
@@ -456,7 +456,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         Table   t;
         Session oldSession = session;
 
-        session = database.getSysSession();
+        session = database.sessionManager.getSysSession();
 
         Trace.check(session != null, Trace.USER_NOT_FOUND,
                     UserManager.SYS_USER_NAME);
@@ -599,11 +599,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             }
         }
 
-        Session oldSession = sysTableSessions[tableIndex];
-        boolean tableValid = oldSession != null;
+        int oldSessionId = sysTableSessions[tableIndex];
+        boolean tableValid = oldSessionId != -1;
 
         // user has changed and table is user-dependent
-        if (session != oldSession && sysTableSessionDependent[tableIndex]) {
+        if (session.getId() != oldSessionId && sysTableSessionDependent[tableIndex]) {
             tableValid = false;
         }
 
@@ -619,7 +619,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // fredt - clear the contents of table and set new User
         t.clearAllRows();
 
-        sysTableSessions[tableIndex] = session;
+        sysTableSessions[tableIndex] = session.getId();
 
         // match and if found, generate.
         t = generateTable(tableIndex);

@@ -683,7 +683,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         row    = t.getNewRow();
         row[0] = "DATABASE_READONLY";
         row[1] = database.databaseReadOnly ? "TRUE"
-                                    : "FALSE";
+                                           : "FALSE";
 
         t.insert(row, null);
 
@@ -1838,7 +1838,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      */
     Table SYSTEM_PROCEDURECOLUMNS() throws SQLException {
 
-        Table t = super.SYSTEM_PROCEDURECOLUMNS();
+        Table t = sysTables[SYSTEM_PROCEDURECOLUMNS];
+
+        if (t == null) {
+            return super.SYSTEM_PROCEDURECOLUMNS();
+        }
 
         // calculated column values
         String  procedureCatalog;
@@ -1942,7 +1946,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      */
     Table SYSTEM_PROCEDURES() throws SQLException {
 
-        Table t = super.SYSTEM_PROCEDURES();
+        Table t = sysTables[SYSTEM_PROCEDURES];
+
+        if (t == null) {
+            return super.SYSTEM_PROCEDURES();
+        }
 
         // calculated column values
         // ------------------------

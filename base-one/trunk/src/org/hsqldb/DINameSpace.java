@@ -35,9 +35,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import org.hsqldb.lib.enum.CompositeEnumeration;
-import org.hsqldb.lib.enum.EmptyEnumeration;
-import org.hsqldb.lib.enum.SingletonEnumeration;
+import org.hsqldb.lib.CompositeEnumeration;
+import org.hsqldb.lib.HsqlEnumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlHashSet;
@@ -202,8 +201,8 @@ final class DINameSpace {
      * @throws SQLException never (reserved for future use)
      */
     Enumeration enumCatalogNames() throws SQLException {
-        return reportCatalogs ? new SingletonEnumeration(database.getName())
-                              : EmptyEnumeration.instance;
+        return reportCatalogs ? new HsqlEnumeration(database.getName())
+                              : new HsqlEnumeration();
     }
 
     /**
@@ -217,7 +216,7 @@ final class DINameSpace {
      */
     Enumeration enumSysSchemaNames() throws SQLException {
         return reportSchemas ? sysSchemas.elements()
-                             : EmptyEnumeration.instance;
+                             : new HsqlEnumeration();
     }
 
     /**
@@ -238,7 +237,7 @@ final class DINameSpace {
         UserManager   userManager;
 
         if (!reportSchemas || session == null) {
-            return EmptyEnumeration.instance;
+            return new HsqlEnumeration();
         }
 
         userManager = database.getUserManager();
@@ -715,7 +714,7 @@ final class DINameSpace {
         try {
             clazz = classForName(className);
         } catch (ClassNotFoundException e) {
-            return EmptyEnumeration.instance;
+            return new HsqlEnumeration();
         }
 
         // we are interested in inherited methods too,
@@ -948,7 +947,7 @@ final class DINameSpace {
         Enumeration methods;
         String      className;
 
-        out        = EmptyEnumeration.instance;
+        out        = new HsqlEnumeration();
         classNames = session.getGrantedClassNames(true).elements();
 
         while (classNames.hasMoreElements()) {

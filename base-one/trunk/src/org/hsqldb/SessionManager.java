@@ -68,12 +68,23 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlIntKeyHashMap;
+import java.util.Enumeration;
 
+/**
+ * Container that maintains a map of session id's to Session objects.
+ * Responsible for managaing openning and closing of sessions.
+ */
 public class SessionManager {
 
-    private HsqlArrayList sessionList = new HsqlArrayList();
+    int                       sessionIdCount;
+    private HsqlArrayList     sessionList = new HsqlArrayList();
+    private HsqlIntKeyHashMap sessionMap  = new HsqlIntKeyHashMap();
+    Session                   sysSession;
 
-    public SessionManager() {}
+    public SessionManager(Database db, User sysUser) {
+        sysSession = newSession(db, sysUser, false);
+    }
 
     /**
      *  Binds the specified Session object into this Database object's active
@@ -83,31 +94,28 @@ public class SessionManager {
      *
      * @param  session the Session object to register
      */
-    void registerSession(Session session) {
+    Session newSession(Database db, User user, boolean readonly) {
 
-        int i    = 0;
-        int size = sessionList.size();
+        Session s = new Session(db, user, true, readonly, sessionIdCount++);
 
-        for (; i < size; i++) {
-            if (sessionList.get(i) == null) {
-                break;
-            }
-        }
+        sessionMap.put(sessionIdCount, s);
 
-        if (i == size) {
-            sessionList.setSize(i + 1);
-        }
+        return s;
+    }
 
-        sessionList.set(i, session);
+    Session getSysSession() {
+        return sysSession;
     }
 
     void closeAllSessions() {
 
         // don't disconnect system user; need it to save database
-        for (int i = 1, tsize = sessionList.size(); i < tsize; i++) {
-            Session s = (Session) sessionList.get(i);
+        Enumeration en = sessionMap.elements();
 
-            if (s != null) {
+        for (; en.hasMoreElements(); ) {
+            Session s = (Session) en.nextElement();
+
+            if (s != sysSession) {
                 s.disconnect();
             }
         }
@@ -122,38 +130,29 @@ public class SessionManager {
      */
     Result processDisconnect(Session session) {
 
-        int i    = 0;
-        int size = sessionList.size();
+        sessionMap.remove(session.getId());
 
         if (!session.isClosed()) {
             session.disconnect();
-
-            for (; i < size; i++) {
-                if (sessionList.get(i) == session) {
-                    sessionList.set(i, null);
-
-                    break;
-                }
-            }
         }
 
         return new Result();
     }
 
     void clearAll() {
-        sessionList.clear();
+        sessionMap.clear();
     }
 
     HsqlArrayList listVisibleSessions(Session session) {
 
-        HsqlArrayList in  = sessionList;
         HsqlArrayList out = new HsqlArrayList();
         Session       observed;
         boolean       isObserverAdmin = session.isAdmin();
         int           observerId      = session.getId();
+        Enumeration   en              = sessionMap.elements();
 
-        for (int i = 0; i < in.size(); i++) {
-            observed = (Session) in.get(i);
+        for (; en.hasMoreElements(); ) {
+            observed = (Session) en.nextElement();
 
             if (observed == null) {
 
@@ -167,15 +166,6 @@ public class SessionManager {
     }
 
     Session getSession(int id) {
-
-        for (int i = 0; i < sessionList.size(); i++) {
-            Session s = (Session) sessionList.get(i);
-
-            if (s != null && s.getId() == id) {
-                return s;
-            }
-        }
-
-        return null;
+        return (Session) sessionMap.get(id);
     }
 }

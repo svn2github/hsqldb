@@ -29,7 +29,7 @@
  */
 
 
-package org.hsqldb.lib.enum;
+package org.hsqldb.lib;
 
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -41,8 +41,7 @@ import java.util.NoSuchElementException;
  *
  * @author Campbell Boucher-Burnet
  */
-public final class CompositeEnumeration extends Object
-implements Enumeration {
+public final class CompositeEnumeration implements Enumeration {
 
     /**
      * An enumeration whose elements are themselves Enumerations
@@ -54,7 +53,7 @@ implements Enumeration {
 
     /**
      * Constructs a new CompositeEnumeration that enumerates, in order, the
-     * elements of the enumerations enumerated by the specified enumeration. <p>
+     * elements of the enumerations enumerated by the specified enumeration.
      *
      * @param enumeration an enumeration of enumerations
      */
@@ -70,7 +69,7 @@ implements Enumeration {
      */
     public CompositeEnumeration(Enumeration a, Enumeration b) {
 
-        this(new ArrayEnumeration(new Enumeration[] {
+        this(new HsqlEnumeration(new Enumeration[] {
             a, b
         }));
     }

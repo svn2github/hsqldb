@@ -249,6 +249,7 @@ public class Trace extends PrintWriter {
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
         "S1000 error in script file",
+
         //
         "", "",
 

@@ -31,6 +31,8 @@
 
 package org.hsqldb.lib;
 
+import java.util.Enumeration;
+
 public class HsqlObjectToIntMap {
 
     private HsqlHashMap map;
@@ -57,5 +59,17 @@ public class HsqlObjectToIntMap {
 
     public boolean containsKey(Object key) {
         return get(key) != -1;
+    }
+
+    public void clear() {
+        map.clear();
+    }
+
+    public Enumeration keys() {
+        return map.keys();
+    }
+
+    public Object remove(Object key) {
+        return map.remove(key);
     }
 }

@@ -145,9 +145,7 @@ class Database {
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
     SessionManager                 sessionManager;
-    int                            sessionIdCount;
     private HsqlDatabaseProperties databaseProperties;
-    private Session                sysSession;
     private Tokenizer              tokenizer;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
@@ -296,11 +294,9 @@ class Database {
     // tony_lai@users 20020820
     private void open() throws SQLException {
 
-        tTable         = new HsqlArrayList();
-        aAccess        = new UserManager();
-        sessionManager = new SessionManager();
-        sessionIdCount = 0;
-        hAlias         = Library.getAliasMap();
+        tTable  = new HsqlArrayList();
+        aAccess = new UserManager();
+        hAlias  = Library.getAliasMap();
 
 //        logger                = new Logger();
         tokenizer             = new Tokenizer();
@@ -311,15 +307,11 @@ class Database {
         boolean newdatabase = false;
 
 // boucherb@users 20021128 - metadata/classloader 1.7.2 sys user
-        sysSession = null;
-
         User sysUser = aAccess.createSysUser(this);
 
+        sessionManager = new SessionManager(this, sysUser);
+
 // -------------------------------------------------------------------
-        sysSession = newSession(sysUser, false);
-
-        sessionManager.registerSession(sysSession);
-
         databaseProperties = new HsqlDatabaseProperties(sName);
         dInfo              = DatabaseInformation.newDatabaseInformation(this);
 
@@ -345,11 +337,9 @@ class Database {
             databaseProperties.getIntegerProperty("hsqldb.gc_interval", 0);
 
         if (newdatabase) {
-            execute("CREATE USER SA PASSWORD \"\" ADMIN", sysSession);
+            execute("CREATE USER SA PASSWORD \"\" ADMIN",
+                    sessionManager.getSysSession());
         }
-
-        aAccess.grant("PUBLIC", "java.lang.Math", UserManager.ALL);
-        aAccess.grant("PUBLIC", "org.hsqldb.Library", UserManager.ALL);
 
 // boucherb@users 20021128 - metadata 1.7.2 system tables
         isOpening = false;
@@ -367,10 +357,6 @@ class Database {
      */
     String getName() {
         return sName;
-    }
-
-    Session getSysSession() {
-        return sysSession;
     }
 
     /**
@@ -413,18 +399,14 @@ class Database {
 
         User user = aAccess.getUser(username.toUpperCase(),
                                     password.toUpperCase());
-        Session session = newSession(user, databaseReadOnly);
+        Session session = sessionManager.newSession(this, user,
+            databaseReadOnly);
 
         logger.writeToLog(session,
                           "CONNECT USER " + username + " PASSWORD \""
                           + password + "\"");
-        sessionManager.registerSession(session);
 
         return session;
-    }
-
-    Session newSession(User user, boolean readonly) {
-        return new Session(this, user, true, readonly, sessionIdCount++);
     }
 
     /**

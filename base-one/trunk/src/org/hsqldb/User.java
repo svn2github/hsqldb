@@ -110,13 +110,6 @@ class User {
     /**
      * A reference to the common, PUBLIC User object held by UserManager.
      * For the special PUBLIC and SYS user objects, this attribute is null.
-     * Under the current security scheme, User objects for users with
-     * administrator role do not really need a non-null uPublic attribute,
-     * as it is never consulted, but one is currently assigned to them anyway
-     * by UserManager. In the future, this may be of some use,
-     * as for instance if the database administrator role could be
-     * revoked (which it currently can not), or if the idea of roles is
-     * broadened.
      */
     private User uPublic;
 
@@ -130,16 +123,6 @@ class User {
      *
      */
     static final HsqlArrayList emptyRightsList = new HsqlArrayList();
-
-//    /**
-//     * A list containing the single element "ALL" which is returned by
-//     * calls to {@link #listTablePrivileges listTablePrivileges}, when
-//     * it is detected that this <code>User</code> object has the
-//     * database administrator role.
-//     *
-//     */
-//    static final HsqlArrayList adminRightsList =
-//        UserManager.listRightNames(UserManager.INTEGER_ALL);
 
     /**
      * Constructor, with a argument reference to the PUBLIC User Object which
@@ -209,16 +192,12 @@ class User {
     /**
      * Grants the specified rights on the specified database object. <p>
      *
-     * This method throws if the flags set in the rights argument do not
-     * repesent a valid set of rights.<p>
-     *
      * Keys stored in rightsMap for database tables are their HsqlName
      * attribute. This allows rights to persist when a table is renamed. <p>
      */
-    void grant(Object dbobject, int rights) throws SQLException {
+    void grant(Object dbobject, int rights) {
 
-        Trace.doAssert(dbobject != null, "dbobject is null");
-
+//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (rights == 0) {
             return;
         }
@@ -234,17 +213,13 @@ class User {
     /**
      * Revokes the specified rights on the specified database object. <p>
      *
-     * It throws if the bits set in the rights argument do not repesent a
-     * valid set of right flags.<p>
-     *
      * If, after removing the specified rights, no rights remain on the
      * database object, then the key/value pair for that object is removed
      * from the rights map
      */
-    void revoke(Object dbobject, int rights) throws SQLException {
+    void revoke(Object dbobject, int rights) {
 
-        Trace.doAssert(dbobject != null, "dbobject is null");
-
+//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (rights == 0) {
             return;
         }
@@ -310,12 +285,11 @@ class User {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument.
      */
-    boolean isAccessible(Object dbobject, int rights) throws SQLException {
+    boolean isAccessible(Object dbobject, int rights) {
 
         Integer n;
 
-        Trace.doAssert(dbobject != null, "dbobject is null");
-
+//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (bAdministrator) {
             return true;
         }
@@ -334,7 +308,7 @@ class User {
      * Returns true if any right at all has been granted to this User object
      * on the database object identified by the dbobject argument.
      */
-    boolean isAccessible(Object dbobject) throws SQLException {
+    boolean isAccessible(Object dbobject) {
         return isAccessible(dbobject, UserManager.ALL);
     }
 
@@ -422,26 +396,14 @@ class User {
      *        <code>User</code> object on the <code>Table</code> object
      *        identified by the <code>name</code> argument.
      * @param name a <code>Table</code> object identifier
-     * @throws SQLException should be never (required because this method calls
-     *      {@link UserManager#listRightNames
-     *      UserManager.listRightNames(Integer)} which throws if
-     *      passed an argument with invalid right flags set).
      * @since HSQLDB 1.7.2
      *
      */
-    HsqlArrayList listTablePrivileges(HsqlName name) throws SQLException {
+    HsqlArrayList listTablePrivileges(HsqlName name) {
 
         if (name == null) {
             return emptyRightsList;
         }
-
-//        if (bAdministrator) {
-//            if (adminRightsList.size() == 0) {
-//                adminRightsList.add("ALL");
-//            }
-//
-//            return adminRightsList;
-//        }
 
         return UserManager.listRightNames((Integer) rightsMap.get(name));
     }

@@ -403,7 +403,7 @@ public final class HsqlIntKeyIntValueHashMap {
 
         Entry tab[] = table;
 
-        for (int index = tab.length - 1; index-- >= 0; ) {
+        for (int index = tab.length - 1; index >= 0; index--) {
             tab[index] = null;
         }
 
