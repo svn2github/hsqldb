@@ -1,9 +1,11 @@
 Readme File
 
-2003.10.19
+2003.10.20
 
 Fixed name resolution issues in some IN (SELECT ...) and EXISTS (SELECT ...)
-queries.
+queries. Optimisation of these queries when not correlated.
+
+Speed optimisation of joins with views and subqueries.
 
 Fixed LIKE parameter bug.
 
@@ -12,6 +14,9 @@ This can be added via ALTER TABLE ADD CHECK() or in table definition.
 
 Fixed the DATETIME normailisation issues.
 Fixed ResultSet.isAfterLast() issue.
+
+Reverted column name case in ResultSet methods to JDBC compliance.
+
 
 2003.10.12
 
