@@ -328,8 +328,7 @@ class Log {
         }
 
         if (cCache == null) {
-            cCache = Cache.newCache(sFileCache, this.dDatabase,
-                                    Cache.CACHE_TYPE_DATA);
+            cCache = new DataFileCache(sFileCache, this.dDatabase);
 
             cCache.open(filesReadOnly);
         }
@@ -675,11 +674,10 @@ class Log {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
     private HashMap textCacheList = new HashMap();
 
-    Cache openTextCache(HsqlName tablename, String source,
-                        boolean readOnlyData,
+    Cache openTextCache(Table table, String source, boolean readOnlyData,
                         boolean reversed) throws HsqlException {
 
-        closeTextCache(tablename);
+        closeTextCache(table);
 
         if (!pProperties.isPropertyTrue("textdb.allow_full_path")) {
             if (source.indexOf("..") != -1) {
@@ -698,22 +696,20 @@ class Log {
         int   type;
 
         if (reversed) {
-            type = Cache.CACHE_TYPE_REVERSE_TEXT;
+            c = new TextCache(source, table);
         } else {
-            type = Cache.CACHE_TYPE_TEXT;
+            c = new TextCache(source, table);
         }
 
-        c = Cache.newCache(source, dDatabase, type);
-
         c.open(readOnlyData || filesReadOnly);
-        textCacheList.put(tablename, c);
+        textCacheList.put(table.tableName, c);
 
         return c;
     }
 
-    void closeTextCache(HsqlName table) throws HsqlException {
+    void closeTextCache(Table table) throws HsqlException {
 
-        TextCache c = (TextCache) textCacheList.remove(table);
+        TextCache c = (TextCache) textCacheList.remove(table.tableName);
 
         if (c != null) {
             c.close();

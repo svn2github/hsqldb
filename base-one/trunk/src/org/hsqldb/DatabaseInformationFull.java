@@ -1223,7 +1223,8 @@ extends org.hsqldb.DatabaseInformationMain {
      * VARCHAR_SEPARATOR         VARCAHR   varchar field separator
      * LONGVARCHAR_SEPARATOR     VARCHAR   longvarchar field separator
      * IS_IGNORE_FIRST           BIT       ignores first line of file?
-     * IS_ALL_QUOTED             BIT       every field is quoted?
+     * IS_QUOTED                 BIT       fields are quoted if necessary?
+     * IS_ALL_QUOTED             BIT       all fields are quoted?
      * IS_DESC                   BIT       read rows starting at end of file?
      * </pre> <p>
      *
@@ -1250,6 +1251,7 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "LONGVARCHAR_SEPARATOR", Types.VARCHAR);
             addColumn(t, "IS_IGNORE_FIRST", Types.BIT);
             addColumn(t, "IS_ALL_QUOTED", Types.BIT);
+            addColumn(t, "IS_QUOTED", Types.BIT);
             addColumn(t, "IS_DESC", Types.BIT);
 
             // ------------------------------------------------------------
@@ -1276,8 +1278,9 @@ extends org.hsqldb.DatabaseInformationMain {
         final int ivfs         = 7;
         final int ilvfs        = 8;
         final int iif          = 9;
-        final int iiaq         = 10;
-        final int iid          = 11;
+        final int iiq          = 10;
+        final int iiaq         = 11;
+        final int iid          = 12;
 
         // Initialization
         tables = database.getTables().iterator();
@@ -1304,7 +1307,8 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[ivfs]       = tc.vs;
                 row[ilvfs]      = tc.lvs;
                 row[iif]        = ValuePool.getBoolean(tc.ignoreFirst);
-                row[iiaq]       = ValuePool.getBoolean(tc.rowIn.allQuoted);
+                row[iiq]        = ValuePool.getBoolean(tc.isQuoted);
+                row[iiaq]       = ValuePool.getBoolean(tc.isAllQuoted);
                 row[iid] = ValuePool.getBoolean(table.isDescDataSource());
             }
 

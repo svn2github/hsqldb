@@ -142,15 +142,12 @@ class NIOScaledRAFile extends ScaledRAFile {
         return buffer.get();
     }
 
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
+    public void read(byte[] b) throws IOException {
+        read(b, 0, b.length);
     }
 
-    public int read(byte[] b, int offset, int length) throws IOException {
-
+    public void read(byte[] b, int offset, int length) throws IOException {
         buffer.get(b, offset, length);
-
-        return length;
     }
 
     public int readInt() throws IOException {

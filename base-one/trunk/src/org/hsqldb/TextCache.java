@@ -32,9 +32,11 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.io.EOFException;
 import java.io.UnsupportedEncodingException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle
@@ -51,7 +53,7 @@ import org.hsqldb.lib.FileUtil;
 class TextCache extends DataFileCache {
 
     //state of Cache
-    private boolean                isIndexingSource;
+    protected boolean              isIndexingSource;
     public static final String     NL = System.getProperty("line.separator");
     String                         fs;
     String                         vs;
@@ -59,8 +61,11 @@ class TextCache extends DataFileCache {
     String                         stringEncoding;
     protected boolean              readOnly;
     protected TextDatabaseRowInput rowIn;
+    protected boolean              isQuoted;
+    protected boolean              isAllQuoted;
     protected boolean              ignoreFirst;
     protected String               ignoredFirst = NL;
+    protected Table                table;
 
     /**
      *  The source string for a cached table is evaluated and the parameters
@@ -70,8 +75,11 @@ class TextCache extends DataFileCache {
      *  source string for the table (2) global database settings in
      *  *.properties file (3) program defaults
      */
-    TextCache(String name, Database db) throws HsqlException {
-        super(name, db);
+    TextCache(String name, Table table) throws HsqlException {
+
+        super(name, table.database);
+
+        this.table = table;
     }
 
     protected void initParams() throws HsqlException {
@@ -116,11 +124,12 @@ class TextCache extends DataFileCache {
         //-- Get booleans
         ignoreFirst = tableprops.isPropertyTrue("ignore_first",
                 dbProps.isPropertyTrue("textdb.ignore_first", false));
-
-        boolean quoted = tableprops.isPropertyTrue("quoted",
-            dbProps.isPropertyTrue("textdb.quoted", true));
-        boolean allquoted = tableprops.isPropertyTrue("all_quoted",
-            dbProps.isPropertyTrue("textdb.all_quoted", false));
+        isQuoted =
+            tableprops.isPropertyTrue("quoted",
+                                      dbProps.isPropertyTrue("textdb.quoted",
+                                          true));
+        isAllQuoted = tableprops.isPropertyTrue("all_quoted",
+                dbProps.isPropertyTrue("textdb.all_quoted", false));
 
         //-- Get encoding
         stringEncoding = translateSep(tableprops.getProperty("encoding",
@@ -134,11 +143,11 @@ class TextCache extends DataFileCache {
                                            20));
 
         try {
-            if (quoted || allquoted) {
+            if (isQuoted || isAllQuoted) {
                 rowIn = new QuotedTextDatabaseRowInput(fs, vs, lvs,
-                                                       allquoted);
+                                                       isAllQuoted);
                 rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs,
-                        allquoted, stringEncoding);
+                        isAllQuoted, stringEncoding);
             } else {
                 rowIn = new TextDatabaseRowInput(fs, vs, lvs, false);
                 rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false,
@@ -395,7 +404,7 @@ class TextCache extends DataFileCache {
 
                     if (next == -1) {
                         break;
-                    }
+        }
 
                     // c = (char) (next & 0xff);
                     c = next;
@@ -425,28 +434,28 @@ class TextCache extends DataFileCache {
                             rowIn.skippedLine();
 
                             continue;
-                        }
-                    }
+        }
+        }
 
                     if (c == '\r') {
 
                         //-- Check for newline
-                        try {
+            try {
                             next = rFile.read();
 
                             if (next == -1) {
                                 break;
-                            }
+            }
 
                             // c = (char) (next & 0xff);
                             c = next;
 
                             if (c == '\n') {
                                 buffer.append('\n');
-                            }
+        }
                         } catch (Exception e2) {
                             ;
-                        }
+    }
 
                         buffer.append('\n');
 
@@ -459,7 +468,7 @@ class TextCache extends DataFileCache {
                         if (ignoreFirst && pos == 0) {
                             ignoredFirst = buffer.toString();
                             blank        = true;
-                        }
+    }
 
                         //-- Ignore blanks.
                         if (!blank) {
@@ -515,7 +524,7 @@ class TextCache extends DataFileCache {
         public ByteArray(int n) {
             buffer = new byte[n];
             buflen = 0;
-        }
+            }
 
         public void append(int c) {
 
@@ -525,7 +534,7 @@ class TextCache extends DataFileCache {
                 System.arraycopy(buffer, 0, newbuf, 0, buflen);
 
                 buffer = newbuf;
-            }
+    }
 
             buffer[buflen] = (byte) c;
 
@@ -538,21 +547,21 @@ class TextCache extends DataFileCache {
 
         public void setLength(int l) {
             buflen = l;
-        }
+    }
 
         public String toString() {
 
-            try {
+        try {
                 return new String(buffer, 0, buflen, stringEncoding);
             } catch (UnsupportedEncodingException e) {
                 return new String(buffer, 0, buflen);
             }
         }
-    }
+            }
 
     int getLineNumber() {
         return rowIn.getLineNumber();
-    }
+        }
 
     void setSourceIndexing(boolean mode) {
         isIndexingSource = mode;

@@ -202,22 +202,6 @@ abstract class Cache {
     int       makeRowCount = 0;
     int       saveRowCount = 0;
 
-    static Cache newCache(String name, Database db,
-                          int type) throws HsqlException {
-
-        switch (type) {
-
-            case CACHE_TYPE_DATA :
-                return new DataFileCache(name, db);
-
-            case CACHE_TYPE_TEXT :
-            case CACHE_TYPE_REVERSE_TEXT :
-                return new TextCache(name, db);
-        }
-
-        return null;
-    }
-
     Cache(String name, Database db) throws HsqlException {
 
         sName     = name;

@@ -72,7 +72,7 @@ class TextTable extends org.hsqldb.Table {
         }
 
         // Close old cache:
-        database.logger.closeTextCache(tableName);
+        database.logger.closeTextCache(this);
 
         cache = null;
 
@@ -81,8 +81,7 @@ class TextTable extends org.hsqldb.Table {
         // Open new cache:
         if (dataSourceNew.length() > 0) {
             try {
-                cache = database.logger.openTextCache(tableName,
-                                                      dataSourceNew,
+                cache = database.logger.openTextCache(this, dataSourceNew,
                                                       isReadOnlyNew,
                                                       isReversedNew);
 

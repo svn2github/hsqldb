@@ -129,7 +129,7 @@
 <p><font face="Arial" size="2">Adds the column to the end of the column list. Optional attributes, size and default value (with or without  NOT NULL)  can be specified. The optional BEFORE &lt;existingcolumn&gt; can be used to specify the name of an existing column so that the new column is inserted in a position just before the &lt;existingcolumn&gt;. If NOT NULL is specified and the table is not empty, then a default value must be specified.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> DROP COLUMN </font></b><font size="2">&lt;columnname&gt;;</font></font></p>
 <p><font face="Arial" size="2">Drops the column from the table. Will not work if column is part of a primary key, unique or foreign key constraint.</font></p>
-<p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ALTER COLUMN </font></b><font size="2">&lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | ADD DEFAULT &lt;defaultvalue&gt;};</font></font></p>
+<p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ALTER COLUMN </font></b><font size="2">&lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</font></font></p>
 <p><font face="Arial" size="2">Changes column name. Or adds or drops the default value.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD [CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;]</font><b><font size="2"> CHECK (</font></b><font size="2">&lt;search condition&gt;</font><b><font size="2">);</font></b></font></p>
 <p><font face="Arial" size="2">Adds a check  constraint to the table. A check constraint is currently limited in that it can have references only to the row being inserted or updated.</font></p>
@@ -563,7 +563,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <font face="Arial, Helvetica" size="2"><font face="Arial"><br>
 <b>SCRIPT</b> ['file'] ;
 </font>
-<p><font face="Arial">Creates an SQL script describing the database. This file is saved on the machine where the database files are located. <br>
+<p><font face="Arial">Creates an SQL script describing the database. If the file is not specified, a result set containing only the DDL script is returned. If the file is specified then this file is saved on the machine where the database files are located. <br>
   Only an administrator may do this. 
 </font>
 <p> <font face="Arial"><br>
@@ -747,21 +747,26 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
-<b>SHUTDOWN</b> [ IMMEDIATELY | COMPACT ] ;
+<b>SHUTDOWN</b> [ IMMEDIATELY | COMPACT<font color="#FF0000"> | SCRIPT</font>] ;
 </font><font face="Arial, Helvetica" size="2">
 <p><font face="Arial">Closes the current database.
 </font>
 <p><font face="Arial">SHUTDOWN performs a checkpoint to creates a new .script file that has the minimum size and contains the data for memory tables only. It then backs up the .data file containing the CACHED TABLE data in zipped format to the  .backup file and closes the database. 
 </font>
 <p><font face="Arial">SHUTDOWN IMMEDIATELY just closes the database files 
-  (like an external poweroff); this command is used internally to test the recovery 
+  (like when the Java process for the database is terminated); this command is used in tests of the recovery 
   mechanism.
 This command should not be used as the routine method of closing the database.</font>
 <p><font face="Arial">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operation shrinks all files 
-  to the minimum size. <br>
-  Only an administrator may do this. 
-
+  to the minimum size.</font>
+<p><font face="Arial, Helvetica" size="2">SHUTDOWN SCRIPT  is similar to SHUTDOWN COMPACT but after writing the script and deleting the existing files, it does not rewrite the .data and text table files.</font> After SHUTDOWN SCRIPT, only the .script and .properties file remain. At the next startup, these files are processed and the .data and .backup files are created.<br>
+  This command produces a full script of the database which can be edited for special purposes.
 </font>
+ <font face="Arial, Helvetica" size="2">
+<p><font face="Arial"> <br>
+  </font>
+<p><font face="Arial">
+  Only an administrator may use the SHUTDOWN command.</font>
 <p> <font face="Arial"><br>
   <a name="UPDATE"></a>
 </font>
@@ -777,7 +782,8 @@ This command should not be used as the routine method of closing the database.</
 <p> <font face="Arial"><br>
   <a name="Datatypes"></a>
 </font>
-<hr></font>
+<hr>
+</font>
 <p><font face="Arial, Helvetica" size="2">
 <font face="Arial"><br>
    <b>Datatypes</b>: The types on the same line are equivalent. <br>

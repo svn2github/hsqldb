@@ -123,15 +123,15 @@ class ScaledRAFile {
     }
 
     public int read() throws IOException {
-        return (file.read());
+        return file.read();
     }
 
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
+    public void read(byte[] b) throws IOException {
+        read(b, 0, b.length);
     }
 
-    public int read(byte[] b, int offset, int length) throws IOException {
-        return file.read(b, offset, length);
+    public void read(byte[] b, int offset, int length) throws IOException {
+        file.readFully(b, offset, length);
     }
 
     public int readInt() throws IOException {

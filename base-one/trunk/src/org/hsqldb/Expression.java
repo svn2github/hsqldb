@@ -2021,7 +2021,7 @@ class Expression {
         if (likeObject.optimised) {
             return;
         }
-        
+
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
         String likeStr = isRightArgFixedConstant
                          ? (String) eArg2.getValue(Types.VARCHAR)
@@ -2033,12 +2033,12 @@ class Expression {
         if (!isRightArgFixedConstant) {
 
             // Then we are done here, since it's impossible
-            // to determine at this point if the right expression 
+            // to determine at this point if the right expression
             // will have a fixed prefix that can be used to optimize
             // any involved table filters
             return;
         }
-        
+
         if (likeObject.isEquivalentToFalsePredicate()) {
             exprType   = FALSE;
             eArg       = null;
@@ -2049,15 +2049,15 @@ class Expression {
             eArg2 = new Expression(Types.VARCHAR, likeObject.getRangeLow());
             likeObject = null;
         } else if (likeObject.isEquivalentToNotNullPredicate()) {
-            
+
             // X LIKE '%' <=>  X IS NOT NULL
             exprType   = NOT_EQUAL;
             eArg2      = new Expression(Types.NULL, null);
             likeObject = null;
         } else {
             if (eArg.exprType != Expression.COLUMN) {
-            
-                // Then we are done here, since range predicates are 
+
+                // Then we are done here, since range predicates are
                 // not picked up for use to optimize table filters
                 // unless the predicate is on the first column of
                 // an index.
@@ -2072,7 +2072,7 @@ class Expression {
                 // phase.
                 return;
             }
-            
+
             if (!Types.isCharacterType(eArg.dataType)) {
 
                 // TODO:
@@ -2080,33 +2080,33 @@ class Expression {
                 // types other than XXXCHAR
                 return;
             }
-            
+
             if (likeObject.isEquivalentToBetweenPredicate()) {
-                
+
                 // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abc' || max_collation_char
                 Expression eArgOld = eArg;
                 Expression eFirst = new Expression(Types.VARCHAR,
-                likeObject.getRangeLow());
+                                                   likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                likeObject.getRangeHigh());
-                
+                                                  likeObject.getRangeHigh());
+
                 eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
                 eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
                 exprType = AND;
-                
+
                 //
                 likeObject = null;
             } else if (likeObject
                     .isEquivalentToBetweenPredicateAugmentedWithLike()) {
-                
+
                 // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abc' || max_collation_char AND X LIKE 'abc%...'
                 Expression eFirst = new Expression(Types.VARCHAR,
-                likeObject.getRangeLow());
+                                                   likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                likeObject.getRangeHigh());
+                                                  likeObject.getRangeHigh());
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
                 Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
-                
+
                 eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
                 eArg2.likeObject = likeObject;
                 eArg             = new Expression(AND, gte, lte);
@@ -2531,7 +2531,7 @@ class Expression {
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
 
-                if (eArg2.exprType == PARAM) {
+                if (eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 
@@ -2786,7 +2786,7 @@ class Expression {
 */
                 String s = (String) eArg2.getValue(Types.VARCHAR);
 
-                if (eArg2.isParam) {
+                if (eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 

@@ -309,17 +309,16 @@ class Logger {
     /**
      *  Opens the TextCache object.
      */
-    Cache openTextCache(HsqlName tablename, String source,
-                        boolean readOnlyData,
+    Cache openTextCache(Table table, String source, boolean readOnlyData,
                         boolean reversed) throws HsqlException {
-        return lLog.openTextCache(tablename, source, readOnlyData, reversed);
+        return lLog.openTextCache(table, source, readOnlyData, reversed);
     }
 
     /**
      *  Closes the TextCache object.
      */
-    void closeTextCache(HsqlName name) throws HsqlException {
-        lLog.closeTextCache(name);
+    void closeTextCache(Table table) throws HsqlException {
+        lLog.closeTextCache(table);
     }
 
     /**

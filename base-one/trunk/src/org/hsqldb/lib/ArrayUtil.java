@@ -499,6 +499,90 @@ public class ArrayUtil {
     }
 
     /**
+     * Returns the index of arrb in arra. Or -1 if not found.
+     */
+    public static int find(byte[] arra, int start, int limit, byte[] arrb) {
+
+        int k = 0;
+
+        limit = limit - arrb.length + 1;
+
+        int value = arrb[0];
+
+        for (; k < limit; k++) {
+            if (arra[k] == value) {
+                if (arrb.length == 1) {
+                    return k;
+                }
+
+                if (containsAt(arra, k, arrb)) {
+                    return k;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Returns an index into arra (or -1) where the character is not in the
+     * charset byte array.
+     */
+    public static int findNotIn(byte[] arra, int start, int limit,
+                                byte[] charset) {
+
+        int k = 0;
+
+        for (; k < limit; k++) {
+            for (int i = 0; i < charset.length; i++) {
+                if (arra[k] == charset[i]) {
+                    continue;
+                }
+            }
+
+            return k;
+        }
+
+        return -1;
+    }
+
+    /**
+     * Returns an index into arra (or -1) where the character is in the
+     * charset byte array.
+     */
+    public static int findIn(byte[] arra, int start, int limit,
+                             byte[] charset) {
+
+        int k = 0;
+
+        for (; k < limit; k++) {
+            for (int i = 0; i < charset.length; i++) {
+                if (arra[k] == charset[i]) {
+                    return k;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Returns the index of b or c in arra. Or -1 if not found.
+     */
+    public static int find(byte[] arra, int start, int limit, int b, int c) {
+
+        int k = 0;
+
+        for (; k < limit; k++) {
+            if (arra[k] == b || arra[k] == c) {
+                return k;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
      * Set elements of arrb true if their indexes appear in arrb.
      */
     public static void intIndexesToBooleanArray(int[] arra, boolean[] arrb) {
