@@ -1,12 +1,12 @@
 
 # Bourne shell Solaris packaging script (no interpreter line on purpose)
 
-# $Id$
+# $Id: HSQLhsqldb.preremove,v 1.1 2002/10/12 01:15:46 unsaved Exp $
 
 # Do not set path.  Pkgadd sets a safe path, it does not use any inherited path
 
 
-BASE=hsqldb1.7.1a.dev
+BASE=hsqldb-1.7.1
 
 /etc/init.d/hsqldb stop
 

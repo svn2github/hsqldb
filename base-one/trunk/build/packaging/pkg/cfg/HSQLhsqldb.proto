@@ -1,33 +1,11 @@
-# $Id$
+# $Id: HSQLhsqldb.proto,v 1.1 2002/10/12 01:15:46 unsaved Exp $
 
-# Additions for this package are isolated here and at the bottom of this
-# file.  The middle block is stuff straight our of the hsqldb tree.
+# Additions for this package are isolated up at the top here.
+# Everything beneath is stuff straight our of the hsqldb tree.
+# (This facilitates running commands like "pkgproto... >> .../thisfile.proto")
 
 # Unfortunately, this file has to be regenerated whenever hsqldb code
 # changes :(
-
-# Tips for regenerating this file:
-#  The hsqldb_j*.jar files must be built and in-place before you begin.
-#  Start by removing all the lines with $VERDIR
-#  Then run pkgproto from inside your main source branch (like "hsqldb").
-#  Exclude RCS
-#  Exclude classes and src branches
-#  Exclude build/packaging branch
-#  Change the top-level dir to "VERDIR=."
-#  Remove settings of default owners and permissions if you're a perfectionist
-#  Change all other listings from "toplevel/x" to "$VERDIR/x=x"
-#    (Type $VERDIR literally.  Those slashes are very important.)
-#  
-# For example, I "rm -rf"ed classes and src, then
-#    cd tree base
-#    pkgproto * > /path/to/file.proto
-#    cd to cfg directory
-#    perl -ni -we 'print unless /\$VERDIR/;' *proto
-#    perl -ni -we 'print unless m:build/packaging:;' *proto
-#    perl -ni.safe -we 'print unless m:/CVS:' *proto
-#    perl -pi -we 's/ 0644 root other$//' *proto  # Use default own/perms
-#    perl -pi -we 's:$VERDIR/(\S+):\$VERDIR/$1=$1:;'=(\S+):\$VERDIR/$1=$1:;' *proto
-#    grep hsqldb-dev *proto   # Just to verify all hsqld-dev's taken care of
 
 i pkginfo=HSQLhsqldb.info
 i preinstall=HSQLhsqldb.preinstall
@@ -38,92 +16,6 @@ i checkinstall=HSQLhsqldb.checkinstall
 
 !default 0644 root other
 
-d none $VERDIR=. 0755 root other
-d none $VERDIR/bin=bin 0755 root other
-f none $VERDIR/bin/hsqldbwebserver=bin/hsqldbwebserver 0755 root other
-f none $VERDIR/bin/hsqldbserver=bin/hsqldbserver 0755 root other
-f none $VERDIR/bin/runUtil.bat=bin/runUtil.bat 0755 root other
-f none $VERDIR/bin/runUtil.sh=bin/runUtil.sh 0755 root other
-d none $VERDIR/doc=doc 0755 root other
-f none $VERDIR/doc/changelog.txt=doc/changelog.txt
-f none $VERDIR/doc/hsqlBuild.html=doc/hsqlBuild.html
-d none $VERDIR/doc/images=doc/images 0755 root other
-f none $VERDIR/doc/images/sqlOther.gif=doc/images/sqlOther.gif
-f none $VERDIR/doc/images/sqlDDL.gif=doc/images/sqlDDL.gif
-f none $VERDIR/doc/images/sqlDML.gif=doc/images/sqlDML.gif
-f none $VERDIR/doc/images/sqlSecurity.gif=doc/images/sqlSecurity.gif
-f none $VERDIR/doc/images/sqlSelect.gif=doc/images/sqlSelect.gif
-f none $VERDIR/doc/images/sqlTransact.gif=doc/images/sqlTransact.gif
-d none $VERDIR/doc/src=doc/src 0755 root other
-f none $VERDIR/doc/src/hsqldbstylesheet.css=doc/src/hsqldbstylesheet.css
-f none $VERDIR/doc/hsqlAdvancedGuide.html=doc/hsqlAdvancedGuide.html
-f none $VERDIR/doc/hsqlCodeSwitcher.html=doc/hsqlCodeSwitcher.html
-f none $VERDIR/doc/hsqlFindFile.html=doc/hsqlFindFile.html
-f none $VERDIR/doc/hsqlFirstExample.html=doc/hsqlFirstExample.html
-f none $VERDIR/doc/hsqlGuide.html=doc/hsqlGuide.html
-f none $VERDIR/doc/hsqlRecovery.html=doc/hsqlRecovery.html
-f none $VERDIR/doc/hsqlScriptTool.html=doc/hsqlScriptTool.html
-f none $VERDIR/doc/hsqlSyntax.html=doc/hsqlSyntax.html
-f none $VERDIR/doc/hsqlTestSelf.html=doc/hsqlTestSelf.html
-f none $VERDIR/doc/hsqlTextTables.html=doc/hsqlTextTables.html
-f none $VERDIR/doc/hsqldbBeginnersGuide.html=doc/hsqldbBeginnersGuide.html
-f none $VERDIR/doc/hsqldb_lic.txt=doc/hsqldb_lic.txt
-f none $VERDIR/doc/hypersonic_lic.txt=doc/hypersonic_lic.txt
-f none $VERDIR/index.html=index.html
-f none $VERDIR/readme.txt=readme.txt
-d none $VERDIR/build=build 0755 root other
-f none $VERDIR/build/buildDoc.bat=build/buildDoc.bat 0755 root other
-f none $VERDIR/build/build.xml=build/build.xml
-f none $VERDIR/build/readmebuild.txt=build/readmebuild.txt
-f none $VERDIR/build/buildDoc.sh=build/buildDoc.sh 0755 root other
-f none $VERDIR/build/buildJDK11.bat=build/buildJDK11.bat 0755 root other
-f none $VERDIR/build/buildJDK11.sh=build/buildJDK11.sh 0755 root other
-f none $VERDIR/build/buildJDK12.bat=build/buildJDK12.bat 0755 root other
-f none $VERDIR/build/buildJDK12.sh=build/buildJDK12.sh 0755 root other
-f none $VERDIR/build/buildJDK14.bat=build/buildJDK14.bat 0755 root other
-f none $VERDIR/build/buildJDK14.sh=build/buildJDK14.sh 0755 root other
-f none $VERDIR/build/switchOffJDK11.bat=build/switchOffJDK11.bat 0755 root other
-f none $VERDIR/build/switchOffJDK11.sh=build/switchOffJDK11.sh 0755 root other
-f none $VERDIR/build/switchOffJDK14.bat=build/switchOffJDK14.bat 0755 root other
-f none $VERDIR/build/switchOffJDK14.sh=build/switchOffJDK14.sh 0755 root other
-f none $VERDIR/build/switchToJDK11.bat=build/switchToJDK11.bat 0755 root other
-f none $VERDIR/build/switchToJDK11.sh=build/switchToJDK11.sh 0755 root other
-f none $VERDIR/build/switchToJDK12.bat=build/switchToJDK12.bat 0755 root other
-f none $VERDIR/build/switchToJDK12.sh=build/switchToJDK12.sh 0755 root other
-f none $VERDIR/build/switchToJDK14.bat=build/switchToJDK14.bat 0755 root other
-f none $VERDIR/build/switchToJDK14.sh=build/switchToJDK14.sh 0755 root other
-d none $VERDIR/build/templates=build/templates 0755 root other
-f none $VERDIR/build/templates/hsqldb.conf.unix=build/templates/hsqldb.conf.unix 0444 root other
-f none $VERDIR/build/templates/hsqldb.init.sh=build/templates/hsqldb.init.sh 0544 root other
-f none $VERDIR/build/templates/hsqldb.shell.sh=build/templates/hsqldb.shell.sh 0555 root other
-d none $VERDIR/demo=demo 0755 root other
-f none $VERDIR/demo/TestSelfCreate.txt=demo/TestSelfCreate.txt
-f none $VERDIR/demo/TestSelf.txt=demo/TestSelf.txt
-f none $VERDIR/demo/memorydbmanager.html=demo/memorydbmanager.html
-f none $VERDIR/demo/TestSelfModify.txt=demo/TestSelfModify.txt
-f none $VERDIR/demo/TestSelfVerify.txt=demo/TestSelfVerify.txt
-f none $VERDIR/demo/runUtil.bat=demo/runUtil.bat 0755 root other
-f none $VERDIR/demo/runTest.sh=demo/runTest.sh 0755 root other
-f none $VERDIR/demo/localhost_clientserver.html=demo/localhost_clientserver.html
-f none $VERDIR/demo/memoryquery.html=demo/memoryquery.html
-f none $VERDIR/demo/readme_linux.txt=demo/readme_linux.txt
-f none $VERDIR/demo/runManager.bat=demo/runManager.bat 0755 root other
-f none $VERDIR/demo/runManager.sh=demo/runManager.sh 0755 root other
-f none $VERDIR/demo/runServer.bat=demo/runServer.bat 0755 root other
-f none $VERDIR/demo/runServer.sh=demo/runServer.sh 0755 root other
-f none $VERDIR/demo/runTest.bat=demo/runTest.bat 0755 root other
-f none $VERDIR/demo/runWebServer.bat=demo/runWebServer.bat 0755 root other
-f none $VERDIR/demo/runUtil.sh=demo/runUtil.sh 0755 root other
-f none $VERDIR/demo/runWebServer.sh=demo/runWebServer.sh 0755 root other
-f none $VERDIR/demo/servletdemo.html=demo/servletdemo.html
-f none $VERDIR/readme_linux.txt=readme_linux.txt
-d none $VERDIR/lib=lib 0755 root other
-f none $VERDIR/lib/servlet.jar=lib/servlet.jar
-f none $VERDIR/lib/functions=lib/functions 0755 root other
-f none $VERDIR/lib/hsqldb_j1.3.1.jar=lib/hsqldb_j1.3.1.jar
-f none $VERDIR/lib/hsqldb_j1.4.0.jar=lib/hsqldb_j1.4.0.jar
-
-
 # Special stuff needed for our package
 d none /var/run 0755 root sys
 e none /etc/hsqldb.conf=build/templates/hsqldb.conf.unix
@@ -133,6 +25,130 @@ l none /etc/rc0.d/K36hsqldb=/etc/init.d/hsqldb
 l none /etc/rc1.d/K36hsqldb=/etc/init.d/hsqldb
 l none /etc/rc2.d/S84hsqldb=/etc/init.d/hsqldb
 l none /etc/rcS.d/K36hsqldb=/etc/init.d/hsqldb
-f none $VERDIR/readme.solaris=build/packaging/pkg/readme.txt
-d none $VERDIR/data=data 0755 root other
-d none $VERDIR/data/db1=data/db1 2775 hsqldb hsqldb
+
+# Do NOT!!! change the following line.  It is used by scripts.
+# REGENERATE AFTER HERE
+d none $VERDIR 0755 root other
+d none $VERDIR/bin 0755 root other
+f none $VERDIR/bin/hsqldbwebserver=bin/hsqldbwebserver 0555 root other
+f none $VERDIR/bin/hsqldbserver=bin/hsqldbserver 0555 root other
+f none $VERDIR/bin/runUtil.bat=bin/runUtil.bat 0555 root other
+f none $VERDIR/bin/runUtil.sh=bin/runUtil.sh 0555 root other
+d none $VERDIR/doc 0755 root other
+f none $VERDIR/doc/changelog.txt=doc/changelog.txt 0444 root other
+f none $VERDIR/doc/hsqlBuild.html=doc/hsqlBuild.html 0444 root other
+d none $VERDIR/doc/images 0755 root other
+f none $VERDIR/doc/images/sqlOther.gif=doc/images/sqlOther.gif 0444 root other
+f none $VERDIR/doc/images/sqlDDL.gif=doc/images/sqlDDL.gif 0444 root other
+f none $VERDIR/doc/images/sqlDML.gif=doc/images/sqlDML.gif 0444 root other
+f none $VERDIR/doc/images/sqlSecurity.gif=doc/images/sqlSecurity.gif 0444 root other
+f none $VERDIR/doc/images/sqlSelect.gif=doc/images/sqlSelect.gif 0444 root other
+f none $VERDIR/doc/images/sqlTransact.gif=doc/images/sqlTransact.gif 0444 root other
+d none $VERDIR/doc/src 0755 root other
+f none $VERDIR/doc/src/hsqldbstylesheet.css=doc/src/hsqldbstylesheet.css 0444 root other
+f none $VERDIR/doc/hsqlAdvancedGuide.html=doc/hsqlAdvancedGuide.html 0444 root other
+f none $VERDIR/doc/hsqlCodeSwitcher.html=doc/hsqlCodeSwitcher.html 0444 root other
+f none $VERDIR/doc/hsqlFindFile.html=doc/hsqlFindFile.html 0444 root other
+f none $VERDIR/doc/hsqlFirstExample.html=doc/hsqlFirstExample.html 0444 root other
+f none $VERDIR/doc/hsqlGuide.html=doc/hsqlGuide.html 0444 root other
+f none $VERDIR/doc/hsqlRecovery.html=doc/hsqlRecovery.html 0444 root other
+f none $VERDIR/doc/hsqlScriptTool.html=doc/hsqlScriptTool.html 0444 root other
+f none $VERDIR/doc/hsqlSyntax.html=doc/hsqlSyntax.html 0444 root other
+f none $VERDIR/doc/hsqlTestSelf.html=doc/hsqlTestSelf.html 0444 root other
+f none $VERDIR/doc/hsqlTextTables.html=doc/hsqlTextTables.html 0444 root other
+f none $VERDIR/doc/hsqldbBeginnersGuide.html=doc/hsqldbBeginnersGuide.html 0444 root other
+f none $VERDIR/doc/hsqldb_lic.txt=doc/hsqldb_lic.txt 0444 root other
+f none $VERDIR/doc/hypersonic_lic.txt=doc/hypersonic_lic.txt 0444 root other
+d none $VERDIR/doc/zaurus 0755 root other
+f none $VERDIR/doc/zaurus/hsqlSyntax.html=doc/zaurus/hsqlSyntax.html 0444 root other
+f none $VERDIR/doc/zaurus/building.html=doc/zaurus/building.html 0444 root other
+f none $VERDIR/doc/zaurus/index.html=doc/zaurus/index.html 0444 root other
+f none $VERDIR/doc/zaurus/todo.html=doc/zaurus/todo.html 0444 root other
+f none $VERDIR/doc/zaurus/readme=doc/zaurus/readme 0444 root other
+d none $VERDIR/doc/zaurus/images 0755 root other
+f none $VERDIR/doc/zaurus/images/constructors.gif=doc/zaurus/images/constructors.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/buttons.png=doc/zaurus/images/buttons.png 0444 root other
+f none $VERDIR/doc/zaurus/images/commandBut.png=doc/zaurus/images/commandBut.png 0444 root other
+f none $VERDIR/doc/zaurus/images/constructor-index.gif=doc/zaurus/images/constructor-index.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/editorBut.png=doc/zaurus/images/editorBut.png 0444 root other
+f none $VERDIR/doc/zaurus/images/green-ball-small.gif=doc/zaurus/images/green-ball-small.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/green-ball.gif=doc/zaurus/images/green-ball.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/hsqldb.gif=doc/zaurus/images/hsqldb.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/method-index.gif=doc/zaurus/images/method-index.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/methods.gif=doc/zaurus/images/methods.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/nicksant3.gif=doc/zaurus/images/nicksant3.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/red-ball-small.gif=doc/zaurus/images/red-ball-small.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/red-ball.gif=doc/zaurus/images/red-ball.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/red_up.gif=doc/zaurus/images/red_up.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/resultBut.png=doc/zaurus/images/resultBut.png 0444 root other
+f none $VERDIR/doc/zaurus/images/sharp1.jpeg=doc/zaurus/images/sharp1.jpeg 0444 root other
+f none $VERDIR/doc/zaurus/images/sourceforge.gif=doc/zaurus/images/sourceforge.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlDDL.gif=doc/zaurus/images/sqlDDL.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlDML.gif=doc/zaurus/images/sqlDML.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlOther.gif=doc/zaurus/images/sqlOther.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlSecurity.gif=doc/zaurus/images/sqlSecurity.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlSelect.gif=doc/zaurus/images/sqlSelect.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/sqlTransact.gif=doc/zaurus/images/sqlTransact.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/treeBut.png=doc/zaurus/images/treeBut.png 0444 root other
+f none $VERDIR/doc/zaurus/images/yellow-ball-small.gif=doc/zaurus/images/yellow-ball-small.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/yellow-ball.gif=doc/zaurus/images/yellow-ball.gif 0444 root other
+f none $VERDIR/doc/zaurus/images/zaurus.jpeg=doc/zaurus/images/zaurus.jpeg 0444 root other
+f none $VERDIR/doc/zaurus/installation.html=doc/zaurus/installation.html 0444 root other
+f none $VERDIR/doc/zaurus/org.hsqldb.util.ZaurusEditor.html=doc/zaurus/org.hsqldb.util.ZaurusEditor.html 0444 root other
+f none $VERDIR/doc/zaurus/usage.html=doc/zaurus/usage.html 0444 root other
+f none $VERDIR/index.html=index.html 0444 root other
+f none $VERDIR/readme.txt=readme.txt 0444 root other
+d none $VERDIR/build 0755 root other
+f none $VERDIR/build/buildDoc.bat=build/buildDoc.bat 0555 root other
+f none $VERDIR/build/build.xml=build/build.xml 0444 root other
+f none $VERDIR/build/readmebuild.txt=build/readmebuild.txt 0444 root other
+f none $VERDIR/build/buildDoc.sh=build/buildDoc.sh 0555 root other
+f none $VERDIR/build/buildJDK11.bat=build/buildJDK11.bat 0555 root other
+f none $VERDIR/build/buildJDK11.sh=build/buildJDK11.sh 0555 root other
+f none $VERDIR/build/buildJDK12.bat=build/buildJDK12.bat 0555 root other
+f none $VERDIR/build/buildJDK12.sh=build/buildJDK12.sh 0555 root other
+f none $VERDIR/build/buildJDK14.bat=build/buildJDK14.bat 0555 root other
+f none $VERDIR/build/buildJDK14.sh=build/buildJDK14.sh 0555 root other
+f none $VERDIR/build/switchOffJDK11.bat=build/switchOffJDK11.bat 0555 root other
+f none $VERDIR/build/switchOffJDK11.sh=build/switchOffJDK11.sh 0555 root other
+f none $VERDIR/build/switchOffJDK14.bat=build/switchOffJDK14.bat 0555 root other
+f none $VERDIR/build/switchOffJDK14.sh=build/switchOffJDK14.sh 0555 root other
+f none $VERDIR/build/switchToJDK11.bat=build/switchToJDK11.bat 0555 root other
+f none $VERDIR/build/switchToJDK11.sh=build/switchToJDK11.sh 0555 root other
+f none $VERDIR/build/switchToJDK12.bat=build/switchToJDK12.bat 0555 root other
+f none $VERDIR/build/switchToJDK12.sh=build/switchToJDK12.sh 0555 root other
+f none $VERDIR/build/switchToJDK14.bat=build/switchToJDK14.bat 0555 root other
+f none $VERDIR/build/switchToJDK14.sh=build/switchToJDK14.sh 0555 root other
+d none $VERDIR/build/templates 0755 root other
+f none $VERDIR/build/templates/hsqldb.conf.unix=build/templates/hsqldb.conf.unix
+f none $VERDIR/build/templates/hsqldb.init.sh=build/templates/hsqldb.init.sh 0755 root other
+f none $VERDIR/build/templates/hsqldb.shell.sh=build/templates/hsqldb.shell.sh 0755 root other
+d none $VERDIR/demo 0755 root other
+f none $VERDIR/demo/TestSelfCreate.txt=demo/TestSelfCreate.txt 0444 root other
+f none $VERDIR/demo/TestSelf.txt=demo/TestSelf.txt 0444 root other
+f none $VERDIR/demo/memorydbmanager.html=demo/memorydbmanager.html 0444 root other
+f none $VERDIR/demo/TestSelfModify.txt=demo/TestSelfModify.txt 0444 root other
+f none $VERDIR/demo/TestSelfVerify.txt=demo/TestSelfVerify.txt 0444 root other
+f none $VERDIR/demo/runUtil.bat=demo/runUtil.bat 0555 root other
+f none $VERDIR/demo/runTest.sh=demo/runTest.sh 0555 root other
+f none $VERDIR/demo/localhost_clientserver.html=demo/localhost_clientserver.html 0444 root other
+f none $VERDIR/demo/memoryquery.html=demo/memoryquery.html 0444 root other
+f none $VERDIR/demo/readme_linux.txt=demo/readme_linux.txt 0444 root other
+f none $VERDIR/demo/runManager.bat=demo/runManager.bat 0555 root other
+f none $VERDIR/demo/runManager.sh=demo/runManager.sh 0555 root other
+f none $VERDIR/demo/runServer.bat=demo/runServer.bat 0555 root other
+f none $VERDIR/demo/runServer.sh=demo/runServer.sh 0555 root other
+f none $VERDIR/demo/runTest.bat=demo/runTest.bat 0555 root other
+f none $VERDIR/demo/runWebServer.bat=demo/runWebServer.bat 0555 root other
+f none $VERDIR/demo/runUtil.sh=demo/runUtil.sh 0555 root other
+f none $VERDIR/demo/runWebServer.sh=demo/runWebServer.sh 0555 root other
+f none $VERDIR/demo/servletdemo.html=demo/servletdemo.html 0444 root other
+f none $VERDIR/readme_linux.txt=readme_linux.txt 0444 root other
+d none $VERDIR/lib 0755 root other
+f none $VERDIR/lib/servlet.jar=lib/servlet.jar 0444 root other
+f none $VERDIR/lib/functions=lib/functions 0555 root other
+f none $VERDIR/lib/hsqldb_jre1_3_1.jar=lib/hsqldb_jre1_3_1.jar
+f none $VERDIR/lib/hsqldb_jre1_1_8.jar=lib/hsqldb_jre1_1_8.jar
+f none $VERDIR/lib/hsqldb_jre1_4_0.jar=lib/hsqldb_jre1_4_0.jar
+d none $VERDIR/data 0755 root other
+d none $VERDIR/data/db1 0755 hsqldb hsqldb

@@ -1,7 +1,7 @@
 
 # Bourne shell Solaris packaging script (no interpreter line on purpose)
 
-# $Id$
+# $Id: HSQLhsqldb.postinstall,v 1.1 2002/10/12 01:15:46 unsaved Exp $
 
 # N.b.  If $BASEDIR/hsqldb exists before installing this package, this
 # stuff will set up for that to be the default hsqldb home.  The 
@@ -24,14 +24,14 @@ safecd() {
     cd "$@"
 }
 
-BASE=hsqldb1.7.1a.dev
+BASE=hsqldb-1.7.1
 LIBJAR=
 JVER=`java -version 2>&1 |
  grep -i '\<java version\>' | sed -e 's:[^"]*"::; s:\".*::;'`
 case "$JVER" in
-    # TODO:  Build a jar for Java 1.1.8, per Fred T.
-    1.4.*) LIBJAR=hsqldb_j1.4.0.jar ;;
-    1.2.*|*JDK_1.2.*|1.3.*) LIBJAR=hsqldb_j1.3.1.jar ;;
+    1.4.*) LIBJAR=hsqldb_jre1_4_0.jar ;;
+    1.2.*|*JDK_1.2.*|1.3.*) LIBJAR=hsqldb_jre1_3_1.jar ;;
+    1.1.*) LIBJAR=hsqldb_jre1_1_8.jar ;;
     *) echo 'Failed to find a supported version of Java.
 You MUST edit /etc/hsqldb.conf and add an entry for $JAVA_HOME; and create 
 a sym link '$BASEDIR/$BASE'/lib/hssqldb.jar pointing 
