@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.2 2004/01/19 20:26:53 unsaved Exp $
+ * $Id: SqlFile.java,v 1.3 2004/01/19 23:09:38 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -66,7 +66,9 @@ public class SqlFile {
             + "delimited with ';'.\n"
             + "SPECIAL Commands all begin with '\\', SQL Statements do not.\n"
             + "SPECIAL Commands:\n"
-            + "    \\q:  exit";
+            + "    \\h;  Help\n"
+            + "    \\!;  Shell out\n"
+            + "    \\q;  Quit";
 
     /**
      * @param inFile  inFile of null means to read stdin.
@@ -188,6 +190,9 @@ public class SqlFile {
         switch (curCommand.charAt(1)) {
             case 'q':
                 throw new QuitNow();
+            case 'h':
+                System.out.println(HELP_TEXT);
+                break;
             case '!':
                 System.err.println("Run '"
                         + ((other == null) ? "SHELL" : other) + "'");
