@@ -1,0 +1,13 @@
+Chronological Change List
+
+This file is the accumulated list of changes in the course of development of
+hsqldb 1.7.3 in reverse chronological order. A list of changes by subject 
+area will be found later in changelog_1_7_3.txt.
+
+Fred Toussi (fredt@users.sourceforge.net)
+
+2004.10.26 FIRST COMMIT 1.7.3
+
+Changed handling of the BOOLEAN type to allow the undefined state.
+This involves changes to the behariour of NOT and NULL, also CHECK conditions
+regarding NULL values.
