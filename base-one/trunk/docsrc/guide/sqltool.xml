@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.56 2004/07/18 03:48:55 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.57 2004/07/18 23:00:28 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.56 $</edition>
-        <pubdate>$Date: 2004/07/18 03:48:55 $</pubdate>
+        <edition>$Revision: 1.57 $</edition>
+        <pubdate>$Date: 2004/07/18 23:00:28 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -700,8 +700,16 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
             then specify a SQL filepath of "-", like
         <informalexample><screen>
     java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
-        </informalexample></para><simpara>
-            This is a good way to test what SqlTool will do when it 
+        </informalexample></para><para>
+            This is very useful in (at least) two situations.
+            This is how you would pipe input into SqlTool, which is 
+            extremely useful in shell scripts where the SQL code is
+            generated dynamically, like
+        <example><title>Piping input into SqlTool</title><screen>
+    echo "Some SQL commands with '$VARIABLES';" |
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
+        </example></para><simpara>
+            This is also a good way to test what SqlTool will do when it 
             encounters a specific command in a SQL file.
             You <emphasis>emulate</emphasis> SQL file execution while
             giving SqlTool commands interactively.
