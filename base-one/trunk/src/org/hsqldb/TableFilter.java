@@ -173,6 +173,94 @@ class TableFilter {
         }
     }
 
+    // TODO: Optimize
+    //
+    // The current way always chooses eStart, eEnd conditions
+    // using first encountered eligible index
+    //
+    // We should check if current index offers better selectivity/access
+    // path than previously assigned iIndex.
+    //
+    // EXAMPLE 1:
+    //
+    // CREATE TABLE t (c1 int, c2 int primary key)
+    // CREATE INDEX I1 ON t(c1)
+    // SELECT
+    //      *
+    // FROM
+    //      t
+    // WHERE
+    //     c1 = | < | <= | >= | > ...
+    // AND
+    //     c2 = | < | <= | >= | > ...
+    //
+    // currently always chooses iIndex / condition (c1/I1), over
+    // index / condition (c2/pk), whereas index / condition (c2/pk)
+    // may well be better, especially if condition on c2 is equality
+    // (condition_start_end) and conditionon(s) on c1 involve range
+    // (condition_start, condition_end, or some composite).
+    //
+    // Currently, the developer/client software must somehow know facts
+    // both about the table, the query and the way HSQLDB forms its
+    // plans and, based on this knowlege, perhaps decide to reverse
+    // order by explicitly issuing instead:
+    //
+    // SELECT
+    //      *
+    // FROM
+    //      t
+    // WHERE
+    //     c2 = | < | <= | >= | > ...
+    // AND
+    //     c1 = | < | <= | >= | > ...
+    //
+    // to get optimal index choice.
+    //
+    // The same thing applies to and is even worse for joins.
+    //
+    // Consider the following (highly artificial, but easy to
+    // understand) case:
+    //
+    // CREATE TABLE T1(ID INTEGER PRIMARY KEY, C1 INTEGER)
+    // CREATE INDEX I1 ON T1(C1)
+    // CREATE TABLE T2(ID INTEGER PRIMARY KEY, C1 INTEGER)
+    // CREATE INDEX I2 ON T2(C1)
+    //
+    // select * from t1, t2 where t1.c1 = t2.c1 and t1.id = t2.id
+    //
+    // Consider the worst value distribution where t1 and t2 are both
+    // 10,000 rows, c1 selectivity is nil (all values are identical)
+    // for both tables, and, say, id values span the range 0..9999
+    // for both tables.
+    //
+    // Then time to completion on 500 MHz Athlon testbed using memory
+    // tables is:
+    //
+    // 10000 row(s) in 309114 ms
+    //
+    // whereas for:
+    //
+    // select * from t1, t2 where t1.id = t2.id and t1.c1 = t2.c1
+    //
+    // time to completion is:
+    //
+    // 10000 row(s) in 471 ms
+    //
+    // Hence, the unoptimized query takes 656 times as long as the
+    // optimized one!!!
+    //
+    // EXAMPLE 2:
+    //
+    // If there are, say, two non-unique candidate indexes,
+    // and some range or equality predicates against
+    // them, preference should be given to the one with
+    // better selectivity (if the total row count of the
+    // table is large, otherwise the overhead of making
+    // the choice is probably large w.r.t. any possible
+    // savings).  Might require maintaining some basic
+    // statistics or performing appropriate index probes
+    // at the time the plan is being generated.
+
     /**
      * Method declaration
      *
@@ -234,93 +322,6 @@ class TableFilter {
 
         if ((index == null) || ((iIndex != index) && (iIndex != null))) {
 
-            // TODO: Optimize
-            //
-            // The current way always chooses eStart, eEnd conditions
-            // using first encountered eligible index
-            //
-            // We should check if current index offers better selectivity/access
-            // path than previously assigned iIndex.
-            //
-            // EXAMPLE 1:
-            //
-            // CREATE TABLE t (c1 int, c2 int primary key)
-            // CREATE INDEX I1 ON t(c1)
-            // SELECT
-            //      *
-            // FROM
-            //      t
-            // WHERE
-            //     c1 = | < | <= | >= | > ...
-            // AND
-            //     c2 = | < | <= | >= | > ...
-            //
-            // currently always chooses iIndex / condition (c1/I1), over
-            // index / condition (c2/pk), whereas index / condition (c2/pk)
-            // may well be better, especially if condition on c2 is equality
-            // (condition_start_end) and conditionon(s) on c1 involve range
-            // (condition_start, condition_end, or some composite).
-            //
-            // Currently, the developer/client software must somehow know facts
-            // both about the table, the query and the way HSQLDB forms its
-            // plans and, based on this knowlege, perhaps decide to reverse
-            // order by explicitly issuing instead:
-            //
-            // SELECT
-            //      *
-            // FROM
-            //      t
-            // WHERE
-            //     c2 = | < | <= | >= | > ...
-            // AND
-            //     c1 = | < | <= | >= | > ...
-            //
-            // to get optimal index choice.
-            //
-            // The same thing applies to and is even worse for joins.
-            //
-            // Consider the following (highly artificial, but easy to
-            // understand) case:
-            //
-            // CREATE TABLE T1(ID INTEGER PRIMARY KEY, C1 INTEGER)
-            // CREATE INDEX I1 ON T1(C1)
-            // CREATE TABLE T2(ID INTEGER PRIMARY KEY, C1 INTEGER)
-            // CREATE INDEX I2 ON T2(C1)
-            //
-            // select * from t1, t2 where t1.c1 = t2.c1 and t1.id = t2.id
-            //
-            // Consider the worst value distribution where t1 and t2 are both
-            // 10,000 rows, c1 selectivity is nil (all values are identical)
-            // for both tables, and, say, id values span the range 0..9999
-            // for both tables.
-            //
-            // Then time to completion on 500 MHz Athlon testbed using memory
-            // tables is:
-            //
-            // 10000 row(s) in 309114 ms
-            //
-            // whereas for:
-            //
-            // select * from t1, t2 where t1.id = t2.id and t1.c1 = t2.c1
-            //
-            // time to completion is:
-            //
-            // 10000 row(s) in 471 ms
-            //
-            // Hence, the unoptimized query takes 656 times as long as the
-            // optimized one!!!
-            //
-            // EXAMPLE 2:
-            //
-            // If there are, say, two non-unique candidate indexes,
-            // and some range or equality predicates against
-            // them, preference should be given to the one with
-            // better selectivity (if the total row count of the
-            // table is large, otherwise the overhead of making
-            // the choice is probably large w.r.t. any possible
-            // savings).  Might require maintaining some basic
-            // statistics or performing appropriate index probes
-            // at the time the plan is being generated.
             addAndCondition(e);
 
             return;

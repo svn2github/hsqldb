@@ -164,7 +164,12 @@ class DatabaseCommandInterpreter {
                 // EX:    session.addResult(executePart(cmd, token, parser));
                 result = executePart(cmd, token, parser);
 
-                if (session.getScripting()) {
+                // PATCH -- needs executePart to return not null result
+                if (result.iMode == ResultConstants.ERROR) {
+                    break;
+                }
+
+                 if (session.getScripting()) {
                     logger.writeToLog(session, tokenizer.getLastPart());
                 }
             }
@@ -182,9 +187,7 @@ class DatabaseCommandInterpreter {
     Result executePart(int cmd, String token,
                        Parser parser) throws Throwable {
 
-        Result result;
-
-        result = null;
+        Result result = this.emptyResult;
 
         switch (cmd) {
 
@@ -953,6 +956,7 @@ class DatabaseCommandInterpreter {
                                 Trace.SECOND_PRIMARY_KEY);
 
                     mainConst.localCol = col;
+                    mainConst.name     = pkHsqlName;
 
                     break;
                 }

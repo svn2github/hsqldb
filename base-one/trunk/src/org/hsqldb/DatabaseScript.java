@@ -353,7 +353,8 @@ class DatabaseScript {
                 a.append(" IDENTITY");
             }
 
-            if ((pk.length == 1) && (j == pk[0])) {
+            if ((pk.length == 1) && (j == pk[0])
+                    && pki.getName().isReservedIndexName()) {
                 a.append(" PRIMARY KEY");
             }
 
@@ -362,7 +363,7 @@ class DatabaseScript {
             }
         }
 
-        if (pk.length > 1) {
+        if (pk.length > 1 ||!pki.getName().isReservedIndexName()) {
             a.append(",CONSTRAINT ");
             a.append(pki.getName().statementName);
             a.append(" PRIMARY KEY");
