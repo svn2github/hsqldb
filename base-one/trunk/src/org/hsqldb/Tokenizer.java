@@ -563,6 +563,9 @@ public class Tokenizer {
                 //fredt - no longer returning string with a singlequote as last char
                 return sToken;
 
+            case LONG :
+                return ValuePool.getLong(Long.parseLong(sToken));
+
             case NUMBER :
 
                 // fredt - this returns unsigned values which are later negated.

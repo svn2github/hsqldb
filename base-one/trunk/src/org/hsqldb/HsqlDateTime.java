@@ -113,7 +113,7 @@ public class HsqlDateTime {
             // fredt - treat Date as full days only
             if (s.equals("CURRENT_DATE") || s.equals("TODAY")
                     || s.equals("SYSDATE")) {
-                return new Timestamp(getToday().getTimeInMillis());
+                return new Timestamp(getTimeInMillis(getToday()));
             }
 
             throw new java.lang.IllegalArgumentException(
@@ -162,7 +162,7 @@ public class HsqlDateTime {
             // fredt - treat Date as full days only
             if (s.equals("TODAY") || s.equals("CURRENT_DATE")
                     || s.equals("SYSDATE")) {
-                return new java.sql.Date(getToday().getTimeInMillis());
+                return new java.sql.Date(getTimeInMillis(getToday()));
             }
 
             throw new java.lang.IllegalArgumentException(
@@ -297,7 +297,7 @@ public class HsqlDateTime {
 
         long now = System.currentTimeMillis();
 
-        if (now - today.getTimeInMillis() > 24 * 3600 * 1000) {
+        if (now - getTimeInMillis(today) > 24 * 3600 * 1000) {
             resetToday();
         }
 
@@ -370,7 +370,7 @@ public class HsqlDateTime {
      * @param       cal                             the Calendar
      * @return      the time value in milliseconds
      */
-    private static long getTimeInMillis(Calendar cal) {
+    static long getTimeInMillis(Calendar cal) {
 
 //#ifdef JDBC3
         // Use method directly
@@ -445,7 +445,7 @@ public class HsqlDateTime {
             setTimeInMillis(tempCalGMT, System.currentTimeMillis());
             resetToDate(tempCalGMT);
 
-            long value = tempCalGMT.getTimeInMillis() + t.getTime();
+            long value = getTimeInMillis(tempCalGMT) + t.getTime();
 
             return new Timestamp(value);
         }

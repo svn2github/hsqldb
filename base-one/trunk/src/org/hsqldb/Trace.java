@@ -311,6 +311,7 @@ public class Trace extends PrintWriter {
      TABLE_REFERENCED_VIEW                          = 194,
      PARAMETRIC_TABLE_NAME                          = 195,
      TEXT_SOURCE_EXISTS                             = 196,
+     COLUMN_IS_REFERENCED                           = 197,
 
     //
     INTERNAL_unknown_internal_statement_type                       = 201,
@@ -538,7 +539,7 @@ public class Trace extends PrintWriter {
         "23000 Table is referenced by view",    //
         "parametric table identifier",    //Parser
         "S1000 text source file already exists",    // SELECT INTO TEXT <name>
-        "reserved 197",    //
+        "23000 column is referenced in",    //
         "reserved 198",    //
         "reserved 199",    //
         "reserved 200",    //

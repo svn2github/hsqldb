@@ -212,7 +212,7 @@ class Logger {
     }
 
     void writeInsertStatement(Session session, Table table,
-                    Object[] row) throws HsqlException {
+                              Object[] row) throws HsqlException {
 
         if (lLog != null) {
             lLog.writeInsertStatement(session, table, row);
@@ -262,10 +262,10 @@ class Logger {
      *
      * @param  i The size, in MB
      */
-    void setLogSize(int i) {
+    void setLogSize(int megas) {
 
         if (lLog != null) {
-            lLog.setLogSize(i);
+            lLog.setLogSize(megas);
         }
     }
 

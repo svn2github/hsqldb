@@ -222,7 +222,6 @@ public class Expression {
     // VALUE LIST NEW
     Expression[]    valueList;
     private boolean isFixedConstantValueList;
-    private boolean isFixedConstantValueListChecked;
 
     // QUERY - in single value selects, IN or EXISTS predicates
     Select  subSelect;
@@ -541,8 +540,7 @@ public class Expression {
             case COLUMN :
 
                 // this is a limited solution
-                Table  table = tableFilter.getTable();
-                String ddlName;
+                Table table = tableFilter.getTable();
 
                 if (tableName != null) {
                     buf.append(table.tableName.statementName);
@@ -1240,11 +1238,11 @@ public class Expression {
                 colExps.add(this);
             } else {
                 if (eArg != null) {
-                    eArg.collectInGroupByExpressions(colExps);     // TODO use loop instead
+                    eArg.collectInGroupByExpressions(colExps);
                 }
 
                 if (eArg2 != null) {
-                    eArg2.collectInGroupByExpressions(colExps);    // TODO use loop instead
+                    eArg2.collectInGroupByExpressions(colExps);
                 }
             }
         }
@@ -1269,8 +1267,7 @@ public class Expression {
     }
 
     /**
-     * Method declaration
-     *
+     * Set the column alias
      *
      * @param s
      */
@@ -1279,6 +1276,24 @@ public class Expression {
         aliasQuoted = isquoted;
     }
 
+    /**
+     * Change the column name
+     */
+    void setColumnName(String newname, boolean isquoted) {
+        columnName   = newname;
+        columnQuoted = isquoted;
+    }
+
+    /**
+     * Change the table name
+     */
+    void setTableName(String newname) {
+        tableName = newname;
+    }
+
+    /**
+     * Return the user defined alias or null if none
+     */
     String getDefinedAlias() {
         return columnAlias;
     }
@@ -2136,17 +2151,17 @@ public class Expression {
                 return;
             }
 
-                Expression eFirst = new Expression(Types.VARCHAR,
-                                                   likeObject.getRangeLow());
-                Expression eLast = new Expression(Types.VARCHAR,
-                                                  likeObject.getRangeHigh());
+            Expression eFirst = new Expression(Types.VARCHAR,
+                                               likeObject.getRangeLow());
+            Expression eLast = new Expression(Types.VARCHAR,
+                                              likeObject.getRangeHigh());
 
             if (between &&!like) {
                 Expression eArgOld = eArg;
 
-                eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
-                eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
-                exprType = AND;
+                eArg       = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
+                eArg2      = new Expression(SMALLER_EQUAL, eArgOld, eLast);
+                exprType   = AND;
                 likeObject = null;
             } else if (between && like) {
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
@@ -2169,8 +2184,6 @@ public class Expression {
         }
     }
 
-    void resolveTypeForIn() throws HsqlException {
-
 // PARAM Resolution rules:
 //
 // Expression used with IN:    Same as the first value or the result column
@@ -2184,6 +2197,8 @@ public class Expression {
 //                             to be a parameter marker if the list is empty.
 // CHECKME:
 // Is an empty IN list legal?  Why would anyone ever use it?
+    void resolveTypeForIn() throws HsqlException {
+
         if (eArg2.exprType == QUERY) {
             if (eArg.isParam) {
                 eArg.dataType = eArg2.dataType;
@@ -2245,6 +2260,32 @@ public class Expression {
                     } else {
                         e.resolveTypes();
                     }
+                }
+            }
+
+            int len = vl.length;
+
+            eArg2.isFixedConstantValueList = true;
+
+            for (int i = 0; i < len; i++) {
+                if (!vl[i].isFixedConstant()) {
+                    eArg2.isFixedConstantValueList = false;
+
+                    break;
+                }
+            }
+
+            if (eArg2.isFixedConstantValueList) {
+                eArg2.hList = new HashSet();
+
+                for (int i = 0; i < len; i++) {
+                    try {
+                        Object value = eArg2.valueList[i].getValue();
+
+                        value = Column.convertObject(value, eArg2.dataType);
+
+                        eArg2.hList.add(value);
+                    } catch (HsqlException e) {}
                 }
             }
         }
@@ -3038,34 +3079,6 @@ public class Expression {
                 }
             }
 
-            if (!isFixedConstantValueListChecked) {
-                int len = valueList.length;
-
-                if (!isFixedConstantValueList) {
-                    isFixedConstantValueList = true;
-
-                    for (int i = 0; i < len; i++) {
-                        if (!valueList[i].isFixedConstant()) {
-                            isFixedConstantValueList = false;
-
-                            break;
-                        }
-                    }
-                }
-
-                if (isFixedConstantValueList) {
-                    hList = new HashSet();
-
-                    for (int i = 0; i < len; i++) {
-                        Object value = valueList[i].getValue(datatype);
-
-                        hList.add(value);
-                    }
-                }
-
-                isFixedConstantValueListChecked = true;
-            }
-
             if (isFixedConstantValueList) {
                 return hList.contains(o);
             }
@@ -3300,9 +3313,8 @@ public class Expression {
 
     void setTableColumnAttributes(Table t, int i) {
 
-        Column c;
+        Column c = t.getColumn(i);
 
-        c           = t.getColumn(i);
         dataType    = c.getType();
         columnSize  = c.getSize();
         columnScale = c.getScale();
@@ -3394,7 +3406,6 @@ public class Expression {
 
         void addAll(Expression e, int type) {
 
-            Select       select;
             Function     function;
             Expression[] list;
 
@@ -3410,18 +3421,7 @@ public class Expression {
                 add(e);
             }
 
-            select = e.subSelect;
-
-            for (; select != null; select = select.sUnion) {
-                list = select.exprColumns;
-
-                for (int i = 0; i < list.length; i++) {
-                    addAll(list[i], type);
-                }
-
-                addAll(select.queryCondition, type);
-                addAll(select.havingCondition, type);
-            }
+            addAll(e.subSelect, type);
 
             function = e.function;
 
@@ -3441,6 +3441,22 @@ public class Expression {
                 for (int i = 0; i < list.length; i++) {
                     addAll(list[i], type);
                 }
+            }
+        }
+
+        void addAll(Select select, int type) {
+
+            for (; select != null; select = select.sUnion) {
+                Expression[] list = select.exprColumns;
+
+                for (int i = 0; i < list.length; i++) {
+                    addAll(list[i], type);
+                }
+
+                addAll(select.queryCondition, type);
+                addAll(select.havingCondition, type);
+
+                // todo order by columns
             }
         }
     }

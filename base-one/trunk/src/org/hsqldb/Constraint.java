@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
@@ -107,7 +108,7 @@ Referential Constraint 4 SET DEFAULT
     int              constType;
 
     /**
-     *  Constructor declaration
+     *  Constructor declaration for UNIQUE
      *
      * @param  name
      * @param  t
@@ -341,6 +342,33 @@ Referential Constraint 4 SET DEFAULT
         return false;
     }
 
+    /**
+     * Only for check constraints
+     */
+    boolean hasColumn(Table table, String colname) {
+
+        if (constType != CHECK) {
+            return false;
+        }
+
+        Expression.Collector coll = new Expression.Collector();
+
+        coll.addAll(core.check, Expression.COLUMN);
+
+        Iterator it = coll.iterator();
+
+        for (; it.hasNext(); ) {
+            Expression e = (Expression) it.next();
+
+            if (e.getColumnName().equals(colname)
+                    && table.tableName.name.equals(e.getTableName())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 // fredt@users 20020225 - patch 1.7.0 by fredt - duplicate constraints
 
     /**
@@ -379,6 +407,7 @@ Referential Constraint 4 SET DEFAULT
 
     /**
      *  Used to update constrains to reflect structural changes in a table.
+     *  Prior checks must ensure that this method does not throw.
      *
      * @param  oldt reference to the old version of the table
      * @param  newt referenct to the new version of the table
@@ -389,17 +418,17 @@ Referential Constraint 4 SET DEFAULT
     void replaceTable(Table oldt, Table newt, int colindex,
                       int adjust) throws HsqlException {
 
-        if (constType == Constraint.CHECK) {
-            return;
-        }
-
         if (oldt == core.mainTable) {
             core.mainTable = newt;
-            core.mainIndex =
-                core.mainTable.getIndex(core.mainIndex.getName().name);
-            core.mainColArray =
-                ArrayUtil.toAdjustedColumnArray(core.mainColArray, colindex,
-                                                adjust);
+
+            // excluede CHECK
+            if (core.mainIndex != null) {
+                core.mainIndex =
+                    core.mainTable.getIndex(core.mainIndex.getName().name);
+                core.mainColArray =
+                    ArrayUtil.toAdjustedColumnArray(core.mainColArray,
+                                                    colindex, adjust);
+            }
         }
 
         if (oldt == core.refTable) {
@@ -415,25 +444,6 @@ Referential Constraint 4 SET DEFAULT
                                                         colindex, adjust);
                 }
             }
-        }
-    }
-
-    /**
-     *  Adding or dropping indexes may require changes to the indexes used by
-     *  a constraint to an equivalent index.
-     *
-     * @param  oldi reference to the old index
-     * @param  newt referenct to the new index
-     * @throws  HsqlException
-     */
-    void replaceIndex(Index oldi, Index newi) {
-
-        if (oldi == core.refIndex) {
-            core.refIndex = newi;
-        }
-
-        if (oldi == core.mainIndex) {
-            core.mainIndex = newi;
         }
     }
 
@@ -460,8 +470,8 @@ Referential Constraint 4 SET DEFAULT
         }
 
         if (core.mainIndex.isNull(row, core.refColArray)) {
-                return;
-            }
+            return;
+        }
 
         // a record must exist in the main table
         if (core.mainIndex.findNotNull(row, core.refColArray, true) == null) {

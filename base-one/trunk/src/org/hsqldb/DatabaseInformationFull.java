@@ -2884,8 +2884,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
                     break;
                 }
-                case Constraint.UNIQUE :
-                case Constraint.MAIN : {
+                case Constraint.UNIQUE : {
                     row[icons_type] = "UNIQUE";
                     table           = constraint.getMain();
 
@@ -2897,8 +2896,9 @@ extends org.hsqldb.DatabaseInformationMain {
 
                     break;
                 }
+                case Constraint.MAIN :
                 default : {
-                    table = null;    // error
+                    continue;
                 }
             }
 

@@ -546,16 +546,14 @@ class Select {
      */
     private boolean inAggregateOrGroupByClause(Expression exp) {
 
-        if ((!isAggregated) || exp.canBeInAggregate()) {
+        if (isGrouped) {
+            return isSimilarIn(exp, iResultLen, iResultLen + iGroupLen)
+                   || allColumnsAreDefinedIn(exp, groupColumnNames);
+        } else if (isAggregated) {
+            return exp.canBeInAggregate();
+        } else {
             return true;
         }
-
-        if (!isGrouped) {
-            return false;
-        }
-
-        return isSimilarIn(exp, iResultLen, iResultLen + iGroupLen)
-               || allColumnsAreDefinedIn(exp, groupColumnNames);
     }
 
     /**
@@ -843,8 +841,6 @@ class Select {
         return sb;
     }
 
-// boucherb@users 20030418 - patch 1.7.2 - fast execution for compiled statements
-// -----------------------------------------------------------------------------
     boolean isResolved = false;
 
     boolean resolveAll(boolean check) throws HsqlException {

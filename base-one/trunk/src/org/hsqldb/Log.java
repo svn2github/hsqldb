@@ -257,8 +257,9 @@ class Log {
     void open() throws HsqlException {
 
         // Allows the user to set log size in the properties file.
-        maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
-        maxLogSize = maxLogSize * 1024 * 1024;
+        int logMegas = pProperties.getIntegerProperty("hsqldb.log_size", 0);
+
+        maxLogSize = logMegas * 1024 * 1024;
         scriptFormat = pProperties.getIntegerProperty("hsqldb.script_format",
                 ScriptWriterBase.SCRIPT_TEXT_170);
         filesReadOnly = dDatabase.filesReadOnly;;
@@ -457,11 +458,11 @@ class Log {
      *
      * @param  mb
      */
-    void setLogSize(int newsize) {
+    void setLogSize(int megas) {
 
-        pProperties.setProperty("hsqldb.log_size", newsize);
+        pProperties.setProperty("hsqldb.log_size", megas);
 
-        maxLogSize = newsize;
+        maxLogSize = megas * 1024 * 1024;
     }
 
     /**

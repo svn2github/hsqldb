@@ -72,6 +72,7 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
 
@@ -559,13 +560,17 @@ public class Table extends BaseTable {
      * @param isquoted
      * @throws  HsqlException
      */
-    void setName(String name, boolean isquoted) throws HsqlException {
+    void renameTable(String newname, boolean isquoted) throws HsqlException {
 
-        tableName.rename(name, isquoted);
+        String oldname = tableName.name;
+
+        tableName.rename(newname, isquoted);
 
         if (HsqlName.isReservedIndexName(getPrimaryIndex().getName().name)) {
-            getPrimaryIndex().getName().rename("SYS_PK", name, isquoted);
+            getPrimaryIndex().getName().rename("SYS_PK", newname, isquoted);
         }
+
+        renameTableInCheckConstraints(oldname, newname);
     }
 
     /**
@@ -704,14 +709,128 @@ public class Table extends BaseTable {
         return tn;
     }
 
-    void updateConstraints(Table to, int colindex,
-                           int adjust) throws HsqlException {
+    void updateConstraintsTables(Table old, int colindex,
+                                 int adjust) throws HsqlException {
 
         for (int j = 0, size = vConstraint.size(); j < size; j++) {
             Constraint c = (Constraint) vConstraint.get(j);
 
-            c.replaceTable(to, this, colindex, adjust);
+            c.replaceTable(old, this, colindex, adjust);
+
+            if (c.constType == Constraint.CHECK) {
+                recompileCheckConstraint(c);
+            }
         }
+    }
+
+    private void recompileCheckConstraints() throws HsqlException {
+
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
+            Constraint c = (Constraint) vConstraint.get(j);
+
+            if (c.constType == Constraint.CHECK) {
+                recompileCheckConstraint(c);
+            }
+        }
+    }
+
+    /**
+     * Used after adding columns or indexes to the table
+     */
+    private void recompileCheckConstraint(Constraint c) throws HsqlException {
+
+        String    ddl       = c.core.check.getDDL();
+        Tokenizer tokenizer = new Tokenizer(ddl);
+        Parser parser =
+            new Parser(database, tokenizer,
+                       database.getSessionManager().getSysSession());
+        Expression condition = parser.parseExpression();
+
+        c.core.check = condition;
+
+        // this workaround is here to stop LIKE optimisation (for proper scripting)
+        condition.setLikeOptimised();
+
+        Select s = Expression.getCheckSelect(this, condition);
+
+        c.core.checkFilter = s.tFilter[0];
+
+        c.core.checkFilter.setAsCheckFilter();
+
+        c.core.mainTable = this;
+    }
+
+    /**
+     * Used for drop column
+     */
+    void checkColumnInCheckConstraint(String colname) throws HsqlException {
+
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
+            Constraint c = (Constraint) vConstraint.get(j);
+
+            if (c.constType == Constraint.CHECK) {
+                if (c.hasColumn(this, colname)) {
+                    throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+                                      c.getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * Used for rename column
+     */
+    private void renameColumnInCheckConstraints(String oldname,
+            String newname, boolean isquoted) throws HsqlException {
+
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
+            Constraint c = (Constraint) vConstraint.get(j);
+
+            if (c.constType == Constraint.CHECK) {
+                Expression.Collector coll = new Expression.Collector();
+
+                coll.addAll(c.core.check, Expression.COLUMN);
+
+                Iterator it = coll.iterator();
+
+                for (; it.hasNext(); ) {
+                    Expression e = (Expression) it.next();
+
+                    if (e.getColumnName() == oldname) {
+                        e.setColumnName(newname, isquoted);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Used for drop column
+     */
+    private void renameTableInCheckConstraints(String oldname,
+            String newname) throws HsqlException {
+
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
+            Constraint c = (Constraint) vConstraint.get(j);
+
+            if (c.constType == Constraint.CHECK) {
+                Expression.Collector coll = new Expression.Collector();
+
+                coll.addAll(c.core.check, Expression.COLUMN);
+
+                Iterator it = coll.iterator();
+
+                for (; it.hasNext(); ) {
+                    Expression e = (Expression) it.next();
+
+                    if (e.getTableName() == oldname) {
+                        e.setTableName(newname);
+                    }
+                }
+            }
+        }
+
+        recompileCheckConstraints();
     }
 
     /**
@@ -2702,10 +2821,12 @@ public class Table extends BaseTable {
     void renameColumn(Column column, String newName,
                       boolean isquoted) throws HsqlException {
 
-        int i = getColumnNr(column.columnName.name);
+        String oldname = column.columnName.name;
+        int    i       = getColumnNr(oldname);
 
         vColumn.setKey(i, newName);
         column.columnName.rename(newName, isquoted);
+        renameColumnInCheckConstraints(oldname, newName, isquoted);
     }
 
     /**

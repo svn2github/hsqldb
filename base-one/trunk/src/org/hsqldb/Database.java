@@ -881,7 +881,7 @@ public class Database {
         }
 
         checkTableIsReferenced(toDrop);
-        checkTableIsInView(toDrop);
+        checkTableIsInView(toDrop, null);
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
         userManager.removeDbObject(toDrop.getName());
@@ -942,18 +942,46 @@ public class Database {
     /**
      * Throws if the table is referenced in a view.
      */
-    void checkTableIsInView(Table table) throws HsqlException {
+    void checkTableIsInView(Table table, String column) throws HsqlException {
+
+        View[] views = getViewsWithTable(table, column);
+
+        if (views != null) {
+            if (column == null) {
+                throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
+                                  views[0].getName().name);
+            } else {
+                throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+                                  views[0].getName().name);
+            }
+        }
+    }
+
+    View[] getViewsWithTable(Table table,
+                             String column) throws HsqlException {
+
+        HsqlArrayList list = null;
 
         for (int i = 0; i < tTable.size(); i++) {
             Table t = (Table) tTable.get(i);
 
             if (t.isView()) {
-                if (((View) t).hasTable(table)) {
-                    throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
-                                      t.getName().name);
+                boolean found = column == null ? ((View) t).hasTable(table)
+                                               : ((View) t).hasColumn(table,
+                                                   column);
+
+                if (found) {
+                    if (list == null) {
+                        list = new HsqlArrayList();
+                    }
+
+                    list.add(t);
                 }
             }
         }
+
+        return list == null ? null
+                            : (View[]) list.toArray(new View[list.size()]);
     }
 
     /**

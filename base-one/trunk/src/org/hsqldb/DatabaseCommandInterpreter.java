@@ -1115,9 +1115,8 @@ class DatabaseCommandInterpreter {
 
                     tempConst = new Constraint(cname, null, null, null,
                                                Constraint.CHECK, 0, 0);
-                    tempConst.core.check =
-                        processCreateCheckConstraintCondition(t);
 
+                    processCreateCheckConstraintCondition(tempConst);
                     tcList.add(tempConst);
 
                     break;
@@ -1147,7 +1146,7 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      * @return check expression
      */
-    private Expression processCreateCheckConstraintCondition(Table t)
+    private void processCreateCheckConstraintCondition(Constraint c)
     throws HsqlException {
 
         tokenizer.getThis(Token.T_OPENBRACKET);
@@ -1157,7 +1156,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_CLOSEBRACKET);
 
-        return condition;
+        c.core.check = condition;
     }
 
     /**
@@ -1515,7 +1514,7 @@ class DatabaseCommandInterpreter {
         checkTableExists(newName, false);
         session.commit();
         session.setScripting(!t.isTemp());
-        t.setName(newName, isquoted);
+        t.renameTable(newName, isquoted);
     }
 
     /**
@@ -3012,8 +3011,8 @@ class DatabaseCommandInterpreter {
 
         check = new Constraint(name, null, null, null, Constraint.CHECK, 0,
                                0);
-        check.core.check = processCreateCheckConstraintCondition(table);
 
+        processCreateCheckConstraintCondition(check);
         session.commit();
 
         TableWorks tableWorks = new TableWorks(table);

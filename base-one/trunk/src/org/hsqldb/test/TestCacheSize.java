@@ -84,7 +84,7 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 15;
+    int    cacheScale = 12;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,11 +102,11 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 1700000;
+    int bigrows   = 40000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
-    boolean multikeytable = true;
+    boolean multikeytable = false;
 
     //
     String     user;

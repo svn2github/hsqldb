@@ -119,7 +119,7 @@ public class Session implements SessionInterface {
     final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
-/** @todo fredt - clarify in which circumstances Session has to disconnect */
+    /** @todo fredt - clarify in which circumstances Session has to disconnect */
     Session getSession() {
         return this;
     }
@@ -381,13 +381,16 @@ public class Session implements SessionInterface {
     public void setAutoCommit(boolean autocommit) {
 
         if (autocommit != isAutoCommit) {
-            commit();
+            synchronized (database) {
+                commit();
 
-            isAutoCommit = autocommit;
+                isAutoCommit = autocommit;
 
-            try {
-                database.logger.writeToLog(this, getAutoCommitStatement());
-            } catch (HsqlException e) {}
+                try {
+                    database.logger.writeToLog(this,
+                                               getAutoCommitStatement());
+                } catch (HsqlException e) {}
+            }
         }
     }
 
@@ -399,9 +402,11 @@ public class Session implements SessionInterface {
     public void commit() {
 
         if (!transactionList.isEmpty()) {
-            try {
-                database.logger.writeToLog(this, Token.T_COMMIT);
-            } catch (HsqlException e) {}
+            synchronized (database) {
+                try {
+                    database.logger.writeToLog(this, Token.T_COMMIT);
+                } catch (HsqlException e) {}
+            }
 
             transactionList.clear();
         }
@@ -414,7 +419,7 @@ public class Session implements SessionInterface {
      *
      * @throws  HsqlException
      */
-    public void rollback() {
+    public synchronized void rollback() {
 
         int i = transactionList.size();
 
@@ -424,14 +429,14 @@ public class Session implements SessionInterface {
 
                 t.rollback(this);
             }
-        }
 
-        if (!transactionList.isEmpty()) {
-            try {
-                database.logger.writeToLog(this, Token.T_ROLLBACK);
-            } catch (HsqlException e) {}
+            if (!transactionList.isEmpty()) {
+                try {
+                    database.logger.writeToLog(this, Token.T_ROLLBACK);
+                } catch (HsqlException e) {}
 
-            transactionList.clear();
+                transactionList.clear();
+            }
         }
 
         savepoints.clear();
@@ -592,7 +597,7 @@ public class Session implements SessionInterface {
      *
      * @return the current value
      */
-    public boolean isAutoCommit() {
+    public synchronized boolean isAutoCommit() {
         return isAutoCommit;
     }
 
@@ -929,35 +934,8 @@ public class Session implements SessionInterface {
         }
     }
 
-    public Result sqlExecuteDirectNoPreChecks(String sql) {
+    public synchronized Result sqlExecuteDirectNoPreChecks(String sql) {
         return dbCommandInterpreter.execute(sql);
-    }
-
-    /**
-     * Executes the statement represented by the compiled statement argument.
-     *
-     * @param cs the compiled statement to execute
-     * @return the result of executing the compiled statement
-     */
-    synchronized Result sqlExecuteCompiled(CompiledStatement cs) {
-
-        try {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(!isNestedTransaction);
-            }
-
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        Trace.getMessage(Trace.Session_sqlExecuteCompiled));
-
-            synchronized (database) {
-                Trace.check(!database.isShutdown(),
-                            Trace.DATABASE_IS_SHUTDOWN);
-
-                return compiledStatementExecutor.execute(cs);
-            }
-        } catch (Throwable t) {
-            return new Result(t, null);
-        }
     }
 
     Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs) {

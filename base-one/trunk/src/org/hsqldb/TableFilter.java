@@ -566,6 +566,14 @@ class TableFilter {
         e.setTrue();
     }
 
+    /**
+     * Remove referenc to Index to avoid possible memory leaks after alter
+     * table or drop index
+     */
+    void setAsCheckFilter() {
+        filterIndex = null;
+    }
+
 // boucheb@users 20030415 - added for debugging support
     public String toString() {
 

@@ -1214,7 +1214,8 @@ public class Library {
      */
     public static java.sql.Date curdate() {
 
-        return new java.sql.Date(HsqlDateTime.getToday().getTimeInMillis());
+        return new java.sql.Date(
+            HsqlDateTime.getTimeInMillis(HsqlDateTime.getToday()));
 
 //        return new java.sql.Date(System.currentTimeMillis());
     }

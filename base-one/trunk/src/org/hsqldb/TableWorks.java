@@ -168,6 +168,7 @@ class TableWorks {
             throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED);
         }
 
+        boolean isSelf = table == expTable;
         boolean isforward = table.database.getTableIndex(table)
                             < table.database.getTableIndex(expTable);
         Index exportindex = expTable.getConstraintIndexForColumns(expcol);
@@ -185,6 +186,13 @@ class TableWorks {
         Index    fkindex = createIndex(fkcol, iname, false, true, isforward);
         HsqlName pkname = table.database.nameManager.newAutoName("REF",
             name.name);
+
+        if (isSelf) {
+
+            // in case createIndex resulted in new Table object
+            expTable = table;
+        }
+
         Constraint c = new Constraint(pkname, name, expTable, table, expcol,
                                       fkcol, exportindex, fkindex,
                                       deleteAction, updateAction);
@@ -233,7 +241,7 @@ class TableWorks {
                                                constraint, forward);
 
             tn.moveData(table, table.getColumnCount(), 0);
-            tn.updateConstraints(table, table.getColumnCount(), 0);
+            tn.updateConstraintsTables(table, table.getColumnCount(), 0);
 
             int index = table.database.getTableIndex(table);
 
@@ -316,15 +324,16 @@ class TableWorks {
 
         // getDDL() is here to ensure no subselects etc. are in condition
         e.getDDL();
+
+        // removes reference to the Index object in filter
+        c.core.checkFilter.setAsCheckFilter();
         table.addConstraint(c);
         table.database.constraintNameList.addName(name.name, table.getName());
     }
 
 /** @todo
-     * before a column is dropped, all CHECK constraints must be reset to
-     * make sure they do not reference the column
-     *
      * when a new Table object is created as a result of structural changes
+     * or a column is added or removed
      * the check constraint expression must be renewed to hold references
      * to the new table (otherwise there will still remain references to the
      * old Table object, resulting in memory leaks
@@ -353,7 +362,7 @@ class TableWorks {
                                             table.getColumnCount(), 0);
 
             tn.moveData(table, table.getColumnCount(), 0);
-            tn.updateConstraints(table, table.getColumnCount(), 0);
+            tn.updateConstraintsTables(table, table.getColumnCount(), 0);
 
             int i = table.database.getTableIndex(table);
 
@@ -379,21 +388,40 @@ class TableWorks {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
-        /**
-         * @todo fredt - view checks - replace with check for column
-         * being in a view and rebuild view
-         */
-
         // only allow add column at the end if referenced in a view
         if (colindex != table.getColumnCount()) {
-            table.database.checkTableIsInView(table);
+
+            /**
+             * // fredt - view checks - replace with check for column
+             * // being in a view and rebuild view
+             * Views[] views = table.database.getViewsWithTable(table,
+             *                              table.getColumn(colindex).
+             *                              columnName.name);
+             *
+             * if ( views != null ){
+             *   if (adjust == -1){
+             *        throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+             *                views[0].getName().name);
+             *   } else {
+             *        recompile each view in views
+             *   }
+             * }
+             */
+
+            // use the restrictive check until we can recompile the views
+            table.database.checkTableIsInView(table, null);
         }
 
-        /** @todo fredt - check constraint columns */
+        // check constraint columns */
+        if (adjust == -1) {
+            table.checkColumnInCheckConstraint(
+                table.getColumn(colindex).columnName.name);
+        }
+
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
         tn.moveData(table, colindex, adjust);
-        tn.updateConstraints(table, colindex, adjust);
+        tn.updateConstraintsTables(table, colindex, adjust);
 
         int i = table.database.getTableIndex(table);
 

@@ -1,7 +1,15 @@
 Readme File
 
 
-2004.03.14
+
+2004.03.19
+
+Bug fixes for: 
+BIGINT values in IN predicate value lists.
+Creation of self ref foreign keys.
+Corrupted log file with SET AUTOCOMMIT
+SET LOGSIZE
+ 
 
 Bug fixes for LIKE with default local and ALTER TABLE with CHECK
 

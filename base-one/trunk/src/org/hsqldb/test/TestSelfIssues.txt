@@ -3,7 +3,7 @@
 --
 -- Tests demonstrating remaining issues
 --
--- bug #901313 - fixe - subselect results in error when it returns no rows
+-- bug #901313 - fixed - subselect results in error when it returns no rows
 drop table table1 if exists;
 drop table table2 if exists;
 create table table1 (col1 integer not null, col2 integer not null);
@@ -26,4 +26,16 @@ insert into table2 (col1, col2) values (2, 4)
 /*u1*/insert into table1 (col1, col2) values (1, 6)
 /*e*/select table2.col2,(select table1.col2 from table1 where table1.col1 = table2.col1) from table2
 
+-- reported bug - fixed - first bigint in value list was ignored
+DROP TABLE T IF EXISTS;
+CREATE TABLE T(A BIGINT);
+INSERT INTO T VALUES(7223955391172290801);
+INSERT INTO T VALUES(8124225344737252039);
+INSERT INTO T VALUES(8112873400132257948);
+INSERT INTO T VALUES(100);
+/*c4*/SELECT * FROM T WHERE A IN
+ (7223955391172290801,8124225344737252039,8112873400132257948,100);
+-- check with different types
+/*c4*/SELECT * FROM T WHERE A IN
+ (7223955391172290801,8124225344737252039,8112873400132257948,100.2E0,'MONDAY');
 

@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 // fredt@users 20031227 - remimplementated as compiled query
@@ -161,6 +162,33 @@ class View extends Table {
                     if (table == tfilter[j].filterTable) {
                         return true;
                     }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if given table or given column in table is in this view.
+     * When colname is null, only the table's presence is checked.
+     */
+    boolean hasColumn(Table table, String colname) {
+
+        if (hasTable(table)) {
+            Expression.Collector coll = new Expression.Collector();
+
+            coll.addAll(viewSubqueries[viewSubqueries.length - 1].select,
+                        Expression.COLUMN);
+
+            Iterator it = coll.iterator();
+
+            for (; it.hasNext(); ) {
+                Expression e = (Expression) it.next();
+
+                if (e.getColumnName().equals(colname)
+                        && table.tableName.name.equals(e.getColumnName())) {
+                    return true;
                 }
             }
         }
