@@ -425,7 +425,6 @@ class User {
      * Appends to the specified StringBuffer the DDL character
      * sequence that creates this user.
      *
-     * @param the StringBuffer to which to append the character sequence
      */
     String getCreateUserDDL() {
 

@@ -45,15 +45,21 @@
 </ul>
 
 <ol>
-   <ol>
-      <ol>
-
-         <li>The user is required to be an administrator.</li>
-         <li>Existing transactions are committed at this point.</li>
-         <li>Constraints, including foreign keys referencing this table, are kept intact. It is the responsibility of the administrator to ensure their integrity.</li>
-      </ol>
-      <p>From version 1.7.2 the new source file is scanned and indexes are built when it is assigned to the table. At this point any violation of NOT NULL, UNIQUE or PRIMARY KEY constrainst are caught and the assignment is aborted. </p>
-   </ol>
+   
+  <ol>
+    <ol>
+      <li>The user is required to be an administrator.</li>
+      <li>Existing transactions are committed at this point.</li>
+      <li>Constraints, including foreign keys referencing this table, are kept 
+        intact. It is the responsibility of the administrator to ensure their 
+        integrity.</li>
+    </ol>
+    <p>From version 1.7.2 the new source file is scanned and indexes are built 
+      when it is assigned to the table. At this point any violation of NOT NULL, 
+      UNIQUE or PRIMARY KEY constrainst are caught and the assignment is aborted. 
+      However, foreign key constraints are not checked at the time of assignment 
+      or reassignment of the source file.</p>
+  </ol>
 </ol>
 
 <ol start=3>
@@ -116,24 +122,27 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
    
 <p>
       This feature provides functionality similar to the Unix tail command, by re-reading the file each time a select is executed. Using this feature sets the table to read-only mode. Afterwards, it will no longer be possible to change the read-only status with SET TABLE &lt;tablename&gt; READONLY TRUE.</p>
-<p>Text table source files are cached in memory. The maximum number of  rows of data that are in memory at any time is controlled by the textdb.cache_scale property. The default value for textdb.cache_scale is 10 and can be changed by setting the property in the .properties file for the database. The number of rows in memory is calculated as 3*(2**scale), which translates to 3072 rows for the default textdb.cache_scale setting (10). The property can also be set for individual text tables:</p>
+<p>Text table source files are cached in memory. The maximum number of rows of 
+  data that are in memory at any time is controlled by the <code>textdb.cache_scale</code> 
+  property. The default value for <code>textdb.cache_scale</code> is 10 and can 
+  be changed by setting the property in the .properties file for the database. 
+  The number of rows in memory is calculated as 3*(2**scale), which translates 
+  to 3072 rows for the default textdb.cache_scale setting (10). The property can 
+  also be set for individual text tables:</p>
 <pre>SET TABLE mytable SOURCE "myfile;ignore_first=true;all_quoted=true;cache_scale=12"</pre>
 <li>
       <h4>Text File Issues</h4>
    </li>
 <ul>
 
-<ul>
-<li>By default, file locations are restricted to below the directory that contains the database. This can be overridden by the&nbsp; database property: </li></ul>
+  <ul>
+    <li>File locations are restricted to below the directory that contains the 
+      database.</li>
+  </ul>
 </ul>
 <dir>
-   <dir>
-      <dir>
-         <dir>
-
-            <pre>textdb.allow_full_path=true. (* deprecated: see below)</pre>
-         </dir>
-</dir>
+  <dir>
+    <dir></dir>
 </dir>
 </dir>
 
@@ -176,10 +185,8 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
   </ul>
 </ul>
 
-<dl>
-   <font color="#FF0000">Deprecation notice: </font>From version 1.7.2  use of  <code>textdb.&lt;tablename&gt;.property=value</code> will be disallowed. Only properties that affect all the text tables in the database will be allowed in the *.properties files. These global properties can then be overridden for individial tables with definitions in the <code>SET TABLE &lt;tablename&gt; SOURCE</code> strings.
- The full list of supported global properties in *.properties files is as follows:
-   </dl>
+<dl> The full list of supported global properties in *.properties files is as 
+  follows: </dl>
 <p><code>textdb.fs<br>
    textdb.vs<br>
    textdb.lvs<br>
@@ -190,7 +197,8 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
   textdb.cache_scale<br>
   </code></p>
 <p><br>
-   Authors: Bob Preston and Fred Toussi - 29 May 2002 - last updated by FT 15 Feb 2004</p>
+  Authors: Bob Preston and Fred Toussi - 29 May 2002 - last updated by FT 12 April 
+  2004</p>
 <p>Copyright 2002-2003 Bob Preston and Fred Toussi. Permission is granted to distribute this document without any alteration under the terms of the HSQLDB license. Additional permission is granted to the HSQLDB Development Group to distribute this document with or without alterations under the terms of the HSQLDB license.</p>
 <p><a href="http://hsqldb.sourceforge.net">http://hsqldb.sourceforge.net&nbsp;</a></p>
 </body>

@@ -349,10 +349,7 @@ public class RowOutputBinary extends RowOutputBase {
     }
 
     /**
-     *  Calculate the size of byte array required to store a string in utf8.
-     *
-     * @param  s - string to convert
-     * @return size of the utf8 string
+     * @param  extra amount of extra space
      */
     public void ensureRoom(int extra) {
         super.ensureRoom(extra);

@@ -270,7 +270,7 @@ public class Expression {
 
     /**
      * Creates a new boolean expression
-     * @param f
+     * @param b
      */
     Expression(boolean b) {
         exprType = b ? TRUE
@@ -293,7 +293,7 @@ public class Expression {
 
     /**
      * Creates a new SEQUENCE expression
-     * @param f
+     * @param sequence
      */
     Expression(NumberSequence sequence) {
 
@@ -336,7 +336,7 @@ public class Expression {
 
     /**
      * Creates a new VALUELIST expression
-     * @param v
+     * @param valueList
      */
     Expression(Expression[] valueList) {
         exprType       = VALUELIST;
@@ -362,9 +362,9 @@ public class Expression {
     /**
      * Creates a new LIKE expression
      *
-     * @param type operator type
      * @param e operand 1
      * @param e2 operand 2
+     * @param escape
      */
     Expression(Expression e, Expression e2, Character escape) {
 
@@ -3045,7 +3045,6 @@ public class Expression {
      *
      *
      * @param o
-     * @param datatype
      *
      * @return
      *

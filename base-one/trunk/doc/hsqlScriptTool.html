@@ -1,18 +1,20 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="Generator" content="Microsoft Word 97">
 <title>Command Line Usage: </title>
 </head>
 <body bgcolor="#FFFFFF">
 
 
 <h2>ScriptTool</h2>
-<p>The new Script Tool class allows executing an SQL script. A script file is read into a string buffer and executed against the database. Results and update counts are written to system out.</p>
+<p>The Script Tool class allows executing an SQL script. A script file is read 
+  into a string buffer and executed against the database. Results and update counts 
+  are written to system out.</p>
 <p>In the default &quot;batch&quot; mode, lines containing &quot;go&quot; (and no other characters or white space) are used to delimit batches of sql statements to execute. Additionally, a line beginning with &quot;print &quot; can be supplied to write comments to system out.</p>
 <p>Script processing is terminated if any errors are encountered.</p>
 <p>Note: there is no checking that the statements executed against the database are valid sql. Nor is there any checking that a &quot;batch&quot; is correct. So if your sql/data contains new lines in combination with the words &quot;go&quot; or &quot;print&quot; be careful. The class uses readline and appends a new line at the end of the file.</p>
-<p>&nbsp;</p>
+<p><i>ScriptTool has been superseded by the new SqlTool which offers both interactive 
+  use and execution of scripts from file.</i></p>
 <h4>Command Line Usage: </h4>
 <pre>  java [jvm options] org.hsqldb.util.ScriptTool [-options] </pre>
 <h4>options are:</h4>

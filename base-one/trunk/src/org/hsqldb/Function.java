@@ -138,11 +138,10 @@ class Function {
      * select from the VIEW regardless, by virtue of being granted SELECT
      * on the VIEW object.
      *
+     * @param name name of the function
      * @param fqn the fully qualified name of a Java method
      * @param session the connected context in which this Function object will
      *      evaluate
-     * @param checkPrivs if true, the session user's routine invocation
-     *      privileges are checked against the declaring class of the fqn
      * @throws HsqlException if the specified function FQN corresponds to no
      *      Java method or the session user at the time of
      *      construction does not have the right to evaluate

@@ -92,7 +92,7 @@ class TriggerDef extends Thread {
      *  execution. Otherwise, the code is run in the Trigger's own thread.
      *  (fredt@users)
      *
-     * @param  sName
+     * @param  name
      * @param  sWhen
      * @param  sOper
      * @param  bForEach
@@ -303,7 +303,8 @@ class TriggerDef extends Thread {
      *  immediately and executed by the main thread. Otherwise, the row
      *  data objects are added to the queue to be used by the Trigger thread.
      *
-     * @param  row Description of the Parameter
+     * @param  row1
+     * @param  row2
      */
     synchronized void pushPair(Object row1[], Object row2[]) {
 

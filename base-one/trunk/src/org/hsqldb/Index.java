@@ -219,7 +219,7 @@ class Index {
      * Method declaration
      *
      *
-     * @param c
+     * @param index
      *
      * @return
      */
@@ -347,8 +347,7 @@ class Index {
      * Method declaration
      *
      *
-     * @param row
-     * @param datatoo
+     * @param x
      *
      * @throws HsqlException
      */
@@ -520,7 +519,9 @@ class Index {
     /**
      * For finding foreign key referencing rows (in child table)
      *
-     * @param data
+     * @param rowdata
+     * @param rowColMap
+     * @param first
      *
      * @return
      *
@@ -571,7 +572,8 @@ class Index {
      * columns to rowdata. Limit to visible columns of data.
      *
      *
-     * @param data
+     * @param rowdata
+     * @param rowColMap
      * @return
      * @throws HsqlException
      */
@@ -615,7 +617,7 @@ class Index {
      * Return the first node equal to the rowdata object. Use visible columns
      * only. The rowdata has the same column mapping as this table.
      *
-     * @param data
+     * @param rowdata
      * @return
      * @throws HsqlException
      */
@@ -739,10 +741,6 @@ class Index {
     /**
      * Finds the first node that is not null
      *
-     *
-     * @param value
-     * @param compare
-     *
      * @return
      *
      * @throws HsqlException
@@ -860,7 +858,7 @@ class Index {
      *
      *
      * @param x
-     * @param w
+     * @param isleft
      *
      * @return
      *
@@ -898,7 +896,7 @@ class Index {
      *
      *
      * @param x
-     * @param w
+     * @param isleft
      * @param n
      *
      * @throws HsqlException
@@ -952,7 +950,7 @@ class Index {
      * or only some columns of this index.
      *
      * @param a row from another table
-     * @param aColIndex column indexes in the other table
+     * @param rowColMap column indexes in the other table
      * @param b a full row in this table
      *
      * @return

@@ -51,8 +51,6 @@ import org.hsqldb.rowio.RowOutputBinary;
  * @version 1.7.2
  * @since 1.7.2
  */
-
-/** @todo fredt - manage the size of rowIn / rowOut buffer */
 public class HSQLClientConnection implements SessionInterface {
 
     static final int          BUFFER_SIZE = 0x1000;

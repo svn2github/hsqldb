@@ -5634,8 +5634,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * ResultSet.getStatement() semantics for result sets that are not from
      * a user supplied Statement object. (fredt)
      *
+     * @param sql SQL statement to execute
      * @return the result of issuing the statement
-     * @param statement SQL statement to execute
      * @throws SQLException is a database error occurs
      */
     private ResultSet execute(String sql) throws SQLException {

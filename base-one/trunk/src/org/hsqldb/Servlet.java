@@ -125,7 +125,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
      * Method declaration
      *
      *
-     * @param database
+     * @param config
      */
     public void init(ServletConfig config) {
 

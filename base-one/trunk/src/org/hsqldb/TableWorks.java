@@ -134,7 +134,7 @@ class TableWorks {
      *
      * @param  fkcol
      * @param  expcol
-     * @param  fkname         foreign key name
+     * @param  name         foreign key name
      * @param  expTable
      * @param  deleteAction
      * @param  updateAction

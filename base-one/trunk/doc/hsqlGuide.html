@@ -10,7 +10,7 @@
 <p>Database Manager (Swing and AWT versions)</p>
 <p>Transfer Tool (AWT version)</p>
 <p>Query Tool (AWT)</p>
-<p>Script Tool</p>
+<p>Sql Tool (command line)</p>
 <p>The HSQLDB RDBMS and JDBC Driver provide the core functionality. The rest are 
   general-purpose database tools that can be used with any database engine that 
   has a JDBC driver.</p>
@@ -39,19 +39,27 @@ org.hsqldb.util.ScriptTool</pre>
 <p>HSQLDB can be run in a number of different ways. In general these are divided 
   into Server Modes and In-Process Mode (also called Standalone Mode). A different 
   sub-program from the jar is used to run HSQLDB in each mode.</p>
-<p>Each HSQLDB database consists of between 2 to 4 files, all named the same but 
+<p>Each HSQLDB database consists of between 2 to 5 files, all named the same but 
   with different extensions, located in the same directory. For example, the database 
   named "test" consists of the following files:</p>
-<pre>test.properties<br>test.script<br>test.data<br>test.backup</pre>
+<pre>test.properties<br>test.script
+test.log<br>test.data<br>test.backup
+</pre>
 <p>The properties files contains general settings about the database. The script 
   file contains the definition of tables and other database objects, plus the 
-  data for non-cached tables. The data file contains the data for cached tables 
-  and the backup file is a zipped backup of the last known consistent state of 
-  the cache. All these files are essential and should never be deleted. If the 
-  database has no cached tables, the <code>test.data</code> and <code>test.backup</code> 
-  files will not be present. In addition to those files, HSQLDB database may link 
-  to any formatted text files, such as CSV lists, anywhere on the disk.</p>
-<p>While the &quot;test&quot; database is operational, a <code>test.log</code> file is used to write the changes made to data. This file is removed at a normal SHUDOWN. Otherwise (with abnormal shutdown) this file is used at the next startup to redo the changes. A <code>test.lck </code>file is also used to record the fact that the database is open. This is deleted at a normal SHUTDOWN.</p>
+  data for non-cached tables. The log file contains recent changes to the database. 
+  The data file contains the data for cached tables and the backup file is a zipped 
+  backup of the last known consistent state of the data file. All these files 
+  are essential and should never be deleted. If the database has no cached tables, 
+  the <code>test.data</code> and <code>test.backup</code> files will not be present. 
+  In addition to those files, HSQLDB database may link to any formatted text files, 
+  such as CSV lists, anywhere on the disk.</p>
+<p>While the &quot;test&quot; database is operational, a <code>test.log</code> 
+  file is used to write the changes made to data. This file is removed at a normal 
+  SHUDOWN. Otherwise (with abnormal shutdown) this file is used at the next startup 
+  to redo the changes. A <code>test.lck </code>file is also used to record the 
+  fact that the database is open. This is deleted at a normal SHUTDOWN. In some 
+  circumstances, a test.data.old is created and deleted afterwards.</p>
 <p><em>When 
   the engine closes the database at a shutdown, it creates temporary files with 
   the extension</em><code> .new </code><em>which it then renames to those listed 
@@ -112,8 +120,14 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
 <p>In some circumstances, you may have to use the following line to get the driver.</p>
 <p><code>Class.<b>forName</b> ( "org.hsqldb.jdbcDriver" ).newInstance();</code></p>
 <p>Note in the above connection URL, there is no mention of the database (file) 
-  as this was specified when running the server. Also, see the Advanced Guide for the connection URL when there is more than one database per server instance.</p>
-<p>&nbsp;</p>
+  as this was specified when running the server. Also, see the Advanced Guide 
+  for the connection URL when there is more than one database per server instance.</p>
+<h4>Security Condiderations</h4>
+<p>When HSQLDB is run as server, the port should be adequately protected with 
+  a firewall. The password for the default system user should also be changed 
+  from the default empty string. When the server is run with the HTTP protocol, 
+  public access should not be allowed to confidential databases as it is not difficult 
+  to spoof an existing open session.</p>
 <h3>IN-PROCESS (Standalone) MODE</h3>
 <p>This mode runs the database engine as part of your application program in the 
   same Java Virtual Machine. For some applications this mode can be faster, as 
@@ -128,24 +142,26 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   specified in the connection URL. For example, if the database name is testdb 
   and its files are located in the same directory as where the command to run 
   your application was issued, the following code is used for the connection:</p>
-<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:testdb", "sa", ""); </pre>
+<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:file:testdb", "sa", ""); </pre>
 <p>The database file path format can be specified using forward slashes in Windows 
   hosts as well as Linux hosts. So relative paths or paths that refer to the same 
   directory on the same drive can be identical. For example if your database path 
   in Linux is <code>/opt/db/testdb</code> and you create an identical directory 
   structure on the <code>C:</code> drive of a Windows host, you can use the same 
   URL in both Windows and Linux:</p>
-<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:/opt/db/testdb", "sa", ""); </pre>
+<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:file:/opt/db/testdb", "sa", ""); </pre>
 <p>Refer to Javadoc for <a href="src/org/hsqldb/jdbcConnection.html"><code>jdbcConnection</code></a> for more details.</p>
-<h4>Memory Only Databases</h4>
+<h4>Memory-Only Databases</h4>
 <p>It is possible to run HSQLDB in a way that the database is not persistent and 
   exists entirely in random access memory. As no information is written to disk, 
   this mode should be used only for internal processing of application data, in 
-  applets or certain special applications. This mode is specified by using a dot 
-  "." as the database file path.</p>
-<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:.", "sa", ""); </pre>
-<p>You can also run a memory only server instance by specifying a dot as the name 
-  of the database. This usage is not common and is limited to special applications where the database server is used only for exchanging information between clients.</p>
+  applets or certain special applications. This mode is specified by the mem: 
+  protocol.</p>
+<pre>Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:mem:aname", "sa", ""); </pre>
+<p>You can also run a memory only server instance by specifying the same URL in 
+  the server.properties. This usage is not common and is limited to special applications 
+  where the database server is used only for exchanging information between clients, 
+  or for non-persistent data.</p>
  
 <h4>&nbsp;</h4>
 <h3>GENERAL</h3>
@@ -221,7 +237,11 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   you should not create duplicate user-defined indexes on the same column sets 
   covered by these constraints. This would result in unnecessary memory and speed 
   overheads. See the discussion in <a href="hsqlSQLGuide.html">hsqlSQLGuide.html</a>  for more information.</p>
-<p>Indexes are crucial for adequate query speed. When queries joining multiple tables are used, there must be an  index on each joined column of each table. When range or equality conditions are used e.g. <code>SELECT ... WHERE a &gt;10 AND  b = 0</code>, an  indexes is  required on  column used in the condition. Indexes have no effect on LIKE conditions or ORDER BY clauses.</p>
+<p>Indexes are crucial for adequate query speed. When queries joining multiple 
+  tables are used, there must be an index on each joined column of each table. 
+  When range or equality conditions are used e.g. <code>SELECT ... WHERE a &gt;10 
+  AND b = 0</code>, an indexes is required on column used in the condition. Indexes 
+  have no effect on ORDER BY clauses or some LIKE conditions.</p>
 <p>As a rule of thumb, HSQLDB is capable of processing queries and returning over 100,000 rows per second. Any query that runs into several seconds should be checked and indexes should be added to the relevant columns of the tables if necessary.</p>
 <h4>SQL SUPPORT</h4>
 <p>The SQL syntax supported by HSQLDB is essentially that specified by the SQL Standard (92 and 200n). Not all the features of the Standard are supported and there are some proprietary extensions. In 1.7.2 the behaviour of the engine is far more compliant with the Standards than with older versions. The main changes are </p>
@@ -234,8 +254,8 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
 <h4>JDBC SUPPORT</h4>
 <p>In 1.7.2, support for JDBC2 has been significantly extended and some features of JDBC3 are also supported. The relevant classes are thoroughly documented. See the JavaDoc for <a href="src/">org.hsqldb.jdbcXXXX </a>classes.</p>
 <p>&nbsp;</p>
-<p>Author: Fred Toussi - 14 July 2002 - updated 01 Feb 2004</p>
-<p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
+<p>Author: Fred Toussi - 14 July 2002 - updated 12 April 2004</p>
+<p>Copyright 2002-2004 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 
   or without alterations under the terms of the HSQLDB license.</p>

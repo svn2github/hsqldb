@@ -87,7 +87,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /**
      * Creates a new instance of jdbcParameterMetaData
-     * @param types The numeric data type codes of the parameters
+     * @param r the Result object
+     * @throws SQLException
      */
     jdbcParameterMetaData(Result r) throws SQLException {
 

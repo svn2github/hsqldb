@@ -96,7 +96,6 @@ class Like {
      * param setter
      *
      * @param s
-     * @param escape
      * @param ignorecase
      */
     void setParams(String s, boolean ignorecase) {
@@ -211,9 +210,8 @@ class Like {
      * Method declaration
      *
      *
-     * @param s
+     * @param pattern
      * @param b
-     * @param e
      */
     private void normalize(String pattern, boolean b) {
 

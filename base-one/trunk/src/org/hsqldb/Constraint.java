@@ -130,8 +130,7 @@ Referential Constraint 4 SET DEFAULT
      *  Constructor for main constraints (foreign key references in PK table)
      *
      * @param  name
-     * @param  t
-     * @param  index
+     * @param  fkconstraint
      */
     Constraint(HsqlName name, Constraint fkconstraint) {
 
@@ -528,7 +527,7 @@ Referential Constraint 4 SET DEFAULT
      * null is returned.
      * (fredt@users)
      *
-     * @param  array of objects for a database row
+     * @param  row array of objects for a database row
      * @param  forDelete should we allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
      * @return Node object or null
      * @throws  HsqlException

@@ -706,9 +706,7 @@ public class Trace {
     /**
      *  Constructor for errors
      *
-     * @param  error error message
-     * @param  state   sql state
-     * @param  code   vendor code
+     * @param  e exception
      */
     static Result toResult(HsqlException e) {
         return new Result(e.getMessage(), e.getSQLState(), e.getErrorCode());
@@ -800,8 +798,8 @@ public class Trace {
     /**
      *     Throws exception if condition is false
      *
-     *     @param boolean condition
-     *     @param int code
+     *     @param condition
+     *     @param code
      *
      * @throws HsqlException
      */
@@ -812,9 +810,9 @@ public class Trace {
     /**
      *     Throws exception if condition is false
      *
-     *     @param boolean condition
-     *     @param int code
-     *     @param Object add
+     *     @param condition
+     *     @param code
+     *     @param add
      *
      * @throws HsqlException
      */
@@ -853,7 +851,8 @@ public class Trace {
      * Used to print messages to System.out
      *
      *
-     * @param message message to print
+     * @param message1 message to print
+     * @param message2 message to print
      */
     public static void printSystemOut(String message1, long message2) {
         System.out.print(message1);
@@ -882,10 +881,10 @@ public class Trace {
     /**
      * Throws exception if condition is false
      *
-     * @param boolean condition
-     * @param int code
-     * @param String add1
-     * @param String add2
+     * @param condition
+     * @param code
+     * @param add1
+     * @param add2
      *
      * @throws HsqlException
      */
@@ -897,11 +896,11 @@ public class Trace {
     /**
      * Throws exception if condition is false
      *
-     * @param boolean condition
-     * @param int code
-     * @param String add1
-     * @param String add2
-     * @param String add3
+     * @param condition
+     * @param code
+     * @param add1
+     * @param add2
+     * @param add3
      *
      * @throws HsqlException
      */
@@ -913,12 +912,12 @@ public class Trace {
     /**
      * Throws exception if condition is false
      *
-     * @param boolean condition
-     * @param int code
-     * @param String add1
-     * @param String add2
-     * @param String add3
-     * @param String add4
+     * @param condition
+     * @param code
+     * @param add1
+     * @param add2
+     * @param add3
+     * @param add4
      *
      * @throws HsqlException
      */
@@ -952,7 +951,7 @@ public class Trace {
     /**
      * Throws exception if assertion fails
      *
-     * @param boolean condition
+     * @param condition
      * @throws HsqlException
      */
     static void doAssert(boolean condition) throws HsqlException {
@@ -962,8 +961,8 @@ public class Trace {
     /**
      * Throws exception if assertion fails
      *
-     * @param boolean condition
-     * @param String error
+     * @param condition
+     * @param error
      * @throws HsqlException
      */
     static void doAssert(boolean condition,

@@ -311,7 +311,10 @@ If the database is all-in-memory, both MEMORY and CACHED forms of CREATE TABLE r
   <font  color="#cc0000">CHECK(&lt;search condition&gt;<font color="#000000">)</font></font></font></p>
 <font>
 <p>search condition:<br>
-  A search condition is similar to the set of conditions in a WHERE clause. In the current version of HSQLDB, the conditions for a CHECK constraint can only reference the current row, meaning there should be no SELECT clause. Sample table definitions with CHECK constraints   are in TestSelfCheckConstraints.txt
+  A search condition is similar to the set of conditions in a WHERE clause. In 
+  the current version of HSQLDB, the conditions for a CHECK constraint can only 
+  reference the current row, meaning there should be no SELECT statement. Sample 
+  table definitions with CHECK constraints are in TestSelfCheckConstraints.txt 
 <p>Gernral syntax limitations:
 <p>Any supplied column size and precision for numeric types is not enforced and serves only for command compatibility with other databases. With character types (CHARACTER and VARCHAR) these are enforced only if the database property, sql.enforce_strict_size has be set to true.
 <p>NOT NULL constraints can be part of the column definition only. Other constraints cannot be part of the column definition and must appear at the end of the column definition list.
@@ -1099,48 +1102,59 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   ROUND(a,b) (rounds a to b digits after the decimal point) <br>
   </font><font>ROUNDMAGIC(d) (solves rounding problems such as 3.11-3.1-0.01) 
 </font>
-<font>
-<p>SIGN(d) (returns -1 if d is smaller than 0, 0 if d==0 and 1 if d is bigger than 0) <br>
+<font> 
+<p>SIGN(d) (returns -1 if d is smaller than 0, 0 if d==0 and 1 if d is bigger 
+  than 0) <br>
   SIN(d) (returns the sine of an angle) <br>
   SQRT(d) (returns the square root) <br>
   TAN (returns the trigonometric tangent of an angle) <br>
   TRUNCATE(a,b) (truncates a to b digits after the decimal point) <br>
   <b>String</b> <br>
-   <br>
+  <br>
   ASCII(s) (returns the ASCII code of the leftmost character of s) <br>
-  <font  color="#CC0000">BIT_LENGTH(str)</font> (returns the length of the  string in bits) <br>
+  <font  color="#CC0000">BIT_LENGTH(str)</font> (returns the length of the string 
+  in bits) <br>
   CHAR(c) (returns a character that has the ASCII code c) <br>
-  <font  color="#CC0000">CHAR_LENGTH(str)</font> (returns the length of the  string in characters) <br>
-  
+  <font  color="#CC0000">CHAR_LENGTH(str)</font> (returns the length of the string 
+  in characters) <br>
 <p>CONCAT(str1,str2) (returns str1 + str2 ) <br>
   DIFFERENCE(s1,s2) (returns the difference between the sound of s1 and s2) <br>
-  <font color="#cc0000">HEXTORAW(s1)<font color="#000000"> (returns translated string) </font></font><font color="#000000"><br>
-  </font>
-  INSERT(s,start,len,s2) (returns a string where len number of characters beginning at start has been replaced by s2) <br>
+  <font color="#cc0000">HEXTORAW(s1)<font color="#000000"> (returns translated 
+  string) </font></font><font color="#000000"><br>
+  </font> INSERT(s,start,len,s2) (returns a string where len number of characters 
+  beginning at start has been replaced by s2) <br>
   LCASE(s) (converts s to lower case) <br>
-  LEFT(s,count) (returns the leftmost count of characters of s) - requires double quoting - use SUBSTRING() instead <br>
+  LEFT(s,count) (returns the leftmost count of characters of s) - requires double 
+  quoting - use SUBSTRING() instead <br>
   LENGTH(s) (returns the number of characters in s) <br>
-  LOCATE(search,s,[start]) (returns the first index (1=left, 0=not found) where search is found in s, starting at start) <br>
+  LOCATE(search,s,[start]) (returns the first index (1=left, 0=not found) where 
+  search is found in s, starting at start) <br>
   LTRIM(s) (removes all leading blanks in s) <br>
-  <font  color="#CC0000">OCTET_LENGTH(str)</font> (returns the length of the  string in bytes (twice the number of characters)) <br>
-  <font color="#cc0000">RAWTOHEX(s1)<font color="#000000"> (returns translated string) </font></font><font color="#000000"><br>
-  </font>
-  REPEAT(s,count) (returns s repeated count times) <br>
+  <font  color="#CC0000">OCTET_LENGTH(str)</font> (returns the length of the string 
+  in bytes (twice the number of characters)) <br>
+  <font color="#cc0000">RAWTOHEX(s1)<font color="#000000"> (returns translated 
+  string) </font></font><font color="#000000"><br>
+  </font> REPEAT(s,count) (returns s repeated count times) <br>
   REPLACE(s,replace,s2) (replaces all occurrences of replace in s with s2) <br>
   RIGHT(s,count) (returns the rightmost count of characters of s) <br>
   RTRIM(s) (removes all trailing spaces) <br>
   SOUNDEX(s) (returns a four character code representing the sound of s) <br>
   SPACE(count) (returns a string consisting of count spaces) <br>
   SUBSTR(s,start[,len]) (alias for substring) <br>
-  SUBSTRING(s,start[,len]) (returns the substring starting at start (1=left) with length len) <br>
+  SUBSTRING(s,start[,len]) (returns the substring starting at start (1=left) with 
+  length len) <br>
   UCASE(s) (converts s to upper case) <br>
   LOWER(s) (converts s to lower case) <br>
   UPPER(s) (converts s to upper case) 
-
 <p> <b>Date / Time</b> <br>
-   <br>
-  CURDATE() (returns the current date)  - use CURRENT_DATE instead<br>
-  CURTIME() (returns the current time)  - use CURRENT_TIME instead<br>
+  <br>
+  CURDATE() (returns the current date) <br>
+  CURTIME() (returns the current time) <br>
+  <font color="#CC0000">DATEDIFF</font>(string, datetime1, datetime2) - returns 
+  the count of units of time elapsed from datetime1 to datetime2. The string indicates 
+  the unit of time and can have the following values 'ms'='millisecond', 'ss'='second','mi'='minute','hh'='hour', 
+  'dd'='day', 'mm'='month', 'yy' = 'year'. Both the long and short form of the 
+  strings can be used.<br>
   DAYNAME(date) (returns the name of the day) <br>
   DAYOFMONTH(date) (returns the day of the month (1-31)) <br>
   DAYOFWEEK(date) (returns the day of the week (1 means Sunday)) <br>
@@ -1149,55 +1163,55 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   MINUTE(time) (returns the minute (0-59)) <br>
   MONTH(date) (returns the month (1-12)) <br>
   MONTHNAME(date) (returns the name of the month) <br>
-  NOW() (returns the currentte and time as a timestamp) - use CURRENT_TIMESTAMP instead<br>
+  NOW() (returns the currentte and time as a timestamp) - use CURRENT_TIMESTAMP 
+  instead<br>
   QUARTER(date) (returns the quarter (1-4)) <br>
   SECOND(time) (returns the second (0-59)) <br>
   WEEK(date) (returns the week of this year (1-53) <br>
   YEAR(date) (returns the year) 
-<p>CURRENT_DATE (returns the current date)<br>
-  CURRENT_TIME (returns the current time)<br>
-<p>
-  CURRENT_TIMESTAMP
-  (returns the current timestamp)<br>
+<p><font color="#CC0000">CURRENT_DATE</font> (returns the current date)<br>
+  <font color="#CC0000">CURRENT_TIME </font>(returns the current time)<br>
+<p><font color="#CC0000"> CURRENT_TIMESTAMP </font>(returns the current timestamp)<br>
   <br>
-
 <p> <b>System / Connection</b> <br>
-   <br>
+  <br>
   DATABASE() (returns the name of the database of this connection) <br>
   USER() (returns the user name of this connection) <br>
   IDENTITY() (returns the last identity values that was inserted by this connection) 
-
 <p> <b>System</b> <br>
-   <br>
-  IFNULL(exp,value) (if exp is null, value is returned else exp)  - use COALESCE() instead<br>
-  CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) - use CASE WHEN instead
-<p>
-  CONVERT(term,type) (converts exp to another data type) <br>
+  <br>
+  IFNULL(exp,value) (if exp is null, value is returned else exp) - use COALESCE() 
+  instead<br>
+  CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) - use CASE WHEN 
+  instead 
+<p> CONVERT(term,type) (converts exp to another data type) <br>
   CAST(term AS type) (converts exp to another data type) 
-<p><font color="#cc0000">COALESCE(expr1,expr2,expr3,...) <font color="#000000">(if expr1 is not null then it is returned else, expr2 is evaluated and if not null it is returned and so on..) <br>
-  </font>
-  </font><font color="#cc0000">NULLIF(v1,v2)<font color="#000000"> (if v1 equals v2 return null, otherwise v1)<br>
-  </font>
-  CASE v1 WHEN v2 THEN v3 [ELSE v4] END<font color="#000000"> (when v1 equals v2 return v3 [otherwise v4 or null if there is no ELSE] )<br>
-  </font>
-  </font><font color="#cc0000">CASE WHEN expr1 THEN v1[WHEN expr2 THEN v2] [ELSE v4] END<font color="#000000"> (when expr1 is true return v1 [optionally repeated for more cases]  [otherwise v4</font><font color="#000000"> or null if there is no ELSE</font><font color="#000000">])</font></font><font  color="#000000">
-<br>
-  </font><font  color="#cc0000">
-  EXTRACT ({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND} FROM &lt;datetime value&gt;)<br>
-  SUBSTRING(&lt;string expression&gt; FROM &lt;numeric expression&gt; [FOR &lt;numeric expression&gt;])<br>
-  TRIM([{LEADING | TRAILING | BOTH}] FROM &lt;string expression&gt;)</font>
-<p>&nbsp;
+<p><font color="#cc0000">COALESCE(expr1,expr2,expr3,...) <font color="#000000">(if 
+  expr1 is not null then it is returned else, expr2 is evaluated and if not null 
+  it is returned and so on..) <br>
+  </font> </font><font color="#cc0000">NULLIF(v1,v2)<font color="#000000"> (if 
+  v1 equals v2 return null, otherwise v1)<br>
+  </font> CASE v1 WHEN v2 THEN v3 [ELSE v4] END<font color="#000000"> (when v1 
+  equals v2 return v3 [otherwise v4 or null if there is no ELSE] )<br>
+  </font> </font><font color="#cc0000">CASE WHEN expr1 THEN v1[WHEN expr2 THEN 
+  v2] [ELSE v4] END<font color="#000000"> (when expr1 is true return v1 [optionally 
+  repeated for more cases] [otherwise v4</font><font color="#000000"> or null 
+  if there is no ELSE</font><font color="#000000">])</font></font><font  color="#000000"> 
+  <br>
+  </font><font  color="#cc0000"> EXTRACT ({YEAR | MONTH | DAY | HOUR | MINUTE 
+  | SECOND} FROM &lt;datetime value&gt;)<br>
+  SUBSTRING(&lt;string expression&gt; FROM &lt;numeric expression&gt; [FOR &lt;numeric 
+  expression&gt;])<br>
+  TRIM([{LEADING | TRAILING | BOTH}] FROM &lt;string expression&gt;)</font> 
+<p>&nbsp; 
 <p> See also: <a href="#CREATE_ALIAS">CREATE ALIAS</a>, <a href="#CALL">CALL</a> 
-
 <p> <br>
-  <a name="Expression"></a>
-
+  <a name="Expression"></a> 
 <hr>
 <br>
 <b>Expression</b>: <br>
 <br>
 [NOT] condition [ { OR | AND } condition ] 
-
 <p>condition: <br>
   { value [ || value ] <br>
   | value { = | &lt; | &lt;= | > | >= | &lt;> | != | IS [NOT] } value <br>
@@ -1205,62 +1219,88 @@ This complies with SQL standards by throwing an exception if an attempt is made 
   | value BETWEEN value AND value <br>
   | value [NOT] IN ( {value [, ...] | selectStatement } ) <br>
   | value [NOT] LIKE value [ESCAPE] value } 
-
 <p>value: <br>
   [ + | - ] { term [ { + | - | * | / | || } term ] <br>
   | ( condition ) <br>
   | <a href="#List">function</a> ( [parameter] [,...] ) <br>
   | selectStatement giving one value 
-
 <p>term: <br>
   { 'string' | number | floatingpoint <br>
   | [table.]column | TRUE | FALSE | NULL } 
 <p>sequnece:<br>
-  NEXT VALUE FOR &lt;sequence&gt;
-<p>HSQLDB does not currently enforce the SQL 200n proposed rules on  where sequence generated values are allowed to be used. In general, these values can be used in insert and update statements but not in CASE statements, order by clauses, search conditions, aggregate functions, or grouped queries.<br>
-  
-<br>
-  
+  NEXT VALUE FOR &lt;sequence&gt; 
+<p>HSQLDB does not currently enforce the SQL 200n proposed rules on where sequence 
+  generated values are allowed to be used. In general, these values can be used 
+  in insert and update statements but not in CASE statements, order by clauses, 
+  search conditions, aggregate functions, or grouped queries.<br>
+  <br>
 <p>string: <br>
-   Strings in HSQLDB are Unicode
-strings.
- A string starts and ends with a single ' (singlequote). In a string started with ' (singlequote) use '' (two singlequotes) to create a ' (singlequote).
-<p>String contatenation should be performed with the standard SQL operator || rather than the non-standard + operator.
-<p>The 
-  LIKE keyword uses '%' to match any (including 0) number of characters, and '_' to match 
-  exactly one character. To search for '%' or '_' itself an escape character must also be specified  using the ESCAPE clause.
-For example, if the backslash is the escaping character, '\%' and '\_' can be used to find the '%' and '_' characters themselves. For example,  SELECT .... LIKE '\_%' ESCAPE '\' will find the strings beginning with an underscore.
+  Strings in HSQLDB are Unicode strings. A string starts and ends with a single 
+  ' (singlequote). In a string started with ' (singlequote) use '' (two singlequotes) 
+  to create a ' (singlequote). 
+<p>String contatenation should be performed with the standard SQL operator || 
+  rather than the non-standard + operator. 
+<p>The LIKE keyword uses '%' to match any (including 0) number of characters, 
+  and '_' to match exactly one character. To search for '%' or '_' itself an escape 
+  character must also be specified using the ESCAPE clause. For example, if the 
+  backslash is the escaping character, '\%' and '\_' can be used to find the '%' 
+  and '_' characters themselves. For example, SELECT .... LIKE '\_%' ESCAPE '\' 
+  will find the strings beginning with an underscore. 
 <p>name: <br>
-   The character set for identifiers (names) in HSQLDB is Unicode.
-<p>A unquoted identifier (name) starts with a letter and is followed by any number of letters or digits. 
-   When an SQL statement is issued, any lowercase characters in unquoted identifiers are converted to uppercase. 
-  Because of this, unquoted names are in fact ALL UPPERCASE when used in SQL statements.
-An important implication of this is the for accessing columns names via JDBC DatabaseMetaData: the internal form, which is the ALL UPPERCASE must be used if the column name  was not quoted in the CREATE TABLE statement.
-<p>Quoted identifiers can be used as names (for tables, columns, constraints or indexes). Quoted identifiers start and end with " (one doublequote). A quoted identifier can contain any Unicode character, including space. In a quoted 
-  identifier use "" (two doublequotes) to create a " (one doublequote). With quoted identifiers it is possible to create 
-  mixed-case table and column names. Example: CREATE TABLE "Address" ("Nr" INTEGER,"Name" 
-  VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address";
-<p>The equivalent quoted identifier can be used for an unquoted identifer by converting the identifier to all uppercase and quoting it. For example, if a table  name is defined as  Address2 (unquoted), it can be referred to by its  quoted form, &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers should not be confused with SQL strings.
-<p>Quoting can sometimes be used for identifiers,  aliases or functions when there is an ambiguity. For example:
-
-<p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
-<p>SELECT &quot;LEFT&quot;(COL1, 2) FROM MYTABLE;
-<p>Portability between different JRE locales could be an issue when accented characters (or extended unicode characters) are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary not be expected in different locales. It is recommended that accented characters are used only in quoted identifiers.
-<p>When using JDBC DatabaseMetaData methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#cc0000">(a change from 1.6.1 and previous versions)</font>.
+  The character set for identifiers (names) in HSQLDB is Unicode. 
+<p>A unquoted identifier (name) starts with a letter and is followed by any number 
+  of letters or digits. When an SQL statement is issued, any lowercase characters 
+  in unquoted identifiers are converted to uppercase. Because of this, unquoted 
+  names are in fact ALL UPPERCASE when used in SQL statements. An important implication 
+  of this is the for accessing columns names via JDBC DatabaseMetaData: the internal 
+  form, which is the ALL UPPERCASE must be used if the column name was not quoted 
+  in the CREATE TABLE statement. 
+<p>Quoted identifiers can be used as names (for tables, columns, constraints or 
+  indexes). Quoted identifiers start and end with " (one doublequote). A quoted 
+  identifier can contain any Unicode character, including space. In a quoted identifier 
+  use "" (two doublequotes) to create a " (one doublequote). With quoted identifiers 
+  it is possible to create mixed-case table and column names. Example: CREATE 
+  TABLE "Address" ("Nr" INTEGER,"Name" VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot; 
+  FROM "Address"; 
+<p>The equivalent quoted identifier can be used for an unquoted identifer by converting 
+  the identifier to all uppercase and quoting it. For example, if a table name 
+  is defined as Address2 (unquoted), it can be referred to by its quoted form, 
+  &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers 
+  should not be confused with SQL strings. 
+<p>Quoting can sometimes be used for identifiers, aliases or functions when there 
+  is an ambiguity. For example: 
+<p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE; 
+<p>SELECT &quot;LEFT&quot;(COL1, 2) FROM MYTABLE; 
+<p>Portability between different JRE locales could be an issue when accented characters 
+  (or extended unicode characters) are used in unquoted identifiers. Because native 
+  Java methods are used to convert the identifier to uppercase, the result may 
+  vary not be expected in different locales. It is recommended that accented characters 
+  are used only in quoted identifiers. 
+<p>When using JDBC DatabaseMetaData methods that take table, column, or index 
+  identifiers as arguments, treat the names as they are registered in the database. 
+  With these methods, unquoted identifiers should be used in all-uppercase to 
+  get the correct result. Quoted identifiers should be used in the exact case 
+  combination as they were defined - no quote character should be included around 
+  the name. JDBC methods that return a result set containing such identifiers 
+  return unquoted identifiers as all-uppercase and quoted identifiers in the exact 
+  case they are registered in the database <font color="#cc0000">(a change from 
+  1.6.1 and previous versions)</font>. 
 <p>values: <br>
-  A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd (see java.sql.Date). 
-  <br>
-  A 'time' value starts and ends with ' (singlequote), the format is hh:mm:ss (see java.sql.Time). 
-  <br>
-  A 'timestamp' or 'datetime'  value starts and ends with ' (singlequote), the format is  yyyy-mm-dd hh:mm:ss.SSSSSSSSS (see java.sql.Timestamp). 
-  <br>
-  
-
-<p>When specifying default values for date / time columns  in CREATE TABLE statements, or in SELECT,INSERT, and  UPDATE statements, special values<font color="#cc0000"> NOW,</font><font color="#cc0000" > TODAY, CURRENT_TIMESTAMP, SYSDATE, CURRENT_TIME and CURRENT_DATE </font>(case independent) can be used. NOW is used for TIME and TIMESTAMP columns, TODAY is used for DATE columns. The three variants CURRENT_* are SQL standard versions and should be used in preference to others. Example:
-
+  A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd 
+  (see java.sql.Date). <br>
+  A 'time' value starts and ends with ' (singlequote), the format is hh:mm:ss 
+  (see java.sql.Time). <br>
+  A 'timestamp' or 'datetime' value starts and ends with ' (singlequote), the 
+  format is yyyy-mm-dd hh:mm:ss.SSSSSSSSS (see java.sql.Timestamp). <br>
+<p>When specifying default values for date / time columns in CREATE TABLE statements, 
+  or in SELECT,INSERT, and UPDATE statements, special values<font color="#cc0000"> 
+  NOW,</font><font color="#cc0000" > TODAY, CURRENT_TIMESTAMP, SYSDATE, CURRENT_TIME 
+  and CURRENT_DATE </font>(case independent) can be used. NOW is used for TIME 
+  and TIMESTAMP columns, TODAY is used for DATE columns. The three variants CURRENT_* 
+  are SQL standard versions and should be used in preference to others. Example: 
 <pre> CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
  CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);  </pre>
-</font>
+</font> 
 <p>
 <font>
 <p>Binary data starts and ends with ' (singlequote), the format is hexadecimal. '0004ff' for 
@@ -1280,7 +1320,7 @@ An important implication of this is the for accessing columns names via JDBC Dat
   <br>
    <font color="#cc0000">Items in dark red indicate features added by HSQL Development Group since April 2001<br>
    Based on original Hypersonic documentation. Updates by Peter Hudson, Joe Maher and Fred Toussi<br>
-  Last update 2004.03.10</font>
+  Last update 2004.04.12</font> 
 <p>&nbsp; 
 </font> 
 </body></html>

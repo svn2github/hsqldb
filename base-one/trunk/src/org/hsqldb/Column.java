@@ -151,11 +151,13 @@ public class Column {
      * @param  name
      * @param  nullable
      * @param  type
+     * @param  size
+     * @param  scale
      * @param  identity
-     * @param  namequoted  Description of the Parameter
-     * @param  size        Description of the Parameter
-     * @param  scale       Description of the Parameter
-     * @param  defvalue    Description of the Parameter
+     * @param  startvalue
+     * @param  increment
+     * @param  primarykey
+     * @param  defstring
      */
     Column(HsqlName name, boolean nullable, int type, int size, int scale,
             boolean identity, long startvalue, long increment,
@@ -1304,7 +1306,7 @@ public class Column {
     /**
      *  Turns a java string into a quoted SQL string
      *
-     * @param  java string
+     * @param  s java string
      * @return quoted SQL string
      */
     public static String createSQLString(String s) {
@@ -1472,7 +1474,7 @@ public class Column {
     }
 
     /**
-     * @param  java.sql.Types int for a numeric type
+     * @param  type java.sql.Types int for a numeric type
      * @return relative width
      */
     private static int getNumTypeWidth(int type) {

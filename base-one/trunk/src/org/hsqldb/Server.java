@@ -291,7 +291,6 @@ public class Server implements HsqlSocketRequestHandler {
          * Constructs a new thread in which to execute the run method
          * of this server.
          *
-         * @param tg The thread group
          * @param name The thread name
          */
         ServerThread(String name) {
@@ -1480,7 +1479,7 @@ public class Server implements HsqlSocketRequestHandler {
      * identifying the current (calling) thread. Replaces old method
      * trace(String msg).
      *
-     * @param s the message to print
+     * @param msg the message to print
      */
     protected void printWithThread(String msg) {
 

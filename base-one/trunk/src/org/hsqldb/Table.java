@@ -170,10 +170,9 @@ public class Table extends BaseTable {
      *  Constructor
      *
      * @param  db
-     * @param  isTemp
      * @param  name
-     * @param  cached
-     * @param  nameQuoted        table name is quoted
+     * @param  type
+     * @param  sessionid
      * @exception  HsqlException
      */
     Table(Database db, HsqlName name, int type,
@@ -424,8 +423,9 @@ public class Table extends BaseTable {
     /**
      *  Get any foreign key constraint equivalent to the column sets
      *
-     * @param  col column list array
-     * @param  unique for the index
+     * @param tablemain
+     * @param  colmain
+     * @param  colref
      * @return
      */
     Constraint getConstraintForColumns(Table tablemain, int[] colmain,
@@ -514,7 +514,8 @@ public class Table extends BaseTable {
     /**
      *  Add a set of columns based on a ResultMetaData
      *
-     * @param  result
+     * @param  metadata
+     * @param columns
      * @throws  HsqlException
      */
     void addColumns(Result.ResultMetaData metadata,
@@ -534,7 +535,7 @@ public class Table extends BaseTable {
     /**
      *  Adds a set of columns based on a compiled Select
      *
-     * @param  result
+     * @param  select
      * @throws  HsqlException
      */
     void addColumns(Select select) throws HsqlException {
@@ -567,7 +568,7 @@ public class Table extends BaseTable {
      * Essential to use the existing HsqlName as this is is referenced by
      * intances of Constraint etc.
      *
-     * @param name
+     * @param newname
      * @param isquoted
      * @throws  HsqlException
      */
@@ -1100,8 +1101,7 @@ public class Table extends BaseTable {
     /**
      *  Used for TableFilter to get an index for the columns
      *
-     * @param  column
-     * @return index
+     * @param  columnCheck
      * @throws  HsqlException
      */
     Index getIndexForColumns(boolean[] columnCheck) {
@@ -1190,7 +1190,7 @@ public class Table extends BaseTable {
      *  root signifies an empty table. Accordingly, all index roots should be
      *  null or all should be a valid file pointer/reference.
      *
-     * @param  s
+     * @param  roots
      * @throws  HsqlException
      */
     void setIndexRoots(int[] roots) throws HsqlException {
@@ -1342,7 +1342,7 @@ public class Table extends BaseTable {
      *
      * @param  index
      * @param  colindex
-     * @param  ajdust -1 or 0 or 1
+     * @param  adjust -1 or 0 or 1
      * @return new index or null if a column is removed from index
      * @throws  HsqlException
      */
@@ -1623,7 +1623,6 @@ public class Table extends BaseTable {
      *  Performs Table structure modification and changes to the index nodes
      *  to remove a given index from a MEMORY or TEXT table.
      *
-     * @return
      */
     void dropIndex(String indexname) throws HsqlException {
 
@@ -2042,7 +2041,8 @@ public class Table extends BaseTable {
      *  Row level triggers
      *
      * @param  trigVecIndx
-     * @param  row
+     * @param  oldrow
+     * @param  newrow
      */
     void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
 
@@ -2131,7 +2131,7 @@ public class Table extends BaseTable {
      *  in the constraint.(fredt@users)
      *
      * @table  table table to update
-     * @param  tableUpdateList list of update lists
+     * @param  tableUpdateLists list of update lists
      * @param  row row to delete
      * @param  session
      * @param  delete
@@ -2305,8 +2305,8 @@ public class Table extends BaseTable {
      * to each constraint. The set of list of updates for all tables is passed
      * and filled in recursive calls.
      *
-     *
-     *   @param list of updates
+     *   @param table
+     *   @param tableUpdateLists lists of updates
      *   @param orow old row data to be deleted.
      *   @param nrow new row data to be inserted.
      *   @param session current database session
@@ -2316,9 +2316,6 @@ public class Table extends BaseTable {
      *   current table (i.e. this) to indicate from where we came.
      *   Foreign keys to this table do not have to be checked since they have
      *   triggered the update and are valid by definition.
-     *
-     *   @param update if true the update will take place. Otherwise
-     *   we just check for referential integrity.
      *
      *   @see #checkCascadeDelete(Object[],Session,boolean)
      *
@@ -2617,8 +2614,6 @@ public class Table extends BaseTable {
 
         return deleteList.size();
     }
-
-    /** @todo move trigger work into calling method above and make sure it is always called */
 
     /**
      *  Mid level row delete method. Fires triggers but no integrity

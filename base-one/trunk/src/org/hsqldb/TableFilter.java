@@ -279,7 +279,7 @@ class TableFilter {
      * Chooses certain query conditions and assigns a copy of them to this
      * filter. The original condition is set to Expression.TRUE once assigned.
      *
-     * @param e
+     * @param condition
      *
      * @throws HsqlException
      */

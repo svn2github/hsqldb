@@ -5354,9 +5354,10 @@ public class jdbcResultSet implements ResultSet {
      * Constructs a new <code>jdbcResultSet</code> object using the specified
      * <code>org.hsqldb.Result</code>. <p>
      *
-     * @param props The properties object of this object's parent Connection.
+     * @param s the statement
      * @param r the internal result form that the new
      *      <code>jdbcResultSet</code> represents
+     * @param props the connection properties
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
      */

@@ -184,8 +184,10 @@ implements RowOutputInterface {
      *  This method is called to write data for a Result.
      *
      * @param  l
-     * @param  type
+     * @param  types
      * @param  data
+     * @param cols
+     * @param primarykeys
      * @throws  IOException
      */
     public void writeData(int l, int types[], Object data[],

@@ -162,7 +162,6 @@ class Log {
      *  Constructor declaration
      *
      * @param  db
-     * @param  system
      * @param  name
      * @exception  HsqlException  Description of the Exception
      */
@@ -249,7 +248,6 @@ class Log {
      * than the earliest version of the engine capable of opening that
      * database.<p>
      *
-     * @return
      * @throws  HsqlException
      */
     void open() throws HsqlException {
@@ -454,7 +452,7 @@ class Log {
     /**
      *  Method declaration
      *
-     * @param  mb
+     * @param  megas
      */
     void setLogSize(int megas) {
 
@@ -466,7 +464,7 @@ class Log {
     /**
      *  Method declaration
      *
-     * @param  mb
+     * @param  type
      */
     void setScriptType(int type) throws HsqlException {
 

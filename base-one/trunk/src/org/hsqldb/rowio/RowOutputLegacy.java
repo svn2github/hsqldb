@@ -58,7 +58,6 @@ public class RowOutputLegacy extends RowOutputBase {
     /**
      *  Constructor used for persistent storage of a Table row
      *
-     * @param  size no of bytes of storage used
      * @exception  IOException when an IO error is encountered
      */
     public RowOutputLegacy() {

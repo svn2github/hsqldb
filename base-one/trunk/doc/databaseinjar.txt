@@ -13,8 +13,8 @@ Include the two database files *.properties and *.script in a directory in your 
 Access the database with the jdbc:hsqldb:res: protocol
 
 The relative location of the database as taken from the jdbc url is used.
-For example, if the url is specified as "jdbc:hsqldb:res:testdata/felder"
-then the database is loaded from the "testdata/" directory in the jar
+For example, if the url is specified as "jdbc:hsqldb:res:/testdata/felder"
+then the database is loaded from the "/testdata/" directory in the jar
 and the database file names are "felder.properties" and
 felder.script" in that directory.
 
@@ -50,7 +50,7 @@ Brendan Ryan
   <jar href="hsqldb.jar"/>
   <jar href="testdb.jar"/>
   <property name="jdbc.drivers" value="org.hsqldb.jdbcDriver"/>
-  <property name="jdbc.url" value="jdbc:hsqldb:res:testdata/felder.hsqldb"/>
+  <property name="jdbc.url" value="jdbc:hsqldb:res:/testdata/felder"/>
   <property name="jdbc.user" value="sa"/>
   <property name="jdbc.password" value="" />
 </resources>

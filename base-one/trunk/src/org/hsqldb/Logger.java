@@ -260,7 +260,7 @@ class Logger {
      *  Sets the maximum size to which the log file can grow
      *  before being automatically checkpointed.
      *
-     * @param  i The size, in MB
+     * @param  megas size in MB
      */
     void setLogSize(int megas) {
 

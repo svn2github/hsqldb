@@ -151,7 +151,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Constructs a new jdbcResultSetMetaData object from the specified
      * Result and HsqlProprties objects.
      *
-     * @param rs the Result object from which to construct a new
+     * @param r the Result object from which to construct a new
      *        jdbcResultSetMetaData object
      * @param props the HsqlProperties object from which to construct a
      *        new jdbcResultSetMetaData object
@@ -187,7 +187,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Initializes this jdbcResultSetMetaData object from the specified
      * Result and HsqlProperties objects.
      *
-     * @param rs the Result object from which to initialize this
+     * @param r the Result object from which to initialize this
      *        jdbcResultSetMetaData object
      * @param props the HsqlProperties object from which to initialize this
      *        jdbcResultSetMetaData object

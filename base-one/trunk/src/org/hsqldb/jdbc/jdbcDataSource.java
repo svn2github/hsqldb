@@ -263,7 +263,7 @@ implements Serializable, Referenceable, DataSource {
      * initially null; in other words, the default is for logging to be
      * disabled.
      *
-     * @param out the new log writer; to disable logging, set to null
+     * @param logWriter the new log writer; to disable logging, set to null
      * @exception SQLException if a database access error occurs
      * @see #getLogWriter
      */

@@ -1134,9 +1134,8 @@ class DatabaseCommandInterpreter {
     /**
      * Responsible for handling check constraints section of CREATE TABLE ...
      *
-     * @param t talbe
+     * @param c check constraint
      * @throws HsqlException
-     * @return check expression
      */
     private void processCreateCheckConstraintCondition(Constraint c)
     throws HsqlException {

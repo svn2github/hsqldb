@@ -651,7 +651,6 @@ public class Tokenizer {
     /**
      * mark the current position to be used for future getLastPart() calls
      *
-     * @return
      */
     void setPartMarker() {
         beginIndex = iIndex;
@@ -660,7 +659,6 @@ public class Tokenizer {
     /**
      * mark the position to be used for future getLastPart() calls
      *
-     * @return
      */
     void setPartMarker(int position) {
         beginIndex = position;

@@ -75,7 +75,6 @@ class View extends Table {
      * may exist at the end.
      *
      * @param s
-     * @param colList
      *
      * @throws HsqlException
      */

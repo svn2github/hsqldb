@@ -416,7 +416,7 @@ public class Result {
     /**
      *  Constructor declaration
      *
-     * @param  b
+     * @param  in
      * @exception  HsqlException  Description of the Exception
      */
     Result(RowInputInterface in) throws HsqlException {
