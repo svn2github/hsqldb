@@ -1,0 +1,471 @@
+<?xml version="1.0"?>
+<!-- author fredt@users.sourceforge.net 2001 - 2003 -->
+<!-- additional targets by unsaved@users.sourceforge.net -->
+
+<project name="hsqldb" default="help" basedir="../">
+   <!-- This loads properties in the same exact way as if you ran
+        "ant -Dprop1name=val1 -Dprop2name=val2...", etc.  To use all
+        defaults, you should have no 'build.properties' file.
+        If you don't understand this or want to know about precedence or 
+        how to use an Ant properties file, look up an Ant manual or an 
+        Ant expert.
+        If you want to know, "Can I set property 'x' in 'build.properties'",
+        rephrase the question to yourself as "Can I run 'ant -Dx=...?"
+        Do not address questions about property file(s) to the
+        hsqldb community. -->
+   <property file='build/build.properties'/>
+
+   <property name="src" value="${basedir}/src"/>
+   <property name="build.debug" value="off"/>
+
+   <target name="init">
+   </target>
+   
+   <target name='explainjars'
+           description="List description of jars that you can build">
+     <echo>
+hsqldb.jar     : default distribution jar
+hsqljdbc.jar   : JDBC driver only (no memory-only nor in-mem mode)
+hsqldbmain.jar : no utility programs
+hsqldbmin.jar  : no utility or server programs
+hsqldbtest.jar : all including test classes
+hsqldbz.jar    : min jar plus necessary util classes for Zaurus
+
+jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.
+
+Run 'ant -projecthelp' to list the target names to build these items.
+     </echo>
+   </target>
+
+   <target name="help" description="Top-level help message">
+      <echo>
+usage:
+   ant -help            Display ant help screen
+   ant -projecthelp     Display all invocable targets
+   ant ANYTHING ELSE    Run 'ant -projecthelp' for details
+
+   jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1
+
+examples:
+   ant jar
+   ant clean
+      </echo>
+   </target>
+
+   <target name="-javajsse">
+      <available classname="javax.net.ssl.SSLSession" property="ant.java.hasjsse"/>
+      <echo message="ant.java.hasjsse=${ant.java.hasjsse}" />
+   </target>
+
+   <target name="-javaversion4">
+      <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
+      <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
+   </target>
+
+   <target name="javaversion2" depends="-javaversion4" 
+           unless="ant.java.iscjava14">
+      <available classname="java.util.Set" property="ant.java.iscjava12"/>
+      <available classname="java.util.Set" property="ant.java.iscjavamodern"/>
+   </target>
+
+   <target name="-prepare" depends="init,javaversion2">
+       <mkdir dir="classes" />
+   </target>
+
+   <target name="-preparedoc" depends="init">
+       <mkdir dir="doc/src" />
+   </target>
+
+   <target name="clean"
+           description="Delete the /classes directory created by ant tasks">
+        <delete dir="classes"/>
+   </target>
+
+   <target name="cleanall" depends="clean"
+           description="Same as clean but delete the jar files as well">
+      <delete>
+         <fileset dir="lib" includes="hsql*.jar"/>
+      </delete>
+   </target>
+
+    <target name="codeswitcher" depends="-prepare"
+            description="uses +-JDBC2 +-JDBC2 +-JAVA2">
+      <javac destdir="classes">
+         <src path="${src}"/>
+         <include name="org/hsqldb/util/CodeSwitcher.java"/>
+       </javac>
+    </target>
+
+    <target name="switchtojdk11" depends="codeswitcher"
+            description="self explanatory" unless="ant.java.iscjavamodern">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
+       </java>
+       <available classname="java.util.Vector" property="noswing"/>
+    </target>
+
+    <target name="switchtojdk12" depends="codeswitcher" 
+            description="self explanatory" if="ant.java.iscjava12">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
+       </java>
+    </target>
+
+    <target name="switchtojdk14" depends="codeswitcher" 
+            description="self explanatory" if="ant.java.iscjava14">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
+       </java>
+    </target>
+
+    <target name="store" depends="switchtojdk11,switchtojdk12,switchtojdk14"
+            description="compiles the /store folder">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+      >
+         <include name="org/hsqldb/store/**"/>
+      </javac>
+    </target>
+
+    <target name="lib" depends="store"
+            description="compiles the /lib folder">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+      >
+         <include name="org/hsqldb/lib/**"/>
+         <include name="org/hsqldb/lib/java/**"/>
+      </javac>
+    </target>
+
+    <target name="classes" depends="lib,-javajsse"
+            description="compiles all the classes">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+       >
+         <classpath>
+            <pathelement location="lib/servlet.jar"/>
+         </classpath>
+         <include name="*.java"/>
+         <include name="org/hsqldb/*.java"/>
+         <include name="org/hsqldb/resources/*.java"/>
+         <include name="org/hsqldb/rowio/*.java"/>
+         <include name="org/hsqldb/scriptio/*.java"/>
+         <exclude name="org/hsqldb/jmx/*.java"/>
+         <exclude name="org/hsqldb/lib/*.java"/>
+         <exclude name="org/hsqldb/test/*.java"/>
+         <exclude name="org/hsqldb/sample/*.java"/>
+         <exclude name="org/hsqldb/util/*.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
+         <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
+         <exclude name="org/hsqldb/NIOLockFile.java"/>
+         <exclude name="org/hsqldb/NIOScaledRAFile.java"/>
+      </javac>
+      <copy todir="${basedir}/classes/org/hsqldb/resources">
+         <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
+      </copy>
+    </target>
+
+   <target name="classes12" depends="classes" if="ant.java.iscjavamodern"
+           description="compiles 1.2 specific classes">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+       >
+         <include name="org/hsqldb/jdbc/jdbcBlob.java"/>
+         <include name="org/hsqldb/jdbc/jdbcClob.java"/>
+      </javac>
+   </target>
+
+   <target name="classes14" depends="classes12" if="ant.java.iscjava14"
+           description="compiles 1.4 specific classes">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+       >
+      <include name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+      <include name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+      <include name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
+      <include name="org/hsqldb/NIOLockFile.java"/>
+      <include name="org/hsqldb/NIOScaledRAFile.java"/>
+      </javac>
+   </target>
+
+    <target name="util" depends="lib"
+            description="compiles the /util folder">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+      >
+         <include name="org/hsqldb/util/**"/>
+         <exclude name="org/hsqldb/util/*Swing.java"/>
+      </javac>
+      <copy todir="classes/org/hsqldb/util">
+      <fileset dir="${src}/org/hsqldb/util">
+         <include name="hsqldb.gif"/>
+      </fileset>
+    </copy>
+    </target>
+
+   <target name="swing" depends="util" unless="noswing"
+           description="compiles the swing based classes in the /util folder">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+       >
+      <include name="org/hsqldb/util/*Swing.java"/>
+      </javac>
+   </target>
+
+   <target name="test" depends="classes14"
+           description="compiles the /test folder">
+      <available property='_junit_available' file='lib/junit.jar' type='file'/>
+      <fail unless='_junit_available'
+            message="'junit.jar' must reside in the /lib directory in order to use this target"/>
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+         >
+         <classpath>
+            <pathelement location="lib/junit.jar"/>
+            <pathelement location="lib/dbunit.jar"/>
+         </classpath>
+         <include name="org/hsqldb/test/**"/>
+         <exclude name="org/hsqldb/test/TestSqlPersistent.java"/>
+      </javac>
+   </target>
+
+    <target name="jarzaurus" depends="classes14,util"
+            description="Build the hsqldbz.jar for Zaurus">
+        <jar jarfile="lib/hsqldbz.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/util/*Transfer*.*"/>
+         <exclude name="org/hsqldb/util/*Swing*.*"/>
+         <exclude name="org/hsqldb/util/DataAccess*.*"/>
+         <exclude name="org/hsqldb/util/*Helper*.*"/>
+         <exclude name="org/hsqldb/util/JDBCTypes.*"/>
+         <exclude name="org/hsqldb/util/SQLStatements.*"/>
+         <exclude name="org/hsqldb/util/QueryTool.*"/>
+         <exclude name="org/hsqldb/util/ShutdownServer.*"/>
+         <exclude name="org/hsqldb/util/CodeSwitcher.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="hsqlServlet.class"/>
+         <exclude name="org/hsqldb/Servlet.class"/>
+         <exclude name="org/hsqldb/HsqlServerFactory.class"/>
+         <exclude name="org/hsqldb/HsqlServerProperties.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
+         <exclude name="org/hsqldb/Server.class"/>
+         <exclude name="org/hsqldb/ServerConnection.class"/>
+         <exclude name="org/hsqldb/WebServer.class"/>
+         <exclude name="org/hsqldb/WebServerConnection.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+       </jar>
+    </target>
+
+    <target name="jartest" depends="test,swing"
+            description="Build the hsqldbtest.jar (default plus test classes)">
+        <jar jarfile="lib/hsqldbtest.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+      </jar>
+    </target>
+
+    <target name="jarmain" depends="classes14"
+            description="Build the hsqldbmain.jar (no utilities) (use '-Dnoswing=true jarmain' to exclude swing classes)">
+        <jar jarfile="lib/hsqldbmain.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/util/*.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+      </jar>
+    </target>
+
+    <target name="jarmin" depends="classes14"
+            description="Build the hsqldbmin.jar (no servers)">
+        <jar jarfile="lib/hsqldbmin.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/lib/java/*.*"/>
+         <exclude name="org/hsqldb/util/*.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/resources/*.properties"/>
+         <exclude name="hsqlServlet.class"/>
+         <exclude name="org/hsqldb/Servlet.class"/>
+         <exclude name="org/hsqldb/HsqlSocketFactory.class"/>
+         <exclude name="org/hsqldb/HsqlServerFactory.class"/>
+         <exclude name="org/hsqldb/HsqlServerProperties.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
+         <exclude name="org/hsqldb/Server.class"/>
+         <exclude name="org/hsqldb/ServerConnection.class"/>
+         <exclude name="org/hsqldb/WebServer.class"/>
+         <exclude name="org/hsqldb/WebServerConnection.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
+         <exclude name="org/hsqldb/DatabaseInformationFull.class"/>
+         <exclude name="org/hsqldb/rowio/RowInputLegacy.class"/>
+         <exclude name="org/hsqldb/rowio/RowOutputLegacy.class"/>
+         <exclude name="org/hsqldb/DINameSpace.class"/>
+         <exclude name="org/hsqldb/DIProcedureInfo.class"/>
+         <exclude name="org/hsqldb/HSQLClientConnection.class"/>
+         <exclude name="org/hsqldb/HTTPClientConnection.class"/>
+
+
+       </jar>
+    </target>
+
+    <target name="jar" depends="classes14,util,swing"
+            description="Build the default hsqldb.jar">
+        <jar jarfile="lib/hsqldb.jar"
+             basedir="classes"
+             compress="true"
+         >
+         <exclude name="org/hsqldb/jmx/**"/>
+         <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>
+         <exclude name="org/hsqldb/util/Zaurus*.*"/>
+         <exclude name="org/hsqldb/test/*.class"/>
+         <exclude name="org/hsqldb/sample/*.class"/>
+         <exclude name="org/hsqldb/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+      </jar>
+    </target>
+
+    <target name="jarclient" depends="classes14"
+            description="Build the hsqljdbc.jar">
+        <jar jarfile="lib/hsqljdbc.jar">
+            <!-- including 'org/hsqldb/jdbc*' just to be safe -->
+            <fileset dir='classes'
+                includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/rowio/RowOutputBase*,
+                          org/hsqldb/rowio/RowInputBase*,
+                          org/hsqldb/rowio/RowOutputBinary*,
+                          org/hsqldb/rowio/RowInputBinary*,
+                          org/hsqldb/rowio/RowOutputInterface*,
+                          org/hsqldb/rowio/RowInputInterface*,
+                          org/hsqldb/lib/InOutUtil*,
+                          org/hsqldb/lib/AsciiStringInputStream*,
+                          org/hsqldb/lib/StringInputStream*,
+                          org/hsqldb/lib/IntValueHashMap*,
+                          org/hsqldb/lib/ArrayUtil*,
+                          org/hsqldb/lib/StringConverter*,
+                          org/hsqldb/lib/Iterator*,
+                          org/hsqldb/lib/HsqlThreadFactory*,
+                          org/hsqldb/lib/ThreadFactory*,
+                          org/hsqldb/lib/HsqlHeap*,
+                          org/hsqldb/lib/HsqlArray*,
+                          org/hsqldb/lib/ObjectComparator*,
+                          org/hsqldb/lib/IntKeyHashMap*,
+                          org/hsqldb/lib/Collection*,
+                          org/hsqldb/lib/Set*,
+                          org/hsqldb/lib/Hash*,
+                          org/hsqldb/lib/HsqlTimer*,
+                          org/hsqldb/lib/HsqlByte*,
+                          org/hsqldb/store/ValuePool*,
+                          org/hsqldb/store/HashIndex*,
+                          org/hsqldb/store/BaseHashMap*,
+                          org/hsqldb/HsqlSocketFactory*,
+                          org/hsqldb/HTTPClientConnection*,
+                          org/hsqldb/HsqlDateTime*,
+                          org/hsqldb/Column*,
+                          org/hsqldb/Binary.*,
+                          org/hsqldb/Record*,
+                          org/hsqldb/Result.*,
+                          org/hsqldb/Result$*,
+                          org/hsqldb/Row*,
+                          org/hsqldb/Cached*,
+                          org/hsqldb/BinaryServer*,
+                          org/hsqldb/DatabaseRow*,
+                          org/hsqldb/HSQLClient*,
+                          org/hsqldb/Session*,
+                          org/hsqldb/HsqlProperties*,
+                          org/hsqldb/HsqlException*,
+                          org/hsqldb/DatabaseManager*,
+                          org/hsqldb/Trace*
+                          '/>
+        </jar>
+    </target>
+
+    <target name="javadoc" depends="-preparedoc"
+            description="Create javadoc for the distribution package">
+      <javadoc packagenames="org.hsqldb.*,org.hsqldb.lib.*,org.hsqldb.util.*"
+           sourcepath="${src}"
+           destdir="${basedir}/doc/src"
+           classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
+           author="true"
+           version="false"
+           use="true"
+           public="true"
+           stylesheetfile="${basedir}/doc/src/hsqldbstylesheet.css"
+           windowtitle="HSQLDB 1.7.2 API"
+           doctitle="HSQLDB 1.7.2"
+           bottom="&lt;i&gt;Copyright &#169; 2001 - 2004 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+     </javadoc>
+   </target>
+</project>

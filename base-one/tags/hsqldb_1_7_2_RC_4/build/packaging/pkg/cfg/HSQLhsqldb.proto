@@ -1,0 +1,302 @@
+# $Id: HSQLhsqldb.proto,v 1.3 2002/10/29 16:36:48 unsaved Exp $
+
+# Additions for this package are isolated up at the top here.
+# Everything beneath is stuff straight our of the hsqldb tree.
+# (This facilitates running commands like "pkgproto... >> .../thisfile.proto")
+
+# Unfortunately, this file has to be regenerated whenever hsqldb code
+# changes :(
+
+i pkginfo=HSQLhsqldb.info
+i preinstall=HSQLhsqldb.preinstall
+i postinstall=HSQLhsqldb.postinstall
+i postremove=HSQLhsqldb.postremove
+i preremove=HSQLhsqldb.preremove
+i checkinstall=HSQLhsqldb.checkinstall
+
+!default 0644 root other
+
+# Special stuff needed for our package
+d none /var/run 0755 root sys
+e none /etc/hsqldb.conf=build/templates/hsqldb.conf.unix
+f none /etc/hsqldb.shell=build/templates/hsqldb.shell.sh 0755 root other
+f none /etc/init.d/hsqldb=build/templates/hsqldb.init.sh  0744 root other
+l none /etc/rc0.d/K36hsqldb=/etc/init.d/hsqldb
+l none /etc/rc1.d/K36hsqldb=/etc/init.d/hsqldb
+l none /etc/rc2.d/S84hsqldb=/etc/init.d/hsqldb
+l none /etc/rcS.d/K36hsqldb=/etc/init.d/hsqldb
+f none $VERDIR/readme.solarispkg=build/packaging/pkg/readme.txt
+
+# Do NOT!!! change the following line.  It is used by scripts.
+# REGENERATE AFTER HERE
+d none $VERDIR 0755 root other
+d none $VERDIR/bin 0755 root other
+f none $VERDIR/bin/hsqldbwebserver=bin/hsqldbwebserver 0755 root other
+f none $VERDIR/bin/hsqldbserver=bin/hsqldbserver 0755 root other
+f none $VERDIR/bin/runUtil.bat=bin/runUtil.bat 0755 root other
+f none $VERDIR/bin/runUtil.sh=bin/runUtil.sh 0755 root other
+d none $VERDIR/doc 0755 root other
+f none $VERDIR/doc/changelog.txt=doc/changelog.txt
+f none $VERDIR/doc/hsqlBuild.html=doc/hsqlBuild.html
+d none $VERDIR/doc/images 0755 root other
+f none $VERDIR/doc/images/sqlOther.gif=doc/images/sqlOther.gif
+f none $VERDIR/doc/images/sqlDDL.gif=doc/images/sqlDDL.gif
+f none $VERDIR/doc/images/sqlDML.gif=doc/images/sqlDML.gif
+f none $VERDIR/doc/images/sqlSecurity.gif=doc/images/sqlSecurity.gif
+f none $VERDIR/doc/images/sqlSelect.gif=doc/images/sqlSelect.gif
+f none $VERDIR/doc/images/sqlTransact.gif=doc/images/sqlTransact.gif
+d none $VERDIR/doc/src 0755 root other
+f none $VERDIR/doc/src/hsqldbstylesheet.css=doc/src/hsqldbstylesheet.css
+f none $VERDIR/doc/hsqlAdvancedGuide.html=doc/hsqlAdvancedGuide.html
+f none $VERDIR/doc/hsqlCodeSwitcher.html=doc/hsqlCodeSwitcher.html
+f none $VERDIR/doc/hsqlFindFile.html=doc/hsqlFindFile.html
+f none $VERDIR/doc/hsqlFirstExample.html=doc/hsqlFirstExample.html
+f none $VERDIR/doc/hsqlGuide.html=doc/hsqlGuide.html
+f none $VERDIR/doc/hsqlRecovery.html=doc/hsqlRecovery.html
+f none $VERDIR/doc/hsqlScriptTool.html=doc/hsqlScriptTool.html
+f none $VERDIR/doc/hsqlSyntax.html=doc/hsqlSyntax.html
+f none $VERDIR/doc/hsqlTestSelf.html=doc/hsqlTestSelf.html
+f none $VERDIR/doc/hsqlTextTables.html=doc/hsqlTextTables.html
+f none $VERDIR/doc/hsqldbBeginnersGuide.html=doc/hsqldbBeginnersGuide.html
+f none $VERDIR/doc/hsqldb_lic.txt=doc/hsqldb_lic.txt
+f none $VERDIR/doc/hypersonic_lic.txt=doc/hypersonic_lic.txt
+d none $VERDIR/doc/zaurus 0755 root other
+f none $VERDIR/doc/zaurus/hsqlSyntax.html=doc/zaurus/hsqlSyntax.html
+f none $VERDIR/doc/zaurus/building.html=doc/zaurus/building.html
+f none $VERDIR/doc/zaurus/index.html=doc/zaurus/index.html
+f none $VERDIR/doc/zaurus/todo.html=doc/zaurus/todo.html
+f none $VERDIR/doc/zaurus/readme=doc/zaurus/readme
+d none $VERDIR/doc/zaurus/images 0755 root other
+f none $VERDIR/doc/zaurus/images/constructors.gif=doc/zaurus/images/constructors.gif
+f none $VERDIR/doc/zaurus/images/buttons.png=doc/zaurus/images/buttons.png
+f none $VERDIR/doc/zaurus/images/commandBut.png=doc/zaurus/images/commandBut.png
+f none $VERDIR/doc/zaurus/images/constructor-index.gif=doc/zaurus/images/constructor-index.gif
+f none $VERDIR/doc/zaurus/images/editorBut.png=doc/zaurus/images/editorBut.png
+f none $VERDIR/doc/zaurus/images/green-ball-small.gif=doc/zaurus/images/green-ball-small.gif
+f none $VERDIR/doc/zaurus/images/green-ball.gif=doc/zaurus/images/green-ball.gif
+f none $VERDIR/doc/zaurus/images/hsqldb.gif=doc/zaurus/images/hsqldb.gif
+f none $VERDIR/doc/zaurus/images/method-index.gif=doc/zaurus/images/method-index.gif
+f none $VERDIR/doc/zaurus/images/methods.gif=doc/zaurus/images/methods.gif
+f none $VERDIR/doc/zaurus/images/nicksant3.gif=doc/zaurus/images/nicksant3.gif
+f none $VERDIR/doc/zaurus/images/red-ball-small.gif=doc/zaurus/images/red-ball-small.gif
+f none $VERDIR/doc/zaurus/images/red-ball.gif=doc/zaurus/images/red-ball.gif
+f none $VERDIR/doc/zaurus/images/red_up.gif=doc/zaurus/images/red_up.gif
+f none $VERDIR/doc/zaurus/images/resultBut.png=doc/zaurus/images/resultBut.png
+f none $VERDIR/doc/zaurus/images/sharp1.jpeg=doc/zaurus/images/sharp1.jpeg
+f none $VERDIR/doc/zaurus/images/sourceforge.gif=doc/zaurus/images/sourceforge.gif
+f none $VERDIR/doc/zaurus/images/sqlDDL.gif=doc/zaurus/images/sqlDDL.gif
+f none $VERDIR/doc/zaurus/images/sqlDML.gif=doc/zaurus/images/sqlDML.gif
+f none $VERDIR/doc/zaurus/images/sqlOther.gif=doc/zaurus/images/sqlOther.gif
+f none $VERDIR/doc/zaurus/images/sqlSecurity.gif=doc/zaurus/images/sqlSecurity.gif
+f none $VERDIR/doc/zaurus/images/sqlSelect.gif=doc/zaurus/images/sqlSelect.gif
+f none $VERDIR/doc/zaurus/images/sqlTransact.gif=doc/zaurus/images/sqlTransact.gif
+f none $VERDIR/doc/zaurus/images/treeBut.png=doc/zaurus/images/treeBut.png
+f none $VERDIR/doc/zaurus/images/yellow-ball-small.gif=doc/zaurus/images/yellow-ball-small.gif
+f none $VERDIR/doc/zaurus/images/yellow-ball.gif=doc/zaurus/images/yellow-ball.gif
+f none $VERDIR/doc/zaurus/images/zaurus.jpeg=doc/zaurus/images/zaurus.jpeg
+f none $VERDIR/doc/zaurus/installation.html=doc/zaurus/installation.html
+f none $VERDIR/doc/zaurus/org.hsqldb.util.ZaurusEditor.html=doc/zaurus/org.hsqldb.util.ZaurusEditor.html
+f none $VERDIR/doc/zaurus/usage.html=doc/zaurus/usage.html
+f none $VERDIR/index.html=index.html
+f none $VERDIR/readme.txt=readme.txt
+d none $VERDIR/build 0755 root other
+f none $VERDIR/build/buildDoc.bat=build/buildDoc.bat 0755 root other
+f none $VERDIR/build/build.xml=build/build.xml
+f none $VERDIR/build/readmebuild.txt=build/readmebuild.txt
+f none $VERDIR/build/buildDoc.sh=build/buildDoc.sh 0755 root other
+f none $VERDIR/build/buildJDK11.bat=build/buildJDK11.bat 0755 root other
+f none $VERDIR/build/buildJDK11.sh=build/buildJDK11.sh 0755 root other
+f none $VERDIR/build/buildJDK12.bat=build/buildJDK12.bat 0755 root other
+f none $VERDIR/build/buildJDK12.sh=build/buildJDK12.sh 0755 root other
+f none $VERDIR/build/buildJDK14.bat=build/buildJDK14.bat 0755 root other
+f none $VERDIR/build/buildJDK14.sh=build/buildJDK14.sh 0755 root other
+f none $VERDIR/build/switchOffJDK11.bat=build/switchOffJDK11.bat 0755 root other
+f none $VERDIR/build/switchOffJDK11.sh=build/switchOffJDK11.sh 0755 root other
+f none $VERDIR/build/switchOffJDK14.bat=build/switchOffJDK14.bat 0755 root other
+f none $VERDIR/build/switchOffJDK14.sh=build/switchOffJDK14.sh 0755 root other
+f none $VERDIR/build/switchToJDK11.bat=build/switchToJDK11.bat 0755 root other
+f none $VERDIR/build/switchToJDK11.sh=build/switchToJDK11.sh 0755 root other
+f none $VERDIR/build/switchToJDK12.bat=build/switchToJDK12.bat 0755 root other
+f none $VERDIR/build/switchToJDK12.sh=build/switchToJDK12.sh 0755 root other
+f none $VERDIR/build/switchToJDK14.bat=build/switchToJDK14.bat 0755 root other
+f none $VERDIR/build/switchToJDK14.sh=build/switchToJDK14.sh 0755 root other
+d none $VERDIR/build/templates 0755 root other
+f none $VERDIR/build/templates/hsqldb.conf.unix=build/templates/hsqldb.conf.unix
+f none $VERDIR/build/templates/hsqldb.init.sh=build/templates/hsqldb.init.sh 0755 root other
+f none $VERDIR/build/templates/hsqldb.shell.sh=build/templates/hsqldb.shell.sh 0755 root other
+d none $VERDIR/demo 0755 root other
+f none $VERDIR/demo/TestSelfCreate.txt=demo/TestSelfCreate.txt
+f none $VERDIR/demo/TestSelf.txt=demo/TestSelf.txt
+f none $VERDIR/demo/memorydbmanager.html=demo/memorydbmanager.html
+f none $VERDIR/demo/TestSelfModify.txt=demo/TestSelfModify.txt
+f none $VERDIR/demo/TestSelfVerify.txt=demo/TestSelfVerify.txt
+f none $VERDIR/demo/runUtil.bat=demo/runUtil.bat 0755 root other
+f none $VERDIR/demo/runTest.sh=demo/runTest.sh 0755 root other
+f none $VERDIR/demo/localhost_clientserver.html=demo/localhost_clientserver.html
+f none $VERDIR/demo/memoryquery.html=demo/memoryquery.html
+f none $VERDIR/demo/readme_linux.txt=demo/readme_linux.txt
+f none $VERDIR/demo/runManager.bat=demo/runManager.bat 0755 root other
+f none $VERDIR/demo/runManager.sh=demo/runManager.sh 0755 root other
+f none $VERDIR/demo/runServer.bat=demo/runServer.bat 0755 root other
+f none $VERDIR/demo/runServer.sh=demo/runServer.sh 0755 root other
+f none $VERDIR/demo/runTest.bat=demo/runTest.bat 0755 root other
+f none $VERDIR/demo/runWebServer.bat=demo/runWebServer.bat 0755 root other
+f none $VERDIR/demo/runUtil.sh=demo/runUtil.sh 0755 root other
+f none $VERDIR/demo/runWebServer.sh=demo/runWebServer.sh 0755 root other
+f none $VERDIR/demo/servletdemo.html=demo/servletdemo.html
+f none $VERDIR/readme_linux.txt=readme_linux.txt
+d none $VERDIR/lib 0755 root other
+f none $VERDIR/lib/servlet.jar=lib/servlet.jar
+f none $VERDIR/lib/functions=lib/functions 0755 root other
+d none $VERDIR/src 0755 root other
+d none $VERDIR/src/org 0755 root other
+d none $VERDIR/src/org/hsqldb 0755 root other
+f none $VERDIR/src/org/hsqldb/CacheFree.java=src/org/hsqldb/CacheFree.java
+f none $VERDIR/src/org/hsqldb/Cache.java=src/org/hsqldb/Cache.java
+f none $VERDIR/src/org/hsqldb/BinaryDatabaseRowInput.java=src/org/hsqldb/BinaryDatabaseRowInput.java
+f none $VERDIR/src/org/hsqldb/BinaryDatabaseRowOutput.java=src/org/hsqldb/BinaryDatabaseRowOutput.java
+f none $VERDIR/src/org/hsqldb/BinaryServerRowInput.java=src/org/hsqldb/BinaryServerRowInput.java
+f none $VERDIR/src/org/hsqldb/BinaryServerRowOutput.java=src/org/hsqldb/BinaryServerRowOutput.java
+f none $VERDIR/src/org/hsqldb/ByteArray.java=src/org/hsqldb/ByteArray.java
+f none $VERDIR/src/org/hsqldb/Constraint.java=src/org/hsqldb/Constraint.java
+f none $VERDIR/src/org/hsqldb/CachedRow.java=src/org/hsqldb/CachedRow.java
+f none $VERDIR/src/org/hsqldb/Column.java=src/org/hsqldb/Column.java
+f none $VERDIR/src/org/hsqldb/ConstraintCore.java=src/org/hsqldb/ConstraintCore.java
+f none $VERDIR/src/org/hsqldb/Database.java=src/org/hsqldb/Database.java
+f none $VERDIR/src/org/hsqldb/DatabaseFile.java=src/org/hsqldb/DatabaseFile.java
+f none $VERDIR/src/org/hsqldb/DatabaseInformation.java=src/org/hsqldb/DatabaseInformation.java
+f none $VERDIR/src/org/hsqldb/DatabaseRowInput.java=src/org/hsqldb/DatabaseRowInput.java
+f none $VERDIR/src/org/hsqldb/DatabaseRowOutputInterface.java=src/org/hsqldb/DatabaseRowOutputInterface.java
+f none $VERDIR/src/org/hsqldb/DatabaseRowInputInterface.java=src/org/hsqldb/DatabaseRowInputInterface.java
+f none $VERDIR/src/org/hsqldb/DatabaseRowOutput.java=src/org/hsqldb/DatabaseRowOutput.java
+f none $VERDIR/src/org/hsqldb/HsqlDatabaseProperties.java=src/org/hsqldb/HsqlDatabaseProperties.java
+f none $VERDIR/src/org/hsqldb/DatabaseScript.java=src/org/hsqldb/DatabaseScript.java
+f none $VERDIR/src/org/hsqldb/DiskNode.java=src/org/hsqldb/DiskNode.java
+f none $VERDIR/src/org/hsqldb/Expression.java=src/org/hsqldb/Expression.java
+f none $VERDIR/src/org/hsqldb/Function.java=src/org/hsqldb/Function.java
+f none $VERDIR/src/org/hsqldb/HsqlProperties.java=src/org/hsqldb/HsqlProperties.java
+f none $VERDIR/src/org/hsqldb/HsqlName.java=src/org/hsqldb/HsqlName.java
+f none $VERDIR/src/org/hsqldb/HsqlServerFactory.java=src/org/hsqldb/HsqlServerFactory.java
+f none $VERDIR/src/org/hsqldb/Library.java=src/org/hsqldb/Library.java
+f none $VERDIR/src/org/hsqldb/Index.java=src/org/hsqldb/Index.java
+f none $VERDIR/src/org/hsqldb/HsqlSocketRequestHandler.java=src/org/hsqldb/HsqlSocketRequestHandler.java
+f none $VERDIR/src/org/hsqldb/HsqlSocketRequestHandlerImpl.java=src/org/hsqldb/HsqlSocketRequestHandlerImpl.java
+f none $VERDIR/src/org/hsqldb/Like.java=src/org/hsqldb/Like.java
+f none $VERDIR/src/org/hsqldb/Log.java=src/org/hsqldb/Log.java
+f none $VERDIR/src/org/hsqldb/Record.java=src/org/hsqldb/Record.java
+f none $VERDIR/src/org/hsqldb/jdbcConnection.java=src/org/hsqldb/jdbcConnection.java
+f none $VERDIR/src/org/hsqldb/MemoryNode.java=src/org/hsqldb/MemoryNode.java
+f none $VERDIR/src/org/hsqldb/Node.java=src/org/hsqldb/Node.java
+f none $VERDIR/src/org/hsqldb/Parser.java=src/org/hsqldb/Parser.java
+f none $VERDIR/src/org/hsqldb/PointerNode.java=src/org/hsqldb/PointerNode.java
+f none $VERDIR/src/org/hsqldb/QuotedTextDatabaseRowInput.java=src/org/hsqldb/QuotedTextDatabaseRowInput.java
+f none $VERDIR/src/org/hsqldb/QuotedTextDatabaseRowOutput.java=src/org/hsqldb/QuotedTextDatabaseRowOutput.java
+f none $VERDIR/src/org/hsqldb/Result.java=src/org/hsqldb/Result.java
+f none $VERDIR/src/org/hsqldb/Row.java=src/org/hsqldb/Row.java
+f none $VERDIR/src/org/hsqldb/Select.java=src/org/hsqldb/Select.java
+f none $VERDIR/src/org/hsqldb/ReverseDatabaseFile.java=src/org/hsqldb/ReverseDatabaseFile.java
+f none $VERDIR/src/org/hsqldb/ReverseTextCache.java=src/org/hsqldb/ReverseTextCache.java
+f none $VERDIR/src/org/hsqldb/Server.java=src/org/hsqldb/Server.java
+f none $VERDIR/src/org/hsqldb/Servlet.java=src/org/hsqldb/Servlet.java
+f none $VERDIR/src/org/hsqldb/ServerConnection.java=src/org/hsqldb/ServerConnection.java
+f none $VERDIR/src/org/hsqldb/Session.java=src/org/hsqldb/Session.java
+f none $VERDIR/src/org/hsqldb/Table.java=src/org/hsqldb/Table.java
+f none $VERDIR/src/org/hsqldb/TableWorks.java=src/org/hsqldb/TableWorks.java
+f none $VERDIR/src/org/hsqldb/StringConverter.java=src/org/hsqldb/StringConverter.java
+f none $VERDIR/src/org/hsqldb/TableFilter.java=src/org/hsqldb/TableFilter.java
+f none $VERDIR/src/org/hsqldb/TextCache.java=src/org/hsqldb/TextCache.java
+f none $VERDIR/src/org/hsqldb/TextTable.java=src/org/hsqldb/TextTable.java
+f none $VERDIR/src/org/hsqldb/TextDatabaseRowInput.java=src/org/hsqldb/TextDatabaseRowInput.java
+f none $VERDIR/src/org/hsqldb/TextDatabaseRowOutput.java=src/org/hsqldb/TextDatabaseRowOutput.java
+f none $VERDIR/src/org/hsqldb/Tokenizer.java=src/org/hsqldb/Tokenizer.java
+f none $VERDIR/src/org/hsqldb/Trace.java=src/org/hsqldb/Trace.java
+f none $VERDIR/src/org/hsqldb/Transaction.java=src/org/hsqldb/Transaction.java
+f none $VERDIR/src/org/hsqldb/Trigger.java=src/org/hsqldb/Trigger.java
+f none $VERDIR/src/org/hsqldb/TriggerDef.java=src/org/hsqldb/TriggerDef.java
+f none $VERDIR/src/org/hsqldb/User.java=src/org/hsqldb/User.java
+f none $VERDIR/src/org/hsqldb/UserManager.java=src/org/hsqldb/UserManager.java
+f none $VERDIR/src/org/hsqldb/View.java=src/org/hsqldb/View.java
+f none $VERDIR/src/org/hsqldb/WebServer.java=src/org/hsqldb/WebServer.java
+d none $VERDIR/src/org/hsqldb/lib 0755 root other
+f none $VERDIR/src/org/hsqldb/lib/HsqlDateTime.java=src/org/hsqldb/lib/HsqlDateTime.java
+f none $VERDIR/src/org/hsqldb/lib/ArrayUtil.java=src/org/hsqldb/lib/ArrayUtil.java
+f none $VERDIR/src/org/hsqldb/lib/AsciiStringInputStream.java=src/org/hsqldb/lib/AsciiStringInputStream.java
+f none $VERDIR/src/org/hsqldb/lib/HsqlDeque.java=src/org/hsqldb/lib/HsqlDeque.java
+f none $VERDIR/src/org/hsqldb/lib/StringInputStream.java=src/org/hsqldb/lib/StringInputStream.java
+f none $VERDIR/src/org/hsqldb/lib/StringUtil.java=src/org/hsqldb/lib/StringUtil.java
+d none $VERDIR/src/org/hsqldb/sample 0755 root other
+f none $VERDIR/src/org/hsqldb/sample/ConnectionTypesSample.java=src/org/hsqldb/sample/ConnectionTypesSample.java
+f none $VERDIR/src/org/hsqldb/sample/DatabaseManagerSample.java=src/org/hsqldb/sample/DatabaseManagerSample.java
+f none $VERDIR/src/org/hsqldb/sample/FindFile.java=src/org/hsqldb/sample/FindFile.java
+f none $VERDIR/src/org/hsqldb/sample/TriggerSample.java=src/org/hsqldb/sample/TriggerSample.java
+f none $VERDIR/src/org/hsqldb/WebServerConnection.java=src/org/hsqldb/WebServerConnection.java
+f none $VERDIR/src/org/hsqldb/jdbcDataSource.java=src/org/hsqldb/jdbcDataSource.java
+f none $VERDIR/src/org/hsqldb/jdbcDataSourceFactory.java=src/org/hsqldb/jdbcDataSourceFactory.java
+f none $VERDIR/src/org/hsqldb/jdbcDatabaseMetaData.java=src/org/hsqldb/jdbcDatabaseMetaData.java
+f none $VERDIR/src/org/hsqldb/jdbcDriver.java=src/org/hsqldb/jdbcDriver.java
+f none $VERDIR/src/org/hsqldb/jdbcPreparedStatement.java=src/org/hsqldb/jdbcPreparedStatement.java
+f none $VERDIR/src/org/hsqldb/jdbcResultSet.java=src/org/hsqldb/jdbcResultSet.java
+f none $VERDIR/src/org/hsqldb/jdbcStatement.java=src/org/hsqldb/jdbcStatement.java
+f none $VERDIR/src/org/hsqldb/jdbcSystem.java=src/org/hsqldb/jdbcSystem.java
+d none $VERDIR/src/org/hsqldb/test 0755 root other
+f none $VERDIR/src/org/hsqldb/test/TestCacheSize.java=src/org/hsqldb/test/TestCacheSize.java
+f none $VERDIR/src/org/hsqldb/test/JDBCBench.java=src/org/hsqldb/test/JDBCBench.java
+f none $VERDIR/src/org/hsqldb/test/TestInstantiation.java=src/org/hsqldb/test/TestInstantiation.java
+f none $VERDIR/src/org/hsqldb/test/TestCascade.java=src/org/hsqldb/test/TestCascade.java
+f none $VERDIR/src/org/hsqldb/test/TestHsql.java=src/org/hsqldb/test/TestHsql.java
+f none $VERDIR/src/org/hsqldb/test/TestMultipleConnections.java=src/org/hsqldb/test/TestMultipleConnections.java
+f none $VERDIR/src/org/hsqldb/test/TestQuotes.java=src/org/hsqldb/test/TestQuotes.java
+f none $VERDIR/src/org/hsqldb/test/TestSelf.java=src/org/hsqldb/test/TestSelf.java
+f none $VERDIR/src/org/hsqldb/test/TestSelf.txt=src/org/hsqldb/test/TestSelf.txt
+f none $VERDIR/src/org/hsqldb/test/TestSelfCreate.txt=src/org/hsqldb/test/TestSelfCreate.txt
+f none $VERDIR/src/org/hsqldb/test/TestSelfModify.txt=src/org/hsqldb/test/TestSelfModify.txt
+f none $VERDIR/src/org/hsqldb/test/TestSelfVerify.txt=src/org/hsqldb/test/TestSelfVerify.txt
+f none $VERDIR/src/org/hsqldb/test/TestSql.java=src/org/hsqldb/test/TestSql.java
+f none $VERDIR/src/org/hsqldb/test/TestSqlPersistent.java=src/org/hsqldb/test/TestSqlPersistent.java
+f none $VERDIR/src/org/hsqldb/test/TestSubselect.java=src/org/hsqldb/test/TestSubselect.java
+d none $VERDIR/src/org/hsqldb/util 0755 root other
+f none $VERDIR/src/org/hsqldb/util/ConnectionDialog.java=src/org/hsqldb/util/ConnectionDialog.java
+f none $VERDIR/src/org/hsqldb/util/CodeSwitcher.java=src/org/hsqldb/util/CodeSwitcher.java
+f none $VERDIR/src/org/hsqldb/util/CommonSwing.java=src/org/hsqldb/util/CommonSwing.java
+f none $VERDIR/src/org/hsqldb/util/GridSwing.java=src/org/hsqldb/util/GridSwing.java
+f none $VERDIR/src/org/hsqldb/util/Grid.java=src/org/hsqldb/util/Grid.java
+f none $VERDIR/src/org/hsqldb/util/ConnectionDialogCommon.java=src/org/hsqldb/util/ConnectionDialogCommon.java
+f none $VERDIR/src/org/hsqldb/util/ConnectionDialogSwing.java=src/org/hsqldb/util/ConnectionDialogSwing.java
+f none $VERDIR/src/org/hsqldb/util/DataAccessPoint.java=src/org/hsqldb/util/DataAccessPoint.java
+f none $VERDIR/src/org/hsqldb/util/DataAccessPointException.java=src/org/hsqldb/util/DataAccessPointException.java
+f none $VERDIR/src/org/hsqldb/util/DatabaseManager.java=src/org/hsqldb/util/DatabaseManager.java
+f none $VERDIR/src/org/hsqldb/util/DatabaseManagerCommon.java=src/org/hsqldb/util/DatabaseManagerCommon.java
+f none $VERDIR/src/org/hsqldb/util/DatabaseManagerSwing.java=src/org/hsqldb/util/DatabaseManagerSwing.java
+f none $VERDIR/src/org/hsqldb/util/HelperFactory.java=src/org/hsqldb/util/HelperFactory.java
+f none $VERDIR/src/org/hsqldb/util/JDBCTypes.java=src/org/hsqldb/util/JDBCTypes.java
+f none $VERDIR/src/org/hsqldb/util/jdbcSystem.java=src/org/hsqldb/util/jdbcSystem.java
+f none $VERDIR/src/org/hsqldb/util/Tree.java=src/org/hsqldb/util/Tree.java
+f none $VERDIR/src/org/hsqldb/util/HsqldbTransferHelper.java=src/org/hsqldb/util/HsqldbTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/InformixTransferHelper.java=src/org/hsqldb/util/InformixTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/McKoiTransferHelper.java=src/org/hsqldb/util/McKoiTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/OracleTransferHelper.java=src/org/hsqldb/util/OracleTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/PostgresTransferHelper.java=src/org/hsqldb/util/PostgresTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/QueryTool.java=src/org/hsqldb/util/QueryTool.java
+f none $VERDIR/src/org/hsqldb/util/SQLStatements.java=src/org/hsqldb/util/SQLStatements.java
+f none $VERDIR/src/org/hsqldb/util/ScriptTool.java=src/org/hsqldb/util/ScriptTool.java
+f none $VERDIR/src/org/hsqldb/util/ShutdownServer.java=src/org/hsqldb/util/ShutdownServer.java
+f none $VERDIR/src/org/hsqldb/util/SqlServerTransferHelper.java=src/org/hsqldb/util/SqlServerTransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/Traceable.java=src/org/hsqldb/util/Traceable.java
+f none $VERDIR/src/org/hsqldb/util/Transfer.java=src/org/hsqldb/util/Transfer.java
+f none $VERDIR/src/org/hsqldb/util/TransferCommon.java=src/org/hsqldb/util/TransferCommon.java
+f none $VERDIR/src/org/hsqldb/util/TransferDb.java=src/org/hsqldb/util/TransferDb.java
+f none $VERDIR/src/org/hsqldb/util/TransferHelper.java=src/org/hsqldb/util/TransferHelper.java
+f none $VERDIR/src/org/hsqldb/util/TransferResultSet.java=src/org/hsqldb/util/TransferResultSet.java
+f none $VERDIR/src/org/hsqldb/util/TransferTable.java=src/org/hsqldb/util/TransferTable.java
+f none $VERDIR/src/org/hsqldb/util/TransferSQLText.java=src/org/hsqldb/util/TransferSQLText.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusComponent.java=src/org/hsqldb/util/ZaurusComponent.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusChoice.java=src/org/hsqldb/util/ZaurusChoice.java
+f none $VERDIR/src/org/hsqldb/util/hsqldb.gif=src/org/hsqldb/util/hsqldb.gif
+f none $VERDIR/src/org/hsqldb/util/ZaurusConnectionDialog.java=src/org/hsqldb/util/ZaurusConnectionDialog.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusDatabaseManager.java=src/org/hsqldb/util/ZaurusDatabaseManager.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusEditor.java=src/org/hsqldb/util/ZaurusEditor.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusTableForm.java=src/org/hsqldb/util/ZaurusTableForm.java
+f none $VERDIR/src/org/hsqldb/util/ZaurusTextField.java=src/org/hsqldb/util/ZaurusTextField.java
+f none $VERDIR/src/hsqlServlet.java=src/hsqlServlet.java
+d none $VERDIR/data 0755 root other
+d none $VERDIR/data/db1 0755 hsqldb hsqldb
