@@ -144,19 +144,6 @@ class TextTable extends org.hsqldb.Table {
         isReversed = (isReversedNew && dataSourceNew.length() > 0);
     }
 
-    /**
-     * Used by TextCache to insert a row into the indexes when the source
-     * file is first read.
-     */
-    private void insertNoChange(CachedDataRow r) throws HsqlException {
-
-        Object[] row = r.getData();
-
-        enforceNullConstraints(row);
-        setIdentityColumn(null, row);
-        indexRow(r);
-    }
-
     boolean equals(Session c, String other) {
 
         boolean isEqual = super.equals(c, other);

@@ -2498,7 +2498,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // Intermediate holders
         Iterator             tables;
         Table                table;
-        HsqlArrayList        constraints;
+        Constraint[]         constraints;
         int                  constraintCount;
         Constraint           constraint;
         Expression.Collector collector;
@@ -2536,13 +2536,13 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             constraints       = table.getConstraints();
-            constraintCount   = constraints.size();
+            constraintCount   = constraints.length;
             constraintCatalog = ns.getCatalogName(table);
             constraintSchema  = ns.getSchemaName(table);
 
             // process constraints
             for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) constraints.get(i);
+                constraint = (Constraint) constraints[i];
 
                 if (constraint.getType() != Constraint.CHECK) {
                     continue;
@@ -2673,7 +2673,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // Intermediate holders
         Iterator             tables;
         Table                table;
-        HsqlArrayList        constraints;
+        Constraint[]         constraints;
         int                  constraintCount;
         Constraint           constraint;
         Expression.Collector collector;
@@ -2705,12 +2705,12 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             constraints       = table.getConstraints();
-            constraintCount   = constraints.size();
+            constraintCount   = constraints.length;
             constraintCatalog = ns.getCatalogName(table);
             constraintSchema  = ns.getSchemaName(table);
 
             for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) constraints.get(i);
+                constraint = (Constraint) constraints[i];
 
                 if (constraint.getType() != Constraint.CHECK) {
                     continue;
@@ -2953,16 +2953,16 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         // Intermediate holders
-        Iterator      tables;
-        Table         table;
-        Index         index;
-        HsqlArrayList constraints;
-        int           constraintCount;
-        Constraint    constraint;
-        String        cat;
-        String        schem;
-        HashSet       constraintSet;
-        Object[]      row;
+        Iterator     tables;
+        Table        table;
+        Index        index;
+        Constraint[] constraints;
+        int          constraintCount;
+        Constraint   constraint;
+        String       cat;
+        String       schem;
+        HashSet      constraintSet;
+        Object[]     row;
 
         // column number mappings
         final int icons_cat   = 0;
@@ -3008,10 +3008,10 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             constraints     = table.getConstraints();
-            constraintCount = constraints.size();
+            constraintCount = constraints.length;
 
             for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) constraints.get(i);
+                constraint = constraints[i];
 
                 if (constraint.getType() == Constraint.FOREIGN_KEY
                         &&!isAccessibleTable(constraint.getRef())) {

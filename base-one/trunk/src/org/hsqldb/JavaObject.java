@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.io.Serializable;
+
 /**
  * Represents of an instance of an OTHER field value. <p>
  *
@@ -75,7 +77,7 @@ public class JavaObject {
      * Used also with JDBC setParameter().
      * If parameter serialize is true, the Object is serialized for storage.
      */
-    public JavaObject(Object o) throws HsqlException {
+    public JavaObject(Serializable o) throws HsqlException {
         data = Column.serialize(o);
     }
 
@@ -93,7 +95,7 @@ public class JavaObject {
      * type OTHER to another type. It will throw if the OTHER is an instance
      * of a classe that is not available.
      */
-    public Object getObject() throws HsqlException {
+    public Serializable getObject() throws HsqlException {
         return Column.deserialize(data);
     }
 

@@ -750,6 +750,18 @@ public class ArrayUtil {
         return newarray;
     }
 
+    public static Object toAdjustedArray(Object source, Object addition,
+                                         int colindex, int adjust) {
+
+        int newsize = Array.getLength(source) + adjust;
+        Object newarray =
+            Array.newInstance(source.getClass().getComponentType(), newsize);
+
+        copyAdjustArray(source, newarray, addition, colindex, adjust);
+
+        return newarray;
+    }
+
     /**
      *  Copies elements of source to dest. If adjust is -1 the element at
      *  colindex is not copied. If adjust is +1 that element is filled with
@@ -759,28 +771,25 @@ public class ArrayUtil {
      *  No checks are perfomed on array sizes and an exception is thrown
      *  if they are not consistent with the other arguments.
      */
-    public static void copyAdjustArray(Object[] source, Object[] dest,
+    public static void copyAdjustArray(Object source, Object dest,
                                        Object addition, int colindex,
                                        int adjust) {
 
-        int i;
+        int length = Array.getLength(source);
 
-        for (i = 0; i < colindex; i++) {
-            dest[i] = source[i];
-        }
+        System.arraycopy(source, 0, dest, 0, colindex);
 
-        if (i == dest.length) {
+        if (colindex == Array.getLength(dest)) {
             return;
         }
 
         if (adjust < 0) {
-            i++;
+            System.arraycopy(source, colindex + 1, dest, colindex,
+                             length - colindex - 1);
         } else {
-            dest[i] = addition;
-        }
-
-        for (; i < source.length; i++) {
-            dest[i + adjust] = source[i];
+            Array.set(dest, colindex, addition);
+            System.arraycopy(source, colindex, dest, colindex + 1,
+                             length - colindex);
         }
     }
 

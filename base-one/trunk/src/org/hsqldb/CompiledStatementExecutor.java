@@ -144,12 +144,6 @@ final class CompiledStatementExecutor {
     }
 
     /**
-     *  todo - fredt - NOW
-     *  JavaObject is a wrapper for Serializable. Neither Result nor
-     *  jdbcResultSet is serialzable. The usage in this method will fail.
-     */
-
-    /**
      * Executes a CALL statement.  It is assumed that the argument is
      * of the correct type.
      *
@@ -164,16 +158,10 @@ final class CompiledStatementExecutor {
         Object     o = e.getValue(session);    // expression return value
         Result     r;
 
-        if (o instanceof JavaObject) {    // then it might wrap a Result
-
-            // fredt - note todo above
-            Object wrapped = ((JavaObject) o).getObject();
-
-            if (wrapped instanceof Result) {
-                return (Result) wrapped;
-            } else if (wrapped instanceof jdbcResultSet) {
-                return ((jdbcResultSet) wrapped).rResult;
-            }
+        if (o instanceof Result) {
+            return (Result) o;
+        } else if (o instanceof jdbcResultSet) {
+            return ((jdbcResultSet) o).rResult;
         }
 
         r = Result.newSingleColumnResult(DIProcedureInfo.RETURN_COLUMN_NAME,

@@ -69,9 +69,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
@@ -807,15 +807,15 @@ public class Database {
      */
     private void checkTableIsReferenced(Table toDrop) throws HsqlException {
 
-        Iterator   constraints       = toDrop.getConstraints().iterator();
-        Constraint currentConstraint = null;
-        Table      refTable          = null;
-        boolean    isRef             = false;
-        boolean    isSelfRef         = false;
-        int        refererIndex      = -1;
+        Constraint[] constraints       = toDrop.getConstraints();
+        Constraint   currentConstraint = null;
+        Table        refTable          = null;
+        boolean      isRef             = false;
+        boolean      isSelfRef         = false;
+        int          refererIndex      = -1;
 
-        while (constraints.hasNext()) {
-            currentConstraint = (Constraint) constraints.next();
+        for (int i = 0; i < constraints.length; i++) {
+            currentConstraint = constraints[i];
 
             if (currentConstraint.getType() != Constraint.MAIN) {
                 continue;
@@ -1014,16 +1014,15 @@ public class Database {
     void removeExportedKeys(Table toDrop) {
 
         for (int i = 0; i < tTable.size(); i++) {
-            HsqlArrayList constraintvector =
-                ((Table) tTable.get(i)).getConstraints();
+            Table table = (Table) tTable.get(i);
 
-            for (int j = constraintvector.size() - 1; j >= 0; j--) {
-                Constraint currentConstraint =
-                    (Constraint) constraintvector.get(j);
-                Table refTable = currentConstraint.getRef();
+            for (int j = table.constraintList.length - 1; j >= 0; j--) {
+                Table refTable = table.constraintList[j].getRef();
 
                 if (toDrop == refTable) {
-                    constraintvector.remove(j);
+                    table.constraintList =
+                        (Constraint[]) ArrayUtil.toAdjustedArray(
+                            table.constraintList, null, j, -1);
                 }
             }
         }

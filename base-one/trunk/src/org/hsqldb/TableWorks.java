@@ -67,9 +67,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.HsqlArrayList;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
@@ -277,10 +277,10 @@ class TableWorks {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
         }
 
-        HsqlArrayList constraints = table.getConstraints();
+        Constraint[] constraints = table.getConstraints();
 
-        for (int i = 0, size = constraints.size(); i < size; i++) {
-            Constraint c = (Constraint) constraints.get(i);
+        for (int i = 0, size = constraints.length; i < size; i++) {
+            Constraint c = constraints[i];
 
             if (c.isEquivalent(col, Constraint.UNIQUE)
                     || c.getName().name.equals(name.name)) {
@@ -433,8 +433,13 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(refIndex.getName().name);
-            mainTable.constraintList.remove(k);
-            table.constraintList.remove(j);
+
+            mainTable.constraintList =
+                (Constraint[]) ArrayUtil.toAdjustedArray(
+                    mainTable.constraintList, null, k, -1);
+            table.constraintList =
+                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
+                    null, j, -1);
         } else if (c.getType() == Constraint.UNIQUE) {
             HashSet cset = new HashSet();
 
@@ -445,9 +450,14 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
-            table.constraintList.remove(j);
+
+            table.constraintList =
+                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
+                    null, j, -1);
         } else if (c.getType() == Constraint.CHECK) {
-            table.constraintList.remove(j);
+            table.constraintList =
+                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
+                    null, j, -1);
         }
 
         table.database.constraintNameList.removeName(name);

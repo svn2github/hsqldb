@@ -139,7 +139,7 @@ public class Table extends BaseTable {
     NumberSequence        rowIdSequence;              // next value of optional rowid
 
 // -----------------------------------------------------------------------
-    HsqlArrayList     constraintList;                 // constrainst for the table
+    Constraint[]      constraintList;                 // constrainst for the table
     HsqlArrayList[]   triggerLists;                   // array of trigger lists
     private int[]     colTypes;                       // fredt - types of columns
     private int[]     colSizes;                       // fredt - copy of SIZE values for columns
@@ -248,7 +248,7 @@ public class Table extends BaseTable {
         identityColumn = -1;
         columnList     = new HashMappedList();
         indexList      = new HsqlArrayList();
-        constraintList = new HsqlArrayList();
+        constraintList = new Constraint[0];
         triggerLists   = new HsqlArrayList[TriggerDef.NUM_TRIGS];
 
 // ----------------------------------------------------------------------------
@@ -373,13 +373,16 @@ public class Table extends BaseTable {
      *  Adds a constraint.
      */
     void addConstraint(Constraint c) {
-        constraintList.add(c);
+
+        constraintList =
+            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c,
+                constraintList.length, 1);
     }
 
     /**
      *  Returns the list of constraints.
      */
-    HsqlArrayList getConstraints() {
+    Constraint[] getConstraints() {
         return constraintList;
     }
 
@@ -397,8 +400,8 @@ public class Table extends BaseTable {
             return getPrimaryIndex();
         }
 
-        for (int i = 0, size = constraintList.size(); i < size; i++) {
-            Constraint c = (Constraint) constraintList.get(i);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.getType() != Constraint.UNIQUE) {
                 continue;
@@ -419,8 +422,8 @@ public class Table extends BaseTable {
     Constraint getConstraintForColumns(Table tablemain, int[] colmain,
                                        int[] colref) {
 
-        for (int i = 0, size = constraintList.size(); i < size; i++) {
-            Constraint c = (Constraint) constraintList.get(i);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.isEquivalent(tablemain, colmain, this, colref)) {
                 return c;
@@ -438,8 +441,8 @@ public class Table extends BaseTable {
      */
     Constraint getConstraintForIndex(Index index) {
 
-        for (int i = 0, size = constraintList.size(); i < size; i++) {
-            Constraint c = (Constraint) constraintList.get(i);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.getMainIndex() == index
                     && c.getType() == Constraint.UNIQUE) {
@@ -459,8 +462,8 @@ public class Table extends BaseTable {
      */
     int getNextConstraintIndex(int from, int type) {
 
-        for (int i = from, size = constraintList.size(); i < size; i++) {
-            Constraint c = (Constraint) constraintList.get(i);
+        for (int i = from, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.getType() == type) {
                 return i;
@@ -719,8 +722,8 @@ public class Table extends BaseTable {
     void updateConstraintsTables(Table old, int colindex,
                                  int adjust) throws HsqlException {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint c = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             c.replaceTable(old, this, colindex, adjust);
 
@@ -732,8 +735,8 @@ public class Table extends BaseTable {
 
     private void recompileCheckConstraints() throws HsqlException {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint c = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.constType == Constraint.CHECK) {
                 recompileCheckConstraint(c);
@@ -772,8 +775,8 @@ public class Table extends BaseTable {
      */
     void checkColumnInCheckConstraint(String colname) throws HsqlException {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint c = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.constType == Constraint.CHECK) {
                 if (c.hasColumn(this, colname)) {
@@ -790,8 +793,8 @@ public class Table extends BaseTable {
     private void renameColumnInCheckConstraints(String oldname,
             String newname, boolean isquoted) throws HsqlException {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint c = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.constType == Constraint.CHECK) {
                 Expression.Collector coll = new Expression.Collector();
@@ -817,8 +820,8 @@ public class Table extends BaseTable {
     private void renameTableInCheckConstraints(String oldname,
             String newname) throws HsqlException {
 
-        for (int j = 0, size = constraintList.size(); j < size; j++) {
-            Constraint c = (Constraint) constraintList.get(j);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (c.constType == Constraint.CHECK) {
                 Expression.Collector coll = new Expression.Collector();
@@ -1279,10 +1282,8 @@ public class Table extends BaseTable {
             colTypes[i] = column.getType();
 
             if (i < visibleColumnCount) {
-                colSizes[i] = column.getSize();
-
-                // when insert or update values are processed, IDENTITY column can be null
-                colNullable[i] = column.isNullable() || column.isIdentity();
+                colSizes[i]         = column.getSize();
+                colNullable[i]      = column.isNullable();
                 defaultColumnMap[i] = i;
             }
 
@@ -1473,8 +1474,8 @@ public class Table extends BaseTable {
             throw Trace.error(Trace.DROP_PRIMARY_KEY, indexname);
         }
 
-        for (int i = 0, size = constraintList.size(); i < size; i++) {
-            Constraint c = (Constraint) constraintList.get(i);
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
 
             if (ignore != null && ignore.contains(c)) {
                 continue;
@@ -1618,7 +1619,7 @@ public class Table extends BaseTable {
             Object newrow[] = this.getNewRow();
 
             ArrayUtil.copyAdjustArray(o, newrow, colvalue, colindex, adjust);
-            insertNoCheck(null, newrow, false);
+            insertWithIdentity(session, newrow);
 
             n = index.next(n);
         }
@@ -1628,21 +1629,12 @@ public class Table extends BaseTable {
 
     /**
      *  Highest level multiple row insert method. Corresponds to an SQL
-     *  INSERT INTO or SELECT .. INTO .. statement.
+     *  INSERT INTO ... SELECT ... statement.
      */
     int insert(Session session, Result ins) throws HsqlException {
 
         Record ni    = ins.rRoot;
         int    count = 0;
-
-        while (ni != null) {
-            enforceFieldValueLimits(ni.data);
-            enforceNullConstraints(ni.data);
-
-            ni = ni.next;
-        }
-
-        ni = ins.rRoot;
 
         fireAll(Trigger.INSERT_BEFORE);
 
@@ -1672,24 +1664,24 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  High level method for inserting rows. Performs constraint checks and
+     *  Mid level method for inserting rows. Performs constraint checks and
      *  fires row level triggers.
      */
     private void insertRow(Session session,
                            Object data[]) throws HsqlException {
 
         fireAll(Trigger.INSERT_BEFORE_ROW, null, data);
+        setIdentityColumn(session, data);
+        enforceFieldValueLimits(data);
+        enforceNullConstraints(data);
 
         if (database.isReferentialIntegrity()) {
-            for (int i = 0, size = constraintList.size(); i < size; i++) {
-                ((Constraint) constraintList.get(i)).checkInsert(data,
-                        session);
+            for (int i = 0, size = constraintList.length; i < size; i++) {
+                constraintList[i].checkInsert(data, session);
             }
         }
 
-        enforceFieldValueLimits(data);
-        enforceNullConstraints(data);
-        insertNoCheck(session, data, true);
+        insertNoCheck(session, data);
         fireAll(Trigger.INSERT_AFTER_ROW, null, data);
     }
 
@@ -1723,12 +1715,8 @@ public class Table extends BaseTable {
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    private Row insertNoCheck(Session session, Object data[],
-                              boolean log) throws HsqlException {
-
-        // this is necessary when rebuilding from the *.script but not
-        // for transaction rollback
-        setIdentityColumn(session, data);
+    private Row insertNoCheck(Session session,
+                              Object data[]) throws HsqlException {
 
         Row r = Row.newRow(this, data);
 
@@ -1739,8 +1727,7 @@ public class Table extends BaseTable {
             session.addTransactionInsert(this, data);
         }
 
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && database.logger.hasLog()) {
+        if (!isTemp &&!isText &&!isReadOnly && database.logger.hasLog()) {
             database.logger.writeInsertStatement(session, this, data);
         }
 
@@ -1766,7 +1753,8 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used for subquery and system table inserts.
+     * Used for subquery and system table inserts. No checks. No identity
+     * columns.
      */
     int insert(Result ins) throws HsqlException {
 
@@ -1785,10 +1773,17 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used by the method above.
-     *
      * Used by ScriptReaderBinary to unconditionally insert a row into
-     * the table when the .script file is read. To avoid unnecessary
+     * the table when the .script file is read.
+     */
+    public void insertWithIdentity(Session session,
+                                   Object[] data) throws HsqlException {
+        setIdentityColumn(session, data);
+        insert(data);
+    }
+
+    /**
+     * Used by the methods above. To avoid unnecessary
      * creation of arrays The Object[] for data in the Result rows is inserted
      * into the table if it has the same length as table row data.
      */
@@ -1809,6 +1804,20 @@ public class Table extends BaseTable {
         Row r = Row.newRow(this, data);
 
         indexRow(r);
+    }
+
+    /**
+     * Used by TextCache to insert a row into the indexes when the source
+     * file is first read.
+     */
+    protected void insertNoChange(CachedDataRow row) throws HsqlException {
+
+        Object[] data = row.getData();
+
+        setIdentityColumn(null, data);
+        enforceFieldValueLimits(data);
+        enforceNullConstraints(data);
+        indexRow(row);
     }
 
     /**
@@ -1849,7 +1858,7 @@ public class Table extends BaseTable {
             }
 
             // only do this if id is for a visible column
-            if (session != null) {
+            if (session != null && identityColumn < visibleColumnCount) {
                 session.setLastIdentity(id);
             }
         }
@@ -2110,8 +2119,8 @@ public class Table extends BaseTable {
                                    boolean delete,
                                    HashSet path) throws HsqlException {
 
-        for (int i = 0, cSize = table.constraintList.size(); i < cSize; i++) {
-            Constraint c = (Constraint) table.constraintList.get(i);
+        for (int i = 0, size = table.constraintList.length; i < size; i++) {
+            Constraint c = table.constraintList[i];
 
             if (c.getType() != Constraint.MAIN || c.getRef() == null) {
                 continue;
@@ -2294,14 +2303,8 @@ public class Table extends BaseTable {
 
         // -- We iterate through all constraints associated with this table
         // --
-        for (int i = 0; i < table.constraintList.size(); i++) {
-            Constraint c = (Constraint) table.constraintList.get(i);
-
-            if (c.getType() == Constraint.CHECK) {
-                c.checkCheckConstraint(nrow, session);
-
-                continue;
-            }
+        for (int i = 0, size = table.constraintList.length; i < size; i++) {
+            Constraint c = table.constraintList[i];
 
             if (c.getType() == Constraint.FOREIGN_KEY && c.getRef() != null) {
 
@@ -2662,7 +2665,7 @@ public class Table extends BaseTable {
      * UPDATE MYTABLE SET UNIQUECOL = UNIQUECOL + 1
      * After performing each cascade update, delete the main row.
      * After all cascade ops and deletes have been performed, insert new
-     * rows. (fredt)
+     * rows.
      *
      * The following clauses from SQL Standard section 11.8 are enforced
      * 9) Let ISS be the innermost SQL-statement being executed.
@@ -2675,6 +2678,8 @@ public class Table extends BaseTable {
      * would cause deletion of a row containing a site that is identified for
      * replacement in that row, then an exception condition is raised:
      * triggered data change violation.
+     *
+     *  (fredt)
      */
     int update(Session session, HashMappedList updateList,
                int[] cols) throws HsqlException {
@@ -2690,13 +2695,15 @@ public class Table extends BaseTable {
 
         tableUpdateList = null;
 
-        // set identity column where null
+        // set identity column where null and check columns
         for (int i = 0; i < updateList.size(); i++) {
             Object[] data = (Object[]) updateList.get(i);
 
             // this means the identity column can be set to null to force
             // creation of a new identity value
-            setIdentityColumn(null, data);
+            setIdentityColumn(session, data);
+            enforceFieldValueLimits(data, cols);
+            enforceNullConstraints(data);
         }
 
         // perform check/cascade operations
@@ -2764,8 +2771,16 @@ public class Table extends BaseTable {
                 }
             }
 
-            enforceFieldValueLimits(data, cols);
-            enforceNullConstraints(data);
+            for (int j = 0; j < constraintList.length; j++) {
+                Constraint c = constraintList[j];
+
+                if (c.getType() == Constraint.CHECK) {
+                    c.checkCheckConstraint(data, session);
+
+                    continue;
+                }
+            }
+
             deleteNoCheck(session, row, true);
         }
 
@@ -2774,7 +2789,7 @@ public class Table extends BaseTable {
             Object[] data = (Object[]) rowSet.get(i);
 
             fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
-            insertNoCheck(session, data, true);
+            insertNoCheck(session, data);
             fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
         }
     }
@@ -2817,10 +2832,8 @@ public class Table extends BaseTable {
      */
     int getConstraintIndex(String constraintName) {
 
-        for (int i = 0, size = constraintList.size(); i < size; i++) {
-            Constraint constraint = (Constraint) constraintList.get(i);
-
-            if (constraint.getName().name.equals(constraintName)) {
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            if (constraintList[i].getName().name.equals(constraintName)) {
                 return i;
             }
         }
@@ -2836,7 +2849,7 @@ public class Table extends BaseTable {
         int i = getConstraintIndex(constraintName);
 
         return (i < 0) ? null
-                       : (Constraint) constraintList.get(i);
+                       : (Constraint) constraintList[i];
     }
 
     /**
@@ -2964,6 +2977,7 @@ public class Table extends BaseTable {
         }
 
         identitySequence.reset();
+        rowIdSequence.reset();
     }
 
     void drop() throws HsqlException {

@@ -401,10 +401,10 @@ public class DatabaseScript {
             getColumnList(t, pk, pk.length, a);
         }
 
-        HsqlArrayList v = t.getConstraints();
+        Constraint[] v = t.getConstraints();
 
-        for (int j = 0, vSize = v.size(); j < vSize; j++) {
-            Constraint c = (Constraint) v.get(j);
+        for (int j = 0, vSize = v.length; j < vSize; j++) {
+            Constraint c = v[j];
 
             switch (c.getType()) {
 

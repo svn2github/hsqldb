@@ -135,7 +135,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
         Object[] data = rowIn.readData(t.getColumnTypes());
 
-        t.insert(data);
+        t.insertWithIdentity(null, data);
 
         return true;
     }

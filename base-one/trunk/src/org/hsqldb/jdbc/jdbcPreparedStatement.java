@@ -32,6 +32,7 @@
 package org.hsqldb.jdbc;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.sql.ResultSet;
@@ -1837,7 +1838,7 @@ implements java.sql.PreparedStatement {
 
         try {
             if (outType == Types.OTHER) {
-                o = new JavaObject(o);
+                o = new JavaObject((Serializable) o);
             } else if (outType == Types.BINARY) {
                 if (!(o instanceof byte[])) {
                     throw jdbcUtil.sqlException(

@@ -1245,7 +1245,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         int           columnCount;
         int[]         mainCols;
         int[]         refCols;
-        HsqlArrayList constraints;
+        Constraint[]  constraints;
         Constraint    constraint;
         int           constraintCount;
         HsqlArrayList fkConstraintsList;
@@ -1300,10 +1300,10 @@ class DatabaseInformationMain extends DatabaseInformation {
             }
 
             constraints     = table.getConstraints();
-            constraintCount = constraints.size();
+            constraintCount = constraints.length;
 
             for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) constraints.get(i);
+                constraint = (Constraint) constraints[i];
 
                 if (constraint.getType() == Constraint.FOREIGN_KEY
                         && isAccessibleTable(constraint.getRef())) {
@@ -2806,7 +2806,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         // Intermediate holders
         Iterator      tables;
         Table         table;
-        HsqlArrayList tableConstraints;
+        Constraint[]  tableConstraints;
         int           constraintCount;
         Constraint    constraint;
         HsqlArrayList constraintList;
@@ -2829,10 +2829,10 @@ class DatabaseInformationMain extends DatabaseInformation {
             }
 
             tableConstraints = table.getConstraints();
-            constraintCount  = tableConstraints.size();
+            constraintCount  = tableConstraints.length;
 
             for (int i = 0; i < constraintCount; i++) {
-                constraint = (Constraint) tableConstraints.get(i);
+                constraint = (Constraint) tableConstraints[i];
 
                 if (constraint.getType() == Constraint.CHECK) {
                     constraintList.add(constraint);
