@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.53 2004/07/09 16:20:39 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.54 2004/07/12 16:54:32 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.53 $</edition>
-        <pubdate>$Date: 2004/07/09 16:20:39 $</pubdate>
+        <edition>$Revision: 1.54 $</edition>
+        <pubdate>$Date: 2004/07/12 16:54:32 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -336,6 +336,27 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             Any of these commands or comments may be preceded by space 
             characters.)
         </simpara></important>
+        <simpara>
+            When you are typing into SqlTool, you are always typing part of
+            the <emphasis>current command</emphasis>.
+            The <emphasis>buffer</emphasis> is the <emphasis>last SQL 
+            command</emphasis>.
+            If you're typing an SQL command, then the previous SQL command
+            will be in the buffer, not the one you are currently typing.
+            The current command could be any type of command, but only SQL
+            commands get moved to the buffer when they are completed.
+            When you type command-editing commands, the <emphasis>current
+            command</emphasis> is the editing command (like
+            "<literal>:s/tbl/table/</literal>"), the result of which is to
+            modify the SQL command in the buffer (which can thereafter be
+            executed).
+            The ":a" command (with no argument) is special in that it takes a
+            copy of the SQL command in the buffer and makes that the current 
+            command, leaving you in a state where you are 
+            <emphasis>appending</emphasis> to that 
+            <emphasis>now current</emphasis> command.
+            The buffer is the zeroeth item of the SQL command history.
+        </simpara>
         <variablelist><title>Command types</title>
             <varlistentry><term>SQL Statement</term><listitem><simpara>
                 Any command that you enter which does not begin with "\", ":", 
