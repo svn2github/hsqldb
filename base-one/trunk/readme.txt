@@ -1,6 +1,14 @@
 Readme File
 
-HSQLDB 1.7.2 ALPHA_H
+HSQLDB 1.7.2 ALPHA_I
+
+2002.12.16
+CVS hsqldb-dev module tag: HSQLDB_1_7_2_ALPHA_I
+
+More work on core classes to consolidate previous changes
+-correction of reported bug with text tables and primary keys
+-reducing data file writes esp. with big rows
+-preventing Cache related error in ON DELETE CASCADE 
 
 2002.12.11
 

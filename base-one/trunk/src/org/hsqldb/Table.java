@@ -1449,6 +1449,10 @@ class Table {
                     refindex.comparePartialRowNonUnique(
                         m_objects, n.getData()) == 0; ) {
 
+                // deleting rows can free n out of the cache so we
+                // make sure it is loaded with up-to-date left-right-parent
+                n = n.getUpdatedNode();
+
                 // get the next node before n is deleted
                 Node nextn = refindex.next(n);
 
@@ -1627,6 +1631,10 @@ class Table {
                         refindex.comparePartialRowNonUnique(
                             mainobjects, n.getData()) == 0; ) {
 
+                    // deleting rows can free n out of the cache so we
+                    // make sure it is loaded with up-to-date left-right-parent
+                    n = n.getUpdatedNode();
+
                     // -- get the next node before n is deleted
                     Node     nextn = refindex.next(n);
                     Object[] rnd   = reftable.getNewRow();
@@ -1741,7 +1749,11 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     * Low level row delete method. Removes the row from the indexes and
+     * from the Cache.
+     *
+     * The reference to the row is kept while it is removed from the indexes.
+     * This
      *
      * @param  row
      * @param  c
@@ -1754,13 +1766,13 @@ class Table {
         Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
 
-        r.lockRow();
+        for (int i = iIndexCount - 1; i >= 0; i--) {
+            node = r.getNode(i);
 
-        for (int i = 0; i < iIndexCount; i++) {
             getIndex(i).delete(node);
-
-            node = r.getNextNode(node);
         }
+
+        r = r.getUpdatedRow();
 
         r.delete();
 
@@ -1948,7 +1960,11 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Used by CACHED tables to fetch a Row from the Cache, resulting in the
+     *  Row being read from disk if it is not in the Cache.
+     *
+     *  TEXT tables pass the memory resident Node parameter so that the Row
+     *  and its index Nodes can be relinked.
      *
      * @param  pos
      * @return
@@ -1981,8 +1997,6 @@ class Table {
 
     void indexRow(Row r) throws SQLException {
 
-        r.lockRow();
-
         int i = 0;
 
         try {
@@ -1993,8 +2007,6 @@ class Table {
 
                 getIndex(i).insert(n);
             }
-
-            r.unlockRow();
         } catch (SQLException e) {
 
             // unique index violation - rollback insert
@@ -2005,7 +2017,6 @@ class Table {
             }
 
             r.delete();
-            r.unlockRow();
 
             throw e;    // and throw error again
         }

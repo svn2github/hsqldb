@@ -35,21 +35,18 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
  * Implementation of rows for tables with memory resident indexes and
- * disk-based data, such as TEXT tables.<p>
+ * disk-based data, such as TEXT tables.
  *
  * @version 1.7.2
  */
 class CachedDataRow extends CachedRow {
 
     /**
-     *  Constructor for new rows
-     *
-     * @param  t
-     * @param  o
-     * @exception  SQLException  Description of the Exception
+     *  Constructor for new rows.
      */
     CachedDataRow(Table t, Object o[]) throws SQLException {
 
@@ -64,12 +61,8 @@ class CachedDataRow extends CachedRow {
     }
 
     /**
-     *  constructor when read from cache
-     *
-     * @param  t
-     * @param  in
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
+     *  Constructor when read from the disk into the Cache. The link with
+     *  the Nodes is made separetly.
      */
     CachedDataRow(Table t,
                   DatabaseRowInputInterface in)
@@ -79,12 +72,16 @@ class CachedDataRow extends CachedRow {
         iPos        = in.getPos();
         storageSize = in.getSize();
 
-        ((TextDatabaseRowInput) in).setSystemId(t.iVisibleColumns
-         != t.iColumnCount);
+        ((TextDatabaseRowInput) in).setSystemId(tTable.iVisibleColumns
+         != tTable.iColumnCount);
 
         oData = in.readData(tTable.getColumnTypes());
     }
 
+    /**
+     *  Used when data is read from the disk into the Cache the first time.
+     *  New Nodes are created which are then indexed.
+     */
     void setNewNodes() {
 
         int index = tTable.getIndexCount();
@@ -99,7 +96,29 @@ class CachedDataRow extends CachedRow {
         }
     }
 
+    /**
+     *  Used when data is re-read from the disk into the Cache. The Row is
+     *  already indexed so it is linked with the Node in the primary index.
+     *  the Nodes is made separetly.
+     */
     void setPrimaryNode(Node primary) {
         nPrimaryNode = primary;
+    }
+
+    /**
+     *  Writes the data to disk. Unlike CachedRow, hasChanged is never set
+     *  to true when changes are made to the Nodes. (Nodes are in-memory).
+     *  The only time this is used is when a new Row is added to the Caches.
+     */
+    void write(DatabaseRowOutputInterface out)
+    throws IOException, SQLException {
+
+        ((TextDatabaseRowOutput) out).setSystemId(tTable.iVisibleColumns
+         != tTable.iColumnCount);
+        out.writeSize(storageSize);
+        out.writeData(oData, tTable);
+        out.writePos(iPos);
+
+        hasChanged = false;
     }
 }

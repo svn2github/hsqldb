@@ -73,18 +73,18 @@ import java.io.IOException;
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
  *  The parent for all AVL node implementations, features factory methods for
  *  its subclasses. Subclasses of Node vary in the way they hold
- *  references to other nodes in the AVL tree, or to their data.<br>
+ *  references to other Nodes in the AVL tree, or to their Row data.<br>
  *
  *  nNext links the Node objects belonging to different indexes for each
  *  table row. It is used solely by Row to locate the node belonging to a
- *  particular index. (fredt@users)
+ *  particular index.
  *
- *
- * @version 1.7.1
+ * @version 1.7.2
  */
 abstract class Node {
 
@@ -126,19 +126,25 @@ abstract class Node {
     }
 
     /**
-     *  Method declaration
+     *  This method unlinks the Node from the other Nodes in the same Index.
+     *  It must keep the links between the Nodes in different Indexes.
+     *  It should also keep the link to the Row
      */
     abstract void delete();
 
     /**
      *  File offset of Node. Used with CachedRow objects only
-     *
-     * @return file offset
      */
     abstract int getKey();
 
+    /**
+     *  Return the Row Object that is linke to this Node.
+     */
     abstract Row getRow() throws SQLException;
 
+    /**
+     *  Getters and setters for AVL index maniputions.
+     */
     abstract Node getLeft() throws SQLException;
 
     abstract void setLeft(Node n) throws SQLException;
@@ -148,8 +154,6 @@ abstract class Node {
     abstract void setRight(Node n) throws SQLException;
 
     abstract Node getParent() throws SQLException;
-
-    abstract boolean isRoot();
 
     abstract void setParent(Node n) throws SQLException;
 
@@ -164,10 +168,12 @@ abstract class Node {
 
     abstract void setBalance(int b) throws SQLException;
 
+    abstract boolean isRoot();
+
     abstract boolean isFromLeft() throws SQLException;
 
     /**
-     *  Returns the data held in the table Row for this Node
+     *  Returns the database table data for this Node
      *
      */
     abstract Object[] getData() throws SQLException;
@@ -175,9 +181,20 @@ abstract class Node {
     abstract boolean equals(Node n) throws SQLException;
 
     /**
-     *  Writes out the node in an implementation dependent way.
+     *  Returns the Node Object that currently represents this Node in the
+     *  AVL index structure. In current implementations of Node this is
+     *  always the same as the this Object for MEMORY and TEXT tables but can
+     *  be a different Object for CACHED tables, where DiskNode Objects may
+     *  be freed from the Cache. Calling this method returns a Node with
+     *  currently valid pointers to its linked AVL Nodes.
      *
-     * @param  out interface providing the different write methods
+     */
+    Node getUpdatedNode() throws SQLException {
+        return this;
+    }
+
+    /**
+     *  Writes out the node in an implementation dependent way.
      */
     abstract void write(DatabaseRowOutputInterface out)
     throws IOException, SQLException;

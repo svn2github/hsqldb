@@ -73,35 +73,52 @@ import java.sql.SQLException;
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
- *  In-memory representation of a disk-based database row object with storage
- *  independent methods for serialization and de-serialization.
+ *  In-memory representation of a disk-based database row object with  methods
+ *  for serialization and de-serialization.<br>
  *
- *  A CachedRow is part of a circular double linked list which contians all
- *  the Rows currently in the Cache for the database.
+ *  A CachedRow is normally part of a circular double linked list which
+ *  contians all the Rows currently in the Cache for the database. It is
+ *  unlinked from this list when it is freed from the Cache to make was for
+ *  other rows.
  *
- * @version 1.7.1
+ * @version 1.7.2
  */
 class CachedRow extends Row {
 
+    // test variables
+    static int       node_write_counter;
+    static int       data_write_counter;
     static final int NO_POS = -1;
     protected Table  tTable;
     int              iLastAccess;
     CachedRow        rLast, rNext;
     int              iPos = NO_POS;
     int              storageSize;
-    private boolean  hasChanged;
-    boolean          isLocked;
 
+    /**
+     *  Flag indication any change to the Nodes or table row data.
+     */
+    protected boolean hasChanged;
+
+    /**
+     *  Flag indicating the row data has changed too.
+     */
+    protected boolean hasDataChanged;
+
+    /**
+     *  Default constructor used only in subclasses.
+     */
     CachedRow() {}
 
     /**
-     *  Constructor declaration
-     *
-     * @param  t
-     * @param  o
-     * @exception  SQLException  Description of the Exception
+     *  Constructor for new Rows. This is currently the only place where
+     *  hasDataChanged is set to true as the current implementation of
+     *  database row updates performs a delete followed by an insert. This
+     *  means that once a row is created its data cannot change.
+     *  (correct as of version 1_7_2_alpha_h)
      */
     CachedRow(Table t, Object o[]) throws SQLException {
 
@@ -119,18 +136,13 @@ class CachedRow extends Row {
         }
 
         oData      = o;
-        hasChanged = true;
+        hasChanged = hasDataChanged = true;
 
         t.putRow(this);
     }
 
     /**
-     *  constructor when read from cache
-     *
-     * @param  t
-     * @param  in
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
+     *  constructor when read from the disk into the Cache
      */
     CachedRow(Table t,
               DatabaseRowInputInterface in) throws IOException, SQLException {
@@ -156,9 +168,8 @@ class CachedRow extends Row {
     }
 
     /**
-     *  Method declaration
-     *
-     * @throws  SQLException
+     *  This method is called only when the Row is deleted from the database
+     *  table. The links with all the other objects are removed.
      */
     void delete() throws SQLException {
 
@@ -175,65 +186,36 @@ class CachedRow extends Row {
         nPrimaryNode = null;
     }
 
-    void lockRow() {
-        isLocked = true;
-    }
-
-    void unlockRow() {
-        isLocked = false;
-    }
-
-    boolean isLocked() {
-        return isLocked;
-    }
-
     void setPos(int pos) {
         iPos = pos;
     }
 
-    void changed() {
+    void setChanged() {
         hasChanged = true;
     }
 
     boolean hasChanged() {
-        return (hasChanged);
+        return hasChanged;
+    }
+
+    void setDataChanged() {
+        hasDataChanged = true;
+    }
+
+    boolean hasDataChanged() {
+        return hasDataChanged;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     * Returns the table which this Row belongs to.
      */
     Table getTable() {
         return tTable;
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  before
-     */
-    void insert(CachedRow before) {
-
-        Record.memoryRecords++;
-
-        if (before == null) {
-            rNext = this;
-            rLast = this;
-        } else {
-            rNext        = before;
-            rLast        = before.rLast;
-            before.rLast = this;
-            rLast.rNext  = this;
-        }
-    }
-
-    /**
-     * Returns true if any of the Index Nodes for this row is root node.
+     * Returns true if any of the Index Nodes for this row is a root node.
      * Used only in Cache.java to avoid removing the row from the cache.
-     *
-     * @return
-     * @throws  SQLException
      */
     boolean isRoot() throws SQLException {
 
@@ -259,37 +241,89 @@ class CachedRow extends Row {
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  out            Description of the Parameter
-     * @throws  IOException
-     * @throws  SQLException
+     *  Using the internal reference to the Table, returns the current valid
+     *  Row that represents the database row for this Object.
+     */
+    Row getUpdatedRow() throws SQLException {
+        return tTable.getRow(iPos, null);
+    }
+
+    /**
+     *  Used exclusively by Cache to save the row to disk. New implementation
+     *  in 1.7.2 writes out only the Node data if the table row data has not
+     *  changed. This situation accounts for the majority of invocations as
+     *  for each row deleted or inserted, the Nodes for several other rows
+     *  will change.
      */
     void write(DatabaseRowOutputInterface out)
     throws IOException, SQLException {
 
-        out.writeSize(storageSize);
+        writeNodes(out);
 
-        if (tTable.isIndexCached()) {
-            Node n = nPrimaryNode;
-
-            while (n != null) {
-                n.write(out);
-
-                n = n.nNext;
-            }
+        if (hasDataChanged) {
+            out.writeData(oData, tTable);
+            out.writePos(iPos);
         }
 
-        out.writeData(oData, tTable);
-        out.writePos(iPos);
+// profiling stuff
+/*
+        node_write_counter++;
+
+        if (hasDataChanged) {
+            data_write_counter++;
+        }
+
+        if (data_write_counter % 10000 == 0) {
+            System.out.println("CachedRow.write Nodes: " + node_write_counter
+                               + " Data: " + data_write_counter);
+        }
+*/
+
+// end
+        hasDataChanged = false;
+    }
+
+    /**
+     *  The Nodes are stored first, immediately after the row size. This
+     *  methods writes this information out.
+     */
+    private void writeNodes(DatabaseRowOutputInterface out)
+    throws IOException, SQLException {
+
+        out.writeSize(storageSize);
+
+        Node n = nPrimaryNode;
+
+        while (n != null) {
+            n.write(out);
+
+            n = n.nNext;
+        }
 
         hasChanged = false;
     }
 
     /**
-     *  Method declaration
-     *
-     * @throws  SQLException
+     * Used to insert the Row into the linked list that includes all the rows
+     * currently in the Cache.
+     */
+    void insert(CachedRow before) {
+
+        Record.memoryRecords++;
+
+        if (before == null) {
+            rNext = this;
+            rLast = this;
+        } else {
+            rNext        = before;
+            rLast        = before.rLast;
+            before.rLast = this;
+            rLast.rNext  = this;
+        }
+    }
+
+    /**
+     *  Removes the Row from the linked list of Rows in the Cache.
      */
     CachedRow free() throws SQLException {
 

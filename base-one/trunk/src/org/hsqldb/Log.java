@@ -105,6 +105,9 @@ import org.hsqldb.lib.StopWatch;
 // tony_lai@users 20020820 - changes to shutdown compact to save memory
 // fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
 // fredt@users 20021208 - ongoing revamp
+/* fredt - todo - 20021212 - do not rewrite the *.backup file if the *.data
+    file has not been updated in the current seesion.
+*/
 
 /**
  *  This class is responsible for most file handling. An HSQLDB database
@@ -127,7 +130,7 @@ import org.hsqldb.lib.StopWatch;
  *  readonly=false
  *  </pre>
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class Log implements Runnable {
 
@@ -251,9 +254,13 @@ class Log implements Runnable {
             }
 
             reopenAllTextCaches();
+
             bRestoring = true;
+
             ScriptRunner.runScript(dDatabase, sFileScript, logType);
+
             bRestoring = false;
+
             return false;
         }
 
@@ -282,9 +289,13 @@ class Log implements Runnable {
         }
 
         reopenAllTextCaches();
+
         bRestoring = true;
+
         ScriptRunner.runScript(dDatabase, sFileScript, logType);
+
         bRestoring = false;
+
         if (needbackup) {
             close(false);
             pProperties.setProperty("modified", "yes");

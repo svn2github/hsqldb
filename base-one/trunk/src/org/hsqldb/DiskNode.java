@@ -129,10 +129,7 @@ class DiskNode extends Node {
     }
 
     void delete() {
-
         iBalance = -2;
-
-//        iLeft    = iRight = iParent = 0;
     }
 
     int getKey() {
@@ -184,7 +181,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) rData).changed();
+        ((CachedRow) rData).setChanged();
 
         iLeft = NO_POS;
 
@@ -212,7 +209,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) rData).changed();
+        ((CachedRow) rData).setChanged();
 
         iRight = NO_POS;
 
@@ -244,7 +241,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) rData).changed();
+        ((CachedRow) rData).setChanged();
 
         iParent = NO_POS;
 
@@ -260,7 +257,7 @@ class DiskNode extends Node {
         }
 
         if (iBalance != b) {
-            ((CachedRow) rData).changed();
+            ((CachedRow) rData).setChanged();
 
             iBalance = b;
         }
@@ -324,6 +321,13 @@ class DiskNode extends Node {
                                             : iRight);
         out.writeIntData((iParent == NO_POS) ? 0
                                              : iParent);
+    }
+
+    Node getUpdatedNode() throws SQLException {
+
+        Row row = rData.getUpdatedRow();
+
+        return row.getNode(iId);
     }
 
     void writeTranslate(DatabaseRowOutputInterface out,

@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.StopWatch;
 
 class ScriptRunner {
 
@@ -104,12 +105,7 @@ class ScriptRunner {
         Session current = sysSession;
 
         try {
-            long time = 0;
-
-            if (Trace.TRACE) {
-                time = System.currentTimeMillis();
-            }
-
+            StopWatch sw = new StopWatch();
             DatabaseScriptReader scr =
                 DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
                     sFileScript, logType);
@@ -172,7 +168,7 @@ class ScriptRunner {
             }
 
             if (Trace.TRACE) {
-                Trace.trace(time - System.currentTimeMillis());
+                Trace.trace(sw.elapsedTime());
             }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);

@@ -34,6 +34,8 @@ package org.hsqldb.test;
 import org.hsqldb.HsqlProperties;
 import java.io.*;
 import java.sql.*;
+import java.util.Hashtable;
+import org.hsqldb.lib.StopWatch;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -116,9 +118,10 @@ public class TestCacheSize {
      */
     public void testFillUp() {
 
-        int    bigrows   = 200000;
-        int    smallrows = 0xfff;
-        double value     = 0;
+        StopWatch sw        = new StopWatch();
+        int       bigrows   = 1000000;
+        int       smallrows = 0xfff;
+        double    value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
@@ -143,18 +146,16 @@ public class TestCacheSize {
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         try {
-            System.out.println("connect");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            System.out.println("Connecting");
+            sw.zero();
 
             cConnection = null;
             sStatement  = null;
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
 
-            System.out.println("connected");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            System.out.println("connected: " + sw.elapsedTime());
+            sw.zero();
 
             sStatement = cConnection.createStatement();
 
@@ -218,10 +219,9 @@ public class TestCacheSize {
                 ps.setString(4, nextrandom + varfiller);
                 ps.execute();
 
-                if (i != 0 && i % 10000 == 0) {
-                    System.out.println(i);
-                    System.out.println(
-                        new java.util.Date(System.currentTimeMillis()));
+                if ((i + 1) % 10000 == 0) {
+                    System.out.println("Insert " + (i + 1) + " : "
+                                       + sw.elapsedTime());
                 }
 
                 // delete and add 4000 rows to introduce fragmentation
@@ -251,13 +251,12 @@ public class TestCacheSize {
 //            sStatement.execute(ddl7);
             long endTime = System.currentTimeMillis();
 
-            System.out.println(i);
-            System.out.println(new java.util.Date(endTime));
-            System.out.println("Insert Time:" + (endTime - startTime));
+            System.out.println("Total insert: " + i);
+            System.out.println("Insert time: " + sw.elapsedTime());
+            sw.zero();
             sStatement.execute("SHUTDOWN");
             cConnection.close();
-            System.out.println("Shutdown Time:"
-                               + (System.currentTimeMillis() - endTime));
+            System.out.println("Shutdown Time: " + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -268,16 +267,39 @@ public class TestCacheSize {
     protected void checkResults() {
 
         try {
-            long startTime = System.currentTimeMillis();
+            StopWatch sw = new StopWatch();
+            ResultSet rs;
 
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
+
+            System.out.println("Reopened database: " + sw.elapsedTime());
+            sw.zero();
+
             sStatement = cConnection.createStatement();
 
+            // the tests use different indexes
+            // use primary index
             sStatement.execute("SELECT count(*) from TEST");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+
+            // use index on zip
+            sw.zero();
+            sStatement.execute("SELECT count(*) from TEST where zip > -1");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+            sw.zero();
             cConnection.close();
-            System.out.println("Checked results:"
-                               + (System.currentTimeMillis() - startTime));
+            System.out.println("Closed database:" + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -290,7 +312,6 @@ public class TestCacheSize {
         test.setUp();
         test.testFillUp();
         test.tearDown();
-
-//        test.checkResults();
+        test.checkResults();
     }
 }

@@ -79,26 +79,40 @@ import org.hsqldb.lib.FileUtil;
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - cache update
 // fredt@users 20020320 - doc 1.7.0 by boucherb@users - doc update
 // fredt@users 20021105 - patch 1.7.2 - refactoring and enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments rewritten
 
 /**
  *
- * Handles cached table persistence through a .data file and memory cache.<p>
+ * Handles cached table persistence with a *.data file and memory cache.<p>
  *
- * All CACHED tables are stored in a .data file. The Cache object provides
+ * All CACHED tables are stored in a *.data file. The Cache object provides
  * buffered access to the rows. The buffer is a linear
  * hash index implementation. Chains of elements in the hash table buckets
  * form a circular double-linked list of all the
- * cached elements. This list is used for selecting modified rows that need
- * saving to disk or to drop infrequently accessed rows to make way for new
+ * cached elements. This list is used to select modified rows that need
+ * saving to disk or to free infrequently-accessed rows to make way for new
  * rows. Saving modified rows to disk is performed in the sequential order of
- * the file offsets of the rows.<p>
+ * the file offsets of the rows but it may sometimes take more than one
+ * pass.<p>
  *
- * A separate linked list of free slots in the .data file is also kept. This
+ * A separate linked list of free slots in the *.data file is also kept. This
  * list is formed when rows are deleted from the database, and is used for
  * allocating space to newly created rows.<p>
  *
- * The algorithm for dropping rows from the cache has changed in version
- * 1.7.2 to better reflect row usage. (fred@users)
+ * The maximum number of rows in the Cache is three times the size of the
+ * Cache array.<p>
+ *
+ * The algorithm for freeing rows from the cache has changed in version
+ * 1.7.2 to better reflect row usage. The trigger for CleanUp() is now
+ * internal to Cache and fired exactly when the maximum size is reached.<p>
+ *
+ * Subclasses of Cache are used for TEXT tables, where each TextCache Object
+ * corresponds to a single table in the database and accesses that table's
+ * data source.<p>
+ *
+ * Maximum size of the all data in cache is not yet enforced (1_7_2_alpha_i)
+ * but will be implemented via the cache_size_scale property.
+ *
  *
  * @version    1.7.2
  * @see        CachedRow
@@ -120,10 +134,12 @@ class Cache {
     // post openning constant fields
     boolean           cacheReadonly;
     private int       cacheScale;
+    private int       cacheRowScale;
     private int       cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
     private int       cacheLength;
     private int       writerLength;
-    private int       maxCacheSize;
+    private int       maxCacheSize;            // number of Rows
+    private int       maxCacheBytes;           // number of bytes
     private int       multiplierMask;
     private CachedRow rData[];
     private CachedRow rWriter[];
@@ -151,13 +167,14 @@ class Cache {
     DatabaseRowOutputInterface rowOut;
 
     /**
-     *  Construct a new Cache object with the given database path name and
-     *  the properties object to get the initial settings from.
+     *  Structural initialisations take place here. This allows the Cache to
+     *  resized while the database is in operation.
      */
-    private void init(int scale) {
+    private void init(int scale, int sizescale) {
 
         cacheReadonly = dDatabase.bReadOnly;
         cacheScale    = scale;
+        cacheRowScale = sizescale;
         cacheLength   = 1 << cacheScale;
 
         // HJB-2001-06-21: use different smaller size for the writer
@@ -165,6 +182,7 @@ class Cache {
 
         // HJB-2001-06-21: let the cache be larger than the array
         maxCacheSize   = cacheLength * 3;
+        maxCacheBytes  = cacheLength * cacheRowScale;
         multiplierMask = cacheLength - 1;
         rData          = new CachedRow[cacheLength];
         rWriter        = new CachedRow[cacheReadonly ? 0
@@ -188,37 +206,19 @@ class Cache {
         dDatabase = db;
         dbProps   = db.getProperties();
 
-        int scale = getCacheScale(db.getProperties());
+        int scale = dbProps.getIntegerProperty("hsqldb.cache_scale", 14, 8,
+                                               16);
+        int sizescale = dbProps.getIntegerProperty("hsqldb.cache_size_scale",
+            20, 8, 20);
 
-        init(scale);
-    }
-
-    private static int getCacheScale(HsqlDatabaseProperties props) {
-
-        int scale = 0;
-
-        try {
-            scale = props.getIntegerProperty("hsqldb.cache_scale", 14);
-
-            if (scale < 8) {
-                scale = 8;
-
-                throw new NumberFormatException();
-            } else if (scale > 16) {
-                scale = 16;
-
-                throw new NumberFormatException();
-            }
-        } catch (NumberFormatException e) {
-            Trace.printSystemOut(
-                "bad value for hsqldb.cache_scale in properties file");
-        }
-
-        return scale;
+        System.out.println("cache_scale: " + scale);
+        System.out.println("cache_size_scale: " + sizescale);
+        init(scale, sizescale);
     }
 
     /**
-     * Opens this object's database file.
+     * Opens the *.data file for this cache, setting the variables that
+     * allow accesse to the particular database version of the *.data file.
      */
     void open(boolean readonly) throws SQLException {
 
@@ -258,8 +258,8 @@ class Cache {
     }
 
     /**
-     *  Writes out all cached data and the free position to this
-     *  object's database file and then closes the file.
+     *  Writes out all cached rows that have been modified and the free
+     *  position pointer for the *.data file and then closes the file.
      */
     void flush() throws SQLException {
 
@@ -311,7 +311,7 @@ class Cache {
             Trace.printSystemOut("closed source");
             new File(sName).delete();
             new File(sName + ".new").renameTo(new File(sName));
-            init(cacheScale);
+            init(cacheScale, cacheRowScale);
             open(cacheReadonly);
             Trace.printSystemOut("opened new file");
         } catch (Exception e) {
@@ -345,7 +345,7 @@ class Cache {
     /**
      * Marks space in this object's cache file as free. <p>
      *
-     * <B>Note:</B> If there exists more than MAX_FREE_COUNT free positions,
+     * If there exists more than MAX_FREE_COUNT free positions,
      * then they are probably all too small, so we start a new list. <p>
      *
      *  todo: This is wrong when deleting lots of records
@@ -387,8 +387,8 @@ class Cache {
     }
 
     /**
-     * Adds a Row to the Cache. <p>
-     *
+     * Adds a new Row to the Cache. This is used when a new database row is
+     * created<p>
      */
     void add(CachedRow r) throws SQLException {
 
@@ -431,10 +431,9 @@ class Cache {
     /**
      * Allocates file space for the row. <p>
      *
-     * A Row is added by walking the list of CacheFree
-     * objects to see if there is available space to store it,
-     * reusing space if it exists.  Otherwise the
-     * file is grown to accommodate it.
+     * A Row is added by walking the list of CacheFree objects to see if
+     * there is available space to store it, reusing space if it exists.
+     * Otherwise the file is grown to accommodate it.
      */
     int setFilePos(CachedRow r) throws SQLException {
 
@@ -589,7 +588,7 @@ class Cache {
      * Reduces the number of rows held in this Cache object. <p>
      *
      * Cleanup is done by checking the accessCount of the Rows and removing
-     * some of those that have been accessed less frequently.
+     * some of those that have been accessed less recently.
      *
      */
     private void cleanUp() throws SQLException {
@@ -622,7 +621,7 @@ class Cache {
             } else {
 
                 // here we can't remove roots
-                if (!r.isRoot() &&!r.isLocked()) {
+                if (!r.isRoot()) {
                     remove(r);
                 }
             }
@@ -659,8 +658,8 @@ class Cache {
     }
 
     /**
-     * Removes a Row from this Cache object.
-     *
+     * Removes a Row from this Cache object. This is done when there is no
+     * room for extra rows to be read from the disk.
      */
     protected CachedRow remove(CachedRow r) throws SQLException {
 
@@ -705,9 +704,15 @@ class Cache {
     }
 
     /**
-     * Finds the Row with the smallest (oldest) iLastAccess member (LRU). <p>
+     * Finds a Row with the smallest (oldest) iLastAccess member among six
+     * rows that are examined, using LRU. <p>
      *
-     * <b>Note:</b> This method is called by the cleanup method.
+     * Freeing one out of six rows ensures that in all circumstances, the
+     * 5 most recently used rows always remain in the Cache. The rows to
+     * which a pointer is kept while deleting or inserting rows must
+     * therefore be among the 5 most recently accessed. The Index class
+     * keeps such pointers on a temporary basis.
+     *
      */
     private CachedRow getWorst() throws SQLException {
 
@@ -761,7 +766,6 @@ class Cache {
 
     /**
      * Writes out all modified cached Rows.
-     *
      */
     protected void saveAll() throws SQLException {
 
@@ -800,19 +804,20 @@ class Cache {
     }
 
     /**
-     * Writes out the specified Row.
+     * Writes out the specified Row. Will write only the Nodes or both Nodes
+     * and table row data depending on what is not already persisted to disk.
      */
     protected void saveRow(CachedRow r) throws IOException, SQLException {
 
+        rowOut.reset();
         rFile.seek(r.iPos);
         r.write(rowOut);
         rFile.write(rowOut.getOutputStream().getBuffer(), 0,
                     rowOut.getOutputStream().size());
-        rowOut.reset();
     }
 
     /**
-     * Writes out the first <code>count</code> rWriter Rows in iPos
+     * Writes out the first count rWriter Rows in iPos
      * sorted order.
      */
     private void saveSorted(int count) throws SQLException {

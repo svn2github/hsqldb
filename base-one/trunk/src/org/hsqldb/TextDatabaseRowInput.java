@@ -113,7 +113,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         field = 0;
     }
 
-    public void setSystemId(boolean flag) {
+    void setSystemId(boolean flag) {
         makeSystemId = flag;
     }
 

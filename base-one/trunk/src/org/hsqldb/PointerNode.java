@@ -73,13 +73,14 @@ import java.io.IOException;
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
  *  Text table node implementation.<p>
  *  Nodes for the AVL tree are all built and kept in memory while the actual
- *  row data is accessed through TextCache from disk.<p>
+ *  row data is accessed via TextCache from disk.<p>
  *  This differs from MemoryNode by maintaining an integral pointer for the
- *  Row data instead of a Java reference. (fredt@users)
+ *  Row data instead of a Java reference.
  *
  * @version    1.7.2
  */

@@ -41,7 +41,6 @@ import java.util.Properties;
 import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.lib.FileUtil;
 
-
 /**
  * Wrapper for java.util.Properties to limit values to String objects and
  * allow saving and loading.
@@ -118,6 +117,27 @@ public class HsqlProperties {
         try {
             defaultValue = Integer.parseInt(prop);
         } catch (NumberFormatException e) {}
+
+        return defaultValue;
+    }
+
+    public int getIntegerProperty(String key, int defaultValue, int minimum,
+                                  int maximum) {
+
+        String  prop     = getProperty(key);
+        boolean badvalue = false;
+
+        try {
+            defaultValue = Integer.parseInt(prop);
+        } catch (NumberFormatException e) {}
+
+        if (defaultValue < minimum) {
+            defaultValue = minimum;
+            badvalue     = true;
+        } else if (defaultValue > maximum) {
+            defaultValue = maximum;
+            badvalue     = true;
+        }
 
         return defaultValue;
     }

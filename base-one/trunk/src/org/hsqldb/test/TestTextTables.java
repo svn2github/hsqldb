@@ -35,6 +35,7 @@ import org.hsqldb.HsqlProperties;
 import java.io.*;
 import java.sql.*;
 import java.util.Hashtable;
+import org.hsqldb.lib.StopWatch;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -64,7 +65,6 @@ public class TestTextTables {
     Statement        sStatement;
     Connection       cConnection;
     boolean          indexZip        = true;
-    boolean          indexId         = false;
     boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
@@ -98,6 +98,7 @@ public class TestTextTables {
                 props.load();
                 props.setProperty("hsqldb.log_size", "400");
                 props.setProperty("hsqldb.cache_scale", "12");
+                props.setProperty("hsqldb.log_type", "0");
                 props.save();
 
                 cConnection = DriverManager.getConnection(url + filepath,
@@ -117,7 +118,8 @@ public class TestTextTables {
      */
     public void testFillUp() {
 
-        int    bigrows   = 50000;
+        StopWatch sw = new StopWatch();
+        int    bigrows   = 10000;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
@@ -148,18 +150,16 @@ public class TestTextTables {
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         try {
-            System.out.println("connect");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            System.out.println("Connecting");
+            sw.zero();
 
             cConnection = null;
             sStatement  = null;
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
 
-            System.out.println("connected");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            System.out.println("connected: " + sw.elapsedTime());
+            sw.zero();
 
             sStatement = cConnection.createStatement();
 
@@ -169,11 +169,6 @@ public class TestTextTables {
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
             System.out.println("test table with no index");
-
-            if (indexId) {
-                sStatement.execute(ddl8);
-                System.out.println("create index on id");
-            }
 
             if (indexLastName) {
                 sStatement.execute(ddl4);
@@ -230,22 +225,21 @@ public class TestTextTables {
                                    + filler.substring(0, randomlength);
 
                 ps.setString(5, varfiller);
-/*
+
                 Hashtable tempobj = new Hashtable();
 
                 tempobj.put("firstname", "Julia");
-                tempobj.put("lastname", "Clancy");
-                tempobj.put("random", new Long(nextrandom));
-                tempobj.put("filler", new StringBuffer(varfiller));
+
+//                tempobj.put("lastname", "Clancy");
+//                tempobj.put("random", new Long(nextrandom));
+//                tempobj.put("filler", new StringBuffer(varfiller));
                 ps.setObject(6, tempobj, Types.OTHER);
-*/
-                ps.setObject(6, null, Types.OTHER);
+
+//                ps.setObject(6, null, Types.OTHER);
                 ps.execute();
 
                 if ((i + 1) % 10000 == 0) {
-                    System.out.println(i + 1);
-                    System.out.println(
-                        new java.util.Date(System.currentTimeMillis()));
+                    System.out.println("Insert " + (i + 1) + " : "  + sw.elapsedTime() );
                 }
 
                 // delete and add 4000 rows to introduce fragmentation
@@ -275,13 +269,12 @@ public class TestTextTables {
 //            sStatement.execute(ddl7);
             long endTime = System.currentTimeMillis();
 
-            System.out.println(i);
-            System.out.println(new java.util.Date(endTime));
-            System.out.println("Insert Time:" + (endTime - startTime));
+            System.out.println("Total insert: " + i);
+            System.out.println("Insert time: " + sw.elapsedTime());
+            sw.zero();
             sStatement.execute("SHUTDOWN");
             cConnection.close();
-            System.out.println("Shutdown Time:"
-                               + (System.currentTimeMillis() - endTime));
+            System.out.println("Shutdown Time: " + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -292,16 +285,39 @@ public class TestTextTables {
     protected void checkResults() {
 
         try {
-            long startTime = System.currentTimeMillis();
+            StopWatch sw = new StopWatch();
+            ResultSet rs;
 
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
+
+            System.out.println("Reopened database: " + sw.elapsedTime());
+            sw.zero();
+
             sStatement = cConnection.createStatement();
 
+            // the tests use different indexes
+            // use primary index
             sStatement.execute("SELECT count(*) from TEST");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+
+            // use index on zip
+            sw.zero();
+            sStatement.execute("SELECT count(*) from TEST where zip > -1");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+            sw.zero();
             cConnection.close();
-            System.out.println("Checked results:"
-                               + (System.currentTimeMillis() - startTime));
+            System.out.println("Closed database:" + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -314,7 +330,6 @@ public class TestTextTables {
         test.setUp();
         test.testFillUp();
         test.tearDown();
-
-//        test.checkResults();
+        test.checkResults();
     }
 }

@@ -72,18 +72,20 @@ import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
  * Base class for a database row object implementing rows for
- * memory resident tables and TEXT tables.<p>
+ * memory resident tables.<p>
  *
- * A Row object references a linked list consisting of Node objects
+ * A Row object references a linked list consisting of Node Objects
  * (one Node per index on the table), and an Object[] containing references
  * to the field values for the row.
  *
- * Subclass CachedRow implements rows for CACHED tables.
+ * Subclass CachedRow implements rows for CACHED and TEXT tables with extra
+ * links to other Row Objects
  *
- * @version 1.7.1
+ * @version 1.7.2
  */
 class Row {
 
@@ -104,14 +106,14 @@ class Row {
         }
     }
 
+    /**
+     *  Default constructor used only in subclasses.
+     */
     Row() {}
 
     /**
-     *  Constructor for memory Row
-     *
-     * @param  t
-     * @param  o
-     * @exception  SQLException  Description of the Exception
+     *  Constructor for MEMORY table Row. The result is a Row with Nodes that
+     *  are not yet linked with other Nodes in the AVL indexes.
      */
     Row(Table t, Object o[]) throws SQLException {
 
@@ -129,17 +131,9 @@ class Row {
         oData = o;
     }
 
-/*
-    void setPrimaryNode(Node primary) {
-        nPrimaryNode = primary;
-    }
-*/
-
     /**
-     * Get the node for a given index.
-     *
-     * @param  index
-     * @return the node
+     * Returns the Node for a given Index, using the ordinal position of the
+     * Index within the Table Object.
      */
     Node getNode(int index) {
 
@@ -153,10 +147,8 @@ class Row {
     }
 
     /**
-     *  Method declaration
-     *
-     * @param  n
-     * @return
+     *  Returns the Node for the next Index on this database row, given the
+     *  Node for any Index.
      */
     Node getNextNode(Node n) {
 
@@ -166,22 +158,35 @@ class Row {
             n = n.nNext;
         }
 
-        return (n);
+        return n;
     }
 
     /**
-     *  Method declaration
-     *
-     * @return
+     * Returns the array of fields in the database row. If the table has no
+     * primary index, an extra internal field is included in the last
+     * position of this array.
      */
     Object[] getData() {
         return oData;
     }
 
     /**
-     *  Method declaration
-     *
-     * @throws  SQLException
+     * Returns the Row Object that currently represents the same database row.
+     * In current implementations of Row, this is always the same as the this
+     * Object for MEMORY tables, but could be a different Object for CachedRow
+     * or CachedDataRow implementation. For example the Row Object that
+     * represents a given database row can be freed from the Cache when other
+     * rows need to be loaded into the Cache. getUpdatedRow() returns a
+     * currently valid Row object that is in the Cache.
+     */
+    Row getUpdatedRow() throws SQLException {
+        return this;
+    }
+
+    /**
+     *  Performs any required operation for unlinking the Row from its Nodes.
+     *  Is used only when the database row is deleted, not when it is freed
+     *  from the Cache.
      */
     void delete() throws SQLException {
 
@@ -189,13 +194,5 @@ class Row {
 
         oData        = null;
         nPrimaryNode = null;
-    }
-
-    void lockRow() {}
-
-    void unlockRow() {}
-
-    boolean isLocked() {
-        return false;
     }
 }

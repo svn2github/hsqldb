@@ -35,11 +35,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
  * Variation on CachedDataRow used while reading the data source the first
  * time to build the memory index. The extra nextPos field is used here.
- * Subsequently, CachedDataRow instances are created, without the extra field.
+ * Subsequently, CachedDataRow instances are created, without the extra
+ * field. The only purpose of this subclass is to reduce memory usage.
  *
  * @version 1.7.2
  */
@@ -48,10 +50,8 @@ class PointerCachedDataRow extends CachedDataRow {
     int nextPos = NO_POS;
 
     /**
-     *  constructor used when read from the data source (CSV) file
-     *
-     * @param  t
-     * @param  in
+     *  constructor used when data is read from the data source (CSV) file
+     *  the first time.
      */
     PointerCachedDataRow(Table t,
                          DatabaseRowInputInterface in)

@@ -71,9 +71,12 @@ import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20021215 - doc 1.7.2 - javadoc comments
 
 /**
- *  Common MEMORY and TEXT table node implementation.
+ *  Common MEMORY and TEXT table node implementation. Nodes are always in
+ *  memory so an Object reference is used to access the other Nodes in the
+ *  AVL tree.
  *
  * @version    1.7.2
  */
@@ -84,11 +87,8 @@ abstract class BaseMemoryNode extends Node {
     protected Node nParent;
 
     void delete() {
-
         iBalance = -2;
         nLeft    = nRight = nParent = null;
-
-//        rData    = null;
     }
 
     Node getLeft() throws SQLException {

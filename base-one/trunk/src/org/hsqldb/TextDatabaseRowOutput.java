@@ -59,8 +59,6 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         super();
 
-        skipSystemId = true;
-
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
             fieldSepEnd = true;
@@ -110,6 +108,10 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         nextSep    = fieldSep;
         nextSepEnd = fieldSepEnd;
+    }
+
+    void setSystemId(boolean flag) {
+        skipSystemId = flag;
     }
 
     protected void writeVarString(String s) throws IOException {
