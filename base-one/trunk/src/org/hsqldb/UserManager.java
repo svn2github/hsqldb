@@ -329,6 +329,9 @@ class UserManager {
             password = "";
         }
 
+        name     = name.toUpperCase();
+        password = password.toUpperCase();
+
         User u = get(name);
 
         Trace.check(u != null, Trace.USER_NOT_FOUND);

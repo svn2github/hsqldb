@@ -259,13 +259,16 @@ public class Server implements HsqlSocketRequestHandler {
     private volatile Thread serverThread;
     private int             serverState;
     private Throwable       serverError;
+    private PrintWriter     errWriter;
     private PrintWriter     logWriter;
     private final Object    mDatabase_mutex    = new Object();
     private final Object    serverState_mutex  = new Object();
+    private final Object    serverError_mutex  = new Object();
     private final Object    serverThread_mutex = new Object();
     private final Object    status_monitor     = new Object();
     private final Object    socket_mutex       = new Object();
     private final Object    logWriter_mutex    = new Object();
+    private final Object    errWriter_mutex    = new Object();
 
 //
 
@@ -299,10 +302,25 @@ public class Server implements HsqlSocketRequestHandler {
 //        }
     }
 
+    /**
+     * Creates a new Server instance handling HSQL protocol connections.
+     */
     public Server() {
         this(ServerConstants.SC_PROTOCOL_HSQL);
     }
 
+    /**
+     * Creates a new Server instance handling the specified connection
+     * protocol. <p>
+     *
+     * For example, the no-args WebServer constructor invokes this constructor
+     * with ServerConstants.SC_PROTOCOL_HTTP, while the Server() no args
+     * contructor invokes this constructor with
+     * ServerConstants.SC_PROTOCOL_HSQL. <p>
+     *
+     * @param protocol the ServerConstants code indicating which
+     *      connection protocol to handle
+     */
     protected Server(int protocol) {
         init(protocol);
     }
@@ -351,7 +369,8 @@ public class Server implements HsqlSocketRequestHandler {
         propsPath = server.getDefaultPropertiesPath();
 
         server.print("Startup sequence initiated from main() method");
-        server.print("Loading properties from [" + propsPath + "]");
+        server.print("Loading properties from [" + propsPath
+                     + ".properties]");
 
         if (!server.putPropertiesFromFile(propsPath)) {
             server.print("Could not load properties from file");
@@ -508,7 +527,8 @@ public class Server implements HsqlSocketRequestHandler {
 
     /**
      * Retrieves the path that will be used by default if a null or zero-length
-     * path is specified to putPropertiesFromFile().
+     * path is specified to putPropertiesFromFile().  This path does not
+     * include the '.properties' file extention, which is implicit.
      *
      * @return The path that will be used by default if null is specified to
      *      putPropertiesFromFile()
@@ -575,6 +595,23 @@ public class Server implements HsqlSocketRequestHandler {
         return BundleHandler.getString(hnd_messages, key);
     }
 
+    /**
+     * Retrieves the PrintWriter to which server errors are printed.
+     *
+     * @return the PrintWriter to which server errors are printed.
+     */
+    public PrintWriter getErrWriter() {
+
+        synchronized (errWriter_mutex) {
+            return errWriter;
+        }
+    }
+
+    /**
+     * Retrieves the PrintWriter to which server messages are printed.
+     *
+     * @return the PrintWriter to which server messages are printed.
+     */
     public PrintWriter getLogWriter() {
 
         synchronized (logWriter_mutex) {
@@ -675,6 +712,22 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * Retrieves a Throwable indicating the last server error, if any. <p>
+     *
+     * @return a Throwable indicating the last server error
+     *
+     * @jmx.managed-attribute
+     *  access="read-only"
+     *  description="Indicating last exception state"
+     */
+    public Throwable getServerError() {
+
+        synchronized (serverError_mutex) {
+            return serverError;
+        }
+    }
+
+    /**
      * Retrieves a String identifying this Server object.
      *
      * @return a String identifying this Server object
@@ -725,10 +778,9 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public String getStateDescriptor() {
 
-        int    state;
         String sState;
-
-        state = getState();
+        int       state = getState();
+        Throwable t     = getServerError();
 
         switch (serverState) {
 
@@ -753,8 +805,8 @@ public class Server implements HsqlSocketRequestHandler {
                 break;
         }
 
-        if (serverError != null) {
-            sState += ": " + serverError.toString();
+        if (t != null) {
+            sState += ": " + t.toString();
         }
 
         return sState;
@@ -1088,6 +1140,18 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * Sets the PrintWriter to which server errors are logged.
+     *
+     * @param pw the PrintWriter to which server messages are logged
+     */
+    public void setErrWriter(PrintWriter pw) {
+
+        synchronized (errWriter_mutex) {
+            errWriter = pw;
+        }
+    }
+
+    /**
      * Sets the PrintWriter to which server messages are logged.
      *
      * @param pw the PrintWriter to which server messages are logged
@@ -1224,8 +1288,8 @@ public class Server implements HsqlSocketRequestHandler {
      * blocks only until the server's background thread notifies the calling
      * thread that the server has either started successfully
      * of failed to do so.  If the return value is not SERVER_ONLINE,
-     * getStateDescriptor() can be called to retrieve a more detailed
-     * description of the failure.
+     * getStateDescriptor() and getServerError() can be called to retrieve
+     * greater detail about the failure.
      *
      * @return the server status at the point this call exits
      *
@@ -1319,6 +1383,18 @@ public class Server implements HsqlSocketRequestHandler {
         logWriter = new PrintWriter(System.out);
 
         javaSystem.setLogToSystem(isTrace());
+    }
+
+    /**
+     * Sets the server state value.
+     *
+     * @param state the new value
+     */
+    protected final void setState(int state) {
+
+        synchronized (serverState_mutex) {
+            serverState = state;
+        }
     }
 
 // Package visibility for related classes and intefaces
@@ -1433,6 +1509,22 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * Prints the stack trace of the Throwable, t, to this Server object's
+     * errWriter. <p>
+     *
+     * @param t the Throwable whose stack trace is to be printed
+     */
+    final void printStackTrace(Throwable t) {
+
+        synchronized (errWriter_mutex) {
+            if (errWriter != null) {
+                t.printStackTrace(errWriter);
+                errWriter.flush();
+            }
+        }
+    }
+
+    /**
      * Prints the specified message, s, prepended with a timestamp representing
      * the current date and time, formatted to identify that the print
      * operation is against this server instance.
@@ -1444,21 +1536,8 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Sets the server state value.
-     *
-     * @param state the new value
-     */
-    final void setState(int state) {
-
-        synchronized (serverState_mutex) {
-            serverState = state;
-        }
-    }
-
-    /**
-     * Prints a message iff isSilent() is false.  The message is formatted
-     * similarly to print(String), additionally identifying the
-     * current (calling) thread.
+     * Prints a message formatted similarly to print(String), additionally
+     * identifying the current (calling) thread.
      *
      * @param s the message to print
      */
@@ -1470,22 +1549,45 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Prints an error message.  The message is formatted
-     * similarly to print(String), additionally identifying the
-     * current (calling) thread.
+     * Prints an error message to this Server object's errWriter.
+     * The message is formatted similarly to print(String),
+     * additionally identifying the current (calling) thread.
      *
      * @param msg the message to print
      */
-    final void traceError(String msg) {
-        print("[" + Thread.currentThread() + "]: " + msg);
+    final void printError(String msg) {
+
+        synchronized (errWriter_mutex) {
+            if (errWriter != null) {
+                errWriter.print("[" + serverId + "]: ");
+                errWriter.print("[" + Thread.currentThread() + "]: ");
+                errWriter.println(msg);
+                errWriter.flush();
+            }
+        }
     }
 
     /**
-     * Prints a message iff isSilent() is false.  The message is formatted
-     * similarly to print(String), additionally identifying the
-     * current (calling) thread.
+     * Prints a description of the request encapsulated by the
+     * Result argument, r.
      *
-     * @param s the message to print
+     * Printing occurs iff isSilent() is false. <p>
+     *
+     * The message is formatted similarly to print(String), additionally
+     * indicating the connection identifier.  <p>
+     *
+     * For Server instances, cid is typically the value assigned to each
+     * ServerConnection object that is unique amongst all such identifiers
+     * in each distinct JVM session / class loader
+     * context. <p>
+     *
+     * For WebServer instances, a single logical connection actually spawns
+     * a new physical WebServerConnection object for each request, so the
+     * cid is typically the underlying session id, since that does not
+     * change for the duration of the logical connection.
+     *
+     * @param cid the connection identifier
+     * @param r the request whose description is to be printed
      */
     final void traceRequest(int cid, Result r) {
 
@@ -1520,12 +1622,12 @@ public class Server implements HsqlSocketRequestHandler {
 
                     break;
                 }
-                case ResultConstants.SQLGETSESSIONINFO : {
+                case ResultConstants.GETSESSIONATTR : {
                     sb.append("CLI:GETCONNECTIONATTRS");
 
                     break;
                 }
-                case ResultConstants.SQLSETENVATTR : {
+                case ResultConstants.SETSESSIONATTR : {
                     sb.append("CLI:SETCONNECTIONATTRS ");
                     sb.append("AUTOCOMMIT ");
                     sb.append(r.rRoot.data[Session.INFO_AUTOCOMMIT]);
@@ -1589,7 +1691,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @return a new default properties object
      */
-    private HsqlProperties newDefaultProperties() {
+    private final HsqlProperties newDefaultProperties() {
 
         HsqlProperties p;
         boolean        isTls;
@@ -1639,7 +1741,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Opens this server's database instance.
+     * Opens this server's database instances.
      *
      * @throws HsqlException if a database access error occurs
      */
@@ -1658,7 +1760,7 @@ public class Server implements HsqlSocketRequestHandler {
         trace("openDB() entered");;
 
         dblist   = new String[10];
-        enum     = serverProperties.getProperties().keys();
+        enum     = serverProperties.propertyNames();
         maxindex = 0;
 
         try {
@@ -1674,9 +1776,8 @@ public class Server implements HsqlSocketRequestHandler {
                                                  : dbnum;
                 dblist[dbnum] = serverProperties.getProperty(key);
             }
-        } catch (ArrayIndexOutOfBoundsException aioob) {
-
-            /** @todo fredt - this should display an error */
+        } catch (ArrayIndexOutOfBoundsException e) {
+            trace("dblist: " + e.toString());
         }
 
         dbAlias = new String[maxindex + 1];
@@ -1768,11 +1869,10 @@ public class Server implements HsqlSocketRequestHandler {
     /** Prints a timestamped message indicating that this server is online */
     private final void printServerOnlineMessage() {
 
-        String productDescription;
+        String s = getProductName() + " " + getProductVersion()
+                   + " is online";
 
-        productDescription = getProductName() + " " + getProductVersion();
-
-        printWithTimestamp(productDescription + " is online");
+        printWithTimestamp(s);
         printResource("online.help");
     }
 
@@ -1817,8 +1917,8 @@ public class Server implements HsqlSocketRequestHandler {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    traceError("Exception closing server socket");
-                    traceError("releaseServerSocket(): " + e);
+                    printError("Exception closing server socket");
+                    printError("releaseServerSocket(): " + e);
                 }
 
                 socket = null;
@@ -1861,7 +1961,7 @@ public class Server implements HsqlSocketRequestHandler {
             // to find that the socket address is already in use
             openServerSocket();
         } catch (Exception e) {
-            traceError(this + ".run/createServerSocket(): ");
+            printError(this + ".run/createServerSocket(): ");
             e.printStackTrace();
 
             serverError = e;
@@ -1880,7 +1980,7 @@ public class Server implements HsqlSocketRequestHandler {
             // already open.
             openDB();
         } catch (Exception e) {
-            traceError(this + ".run/openDB(): ");
+            printError(this + ".run/openDB(): ");
             e.printStackTrace();
 
             serverError = e;
@@ -1906,7 +2006,7 @@ public class Server implements HsqlSocketRequestHandler {
             }
         } catch (IOException ioe) {
             if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
-                traceError(this + ".run/listen(): ");
+                printError(this + ".run/listen(): ");
                 ioe.printStackTrace();
 
                 serverError = ioe;
@@ -2104,8 +2204,8 @@ public class Server implements HsqlSocketRequestHandler {
             set.add(InetAddress.getByName("loopback").getHostName());
         } catch (Exception e) {}
 
-        for (Enumeration e = out.elements(); e.hasMoreElements(); ) {
-            out.addElement(e.nextElement());
+        for (Iterator i = set.iterator(); i.hasNext(); ) {
+            out.addElement(i.next());
         }
 
         return out;

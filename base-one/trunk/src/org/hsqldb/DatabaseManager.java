@@ -600,7 +600,7 @@ class DatabaseManager {
             props.setProperty("path", path);
         } else {
             if (type == S_MEM) {
-                database = urlImage.substring(pos, semicolpos);
+                database = urlImage.substring(pos, semicolpos).toLowerCase();
             } else {
                 database = url.substring(pos, semicolpos);
             }

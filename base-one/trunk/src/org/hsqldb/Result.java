@@ -97,8 +97,8 @@ class Result {
 
     // type of result
     int     iMode;
-    boolean isMulti;
 
+//    boolean isMulti;
     // database ID
     int databaseID;
 
@@ -336,14 +336,15 @@ class Result {
 
         iMode = type;
 
+/*
         if (type == ResultConstants.MULTI) {
             isMulti = true;
         }
-
+*/
         if (type == ResultConstants.DATA
                 || type == ResultConstants.PARAM_META_DATA
                 || type == ResultConstants.SQLEXECUTE
-                || type == ResultConstants.SQLSETENVATTR) {
+                || type == ResultConstants.SETSESSIONATTR) {
             metaData = new ResultMetaData();
         }
     }
@@ -416,25 +417,8 @@ class Result {
 
             switch (iMode) {
 
-// SQLGETSESSIONINFO does not implement spec semantics, table 15, 5Wd 200n FCD
-//
-// Information Type                   | Code  | Data Type     | <general value specification>
-// -----------------------------------+-------+---------------+----------------------------------------------                
-// CURRENT USER                        47      CHARACTER(L)    USER and CURRENT_USER
-// CURRENT DEFAULT TRANSFORM GROUP     20004   CHARACTER(L)    CURRENT_DEFAULT_TRANSFORM_GROUP
-// CURRENT PATH                        20005   CHARACTER(L)    CURRENT_PATH
-// CURRENT ROLE                        20006   CHARACTER(L)    CURRENT_ROLE
-// SESSION USER                        20007   CHARACTER(L)    SESSION_USER
-// SYSTEM USER                         20008   CHARACTER(L)    SYSTEM_USER
-// Where L is the implementation-defined maximum length of the corresponding <general value specification>.
-//
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
-                case ResultConstants.SQLGETSESSIONINFO :
+                case ResultConstants.GETSESSIONATTR :
                 case ResultConstants.SQLDISCONNECT :
-
-// SQLSTARTTRAN currently unused and is done with SQLSETENVVAR instead; why?
-// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
                 case ResultConstants.SQLSTARTTRAN :
                     break;
 
@@ -459,6 +443,7 @@ class Result {
                     mainString   = in.readString();
                     subString    = in.readString();
                     subSubString = in.readString();
+                    statementID  = in.readIntData();
 
 //                    throw Trace.getError(string, code);
                     break;
@@ -484,10 +469,7 @@ class Result {
                     break;
                 }
                 case ResultConstants.SQLEXECUTE :
-
-// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
-                case ResultConstants.SQLSETENVATTR : {
+                case ResultConstants.SETSESSIONATTR : {
                     if (iMode == ResultConstants.SQLEXECUTE) {
                         statementID = in.readIntData();
                     } else {
@@ -577,7 +559,8 @@ class Result {
         Result pack;
 
         out              = new Result(ResultConstants.MULTI);
-        out.isMulti      = true;
+
+//        out.isMulti      = true;
         pack             = new Result(ResultConstants.PREPARE_ACK);
         pack.statementID = csid;
 
@@ -1171,7 +1154,8 @@ class Result {
     void write(DatabaseRowOutputInterface out)
     throws IOException, HsqlException {
 
-        if (isMulti) {
+//        if (isMulti) {
+        if (iMode == ResultConstants.MULTI) {
             writeMulti(out);
 
             return;
@@ -1199,12 +1183,8 @@ class Result {
 // Where L is the implementation-defined maximum length of the corresponding <general value specification>.
 //
 // If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
-            case ResultConstants.SQLGETSESSIONINFO :
+            case ResultConstants.GETSESSIONATTR :
             case ResultConstants.SQLDISCONNECT :
-
-// SQLSTARTTRAN currently unused and is done with SQLSETENVVAR instead; why?
-// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
             case ResultConstants.SQLSTARTTRAN :
                 break;
 
@@ -1234,6 +1214,7 @@ class Result {
                 out.writeString(mainString);
                 out.writeString(subString);
                 out.writeString(subSubString);
+                out.writeIntData(statementID);
                 break;
 
             case ResultConstants.UPDATECOUNT :
@@ -1257,10 +1238,7 @@ class Result {
                 break;
             }
             case ResultConstants.SQLEXECUTE :
-
-// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
-// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
-            case ResultConstants.SQLSETENVATTR : {
+            case ResultConstants.SETSESSIONATTR : {
                 out.writeIntData(iMode == ResultConstants.SQLEXECUTE
                                  ? statementID
                                  : iUpdateCount);
@@ -1329,11 +1307,11 @@ class Result {
     void readMultiResult(DatabaseRowInputInterface in)
     throws HsqlException, IOException {
 
-        isMulti = true;
-
+//        isMulti = true;
         // Why do we need both?  Currently, the iMode of a MUTLI result
         // is useless. Why not just use the iMode to indicate a MUTLI?
-        iMode      = in.readIntData();
+//        iMode      = in.readIntData();
+        iMode      = ResultConstants.MULTI;
         databaseID = in.readIntData();
         sessionID  = in.readIntData();
 
@@ -1357,7 +1335,7 @@ class Result {
 
         // Why do we need both?  Currently, the iMode of a MUTLI result
         // is useless. Why not just use the iMode to indicate a MUTLI?
-        out.writeIntData(ResultConstants.MULTI);
+//        out.writeIntData(ResultConstants.MULTI);
         out.writeIntData(iMode);
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
@@ -1445,7 +1423,7 @@ class Result {
             statementID = Trace.GENERAL_ERROR;
         } else if (t instanceof OutOfMemoryError) {
 
-            // At this point, we've nothing to loose by doing this
+            // At this point, we've nothing to lose by doing this
             System.gc();
             t.printStackTrace();
 

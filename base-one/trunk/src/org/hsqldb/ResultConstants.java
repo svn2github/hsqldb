@@ -42,10 +42,18 @@ package org.hsqldb;
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
+// fredt@users - the constants from the SQL standards are used freely where a
+// similar function is performed. The Result objects do not necessarily contain
+// the same information as stated in SQL standard for CLI.
 public interface ResultConstants {
 
     /** The offset at which HSQLDB API Result mode values start. */
     int HSQL_API_BASE = 0;
+
+    /**
+     * Indicates that the Result object encapsulates multiple Result objects.
+     */
+    int MULTI = HSQL_API_BASE + 0;
 
     /**
      * Indicates that the Result object encapsulates an update
@@ -79,9 +87,16 @@ public interface ResultConstants {
     int PARAM_META_DATA = HSQL_API_BASE + 5;
 
     /**
-     * Indicates that the Result object encapsulates multiple Result objects.
+     * Indicates that the Result object encapsulates a result
+     * set for setting session attributes.
      */
-    int MULTI = HSQL_API_BASE + 0;
+    int SETSESSIONATTR = HSQL_API_BASE + 6;
+
+    /**
+     * Indicates that the Result object encapsulates a request
+     * to get session attributes.
+     */
+    int GETSESSIONATTR = HSQL_API_BASE + 7;
 
     /** The offset at which the standard SQL API Result mode values start. */
     int SQL_API_BASE = 0x00010000;
@@ -210,14 +225,14 @@ public interface ResultConstants {
      * Indicates that Result encapsulates a request to fetch the next row of
      * a cursor.
      */
-    int SQLFETCH = SQL_API_BASE + 13;
+
+//  int SQLFETCH = SQL_API_BASE + 13;
 
     /**
      * Indicates that Result encapsulates a request to position a cursor on
      * the specified row and retrieve values from that row.
      */
-    int SQLFETCHSCROLL = SQL_API_BASE + 1021;
-
+//  int SQLFETCHSCROLL = SQL_API_BASE + 1021;
 //    /**
 //     * Indicates that Result encapsulates a request to return a result set
 //     * that contains information about foreign keys either in or referencing
@@ -337,8 +352,7 @@ public interface ResultConstants {
      * Indicates that Result encapsulates a request to get information about
      * general value specifications supported by the implementation.
      */
-    int SQLGETSESSIONINFO = SQL_API_BASE + 1028;
-
+//    int SQLGETSESSIONINFO = SQL_API_BASE + 1028;
 //    /**
 //     * Indicates that Result encapsulates a request to get the value of an
 //     * SQL-statement attribute.
@@ -364,7 +378,7 @@ public interface ResultConstants {
      * are more result sets available on a statement handle and, if there are,
      * initialize processing for those result sets.
      */
-    int SQLMORERESULTS = SQL_API_BASE + 61;
+//  int SQLMORERESULTS = SQL_API_BASE + 61;
 
     /**
      * Indicates that Result encapsulates a request to determine whether there
@@ -372,8 +386,7 @@ public interface ResultConstants {
      * initialize processing for the next result set on a separate statement
      * handle.
      */
-    int SQLNEXTRESULT = SQL_API_BASE + 73;
-
+//  int SQLNEXTRESULT = SQL_API_BASE + 73;
 //    /**
 //     * Indicates that Result encapsulates a request to get the number of
 //     * result columns of a prepared or executed statement.
@@ -410,7 +423,7 @@ public interface ResultConstants {
      * Indicates that Result encapsulates a request to get the row count of an
      * executed statement.
      */
-    int SQLROWCOUNT = SQL_API_BASE + 20;
+//  int SQLROWCOUNT = SQL_API_BASE + 20;
 
     /**
      * Indicates that Result encapsulates a request to set the value of an
@@ -439,8 +452,7 @@ public interface ResultConstants {
      * Indicates that Result encapsulates a request to set the value of an
      * SQL-environment attribute.
      */
-    int SQLSETENVATTR = SQL_API_BASE + 1019;
-
+//  int SQLSETENVATTR = SQL_API_BASE + 1019;
 //    /** Indicates that Result encapsulates a request to set the value of an
 //     * SQL-statement attribute.
 //     */

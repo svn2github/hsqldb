@@ -258,7 +258,7 @@ class WebServerConnection implements Runnable {
             inStream.close();
             socket.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            server.printStackTrace(e);
         }
     }
 
@@ -304,6 +304,13 @@ class WebServerConnection implements Runnable {
         processQuery(inStream);
     }
 
+    /**
+     * Processes a database query in HSQL protocol that has been
+     * tunneled over HTTP protocol.
+     *
+     * @param inStream the incoming byte stream representing the HSQL protocol
+     *      database query
+     */
     void processQuery(InputStream inStream) {
 
         try {
@@ -358,7 +365,7 @@ class WebServerConnection implements Runnable {
             outStream.flush();
             outStream.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            server.printStackTrace(e);
         }
     }
 
@@ -419,11 +426,20 @@ class WebServerConnection implements Runnable {
             os.flush();
             os.close();
         } catch (Exception e) {
-            server.traceError("processGet: " + e.getMessage());
-            e.printStackTrace();
+            server.printError("processGet: " + e.getMessage());
+            server.printStackTrace(e);
         }
     }
 
+    /**
+     * Retrieves an HTTP protocol header given the supplied arguments.
+     *
+     * @param responseCodeString the HTTP response code
+     * @param addInfo true if additional header info is to be added
+     * @param mimeType the Content-Type field value
+     * @param length the Content-Length field value
+     * @return an HTTP protocol header
+     */
     String getHead(String responseCodeString, boolean addInfo,
                    String mimeType, int length) {
 
@@ -447,9 +463,10 @@ class WebServerConnection implements Runnable {
     }
 
     /**
-     *  Method declaration
+     *  Processess an HTTP error condition, sending an error response to
+     *  the client.
      *
-     * @param  code
+     * @param code the error condition code
      */
     private void processError(int code) {
 
@@ -489,11 +506,18 @@ class WebServerConnection implements Runnable {
             os.flush();
             os.close();
         } catch (Exception e) {
-            server.traceError("processError: " + e.getMessage());
-            e.printStackTrace();
+            server.printError("processError: " + e.getMessage());
+            server.printStackTrace(e);
         }
     }
 
+    /**
+     * Retrieves the thread name to be used  when
+     * this object is the Runnable object of a Thread.
+     *
+     * @return the thread name to be used  when
+     *      this object is the Runnable object of a Thread.
+     */
     String getConnectionThreadName() {
 
         String s = toString();

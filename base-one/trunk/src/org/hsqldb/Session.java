@@ -428,12 +428,11 @@ class Session implements SessionInterface {
         }
 
     /**
-     *  Implements a transaction SAVEPOINT. Applications may do a partial
-     *  rollback by calling rollbackToSavepoint(). A new SAVEPOINT with the
+     *  Implements a transaction SAVEPOINT. A new SAVEPOINT with the
      *  name of an existing one replaces the old SAVEPOINT.
      *
-     * @param  name Name of savepoint
-     * @throws  HsqlException
+     * @param  name of the savepoint
+     * @throws  HsqlException if there is no current transaction
      */
     void savepoint(String name) throws HsqlException {
 
@@ -482,7 +481,7 @@ class Session implements SessionInterface {
     }
 
     /**
-     * Implements release of named SAVEPOINT. Other SAVEPOINTs remain intact.
+     * Implements release of named SAVEPOINT.
      *
      * @param  name Name of savepoint that was marked before by savepoint()
      *      call
@@ -780,7 +779,7 @@ class Session implements SessionInterface {
     }
 
     /**
-     * Executes the sql command encapsulated by the cmd argument.
+     * Executes the command encapsulated by the cmd argument.
      *
      * @param cmd the command to execute
      * @return the result of executing the command
@@ -825,10 +824,10 @@ class Session implements SessionInterface {
                 case ResultConstants.SQLFREESTMT : {
                     return sqlFreeStatement(cmd.getStatementID());
                 }
-                case ResultConstants.SQLGETSESSIONINFO : {
+                case ResultConstants.GETSESSIONATTR : {
                     return getAttributes();
                 }
-                case ResultConstants.SQLSETENVATTR : {
+                case ResultConstants.SETSESSIONATTR : {
                     return setAttributes(cmd);
                 }
                 case ResultConstants.SQLENDTRAN : {
@@ -979,7 +978,7 @@ class Session implements SessionInterface {
      *
      * @param sql a string describing the desired statement object
      * @throws HsqlException is a database access error occurs
-     * @return a MULTI Result describing compiled statement.
+     * @return a MULTI Result describing the compiled statement.
      */
     private Result sqlPrepare(String sql, int type) {
 
@@ -1014,21 +1013,21 @@ class Session implements SessionInterface {
 //        equivalent in its effect and perhaps runs the risk of corrupting
 //        the database.  For instance, a CompiledStatement contains
 //        fixed mappings from positions in a column value expression array
-//        to column positions in the target table.  Thus, An alteration to a
+//        to column positions in the target table.  Thus, an alteration to a
 //        target table may leave an existing CompiledStatement's SQL
 //        character sequence valid, but not its execution plan.
 //        OTOH, simply replacing the old execution plan with a new one
 //        may also be undesirable, as the intended and actual effects
 //        may become divergent. Once again, for example, if a column name
 //        comes to mean a different column, then by blindly replacing the
-//        old CompiledStatement with the new, then inserting, updating
+//        old CompiledStatement with the new, inserting, updating
 //        or predicating happens upon an unintended column.
 //        The only DDL operations that raise such dangers are sequences
 //        involving dropping a columns and then adding an incompatible one
 //        of the same name at the same position or alterations that
 //        change the positions of columns.  All other alterations to
 //        database objects should, in theory, allow the original
-//        CompiledStatement to operate correctly.
+//        CompiledStatement to continue to operate as intended.
         if (csid <= 0) {
             csid = compiledStatementManager.registerStatement(cs);
         }

@@ -2474,6 +2474,14 @@ public class jdbcConnection implements Connection {
         boolean isTLS = (connType == DatabaseManager.S_HSQLS
                          || connType == DatabaseManager.S_HTTPS);
 
+        if (user == null) {
+            user = "SA";
+        }
+
+        if (password == null) {
+            password = "";
+        }
+
         try {
             if (connType == DatabaseManager.S_FILE
                     || connType == DatabaseManager.S_MEM

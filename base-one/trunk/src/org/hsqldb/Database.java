@@ -342,12 +342,11 @@ class Database {
     synchronized Session connect(String username,
                                  String password) throws HsqlException {
 
-        User user = userManager.getUser(username.toUpperCase(),
-                                        password.toUpperCase());
+        User user = userManager.getUser(username, password);
         Session session = sessionManager.newSession(this, user,
             databaseReadOnly);
 
-        logger.logConnectUser(session, username, password);
+        logger.logConnectUser(session, user.getName(), user.getPassword());
 
         return session;
     }

@@ -256,7 +256,7 @@ class ServerConnection implements Runnable {
                 // fredt - is thrown while constructing the result
                 String s = e.getMessage();
 
-                e.printStackTrace();
+                server.printStackTrace(e);
             }
 
             close();
