@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.27 2004/06/08 05:54:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.28 2004/06/08 13:04:25 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.27 $</edition>
-        <pubdate>$Date: 2004/06/08 05:54:23 $</pubdate>
+        <edition>$Revision: 1.28 $</edition>
+        <pubdate>$Date: 2004/06/08 13:04:25 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,8 +40,8 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.34 of SqlTool and
-            1.74 of SqlFile (the latter is the class which does most of the
+            This document is now updated for version 1.36 of SqlTool and
+            1.75 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both version when you run SqlTool
             interactively.
@@ -725,10 +725,31 @@
                 work.
                 Buffer Commands are for interactive use only.
             </simpara><simpara>
-                Most Special Commands won't work in sql files, but the 
+                A couple Special Commands won't work in sql files (stuff for
+                command-line history and editing), but the
                 following not only work, but were designed for use in sql files.
             </simpara>
             <variablelist>
+                <varlistentry><term>\q [abort message]</term><listitem><para>
+                    Be aware that the \q command will cause SqlTool to 
+                    completely exit.
+                    If a script <filename>x.sql</filename> has a \q command in
+                    it, then it doesn't matter if the script is executed like
+                    <screen>
+    java -jar .../hsqldb.jar urlid a.sql x.sql z.sql</screen> or if you use
+                    \i to read it in interactively, or if another SQL file
+                    uses \i to nest it.
+                    If \q is encountered, SqlTool will quit.
+                    See the <link linkend='pl-section' endterm='pl-title'/> 
+                    section for commands to abort an SQL file (or even parts
+                    of an SQL file) without causing SqlTool to exit.
+                </para><simpara>
+                    \q takes an optional argument, which is an abort message.
+                    If you give an abort message, the message is displayed to
+                    the user and SqlTool will exit with a failure status.
+                    If you give no abort message, then SqlTool will exit 
+                    quietly with successful status.
+                </simpara></listitem></varlistentry>
                 <varlistentry><term>\p [text to print]</term><listitem><simpara>
                     Print the given string to stdout.
                     Just give "\p" alone to print a blank line.
@@ -787,6 +808,12 @@
                 dependable solution by intelligently using \* commands 
                 (Continue upon Errors) and commit statements, and by
                 verifying exit statuses.
+            </simpara> <simpara>
+                Using the SqlTool Procedural Language, you have ultimate
+                control over program flow, and you can use variables for
+                database input and output as well as for many other purposes.
+                See the <link linkend='pl-section' endterm='pl-title'/>
+                section.
             </simpara>
         </section>
         <section><title>Getting Interactive Functionality with SQL Files</title>
@@ -892,11 +919,16 @@
         <title id='pl-title'>Procedural Language</title>
         <subtitle>Aka PL</subtitle>
         <simpara>
-            Most importantly, run SqlTool interactively and give the "* ?"
-            command to see what PL commands are available to you.
+            Most importantly, run <filename>SqlTool</filename> interactively 
+            and give the "* ?" command to see what PL commands are available to 
+            you.
         </simpara> <simpara>
-            As noted elsewhere, PL variables will only be expanded after you
-            run a PL command (or set variable(s) from the command-line).
+            PL variables will only be expanded after you run a PL command (or 
+            set variable(s) from the command-line).
+            We only want to turn on variable expansion if the user wants
+            variable expansion.
+            People who don't use PL don't have to worry about strings getting
+            accidentally expanded.
         </simpara>
         <section>
             <title>Variables</title>
@@ -910,7 +942,7 @@
                 </simpara></listitem> <listitem><simpara>
                     You can also set variables using the 
                     <literal>--setvar</literal> command-line switch.
-                    I give a very useful example of this below.
+                    I give a very brief but useful example of this below.
                 </simpara></listitem> <listitem><simpara>
                     Variables are always expanded in SQL, Special, and PL
                     commands if they are written like
@@ -936,7 +968,7 @@
                     prevent them from being evaluated too early.
                     See below about logical expressions.
                 </simpara></listitem> <listitem><simpara>
-                    You can continuosly modify variable values, like
+                    You can continuously modify variable values, like
                     <literal>@ x = @{x}/@{addeddir}</literal>.
                     This is useful in conjunctionj with conditional flow
                     control.
@@ -946,7 +978,7 @@
                 Here is a short SQL file that gives the specified user write
                 permissions on some application tables.
             </simpara>
-            <example><title>Sample SQL file using PL</title>
+            <example><title>Simple SQL file using PL</title>
                 <programlisting>
     /*
        grantwrite.sql
@@ -954,6 +986,8 @@
        Run SqlTool like this:
            java -jar path/to/hsqldb.jar -setvar USER=debbie grantwrite.sql
      */
+    * INIT =
+
     GRANT all ON book TO *{USER};
     GRANT all ON category TO *{USER};</programlisting>
             </example>
@@ -963,9 +997,15 @@
                 I.e., no need to modify the tested and proven script.
                 There is no need for a <literal>commit</literal> statement
                 in this SQL file since no DML is done.
-                If the script is accidentally running without setting the
+                If the script is accidentally run without setting the
                 USER variable, SqlTool will give a very clear notificaton of
                 that.
+            </simpara> <simpara>
+                The purpose of unsetting the INIT variable is just to 
+                initialize PL so that the *{USER} variables will be expanded.
+                (This would not be necessary if the USER variable, or any
+                other variable, were set, but we don't want to depend upon 
+                that).
             </simpara>
         </section>
         <section>
@@ -981,7 +1021,7 @@
                 <literal>while *LOOPVAR</literal> will change depending on the 
                 current value of LOOPVAR.
             </simpara> <simpara>
-                This does not work with quoting of any type, not with values
+                This does not work with quoting of any type, nor with values
                 containing white space.
                 If you're using variables in logical expressions, stick to
                 simple tokens with normal characters.
@@ -1013,10 +1053,29 @@
                 <varlistentry><term>TOKEN1 &lt; TOKEN2</term><listitem><simpara>
                     Similarly to TOKEN1 &gt; TOKEN2.
                 </simpara></listitem></varlistentry>
+                <varlistentry><term>! LOGICAL_EXPRESSION</term><listitem><simpara>
+                    Logical negation of any of the expressions listed above.
+                </simpara></listitem></varlistentry>
             </variablelist>
+            <simpara>
+                For the binary operations, unset variables are expanded to the
+                empty string.
+            </simpara>
         </section>
         <section>
             <title>Flow Control</title>
+            <simpara>
+                A considerable limitation to the procedural commands is that you
+                can not nest flow control commands of the same kind inside one
+                another.
+                You can't, for example, have an "* if" statement inside of 
+                another "* if" statement.
+                You can use SQL file nesting as a work-around.
+                (You can nest SQL files).
+                You can nest statements of one type inside statements of
+                another (like an <literal>if</literal> within a 
+                <literal>while</literal>).
+            </simpara>
             <simpara>
                 Flow control works by conditionally executing blocks of 
                 Commands according to conditions specified by logical 
@@ -1026,12 +1085,33 @@
                 <emphasis>PL Blocks</emphasis>.
                 These PL Blocks always occur between a PL flow control 
                 statement (like <literal>* foreach, *while, * if</literal>)
-                and a <literal>* end</literal> PL Command.
+                and a corresponding <literal>* end</literal> PL Command
+                (like <literal>* end foreach</literal>).
             </simpara> <simpara>
                 The values of control variables for foreach and while PL
                 blocks will change as expected.
+            </simpara> <simpara>
+                There are <literal>* break</literal> and 
+                <literal>* continue</literal>, which work as any shell
+                scripter would expect them to.
+                The <literal>* break</literal> command can also be used to
+                quit the current SQL file without triggering any error 
+                processing.
+                (I.e. processing will continue with the next line in the 
+                <emphasis>including</emphasis> SQL file or interactive 
+                session, or with the next SQL file if you supplied multiple on 
+                the command-line).
             </simpara>
         </section>
+        <simpara>
+            Here is an example that shows how to use most PL features.
+            This file resides in the
+            <filename>src/org/hsqldb/sample</filename> directory with the
+            name <filename>pl.sql</filename>.
+        </simpara>
+        <example><title>SQL File showing use of most PL features</title>
+            <programlisting>&pl.sql-cdata;</programlisting>
+        </example>
     </section>
 
     <section>

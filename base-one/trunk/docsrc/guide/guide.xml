@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.28 2004/06/02 20:30:44 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.29 2004/06/04 01:29:17 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.28 $">
-    <!ENTITY date "$Date: 2004/06/02 20:30:44 $">
+    <!ENTITY revision "$Revision: 1.29 $">
+    <!ENTITY date "$Date: 2004/06/04 01:29:17 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/&docbasename;">
@@ -37,6 +37,8 @@
              SYSTEM "../../docwork/guide/cdata/sample-hsqldb.cfg">
     <!ENTITY sample.sql-cdata
              SYSTEM "../../docwork/guide/cdata/sample.sql">
+    <!ENTITY pl.sql-cdata
+             SYSTEM "../../docwork/guide/cdata/pl.sql">
 ]>
     
 <book>
