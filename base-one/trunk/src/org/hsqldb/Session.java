@@ -728,19 +728,22 @@ public class Session implements SessionInterface {
     private CompiledStatement sqlCompileStatement(String sql)
     throws HsqlException {
 
-        String            token;
-        int               cmd;
-        CompiledStatement cs;
-
         parser.reset(sql);
 
-        token = tokenizer.getString();
-        cmd   = Token.get(token);
+        CompiledStatement cs;
+        int               brackets = 0;
+        String            token    = tokenizer.getString();
+        int               cmd      = Token.get(token);
 
         switch (cmd) {
 
+            case Token.OPENBRACKET : {
+                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
+
+                tokenizer.getThis(Token.T_SELECT);
+            }
             case Token.SELECT : {
-                cs = parser.compileSelectStatement(false);
+                cs = parser.compileSelectStatement(brackets);
 
                 break;
             }

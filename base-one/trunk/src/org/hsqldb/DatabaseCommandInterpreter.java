@@ -187,13 +187,19 @@ class DatabaseCommandInterpreter {
     private Result executePart(int cmd, String token,
                                Parser parser) throws Throwable {
 
-        Result result = Session.emptyUpdateCount;
+        Result result   = Session.emptyUpdateCount;
+        int    brackets = 0;
 
         switch (cmd) {
 
+            case Token.OPENBRACKET : {
+                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
+
+                tokenizer.getThis(Token.T_SELECT);
+            }
             case Token.SELECT : {
                 CompiledStatement cStatement =
-                    parser.compileSelectStatement(false);
+                    parser.compileSelectStatement(brackets);
 
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
@@ -1441,13 +1447,20 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_AS);
         tokenizer.setPartMarker();
+
+        Parser parser   = new Parser(session, database, tokenizer);
+        int    brackets = 0;
+
+        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+        }
+
         tokenizer.getThis(Token.T_SELECT);
 
-        Parser parser = new Parser(session, database, tokenizer);
         Select select;
 
-        // parse as UNION and do not accept ORDER BY
-        select = parser.parseSelect(true);
+        // do not accept LIMIT and ORDER BY - accept unions
+        select = parser.parseSelect(brackets, false, true);
 
         if (select.sIntoTable != null) {
             throw (Trace.error(Trace.TABLE_NOT_FOUND));
@@ -2764,10 +2777,17 @@ class DatabaseCommandInterpreter {
         cmd    = Token.get(token);
         result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
 
+        int brackets = 0;
+
         switch (cmd) {
 
+            case Token.OPENBRACKET : {
+                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
+
+                tokenizer.getThis(Token.T_SELECT);
+            }
             case Token.SELECT :
-                cs = parser.compileSelectStatement(false);
+                cs = parser.compileSelectStatement(brackets);
                 break;
 
             case Token.INSERT :

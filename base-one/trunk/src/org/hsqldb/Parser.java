@@ -239,7 +239,8 @@ class Parser {
      * for view column aliases.
      *
      */
-    SubQuery parseSubquery(View v, HsqlName[] colNames, boolean resolveAll,
+    SubQuery parseSubquery(int brackets, View v, HsqlName[] colNames,
+                           boolean resolveAll,
                            int predicateType) throws HsqlException {
 
         SubQuery sq;
@@ -249,7 +250,7 @@ class Parser {
 
             subQueryLevel++;
 
-            Select s = parseSelect(false);
+            Select s = parseSelect(brackets, false, true);
 
             sq.level = subQueryLevel;
 
@@ -318,18 +319,21 @@ class Parser {
     }
 
     /**
-     *  Retrieves a Select object newly constructed from the
-     *  current Parse context.
+     *  Constructs and returns a Select object.
      *
-     * @param isUnion whether the Select being parsed as part of a UNION
+     * @param hasOrder whether the SELECT being parsed is the first
+     * select statement and can have LIMIT and ORDER BY clauses
+     * @param isMain whether the SELECT being parsed is the first
+     * select statement in the set
      * @return a new Select object
      * @throws  HsqlException if a parsing error occurs
      */
-    Select parseSelect(boolean isUnion) throws HsqlException {
+    Select parseSelect(int brackets, boolean hasOrder,
+                       boolean isMain) throws HsqlException {
 
         Select select = new Select();
 
-        if (!isUnion) {
+        if (hasOrder) {
             parseLimit(select);
         }
 
@@ -421,18 +425,14 @@ class Parser {
             token = tokenizer.getString();
 
             if (token.equals(Token.T_INNER)) {
-                token = tokenizer.getThis(Token.T_JOIN);
+                tokenizer.getThis(Token.T_JOIN);
+
+                token = Token.T_JOIN;
             }
 
             if (token.equals(Token.T_LEFT)) {
-                token = tokenizer.getString();
-
-                if (token.equals(Token.T_OUTER)) {
-                    token = tokenizer.getString();
-                }
-
-                Trace.check(token.equals(Token.T_JOIN),
-                            Trace.UNEXPECTED_TOKEN, token);
+                tokenizer.isGetThis(Token.T_OUTER);
+                tokenizer.getThis(Token.T_JOIN);
 
                 TableFilter tf = parseTableFilter(true);
 
@@ -510,24 +510,74 @@ class Parser {
             vcolumn.add(select.havingCondition);
         }
 
+        if (brackets > 0 && token.equals(Token.T_CLOSEBRACKET)) {
+            brackets -= Parser.parseCloseBrackets(tokenizer, brackets - 1)
+                        + 1;
+            token = tokenizer.getString();
+        }
+
+        select.unionDepth = brackets;
+
+        int unionType = parseUnion(token);
+
+        if (unionType != Select.NOUNION) {
+            select.unionType = unionType;
+
+            if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+            }
+
+            tokenizer.getThis(Token.T_SELECT);
+
+            select.unionSelect = parseSelect(brackets, false, false);
+        }
+
+        if (hasOrder) {
+            token = tokenizer.getString();
+
+            if (token.equals(Token.T_ORDER)) {
+                tokenizer.getThis(Token.T_BY);
+                parseOrderBy(select, vcolumn);
+            } else {
+                tokenizer.back();
+            }
+        }
+
+        if (isMain) {
+            select.prepareUnions();
+        }
+
+        int len = vcolumn.size();
+
+        select.exprColumns = new Expression[len];
+
+        vcolumn.toArray(select.exprColumns);
+
+        return select;
+    }
+
+    /**
+     * Parses the given token and any further tokens in tokenizer to return
+     * any UNION or other set operation ID.
+     */
+    int parseUnion(String token) throws HsqlException {
+
+        int unionType = Select.NOUNION;
+
         switch (Token.get(token)) {
 
             case Token.UNION :
                 token = tokenizer.getString();
 
                 if (token.equals(Token.T_ALL)) {
-                    select.iUnionType = Select.UNIONALL;
+                    unionType = Select.UNIONALL;
                 } else if (token.equals(Token.T_DISTINCT)) {
-                    select.iUnionType = Select.UNION;
+                    unionType = Select.UNION;
                 } else {
-                    select.iUnionType = Select.UNION;
+                    unionType = Select.UNION;
 
                     tokenizer.back();
                 }
-
-                tokenizer.getThis(Token.T_SELECT);
-
-                select.sUnion = parseSelect(true);
                 break;
 
             case Token.INTERSECT :
@@ -538,10 +588,7 @@ class Parser {
                     tokenizer.back();
                 }
 
-                tokenizer.getThis(Token.T_SELECT);
-
-                select.iUnionType = Select.INTERSECT;
-                select.sUnion     = parseSelect(true);
+                unionType = Select.INTERSECT;
                 break;
 
             case Token.EXCEPT :
@@ -553,10 +600,7 @@ class Parser {
                     tokenizer.back();
                 }
 
-                tokenizer.getThis(Token.T_SELECT);
-
-                select.iUnionType = Select.EXCEPT;
-                select.sUnion     = parseSelect(true);
+                unionType = Select.EXCEPT;
                 break;
 
             default :
@@ -564,24 +608,7 @@ class Parser {
                 break;
         }
 
-        if (!isUnion) {
-            token = tokenizer.getString();
-
-            if (token.equals(Token.T_ORDER)) {
-                tokenizer.getThis(Token.T_BY);
-                parseOrderBy(select, vcolumn);
-            } else {
-                tokenizer.back();
-            }
-        }
-
-        int len = vcolumn.size();
-
-        select.exprColumns = new Expression[len];
-
-        vcolumn.toArray(select.exprColumns);
-
-        return select;
+        return unionType;
     }
 
 // fredt@users 20011010 - patch 471710 by fredt - LIMIT rewritten
@@ -654,7 +681,7 @@ class Parser {
             Expression e = parseExpression();
 
             e = resolveOrderByColumnAlias(e, vcolumn, select.iResultLen,
-                                          select.sUnion != null);
+                                          select.unionSelect != null);
             token = tokenizer.getString();
 
             if (token.equals(Token.T_DESC)) {
@@ -891,10 +918,16 @@ class Parser {
         String      sAlias = null;
 
         if (token.equals(Token.T_OPENBRACKET)) {
+            int brackets = 0;
+
+            if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+            }
+
             tokenizer.getThis(Token.T_SELECT);
 
             // fredt - not correlated - a joined subquery table must resolve fully
-            sq = parseSubquery(null, null, true, Expression.QUERY);
+            sq = parseSubquery(brackets, null, null, true, Expression.QUERY);
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
 
@@ -905,7 +938,7 @@ class Parser {
             session.check(t.getName(), UserManager.SELECT);
 
             if (t.isView()) {
-                sq = parseSubquery((View) t, null, true, Expression.QUERY);
+                sq = parseSubquery(0, (View) t, null, true, Expression.QUERY);
                 sq.select = ((View) t).viewSelect;
                 t         = sq.table;
                 sAlias    = token;
@@ -1085,7 +1118,7 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                SubQuery sq = parseSubquery(null, null, false,
+                SubQuery sq = parseSubquery(0, null, null, false,
                                             Expression.EXISTS);
                 Select select = sq.select;
                 Expression s = new Expression(select, sq.table,
@@ -1219,7 +1252,7 @@ class Parser {
         Expression b = null;
 
         if (iToken == Expression.SELECT) {
-            SubQuery sq     = parseSubquery(null, null, false, Expression.IN);
+            SubQuery sq = parseSubquery(0, null, null, false, Expression.IN);
             Select   select = sq.select;
 
             // until we support rows in IN predicates
@@ -1470,7 +1503,7 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-                Select select = parseSelect(false);
+                Select select = parseSelect(0, true, true);
 
                 select.resolve();
 
@@ -2329,39 +2362,52 @@ class Parser {
             token = tokenizer.getString();
         }
 
-        if (token.equals(Token.T_VALUES)) {
-            Expression[] acve = new Expression[len];
+        int command  = Token.get(token);
+        int brackets = 0;
 
-            getInsertColumnValueExpressions(table, acve, len);
+        switch (command) {
 
-            CompiledStatement cs = new CompiledStatement(table, columnMap,
-                acve, columnCheckList, getParameters());
+            case Token.VALUES : {
+                Expression[] acve = new Expression[len];
 
-            cs.subqueries = getSortedSubqueries();
+                getInsertColumnValueExpressions(table, acve, len);
 
-            return cs;
-        } else if (token.equals(Token.T_SELECT)) {
-            Select select = parseSelect(false);
+                CompiledStatement cs = new CompiledStatement(table,
+                    columnMap, acve, columnCheckList, getParameters());
 
-            if (len != select.iResultLen) {
-                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+                cs.subqueries = getSortedSubqueries();
+
+                return cs;
             }
+            case Token.OPENBRACKET : {
+                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
 
-            CompiledStatement cs = new CompiledStatement(table, columnMap,
-                columnCheckList, select, getParameters());
+                tokenizer.getThis(Token.T_SELECT);
+            }
+            case Token.SELECT : {
+                Select select = parseSelect(brackets, true, true);
 
-            cs.subqueries = getSortedSubqueries();
+                if (len != select.iResultLen) {
+                    throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+                }
 
-            return cs;
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                CompiledStatement cs = new CompiledStatement(table,
+                    columnMap, columnCheckList, select, getParameters());
+
+                cs.subqueries = getSortedSubqueries();
+
+                return cs;
+            }
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            }
         }
     }
 
     /**
      * Retrieves a SELECT-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileSelectStatement(boolean isview)
+    CompiledStatement compileSelectStatement(int brackets)
     throws HsqlException {
 
         Select select;
@@ -2369,7 +2415,7 @@ class Parser {
 
         clearParameters();
 
-        select = parseSelect(isview);
+        select = parseSelect(brackets, true, true);
 
         if (select.sIntoTable != null) {
             session.checkDDLWrite();
@@ -2457,5 +2503,28 @@ class Parser {
         cs.subqueries = getSortedSubqueries();
 
         return cs;
+    }
+
+    static int parseOpenBrackets(Tokenizer t) throws HsqlException {
+
+        int count = 0;
+
+        while (t.isGetThis(Token.T_OPENBRACKET)) {
+            count++;
+        }
+
+        return count;
+    }
+
+    static int parseCloseBrackets(Tokenizer t,
+                                  int limit) throws HsqlException {
+
+        int count = 0;
+
+        while (count < limit && t.isGetThis(Token.T_CLOSEBRACKET)) {
+            count++;
+        }
+
+        return count;
     }
 }

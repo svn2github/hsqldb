@@ -196,6 +196,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return 0;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return 0;
+        }
+
         return Integer.parseInt(s);
     }
 
@@ -234,6 +240,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return null;
+        }
+
         return Integer.valueOf(s);
     }
 
@@ -242,6 +254,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 
@@ -256,6 +274,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return null;
+        }
+
         return Long.valueOf(s);
     }
 
@@ -264,6 +288,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 
@@ -279,6 +309,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return null;
+        }
+
         return new java.math.BigDecimal(s);
     }
 
@@ -287,6 +323,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 
@@ -301,6 +343,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return null;
+        }
+
         return java.sql.Date.valueOf(s);
     }
 
@@ -310,6 +358,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 
@@ -328,6 +382,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
+        s = s.trim();
+
+        if (s.length() == 0) {
+            return null;
+        }
+
         return org.hsqldb.lib.BooleanConverter.getBoolean(s);
     }
 
@@ -337,6 +397,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 
@@ -350,6 +416,12 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         String s = readString();
 
         if (s == null) {
+            return null;
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) {
             return null;
         }
 

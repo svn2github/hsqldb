@@ -377,8 +377,8 @@ final class CompiledStatement {
 
             Table  t = sq.table;
             Select s = sq.select;
-            Result r = s.getResult(sq.isExistsPredicate ? 1
-                                                        : 0, session);
+            Result r = s.getResult(session, sq.isExistsPredicate ? 1
+                                                                 : 0);
 
             if (sq.isInPredicate) {
                 r.removeDuplicates(1);

@@ -314,7 +314,7 @@ class TableWorks {
 
         Select s = Expression.getCheckSelect(table, e);
         Result r = s.getResult(
-            1, this.table.database.getSessionManager().getSysSession());
+            this.table.database.getSessionManager().getSysSession(), 1);
 
         c.core.checkFilter = s.tFilter[0];
         c.core.mainTable   = table;

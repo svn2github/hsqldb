@@ -2704,7 +2704,7 @@ public class Expression {
 
             case EXISTS :
                 if (eArg.isCorrelated) {
-                    Result r = eArg.subSelect.getResult(1, session);    // 1 is already enough
+                    Result r = eArg.subSelect.getResult(session, 1);    // 1 is already enough
 
                     return r.rRoot == null ? Boolean.FALSE
                                            : Boolean.TRUE;
@@ -2993,7 +2993,7 @@ public class Expression {
                 return eArg2.testValueList(session, eArg.getValue(session));
 
             case EXISTS :
-                Result r = eArg.subSelect.getResult(1, session);    // 1 is already enough
+                Result r = eArg.subSelect.getResult(session, 1);    // 1 is already enough
 
                 return r.rRoot != null;
 
@@ -3199,7 +3199,7 @@ public class Expression {
                     o, Expression.EQUAL) != null;
             }
 
-            Result r = subSelect.getResult(0, session);
+            Result r = subSelect.getResult(session, 0);
 
             // fredt - reduce the size if possible
             r.removeDuplicates();
@@ -3534,7 +3534,7 @@ public class Expression {
 
         void addAll(Select select, int type) {
 
-            for (; select != null; select = select.sUnion) {
+            for (; select != null; select = select.unionSelect) {
                 Expression[] list = select.exprColumns;
 
                 for (int i = 0; i < list.length; i++) {

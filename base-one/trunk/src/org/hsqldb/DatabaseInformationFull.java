@@ -1975,16 +1975,9 @@ extends org.hsqldb.DatabaseInformationMain {
      *                              corresponding &lt;view descriptor&gt;.
      * CHECK_OPTION     VARCHAR     {"CASCADED" | "LOCAL" | "NONE"}
      * IS_UPDATABLE     VARCHAR     {"YES" | "NO"}
-     * VALID            BOOLEAN     TRUE: VIEW_DEFINITION currently represents
-     *                              a valid &lt;query expression&gt.
-     *                              FALSE: VIEW_DEFINITION cannot currently be
-     *                              parsed to a valid &lt;query expression&gt;.
-     *                              This can happen if, say, a table, column or
-     *                              routine upon which the view depends has
-     *                              been incompatibly altered, has been
-     *                              dropped since the view was created or is no
-     *                              longer accessible due to changes in assigned
-     *                              access permissions
+     * VALID            BOOLEAN     Always TRUE: VIEW_DEFINITION currently
+     *                              represents a valid &lt;query expression&gt.
+     *
      * </pre> <p>
      *
      * @return a tabular description of the text source of all
@@ -2051,22 +2044,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[idefn]  = defn;
             row[icopt]  = "NONE";
             row[iiupd]  = "NO";
-
-            try {
-                tokenizer = new Tokenizer(defn);
-
-                tokenizer.getThis("SELECT");
-
-                parser = new Parser(sys, database, tokenizer);
-                select = parser.parseSelect(false);
-
-                select.resolve();
-                select.checkResolved(true);
-
-                row[ivalid] = Boolean.TRUE;
-            } catch (Exception e) {
-                row[ivalid] = Boolean.FALSE;
-            }
+            row[ivalid] = Boolean.TRUE;
 
             t.insert(row);
         }

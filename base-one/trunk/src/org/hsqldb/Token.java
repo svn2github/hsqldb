@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.HashSet;
 
 /**
  * Defines and enumerates reserved and non-reserved SQL
@@ -647,22 +648,23 @@ public class Token {
     static final int        MEMORY                = 309;
     static final int        MINUS                 = 310;
     static final int        NEXT                  = 311;
-    static final int        PASSWORD              = 312;
-    static final int        PLAN                  = 313;
-    static final int        PROPERTY              = 314;
-    static final int        READONLY              = 315;
-    static final int        REFERENTIAL_INTEGRITY = 316;
-    static final int        RENAME                = 317;
-    static final int        SCRIPT                = 318;
-    static final int        SCRIPTFORMAT          = 319;
-    static final int        SEMICOLON             = 320;
-    static final int        SEQUENCE              = 321;
-    static final int        SHUTDOWN              = 322;
-    static final int        SOURCE                = 323;
-    static final int        TEMP                  = 324;
-    static final int        TEXT                  = 325;
-    static final int        VIEW                  = 326;
-    static final int        WRITE_DELAY           = 327;
+    static final int        OPENBRACKET           = 312;
+    static final int        PASSWORD              = 313;
+    static final int        PLAN                  = 314;
+    static final int        PROPERTY              = 315;
+    static final int        READONLY              = 316;
+    static final int        REFERENTIAL_INTEGRITY = 317;
+    static final int        RENAME                = 318;
+    static final int        SCRIPT                = 319;
+    static final int        SCRIPTFORMAT          = 320;
+    static final int        SEMICOLON             = 321;
+    static final int        SEQUENCE              = 322;
+    static final int        SHUTDOWN              = 323;
+    static final int        SOURCE                = 324;
+    static final int        TEMP                  = 325;
+    static final int        TEXT                  = 326;
+    static final int        VIEW                  = 327;
+    static final int        WRITE_DELAY           = 328;
 
     //
     static {
@@ -711,6 +713,7 @@ public class Token {
         commandSet.put(T_MINUS, MINUS);
         commandSet.put(T_NEXT, NEXT);
         commandSet.put(T_NOT, NOT);
+        commandSet.put(T_OPENBRACKET, OPENBRACKET);
         commandSet.put(T_PASSWORD, PASSWORD);
         commandSet.put(T_PLAN, PLAN);
         commandSet.put(T_PRIMARY, PRIMARY);
@@ -738,6 +741,7 @@ public class Token {
         commandSet.put(T_UPDATE, UPDATE);
         commandSet.put(T_UNION, UNION);
         commandSet.put(T_USER, USER);
+        commandSet.put(T_VALUES, VALUES);
         commandSet.put(T_VIEW, VIEW);
         commandSet.put(T_WRITE_DELAY, WRITE_DELAY);
 
@@ -746,5 +750,53 @@ public class Token {
 
     public static int get(String token) {
         return commandSet.get(token, -1);
+    }
+
+    private static HashSet keywords;
+    static IntValueHashMap valueTokens;
+
+    static {
+
+        // both maps are used as sets only
+        // literals not allowed as table / column names
+        keywords = new HashSet(67);
+
+        // fredt - if we add MONTH, DAY, YEAR etc. MONTH(), DAY() et al will no longer work
+        // following tokens are values
+
+        /* "FALSE",*/
+        /* "TRUE",*/
+        /* "NULL", */
+
+        /** @todo perhaps rename LEFT() */
+
+        // following token is excluded to allow LEFT() function to work
+
+        /* "LEFT" ,*/
+        String keyword[] = {
+            Token.T_AS, Token.T_AND, Token.T_ALL, Token.T_AVG, Token.T_BY,
+            Token.T_BETWEEN, Token.T_BOTH, Token.T_CALL, Token.T_CASE,
+            Token.T_CASEWHEN, Token.T_CAST, Token.T_CONVERT, Token.T_CONCAT,
+            Token.T_COUNT, Token.T_COALESCE, Token.T_DISTINCT, Token.T_ELSE,
+            Token.T_END, Token.T_EXISTS, Token.T_EXCEPT, Token.T_EXTRACT,
+            Token.T_FOR, Token.T_FROM, Token.T_GROUP, Token.T_IF,
+            Token.T_INTO, Token.T_IFNULL, Token.T_IS, Token.T_IN,
+            Token.T_JOIN, Token.T_INTERSECT, Token.T_INNER, Token.T_LEADING,
+            Token.T_LIKE, Token.T_MAX, Token.T_MIN, Token.T_NEXT,
+            Token.T_NULLIF, Token.T_NOT, Token.T_MINUS, Token.T_ON,
+            Token.T_ORDER, Token.T_OR, Token.T_OUTER, Token.T_POSITION,
+            Token.T_PRIMARY, Token.T_SELECT, Token.T_SET, Token.T_SUBSTRING,
+            Token.T_SUM, Token.T_THEN, Token.T_TO, Token.T_TRAILING,
+            Token.T_TRIM, Token.T_UNIQUE, Token.T_UNION, Token.T_VALUES,
+            Token.T_WHEN, Token.T_WHERE, Token.T_HAVING
+        };
+
+        for (int i = 0; i < keyword.length; i++) {
+            keywords.add(keyword[i]);
+        }
+    }
+
+    public static boolean isKeyword(String token) {
+        return keywords.contains(token);
     }
 }

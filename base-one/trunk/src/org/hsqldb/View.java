@@ -107,13 +107,19 @@ class View extends Table {
 
         // create the working table
         Tokenizer tokenizer = new Tokenizer(statement);
+        int       brackets  = 0;
+
+        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+        }
 
         tokenizer.getThis(Token.T_SELECT);
 
         Parser p = new Parser(database.sessionManager.getSysSession(),
                               this.database, tokenizer);
 
-        viewSubQuery = p.parseSubquery(null, colList, true, Expression.QUERY);
+        viewSubQuery = p.parseSubquery(brackets, null, colList, true,
+                                       Expression.QUERY);
 
         p.setAsView(this);
 
@@ -170,7 +176,7 @@ class View extends Table {
         for (int i = 0; i < viewSubqueries.length; i++) {
             Select select = viewSubqueries[i].select;
 
-            for (; select != null; select = select.sUnion) {
+            for (; select != null; select = select.unionSelect) {
                 TableFilter tfilter[] = select.tFilter;
 
                 for (int j = 0; j < tfilter.length; j++) {

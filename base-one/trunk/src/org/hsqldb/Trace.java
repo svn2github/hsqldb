@@ -222,7 +222,7 @@ public class Trace {
                             JDBC_INVALID_BRI_SCOPE                    = 118,
                             JDBC_NO_RESULT_SET_METADATA               = 119,
                             JDBC_NO_RESULT_SET                        = 120,
-                            unused121                                 = 121,
+                            MISSING_CLOSEBRACKET                      = 121,
                             TableFilter_findFirst                     = 122,
                             Table_moveDefinition                      = 123,
                             STRING_DATA_TRUNCATION                    = 124,
@@ -454,7 +454,7 @@ public class Trace {
         "invalid scope value",                                          // jdbcDatabaseMetaData_getBestRowIdentifier
         "result set is null",                                           // jdbcResultSetMetaData_jdbcResultSetMetaData
         "result set is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_2
-        "",                                                             // 121
+        "37000 missing )",                                              // MISSING_CLOSEBRACKET
         "37000 an index is required on table $$, column $$",            // TableFilter_findFirst
         "37000 there is an index on the column to be removed",          // Table_moveDefinition
         "22001 string too long",                                        //

@@ -279,8 +279,8 @@ public class Database {
         } catch (Throwable e) {
             logger.closeLog(Database.CLOSEMODE_IMMEDIATELY);
             logger.releaseLock();
-            clearStructures();
             setState(DATABASE_SHUTDOWN);
+            clearStructures();
 
             if (!(e instanceof HsqlException)) {
                 e = Trace.error(Trace.GENERAL_ERROR, e.toString());
@@ -297,10 +297,12 @@ public class Database {
      */
     void clearStructures() {
 
-        for (int i = 0; i < tTable.size(); i++) {
-            Table table = (Table) tTable.get(i);
+        if (tTable != null) {
+            for (int i = 0; i < tTable.size(); i++) {
+                Table table = (Table) tTable.get(i);
 
-            table.dropTriggers();
+                table.dropTriggers();
+            }
         }
 
         isNew              = false;
@@ -698,8 +700,8 @@ public class Database {
         classLoader = null;
 
         logger.releaseLock();
-        clearStructures();
         setState(DATABASE_SHUTDOWN);
+        clearStructures();
 
         // fredt - this could change to avoid removing a db from the
         // DatabaseManager repository if there are pending getDatabase()

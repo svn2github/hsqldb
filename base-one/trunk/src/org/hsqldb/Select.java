@@ -75,11 +75,14 @@ import org.hsqldb.lib.Iterator;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m
+// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
+// for SELECT LIMIT n m DISTINCT
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // type and logging attributes of sIntotable
 // fredt@users 20020230 - patch 495938 by johnhobs@users - GROUP BY order
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
+// fredt@users 20020804 - patch 580347 by dkkopp - view speedup
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
 // boucherb@users 20030811 - patch 1.7.2 - prepared statement support
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
@@ -107,11 +110,15 @@ class Select {
     int                   iOrderLen;            // number of columns that are 'order'
     int                   sortOrder[];
     int                   sortDirection[];
-    Select                sUnion;               // null means no union select
     HsqlName              sIntoTable;           // null means not select..into
     int                   intoType = Table.MEMORY_TABLE;
     boolean               isIntoTableQuoted;
-    int                   iUnionType;
+    boolean               isMainSelect;         // false if this is appended in a union chain
+    Select[]              unionArray;           // only set in the first Select in a union chain
+    int                   unionMaxDepth;        // max unionDepth in chain
+    Select                unionSelect;          // null means no union select
+    int                   unionType;
+    int                   unionDepth;
     static final int      NOUNION   = 0,
                           UNION     = 1,
                           UNIONALL  = 2,
@@ -276,7 +283,7 @@ class Select {
 
         resolve();
 
-        Result r    = getResult(2, session);    // 2 records are (already) too much
+        Result r    = getResult(session, 2);    // 2 records are (already) too much
         int    size = r.getSize();
         int    len  = r.getColumnCount();
 
@@ -391,15 +398,50 @@ class Select {
         prepareSort();
     }
 
+    /**
+     * This is called externally only on the first Select in a UNION chain.
+     */
+    void prepareUnions() throws HsqlException {
+
+        int count = 0;
+
+        for (Select current = this; current != null;
+                current = current.unionSelect, count++) {}
+
+        if (count == 1) {
+            if (unionDepth != 0) {
+                throw Trace.error(Trace.MISSING_CLOSEBRACKET);
+            }
+
+            return;
+        }
+
+        unionArray = new Select[count];
+        count      = 0;
+
+        for (Select current = this; current != null;
+                current = current.unionSelect, count++) {
+            unionArray[count] = current;
+            unionMaxDepth = current.unionDepth > unionMaxDepth
+                            ? current.unionDepth
+                            : unionMaxDepth;
+        }
+
+        if (unionArray[unionArray.length - 1].unionDepth != 0) {
+            throw Trace.error(Trace.MISSING_CLOSEBRACKET);
+        }
+    }
+
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
 
-/**
- * For SELECT LIMIT n m ....
- * find cases where the result does not have to be fully built and
- * set issimplemaxrows and adjust maxrows with LIMIT params.
- * Chnages made to apply LIMIT only to the containing SELECT
- * so they can be used as part of UNION and other set operations
- */
+    /**
+     * For SELECT LIMIT n m ....
+     * finds cases where the result does not have to be fully built and
+     * returns and adjusted maxrows with LIMIT params.
+     * LIMIT applies only to the result of UNION and other set operations,
+     * not to individual SELECT statements in the set.
+     *
+     */
     private int getLimitCount(int maxrows) throws HsqlException {
 
         limitStart = limitCondition == null ? 0
@@ -423,7 +465,7 @@ class Select {
         boolean issimplemaxrows = false;
 
         if (maxrows != 0 && isDistinctSelect == false && isGrouped == false
-                && sUnion == null && iOrderLen == 0) {
+                && unionSelect == null && iOrderLen == 0) {
             issimplemaxrows = true;
         }
 
@@ -432,55 +474,23 @@ class Select {
     }
 
     /**
-     * Retrieves the result of executing this Select.
+     * Returns the result of executing this Select.
      *
-     * @param maxrows may be 0 to indicate no limit on the number of rows, or
-     *      -1 to indicate 0 size result (used for pre-processing the selects
-     *      in view statements. Positive values limit the size of the
-     *      result set.
+     * @param maxrows may be 0 to indicate no limit on the number of rows.
+     * Positive values limit the size of the result set.
      * @return the result of executing this Select
      * @throws HsqlException if a database access error occurs
      */
+    Result getResult(Session session, int maxrows) throws HsqlException {
 
-// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
-// for SELECT LIMIT n m DISTINCT
-// fredt@users 20020804 - patch 580347 by dkkopp - view speedup
-    Result getResult(int maxrows, Session session) throws HsqlException {
+        Result r;
 
-        if (resultMetaData == null) {
-            prepareResult();
-        }
-
-        Result r = buildResult(getLimitCount(maxrows), session);
-
-        // the result is perhaps wider (due to group and order by)
-        // so use the visible columns to remove duplicates
-        if (isDistinctSelect) {
-            r.removeDuplicates(iResultLen);
-        }
-
-        if (sUnion != null) {
-            Result x = sUnion.getResult(0, session);
-
-            switch (iUnionType) {
-
-                case UNION :
-                    r.append(x);
-                    r.removeDuplicates(iResultLen);
-                    break;
-
-                case UNIONALL :
-                    r.append(x);
-                    break;
-
-                case INTERSECT :
-                    r.removeDifferent(x, iResultLen);
-                    break;
-
-                case EXCEPT :
-                    r.removeSecond(x, iResultLen);
-                    break;
-            }
+        if (unionType == NOUNION) {
+            maxrows = getLimitCount(maxrows);
+            r       = getSingleResult(session, maxrows);
+        } else {
+            maxrows = Integer.MAX_VALUE;
+            r       = getResultMain(session);
         }
 
         sortResult(r);
@@ -488,6 +498,103 @@ class Select {
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
         r.trimResult(limitStart, limitCount);
+
+        return r;
+    }
+
+    private Result getResultMain(Session session) throws HsqlException {
+
+        Result unionResults[] = new Result[unionArray.length];
+
+        for (int i = 0; i < unionArray.length; i++) {
+            unionResults[i] = unionArray[i].getSingleResult(session,
+                    Integer.MAX_VALUE);
+        }
+
+        for (int depth = unionMaxDepth; depth >= 0; depth--) {
+            for (int pass = 0; pass < 2; pass++) {
+                for (int i = 0; i < unionArray.length - 1; i++) {
+                    if (unionResults[i] != null
+                            && unionArray[i].unionDepth >= depth) {
+                        if (pass == 0
+                                && unionArray[i].unionType
+                                   != Select.INTERSECT) {
+                            continue;
+                        }
+
+                        if (pass == 1
+                                && unionArray[i].unionType
+                                   == Select.INTERSECT) {
+                            continue;
+                        }
+
+                        int nextIndex = i + 1;
+
+                        for (; nextIndex < unionArray.length; nextIndex++) {
+                            if (unionResults[nextIndex] != null) {
+                                break;
+                            }
+                        }
+
+                        if (nextIndex == unionArray.length) {
+                            break;
+                        }
+
+                        unionArray[i].mergeResults(unionResults[i],
+                                                   unionResults[nextIndex]);
+
+                        unionResults[nextIndex] = unionResults[i];
+                        unionResults[i]         = null;
+                    }
+                }
+            }
+        }
+
+        return unionResults[unionResults.length - 1];
+    }
+
+    /**
+     * Merges the second result into the first using the unionMode
+     * set operation.
+     */
+    private void mergeResults(Result first,
+                              Result second) throws HsqlException {
+
+        switch (unionType) {
+
+            case UNION :
+                first.append(second);
+                first.removeDuplicates(iResultLen);
+                break;
+
+            case UNIONALL :
+                first.append(second);
+                break;
+
+            case INTERSECT :
+                first.removeDifferent(second, iResultLen);
+                break;
+
+            case EXCEPT :
+                first.removeSecond(second, iResultLen);
+                break;
+        }
+    }
+
+    private Result getSingleResult(Session session,
+                                   int maxrows) throws HsqlException {
+
+        if (resultMetaData == null) {
+            prepareResult();
+        }
+
+        Result r = buildResult(maxrows, session);
+
+        // the result is perhaps wider (due to group and order by)
+        // so use the visible columns to remove duplicates
+        if (isDistinctSelect) {
+            r.removeDuplicates(iResultLen);
+        }
 
         return r;
     }
@@ -536,7 +643,6 @@ class Select {
 
     /**
      * Check result columns for aggregate or group by violation.
-     * <p>
      * If any result column is aggregated, then all result columns need to be
      * aggregated, unless it is included in the group by clause.
      */
@@ -831,8 +937,8 @@ class Select {
             }
         }
 
-        if (sUnion != null) {
-            switch (iUnionType) {
+        if (unionSelect != null) {
+            switch (unionType) {
 
                 case EXCEPT :
                     sb.append(' ').append(Token.T_EXCEPT).append(' ');
@@ -886,12 +992,12 @@ class Select {
 
         result = result && checkResolved(check);
 
-        if (sUnion != null) {
-            if (sUnion.iResultLen != iResultLen) {
+        if (unionSelect != null) {
+            if (unionSelect.iResultLen != iResultLen) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            sUnion.resolveAll(check);
+            unionSelect.resolveAll(check);
         }
 
         isResolved = result;
@@ -955,8 +1061,8 @@ class Select {
         sb.append("havingCondition=[").append(havingCondition).append("]\n");
         sb.append("groupColumns=[").append(groupColumnNames).append("]\n");
 
-        if (sUnion != null) {
-            switch (iUnionType) {
+        if (unionSelect != null) {
+            switch (unionType) {
 
                 case EXCEPT :
                     sb.append(" EXCEPT ");
@@ -978,7 +1084,7 @@ class Select {
                     sb.append(" UNKNOWN SET OPERATION ");
             }
 
-            sb.append("[\n").append(sUnion).append("]\n");
+            sb.append("[\n").append(unionSelect).append("]\n");
         }
 
         return sb.toString();
@@ -988,7 +1094,7 @@ class Select {
     private void preProcess() {
 
         try {
-            getResult(1, null);
+            getResult(null, 1);
         } catch (HsqlException e) {}
     }
 
