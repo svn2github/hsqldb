@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.7 2004/02/20 00:05:19 unsaved Exp $
+# $Id: hsqldb,v 1.9 2004/04/03 21:11:51 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -93,7 +93,11 @@ case "`uname`" in
         CFGFILE=/etc/sysconfig/hsqldb
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
-        THISDIR=/etc/rc.d/init.d
+        # There may be some UNIX variants that have init.d somewhere else
+        # and that don't have a link directly in /etc.  If so, make a sym
+        # link from /etc/init.d to your real init.d directory.
+        # (This is the case with very old versions of RedHat).
+        THISDIR=/etc/init.d
     ;;
     FreeBSD)
         CFGFILE=/usr/local/etc/hsqldb.cfg
