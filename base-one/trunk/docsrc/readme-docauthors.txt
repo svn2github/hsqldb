@@ -75,6 +75,13 @@ If you want to provide a link to the document, you just ulink to
 the document in the current directory, not to the one in the cdata
 
 
+NOTES
+
+Please use <remark> elements to mark up notes for yourself or for
+other developers.
+All <remarks> should be removed before the doc goes public!
+
+
 TIPS
 
 When closing DocBook <screen> and <programlisting> elements, make
