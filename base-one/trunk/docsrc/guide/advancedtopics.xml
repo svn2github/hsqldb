@@ -1,7 +1,7 @@
-<!-- $Id: advancedtopics.xml,v 1.1 2004/04/16 00:35:16 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.2 2004/04/16 03:01:17 unsaved Exp $ -->
 
-<chapter>
-    <title>Advanced Topics</title>
+<chapter id='advanced-chapter'>
+    <title id='advanced-title'>Advanced Topics</title>
     <chapterinfo>
         <authorgroup>
             <author>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/16 00:35:16 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/16 03:01:17 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>

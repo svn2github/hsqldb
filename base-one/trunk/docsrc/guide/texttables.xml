@@ -1,7 +1,7 @@
-<!-- $Id: texttables.xml,v 1.2 2004/04/15 04:28:53 unsaved Exp $ -->
+<!-- $Id: texttables.xml,v 1.3 2004/04/16 03:02:21 unsaved Exp $ -->
 
-<chapter>
-    <title>Text Tables</title>
+<chapter id='texttables-chapter'>
+    <title id='texttables-title'>Text Tables</title>
     <subtitle>Text Tables as a Standard Feature of HSQLDB</subtitle>
     <chapterinfo>
         <authorgroup>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/15 04:28:53 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/16 03:02:21 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
