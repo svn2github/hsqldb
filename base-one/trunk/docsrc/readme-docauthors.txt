@@ -87,7 +87,7 @@ CONVENTIONS
 
 Please use <remark> elements to mark up notes for yourself or for
 other developers.
-All <remarks> should be removed before the doc goes public!
+All <remark>s should be removed before the doc goes public!
 
 Please capitalize HSQLDB like "Hsqldb" in titles, and capitalize like
 "HSQLDB" elsewhere.  (In filepaths and package names you code as
