@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.28 2004/06/08 13:04:25 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.29 2004/06/08 23:27:37 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.28 $</edition>
-        <pubdate>$Date: 2004/06/08 13:04:25 $</pubdate>
+        <edition>$Revision: 1.29 $</edition>
+        <pubdate>$Date: 2004/06/08 23:27:37 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -1065,18 +1065,6 @@
         <section>
             <title>Flow Control</title>
             <simpara>
-                A considerable limitation to the procedural commands is that you
-                can not nest flow control commands of the same kind inside one
-                another.
-                You can't, for example, have an "* if" statement inside of 
-                another "* if" statement.
-                You can use SQL file nesting as a work-around.
-                (You can nest SQL files).
-                You can nest statements of one type inside statements of
-                another (like an <literal>if</literal> within a 
-                <literal>while</literal>).
-            </simpara>
-            <simpara>
                 Flow control works by conditionally executing blocks of 
                 Commands according to conditions specified by logical 
                 expressions.
@@ -1087,6 +1075,16 @@
                 statement (like <literal>* foreach, *while, * if</literal>)
                 and a corresponding <literal>* end</literal> PL Command
                 (like <literal>* end foreach</literal>).
+            </simpara> <simpara>
+                You can nest flow control statements, just like you can nest
+                SQL files, but be aware that the PL block reader is pretty
+                ignorant about SQL statements and comments-- is just looks
+                for lines beginning with "* end BLOCK-TYPE".
+                Therefore, if you put a comment line in front of such an
+                end statement, or if a line of a multi-line SQL statement
+                begins with "* end BLOCK-TYPE", things will not work.
+                (This limitation will very likely be removed in a future 
+                version of SqlTool).
             </simpara> <simpara>
                 The values of control variables for foreach and while PL
                 blocks will change as expected.
