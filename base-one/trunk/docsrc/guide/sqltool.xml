@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.49 2004/07/06 15:41:35 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.50 2004/07/06 16:49:21 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.49 $</edition>
-        <pubdate>$Date: 2004/07/06 15:41:35 $</pubdate>
+        <edition>$Revision: 1.50 $</edition>
+        <pubdate>$Date: 2004/07/06 16:49:21 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -937,6 +937,25 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         script is called by
                         somebody interactively, from the SqlTool command-line, 
                         or included in another SQL file (i.e. nested).
+                    </simpara><simpara>
+                        The default settings are usually best for people who 
+                        don't want to put in any explicit \* or error handling 
+                        code at all.
+                        If you run SQL files from the SqlTool command line,
+                        then any errors will cause SqlTool to roll back and
+                        abort immediately.
+                        If you run SqlTool interactively and invoke SQL files
+                        with \i commands, the scripts will continue to run
+                        upon errors (and will not roll back).
+                        This behavior was chosen because there are lots of
+                        SQL files out there that produce errors which can be
+                        ignored; but we don't want to ignore errors that a
+                        user won't see.
+                        I reiterate that any and all of this behavior can (and 
+                        often should) be changed by Special Commands run in 
+                        your interactive shell or in the SQL files.
+                        Only you know whether errors in your SQL files can
+                        safely be ignored.
                     </simpara></tip>
                 </listitem></varlistentry>
             </variablelist>
