@@ -1,6 +1,7 @@
-# If using this as a UNIX init script, do not put an interpreter line here,
-# since System V UNIXes invoke init scripts using the the default system
-# shell and ignore interpreter lines.
+#!/bin/sh
+# For boot-up and system shutdown, most UNIXes explicitly run a shell
+# interpreter.  In that case, the interpreter line above is ignored.
+# There are a few UNIXes (notably Darwin) that require the interpreter line.
 
 # Copyright (c) 2001-2004, The HSQL Development Group
 # All rights reserved.
@@ -32,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.25 2004/06/07 15:19:53 unsaved Exp $
+# $Id: hsqldb,v 1.26 2004/06/11 04:24:48 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -112,7 +113,7 @@ BASEDIR=
 AUTH_FILE=
 SHUTDOWN_OPTION=
 case "`uname`" in
-    Darwin)
+    Darwin)     # I.e. Mac OS X.  I don't know about older Mac OSes.
         CFGFILE=/etc/hsqldb.conf
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
@@ -229,6 +230,9 @@ esac
     echo "No Java executable found at '$JAVA_EXECUTABLE'" 1>&2
     exit 2
 }
+
+# "chown" lives here on some UNIXes.
+PATH="$PATH:/usr/sbin"
 
 # Set HSQLDB_PID according to pid file.
 HSQLDB_PID=
