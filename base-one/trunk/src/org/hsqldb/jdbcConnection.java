@@ -953,35 +953,19 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * As of HSQLDB 1.7.0, SQL Savepoints are supported.  As such,
-     * successfully calling this method now also removes all
-     * Savepoints from this connection's {@link Session Session}. <p>
+     * Starting with HSQLDB 1.7.2, savepoints are fully supported both
+     * in SQL and via the JDBC interface. <p>
      *
-     * HSQLDB supports an arbitrary number of named
-     * Savepoints per transaction and allows explicitly rolling back
-     * to any one of them. At this time, HSQLDB does not support
-     * anonymous Savepoints. However, this feature <i>is</i> slated
-     * for the 1.7.x series. <p>
+     * Using SQL, savepoints may be set, released and used in rollback
+     * as follows:
      *
-     * Also, JDBC 3 support for java.sql.Savepoint has not yet been
-     * implemented. At present, rather, the following SQL syntax must
-     * be used: <p>
+     * <pre>
+     * SAVEPOINT &lt;savepoint-name&gt;
+     * RELEASE SAVEPOINT &lt;savepoint-name&gt;
+     * ROLLBACK TO SAVEPOINT &lt;savepoint-name&gt;
+     * </pre>
      *
-     * <code class="JavaCodeExample">
-     * SAVEPOINT savepoint_name1;<br>
-     * ... -- perform some work<br>
-     * SAVEPOINT savepoint_name2;<br>
-     * ...-- perform some work<br>
-     * ROLLABACK TO SAVEPOINT savepoint_name2<br>
-     * ...-- perform some work<br>
-     * ROLLABACK TO SAVEPOINT savepoint_name1; </code> <p>
-     *
-     * <B>Note:</B> If two or more Savepoints with the same name are
-     * performed during the same transaction, the latest one replaces
-     * the previous one, so that it is impossible to roll back to the
-     * previous one. </span> <p>
-     *
-     * <!-- end release-specific documentation -->
+     * </span><!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit
@@ -1007,27 +991,19 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * As of HSQLDB 1.7.0, SQL Savepoints are supported.  As such,
-     * successfully calling this method also removes all Savepoints
-     * from this <code>Connection</code>'s {@link Session Session}.
-     * <p>
+     * Starting with HSQLDB 1.7.2, savepoints are fully supported both
+     * in SQL and via the JDBC interface. <p>
      *
-     * As of 1.7.0, HSQLDB supports an arbitrary number of named
-     * Savepoints per transaction and allows explicitly rolling back
-     * to any one of them. At this time, HSQLDB does not support
-     * anonymous Savepoints. However, this feature <i>is</i> slated
-     * for the 1.7.x series. <p>
+     * Using SQL, savepoints may be set, released and used in rollback
+     * as follows:
      *
-     * <code class="JavaCodeExample">
-     * SAVEPOINT savepoint_name1;<br>
-     * ...-- perform some work<br>
-     * SAVEPOINT savepoint_name2;<br>
-     * ...-- perform some work<br>
-     * ROLLABACK TO SAVEPOINT savepoint_name2<br>
-     * ...-- perform some work<br>
-     * ROLLABACK TO SAVEPOINT savepoint_name1; </code> <p>
+     * <pre>
+     * SAVEPOINT &lt;savepoint-name&gt;
+     * RELEASE SAVEPOINT &lt;savepoint-name&gt;
+     * ROLLBACK TO SAVEPOINT &lt;savepoint-name&gt;
+     * </pre>
      *
-     * <!-- end release-specific documentation -->
+     * </span> <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs
      * @see #setAutoCommit

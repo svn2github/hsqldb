@@ -236,7 +236,6 @@ class Database {
             isNew = (sType == DatabaseManager.S_MEM
                      ||!HsqlProperties.checkFileExists(sPath, isFilesInJar(),
                          getClass()));
-
             databaseProperties = new HsqlDatabaseProperties(this);
 
             databaseProperties.load();

@@ -135,10 +135,13 @@ class WebServerConnection implements Runnable {
         BundleHandler.getBundleHandle("content_types", null);
 
     /**
-     *  Constructor declaration
+     * Creates a new WebServerConnection to the specified WebServer on the
+     * specified socket.
      *
-     * @param  socket
-     * @param  server
+     * @param socket the network socket on which WebServer communication
+     *      takes place
+     * @param server the WebServer instance to which the object
+     *      represents a connection 
      */
     WebServerConnection(Socket socket, WebServer server) {
         this.server = server;
@@ -146,8 +149,11 @@ class WebServerConnection implements Runnable {
     }
 
     /**
-     * @throws Exception
-     * @return
+     * Retrieves a best-guess mime-type string using the file extention
+     * of the name argument.
+     *
+     * @return a best-guess mime-type string using the file extention
+     *      of the name argument.
      */
     private String getMimeTypeString(String name) {
 

@@ -551,7 +551,9 @@ public class Trace extends PrintWriter {
                          String error) throws HsqlException {
 
         if (!condition) {
+            if (TRACE) {
             printStack();
+            }
 
             throw getError(ASSERT_FAILED, error);
         }

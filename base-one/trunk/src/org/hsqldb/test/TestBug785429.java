@@ -34,8 +34,8 @@
  *
  * Created on August 27, 2003, 3:20 PM
  */
-
 package org.hsqldb.test;
+
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 import org.hsqldb.Server;
@@ -50,7 +50,7 @@ import java.sql.Statement;
  *
  * @author  boucherb@users.sourceforge.net
  */
-public class TestBug785429 extends TestCase{
+public class TestBug785429 extends TestCase {
 
 //  change the url to reflect your preferred db location and name
 //  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
@@ -84,21 +84,24 @@ public class TestBug785429 extends TestCase{
             stmt = conn.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(this +".setUp() error: " + e.getMessage());
+            System.out.println(this + ".setUp() error: " + e.getMessage());
         }
     }
 
     protected void tearDown() {
+
         try {
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(this + ".tearDown() error: " + e.getMessage());
         }
+
         server.stop();
     }
 
     public void testBug785429() throws Exception {
+
         String            sql;
         String            msg;
         int               i;
@@ -108,50 +111,54 @@ public class TestBug785429 extends TestCase{
 
         stmt.executeUpdate("drop table testA if exists;");
         stmt.executeUpdate("drop table testB if exists;");
-        stmt.executeUpdate("create table testA(oid binary(2), data integer);");
-        stmt.executeUpdate("create table testB(oid binary(2), data integer);");
+        stmt.executeUpdate(
+            "create table testA(oid binary(2), data integer);");
+        stmt.executeUpdate(
+            "create table testB(oid binary(2), data integer);");
         stmt.executeUpdate("insert into testA values('0001',1);");
         stmt.executeUpdate("insert into testB values('0001',1);");
 
         sql = "select * from testA as ttt,(select oid,data from testB) as tst "
               + "where (tst.oid=ttt.oid) and (tst.oid='0001');";
-
         rs = stmt.executeQuery(sql);
-
         rowcount = 0;
 
-        while(rs.next()) {
+        while (rs.next()) {
             rowcount++;
         }
 
         msg = "select * row count:";
 
         assertEquals(msg, 1, rowcount);
-
         stmt.execute("drop table testA if exists");
         stmt.execute("drop table testB if exists");
         stmt.execute("create table testA(oid binary(2), data integer)");
         stmt.execute("create table testB(oid binary(2), data integer)");
 
-        byte[] oid= new byte[]{0,1};
+        byte[] oid = new byte[] {
+            0, 1
+        };
 
         ps = conn.prepareStatement("insert into testA values(?,1)");
-        ps.setBytes(1,oid);
+
+        ps.setBytes(1, oid);
         ps.execute();
 
         ps = conn.prepareStatement("insert into testB values (?,1)");
-        ps.setBytes(1,oid);
+
+        ps.setBytes(1, oid);
         ps.execute();
 
         sql = "select * from testA as ttt,(select oid,data from testB) as tst "
               + "where (tst.oid=ttt.oid) and (tst.oid=?);";
-
         ps = conn.prepareStatement(sql);
-        ps.setBytes(1,oid);
+
+        ps.setBytes(1, oid);
+
         rs = ps.executeQuery();
         rowcount = 0;
 
-        while(rs.next()) {
+        while (rs.next()) {
             rowcount++;
         }
 
@@ -161,6 +168,7 @@ public class TestBug785429 extends TestCase{
     }
 
     public static void main(String[] args) throws Exception {
+
         TestResult            result;
         TestCase              test;
         java.util.Enumeration failures;
@@ -177,7 +185,7 @@ public class TestBug785429 extends TestCase{
 
         failures = result.failures();
 
-        while(failures.hasMoreElements()) {
+        while (failures.hasMoreElements()) {
             System.out.println(failures.nextElement());
         }
     }

@@ -113,9 +113,13 @@ class ServerConnection implements Runnable {
     Thread                  runnerThread;
 
     /**
+     * Creates a new ServerConnection to the specified Server on the
+     * specified socket.
      *
-     * @param socket
-     * @param server
+     * @param socket the network socket on which Server communication
+     *      takes place
+     * @param server the Server instance to which the object
+     *      represents a connection 
      */
     ServerConnection(Socket socket, Server server) {
 
@@ -131,6 +135,10 @@ class ServerConnection implements Runnable {
         }
     }
 
+    /**
+     * Signals this object to close, including exiting the thread running
+     * the request handling loop
+     */
     void signalClose() {
 
         keepAlive = false;
@@ -140,6 +148,9 @@ class ServerConnection implements Runnable {
         }
     }
 
+    /**
+     * Closes this connection.
+     */
     private void close() {
 
         if (session != null) {
@@ -159,10 +170,7 @@ class ServerConnection implements Runnable {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Initializes this connection.
      */
     private void init() {
 
@@ -219,8 +227,8 @@ class ServerConnection implements Runnable {
     }
 
     /**
-     * Method declaration
-     *
+     * Initializes this connection and runs the request handling
+     * loop until closed.
      */
     public void run() {
 
@@ -255,6 +263,13 @@ class ServerConnection implements Runnable {
         }
     }
 
+    /**
+     * Retrieves the thread name to be used  when
+     * this object is the Runnable object of a Thread.
+     *
+     * @return the thread name to be used  when
+     *      this object is the Runnable object of a Thread.
+     */
     String getConnectionThreadName() {
 
         String s = toString();

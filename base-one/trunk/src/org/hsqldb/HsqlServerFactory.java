@@ -50,7 +50,7 @@ public class HsqlServerFactory {
 
         HsqlProperties props = new HsqlProperties();
 
-        props.setProperty("server.database", dbFilePath);
+        props.setProperty("server.database.0", dbFilePath);
         props.setProperty("server.trace", debugMessages);
         props.setProperty("server.silent", silentMode);
 
@@ -66,7 +66,7 @@ public class HsqlServerFactory {
 
         server.setState(ServerConstants.SERVER_STATE_ONLINE);
 
-        // Server now implementes HsqlSocketRequestHandler,
+        // Server now implements HsqlSocketRequestHandler,
         // so there's really no need for HsqlSocketRequestHandlerImpl
         return (HsqlSocketRequestHandler) server;
     }

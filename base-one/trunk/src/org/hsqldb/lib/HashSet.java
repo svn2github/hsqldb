@@ -97,7 +97,7 @@ public class HashSet extends BaseHashMap implements Set {
 
     public Object[] toArray(Object a[]) {
 
-        if (a.length < size()) {
+        if (a == null || a.length < size()) {
             a = new Object[size()];
         }
 

@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.io.Externalizable;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
@@ -117,7 +116,7 @@ final class DIProcedureInfo {
         int size;
         int type;
 
-        type = getColDataType(i).intValue();
+        type = getColTypeCode(i);
 
         switch (type) {
 
@@ -131,13 +130,17 @@ final class DIProcedureInfo {
             case Types.BIGINT :
             case Types.DOUBLE :
             case Types.DATE :
-            case Types.TIME :
-            case Types.TIMESTAMP : {
+            case Types.FLOAT :
+            case Types.TIME : {
                 size = 8;
 
                 break;
             }
-            case Types.FLOAT :
+            case Types.TIMESTAMP : {
+                size = 12;
+
+                break;
+            }
             case Types.REAL :
             case Types.INTEGER : {
                 size = 4;
@@ -392,7 +395,7 @@ final class DIProcedureInfo {
         typeMap.put(Double.TYPE, type);
         typeMap.put(Double.class, type);
 
-        // FLOAT
+        // FLOAT : Not actually a legal IN parameter type yet
         type = ValuePool.getInt(Types.FLOAT);
 
         typeMap.put(Float.TYPE, type);
@@ -413,6 +416,7 @@ final class DIProcedureInfo {
         type = ValuePool.getInt(Types.LONGVARBINARY);
 
         typeMap.put(byte[].class, type);
+        typeMap.put(Binary.class, type);
 
         // LONGVARCHAR
         type = ValuePool.getInt(Types.LONGVARCHAR);
@@ -434,13 +438,13 @@ final class DIProcedureInfo {
             typeMap.put(c, type);
         } catch (Exception e) {}
 
-        // SMALLINT
+        // SMALLINT : Not actually a legal IN parameter type yet
         type = ValuePool.getInt(Types.SMALLINT);
 
         typeMap.put(Short.TYPE, type);
         typeMap.put(Short.class, type);
 
-        // STRUCT
+        // STRUCT :
         type = ValuePool.getInt(Types.STRUCT);
 
         try {
@@ -459,13 +463,13 @@ final class DIProcedureInfo {
 
         typeMap.put(java.sql.Timestamp.class, type);
 
-        // TINYINT
+        // TINYINT : Not actually a legal IN parameter type yet
         type = ValuePool.getInt(Types.TINYINT);
 
         typeMap.put(Byte.TYPE, type);
         typeMap.put(Byte.class, type);
 
-        // XML
+        // XML : Not actually a legal IN parameter type yet
         type = ValuePool.getInt(Types.XML);
 
         try {
@@ -600,7 +604,7 @@ final class DIProcedureInfo {
             to = Class.forName("java.sql.Clob");
 
             if (to.isAssignableFrom(c)) {
-                return Types.TIMESTAMP;
+                return Types.CLOB;
             }
         } catch (Exception e) {}
 
@@ -622,7 +626,12 @@ final class DIProcedureInfo {
             }
         } catch (Exception e) {}
 
-        // LONGVARCHAR
+        // LONGVARBINARY : org.hsqldb.Binary is not final
+        if (Binary.class.isAssignableFrom(c)) {
+            return Types.LONGVARBINARY;
+        }
+
+        // LONGVARCHAR : really OTHER at this point
         try {
 
             // @since JDK1.4
@@ -635,10 +644,7 @@ final class DIProcedureInfo {
 
         // we have no standard mapping for the specified class
         // at this point...is it even storable?
-        if (Serializable.class.isAssignableFrom(c)
-        /* Oops: Externalizable extends Serializable
-         || Externalizable.class.isAssignableFrom(c) */
-        ) {
+        if (Serializable.class.isAssignableFrom(c)) {
 
             // Yes: it is storable, as an OTHER.
             return Types.OTHER;

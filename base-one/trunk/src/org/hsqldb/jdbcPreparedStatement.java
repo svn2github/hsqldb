@@ -1064,6 +1064,7 @@ implements java.sql.PreparedStatement {
         // NOTE: synchronized because we wouldn't want
         //       the partial effects of clearing the array
         //       to be visible to an executeXXX call.
+        checkClosed();
         org.hsqldb.lib.ArrayUtil.fillArray(parameterValues, null);
     }
 
@@ -1232,8 +1233,8 @@ implements java.sql.PreparedStatement {
      * Starting with HSQLDB 1.7.2, a prepared statement object knows, apriori,
      * the SQL type of each parameter, as a result of preparing the supplied
      * SQL character sequence.  As such, this method no longer calls out to
-     * setXXX methods and instead the supplied object is paased directly into
-     * the internal setParameter method where the need for conversion is
+     * setXXX methods and instead the supplied object is passed directly into
+     * the internal setParameter() method where the need for conversion is
      * detected and, if required, only a single, direct conversion to the
      * internal representation of the type of the parameter is performed. <p>
      *
@@ -1603,7 +1604,7 @@ implements java.sql.PreparedStatement {
      * Up to and including HSQLDB 1.7.1, this feature is not supported. <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported and is
-     * roughly equivatent (null handling not shown) to:
+     * roughly equivalent (null handling not shown) to:
      *
      * <pre>
      * setObject(i, x.getArray());
@@ -2198,8 +2199,8 @@ implements java.sql.PreparedStatement {
      *
      * Excludes the case where t1 or t2 or both are OTHER. <p>
      *
-     * @param the "from" type
-     * @param the "to" type
+     * @param t1 the "from" type
+     * @param t2 the "to" type
      * @return true iff setParameter can safely assign the value of its
      *      argument, o, without an intermediate conversion
      */
@@ -2394,18 +2395,18 @@ implements java.sql.PreparedStatement {
      *
      * @return a String representation of this object
      */
-    public synchronized String toString() {
+    public String toString() {
 
-        // synchronized, since otherwise we could get NPE's
-        // if another thread closes this statement while the
-        // current thread is executing this method.
-        StringBuffer sb;
-
-        sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
+        String       sql;
+        Object[]     pv;
 
         sb.append(super.toString());
 
-        if (isClosed()) {
+        sql = this.sql;
+        pv  = parameterValues;
+
+        if (sql == null || pv == null) {
             sb.append("[closed]");
 
             return sb.toString();
@@ -2413,12 +2414,12 @@ implements java.sql.PreparedStatement {
 
         sb.append("[sql=[").append(sql).append("]");
 
-        if (parameterValues.length > 0) {
+        if (pv.length > 0) {
             sb.append(", parameters=[");
 
-            for (int i = 0; i < parameterValues.length; i++) {
+            for (int i = 0; i < pv.length; i++) {
                 sb.append('[');
-                sb.append(parameterValues[i]);
+                sb.append(pv[i]);
                 sb.append("], ");
             }
 

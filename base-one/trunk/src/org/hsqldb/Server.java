@@ -218,9 +218,9 @@ import org.hsqldb.resources.BundleHandler;
  *         method.
  * </ol> <p>
  *
- * These values natural to their context because the first case allows
+ * These values are natural to their context because the first case allows
  * the JVM to exit by default on Server shutdown when a Server instance is
- * started from a command line environment, while the second case prevents
+ * started from a command line environment, whereas the second case prevents
  * a typically unwanted JVM exit on Server shutdown when a Server intance
  * is started as part of a larger framework. <p>
  *
@@ -763,10 +763,9 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Retrieves the root context (directory) from which web content
      * is served.  This property is relevant only when the server
-     * protocol is HTTP(S).  Although unlikely, in the future, other
-     * contexts, such as jar urls may be supported, so that pages can
-     * be served from the contents of a jar or from the JVM class path,
-     * for example.
+     * protocol is HTTP(S).  Although unlikely, it may be that in the future
+     * other contexts, such as jar urls may be supported, so that pages can
+     * be served from the contents of a jar or from the JVM class path.
      *
      * @return the root context (directory) from which web content is served
      *
@@ -845,8 +844,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retrieves whether this server restarts on shutdown (currently not
-     * implemented).
+     * Retrieves whether this server restarts on shutdown.
      *
      * @return true this server restarts on shutdown
      *
@@ -875,7 +873,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retreives whether the use secure sockets was requested in the
+     * Retreives whether the use of secure sockets was requested in the
      * server properties.
      *
      * @return if true, secure sockets are requested, else not
@@ -889,10 +887,10 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retrieves whether trace messages are to go to System.out or the
+     * Retrieves whether JDBC trace messages are to go to System.out or the
      * DriverManger PrintStream/PrintWriter, if any.
      *
-     * @return true if tracing is on
+     * @return true if tracing is on (JDBC trace messages to system out)
      *
      * @jmx.managed-attribute
      *  access="read-write"
@@ -905,9 +903,12 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Attempts to put properties from the file
      * with the specified path.  If the path is null or
-     * zero length, the default path is assumed.
+     * zero length, the default path is assumed.  The file
+     * extention '.properties' is implicit and should not
+     * be included in the path specification.
      *
-     * @param path the path of the desired properties file
+     * @param path the path of the desired properties file, without the
+     *      '.properties' file extention
      * @throws RuntimeException if this server is running
      * @return true if the indicated file was read sucessfully, else false
      *
@@ -995,9 +996,9 @@ public class Server implements HsqlSocketRequestHandler {
      * without specifying an InetAddress.
      *
      * @param address A string representing the desired InetAddress as would be
-     *    retrieved by InetAddres.getByName(), or "any" to signify
-     *    that server sockets should be constructed using the signature
-     *    that does not specify the InetAddres.
+     *    retrieved by InetAddres.getByName(), or "any" (case insensitive) to
+     *    signify that server sockets should be constructed using the signature
+     *    that does not specify the InetAddress.
      * @throws RuntimeException if this server is running
      *
      * @jmx.managed-operation
@@ -1113,8 +1114,7 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Sets whether this server restarts on shutdown (currently not
-     * implemented).
+     * Sets whether this server restarts on shutdown.
      *
      * @param restart if true, this server restarts on shutdown
      *

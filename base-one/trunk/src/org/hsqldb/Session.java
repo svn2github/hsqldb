@@ -153,6 +153,9 @@ class Session implements SessionInterface {
         return iId;
     }
 
+    /**
+     * Closes this Session.
+     */
     public void close() {
 
         if (!isClosed) {
@@ -165,8 +168,6 @@ class Session implements SessionInterface {
     /**
      * Closes this Session, freeing any resources associated with it
      * and rolling back any uncommited transaction it may have open.
-     *
-     * @throws HsqlException if a database access error occurs
      */
     void disconnect() {
 
@@ -220,7 +221,7 @@ class Session implements SessionInterface {
 
     /**
      * Retrieves the Database instance to which this
-     * Session represents a connection
+     * Session represents a connection.
      *
      * @return the Database object to which this Session is connected
      */
@@ -240,7 +241,7 @@ class Session implements SessionInterface {
 
     /**
      * Retrieves the User object representing the user currently controlling
-     * this session
+     * this Session.
      *
      * @return this Session's User object
      */
@@ -494,7 +495,7 @@ class Session implements SessionInterface {
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
 
-        while (savepoints.size() > index){
+        while (savepoints.size() > index) {
             savepoints.remove(savepoints.size() - 1);
         }
     }

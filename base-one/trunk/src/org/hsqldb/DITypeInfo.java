@@ -306,7 +306,7 @@ final class DITypeInfo {
                 return 5;                    // Math.max("true".length(),"false".length);
 
             case Types.DATALINK :
-                return 2004;                 // same as precision
+                return 20004;                 // same as precision
 
             case Types.DECIMAL :
             case Types.NUMERIC :
@@ -663,7 +663,7 @@ final class DITypeInfo {
             case Types.DATALINK :
 
                 // from SQL CLI spec.  TODO:  Interpretation?
-                return ValuePool.getInt(2004);
+                return ValuePool.getInt(20004);
 
             case Types.DECIMAL :
             case Types.NUMERIC :
@@ -1062,7 +1062,7 @@ final class DITypeInfo {
                 return "CLOB";
 
             case Types.DATALINK :
-                return "Types.DATALINK";
+                return "DATALINK";
 
             case Types.DATE :
                 return "DATE";

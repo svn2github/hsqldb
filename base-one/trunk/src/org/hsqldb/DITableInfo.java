@@ -124,7 +124,7 @@ final class DITableInfo {
      */
     Integer getBRIScope() {
 
-        return (table.database.databaseReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
+        return (table.isTemp() ||!table.isWritable())
                ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
                : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
     }
@@ -200,9 +200,13 @@ final class DITableInfo {
             case Types.FLOAT :
             case Types.DATE :
             case Types.REAL :
-            case Types.TIME :
-            case Types.TIMESTAMP : {
+            case Types.TIME : {
                 size = 8;
+
+                break;
+            }
+            case Types.TIMESTAMP : {
+                size = 12;
 
                 break;
             }

@@ -891,7 +891,6 @@ class DatabaseCommandInterpreter {
         // check conversion of literals to values and size constraints
         try {
             Column.convertObject(sv, type);
-
         } catch (Exception e) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
         }
@@ -914,7 +913,8 @@ class DatabaseCommandInterpreter {
         return dv;
     }
 
-    public static void checkBooleanDefault(String s, int type) throws HsqlException{
+    public static void checkBooleanDefault(String s,
+                                           int type) throws HsqlException {
 
         if (type != Types.BIT || s == null) {
             return;
@@ -922,12 +922,11 @@ class DatabaseCommandInterpreter {
 
         s = s.toUpperCase();
 
-        if (s.equals(Token.T_TRUE) ||
-            s.equals(Token.T_FALSE)){
+        if (s.equals(Token.T_TRUE) || s.equals(Token.T_FALSE)) {
             return;
         }
 
-        if (s.equals("0") || s.equals("1") ){
+        if (s.equals("0") || s.equals("1")) {
             return;
         }
 
