@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.21 2004/01/25 04:51:49 unsaved Exp $
+ * $Id: SqlFile.java,v 1.22 2004/01/26 05:40:19 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -495,7 +495,7 @@ public class SqlFile {
                             ? ("<TD>" + fieldArray[j] + "</TD>")
                             : (((j > 0) ? spaces(2) : "")
                                     + pad(fieldArray[j], maxWidth[j],
-                                            rightJust[i]))
+                                            rightJust[j]))
                         );
                     };
                     psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
