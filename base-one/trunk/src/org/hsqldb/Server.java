@@ -222,7 +222,7 @@ public class Server {
 	    	ClassLoader loader = getClass().getClassLoader();
 		if (loader == null)
 		 throw new IncompatibleClassChangeError(
-		  "Failed to retrieve a ClassLoader");
+		  "Failed to retrieve a ClassLoader (Java 1.1?)");
 		Class clsProvider = loader.loadClass("java.security.Provider");
 		Class[] caProvider = { clsProvider };
 		Object objProvider =
