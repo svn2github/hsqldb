@@ -1,5 +1,13 @@
 Readme File
 
+2003.12.27
+
+support for SQL style SEQUENCE objects.
+
+Fixed reported bugs.
+
+support for DROP INDEX <IDX> IF EXISTS
+
 2003.12.05
 
 support for DROP INDEX <IDX> IF EXISTS

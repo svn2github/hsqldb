@@ -270,8 +270,6 @@ class Expression {
     //
     static final Integer INTEGER_0 = ValuePool.getInt(0);
     static final Integer INTEGER_1 = ValuePool.getInt(1);
-    static final Expression EXPRESSION_NULL = new Expression(Types.NULL,
-        null);
 
     /**
      * Creates a new boolean expression

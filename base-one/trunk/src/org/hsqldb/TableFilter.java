@@ -88,7 +88,7 @@ class TableFilter {
     static final int   CONDITION_START     = 2;    // candidate for eStart
     static final int   CONDITION_END       = 3;    // candidate for eEnd
     static final int   CONDITION_OUTER     = 4;    // add to this
-    private Table      filterTable;
+    Table              filterTable;
     private String     tableAlias;
     private Index      filterIndex;
     private Node       currentNode;

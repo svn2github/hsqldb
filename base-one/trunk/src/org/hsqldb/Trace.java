@@ -305,36 +305,36 @@ public class Trace extends PrintWriter {
      TextCache_closing_file_error                   = 189,
      TextCache_purging_file_error                   = 190,
      SEQUENCE_NOT_FOUND                             = 191,
-     SEQUENCE_ALREADY_EXISTS                        = 192;
+     SEQUENCE_ALREADY_EXISTS                        = 192,
+     TABLE_REFERENCED_CONSTRAINT                    = 193,
+     TABLE_REFERENCED_VIEW                          = 194,
 
     //
-    public static final int INTERNAL_unknown_internal_statement_type = 201,
-                            INTERNAL_session_operation_not_supported = 202,
-                            INTERNAL_ivalid_compiled_statement_id    = 203,
-                            DatabaseCommandInterpreter_processCreateTrigger1 =
-                                204,
-                            DatabaseCommandInterpreter_processCreateTrigger2 =
-                                205,
-                            DatabaseCommandInterpreter_processSavepoint = 206,
-                            DataFileCache_defrag                        = 207,
-                            DataFileCache_closeFile                     = 208,
-                            DataFileCache_makeRow                       = 209,
-                            DataFileCache_open                          = 210,
-                            DataFileCache_close                         = 211,
-                            Expression_resolveTypes1                    = 212,
-                            Expression_resolveTypes2                    = 213,
-                            Expression_resolveTypes3                    = 214,
-                            Expression_resolveTypes4                    = 215,
-                            Expression_resolveTypes5                    = 216,
-                            Expression_resolveTypes6                    = 217,
-                            Expression_resolveTypes7                    = 218,
-                            Expression_resolveTypeForLike               = 219,
-                            Expression_resolveTypeForIn1                = 220,
-                            Expression_resolveTypeForIn2                = 221,
-                            Session_execute                             = 222,
-                            Session_sqlExecuteDirect                    = 223,
-                            Session_sqlExecuteCompiled                  = 224;
-    static String           MESSAGE_TAG = "$$";
+    INTERNAL_unknown_internal_statement_type                       = 201,
+                  INTERNAL_session_operation_not_supported         = 202,
+                  INTERNAL_ivalid_compiled_statement_id            = 203,
+                  DatabaseCommandInterpreter_processCreateTrigger1 = 204,
+                  DatabaseCommandInterpreter_processCreateTrigger2 = 205,
+                  DatabaseCommandInterpreter_processSavepoint      = 206,
+                  DataFileCache_defrag                             = 207,
+                  DataFileCache_closeFile                          = 208,
+                  DataFileCache_makeRow                            = 209,
+                  DataFileCache_open                               = 210,
+                  DataFileCache_close                              = 211,
+                  Expression_resolveTypes1                         = 212,
+                  Expression_resolveTypes2                         = 213,
+                  Expression_resolveTypes3                         = 214,
+                  Expression_resolveTypes4                         = 215,
+                  Expression_resolveTypes5                         = 216,
+                  Expression_resolveTypes6                         = 217,
+                  Expression_resolveTypes7                         = 218,
+                  Expression_resolveTypeForLike                    = 219,
+                  Expression_resolveTypeForIn1                     = 220,
+                  Expression_resolveTypeForIn2                     = 221,
+                  Session_execute                                  = 222,
+                  Session_sqlExecuteDirect                         = 223,
+                  Session_sqlExecuteCompiled                       = 224;
+    static String MESSAGE_TAG                                      = "$$";
 
     //
     private static final String[] sDescription = {
@@ -531,8 +531,8 @@ public class Trace extends PrintWriter {
         "purging file: $$ error: $$",    //TextCache - or generic file error
         "S0002 Sequence not found",    //
         "S1000 Sequence already exists",    //
-        "reserved 193",    //
-        "reserved 194",    //
+        "23000 Table is referenced by a constraint in table",                                                                   //
+        "23000 Table is referenced by view",    //
         "reserved 195",    //
         "reserved 196",    //
         "reserved 197",    //

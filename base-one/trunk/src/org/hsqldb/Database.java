@@ -841,14 +841,8 @@ class Database {
     void dropTable(String name, boolean ifExists, boolean isView,
                    Session session) throws HsqlException {
 
-        Table      toDrop            = null;
-        int        dropIndex         = -1;
-        int        refererIndex      = -1;
-        Iterator   constraints       = null;
-        Constraint currentConstraint = null;
-        Table      refTable          = null;
-        boolean    isRef             = false;
-        boolean    isSelfRef         = false;
+        Table toDrop    = null;
+        int   dropIndex = -1;
 
         for (int i = 0; i < tTable.size(); i++) {
             toDrop = (Table) tTable.get(i);
@@ -871,7 +865,29 @@ class Database {
             }
         }
 
-        constraints = toDrop.getConstraints().iterator();
+        checkTableIsReferenced(toDrop);
+        checkTableIsInView(toDrop);
+        tTable.remove(dropIndex);
+        removeExportedKeys(toDrop);
+        userManager.removeDbObject(toDrop.getName());
+        triggerNameList.removeOwner(toDrop.tableName);
+        indexNameList.removeOwner(toDrop.tableName);
+        toDrop.drop();
+        session.setScripting(!toDrop.isTemp());
+        session.commit();
+    }
+
+    /**
+     * Throws if the table is referenced in a foreign key constraint.
+     */
+    private void checkTableIsReferenced(Table toDrop) throws HsqlException {
+
+        Iterator   constraints       = toDrop.getConstraints().iterator();
+        Constraint currentConstraint = null;
+        Table      refTable          = null;
+        boolean    isRef             = false;
+        boolean    isSelfRef         = false;
+        int        refererIndex      = -1;
 
         while (constraints.hasNext()) {
             currentConstraint = (Constraint) constraints.next();
@@ -897,9 +913,7 @@ class Database {
                 }
 
                 if (refererIndex != -1) {
-
-// tony_lai@users 20020820 - patch 595156
-                    throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    throw Trace.error(Trace.TABLE_REFERENCED_CONSTRAINT,
                                       Trace.Database_dropTable, new Object[] {
                         currentConstraint.getName().name,
                         refTable.getName().name
@@ -907,15 +921,23 @@ class Database {
                 }
             }
         }
+    }
 
-        tTable.remove(dropIndex);
-        removeExportedKeys(toDrop);
-        userManager.removeDbObject(toDrop.getName());
-        triggerNameList.removeOwner(toDrop.tableName);
-        indexNameList.removeOwner(toDrop.tableName);
-        toDrop.drop();
-        session.setScripting(!toDrop.isTemp());
-        session.commit();
+    /**
+     * Throws if the table is referenced in a view.
+     */
+    private void checkTableIsInView(Table toDrop) throws HsqlException {
+
+        for (int i = 0; i < tTable.size(); i++) {
+            Table t = (Table) tTable.get(i);
+
+            if (t.isView()) {
+                if (((View) t).hasTable(toDrop)) {
+                    throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
+                                      t.getName().name);
+                }
+            }
+        }
     }
 
     /**

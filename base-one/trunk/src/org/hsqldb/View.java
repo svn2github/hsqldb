@@ -32,10 +32,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
-// fredt - todo - disallow dropping tables used in views
+// fredt@users 20031227 - remimplementated as compiled query
 
 /**
  * Implementation of SQL VIEWS based on a SELECT query.
@@ -143,5 +144,28 @@ class View extends Table {
 
     void setDataReadOnly(boolean value) throws HsqlException {
         throw Trace.error(Trace.NOT_A_TABLE);
+    }
+
+    /**
+     * Returns true if specified table is referenced by this view or any views
+     * that this view references.
+     */
+    boolean hasTable(Table table) {
+
+        for (int i = 0; i < viewSubqueries.length; i++) {
+            Select select = viewSubqueries[i].select;
+
+            for (; select != null; select = select.sUnion) {
+                TableFilter tfilter[] = select.tFilter;
+
+                for (int j = 0; j < tfilter.length; j++) {
+                    if (table == tfilter[j].filterTable) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
