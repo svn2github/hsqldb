@@ -45,4 +45,22 @@ create table testB(id integer, parent integer default 20, ref integer,
 /*u1*/delete from testB where id=100;
 /*c3*/select * from testB
 /*c2*/select * from testB where parent=20
+-- CHAINED SELF REFERENCING FK
+-- ON DELETE CASCADE
+drop table testA if exists;
+create table testA(a int primary key,b int,
+    foreign key(b) references testA(a) on update cascade on delete cascade);
+insert into testA(a,b) values(1,1);
+insert into testA(a,b) values(2,1);
+insert into testA(a,b) values(3,1);
+insert into testA(a,b) values(4,2);
+insert into testA(a,b) values(5,2);
+insert into testA(a,b) values(6,2);
+insert into testA(a,b) values(7,3);
+insert into testA(a,b) values(8,3);
+insert into testA(a,b) values(9,3);
+/*u1*/delete from testA where a=1;
+/*r0*/select count(*) from testA;
+
+
 

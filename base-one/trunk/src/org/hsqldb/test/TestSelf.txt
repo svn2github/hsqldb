@@ -44,7 +44,7 @@ create table T1(Nr integer)
 create table T2(Nr integer primary Key)
 create table T3(Nr integer,dbl double,vc varchar(10),cc char(1))
 create table T4(nr integer,lvc longVarChar,dt date,tm time)
-create table T5(dec decimal(10) primary key,b bit(1) not null)
+create table T5(dec decimal(10) primary key,b binary(1) not null)
 create table "T6"("x" tinyint,s smallint not null,b bigint)
 create table t7("-x's'-" real,f float(2),n numeric,t timestamp)
 create table t8(bin binary,vb varbinary,lvb longvarbinary)
@@ -209,9 +209,13 @@ DROP TABLE HLO
 /*rx*/ update test set name=null || 'x' || null;select name from "TEST"
 /*rHo*/ select 'Ho' as hhoo from TEsT where name in ('x','y','z')
 -- case sensitivity tests
-/*r0*/ create table "T6"("x" char,s smallint not null,b bigint);select count(*) from "T6"
-/*rCaseS*/ insert into "T6" values('CaseS',100, 1000000000000); select "x" from "T6"
-
+create table "t6"("x" char,s smallint not null,b bigint, c binary);
+/*r0*/ select count(*) from "t6"
+/*u1*/ insert into "t6" values('CaseS',100, 1000000000000, null);
+/*rCaseS*/ select "x" from "t6"
+/*u1*/ delete from "t6"
+/*u1*/ insert into "t6" values(null,100, 1000000000000, null);
+/*u1*/ delete from "t6"
 -- Finish
 drop table address drop table place drop table invoice
 drop table t_double;drop table t_date drop table t_bit
