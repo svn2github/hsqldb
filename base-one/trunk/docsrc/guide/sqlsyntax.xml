@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.9 2004/05/31 00:38:36 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.10 2004/06/01 17:37:48 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.9 $</edition>
-    <pubdate>$Date: 2004/05/31 00:38:36 $</pubdate>
+    <edition>$Revision: 1.10 $</edition>
+    <pubdate>$Date: 2004/06/01 17:37:48 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -124,8 +124,9 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
             If NOT NULL is specified and the table is not empty, then a default 
             value must be specified.
         </para> <para>
-            This will fail if the  BEFORE clause is used and an SQL view
-            includes the table.
+            If an SQL view includes a SELECT * FROM &lt;tablename&gt; in its select
+            statement, the new columns is added to the view. This is a
+			non-standard feature which is likely to change in the future.
         </para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; DROP COLUMN &lt;columnname&gt;;</programlisting>
@@ -135,7 +136,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
             Will not work if column is part of a primary key, unique or foreign 
             key constraint.
         </para> <para>
-            This will fail if an SQL view  includes the table.
+            This will fail if an SQL view  includes the column.
         </para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>

@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.11 2004/05/16 22:29:04 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.12 2004/05/26 09:05:48 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.11 $</edition>
-        <pubdate>$Date: 2004/05/16 22:29:04 $</pubdate>
+        <edition>$Revision: 1.12 $</edition>
+        <pubdate>$Date: 2004/05/26 09:05:48 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -997,15 +997,16 @@
                 bytes on the total size of rows that are cached.
                 When the default values is used for both properties, the limit
                 on the total size of rows is approximately 50MB.
-                This translates to more actual memory used for the cache,
-                typically 2-4 times.
+                (This is the size of binary images of the rows. It translates to
+				 more actual memory, typically 2-4 times, used for the cache as
+				 the data is represented by Java objects.)
             </para> <para>
                 If memory is limited, the <property>hsqldb.cache_scale</property>
                 or <property>hsqldb.cache_size_scale</property> database
                 properties can be reduced.
                 In the example above, if the
                 <property>hsqldb.cache_size_scale</property> is reduced from 10
-                to 8, then the total size limit is reduced from 50MB to 12.5 MB.
+                to 8, then the total binary size limit is reduced from 50MB to 12.5 MB.
                 This will allow the number of cached rows to reach 50,000 small
                 rows, but only 12,500 of the larger rows.
             </para>

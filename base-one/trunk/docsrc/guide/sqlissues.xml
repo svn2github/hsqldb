@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.11 2004/04/23 17:10:15 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.12 2004/05/01 16:37:53 fredt Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.11 $</edition>
-        <pubdate>$Date: 2004/04/23 17:10:15 $</pubdate>
+        <edition>$Revision: 1.12 $</edition>
+        <pubdate>$Date: 2004/05/01 16:37:53 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -70,7 +70,7 @@
                 <title>
                     Column values which satisfy a 2-column UNIQUE constraint
                 </title>
-                <simplelist type='vert' columns='2'>
+                <simplelist type='horiz' columns='2'>
                     <member>1,</member>  <member>2</member>
                     <member>2,</member>  <member>1</member>
                     <member>2,</member>  <member>2</member>

@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.5 2004/04/23 00:47:09 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.7 2004/05/17 13:14:46 fredt Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building Hsqldb version 1.7.2</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/23 00:47:09 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/05/17 13:14:46 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -172,8 +172,7 @@
         <para>
             CodeSwitcher is a tool to manage different version of Java source 
             code.
-            It allows to compile HSQLDB for different JDKs, and switch between 
-            debug and runtime versions.
+            It allows to compile HSQLDB for different JDKs.
             It is something like a precompiler in C but it works directly on 
             the source code and does not create intermediate output or extra 
             files.

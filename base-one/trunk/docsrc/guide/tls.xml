@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.7 2004/05/16 22:36:57 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.8 2004/05/17 12:50:22 fredt Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/05/16 22:36:57 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/05/17 12:50:22 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -60,7 +60,7 @@
             </para></listitem> <listitem><para>
                 You need a HSQLDB jar file that was built with JSSE present.
                 If you got your HSQLDB 1.7.2 distribution from us, you are
-                all set, because we with Java 1.4 (which contains JSSE).
+                all set, because we build with Java 1.4 (which contains JSSE).
                 If you build your own jar file with Java 1.3, make sure to
                 install JSSE first.
             </para></listitem>

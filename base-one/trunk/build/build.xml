@@ -460,9 +460,12 @@ examples:
             description="Create javadoc for the distribution package">
       <javadoc
 		   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
+                        ${src}/org/hsqldb/Trigger.java,
 		   				${src}/org/hsqldb/Server.java,
 		   				${src}/org/hsqldb/WebServer.java,
-		   				${src}/org/hsqldb/jdbc/*.java"
+		   				${src}/org/hsqldb/jdbc/*.java,
+		   				${src}/org/hsqldb/sample/TriggerSample.java,
+		   				${src}/org/hsqldb/util/SqlTool.java"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
            author="true"
@@ -478,8 +481,8 @@ examples:
    </target>
 
     <target name="javadocdev" depends="-preparedoc"
-            description="Create javadoc for the distribution package">
-      <javadoc packagenames="org.hsqldb.*,org.hsqldb.lib.*,org.hsqldb.util.*"
+            description="Create javadoc for developers">
+      <javadoc packagenames="org.hsqldb.*,org.hsqldb.jdbc.*,org.hsqldb.lib.*,org.hsqldb.util.*"
            sourcepath="${src}"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"

@@ -1,14 +1,14 @@
 HSQLDB 1.7.2 CHANGE LOG
 
 
-The development of 1.7.2 began in late 2002 with a plan to release the new version within 6 months. Within 3 months, several alpha versions, culminating in ALPHA_M, were released and featured most of the intended enhancements. However, when newly written code for system tables was introduced, many changes had to be made to internal code to accommodate the reporting requirements. This was followed from around April 2003 with efforts to separate query compilation from execution. Other developments to allow multiple databases, better query processing, more advanced SQL keywords, etc. took place simultaneously, resulting in an extended scope for 1.7.2 and extensive addition and rewrite of several key classes. The next alpha version was released in September, followed by six others until the first Release Candidate became available at the end of 2003. Since then, all efforts have been concentrated on fixing bugs and inconsistencies, with 7 additional Release Candidates issued.
+The development of 1.7.2 began in late 2002 with a plan to release the new version within 6 months. Several alpha versions, culminating in ALPHA_M, were released in the first three months and featured most of the intended enhancements. However, when newly written code for system tables was introduced, many changes had to be made to internal code to accommodate the reporting requirements. This was followed from around April 2003 with efforts to separate query compilation from execution. Other developments to allow multiple databases, better query processing, more advanced SQL keywords, etc. took place simultaneously, resulting in an extended scope for 1.7.2 and extensive addition and rewrite of several key classes. The next alpha version was released in September, followed by a further six, until the first Release Candidate became available at the end of 2003. Since then, all efforts have been focused on fixing bugs and inconsistencies, with 7 additional Release Candidates issued.
 
 As a result, 1.7.2 features major changes to the database engine. Existing applications that work with previous versions may need modifications to work with the new version. Changes are listed here and in the rest of the documentation.
 
 I would like to thank all developers, testers and users who have contributed to this effort.
 
 
-April 2004
+June 2004
 
 Fred Toussi
 
@@ -33,7 +33,7 @@ Size / precision / scale values for several types are now disallowed. Allowed ty
 
 In column default value specification, functions such as CURRENT_TIME, CURRENT_DATA, etc. should not be enclosed in quotes. New function CURRENT_USER can also be used.
 
-
+SQL keywords are not allowed as table or column names unless they are double-quoted. 
 
 ----------------
 
@@ -44,7 +44,7 @@ View definitions can now have a column name list:
 
 CREATE VIEW <viewname> [(<colnmae>, ...)] AS SELECT ....
 
-ALTER TABLE commands take into account the views that reference the table and prevents illegal changes.
+ALTER TABLE commands take into account the views that reference the table and prevent illegal changes.
 
 
 
@@ -96,7 +96,7 @@ AGGREGATES, GROUP BY, HAVING
 
 DISTINCT aggregates are now supported.
 
-Aggregates on all numeric type columns are now supported.
+Aggregates on all numeric type columns are now supported. Expressions are allowed as aggregate function parameter.
 
 SUM returns a BIGINT for TINYINT, SMALLINT and INTEGER columns. It returns a DECIMAL for BIGINT columns (scale 0). SUM of a DECIMAL column has the same scale as the column.
 
@@ -149,7 +149,7 @@ FOREIGN KEY
 
 
 
-Full support of triggered actions, including foreign keys that reference the same table.
+Full support for triggered actions, including foreign keys that reference the same table.
 
 FORIEGN KEY ... ON UPDATE { CASCADE | SET NULL | SET DEFAULT } ON DELETE { CASCADE | SET NULL | SET DEFAULT }
 
@@ -171,7 +171,7 @@ Named sequence objects can be defined with:
 
 CREATE SEQUENCE <sequencename> [AS {INTEGER | BIGINT}] [START WITH <startvalue>] [INCREMENT BY <incrementvalue>];
 
-And the next value can be retrieved with:
+And the next value can be retrieved with the following expression in SELECT, INSERT and UPDATE queries:
 
 NEXT VALUE FOR <sequencename>
 
@@ -311,7 +311,7 @@ SPEED
 
 
 
-Speed optimisation of joins with views and subqueries.
+Speed optimisation of joins with views and subqueries, using indexes to optimise join performance.
 
 Improved index use for multiple key joins.
 
@@ -330,6 +330,7 @@ DATABASE PACKAGING AND MODES
 
 
 Two new options for databases: files_readonly and files_in_jar were added:
+
 
 FILE READ-ONLY
 
@@ -372,15 +373,13 @@ The server.properties and webserver.properties method for defining the databases
 server.database.0   path_of_the_first_database
 server.dbname.0 alias_for_the_first_database
 
-
 Up to 10 databases can be defined but they must start from 0. The same applies to command line arguments for Server and WebServer.
-
 
 The URL's for connecting to servers should have the alias of the database at the end. For example, to connect to the HSQL protocol server on the localhost use:
 
 jdbc:hsqldb:hsql://localhost/alias_for_the_database
 
-where alias_for_the_database is the same string as defined in server.properties as server.dbnam.n
+where alias_for_the_database is the same string as defined in server.properties as server.dbname.n
 
 If not explicitly set, the default for server.dbname.0 is "" (empty string) so that old URL types continue to work.
 
@@ -390,7 +389,6 @@ jdbc:hsqldb:mem:alias_for_the_first_database
 jdbc:hsqldb:mem:alias_for_the_second_database
 
 Examples: jdbc:hsqldb:mem:db1 jdbc:hsqldb:mem:mydb
-
 
 The connection type, 'file:', can be used for file database connections. Example below:
 
@@ -408,7 +406,7 @@ DATABASE METADATA
 
 System table support and java.sql.DatabaseMetadate have been overhauled.
 
-Use SELECT * FROM SYSTEM_TABLES for a full list.
+Use SELECT * FROM SYSTEM_TABLES to see the full list.
 
 
 
@@ -428,7 +426,7 @@ TEXT TABLES encoding of the source file can now be specified. UTF-8 and other en
 MEMORY USE AND OBJECT POOLING
 
 
-An Object pool has been incorporated. This reduces memory usage to varying degrees depending on the contents of database tables and speeds up the database in most cases. Currently the size of the pool is hard-coded but it will be user adjustable in the release version.
+An Object pool has been incorporated. This reduces memory usage to varying degrees depending on the contents of database tables and speeds up the database in most cases. Currently the size of the pool is hard-coded but it will be user adjustable in a future version.
 
 
 
@@ -437,19 +435,29 @@ An Object pool has been incorporated. This reduces memory usage to varying degre
 PERSISTENCE
 
 
+----------------
+
 CHECKPOINT DEFRAG
 
 Defragments the *.data file without shutting down the database
 
-Database script can be stored in binary or compressed binary formats, resulting in smaller size and faster loading.
+
+----------------
 
 SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED }
 
 Changes the format of the *.script file and performs a checkpoint.
 
+Database script can be stored in binary or compressed binary formats, resulting in smaller size and faster loading.
+
+
+----------------
+
 The *.script file now contains only the DDL and data that is written at CHECKPOINT or SHUTDOWN. The COMPRESSED format has the side benefit of hiding the DDL and the admin password.
 
 The *.log file now contains the statements executed since the last startup or CHECKPOINT. This file is in plain text format.
+
+----------------
 
 SET WRITE_DELAY {TRUE | FALSE}
 
@@ -460,6 +468,8 @@ The behaviour of SET WRITE_DELAY has changed with the introduction of the sync()
 SET WRITE_DELAY {TRUE | FALSE} is interpreted as synch every 60 seconds or 1 second. SET WRITE_DELAY <n> where n is an integer is interpreted as synch every n seconds. The current default is 60 seconds which seems to provide the right balance. Under heavy INSERT/DELETE/UPDATE test conditions, the performance impact of SET WRITE_DELAY 1 is probably about 15% over that of SET WRITE_DELAY 300.
 
 Crash recovery has been modified so that any line in the *.log file that is not properly written (and causes an error) ends the redo process. A message is reported to the user, instead of stopping engine operation.
+
+----------------
 
 NIO ACCESS FOR *.data FILES
 
@@ -493,9 +503,13 @@ Documentation is now maintained mainly in XML format with HTML and PDF versions 
 UTILITIES
 
 
-The SQL Tool is a powerful new utility in 1.7.2 and allows processing SQL command via the shell or scripts.
+The SQL Tool is a powerful new utility in 1.7.2 and allows processing SQL commands via the shell or scripts.
 
-The Transfer Tool utility saw a major upgrade just before the 1.7.2 release cycle. Since then only minor updates have been made to various existing tools.
+The Transfer Tool utility saw a major upgrade just before the 1.7.2 release cycle. In this release some minor updates and bug fixes, together with significant speedup, have been intoduced.
+
+The Database Manager has been enhanced slightly to include a command to save the result set in CSV format. The Swing version of Database Manager allows the user to sort the rows of the result set on any column.
+
+The connection dialogue in the AWT version of Database Manager and Transfer Tool allows saving and recalling connection URL's together with the user name and password.
 
 
 ----------------------------------------------------

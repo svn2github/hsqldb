@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: dbmanager.xml,v 1.1 2004/06/04 01:28:43 unsaved Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -12,8 +12,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision$</edition>
-    <pubdate>$Date$</pubdate>
+    <edition>$Revision: 1.1 $</edition>
+    <pubdate>$Date: 2004/06/04 01:28:43 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -22,8 +22,12 @@
 </appendixinfo>
 
 <section>
-    <title>Purpose</title>
-    <para>blah</para>
+    <title>Brief Introduction</title>
+    <para>The Database Manager tool is a simple GUI database query tool with a 
+	tree display of the tables. Both AWT and SWING versions of the tool are
+	available and work almost identically. 
+	</para><para>
+	</para>
 </section> 
 
 </appendix>

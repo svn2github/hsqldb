@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: transfertool.xml,v 1.1 2004/06/04 01:28:43 unsaved Exp $ -->
 
 <appendix>
 <title>Transfer Tool</title>
@@ -12,8 +12,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision$</edition>
-    <pubdate>$Date$</pubdate>
+    <edition>$Revision: 1.1 $</edition>
+    <pubdate>$Date: 2004/06/04 01:28:43 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Transfer</keyword>
@@ -21,8 +21,18 @@
 </appendixinfo>
 
 <section>
-    <title>Purpose</title>
-    <para>blah</para>
+    <title>Brief Introduction</title>
+    <para>Transfer Tool is a GUI program for transferring SQL schema and data
+	from one JDBC source to another. Source and destination can be different
+	database engines or different databases on the same server. 
+	</para><para>
+	Transfer Tool works in two different modes. Direct transfer maintains a 
+	connection to both source and destination and performs the transfer. Dump
+	and Restore mode is invoked once to transfer the data from the source to a
+	text file (Dump), then again to transfer the data from the text file to the
+	destination (Restore). With Dump and Restore, it is possible to make any
+	changes to the data prior to restoring it to the target. 
+	</para>
 </section> 
 
 </appendix>
