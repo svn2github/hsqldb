@@ -49,8 +49,8 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
 abstract class DatabaseRowOutput extends HsqlByteArrayOutputStream
 implements DatabaseRowOutputInterface {
 
-    static final int CACHE_ROW_160 = 0;
-    static final int CACHE_ROW_170 = 1;
+    static final int CACHED_ROW_160 = 0;
+    static final int CACHED_ROW_170 = 1;
 
     // the last column in a table is an ID that should not be written to file
     protected boolean skipSystemId = false;
@@ -59,7 +59,7 @@ implements DatabaseRowOutputInterface {
     throws SQLException {
 
         try {
-            if (cachedRowType == CACHE_ROW_170) {
+            if (cachedRowType == CACHED_ROW_170) {
                 return new BinaryServerRowOutput();
             } else {
                 Class c = Class.forName("org.hsqldb.BinaryDatabaseRowOutput");

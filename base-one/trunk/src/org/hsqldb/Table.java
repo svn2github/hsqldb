@@ -719,7 +719,7 @@ class Table {
         return bestRowIdentifierStrict;
     }
 
-    void resetBestRowIdentifiers() {
+    private void resetBestRowIdentifiers() {
 
         int[]   briCols    = getPrimaryKey();
         boolean isStrict   = false;
@@ -1179,13 +1179,13 @@ class Table {
         Index newindex = new Index(name, this, col, type, unique, s);
 
 // fredt@users 20030219 - patch 1.7.2 - no duplicate indexes
+/*
         for (int i = 0; i < iIndexCount; i++) {
             if (newindex.isEquivalent(getIndex(i))) {
                 throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
             }
         }
-
-//        Trace.doAssert(isEmpty(), "createIndex");
+*/
         vIndex.add(newindex);
 
         iIndexCount = vIndex.size();
@@ -1615,7 +1615,7 @@ class Table {
             }
 
             if (c != null) {
-                c.setLastIdentity(id);
+                c.setLastIdentity(id); // don't do this if id is internal column
             }
         }
 

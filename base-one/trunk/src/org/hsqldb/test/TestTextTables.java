@@ -59,9 +59,9 @@ public class TestTextTables {
     protected String url = "jdbc:hsqldb:";
 
 //    protected String filepath = ".";
-    protected String filepath = "/hsql/tt";
-    String           user;
-    String           password;
+    protected String filepath = "/hsql/testtext/tt";
+    String           user     = "sa";
+    String           password = "";
     Statement        sStatement;
     Connection       cConnection;
     boolean          indexZip        = true;
@@ -69,46 +69,17 @@ public class TestTextTables {
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
     boolean          createTempTable = false;
+    int              textCacheScale  = 12;
 
     // introduces fragmentation to the .data file
-    boolean deleteWhileInsert         = true;
+    boolean deleteWhileInsert         = false;
     int     deleteWhileInsertInterval = 10000;
+    int     deleteWhileInsertCount    = 4000;
 
     protected void setUp() {
-
-        user     = "sa";
-        password = "";
-
-        try {
-            sStatement  = null;
-            cConnection = null;
-
-            HsqlProperties props      = new HsqlProperties(filepath);
-            boolean        fileexists = props.checkFileExists();
-
-            Class.forName("org.hsqldb.jdbcDriver");
-
-            if (fileexists == false) {
-                cConnection = DriverManager.getConnection(url + filepath,
-                        user, password);
-                sStatement = cConnection.createStatement();
-
-                sStatement.execute("SHUTDOWN");
-                cConnection.close();
-                props.load();
-                props.setProperty("hsqldb.log_size", "400");
-                props.setProperty("hsqldb.cache_scale", "12");
-                props.setProperty("hsqldb.log_type", "0");
-                props.save();
-
-                cConnection = DriverManager.getConnection(url + filepath,
-                        user, password);
-                sStatement = cConnection.createStatement();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("TestSql.setUp() error: " + e.getMessage());
-        }
+        try{
+        Class.forName("org.hsqldb.jdbcDriver");
+        } catch (Exception e){}
     }
 
     /**
@@ -128,7 +99,8 @@ public class TestTextTables {
         String ddl3 = "CREATE TEXT TABLE test( id INT IDENTITY,"
                       + " firstname VARCHAR, lastname VARCHAR, "
                       + " zip INTEGER, " + " filler VARCHAR, obj OTHER ); "
-                      + "SET TABLE test SOURCE \"test.csv\";";
+                      + "SET TABLE test SOURCE \"test.csv;cache_scale="
+                      + textCacheScale + "\";";
 
         // adding extra index will slow down inserts a bit
         String ddl4 = "CREATE INDEX idx1 ON TEST (lastname);";
@@ -234,7 +206,6 @@ public class TestTextTables {
 //                tempobj.put("random", new Long(nextrandom));
 //                tempobj.put("filler", new StringBuffer(varfiller));
 //                ps.setObject(6, tempobj, Types.OTHER);
-
                 ps.setObject(6, null, Types.OTHER);
                 ps.execute();
 
@@ -253,14 +224,16 @@ public class TestTextTables {
                     rs.next();
 
                     int lastId = rs.getInt(1);
-
-                    sStatement.execute(
+                    int ucount = sStatement.executeUpdate(
                         "SELECT * INTO TEMP tempt FROM test WHERE id > "
-                        + (lastId - 4000) + " ;");
-                    sStatement.execute("DELETE FROM test WHERE id > "
-                                       + (lastId - 4000) + " ;");
-                    sStatement.execute(
+                        + (lastId - deleteWhileInsertCount) + " ;");
+
+                    ucount = sStatement.executeUpdate(
+                        "DELETE FROM test WHERE id > "
+                        + (lastId - deleteWhileInsertCount) + " ;");
+                    ucount = sStatement.executeUpdate(
                         "INSERT INTO test SELECT * FROM tempt;");
+
                     sStatement.execute("DROP TABLE tempt;");
                 }
             }

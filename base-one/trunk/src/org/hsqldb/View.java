@@ -99,7 +99,7 @@ class View extends Table {
             str      = t.getString();
         } while (str.length() != 0 || t.wasValue());
 
-        sStatement = s.substring(0, position);
+        sStatement = s.substring(0, position).trim();
     }
 
     String getStatement() {

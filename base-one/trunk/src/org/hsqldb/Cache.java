@@ -133,16 +133,16 @@ class Cache {
     // pre openning fields
     private Database dDatabase;
 
-// boucherb@users - access changed for metadata 1.7.2    
+// boucherb@users - access changed for metadata 1.7.2
     protected HsqlDatabaseProperties dbProps;
     protected String                 sName;
 
-// --------------------------------------------------    
+// --------------------------------------------------
     // cache operation mode
-// boucherb@users - access changed for metadata 1.7.2     
+// boucherb@users - access changed for metadata 1.7.2
     protected boolean storeOnInsert;
 
-// --------------------------------------------------    
+// --------------------------------------------------
     // post openning constant fields
     boolean cacheReadonly;
 
@@ -151,12 +151,12 @@ class Cache {
 
     // outside access to all below allowed only for metadata
     int               cacheScale;
-    int               cacheRowScale;
-    int               cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
+    int               cacheSizeScale;
+    int               cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
     int               cacheLength;
     int               writerLength;
     int               maxCacheSize;            // number of Rows
-    int               maxCacheBytes;           // number of bytes
+    long              maxCacheBytes;           // number of bytes
     int               multiplierMask;
     private CachedRow rData[];
     private CachedRow rWriter[];
@@ -166,11 +166,11 @@ class Cache {
     static final int INITIAL_FREE_POS = 32;
 
     // variable fields
-// boucherb@users - access changed for metadata 1.7.2     
+// boucherb@users - access changed for metadata 1.7.2
     protected DatabaseFile rFile;
     protected int          iFreePos;
 
-// ---------------------------------------------------    
+// ---------------------------------------------------
     //
     private CachedRow        rFirst;           // must point to one of rData[]
     private CachedRow        rLastChecked;     // can be any row
@@ -185,15 +185,37 @@ class Cache {
     DatabaseRowInputInterface  rowIn;
     DatabaseRowOutputInterface rowOut;
 
+    Cache(String name, Database db) throws SQLException {
+
+        sName     = name;
+        dDatabase = db;
+        dbProps   = db.getProperties();
+
+        initParams();
+        init();
+    }
+
+    /**
+     * initial external parameters are set here.
+     */
+    protected void initParams() throws SQLException {
+
+        cacheScale = dbProps.getIntegerProperty("hsqldb.cache_scale", 14, 8,
+                16);
+        cacheSizeScale = dbProps.getIntegerProperty("hsqldb.cache_size_scale",
+                20, 8, 20);
+
+        System.out.println("cache_scale: " + cacheScale);
+        System.out.println("cache_size_scale: " + cacheSizeScale);
+    }
+
     /**
      *  Structural initialisations take place here. This allows the Cache to
      *  be resized while the database is in operation.
      */
-    private void init(int scale, int sizescale) {
+    private void init() {
 
         cacheReadonly = dDatabase.bReadOnly;
-        cacheScale    = scale;
-        cacheRowScale = sizescale;
         cacheLength   = 1 << cacheScale;
 
         // HJB-2001-06-21: use different smaller size for the writer
@@ -201,7 +223,7 @@ class Cache {
 
         // HJB-2001-06-21: let the cache be larger than the array
         maxCacheSize   = cacheLength * 3;
-        maxCacheBytes  = cacheLength * cacheRowScale;
+        maxCacheBytes  = cacheLength * cacheSizeScale;
         multiplierMask = cacheLength - 1;
         rData          = new CachedRow[cacheLength];
         rWriter        = new CachedRow[cacheReadonly ? 0
@@ -217,22 +239,6 @@ class Cache {
     private void initBuffers() throws SQLException {
         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
-    }
-
-    Cache(String name, Database db) throws SQLException {
-
-        sName     = name;
-        dDatabase = db;
-        dbProps   = db.getProperties();
-
-        int scale = dbProps.getIntegerProperty("hsqldb.cache_scale", 14, 8,
-                                               16);
-        int sizescale = dbProps.getIntegerProperty("hsqldb.cache_size_scale",
-            20, 8, 20);
-
-        System.out.println("cache_scale: " + scale);
-        System.out.println("cache_size_scale: " + sizescale);
-        init(scale, sizescale);
     }
 
     /**
@@ -266,7 +272,7 @@ class Cache {
                 "1.6.0");
 
             if (cacheVersion.equals("1.7.0")) {
-                cachedRowType = DatabaseRowOutput.CACHE_ROW_170;
+                cachedRowType = DatabaseRowOutput.CACHED_ROW_170;
             }
 
             initBuffers();
@@ -330,7 +336,7 @@ class Cache {
             Trace.printSystemOut("closed source");
             new File(sName).delete();
             new File(sName + ".new").renameTo(new File(sName));
-            init(cacheScale, cacheRowScale);
+            init();
             open(cacheReadonly);
             Trace.printSystemOut("opened new file");
         } catch (Exception e) {
@@ -621,6 +627,8 @@ class Cache {
 
         resetAccessCount();
 
+        rLastChecked = null;
+
         // HJB-2001-06-21
         while ((j++ < cacheLength) && (iCacheSize > maxCacheSize / 2)
                 && (count < writerLength)) {
@@ -767,7 +775,12 @@ class Cache {
                 worst     = w;
             }
 
+            if (rLastChecked.rNext == null) {
+                Trace.printSystemOut("rLastChecked is null; i =" + i);
+            }
+
             rLastChecked = rLastChecked.rNext;
+
         }
 
         return candidate;

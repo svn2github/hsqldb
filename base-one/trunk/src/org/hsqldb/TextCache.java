@@ -45,7 +45,7 @@ import org.hsqldb.lib.FileUtil;
  * @author sqlbob@users (RMP)
  * @version 1.7.2
  */
-class TextCache extends org.hsqldb.Cache {
+class TextCache extends Cache {
 
     //state of Cache
     private boolean                isIndexingSource;
@@ -68,15 +68,16 @@ class TextCache extends org.hsqldb.Cache {
      *  *.properties file (3) program defaults
      */
     TextCache(String name, Database db) throws SQLException {
+        super(name, db);
+    }
 
-        super("", db);
+    protected void initParams() throws SQLException {
 
         // fredt - write rows as soon as they are inserted
         storeOnInsert = true;
 
-        HsqlProperties dbprops = db.getProperties();
         HsqlProperties tableprops =
-            HsqlProperties.delimitedArgPairsToProps(name, "=", ";", null);
+            HsqlProperties.delimitedArgPairsToProps(sName, "=", ";", null);
 
         //-- Get file name
         switch (tableprops.errorCodes.length) {
@@ -96,11 +97,11 @@ class TextCache extends org.hsqldb.Cache {
 
         //-- Get separators:
         fs = translateSep(tableprops.getProperty("fs",
-                dbprops.getProperty("textdb.fs", ",")));
+                dbProps.getProperty("textdb.fs", ",")));
         vs = translateSep(tableprops.getProperty("vs",
-                dbprops.getProperty("textdb.vs", fs)));
+                dbProps.getProperty("textdb.vs", fs)));
         lvs = translateSep(tableprops.getProperty("lvs",
-                dbprops.getProperty("textdb.lvs", fs)));
+                dbProps.getProperty("textdb.lvs", fs)));
 
         if (fs.length() == 0 || vs.length() == 0 || lvs.length() == 0) {
             throw Trace.error(Trace.TEXT_TABLE_SOURCE,
@@ -109,16 +110,23 @@ class TextCache extends org.hsqldb.Cache {
 
         //-- Get booleans
         ignoreFirst = tableprops.isPropertyTrue("ignore_first",
-                dbprops.isPropertyTrue("textdb.ignore_first", false));
+                dbProps.isPropertyTrue("textdb.ignore_first", false));
 
         boolean quoted = tableprops.isPropertyTrue("quoted",
-            dbprops.isPropertyTrue("textdb.quoted", true));
+            dbProps.isPropertyTrue("textdb.quoted", true));
         boolean allquoted = tableprops.isPropertyTrue("all_quoted",
-            dbprops.isPropertyTrue("textdb.all_quoted", false));
+            dbProps.isPropertyTrue("textdb.all_quoted", false));
 
         //-- Get encoding
         stringEncoding = translateSep(tableprops.getProperty("encoding",
-                dbprops.getProperty("textdb.encoding", "ASCII")));
+                dbProps.getProperty("textdb.encoding", "ASCII")));
+
+        //-- Get size and scale
+        cacheScale = tableprops.getIntegerProperty("cache_scale",
+                dbProps.getIntegerProperty("textdb.cache_scale", 10, 8, 16));
+        cacheSizeScale = tableprops.getIntegerProperty("cache_size_scale",
+                dbProps.getIntegerProperty("textdb.cache_size_scale", 12, 8,
+                                           20));
 
         try {
             if (quoted || allquoted) {
@@ -131,6 +139,8 @@ class TextCache extends org.hsqldb.Cache {
                 rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false);
             }
         } catch (IOException e) {
+
+            // no exception expected here the IOException is vestigial
             throw (Trace.error(Trace.TEXT_TABLE_SOURCE,
                                "invalid file: " + e));
         }

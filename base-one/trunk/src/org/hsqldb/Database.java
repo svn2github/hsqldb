@@ -136,6 +136,7 @@ class Database {
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
     HsqlArrayList                  cSession;
+    int                            sessionIdCount;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
     private Tokenizer              tokenizer;
@@ -280,6 +281,7 @@ class Database {
         tTable   = new HsqlArrayList();
         aAccess  = new UserManager();
         cSession = new HsqlArrayList();
+        sessionIdCount = 0;
         hAlias   = Library.getAliasMap();
 
 //        logger                = new Logger();
@@ -296,7 +298,8 @@ class Database {
         User sysUser = aAccess.createSysUser(this);
 
 // -------------------------------------------------------------------
-        sysSession = new Session(this, sysUser, true, false, 0);
+
+        sysSession = newSession(sysUser, false);
 
         registerSession(sysSession);
 
@@ -393,18 +396,7 @@ class Database {
 
         User user = aAccess.getUser(username.toUpperCase(),
                                     password.toUpperCase());
-        int size = cSession.size();
-        int id   = size;
-
-        for (int i = 0; i < size; i++) {
-            if (cSession.get(i) == null) {
-                id = i;
-
-                break;
-            }
-        }
-
-        Session session = new Session(this, user, true, bReadOnly, id);
+        Session session = newSession(user, bReadOnly);
 
         logger.writeToLog(session,
                           "CONNECT USER " + username + " PASSWORD \""
@@ -414,6 +406,9 @@ class Database {
         return session;
     }
 
+    Session newSession(User user, boolean readonly){
+        return new Session(this, user, true, readonly, sessionIdCount++);
+    }
     /**
      *  Binds the specified Session object into this Database object's active
      *  session registry. This method is typically called from {@link
@@ -424,14 +419,31 @@ class Database {
      */
     void registerSession(Session session) {
 
+        int i    = 0;
         int size = cSession.size();
-        int id   = session.getId();
 
-        if (id >= size) {
-            cSession.setSize(id + 1);
+        for (; i < size; i++) {
+            if (cSession.get(i) == null) {
+                break;
+            }
         }
 
-        cSession.set(id, session);
+        if (i == size) {
+            cSession.setSize(i + 1);
+        }
+
+        cSession.set(i, session);
+    }
+
+    void closeAllSessions(){
+        // don't disconnect system user; need it to save database
+        for (int i = 1, tsize = cSession.size(); i < tsize; i++) {
+            Session d = (Session) cSession.get(i);
+
+            if (d != null) {
+                d.disconnect();
+            }
+        }
     }
 
     /**
@@ -623,6 +635,7 @@ class Database {
 
                     case CONNECT :
                         rResult = processConnect(tokenizer, session);
+
 // boucherb@users  - metadata 1.7.2 - system tables
                         setMetaDirty(null);
 
@@ -657,8 +670,8 @@ class Database {
                 }
             }
         } catch (SQLException e) {
-            // e.printStackTrace();
 
+            // e.printStackTrace();
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            rResult = new Result(Trace.getMessage(e) + " in statement ["
@@ -1470,26 +1483,25 @@ class Database {
         }
 
         if (c.wasValue() && iType != Types.BINARY && iType != Types.OTHER) {
-
-            // see if it is a literal
-            boolean wasliteral = !(Tokenizer.valueTokens.get(s) == -1);
-            Object  sv         = wasliteral ? s
-                                            : c.getAsValue();
+            Object sv = c.getAsValue();
 
             if (wasminus) {
                 sv = Column.negate(sv, iType);
             }
 
             if (sv != null) {
-                defaultvalue = Column.convertObject(sv);
 
+                // check conversion of literals to values and size constraints
                 try {
-                    Column.convertObject(defaultvalue, iType);
+                    Column.convertObject(sv, iType);
                 } catch (Exception e) {
                     throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
                                       defaultvalue);
                 }
 
+                defaultvalue = Column.convertObject(sv);
+
+                // ensure char trimming does not affect the value
                 String testdefault =
                     sqlEnforceSize
                     ? (String) Table.enforceSize(defaultvalue, iType, iLen,
@@ -1497,7 +1509,7 @@ class Database {
                     : defaultvalue;
 
                 // if default value is too long for fixed size column
-                if (defaultvalue.equals(testdefault) == false) {
+                if (!defaultvalue.equals(testdefault)) {
                     throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
                                       defaultvalue);
                 }
@@ -2390,9 +2402,19 @@ class Database {
      */
     private Result processDisconnect(Session session) throws SQLException {
 
+        int i    = 0;
+        int size = cSession.size();
+
         if (!session.isClosed()) {
             session.disconnect();
-            cSession.set(session.getId(), null);
+
+            for (; i < size; i++) {
+                if (cSession.get(i) == session) {
+                    cSession.set(i, null);
+
+                    break;
+                }
+            }
         }
 
         return new Result();
@@ -2702,8 +2724,8 @@ class Database {
         bShutdown = true;
 
         jdbcConnection.removeDatabase(this);
-
         logger.tryRelease();
+
         classLoader = null;
     }
 
@@ -2733,16 +2755,7 @@ class Database {
         } else {
             c.back();
         }
-
-        // don't disconnect system user; need it to save database
-        for (int i = 1, tsize = cSession.size(); i < tsize; i++) {
-            Session d = (Session) cSession.get(i);
-
-            if (d != null) {
-                d.disconnect();
-            }
-        }
-
+        closeAllSessions();
         cSession.clear();
         close(closemode);
         processDisconnect(session);
@@ -2787,7 +2800,8 @@ class Database {
         while (i-- > 0) {
             Table toDrop = (Table) tTable.get(i);
 
-            if (toDrop.isTemp() && toDrop.getOwnerSessionId() != ownerSession.getId()) {
+            if (toDrop.isTemp()
+                    && toDrop.getOwnerSessionId() != ownerSession.getId()) {
                 tTable.remove(i);
             }
         }

@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
 import java.io.IOException;
 import java.sql.SQLException;
 import org.hsqldb.lib.FileUtil;
@@ -94,12 +95,9 @@ class ScriptRunner {
         // fredt - needed for forward referencing FK constraints
         dDatabase.setReferentialIntegrity(false);
 
-        HsqlArrayList session    = new HsqlArrayList();
-        Session       sysSession = dDatabase.getSysSession();
-
-        session.add(sysSession);
-
-        Session current = sysSession;
+        HsqlHashMap sessionMap = new HsqlHashMap();
+        Session     sysSession = dDatabase.getSysSession();
+        Session     current    = sysSession;
 
         try {
             StopWatch sw = new StopWatch();
@@ -117,19 +115,16 @@ class ScriptRunner {
                 }
 
                 if (s.startsWith("/*C")) {
-                    int id = Integer.parseInt(s.substring(3, s.indexOf('*',
+                    Integer id = new Integer(s.substring(3, s.indexOf('*',
                         4)));
 
-                    if (id >= session.size()) {
-                        session.setSize(id + 1);
-                    }
-
-                    current = (Session) session.get(id);
+                    current = (Session) sessionMap.get(id);
 
                     if (current == null) {
-                        current = new Session(sysSession, id);
+                        current = dDatabase.newSession(sysSession.getUser(),
+                                                       false);
 
-                        session.set(id, current);
+                        sessionMap.put(id, current);
                         dDatabase.registerSession(current);
                     }
 
@@ -146,25 +141,10 @@ class ScriptRunner {
                         Trace.printSystemOut(result.sError);
                     }
                 }
-
-                if (s.equals("DISCONNECT")) {
-                    int id = current.getId();
-
-                    current = new Session(sysSession, id);
-
-                    session.set(id, current);
-                }
             }
 
             scr.close();
-
-            for (int i = 0; i < session.size(); i++) {
-                current = (Session) session.get(i);
-
-                if (current != null) {
-                    current.rollback();
-                }
-            }
+            dDatabase.closeAllSessions();
 
             if (Trace.TRACE) {
                 Trace.trace("restore time: " + sw.elapsedTime());

@@ -98,7 +98,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     throws SQLException {
 
         try {
-            if (cachedRowType == DatabaseRowOutput.CACHE_ROW_170) {
+            if (cachedRowType == DatabaseRowOutput.CACHED_ROW_170) {
                 return new BinaryServerRowInput();
             } else {
                 Class c = Class.forName("org.hsqldb.BinaryDatabaseRowInput");

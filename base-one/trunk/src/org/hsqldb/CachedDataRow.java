@@ -79,11 +79,11 @@ class CachedDataRow extends CachedRow {
     }
 
     /**
-     *  As the indexes are in-memory, this method is the same as the in-memory
-     *  implementation of Row.
+     *  As the indexes are in-memory, this passes the existing primary node
+     *  for the construction of the new Row
      */
     Row getUpdatedRow() throws SQLException {
-        return this;
+        return tTable.getRow(iPos, nPrimaryNode);
     }
 
     /**
