@@ -82,6 +82,8 @@ import java.math.BigDecimal;
 // logging in the .script file.
 // also restructuring to reduce use of objects and speed up tokenising of
 // strings and quoted identifiers
+// fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
+// rewrite of the majority of multiple if(){}else{} chains with switch(){}
 
 /**
  * Tokenizer class declaration

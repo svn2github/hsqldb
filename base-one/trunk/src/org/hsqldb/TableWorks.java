@@ -199,7 +199,12 @@ class TableWorks {
     /**
      *  Because of the way indexes and column data are held in memory and
      *  on disk, it is necessary to recreate the table when an index is added
-     *  to a non-empty table. (fredt@users)
+     *  to a non-empty table cached table.<p>
+     *
+     *  With empty tables, Index objects are simply added<p>
+     *
+     *  With MEOMRY and TEXT tables, a new index is built up and nodes for
+     *  earch row are interlinked (fredt@users)
      *
      * @param  col
      * @param  name
@@ -210,24 +215,26 @@ class TableWorks {
     Index createIndex(int col[], HsqlName name,
                       boolean unique) throws SQLException {
 
-        if (table.isEmpty()) {
-            return table.createIndexPrivate(col, name, unique);
+        if (table.isEmpty() || table.isIndexingMutable()) {
+            Index newindex = table.createIndex(col, name, unique);
+
+            return newindex;
+        } else {
+            Table tn = table.moveDefinition(null, null,
+                                            table.getColumnCount(), 0);
+            Index newindex = tn.createIndexPrivate(col, name, unique);
+
+            tn.moveData(table, table.getColumnCount(), 0);
+            tn.updateConstraints(table, table.getColumnCount(), 0);
+
+            int index = table.dDatabase.getTableIndex(table);
+
+            table.dDatabase.getTables().set(index, tn);
+
+            table = tn;
+
+            return newindex;
         }
-
-        Table tn = table.moveDefinition(null, null, table.getColumnCount(),
-                                        0);
-        Index newindex = tn.createIndexPrivate(col, name, unique);
-
-        tn.moveData(table, table.getColumnCount(), 0);
-        tn.updateConstraints(table, table.getColumnCount(), 0);
-
-        int index = table.dDatabase.getTableIndex(table);
-
-        table.dDatabase.getTables().set(index, tn);
-
-        table = tn;
-
-        return newindex;
     }
 
 // fredt@users 20020225 - avoid duplicate constraints
@@ -282,17 +289,21 @@ class TableWorks {
      */
     void dropIndex(String indexname) throws SQLException {
 
-        Table tn = table.moveDefinition(indexname, null,
-                                        table.getColumnCount(), 0);
+        if (table.isIndexingMutable()) {
+            table.dropIndex(indexname);
+        } else {
+            Table tn = table.moveDefinition(indexname, null,
+                                            table.getColumnCount(), 0);
 
-        tn.moveData(table, table.getColumnCount(), 0);
-        tn.updateConstraints(table, table.getColumnCount(), 0);
+            tn.moveData(table, table.getColumnCount(), 0);
+            tn.updateConstraints(table, table.getColumnCount(), 0);
 
-        int i = table.dDatabase.getTableIndex(table);
+            int i = table.dDatabase.getTableIndex(table);
 
-        table.dDatabase.getTables().set(i, tn);
+            table.dDatabase.getTables().set(i, tn);
 
-        table = tn;
+            table = tn;
+        }
     }
 
     /**
@@ -304,6 +315,10 @@ class TableWorks {
      */
     void addOrDropColumn(Column column, int colindex,
                          int adjust) throws SQLException {
+
+        if (table.isText()) {
+            throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+        }
 
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
@@ -357,7 +372,7 @@ class TableWorks {
 
                 try {
 
-                    // check if the index is used by other constraints otherwise drop
+                    // drop unless the index is used by other constraints
                     mainTable.checkDropIndex(mainIndex.getName().name, cmap);
 
                     candrop = true;
@@ -383,7 +398,7 @@ class TableWorks {
             if (refIndex.getName().isReservedName()) {
                 try {
 
-                    // check if the index is used by other constraints otherwise drop
+                    // drop unless the index is used by other constraints
                     table.checkDropIndex(refIndex.getName().name, cmap);
                     dropIndex(refIndex.getName().name);
                 } catch (SQLException e) {}

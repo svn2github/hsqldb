@@ -172,21 +172,27 @@ public class Trace extends PrintWriter {
                                 INVALID_HAVING                      = 69,
                                 INVALID_ORDER_BY                    = 70,
                                 INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
-				// N.b.  Typo in following line:
-                                INVALIC_CHARACTER_ENCODING          = 72,
-                                NO_CLASSLOADER_FOR_TLS              = 73,
-                                NO_JSSE                             = 74,
-                                NO_SSLSOCKETFACTORY_METHOD          = 75,
-                                UNEXPECTED_EXCEPTION                = 76,
-                                TLS_ERROR                           = 77,
-                                MISSING_TLS_METHOD                  = 78,
-                                TLS_SECURITY_ERROR                  = 79,
-                                NO_TLS_DATA                         = 80,
-                                NO_PRINCIPAL                        = 81,
-                                INCOMPLETE_CERTIFICATE              = 82,
-                                TLS_HOSTNAME_MISMATCH               = 83,
-                                KEYSTORE_PROBLEM                    = 84;
-    private static String[]     sDescription                        = {
+                                OUT_OF_MEMORY                       = 72,
+                                OPERATION_NOT_SUPPORTED             = 73,
+
+    // use empty range for new messages
+    // TLS error messages
+    // N.b.  Typo in following line:
+    INVALIC_CHARACTER_ENCODING                         = 81,
+                            NO_CLASSLOADER_FOR_TLS     = 82,
+                            NO_JSSE                    = 83,
+                            NO_SSLSOCKETFACTORY_METHOD = 84,
+                            UNEXPECTED_EXCEPTION       = 85,
+                            TLS_ERROR                  = 86,
+                            MISSING_TLS_METHOD         = 87,
+                            TLS_SECURITY_ERROR         = 88,
+                            NO_TLS_DATA                = 89,
+                            NO_PRINCIPAL               = 90,
+                            INCOMPLETE_CERTIFICATE     = 91,
+                            TLS_HOSTNAME_MISMATCH      = 92,
+                            KEYSTORE_PROBLEM           = 93
+    ;
+    private static String[] sDescription               = {
         "NOT USED", "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
         "08003 The database is shutdown", "21000 Column count does not match",
@@ -236,6 +242,12 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in HAVING clause",
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
+        "S1000 Out of Memory", "S1000 This operation is not supported",
+
+        //
+        "", "", "", "", "", "", "",
+
+        //
         "37000 invalid character encoding",
         "08000 reserved for NO_CLASSLOADER_FOR_TLS",
         "08000 reserved for NO_JSSE",
@@ -244,8 +256,7 @@ public class Trace extends PrintWriter {
         "08000 reserved for TLS_ERROR",
         "08000 reserved for MISSING_TLS_METHOD",
         "08000 reserved for TLS_SECURITY_ERROR",
-        "08000 reserved for NO_TLS_DATA",
-        "08000 reserved for NO_PRINCIPAL",
+        "08000 reserved for NO_TLS_DATA", "08000 reserved for NO_PRINCIPAL",
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
         "08000 reserved for KEYSTORE_PROBLEM",

@@ -524,15 +524,15 @@ class Cache {
             rFirst                                = r;
 
             t.indexRow(r, false);
+            r.iLastAccess = iCurrentAccess++;
         }
 
-        r.iLastAccess = iCurrentAccess++;
 
         return r;
     }
 
     /**
-     * Cleans up this Cache object. <p>
+     * Reduces the number of rows held in this Cache object. <p>
      *
      * This method is called when this Cache object grows too large. <p>
      *
@@ -541,7 +541,7 @@ class Cache {
      * been least recently accessed (classic LRU algoritm).
      *
      */
-    void cleanUp() throws SQLException {
+    private void cleanUp() throws SQLException {
 
         int count = 0;
         int j     = 0;

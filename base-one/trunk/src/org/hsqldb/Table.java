@@ -905,6 +905,64 @@ class Table {
         return createIndexPrivate(colarr, index.getName(), index.isUnique());
     }
 
+/**
+ * todo - memory check
+ */
+    Index createIndex(int column[], HsqlName name,
+                      boolean unique) throws SQLException {
+
+        Index newindex     = createIndexPrivate(column, name, unique);
+        Index primaryindex = getPrimaryIndex();
+        Node  n            = primaryindex.first();
+        int   error        = 0;
+
+        try {
+            while (n != null) {
+                if (Trace.STOP) {
+                    Trace.stop();
+                }
+
+                Row  row     = n.getRow();
+                Node newnode = Node.newNode(row, iIndexCount - 1, this);
+                Node endnode = row.getNode(iIndexCount - 2);
+
+                endnode.nNext = newnode;
+
+                newindex.insert(newnode);
+
+                n = primaryindex.next(n);
+            }
+
+            return newindex;
+        } catch (java.lang.OutOfMemoryError e) {
+            error = Trace.OUT_OF_MEMORY;
+        } catch (SQLException e) {
+            error = Trace.VIOLATION_OF_UNIQUE_INDEX;
+        }
+
+        Node lastnode = n;
+
+        n = primaryindex.first();
+
+        while (n != lastnode) {
+            int  i        = iIndexCount - 2;
+            Node backnode = n;
+
+            while (i-- > 0) {
+                backnode = backnode.nNext;
+            }
+
+            backnode.nNext = null;
+            n              = primaryindex.next(n);
+        }
+
+        vIndex.remove(iIndexCount - 1);
+
+        iIndexCount = vIndex.size();
+
+        throw Trace.error(error);
+    }
+
     /**
      *  Method declaration
      *
@@ -957,12 +1015,21 @@ class Table {
             }
         }
 */
-        Trace.doAssert(isEmpty(), "createIndex");
+
+//        Trace.doAssert(isEmpty(), "createIndex");
         vIndex.add(newindex);
 
-        iIndexCount++;
+        iIndexCount = vIndex.size();
 
         return newindex;
+    }
+
+    /**
+     * returns false if the table has to be recreated in order to add / drop
+     * indexes. Only CACHED tables return false.
+     */
+    boolean isIndexingMutable() {
+        return !isIndexCached();
     }
 
 // fredt@users 20020315 - patch 1.7.0 - drop index bug
@@ -1028,6 +1095,43 @@ class Table {
      */
     Object[] getNewRow() {
         return new Object[iColumnCount];
+    }
+
+    void dropIndex(String indexname) throws SQLException {
+
+        // find the array index for indexname and remove
+        int todrop = 1;
+
+        for (; todrop < getIndexCount(); todrop++) {
+            Index tempidx = getIndex(todrop);
+
+            if (tempidx.getName().name.equals(indexname)) {
+                vIndex.remove(todrop);
+
+                iIndexCount = vIndex.size();
+
+                break;
+            }
+        }
+
+        Index primaryindex = getPrimaryIndex();
+        Node  n            = primaryindex.first();
+
+        while (n != null) {
+            if (Trace.STOP) {
+                Trace.stop();
+            }
+
+            int  i        = todrop - 1;
+            Node backnode = n;
+
+            while (i-- > 0) {
+                backnode = backnode.nNext;
+            }
+
+            backnode.nNext = backnode.nNext.nNext;
+            n              = primaryindex.next(n);
+        }
     }
 
     /**
@@ -1881,7 +1985,8 @@ class Table {
         }
     }
 
-    void drop() throws SQLException{
+    void drop() throws SQLException {
+
         if (cCache != null) {
             cCache.remove(this);
         }

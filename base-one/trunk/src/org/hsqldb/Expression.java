@@ -74,6 +74,9 @@ import org.hsqldb.lib.HsqlHashMap;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
+// tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
+// fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
+// rewrite of the majority of multiple if(){}else{} chains with switch(){}
 
 /**
  * Expression class declaration

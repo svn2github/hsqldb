@@ -82,7 +82,11 @@ import java.sql.Types;
 // thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
 // fredt@users 20020420 - patch 523880 by leptipre@users - VIEW support
 // fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
+// tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
+// aggregate functions can now be used in expressions - HAVING supported
 // kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
+// fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
+// rewrite of the majority of multiple if(){}else{} chains with switch(){}
 
 /**
  *  Class declaration

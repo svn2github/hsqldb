@@ -87,9 +87,9 @@ import java.util.Enumeration;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions to different parts to support savepoint transactions
-// fredt@users 20020215 - patch 1.7.0 by fredt - new HsqlProperties class
+// fredt@users 20020215 - patch 1.7.0 - new HsqlProperties class
 // support use of properties from database.properties file
-// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
+// fredt@users 20020218 - patch 1.7.0 - DEFAULT keyword
 // support for default values for table columns
 // fredt@users 20020305 - patch 1.7.0 - restructuring
 // some methods move to Table.java, some removed
@@ -99,15 +99,17 @@ import java.util.Enumeration;
 // idents listed in alpha-order for easy check of stats...
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
 // fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
-// fredt@users 20020405 - patch 1.7.0 by fredt - other ALTER TABLE statements
-// boucherb@users - added javadoc comments
-// tony_lai@users 20020820 - patch 595099 - use user define PK name
+// fredt@users 20020405 - patch 1.7.0 - other ALTER TABLE statements
+// boucherb@users - doc 1.7.0 - added javadoc comments
+// tony_lai@users 20020820 - patch 595099 - use user-defined PK name
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 // tony_lai@users 20020820 - patch 595156 - violation of Integrity constraint name
 // tony_lai@users 20020820 - patch 1.7.1 - modification to shutdown compact process to save memory usage
 // boucherb@users 20020828 - patch 1.7.1 - allow reconnect to local db that has shutdown
 // fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
+// fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
+// rewrite of the majority of multiple if(){}else chains with switch
 class Database {
 
     private String                 sName;
@@ -464,7 +466,7 @@ class Database {
             Tokenizer c = new Tokenizer(statement);
             Parser    p = new Parser(this, c, session);
 
-            logger.cleanUp();
+//            logger.cleanUp();
 
             if (Trace.DOASSERT) {
                 Trace.doAssert(!session.isNestedTransaction());
@@ -2210,14 +2212,9 @@ class Database {
                     dropmode = true;
                 } else {
                     c.back();
-
-                    Table t = getTable(tablename, session);
-
-                    session.setScripting(!t.isTemp());
                 }
 
                 dropTable(tablename, dropmode, isview, session);
-                session.commit();
                 break;
 
             case USER :
@@ -2230,22 +2227,8 @@ class Database {
 
             case INDEX :
                 String indexname = c.getName();
-                Table  t         = findTableForIndex(indexname);
 
-                if (t == null ||!t.equals(t.getName().name, session)) {
-                    throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
-                }
-
-                t.checkDropIndex(indexname, null);
-
-// fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
-// see Table.moveDefinition();
-                session.commit();
-                session.setScripting(!t.isTemp());
-
-                TableWorks tw = new TableWorks(t);
-
-                tw.dropIndex(indexname);
+                dropIndex(indexname, session);
                 break;
 
             default :
@@ -2253,6 +2236,26 @@ class Database {
         }
 
         return new Result();
+    }
+
+    void dropIndex(String indexname, Session session) throws SQLException {
+
+        Table t = findTableForIndex(indexname);
+
+        if (t == null ||!t.equals(t.getName().name, session)) {
+            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
+        }
+
+        t.checkDropIndex(indexname, null);
+
+// fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
+// see Table.moveDefinition();
+        session.commit();
+        session.setScripting(!t.isTemp());
+
+        TableWorks tw = new TableWorks(t);
+
+        tw.dropIndex(indexname);
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -2870,15 +2873,17 @@ class Database {
         removeExportedKeys(toDrop);
         aAccess.removeDbObject(toDrop.getName());
         toDrop.drop();
+        session.setScripting(!toDrop.isTemp());
+        session.commit();
     }
 
     /**
      *  Removes any foreign key Constraint objects (exported keys) held by any
      *  tables referenced by the specified table. <p>
      *
-     *  This method is called as the last step of a successful call to in
-     *  order to ensure that the dropped Table ceases to be referenced when
-     *  enforcing referential integrity.
+     *  This method is called as the last step of a successful call to
+     *  dropTable() in order to ensure that the dropped Table ceases to be
+     *  referenced when enforcing referential integrity.
      *
      * @param  toDrop The table to which other tables may be holding keys.
      *      This is typically a table that is in the process of being dropped.
@@ -3083,13 +3088,15 @@ class Database {
          * @throws  SQLException if there is a problem releasing cahced data
          *      rows during the cleanup process
          */
+         /*
+        // replace with method to flush the cache
         void cleanUp() throws SQLException {
-            // todo : text table cleanup missing
+
             if (lLog != null && lLog.getCache() != null) {
                 lLog.getCache().cleanUp();
             }
         }
-
+        */
         /**
          *  Records a Log entry representing a new connection action on the
          *  specified Session object.

@@ -117,7 +117,7 @@ public class TestTextTables {
      */
     public void testFillUp() {
 
-        int    bigrows   = 100000;
+        int    bigrows   = 200;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
@@ -241,7 +241,7 @@ public class TestTextTables {
                 ps.setObject(6, null, Types.OTHER);
                 ps.execute();
 
-                if ((i + 1) % 50000 == 0) {
+                if ((i + 1) % 10000 == 0) {
                     System.out.println(i + 1);
                     System.out.println(
                         new java.util.Date(System.currentTimeMillis()));

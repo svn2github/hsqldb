@@ -88,7 +88,7 @@ class Index {
 
     // fields
     private HsqlName indexName;
-    private Table    table;
+//    private Table    table;
     private int      iFields;
     private int      iColumn[];
     private int      iType[];
@@ -110,7 +110,7 @@ class Index {
             boolean unique, int visibleColumns) {
 
         indexName           = name;
-        this.table          = table;
+//        this.table          = table;
         iFields             = column.length;
         iColumn             = column;
         iType               = type;

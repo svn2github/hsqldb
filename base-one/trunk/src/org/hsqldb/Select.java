@@ -75,6 +75,7 @@ import java.util.Enumeration;
 
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
+// tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
 
 /**
  * Class declaration
