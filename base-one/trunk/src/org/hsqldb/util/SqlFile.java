@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.60 2004/06/05 07:08:02 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.61 2004/06/05 10:58:17 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.60 $
+ * @version $Revision: 1.61 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.60 $".substring("$Revision: ".length(),
-                "$Revision: 1.60 $".length() - 2);
+        revnum = "$Revision: 1.61 $".substring("$Revision: ".length(),
+                "$Revision: 1.61 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -161,16 +161,16 @@ public class SqlFile {
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n" + "    \\-3\n" + "    :;\n";
     final private static String PL_HELP_TEXT =
-        "PROCEDURAL LANGUAGE Commands.  Must have one space after '*'.\n"
+        "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
         + "    * VARNAME =                   Unset variable\n"
-        + "    * list                        List values of all variables\n\n"
-        + "    * foreach VARNAME [val1...]   Repeat the following PL block with \n"
+        + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n\n"
+        + "    * foreach VARNAME ([val1...]) Repeat the following PL block with \n"
         + "                                  given variable value each time\n"
         + "    * end                         Ends a PL block\n\n"
         + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
-        + "You may omit the {}'s only if *VARNAME is the very first word of a command.\n"
+        + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
         + "No variable substitutions are performed until you run any '* ...' command\n"
         + "(other than '* ?').\n";
 
@@ -765,6 +765,7 @@ public class SqlFile {
 
     /**
      * Process a Process Language Command.
+     * Nesting not supported yet.
      *
      * @param inString Complete command, less the leading '\' character.
      * @throws BadSpecial Runtime error()
@@ -783,76 +784,58 @@ public class SqlFile {
         }
         StringTokenizer toker = new StringTokenizer(inString);
         String arg1 = toker.nextToken();
+        String[] tokenArray = null;
         // If user runs any PL command, we turn PL mode on.
         plMode = true;
         if (userVars == null) userVars = new HashMap();
         if (arg1.equals("list")) {
-            if (toker.countTokens() > 0) {
-                throw new BadSpecial("PL comand 'list' takes no args");
+            if (toker.countTokens() == 0) {
+                stdprintln(new TreeMap(userVars).toString());
+            } else {
+                tokenArray = getTokenArray(toker.nextToken(""));
+                for (int i = 0; i < tokenArray.length; i++) {
+                    stdprintln(tokenArray[i] + ": " 
+                            + userVars.get(tokenArray[i]));
+                }
             }
-            stdprintln(new TreeMap(userVars).toString());
             return;
         }
         if (arg1.equals("foreach")) {
-            /* 
-             * WARNING!!! foreach blocks are not yet smart about comments
-             * and strings.  We just look for a line beginning with "* end"
-             * without worrying about comments or quotes (for now).
-             *
-             * WARNING!!! This is very rudimentary.
-             * Users give up all editing and feedback capabilities for while
-             * in the foreach loop.
-             * A better solution would be to pass current input stream to a
-             * new SqlFile.execute() with a mode whereby commands are written 
-             * to a separate history but not executed.
-             */
-            String s;
-            if (toker.countTokens() < 1) {
-                throw new BadSpecial(
-                        "foreach PL command requires a variable name argument");
+            if (toker.countTokens() < 2) {
+                throw new BadSpecial("Malformatted PL foreach command (1)");
             }
             String varName = toker.nextToken();
+            String parenExpr = toker.nextToken("").trim();
+            if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
+                    || parenExpr.charAt(parenExpr.length() - 1) != ')') {
+                throw new BadSpecial("Malformatted PL foreach command (2)");
+            }
+            String[] values = getTokenArray(parenExpr.substring(1,
+                    parenExpr.length() - 1));
             File tmpFile = null;
+            String varVal;
             try {
-                tmpFile = File.createTempFile("sqltool-", ".sql");
-                PrintWriter pw = new PrintWriter(
-                        new OutputStreamWriter(
-                                new FileOutputStream(tmpFile)));
-                while (true) {
-                    s = br.readLine();
-                    if (s == null)
-                        throw new SqlToolError("Unterminated PL lbock");
-                    if (s.trim().equals("* end")) {
-                        break;
-                    }
-                    pw.println(s);
-                }
-                pw.flush();
-                pw.close();
+                tmpFile = plBlockFile();
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
-            if (toker.countTokens() > 0) {
-                try {
-                    String origval = (String) userVars.get(varName);
-                    String varVal;
-                    while (toker.hasMoreTokens()) {
-                        varVal = toker.nextToken();
-                        userVars.put(varName, varVal);
-                        (new SqlFile(tmpFile, false, userVars)).
-                            execute(curConn);
-                    }
-                    if (origval == null) {
-                        userVars.remove(varName);
-                    } else {
-                        userVars.put(varName, origval);
-                    }
-                } catch (Exception e) {
-                    throw new BadSpecial(
-                            "Failed to execute SQL from PL block.  "
-                            + e.getMessage());
+            String origval = (String) userVars.get(varName);
+            try {
+                for (int i = 0; i < values.length; i++) {
+                    varVal = values[i];
+                    userVars.put(varName, varVal);
+                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
                 }
+            } catch (Exception e) {
+                throw new BadSpecial(
+                        "Failed to execute SQL from PL block.  "
+                        + e.getMessage());
+            }
+            if (origval == null) {
+                userVars.remove(varName);
+            } else {
+                userVars.put(varName, origval);
             }
             if (tmpFile != null && !tmpFile.delete()) {
                 throw new BadSpecial(
@@ -869,6 +852,43 @@ public class SqlFile {
         } else {
             userVars.put(arg1, toker.nextToken("").trim());
         }
+    }
+
+    /* 
+     * Read a PL block into a new temp file.
+     *
+     * WARNING!!! foreach blocks are not yet smart about comments
+     * and strings.  We just look for a line beginning with "* end"
+     * without worrying about comments or quotes (for now).
+     *
+     * WARNING!!! This is very rudimentary.
+     * Users give up all editing and feedback capabilities for while
+     * in the foreach loop.
+     * A better solution would be to pass current input stream to a
+     * new SqlFile.execute() with a mode whereby commands are written 
+     * to a separate history but not executed.
+     */
+    private File plBlockFile() throws IOException, SqlToolError {
+        String s;
+
+        File tmpFile = File.createTempFile("sqltool-", ".sql");
+        PrintWriter pw = new PrintWriter(
+                new OutputStreamWriter(
+                        new FileOutputStream(tmpFile)));
+        pw.println("/* " + (new java.util.Date())
+                + ". " + getClass().getName() + " PL block. */\n");
+        while (true) {
+            s = br.readLine();
+            if (s == null)
+                throw new SqlToolError("Unterminated PL lbock");
+            if (s.trim().equals("* end")) {
+                break;
+            }
+            pw.println(s);
+        }
+        pw.flush();
+        pw.close();
+        return tmpFile;
     }
 
     /**
@@ -1406,5 +1426,21 @@ public class SqlFile {
         if (htmlMode) {
             stdprintln("\n</TABLE>");
         }
+    }
+
+    static public String[] getTokenArray(String inString) {
+        // I forget how to code a String array literal outside of a
+        // definition.
+        String[] mtString = {};
+
+        if (inString == null) {
+            return mtString;
+        }
+        StringTokenizer toker = new StringTokenizer(inString);
+        String[] sa = new String[toker.countTokens()];
+        for (int i = 0; i < sa.length; i++) {
+            sa[i] = toker.nextToken();
+        }
+        return sa;
     }
 }
