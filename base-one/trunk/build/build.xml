@@ -455,6 +455,65 @@ examples:
                           '/>
         </jar>
     </target>
+    <target name="jarsqltool" depends="classes14"
+            description="Build the sqltool.jar">
+        <jar jarfile="lib/sqltool.jar">
+            <manifest>
+                <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
+            </manifest>
+            <!-- including 'org/hsqldb/jdbc*' just to be safe -->
+            <fileset dir='classes'
+                includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/jdbcDriver*,
+                          org/hsqldb/rowio/RowOutputBase*,
+                          org/hsqldb/rowio/RowInputBase*,
+                          org/hsqldb/rowio/RowOutputBinary*,
+                          org/hsqldb/rowio/RowInputBinary*,
+                          org/hsqldb/rowio/RowOutputInterface*,
+                          org/hsqldb/rowio/RowInputInterface*,
+                          org/hsqldb/lib/InOutUtil*,
+                          org/hsqldb/lib/AsciiStringInputStream*,
+                          org/hsqldb/lib/StringInputStream*,
+                          org/hsqldb/lib/IntValueHashMap*,
+                          org/hsqldb/lib/ArrayUtil*,
+                          org/hsqldb/lib/StringConverter*,
+                          org/hsqldb/lib/Iterator*,
+                          org/hsqldb/lib/HsqlThreadFactory*,
+                          org/hsqldb/lib/ThreadFactory*,
+                          org/hsqldb/lib/HsqlHeap*,
+                          org/hsqldb/lib/HsqlArray*,
+                          org/hsqldb/lib/ObjectComparator*,
+                          org/hsqldb/lib/IntKeyHashMap*,
+                          org/hsqldb/lib/Collection*,
+                          org/hsqldb/lib/Set*,
+                          org/hsqldb/lib/Hash*,
+                          org/hsqldb/lib/HsqlTimer*,
+                          org/hsqldb/lib/HsqlByte*,
+                          org/hsqldb/store/ValuePool*,
+                          org/hsqldb/store/HashIndex*,
+                          org/hsqldb/store/BaseHashMap*,
+                          org/hsqldb/Binary.*,
+                          org/hsqldb/Column*,
+                          org/hsqldb/DatabaseManager*,
+                          org/hsqldb/HSQLClient*,
+                          org/hsqldb/HsqlProperties*,
+                          org/hsqldb/HsqlException*,
+                          org/hsqldb/HsqlSocketFactory*,
+                          org/hsqldb/HTTPClientConnection*,
+                          org/hsqldb/HsqlDateTime*,
+                          org/hsqldb/JavaObject.*,
+                          org/hsqldb/Record*,
+                          org/hsqldb/Result.*,
+                          org/hsqldb/Result$*,
+                          org/hsqldb/Row*,
+                          org/hsqldb/SessionInterface*,
+                          org/hsqldb/Trace*
+                          org/hsqldb/Types*
+                          org/hsqldb/util/SqlTool*
+                          org/hsqldb/util/SqlFile*
+                          '/>
+        </jar>
+    </target>
 
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
