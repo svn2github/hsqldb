@@ -337,7 +337,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
 
         data = Column.hexToByteArray(s);
 
-        return new JavaObject(data, true);
+        return new JavaObject(data);
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {
@@ -348,7 +348,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return new Binary(Column.hexToByteArray(s), true);
+        return new Binary(Column.hexToByteArray(s), false);
     }
 
     public int getLineNumber() {

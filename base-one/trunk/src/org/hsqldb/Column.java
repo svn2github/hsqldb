@@ -1058,7 +1058,7 @@ public class Column {
                     if (o instanceof Binary) {
                         return o;
                     } else if (o instanceof byte[]) {
-                        return new Binary((byte[]) o);
+                        return new Binary((byte[]) o, false);
                     } else if (o instanceof String) {
 
                         /**
@@ -1068,7 +1068,7 @@ public class Column {
                          *  standard
                          */
                         return new Binary(
-                            StringConverter.hexToByte((String) o));
+                            StringConverter.hexToByte((String) o), false);
                     }
 
                     throw Trace.error(Trace.INVALID_CONVERSION, type);
@@ -1085,10 +1085,12 @@ public class Column {
                          *  objects to be stored as JavaObject
                          */
                         return new JavaObject(
-                            StringConverter.hexToByte((String) o), true);
+                            StringConverter.hexToByte((String) o));
+                    } else if (o instanceof Binary){
+                        return new JavaObject(((Binary) o).getBytes(), false);
                     }
 
-                    return new JavaObject(o);
+                    return new JavaObject(o,false);
 
                 default :
             }

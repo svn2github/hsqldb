@@ -51,21 +51,18 @@ public class Binary {
     int            hash;
 
     /**
-     * This constructor is used only from classes implementing the JDBC
-     * interfaces.
+     * This constructor is used inside the engine when an already serialized
+     * byte[] is read from a file (.log, .script, .data or text table source).
+     * In this case clone is false.
+     *
+     * When a byte[] is submitted as a parameter of PreparedStatement then
+     * clone is true.
      */
-    public Binary(byte[] data) {
-        this.data = data;
+    public Binary(byte[] data, boolean clone) {
+        if (clone){
+            data = (byte[]) ArrayUtil.duplicateArray(data);
     }
 
-    /**
-     * This constructor is used inside the engine when an already serialized
-     * Object is read from a file (.log, .script, .data or text table source).
-     *
-     * fromfile is a marker argument to fully distinguish this from the other
-     * constructor
-     */
-    public Binary(byte[] data, boolean fromfile) throws IOException {
         this.data = data;
     }
 

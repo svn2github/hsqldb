@@ -43,7 +43,7 @@ package org.hsqldb;
  * revert to the pre 1.7.0 behaviour without the artificial limitations.<b>
  *
  * The classes for stored objects need not be available to open and operate
- * on the database in general. The classes need to be available only if a
+ * the database in general. The classes need to be available only if a
  * conversion from one of these objects to another type is performed inside
  * the engine while operating the database.
  *
@@ -62,28 +62,16 @@ public class JavaObject {
     private Object object;
 
     /**
-     * This constructor is from classes implementing the JDBC interfaces.<b>
-     * Inside the engine, it is used to convert a value into an object
-     * of type OTHER.
-     */
-    JavaObject(Object o) {
-        object = o;
-    }
-
-    /**
      * This constructor is used inside the engine when an already serialized
      * Object is read from a file (.log, .script, .data or text table source).
-     *
-     * fromfile is a marker argument to fully distinguish this from the other
-     * constructor
      */
-    public JavaObject(byte[] data, boolean fromfile) {
+    public JavaObject(byte[] data) {
         this.data = data;
     }
 
     /**
      * This constructor is from classes implementing the JDBC interfaces.<b>
-     * Inside the engine, it is used to convert a value into an object
+     * Inside the engine, it is used to convert an object into an object
      * of type OTHER.
      */
     public JavaObject(Object o, boolean serialise) throws HsqlException {

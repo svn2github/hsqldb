@@ -175,7 +175,7 @@ implements org.hsqldb.rowio.RowInputInterface {
             data = Column.hexToByteArray(binarystring);
         }
 
-        return new JavaObject(data, true);
+        return new JavaObject(data);
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {
@@ -185,11 +185,11 @@ implements org.hsqldb.rowio.RowInputInterface {
         if (hexstring.equals("**")) {
 
             // hsql - new format
-            return new Binary(readByteArray(), true);
+            return new Binary(readByteArray(), false);
         } else {
 
             // hsql - old format
-            return new Binary(Column.hexToByteArray(hexstring));
+            return new Binary(Column.hexToByteArray(hexstring), false);
         }
     }
 }

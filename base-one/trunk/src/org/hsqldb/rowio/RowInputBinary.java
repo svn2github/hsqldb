@@ -179,11 +179,11 @@ implements org.hsqldb.rowio.RowInputInterface {
     }
 
     protected Object readOther() throws IOException, HsqlException {
-        return new JavaObject(readByteArray(), true);
+        return new JavaObject(readByteArray());
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {
-        return new Binary(readByteArray(), true);
+        return new Binary(readByteArray(), false);
     }
 
     /**
