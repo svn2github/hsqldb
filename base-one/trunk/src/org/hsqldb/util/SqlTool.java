@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.32 2004/06/06 16:14:16 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.33 2004/06/06 18:59:03 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.32 $
+ * @version $Revision: 1.33 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -64,8 +64,8 @@ public class SqlTool {
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.32 $".substring("$Revision: ".length(),
-                "$Revision: 1.32 $".length() - 2);
+        revnum = "$Revision: 1.33 $".substring("$Revision: ".length(),
+                "$Revision: 1.33 $".length() - 2);
     }
 
     /**
@@ -155,6 +155,8 @@ public class SqlTool {
                         driver = value;
                     } else if (keyword.equals("charset")) {
                         charset = value;
+                    } else if (keyword.equals("truststore")) {
+                        truststore = value;
                     } else if (keyword.equals("password")) {
                         password = value;
                     } else {
@@ -171,12 +173,13 @@ public class SqlTool {
                         + "for '" + dbKey + "' in file '" + file + "'");
             }
         }
-        String id       = null;
-        String url      = null;
-        String username = null;
-        String password = null;
-        String driver   = null;
-        String charset  = null;
+        String id         = null;
+        String url        = null;
+        String username   = null;
+        String password   = null;
+        String driver     = null;
+        String charset    = null;
+        String truststore = null;
     }
 
     static final private String SYNTAX_MESSAGE =
@@ -426,6 +429,9 @@ public class SqlTool {
         if (System.getProperty("sqlfile.charset") == null
                 && conData.charset != null) {
             System.setProperty("sqlfile.charset", conData.charset);
+        }
+        if (conData.truststore != null) {
+            System.setProperty("javax.net.ssl.trustStore", conData.truststore);
         }
         try {
 
