@@ -2222,7 +2222,7 @@ class Database {
 
                     if (sToken.equals("EXISTS")) {
                         dropmode  = true;
-                        tablename = c.getName();
+                        tablename = c.getString();
                     } else if (sToken.equals("IF")) {
                         c.getThis("EXISTS");
 
