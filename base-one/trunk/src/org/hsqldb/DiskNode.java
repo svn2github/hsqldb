@@ -308,12 +308,15 @@ class DiskNode extends Node {
                                || (n.getKey() != getKey());
 
                 if (test == false) {
-                    int aA = ((CachedDataRow) getRow()).iLastAccess;
-                    int bA = ((CachedDataRow) n.getRow()).iLastAccess;
+                    int aA = ((CachedRow) getRow()).iLastAccess;
+                    int bA = ((CachedRow) n.getRow()).iLastAccess;
 
                     Trace.doAssert(test,
-                                   "a: " + aA + " - " + iParent + " b: " + bA
-                                   + " - " + ((DiskNode) n).iParent);
+                                   "a: " + aA + ", " + iParent + ", " + iLeft
+                                   + ", " + iRight + " b: " + bA + ", "
+                                   + ((DiskNode) n).iParent + ", "
+                                   + ((DiskNode) n).iLeft + ", "
+                                   + ((DiskNode) n).iRight);
                 }
             }
 /*
