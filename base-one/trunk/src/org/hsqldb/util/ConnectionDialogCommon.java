@@ -178,7 +178,13 @@ class ConnectionDialogCommon {
     throws IOException {
 
         if (recentSettings == null) {
-            recentSettings = new File(getTempDir() + fileName);
+            String dir = getTempDir();
+
+            if (dir == null) {
+                return new ConnectionSetting[]{ emptySetting };
+            }
+
+            recentSettings = new File(dir + fileName);
 
             if (!recentSettings.exists()) {
                 recentSettings.createNewFile();
@@ -237,7 +243,13 @@ class ConnectionDialogCommon {
     throws IOException {
 
         if (recentSettings == null) {
-            recentSettings = new File(getTempDir() + fileName);
+            String dir = getTempDir();
+
+            if (dir == null) {
+                return;
+            }
+
+            recentSettings = new File(dir + fileName);
 
             if (!recentSettings.exists()) {
                 recentSettings.createNewFile();
@@ -267,7 +279,13 @@ class ConnectionDialogCommon {
     static void deleteRecentConnectionSettings() {
 
         if (recentSettings == null) {
-            recentSettings = new File(getTempDir() + fileName);
+            String dir = getTempDir();
+
+            if (dir == null) {
+                return;
+            }
+
+            recentSettings = new File(dir + fileName);
         }
 
         if (!recentSettings.exists()) {
@@ -286,11 +304,16 @@ class ConnectionDialogCommon {
     private static String getTempDir() {
 
         if (tmpdir == null) {
+            try {
+                Class.forName("sun.security.action.GetPropertyAction");
+
             sun.security.action.GetPropertyAction a =
-                new sun.security.action.GetPropertyAction("java.io.tmpdir");
+                    new sun.security.action.GetPropertyAction(
+                        "java.io.tmpdir");
 
             tmpdir =
                 ((String) java.security.AccessController.doPrivileged(a));
+            } catch (Exception e) {}
         }
 
         return tmpdir;

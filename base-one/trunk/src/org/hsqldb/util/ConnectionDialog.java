@@ -226,7 +226,7 @@ implements ActionListener, ItemListener {
         pClearButton.add(b);
         pLabel.add(createLabel("Setting Name:"));
 
-        mName = new TextField(null);
+        mName = new TextField("");
 
         pText.add(mName);
         pLabel.add(createLabel("Type:"));
