@@ -54,7 +54,7 @@ public class HsqlArrayList implements HsqlList {
         Reporter() {
 
             try {
-            System.runFinalizersOnExit(true);
+                System.runFinalizersOnExit(true);
             } catch (SecurityException e) {}
         }
 
