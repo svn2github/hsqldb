@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
 import java.sql.SQLException;
-import java.util.Hashtable;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
 // fredt@users 20020320 - doc 1.7.0 - update

@@ -76,9 +76,9 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
-// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
+// dmarshall@users - 20020101 - original swing port
 // sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
-// sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// sqlbob@users 20020407 - patch 1.7.0 - reengineering and enhancements
 // nickferguson@users 20021005 - patch 1.7.1 - enhancements
 
 /**
