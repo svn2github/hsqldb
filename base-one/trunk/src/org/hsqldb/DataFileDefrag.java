@@ -177,7 +177,8 @@ class DataFileDefrag {
             rowOut.writePos(rowPointer);
 
 // end
-            destFile.write(rowOut.getBuffer(), 0, rowOut.size());
+            destFile.write(rowOut.getOutputStream().getBuffer(), 0,
+                           rowOut.size());
 
 /*
             if (rowOut.size() != row.storageSize) {

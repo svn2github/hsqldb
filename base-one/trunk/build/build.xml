@@ -21,7 +21,7 @@ usage:
    ant cleanall       same as clean but delete the jar files as well
    ant javadoc        create javadoc for the distribution package
 
-   ant Dnoswing=true jarmain   exclue swing classes
+   ant -Dnoswing=true jarmain   exclude swing classes
    hsqldb.jar     : default dirstibution jar
    hsqldbmain.jar : no utility programs
    hsqldbmin.jar  : no utility or server programs
@@ -106,7 +106,7 @@ example:
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-	<include name="org/hsqldb/lib/**"/>
+    <include name="org/hsqldb/lib/**"/>
       </javac>
     </target>
 
@@ -131,12 +131,12 @@ example:
     </target>
 
    <target name="classes14" depends="classes" if="ant.java.iscjava14">
-      <javac srcdir="${src}/org/hsqldb/"
+      <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-      <include name="jdbcDataSource*.java"/>
+      <include name="org/hsqldb/jdbcDataSource*.java"/>
       </javac>
    </target>
 
@@ -146,7 +146,7 @@ example:
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-	 <include name="org/hsqldb/util/**"/>
+     <include name="org/hsqldb/util/**"/>
          <exclude name="*Swing.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">
@@ -157,17 +157,17 @@ example:
     </target>
 
    <target name="swing" depends="util" unless="noswing">
-      <javac srcdir="${src}/org/hsqldb/util"
+      <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-      <include name="*Swing.java"/>
+      <include name="org/hsqldb/util/*Swing.java"/>
       </javac>
    </target>
 
    <target name="test" depends="classes14">
-      <javac srcdir="${src}/org/hsqldb/lib"
+      <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
@@ -176,7 +176,8 @@ example:
             <pathelement location="lib/junit.jar"/>
             <pathelement location="lib/dbunit.jar"/>
          </classpath>
-         <exclude name="TestSqlPersistent.java"/>
+         <include name="org/hsqldb/test/**"/>
+         <exclude name="org/hsqldb/test/TestSqlPersistent.java"/>
       </javac>
    </target>
 
@@ -280,7 +281,6 @@ example:
              basedir="classes"
          >
          <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>
-         <exclude name="org/hsqldb/util/CodeSwitcher.*"/>
          <exclude name="org/hsqldb/util/Zaurus*.*"/>
          <exclude name="org/hsqldb/test/*.class"/>
          <exclude name="org/hsqldb/sample/*.class"/>

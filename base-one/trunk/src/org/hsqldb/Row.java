@@ -71,14 +71,17 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - patch 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
 
 /**
  * Base class for a database row object implementing rows for
  * memory resident tables and TEXT tables.<p>
  *
+ * A Row object references a linked list consisting of Node objects
+ * (one Node per index on the table), and an Object[] containing references
+ * to the field values for the row.
  *
- * Subclasses implement rows for CACHED tables.
+ * Subclass CachedRow implements rows for CACHED tables.
  *
  * @version 1.7.1
  */

@@ -665,7 +665,7 @@ class Result {
                 }
             }
 
-            return out.toByteArray();
+            return out.getOutputStream().toByteArray();
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
         }

@@ -231,8 +231,9 @@ class ServerConnection implements Runnable {
     // fredt - todo - rewrite for reusing the ouput buffer
     void write(DatabaseRowOutputInterface binImage) throws IOException {
 
-        mOutput.writeInt(binImage.size());
-        mOutput.write(binImage.getBuffer(), 0, binImage.size());
+        mOutput.writeInt(binImage.getOutputStream().size());
+        mOutput.write(binImage.getOutputStream().getBuffer(), 0,
+                      binImage.getOutputStream().size());
         mOutput.flush();
     }
 

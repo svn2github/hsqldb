@@ -31,11 +31,12 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
-
+import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.StringConverter;
 /**
- *
+ * This class quotes strings only if they contain the quote character or
+ * the separator for the field. The quote character is doubled.
  * @author sqlbob@users (RMP)
  * @version 1.7.0
  */
@@ -50,26 +51,8 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
 
         if ((s.indexOf('\"') != -1)
                 || ((sep.length() > 0) && (s.indexOf(sep) != -1))) {
-            int              len    = s.length();
-            HsqlStringBuffer quoted = new HsqlStringBuffer(len + 3);    //-- at least 3.
 
-            quoted.append('\"');
-
-            char ch;
-
-            for (int i = 0; i < len; i++) {
-                ch = s.charAt(i);
-
-                if (ch == '\"') {
-                    quoted.append('\"');
-                }
-
-                quoted.append(ch);
-            }
-
-            quoted.append('\"');
-
-            s = quoted.toString();
+            StringConverter.toQuotedString(s,'\"',true);
         }
 
         return (s);
@@ -85,40 +68,5 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
 
     protected void writeLongVarString(String s) throws IOException {
         super.writeLongVarString(addQuotes(s, longvarSep));
-    }
-
-    private String addQuotes(byte b[], String sep) {
-
-        HsqlStringBuffer quoted = new HsqlStringBuffer(b.length + 2);
-        char             ch;
-
-        //-- Always quote (just in case it's needed for unprintable chars).
-        quoted.append('\"');
-
-        for (int i = 0; i < b.length; i++) {
-            ch = (char) (b[i] & 0xff);
-
-            if (ch == '\"') {
-                quoted.append('\"');
-            }
-
-            quoted.append(ch);
-        }
-
-        quoted.append('\"');
-
-        return (quoted.toString());
-    }
-
-    protected void writeByteArray(byte b[]) throws IOException {
-        super.writeString(addQuotes(b, fieldSep));
-    }
-
-    protected void writeVarByteArray(byte b[]) throws IOException {
-        super.writeVarString(addQuotes(b, varSep));
-    }
-
-    protected void writeLongVarByteArray(byte b[]) throws IOException {
-        super.writeLongVarString(addQuotes(b, longvarSep));
     }
 }

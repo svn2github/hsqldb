@@ -168,26 +168,6 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return (getField(longvarSep, longvarSepLen, longvarSepEnd));
     }
 
-    private byte[] readByteArray(String field)
-    throws IOException, SQLException {
-
-        char         from[] = field.toCharArray();
-        String       hex;
-        StringBuffer to = new StringBuffer();
-
-        for (int i = 0; i < from.length; i++) {
-            hex = Integer.toHexString(from[i]);
-
-            if (hex.length() == 1) {
-                to.append("0");
-            }
-
-            to.append(hex);
-        }
-
-        return Column.hexToByteArray(to.toString());
-    }
-
     public int readIntData() throws IOException {
 
         String s = readString();
@@ -330,51 +310,26 @@ implements org.hsqldb.DatabaseRowInputInterface {
     protected Object readOther() throws IOException, SQLException {
 
         byte[] o;
-        String s = readLongVarString();
+        String s = readString();
 
         if (s == null) {
             return (null);
         }
 
-        o = readByteArray(s);
+        o = Column.hexToByteArray(s);
 
         return Column.deserialize(o);
     }
 
     protected byte[] readBinary(int type) throws IOException, SQLException {
 
-        String s;
+        String s = readString();
 
-        switch (type) {
-
-            case Types.BINARY :
-                s = readString();
-
-                if (s == null) {
-                    return (null);
-                }
-
-                return readByteArray(s);
-
-            case Types.VARBINARY :
-                s = readVarString();
-
-                if (s == null) {
-                    return (null);
-                }
-
-                return readByteArray(s);
-
-            case Types.LONGVARBINARY :
-            default :
-                s = readLongVarString();
-
-                if (s == null) {
-                    return (null);
-                }
-
-                return readByteArray(s);
+        if (s == null) {
+            return null;
         }
+
+        return Column.hexToByteArray(s);
     }
 
     public void setNextPos(int pos) {

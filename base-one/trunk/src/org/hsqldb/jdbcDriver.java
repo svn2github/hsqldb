@@ -74,6 +74,8 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.Properties;
 
+// fredt@users 20011220 - patch 1.7.0 by fredt
+// new version numbering scheme
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 
@@ -116,8 +118,6 @@ import java.util.Properties;
  *
  * @see  jdbcConnection
  */
-// fredt@users 20011220 - patch 1.7.0 by fredt
-// new version numbering scheme
 public class jdbcDriver implements Driver {
 
     static final String sStartURL = "jdbc:hsqldb:";
@@ -132,17 +132,25 @@ public class jdbcDriver implements Driver {
      *  returns "null" if it realizes it is the wrong kind of driver to
      *  connect to the given URL. This will be common, as when the JDBC
      *  driver manager is asked to connect to a given URL it passes the URL
-     *  to each loaded driver in turn. <p>
+     *  to each loaded driver in turn.<p>
      *
      *  The driver raises a SQLException if it is the right driver to
      *  connect to the given URL, but has trouble connecting to the
-     *  database. <p>
+     *  database.<p>
      *
      *  The java.util.Properties argument can be used to passed arbitrary
-     *  string tag/value pairs as connection arguments. <p>
+     *  string tag/value pairs as connection arguments.<p>
      *
      *  <font color="#009900"> For HSQL Database Engine, at least "user" and
-     *  "password" properties must be included in the Properties. </font>
+     *  "password" properties must be included in the Properties. From
+     *  version 1.7.1 two optional properties are supported:<p>
+     *  <code>get_column_name</code> if set to false, a
+     *  ResultSetMetaData.getColumnName() call will return the user defined
+     *  label instead of the column name.
+     *  <code>strict_md</code> if set to true, some ResultSetMetaData methods
+     *  return more strict values for compatibility reasons.
+     *
+     *  </font>
      *  <p>
      *
      *
@@ -176,7 +184,7 @@ public class jdbcDriver implements Driver {
      * @return  true if this driver can connect to the given URL
      */
 
-    // fredt@users - patch 1.70 - allow mixedcase url's when called externally
+    // fredt@users - patch 1.7.0 - allow mixedcase url's when called externally
     public boolean acceptsURL(String url) {
 
         if (Trace.TRACE) {

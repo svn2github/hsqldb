@@ -63,6 +63,9 @@ class TextTable extends org.hsqldb.Table {
 
     private void openCache(String source, boolean isDesc,
                            boolean isRdOnly) throws SQLException {
+        if (source == null) {
+            source = "";
+        }
 
         // Close old cache:
         if (dataSource.length() > 0) {
@@ -78,7 +81,7 @@ class TextTable extends org.hsqldb.Table {
         }
 
         // Open new cache:
-        if ((source != null) && source.length() > 0) {
+        if (source.length() > 0) {
             try {
                 cCache = dDatabase.logger.openTextCache(tableName.name,
                         source, isRdOnly, isDesc);
@@ -94,8 +97,8 @@ class TextTable extends org.hsqldb.Table {
 
                 super.setIndexRoots(roots);
             } catch (SQLException e) {
-                if (!dataSource.equals(source) || (isDesc != isReversed)
-                        || (isRdOnly != isReadOnly)) {
+                if (!dataSource.equals(source) || isDesc != isReversed
+                        || isRdOnly != isReadOnly) {
 
                     // Restore old cache.
                     openCache(dataSource, isReversed, isReadOnly);
@@ -110,10 +113,6 @@ class TextTable extends org.hsqldb.Table {
 
                 throw (e);
             }
-        }
-
-        if (source == null) {
-            source = "";
         }
 
         dataSource = source;
@@ -249,17 +248,29 @@ class TextTable extends org.hsqldb.Table {
 
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws SQLException {
-        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
+
+        if (dataSource.length() == 0) {
+            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
+        }
+
         super.checkUpdate(col, deleted, inserted);
     }
 
     void insert(Object row[], Session c) throws SQLException {
-        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
+
+        if (dataSource.length() == 0) {
+            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
+        }
+
         super.insert(row, c);
     }
 
     void delete(Object row[], Session c) throws SQLException {
-        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
+
+        if (dataSource.length() == 0) {
+            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
+        }
+
         super.delete(row, c);
     }
 
@@ -292,5 +303,9 @@ class TextTable extends org.hsqldb.Table {
         } else {
             throw (Trace.error(Trace.SECOND_PRIMARY_KEY));
         }
+    }
+
+    void drop() throws SQLException{
+        openCache("", false, false);
     }
 }

@@ -2866,13 +2866,10 @@ class Database {
             }
         }
 
-        if (toDrop.isText()) {
-            toDrop.setDataSource("", false, session);
-        }
-
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
         aAccess.removeDbObject(toDrop.getName());
+        toDrop.drop();
     }
 
     /**
@@ -3087,7 +3084,7 @@ class Database {
          *      rows during the cleanup process
          */
         void cleanUp() throws SQLException {
-
+            // todo : text table cleanup missing
             if (lLog != null && lLog.getCache() != null) {
                 lLog.getCache().cleanUp();
             }

@@ -59,7 +59,7 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
         buf = new byte[size];
     }
 
-// methods that implement dataOutput
+    // methods that implement dataOutput
     public final void writeShort(int v) {
 
         ensureRoom(2);
@@ -100,12 +100,16 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
         writeLong(Double.doubleToLongBits(v));
     }
 
-// methods that extend java.io.OutputStream
+    // methods that extend java.io.OutputStream
     public void write(int b) {
 
         ensureRoom(1);
 
         buf[count] = (byte) b;
+
+        if (buf[count] < 32) {
+            size();
+        }
 
         count++;
     }
@@ -152,6 +156,20 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
     }
 
     public void close() throws IOException {}
+
+    // additional public methods not in similar java.util classes
+    public void fill(int b, int len) {
+
+        ensureRoom(len);
+
+        for (int i = 0; i < len; i++) {
+            buf[count++] = (byte) b;
+        }
+    }
+
+    public byte[] getBuffer() {
+        return this.buf;
+    }
 
     protected void ensureRoom(int extra) {
 

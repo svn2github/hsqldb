@@ -40,17 +40,17 @@ import org.hsqldb.lib.StringConverter;
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
  *
- * DDL statements and definition of users and rights at startup time<br>
- * All data for MEMORY tables at startup time<br>
- * Logged SQL statements since startup time or the last CHECKPOINT<br>
+ * DDL BLOCK: definition of DB objects, users and rights at startup time<br>
+ * DATA BLOCK: All data for MEMORY tables at startup time<br>
+ * LOG BLOCK: SQL statements logged since startup or the last CHECKPOINT<br>
  *
  * The implementation of this class and its subclasses determines the format
  * used for writing the data. In versions up to 1.7.2, this data is written
- * to the *.script file for the database for logging. Since 1.7.2 the data
- * can be written as binray in order to speed up shutdown and startup.<p>
+ * to the *.script file for the database. Since 1.7.2 the data can also be
+ * written as binray in order to speed up shutdown and startup.<p>
  *
  * A related use for this class is for saving a current snapshot of the
- * database data to a user defined file.<p>
+ * database data to a user-defined file.<p>
  *
  * DatabaseScriptReader and its subclasses read back the data at startup time.
  *
@@ -66,6 +66,10 @@ import org.hsqldb.lib.StringConverter;
 
 // todo - can lock the database engine as readonly in a wrapper for this when
 // used at checkpoint
+// todo - rework the semantics of READONLY TRUE - it should be possible to
+// treat this in the DDL block as a delayed setting that comes into effect
+// after processing the DATA block and before the LOG block
+// at the moment READLONLY is not supported for binary logging
 class DatabaseScriptWriter {
 
     Database          db;
@@ -83,7 +87,9 @@ class DatabaseScriptWriter {
     boolean          noWriteDelay = true;
     boolean          needsFlush   = false;
     static final int INSERT       = 0;
-    static byte[]    lineSep;
+
+    // todo - perhaps move this gloabal into a lib utility class
+    static byte[] lineSep;
 
     static {
         String sLineSep = System.getProperty("line.separator", "\n");
@@ -190,10 +196,25 @@ class DatabaseScriptWriter {
             // write all memory table data
             // write cached table data unless index roots have been written
             // write all text table data apart from readonly text tables
-            if (t.tableType == Table
-                    .MEMORY_TABLE || (t.tableType == Table
-                        .CACHED_TABLE && includeCachedData) || (t
-                        .tableType == Table.TEXT_TABLE &&!t.isReadOnly)) {
+            // unless index roots have been written
+            boolean script = false;
+
+            switch (t.tableType) {
+
+                case Table.MEMORY_TABLE :
+                    script = true;
+                    break;
+
+                case Table.CACHED_TABLE :
+                    script = includeCachedData;
+                    break;
+
+                case Table.TEXT_TABLE :
+                    script = includeCachedData &&!t.isReadOnly;
+                    break;
+            }
+
+            if (script) {
                 writeTableInit(t);
 
                 Index primary = t.getPrimaryIndex();

@@ -93,6 +93,9 @@ class Cache {
     protected HsqlDatabaseProperties dbProps;
     protected String                 sName;
 
+    // cache operation mode
+    protected boolean storeOnInsert;
+
     // post openning constant fields
     boolean           cacheReadonly;
     private int       cacheScale;
@@ -115,6 +118,7 @@ class Cache {
     //
     private CachedRow        rFirst;           // must point to one of rData[]
     private CachedRow        rLastChecked;     // can be any row
+    private int              iCurrentAccess = 0;
     private static final int MAX_FREE_COUNT = 1024;
 
     //
@@ -164,19 +168,24 @@ class Cache {
         dDatabase = db;
         dbProps   = db.getProperties();
 
-        int cacheScale = 0;
+        int scale = getCacheScale(db.getProperties());
+
+        init(scale);
+    }
+
+    private static int getCacheScale(HsqlDatabaseProperties props) {
+
+        int scale = 0;
 
         try {
+            scale = props.getIntegerProperty("hsqldb.cache_scale", 14);
 
-            // HJB-2001-06-21: use larger cache size
-            cacheScale = dbProps.getIntegerProperty("hsqldb.cache_scale", 15);
-
-            if (cacheScale < 8) {
-                cacheScale = 8;
+            if (scale < 8) {
+                scale = 8;
 
                 throw new NumberFormatException();
-            } else if (cacheScale > 16) {
-                cacheScale = 16;
+            } else if (scale > 16) {
+                scale = 16;
 
                 throw new NumberFormatException();
             }
@@ -185,7 +194,7 @@ class Cache {
                 "bad value for hsqldb.cache_scale in properties file");
         }
 
-        init(cacheScale);
+        return scale;
     }
 
     /**
@@ -423,6 +432,16 @@ class Cache {
 
         r.insert(before);
 
+        try {
+
+            // for text tables
+            if (storeOnInsert) {
+                saveRow(r);
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR);
+        }
+
         iCacheSize++;
 
         rData[k] = r;
@@ -470,6 +489,7 @@ class Cache {
             p = r.iPos;
 
             if (p == pos) {
+                r.iLastAccess = iCurrentAccess++;
                 return r;
             } else if (((p >> 3) & multiplierMask) != k) {    // HJB-2001-06-21
                 break;
@@ -480,6 +500,10 @@ class Cache {
             if (r == start) {
                 break;
             }
+        }
+
+        if (iCacheSize == maxCacheSize) {
+            cleanUp();
         }
 
         CachedRow before = rData[k];
@@ -502,6 +526,8 @@ class Cache {
             t.indexRow(r, false);
         }
 
+        r.iLastAccess = iCurrentAccess++;
+
         return r;
     }
 
@@ -516,10 +542,6 @@ class Cache {
      *
      */
     void cleanUp() throws SQLException {
-
-        if (iCacheSize < maxCacheSize) {
-            return;
-        }
 
         int count = 0;
         int j     = 0;
@@ -543,7 +565,7 @@ class Cache {
                  *  for (int i=0;i<count;i++) { if (rWriter[i]==r) { r=null;
                  *  break; } } if (r!=null) { rWriter[count++] = r; }
                  */
-                r.iLastAccess    = CachedRow.iCurrentAccess;
+                r.iLastAccess    = iCurrentAccess;
                 rWriter[count++] = r;
             } else {
 
@@ -571,12 +593,24 @@ class Cache {
         }
     }
 
+    protected void remove(Table t) throws SQLException {
+
+        CachedRow row = rFirst;
+
+        for (int i = 0; i < iCacheSize; i++) {
+            if (row.tTable == t) {
+                row = remove(row);
+            } else {
+                row = row.rNext;
+            }
+        }
+    }
+
     /**
      * Removes a Row from this Cache object.
      *
-     * <b>Note:</b> This method is called by the cleanUp method.
      */
-    protected void remove(CachedRow r) throws SQLException {
+    protected CachedRow remove(CachedRow r) throws SQLException {
 
 /*
         if (Trace.DOASSERT) {
@@ -618,9 +652,9 @@ class Cache {
             }
         }
 
-        r.free();
-
         iCacheSize--;
+
+        return r.free();
     }
 
     /**
@@ -641,7 +675,7 @@ class Cache {
         }
 
         CachedRow candidate = r;
-        int       worst     = CachedRow.iCurrentAccess;
+        int       worst     = iCurrentAccess;
 
         // algorithm: check the next rows and take the worst
         for (int i = 0; i < 6; i++) {
@@ -661,7 +695,7 @@ class Cache {
     }
 
     /**
-     * Writes out all cached Rows.
+     * Writes out all modified cached Rows.
      *
      */
     protected void saveAll() throws SQLException {
@@ -707,7 +741,8 @@ class Cache {
 
         rFile.seek(r.iPos);
         r.write(rowOut);
-        rFile.write(rowOut.getBuffer(), 0, rowOut.size());
+        rFile.write(rowOut.getOutputStream().getBuffer(), 0,
+                    rowOut.getOutputStream().size());
         rowOut.reset();
     }
 

@@ -87,17 +87,15 @@ class Index {
     static final int POINTER_INDEX = 2;
 
     // fields
-    private HsqlName   indexName;
-    private Table      table;
-    private int        iFields;
-    private int        iColumn[];
-    private int        iType[];
-    private boolean    bUnique;               // DDL uniqueness
-    private int        visibleColumns;
-    private Node       root;
-    private int        iColumn_0, iType_0;    // just for tuning
-    private static int iNeedCleanUp;
-    private boolean    cleanUp;
+    private HsqlName indexName;
+    private Table    table;
+    private int      iFields;
+    private int      iColumn[];
+    private int      iType[];
+    private boolean  bUnique;               // DDL uniqueness
+    private int      visibleColumns;
+    private Node     root;
+    private int      iColumn_0, iType_0;    // just for tuning
 
     /**
      * Constructor declaration
@@ -113,7 +111,6 @@ class Index {
 
         indexName           = name;
         this.table          = table;
-        cleanUp             = table.isCached();    // fredt - see if isIndexCached() can do
         iFields             = column.length;
         iColumn             = column;
         iType               = type;
@@ -324,7 +321,7 @@ class Index {
 
         balance(x, way);
 
-        return (i);
+        return i;
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -764,10 +761,6 @@ class Index {
 
         if (x == null) {
             return null;
-        }
-
-        if (cleanUp && (++iNeedCleanUp & 127) == 0) {
-            table.cleanUp();
         }
 
         Node r = x.getRight();

@@ -164,7 +164,7 @@ class ReverseTextCache extends org.hsqldb.TextCache {
 
                             first = blank = true;
 
-                            in.skippedLine();
+                            rowIn.skippedLine();
 
                             continue;
                         }
@@ -184,10 +184,10 @@ class ReverseTextCache extends org.hsqldb.TextCache {
 
             if (complete) {
                 buffer.reverse();
-                in.setSource(buffer.toString(), pos);
-                in.setNextPos(nextPos);
+                rowIn.setSource(buffer.toString(), pos);
+                rowIn.setNextPos(nextPos);
 
-                r = new CachedRow(t, in);
+                r = new CachedRow(t, rowIn);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -57,7 +57,7 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
     }
 
     // int : row size (0 if no more rows) ,
-    // BinaryServerRowInput : row (column values)
+    // BinaryServerRowInput/Output : row (column values)
     protected void writeRow(Object[] data,
                             Table t) throws IOException, SQLException {
 

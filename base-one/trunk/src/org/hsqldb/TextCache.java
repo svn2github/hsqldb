@@ -34,6 +34,8 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.lib.HsqlStringBuffer;
 
 /**
  * Handles operations on a DatabaseFile object and uses signle
@@ -45,15 +47,14 @@ import java.sql.SQLException;
  */
 class TextCache extends org.hsqldb.Cache {
 
-    public static final String NL = System.getProperty("line.separator");
-    private String                     fs;
-    private String                     vs;
-    private String                     lvs;
-    private DatabaseRowOutputInterface out;
-    protected boolean                  readOnly;
-    protected TextDatabaseRowInput     in;
-    protected boolean                  ignoreFirst;
-    protected String                   ignoredFirst = NL;
+    public static final String     NL = System.getProperty("line.separator");
+    private String                 fs;
+    private String                 vs;
+    private String                 lvs;
+    protected boolean              readOnly;
+    protected TextDatabaseRowInput rowIn;
+    protected boolean              ignoreFirst;
+    protected String               ignoredFirst = NL;
 
     private class TextSource {
 
@@ -102,6 +103,9 @@ class TextCache extends org.hsqldb.Cache {
               Database db) throws SQLException {
 
         super("", db);
+
+        // write rows as soon as they are inserted
+        storeOnInsert = true;
 
         TextSource textSource = new TextSource(name);
 
@@ -175,13 +179,13 @@ class TextCache extends org.hsqldb.Cache {
 
         try {
             if (quoted.equals("true")) {
-                in = new QuotedTextDatabaseRowInput(
+                rowIn = new QuotedTextDatabaseRowInput(
                     fs, vs, lvs, emptyIsNull.equals("true"));
-                out = new QuotedTextDatabaseRowOutput(fs, vs, lvs);
+                rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs);
             } else {
-                in = new TextDatabaseRowInput(fs, vs, lvs,
-                                              emptyIsNull.equals("true"));
-                out = new TextDatabaseRowOutput(fs, vs, lvs);
+                rowIn = new TextDatabaseRowInput(fs, vs, lvs,
+                                                 emptyIsNull.equals("true"));
+                rowOut = new TextDatabaseRowOutput(fs, vs, lvs);
             }
         } catch (IOException e) {
             throw (Trace.error(Trace.FILE_IO_ERROR,
@@ -202,11 +206,11 @@ class TextCache extends org.hsqldb.Cache {
         int next = 0;
 
         if ((next = sep.indexOf('\\')) != -1) {
-            int          start      = 0;
-            char         sepArray[] = sep.toCharArray();
-            char         ch         = 0;
-            int          len        = sep.length();
-            StringBuffer realSep    = new StringBuffer(len);
+            int              start      = 0;
+            char             sepArray[] = sep.toCharArray();
+            char             ch         = 0;
+            int              len        = sep.length();
+            HsqlStringBuffer realSep    = new HsqlStringBuffer(len);
 
             do {
                 realSep.append(sepArray, start, next - start);
@@ -310,7 +314,7 @@ class TextCache extends org.hsqldb.Cache {
 
     void reopen() throws SQLException {
         open(readOnly);
-        in.reset();
+        rowIn.reset();
     }
 
     /**
@@ -328,7 +332,8 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         try {
-            rFile.seek(0);
+
+//            rFile.seek(0);
             saveAll();
 
             boolean empty = (rFile.length() <= NL.length());
@@ -371,22 +376,17 @@ class TextCache extends org.hsqldb.Cache {
     void free(CachedRow r) throws SQLException {
 
         int pos    = r.iPos;
-        int length = r.storageSize;
+        int length = r.storageSize - DatabaseScriptWriter.lineSep.length;
 
-        //-- Change to blank line:
-        StringBuffer blank = new StringBuffer(length);
+        rowOut.reset();
 
-        length -= NL.length();
-
-        for (int i = 0; i < length; i++) {
-            blank.append(' ');
-        }
-
-        blank.append(NL);
+        HsqlByteArrayOutputStream out = rowOut.getOutputStream();
 
         try {
+            out.fill(' ', length);
+            out.write(DatabaseScriptWriter.lineSep);
             rFile.seek(pos);
-            rFile.writeBytes(blank.toString());
+            rFile.write(out.getBuffer(), 0, out.size());
         } catch (IOException e) {
             throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
         }
@@ -395,7 +395,7 @@ class TextCache extends org.hsqldb.Cache {
     }
 
     protected void setStorageSize(CachedRow r) throws SQLException {
-        r.storageSize = out.getSize(r);
+        r.storageSize = rowOut.getSize(r);
     }
 
     protected CachedRow makeRow(int pos, Table t) throws SQLException {
@@ -403,9 +403,9 @@ class TextCache extends org.hsqldb.Cache {
         CachedRow r = null;
 
         try {
-            StringBuffer buffer   = new StringBuffer(80);
-            boolean      blank    = true;
-            boolean      complete = false;
+            HsqlStringBuffer buffer   = new HsqlStringBuffer(80);
+            boolean          blank    = true;
+            boolean          complete = false;
 
             try {
                 char c;
@@ -446,7 +446,7 @@ class TextCache extends org.hsqldb.Cache {
 
                             blank = true;
 
-                            in.skippedLine();
+                            rowIn.skippedLine();
 
                             continue;
                         }
@@ -491,7 +491,7 @@ class TextCache extends org.hsqldb.Cache {
 
                             blank = true;
 
-                            in.skippedLine();
+                            rowIn.skippedLine();
 
                             continue;
                         }
@@ -508,9 +508,9 @@ class TextCache extends org.hsqldb.Cache {
             }
 
             if (complete) {
-                in.setSource(buffer.toString(), pos);
+                rowIn.setSource(buffer.toString(), pos);
 
-                r = new CachedRow(t, in);
+                r = new CachedRow(t, rowIn);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -519,12 +519,5 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         return (r);
-    }
-
-    protected void saveRow(CachedRow r) throws IOException, SQLException {
-
-        rFile.seek(r.iPos);
-        r.write(out);
-        rFile.write(out.toByteArray());
     }
 }

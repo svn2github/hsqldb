@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 
 /**
  * Public interface for writing the data for a database row.
@@ -55,9 +56,6 @@ interface DatabaseRowOutputInterface {
 
     public void writeIntData(int i, int position) throws IOException;
 
-    // resets the data after copying to new byte[]
-    public byte[] toByteArray() throws IOException;
-
     public void writeData(Object data[],
                           Table t) throws IOException, SQLException;
 
@@ -67,11 +65,8 @@ interface DatabaseRowOutputInterface {
     // independent of the this object, calls only a static method
     public int getSize(CachedRow row) throws SQLException;
 
-    // simply returns the byte[] buffer
-    public byte[] getBuffer();
-
-    // used with getByteArray() to get the current size
-    public int size();
+    // returns the underlying HsqlByteArrayOutputStream
+    public HsqlByteArrayOutputStream getOutputStream();
 
     // resets the byte[] buffer, ready for processing new row
     public void reset();

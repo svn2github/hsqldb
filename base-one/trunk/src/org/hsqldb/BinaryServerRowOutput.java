@@ -56,9 +56,8 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         try {
             unscaledValueMethod =
                 java.math.BigInteger.class.getMethod("unscaledValue", null);
-        } catch (NoSuchMethodException e) {
-        } catch (SecurityException e) {
-        }
+        } catch (NoSuchMethodException e) {}
+        catch (SecurityException e) {}
     }
 
     int storageSize;
@@ -125,6 +124,21 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         }
 
         writeIntData(count - temp - 4, temp);
+    }
+
+    /**
+     *  Calculate the size of byte array required to store a row.
+     *
+     * @param  row - a database row
+     * @return  size of byte array
+     * @exception  SQLException When data is inconsistent
+     */
+    public int getSize(CachedRow row) throws SQLException {
+
+        Object data[] = row.getData();
+        int    type[] = row.getTable().getColumnTypes();
+
+        return getSize(data, data.length, type);
     }
 
 // fredt@users - comment - methods used for writing each SQL type
@@ -215,21 +229,6 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
     protected void writeByteArray(byte b[]) throws IOException {
         writeInt(b.length);
         write(b, 0, b.length);
-    }
-
-    /**
-     *  Calculate the size of byte array required to store a row.
-     *
-     * @param  row - a database row
-     * @return  size of byte array
-     * @exception  SQLException When data is inconsistent
-     */
-    public int getSize(CachedRow row) throws SQLException {
-
-        Object data[] = row.getData();
-        int    type[] = row.getTable().getColumnTypes();
-
-        return getSize(data, data.length, type);
     }
 
     /**

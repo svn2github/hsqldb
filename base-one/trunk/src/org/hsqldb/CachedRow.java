@@ -71,18 +71,20 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 
 /**
- *  Disk and In-memory representation of a database row object with storage
+ *  In-memory representation of a disk-based database row object with storage
  *  independent methods for serialization and de-serialization.
+ *
+ *  A CachedRow is part of a circular double linked list which contians all
+ *  the Rows currently in the Cache for the database.
  *
  * @version 1.7.1
  */
 class CachedRow extends Row {
 
-    static final int NO_POS         = -1;
-    static int       iCurrentAccess = 0;
+    static final int NO_POS = -1;
     protected Table  tTable;
     int              iLastAccess;
     CachedRow        rLast, rNext;
@@ -112,9 +114,8 @@ class CachedRow extends Row {
             n       = n.nNext;
         }
 
-        oData       = o;
-        bChanged    = true;
-        iLastAccess = iCurrentAccess++;
+        oData    = o;
+        bChanged = true;
 
         t.putRow(this);
     }
@@ -133,50 +134,11 @@ class CachedRow extends Row {
     }
 
     void changed() {
-        bChanged    = true;
-        iLastAccess = iCurrentAccess++;
+        bChanged = true;
     }
 
     boolean hasChanged() {
         return (bChanged);
-    }
-
-    /**
-     * Get the node for a given index.
-     *
-     * @param  index
-     * @return the node
-     */
-    Node getNode(int index) {
-
-        iLastAccess = iCurrentAccess++;
-
-        return super.getNode(index);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @return
-     */
-    Node getNextNode(Node n) {
-
-        iLastAccess = iCurrentAccess++;
-
-        return super.getNextNode(n);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    Object[] getData() {
-
-        iLastAccess = iCurrentAccess++;
-
-        return oData;
     }
 
     /**
@@ -294,7 +256,7 @@ class CachedRow extends Row {
      *
      * @throws  SQLException
      */
-    void free() throws SQLException {
+    CachedRow free() throws SQLException {
 
         rLast.rNext = rNext;
         rNext.rLast = rLast;
@@ -302,6 +264,8 @@ class CachedRow extends Row {
         if (rNext == this) {
             rNext = rLast = null;
         }
+
+        return rNext;
     }
 
     /**
@@ -339,7 +303,5 @@ class CachedRow extends Row {
         if (tTable.isIndexCached()) {
             Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
         }
-
-        iLastAccess = iCurrentAccess++;
     }
 }

@@ -34,6 +34,7 @@ package org.hsqldb.test;
 import org.hsqldb.HsqlProperties;
 import java.io.*;
 import java.sql.*;
+import java.util.Hashtable;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
@@ -52,17 +53,18 @@ import java.sql.*;
  *
  * @author fredt@users
  */
-public class TestCacheSize {
+public class TestTextTables {
 
     protected String url = "jdbc:hsqldb:";
 
-    protected String filepath = ".";
-//    protected String filepath = "/hsql/testcache/test";
+//    protected String filepath = ".";
+    protected String filepath = "/hsql/testtext/test";
     String           user;
     String           password;
     Statement        sStatement;
     Connection       cConnection;
-    boolean          indexZip        = false;
+    boolean          indexZip        = true;
+    boolean          indexId         = true;
     boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
@@ -70,7 +72,7 @@ public class TestCacheSize {
 
     // introduces fragmentation to the .data file
     boolean deleteWhileInsert         = false;
-    int     deleteWhileInsertInterval = 100000;
+    int     deleteWhileInsertInterval = 10000;
 
     protected void setUp() {
 
@@ -96,7 +98,6 @@ public class TestCacheSize {
                 props.load();
                 props.setProperty("hsqldb.log_size", "400");
                 props.setProperty("hsqldb.cache_scale", "12");
-                props.setProperty("hsqldb.log_type", "0");
                 props.save();
 
                 cConnection = DriverManager.getConnection(url + filepath,
@@ -122,9 +123,10 @@ public class TestCacheSize {
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "CREATE CACHED TABLE test( id INT IDENTITY,"
-                      + " firstname VARCHAR, " + " lastname VARCHAR, "
-                      + " zip INTEGER, " + " filler VARCHAR); ";
+        String ddl3 = "CREATE TEXT TABLE test( id INT,"
+                      + " firstname VARCHAR, lastname VARCHAR, "
+                      + " zip INTEGER, " + " filler VARCHAR, obj OTHER ); "
+                      + "SET TABLE test SOURCE \"test.csv\";";
 
         // adding extra index will slow down inserts a bit
         String ddl4 = "CREATE INDEX idx1 ON TEST (lastname);";
@@ -138,6 +140,9 @@ public class TestCacheSize {
         String ddl7 = "CREATE TEMP TABLE temptest( id INT,"
                       + " firstname VARCHAR, " + " lastname VARCHAR, "
                       + " zip INTEGER, " + " filler VARCHAR); ";
+        // adding this index will slow down inserts a bit
+        String ddl8 = "CREATE INDEX idx3 ON TEST (id);";
+
         String filler =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -164,6 +169,11 @@ public class TestCacheSize {
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
             System.out.println("test table with no index");
+
+            if (indexId) {
+                sStatement.execute(ddl8);
+                System.out.println("create index on id");
+            }
 
             if (indexLastName) {
                 sStatement.execute(ddl4);
@@ -196,15 +206,17 @@ public class TestCacheSize {
                                + this.refIntegrity + ";");
 
             PreparedStatement ps = cConnection.prepareStatement(
-                "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
+                "INSERT INTO test (id,firstname,lastname,zip,filler,obj) VALUES (?,?,?,?,?,?)");
 
-            ps.setString(1, "Julia");
-            ps.setString(2, "Clancy");
+            ps.setString(2, "Julia");
+            ps.setString(3, "Clancy");
 
             long startTime = System.currentTimeMillis();
 
             for (i = 0; i < bigrows; i++) {
-                ps.setInt(3, randomgen.nextInt() & smallrows);
+                // only without identity
+                ps.setInt(1, i);
+                ps.setInt(4, randomgen.nextInt() & smallrows);
 
                 long nextrandom   = randomgen.nextLong();
                 int  randomlength = (int) nextrandom & 0x7f;
@@ -213,13 +225,24 @@ public class TestCacheSize {
                     randomlength = filler.length();
                 }
 
-                String varfiller = filler.substring(0, randomlength);
+                String varfiller = nextrandom
+                                   + filler.substring(0, randomlength);
 
-                ps.setString(4, nextrandom + varfiller);
+                ps.setString(5, varfiller);
+/*
+                Hashtable tempobj = new Hashtable();
+
+                tempobj.put("firstname", "Julia");
+                tempobj.put("lastname", "Clancy");
+                tempobj.put("random", new Long(nextrandom));
+                tempobj.put("filler", new StringBuffer(varfiller));
+                ps.setObject(6, tempobj, Types.OTHER);
+*/
+                ps.setObject(6, null, Types.OTHER);
                 ps.execute();
 
-                if (i != 0 && i % 10000 == 0) {
-                    System.out.println(i);
+                if ((i + 1) % 50000 == 0) {
+                    System.out.println(i + 1);
                     System.out.println(
                         new java.util.Date(System.currentTimeMillis()));
                 }
@@ -285,7 +308,7 @@ public class TestCacheSize {
 
     public static void main(String argv[]) {
 
-        TestCacheSize test = new TestCacheSize();
+        TestTextTables test = new TestTextTables();
 
         test.setUp();
         test.testFillUp();

@@ -253,16 +253,8 @@ implements DatabaseRowOutputInterface {
         }
     }
 
-    public byte[] toByteArray() {
-
-        byte ret[] = super.toByteArray();
-
-        reset();
-
-        return ret;
-    }
-
-    public byte[] getBuffer() {
-        return this.buf;
+    // returns the underlying HsqlByteArrayOutputStream
+    public HsqlByteArrayOutputStream getOutputStream() {
+        return this;
     }
 }

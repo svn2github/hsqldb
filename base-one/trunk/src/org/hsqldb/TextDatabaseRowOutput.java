@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.sql.SQLException;
 import java.sql.Types;
+import org.hsqldb.lib.StringConverter;
 
 /**
  *  Class for writing the data for a database row in text table format.
@@ -83,46 +84,28 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void writePos(int pos) throws IOException {
 
-        //-- Do nothing.
+        // terminate at the end of row
+        if (nextSepEnd) {
+            writeBytes(nextSep);
+        }
+
+        writeBytes(TextCache.NL);
     }
 
     public void writeSize(int size) throws IOException {
 
-        //-- Do nothing.
+        // initialise at the start of row
+        nextSep    = "";
+        nextSepEnd = false;
     }
 
     public void writeType(int type) throws IOException {
 
-        //-- Do nothing.
-    }
-
-    private void writeNull() throws IOException {
-
-        writeBytes(nextSep);
-
-        nextSep    = fieldSep;
-        nextSepEnd = fieldSepEnd;
-    }
-
-    private void writeVarNull() throws IOException {
-
-        writeBytes(nextSep);
-
-        nextSep    = varSep;
-        nextSepEnd = varSepEnd;
-    }
-
-    private void writeLongVarNull() throws IOException {
-
-        writeBytes(nextSep);
-
-        nextSep    = longvarSep;
-        nextSepEnd = longvarSepEnd;
+        //--do Nothing
     }
 
     public void writeString(String s) throws IOException {
 
-        writeBytes(nextSep);
         writeBytes(s);
 
         nextSep    = fieldSep;
@@ -131,7 +114,6 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeVarString(String s) throws IOException {
 
-        writeBytes(nextSep);
         writeBytes(s);
 
         nextSep    = varSep;
@@ -140,7 +122,6 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeLongVarString(String s) throws IOException {
 
-        writeBytes(nextSep);
         writeBytes(s);
 
         nextSep    = longvarSep;
@@ -149,34 +130,14 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeByteArray(byte b[]) throws IOException {
 
-        writeBytes(nextSep);
-        write(b, 0, b.length);
+        String s = StringConverter.byteToHex(b);
 
-        nextSep    = fieldSep;
-        nextSepEnd = fieldSepEnd;
-    }
-
-    protected void writeVarByteArray(byte b[]) throws IOException {
-
-        writeBytes(nextSep);
-        write(b, 0, b.length);
-
-        nextSep    = varSep;
-        nextSepEnd = varSepEnd;
-    }
-
-    protected void writeLongVarByteArray(byte b[]) throws IOException {
-
-        writeBytes(nextSep);
-        write(b, 0, b.length);
-
-        nextSep    = longvarSep;
-        nextSepEnd = longvarSepEnd;
+        writeString(s);
     }
 
     public void writeIntData(int i) throws IOException {
 
-        writeBytes(nextSep + i);
+        writeBytes(Integer.toString(i));
 
         nextSep    = fieldSep;
         nextSepEnd = fieldSepEnd;
@@ -187,32 +148,33 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
             "Method writeIntData(int, int) not yet implemented.");
     }
 
-// fredt: write methods for SQL types
 // fredt@users - comment - methods used for writing each SQL type
     protected void writeFieldType(int type) throws IOException {
 
-        //-- Do nothing.
-    }
-
-    protected void writeNull(int type) throws IOException {
+        writeBytes(nextSep);
 
         switch (type) {
 
             case Types.VARCHAR :
             case Column.VARCHAR_IGNORECASE :
-            case Types.VARBINARY :
-                writeVarNull();
+                nextSep    = varSep;
+                nextSepEnd = varSepEnd;
                 break;
 
             case Types.LONGVARCHAR :
-            case Types.LONGVARBINARY :
-                writeLongVarNull();
+                nextSep    = longvarSep;
+                nextSepEnd = longvarSepEnd;
                 break;
 
             default :
-                writeNull();
+                nextSep    = fieldSep;
+                nextSepEnd = fieldSepEnd;
                 break;
         }
+    }
+
+    protected void writeNull(int type) throws IOException {
+        writeFieldType(type);
     }
 
     protected void writeChar(String s, int t) throws IOException {
@@ -288,44 +250,25 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeBinary(byte[] o,
                                int t) throws IOException, SQLException {
-
-        switch (t) {
-
-            case Types.BINARY :
-            case Types.VARBINARY :
-            case Types.LONGVARBINARY :
-            default :
-                writeByteArray(o);
-        }
+        writeByteArray(o);
     }
 
     public int getSize(CachedRow r) throws SQLException {
 
+        reset();
+
         try {
+            writeSize(0);
             writeData(r.getData(), r.getTable());
+            writePos(0);
         } catch (IOException e) {
             throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
         }
 
-        return size();
-    }
-
-    //
-    public byte[] toByteArray() {
-
-        if (nextSepEnd) {
-            writeBytes(nextSep);
-        }
-
-        nextSep    = "";
-        nextSepEnd = false;
-
-        writeBytes(TextCache.NL);
-
-        byte ret[] = super.toByteArray();
+        int rowsize = size();
 
         reset();
 
-        return ret;
+        return rowsize;
     }
 }

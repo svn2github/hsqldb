@@ -67,12 +67,13 @@
 
 package org.hsqldb;
 
+import java.sql.SQLException;
+import java.sql.Types;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
-import java.sql.SQLException;
-import java.sql.Types;
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
 // for sql standard quoted identifiers for column and table names and aliases
@@ -732,8 +733,8 @@ class Table {
 
         Trace.doAssert(isCached, "Table.getIndexRootData");
 
-        String roots   = StringUtil.getList(getIndexRootsArray(), " ", "");
-        StringBuffer s = new StringBuffer(roots);
+        String roots = StringUtil.getList(getIndexRootsArray(), " ", "");
+        HsqlStringBuffer s = new HsqlStringBuffer(roots);
 
         s.append(' ');
         s.append(iIdentityId);
@@ -1211,7 +1212,8 @@ class Table {
 
         iIdentityId = nextId;
 
-        if (log &&!isTemp &&!isReadOnly && dDatabase.logger.hasLog()) {
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
             dDatabase.logger.writeToLog(c, getInsertStatement(row));
         }
     }
@@ -1645,7 +1647,8 @@ class Table {
             c.addTransactionDelete(this, row);
         }
 
-        if (log &&!isTemp &&!isReadOnly && dDatabase.logger.hasLog()) {
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
             dDatabase.logger.writeToLog(c, getDeleteStatement(row));
         }
     }
@@ -1659,7 +1662,7 @@ class Table {
      */
     String getInsertStatement(Object row[]) throws SQLException {
 
-        StringBuffer a = new StringBuffer(128);
+        HsqlStringBuffer a = new HsqlStringBuffer(128);
 
         a.append("INSERT INTO ");
         a.append(tableName.statementName);
@@ -1787,7 +1790,7 @@ class Table {
      */
     private String getDeleteStatement(Object row[]) throws SQLException {
 
-        StringBuffer a = new StringBuffer(128);
+        HsqlStringBuffer a = new HsqlStringBuffer(128);
 
         a.append("DELETE FROM ");
         a.append(tableName.statementName);
@@ -1855,13 +1858,6 @@ class Table {
         }
     }
 
-    void cleanUp() throws SQLException {
-
-        if (cCache != null) {
-            cCache.cleanUp();
-        }
-    }
-
     void indexRow(Row r, boolean inserted) throws SQLException {
 
         if (inserted) {
@@ -1882,6 +1878,12 @@ class Table {
 
                 throw e;                  // and throw error again
             }
+        }
+    }
+
+    void drop() throws SQLException{
+        if (cCache != null) {
+            cCache.remove(this);
         }
     }
 }
