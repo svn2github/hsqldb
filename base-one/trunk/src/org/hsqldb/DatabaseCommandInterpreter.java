@@ -2495,6 +2495,12 @@ class DatabaseCommandInterpreter {
         t = database.getTable(tokenizer.getName(), session);
 
         addIndexOn(t, name, isQuoted, unique);
+
+        String extra = tokenizer.getString();
+
+        if (!Token.T_DESC.equals(extra) &&!Token.T_ASC.equals(extra)) {
+            tokenizer.back();
+        }
     }
 
     private void processCreateUser() throws HsqlException {
