@@ -72,6 +72,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.DriverManager;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.security.Security;
+import java.security.Provider;
 
 /**
  *  WebServer acts as an HTTP server and is one way of
@@ -108,6 +112,9 @@ public class WebServer extends Server {
     String              mRoot;
     String              mDefaultFile;
     char                mPathSeparatorChar;
+    boolean		bTls = false;
+    public int             _int_;  // Trick to get a Class for a primitive
+    private Method      methAccept = null;
 
     /**
      *  Method declaration
@@ -135,6 +142,7 @@ public class WebServer extends Server {
 
     void setProperties(HsqlProperties props) {
 
+	bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
         serverProperties = new HsqlProperties("webserver");
 
         try {
@@ -147,7 +155,8 @@ public class WebServer extends Server {
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
-        serverProperties.setPropertyIfNotExists("server.port", "80");
+        serverProperties.setPropertyIfNotExists("server.port",
+	 bTls ? "443" : "80");
 
         mRoot = serverProperties.setPropertyIfNotExists("server.root", "./");
         mDefaultFile =
@@ -168,10 +177,11 @@ public class WebServer extends Server {
      */
     private void run() {
 
-        socket = null;
+        ServerSocket socket = null;
 
         try {
-            int port = serverProperties.getIntegerProperty("server.port", 80);
+            int port = serverProperties.getIntegerProperty("server.port",
+	     bTls ? 443 : 80);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
@@ -179,7 +189,58 @@ public class WebServer extends Server {
 
             mPathSeparatorChar = File.separatorChar;
             mDatabase          = new Database(database);
-            socket             = new ServerSocket(port);
+            socket             = null;
+	    if (bTls) try {
+		Object[] oaInt = { new Integer(port) };
+		Class[] caInt = { getClass().getField("_int_").getType() };
+	    	ClassLoader loader = getClass().getClassLoader();
+		if (loader == null)
+		 throw new IncompatibleClassChangeError(
+		"Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
+		try {
+		Security.addProvider((Provider) 
+		 loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
+		 newInstance());
+		 // User may have some other Provider loaded.
+		 // If not, error will be caught later
+		} catch(Exception e) { }
+		Class SSLSSF =
+		 loader.loadClass("javax.net.ssl.SSLServerSocketFactory");
+		methAccept =
+		 loader.loadClass("javax.net.ssl.SSLServerSocket").
+		  getMethod("accept", null);
+		socket = (ServerSocket)
+		 SSLSSF.getMethod("createServerSocket", caInt).invoke(
+		  SSLSSF.getMethod("getDefault", null).invoke(null, null),
+		  oaInt);
+            	Trace.printSystemOut(
+                 new java.util.Date(System.currentTimeMillis())
+                 + " Running with TLS/SSL-encrypted JDBC");
+	    } catch(SecurityException se) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    } catch (IllegalAccessException iae) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    } catch (ClassNotFoundException cnfe) {
+	    	throw new ClassNotFoundException("JSSE not installed");
+	    } catch (NoSuchMethodException nsme) {
+	    	throw new Exception(
+	  	 "Failed to find an SSL method even though JSSE " +
+		 "is installed:\n" + nsme);
+	    // Need to unwrap the following exceptions
+	    } catch (InvocationTargetException ite) {
+	    	Throwable t = ite.getTargetException();
+		if (t.toString().endsWith("no SSL Server Sockets"))
+		 throw new Exception(t.toString() +
+		 "\n(If you are running Java 1.2 or 1.3, keystore could be " +
+		 "invalid or password wrong)");
+		else throw((t instanceof Exception) ? ((Exception) t) : ite);
+	    } catch (ExceptionInInitializerError eiie) {
+	    	Throwable t = eiie.getException();
+		if (t instanceof Exception) throw (Exception) t;
+		else throw eiie;
+            } else socket = new ServerSocket(port);
         } catch (Exception e) {
             traceError("WebServer.run/init: " + e);
 
@@ -188,8 +249,25 @@ public class WebServer extends Server {
 
         try {
             while (true) {
-                Socket              s = socket.accept();
-                WebServerConnection c = new WebServerConnection(s, this);
+                Socket              s = null;
+		if (bTls) try {
+		    s = (Socket) methAccept.invoke(socket, null);
+	    	} catch (IllegalAccessException iae) {
+            	    throw new IOException(
+	    	 "You do not have permission to use the needed SSL resources");
+	    	// Need to unwrap the following exceptions
+	    	} catch (InvocationTargetException ite) {
+	    	    Throwable t = ite.getTargetException();
+		    throw new IOException
+		     ((t instanceof Exception) ? ((Exception) t).toString() :
+		     ite.toString());
+	    	} catch (ExceptionInInitializerError eiie) {
+	    	    Throwable t = eiie.getException();
+		    throw new IOException(
+		     (t instanceof Exception) ? ((Exception) t).toString() :
+		    eiie.toString());
+		} else s = socket.accept();
+                WebServerConnection c = new WebServerConnection(s, this, bTls);
 
                 thread = new Thread(c);
 

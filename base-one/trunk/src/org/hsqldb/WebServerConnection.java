@@ -80,6 +80,10 @@ import java.sql.SQLException;
 import java.util.Observable;
 import java.util.StringTokenizer;
 import org.hsqldb.lib.StringConverter;
+import java.lang.reflect.Method;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 
 // fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
 
@@ -95,6 +99,10 @@ class WebServerConnection implements Runnable {
     static final String      ENCODING = "8859_1";
     private Socket           mSocket;
     private WebServer        mServer;
+    private boolean	     bTls;
+    private ClassLoader	     loader = null;
+    private Method	     methSSLSgetInputStream = null,
+			     methSSLSgetOutputStream = null;
     private static final int GET         = 1,
                              HEAD        = 2,
                              POST        = 3,
@@ -108,9 +116,10 @@ class WebServerConnection implements Runnable {
      * @param  socket
      * @param  server
      */
-    WebServerConnection(Socket socket, WebServer server) {
+    WebServerConnection(Socket socket, WebServer server, boolean bIn) {
         mServer = server;
         mSocket = socket;
+	bTls = bIn;
     }
 
     /**
@@ -119,8 +128,53 @@ class WebServerConnection implements Runnable {
     public void run() {
 
         try {
-            BufferedReader input = new BufferedReader(
-                new InputStreamReader(mSocket.getInputStream(), ENCODING));
+	    if (bTls) try {
+		if (loader == null) loader = getClass().getClassLoader();
+		if (loader == null)
+		 throw new IncompatibleClassChangeError(
+		"Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
+		if (methSSLSgetInputStream == null)
+		    methSSLSgetInputStream =
+		     loader.loadClass("javax.net.ssl.SSLSocket").
+		     getMethod("getInputStream", null);
+		if (methSSLSgetOutputStream == null)
+		    methSSLSgetOutputStream =
+		     loader.loadClass("javax.net.ssl.SSLSocket").
+		     getMethod("getOutputStream", null);
+	    } catch(SecurityException se) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    } catch (ClassNotFoundException cnfe) {
+	    	throw new ClassNotFoundException("JSSE not installed");
+	    } catch (NoSuchMethodException nsme) {
+	    	throw new Exception(
+	  	 "Failed to find an SSL method even though JSSE " +
+		 "is installed:\n" + nsme);
+	    }
+	    // Assertion (would use "assert" if Java 1.4):
+	    if (bTls && (methSSLSgetInputStream == null ||
+	     methSSLSgetOutputStream == null))
+	      throw new VerifyError("Unexpected SSL error encountered");
+	    // At this point, if mode is SSL, then methSSL
+	    BufferedReader input = null;
+	    try {
+                input = new BufferedReader(
+                 new InputStreamReader((bTls ?
+		  (InputStream) methSSLSgetInputStream.invoke(mSocket, null) :
+		 mSocket.getInputStream())
+	        , ENCODING));
+	    } catch (IllegalAccessException iae) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    // Need to unwrap the following exceptions
+	    } catch (InvocationTargetException ite) {
+	    	Throwable t = ite.getTargetException();
+		throw((t instanceof Exception) ? ((Exception) t) : ite);
+	    } catch (ExceptionInInitializerError eiie) {
+	    	Throwable t = eiie.getException();
+		if (t instanceof Exception) throw (Exception) t;
+		else throw eiie;
+	    }
             String request;
             String name   = null;
             int    method = BAD_REQUEST;
@@ -239,8 +293,30 @@ class WebServerConnection implements Runnable {
                 return;
             }
 
-            DataOutputStream output = new DataOutputStream(
-                new BufferedOutputStream(mSocket.getOutputStream()));
+            DataOutputStream output = null;
+	    // Assertion (would use "assert" if Java 1.4):
+	    if (bTls && methSSLSgetOutputStream == null)
+	      throw new VerifyError("Unexpected SSL error encountered");
+	    try {
+            	output = new DataOutputStream(
+                 new BufferedOutputStream(
+		  bTls ? (OutputStream)
+		  methSSLSgetOutputStream.invoke(mSocket, null) :
+		  mSocket.getOutputStream()
+		 )
+	        );
+	    } catch (IllegalAccessException iae) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    // Need to unwrap the following exceptions
+	    } catch (InvocationTargetException ite) {
+	    	Throwable t = ite.getTargetException();
+		throw((t instanceof Exception) ? ((Exception) t) : ite);
+	    } catch (ExceptionInInitializerError eiie) {
+	    	Throwable t = eiie.getException();
+		if (t instanceof Exception) throw (Exception) t;
+		else throw eiie;
+	    }
 
             output.write(header.getBytes(ENCODING));
 
@@ -361,9 +437,14 @@ class WebServerConnection implements Runnable {
                 break;
         }
 
-        try {
+	// No point in trying to write if SSL handshaking can't succeed
+	if (!bTls || methSSLSgetOutputStream != null) try {
             DataOutputStream output = new DataOutputStream(
-                new BufferedOutputStream(mSocket.getOutputStream()));
+                new BufferedOutputStream(bTls ?
+		 (OutputStream) methSSLSgetOutputStream.invoke(mSocket, null) :
+		 mSocket.getOutputStream()
+		)
+	    );
 
             output.write(message.getBytes(ENCODING));
             output.flush();
@@ -393,8 +474,27 @@ class WebServerConnection implements Runnable {
             String header = getHead("HTTP/1.0 200 OK",
                                     "Content-Type: application/octet-stream\n"
                                     + "Content-Length: " + len);
-            DataOutputStream output = new DataOutputStream(
-                new BufferedOutputStream(mSocket.getOutputStream()));
+            DataOutputStream output = null;
+	    if (bTls && methSSLSgetOutputStream == null)
+	      throw new VerifyError("Unexpected SSL error encountered");
+	    try {
+		output = new DataOutputStream(new BufferedOutputStream(bTls ?
+		  (OutputStream) methSSLSgetOutputStream.invoke(mSocket, null) :
+		  mSocket.getOutputStream()
+	    	 )
+		);
+	    } catch (IllegalAccessException iae) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    // Need to unwrap the following exceptions
+	    } catch (InvocationTargetException ite) {
+	    	Throwable t = ite.getTargetException();
+		throw((t instanceof Exception) ? ((Exception) t) : ite);
+	    } catch (ExceptionInInitializerError eiie) {
+	    	Throwable t = eiie.getException();
+		if (t instanceof Exception) throw (Exception) t;
+		else throw eiie;
+	    }
 
             output.write(header.getBytes(ENCODING));
             output.write(result);
