@@ -44,8 +44,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.io.InputStream;
 
-/* $Id: SqlFile.java,v 1.47 2004/04/11 16:51:12 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.48 2004/04/12 20:13:21 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +82,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.47 $
+ * @version $Revision: 1.48 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -133,6 +134,7 @@ public class SqlFile {
         + "    \\dt                  List tables\n"
         + "    \\d TABLENAME         Describe table\n"
         + "    \\H                   Toggle HTML output mode\n"
+        + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands (i.e. command history)\n"
         + "    \\-[3]                * reload a command to buffer (for / commands)\n"
@@ -229,7 +231,7 @@ public class SqlFile {
                             ? DEFAULT_CHARSET : specifiedCharSet)));
             curLinenum = 0;
             if (interactive) {
-                stdprint(BANNER);
+                stdprintln(BANNER);
             }
             while (true) {
                 if (interactive) {
@@ -268,7 +270,7 @@ public class SqlFile {
                             } catch (QuitNow qn) {
                                 return;
                             } catch (BadSpecial bs) {
-                                errprint("Error at '" + ((file == null)
+                                errprintln("Error at '" + ((file == null)
                                         ? "stdin"
                                         : file.toString()
                                 ) + "' line " + curLinenum + ":\n\""
@@ -283,7 +285,7 @@ public class SqlFile {
                             try {
                                 processBuffer(trimmedInput.substring(1));
                             } catch (BadSpecial bs) {
-                                errprint("Error at '" + ((file == null)
+                                errprintln("Error at '" + ((file == null)
                                         ? "stdin"
                                         : file.toString()
                                 ) + "' line " + curLinenum + ":\n\""
@@ -299,7 +301,7 @@ public class SqlFile {
                         if (interactive) {
                             setBuf(stringBuffer.toString());
                             stringBuffer.setLength(0);
-                            stdprint("Current input moved into buffer.");
+                            stdprintln("Current input moved into buffer.");
                         }
                         continue;
                     }
@@ -339,7 +341,7 @@ public class SqlFile {
                         processStatement();
                     }
                 } catch (SQLException se) {
-                    errprint("SQL Error at '" + ((file == null)
+                    errprintln("SQL Error at '" + ((file == null)
                             ? "stdin"
                             : file.toString()) + "' line " + curLinenum
                             + ":\n\"" + curCommand + "\"\n" + se .getMessage());
@@ -350,7 +352,7 @@ public class SqlFile {
                 stringBuffer.setLength(0);
             }
             if (stringBuffer.length() != 0) {
-                errprint("Unterminated input:  [" + stringBuffer + ']');
+                errprintln("Unterminated input:  [" + stringBuffer + ']');
             }
         } finally {
             if (br != null) {
@@ -426,7 +428,7 @@ public class SqlFile {
         switch (commandChar) {
             case ';':
                 curCommand = commandFromHistory(0);
-                stdprint("Executing command from buffer:\n" + curCommand
+                stdprintln("Executing command from buffer:\n" + curCommand
                          + '\n');
                 processStatement();
                 return;
@@ -436,7 +438,7 @@ public class SqlFile {
                 return;
             case 'l':
             case 'L':
-                stdprint("Current Buffer:\n" + commandFromHistory(0));
+                stdprintln("Current Buffer:\n" + commandFromHistory(0));
                 return;
             case 's':
             case 'S':
@@ -474,7 +476,7 @@ public class SqlFile {
                         sb.replace(i, i + from.length(), to);
                     }
                     statementHistory[curHist] = sb.toString();
-                    stdprint("Current Buffer:\n" + commandFromHistory(0));
+                    stdprintln("Current Buffer:\n" + commandFromHistory(0));
                 } catch (BadSwitch badswitch) {
                     throw new BadSpecial(
                         "Switch syntax:  \":s/from this/to that/\".  "
@@ -483,7 +485,7 @@ public class SqlFile {
                 }
                 return;
             case '?':
-                stdprint(BUFFER_HELP_TEXT);
+                stdprintln(BUFFER_HELP_TEXT);
                 return;
         }
         throw new BadSpecial("Unknown Buffer Command");
@@ -518,7 +520,7 @@ public class SqlFile {
                 throw new QuitNow();
             case 'H':
                 htmlMode = !htmlMode;
-                stdprint(htmlMode ? "<HTML>" : "</HTML>");
+                stdprintln(htmlMode ? "<HTML>" : "</HTML>");
                 return;
             case 'd':
                 if (arg1.length() > 1 && arg1.charAt(1) == 't') {
@@ -532,9 +534,9 @@ public class SqlFile {
                 break;
             case 'p':
                 if (other == null) {
-                    stdprint();
+                    stdprintln();
                 } else {
-                    stdprint(other);
+                    stdprintln(other);
                 }
                 return;
             case '*':
@@ -542,7 +544,7 @@ public class SqlFile {
                     // But remember that we have to abort on some I/O errors.
                     continueOnError = Boolean.valueOf(other).booleanValue();
                 }
-                stdprint("Continue-on-error is set to: " + continueOnError);
+                stdprintln("Continue-on-error is set to: " + continueOnError);
                 return;
             case 's':
                 showHistory();
@@ -564,16 +566,42 @@ public class SqlFile {
                     }
                 }
                 setBuf(commandFromHistory(commandsAgo));
-                stdprint(
+                stdprintln(
                     "RESTORED following command to buffer.  Enter \":?\" "
                     + "to see buffer commands:\n" + commandFromHistory(0));
                 return;
             case '?':
-                stdprint(HELP_TEXT);
+                stdprintln(HELP_TEXT);
                 return;
             case '!':
-                System.err.println("Run '" + ((other == null)
-                        ? "SHELL" : other) + "'");
+                InputStream stream;
+                byte[] ba = new byte[1024];
+                String extCommand =
+                    ((arg1.length() == 1) ? "" : arg1.substring(1))
+                    + ((arg1.length() > 1 && other != null) ? " " : "")
+                    + ((other == null)  ? "" : other);
+                try {
+                    Process proc = Runtime.getRuntime().exec(extCommand);
+                    proc.getOutputStream().close();
+                    int i;
+                    stream = proc.getInputStream();
+                    while ((i = stream.read(ba)) > 0) {
+                        stdprint(new String(ba, 0, i));
+                    }
+                    stream.close();
+                    stream = proc.getErrorStream();
+                    while ((i = stream.read(ba)) > 0) {
+                        errprint(new String(ba, 0, i));
+                    }
+                    stream.close();
+                    if (proc.waitFor() != 0) {
+                        throw new BadSpecial("External command failed: '"
+                                + extCommand + "'");
+                    }
+                } catch (Exception e) {
+                    throw new BadSpecial("Failed to execute command '"
+                            + extCommand + "':  " + e);
+                }
                 return;
         }
         throw new BadSpecial("Unknown Special Command");
@@ -584,7 +612,7 @@ public class SqlFile {
      *
      * Conditionally HTML-ifies output.
      */
-    private void stdprint() {
+    private void stdprintln() {
         if (htmlMode) {
             psStd.println("<BR>");
         } else {
@@ -598,6 +626,18 @@ public class SqlFile {
      * Conditionally HTML-ifies error output.
      */
     private void errprint(String s) {
+        psErr.print(htmlMode
+                      ? ("<DIV style='color:white; background: red; "
+                         + "font-weight: bold'>" + s + "</DIV>")
+                      : s);
+    }
+
+    /**
+     * Encapsulates error output.
+     *
+     * Conditionally HTML-ifies error output.
+     */
+    private void errprintln(String s) {
         psErr.println(htmlMode
                       ? ("<DIV style='color:white; background: red; "
                          + "font-weight: bold'>" + s + "</DIV>")
@@ -610,6 +650,15 @@ public class SqlFile {
      * Conditionally HTML-ifies output.
      */
     private void stdprint(String s) {
+        psStd.print(htmlMode ? ("<P>" + s + "</P>") : s);
+    }
+
+    /**
+     * Encapsulates normal output.
+     *
+     * Conditionally HTML-ifies output.
+     */
+    private void stdprintln(String s) {
         psStd.println(htmlMode ? ("<P>" + s + "</P>") : s);
     }
 
@@ -713,7 +762,7 @@ public class SqlFile {
         switch (updateCount) {
             case -1 :
                 if (r == null) {
-                    stdprint("No result");
+                    stdprintln("No result");
 
                     break;
                 }
@@ -862,12 +911,12 @@ public class SqlFile {
                     psStd.println("</TABLE>");
                 }
                 if (rows.size() != 1) {
-                    stdprint("\n" + rows.size() + " rows");
+                    stdprintln("\n" + rows.size() + " rows");
                 }
                 break;
             default :
                 if (updateCount != 0) {
-                    stdprint(Integer.toString(updateCount) + " row"
+                    stdprintln(Integer.toString(updateCount) + " row"
                              + ((updateCount == 1) ? "" : "s") + " updated");
                 }
                 break;
@@ -968,7 +1017,7 @@ public class SqlFile {
             }
         } finally {
             if (ctr < 0) {
-                stdprint("<<<    No history yet    >>>");
+                stdprintln("<<<    No history yet    >>>");
                 return;
             }
             for (int i = ctr; i >= 0; i--) {
@@ -1091,7 +1140,7 @@ public class SqlFile {
             psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
         }
         if (htmlMode) {
-            stdprint("\n</TABLE>");
+            stdprintln("\n</TABLE>");
         }
     }
 }
