@@ -112,18 +112,9 @@ public class HSQLClientConnection implements SessionInterface {
 
         rowOut    = new RowOutputBinary(mainBuffer);
         rowIn     = new RowInputBinary(rowOut);
-        resultOut = new Result(ResultConstants.DATA, 7);
-        resultOut.metaData.colNames = resultOut.metaData.colLabels =
-            resultOut.metaData.tableNames = new String[] {
-            "", "", "", "", "", "", ""
-        };
+        resultOut = Result.newSessionAttributesResult();
 
         resultOut.add(new Object[7]);
-
-        resultOut.metaData.colTypes = new int[] {
-            Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
-            Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
-        };
     }
 
     protected void initConnection(String host, int port,
@@ -239,6 +230,15 @@ public class HSQLClientConnection implements SessionInterface {
     public void setAutoCommit(boolean mode) throws HsqlException {
         setAttribute(mode ? Boolean.TRUE
                           : Boolean.FALSE, Session.INFO_AUTOCOMMIT);
+    }
+
+    public void setIsolation(int level) throws HsqlException {}
+
+    public int getIsolation() throws HsqlException {
+
+        Object info = getAttribute(Session.INFO_ISOLATION);
+
+        return ((Integer) info).intValue();
     }
 
     public boolean isClosed() {

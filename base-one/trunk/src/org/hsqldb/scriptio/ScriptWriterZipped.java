@@ -63,7 +63,7 @@ class ScriptWriterZipped extends ScriptWriterBinary {
     protected void openFile() throws HsqlException {
 
         try {
-            FileAccess           fa  = db.getFileAccess();
+            FileAccess           fa  = database.getFileAccess();
             java.io.OutputStream fos = fa.openOutputStreamElement(outFile);
 
             outDescriptor = fa.getFileSync(fos);

@@ -107,9 +107,10 @@ public class Session implements SessionInterface {
     private volatile boolean isAutoCommit;
     private volatile boolean isReadOnly;
     private volatile boolean isClosed;
+    int                      isolation;
 
     //
-    private Database       database;
+    Database               database;
     private User           user;
     HsqlArrayList          transactionList;
     private boolean        isNestedTransaction;
@@ -118,7 +119,7 @@ public class Session implements SessionInterface {
     private int            sessionMaxRows;
     private Number         lastIdentity = ValuePool.getInt(0);
     private final int      sessionId;
-    private HashMappedList savepoints;
+    HashMappedList         savepoints;
     private boolean        script;
     private jdbcConnection intConnection;
     private Tokenizer      tokenizer;
@@ -212,6 +213,14 @@ public class Session implements SessionInterface {
      */
     public boolean isClosed() {
         return isClosed;
+    }
+
+    public void setIsolation(int level) throws HsqlException {
+        isolation = level;
+    }
+
+    public int getIsolation() throws HsqlException {
+        return isolation;
     }
 
     /**
@@ -349,6 +358,7 @@ public class Session implements SessionInterface {
             Transaction t = new Transaction(true, table, row, sessionSCN);
 
             transactionList.add(t);
+            database.txManager.addTransaction(this, t);
         }
     }
 
@@ -365,6 +375,7 @@ public class Session implements SessionInterface {
             Transaction t = new Transaction(false, table, row, sessionSCN);
 
             transactionList.add(t);
+            database.txManager.addTransaction(this, t);
         }
     }
 
@@ -410,10 +421,9 @@ public class Session implements SessionInterface {
                 try {
                     database.logger.writeCommitStatement(this);
                 } catch (HsqlException e) {}
-
-                transactionList.clear();
-                savepoints.clear();
             }
+
+            database.txManager.commit(this);
         }
     }
 
@@ -429,23 +439,13 @@ public class Session implements SessionInterface {
         }
 
         synchronized (database) {
-            int i = transactionList.size();
-
-            while (i-- > 0) {
-                Transaction t = (Transaction) transactionList.get(i);
-
-                t.rollback(this, false);
-            }
-
-            if (!transactionList.isEmpty()) {
+            if (transactionList.size() != 0) {
                 try {
                     database.logger.writeToLog(this, Token.T_ROLLBACK);
                 } catch (HsqlException e) {}
-
-                transactionList.clear();
             }
 
-            savepoints.clear();
+            database.txManager.rollback(this);
         }
     }
 
@@ -475,16 +475,9 @@ public class Session implements SessionInterface {
      */
     void rollbackToSavepoint(String name) throws HsqlException {
 
-        int index = savepoints.getIndex(name);
-
-        Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
-
-        Integer oi = (Integer) savepoints.get(index);
-
-        index = oi.intValue();
-
-        rollbackToSavepoint(index, false);
-        releaseSavepoint(name);
+        if (isClosed) {
+            return;
+        }
 
         try {
             database.logger.writeToLog(this,
@@ -492,20 +485,8 @@ public class Session implements SessionInterface {
                                        + " " + Token.T_SAVEPOINT + " "
                                        + name);
         } catch (HsqlException e) {}
-    }
 
-    private void rollbackToSavepoint(int index,
-                                     boolean log) throws HsqlException {
-
-        int i = transactionList.size() - 1;
-
-        for (; i >= index; i--) {
-            Transaction t = (Transaction) transactionList.get(i);
-
-            t.rollback(this, log);
-        }
-
-        transactionList.setSize(index);
+        database.txManager.rollbackSavepoint(this, name);
     }
 
     /**
@@ -551,7 +532,8 @@ public class Session implements SessionInterface {
         Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            rollbackToSavepoint(nestedOldTransIndex, true);
+            database.txManager.rollbackTransactions(this,
+                    nestedOldTransIndex, true);
         }
 
         // reset after the rollback
@@ -1290,29 +1272,17 @@ public class Session implements SessionInterface {
     static final int INFO_DATABASE            = 0;
     static final int INFO_USER                = 1;
     static final int INFO_SESSION_ID          = 2;
-    static final int INFO_IDENTITY            = 3;
+    static final int INFO_ISOLATION           = 3;
     static final int INFO_AUTOCOMMIT          = 4;
     static final int INFO_DATABASE_READONLY   = 5;
     static final int INFO_CONNECTION_READONLY = 6;
 
     Result getAttributes() {
 
-        Result r = new Result(ResultConstants.DATA, 7);
-
-        r.metaData.colNames = r.metaData.colLabels = r.metaData.tableNames =
-            new String[] {
-            "", "", "", "", "", "", ""
-        };
-        r.metaData.colTypes = new int[] {
-            Types.VARCHAR, Types.VARCHAR, Types.INTEGER,
-            lastIdentity instanceof Long ? Types.BIGINT
-                                         : Types.INTEGER, Types.BOOLEAN,
-            Types.BOOLEAN, Types.BOOLEAN
-        };
-
+        Result   r   = Result.newSessionAttributesResult();
         Object[] row = new Object[] {
             database.getURI(), getUsername(), ValuePool.getInt(sessionId),
-            lastIdentity, ValuePool.getBoolean(isAutoCommit),
+            ValuePool.getInt(isolation), ValuePool.getBoolean(isAutoCommit),
             ValuePool.getBoolean(database.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)
         };

@@ -32,7 +32,6 @@
 package org.hsqldb.test;
 
 import java.util.Random;
-import java.util.Arrays;
 
 import org.hsqldb.lib.DoubleIntIndex;
 
@@ -53,123 +52,142 @@ public class TestHashStructures extends TestCase {
 
     public void testHashMap() throws Exception {
 
+        boolean                failed   = false;
         int                    testSize = 33;
         org.hsqldb.lib.HashMap hMap     = new org.hsqldb.lib.HashMap();
         org.hsqldb.lib.IntKeyHashMap hIntMap =
             new org.hsqldb.lib.IntKeyHashMap();
         java.util.HashMap uMap = new java.util.HashMap();
 
-        // -
-        populateBySerialIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+        try {
+            populateBySerialIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
 
-        // -
-        populateByRandomIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+            // -
+            populateByRandomIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
 
-        //
-        depopulateRandomly(uMap, hMap, 20);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+            //
+            depopulateRandomly(uMap, hMap, 20);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
 
-        // -
-        populateBySerialIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+            // -
+            populateBySerialIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
 
-        //
-        depopulateByIterator(uMap, hMap, 20);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+            //
+            depopulateByIterator(uMap, hMap, 20);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+        } catch (Exception e) {
+            failed = true;
+        }
+
+        assertTrue(!failed);
     }
 
     public void testIntKeyHashMap() throws Exception {
 
-        int testSize = 33;
+        boolean failed   = false;
+        int     testSize = 33;
         org.hsqldb.lib.IntKeyHashMap hIntMap =
             new org.hsqldb.lib.IntKeyHashMap();
         java.util.HashMap uMap = new java.util.HashMap();
 
-        populateBySerialIntKeysInt(uMap, hIntMap, testSize);
-        compareByUIteratorInt(uMap, hIntMap);
-        populateByRandomIntKeysInt(uMap, hIntMap, testSize);
-        compareByUIteratorInt(uMap, hIntMap);
-        compareByHIteratorInt(uMap, hIntMap);
+        try {
+            populateBySerialIntKeysInt(uMap, hIntMap, testSize);
+            compareByUIteratorInt(uMap, hIntMap);
+            populateByRandomIntKeysInt(uMap, hIntMap, testSize);
+            compareByUIteratorInt(uMap, hIntMap);
+            compareByHIteratorInt(uMap, hIntMap);
 
-        //
-        depopulateByIntIterator(uMap, hIntMap, 20);
-        compareByUIteratorInt(uMap, hIntMap);
-        compareByHIteratorInt(uMap, hIntMap);
+            //
+            depopulateByIntIterator(uMap, hIntMap, 20);
+            compareByUIteratorInt(uMap, hIntMap);
+            compareByHIteratorInt(uMap, hIntMap);
 
-        //
-        clearByIntIterator(uMap, hIntMap);
-        compareByUIteratorInt(uMap, hIntMap);
-        compareByHIteratorInt(uMap, hIntMap);
+            //
+            clearByIntIterator(uMap, hIntMap);
+            compareByUIteratorInt(uMap, hIntMap);
+            compareByHIteratorInt(uMap, hIntMap);
 
-        // -
-        populateBySerialIntKeysInt(uMap, hIntMap, testSize);
-        compareByUIteratorInt(uMap, hIntMap);
-        compareByHIteratorInt(uMap, hIntMap);
+            // -
+            populateBySerialIntKeysInt(uMap, hIntMap, testSize);
+            compareByUIteratorInt(uMap, hIntMap);
+            compareByHIteratorInt(uMap, hIntMap);
 
-        //
-        clearByIntIterator(uMap, hIntMap);
-        compareByUIteratorInt(uMap, hIntMap);
-        compareByHIteratorInt(uMap, hIntMap);
+            //
+            clearByIntIterator(uMap, hIntMap);
+            compareByUIteratorInt(uMap, hIntMap);
+            compareByHIteratorInt(uMap, hIntMap);
+        } catch (Exception e) {
+            failed = true;
+        }
 
-        //-
-        assertTrue(true);
+        assertTrue(!failed);
     }
 
     public void testHashMappedList() throws Exception {
 
-        int testSize = 33;
+        boolean failed   = false;
+        int     testSize = 33;
         org.hsqldb.lib.HashMappedList hMap =
             new org.hsqldb.lib.HashMappedList();
         java.util.HashMap uMap = new java.util.HashMap();
 
-        populateBySerialIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
-        populateByRandomIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
-        depopulateRandomly(uMap, hMap, 20);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
-        populateByRandomIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
-        depopulateRandomly(uMap, hMap, 20);
-        populateBySerialIntKeys(uMap, hMap, testSize);
-        compareByUIterator(uMap, hMap);
-        compareByHIterator(uMap, hMap);
+        try {
+            populateBySerialIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+            populateByRandomIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+            depopulateRandomly(uMap, hMap, 20);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+            populateByRandomIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+            depopulateRandomly(uMap, hMap, 20);
+            populateBySerialIntKeys(uMap, hMap, testSize);
+            compareByUIterator(uMap, hMap);
+            compareByHIterator(uMap, hMap);
+        } catch (Exception e) {
+            failed = true;
+        }
 
-        //-
-        assertTrue(true);
+        assertTrue(!failed);
     }
 
     public void testDoubleIntLookup() throws Exception {
 
-        int testSize = 512;
+        boolean failed   = false;
+        int     testSize = 512;
         org.hsqldb.lib.IntKeyHashMap hIntMap =
             new org.hsqldb.lib.IntKeyHashMap();
         DoubleIntIndex intLookup = new DoubleIntIndex(12, false);
 
-        intLookup.setKeysSearchTarget();
-        populateBySerialIntKeysInt(intLookup, hIntMap, testSize);
-        compareByHIteratorInt(intLookup, hIntMap);
-        populateByRandomIntKeysInt(intLookup, hIntMap, testSize);
-        compareByHIteratorInt(intLookup, hIntMap);
+        try {
+            intLookup.setKeysSearchTarget();
+            populateBySerialIntKeysInt(intLookup, hIntMap, testSize);
+            compareByHIteratorInt(intLookup, hIntMap);
+            populateByRandomIntKeysInt(intLookup, hIntMap, testSize);
+            compareByHIteratorInt(intLookup, hIntMap);
+        } catch (Exception e) {
+            failed = true;
+        }
 
-        //-
-        assertTrue(true);
+        assertTrue(!failed);
     }
 
     public void testDoubleIntSpeed() throws Exception {
 
-        int testSize = 500;
+        boolean failed   = false;
+        int     testSize = 500;
         org.hsqldb.lib.IntKeyHashMap hIntMap =
             new org.hsqldb.lib.IntKeyHashMap();
         DoubleIntIndex intLookup = new DoubleIntIndex(testSize, false);
@@ -207,10 +225,10 @@ public class TestHashStructures extends TestCase {
             System.out.println(
                 sw.elapsedTimeToMessage("Double int table error: i =" + i));
 
-            throw e;
+            failed = true;
         }
 
-        assertTrue(true);
+        assertTrue(!failed);
     }
 
     int[] getSampleIntArray(org.hsqldb.lib.DoubleIntIndex index, int size) {

@@ -55,7 +55,10 @@ public class TestBug785429 extends TestBase {
 
     public void test() throws Exception {
 
-        Connection        conn = newConnection();
+        Connection conn = newConnection();
+
+        conn.setAutoCommit(false);
+
         Statement         stmt = conn.createStatement();
         String            sql;
         String            msg;

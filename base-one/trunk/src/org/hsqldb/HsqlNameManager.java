@@ -62,7 +62,7 @@ import org.hsqldb.lib.StringConverter;
 class HsqlNameManager {
 
     private static HsqlNameManager staticManager = new HsqlNameManager();
-    private static int             serialNumber  = 0;
+    private int                    serialNumber  = 1;    // 0 is reserved in lookups
     private int                    sysNumber     = 0;
 
     static HsqlName newHsqlSystemTableName(String name) {
@@ -132,7 +132,7 @@ class HsqlNameManager {
 
         private HsqlName(HsqlNameManager man) {
             manager  = man;
-            hashCode = HsqlNameManager.serialNumber++;
+            hashCode = manager.serialNumber++;
         }
 
         private HsqlName(HsqlNameManager man, String name,

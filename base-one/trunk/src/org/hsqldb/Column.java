@@ -90,11 +90,6 @@ import org.hsqldb.types.JavaObject;
 // java.lang.Number values and new functions to choose type for promotion
 // fredt@users 20020401 - patch 455757 by galena@users (Michiel de Roo)
 // interpretation of TINYINT as Byte instead of Short
-// fredt@users 20020130 - patch 505356 by daniel_fiser@users
-// use of the current locale for string comparison (instead of posix)
-// turned off by default but can be applied accross the database by defining
-// sql.compare_in_locale=true in database.properties file
-// changes marked separately
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // support for sql standard char and varchar. size is maintained as
 // defined in the DDL and trimming and padding takes place accordingly
@@ -635,13 +630,18 @@ public class Column {
         }
     }
 
-// fredt@users 20020130 - patch 505356 by daniel_fiser@users
-// modified for performance and made optional
-    static boolean sql_compare_in_locale = false;
-
-    public static void setCompareInLocal(boolean value) {
-        sql_compare_in_locale = value;
-    }
+// boucherb@users 2003-09-25
+// TODO:  Maybe use //#ifdef tag or reflective static method attribute
+// instantiation to take advantage of String.compareToIgnoreCase when
+// available (JDK 1.2 and greater) during ANT build. That or perhaps
+// consider using either local character-wise comparison or first converting
+// to lower case and then to upper case. Sun states that the JDK 1.2 introduced
+// String.compareToIngnorCase() comparison involves calling
+// Character.toLowerCase(Character.toUpperCase()) on compared characters,
+// to correctly handle some caveats concering using only the one operation or
+// the other outside the ascii character range.
+// fredt@users 20020130 - patch 418022 by deforest@users
+// use of rtrim() to mimic SQL92 behaviour
 
     /**
      *  Compare a with b and return int value as result.
@@ -652,7 +652,8 @@ public class Column {
      * @return result 1 if a>b, 0 if a=b, -1 if b>a
      * @throws  HsqlException
      */
-    static int compare(Object a, Object b, int type) throws HsqlException {
+    static int compare(Session session, Object a, Object b,
+                       int type) throws HsqlException {
 
         int i = 0;
 
@@ -678,44 +679,16 @@ public class Column {
 
             case Types.VARCHAR :
             case Types.LONGVARCHAR :
-                if (sql_compare_in_locale) {
-                    i = JavaSystem.CompareInLocale((String) a, (String) b);
-                } else {
-                    i = ((String) a).compareTo((String) b);
-                }
-                break;
+                return session.database.collation.compare((String) a,
+                        (String) b);
 
-// fredt@users 20020130 - patch 418022 by deforest@users
-// use of rtrim() to mimic SQL92 behaviour
             case Types.CHAR :
-                if (sql_compare_in_locale) {
-                    i = JavaSystem.CompareInLocale(Library.rtrim((String) a),
-                                                   Library.rtrim((String) b));
-                } else {
-                    i = (Library.rtrim((String) a)).compareTo(
-                        Library.rtrim((String) b));
-                }
-                break;
+                return session.database.collation.compare(
+                    Library.rtrim((String) a), Library.rtrim((String) b));
 
-// boucherb@users 2003-09-25
-// TODO:  Maybe use //#ifdef tag or reflective static method attribute
-// instantiation to take advantage of String.compareToIgnoreCase when
-// available (JDK 1.2 and greater) during ANT build. That or perhaps
-// consider using either local character-wise comparison or first converting
-// to lower case and then to upper case. Sun states that the JDK 1.2 introduced
-// String.compareToIngnorCase() comparison involves calling
-// Character.toLowerCase(Character.toUpperCase()) on compared characters,
-// to correctly handle some caveats concering using only the one operation or
-// the other outside the ascii character range.
             case Types.VARCHAR_IGNORECASE :
-                if (sql_compare_in_locale) {
-                    i = JavaSystem.CompareInLocale(
-                        ((String) a).toUpperCase(),
-                        ((String) b).toUpperCase());
-                } else {
-                    i = JavaSystem.CompareIngnoreCase((String) a, (String) b);
-                }
-                break;
+                return session.database.collation.compare(
+                    ((String) a).toUpperCase(), ((String) b).toUpperCase());
 
             case Types.TINYINT :
             case Types.SMALLINT :
@@ -1080,12 +1053,12 @@ public class Column {
                         return o;
                     }
 
-                    if (o instanceof java.sql.Time) {
+                    if (o instanceof Time) {
                         return HsqlDateTime.getTimeString((java.sql.Time) o,
                                                           null);
                     }
 
-                    if (o instanceof java.sql.Timestamp) {
+                    if (o instanceof Timestamp) {
                         return HsqlDateTime.getTimestampString(
                             (java.sql.Timestamp) o, null);
                     }
@@ -1101,11 +1074,11 @@ public class Column {
                     break;
 
                 case Types.TIME :
-                    if (o instanceof java.sql.Time) {
+                    if (o instanceof Time) {
                         return HsqlDateTime.getNormalisedTime((Time) o);
                     }
 
-                    if (o instanceof java.sql.Timestamp) {
+                    if (o instanceof Timestamp) {
                         return HsqlDateTime.getNormalisedTime((Timestamp) o);
                     }
 
@@ -1120,11 +1093,11 @@ public class Column {
                     break;
 
                 case Types.TIMESTAMP :
-                    if (o instanceof java.sql.Timestamp) {
+                    if (o instanceof Timestamp) {
                         return o;
                     }
 
-                    if (o instanceof java.sql.Time) {
+                    if (o instanceof Time) {
                         return HsqlDateTime.getNormalisedTimestamp((Time) o);
                     }
 
@@ -1144,7 +1117,7 @@ public class Column {
                             (java.sql.Date) o);
                     }
 
-                    if (o instanceof java.sql.Timestamp) {
+                    if (o instanceof Timestamp) {
                         return HsqlDateTime.getNormalisedDate((Timestamp) o);
                     }
 
@@ -1152,7 +1125,7 @@ public class Column {
                         return HsqlDateTime.dateValue((String) o);
                     }
 
-                    if (o instanceof java.sql.Time) {
+                    if (o instanceof Time) {
                         throw Trace.error(Trace.INVALID_CONVERSION,
                                           Types.getTypeString(type));
                     }

@@ -73,10 +73,10 @@ package org.hsqldb;
  */
 class Transaction {
 
-    private boolean isDelete;
-    private Table   tTable;
-    private Row     row;
-    long            SCN;
+    boolean isDelete;
+    Table   tTable;
+    Row     row;
+    long    SCN;
 
     /**
      * Constructor. <p>

@@ -1260,11 +1260,6 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <div class="ReleaseSpecificDocumentation">
-     * <h3>HSQLDB-Specific Information:</h3> <p>
-     *
-     * Up to and including 1.7.1, HSQLDB supports only
-     * <code>Connection.TRANSACTION_READ_UNCOMMITTED</code>. <p>
-     *
      * </div> <!-- end release-specific documentation -->
      *
      * @param level one of the following <code>Connection</code>
@@ -1286,8 +1281,19 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        if (level != Connection.TRANSACTION_READ_UNCOMMITTED) {
+        boolean ok = level == Connection.TRANSACTION_READ_UNCOMMITTED
+                     || level == Connection.TRANSACTION_READ_COMMITTED
+                     || level == Connection.TRANSACTION_REPEATABLE_READ
+                     || level == Connection.TRANSACTION_SERIALIZABLE;
+
+        if (!ok) {
             throw Util.notSupported;
+        }
+
+        try {
+            sessionProxy.setIsolation(level);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1324,7 +1330,11 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        return Connection.TRANSACTION_READ_UNCOMMITTED;
+        try {
+            return sessionProxy.getIsolation();
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
+        }
     }
 
     /**

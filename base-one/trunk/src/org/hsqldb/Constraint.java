@@ -531,28 +531,6 @@ class Constraint {
             return core.refIndex.emptyIterator();
         }
 
-/*
-        // there must be no record in the 'slave' table
-        // sebastian@scienion -- dependent on forDelete | forUpdate
-        boolean noaction = forDelete ? core.deleteAction == NO_ACTION
-                                     : core.updateAction == NO_ACTION;
-
-        if (noaction) {
-            if (core.refIndex.exists(row, core.mainColArray)) {
-                throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                                  Trace.Constraint_violation, new Object[] {
-                    core.fkName.name, core.refTable.getName().name
-                });
-            } else {
-                return core.refIndex.emptyIterator();
-            }
-        } else {
-            return delete
-                   ? core.refIndex.findFirstRowForDelete(row,
-                       core.mainColArray)
-                   : core.refIndex.findFirstRow(row, core.mainColArray);
-        }
-*/
         return delete
                ? core.refIndex.findFirstRowForDelete(session, row,
                    core.mainColArray)
@@ -593,15 +571,16 @@ class Constraint {
      * table. Also returns true if any column covered by the foreign key
      * constraint has a null value.
      */
-    private static boolean hasReferencedRow(Object[] rowdata,
-            int[] rowColArray, Index mainIndex) throws HsqlException {
+    private static boolean hasReferencedRow(Session session,
+            Object[] rowdata, int[] rowColArray,
+            Index mainIndex) throws HsqlException {
 
         if (Index.isNull(rowdata, rowColArray)) {
             return true;
         }
 
         // else a record must exist in the main index
-        return mainIndex.exists(null, rowdata, rowColArray);
+        return mainIndex.exists(session, rowdata, rowColArray);
     }
 
     /**
@@ -609,10 +588,11 @@ class Constraint {
      * checks all rows of a table to ensure they all have a corresponding
      * row in the main table.
      */
-    static void checkReferencedRows(Table table, int[] rowColArray,
+    static void checkReferencedRows(Session session, Table table,
+                                    int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 
-        RowIterator it = table.rowIterator(null);
+        RowIterator it = table.rowIterator(session);
 
         while (true) {
             Row row = it.next();
@@ -623,7 +603,7 @@ class Constraint {
 
             Object[] rowdata = row.getData();
 
-            if (!Constraint.hasReferencedRow(rowdata, rowColArray,
+            if (!Constraint.hasReferencedRow(session, rowdata, rowColArray,
                                              mainIndex)) {
                 String colvalues = "";
 

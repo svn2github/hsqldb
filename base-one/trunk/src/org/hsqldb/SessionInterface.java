@@ -56,6 +56,10 @@ public interface SessionInterface {
 
     void setAutoCommit(boolean autoCommit) throws HsqlException;
 
+    void setIsolation(int level) throws HsqlException;
+
+    int getIsolation() throws HsqlException;
+
     void commit() throws HsqlException;
 
     void rollback() throws HsqlException;

@@ -54,7 +54,7 @@ public abstract class TestBase extends TestCase {
     String  user     = "sa";
     String  password = "";
     Server  server;
-    boolean isNetwork = false;
+    boolean isNetwork = true;
 
     public TestBase(String name) {
         super(name);

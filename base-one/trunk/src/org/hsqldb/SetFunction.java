@@ -77,7 +77,7 @@ public class SetFunction {
         }
     }
 
-    void add(Object item) throws HsqlException {
+    void add(Session session, Object item) throws HsqlException {
 
         if (item == null) {
             hasNull = true;
@@ -141,7 +141,7 @@ public class SetFunction {
                     return;
                 }
 
-                if (Column.compare(currentValue, item, type) > 0) {
+                if (Column.compare(session, currentValue, item, type) > 0) {
                     currentValue = item;
                 }
 
@@ -154,7 +154,7 @@ public class SetFunction {
                     return;
                 }
 
-                if (Column.compare(currentValue, item, type) < 0) {
+                if (Column.compare(session, currentValue, item, type) < 0) {
                     currentValue = item;
                 }
 

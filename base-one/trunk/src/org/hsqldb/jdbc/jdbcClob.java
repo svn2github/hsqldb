@@ -275,6 +275,8 @@ public final class jdbcClob implements Clob {
         final long   dlen  = ldata.length();
         final long   sslen = searchstr.length();
 
+        start--;    //***** FOIRGOT THIS *******
+
 // This is potentially much less expensive than materializing a large
 // substring from some other vendor's CLOB.  Indeed, we should probably
 // do the comparison piecewise, using an in-memory buffer (or temp-files

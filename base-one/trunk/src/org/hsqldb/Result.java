@@ -839,8 +839,8 @@ public class Result {
      *
      * @throws  HsqlException
      */
-    void removeDuplicates() throws HsqlException {
-        removeDuplicates(significantColumns);
+    void removeDuplicates(Session session) throws HsqlException {
+        removeDuplicates(session, significantColumns);
     }
 
     /**
@@ -852,7 +852,8 @@ public class Result {
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all set operations
-    void removeDuplicates(int columnCount) throws HsqlException {
+    void removeDuplicates(Session session,
+                          int columnCount) throws HsqlException {
 
         if (rRoot == null) {
             return;
@@ -866,7 +867,7 @@ public class Result {
             way[i]   = 1;
         }
 
-        sortResult(order, way);
+        sortResult(session, order, way);
 
         Record n = rRoot;
 
@@ -877,7 +878,7 @@ public class Result {
                 break;
             }
 
-            if (compareRecord(n.data, next.data, columnCount) == 0) {
+            if (compareRecord(session, n.data, next.data, columnCount) == 0) {
                 n.next = next.next;
 
                 size--;
@@ -896,10 +897,11 @@ public class Result {
      * @param  minus
      * @throws  HsqlException
      */
-    void removeSecond(Result minus, int columnCount) throws HsqlException {
+    void removeSecond(Session session, Result minus,
+                      int columnCount) throws HsqlException {
 
-        removeDuplicates(columnCount);
-        minus.removeDuplicates(columnCount);
+        removeDuplicates(session, columnCount);
+        minus.removeDuplicates(session, columnCount);
 
         Record  n     = rRoot;
         Record  last  = rRoot;
@@ -908,7 +910,7 @@ public class Result {
         int     i     = 0;
 
         while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, columnCount);
+            i = compareRecord(session, n.data, n2.data, columnCount);
 
             if (i == 0) {
                 if (rootr) {
@@ -945,10 +947,11 @@ public class Result {
      * @param  r2
      * @throws  HsqlException
      */
-    void removeDifferent(Result r2, int columnCount) throws HsqlException {
+    void removeDifferent(Session session, Result r2,
+                         int columnCount) throws HsqlException {
 
-        removeDuplicates(columnCount);
-        r2.removeDuplicates(columnCount);
+        removeDuplicates(session, columnCount);
+        r2.removeDuplicates(session, columnCount);
 
         Record  n     = rRoot;
         Record  last  = rRoot;
@@ -959,7 +962,7 @@ public class Result {
         size = 0;
 
         while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, columnCount);
+            i = compareRecord(session, n.data, n2.data, columnCount);
 
             if (i == 0) {             // same rows
                 if (rootr) {
@@ -998,7 +1001,8 @@ public class Result {
      * @param  way
      * @throws  HsqlException
      */
-    void sortResult(final int[] order, final int[] way) throws HsqlException {
+    void sortResult(Session session, final int[] order,
+                    final int[] way) throws HsqlException {
 
         if (rRoot == null || rRoot.next == null) {
             return;
@@ -1043,8 +1047,8 @@ public class Result {
                         source0 = source0.next;
 
                         n0--;
-                    } else if (compareRecord(
-                            source0.data, source1.data, order, way) > 0) {
+                    } else if (compareRecord(session, source0.data, source1
+                            .data, order, way) > 0) {
                         n       = source1;
                         source1 = source1.next;
 
@@ -1082,16 +1086,16 @@ public class Result {
      * @return -1, 0, +1
      * @throws  HsqlException
      */
-    private int compareRecord(Object[] a, final Object[] b,
+    private int compareRecord(Session session, Object[] a, final Object[] b,
                               final int[] order,
                               int[] way) throws HsqlException {
 
-        int i = Column.compare(a[order[0]], b[order[0]],
+        int i = Column.compare(session, a[order[0]], b[order[0]],
                                metaData.colTypes[order[0]]);
 
         if (i == 0) {
             for (int j = 1; j < order.length; j++) {
-                i = Column.compare(a[order[j]], b[order[j]],
+                i = Column.compare(session, a[order[j]], b[order[j]],
                                    metaData.colTypes[order[j]]);
 
                 if (i != 0) {
@@ -1112,11 +1116,11 @@ public class Result {
      * @return -1, 0, +1
      * @throws  HsqlException
      */
-    private int compareRecord(Object[] a, Object[] b,
+    private int compareRecord(Session session, Object[] a, Object[] b,
                               int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
-            int i = Column.compare(a[j], b[j], metaData.colTypes[j]);
+            int i = Column.compare(session, a[j], b[j], metaData.colTypes[j]);
 
             if (i != 0) {
                 return i;
@@ -1124,6 +1128,25 @@ public class Result {
         }
 
         return 0;
+    }
+
+    /**
+     * Result structure used for set/get session attributes
+     */
+    static Result newSessionAttributesResult() {
+
+        Result r = new Result(ResultConstants.DATA, 7);
+
+        r.metaData.colNames = r.metaData.colLabels = r.metaData.tableNames =
+            new String[] {
+            "", "", "", "", "", "", ""
+        };
+        r.metaData.colTypes = new int[] {
+            Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
+            Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
+        };
+
+        return r;
     }
 
     void write(RowOutputBinary out) throws IOException, HsqlException {

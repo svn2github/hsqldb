@@ -331,6 +331,10 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         Sort.sort(elementData, c, 0, elementCount - 1);
     }
 
+    public Object[] getArray() {
+        return elementData;
+    }
+
 // fredt@users - temp - won't need this when start using HashedMappedList for Table
     public void remove(Object obj) {
 

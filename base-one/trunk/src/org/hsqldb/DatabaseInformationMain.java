@@ -864,7 +864,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[inullable]       = ti.getColNullability(i);
                 row[iinKey]          = inKey;
 
-                t.insert(row);
+                t.insertSys(row);
             }
         }
 
@@ -912,7 +912,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             row    = t.getEmptyRowData();
             row[0] = (String) catalogs.next();
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -985,7 +985,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             + "a.GRANTOR, a.GRANTEE, a.PRIVILEGE, a.IS_GRANTABLE "
             + "from  SYSTEM_TABLEPRIVILEGES a, SYSTEM_COLUMNS b where a.TABLE_NAME = b.TABLE_NAME;");
 
-        t.insert(rs);
+        t.insertSys(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -1144,7 +1144,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[iis_nullable]       = ti.getColIsNullable(i);
                 row[itype_sub]          = ti.getColDataTypeSub(i);
 
-                t.insert(row);
+                t.insertSys(row);
             }
         }
 
@@ -1360,7 +1360,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[ipk_name]        = pkName;
                 row[ideferrability]  = deferrability;
 
-                t.insert(row);
+                t.insertSys(row);
             }
         }
 
@@ -1531,7 +1531,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                     row[ipages]            = pages;
                     row[ifilter_condition] = filterCondition;
 
-                    t.insert(row);
+                    t.insertSys(row);
                 }
             }
         }
@@ -1649,7 +1649,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[ikey_seq]     = ValuePool.getInt(j + 1);
                 row[ipk_name]     = primaryKeyName;
 
-                t.insert(row);
+                t.insertSys(row);
             }
         }
 
@@ -1869,7 +1869,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             row[0] = schemas.next();
             row[1] = ns.getCatalogName(row[0]);
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2001,7 +2001,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                     row[iprivilege]    = privilege;
                     row[iis_grantable] = isGrantable;
 
-                    t.insert(row);
+                    t.insertSys(row);
                 }
             }
         }
@@ -2132,7 +2132,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             row[ihsqldb_type] = ti.getHsqlType();
             row[iread_only]   = ti.isReadOnly();
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2196,7 +2196,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             row    = t.getEmptyRowData();
             row[0] = tableTypes[i];
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2303,7 +2303,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             + "MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB, NUM_PREC_RADIX, TYPE_SUB "
             + "from SYSTEM_ALLTYPEINFO  where AS_TAB_COL = true;");
 
-        t.insert(rs);
+        t.insertSys(rs);
         t.setDataReadOnly(true);
 
         return t;
@@ -2630,7 +2630,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             //------------------------------------------
             row[itype_sub] = ti.getDataTypeSub();
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2678,7 +2678,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             row[0] = user.getName();
             row[1] = ValuePool.getBoolean(user.isAdmin());
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2805,7 +2805,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[icons_clause] = constraint.core.check.getDDL();
             } catch (Exception e) {}
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);
@@ -2974,7 +2974,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 }
             }
 
-            t.insert(row);
+            t.insertSys(row);
         }
 
         t.setDataReadOnly(true);

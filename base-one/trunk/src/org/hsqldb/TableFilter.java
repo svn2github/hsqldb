@@ -480,7 +480,7 @@ final class TableFilter {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(null, types[i]);
+                    data[i] = e.getValue(session, types[i]);
                 }
             }
 

@@ -72,6 +72,7 @@ import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Script generation.
@@ -245,6 +246,15 @@ public class DatabaseScript {
         // ignorecase for future CREATE TABLE statements
         if (dDatabase.isIgnoreCase()) {
             addRow(r, "SET IGNORECASE TRUE");
+        }
+
+        // collation for database
+        if (dDatabase.collation.name != null) {
+            String name =
+                StringConverter.toQuotedString(dDatabase.collation.name, '"',
+                                               true);
+
+            addRow(r, "SET DATABASE COLLATION " + name);
         }
 
         // aliases

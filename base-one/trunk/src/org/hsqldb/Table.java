@@ -67,8 +67,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.index.RowIterator;
@@ -568,6 +566,10 @@ public class Table extends BaseTable {
      */
     public HsqlName getName() {
         return tableName;
+    }
+
+    public int getId() {
+        return tableName.hashCode();
     }
 
     /**
@@ -1339,9 +1341,10 @@ public class Table extends BaseTable {
     }
 
     HsqlName makeSysPKName() throws HsqlException {
-        return isTemp ? database.nameManager.newAutoName("PK"):
-            database.nameManager.newHsqlName("SYS_PK",
-                tableName.name, tableName.isNameQuoted);
+
+        return isTemp ? database.nameManager.newAutoName("PK")
+                      : database.nameManager.newHsqlName("SYS_PK",
+                      tableName.name, tableName.isNameQuoted);
     }
 
     void createPrimaryIndex(int[] pkcols,
@@ -1392,7 +1395,8 @@ public class Table extends BaseTable {
             constraint, forward);
         Index       newindex     = indexList[newindexNo];
         Index       primaryindex = getPrimaryIndex();
-        RowIterator it           = primaryindex.firstRow(null);
+        Session     session      = database.sessionManager.getSysSession();
+        RowIterator it           = primaryindex.firstRow(session);
         int         rowCount     = 0;
         int         error        = 0;
 
@@ -1408,7 +1412,7 @@ public class Table extends BaseTable {
                 // count before inserting
                 rowCount++;
 
-                newindex.insert(row, newindexNo);
+                newindex.insert(session, row, newindexNo);
             }
 
             return newindex;
@@ -1420,7 +1424,7 @@ public class Table extends BaseTable {
 
         // backtrack on error
         // rowCount rows have been modified
-        it = primaryindex.firstRow(null);
+        it = primaryindex.firstRow(session);
 
         for (int i = 0; i < rowCount; i++) {
             Row  row      = it.next();
@@ -1686,7 +1690,7 @@ public class Table extends BaseTable {
 
             Row newrow = newRow(data);
 
-            indexRow(newrow);
+            indexRow(session, newrow);
         }
 
         from.drop();
@@ -1759,7 +1763,7 @@ public class Table extends BaseTable {
     void insertIntoTable(Session session,
                          Result result) throws HsqlException {
 
-        insert(result);
+        insertResult(session, result);
 
         if (isTemp || isText ||!database.logger.hasLog()) {
             return;
@@ -1785,7 +1789,7 @@ public class Table extends BaseTable {
         Row r = newRow(data);
 
         // this handles the UNIQUE constraints
-        indexRow(r);
+        indexRow(session, r);
 
         if (session != null) {
             session.addTransactionInsert(this, r);
@@ -1807,7 +1811,7 @@ public class Table extends BaseTable {
         Row r = newRow(data);
 
         updateIdentityValue(data);
-        indexRow(r);
+        indexRow(session, r);
 
         if (session != null) {
             session.addTransactionInsert(this, r);
@@ -1824,7 +1828,7 @@ public class Table extends BaseTable {
 
         row = newRow(row.getData());
 
-        indexRow(row);
+        indexRow(session, row);
 
         if (log &&!isTemp &&!isText &&!isReadOnly) {
             database.logger.writeInsertStatement(session, this,
@@ -1833,16 +1837,37 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used for subquery and system table inserts. No checks. No identity
+     * Used for system table inserts. No checks. No identity
      * columns.
      */
-    int insert(Result ins) throws HsqlException {
+    int insertSys(Result ins) throws HsqlException {
+
+        Session session = database.sessionManager.getSysSession();
+        Record  ni      = ins.rRoot;
+        int     count   = 0;
+
+        while (ni != null) {
+            insertData(session, ni.data);
+
+            ni = ni.next;
+
+            count++;
+        }
+
+        return count;
+    }
+
+    /**
+     * Used for subquery inserts. No checks. No identity
+     * columns.
+     */
+    int insertResult(Session session, Result ins) throws HsqlException {
 
         Record ni    = ins.rRoot;
         int    count = 0;
 
         while (ni != null) {
-            insert(ni.data);
+            insertData(session, ni.data);
 
             ni = ni.next;
 
@@ -1858,28 +1883,33 @@ public class Table extends BaseTable {
      * the table when the .script file is read.
      */
     public void insertFromScript(Object[] data) throws HsqlException {
+
+        Session session = database.sessionManager.getSysSession();
+
         updateIdentityValue(data);
-        insert(data);
+        insertData(session, data);
     }
 
     /**
-     * Used by the methods above. To avoid unnecessary
-     * creation of arrays The Object[] for data in the Result rows is inserted
-     * into the table if it has the same length as table row data.
+     * Used by the methods above.
      */
-    public void insert(Object[] data) throws HsqlException {
-
-        if (data.length != columnCount) {
-            Object[] newdata = getEmptyRowData();
-
-            ArrayUtil.copyArray(data, newdata, columnCount);
-
-            data = newdata;
-        }
+    public void insertData(Session session,
+                           Object[] data) throws HsqlException {
 
         Row r = newRow(data);
 
-        indexRow(r);
+        indexRow(session, r);
+    }
+
+    /**
+     * Used by the system tables
+     */
+    public void insertSys(Object[] data) throws HsqlException {
+
+        Session session = database.sessionManager.getSysSession();
+        Row     r       = newRow(data);
+
+        indexRow(session, r);
     }
 
     /**
@@ -1888,12 +1918,13 @@ public class Table extends BaseTable {
      */
     protected void insertNoChange(CachedRow row) throws HsqlException {
 
-        Object[] data = row.getData();
+        Session  session = database.sessionManager.getSysSession();
+        Object[] data    = row.getData();
 
         updateIdentityValue(data);
         enforceFieldValueLimits(data, defaultColumnMap);
         enforceNullConstraints(data);
-        indexRow(row);
+        indexRow(session, row);
     }
 
     /**
@@ -2208,7 +2239,8 @@ public class Table extends BaseTable {
 
                 if (refrow == null || refrow.isDeleted()
                         || refindex.compareRowNonUnique(
-                            mdata, m_columns, refrow.getData()) != 0) {
+                            session, mdata, m_columns,
+                            refrow.getData()) != 0) {
                     break;
                 }
 
@@ -2413,7 +2445,7 @@ public class Table extends BaseTable {
                         refrow = refiterator.next()) {
                     if (refrow == null
                             || refindex.compareRowNonUnique(
-                                orow.getData(), m_columns,
+                                session, orow.getData(), m_columns,
                                 refrow.getData()) != 0) {
                         break;
                     }
@@ -2493,16 +2525,18 @@ public class Table extends BaseTable {
      * Merge the full triggered change with the updated row, or add to list.
      * Return false if changes conflict.
      */
-    static boolean mergeKeepUpdate(HashMappedList rowSet, int[] cols,
-                                   int[] colTypes, Row row,
+    static boolean mergeKeepUpdate(Session session, HashMappedList rowSet,
+                                   int[] cols, int[] colTypes, Row row,
                                    Object[] newData) throws HsqlException {
 
         Object[] data = (Object[]) rowSet.get(row);
 
         if (data != null) {
-            if (Index.compareRows(row
-                    .getData(), newData, cols, colTypes) != 0 && Index
-                        .compareRows(newData, data, cols, colTypes) != 0) {
+            if (Index.compareRows(
+                    session, row
+                        .getData(), newData, cols, colTypes) != 0 && Index
+                            .compareRows(
+                                session, newData, data, cols, colTypes) != 0) {
                 return false;
             }
 
@@ -2556,6 +2590,17 @@ public class Table extends BaseTable {
             }
         }
 
+        // check transactions
+        database.txManager.checkDelete(session, deleteList);
+
+        for (int i = 0; i < tUpdateList.size(); i++) {
+            Table          table      = (Table) tUpdateList.getKey(i);
+            HashMappedList updateList = (HashMappedList) tUpdateList.get(i);
+
+            database.txManager.checkDelete(session, updateList);
+        }
+
+        // perform delete
         fireAll(session, Trigger.DELETE_BEFORE);
 
         if (database.isReferentialIntegrity()) {
@@ -2665,7 +2710,7 @@ public class Table extends BaseTable {
                 }
 
                 if (Index.compareRows(
-                        row.getData(), data, defaultColumnMap,
+                        session, row.getData(), data, defaultColumnMap,
                         colTypes) == 0) {
                     break;
                 }
@@ -2684,14 +2729,16 @@ public class Table extends BaseTable {
 
                 // reached end of range
                 if (bestIndex.compareRowNonUnique(
-                        data, bestIndex.getColumns(), rowdata) != 0) {
+                        session, data, bestIndex.getColumns(),
+                        rowdata) != 0) {
                     row = null;
 
                     break;
                 }
 
                 if (Index.compareRows(
-                        rowdata, data, defaultColumnMap, colTypes) == 0) {
+                        session, rowdata, data, defaultColumnMap,
+                        colTypes) == 0) {
                     break;
                 }
             }
@@ -2700,6 +2747,9 @@ public class Table extends BaseTable {
         if (row == null) {
             return;
         }
+
+        // not necessary for log deletes
+        database.txManager.checkDelete(session, row);
 
         for (int i = indexList.length - 1; i >= 0; i--) {
             Node node = row.getNode(i);
@@ -2721,8 +2771,6 @@ public class Table extends BaseTable {
     void deleteNoCheckRollback(Session session, Row row,
                                boolean log) throws HsqlException {
 
-        // the orininal row may have been deleted by another transaction
-        // so we do not use it directly
         row = getIndex(0).findRow(session, row);
 
         for (int i = indexList.length - 1; i >= 0; i--) {
@@ -2811,12 +2859,24 @@ public class Table extends BaseTable {
                 Row      row  = (Row) triggeredList.getKey(i);
                 Object[] data = (Object[]) triggeredList.get(i);
 
-                mergeKeepUpdate(updateList, cols, colTypes, row, data);
+                mergeKeepUpdate(session, updateList, cols, colTypes, row,
+                                data);
             }
 
             triggeredList.clear();
         }
 
+        // check transactions
+        for (int i = 0; i < tUpdateList.size(); i++) {
+            Table          table       = (Table) tUpdateList.getKey(i);
+            HashMappedList updateListT = (HashMappedList) tUpdateList.get(i);
+
+            database.txManager.checkDelete(session, updateListT);
+        }
+
+        database.txManager.checkDelete(session, updateList);
+
+        // update lists - main list last
         for (int i = 0; i < tUpdateList.size(); i++) {
             Table          table       = (Table) tUpdateList.getKey(i);
             HashMappedList updateListT = (HashMappedList) tUpdateList.get(i);
@@ -2825,7 +2885,6 @@ public class Table extends BaseTable {
             updateListT.clear();
         }
 
-        // update main list
         updateRowSet(session, updateList, cols, true);
         fireAll(session, Trigger.UPDATE_AFTER);
         path.clear();
@@ -3047,17 +3106,19 @@ public class Table extends BaseTable {
 
     void registerRow(CachedRow row) {}
 
+    /**
+     */
     void removeRow(CachedRow row) throws HsqlException {
         rowStore.remove(row.getPos());
     }
 
-    void indexRow(Row row) throws HsqlException {
+    void indexRow(Session session, Row row) throws HsqlException {
 
         int i = 0;
 
         try {
-            for (; i < getIndexCount(); i++) {
-                indexList[i].insert(row, i);
+            for (; i < indexList.length; i++) {
+                indexList[i].insert(session, row, i);
             }
         } catch (HsqlException e) {
             Index   index        = indexList[i];
@@ -3174,9 +3235,11 @@ public class Table extends BaseTable {
             return;
         }
 
+        Session session = database.sessionManager.getSysSession();
+
         rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
 
-        RowIterator it = rowIterator(null);
+        RowIterator it = rowIterator(session);
 
         while (it.hasNext()) {
             Row row = it.next();

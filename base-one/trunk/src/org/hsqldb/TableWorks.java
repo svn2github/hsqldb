@@ -140,7 +140,7 @@ class TableWorks {
         }
 
         // existing rows, value checks
-        Constraint.checkReferencedRows(table, fkcol, exportindex);
+        Constraint.checkReferencedRows(session, table, fkcol, exportindex);
 
         // create
         HsqlName iname   = table.database.nameManager.newAutoName("IDX");

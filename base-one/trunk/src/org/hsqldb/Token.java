@@ -338,11 +338,13 @@ public class Token {
     static final String        T_CHECKPOINT     = "CHECKPOINT";
     static final String        T_CLASS          = "CLASS";
     static final String        T_COALESCE       = "COALESCE";
+    static final String        T_COLLATION      = "COLLATION";
     static final String        T_COMPACT        = "COMPACT";
     public static final String T_COMPRESSED     = "COMPRESSED";
     static final String        T_CONCAT         = "CONCAT";
     static final String        T_CONVERT        = "CONVERT";
     static final String        T_COUNT          = "COUNT";
+    static final String        T_DATABASE       = "DATABASE";
     static final String        T_DEFRAG         = "DEFRAG";
     static final String        T_DESC           = "DESC";
     static final String        T_EVERY          = "EVERY";
@@ -680,7 +682,6 @@ public class Token {
     static final int        TEXT                  = 327;
     static final int        VIEW                  = 328;
     static final int        WRITE_DELAY           = 329;
-    static final int        TOCHAR                = 330;
 
     // added stuff
     static final int VAR_POP     = 330;
@@ -689,6 +690,8 @@ public class Token {
     static final int STDDEV_SAMP = 333;
     static final int DEFRAG      = 334;
     static final int INCREMENT   = 335;
+    static final int TOCHAR      = 336;
+    static final int DATABASE    = 337;
 
     //
     static {
@@ -720,6 +723,7 @@ public class Token {
         commandSet.put(T_CONNECT, CONNECT);
         commandSet.put(T_CONSTRAINT, CONSTRAINT);
         commandSet.put(T_CREATE, CREATE);
+        commandSet.put(T_DATABASE, DATABASE);
         commandSet.put(T_DELETE, DELETE);
         commandSet.put(T_DEFRAG, DEFRAG);
         commandSet.put(T_DISCONNECT, DISCONNECT);

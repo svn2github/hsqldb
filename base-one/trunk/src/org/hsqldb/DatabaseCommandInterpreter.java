@@ -824,6 +824,10 @@ class DatabaseCommandInterpreter {
             tokenizer.getThis(Token.T_CLOSEBRACKET);
         }
 
+        if (type == Types.FLOAT && length > 53) {
+            throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+        }
+
         token = tokenizer.getString();
 
         if (token.equals(Token.T_DEFAULT)) {
@@ -2126,6 +2130,21 @@ class DatabaseCommandInterpreter {
                 }
 
                 database.logger.setWriteDelay(delay);
+
+                break;
+            }
+            case Token.DATABASE : {
+                session.checkAdmin();
+                session.checkDDLWrite();
+                tokenizer.getThis(Token.T_COLLATION);
+
+                String cname = tokenizer.getIdentifier();
+
+                if (!tokenizer.wasQuotedIdentifier()) {
+                    throw Trace.error(Trace.INVALID_IDENTIFIER);
+                }
+
+                database.collation.setCollation(cname);
 
                 break;
             }

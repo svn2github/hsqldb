@@ -306,7 +306,8 @@ class Select {
                                                   type);
         }
 
-        HsqlException e = Trace.error(Trace.SINGLE_VALUE_EXPECTED);
+        HsqlException e =
+            Trace.error(Trace.CARDINALITY_VIOLATION_NO_SUBCLASS);
 
         if (size == 0 && len == 1) {
             throw new HsqlInternalException(e);
@@ -504,7 +505,7 @@ class Select {
             r = getResultMain(session);
         }
 
-        sortResult(r);
+        sortResult(session, r);
 
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
@@ -551,7 +552,7 @@ class Select {
                             break;
                         }
 
-                        unionArray[i].mergeResults(unionResults[i],
+                        unionArray[i].mergeResults(session, unionResults[i],
                                                    unionResults[nextIndex]);
 
                         unionResults[nextIndex] = unionResults[i];
@@ -568,14 +569,14 @@ class Select {
      * Merges the second result into the first using the unionMode
      * set operation.
      */
-    private void mergeResults(Result first,
+    private void mergeResults(Session session, Result first,
                               Result second) throws HsqlException {
 
         switch (unionType) {
 
             case UNION :
                 first.append(second);
-                first.removeDuplicates(iResultLen);
+                first.removeDuplicates(session, iResultLen);
                 break;
 
             case UNIONALL :
@@ -583,11 +584,11 @@ class Select {
                 break;
 
             case INTERSECT :
-                first.removeDifferent(second, iResultLen);
+                first.removeDifferent(session, second, iResultLen);
                 break;
 
             case EXCEPT :
-                first.removeSecond(second, iResultLen);
+                first.removeSecond(session, second, iResultLen);
                 break;
         }
     }
@@ -604,7 +605,7 @@ class Select {
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
         if (isDistinctSelect) {
-            r.removeDuplicates(iResultLen);
+            r.removeDuplicates(session, iResultLen);
         }
 
         return r;
@@ -643,13 +644,13 @@ class Select {
         }
     }
 
-    private void sortResult(Result r) throws HsqlException {
+    private void sortResult(Session session, Result r) throws HsqlException {
 
         if (iOrderLen == 0) {
             return;
         }
 
-        r.sortResult(sortOrder, sortDirection);
+        r.sortResult(session, sortOrder, sortDirection);
     }
 
     /**

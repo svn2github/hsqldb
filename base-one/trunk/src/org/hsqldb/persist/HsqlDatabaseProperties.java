@@ -145,9 +145,6 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // char and padding to size and exception if data is too long
         setProperty("sql.enforce_strict_size", false);
 
-        // char and varchar sorting in charset of the current jvm Locale
-        setProperty("sql.compare_in_locale", false);
-
         // removed from 1.7.2 - sql.month is always true (1-12)
         // removed from 1.7.2 - sql.strict_fk is always enforced
         // if true, requires a pre-existing unique index for foreign key
@@ -254,6 +251,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty("hsqldb.log_size", 10);
             setProperty("sql.enforce_strict_size", true);
             setProperty("hsqldb.first_identity", 1);
+            setProperty("hsqldb.nio_data_file", false);
         }
 
         setSystemVariables();
@@ -262,7 +260,10 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     private void setSystemVariables() {
 
-        Column.setCompareInLocal(isPropertyTrue("sql.compare_in_locale"));
+        if (isPropertyTrue("sql.compare_in_locale")) {
+            stringProps.remove("sql.compare_in_locale");
+            database.collation.setCollationAsLocale();
+        }
 
         Record.gcFrequency = getIntegerProperty("runtime.gc_interval", 0);
     }

@@ -85,12 +85,14 @@ class Like {
     private int      iFirstWildCard;
     private boolean  isNull;
     Character        escapeChar;
+    boolean          hasCollation;
     boolean          optimised;
     static final int UNDERSCORE_CHAR = 1;
     static final int PERCENT_CHAR    = 2;
 
-    Like(Character escape) {
-        escapeChar = escape;
+    Like(Character escape, boolean collation) {
+        escapeChar   = escape;
+        hasCollation = collation;
     }
 
     /**
@@ -143,7 +145,7 @@ class Like {
      *
      * @return
      */
-    Boolean compare(Object o) {
+    Boolean compare(Session session, Object o) {
 
         if (o == null) {
             return null;

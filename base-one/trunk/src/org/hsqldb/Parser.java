@@ -1281,7 +1281,9 @@ class Parser {
             escape = new Character(s.charAt(0));
         }
 
-        a = new Expression(a, b, escape);
+        boolean hasCollation = database.collation.name != null;
+
+        a = new Expression(a, b, escape, hasCollation);
 
         return a;
     }
@@ -1732,6 +1734,10 @@ class Parser {
             }
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
+        }
+
+        if (t == Types.FLOAT && p > 53) {
+            throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
         }
 
         if (r.isParam()) {

@@ -117,7 +117,7 @@ public class Trace {
                             NEED_AGGREGATE                            = 14,
                             SUM_OF_NON_NUMERIC                        = 15,
                             WRONG_DATA_TYPE                           = 16,
-                            SINGLE_VALUE_EXPECTED                     = 17,
+                            CARDINALITY_VIOLATION_NO_SUBCLASS         = 17,
                             SERIALIZATION_FAILURE                     = 18,
                             TRANSFER_CORRUPTED                        = 19,
                             FUNCTION_NOT_SUPPORTED                    = 20,
@@ -217,12 +217,12 @@ public class Trace {
                             DatabaseScriptReader_readExistingData     = 114,
                             Message_Pair                              = 115,
                             HsqlDatabaseProperties                    = 116,
-                            not_used                                  = 117,
+                            INVALID_TRANSACTION_STATE_NO_SUBCLASS     = 117,
                             JDBC_INVALID_BRI_SCOPE                    = 118,
                             JDBC_NO_RESULT_SET_METADATA               = 119,
                             JDBC_NO_RESULT_SET                        = 120,
                             MISSING_CLOSEBRACKET                      = 121,
-                            TableFilter_findFirst                     = 122,
+                            ITSNS_OVERWRITE                           = 122,
                             Table_moveDefinition                      = 123,
                             STRING_DATA_TRUNCATION                    = 124,
                             QUOTED_IDENTIFIER_REQUIRED                = 125,
@@ -308,7 +308,7 @@ public class Trace {
                             CREATE_TRIGGER_COMMAND_2                  = 205,
                             BAD_SAVEPOINT_NAME                        = 206,
                             DataFileCache_defrag                      = 207,
-                            DataFileCache_closeFile                   = 208,
+                            INVALID_COLLATION_NAME_NO_SUBCLASS        = 208,
                             DataFileCache_makeRow                     = 209,
                             DataFileCache_open                        = 210,
                             DataFileCache_close                       = 211,
@@ -350,7 +350,7 @@ public class Trace {
         "37000 Need aggregate function or group by",                    //
         "37000 Sum on non-numeric data not allowed",                    //
         "37000 Wrong data type",                                        //
-        "37000 Single value expected",                                  //
+        "21000 Single value expected",                                  //
         "40001 Serialization failure",                                  //
         "40001 Transfer corrupted",                                     //
         "IM001 This function is not supported",                         //
@@ -450,12 +450,12 @@ public class Trace {
         " line: $$ $$",                                                 // DatabaseScriptReader_readExistingData
         " $$ $$",                                                       // Function_Function
         " $$.properties $$",                                            // HsqlDatabaseProperties_load
-        "",                                                             // unused
+        "25000 invalid transaction state",                              // INVALID_TRANSACTION_STATE_NO_SUBCLASS
         "invalid scope value",                                          // jdbcDatabaseMetaData_getBestRowIdentifier
         "result set is null",                                           // jdbcResultSetMetaData_jdbcResultSetMetaData
         "result set is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_2
         "37000 missing )",                                              // MISSING_CLOSEBRACKET
-        "37000 an index is required on table $$, column $$",            // TableFilter_findFirst
+        "row has been modified by another transaction",                 // TableFilter_findFirst
         "37000 there is an index on the column to be removed",          // Table_moveDefinition
         "22001 string too long",                                        //
         "00000 quoted identifier required",                             // SET PROPERTY "name" "value"
@@ -541,7 +541,7 @@ public class Trace {
         "loading trigger class ",                                       // DatabaseCommandInterpreter_processCreateTrigger2
         "missing or zero-length savepoint name",                        // DatabaseCommandInterpreter_processSavepoint
         "error $$ during defrag - file $$",                             // DataFileCache_defrag
-        "error $$ during shutdown - file $$",                           // DataFileCache_closeFile
+        "invalid collation name",                                       // INVALID_COLLATION_NAME_NO_SUBCLASS
         "error $$ reading row - file $$",                               // DataFileCache_makeRow
         "error $$ opening file - file $$",                              // DataFileCache_makeRow
         "error $$ closing file - file $$",                              // 211 DataFileCache_makeRow

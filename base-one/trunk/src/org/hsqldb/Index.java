@@ -253,7 +253,7 @@ public class Index {
     /**
      * Insert a node into the index
      */
-    void insert(Row row, int offset) throws HsqlException {
+    void insert(Session session, Row row, int offset) throws HsqlException {
 
         Node    n       = root,
                 x       = n;
@@ -273,7 +273,7 @@ public class Index {
                 break;
             }
 
-            compare = compareRowUnique(row, n.getRow());
+            compare = compareRowUnique(session, row, n.getRow());
 
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
@@ -523,7 +523,7 @@ public class Index {
     RowIterator findFirstRow(Session session, Object[] rowdata,
                              int[] rowColMap) throws HsqlException {
 
-        Node node = findNotNull(rowdata, rowColMap, true);
+        Node node = findNotNull(session, rowdata, rowColMap, true);
 
         return node == null ? emptyIterator
                             : new IndexRowIterator(session, this, node);
@@ -532,7 +532,7 @@ public class Index {
     RowIterator findFirstRowForDelete(Session session, Object[] rowdata,
                                       int[] rowColMap) throws HsqlException {
 
-        Node node = findNotNull(rowdata, rowColMap, true);
+        Node node = findNotNull(session, rowdata, rowColMap, true);
 
         if (node == null) {
             return emptyIterator;
@@ -547,7 +547,7 @@ public class Index {
 
     public Row findRow(Session session, Row row) throws HsqlException {
 
-        Node node = search(row);
+        Node node = search(session, row);
 
         return node == null ? null
                             : node.getRow();
@@ -555,7 +555,7 @@ public class Index {
 
     boolean exists(Session session, Object[] rowdata,
                    int[] rowColMap) throws HsqlException {
-        return findNotNull(rowdata, rowColMap, true) != null;
+        return findNotNull(session, rowdata, rowColMap, true) != null;
     }
 
     RowIterator emptyIterator() {
@@ -571,7 +571,8 @@ public class Index {
      * @return matching node or null
      * @throws HsqlException
      */
-    private Node findNotNull(Object[] rowdata, int[] rowColMap,
+    private Node findNotNull(Session session, Object[] rowdata,
+                             int[] rowColMap,
                              boolean first) throws HsqlException {
 
         Node x      = root, n;
@@ -582,7 +583,8 @@ public class Index {
         }
 
         while (x != null) {
-            int i = this.compareRowNonUnique(rowdata, rowColMap, x.getData());
+            int i = this.compareRowNonUnique(session, rowdata, rowColMap,
+                                             x.getData());
 
             if (i == 0) {
                 if (first == false) {
@@ -620,6 +622,7 @@ public class Index {
      * @return node matching node
      * @throws HsqlException
      */
+/*
     Node find(Object[] rowdata, int[] rowColMap) throws HsqlException {
 
         Node x = root;
@@ -638,6 +641,7 @@ public class Index {
 
         return null;
     }
+*/
 
     /**
      * Determines if a table row has a null column for any of the columns given
@@ -691,7 +695,8 @@ public class Index {
         boolean unique = isUnique &&!isNull(rowdata);
 
         while (x != null) {
-            int c = compareRowNonUnique(rowdata, colIndex, x.getData());
+            int c = compareRowNonUnique(session, rowdata, colIndex,
+                                        x.getData());
 
             if (c == 0) {
                 found = x;
@@ -751,8 +756,9 @@ public class Index {
 */
         while (x != null) {
             boolean t =
-                Column.compare(value, x.getData()[colIndex[0]], colType[0])
-                >= iTest;
+                Column.compare(
+                    session, value, x.getData()[colIndex[0]],
+                    colType[0]) >= iTest;
 
             if (t) {
                 Node r = x.getRight();
@@ -782,7 +788,7 @@ public class Index {
 */
         while (x != null) {
             Object colvalue = x.getData()[colIndex[0]];
-            int    result   = Column.compare(value, colvalue, colType[0]);
+            int result = Column.compare(session, value, colvalue, colType[0]);
 
             if (result >= iTest) {
                 x = next(x);
@@ -817,9 +823,8 @@ public class Index {
         Node x = root;
 
         while (x != null) {
-            boolean t =
-                Column.compare(null, x.getData()[colIndex[0]], colType[0])
-                >= 0;
+            boolean t = Column.compare(
+                session, null, x.getData()[colIndex[0]], colType[0]) >= 0;
 
             if (t) {
                 Node r = x.getRight();
@@ -988,13 +993,13 @@ public class Index {
      *
      * @throws HsqlException
      */
-    Node search(Row row) throws HsqlException {
+    Node search(Session session, Row row) throws HsqlException {
 
         Object[] d = row.getData();
         Node     x = root;
 
         while (x != null) {
-            int c = compareRowUnique(row, x.getRow());
+            int c = compareRowUnique(session, row, x.getRow());
 
             if (c == 0) {
                 return x;
@@ -1022,10 +1027,11 @@ public class Index {
      * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
-    int compareRowNonUnique(Object[] a, int[] rowColMap,
+    int compareRowNonUnique(Session session, Object[] a, int[] rowColMap,
                             Object[] b) throws HsqlException {
 
-        int i = Column.compare(a[rowColMap[0]], b[colIndex[0]], colType[0]);
+        int i = Column.compare(session, a[rowColMap[0]], b[colIndex[0]],
+                               colType[0]);
 
         if (i != 0) {
             return i;
@@ -1034,7 +1040,8 @@ public class Index {
         int fieldcount = rowColMap.length;
 
         for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(a[rowColMap[j]], b[colIndex[j]], colType[j]);
+            i = Column.compare(session, a[rowColMap[j]], b[colIndex[j]],
+                               colType[j]);
 
             if (i != 0) {
                 return i;
@@ -1054,13 +1061,14 @@ public class Index {
      * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
-    static int compareRows(Object[] a, Object[] b, int[] cols,
-                           int[] coltypes) throws HsqlException {
+    static int compareRows(Session session, Object[] a, Object[] b,
+                           int[] cols, int[] coltypes) throws HsqlException {
 
         int fieldcount = cols.length;
 
         for (int j = 0; j < fieldcount; j++) {
-            int i = Column.compare(a[cols[j]], b[cols[j]], coltypes[j]);
+            int i = Column.compare(session, a[cols[j]], b[cols[j]],
+                                   coltypes[cols[j]]);
 
             if (i != 0) {
                 return i;
@@ -1080,7 +1088,8 @@ public class Index {
      *
      * @throws HsqlException
      */
-    private int compareRowUnique(Row left, Row right) throws HsqlException {
+    private int compareRowUnique(Session session, Row left,
+                                 Row right) throws HsqlException {
 
         Object[] a       = left.getData();
         Object[] b       = right.getData();
@@ -1089,7 +1098,8 @@ public class Index {
 
         for (; j < colIndex.length; j++) {
             Object currentvalue = a[colIndex[j]];
-            int i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
+            int i = Column.compare(session, currentvalue, b[colIndex[j]],
+                                   colType[j]);
 
             if (i != 0) {
                 return i;
@@ -1106,7 +1116,8 @@ public class Index {
 
         for (j = 0; j < pkCols.length; j++) {
             Object currentvalue = a[pkCols[j]];
-            int    i = Column.compare(currentvalue, b[pkCols[j]], pkTypes[j]);
+            int i = Column.compare(session, currentvalue, b[pkCols[j]],
+                                   pkTypes[j]);
 
             if (i != 0) {
                 return i;
@@ -1161,6 +1172,7 @@ public class Index {
 
     static class IndexRowIterator implements RowIterator {
 
+        Session                    session;
         Index                      index;
         Node                       nextnode;
         protected IndexRowIterator last;
@@ -1172,6 +1184,7 @@ public class Index {
                 return;
             }
 
+            this.session  = session;
             this.index    = index;
             this.nextnode = node;
         }

@@ -74,6 +74,7 @@ import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.StringUtil;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.persist.Logger;
@@ -152,6 +153,7 @@ public class Database {
     private HashMap                hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
+    public TxManager               txManager;
     public SessionManager          sessionManager;
     private HsqlDatabaseProperties databaseProperties;
     HsqlNameManager                nameManager;
@@ -160,6 +162,7 @@ public class Database {
     DatabaseObjectNames            constraintNameList;
     public SequenceManager         sequenceManager;
     CompiledStatementManager       compiledStatementManager;
+    public Collation               collation;
 
     //
     public static final int DATABASE_ONLINE       = 1;
@@ -288,6 +291,8 @@ public class Database {
             bReferentialIntegrity = true;
             sysUser               = userManager.createSysUser();
             sessionManager        = new SessionManager(this, sysUser);
+            txManager             = new TxManager();
+            collation             = new Collation();
             dInfo = DatabaseInformation.newDatabaseInformation(this);
 
             if (sType != DatabaseManager.S_MEM) {

@@ -383,10 +383,10 @@ final class CompiledStatement {
                                                                  : 0);
 
             if (sq.isInPredicate) {
-                r.removeDuplicates(1);
+                r.removeDuplicates(session, 1);
             }
 
-            t.insert(r);
+            t.insertResult(session, r);
 
             sq.isMaterialised = true;
         }

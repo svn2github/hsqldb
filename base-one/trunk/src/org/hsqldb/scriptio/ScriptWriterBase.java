@@ -41,6 +41,7 @@ import org.hsqldb.DatabaseManager;
 import org.hsqldb.DatabaseScript;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
+import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Token;
 import org.hsqldb.Trace;
@@ -83,7 +84,7 @@ import org.hsqldb.NumberSequence;
 // used at checkpoint
 public abstract class ScriptWriterBase implements Runnable {
 
-    Database            db;
+    Database            database;
     String              outFile;
     OutputStream        fileStreamOut;
     FileAccess.FileSync outDescriptor;
@@ -139,7 +140,7 @@ public abstract class ScriptWriterBase implements Runnable {
             throw Trace.error(Trace.FILE_IO_ERROR, file);
         }
 
-        this.db                = db;
+        this.database          = db;
         this.includeCachedData = includeCachedData;
         outFile                = file;
 
@@ -219,7 +220,7 @@ public abstract class ScriptWriterBase implements Runnable {
     protected void openFile() throws HsqlException {
 
         try {
-            FileAccess   fa  = db.getFileAccess();
+            FileAccess   fa  = database.getFileAccess();
             OutputStream fos = fa.openOutputStreamElement(outFile);
 
             outDescriptor = fa.getFileSync(fos);
@@ -240,14 +241,16 @@ public abstract class ScriptWriterBase implements Runnable {
 
     protected void writeDDL() throws IOException, HsqlException {
 
-        Result ddlPart = DatabaseScript.getScript(db, !includeCachedData);
+        Result ddlPart = DatabaseScript.getScript(database,
+            !includeCachedData);
 
         writeSingleColumnResult(ddlPart);
     }
 
     protected void writeExistingData() throws HsqlException, IOException {
 
-        HsqlArrayList tables = db.getTables();
+        HsqlArrayList tables  = database.getTables();
+        Session       session = database.sessionManager.getSysSession();
 
         for (int i = 0, size = tables.size(); i < size; i++) {
             Table t = (Table) tables.get(i);
@@ -277,7 +280,7 @@ public abstract class ScriptWriterBase implements Runnable {
                 if (script) {
                     writeTableInit(t);
 
-                    RowIterator it = t.rowIterator(null);
+                    RowIterator it = t.rowIterator(session);
 
                     while (it.hasNext()) {
                         writeRow(0, t, it.next().getData());

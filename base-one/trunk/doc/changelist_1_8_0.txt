@@ -6,7 +6,26 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-2005.02.09 1.8.0.RC9
+2005.03.18
+
+Added support for collations. Each database can have its own collation. The
+SQL command below sets the collation from the set of collations in the source 
+for org.hsqldb.Collation:
+
+SET DATABASE COLLATION <double quoted collation name>
+
+Once this command has been issued, the database can be opened in any JVM and
+will retain its collation.
+
+The property sql.compare_in_locale=true is no longer supported. If the line
+exists in a .properties file, it will switch the database to the collation for
+the current default.  
+
+Changed behaviour of transactions in the default READ UNCOMMITTED mode. A
+transcation is no longer allowed to delete or update a row that has already
+been updated or added by another transaction.
+
+Fixed various small bugs.
 
 Fixed reported bug with NOT LIKE and null values
 Fixed reported bug with OR conditions in OUTER JOIN
@@ -15,19 +34,18 @@ Fixed reported bug with duplicated closing of prepared statements
 Support for the res: connection protocol (database files in a jar) has been
 extended to allow CACHED tables.
 
-Support for converting type, nullability, identity and PK attributes of a column
+Support for converting type, nullability, identity attributes of a column
 
 ALTER TABLE <mytable> ALTER COLUMN <mycol> <column definition>
 
 <column definition> has the same syntax as normal column definition. The new
 column definition replaces the old one, so it is possible to add/remove a
-DEFAULT, a NOT NULL constraint, and IDENTITY definition, or a single column
-PRIMARY KEY. If there is a multi-column primary key on the table, no change
-to the primary key is allowed with this command. 
+DEFAULT, a NOT NULL constraint, and IDENTITY definition. 
+No change to the primary key is allowed with this command. 
 
 
 
-2005.02.02 1.8.0.RC9
+2005.03.02 1.8.0.RC9
 
 Fixed unreported bug in recovery when first column contains null.
 Fixed unreported issue with possible PK and FK name duplication

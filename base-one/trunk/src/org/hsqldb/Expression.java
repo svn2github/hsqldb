@@ -386,12 +386,13 @@ public class Expression {
      * @param e2 operand 2
      * @param escape escape character
      */
-    Expression(Expression e, Expression e2, Character escape) {
+    Expression(Expression e, Expression e2, Character escape,
+               boolean hasCollation) {
 
         exprType   = LIKE;
         eArg       = e;
         eArg2      = e2;
-        likeObject = new Like(escape);
+        likeObject = new Like(escape, hasCollation);
 
         checkAggregate();
     }
@@ -2367,14 +2368,14 @@ public class Expression {
             if (likeObject.isEquivalentToBetweenPredicate()) {
 
                 // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abc' || max_collation_char
-                larger  = Column.sql_compare_in_locale;
+                larger  = likeObject.hasCollation;
                 between = !larger;
                 like    = larger;
             } else if (likeObject
                     .isEquivalentToBetweenPredicateAugmentedWithLike()) {
 
                 // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abc' || max_collation_char AND X LIKE 'abc%...'
-                larger  = Column.sql_compare_in_locale;
+                larger  = likeObject.hasCollation;
                 between = !larger;
                 like    = true;
             }
@@ -2399,7 +2400,8 @@ public class Expression {
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
                 Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
 
-                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
+                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar,
+                                       likeObject.hasCollation);
                 eArg2.likeObject = likeObject;
                 eArg             = new Expression(AND, gte, lte);
                 exprType         = AND;
@@ -2407,7 +2409,8 @@ public class Expression {
             } else if (larger) {
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
 
-                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
+                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar,
+                                       likeObject.hasCollation);
                 eArg2.likeObject = likeObject;
                 eArg             = gte;
                 exprType         = AND;
@@ -2867,7 +2870,7 @@ public class Expression {
                 String c = (String) Column.convertObject(leftValue,
                     Types.VARCHAR);
 
-                return likeObject.compare(c);
+                return likeObject.compare(session, c);
 
             case IN :
                 return eArg2.testValueList(session, leftValue);
@@ -2933,7 +2936,7 @@ public class Expression {
             int valueType = eArg.isColumn() ? eArg.dataType
                                             : eArg2.dataType;
 
-            return compareValues(leftValue, rightValue, valueType, exprType)
+            return compareValues(session, leftValue, rightValue, valueType, exprType)
                    ? Boolean.TRUE
                    : Boolean.FALSE;
         }
@@ -2997,7 +3000,7 @@ public class Expression {
                                                            : eArg.getValue(
                                                                session);
 
-                ((SetFunction) currValue).add(newValue);
+                ((SetFunction) currValue).add(session, newValue);
 
                 return currValue;
             }
@@ -3193,7 +3196,7 @@ public class Expression {
 
                 String c = (String) eArg.getValue(session, Types.VARCHAR);
 
-                return likeObject.compare(c);
+                return likeObject.compare(session, c);
 
             case IN :
                 return eArg2.testValueList(session, eArg.getValue(session));
@@ -3252,14 +3255,15 @@ public class Expression {
             return null;
         }
 
-        return compareValues(o, o2, type, exprType) ? Boolean.TRUE
-                                                    : Boolean.FALSE;
+        return compareValues(session, o, o2, type, exprType) ? Boolean.TRUE
+                                                             : Boolean.FALSE;
     }
 
-    private static boolean compareValues(Object o, Object o2, int valueType,
+    private static boolean compareValues(Session session, Object o,
+                                         Object o2, int valueType,
                                          int exprType) throws HsqlException {
 
-        int result = Column.compare(o, o2, valueType);
+        int result = Column.compare(session, o, o2, valueType);
 
         switch (exprType) {
 
@@ -3324,7 +3328,7 @@ public class Expression {
             for (int i = 0; i < len; i++) {
                 Object o2 = valueList[i].getValue(session, dataType);
 
-                if (Column.compare(o, o2, dataType) == 0) {
+                if (Column.compare(session, o, o2, dataType) == 0) {
                     return Boolean.TRUE;
                 }
             }
@@ -3348,7 +3352,7 @@ public class Expression {
             Result r = subSelect.getResult(session, 0);
 
             // fredt - reduce the size if possible
-            r.removeDuplicates();
+            r.removeDuplicates(session);
 
             Record n    = r.rRoot;
             int    type = r.metaData.colTypes[0];
@@ -3362,7 +3366,7 @@ public class Expression {
             while (n != null) {
                 Object o2 = n.data[0];
 
-                if (o2 != null && Column.compare(o2, o, type) == 0) {
+                if (o2 != null && Column.compare(session, o2, o, type) == 0) {
                     return Boolean.TRUE;
                 }
 

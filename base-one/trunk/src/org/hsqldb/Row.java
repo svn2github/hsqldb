@@ -84,6 +84,7 @@ import org.hsqldb.rowio.RowOutputInterface;
  */
 public class Row implements CachedObject {
 
+    int                tableId;
     int                iPos;
     protected Object[] oData;
     protected Node     nPrimaryNode;
@@ -110,7 +111,8 @@ public class Row implements CachedObject {
             n       = n.nNext;
         }
 
-        oData = o;
+        tableId = t.getId();
+        oData   = o;
     }
 
     /**
@@ -190,6 +192,10 @@ public class Row implements CachedObject {
 
     public int getStorageSize() {
         return 0;
+    }
+
+    public long getId() {
+        return ((long) tableId << 32) + (((long) iPos) & 0xffffffffL);
     }
 
     public int getPos() {

@@ -930,7 +930,7 @@ public class ArrayUtil {
             colindex[i] = i;
         }
     }
-    /*
+/*
     public static void main(String[] args) {
 
         int[] a = new int[] {
