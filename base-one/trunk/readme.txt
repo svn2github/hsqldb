@@ -1,9 +1,16 @@
 Readme File
 
 
+2003.10.28
+
+Fixed reported bugs.
+
+Views and subqueries can appear in a view definition.
+
+
 2003.10.26
 
-HSQLDB 1.7.2 ALPHA_S
+HSQLDB 1.7.2 ALPHA_T
 
 Improved index use for multiple key joins.
 

@@ -342,7 +342,7 @@ if necessary.
 </font>
 <hr>
 <font face="Arial" color="#FF0000"><br>
-<b>CREATE VIEW</b> &lt;viewname&gt; <b>AS SELECT ... FROM ... </b>[ WHERE Expression ] ;
+<b>CREATE VIEW</b> &lt;viewname&gt;[(&lt;viewcolumn&gt;,..) <b>AS SELECT ... FROM ... </b>[ WHERE Expression ] ;
 </font>
 <p>
 <font face="Arial">A view can be thought of as either a virtual table or a stored query. The data accessible through a view is not stored in the database as a distinct object. What is stored in the database is a SELECT statement. The result set of the SELECT statement forms the virtual table returned by the view. A user can use this virtual table by referencing the view name in SQL statements the same way a table is referenced. A view is used to do any or all of these functions:<br>
@@ -393,11 +393,17 @@ A view can reference another view. For example, mealsjv presents information tha
     CREATE VIEW mealswebv AS
       SELECT name, author
         FROM mealsjv
-</pre>
+</pre></big></font></font></font>
+<p><font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica" size="2"><font face="Arial"><big>
 </big>
-The SELECT statement in a VIEW definition should return columns with distinct names. If the names of two columns in the SELECT statement  are the same, use a column alias to distinguish between them.<br>
-</font>
-<p><font face="Arial">See also: <a href="#Expression">Expression</a>, <a href="#SELECT">SELECT</a>, <a href="#DROP VIEW">DROP VIEW</a>
+The SELECT statement in a VIEW definition should return columns with distinct names. If the names of two columns in the SELECT statement  are the same, use a column alias to distinguish between them. A list of new column names can always be defined for a view.<br>
+  </font></font></font></p>
+<p><br>
+  <font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica" size="2"><font face="Arial"><big>
+    <font size="1" face="Courier New, Courier, mono">CREATE VIEW aview (new_name, new_author) AS
+      SELECT name, author
+        FROM mealsjv</font></big></font></font></font></p>
+<font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica" size="2"><p><font face="Arial">See also: <a href="#Expression">Expression</a>, <a href="#SELECT">SELECT</a>, <a href="#DROP VIEW">DROP VIEW</a>
 </font>
 <p> <font face="Arial"><br>
   <a name="DELETE"></a>
@@ -572,7 +578,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 [ WHERE <a href="#Expression">Expression</a> ] <br>
 [ GROUP BY Expression [, ...] ] <br>
 [ ORDER BY orderExpression [, ...] ] <br>
-[ { UNION [ALL] | {MINUS|EXCEPT} | INTERSECT } selectStatement ] ;
+[ { UNION [ALL | DISTINCT] | {MINUS | EXCEPT} | INTERSECT } selectStatement ] ;
 </font>
 <p><font face="Arial"> Retrieves information from one or more tables in the database. 
 </font>

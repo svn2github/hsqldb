@@ -48,6 +48,7 @@ class View extends Table {
     Table          workingTable;
     Select         viewSelect;
     private String sStatement;
+    SubQuery[]     viewSubqueries;
 
     View(Database db, HsqlName name, String definition,
             HsqlArrayList colList) throws HsqlException {
@@ -95,6 +96,14 @@ class View extends Table {
                               database.sessionManager.getSysSession());
         SubQuery sq = p.parseSubquery(null, true, Expression.QUERY);
 
+        viewSubqueries = p.getSubqueries();
+
+        for (int i = 0; i < viewSubqueries.length; i++) {
+            if (viewSubqueries[i].view == null) {
+                viewSubqueries[i].view = this;
+            }
+        }
+
         workingTable = sq.table;
         viewSelect   = sq.select;
 
@@ -117,18 +126,6 @@ class View extends Table {
                 viewSelect.eColumn[i].setAlias(name.name, name.isNameQuoted);
                 workingTable.renameColumn(workingTable.getColumn(i),
                                           name.name, name.isNameQuoted);
-            }
-        }
-
-        // check the tableFilters to ensure all tables are user tables
-        int filtercount = viewSelect.tFilter.length;
-
-        for (int i = 0; i < filtercount; i++) {
-            Table table = viewSelect.tFilter[i].getTable();
-
-            if (table.isSystem()) {
-                throw Trace.error(Trace.TABLE_NOT_FOUND,
-                                  new Object[]{ table.tableName.name });
             }
         }
 

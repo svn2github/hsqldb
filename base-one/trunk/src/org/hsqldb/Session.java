@@ -721,7 +721,7 @@ class Session implements SessionInterface {
         switch (cmd) {
 
             case Token.SELECT : {
-                cs = parser.compileSelectStatement(null);
+                cs = parser.compileSelectStatement(null, false);
 
                 break;
             }

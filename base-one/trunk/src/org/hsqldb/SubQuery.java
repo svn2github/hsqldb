@@ -42,8 +42,33 @@ class SubQuery implements ObjectComparator {
     boolean isInPredicate;
     Select  select;
     Table   table;
+    View    view;
+    boolean isMaterialised;
 
     public int compare(Object a, Object b) {
-        return ((SubQuery) b).level - ((SubQuery) a).level;
+
+        SubQuery sqa = (SubQuery) a;
+        SubQuery sqb = (SubQuery) b;
+
+        if (sqa.view == null && sqb.view == null) {
+            return sqb.level - sqa.level;
+        } else if (sqa.view != null && sqb.view != null) {
+            Database db = sqa.view.database;
+            int      ia = db.getTableIndex(sqa.view);
+            int      ib = db.getTableIndex(sqb.view);
+
+            if (ia == -1) {
+                ia = db.getTables().size();
+            }
+
+            if (ib == -1) {
+                ib = db.getTables().size();
+            }
+
+            return ia - ib;
+        } else {
+            return ((SubQuery) a).view == null ? 1
+                                               : -1;
+        }
     }
 }

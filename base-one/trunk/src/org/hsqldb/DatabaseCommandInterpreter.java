@@ -196,7 +196,7 @@ class DatabaseCommandInterpreter {
         switch (cmd) {
 
             case Token.SELECT :
-                cs = parser.compileSelectStatement(cs);
+                cs = parser.compileSelectStatement(cs, false);
 
                 Trace.doAssert(cs.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
@@ -2668,7 +2668,7 @@ class DatabaseCommandInterpreter {
         switch (cmd) {
 
             case Token.SELECT :
-                cs = parser.compileSelectStatement(null);
+                cs = parser.compileSelectStatement(null, false);
                 break;
 
             case Token.INSERT :

@@ -191,30 +191,33 @@ class Parser {
         return columns;
     }
 
-    SubQuery parseSubquery(Table table, boolean resolveAll,
+    /**
+     * The SubQuery objects are added to the subquery list at the
+     */
+    SubQuery parseSubquery(View v, boolean resolveAll,
                            int predicateType) throws HsqlException {
 
-        subQueryLevel++;
+        SubQuery sq;
 
-        SubQuery sq         = new SubQuery();
-        boolean  isResolved = true;
-        Select   s          = null;
+        if (v == null) {
+            Table  table;
+            Select s = null;
 
-        if (table == null) {
-            s             = parseSelect(false);
-            isResolved    = s.resolveAll(resolveAll);
-            sq.level      = subQueryLevel;
+            subQueryLevel++;
+
+            s = parseSelect(false);
+
+            subQueryLevel--;
+
+            boolean isResolved = s.resolveAll(resolveAll);
+
+            sq            = new SubQuery();
             sq.select     = s;
             sq.isResolved = isResolved;
-        }
 
-        subQueryLevel--;
-
-        if (!isResolved) {
-            return sq;
-        }
-
-        if (table == null) {
+            if (!isResolved) {
+                return sq;
+            }
 
             // it's not a problem that this table has not a unique name
             table = new Table(
@@ -241,15 +244,25 @@ class Parser {
                                                         : null;
 
             table.createPrimaryKey(pcol);
+
+            sq.table = table;
+
+            if (subQueryHeap == null) {
+                subQueryHeap = new HsqlArrayHeap(8, sq);
+            }
+
+            subQueryHeap.add(sq);
+        } else {
+            sq = v.viewSubqueries[v.viewSubqueries.length - 1];
+
+            if (subQueryHeap == null) {
+                subQueryHeap = new HsqlArrayHeap(8, sq);
+            }
+
+            for (int i = 0; i < v.viewSubqueries.length; i++) {
+                subQueryHeap.add(v.viewSubqueries[i]);
+            }
         }
-
-        sq.table = table;
-
-        if (subQueryHeap == null) {
-            subQueryHeap = new HsqlArrayHeap(8, new SubQuery());
-        }
-
-        subQueryHeap.add(sq);
 
         return sq;
     }
@@ -785,8 +798,7 @@ class Parser {
             session.check(t.getName(), UserManager.SELECT);
 
             if (t.isView()) {
-                sq = parseSubquery(((View) t).workingTable, true,
-                                   Expression.QUERY);
+                sq        = parseSubquery((View) t, true, Expression.QUERY);
                 sq.select = ((View) t).viewSelect;
                 t         = sq.table;
                 sAlias    = token;
@@ -1914,7 +1926,7 @@ class Parser {
 
     // destructive get, but that's OK (preferred, actually)
 
-    /** @todo fredt - replace this stuff and the subquery stack with a simpler structure */
+    /** @todo fredt - replace this stuff with a simpler structure */
     SubQuery[] getSubqueries() {
 
         SubQuery[] subqueries;
@@ -1969,7 +1981,7 @@ class Parser {
                 return compileUpdateStatement(cs);
 
             case Token.SELECT :
-                return compileSelectStatement(cs);
+                return compileSelectStatement(cs, false);
 
             default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -2168,14 +2180,14 @@ class Parser {
     /**
      * Retrieves a SELECT-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileSelectStatement(CompiledStatement cs)
-    throws HsqlException {
+    CompiledStatement compileSelectStatement(CompiledStatement cs,
+            boolean isview) throws HsqlException {
 
         Select select;
 
         clearParameters();
 
-        select = parseSelect(false);
+        select = parseSelect(isview);
 
         if (cs == null) {
             cs = new CompiledStatement();

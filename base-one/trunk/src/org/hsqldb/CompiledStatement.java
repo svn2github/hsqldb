@@ -322,7 +322,6 @@ final class CompiledStatement {
 
         this.select = select;
 
-//        select.resolveAll();
         select.prepareResult();
         setParameters(parameters);
 
@@ -365,23 +364,22 @@ final class CompiledStatement {
 
     void materializeSubQueries() throws HsqlException {
 
-        SubQuery sq;
-
         for (int i = 0; i < subqueries.length; i++) {
-            sq = subqueries[i];
-
-            Table t = sq.table;
+            SubQuery sq = subqueries[i];
 
             // a VIEW working table contents are filled only once and reused
-            if (!t.isEmpty()) {
+            if (sq.isMaterialised) {
                 continue;
             }
 
+            Table  t = sq.table;
             Select s = sq.select;
             Result r = s.getResult(sq.isExistsPredicate ? 1
                                                         : 0);
 
             t.insertIntoTable(r, null);
+
+            sq.isMaterialised = true;
         }
     }
 
@@ -389,6 +387,8 @@ final class CompiledStatement {
 
         for (int i = 0; i < subqueries.length; i++) {
             subqueries[i].table.setIndexRootsNull();
+
+            subqueries[i].isMaterialised = false;
         }
     }
 

@@ -89,7 +89,9 @@ class Logger {
 
         if (db.isFilesInJar()) {
             checkFilesInJar(path);
-        } else {
+        }
+
+        if (!db.isFilesReadOnly()) {
             acquireLock(path);
         }
 
