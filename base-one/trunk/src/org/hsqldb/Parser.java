@@ -239,80 +239,83 @@ class Parser {
      * for view column aliases.
      *
      */
-    SubQuery parseSubquery(int brackets, View v, HsqlName[] colNames,
+    SubQuery parseSubquery(int brackets, HsqlName[] colNames,
                            boolean resolveAll,
                            int predicateType) throws HsqlException {
 
         SubQuery sq;
 
-        if (v == null) {
-            sq = new SubQuery();
+        sq = new SubQuery();
 
-            subQueryLevel++;
+        subQueryLevel++;
 
-            Select s = parseSelect(brackets, false, true);
+        Select s = parseSelect(brackets, false, true);
 
-            sq.level = subQueryLevel;
+        sq.level = subQueryLevel;
 
-            subQueryLevel--;
+        subQueryLevel--;
 
-            boolean isResolved = s.resolveAll(resolveAll);
+        boolean isResolved = s.resolveAll(resolveAll);
 
-            sq.select     = s;
-            sq.isResolved = isResolved;
+        sq.select     = s;
+        sq.isResolved = isResolved;
 
-            if (!isResolved) {
-                return sq;
+        if (!isResolved) {
+            return sq;
+        }
+
+        // it's not a problem that this table has not a unique name
+        Table table = new Table(
+            database,
+            database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
+            Table.SYSTEM_SUBQUERY, 0);
+
+        if (colNames != null) {
+            if (colNames.length != s.iResultLen) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            // it's not a problem that this table has not a unique name
-            Table table = new Table(
-                database,
-                database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
-                Table.SYSTEM_SUBQUERY, 0);
+            for (int i = 0; i < s.iResultLen; i++) {
+                HsqlName name = colNames[i];
 
-            if (colNames != null) {
-                if (colNames.length != s.iResultLen) {
-                    throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-                }
-
-                for (int i = 0; i < s.iResultLen; i++) {
-                    HsqlName name = colNames[i];
-
-                    s.exprColumns[i].setAlias(name.name, name.isNameQuoted);
-                }
-            } else {
-                for (int i = 0; i < s.iResultLen; i++) {
-                    String colname = s.exprColumns[i].getAlias();
-
-                    if (colname == null || colname.length() == 0) {
-
-                        // fredt - this does not guarantee the uniqueness of column
-                        // names but addColumns() will throw if names are not unique.
-                        colname = "COL_" + String.valueOf(i + 1);
-
-                        s.exprColumns[i].setAlias(colname, false);
-                    }
-                }
+                s.exprColumns[i].setAlias(name.name, name.isNameQuoted);
             }
-
-            table.addColumns(s);
-
-            int[] pcol = predicateType == Expression.IN ? new int[]{ 0 }
-                                                        : null;
-
-            table.createPrimaryKey(pcol);
-
-            sq.table         = table;
-            sq.isInPredicate = predicateType == Expression.IN;
-
-            subQueryList.add(sq);
         } else {
-            sq = v.viewSubQuery;
+            for (int i = 0; i < s.iResultLen; i++) {
+                String colname = s.exprColumns[i].getAlias();
 
-            for (int i = 0; i < v.viewSubqueries.length; i++) {
-                subQueryList.add(v.viewSubqueries[i]);
+                if (colname == null || colname.length() == 0) {
+
+                    // fredt - this does not guarantee the uniqueness of column
+                    // names but addColumns() will throw if names are not unique.
+                    colname = "COL_" + String.valueOf(i + 1);
+
+                    s.exprColumns[i].setAlias(colname, false);
+                }
             }
+        }
+
+        table.addColumns(s);
+
+        int[] pcol = predicateType == Expression.IN ? new int[]{ 0 }
+                                                    : null;
+
+        table.createPrimaryKey(pcol);
+
+        sq.table         = table;
+        sq.isInPredicate = predicateType == Expression.IN;
+
+        subQueryList.add(sq);
+
+        return sq;
+    }
+
+    SubQuery getViewSubquery(View v) {
+
+        SubQuery sq = v.viewSubQuery;
+
+        for (int i = 0; i < v.viewSubqueries.length; i++) {
+            subQueryList.add(v.viewSubqueries[i]);
         }
 
         return sq;
@@ -927,7 +930,7 @@ class Parser {
             tokenizer.getThis(Token.T_SELECT);
 
             // fredt - not correlated - a joined subquery table must resolve fully
-            sq = parseSubquery(brackets, null, null, true, Expression.QUERY);
+            sq = parseSubquery(brackets, null, true, Expression.QUERY);
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
 
@@ -938,7 +941,7 @@ class Parser {
             session.check(t.getName(), UserManager.SELECT);
 
             if (t.isView()) {
-                sq = parseSubquery(0, (View) t, null, true, Expression.QUERY);
+                sq        = getViewSubquery((View) t);
                 sq.select = ((View) t).viewSelect;
                 t         = sq.table;
                 sAlias    = token;
@@ -1115,10 +1118,19 @@ class Parser {
 
                 read();
                 readThis(Expression.OPEN);
+
+                int brackets = 0;
+
+                if (iToken == Expression.OPEN) {
+                    brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+
+                    read();
+                }
+
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                SubQuery sq = parseSubquery(0, null, null, false,
+                SubQuery sq = parseSubquery(brackets, null, false,
                                             Expression.EXISTS);
                 Select select = sq.select;
                 Expression s = new Expression(select, sq.table,
@@ -1249,10 +1261,17 @@ class Parser {
         read();
         readThis(Expression.OPEN);
 
-        Expression b = null;
+        Expression b        = null;
+        int        brackets = 0;
+
+        if (iToken == Expression.OPEN) {
+            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+
+            read();
+        }
 
         if (iToken == Expression.SELECT) {
-            SubQuery sq = parseSubquery(0, null, null, false, Expression.IN);
+            SubQuery sq = parseSubquery(brackets, null, false, Expression.IN);
             Select   select = sq.select;
 
             // until we support rows in IN predicates

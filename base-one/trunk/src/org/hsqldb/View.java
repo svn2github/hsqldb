@@ -118,7 +118,7 @@ class View extends Table {
         Parser p = new Parser(database.sessionManager.getSysSession(),
                               this.database, tokenizer);
 
-        viewSubQuery = p.parseSubquery(brackets, null, colList, true,
+        viewSubQuery = p.parseSubquery(brackets, colList, true,
                                        Expression.QUERY);
 
         p.setAsView(this);
