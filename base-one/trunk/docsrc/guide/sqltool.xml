@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.34 2004/06/10 12:58:08 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.35 2004/06/10 13:17:06 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.34 $</edition>
-        <pubdate>$Date: 2004/06/10 12:58:08 $</pubdate>
+        <edition>$Revision: 1.35 $</edition>
+        <pubdate>$Date: 2004/06/10 13:17:06 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,8 +40,8 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.36 of SqlTool and
-            1.76 of SqlFile (the latter is the class which does most of the
+            This document is now updated for version 1.37 of SqlTool and
+            1.78 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -106,7 +106,7 @@
                 </informalexample>
                     for interactive use, or
                 <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</screen>
                     </informalexample>
                     or
                     <informalexample><screen>
@@ -163,7 +163,7 @@
             explains the second method.  Here's an example of the first method
             (after you have set the classpath appropriately).
         <informalexample><screen>
-    java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
+java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </informalexample></para>
     </section>
 
@@ -293,9 +293,9 @@
                 line, or with a blank line.
                 In the former case, the SQL Statement will be executed against 
                 the SQL database and the command will go into the command 
-                buffer and command history for editing or viewing later on.
+                buffer and SQL command history for editing or viewing later on.
                 In the latter case (you end an SQL Statement with a blank 
-                line), the command will go to the buffer and history, but 
+                line), the command will go to the buffer and SQL history, but 
                 will not be executed (but you can execute it later from the 
                 buffer).
             </simpara><simpara>
@@ -363,18 +363,18 @@
                 Lists names of all columns in the specified table.
             </simpara></listitem></varlistentry>
             <varlistentry><term>\s</term><listitem><simpara>
-                Shows the command history.
-                The command history will show a number (a negative number) 
+                Shows the SQL command history.
+                The SQL command history will show a number (a negative number) 
                 for each SQL Statement that has made it into the buffer so 
                 fare (by either executing or entering a blank line).
                 You can then use "\-" command (which is described next) to 
-                retrieve commands from the history to work with.
+                retrieve commands from the SQL history to work with.
                 To list just the very last command, you would use the ":l" 
                 buffer command to list the buffer contents, instead of this 
                 command.
             </simpara></listitem></varlistentry>
             <varlistentry><term>\-[3]</term><listitem><simpara>
-                Enter "\" followed by the command number from history, like
+                Enter "\" followed by the command number from SQL history, like
                 "\-3".
                 That command will be written to the buffer so that you can 
                 execute it or edit it using buffer commands.
@@ -386,20 +386,27 @@
             </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
-            This chapter documents only the <emphasis>essential</emphasis> 
+            This list here includes only the <emphasis>essential</emphasis> 
             Special Commands, but n.b. that there are other useful Special 
             Commands which you can list by running <literal>\?</literal>.
             (You can, for example, execute SQL from external SQL files, and 
             save your interactive SQL commands to files).
-            The <link linkend='report-section' endterm='report-title'/> section 
-            explains how to use the "\o" and "\H" special commands to generate
-            reports.
-        </simpara>
-        <simpara>
+            Some specifics of these othe commands are specified immediately 
+            below, and the 
+            <link linkend='report-section' endterm='report-title'/>
+            section explains how to use the "\o" and "\H" special commands to 
+            generate reports.
+        </simpara> <simpara>
             Be aware that the <literal>\!</literal> Special Command does
             not work for external programs that read from standard input.
-            You can non-interactive and graphical interactive programs, but not
-            command-line interactive programs.
+            You can invoke non-interactive and graphical interactive programs, 
+            but not command-line interactive programs.
+        </simpara> <simpara>
+            The \w command can be used to store any command in your SQL 
+            history to a file.
+            Just restore the command to the buffer (which is the 0th
+            element of the history) with a command like "\-4" before you give
+            the \w command.
         </simpara>
         <variablelist><title>Buffer Commands</title>
             <varlistentry><term>:?</term><listitem><simpara>
@@ -537,6 +544,25 @@
             below for information on using variables in other ways, and 
             information on the other PL commands and features.
         </simpara>
+        <section>SQL History</section>
+        <simpara>
+            The SQL history shown by the \s command, and used by other commands,
+            is truncated to 20 entries, since the utility comes from being 
+            able to quickly view the history list.
+            You can change the history length by setting the system property
+            <literal>sqltool.historyLength</literal> to an integer like
+            <screen>
+java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
+        </simpara> <simpara>
+            The SQL history list explicitly does not contain Special, Buffer,
+            or PL commands.
+            It only contains commands SQL commands, valid or invalid, 
+            successful or unsuccessful.
+            The reason for including bad SQL commands is so that you can 
+            recall and edit them if you want to.
+            The same applies to the editing buffer (which is element 0
+            of the history).
+        </simpara>
     </section>
 
     <section><title>Raw mode</title>
@@ -582,7 +608,7 @@
                 directly from the comand-line or from a shell script without an 
                 SQL file, like this.
             <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</screen>
             </informalexample></para><para>
                 Since SqlTool executes SQL statements only when a statement 
                 line is terminated with ";", you can only execute more than one 
@@ -591,12 +617,12 @@
                 With any Bourne-compatible shell, you can include linebreaks in 
                 the SQL statements like this.
             <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid
-        SQL statement number one;
-        SQL statement
-            number two;
-        SQL statement three;
-    ' urlid</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid
+    SQL statement number one;
+    SQL statement
+        number two;
+    SQL statement three;
+' urlid</screen>
             </informalexample></para><simpara>
                 If you don't give the <literal>--noinput</literal> switch, then 
                 after executing the given statements, an interactive session 
@@ -622,7 +648,7 @@
             </simpara><para>
                 Often, you will want to redirect output to a file, like
             <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
             </informalexample></para><simpara>
                 (Skip the "2>&amp;1" if you're on Windows).
             </simpara><simpara>
@@ -755,7 +781,7 @@
                 Buffer Commands are for interactive use only.
             </simpara><simpara>
                 A couple Special Commands won't work in sql files (stuff for
-                command-line history and editing), but the
+                SQL history manipulation), but the
                 following not only work, but were designed for use in sql files.
             </simpara>
             <variablelist>
@@ -800,7 +826,7 @@
                     This will HTML-ify the entire session.
                     For example,
                     <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
                     </informalexample>
                     (See the
                     <link linkend='report-section' endterm='report-title'/> 
@@ -879,12 +905,12 @@
                 In this case, do not give the sql file(s) as an argument to 
                 SqlTool, but pipe them in instead, like
             <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
             </informalexample>
                 or
             <informalexample><screen>
-    cat filepath1.sql... |
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
+cat filepath1.sql... |
+java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
             </informalexample>
             </para>
         </section>
@@ -895,7 +921,7 @@
                 You can use another character set by setting the system 
                 property <property>sqltool.charset</property>, like
             <informalexample><screen>
-    java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
+java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
             </informalexample></para><simpara>
                 You can also set this per urlid in the SqlTool configuration 
                 file.
@@ -1009,7 +1035,9 @@
             except for the very first character ("\" or "*").
             Therefore, you can use variables but not aliasing in Special and
             PL Commands.
-            Example.
+            Here is ahyperbolically impractical example to show the extent to
+            which PL variables can be used in Special commands even though you
+            can not use them as aliases.
             <programlisting>
         sql> * qq = p Hello Butch
         sql> \*{qq} done now
