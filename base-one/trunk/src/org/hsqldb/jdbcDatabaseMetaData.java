@@ -4819,9 +4819,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             and("PKTABLE_CAT", "=", primaryCatalog)).append(
             and("PKTABLE_SCHEM", "=", primarySchema)).append(
             and("PKTABLE_NAME", "=", primaryTable)).append(
-            and("PKTABLE_CAT", "=", foreignCatalog)).append(
-            and("PKTABLE_SCHEM", "=", foreignSchema)).append(
-            and("PKTABLE_NAME", "=", foreignTable));
+            and("FKTABLE_CAT", "=", foreignCatalog)).append(
+            and("FKTABLE_SCHEM", "=", foreignSchema)).append(
+            and("FKTABLE_NAME", "=", foreignTable));
 
         // by default, query already returns the table ordered by
         // FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.

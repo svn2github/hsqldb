@@ -130,16 +130,17 @@ public class Session {
     Session(Database db, User user, boolean autocommit, boolean readonly,
             int id) {
 
-        iId          = id;
-        dDatabase    = db;
-        uUser        = user;
-        tTransaction = new HsqlArrayList();
-        isAutoCommit = autocommit;
-        isReadOnly   = readonly;
-        dbci         = new DatabaseCommandInterpreter(this);
-        cse          = new CompiledStatementExecutor(this);
-        cs           = new CompiledStatement();
-        csm          = db.compiledStatementManager;
+        iId                       = id;
+        dDatabase                 = db;
+        uUser                     = user;
+        tTransaction              = new HsqlArrayList();
+        isAutoCommit              = autocommit;
+        isReadOnly                = readonly;
+        dbCommandInterpreter      = new DatabaseCommandInterpreter(this);
+        compiledStatementExecutor = new CompiledStatementExecutor(this);
+
+//        cs           = new CompiledStatement();
+        compiledStatementManager = db.compiledStatementManager;
     }
 
     /**
@@ -648,10 +649,11 @@ public class Session {
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
 //-------------------------------------------------------------------
-    DatabaseCommandInterpreter dbci;
-    CompiledStatement          cs;
-    CompiledStatementExecutor  cse;
-    CompiledStatementManager   csm;
+    DatabaseCommandInterpreter dbCommandInterpreter;
+
+//    CompiledStatement          cs;
+    CompiledStatementExecutor compiledStatementExecutor;
+    CompiledStatementManager  compiledStatementManager;
 
     CompiledStatement sqlCompileStatement(String sql) throws HsqlException {
 
@@ -754,7 +756,8 @@ public class Session {
             default : {
                 String msg = "operation type:" + type;
 
-                return new Result(msg, "s1000", Trace.OPERATION_NOT_SUPPORTED);
+                return new Result(msg, "s1000",
+                                  Trace.OPERATION_NOT_SUPPORTED);
             }
         }
     }
@@ -767,7 +770,7 @@ public class Session {
      * @return the result of the last sql statement in the collection
      */
     Result sqlExecuteDirect(String sql) {
-        return dbci.execute(sql);
+        return dbCommandInterpreter.execute(sql);
     }
 
     /**
@@ -777,7 +780,7 @@ public class Session {
      * @return the result of executing the compiled statement
      */
     Result sqlExecuteCompiled(CompiledStatement cs) {
-        return cse.execute(cs);
+        return compiledStatementExecutor.execute(cs);
     }
 
     /**
@@ -794,24 +797,19 @@ public class Session {
      */
     Result sqlPrepare(String sql) {
 
-        CompiledStatement cs;
-        int               csid;
-        Result            result;
-        boolean           hasSubqueries;
-
-        result        = null;
-        cs            = null;
-        hasSubqueries = false;
-
-        // get...
-        csid = csm.getStatementID(sql);
+        CompiledStatement cs            = null;
+        Result            result        = null;
+        int               csid = compiledStatementManager.getStatementID(sql);
+        boolean           hasSubqueries = false;
 
         // ...check valid...
-        if (csid > 0 && csm.isValid(csid, iId)) {
+        if (csid > 0 && compiledStatementManager.isValid(csid, iId)) {
+            cs           = compiledStatementManager.getStatement(csid);
             result       = new Result();
             result.iMode = Result.SQLPREPARE;
 
             result.setStatementID(csid);
+            result.setParameterTypes(cs.paramTypes);
 
             return result;
         }
@@ -828,14 +826,16 @@ public class Session {
         }
 
         if (csid <= 0) {
-            csid = csm.registerStatement(cs);
+            csid = compiledStatementManager.registerStatement(cs);
         }
 
-        csm.setValidated(csid, iId, dDatabase.getDDLSCN());
+        compiledStatementManager.setValidated(csid, iId,
+                                              dDatabase.getDDLSCN());
 
         result       = new Result();
         result.iMode = Result.SQLPREPARE;
 
+        result.setParameterTypes(cs.paramTypes);
         result.setStatementID(csid);
 
         return result;
@@ -857,7 +857,7 @@ public class Session {
         int               count;
 
         csid = cmd.getStatementID();
-        cs   = csm.getStatement(csid);
+        cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
@@ -865,7 +865,7 @@ public class Session {
             return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
-        if (!csm.isValid(csid, iId)) {
+        if (!compiledStatementManager.isValid(csid, iId)) {
             out = sqlPrepare(cs.sql);
 
             if (out.iMode == Result.ERROR) {
@@ -958,7 +958,7 @@ public class Session {
         csid   = cmd.getStatementID();
         pvals  = cmd.getParameterData();
         ptypes = cmd.getParameterTypes();
-        cs     = csm.getStatement(csid);
+        cs     = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
@@ -966,7 +966,7 @@ public class Session {
             return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
-        if (!csm.isValid(csid, iId)) {
+        if (!compiledStatementManager.isValid(csid, iId)) {
             Result r = sqlPrepare(cs.sql);
 
             if (r.iMode == Result.ERROR) {
@@ -1001,7 +1001,7 @@ public class Session {
         boolean existed;
         Result  result;
 
-        existed = csm.freeStatement(csid, iId);
+        existed = compiledStatementManager.freeStatement(csid, iId);
         result  = new Result();
 
         if (existed) {

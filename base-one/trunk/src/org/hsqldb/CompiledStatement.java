@@ -86,6 +86,11 @@ public class CompiledStatement {
     Expression[] parameters;
 
     /**
+     * int[] contains type of each parameter
+     */
+    int[] paramTypes;
+
+    /**
      * Subqueries in heaped inverse parse depth order
      */
     Parser.SubQuery[] subqueries;
@@ -150,6 +155,7 @@ public class CompiledStatement {
         columnValues = null;
         condition    = null;
         parameters   = null;
+        paramTypes   = null;
         select       = null;
         targetTable  = null;
         type         = UNKNOWN;
@@ -169,8 +175,10 @@ public class CompiledStatement {
         clearAll();
 
         this.targetTable = targetTable;
-        this.parameters  = parameters;
-        tf               = new TableFilter(targetTable, null, false);
+
+        setParameters(parameters);
+
+        tf = new TableFilter(targetTable, null, false);
 
         if (deleteCondition != null) {
             condition = new Expression(deleteCondition);
@@ -201,8 +209,10 @@ public class CompiledStatement {
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
         this.checkColumns = checkColumns;
-        this.parameters   = parameters;
-        tf                = new TableFilter(targetTable, null, false);
+
+        setParameters(parameters);
+
+        tf = new TableFilter(targetTable, null, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
@@ -239,8 +249,10 @@ public class CompiledStatement {
         this.columnMap    = columnMap;
         this.checkColumns = checkColumns;
         this.columnValues = columnValues;
-        this.parameters   = parameters;
-        type              = INSERT_VALUES;
+
+        setParameters(parameters);
+
+        type = INSERT_VALUES;
     }
 
     /**
@@ -264,9 +276,9 @@ public class CompiledStatement {
         this.select       = select;
 
         select.resolveAll();
+        setParameters(parameters);
 
-        this.parameters = parameters;
-        type            = INSERT_SELECT;
+        type = INSERT_SELECT;
     }
 
     /**
@@ -281,9 +293,9 @@ public class CompiledStatement {
         this.select = select;
 
         select.resolveAll();
+        setParameters(parameters);
 
-        this.parameters = parameters;
-        type            = SELECT;
+        type = SELECT;
     }
 
     /**
@@ -295,8 +307,23 @@ public class CompiledStatement {
     void setAsCall(Expression expression, Expression[] parameters) {
 
         this.expression = expression;
+
+        setParameters(parameters);
+
+        type = CALL;
+    }
+
+    private void setParameters(Expression[] parameters) {
+
         this.parameters = parameters;
-        type            = CALL;
+
+        int[] types = new int[parameters.length];
+
+        for (int i = 0; i < parameters.length; i++) {
+            types[i] = parameters[i].getType();
+        }
+
+        this.paramTypes = types;
     }
 
     /**

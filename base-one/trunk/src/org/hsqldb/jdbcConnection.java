@@ -3026,7 +3026,8 @@ public class jdbcConnection implements Connection {
      * @see  #execute execute
      */
     private jdbcResultSet executeStandalone(String s) throws SQLException {
-        return new jdbcResultSet(dDatabase.execute(s, cSession),
+
+        return new jdbcResultSet(cSession.sqlExecuteDirect(s),
                                  connProperties);
     }
 

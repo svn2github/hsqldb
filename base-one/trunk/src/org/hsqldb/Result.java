@@ -801,4 +801,9 @@ class Result implements ResultConstants {
     int[] getParameterTypes() {
         return colType;
     }
+
+        void setParameterTypes(int[] types) {
+            colType = types;
+    }
+
 }
