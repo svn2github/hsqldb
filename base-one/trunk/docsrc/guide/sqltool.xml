@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.36 2004/06/10 16:18:58 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.37 2004/06/11 13:51:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.36 $</edition>
-        <pubdate>$Date: 2004/06/10 16:18:58 $</pubdate>
+        <edition>$Revision: 1.37 $</edition>
+        <pubdate>$Date: 2004/06/11 13:51:23 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -296,14 +296,16 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         <important><simpara>
             Every command (regardless of type) and comment must begin at the
             beginning of a line.
+        </simpara><simpara>
             You can't nest commands or comments.
             You can only start new commands (and comments) after the preceding
             statement has been terminated.
             (Remember that you if you're running SqlTool interactively, you 
             can terminate an SQL statement without executing it by entering a
             blank line).
-            Special Commands, Buffer Commands and PL Commands always consist
-            of just one line.
+        </simpara><simpara>
+            (Special Commands, Buffer Commands and PL Commands always consist
+            of just one line.)
         </simpara></important>
         <variablelist><title>Command types</title>
             <varlistentry><term>SQL Statement</term><listitem><simpara>
