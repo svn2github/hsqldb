@@ -6,7 +6,7 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.07.12 UPDATED RELEASE 1.7.2.3
+2004.08.12 UPDATED RELEASE 1.7.2.3
 
 Fixed bug preventing the use of hsqldb.files_read_only property
 Minor enhancements allowing use of SELECT ALL and COUNT(ALL colname) etc.

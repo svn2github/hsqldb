@@ -725,7 +725,7 @@ public class Database {
             Table toDrop = (Table) tTable.get(i);
 
             if (toDrop.isTemp()
-                    && toDrop.getOwnerSessionId() != ownerSession.getId()) {
+                    && toDrop.getOwnerSessionId() == ownerSession.getId()) {
                 tTable.remove(i);
             }
         }
