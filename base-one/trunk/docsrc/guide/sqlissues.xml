@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: sqlissues.xml,v 1.1 2004/04/15 21:40:36 unsaved Exp $ -->
 
 <chapter>
     <title>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/15 21:40:36 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -223,7 +223,7 @@
             </para>
         </section>
         <section>
-            <title>Where Considtin or Join</title>
+            <title>Where Condition or Join</title>
             <para>
                 Using <literal>WHERE</literal> conditions to join tables is 
                 likely to reduce execution speed.
