@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.14 2002/12/06 18:24:37 unsaved Exp $
+# $Id: buildjar.sh,v 1.15 2002/12/06 19:42:24 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -33,6 +33,7 @@ while [ $# -gt 0 ]; do
     	    case "$1" in *v*) VERBOSE=1;; esac
 	    shift
 	;;
+	*) break;;  // First non-switch arg encountered
     esac
 done
 
