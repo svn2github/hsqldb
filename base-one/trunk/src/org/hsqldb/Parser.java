@@ -748,7 +748,9 @@ class Parser {
 // i.e. "?" is a valid alias, but ? is, in essence, a reserved word
         token = tokenizer.getString();
 
-        if (token.equals(Token.T_AS)) {
+        if (token.equals(Token.T_LEFT)) {
+            tokenizer.back();
+        } else if (token.equals(Token.T_AS)) {
             sAlias = tokenizer.getName();
         } else if (tokenizer.wasName()) {
             sAlias = token;
