@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.1 2004/04/21 22:32:30 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.2 2004/04/22 03:06:27 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/21 22:32:30 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -63,16 +63,16 @@
         </para> <note><para>
             It could very well happen that some of the file formats which I
             discuss here are not in fact offered.
-            If so, then we have not gotten around to 
+            If so, then we have not gotten around to building them.
         </para></note> <para>
             Binary installation depends on the package format that you 
             downloaded.
-        </para><variablelist><
+        </para><variablelist>
         <varlistentry><term>Installing from a .pkg.Z file</term><listitem><para>
             This package is only for use by a Solaris super-user.
             It's a System V package.
             Download then uncompress the package with uncompress or gunzip
-            <para><screen>
+            </para><screen>
     uncompress filename.pkg.Z</screen>
             <para>
                 You can read about the package by running
@@ -97,48 +97,204 @@
             </para>
         </listitem></varlistentry>
         <varlistentry><term>Installing from a .zip file</term><listitem><para>
-            Extract the zip file to wherever you want the hsqldb system to
-            reside (the $HSQLDB_HOME).
+            Extract the zip file to the parent directory of the new HSQLDB
+            home.
+            You don't need to create the
+            <emphasis role='bold'>HSQLDB_HOME</emphasis> directory because
+            the extraction will create it for you with the right name)
             </para><screen>
     cd parent/of/new/hsqldb/home
-    unzip /path/to/file.zip<screen>
+    unzip /path/to/file.zip</screen>
             <para>
-            This will make a subdirectory <filename>hsqldb</filename> and 
-            everything else will be extracted within it.
-        </para>
-The most important file of the hsqldb system is hsqldb.jar, which
-resides at $HSQLDB_HOME/lib/hsqldb.jar.
-Your index.html or readme.txt file should say what version of Java
-your hsqldb.jar was built with/for (Rpm users should be able to run
-<I>rpm -qi hsqldb</I>, though I can't test that now because the rpm
-isn't built yet).
-If they don't say, or it is not your JRE version, then I suggest that
-you rebuild hsqldb.jar to avoid problems due to JRE version conflicts.
-The rest of the section is only for those people who want to rebuild hsqldb.
-<P>
-First set the environmental
-variable JAVA_HOME to the base directory of your Java JRE or SDK.
-(like &quot;<CODE>export JAVA_HOME; JAVA_HOME=/usr/java/j2sdk1.4.0</CODE>&quot; in UNIX,
-or &quot;<CODE>set JAVA_HOME=C:\Program Files\Java\J2re1.4.0</CODE>&quot; in Windows).
-(For Solaris, you would normally set JAVA_HOME to /usr/java, which is a sym-link
-to the default java home).
-<P>
+            All the files in the zip archive will be extracted to underneath
+            the new <filename>hsqldb</filename> directory.
+            </para>
+        </listitem></varlistentry>
+        </variablelist>
+        <para>
+            Take a look at the files you installed.
+            (Under <filename>hsqldb</filename> for zip file installations.
+            Otherwise, use the utilities for your packaging system).
+            The most important file of the hsqldb system is
+            <filename>hsqldb.jar</filename>, which resides in the directory
+            <filename>lib</filename>.
+        </para> <important><para>
+            For the purposes of this chapter, I define
+            <emphasis role='bold'>HSQLDB_HOME</emphasis> to be the parent
+            directory of the lib directory that contains
+            <filename>hsqldb.jar</filename>.
+            E.g., if your path to <filename>hsqldb.jar</filename> is
+            <filename>/a/b/c/lib/jar</filename>, then your
+            <emphasis role='bold'>HSQLDB_HOME</emphasis> is
+            <filename>/a/b/c</filename>.
+        </para></important> <para>
+            If the description of your distribution says that the hsqldb.jar
+            file will work for your Java version, then you are finished with
+            installation.
+            Otherwise you need to build a new hsqldb.jar file.
+        </para> <para>
+            If you followed the instructions above and you still don't know
+            what Java version your <filename>hsqldb.jar</filename> supports,
+            then read
+            <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/readme.txt</filename>
+            and <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/index.html</filename>.
+            If that still doesn't help, then you can just try your hsqldb.jar
+            and see if it works, or build your own.
+        </para> <para>
+            To use the supplied <filename>hsqldb.jar</filename>, just skip to
+            the next section of this document.
+            Otherwise build a new <filename>hsqldb.jar</filename>.
+        </para><procedure>
+            <title>Building hsqldb.jar</title>
+            <step><para>
+                If you don't already have Ant, download the latest stable 
+                binary version from <ulink url='http://ant.apache.org'/>.
+                cd to where you want Ant to live, and extract from the archive 
+                with
+                </para><screen>
+    unzip /path/to/file.zip</screen>
+                <para>or</para><screen>
+    tar -xzf /path/to/file.tar.gz</screen>
+                <para>or</para><screen>
+    gunzip2 -c /path/to/file.tar.bz2 | tar -xzf -</screen>
+                <para>
+                Everything will be installed into a new subdirectory named
+                <filename>apache-ant- + version</filename>.
+                You can rename the directory after the extraction if you wish.
+            </para></step> <step><para>
+                Set the environmental variable <literal>JAVA_HOME</literal> to 
+                the base directory of your Java JRE or SDK, like
+                </para><informalexample><screen>
+    export JAVA_HOME; JAVA_HOME=/usr/java/j2sdk1.4.0</screen>
+                </informalexample><para>
+                The location is entirely dependent upon your variety of UNIX.
+                Sun's rpm distributions of Java normally install to
+                <filename>/usr/java/something</filename>.
+                Sun's package distributions of Java (including those that come 
+                with Solaris) normally install to
+                <filename>/usr/something</filename>, with a sym-link from 
+                <filename>/usr/java</filename> to the default version (so for 
+                Solaris you will usually set JAVA_HOME to 
+                <filename>/usr/java</filename>).
+            </para></step> <step><para>
+                Remove the existing file
+<emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
+            </para></step> <step><para>
+                cd to $HSQLDB_HOME/build.
+                Make sure that the bin directory under your Ant home is in your 
+                search path.
+                Run the following command.
+                </para><programlisting>
+    ant jar</programlisting>
+                <para>
+                This will build a new
+<emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
+                </para>
+            </step>
+        </procedure>
+    </section>
 
-You can run run the scripts $HSQLDB/build/switchToJDK*.bat and $HSQLDB/build/buildJDK*.bat (Windows users, where the * is your Java version number).
-or the script $HSQLDB/build/buildjar.sh (no need to specify Java version).
-If that works, you're finished with the installation.
-If you have any problems with that, then use the following instructions to 
-perform the build yourself using Ant.
-<P>
-If you don't already have Ant, download any recent production version
-from <A href="http://jakarta.apache.org/ant/">Apache's Jakarta site</A>,
-cd to where you want Ant to live, and extract from the archive with
-<I>unzip</I> or <I>tar -xzf</I>.
-<P>
-cd to $HSQLDB_HOME/build.  Make sure that the bin directory under your Ant
-home is in your search path.
-Run the following command.
-<BLOCKQUOTE><CODE>ant jar</CODE></BLOCKQUOTE>
-This builds $HSQLDB_HOME/lib/hsqldb.jar.
+    <section>
+        <title>
+            Setting up a Hsqldb Persistent Database Instance and a Hsqldb
+            Server
+        </title>
+        <titleabbrev>Setting up Database Instance and Server</titleabbrev>
+        <para>
+            If you installed from an OS-specific package, you may already
+            have a database instance and server pre-configured.
+            See if your package includes a file named 
+            <filename>server.properties</filename>
+            (make use of your packaging utilities).
+            If you do, then I suggest that you still read this section while
+            you poke around, in order to understand your setup.
+        </para> <para>
+            Create user hsqldb...
+            In this chapter, I refer to this user as the 
+            <emphasis role='bold'>HSQLDB_OWNER</emphasis>, since that user will
+            own the database instance files and processes.
+        </para>
+    </section>
+
+    <section>
+        <title>Accessing your Database</title>
+        <para>
+            Download this sample <ulink url='sqltool.rc'/> file to the
+            <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
+        </para> <para>
+            Run Sql Tool...
+            If security is of any concern to you at all, then immediately after
+            starting your database for the first time, you should change the
+            privileged password in the database.
+            Connect up as user "sa" with no password, perhaps using one of the
+            utilities described above.
+            Execute the command <literal>set password "newpassword"</literal>.
+            Fix the password in the <filename>sqltool.rc</filename> file
+            accordingly.
+        </para> <para>
+            You can, of course, also access the database with any JDBC client
+            program.
+            See the
+            <link linkend='firstclient-appendix' endterm='firstclient-title'/>
+            appendix.
+        </para>
+    </section>
+
+    <section>
+        <title>Setting up for Multiple Users</title>
+        <para>
+            If you will ever make use of non-Admin user account(s), then you should
+            grant SELECT privilege on the following objects to PUBLIC
+        </para>
+        <para>
+            TODO:  Make an sql script file.  Show it and offer it for download:
+            </para><screen>
+    system_tables
+    system_columns
+    system_indexinfo
+    system_connectioninfo</screen>
+        <para>
+            If you don't, then you will have to grant these permissions to every new
+            user every time you add a new user.
+            (New users will still be unable to even read data in tables that you
+            have created, unless you also grant privileges on those objects).
+            There are two classes of database accounts, Admin accounts and non-Admin
+            accounts.
+            Admins have privileges to do anything, non-Admins may be granted some
+            privileges, but may never create or own database objects.
+            When you first create a hsqldb database, it has only one database user-- SA,
+            an Admin account, with no password set.
+            You should set a password (as described above).
+            You can create as many additional Admin users as you wish.
+            Each Admin user has a unique user name (and optional password), but 
+            these accounts are otherwise indistinguishable.
+            These accounts are created by appending the keyword "ADMIN" to the 
+            <literal>CREATE USER</literal> command (see the
+            <link linkend='stored-section' endterm='stored-title'/> chapter).
+        </para> <para>
+            If you create a user without the ADMIN tag, it will be a Non-Admin account.
+            These users can not create or own objects, and, by default, they can't use
+            any database objects.
+            The user will then be able to perform operations which have been granted to
+            the pseudo-user PUBLIC.
+            To give the user additional privileges (even the privilege to read data),
+            an Admin user must grant those rights to the user (or to PUBLIC).
+        </para> <para>
+            Since only people with a database account may do anything at all with the 
+            database, it is often useful to permit other database users to view the 
+            data in your tables.
+            To optimize performance, reduce contention, and minimize administration, it
+            is usually best to grant SELECT to PUBLIC on any object that needs to be
+            accessed by multiple database users (with the significant exception of any
+            data which you want to keep secret).
+        </para>
+    </section>
+
+    <section>
+        <title>Running Hsqldb as a System Daemon</title>
+        <para>
+            Put simplified version of instructions in the init script here,
+            or just refer to those instructions.
+        </para>
     </section>
 </chapter>
