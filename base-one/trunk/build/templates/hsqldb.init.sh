@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id$
+# $Id: hsqldb.init.sh,v 1.1 2002/10/12 01:15:46 unsaved Exp $
 
 # Since this script handles multiple databases, the return value indicates
 # a negative with any of the database.  I.e., if you have five databases
@@ -179,6 +179,13 @@ IsInteger "$MAXSTOPTIME" ||
 JVER=`java -version 2>&1 |
  grep -i '\<java version\>' | sed -e 's:[^"]*"::; s:\".*::;'`
 [ -n "$JVER" ] || Failout '' "Failed to obtain version from 'java'"
+CPADDN=   # Classpath addition
+case "$JVER" in 1.1.*)
+    [ -n "$JAVA_HOME" ] ||
+     Failout '' 'Due to Java version 1 Classpath requirements, you must set
+$JAVA_HOME'" in '$CFGFILE'"
+    CPADDN=":$JAVA_HOME/lib/classes.zip"
+;; esac
 
 # Construct list of DB names
 # AND...
@@ -313,10 +320,12 @@ start)
     [ -n "$RUNNINGS" ] && Bitch '' \
      "Start command given but daemon already running for this database(s):
     $RUNNINGS"
+    JSYSLIB=
     case "$JVER" in
 	# TODO:  Build a jar for Java 1.1.8, per Fred T.
-    	1.4.*) HSQLDBLIB=$HSQLDB_HOME/lib/hsqldb_j1.4.0.jar;;
-    	1.2.*|*JDK_1.2.*|1.3.*) HSQLDBLIB=$HSQLDB_HOME/lib/hsqldb_j1.3.1.jar;;
+    	1.4.*) HSQLDBLIB=$HSQLDB_HOME/lib/hsqldb_jre1_4_0.jar;;
+    	1.2.*|*JDK_1.2.*|1.3.*) HSQLDBLIB=$HSQLDB_HOME/lib/hsqldb_jre1_3_1.jar;;
+    	1.1.*) HSQLDBLIB=$HSQLDB_HOME/lib/hsqldb_jre1_1_8.jar;;
 	*)
 	    Failout ''  \
 	    "Sorry, but Java version $JVER is not supported at this time.
@@ -345,10 +354,10 @@ If you seriously want support for it, email ${AUTHOR_EMAILADDR}."
 	}
 	if [ "$OWNER" = 'root' ]; then
 	    [ -n "$VERBOSE" ] && echo \
-    	'exec java -cp $HSQLDBLIB org.hsqldb.${WEB}Server -database $dbname  \
+'exec java -classpath $HSQLDBLIB$CPADDN org.hsqldb.${WEB}Server -database $dbname  \
     	     >> $REDIRFILE 2>&1" > /dev/null 2>&1 &'
     	    nohup sh -c 'echo $$'" > $PIDFILE;
-    	exec java -cp $HSQLDBLIB org.hsqldb.${WEB}Server -database $dbname  \
+exec java -classpath $HSQLDBLIB$CPADDN org.hsqldb.${WEB}Server -database $dbname  \
     	     >> $REDIRFILE 2>&1" > /dev/null 2>&1 &
 	    [ $? = 0 ] || Failout $dbname "Failed to execute 'java'"
 	else

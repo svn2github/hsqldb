@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Captive shell for running hsqldb daemons
-# $Id$
+# $Id: hsqldb.shell.sh,v 1.1 2002/10/12 01:15:46 unsaved Exp $
 
 # Cannot use a "restricted" shell because we need to "cd"
 # This is not intended to be user-friendly or safe.
@@ -13,7 +13,7 @@
 
 # SYTAX:  su - thisuser dbname /path/to/hsqldb.jar Web|''
 # Examples:  "su - hsqldb db1 /usr/hsqldb/lib/hsqldb.jar Web"
-#            "su - tom test /usr/hsqldb1.7.1/lib/hsqldb_j1.4.1.jar ''"
+#            "su - tom test /usr/hsqldb1.7.1/lib/hsqldb_jre1_4_1.jar ''"
 
 #set -x
 set +u
@@ -69,6 +69,11 @@ echo $$ >> "$PIDDIR/hsqldb_${1}.pid" ||
 cd "$HSQLDB_HOME/data/$1" 2> /dev/null ||
  Failout 6 "Failed to cd to '$HSQLDB_HOME/data/$1'"
 
-exec java -cp "$2" org.hsqldb.${3}Server -database "$1" >> "$LOGDIR/hsqldb_${1}.log" 2>&1
+# We depend on the caller of this script setting up $JAVA_HOME if we
+# are using Java v. 1.x.  (hsqldb.init does this)
+CPADDN=   # Classpath addition
+[ -n "$JAVA_HOME" ] && [ -r "$JAVA_HOME/lib/classes.zip" ] &&
+ CPADDN=":$JAVA_HOME/lib/classes.zip"
+exec java -classpath "$2$CPADDN" org.hsqldb.${3}Server -database "$1" >> "$LOGDIR/hsqldb_${1}.log" 2>&1
 
 Failout 8 "Failed to exec '$4'"
