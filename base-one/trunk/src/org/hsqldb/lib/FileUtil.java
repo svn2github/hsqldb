@@ -33,6 +33,8 @@ package org.hsqldb.lib;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Random;
 
 /**
  * A collection of static file management methods.
@@ -45,7 +47,7 @@ public class FileUtil {
     // a new File("...")'s path is not canonicalized, only resolved
     // and normalized (e.g. redundant separator chars removed),
     // so as of JDK 1.4.2, this is a valid test for case insensitivity,
-    // at least when it is assumed that we are dealing in a configuration
+    // at least when it is assumed that we are dealing with a configuration
     // that only needs to consider the host platform's native file system,
     // even if, unlike for File.getCanonicalPath(), (new File("a")).exists() or
     // (new File("A")).exits(), regardless of the hosting system's
@@ -54,19 +56,62 @@ public class FileUtil {
         (new File("A")).equals(new File("a"));
 
     // posix separator normalized to File.separator?
-    // CHECKME is this true for every file system under Java?
+    // CHECKME: is this true for every file system under Java?
     public static final boolean fsNormalizesPosixSeparator =
         (new File("/")).getPath().endsWith(File.separator);
+
+    // only available in JDK 1.2 or better
+    static final Method deleteOnExitMethod = getDeleteOnExitMethod();
+
+    // for JDK 1.1 createTempFile
+    static final Random random = new Random(System.currentTimeMillis());
+
+    // retrieve the method, or null of not available
+    private static Method getDeleteOnExitMethod() {
+
+        try {
+            return File.class.getMethod("deleteOnExit", new Class[0]);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * Delete the named file
      */
-    static public void delete(String filename) throws IOException {
+    public static void delete(String filename) throws IOException {
 
         try {
             (new File(filename)).delete();
         } catch (Throwable e) {
             throw toIOException(e);
+        }
+    }
+
+    /**
+     * Requests, in a JDK 1.1 compliant way, that the file or directory denoted
+     * by the given abstract pathname be deleted when the virtual machine
+     * terminates. <p>
+     *
+     * Deletion will be attempted only for JDK 1.2 and greater runtime
+     * environments and only upon normal termination of the virtual
+     * machine, as defined by the Java Language Specification. <p>
+     *
+     * Once deletion has been sucessfully requested, it is not possible to
+     * cancel the request. This method should therefore be used with care. <p>
+     *
+     * @param f the abstract pathname of the file be deleted when the virtual
+     *       machine terminates
+     */
+    public static void deleteOnExit(File f) {
+
+        if (deleteOnExitMethod == null) {
+
+            // do nothing
+        } else {
+            try {
+                deleteOnExitMethod.invoke(f, new Object[0]);
+            } catch (Exception e) {}
         }
     }
 
@@ -83,9 +128,9 @@ public class FileUtil {
     }
 
     /**
-     * Rename the file with oldname to newname. Do nothing if the oldname
-     * file does not exist. If a file named newname already exists, delete
-     * it before ranaming.
+     * Rename the file with oldname to newname. If a file with oldname does not
+     * exist, nothing occurs. If a file with newname already exists, it is
+     * deleted it before the renaming operation proceeds.
      */
     static public void renameOverwrite(String oldname,
                                        String newname) throws IOException {
@@ -145,7 +190,7 @@ public class FileUtil {
     }
 
     /**
-     * Retrieves the canonical path for the given File in a
+     * Retrieves the canonical path for the given File, in a
      * JDK 1.1 complaint way.
      *
      * @param f the File for which to retrieve the canonical path
@@ -156,7 +201,7 @@ public class FileUtil {
     }
 
     /**
-     * Retrieves the canonical path for the given path in a
+     * Retrieves the canonical path for the given path, in a
      * JDK 1.1 complaint way.
      *
      * @param path the path for which to retrieve the canonical path

@@ -32,7 +32,9 @@
 package org.hsqldb.util;
 
 /**
- * Contains just the static main(String[]) method
+ * Provides console output of the System property value corresponding to the
+ * property name provided on the command line. <p>
+ *
  * <pre>
  * Usage: java org.hsqldb.util.EchoProperty propname
  * </pre>

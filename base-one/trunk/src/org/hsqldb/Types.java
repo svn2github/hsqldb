@@ -77,11 +77,11 @@ import org.hsqldb.lib.IntValueHashMap;
  * or those defined by ansi/iso SQL 200n otherwise. A type sub-identifer
  * has been added to differentiate HSQLDB-specific type specializations.
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public class Types {
+public final class Types {
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -107,6 +107,199 @@ public class Types {
     public static final int BINARY = -2;
 
     /**
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
      * The constant in the Java programming language, sometimes referred to
      * as a type code, that identifies the generic SQL type
      * <code>BLOB</code>.
@@ -122,6 +315,9 @@ public class Types {
      *
      * @since JDK 1.4
      */
+
+    // boucherb@users
+    // NOTE:  See discussion at BIT
     public static final int BOOLEAN = 16;
 
     /**
@@ -457,7 +653,7 @@ public class Types {
     // such as:
     // SQL 200n Part 9: Management of External Data (SQL/MED) : DATALINK
     // SQL 200n Part 14: XML-Related Specifications (SQL/XML) : XML
-    static final int SQL_BIT_VARYING      = 15;              // is in SQL99 but removed from 2002
+    static final int SQL_BIT_VARYING      = 15;              // is in SQL99 but removed from 200n
     static final int SQL_DATALINK         = 70;
     static final int SQL_UDT              = 17;
     static final int SQL_UDT_LOCATOR      = 18;
@@ -639,13 +835,12 @@ public class Types {
             return Types.NULL;
         }
 
-        name = c.getName();
-
         if (illegalParameterClasses.contains(c)) {
             throw Trace.error(Trace.WRONG_DATA_TYPE,
-                              Trace.UNSUPPORTED_PARAM_CLASS, name);
+                              Trace.UNSUPPORTED_PARAM_CLASS, c.getName());
         }
 
+        name = c.getName();
         type = typeAliases.get(name, Integer.MIN_VALUE);
 
         if (type == Integer.MIN_VALUE) {
@@ -803,7 +998,7 @@ public class Types {
         }
     }
 
-    static boolean isBinaryType(int type) {
+    public static boolean isBinaryType(int type) {
 
         switch (type) {
 
@@ -818,7 +1013,6 @@ public class Types {
                 return false;
         }
     }
-
 
     static boolean isDatetimeType(int type) {
 
@@ -842,7 +1036,7 @@ public class Types {
      * are used when the sql.enforce_strict_types is true.
      *
      */
-    static boolean acceptsPrecisionCreateParam(int type) {
+    public static boolean acceptsPrecisionCreateParam(int type) {
 
         switch (type) {
 
@@ -866,7 +1060,7 @@ public class Types {
         }
     }
 
-    static int numericPrecisionCreateParamRadix(int type) {
+    public static int numericPrecisionCreateParamRadix(int type) {
 
         switch (type) {
 
@@ -884,7 +1078,7 @@ public class Types {
         }
     }
 
-    static boolean acceptsScaleCreateParam(int type) {
+    public static boolean acceptsScaleCreateParam(int type) {
 
         switch (type) {
 
@@ -897,7 +1091,7 @@ public class Types {
         }
     }
 
-    static boolean isNumberType(int type) {
+    public static boolean isNumberType(int type) {
 
         switch (type) {
 
@@ -917,7 +1111,7 @@ public class Types {
         }
     }
 
-    static boolean isCharacterType(int type) {
+    public static boolean isCharacterType(int type) {
 
         switch (type) {
 
@@ -1035,21 +1229,73 @@ public class Types {
         }
     }
 
+    /**
+     * A reasonable/customizable number to avoid the shortcomings/defects
+     * associated with doing a dynamic scan of results to determine
+     * the value.  In practice, it turns out that single query yielding
+     * widely varying values for display size of CHAR and VARCHAR columns
+     * on repeated execution results in patently poor usability, as some fairly
+     * high-profile, otherwise "enterprise-quality" RAD tools depend on
+     * on the first value returned to lay out forms and limit the size of
+     * single line edit controls, set corresponding local datastore storage
+     * sizes, etc. In practice, It also turns out that many tools (due to
+     * the original lack of PreparedStatement.getMetaData() in JDK 1.1) emulate
+     * a SQL_DESCRIBE by executing a query hopefully guaranteed to return no
+     * or very few rows for example: select ... from ... where 1=0.
+     * Using the dynamic scan of 1.7.2 RC5 and previous, therefore, the
+     * minimum display size value (1) was often being generated during
+     * a tool's describe phase.  Upon subsequent "real" retrievals, some
+     * tools complain that CHAR and VARCHAR result values exceeded the
+     * originally reported display size and refused to fetch further values.
+     */
+    public static final int MAX_CHAR_OR_VARCHAR_DISPLAY_SIZE =
+        MAX_CHAR_OR_VARCHAR_DISPLAY_SIZE();
+
+    // So that the variable can be both public static final and
+    // customizable through system properties if required.
+    //
+    // 32766 (0x7ffe) seems to be a magic number over which several
+    // rather high-profile RAD tools start to have problems
+    // regarding layout and allocation stress.  It is gently
+    // recommended that LONGVARCHAR be used for larger values in RAD
+    // tool layout & presentation use cases until such time as we provide
+    // true BLOB support (at which point, LONGVARCHAR will most likely become
+    // an alias for CLOB).  
+    //
+    // Most GUI tools seem to handle LONGVARCHAR gracefully by:
+    //
+    // 1.) refusing to directly display such columns in graphical query results
+    // 2.) providing other means to retrieve and display such values
+    private static int MAX_CHAR_OR_VARCHAR_DISPLAY_SIZE() {
+
+        try {
+            return Integer.getInteger(
+                "hsqldb.max_char_or_varchar_display_size", 32766).intValue();
+        } catch (SecurityException e) {
+            return 32766;
+        }
+    }
+
     public static int getMaxDisplaySize(int type) {
 
         switch (type) {
 
             case Types.BINARY :
-            case Types.CHAR :
             case Types.LONGVARBINARY :
             case Types.LONGVARCHAR :
             case Types.OTHER :
             case Types.VARBINARY :
-            case Types.VARCHAR :
             case Types.XML :
-                return Integer.MAX_VALUE;    // same as precision
+                return Integer.MAX_VALUE;    // max string length
 
-            case Types.BIGINT :
+            case Types.CHAR :
+            case Types.VARCHAR :
+                return MAX_CHAR_OR_VARCHAR_DISPLAY_SIZE;
+
+            case Types.BIGINT :              // PowerBuilder barfs, wants 19
+
+                // ...not our problem, tho,
+                // according to JDBC
                 return 20;                   // precision + "-".length();
 
             case Types.BOOLEAN :

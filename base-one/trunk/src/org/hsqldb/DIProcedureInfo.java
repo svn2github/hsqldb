@@ -33,34 +33,55 @@ package org.hsqldb;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.sql.DatabaseMetaData;
-import java.sql.Connection;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
+/**@todo fredt - move Trace.doAssert() literals to Trace*/
+
 /**
- * Provides information about Java Methods in context of
- * their being used as callable HSQLDB SQL routines and SQL functions. <p>
+ * Provides information about HSQLDB SQL-invoked routines and SQL functions. <p>
  *
- * @author  boucherb@users.sourceforge.net
+ * In particular, this class provides information about Java Methods in a form
+ * compatible with presentation via the related HSQLDB system tables,
+ * SYSTEM_PROCEDURES and SYSTEM_PROCEDURECOLUMNS, involved in the production of
+ * the DatabaseMetaData getProcedures and getProcedureColumns result sets.
+ *
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-
-/** @todo fredt - move Trace.doAssert() literals to Trace */
 final class DIProcedureInfo {
 
+    // make temporary ad-hoc spec a little more "official"
+    // until better system in place
+    static final String PCOL_PREFIX        = "@p";
+    static final String RETURN_COLUMN_NAME = "@p0";
+
+    // java.sql dependencies mostly removed
+    static final String   conClsName               = "java.sql.Connection";
+    static final int      procedureResultUnknown   = 0;
+    static final int      procedureNoResult        = 1;
+    static final int      procedureReturnsResult   = 2;
+    static final int      procedureColumnUnknown   = 0;
+    static final int      procedureColumnIn        = 1;
+    static final int      procedureColumnInOut     = 2;
+    static final int      procedureColumnResult    = 3;
+    static final int      procedureColumnOut       = 4;
+    static final int      procedureColumnReturn    = 5;
+    static final int      procedureNoNulls         = 0;
+    static final int      procedureNullable        = 1;
+    static final int      procedureNullableUnknown = 2;
     private Class         clazz;
     private Class[]       colClasses;
     private int[]         colTypes;
     private int           colOffset;
     private int           colCount;
     private boolean       colsResolved;
-    private String        methodDescr;
     private String        fqn;
+    private String        specificName;
     private int           hnd_remarks;
     private Method        method;
     private String        sig;
@@ -84,21 +105,7 @@ final class DIProcedureInfo {
         return (HsqlArrayList) nameSpace.getInverseAliasMap().get(getFQN());
     }
 
-    String getMethodDescriptor() {
-
-        if (methodDescr == null) {
-            methodDescr = method.toString();
-        }
-
-        return methodDescr;
-    }
-
     Class getColClass(int i) {
-
-        if (!colsResolved) {
-            resolveCols();
-        }
-
         return colClasses[i + colOffset()];
     }
 
@@ -171,16 +178,15 @@ final class DIProcedureInfo {
     }
 
     String getColName(int i) {
-        return "@" + (i + colOffset());
+        return PCOL_PREFIX + (i + colOffset());
     }
 
     Integer getColNullability(int i) {
 
         int cn;
 
-        cn = getColClass(i).isPrimitive() ? DatabaseMetaData.procedureNoNulls
-                                          : DatabaseMetaData
-                                              .procedureNullable;
+        cn = getColClass(i).isPrimitive() ? procedureNoNulls
+                                          : procedureNullable;
 
         return ValuePool.getInt(cn);
     }
@@ -190,10 +196,25 @@ final class DIProcedureInfo {
         String       key;
         StringBuffer sb;
 
-        sb  = new StringBuffer();
-        key = sb.append(getSignature()).append(getColName(i)).toString();
+        sb  = new StringBuffer(getSignature());
+        key = sb.append('@').append(i + colOffset()).toString();
 
         return BundleHandler.getString(hnd_remarks, key);
+    }
+
+    // JDBC sort-contract: 
+    // out return value column, then in/in out/out parameter columns
+    // in formal order, then result columns in column order
+    //
+    // Currently, we materialize the java method return value, if
+    // any, as a result column, not as an OUT return value column, so
+    // it should actually appear _after_ the other procedure columns
+    // in the row order returned by the JDBC getProcedureColumns() method
+    int getColSequence(int i) {
+
+        // colOffset has the side-effect of setting colCount properly
+        return (i + colOffset() == 0) ? colCount
+                                      : i;
     }
 
     int getColTypeCode(int i) {
@@ -205,26 +226,24 @@ final class DIProcedureInfo {
 
     Integer getColUsage(int i) {
 
-// boucherb@users 2003-09-22 - patch 1.7.2 Alpha P - external tools cannot
-//                             pass Connection in arg position 1 and should
-//                             use setXXX(String paramName, ValueClass x)
-//                             instead, or we must stop reporting this
-//                             column (at least in this position)
-        int idx = i + colOffset();
+        switch (i + colOffset()) {
 
-        switch (i) {
+            case 0 : {
 
-            case 0 :
-                return ValuePool.getInt(
-                    DatabaseMetaData.procedureColumnReturn);
+                // Currently, we materialize the java method return value, if
+                // any, as a result column, not as an OUT return column
+                return ValuePool.getInt(procedureColumnResult);
+            }
 
-            case 1 :
-                return java.sql.Connection.class.isAssignableFrom(getColClass(i))
-                       ? ValuePool.getInt(DatabaseMetaData.procedureColumnUnknown)
-                       : ValuePool.getInt(DatabaseMetaData.procedureColumnIn);
+            // todo: registration and reporting on result columns for routines
+            //       that generate real" result sets
+            default : {
 
-            default :
-                return ValuePool.getInt(DatabaseMetaData.procedureColumnIn);
+                // We could get religious here and maybe report IN OUT
+                // for newRow of before update for each row trigger methods,
+                // but there's not really any added value
+                return ValuePool.getInt(procedureColumnIn);
+            }
         }
     }
 
@@ -243,6 +262,15 @@ final class DIProcedureInfo {
         }
 
         return fqn;
+    }
+
+    String getSpecificName() {
+
+        if (specificName == null) {
+            specificName = clazz.getName() + "." + getSignature();
+        }
+
+        return specificName;
     }
 
     Integer getInputParmCount() {
@@ -277,46 +305,51 @@ final class DIProcedureInfo {
 
         int type;
 
-        type = !"ROUTINE".equals(origin)
-               ? DatabaseMetaData.procedureResultUnknown
-               : method.getReturnType() == Void.TYPE
-                 ? DatabaseMetaData.procedureNoResult
-                 : DatabaseMetaData.procedureReturnsResult;
+        type = !"ROUTINE".equals(origin) ? procedureResultUnknown
+                                         : method.getReturnType()
+                                           == Void.TYPE ? procedureNoResult
+                                                        : procedureReturnsResult;
 
         return ValuePool.getInt(type);
     }
 
     String getSignature() {
 
-        StringBuffer sb;
-        Class[]      parmTypes;
-        int          len;
-
         if (sig == null) {
-            sb        = new StringBuffer();
-            parmTypes = method.getParameterTypes();
-            len       = parmTypes.length;
-
-            try {
-                sb.append(method.getName()).append('(');
-
-                for (int i = 0; i < len; i++) {
-                    sb.append(parmTypes[i].getName());
-
-                    if (i + 1 < len) {
-                        sb.append(',');
-                    }
-                }
-
-                sb.append(')');
-
-                sig = sb.toString();
-            } catch (Exception e) {
-                sig = null;
-            }
+            sig = getSignature(method);
         }
 
         return sig;
+    }
+
+    static String getSignature(Method method) {
+
+        StringBuffer sb;
+        String       signature;
+        Class[]      parmTypes;
+        int          len;
+        int          last;
+
+        sb        = new StringBuffer();
+        parmTypes = method.getParameterTypes();
+        len       = parmTypes.length;
+        last      = len - 1;
+
+        sb.append(method.getName()).append('(');
+
+        for (int i = 0; i < len; i++) {
+            sb.append(parmTypes[i].getName());
+
+            if (i < last) {
+                sb.append(',');
+            }
+        }
+
+        sb.append(')');
+
+        signature = sb.toString();
+
+        return signature;
     }
 
     DINameSpace getNameSpace() {
@@ -325,7 +358,7 @@ final class DIProcedureInfo {
 
     void setNameSpace(DINameSpace ns) throws HsqlException {
 
-        Trace.doAssert(ns != null, "name space is null");
+        Trace.doAssert(ns != null, "null ns");
 
         nameSpace = ns;
 
@@ -338,7 +371,7 @@ final class DIProcedureInfo {
         // hierarchy parent is not final.
         //ARRAY
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcArray");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcArray");
 
             typeMap.put(c, ValuePool.getInt(Types.ARRAY));
         } catch (Exception e) {}
@@ -359,7 +392,7 @@ final class DIProcedureInfo {
         type = ValuePool.getInt(Types.BLOB);
 
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcBlob");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcBlob");
 
             typeMap.put(c, type);
         } catch (Exception e) {}
@@ -376,7 +409,7 @@ final class DIProcedureInfo {
         type = ValuePool.getInt(Types.CLOB);
 
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcClob");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcClob");
 
             typeMap.put(c, type);
         } catch (Exception e) {}
@@ -403,7 +436,7 @@ final class DIProcedureInfo {
 
         // DISTINCT
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcDistinct");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcDistinct");
 
             typeMap.put(c, ValuePool.getInt(Types.DISTINCT));
         } catch (Exception e) {}
@@ -452,7 +485,7 @@ final class DIProcedureInfo {
         type = ValuePool.getInt(Types.REF);
 
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcRef");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcRef");
 
             typeMap.put(c, type);
         } catch (Exception e) {}
@@ -467,7 +500,7 @@ final class DIProcedureInfo {
         type = ValuePool.getInt(Types.STRUCT);
 
         try {
-            c = nameSpace.classForName("org.hsqldb.jdbcStruct");
+            c = nameSpace.classForName("org.hsqldb.jdbc.jdbcStruct");
 
             typeMap.put(c, type);
         } catch (Exception e) {}
@@ -514,7 +547,7 @@ final class DIProcedureInfo {
         rType         = method.getReturnType();
         pTypes        = method.getParameterTypes();
         ptlen         = pTypes.length;
-        isFPCON = ptlen > 0 && java.sql.Connection.class.equals(pTypes[0]);
+        isFPCON       = ptlen > 0 && pTypes[0].getName().equals(conClsName);
         pclen         = 1 + ptlen - (isFPCON ? 1
                                              : 0);
         colClasses    = new Class[pclen];
@@ -547,8 +580,8 @@ final class DIProcedureInfo {
         method       = m;
         clazz        = method.getDeclaringClass();
         fqn          = null;
+        specificName = null;
         sig          = null;
-        methodDescr  = null;
         colsResolved = false;
         remarkKey    = clazz.getName().replace('.', '_');
         hnd_remarks  = BundleHandler.getBundleHandle(remarkKey, null);
@@ -676,9 +709,10 @@ final class DIProcedureInfo {
             return Types.OTHER;
         }
 
-        // No: It is not storable (by HSQLDB)...
-        // but it may be possible to pass to a procedure,
-        // so return the most generic type.
+        // It may (in future, say using bean contract) or may not be storable
+        // (by HSQLDB)...
+        // but then it may be possible to pass to an in-process routine,
+        // so be lenient and just return the most generic type.
         return Types.JAVA_OBJECT;
     }
 }

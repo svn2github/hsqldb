@@ -31,15 +31,14 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.ArrayUtil;
 
 /**
- * Representation of instnace of BINARY field data. An instance always has
- * a not-null byte[] object.
+ * Java representation of a BINARY field value. <p>
  *
+ * A Binary object instance always wraps a non-null byte[] object; all
+ * NULL SQL field values are represented internally by HSQLDB as Java null.
  *
  * @author fredt@users
  * @version 1.7.2
@@ -72,7 +71,7 @@ public class Binary {
     }
 
     public byte[] getClonedBytes() {
-        return (byte[]) ArrayUtil.duplicateArray(data);
+        return (byte[]) data.clone();
     }
 
     public int getBytesLength() {

@@ -41,6 +41,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.scriptio.ScriptWriterBase;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -52,7 +53,7 @@ import org.hsqldb.store.ValuePool;
  * Extends DatabaseInformationMain to provide additional system table
  * support. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -169,7 +170,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
     /**
      * Retrieves a <code>Table</code> object describing the aliases defined
-     * within this database <p>
+     * within this database. <p>
      *
      * Currently two types of alias are reported: DOMAIN alaises (alternate
      * names for column data types when issuing "CREATE TABLE" DDL) and
@@ -178,7 +179,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * Each row is an alias description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * OBJECT_TYPE  VARCHAR   type of the aliased object
      * OBJECT_CAT   VARCHAR   catalog of the aliased object
      * OBJECT_SCHEM VARCHAR   schema of the aliased object
@@ -204,13 +205,13 @@ extends org.hsqldb.DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_ALIASES]);
 
-            addColumn(t, "OBJECT_TYPE", Types.VARCHAR, false);    // not null
+            addColumn(t, "OBJECT_TYPE", Types.VARCHAR, 32, false);    // not null
             addColumn(t, "OBJECT_CAT", Types.VARCHAR);
             addColumn(t, "OBJECT_SCHEM", Types.VARCHAR);
-            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);        // not null
             addColumn(t, "ALIAS_CAT", Types.VARCHAR);
             addColumn(t, "ALIAS_SCHEM", Types.VARCHAR);
-            addColumn(t, "ALIAS", Types.VARCHAR, false);          // not null
+            addColumn(t, "ALIAS", Types.VARCHAR, false);              // not null
 
             // order: OBJECT_TYPE, OBJECT_NAME, ALIAS.
             // true PK.
@@ -229,6 +230,7 @@ extends org.hsqldb.DatabaseInformationMain {
         String objType;
 
         // Intermediate holders
+        String   className;
         HashMap  hAliases;
         Iterator aliases;
         Object[] row;
@@ -257,12 +259,24 @@ extends org.hsqldb.DatabaseInformationMain {
             // must have class grant to see method call aliases
             pos = objName.lastIndexOf('.');
 
-            if (pos <= 0 ||!session.isAccessible(objName.substring(0, pos))) {
+            if (pos <= 0) {
+
+                // should never occur in practice, as this is typically a Java 
+                // method name, but there's nothing preventing a user from
+                // creating an alias entry that is not in method FQN form;
+                // such entries are not illegal, only useless.  Probably,
+                // we should eventually try to disallow them.
+                continue;
+            }
+
+            className = objName.substring(0, pos);
+
+            if (!session.isAccessible(className)) {
                 continue;
             }
 
             cat                      = ns.getCatalogName(objName);
-            schem                    = ns.getSchemaName(objName);
+            schem                    = ns.getSchemaName(className);
             row[ialias_object_type]  = objType;
             row[ialias_object_cat]   = cat;
             row[ialias_object_schem] = schem;
@@ -331,7 +345,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a cache object state description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CACHE_CLASS         VARCHAR   FQN of Cache class
      * CACHE_HASH          INTEGER   in-memory hashCode() value of Cache object
      * CACHE_FILE          VARCHAR   absolute path of cache data file
@@ -501,7 +515,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a Class privilege description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CLASS_CAT    VARCHAR   catalog in which the class is defined
      * CLASS_SCHEM  VARCHAR   schema in which the class is defined
      * CLASS_NAME   VARCHAR   fully qualified name of class
@@ -532,11 +546,11 @@ extends org.hsqldb.DatabaseInformationMain {
 
             addColumn(t, "CLASS_CAT", Types.VARCHAR);
             addColumn(t, "CLASS_SCHEM", Types.VARCHAR);
-            addColumn(t, "CLASS_NAME", Types.VARCHAR, false);      // not null
-            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
+            addColumn(t, "CLASS_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);            // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);            // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, 7, false);       // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, 3, false);    // not null
             t.createPrimaryKey(null, new int[] {
                 2, 4, 5
             }, true);
@@ -556,6 +570,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // intermediate holders
         UserManager   um;
         HsqlArrayList users;
+        HashSet       classNameSet;
         Iterator      classNames;
         User          granteeUser;
         Object[]      row;
@@ -576,11 +591,17 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // Do it.
         for (int i = 0; i < users.size(); i++) {
-            granteeUser = (User) users.get(i);
-            granteeName = granteeUser.getName();
-            isGrantable = granteeUser.isAdmin() ? "YES"
-                                                : "NO";
-            classNames  = granteeUser.getGrantedClassNames(false).iterator();
+            granteeUser  = (User) users.get(i);
+            granteeName  = granteeUser.getName();
+            isGrantable  = granteeUser.isAdmin() ? "YES"
+                                                 : "NO";
+            classNameSet = granteeUser.getGrantedClassNames(false);
+
+            if (granteeUser.isPublic()) {
+                ns.addBuiltinToSet(classNameSet);
+            }
+
+            classNames = classNameSet.iterator();
 
 // boucherb@users 20030305 - TODO completed.
 // "EXECUTE" is closest to correct (from: SQL 200n ROUTINE_PRIVILEGES)
@@ -603,7 +624,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 t.insert(row, session);
             }
 
-            classNames = ns.enumAccessibleTriggerClassNames(granteeUser);
+            classNames = ns.iterateAccessibleTriggerClassNames(granteeUser);
 
 // boucherb@users 20030305 - TODO completed.
 // "TRIGGER" is closest to correct. (from: SQL 200n TABLE_PRIVILEGES)
@@ -638,7 +659,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * The rows report the following {key,value} pairs:<p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * KEY (VARCHAR)       VALUE (VARCHAR)
      * ------------------- ---------------
      * SESSION_ID          the id of the calling session
@@ -721,7 +742,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         row    = t.getNewRow();
         row[0] = "DATABASE";
-        row[1] = String.valueOf(database.getPath());
+        row[1] = database.getURI();
 
         t.insert(row, null);
 
@@ -741,45 +762,51 @@ extends org.hsqldb.DatabaseInformationMain {
      * database, as well as their applicability in terms of scope and
      * name space. <p>
      *
-     * Reported properties include all static JDBC <code>DatabaseMetaData</code>
-     * capabilities values as well as certain <code>Database</code> object
-     * properties and attribute values. <p>
+     * Reported properties include certain predefined <code>Database</code>
+     * properties file values as well as certain database scope
+     * attributes. <p>
      *
      * It is intended that all <code>Database</code> attributes and
      * properties that can be set via the database properties file,
      * JDBC connection properties or SQL SET/ALTER statements will
-     * eventually be reported here. <p>
+     * eventually be reported here or, where more applicable, in an
+     * ANSI/ISO conforming feature info base table in the defintion
+     * schema. <p>
      *
-     * Currently, in addition to the static JDBC <code>DatabaseMetaData</code>
-     * capabilities values, the database properties reported are: <p>
+     * Currently, the database properties reported are: <p>
      *
      * <OL>
-     *     <LI>LOGSIZSE - # bytes to which REDO log grows before auto-checkpoint
-     *     <LI>LOGTYPE - 0 : TEXT, 1 : BINARY, ...
-     *     <LI>WRITEDELAY - does REDO log currently use buffered write strategy?
-     *     <LI>IGNORECASE - currently ignoring case in character comparisons?
-     *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
-     *     <LI>sql.enforce_size - column length specifications enforced?
-     *     <LI>sql.enforce_strict_size - strict column length specifications enforced?
-     *     <LI>sql.compare_in_locale - is JVM Locale used in collations?
-     *     <LI>hsqldb.cache_scale - base-2 exponent of row cache size
+     *     <LI>hsqldb.cache_file_scale - the scaling factor used to translate data and index structure file pointers
+     *     <LI>hsqldb.cache_scale - base-2 exponent scaling allowable cache row count
+     *     <LI>hsqldb.cache_size_scale - base-2 exponent scaling allowable cache byte count
+     *     <LI>hsqldb.cache_version -
+     *     <LI>hsqldb.catalogs - whether to report the database catalog (database uri)
+     *     <LI>hsqldb.compatible_version -
+     *     <LI>hsqldb.files_readonly - whether the database is in files_readonly mode
+     *     <LI>hsqldb.first_identity - the default first identity value
      *     <LI>hsqldb.gc_interval - # new records forcing gc ({0|NULL}=>never)
+     *     <LI>hsqldb.max_nio_scale - scale factor for cache nio mapped buffers
+     *     <LI>hsqldb.nio_data_file - whether cache uses nio mapped buffers
+     *     <LI>hsqldb.original_version -
+     *     <LI>hsqldb.schemas - whether to report synthetic schema values for compatibility
+     *     <LI>sql.compare_in_locale - is JVM Locale used in collations?
+     *     <LI>sql.enforce_size - column length specifications enforced (truncate/pad)?
+     *     <LI>sql.enforce_strict_size - column length specifications enforced strictly (raise exception on overflow)?
+     *     <LI>textdb.all_quoted - default policy regarding whether to quote all character field values
+     *     <LI>textdb.cache_scale - base-2 exponent scaling allowable cache row count
+     *     <LI>textdb.cache_size_scale - base-2 exponent scaling allowable cache byte count
+     *     <LI>textdb.encoding - default TEXT table file encoding
+     *     <LI>textdb.fs - default field separator
+     *     <LI>textdb.vs - default varchar field separator
+     *     <LI>textdb.lvs - default long varchar field separator
+     *     <LI>textdb.ignore_first - default policy regarding whether to ignore the first line
+     *     <LI>textdb.quoted - default policy regarding treatement character field values that _may_ require quoting
+     *     <LI>IGNORECASE - currently ignoring case in character comparisons?
+     *     <LI>LOGSIZSE - # bytes to which REDO log grows before auto-checkpoint
+     *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
+     *     <LI>SCRIPTFORMAT - 0 : TEXT, 1 : BINARY, ...
+     *     <LI>WRITEDELAY - does REDO log currently use buffered write strategy?
      * </OL> <p>
-     *
-     * <b>Notes:</b> <p>
-     *
-     * Since DatabaseMetaData return values are embedded in the
-     * jdbcDatabaseMetaData class (assumption is driver version matches server
-     * version), the possibility exists that a remote server actually has
-     * different DatabaseMetaData values than returned by the local driver
-     * being used. Rather than impose a great deal of overhead on the engine
-     * and jdbcDatabaseMetaData classes by making all metadata calls query
-     * the (possibly remote) engine directly, this table can be used to
-     * resolve such differences.
-     *
-     * Also, as engine capabilities and supported properties/attributes are
-     * added, this list will be expanded, if required, to include all relevant
-     * additions supported at that time. <p>
      *
      * @return table describing database and session operating parameters
      *      and capabilities
@@ -822,6 +849,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Object[]         row;
         Result           r;
         HsqlProperties   props;
+        Log              log;
 
         // column number mappings
         final int iscope = 0;
@@ -832,43 +860,10 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // First, we want the names and values for
         // all JDBC capabilities constants
-        scope = "SESSION";
-
-// fredt - jdbc is not part of the database
-/*
-        nameSpace  = "java.sql.DatabaseMetaData";
-        md         = session.getInternalConnection().getMetaData();
-        methods    = DatabaseMetaData.class.getMethods();
-        emptyParms = new Object[]{};
-
-        for (int i = 0; i < methods.length; i++) {
-            method     = methods[i];
-            returnType = method.getReturnType();
-
-            if (method.getParameterTypes().length > 0
-                    ||!(returnType.isPrimitive() || String.class
-                        .isAssignableFrom(returnType)) ||
-
-            // not really a "property" of the database
-            "getUserName".equals(method.getName())) {}
-            else {
-                try {
-                    name        = method.getName();
-                    value       = method.invoke(md, emptyParms);
-                    row         = t.getNewRow();
-                    row[iscope] = scope;
-                    row[ins]    = nameSpace;
-                    row[iname]  = name;
-                    row[ivalue] = String.valueOf(value);
-                    row[iclass] = returnType.getName();
-
-                    t.insert(row, session);
-                } catch (Exception e) {}
-            }
-        }
-*/
+        scope     = "SESSION";
         props     = database.getProperties();
         nameSpace = "database.properties";
+        log       = database.logger.lLog;
 
         // hsqldb.catalogs
         row         = t.getNewRow();
@@ -940,6 +935,36 @@ extends org.hsqldb.DatabaseInformationMain {
 
         t.insert(row, session);
 
+        // hsqldb.compatible_version
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.compatible_version";
+        row[ivalue] = props.getProperty("hsqldb.compatible_version");
+        row[iclass] = "java.lang.String";
+
+        t.insert(row, session);
+
+        // hsqldb.cache_version
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.cache_version";
+        row[ivalue] = props.getProperty("hsqldb.cache_version");
+        row[iclass] = "java.lang.String";
+
+        t.insert(row, session);
+
+        // hsqldb.original_version
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.original_version";
+        row[ivalue] = props.getProperty("hsqldb.original_version");
+        row[iclass] = "java.lang.String";
+
+        t.insert(row, session);
+
         // hsqldb.cache_scale
         row         = t.getNewRow();
         row[iscope] = scope;
@@ -947,6 +972,134 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iname]  = "hsqldb.cache_scale";
         row[ivalue] = props.getProperty("hsqldb.cache_scale");
         row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.cache_file_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.cache_file_scale";
+        row[ivalue] = props.getProperty("hsqldb.cache_file_scale");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.cache_size_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.cache_size_scale";
+        row[ivalue] = props.getProperty("hsqldb.cache_size_scale");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.max_nio_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.max_nio_scale";
+        row[ivalue] = props.getProperty("hsqldb.max_nio_scale");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // hsqldb.nio_data_file
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "hsqldb.nio_data_file";
+        row[ivalue] = props.getProperty("hsqldb.nio_data_file");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // textdb.all_quoted
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.all_quoted";
+        row[ivalue] = props.getProperty("textdb.all_quoted", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // textdb.cache_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.cache_scale";
+        row[ivalue] = props.getProperty("textdb.cache_scale", "10");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // textdb.cache_size_scale
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.cache_size_scale";
+        row[ivalue] = props.getProperty("textdb.cache_size_scale", "12");
+        row[iclass] = "int";
+
+        t.insert(row, session);
+
+        // textdb.ignore_first
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.ignore_first";
+        row[ivalue] = props.getProperty("textdb.ignore_first", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // textdb.quoted
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.quoted";
+        row[ivalue] = props.getProperty("textdb.quoted", "true");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // textdb.fs
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.fs";
+        row[ivalue] = props.getProperty("textdb.fs", ",");
+        row[iclass] = "java.lang.String";
+
+        // textdb.vs
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.vs";
+        row[ivalue] = props.getProperty("textdb.vs", ",");
+        row[iclass] = "java.lang.String";
+
+        t.insert(row, session);
+
+        // textdb.lvs
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.lvs";
+        row[ivalue] = props.getProperty("textdb.lvs", ",");
+        row[iclass] = "java.lang.String";
+
+        t.insert(row, session);
+
+        // textdb.encoding
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "textdb.encoding";
+        row[ivalue] = props.getProperty("textdb.encoding", "ASCII");
+        row[iclass] = "java.lang.String";
 
         t.insert(row, session);
 
@@ -966,43 +1119,36 @@ extends org.hsqldb.DatabaseInformationMain {
         nameSpace = "org.hsqldb.Database";
 
         // log size
-        Log log     = database.logger.lLog;
-        int logSize = (log == null) ? 0
-                                    : log.maxLogSize * 1 << 20;
-
         row         = t.getNewRow();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "LOGSIZE";
-        row[ivalue] = String.valueOf(logSize);
+        row[ivalue] = props.getProperty("hsqldb.log_size", "200");
         row[iclass] = "int";
 
         t.insert(row, session);
-
-        Integer logType = (log == null) ? null
-                                        : ValuePool.getInt(log.scriptFormat);
 
         row         = t.getNewRow();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "SCRIPTFORMAT";
-        row[ivalue] = logType == null ? null
-                                      : String.valueOf(logType);
-        row[iclass] = "int";
+
+        try {
+            row[ivalue] =
+                ScriptWriterBase.LIST_SCRIPT_FORMATS[log.scriptFormat];
+        } catch (Exception e) {}
+
+        row[iclass] = "java.lang.String";
 
         t.insert(row, session);
 
         // write delay
-        row = t.getNewRow();
-
-        Integer writeDelay = (log == null) ? null
-                                           : ValuePool.getInt(log.writeDelay);
-
+        row         = t.getNewRow();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "WRITE_DELAY";
-        row[ivalue] = (writeDelay == null) ? null
-                                           : String.valueOf(writeDelay);
+        row[ivalue] = (log == null) ? "0"
+                                    : "" + log.writeDelay;
         row[iclass] = "int";
 
         t.insert(row, session);
@@ -1012,7 +1158,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "IGNORECASE";
-        row[ivalue] = String.valueOf(database.isIgnoreCase());
+        row[ivalue] = Boolean.toString(database.isIgnoreCase());
         row[iclass] = "boolean";
 
         t.insert(row, session);
@@ -1022,7 +1168,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "REFERENTIAL_INTEGRITY";
-        row[ivalue] = String.valueOf(database.isReferentialIntegrity());
+        row[ivalue] = Boolean.toString(database.isReferentialIntegrity());
         row[iclass] = "boolean";
 
         t.insert(row, session);
@@ -1038,7 +1184,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * Each row is a session state description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * SESSION_ID         INTEGER   session identifier
      * CONNECTED          TIMESTAMP time at which session was created
      * USER_NAME          VARCHAR   db user name of current session user
@@ -1129,7 +1275,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * Each row is a super table description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT       VARCHAR   the table's catalog
      * TABLE_SCHEM     VARCHAR   table schema
      * TABLE_NAME      VARCHAR   table name
@@ -1168,7 +1314,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * Each row is a super type description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TYPE_CAT        VARCHAR   the UDT's catalog
      * TYPE_SCHEM      VARCHAR   UDT's schema
      * TYPE_NAME       VARCHAR   type name of the UDT
@@ -1212,7 +1358,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a description of the attributes that defines its TEXT TABLE,
      * with the following columns:
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT                 VARCHAR   table's catalog name
      * TABLE_SCHEM               VARCHAR   table's simple schema name
      * TABLE_NAME                VARCHAR   table's simple name
@@ -1323,13 +1469,13 @@ extends org.hsqldb.DatabaseInformationMain {
     }
 
     /**
-     * Retrieves a <code>Table</code> object describing of the usage
+     * Retrieves a <code>Table</code> object describing the usage
      * of accessible columns in accessible triggers defined within
      * the database. <p>
      *
      * Each column usage description has the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TRIGGER_CAT   VARCHAR   Trigger catalog.
      * TRIGGER_SCHEM VARCHAR   Trigger schema.
      * TRIGGER_NAME  VARCHAR   Trigger name.
@@ -1404,7 +1550,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * Each row is a trigger description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TRIGGER_CAT       VARCHAR   Trigger catalog.
      * TRIGGER_SCHEM     VARCHAR   Trigger Schema.
      * TRIGGER_NAME      VARCHAR   Trigger Name.
@@ -1439,16 +1585,16 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "TRIGGER_CAT", Types.VARCHAR);
             addColumn(t, "TRIGGER_SCHEM", Types.VARCHAR);
             addColumn(t, "TRIGGER_NAME", Types.VARCHAR, false);
-            addColumn(t, "TRIGGER_TYPE", Types.VARCHAR, false);
-            addColumn(t, "TRIGGERING_EVENT", Types.VARCHAR, false);
+            addColumn(t, "TRIGGER_TYPE", Types.VARCHAR, 15, false);
+            addColumn(t, "TRIGGERING_EVENT", Types.VARCHAR, 10, false);
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
-            addColumn(t, "BASE_OBJECT_TYPE", Types.VARCHAR, false);
+            addColumn(t, "BASE_OBJECT_TYPE", Types.VARCHAR, 8, false);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);
             addColumn(t, "COLUMN_NAME", Types.VARCHAR);
             addColumn(t, "REFERENCING_NAMES", Types.VARCHAR, false);
             addColumn(t, "WHEN_CLAUSE", Types.VARCHAR);
-            addColumn(t, "STATUS", Types.VARCHAR, false);
+            addColumn(t, "STATUS", Types.VARCHAR, 8, false);
             addColumn(t, "DESCRIPTION", Types.VARCHAR, false);
             addColumn(t, "ACTION_TYPE", Types.VARCHAR, false);
             addColumn(t, "TRIGGER_BODY", Types.VARCHAR, false);
@@ -1601,7 +1747,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a user-defined type attributes description with the
      * following columns:
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TYPE_CAT          VARCHAR   type catalog
      * TYPE_SCHEM        VARCHAR   type schema
      * TYPE_NAME         VARCHAR   type name
@@ -1818,7 +1964,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a description of the query expression that defines its view,
      * with the following columns:
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CATALOG    VARCHAR     name of view's defining catalog.
      * TABLE_SCHEMA     VARCHAR     unqualified name of view's defining schema.
      * TABLE_NAME       VARCHAR     the simple name of the view.
@@ -1855,8 +2001,8 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "TABLE_SCHEMA", Types.VARCHAR);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, true);         // not null
             addColumn(t, "VIEW_DEFINITION", Types.VARCHAR, true);    // not null
-            addColumn(t, "CHECK_OPTION", Types.VARCHAR, true);       // not null
-            addColumn(t, "IS_UPDATABLE", Types.VARCHAR, true);       // not null
+            addColumn(t, "CHECK_OPTION", Types.VARCHAR, 8, true);    // not null
+            addColumn(t, "IS_UPDATABLE", Types.VARCHAR, 3, true);    // not null
             addColumn(t, "VALID", Types.BOOLEAN, true);              // not null
 
             // order TABLE_NAME
@@ -1936,7 +2082,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a procedure column description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * PROCEDURE_CAT   VARCHAR   routine catalog
      * PROCEDURE_SCHEM VARCHAR   routine schema
      * PROCEDURE_NAME  VARCHAR   routine name
@@ -1952,11 +2098,11 @@ extends org.hsqldb.DatabaseInformationMain {
      * RADIX           SMALLINT  radix
      * NULLABLE        SMALLINT  can column contain NULL?
      * REMARKS         VARCHAR   explanatory comment on column
-     * SIGNATURE       VARCHAR   typically (but not restricted to) a
-     *                           Java Method signature
+     * SPECIFIC_NAME   VARCHAR   typically (but not restricted to) a
+     *                           fully qulified Java Method name and signature
      * SEQ             INTEGER   The JDBC-specified order within
      *                           runs of PROCEDURE_SCHEM, PROCEDURE_NAME,
-     *                           SIGNATURE, which is:
+     *                           SPECIFIC_NAME, which is:
      *
      *                           return value (0), if any, first, followed
      *                           by the parameter descriptions in call order
@@ -1993,7 +2139,9 @@ extends org.hsqldb.DatabaseInformationMain {
         Integer radix;
         Integer nullability;
         String  remark;
-        String  sig;
+        String  specificName;
+        int     colSequence;
+        int     colCount;
 
         // intermediate holders
         HsqlArrayList aliasList;
@@ -2004,7 +2152,7 @@ extends org.hsqldb.DatabaseInformationMain {
         DITypeInfo    ti;
 
         // Initialization
-        methods = ns.enumAllAccessibleMethods(session, true);    // and aliases
+        methods = ns.iterateAllAccessibleMethods(session, true);    // and aliases
         ti      = new DITypeInfo();
 
         // no such thing as identity or ignorecase return/parameter
@@ -2022,10 +2170,11 @@ extends org.hsqldb.DatabaseInformationMain {
 
             pi.setMethod(method);
 
-            sig           = pi.getSignature();
+            specificName  = pi.getSpecificName();
             procedureName = pi.getFQN();
+            colCount      = pi.getColCount();
 
-            for (int i = 0; i < pi.getColCount(); i++) {
+            for (int i = 0; i < colCount; i++) {
                 ti.setTypeCode(pi.getColTypeCode(i));
 
                 columnName   = pi.getColName(i);
@@ -2038,11 +2187,12 @@ extends org.hsqldb.DatabaseInformationMain {
                 radix        = ti.getNumPrecRadix();
                 nullability  = pi.getColNullability(i);
                 remark       = pi.getColRemark(i);
+                colSequence  = pi.getColSequence(i);
 
                 addPColRows(t, aliasList, procedureCatalog, procedureSchema,
                             procedureName, columnName, columnType, dataType,
                             dataTypeName, precision, length, scale, radix,
-                            nullability, remark, sig, i);
+                            nullability, remark, specificName, colSequence);
             }
         }
 
@@ -2058,7 +2208,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * Each row is a procedure description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * PROCEDURE_CAT     VARCHAR   catalog in which routine is defined
      * PROCEDURE_SCHEM   VARCHAR   schema in which routine is defined
      * PROCEDURE_NAME    VARCHAR   simple routine identifier
@@ -2071,8 +2221,9 @@ extends org.hsqldb.DatabaseInformationMain {
      *                             [BUILTIN | USER DEFINED] ROUTINE |
      *                             [BUILTIN | USER DEFINED] TRIGGER |
      *                              ...}
-     * SIGNATURE         VARCHAR   typically (but not restricted to) a
-     *                             Java Method signature
+     * SPECIFIC_NAME     VARCHAR   typically (but not restricted to) a
+     *                             a fully qualified Java Method name
+     *                             and signature
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing the accessible
@@ -2104,7 +2255,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // extended
         // -------------------
         String procOrigin;
-        String procSignature;
+        String specificName;
 
         // intermediate holders
         String        alias;
@@ -2116,7 +2267,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Object[]      row;
 
         // Initialization
-        methods = ns.enumAllAccessibleMethods(session, true);    //and aliases
+        methods = ns.iterateAllAccessibleMethods(session, true);    //and aliases
 
         // Do it.
         while (methods.hasNext()) {
@@ -2136,11 +2287,11 @@ extends org.hsqldb.DatabaseInformationMain {
             remarks         = pi.getRemark();
             procRType       = pi.getResultType(methodOrigin);
             procOrigin      = pi.getOrigin(methodOrigin);
-            procSignature   = pi.getSignature();
+            specificName    = pi.getSpecificName();
 
             addProcRows(t, aliasList, catalog, schema, procName,
                         numInputParams, numOutputParams, numResultSets,
-                        remarks, procRType, procOrigin, procSignature);
+                        remarks, procRType, procOrigin, specificName);
         }
 
         t.setDataReadOnly(true);
@@ -2157,7 +2308,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_USAGE_PRIVILEGES (
      *      GRANTOR         VARCHAR NOT NULL,
      *      GRANTEE         VARCHAR NOT NULL,
@@ -2252,13 +2403,13 @@ extends org.hsqldb.DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_USAGE_PRIVILEGES]);
 
-            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);            // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);            // not null
             addColumn(t, "OBJECT_CATALOG", Types.VARCHAR);
             addColumn(t, "OBJECT_SCHEMA", Types.VARCHAR);
-            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);     // not null
-            addColumn(t, "OBJECT_TYPE", Types.VARCHAR, false);     // not null
-            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
+            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);        // not null
+            addColumn(t, "OBJECT_TYPE", Types.VARCHAR, 32, false);    // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, 3, false);    // not null
 
             // order: COLUMN_NAME, PRIVILEGE
             // for unique: GRANTEE, GRANTOR, TABLE_NAME, TABLE_SCHEM, TABLE_CAT
@@ -2287,7 +2438,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b><p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE CHECK_COLUMN_USAGE (
      *      CONSTRAINT_CATALOG  VARCHAR NULL,
      *      CONSTRAINT_SCHEMA   VARCHAR NULL,
@@ -2299,7 +2450,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *      UNIQUE( CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME,
      *              TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME )
      * )
-     * <pre>
+     * </pre>
      *
      * <b>Description:</b> <p>
      *
@@ -2458,7 +2609,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_CHECK_ROUTINE_USAGE (
      *      CONSTRAINT_CATALOG      VARCHAR NULL,
      *      CONSTRAINT_SCHEMA       VARCHAR NULL,
@@ -2594,7 +2745,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     row[icons_name]  = constraintName;
                     row[ir_cat]      = ns.getCatalogName(method);
                     row[ir_schem]    = ns.getSchemaName(method);
-                    row[ir_name]     = ns.getMethodFQN(method);
+                    row[ir_name]     = ns.getMethodSpecificName(method);
 
                     t.insert(row, session);
                 }
@@ -2614,7 +2765,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE STABLE SYSTEM_CHECK_TABLE_USAGE (
      *      CONSTRAINT_CATALOG      VARCHAR NULL,
      *      CONSTRAINT_SCHEMA       VARCHAR NULL,
@@ -2683,7 +2834,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_TABLE_CONSTRAINTS (
      *      CONSTRAINT_CATALOG      VARCHAR NULL,
      *      CONSTRAINT_SCHEMA       VARCHAR NULL,
@@ -2784,13 +2935,13 @@ extends org.hsqldb.DatabaseInformationMain {
 
             addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
             addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);
-            addColumn(t, "CONSTRAINT_NAME", Types.VARCHAR, false);       // not null
-            addColumn(t, "CONSTRAINT_TYPE", Types.VARCHAR, false);       // not null
+            addColumn(t, "CONSTRAINT_NAME", Types.VARCHAR, false);          // not null
+            addColumn(t, "CONSTRAINT_TYPE", Types.VARCHAR, 11, false);      // not null
             addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEMA", Types.VARCHAR);
-            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);            // not null
-            addColumn(t, "IS_DEFERRABLE", Types.VARCHAR, false);         // not null
-            addColumn(t, "INITIALLY_DEFERRED", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);               // not null
+            addColumn(t, "IS_DEFERRABLE", Types.VARCHAR, 3, false);         // not null
+            addColumn(t, "INITIALLY_DEFERRED", Types.VARCHAR, 3, false);    // not null
 
             // false PK, as CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA,
             // TABLE_CATALOG and/or TABLE_SCHEMA may be null
@@ -2867,7 +3018,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     continue;
                 }
 
-                constraintSet.add(constraints.get(i));
+                constraintSet.add(constraint);
             }
         }
 
@@ -2927,7 +3078,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition</b><p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_VIEW_TABLE_USAGE (
      *      VIEW_CATALOG    VARCHAR NULL,
      *      VIEW_SCHEMA     VARCHAR NULL,
@@ -2996,7 +3147,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_VIEW_COLUMN_USAGE (
      *      VIEW_CATALOG    VARCHAR NULL,
      *      VIEW_SCHEMA     VARCHAR NULL,
@@ -3061,8 +3212,6 @@ extends org.hsqldb.DatabaseInformationMain {
         Object[]             row;
         SubQuery[]           subqueries;
         Select               select;
-        HsqlArrayList        selectList;
-        Expression[]         selectColumns;
         Expression           expression;
         TableFilter          tableFilter;
         Table                columnTable;
@@ -3095,7 +3244,10 @@ extends org.hsqldb.DatabaseInformationMain {
 
             table = (Table) tables.next();
 
-            if (!table.isView() ||!isAccessibleTable(table)) {
+            if (table.isView() && isAccessibleTable(table)) {
+
+                // fall through
+            } else {
                 continue;
             }
 
@@ -3104,28 +3256,11 @@ extends org.hsqldb.DatabaseInformationMain {
             viewName    = table.getName().name;
             view        = (View) table;
             subqueries  = view.viewSubqueries;
-            selectList  = new HsqlArrayList();
 
-            selectList.add(view.viewSelect);
+            collector.addAll(view.viewSelect, Expression.COLUMN);
 
             for (int i = 0; i < subqueries.length; i++) {
-                select = subqueries[i].select;
-
-                for (; select != null; select = select.sUnion) {
-                    selectList.add(select);
-                }
-            }
-
-            for (int i = 0; i < selectList.size(); i++) {
-                select        = (Select) selectList.get(i);
-                selectColumns = select.exprColumns;
-
-                for (int j = 0; j < selectColumns.length; j++) {
-                    collector.addAll(selectColumns[j], Expression.COLUMN);
-                }
-
-                collector.addAll(select.queryCondition, Expression.COLUMN);
-                collector.addAll(select.havingCondition, Expression.COLUMN);
+                collector.addAll(subqueries[i].select, Expression.COLUMN);
             }
 
             iterator = collector.iterator();
@@ -3180,7 +3315,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * <b>Definition</b><p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE VIEW_ROUTINE_USAGE (
      *      TABLE_CATALOG       VARCHAR NULL,
      *      TABLE_SCHEMA        VARCHAR NULL,
@@ -3241,9 +3376,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Table                table;
         Object[]             row;
         SubQuery[]           subqueries;
-        HsqlArrayList        selectList;
         Select               select;
-        Expression[]         selectColumns;
         Expression           expression;
         Function             function;
         Expression.Collector collector;
@@ -3270,7 +3403,10 @@ extends org.hsqldb.DatabaseInformationMain {
 
             table = (Table) tables.next();
 
-            if (!table.isView() ||!isAccessibleTable(table)) {
+            if (table.isView() && isAccessibleTable(table)) {
+
+                // fall through
+            } else {
                 continue;
             }
 
@@ -3279,28 +3415,11 @@ extends org.hsqldb.DatabaseInformationMain {
             viewName   = table.getName().name;
             view       = (View) table;
             subqueries = view.viewSubqueries;
-            selectList = new HsqlArrayList();
 
-            selectList.add(view.viewSelect);
+            collector.addAll(view.viewSelect, Expression.FUNCTION);
 
             for (int i = 0; i < subqueries.length; i++) {
-                select = subqueries[i].select;
-
-                for (; select != null; select = select.sUnion) {
-                    selectList.add(select);
-                }
-            }
-
-            for (int i = 0; i < selectList.size(); i++) {
-                select        = (Select) selectList.get(i);
-                selectColumns = select.exprColumns;
-
-                for (int j = 0; j < selectColumns.length; j++) {
-                    collector.addAll(selectColumns[j], Expression.FUNCTION);
-                }
-
-                collector.addAll(select.queryCondition, Expression.FUNCTION);
-                collector.addAll(select.havingCondition, Expression.FUNCTION);
+                collector.addAll(subqueries[i].select, Expression.FUNCTION);
             }
 
             methodSet = new HashSet();
@@ -3310,12 +3429,10 @@ extends org.hsqldb.DatabaseInformationMain {
                 expression = (Expression) iterator.next();
                 function   = expression.function;
 
-                if (!session.isAccessible(
+                if (session.isAccessible(
                         function.mMethod.getDeclaringClass().getName())) {
-                    continue;
+                    methodSet.add(function.mMethod);
                 }
-
-                methodSet.add(function.mMethod);
             }
 
             iterator = methodSet.iterator();
@@ -3328,7 +3445,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iv_name]  = viewName;
                 row[ir_cat]   = ns.getCatalogName(method);
                 row[ir_schem] = ns.getSchemaName(method);
-                row[ir_name]  = ns.getMethodFQN(method);
+                row[ir_name]  = ns.getMethodSpecificName(method);
 
                 t.insert(row, session);
             }
@@ -3360,10 +3477,10 @@ extends org.hsqldb.DatabaseInformationMain {
      * @param nullability the column's java.sql.DatbaseMetaData
      *      nullabiliy code
      * @param remark a human-readable remark regarding the column
-     * @param sig the signature of the procedure
+     * @param specificName the specific name of the procedure
      *      (typically but not limited to
-     *      a java method signature)
-     * @param seq helper value to allow JDBC contract order
+     *      a fully qualified Java Method name and signature)
+     * @param seq helper value to back JDBC contract sort order
      * @throws HsqlException if there is problem inserting the specified rows
      *      in the table
      *
@@ -3373,7 +3490,7 @@ extends org.hsqldb.DatabaseInformationMain {
                                Integer cType, Integer dType, String tName,
                                Integer prec, Integer len, Integer scale,
                                Integer radix, Integer nullability,
-                               String remark, String sig,
+                               String remark, String specificName,
                                int seq) throws HsqlException {
 
         // column number mappings
@@ -3390,7 +3507,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iradix     = 10;
         final int inullable  = 11;
         final int iremark    = 12;
-        final int isig       = 13;
+        final int isn        = 13;
         final int iseq       = 14;
         Object[]  row        = t.getNewRow();
         Integer   sequence   = ValuePool.getInt(seq);
@@ -3408,7 +3525,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iradix]     = radix;
         row[inullable]  = nullability;
         row[iremark]    = remark;
-        row[isig]       = sig;
+        row[isn]        = specificName;
         row[iseq]       = sequence;
 
         t.insert(row, session);
@@ -3432,7 +3549,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iradix]     = radix;
                 row[inullable]  = nullability;
                 row[iremark]    = remark;
-                row[isig]       = sig;
+                row[isn]        = specificName;
                 row[iseq]       = sequence;
 
                 t.insert(row, session);
@@ -3461,9 +3578,9 @@ extends org.hsqldb.DatabaseInformationMain {
      *      if it returns a value)
      * @param origin origin of the procedure, e.g.
      *      (["BUILTIN" | "USER DEFINED"] "ROUTINE" | "TRIGGER") | "ALIAS", etc.
-     * @param sig the signature of the procedure
+     * @param specificName the specific name of the procedure
      *      (typically but not limited to a
-     *      java method signature)
+     *      fully qualified Java Method name and signature)
      * @throws HsqlException if there is problem inserting the specified rows
      *      in the table
      *
@@ -3472,7 +3589,7 @@ extends org.hsqldb.DatabaseInformationMain {
                                String schem, String pName, Integer ip,
                                Integer op, Integer rs, String remark,
                                Integer pType, String origin,
-                               String sig) throws HsqlException {
+                               String specificName) throws HsqlException {
 
         // column number mappings
         final int icat          = 0;
@@ -3484,7 +3601,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iremark       = 6;
         final int iptype        = 7;
         final int iporigin      = 8;
-        final int isig          = 9;
+        final int isn           = 9;
         Object[]  row           = t.getNewRow();
 
         row[icat]          = cat;
@@ -3496,7 +3613,7 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iremark]       = remark;
         row[iptype]        = pType;
         row[iporigin]      = origin;
-        row[isig]          = sig;
+        row[isn]           = specificName;
 
         t.insert(row, session);
 
@@ -3515,7 +3632,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 row[iremark]       = remark;
                 row[iptype]        = pType;
                 row[iporigin]      = "ALIAS";
-                row[isig]          = sig;
+                row[isn]           = specificName;
 
                 t.insert(row, session);
             }

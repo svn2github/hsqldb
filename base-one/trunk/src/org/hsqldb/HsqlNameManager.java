@@ -34,10 +34,10 @@ package org.hsqldb;
 import org.hsqldb.lib.StringConverter;
 
 /**
- * Name Manager for an SQL object<p>
+ * Provides Name Management for SQL objects. <p>
  *
- * This class now includes the HsqlName inroduced in 1.7.1 and improves
- * auto-naming with several database in the engine.<p>
+ * This class now includes the HsqlName class inroduced in 1.7.1 and improves
+ * auto-naming with multiple databases in the engine.<p>
  *
  * Methods check user defined names and issue system generated names
  * for SQL objects.<p>
@@ -49,7 +49,7 @@ import org.hsqldb.lib.StringConverter;
  * These are defined in isReserveName(String name) and created by the
  * makeAutoName(String type) factory method<p>
  *
- * sysNumber is used to generate system generated names. It is
+ * sysNumber is used to generate system-generated names. It is
  * set to the largest integer encountered in names that use the
  * SYS_xxxxxxx_INTEGER format. As the DDL is processed before any ALTER
  * command, any new system generated name will have a larger integer suffix

@@ -36,7 +36,7 @@ package org.hsqldb.lib;
  * {@link ObjectComparator ObjectComparator}.  This implementation
  * is non-blocking, dynamically resizing and thread-safe.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */
@@ -90,17 +90,17 @@ public class HsqlArrayHeap implements HsqlHeap {
     }
 
     public synchronized void add(Object o)
-    throws java.lang.IllegalArgumentException, RuntimeException {
+    throws IllegalArgumentException, RuntimeException {
 
         int ci;    // current index
         int pi;    // parent index
 
         if (o == null) {
-            throw new IllegalArgumentException("heap does not accept null.");
+            throw new IllegalArgumentException("null element");
         }
 
         if (isFull()) {
-            throw new RuntimeException("heap is full.");
+            throw new RuntimeException("full");
         }
 
         if (count >= heap.length) {

@@ -47,7 +47,7 @@ package org.hsqldb.lib;
  * PriorityQueue, since Heap operations using the typical implementation are,
  * in theory, guaranteed to be O(log n).
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */
@@ -74,7 +74,7 @@ public interface HsqlHeap {
      * @param o The element to add
      * @throws IllegalArgumentException if the implementation does
      *      not accept elements of the supplied type (optional)
-     * throws HsqlUnsupportedOperationException if the implementation
+     * throws RuntimeException if the implementation
      *      dictates that this Heap is not currently accepting additions
      *      or that this Heap is currently full (optional)
      */

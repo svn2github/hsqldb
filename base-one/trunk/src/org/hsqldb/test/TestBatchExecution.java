@@ -38,7 +38,7 @@ import java.sql.*;
 /**
  * A quick test of the new CompiledStatement and batch execution facilities.
  *
- * @author boucher@users.sourceforge.net
+ * @author boucherb@users
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */

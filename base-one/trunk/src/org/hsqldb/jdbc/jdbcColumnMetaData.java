@@ -37,7 +37,7 @@ import java.lang.reflect.Field;
  * Provides a site for holding the ResultSetMetaData for individual ResultSet
  * columns. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -106,8 +106,12 @@ public final class jdbcColumnMetaData {
 
     /** Whether it is possible for a write on the column to succeed. */
     public boolean isWritable;
-    private String toString;
 
+    /**
+     * Retrieves a String representation of this object.
+     *
+     * @return a Sring representation of this object
+     */
     public String toString() {
 
         try {
@@ -117,6 +121,11 @@ public final class jdbcColumnMetaData {
         }
     }
 
+    /**
+     * Provides the implementation of the toString() method.
+     *
+     * @return a Sring representation of this object
+     */
     private String toStringImpl() throws Exception {
 
         StringBuffer sb;
@@ -125,7 +134,6 @@ public final class jdbcColumnMetaData {
 
         sb = new StringBuffer();
 
-        //sb.append(super.toString());
         sb.append('[');
 
         fields = getClass().getFields();

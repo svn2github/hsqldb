@@ -47,8 +47,10 @@ import org.hsqldb.store.ValuePool;
 // - completed Fred's work on allowing inheritance
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
 
+/**@todo fredt - move Trace.doAssert() literals to Trace*/
+
 /**
- * Produces tables which form a view of the system data dictionary. <p>
+ * Produces a collection of tables that form the system data dictionary. <p>
  *
  * Implementations use a group of arrays of equal size to store various
  * attributes or cached instances of system tables.<p>
@@ -109,12 +111,10 @@ import org.hsqldb.store.ValuePool;
  * in that slot, the table contents are cleared and rebuilt. <p>
  *
  * (fredt@users) <p>
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-
-/** @todo fredt - move Trace.doAssert() literals to Trace */
 class DatabaseInformationMain extends DatabaseInformation {
 
     // HsqlName objects for the system tables
@@ -208,10 +208,37 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         super(db);
 
-        Trace.doAssert(db != null, "database is null");
-        Trace.doAssert(db.getTables() != null, "database table list is null");
-        Trace.doAssert(db.getUserManager() != null, "user manager is null");
+        Trace.doAssert(db != null, "db != null");
+        Trace.doAssert(db.getTables() != null, "db.getTables() != null");
+        Trace.doAssert(db.getUserManager() != null,
+                       "db.getUserManager() != null");
         init();
+    }
+
+    /**
+     * Adds a <code>Column</code> object with the specified name, data type,
+     * data size and nullability to the specified <code>Table</code>
+     * object. <p>
+     *
+     * @param t the table to which to add the specified column
+     * @param name the name of the column
+     * @param type the data type of the column
+     * @param size the precision/length of the column
+     * @param nullable <code>true</code> if the column is to allow null values,
+     *      else <code>false</code>
+     * @throws HsqlException if a problem occurs when adding the
+     *      column (e.g. duplicate name)
+     */
+    protected final void addColumn(Table t, String name, int type, int size,
+                                   boolean nullable) throws HsqlException {
+
+        HsqlName cn;
+        Column   c;
+
+        cn = ns.findOrCreateHsqlName(name, columnNameMap);
+        c = new Column(cn, nullable, type, size, 0, false, 0, 0, false, null);
+
+        t.addColumn(c);
     }
 
     /**
@@ -228,14 +255,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      */
     protected final void addColumn(Table t, String name, int type,
                                    boolean nullable) throws HsqlException {
-
-        HsqlName cn;
-        Column   c;
-
-        cn = ns.findOrCreateHsqlName(name, columnNameMap);
-        c  = new Column(cn, nullable, type, 0, 0, false, 0, 0, false, null);
-
-        t.addColumn(c);
+        addColumn(t, name, type, 0, nullable);
     }
 
     /**
@@ -301,10 +321,9 @@ class DatabaseInformationMain extends DatabaseInformation {
         Table t = sysTables[tableIndex];
 
 //        Please note that this class produces non-null tables for
-//        just those absolutely essential to the JDBC 1 spec (with
-//        SYSTEM_ALLTYPEINFO being the single exception, because it is the
-//        source table for SYSTEM_TYPEINFO) and declares all but
-//        SYSTEM_PROCEDURES and SYSTEM_PROCEDURECOLUMNS final (because
+//        just those absolutely essential to the JDBC 1 spec and the 
+//        HSQLDB core.  Also, all table producing methods except 
+//        SYSTEM_PROCEDURES() and SYSTEM_PROCEDURECOLUMNS() are declared final;
 //        this class produces only an empty table for each, as per previous
 //        DatabaseInformation implementations, whereas
 //        DatabaseInformationFull produces comprehensive content for
@@ -454,7 +473,8 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         for (int i = 0; i < sysTableHsqlNames.length; i++) {
             if (sysTables[i] != null) {
-                um.grant("PUBLIC", sysTableHsqlNames[i], UserManager.SELECT);
+                um.grant(UserManager.PUBLIC_USER_NAME, sysTableHsqlNames[i],
+                         UserManager.SELECT);
             }
         }
 
@@ -607,7 +627,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * set for a particular table.  Each row has the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * SCOPE          SMALLINT  scope of applicability
      * COLUMN_NAME    VARCHAR   simple name of the column
      * DATA_TYPE      SMALLINT  SQL data type from DITypes
@@ -733,7 +753,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "SCOPE", Types.SMALLINT, false);            // not null
             addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);       // not null
             addColumn(t, "DATA_TYPE", Types.SMALLINT, false);        // not null
-            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, 32, false);     // not null
             addColumn(t, "COLUMN_SIZE", Types.INTEGER);
             addColumn(t, "BUFFER_LENGTH", Types.INTEGER);
             addColumn(t, "DECIMAL_DIGITS", Types.SMALLINT);
@@ -860,7 +880,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * Each row is a catalog name description with the following column: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT   VARCHAR   catalog name
      * </pre> <p>
      *
@@ -887,7 +907,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Object[] row;
         Iterator catalogs;
 
-        catalogs = ns.enumCatalogNames();
+        catalogs = ns.iterateCatalogNames();
 
         while (catalogs.hasNext()) {
             row    = t.getNewRow();
@@ -909,7 +929,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a column privilege description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT    VARCHAR   table catalog
      * TABLE_SCHEM  VARCHAR   table schema
      * TABLE_NAME   VARCHAR   table name
@@ -941,12 +961,12 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
-            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);      // not null
-            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);     // not null
-            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);        // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);            // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);            // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, 10, false);      // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, 3, false);    // not null
 
             // order: COLUMN_NAME, PRIVILEGE
             // for unique: GRANTEE, GRANTOR, TABLE_NAME, TABLE_SCHEM, TABLE_CAT
@@ -979,7 +999,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * Each row is a column description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT         VARCHAR   table catalog
      * TABLE_SCHEM       VARCHAR   table schema
      * TABLE_NAME        VARCHAR   table name
@@ -1003,7 +1023,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * SCOPE_TABLE       VARCHAR   name of REF attribute scope table
      * SOURCE_DATA_TYPE  VARCHAR   source type of REF attribute
      * TYPE_SUB          INTEGER   HSQLDB data subtype code
-     * <pre> <p>
+     * </pre> <p>
      *
      * @return a <code>Table</code> object describing the
      *        visible columns of all accessible
@@ -1022,7 +1042,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);          // not null
             addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);         // not null
             addColumn(t, "DATA_TYPE", Types.SMALLINT, false);          // not null
-            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);           // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, 32, false);       // not null
             addColumn(t, "COLUMN_SIZE", Types.INTEGER);
             addColumn(t, "BUFFER_LENGTH", Types.INTEGER);
             addColumn(t, "DECIMAL_DIGITS", Types.INTEGER);
@@ -1034,7 +1054,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "SQL_DATETIME_SUB", Types.INTEGER);
             addColumn(t, "CHAR_OCTET_LENGTH", Types.INTEGER);
             addColumn(t, "ORDINAL_POSITION", Types.INTEGER, false);    // not null
-            addColumn(t, "IS_NULLABLE", Types.VARCHAR, false);         // not null
+            addColumn(t, "IS_NULLABLE", Types.VARCHAR, 3, false);      // not null
             addColumn(t, "SCOPE_CATLOG", Types.VARCHAR);
             addColumn(t, "SCOPE_SCHEMA", Types.VARCHAR);
             addColumn(t, "SCOPE_TABLE", Types.VARCHAR);
@@ -1143,7 +1163,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a foreign key column description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * PKTABLE_CAT   VARCHAR   referenced table catalog
      * PKTABLE_SCHEM VARCHAR   referenced table schema
      * PKTABLE_NAME  VARCHAR   referenced table name
@@ -1161,7 +1181,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * PK_NAME       VARCHAR   primary key or unique constraint name
      * DEFERRABILITY SMALLINT
      *    { initially deferred | initially immediate | not deferrable }
-     * <pre> <p>
+     * </pre> <p>
      *
      * @return a <code>Table</code> object describing how accessible tables
      *      import other accessible tables' primary key and/or unique
@@ -1405,7 +1425,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is an index column description with the following
      * columns: <p>
      *
-     * <PRE>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT        VARCHAR   table's catalog
      * TABLE_SCHEM      VARCHAR   simple name of table's schema
      * TABLE_NAME       VARCHAR   simple name of the table using the index
@@ -1419,7 +1439,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * CARDINALITY      INTEGER   # of unique values in index (not implemented)
      * PAGES            INTEGER   index page use (not implemented)
      * FILTER_CONDITION VARCHAR   filter condition, if any (not implemented)
-     * </PRE> <p>
+     * </pre> <p>
      *
      * @return a <code>Table</code> object describing the visible
      *        <code>Index</code> objects for each accessible
@@ -1442,7 +1462,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "TYPE", Types.SMALLINT, false);                // NOT NULL
             addColumn(t, "ORDINAL_POSITION", Types.SMALLINT, false);    // NOT NULL
             addColumn(t, "COLUMN_NAME", Types.VARCHAR);
-            addColumn(t, "ASC_OR_DESC", Types.VARCHAR);
+            addColumn(t, "ASC_OR_DESC", Types.VARCHAR, 1, true);
             addColumn(t, "CARDINALITY", Types.INTEGER);
             addColumn(t, "PAGES", Types.INTEGER);
             addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
@@ -1577,7 +1597,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a PRIMARY KEY column description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT   VARCHAR   table catalog
      * TABLE_SCHEM VARCHAR   table schema
      * TABLE_NAME  VARCHAR   table name
@@ -1701,7 +1721,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a procedure column description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * PROCEDURE_CAT   VARCHAR   routine catalog
      * PROCEDURE_SCHEM VARCHAR   routine schema
      * PROCEDURE_NAME  VARCHAR   routine name
@@ -1717,11 +1737,11 @@ class DatabaseInformationMain extends DatabaseInformation {
      * RADIX           SMALLINT  radix
      * NULLABLE        SMALLINT  can column contain NULL?
      * REMARKS         VARCHAR   explanatory comment on column
-     * SIGNATURE       VARCHAR   typically (but not restricted to) a
-     *                           Java Method signature
+     * SPECIFIC_NAME   VARCHAR   typically (but not restricted to) a
+     *                           fully qualified Java Method name and signature
      * SEQ             INTEGER   The JDBC-specified order within
      *                           runs of PROCEDURE_SCHEM, PROCEDURE_NAME,
-     *                           SIGNATURE, which is:
+     *                           SPECIFIC_NAME, which is:
      *
      *                           return value (0), if any, first, followed
      *                           by the parameter descriptions in call order
@@ -1752,7 +1772,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);       // not null
             addColumn(t, "COLUMN_TYPE", Types.SMALLINT, false);      // not null
             addColumn(t, "DATA_TYPE", Types.SMALLINT, false);        // not null
-            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, 32, false);     // not null
             addColumn(t, "PRECISION", Types.INTEGER);
             addColumn(t, "LENGTH", Types.INTEGER);
             addColumn(t, "SCALE", Types.SMALLINT);
@@ -1763,7 +1783,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             // ----------------------------------------------------------------
             // extended (and required for JDBC sort contract w.r.t. overloading)
             // ----------------------------------------------------------------
-            addColumn(t, "SIGNATURE", Types.VARCHAR, false);         // not null
+            addColumn(t, "SPECIFIC_NAME", Types.VARCHAR, false);     // not null
 
             // ----------------------------------------------------------------
             // just required for JDBC sort contract
@@ -1793,7 +1813,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a procedure description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * PROCEDURE_CAT     VARCHAR   catalog in which routine is defined
      * PROCEDURE_SCHEM   VARCHAR   schema in which routine is defined
      * PROCEDURE_NAME    VARCHAR   simple routine identifier
@@ -1806,8 +1826,9 @@ class DatabaseInformationMain extends DatabaseInformation {
      *                             [BUILTIN | USER DEFINED] ROUTINE |
      *                             [BUILTIN | USER DEFINED] TRIGGER |
      *                              ...}
-     * SIGNATURE         VARCHAR   typically (but not restricted to) a
-     *                             Java Method signature
+     * SPECIFIC_NAME     VARCHAR   typically (but not restricted to) a
+     *                             fully qualified Java Method name
+     *                             and signature
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing the accessible
@@ -1839,12 +1860,12 @@ class DatabaseInformationMain extends DatabaseInformation {
             // ----------------------------------------------------------------
             // extended
             // ----------------------------------------------------------------
-            addColumn(t, "ORIGIN", Types.VARCHAR, false);             // not null
-            addColumn(t, "SIGNATURE", Types.VARCHAR, false);          // not null
+            addColumn(t, "ORIGIN", Types.VARCHAR, 32, false);         // not null
+            addColumn(t, "SPECIFIC_NAME", Types.VARCHAR, false);      // not null
 
             // ----------------------------------------------------------------
             // order: PROCEDURE_SCHEM and PROCEDURE_NAME.
-            // added for uniqe: SIGNATURE, PROCEDURE_CAT
+            // added for uniqe: SPECIFIC_NAME, PROCEDURE_CAT
             // false PK, as PROCEDURE_SCHEM and/or PROCEDURE_CAT may be null
             t.createPrimaryKey(null, new int[] {
                 1, 2, 9, 0
@@ -1865,7 +1886,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * Each row is a schema description with the following
      * columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_SCHEM   VARCHAR   simple schema name
      * TABLE_CATALOG VARCHAR   catalog in which schema is defined
      * </pre> <p>
@@ -1895,7 +1916,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Object[] row;
 
         // Initialization
-        schemas = ns.enumVisibleSchemaNames(session);
+        schemas = ns.iterateVisibleSchemaNames(session);
 
         // Do it.
         while (schemas.hasNext()) {
@@ -1917,7 +1938,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * Each row is a table privilege description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT    VARCHAR   table catalog
      * TABLE_SCHEM  VARCHAR   table schema
      * TABLE_NAME   VARCHAR   table name
@@ -1946,11 +1967,11 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
-            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);      // not null
-            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);            // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);            // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, 10, false);      // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, 3, false);    // not null
 
             // order: TABLE_SCHEM, TABLE_NAME, and PRIVILEGE,
             // added for unique:  GRANTEE, GRANTOR, TABLE_CAT
@@ -2043,7 +2064,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * Each row is a table description with the following columns: <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TABLE_CAT                 VARCHAR   table catalog
      * TABLE_SCHEM               VARCHAR   table schema
      * TABLE_NAME                VARCHAR   table name
@@ -2079,8 +2100,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             // -------------------------------------------------------------
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
-            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);    // not null
-            addColumn(t, "TABLE_TYPE", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
+            addColumn(t, "TABLE_TYPE", Types.VARCHAR, 16, false);    // not null
             addColumn(t, "REMARKS", Types.VARCHAR);
 
             // -------------------------------------------------------------
@@ -2095,8 +2116,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             // -------------------------------------------------------------
             // extended
             // ------------------------------------------------------------
-            addColumn(t, "HSQLDB_TYPE", Types.VARCHAR);
-            addColumn(t, "READ_ONLY", Types.BOOLEAN, false);     // not null
+            addColumn(t, "HSQLDB_TYPE", Types.VARCHAR, 6, true);
+            addColumn(t, "READ_ONLY", Types.BOOLEAN, false);         // not null
 
             // ------------------------------------------------------------
             // order TABLE_TYPE, TABLE_SCHEM and TABLE_NAME
@@ -2183,8 +2204,8 @@ class DatabaseInformationMain extends DatabaseInformation {
      *   <LI><FONT color='#FF00FF'>"SYNONYM"</FONT>
      * </UL> <p>
      *
-     * As of HSQLDB 1.7.2, the engine supports and thus reports only a subset
-     * of this range: <p>
+     * As of HSQLDB 1.7.2, the engine supports and thus this method reports
+     * only a subset of the range above: <p>
      *
      * <UL>
      *   <LI><FONT color='#FF00FF'>"TABLE"</FONT>
@@ -2207,7 +2228,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TABLETYPES]);
 
-            addColumn(t, "TABLE_TYPE", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_TYPE", Types.VARCHAR, 16, false);    // not null
 
             // order: TABLE_TYPE
             // true PK
@@ -2235,7 +2256,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * result expected by the JDBC DatabaseMetaData interface implementation
      * for system-defined SQL types supported as table columns.
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TYPE_NAME          VARCHAR   the canonical name for DDL statements.
      * DATA_TYPE          SMALLINT  data type code from DITypes.
      * PRECISION          INTEGER   max column size.
@@ -2288,11 +2309,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             //-------------------------------------------
             // required by JDBC:
             // ------------------------------------------
-            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, 32, false);
             addColumn(t, "DATA_TYPE", Types.SMALLINT, false);
             addColumn(t, "PRECISION", Types.INTEGER);
-            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR);
-            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
+            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR, 2, true);
+            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR, 2, true);
             addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
             addColumn(t, "NULLABLE", Types.SMALLINT);
             addColumn(t, "CASE_SENSITIVE", Types.BOOLEAN);
@@ -2341,7 +2362,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * this database, including its level of support for them (which may
      * be no support at all) in various capacities. <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * TYPE_NAME          VARCHAR   the canonical name used in DDL statements.
      * DATA_TYPE          SMALLINT  data type code from DITypes
      * PRECISION          INTEGER   max column size.
@@ -2419,11 +2440,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             //-------------------------------------------
             // same as SYSTEM_TYPEINFO:
             // ------------------------------------------
-            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, 32, false);
             addColumn(t, "DATA_TYPE", Types.SMALLINT, false);
             addColumn(t, "PRECISION", Types.INTEGER);
-            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR);
-            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
+            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR, 2, true);
+            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR, 2, true);
             addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
             addColumn(t, "NULLABLE", Types.SMALLINT);
             addColumn(t, "CASE_SENSITIVE", Types.BOOLEAN);
@@ -2718,7 +2739,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * <b>Definition:</b><p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_CHECK_CONSTRAINTS (
      *      CONSTRAINT_CATALOG  VARCHAR NULL,
      *      CONSTRAINT_SCHEMA   VARCHAR NULL,
@@ -2760,7 +2781,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *      </table>
      * </ol>
      */
-    Table SYSTEM_CHECK_CONSTRAINTS() throws HsqlException {
+    final Table SYSTEM_CHECK_CONSTRAINTS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CHECK_CONSTRAINTS];
 
@@ -2845,7 +2866,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * <b>Definition:</b> <p>
      *
-     * <pre>
+     * <pre class="SqlCodeExample">
      * CREATE TABLE SYSTEM_SEQUENCES (
      *      SEQUENCE_CATALOG     VARCHAR NULL,
      *      SEQUENCE_SCHEMA      VARCHAR NULL,
@@ -2914,7 +2935,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *      is materialized in session context. <p>
      *
      */
-    Table SYSTEM_SEQUENCES() throws HsqlException {
+    final Table SYSTEM_SEQUENCES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_SEQUENCES];
 
@@ -2923,15 +2944,15 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             addColumn(t, "SEQUENCE_CATALOG", Types.VARCHAR);
             addColumn(t, "SEQUENCE_SCHEMA", Types.VARCHAR);
-            addColumn(t, "SEQUENCE_NAME", Types.VARCHAR, true);     // not null
-            addColumn(t, "DTD_IDENTIFIER", Types.VARCHAR, true);    // not null
-            addColumn(t, "MAXIMUM_VALUE", Types.VARCHAR, true);     // not null
-            addColumn(t, "MINIMUM_VALUE", Types.VARCHAR, true);     // not null
-            addColumn(t, "INCREMENT", Types.VARCHAR, true);         // not null
-            addColumn(t, "CYCLE_OPTION", Types.VARCHAR, true);      // not null
+            addColumn(t, "SEQUENCE_NAME", Types.VARCHAR, true);        // not null
+            addColumn(t, "DTD_IDENTIFIER", Types.VARCHAR, true);       // not null
+            addColumn(t, "MAXIMUM_VALUE", Types.VARCHAR, 20, true);    // not null
+            addColumn(t, "MINIMUM_VALUE", Types.VARCHAR, 20, true);    // not null
+            addColumn(t, "INCREMENT", Types.VARCHAR, 20, true);        // not null
+            addColumn(t, "CYCLE_OPTION", Types.VARCHAR, 3, true);      // not null
 
             // HSQLDB-specific
-            addColumn(t, "START_WITH", Types.VARCHAR, true);        // not null
+            addColumn(t, "START_WITH", Types.VARCHAR, 20, true);       // not null
 
             // order SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
             // false PK, as SCHEMA and/or CATALOG may be null
@@ -2976,6 +2997,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             sequence         = (NumberSequence) it.next();
             dataType         = sequence.getType();
             sequenceName     = sequence.getName().name;
+            row[iseq_cat]    = ns.getCatalogName(sequence);
+            row[iseq_schem]  = ns.getSchemaName(sequence);
             row[iseq_name]   = sequenceName;
             row[iseq_dtdid]  = Types.getTypeString(dataType);
             row[iseq_min]    = min;

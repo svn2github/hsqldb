@@ -48,7 +48,7 @@ import org.hsqldb.lib.IntValueHashMap;
  * This class has been developed from scratch to replace the previous
  * DatabaseInformation implementations. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

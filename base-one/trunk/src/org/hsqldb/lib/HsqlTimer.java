@@ -40,7 +40,7 @@ import java.util.Date;
  * implementation required by HSQLDB because the java.util.Timer class is
  * available only in JDK 1.3+.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */
@@ -227,7 +227,7 @@ public class HsqlTimer implements ObjectComparator {
     }
 
     /**
-     * Retreives whether the specified argument references a cancelled task.
+     * Retrieves whether the specified argument references a cancelled task.
      *
      * @param task a task reference
      * @return true if referenced task is cancelled
@@ -241,7 +241,7 @@ public class HsqlTimer implements ObjectComparator {
     }
 
     /**
-     * Retreives whether the specified argument references a task scheduled
+     * Retrieves whether the specified argument references a task scheduled
      * periodically using fixed rate scheduling.
      *
      * @param task a task reference
@@ -258,7 +258,7 @@ public class HsqlTimer implements ObjectComparator {
     }
 
     /**
-     * Retreives whether the specified argument references a task scheduled
+     * Retrieves whether the specified argument references a task scheduled
      * periodically using fixed delay scheduling.
      *
      * @param task a task reference
@@ -276,7 +276,7 @@ public class HsqlTimer implements ObjectComparator {
     }
 
     /**
-     * Retreives whether the specified argument references a task scheduled
+     * Retrieves whether the specified argument references a task scheduled
      * for periodic execution.
      *
      * @param task a task reference
@@ -628,6 +628,7 @@ public class HsqlTimer implements ObjectComparator {
 //        int         runs = 0;
 //        long        last;
 //        long        total = 0;
+//        Thread      sleeper;
 //
 //        TestTask(String name) {
 //            this.name = name;
@@ -652,11 +653,13 @@ public class HsqlTimer implements ObjectComparator {
 //                    last = now;
 //                    System.out.println("runs: " + (runs -1));
 //                    System.out.println("totl: " + total);
+//                    System.out.flush();
 //                }
 //            }
 //            System.out.println("------------------");
 //            if (runs == 10) {
 //                timer.shutDown();
+//                sleeper.interrupt();
 //            }
 //        }
 //
@@ -664,7 +667,7 @@ public class HsqlTimer implements ObjectComparator {
 //            return name;
 //        }
 //
-//        protected void finalize() {
+//        protected void printstats() {
 //            System.out.println(this + " avg. latency: " + (total/(runs-1)));
 //        }
 //    }
@@ -673,28 +676,54 @@ public class HsqlTimer implements ObjectComparator {
 //        HsqlTimer timer;
 //        TestTask tt1;
 //        TestTask tt2;
+//        Thread   sleeper;
 //
 //        timer = new HsqlTimer();
 //
-//        Runnable r = new Runnable() {
-//            long x;
+//        // need this to run tests now, since 
+//        // taskRunnerThread is now daemon.
+//        // Otherwise, timer thread exits
+//        // immediately when this thread exits.
+//        sleeper = new Thread() {
 //            public void run() {
-//                for (int i = 0; i < 100000; i++) {
-//                    x = 5; x+=6;
+//                try {
+//                    sleep(Long.MAX_VALUE);
+//                } catch (Exception e) {
+//                    // do nothing
 //                }
 //            }
 //        };
-//        for (int i = 0; i < 2000; i++) {
-//        timer.schedulePeriodicallyAfter(0,1, r, false);
-//        }
+//
+//        sleeper.start();
+//
+//        Runnable r = new Runnable() {
+//            long x;
+//            int runs = 0;
+//            public void run() {
+//                for (int i = 0; i < 1000000; i++) {
+//                    x = (long) ((x + 6) * (double)12) - 100;
+//                }
+//            }
+//        };
 //
 //        tt2 = new TestTask("Task 2");
 //        tt2.timer = timer;
-//        tt2.tid = (Task) timer.schedulePeriodicallyAfter(0, 2000, tt2, false);
+//        tt2.sleeper = sleeper;
+//        tt2.tid = (Task) timer.schedulePeriodicallyAfter(0, 500, tt2, false);
 //
 //        tt1 = new TestTask("Task 1");
 //        tt1.timer = timer;
-//        tt1.tid = (Task) timer.schedulePeriodicallyAfter(0, 2000, tt1, true);
+//        tt1.sleeper = sleeper;
+//        tt1.tid = (Task) timer.schedulePeriodicallyAfter(0, 500, tt1, true);
+//
+//        timer.schedulePeriodicallyAfter(0,1, r, false);
+//        
+//        try {
+//            sleeper.join();
+//        } catch (Exception e) {}
+//        
+//        tt1.printstats();
+//        tt2.printstats();
 //
 //    }
 }

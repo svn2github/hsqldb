@@ -562,7 +562,6 @@ public class StringConverter {
         }
 
         write.close();
-        x.close();
 
         return write.toString();
     }

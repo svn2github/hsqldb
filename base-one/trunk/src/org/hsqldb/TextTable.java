@@ -38,7 +38,11 @@ import org.hsqldb.lib.FileUtil;
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
 /**
- *  Class declaration
+ * Subclass of Table to handle TEXT data source. <p>
+ *
+ * Extends Table to provide the notion of an SQL base table object whose
+ * data is read from and written to a text format data file.
+ *
  * @author sqlbob@users (RMP)
  * @version    1.7.0
  */
@@ -49,12 +53,12 @@ class TextTable extends org.hsqldb.Table {
     private boolean isReversed = false;
 
     /**
-     *  Constructor declaration
+     *  Constructs a new TextTable from the given arguments.
      *
-     * @param  db
-     * @param  name
+     * @param  db the owning database
+     * @param  name the table's HsqlName
      * @param  type (normal or temp text table)
-     * @param  sessionid
+     * @param  sessionid the id of the owning session (for temp table)
      * @exception  HsqlException  Description of the Exception
      */
     TextTable(Database db, HsqlNameManager.HsqlName name, int type,

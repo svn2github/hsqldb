@@ -465,7 +465,7 @@ Referential Constraint 4 SET DEFAULT
             return;
         }
 
-        if (core.mainIndex.isNull(row, core.refColArray)) {
+        if (Index.isNull(row, core.refColArray)) {
             return;
         }
 
@@ -539,7 +539,7 @@ Referential Constraint 4 SET DEFAULT
             return null;
         }
 
-        if (core.refIndex.isNull(row, core.mainColArray)) {
+        if (Index.isNull(row, core.mainColArray)) {
             return null;
         }
 
@@ -578,7 +578,7 @@ Referential Constraint 4 SET DEFAULT
      */
     Node findMainRef(Object row[]) throws HsqlException {
 
-        if (core.mainIndex.isNull(row, core.refColArray)) {
+        if (Index.isNull(row, core.refColArray)) {
             return null;
         }
 

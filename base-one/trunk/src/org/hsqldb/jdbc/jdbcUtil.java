@@ -38,6 +38,9 @@ import org.hsqldb.Result;
 import org.hsqldb.Trace;
 
 /**
+ * Provides driver constants and a gateway from internal HsqlExceptions to
+ * external SQLExceptions.
+ *
  * @author fredt@users
  * @version 1.7.2
  * @since 1.7.2

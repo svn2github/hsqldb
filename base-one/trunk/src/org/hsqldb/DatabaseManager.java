@@ -91,7 +91,7 @@ public class DatabaseManager {
         while (it.hasNext()) {
             Database db = (Database) it.next();
 
-            v.addElement(db.getType() + db.getPath());
+            v.addElement(db.getURI());
         }
 
         return v;
@@ -464,8 +464,11 @@ public class DatabaseManager {
     // URL parsing
 
     /**
-     * Parses the url into the following components returned in the properties
-     * object: <p>
+     * Parses the url into components that are returned in a properties
+     * object. <p>
+     *
+     * The following components are isolated: <p>
+     *
      * <ul>
      * url: the original url<p>
      * connection_type: a static string that indicate the protocol. If the

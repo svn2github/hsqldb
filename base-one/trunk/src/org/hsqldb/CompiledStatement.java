@@ -35,12 +35,13 @@ package org.hsqldb;
  * A simple structure class for holding the products of
  * statement compilation for later execution.
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 
 // fredt@users 20040404 - patch 1.7.2 - fixed type resolution for parameters
+// boucherb@users 200404xx - patch 1.7.2 - changed parameter naming scheme for SQLCI client usability/support
 final class CompiledStatement {
 
     static final int UNKNOWN = 0;
@@ -397,7 +398,7 @@ final class CompiledStatement {
     private static final Result updateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
-    Result describeResultSet() {
+    Result describeResult() {
 
         switch (type) {
 
@@ -421,19 +422,16 @@ final class CompiledStatement {
                 Result     r;
 
                 e = expression;
-                r = Result.newSingleColumnResult("@0" /*e.getAlias()*/,
-                                                 e.getDataType());
+                r = Result.newSingleColumnResult(
+                    DIProcedureInfo.RETURN_COLUMN_NAME, e.getDataType());
                 r.metaData.sClassName[0] = e.getValueClassName();
 
                 // no more setup for r; all the defaults apply
                 return r;
             }
             case SELECT :
-
-                // PRE: select is not a select into, since we currently
-                // prevent this ever being the case here via checks
-                // elsewhere in the code
-                return select.describeResult();
+                return select.sIntoTable == null ? select.describeResult()
+                                                 : updateCount;
 
             case DELETE :
             case INSERT_SELECT :
@@ -475,7 +473,7 @@ final class CompiledStatement {
 // NO: Not yet
 //        if (hasReturnValue) {
 //            e = expression;
-//            out.sName[0]       = "@0";
+//            out.sName[0]       = DIProcedureInfo.RETURN_COLUMN_NAME;
 //            out.sClassName[0]  = e.getValueClassName();
 //            out.colType[0]     = e.getDataType();
 //            out.colSize[0]     = e.getColumnSize();
@@ -488,9 +486,9 @@ final class CompiledStatement {
             e   = parameters[i];
             idx = i + offset;
 
-            // always i + 1.  We will use the convention of @0 to name the
+            // always i + 1.  We currently use the convention of @p0 to name the
             // return value OUT parameter
-            out.metaData.sName[idx] = "@" + i + 1;
+            out.metaData.sName[idx] = DIProcedureInfo.PCOL_PREFIX + (i + 1);
 
             // sLabel is meaningless in this context.
             out.metaData.sClassName[idx]  = e.getValueClassName();

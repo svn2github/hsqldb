@@ -45,7 +45,7 @@ import java.sql.Statement;
 /**
  * Tests Bug 785429 concerning BINARY values as PreparedStatement parameters
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  */
 public class TestBug785429 extends TestBase {
 

@@ -42,7 +42,7 @@ import org.hsqldb.store.ValuePool;
  * Provides extended information about HSQLDB tables and their
  * columns/indices. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -417,7 +417,7 @@ final class DITableInfo {
     }
 
     /**
-     * Retreives the declared (but not currently enforced) or implicit fixed
+     * Retrieves the declared (but not currently enforced) or implicit fixed
      * number of digits to the right of the decimal point for exact numeric
      * types.
      *
@@ -615,7 +615,7 @@ final class DITableInfo {
     }
 
     /**
-     * Retreives the simple name of the specified Index. <p>
+     * Retrieves the simple name of the specified Index. <p>
      *
      * @param i zero-based index specifier
      * @return the simple name of the specified Index
@@ -625,7 +625,7 @@ final class DITableInfo {
     }
 
     /**
-     * Retreives null (not implemented). <p>
+     * Retrieves null (not implemented). <p>
      *
      * @param i zero-based index specifier
      * @return null (not implemented)

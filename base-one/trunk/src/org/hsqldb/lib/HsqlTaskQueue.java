@@ -36,7 +36,7 @@ package org.hsqldb.lib;
  * thread. The underlying queue is an HsqlDeque instance, an array-based
  * circular queue implementation with automatic capacity expansion.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */
@@ -82,6 +82,10 @@ public class HsqlTaskQueue {
                     if (task == SHUTDOWNTASK) {
                         isShutdown = true;
 
+                        synchronized (queue) {
+                            queue.clear();
+                        }
+
                         break;
                     } else if (task != null) {
                         task.run();
@@ -117,17 +121,17 @@ public class HsqlTaskQueue {
     public void execute(Runnable command) throws RuntimeException {
 
         if (!isShutdown) {
-            restart();
-
             synchronized (queue) {
                 queue.addLast(command);
             }
+
+            restart();
         }
     }
 
     public synchronized void shutdownAfterQueued() {
 
-        if (taskRunnerThread != null &&!isShutdown) {
+        if (!isShutdown) {
             synchronized (queue) {
                 queue.addLast(SHUTDOWNTASK);
             }
@@ -138,11 +142,9 @@ public class HsqlTaskQueue {
 
         isShutdown = true;
 
-        if (taskRunnerThread != null) {
-            synchronized (queue) {
-                queue.clear();
-                queue.addLast(SHUTDOWNTASK);
-            }
+        synchronized (queue) {
+            queue.clear();
+            queue.addLast(SHUTDOWNTASK);
         }
     }
 
@@ -152,7 +154,11 @@ public class HsqlTaskQueue {
 
         if (taskRunnerThread != null) {
             taskRunnerThread.interrupt();
-            shutdownAfterCurrent();
+        }
+
+        synchronized (queue) {
+            queue.clear();
+            queue.addLast(SHUTDOWNTASK);
         }
     }
 }

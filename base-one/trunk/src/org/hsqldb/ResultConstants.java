@@ -38,7 +38,7 @@ package org.hsqldb;
  * between the client and the engine when sending Result objects back
  * and forth.
  *
- * @author boucher@users.sourceforge.net
+ * @author boucherb@users
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */

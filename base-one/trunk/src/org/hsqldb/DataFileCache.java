@@ -75,6 +75,11 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.ZipUnzipFile;
 import org.hsqldb.rowio.RowOutputBase;
 
+/**
+ * Acts as a buffer manager for CACHED table Row data and Index structures.
+ *
+ * @version 1.7.2
+ */
 public class DataFileCache extends Cache {
 
     private static final int MAX_FREE_COUNT = 1024;
@@ -213,11 +218,7 @@ public class DataFileCache extends Cache {
                 File oldfile = new File(sName + ".old");
 
                 oldfile.delete();
-
-                // delete() may not succeed
-                // this line can be deleted to compile with 1.1
-                // the block will not be reached if run under 1.1
-                oldfile.deleteOnExit();
+                FileUtil.deleteOnExit(oldfile);
             }
 
             FileUtil.renameOverwrite(sName + ".new", sName);

@@ -82,8 +82,7 @@ List compiled by Andrew Knight (quozzbat@users)
 */
 
 /**
- *
- *
+ * The interface an HSQLDB TRIGGER must implement
  *
  * @author Peter Hudson
  * @version 1.7.2
@@ -106,8 +105,11 @@ public interface Trigger {
     int UPDATE_BEFORE_ROW = UPDATE_BEFORE + 2 * TriggerDef.NUM_TRIGGER_OPS;
 
     /**
+     * The method invoked upon each triggered action. <p>
+     *
      * When UPDATE triggers are fired, row1 contains the
-     * existing values of the table row and row2 contains the new values.<p>
+     * existing values of the table row and row2 contains the
+     * new values.<p>
      *
      * For INSERT triggers, row1 is null and row2 contains the
      * table row to be inserted.
@@ -118,10 +120,11 @@ public interface Trigger {
      * type contains the integer index id for trigger type, e.g.
      * TriggerDef.INSERT_AFTER (fredt@users)
      *
-     * @param trigName
-     * @param tabName
-     * @param row1
-     * @param row2
+     * @param trigName the name of the trigger
+     * @param tabName the name of the table upon which the
+     *      triggered action is occuring
+     * @param row1 the old row
+     * @param row2 the new row
      */
     public void fire(int type, String trigName, String tabName,
                      Object row1[], Object row2[]);

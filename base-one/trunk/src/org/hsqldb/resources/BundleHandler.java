@@ -51,7 +51,7 @@ import org.hsqldb.lib.HashMap;
  * exceptions result in null return values when attempting to retrieve a
  * resource. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */

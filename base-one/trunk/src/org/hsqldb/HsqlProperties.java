@@ -339,7 +339,7 @@ public class HsqlProperties {
 
     /**
      * Creates and populates a new HsqlProperties Object using a string
-     * such as "key1=value1;key2=value2" <p>
+     * such as "key1=value1;key2=value2". <p>
      *
      * The string that represents the = sign above is specified as pairsep
      * and the one that represents the semicolon is specified as delimiter,

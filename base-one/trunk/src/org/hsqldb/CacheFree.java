@@ -68,8 +68,8 @@
 package org.hsqldb;
 
 /**
- *  This class is essetially an object used to create a singly linked list
- *  of the free space available in a HSQL database file.
+ *  A singly linked list representing the free space available in an HSQLDB
+ *  database file.
  *
  * @version  1.7.0
  */

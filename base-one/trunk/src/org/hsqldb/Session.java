@@ -100,18 +100,21 @@ import org.hsqldb.store.ValuePool;
  */
 public class Session implements SessionInterface {
 
+    //
+    private volatile boolean isAutoCommit;
+    private volatile boolean isReadOnly;
+    private volatile boolean isClosed;
+
+    //
     private Database       database;
     private User           user;
     private HsqlArrayList  transactionList;
-    private boolean        isAutoCommit;
     private boolean        isNestedTransaction;
     private int            nestedOldTransIndex;
-    private boolean        isReadOnly;
     private int            currentMaxRows;
     private int            sessionMaxRows;
     private Number         iLastIdentity = ValuePool.getInt(0);
-    private boolean        isClosed;
-    private int            sessionId;
+    private final int      sessionId;
     private HashMappedList savepoints;
     private boolean        script;
     private jdbcConnection intConnection;
@@ -651,7 +654,7 @@ public class Session implements SessionInterface {
         return intConnection;
     }
 
-// boucherb@users.sf.net 20020810 metadata 1.7.2
+// boucherb@users 20020810 metadata 1.7.2
 //----------------------------------------------------------------
     private final long connectTime = System.currentTimeMillis();
 
@@ -951,10 +954,10 @@ public class Session implements SessionInterface {
     /**
      * Retrieves a MULTI Result describing three aspects of the
      * CompiledStatement prepared from the SQL argument for execution
-     * in this session context: <p>
+     * in this session context. <p>
      *
      * <ol>
-     * <li>An PREPARE_ACK mode Result describing id of the statement
+     * <li>A PREPARE_ACK mode Result describing id of the statement
      *     prepared by this request.  This is used by the JDBC implementation
      *     to later identify to the engine which prepared statement to execute.
      *
@@ -976,7 +979,7 @@ public class Session implements SessionInterface {
 
         int               csid = compiledStatementManager.getStatementID(sql);
         CompiledStatement cs   = compiledStatementManager.getStatement(csid);
-        Result            rsmd;
+        Result            rmd;
         Result            pmd;
 
         if (cs == null) {
@@ -993,10 +996,10 @@ public class Session implements SessionInterface {
 
         compiledStatementManager.linkSession(csid, sessionId);
 
-        rsmd = cs.describeResultSet();
-        pmd  = cs.describeParameters();
+        rmd = cs.describeResult();
+        pmd = cs.describeParameters();
 
-        return Result.newPrepareResponse(csid, rsmd, pmd);
+        return Result.newPrepareResponse(csid, rmd, pmd);
     }
 
     private Result sqlExecuteBatch(Result cmd) {
@@ -1246,7 +1249,7 @@ public class Session implements SessionInterface {
         };
 
         Object[] row = new Object[] {
-            database.getPath(), getUsername(), ValuePool.getInt(sessionId),
+            database.getURI(), getUsername(), ValuePool.getInt(sessionId),
             iLastIdentity, ValuePool.getBoolean(isAutoCommit),
             ValuePool.getBoolean(database.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)
@@ -1286,5 +1289,11 @@ public class Session implements SessionInterface {
         }
 
         return emptyUpdateCount;
+    }
+
+    // DatabaseMetaData.getURL should work as specified for
+    // internal connections too.   
+    public String getInternalConnectionURL() {
+        return DatabaseManager.S_URL_PREFIX + database.getURI();
     }
 }

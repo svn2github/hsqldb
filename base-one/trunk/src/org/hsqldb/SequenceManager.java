@@ -35,6 +35,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMappedList;
 
 /**
+ * Manages SEQUENCE objects for a Database instance. <p>
+ *
  * @author fredt@user
  * @version 1.7.2
  * @since 1.7.2

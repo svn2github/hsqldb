@@ -35,6 +35,13 @@ import org.hsqldb.lib.Iterator;
 
 import java.util.NoSuchElementException;
 
+/**
+ * The abstract base of all HSQLDB table implementations.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public abstract class BaseTable {
 
     public BaseTable() {}

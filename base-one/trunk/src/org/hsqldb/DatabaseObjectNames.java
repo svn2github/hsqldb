@@ -57,21 +57,23 @@ class DatabaseObjectNames {
         return (HsqlName) nameList.get(name);
     }
 
-    void addName(String name, HsqlName owner) throws HsqlException {
+    void addName(String name, HsqlName owner,
+                 int errorcode) throws HsqlException {
 
         // should not contain name
         if (containsName(name)) {
-            throw Trace.error(Trace.GENERAL_ERROR);
+            throw Trace.error(errorcode, name);
         }
 
         nameList.put(name, owner);
     }
 
-    void rename(String name, String newname) throws HsqlException {
+    void rename(String name, String newname,
+                int errorcode) throws HsqlException {
 
         HsqlName owner = (HsqlName) nameList.get(name);
 
-        addName(newname, owner);
+        addName(newname, owner, errorcode);
         nameList.remove(name);
     }
 

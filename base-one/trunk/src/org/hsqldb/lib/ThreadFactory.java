@@ -33,7 +33,7 @@ package org.hsqldb.lib;
 
 /**
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */

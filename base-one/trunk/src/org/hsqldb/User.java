@@ -100,6 +100,9 @@ class User {
     /** true if this user is the sys user. */
     private boolean isSys;
 
+    /** true if this user is the public user. */
+    private boolean isPublic;
+
     /** map with database object identifier keys and access privileges values */
     private IntValueHashMap rightsMap;
 
@@ -128,6 +131,7 @@ class User {
 
         isAdministrator = admin;
         isSys           = name.equals(UserManager.SYS_USER_NAME);
+        isPublic        = name.equals(UserManager.PUBLIC_USER_NAME);
         uPublic         = pub;
     }
 
@@ -325,6 +329,13 @@ class User {
      */
     boolean isSys() {
         return isSys;
+    }
+
+    /**
+     * Returns true if this User object represents the PUBLIC user
+     */
+    boolean isPublic() {
+        return isPublic;
     }
 
     /**

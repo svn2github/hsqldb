@@ -86,10 +86,9 @@ import org.hsqldb.lib.Iterator;
 // fredt@users 20031012 - patch 1.7.2 - SQL standard ORDER BY with UNION and other set queries
 
 /**
- * Class declaration
+ * The compiled representation of an SQL SELECT.
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class Select {
 
@@ -263,9 +262,12 @@ class Select {
 */
 
     /**
-     * Method declaration
-     * @param type
-     * @return
+     * Retruns a single value result or throws if the result has more than
+     * one row with one value.
+     *
+     * @param type data type
+     * @param session context
+     * @return the single valued result
      * @throws HsqlException
      */
     Object getValue(int type, Session session) throws HsqlException {
@@ -424,13 +426,14 @@ class Select {
     }
 
     /**
-     * maxrow may be 0 to indicate no limit on the number of rows, or -1
-     * to indicate 0 size result (used for pre-processing the selects in
-     * view statements. positive values limit the size of the result set.
+     * Retrieves the result of executing this Select.
      *
-     * @param maxrows
-     * @return
-     * @throws HsqlException
+     * @param maxrows may be 0 to indicate no limit on the number of rows, or
+     *      -1 to indicate 0 size result (used for pre-processing the selects
+     *      in view statements. Positive values limit the size of the
+     *      result set.
+     * @return the result of executing this Select
+     * @throws HsqlException if a database access error occurs
      */
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten

@@ -166,7 +166,7 @@ import org.hsqldb.resources.BundleHandler;
  *
  *        A full description of how
  *       <b>'[type]spec'</b> values are interpreted appears in the overview for
- *       {@link org.hsqldb.jdbcConnection jdbcConnection}. <p>
+ *       {@link org.hsqldb.jdbc.jdbcConnection jdbcConnection}. <p>
  *
  *   <li>The value assigned to <em>dbname.i</em> is taken to be the key used to
  *       look up the desired database instance and thus corresponds to the

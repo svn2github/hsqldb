@@ -67,6 +67,8 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.StringUtil;
+
 /**
  * Reusable object for processing LIKE queries.
  *
@@ -335,26 +337,22 @@ class Like {
 
     public String toString() {
 
-        return super.toString() + "[\n" + "bIgnoreCase=" + isIgnoreCase
-               + '\n' + "iLen=" + iLen + '\n' + "cLike="
-               + org.hsqldb.lib.StringUtil.arrayToString(cLike) + '\n'
-               + "iType="
-               + org.hsqldb.lib.StringUtil.arrayToString(wildCardType) + ']';
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(super.toString()).append("[\n");
+        sb.append("escapeChar=").append(escapeChar).append('\n');
+        sb.append("isNull=").append(isNull).append('\n');
+        sb.append("optimised=").append(optimised).append('\n');
+        sb.append("isIgnoreCase=").append(isIgnoreCase).append('\n');
+        sb.append("iLen=").append(iLen).append('\n');
+        sb.append("iFirstWildCard=").append(iFirstWildCard).append('\n');
+        sb.append("cLike=");
+        sb.append(StringUtil.arrayToString(cLike));
+        sb.append('\n');
+        sb.append("wildCardType=");
+        sb.append(StringUtil.arrayToString(wildCardType));
+        sb.append(']');
+
+        return sb.toString();
     }
-/*
-    static int indexOf(String s, int start, char search, String escape) {
-
-        // PRE:
-        // s != null
-        // s.length() > 0
-        // start >= 0 and start < s.length()
-        int pos = s.indexOf(search, start);
-
-        while (pos > -1 && s.regionMatches(pos - 1, escape, 0, 1)) {
-            pos = s.indexOf(search, pos + 1);
-        }
-
-        return pos;
-    }
-*/
 }

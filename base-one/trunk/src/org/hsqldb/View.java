@@ -38,7 +38,7 @@ import org.hsqldb.lib.Iterator;
 // fredt@users 20031227 - remimplementated as compiled query
 
 /**
- * Implementation of SQL VIEWS based on a SELECT query.
+ * Represents an SQL VIEW based on a SELECT statement.
  *
  * @author leptipre@users
  * @version 1.7.2
@@ -58,6 +58,15 @@ class View extends Table {
      */
     SubQuery[] viewSubqueries;
 
+    /**
+     * Constructor.
+     *
+     * @param db database
+     * @param name HsqlName of the view
+     * @param definition SELECT statement of the view
+     * @param columns array of HsqlName column names
+     * @throws HsqlException
+     */
     View(Database db, HsqlName name, String definition,
             HsqlName[] columns) throws HsqlException {
 
@@ -71,12 +80,8 @@ class View extends Table {
     }
 
     /**
-     * Tokenize the SELECT statement to get rid of any comment line that
-     * may exist at the end.
-     *
-     * @param s
-     *
-     * @throws HsqlException
+     * Returns the SELECT statement trimmed of any terminating SQL
+     * whitespace, separators or SQL comments.
      */
     static String trimStatement(String s) throws HsqlException {
 
@@ -95,6 +100,9 @@ class View extends Table {
         return s.substring(0, position).trim();
     }
 
+    /**
+     * Compiles the SELECT statement and sets up the columns.
+     */
     void compile() throws HsqlException {
 
         // create the working table
@@ -141,17 +149,22 @@ class View extends Table {
         }
     }
 
+    /**
+     * Returns the SELECT statement for the view.
+     */
     String getStatement() {
         return statement;
     }
 
+    /**
+     * Overridden to disable SET TABLE READONLY DDL for View objects.
+     */
     void setDataReadOnly(boolean value) throws HsqlException {
         throw Trace.error(Trace.NOT_A_TABLE);
     }
 
     /**
-     * Returns true if specified table is referenced by this view or any views
-     * that this view references.
+     * Returns true if the view references any column of the named table.
      */
     boolean hasTable(String table) {
 
@@ -173,7 +186,8 @@ class View extends Table {
     }
 
     /**
-     * Returns true if given column in table is in this view.
+     * Returns true if the view references the named column of the named table,
+     * otherwise false.
      */
     boolean hasColumn(String table, String colname) {
 

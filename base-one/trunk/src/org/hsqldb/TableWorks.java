@@ -193,7 +193,8 @@ class TableWorks {
 
         table.addConstraint(c);
         expTable.addConstraint(new Constraint(pkname, c));
-        table.database.constraintNameList.addName(name.name, table.getName());
+        table.database.constraintNameList.addName(name.name, table.getName(),
+                Trace.CONSTRAINT_ALREADY_EXISTS);
     }
 
 // fredt@users 20020315 - patch 1.7.0 - create index bug
@@ -245,7 +246,8 @@ class TableWorks {
         }
 
         table.database.indexNameList.addName(newindex.getName().name,
-                                             table.getName());
+                                             table.getName(),
+                                             Trace.INDEX_ALREADY_EXISTS);
         table.database.recompileViews(table.getName().name);
 
         return newindex;
@@ -291,7 +293,8 @@ class TableWorks {
         Constraint newconstraint = new Constraint(name, table, index);
 
         table.addConstraint(newconstraint);
-        table.database.constraintNameList.addName(name.name, table.getName());
+        table.database.constraintNameList.addName(name.name, table.getName(),
+                Trace.CONSTRAINT_ALREADY_EXISTS);
     }
 
     void createCheckConstraint(Constraint c,
@@ -324,7 +327,8 @@ class TableWorks {
         // removes reference to the Index object in filter
         c.core.checkFilter.setAsCheckFilter();
         table.addConstraint(c);
-        table.database.constraintNameList.addName(name.name, table.getName());
+        table.database.constraintNameList.addName(name.name, table.getName(),
+                Trace.CONSTRAINT_ALREADY_EXISTS);
     }
 
 // fredt@users 20020315 - patch 1.7.0 - drop index bug

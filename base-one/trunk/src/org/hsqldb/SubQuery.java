@@ -34,9 +34,11 @@ package org.hsqldb;
 import org.hsqldb.lib.ObjectComparator;
 
 /**
- * Subquery objects represent views or anonymous subqueries. The implementation
- * of ObjectComparator provides the correct order of materialization for
- * nested views / subqueries.
+ * Represents an SQL view or anonymous subquery (inline virtual table
+ * descriptor) nested within an SQL statement. <p>
+ *
+ * Implements {@link org.hsqldb.lib.ObjectComparator ObjectComparator} to
+ * provide the correct order of materialization for nested views / subqueries.
  *
  * @author boucherb@users
  * @author fredt@users

@@ -35,6 +35,9 @@ import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.jdbc.jdbcResultSet;
 
+// boucherb@users 200404xx - fixed broken CALL statement result set unwrapping;
+//                           fixed broken support for prepared SELECT...INTO
+
 /**
  * Provides execution of CompiledStatement objects. <p>
  *
@@ -44,7 +47,7 @@ import org.hsqldb.jdbc.jdbcResultSet;
  * is accomplished in Session.execute() by synchronizing on the Session
  * object's Database object.
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -154,16 +157,22 @@ final class CompiledStatementExecutor {
         Expression e = cs.expression;          // representing CALL
         Object     o = e.getValue(session);    // expression return value
         Result     r;
-        Object[]   row;
 
-        if (o instanceof Result) {
-            return (Result) o;
-        } else if (o instanceof jdbcResultSet) {
-            return ((jdbcResultSet) o).rResult;
+        if (o instanceof JavaObject) {    // then it might wrap a Result
+            Object wrapped = ((JavaObject) o).getObjectNoDeserialize();
+
+            if (wrapped instanceof Result) {
+                return (Result) wrapped;
+            } else if (wrapped instanceof jdbcResultSet) {
+                return ((jdbcResultSet) wrapped).rResult;
+            }
         }
 
-        r = Result.newSingleColumnResult("@0", e.getDataType());
-        row                      = new Object[1];
+        r = Result.newSingleColumnResult(DIProcedureInfo.RETURN_COLUMN_NAME,
+                                         e.getDataType());
+
+        Object[] row = new Object[1];
+
         row[0]                   = o;
         r.metaData.sClassName[0] = e.getValueClassName();
 
@@ -304,8 +313,7 @@ final class CompiledStatementExecutor {
 
     /**
      * Executes a SELECT statement.  It is assumed that the argument
-     * is of the correct type and that it does not represent a
-     * SELECT ... INTO statement.
+     * is of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.SELECT
      * @throws HsqlException if a database access error occurs
@@ -313,7 +321,19 @@ final class CompiledStatementExecutor {
      */
     private Result executeSelectStatement(CompiledStatement cs)
     throws HsqlException {
-        return cs.select.getResult(session.getMaxRows(), session);
+
+        Select select = cs.select;
+        Result result;
+
+        if (select.sIntoTable != null) {
+            result = session.dbCommandInterpreter.processSelectInto(select);
+
+            session.getDatabase().setMetaDirty(false);
+        } else {
+            result = select.getResult(session.getMaxRows(), session);
+        }
+
+        return result;
     }
 
     /**

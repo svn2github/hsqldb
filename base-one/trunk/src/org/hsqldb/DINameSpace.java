@@ -41,40 +41,31 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
 
+// boucherb@users - 2004xxxx - patch 1.7.2
+// -- canonical database uri for catalog name reporting
+// -- enumXXX methods to iterateXXX
+// -- simple support for SEQUENCE schema reporting 
+// -- report built-in procedures/procedure columns without dependency on user grants;
+
 /**
- * Provides catalog and schema name related definitions and functionality,
- * as well as accessibility, enumeration and alias mapping functions regarding
- * Java Classes and Methods within the context of this name space. <p>
+ * Provides catalog and schema related definitions and functionality. <p>
  *
- * @author  boucherb@users.sourceforge.net
+ * Additional features include accessibility tests, class loading, filtered
+ * iteration and inverted alias mapping functionality regarding Java Classes
+ * and Methods defined within the context of this database name space support
+ * object. <p>
+ *
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-
-/** @todo fredt - move Trace.doAssert() literals to Trace */
 final class DINameSpace {
 
     /** The Database for which the name space functionality is provided */
     private Database database;
 
-// NO:   Properties are not initialized until log open, but DatabaseInformation
-//       must be constructed before this happens to provide at least
-//       structurally complete (if not contentful) system tables, just in case
-//       there are views referencing them.  Better just to check the
-//       database properties each time, as we might decide to introduce SQL
-//       syntax to allow these values to change at runtime.  New methods,
-//       isReportCatalogs() and isReportSchemas() have been introduced to do
-//       this.
-// TODO: Make this more efficient.  It seems like we've gone back a step,
-//       since hitting the database properties object for every row of almost
-//       every system table seems like a big waste of CPU.  Consider messaging
-//       this object any time there is a change instead?
-//
-//    /** controls reporting of Catalog */
-//    private boolean reportCatalogs;
-//
-//    /** Controls reporting of Schema */
-//    private boolean reportSchemas;
+    /** The catalog name reported by this namespace */
+    private String catalogName;
 
     /**
      * Set { <code>Class</code> FQN <code>String</code> objects }. <p>
@@ -111,7 +102,7 @@ final class DINameSpace {
     private static final int INFO_SCHEMA_DOT_LEN = INFO_SCHEMA_DOT.length();
 
     /** The <code>PUBLIC</code> schema name. */
-    static final String PUB_SCHEMA = "PUBLIC";
+    static final String PUB_SCHEMA = UserManager.PUBLIC_USER_NAME;
 
     /**
      * The <code>PUBLIC</code> schema name plus the schema
@@ -133,7 +124,6 @@ final class DINameSpace {
         sysSchemas.add(INFO_SCHEMA);
         sysSchemas.add(PUB_SCHEMA);
         builtin.add("org.hsqldb.Library");
-        builtin.add("org.hsqldb.DatabaseClassLoader");
         builtin.add("java.lang.Math");
     }
 
@@ -147,16 +137,12 @@ final class DINameSpace {
      */
     public DINameSpace(Database database) throws HsqlException {
 
-        HsqlProperties p;
-
-        Trace.doAssert(database != null, "database is null");
-
-        this.database = database;
-
-// NO:  This is too early
-//        p              = database.getProperties();
-//        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs");
-//        reportSchemas  = p.isPropertyTrue("hsqldb.schemas");
+        try {
+            this.database    = database;
+            this.catalogName = database.getURI();
+        } catch (Exception e) {
+            Trace.throwerror(Trace.GENERAL_ERROR, e.toString());
+        }
     }
 
     /**
@@ -173,9 +159,9 @@ final class DINameSpace {
 
         try {
             return classForName(fqn.substring(0, fqn.lastIndexOf('.')));
-        } catch (Exception e) {}
-
-        return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -193,61 +179,69 @@ final class DINameSpace {
     Class classForName(String name) throws ClassNotFoundException {
 
         try {
-            return (database.classLoader == null) ? Class.forName(name)
-                                                  : database.classLoader
-                                                  .loadClass(name);
+            if (database.classLoader == null) {
+                return Class.forName(name);
+            } else {
+                return database.classLoader.loadClass(name);
+            }
         } catch (NoClassDefFoundError err) {
             throw new ClassNotFoundException(err.toString());
         }
     }
 
     /**
-     * Retrieves an enumeration whose elements form the set of distinct
-     * names of all visible catalogs, relative to this object's database.
-     * If catalog reporting is turned off, then this is
-     * an empty enumeration. <p>
+     * Retrieves an <code>Iterator</code> whose elements form the set of
+     * distinct names of all visible catalogs, relative to this object's
+     * database. <p>
+     *
+     * If catalog reporting is turned off, then the empty Iterator is
+     * returned. <p>
      *
      * <b>Note:</b> in the present implementation, if catalog reporting is
-     * turned on, then the returned <code>Enumeration</code> object is a
-     * <code>SingletonEnumeration</code> whose single element is the name
-     * of this object's database; HSQLDB  currently does not support the
+     * turned on, then the iteration consists of a single element that is the
+     * uri of this object's database; HSQLDB  currently does not support the
      * concept a single engine hosting multiple catalogs. <p>
      *
-     * @return An enumeration of <code>String</code> objects naming all
-     *      visible catalogs, relative to this object's database.
+     * @return An Iterator whose elements are <code>String</code> objects
+     *      naming all visible catalogs, relative to this object's database.
      * @throws HsqlException never (reserved for future use)
      */
-    Iterator enumCatalogNames() throws HsqlException {
-        return isReportCatalogs() ? new WrapperIterator(database.getPath())
+    Iterator iterateCatalogNames() throws HsqlException {
+        return isReportCatalogs() ? new WrapperIterator(catalogName)
                                   : new WrapperIterator();
     }
 
     /**
-     * Retrieves an enumeration whose elements form the set of distinct names
-     * of system schemas visible in this object's database. If schema reporting
-     * is turned off, then this is an empty enumeration. <p>
+     * Retrieves an <code>Iterator</code> object whose elements form the set
+     * of distinct names of system schemas visible in this object's
+     * database. <p>
      *
-     * @return An enumeration of <code>String</code> objects naming the
-     *      system schemas
+     * If schema reporting is turned off, then the empty Iterator is
+     * returned. <p>
+     *
+     * @return An <code>Iterator</code> whose elements are <code>String</code>
+     *      objects naming the system schemas
      * @throws HsqlException never (reserved for future use)
      */
-    Iterator enumSysSchemaNames() throws HsqlException {
+    Iterator iterateSysSchemaNames() throws HsqlException {
         return isReportSchemas() ? sysSchemas.iterator()
                                  : new WrapperIterator();
     }
 
     /**
-     * Retrieves an enumeration of the names of schemas visible in
-     * the context of the specified session. If schema reporting
-     * is turned off or a null session is specified, the this is
-     * an empty enumeration. <p>
+     * Retrieves an an <code>Iterator</code> object whose elements form the set
+     * of schema names visible in the context of the specified session. <p>
      *
-     * @return An enumeration of <code>Strings</code> naming the schemas
-     *      visible to the specified session
-     * @param session The context in which to provide the enumeration
+     * If schema reporting is turned off or a null session is specified,
+     * then the empty Iterator is returned. <p>
+     *
+     * @return An <code>Iterator</code> object whose elements are
+     *      <code>Strings</code> naming the schemas visible to the
+     *      specified session
+     * @param session The context in which to provide the iteration
      * @throws HsqlException if a database access error occurs
      */
-    Iterator enumVisibleSchemaNames(Session session) throws HsqlException {
+    Iterator iterateVisibleSchemaNames(Session session) throws HsqlException {
 
         HsqlArrayList users;
         HsqlArrayList userNames;
@@ -267,7 +261,7 @@ final class DINameSpace {
             userNames.add(u.getName());
         }
 
-        return new WrapperIterator(enumSysSchemaNames(),
+        return new WrapperIterator(iterateSysSchemaNames(),
                                    userNames.iterator());
     }
 
@@ -354,20 +348,21 @@ final class DINameSpace {
      * Retrieves the name of the catalog corresponding to the indicated
      * object. <p>
      *
-     * <B>Note:</B> the name of this object's database is returned whenever
-     * catalog reporting is turned on and a non-null parameter is specified.
+     * <B>Note:</B> the uri of this object's database is returned whenever
+     * catalog reporting is turned on. <p>
+     *
      * This a stub that will be used until such time (if ever) that the
      * engine actually supports the concept of multiple hosted
      * catalogs. <p>
      *
      * @return the name of specified object's qualifying catalog, or null if
-     *      the object is null or if catalog reporting is turned off.
+     *      catalog reporting is turned off.
      * @param o the object for which the name of its qualifying catalog
      *      is to be retrieved
      */
     String getCatalogName(Object o) {
-        return (!isReportCatalogs() || o == null) ? null
-                                                  : database.getPath();
+        return isReportCatalogs() ? catalogName
+                                  : null;
     }
 
     /**
@@ -413,7 +408,7 @@ final class DINameSpace {
     }
 
     /**
-     * Retrieves the fully qualified name of the specified Method object. <p>
+     * Retrieves the fully qualified name of the given Method object. <p>
      *
      * @param m The Method object for which to retreive the fully
      *      qualified name
@@ -424,6 +419,19 @@ final class DINameSpace {
         return m == null ? null
                          : m.getDeclaringClass().getName() + '.'
                            + m.getName();
+    }
+
+    /**
+     * Retrieves the specific name of the given Method object. <p>
+     *
+     * @param m The Method object for which to retreive the specific name
+     * @return the specific name of the specified Method object.
+     */
+    static String getMethodSpecificName(Method m) {
+
+        return m == null ? null
+                         : m.getDeclaringClass().getName() + '.'
+                           + DIProcedureInfo.getSignature(m);
     }
 
     /**
@@ -438,6 +446,10 @@ final class DINameSpace {
      *
      * <LI> if the specifed object is <code>null</code>, then <code>null</code>
      *      is returned immediately.
+     *
+     * <LI> if the specified object is an <code>org.hsqldb.NumberSequence</code>
+     *      instance, then it represents a SEQUENCE object and "PUBLIC" is
+     *      returned immediately.
      *
      * <LI> if the specified object is an <code>org.hsqldb.Table</code>
      *      instance and it is a system table, then "DEFINITION_SCHEMA" is
@@ -491,8 +503,12 @@ final class DINameSpace {
         Class c;
         Table table;
 
-        if (!isReportSchemas() || o == null) {
+        if (o == null ||!isReportSchemas()) {
             return null;
+        }
+
+        if (o instanceof NumberSequence) {
+            return PUB_SCHEMA;
         }
 
         if (o instanceof Table) {
@@ -540,6 +556,18 @@ final class DINameSpace {
         return (c == null) ? null
                            : isBuiltin(c) ? DEFN_SCHEMA
                                           : PUB_SCHEMA;
+    }
+
+    /**
+     * Adds to the given Set the fully qualified names of the Class objects
+     * internally granted to PUBLIC in support of core operation.
+     *
+     * @param the HashSet to which to add the fully qualified names of
+     * the Class objects internally granted to PUBLIC in support of
+     * core operation.
+     */
+    void addBuiltinToSet(HashSet set) {
+        set.addAll(builtin.toArray(new String[builtin.size()]));
     }
 
     /**
@@ -658,12 +686,12 @@ final class DINameSpace {
     }
 
     /**
-     * Retrieves an <code>Enumeration</code> object describing the Java
+     * Retrieves an <code>Iterator</code> object describing the Java
      * <code>Method</code> objects that are both the entry points
      * to executable SQL database objects (such as SQL functions and
      * stored procedures) within the context of this name space. <p>
      *
-     * Each element of the <code>Enumeration</code> is an Object[3] array
+     * Each element of the <code>Iterator</code> is an Object[3] array
      * whose elements are: <p>
      *
      * <ol>
@@ -679,30 +707,30 @@ final class DINameSpace {
      * as long as its parameters and return type are compatible with the
      * engine's supported SQL type / Java <code>Class</code> mappings. <p>
      *
-     * @return <code>Enumeration</code> object whose elements represent the set
+     * @return An <code>Iterator</code> object whose elements form the set
      *        of distinct <code>Method</code> objects accessible as
      *        executable as SQL routines within the current execution
      *        context.<p>
      *
-     *        Elements are <code>Object[]</code> instances, with [0] being a
+     *        Elements are <code>Object[3]</code> instances, with [0] being a
      *        <code>Method</code> object, [1] being an alias list object and
      *        [2] being the <code>String</code> "ROUTINE"<p>
      *
      *        If the <code>Method</code> object at index [0] has aliases,
      *        and the <code>andAliases</code> parameter is specified
-     *        as <code>true</code>, then there is an alias list
+     *        as <code>true</code>, then there is an HsqlArrayList
      *        at index [1] whose elements are <code>String</code> objects
      *        whose values are the SQL call aliases for the method.
      *        Otherwise, the value of index [1] is <code>null</code>.
      * @param className The fully qualified name of the class for which to
-     *        retrive the enumeration
+     *        retrieve the iteration
      * @param andAliases if <code>true</code>, alias lists for qualifying
      *        methods are additionally retrieved.
      * @throws HsqlException if a database access error occurs
      *
      */
-    Iterator enumRoutineMethods(String className,
-                                boolean andAliases) throws HsqlException {
+    Iterator iterateRoutineMethods(String className,
+                                   boolean andAliases) throws HsqlException {
 
         Class         clazz;
         Method[]      methods;
@@ -713,14 +741,14 @@ final class DINameSpace {
         HsqlArrayList methodList;
         HashMap       invAliasMap;
 
-        invAliasMap = andAliases ? getInverseAliasMap()
-                                 : null;
-
         try {
             clazz = classForName(className);
         } catch (ClassNotFoundException e) {
             return new WrapperIterator();
         }
+
+        invAliasMap = andAliases ? getInverseAliasMap()
+                                 : null;
 
         // we are interested in inherited methods too,
         // so we use getDeclaredMethods() first.
@@ -756,28 +784,29 @@ final class DINameSpace {
             methodList.add(info);
         }
 
-        // return the enumeration
+        // return the iterator
         return methodList.iterator();
     }
 
     /**
-     * Retrieves an <code>Enumeration</code> object describing the
+     * Retrieves an <code>Iterator</code> object describing the
      * fully qualified names of all Java <code>Class</code> objects
      * that are both trigger body implementations and that are accessible
      * (whose fire method can potentially be invoked) by actions upon this
      * object's database by the specified <code>User</code>. <p>
      *
      * @param user the <code>User</code> for which to retrieve the
-     *      <code>Enumeration</code>
+     *      <code>Iterator</code>
      * @throws HsqlException if a database access error occurs
-     * @return an <code>Enumeration</code> object describing the
+     * @return an <code>Iterator</code> object describing the
      *        fully qualified names of all Java <code>Class</code>
      *        objects that are both trigger body implementations
      *        and that are accessible (whose fire method can
      *        potentially be invoked) by actions upon this object's database
      *        by the specified <code>User</code>.
      */
-    Iterator enumAccessibleTriggerClassNames(User user) throws HsqlException {
+    Iterator iterateAccessibleTriggerClassNames(User user)
+    throws HsqlException {
 
         Table           table;
         Class           clazz;
@@ -832,25 +861,25 @@ final class DINameSpace {
     }
 
     /**
-     * Retrieves an <code>Enumeration</code> object describing the distinct
+     * Retrieves an <code>Iterator</code> object describing the distinct
      * Java <code>Method</code> objects that are both the entry points
      * to trigger body implementations and that are accessible (can potentially
      * be fired) within the execution context of User currently
      * represented by the specified session. <p>
      *
-     * The elements of the Enumeration have the same format as those for
-     * {@link #enumRoutineMethods}, except that position [1] of each
+     * The elements of the Iterator have the same format as those for
+     * {@link #iterateRoutineMethods}, except that position [1] of each
      * Object[] element is always null (there are no aliases for trigger bodies)
      * and position [2] is always "TRIGGER". <p>
-     * @return an <code>Enumeration</code> object describing the Java
+     * @return an <code>Iterator</code> object describing the Java
      *      <code>Method</code> objects that are both the entry points
      *      to trigger body implementations and that are accessible (can
      *      potentially be fired) within the execution context of User
      *      currently represented by the specified session.
-     * @param session The context in which to produce the enumeration
+     * @param session The context in which to produce the iteration
      * @throws HsqlException if a database access error occurs.
      */
-    Iterator enumAccessibleTriggerMethods(Session session)
+    Iterator iterateAccessibleTriggerMethods(Session session)
     throws HsqlException {
 
         Table           table;
@@ -933,41 +962,44 @@ final class DINameSpace {
     }
 
     /**
-     * Retrieves a composite enumeration consisting of the elements from
-     * {@link #enumRoutineMethods} for each Class granted to the
-     * specified session and {@link #enumAccessibleTriggerMethods} for
+     * Retrieves a composite <code>Iterator</code> consisting of the elements
+     * from {@link #iterateRoutineMethods} for each Class granted to the
+     * specified session and from {@link #iterateAccessibleTriggerMethods} for
      * the specified session. <p>
      *
-     * @return a composite enumeration consisting of the elements from
-     *      {@link #enumRoutineMethods} and
-     *      {@link #enumAccessibleTriggerMethods}
-     * @param session The context in which to produce the enumeration
+     * @return a composite <code>Iterator</code> consisting of the elements
+     *      from {@link #iterateRoutineMethods} and
+     *      {@link #iterateAccessibleTriggerMethods}
+     * @param session The context in which to produce the iterator
      * @param andAliases true if the alias lists for the "ROUTINE" type method
      *      elements are to be generated.
      * @throws HsqlException if a database access error occurs
      */
-    Iterator enumAllAccessibleMethods(Session session,
-                                      boolean andAliases)
-                                      throws HsqlException {
+    Iterator iterateAllAccessibleMethods(Session session,
+                                         boolean andAliases)
+                                         throws HsqlException {
 
         Iterator out;
+        HashSet  classNameSet;
         Iterator classNames;
         Iterator methods;
         String   className;
 
-        out = new WrapperIterator(
-            enumRoutineMethods("org.hsqldb.Library", andAliases),
-            enumRoutineMethods("java.Math", andAliases));
-        classNames = session.getGrantedClassNames(true).iterator();
+        out          = new WrapperIterator();
+        classNameSet = session.getGrantedClassNames(true);
+
+        addBuiltinToSet(classNameSet);
+
+        classNames = classNameSet.iterator();
 
         while (classNames.hasNext()) {
             className = (String) classNames.next();
-            methods   = enumRoutineMethods(className, andAliases);
+            methods   = iterateRoutineMethods(className, andAliases);
             out       = new WrapperIterator(out, methods);
         }
 
         return new WrapperIterator(out,
-                                   enumAccessibleTriggerMethods(session));
+                                   iterateAccessibleTriggerMethods(session));
     }
 
     /**

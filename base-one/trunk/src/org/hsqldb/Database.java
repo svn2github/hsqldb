@@ -100,6 +100,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
 // boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users - fredt@users 200305..200307 - patch 1.7.2 - DatabaseManager upgrade
+// loosecannon1@users - patch 1.7.2 - properties on the JDBC URL
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -129,15 +130,17 @@ public class Database {
     /** indicates the state of the database */
     private int dbState;
     Logger      logger;
-    boolean     databaseReadOnly;    // all tables are readonly
 
-// ----------------------------------------------------------------------------
-// akede@users - 1.7.2 patch Files readonly
+    /** true means that all tables are readonly. */
+    boolean databaseReadOnly;
 
-    /** true means that all file based table will automaticly become readonly */
-    boolean filesReadOnly;           // cached tables are readonly
+    /**
+     * true means that all CACHED and TEXT tables are readonly.
+     *  MEMORY tables are updatable but updates are not persisted.
+     */
+    boolean filesReadOnly;
 
-// ----------------------------------------------------------------------------
+    /** true means filesReadOnly but CACHED and TEXT tables are disallowed */
     boolean                        filesInJar;
     boolean                        sqlEnforceSize;
     boolean                        sqlEnforceStrictSize;
@@ -165,7 +168,7 @@ public class Database {
     /**
      *  Constructs a new Database object.
      *
-     * @param name is an identifier for the database, for future use
+     * @param type is the type of the database: "mem", "file", "res"
      * @param path is the canonical path to the database files
      * @param ifexists if true, prevents creation of a new database if it
      * does not exist. Only valid for file-system databases.
@@ -174,8 +177,6 @@ public class Database {
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     Database(String type, String path, String name, boolean ifexists,
              HsqlProperties props) throws HsqlException {
 
@@ -218,9 +219,6 @@ public class Database {
 
     /**
      * Opens this database.  The database should be opened after construction.
-     *
-     * @see #close(int closemode)
-     * @throws HsqlException if a database access error occurs
      */
     synchronized void open() throws HsqlException {
 
@@ -235,8 +233,6 @@ public class Database {
      * Opens this database.  The database should be opened after construction.
      * or reopened by the close(int closemode) method during a
      * "shutdown compact". Closes the log if there is an error.
-     *
-     * @throws HsqlException if a database access error occurs
      */
     void reopen() throws HsqlException {
 
@@ -293,6 +289,9 @@ public class Database {
         setState(DATABASE_ONLINE);
     }
 
+    /**
+     * Clears the data structuress, making them elligible for garbage collection.
+     */
     void clearStructures() {
 
         isNew              = false;
@@ -309,31 +308,28 @@ public class Database {
     }
 
     /**
-     *  Name is a lowercase identifier.
-     *
-     * @return  this Database object's name
+     *  Returns the type of the database: "mem", "file", "res"
      */
     String getType() {
         return sType;
     }
 
+    /**
+     *  Returns the path of the database
+     */
     String getPath() {
         return sPath;
     }
 
     /**
-     *  Retrieves this Database object's properties.
-     *
-     * @return  this Database object's properties object
+     *  Returns the database properties.
      */
     HsqlDatabaseProperties getProperties() {
         return databaseProperties;
     }
 
     /**
-     *  isShutdown attribute getter.
-     *
-     * @return  the value of this Database object's isShutdown attribute
+     *  Returns true if database has been shut down, false otherwise
      */
     synchronized boolean isShutdown() {
         return dbState == DATABASE_SHUTDOWN;
@@ -346,15 +342,7 @@ public class Database {
      *  If successful, the new Session object initially operates on behalf of
      *  the user specified by the supplied user name.
      *
-     * @param  username the name of the initial user of this session. The user
-     *      must already exist in this Database object.
-     * @param  password the password of the specified user. This must match
-     *      the password, as known to this Database object, of the specified
-     *      user
-     * @return  a new Session object that initially that initially operates on
-     *      behalf of the specified user
-     * @throws  HsqlException if the specified user does not exist or a bad
-     *      password is specified
+     * Throws if username or password is invalid.
      */
     synchronized Session connect(String username,
                                  String password) throws HsqlException {
@@ -369,7 +357,7 @@ public class Database {
     }
 
     /**
-     *  Puts this Database object in global read-only mode. That is, after
+     *  Puts this Database object in global read-only mode. After
      *  this call, all existing and future sessions are limited to read-only
      *  transactions. Any following attempts to update the state of the
      *  database will result in throwing an HsqlException.
@@ -379,97 +367,74 @@ public class Database {
         filesReadOnly    = true;
     }
 
-// ----------------------------------------------------------------------------
-// akede@users - 1.7.2 patch Files readonly
-
     /**
-     * Puts this Database object in a special read-only mode that only
-     * affects file bases tables such as cached or text tables.
-     * After this call all tables that use a file based format will automaticly
-     * be set to read-only modus.
-     * All changes that are done to memory based tables (e.g. Temp-Tables or
-     * normal Memory-Tables will <b>NOT</b> be stored or updated in the script
-     * file.
-     * This mode is special for all uses on read-only media but with the need
-     * of using Temp-Tables for queries or not persistent changes.
+     * After this call all CACHED and TEXT tables will be set to read-only
+     * mode. Changes to MEMORY tables will NOT
+     * be stored or updated in the script file. This mode is intended for
+     * use with read-only media where data should not be persisted.
      */
     void setFilesReadOnly() {
         filesReadOnly = true;
     }
 
+    /**
+     * Is this in filesReadOnly mode?
+     */
     boolean isFilesReadOnly() {
         return filesReadOnly;
     }
 
+    /**
+     * Is this in filesInJar mode?
+     */
     public boolean isFilesInJar() {
         return filesInJar;
     }
 
     /**
-     *  Retrieves a HsqlArrayList containing references to all non-system
+     *  Returns an HsqlArrayList containing references to all non-system
      *  tables and views. This includes all tables and views registered with
-     *  this Database object via a call to {@link #linkTable linkTable}.
-     *
-     * @return  a HsqlArrayList of all registered non-system tables and views
+     *  this Database.
      */
     public HsqlArrayList getTables() {
         return tTable;
     }
 
     /**
-     *  Retrieves the UserManager object for this Database.
-     *
-     * @return  UserManager object
+     *  Returns the UserManager for this Database.
      */
     UserManager getUserManager() {
         return userManager;
     }
 
     /**
-     *  isReferentialIntegrity attribute setter.
-     *
-     * @param  ref if true, this Database object enforces referential
-     *      integrity, else not
+     *  Sets the isReferentialIntegrity attribute.
      */
     public void setReferentialIntegrity(boolean ref) {
         bReferentialIntegrity = ref;
     }
 
     /**
-     *  isReferentialIntegrity attribute getter.
-     *
-     * @return  indicates whether this Database object is currently enforcing
-     *      referential integrity
+     *  Is referential integrity currently enforced?
      */
     boolean isReferentialIntegrity() {
         return bReferentialIntegrity;
     }
 
     /**
-     *  Retrieves a map from Java method-call name aliases to the
+     *  Returns a map from Java method-call name aliases to the
      *  fully-qualified names of the Java methods themsleves.
-     *
-     * @return  a map in the form of a HashMap
      */
     HashMap getAlias() {
         return hAlias;
     }
 
     /**
-     *  Retieves a Java method's fully qualified name, given a String that is
-     *  supposedly an alias for it. <p>
-     *
-     *  This is somewhat of a misnomer, since it is not an alias that is being
-     *  retrieved, but rather what the supplied alias maps to. If the
-     *  specified alias does not map to any registered Java method
-     *  fully-qualified name, then the specified String itself is returned.
-     *
-     * @param  s a call name alias that supposedly maps to a registered Java
-     *      method
-     * @return  a Java method fully-qualified name, or null if no method is
-     *      registered with the given alias
+     *  Returns the fully qualified name for the Java method corresponding to
+     *  the given method alias. If there is no Java method, then returns the
+     *  alias itself.
      */
-    String getAlias(String s) {
+    String getJavaName(String s) {
 
         String alias = (String) hAlias.get(s);
 
@@ -481,14 +446,10 @@ public class Database {
 // temp tables should be accessed by the owner and not scripted in the log
 
     /**
-     *  Retrieves the specified user-defined table or view visible within the
+     *  Retruns the specified user-defined table or view visible within the
      *  context of the specified Session, or any system table of the given
-     *  name. This excludes any temp tables created in different Sessions.
-     *
-     * @param  name of the table or view to retrieve
-     * @param  session the Session within which to search for user tables
-     * @return  the user table or view, or system table
-     * @throws  HsqlException if there is no such table or view
+     *  name. It excludes any temp tables created in different Sessions.
+     *  Throws if the table does not exist in the context.
      */
     public Table getTable(String name, Session session) throws HsqlException {
 
@@ -506,19 +467,10 @@ public class Database {
     }
 
     /**
-     * Retrieves the user table object with the specified
-     * name from this datbase, using the specified session
-     * context. In particular, this method will succeed iff
-     * such a table exists <i>and</i> it is considered visible
-     * by the specified session.
-     *
-     * @param name of the table to retrieve
-     * @param session the retrieval context
-     * @return the user table object with the specified
-     *      name
-     * @throws HsqlException if the user table object with the specified
-     *      name cannot be found, given the specified
-     *      session context
+     *  Retruns the specified user-defined table or view visible within the
+     *  context of the specified Session. It excludes system tables and
+     *  any temp tables created in different Sessions.
+     *  Throws if the table does not exist in the context.
      */
     Table getUserTable(String name, Session session) throws HsqlException {
 
@@ -532,33 +484,9 @@ public class Database {
     }
 
     /**
-     * Retrieves the user table object with the specified
-     * name from this datbase.
-     *
-     * @param name of the table to retrieve
-     * @return the user table object with the specified
-     *      name
-     * @throws HsqlException if the user table object with the specified
-     *      name cannot be found
-     */
-    Table getUserTable(String name) throws HsqlException {
-
-        Table t = findUserTable(name);
-
-        if (t == null) {
-            throw Trace.error(Trace.TABLE_NOT_FOUND, name);
-        }
-
-        return t;
-    }
-
-    /**
-     * Retrieves the user table object with the specified
-     * name from this datbase.
-     *
-     * @param name of the table to retrieve
-     * @return the user table object with the specified
-     *  name, or null if not found
+     *  Retruns the specified user-defined table or view. It excludes system
+     *  tables and all temp tables.
+     *  Returns null if the table does not exist.
      */
     Table findUserTable(String name) {
 
@@ -576,15 +504,10 @@ public class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
-     * Retrieves the user table object with the specified
-     * name from this datbase, using the specified session
-     * context. In particular, this method will succeed iff
-     * such a table exists <i>and</i> it is considered visible
-     * by the specified session.
-     * @param name of the table to retrieve
-     * @param session the retrieval context
-     * @return the user table object with the specified
-     *  name, or null if not found
+     *  Retruns the specified user-defined table or view visible within the
+     *  context of the specified Session. It excludes system tables and
+     *  any temp tables created in different Sessions.
+     *  Returns null if the table does not exist in the context.
      */
     Table findUserTable(String name, Session session) {
 
@@ -600,42 +523,32 @@ public class Database {
     }
 
     /**
-     *  Attempts to register the specified table or view with this Database
-     *  object.
-     *
-     * @param  t the table of view to register
-     * @throws  HsqlException if there is a problem
+     *  Registers the specified table or view with this Database.
      */
-    void linkTable(Table t) throws HsqlException {
+    void linkTable(Table t) {
         tTable.add(t);
     }
 
     /**
-     * Setter for the isIgnoreCase attribute.
-     * @param b the new value for the isIgnoreCase attribute
+     * Sets the database to treat any new VARCHAR column declarations as
+     * VARCHAR_IGNORECASE.
      */
     void setIgnoreCase(boolean b) {
         bIgnoreCase = b;
     }
 
     /**
-     *  isIgnoreCase attribute getter.
-     *
-     * @return  the value of this Database object's isIgnoreCase attribute
+     *  Does the database treat any new VARCHAR column declarations as
+     * VARCHAR_IGNORECASE.
      */
     boolean isIgnoreCase() {
         return bIgnoreCase;
     }
 
     /**
-     * Finds the table that has an index with the given name in the
-     * whole database and visible in this session.
-     *
-     * @param name of index
-     * @param session visibility context
-     * @return the table that encloses the index with the specific name,
-     *      or null if the table or index are not visible in the specified
-     *      session context
+     * Returns the table that has an index with the given name in the
+     * whole database and is visible in this session.
+     * Returns null if not found.
      */
     Table findUserTableForIndex(String name, Session session) {
 
@@ -649,8 +562,8 @@ public class Database {
     }
 
     /**
-     *  Retrieves the index of a table or view in the HsqlArrayList that
-     *  contains these objects for this Database.
+     *  Returns index of a table or view in the HsqlArrayList that
+     *  contains the table objects for this Database.
      *
      * @param  table the Table object
      * @return  the index of the specified table or view, or -1 if not found
@@ -674,8 +587,8 @@ public class Database {
      * @param  ifExists if true and if the Index to drop does not exist, fail
      *      silently, else throw
      * @param session the execution context
-     * @throws HsqlException if the index does not exist, the session lacks the permission
-     *        or the operation violates database integrity
+     * @throws HsqlException if the index does not exist, the session lacks
+     *        the permission or the operation violates database integrity
      */
     void dropIndex(String indexname, boolean ifExists,
                    Session session) throws HsqlException {
@@ -702,6 +615,9 @@ public class Database {
         tw.dropIndex(indexname);
     }
 
+    /**
+     * Returns the SessionManager for the database.
+     */
     SessionManager getSessionManager() {
         return sessionManager;
     }
@@ -722,12 +638,6 @@ public class Database {
         }
     }
 
-    // tony_lai@users 20020820
-    // The database re-open and close has been moved from
-    // Log#close(int closemode) for saving memory usage.
-    // Doing so the instances of Log and other objects are no longer
-    // referenced, and therefore can be garbage collected if necessary.
-
     /**
      *  Closes this Database using the specified mode. <p>
      *
@@ -744,10 +654,6 @@ public class Database {
      *       for all CACHED table before the normal checkpoint process
      *       which in turn creates a new, compact *.data file.
      * </ol>
-     *
-     * @param  closemode which type of close to perform
-     * @throws  HsqlException if a database access error occurs
-     * @see Logger#closeLog(int)
      */
     void close(int closemode) throws HsqlException {
 
@@ -781,7 +687,7 @@ public class Database {
         clearStructures();
         setState(DATABASE_SHUTDOWN);
 
-        // fredt - this should change to avoid removing a db from the
+        // fredt - this could change to avoid removing a db from the
         // DatabaseManager repository if there are pending getDatabase()
         // calls
         DatabaseManager.removeDatabase(this);
@@ -794,8 +700,6 @@ public class Database {
     /**
      * Drops from this Database any temporary tables owned by the specified
      * Session.
-     *
-     * @param  ownerSession the owning context
      */
     void dropTempTables(Session ownerSession) {
 
@@ -1017,7 +921,7 @@ public class Database {
      *  referenced when enforcing referential integrity.
      *
      * @param  toDrop The table to which other tables may be holding keys.
-     *      This is typically a table that is in the process of being dropped.
+     *      This is a table that is in the process of being dropped.
      */
     void removeExportedKeys(Table toDrop) {
 
@@ -1040,11 +944,7 @@ public class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
-     *  Drops a trigger with the specified name from this Database
-     *
-     * @param name of the trigger to drop
-     * @param session execution context
-     * @throws HsqlException if a database access error occurs
+     *  Drops a trigger with the specified name in the given context.
      */
     void dropTrigger(String name, Session session) throws HsqlException {
 
@@ -1060,20 +960,18 @@ public class Database {
     }
 
     /**
-     * Ensures system table producer's table cache, if any, is set dirty.
-     * and up-to-date versions are
-     * generated if necessary in response to subsequent system table
-     * requests. <p>
+     * Ensures system table producer's table cache, if it exists, is set dirty.
+     * After this call up-to-date versions are generated in response to
+     * system table requests. <p>
      *
      * Also resets all prepared statements if a change to database structure
-     * can possibly affect any existing prepared statement's validdity.<p>
+     * can possibly affect any existing prepared statement's validity.<p>
      *
      * The argument is false if the change to the database structure does not
      * affect the prepared statement, such as when a new table is added.<p>
      *
-     * The argument is true when a table is dropped, altered or a permission
-     * was revoked. Also when an indes is added or dropped which affects the
-     * inner working of prepared statements.
+     * The argument is typically true when a database object is dropped,
+     * altered or a permission was revoked.
      *
      * @param  resetPrepared If true, reset all prepared statements.
      */
@@ -1159,5 +1057,32 @@ public class Database {
             default :
                 return "UNKNOWN";
         }
+    }
+
+// boucherb@users - 200403?? - patch 1.7.2 - metadata
+//------------------------------------------------------------------------------
+    private String uri;
+
+    /**
+     * Retrieves the uri portion of this object's in-process JDBC url.
+     *
+     * @return the uri portion of this object's in-process JDBC url
+     */
+    public String getURI() {
+
+        if (uri == null) {
+            String type = getType();
+            String path = getPath();
+
+            if ("file:".equals(type)) {
+
+// this should have been done when instantiating the database
+//                path = FileUtil.canonicalOrAbsolutePath(path);
+            }
+
+            uri = type + path;
+        }
+
+        return uri;
     }
 }

@@ -111,13 +111,14 @@ class Index {
      * Constructor declaration
      *
      *
-     * @param name of the index
-     * @param table of the index
-     * @param column column indexes
-     * @param type column types
-     * @param unique unique index
-     * @param constraint index belonging to a constraint
-     * @param forward an auto-index for an FK that refers to a table defined after this
+     * @param name HsqlName of the index
+     * @param table table of the index
+     * @param column array of column indexes
+     * @param type array of column types
+     * @param unique is this a unique index
+     * @param constraint does this index belonging to a constraint
+     * @param forward is this an auto-index for an FK that refers to a table defined after this table
+     * @param visColumns count of visible columns
      */
     Index(HsqlName name, Table table, int column[], int type[],
             boolean unique, boolean constraint, boolean forward,
@@ -139,20 +140,14 @@ class Index {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the root node
      */
     Node getRoot() {
         return root;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param r
+     * Set the root node
      */
     void setRoot(Node r) {
         root  = r;
@@ -160,94 +155,50 @@ class Index {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the HsqlName object
      */
     HsqlName getName() {
         return indexName;
     }
 
     /**
-     * Changes index name. Used by 'alter index rename to'
-     *
-     * @param name
-     * @param isquoted
+     * Changes index name. Used by 'alter index rename to'. Argument isquoted
+     * is true if the name was quoted in the DDL.
      */
     void setName(String name, boolean isquoted) throws HsqlException {
         indexName.rename(name, isquoted);
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the count of visible columns used
      */
     int getVisibleColumns() {
         return visibleColumns;
     }
 
     /**
-     * Is this a UNIQUE index.
-     * @return
+     * Is this a UNIQUE index?
      */
     boolean isUnique() {
         return isUnique;
     }
 
     /**
-     * Does this belong to a constraint.
-     * @return
+     * Does this index belong to a constraint?
      */
     boolean isConstraint() {
         return isConstraint;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns the array containing column indexes for index
      */
     int[] getColumns() {
         return colIndex;    // todo: this gives back also primary key field!
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param index
-     *
-     * @return
-     */
-
-// fredt@users 20020225 - patch 1.7.0 - compare two indexes
-    boolean isEquivalent(Index index) {
-
-        if (isUnique == index.isUnique
-                && colIndex.length == index.colIndex.length) {
-            for (int j = 0; j < colIndex.length; j++) {
-                if (colIndex[j] != index.colIndex[j]) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param i
-     *
-     * @throws HsqlException
+     * Insert a node into the index
      */
     void insert(Node i) throws HsqlException {
 
@@ -287,6 +238,9 @@ class Index {
         balance(x, isleft);
     }
 
+    /**
+     * Balances part of the tree after an alteration to the index.
+     */
     private void balance(Node x, boolean isleft) throws HsqlException {
 
         while (true) {
@@ -344,12 +298,7 @@ class Index {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param x
-     *
-     * @throws HsqlException
+     * Delete a node from the index
      */
     void delete(Node x) throws HsqlException {
 
@@ -517,14 +466,12 @@ class Index {
     }
 
     /**
-     * For finding foreign key referencing rows (in child table)
+     * Finds a foreign key referencing rows (in child table)
      *
-     * @param rowdata
-     * @param rowColMap
-     * @param first
-     *
-     * @return
-     *
+     * @param rowdata array containing data for the index columns
+     * @param rowColMap map of the data to columns
+     * @param first true if the first matching node is required, false if any node
+     * @return matching node or null
      * @throws HsqlException
      */
     Node findNotNull(Object rowdata[], int[] rowColMap,
@@ -568,13 +515,12 @@ class Index {
     }
 
     /**
-     * Find any row that matches the rowdata. Use rowColMap to map index
+     * Finds any row that matches the rowdata. Use rowColMap to map index
      * columns to rowdata. Limit to visible columns of data.
      *
-     *
-     * @param rowdata
-     * @param rowColMap
-     * @return
+     * @param rowdata array containing data for the index columns
+     * @param rowColMap map of the data to columns
+     * @return node matching node
      * @throws HsqlException
      */
     Node find(Object rowdata[], int[] rowColMap) throws HsqlException {
@@ -596,13 +542,13 @@ class Index {
         return null;
     }
 
-    boolean isNull(Object row[], int[] rowColMap) {
+    /**
+     * Determines if a table row has a null column for any of the columns given
+     * in the rowColMap array.
+     */
+    static boolean isNull(Object row[], int[] rowColMap) {
 
         int count = rowColMap.length;
-
-        if (count > visibleColumns) {
-            count = visibleColumns;
-        }
 
         for (int i = 0; i < count; i++) {
             if (row[rowColMap[i]] == null) {
@@ -614,18 +560,37 @@ class Index {
     }
 
     /**
+     * Determines if a table row has a null column for any of the indexed
+     * columns.
+     */
+    boolean isNull(Object row[]) {
+
+        int count = colIndex.length;
+
+        for (int i = 0; i < count; i++) {
+            int j = colIndex[i];
+
+            if (j < visibleColumns && row[j] == null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Return the first node equal to the rowdata object. Use visible columns
      * only. The rowdata has the same column mapping as this table.
      *
-     * @param rowdata
-     * @return
+     * @param rowdata array containing table row data
+     * @return matching node
      * @throws HsqlException
      */
     Node findFirst(Object rowdata[]) throws HsqlException {
 
         Node    x      = root;
         Node    found  = null;
-        boolean unique = isUnique &&!isNull(rowdata, colIndex);
+        boolean unique = isUnique &&!isNull(rowdata);
 
         while (x != null) {
             int c = compareRowNonUnique(rowdata, colIndex, x.getData());
@@ -652,11 +617,10 @@ class Index {
      * Finds the first node that is larger or equal to the given one based
      * on the first column of the index only.
      *
+     * @param value value to match
+     * @param compare comparison Expression type
      *
-     * @param value
-     * @param compare
-     *
-     * @return
+     * @return matching node
      *
      * @throws HsqlException
      */
@@ -741,7 +705,7 @@ class Index {
     /**
      * Finds the first node that is not null
      *
-     * @return
+     * @return matching node
      *
      * @throws HsqlException
      */
@@ -786,10 +750,9 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Return the first node of the index
      *
-     *
-     * @return
+     * @return first node
      *
      * @throws HsqlException
      */
@@ -811,12 +774,11 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Return the node after the given one
      *
+     * @param x node
      *
-     * @param x
-     *
-     * @return
+     * @return next node
      *
      * @throws HsqlException
      */
@@ -854,13 +816,12 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Returns either child node
      *
+     * @param x node
+     * @param isleft boolean
      *
-     * @param x
-     * @param isleft
-     *
-     * @return
+     * @return child node
      *
      * @throws HsqlException
      */
@@ -870,11 +831,10 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Replace two nodes
      *
-     *
-     * @param x
-     * @param n
+     * @param x node
+     * @param n node
      *
      * @throws HsqlException
      */
@@ -892,12 +852,11 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Set a node as child of another
      *
-     *
-     * @param x
-     * @param isleft
-     * @param n
+     * @param x parent node
+     * @param isleft boolean
+     * @param n child node
      *
      * @throws HsqlException
      */
@@ -915,12 +874,11 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * Find a node with matching data
      *
+     * @param d row data
      *
-     * @param d
-     *
-     * @return
+     * @return matching node
      *
      * @throws HsqlException
      */
@@ -944,7 +902,7 @@ class Index {
     }
 
     /**
-     * compares two table rows based on the columns of the index. The aColIndex
+     * Compares two table rows based on the columns of the index. The aColIndex
      * parameter specifies which columns of the other table are to be compared
      * with the colIndex columns of this index. The aColIndex can cover all
      * or only some columns of this index.
@@ -953,8 +911,7 @@ class Index {
      * @param rowColMap column indexes in the other table
      * @param b a full row in this table
      *
-     * @return
-     *
+     * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
     int compareRowNonUnique(Object a[], int[] rowColMap,
@@ -984,14 +941,12 @@ class Index {
     }
 
     /**
-     * compares two full table rows based on the columns of the index
-     *
+     * Compares two full table rows based on the columns of the index
      *
      * @param a a full row
      * @param b a full row
      *
-     * @return
-     *
+     * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
     private int compareRow(Object a[], Object b[]) throws HsqlException {
@@ -1018,12 +973,11 @@ class Index {
     /**
      * compares two full table rows based on a set of columns
      *
-     *
      * @param a a full row
      * @param b a full row
+     * @param cols array of column indexes to compare
      *
-     * @return
-     *
+     * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
     static int compareRows(Object a[], Object b[],
@@ -1043,13 +997,12 @@ class Index {
     }
 
     /**
-     * For inserting rows into unique indexes
+     * Compare two rows of the table for inserting rows into unique indexes
      *
+     * @param a data
+     * @param b data
      *
-     * @param a
-     * @param b
-     *
-     * @return
+     * @return comparison result, -1,0,+1
      *
      * @throws HsqlException
      */
@@ -1110,6 +1063,8 @@ class Index {
      *
      * Among a group of indexes, the order is based on the order of creation
      * of the index.
+     *
+     * @return ordinal value
      */
     int getIndexOrderValue() {
 

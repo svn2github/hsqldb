@@ -43,15 +43,16 @@ public class ArrayCounter {
 
     /**
      * Returns an int[] array of length segments containing the distribution
-     * count of elements in unsorted int[] array with values between min
-     * and max (range).<p>
+     * count of the elements in unsorted int[] array with values between min
+     * and max (range). Values outside the min-max reange are ignored<p>
      *
      * A usage example is determining the count of people of each age group
      * in a large int[] array containing the age of each person. Called with
      * (array, 16,0,79), it will return an int[16] with the first element
      * the count of people aged 0-4, the second element the count of those
-     * aged 5-9, and so on. If the range is not a multiple of segments, the
-     * last segment will be smaller that the rest.
+     * aged 5-9, and so on. People above the age of 79 are excluded. If the
+     * range is not a multiple of segments, the last segment will be cover a
+     * smaller sub-range than the rest.
      *
      */
     public static int[] countSegments(int[] array, int segments, int start,
@@ -89,7 +90,7 @@ public class ArrayCounter {
      * margin of error<p>
      *
      * In statistics, this can be used to calculate a median or quadrile value.
-     * A usage example applied to an array of age values is to determine,
+     * A usage example applied to an array of age values is to determine
      * the maximum age of a given number of people. With the example array
      * given in countSegments, rank(array, 6000, 18, 65) will return an age
      * value between 18-64 (inclusive) and the count of all people aged between
@@ -131,6 +132,11 @@ public class ArrayCounter {
         }
     }
 
+    /**
+     * Helper method to calculate the span of the sub-interval. Simply returns
+     * the cieling of ((limit - start) / segments) and accounts for invalid
+     * start and limit combinations.
+     */
     static long calcInterval(int segments, int start, int limit) {
 
         long range = limit - start;

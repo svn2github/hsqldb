@@ -58,7 +58,7 @@ import org.hsqldb.Trace;
  *
  * </span> <!-- end release-specific documentation -->
  *
- * @author  boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @since JDK 1.4, HSQLDB 1.7.2
  */
 public class jdbcSavepoint implements java.sql.Savepoint {

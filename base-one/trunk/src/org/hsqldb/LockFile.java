@@ -77,11 +77,11 @@ import org.hsqldb.lib.HsqlTimer;
  *        another process or a database in an inaccessible class loader context
  *        and signify that the attempt failed, else if the read value
  *        is less than <code>HEARTBEAT_INTERVAL</code> milliseconds into the
- *        past, assume that a lock condition is held by another process or a
- *        database in an inaccessible class loader context and signify that the
- *        lock attempt failed, else assume that the file is not in use, shedule
- *        a periodic heartbeat task and signify that the lock attempt was
- *        successful.<p>
+ *        past or futuer, assume that a lock condition is held by another
+ *        process or a database in an inaccessible class loader context and
+ *        signify that the lock attempt failed, else assume that the file is
+ *        not in use, schedule a periodic heartbeat task and signify that the
+ *        lock attempt was successful.<p>
  *
  *    </ul>
  * <li>The generic release attempt rules are:<p>
@@ -146,13 +146,13 @@ import org.hsqldb.lib.HsqlTimer;
  * and deploy <code>NIOLockFile</code> to the hsqldb.jar if such features are
  * reported present. </p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 public class LockFile {
 
-    /** Reference to this object's lock file. */
+    /** Canonical reference to this object's lock file. */
     protected File f;
 
     /** Cached value of the lock file's canonical path. */
@@ -183,13 +183,13 @@ public class LockFile {
     protected boolean locked;
 
     /**
-     * The the timed shceduler with which to register this object's
+     * The timed scheduler with which to register this object's
      * heartbeat task.
      */
     protected static final HsqlTimer timer = DatabaseManager.getTimer();
 
     /**
-     * And opaque reference to this object's heatbeat task.
+     * An opaque reference to this object's heatbeat task.
      */
     private Object timerTask;
 
@@ -213,7 +213,8 @@ public class LockFile {
      * <li>If no exception is thrown in 2.) or 3.), this method simply returns.
      * </ol>
      * @throws Exception if it must be presumed that another process
-     *        currently has a lock condition on this object's lock file
+     *        or isolated class loader context currently has a
+     *        lock condition on this object's lock file
      */
     private void checkHeartbeat() throws Exception {
 
@@ -306,8 +307,8 @@ public class LockFile {
             }
         }
 
-        f      = file;
-        cpath  = FileUtil.canonicalPath(f);
+        f      = FileUtil.canonicalFile(file);
+        cpath  = f.getPath();
         raf    = null;
         locked = false;
     }
@@ -354,20 +355,11 @@ public class LockFile {
     protected boolean lockImpl() throws Exception {
 
         String mn;
-        Method m;
 
         mn = "lockImpl(): ";
 
         trace(mn + "entered.");
-
-        try {
-            m = File.class.getMethod("deleteOnExit", new Class[]{});
-
-            m.invoke(f, new Object[]{});
-            trace(mn + "sucess for deleteOnExit: [" + cpath + "]");
-        } catch (Exception e) {
-            trace(mn + e);
-        }
+        FileUtil.deleteOnExit(f);
 
         return true;
     }
@@ -394,7 +386,7 @@ public class LockFile {
      *
      * @throws Exception if an error occurs while reading the hearbeat
      *      timestamp from this object's lock file.
-     * @return the he hearbeat timestamp from this object's lock file,
+     * @return the hearbeat timestamp from this object's lock file,
      *      as a <code>long</code> value or, if this object's lock
      *      file does not exist, Long.MIN_VALUE, the earliest time
      *      representable as a long in Java,
@@ -610,9 +602,9 @@ public class LockFile {
     }
 
     /**
-     * Retreives, as a String, the canonical path of this object's lock file.
+     * Retrieves, as a String, the canonical path of this object's lock file.
      *
-     * @return the absolute path of this object's lock file.
+     * @return the canonical path of this object's lock file.
      */
     public String getCanonicalPath() {
         return cpath;
@@ -758,7 +750,7 @@ public class LockFile {
     }
 
     /**
-     * Retreives an implementation-specific tail value for the
+     * Retrieves an implementation-specific tail value for the
      * toString() method. <p>
      *
      * The default implementation returns the empty string.

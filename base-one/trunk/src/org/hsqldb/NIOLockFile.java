@@ -38,7 +38,7 @@ import java.nio.channels.FileLock;
  * A LockFile variant that capitalizes upon the
  * availability of {@link java.nio.channels.FileLock FileLock}.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  *

@@ -45,6 +45,8 @@ import javax.sql.DataSource;
 
 import org.hsqldb.jdbcDriver;
 
+// boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
+
 /**
  * <p>A factory for connections to the physical data source that this
  * <code>DataSource</code> object represents.  An alternative to the
@@ -160,7 +162,9 @@ implements Serializable, Referenceable, DataSource {
     }
 
     /**
-     * Return database
+     * Retrieves the jdbc database connection url attribute. <p>
+     *
+     * @return the jdbc database connection url attribute
      */
     public String getDatabase() {
         return database;
@@ -206,6 +210,7 @@ implements Serializable, Referenceable, DataSource {
         return logWriter;
     }
 
+    // javadoc to be copied from javax.naming.Referenceable.getReference()
     public Reference getReference() throws NamingException {
 
         String    cname = "org.hsqldb.jdbc.jdbcDataSourceFactory";
@@ -219,14 +224,20 @@ implements Serializable, Referenceable, DataSource {
     }
 
     /**
-     * @return user ID for the connection
+     * Retrieves the user ID for the connection. <p>
+     *
+     * @return the user ID for the connection
      */
     public String getUser() {
         return user;
     }
 
     /**
-     * Set database location
+     * Assigns the value of this object's jdbc database connection
+     * url attribute. <p>
+     *
+     * @param database the new value of this object's jdbc database connection
+     *      url attribute
      */
     public void setDatabase(String database) {
         this.database = database;

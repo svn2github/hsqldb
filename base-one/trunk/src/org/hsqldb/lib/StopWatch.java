@@ -29,12 +29,10 @@
  */
 
 
-/*
- * StopWatch.java
- */
 package org.hsqldb.lib;
 
-/** Provides the programatic analog of a physical stop watch. <p>
+/**
+ * Provides the programatic analog of a physical stop watch. <p>
  *
  * The watch can be started, stopped and zeroed and can be queried for
  * elapsed running time.  The watch accumulates elapsed time over starts
@@ -42,7 +40,7 @@ package org.hsqldb.lib;
  * If the watch is zeroed, then the accumulated time is discarded and
  * the watch starts again with zero acumulated time. <p>
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

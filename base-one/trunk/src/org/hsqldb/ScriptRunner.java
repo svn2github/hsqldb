@@ -74,6 +74,15 @@ import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.scriptio.ScriptReaderBase;
 
+/**
+ * Restores the state of a Database instance from an SQL script. <p>
+ *
+ * The script file may be in one of several allowed encodings, currently
+ * including plain text, binary format and compressed binary format.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ */
 public class ScriptRunner {
 
     /**

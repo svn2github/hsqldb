@@ -717,7 +717,8 @@ class DatabaseCommandInterpreter {
         }
 
 // boucherb@users 20021128 - enforce unique trigger names
-        database.triggerNameList.addName(triggerName, t.getName());
+        database.triggerNameList.addName(triggerName, t.getName(),
+                                         Trace.TRIGGER_ALREADY_EXISTS);
 
 // --
     }
@@ -1236,15 +1237,15 @@ class DatabaseCommandInterpreter {
         try {
             session.commit();
 
-            Constraint primaryConst;
-
-            primaryConst = (Constraint) tempConstraints.get(0);
+            Constraint primaryConst = (Constraint) tempConstraints.get(0);
 
             if (primaryConst.constName != null) {
                 database.indexNameList.addName(primaryConst.constName.name,
-                                               t.getName());
+                                               t.getName(),
+                                               Trace.INDEX_ALREADY_EXISTS);
                 database.constraintNameList.addName(
-                    primaryConst.constName.name, t.getName());
+                    primaryConst.constName.name, t.getName(),
+                    Trace.CONSTRAINT_ALREADY_EXISTS);
             }
 
             t.createPrimaryKey(primaryConst.constName,
@@ -1364,7 +1365,7 @@ class DatabaseCommandInterpreter {
         // -- In a while loop we parse a maximium of two
         // -- "ON" statements following the foreign key
         // -- definition this can be
-        // -- ON [UPDATE|DELETE] [CASCADE|SET [NULL|DEFAULT]]
+        // -- ON [UPDATE|DELETE] [NO ACTION|RESTRICT|CASCADE|SET [NULL|DEFAULT]]
         int deleteAction = Constraint.NO_ACTION;
         int updateAction = Constraint.NO_ACTION;
 
@@ -1387,6 +1388,10 @@ class DatabaseCommandInterpreter {
                     }
                 } else if (token.equals(Token.T_CASCADE)) {
                     deleteAction = Constraint.CASCADE;
+                } else if (token.equals(Token.T_RESTRICT)) {
+
+                    // LEGACY compatibility/usability
+                    // - same as NO ACTION or nothing at all
                 } else {
                     tokenizer.getCurrentThis(Token.T_NO);
                     tokenizer.getThis(Token.T_ACTION);
@@ -1407,6 +1412,10 @@ class DatabaseCommandInterpreter {
                     }
                 } else if (token.equals(Token.T_CASCADE)) {
                     updateAction = Constraint.CASCADE;
+                } else if (token.equals(Token.T_RESTRICT)) {
+
+                    // LEGACY compatibility/usability
+                    // - same as NO ACTION or nothing at all
                 } else {
                     tokenizer.getCurrentThis(Token.T_NO);
                     tokenizer.getThis(Token.T_ACTION);
@@ -2488,7 +2497,8 @@ class DatabaseCommandInterpreter {
         session.setScripting(!t.isTemp());
         session.commit();
         t.getIndex(indexName).setName(newName, isQuoted);
-        database.indexNameList.rename(indexName, newName);
+        database.indexNameList.rename(indexName, newName,
+                                      Trace.INDEX_ALREADY_EXISTS);
     }
 
     /**
@@ -2709,8 +2719,6 @@ class DatabaseCommandInterpreter {
             }
         }
 
-        Table t = database.findUserTable(tableName, session);
-
         database.dropTable(tableName, ifExists, isView, session);
     }
 
@@ -2834,7 +2842,7 @@ class DatabaseCommandInterpreter {
                                    : classLoader.loadClass(fqn);
     }
 
-    private Result processSelectInto(Select select) throws HsqlException {
+    Result processSelectInto(Select select) throws HsqlException {
 
         Table        t;
         Result       r;

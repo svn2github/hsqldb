@@ -31,23 +31,26 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.StringUtil;
+
 /**
- * Representation of an instance of OTHER field data.<p>
+ * Represents of an instance of an OTHER field value. <p>
  *
- * Prior to 1.7.0 there were problems storing Objets of normal column types
+ * Prior to 1.7.0 there were problems storing Objects of normal column types
  * in columns of the type OTHER. In 1.7.0 changes were made to allow this,
  * but as all the conversion took place inside the engine, it introduced a
  * requirement for all classes for objects stored in OTHER columns to be
- * available in the class path of the engine.<p>
+ * available on the runtime class path of the engine. <p>
+ *
  * In 1.7.2, the introduction of real preprared statement support allows us
- * revert to the pre 1.7.0 behaviour without the artificial limitations.<b>
+ * revert to the pre 1.7.0 behaviour without the artificial limitations. <p>
  *
  * The classes for stored objects need not be available to open and operate
  * the database in general. The classes need to be available only if a
  * conversion from one of these objects to another type is performed inside
  * the engine while operating the database.
  *
- * Current limitation is that in SQL statements, values of type String
+ * The current limitation is that in SQL statements, values of type String
  * (CHARACTER and related SQL types) cannot be stored in columns of type
  * OTHER. This limitation does not exist for String values assigned to
  * PreparedStatement variables.
@@ -116,6 +119,30 @@ public class JavaObject {
         return object;
     }
 
+    /**
+     * Retrieves the deserialized (Object) form of the OTHER value this
+     * object represents, or null if the OTHER value is not already available
+     * for retrieval in deserialized form.
+     *
+     * The primary client of this method is
+     * CompiledStatementExecutor.executeCallStatement, wherein an attempt is
+     * made to determine if this object wraps a Result, in which case the
+     * Result is unwrapped and and used directly to present results through
+     * the JDBC client interfaces. <p>
+     *
+     * @return the deserialized form of the OTHER value this object represents,
+     *      or null if the OTHER value is not already available
+     *      for retrieval in deserialized form
+     */
+    Object getObjectNoDeserialize() {
+        return object;
+    }
+
+    /**
+     * Retrieves a String repsentation of this object.
+     *
+     * @return a String represntation of this object.
+     */
     public String toString() {
 
         String s = super.toString() + "[";

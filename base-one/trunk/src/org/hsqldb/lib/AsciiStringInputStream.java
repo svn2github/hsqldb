@@ -34,7 +34,7 @@ package org.hsqldb.lib;
 import java.io.IOException;
 
 /**
- * minimal InputStream subclass to fetch low order bytes form a String
+ * Minimal InputStream subclass to fetch low order bytes from a String.<p>
  *
  * @author fredt@users
  * @version 1.7.0

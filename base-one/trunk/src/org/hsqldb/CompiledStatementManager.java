@@ -40,11 +40,11 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  * This class manages the reuse of CompiledStatement objects for prepared
  * statements for a Database instance.<p>
  *
- * A compiled statement is registered by any session to be managed. Once
+ * A compiled statement is registered by a session to be managed. Once
  * registered, it is linked with one or more sessions.<p>
  *
- * The sql statement distinguishes different compiled statements and acts
- * as lookup when a session initially looks for an existing instance of
+ * The sql statement text distinguishes different compiled statements and acts
+ * as lookup key when a session initially looks for an existing instance of
  * the compiled sql statement.<p>
  *
  * Once a session is linked with a statement, it uses the uniqe compiled
@@ -62,13 +62,13 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  * is linked.  It unregisters a compiled statement when no session remains
  * linked to it.<p>
  *
- * Modified by fredt@users from the original to simplify, support multiple
- * identical prepared statements per session, and avoid keeping references
- * to CompiledStatement objects after DDL changes which could result in
- * memory leaks. <p>
+ * Modified by fredt@users from the original by boucherb@users to simplify,
+ * support multiple identical prepared statements per session, and avoid
+ * keeping references to CompiledStatement objects after DDL changes which
+ * could result in memory leaks. <p>
  *
  *
- * @author boucher@users.sourceforge.net
+ * @author boucherb@users
  * @author fredt@users
  *
  * @since 1.7.2
@@ -78,19 +78,23 @@ final class CompiledStatementManager {
 
     /**
      * The Database for which this object is managing
-     * CompiledStatementObjects.
+     * CompiledStatement objects.
      */
     Database database;
 
-    /** Map:  SQL String => Compiled Statement id */
+    /** Map:  SQL String => Compiled Statement id (int) */
     IntValueHashMap sqlMap;
-    IntKeyHashMap   sqlLookup;
 
-    /** Map: compiled statment id (int) => CompiledStatement object. */
+    /** Map: Compiled Statement id (int) => SQL String */
+    IntKeyHashMap sqlLookup;
+
+    /** Map: Compiled statment id (int) => CompiledStatement object. */
     IntKeyHashMap csidMap;
 
     /** Map: Session id (int) => Map: compiled statement id (int) => use count in session; */
-    IntKeyHashMap         sessionMap;
+    IntKeyHashMap sessionMap;
+
+    /** Map: Compiled statment id (int) => total use count (all sessions) */
     IntKeyIntValueHashMap useMap;
 
     /**
@@ -184,7 +188,7 @@ final class CompiledStatementManager {
     }
 
     /**
-     * Retreives the sql statement for a registered compiled statement.
+     * Retrieves the sql statement for a registered compiled statement.
      *
      * @param csid the compiled statement identifier
      * @return sql string
@@ -227,8 +231,8 @@ final class CompiledStatementManager {
      * Registers a compiled statement to be managed.
      *
      * The only caller should be a Session that is attempting to prepare
-     * a statement for the first time, or a statement that has been invalidated
-     * due to DDL changes.
+     * a statement for the first time or process a statement that has been
+     * invalidated due to DDL changes.
      *
      * @param csid existing id or negative if the statement is not yet managed
      * @param cs The CompiledStatement to add

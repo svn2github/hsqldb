@@ -98,16 +98,17 @@ import org.hsqldb.store.ValuePool;
 // fredt@users 20030820 - patch 1.7.2 - NULLIF(expr,expr)
 // fredt@users 20030820 - patch 1.7.2 - COALESCE(expr,expr,...)
 // fredt@users 20031012 - patch 1.7.2 - improved scoping for column names in all areas
+// boucherb@users 2004-03-xx - patch 1.7.2 - added support for prepared SELECT INTO
+// boucherb@users 2004-03-xx - doc 1.7.2 - some 
+/* todo: fredt - implement numeric value functions (SQL92 6.6)
+*
+ * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
+*/
 
 /**
- *  This class is responsible for parsing non-DDL statements.
+ *  Responsible for parsing non-DDL statements.
  *
- * @version    1.7.2
- */
-
-/** @todo fredt - implement numeric value functions (SQL92 6.6)
- *
- * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
+ * @version 1.7.2
  */
 class Parser {
 
@@ -125,11 +126,12 @@ class Parser {
     private HsqlArrayList subQueryList = new HsqlArrayList();
 
     /**
-     *  Constructor declaration
+     *  Constructs a new Parser object with the given context.
      *
-     * @param  db
-     * @param  t
-     * @param  session
+     * @param  db the Database instance against which to resolve named
+     *      database object references
+     * @param  t the token source from which to parse commands
+     * @param  session the connected context
      */
     Parser(Database db, Tokenizer t, Session session) {
 
@@ -138,6 +140,14 @@ class Parser {
         this.session = session;
     }
 
+    /**
+     *  Resets this parse context with the given SQL character sequence.
+     *
+     * Internal structures are reset as though a new parser were created
+     * with the given sql and the originally specified database and session
+     *
+     * @param a new SQL character sequence to replace the current one
+     */
     void reset(String sql) {
 
         sTable = null;
@@ -152,6 +162,16 @@ class Parser {
         parameters.clear();
     }
 
+    /**
+     * Tests whether the parsing session has the given write access on the
+     * given Table object. <p>
+     *
+     * @param table the Table object to check
+     * @param userRight the numeric code of the right to check
+     * @throws HsqlException if the session user does not have the right
+     *      or the given Table object is simply not writable (e.g. is a
+     *      non-updateable View)
+     */
     void checkTableWriteAccess(Table table,
                                int userRight) throws HsqlException {
 
@@ -170,6 +190,16 @@ class Parser {
         table.checkDataReadOnly();
     }
 
+    /**
+     * Parses a comma-separated, right-bracket terminated list of column
+     * names. <p>
+     *
+     * @param db the Database instance whose name manager is to provide the
+     *      resulting HsqlName objects, when the full argument is true
+     * @param t the tokenizer representing the character sequence to be parsed
+     * @param full if true, generate a list of HsqlNames, else a list of
+     *  S   tring objects
+     */
     static HsqlArrayList getColumnNames(Database db, Tokenizer t,
                                         boolean full) throws HsqlException {
 
@@ -271,10 +301,12 @@ class Parser {
     }
 
     /**
-     *  Method declaration
+     *  Retrieves a Select object newly constructed from the
+     *  current Parse context.
      *
-     * @return
-     * @throws  HsqlException
+     * @param isUnion whether the Select being parsed as part of a UNION
+     * @return a new Select object
+     * @throws  HsqlException if a parsing error occurs
      */
     Select parseSelect(boolean isUnion) throws HsqlException {
 
@@ -714,20 +746,18 @@ class Parser {
     }
 
     /**
-     * Checks an ORDER BY Expression and if it is an alias or column index
-     * returns the column expression it refers to.<b>
+     * Resolves an ORDER BY Expression, returning the column Expression object
+     * to which it refers if it is an alias or column index. <p>
      *
-     * Ambiguous reference to an alias and non-integer column index throw an
-     * exception.
-     *
-     * If select is a SET QUERY then only column indexes or names in the first
+     * If select is a SET QUERY, then only column indexes or names in the first
      * query are allowed.
      *
      * @param  e                          search column expression
      * @param  vcolumn                    list of columns
      * @param  union                      is select a union
      * @return                            new or the same expression
-     * @exception  java.sql.HsqlException  when invalid search specification
+     * @throws HsqlException if an ambiguous reference to an alias or
+     *      non-integer column index is encountered
      */
     private static Expression resolveOrderByColumnAlias(Expression e,
             HsqlArrayList vcolumn, int visiblecols,
@@ -827,11 +857,12 @@ class Parser {
     }
 
     /**
-     *  Method declaration
+     * Retrieves a TableFilter object newly constructed from the current
+     * parse context. <p>
      *
-     * @param  outerjoin
-     * @return
-     * @throws  HsqlException
+     * @param  outerjoin if the filter is to back an outer join
+     * @return a newly constructed TableFilter object
+     * @throws  HsqlException if a parsing error occurs
      */
     private TableFilter parseTableFilter(boolean outerjoin)
     throws HsqlException {
@@ -903,13 +934,17 @@ class Parser {
     }
 
     /**
-     *  Add a condition from the JOIN table ON clause.
+     *  Conjuntively adds a condition from the JOIN table ON clause.
      *
-     * @param  e1
-     * @param  e2
-     * @param tf
-     * @param outer
-     * @return
+     * @param  e1 an existing condition with which e2 is to be combined
+     *      in order to form a new conjunction
+     * @param  e2 the new condition
+     * @param tf the table filter that should become e2's join
+     *      table filter
+     * @param outer true if join is outer
+     * @throws HsqlException if e2 responds that it cannot participate
+     *      in the join
+     * @return a new Expression object; the conjunction of e1 and e2
      */
     private static Expression addJoinCondition(Expression e1, Expression e2,
             TableFilter tf, boolean outer) throws HsqlException {
@@ -924,7 +959,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return the Expression resulting from the parse
      * @throws  HsqlException
      */
     Expression parseExpression() throws HsqlException {
@@ -967,7 +1002,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return a disjuntion, possibly degenerate
      * @throws  HsqlException
      */
     private Expression readOr() throws HsqlException {
@@ -989,7 +1024,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return a conjunction, possibly degenerate
      * @throws  HsqlException
      */
     private Expression readAnd() throws HsqlException {
@@ -1011,7 +1046,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return a predicate, possibly composite
      * @throws  HsqlException
      */
     private Expression readCondition() throws HsqlException {
@@ -1098,13 +1133,8 @@ class Parser {
 
         read();
 
-        Expression b = readTerm();
-
-        // boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
-        // correct default like escape characters (i.e. the one
-        // we report from jdbcDatabaseMetaData)
-        // fredt@users - both 0 and '\\' are wrong - there shouldn't be any escape character if none is specified in the SQL
-        Character escape = null;
+        Expression b      = readTerm();
+        Character  escape = null;
 
         if (sToken.equals(Token.T_ESCAPE)) {
             read();
@@ -1226,7 +1256,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return a concatenation, possibly degenerate
      * @throws  HsqlException
      */
     private Expression readConcat() throws HsqlException {
@@ -1262,7 +1292,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return  a summation, possibly degenerate
      * @throws  HsqlException
      */
     private Expression readSum() throws HsqlException {
@@ -1293,7 +1323,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return  a product, possibly degenerate
      * @throws  HsqlException
      */
     private Expression readFactor() throws HsqlException {
@@ -1315,7 +1345,7 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @return
+     * @return  a term, possibly composite
      * @throws  HsqlException
      */
     private Expression readTerm() throws HsqlException {
@@ -1332,7 +1362,7 @@ class Parser {
                 read();
 
                 if (iToken == Expression.OPEN) {
-                    String   javaName = database.getAlias(name);
+                    String   javaName = database.getJavaName(name);
                     Function f        = new Function(name, javaName, false);
 
                     session.check(javaName, UserManager.ALL);
@@ -1696,7 +1726,7 @@ class Parser {
                 readThis(Expression.FROM);
 
                 // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
-                Function f = new Function(name, database.getAlias(name),
+                Function f = new Function(name, database.getJavaName(name),
                                           false);
 
                 f.setArgument(0, readOr());
@@ -1968,7 +1998,10 @@ class Parser {
     }
 
     /**
-     * a workaround to read MONTH, DAY, YEAR etc. with EXTRACT while not making them SQL KEYWORDS in Tokenizer
+     * A workaround for parsing EXTRACT clause elements such as MONTH, DAY
+     * and YEAR, without having to make each of them SQL KEYWORDS in Tokenizer.
+     *
+     * @throws HsqlException if a tokenization error occurs
      */
     private void readToken() throws HsqlException {
         sToken = tokenizer.getString();
@@ -2261,10 +2294,21 @@ class Parser {
     throws HsqlException {
 
         Select select;
+        String intoName;
 
         clearParameters();
 
         select = parseSelect(isview);
+
+        if (select.sIntoTable != null) {
+            session.checkDDLWrite();
+
+            intoName = select.sIntoTable.name;
+
+            if (database.findUserTable(intoName, session) != null) {
+                throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
+            }
+        }
 
         CompiledStatement cs = new CompiledStatement(select, getParameters());
 

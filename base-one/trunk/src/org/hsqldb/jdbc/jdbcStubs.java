@@ -34,6 +34,10 @@ package org.hsqldb.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Provides a site for conditional compilation of stub classes supporting
+ * the JDBC 2 imterface implementation under the JDBC 1 runtime. <p>
+ */
 class jdbcStubs {}
 
 //#ifdef JAVA2

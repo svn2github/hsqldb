@@ -41,21 +41,19 @@ import org.hsqldb.Result;
 import org.hsqldb.Trace;
 
 // fredt@users 20040412 - removed DITypeInfo dependencies
-// boucherb@users 200307?? - patch 1.7.2
-// TODO:
-// Engine side complementary work corresponding to the TODO items
-// listed below
+// TODO: implement internal support for at least OUT return parameter
 
 /**
  * An object that can be used to get information about the types and
  * properties of the parameters in a PreparedStatement object.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since JDK 1.4, HSQLDB 1.7.2
  */
 public class jdbcParameterMetaData implements ParameterMetaData {
 
+    /** The metadata object with which this object is constructed */
     Result.ResultMetaData rmd;
 
     /** The numeric data type codes of the parameters. */
@@ -83,12 +81,15 @@ public class jdbcParameterMetaData implements ParameterMetaData {
      * and transport objects whose class is not in the standard mapping.
      */
     String[] classNames;
-    int      parameterCount;
+
+    /** The number of parameters in the described statement */
+    int parameterCount;
 
     /**
-     * Creates a new instance of jdbcParameterMetaData
-     * @param r the Result object
-     * @throws SQLException
+     * Creates a new instance of jdbcParameterMetaData. <p>
+     *
+     * @param r A Result object describing the statement parameters
+     * @throws SQLException never - reserved for future use
      */
     jdbcParameterMetaData(Result r) throws SQLException {
 
@@ -108,10 +109,11 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Checks if the param argument indicates a valid parameter position.
+     * Checks if the value of the param argument is a valid parameter
+     * position. <p>
      *
      * @param param position to check
-     * @throws SQLException if the param argument does not indicate a
+     * @throws SQLException if the value of the param argument is not a
      *      valid parameter position
      */
     void checkRange(int param) throws SQLException {
@@ -125,7 +127,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /**
      * Retrieves the fully-qualified name of the Java class whose instances
-     * should be passed to the method PreparedStatement.setObject
+     * should be passed to the method PreparedStatement.setObject. <p>
      *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
@@ -145,7 +147,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /**
      * Retrieves the number of parameters in the PreparedStatement object for
-     * which this ParameterMetaData object contains information.
+     * which this ParameterMetaData object provides information. <p>
      *
      * @throws SQLException if a database access error occurs
      * @return the number of parameters
@@ -156,7 +158,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Retrieves the designated parameter's mode.
+     * Retrieves the designated parameter's mode. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return mode of the parameter; one of
@@ -174,7 +177,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Retrieves the designated parameter's SQL type.
+     * Retrieves the designated parameter's SQL type. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return SQL type from java.sql.Types
@@ -194,7 +198,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Retrieves the designated parameter's database-specific type name.
+     * Retrieves the designated parameter's database-specific type name. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return type the name used by the database.
@@ -214,7 +219,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Retrieves the designated parameter's number of decimal digits.
+     * Retrieves the designated parameter's number of decimal digits. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return precision
@@ -234,7 +240,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /**
      * Retrieves the designated parameter's number of digits to right of
-     * the decimal point.
+     * the decimal point. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return scale
@@ -252,7 +259,8 @@ public class jdbcParameterMetaData implements ParameterMetaData {
     }
 
     /**
-     * Retrieves whether null values are allowed in the designated parameter.
+     * Retrieves whether null values are allowed in the designated parameter. <p>
+     *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
      * @return the nullability status of the given parameter; one of
@@ -270,7 +278,7 @@ public class jdbcParameterMetaData implements ParameterMetaData {
 
     /**
      * Retrieves whether values for the designated parameter can be
-     * signed numbers.
+     * signed numbers. <p>
      *
      * @param param the first parameter is 1, the second is 2, ...
      * @throws SQLException if a database access error occurs
@@ -286,6 +294,11 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         return b != null &&!b.booleanValue() &&!isIdentity[param];
     }
 
+    /**
+     * Retrieves a String repsentation of this object. <p>
+     *
+     * @return a String repsentation of this object
+     */
     public String toString() {
 
         try {
@@ -295,6 +308,12 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         }
     }
 
+    /**
+     * Provides the implementation of the toString() method. <p>
+     *
+     * @return a String representation of this object
+     * @throws Exception if a reflection error occurs
+     */
     private String toStringImpl() throws Exception {
 
         StringBuffer sb;

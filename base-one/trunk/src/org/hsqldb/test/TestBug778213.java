@@ -46,7 +46,7 @@ import java.sql.SQLException;
  * that the behaviour of the prepared statement object is
  * nominally correct under "prepared" DDL.
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

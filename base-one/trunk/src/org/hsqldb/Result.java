@@ -82,9 +82,17 @@ import org.hsqldb.rowio.RowOutputBinary;
 // methods for set operations moved here from Select.java
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 // fredt@users 20030801 - patch 1.7.2 - separate metadata and polymophic serialisation
+// boucherb@users 200307/8 - various, in support of fred's work over the same time period
 
 /**
- *  Class declaration
+ *  The primary unit of comunication between Connection, Server and Session
+ *  objects.
+ *
+ *  An HSQLDB Result object encapsulates all requests (such as to alter or
+ *  query session settings, to allocate and execute statements, etc.) and all
+ *  responses (such as exception indications, update counts, result sets and
+ *  result set metadata). It also implements the HSQL wire protocol for
+ *  comunicating all such requests and responses across the network.
  *
  * @version    1.7.2
  */
@@ -122,6 +130,7 @@ public class Result {
     int                   iUpdateCount;
     public ResultMetaData metaData;
 
+    /** A Result object's metadata */
     public static class ResultMetaData {
 
         // always resolved
@@ -1070,7 +1079,7 @@ public class Result {
      * @param  b
      * @param  order
      * @param  way
-     * @return
+     * @return -1, 0, +1
      * @throws  HsqlException
      */
     private int compareRecord(Object a[], Object b[], int order[],
@@ -1099,7 +1108,7 @@ public class Result {
      * @param  a
      * @param  b
      * @param  len
-     * @return
+     * @return -1, 0, +1
      * @throws  HsqlException
      */
     private int compareRecord(Object a[], Object b[],

@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 /**
- * Class declaration
+ * Represents a single row table operation.
  *
  * @version 1.7.0
  */
@@ -80,12 +80,14 @@ class Transaction {
     private Object  oRow[];
 
     /**
-     * Constructor declaration
+     * Constructor. <p>
      *
-     *
-     * @param delete
-     * @param table
-     * @param row
+     * @param delete if true, this represents a single row delete action, else
+     *      a single row insert action
+     * @param nested true if this action is part of a transaction initiated
+     *  within an INSERT INTO or UPDATE statement
+     * @param table the Table object against which the operation occured
+     * @param row the row data that iis inserted or deleted
      */
     Transaction(boolean delete, boolean nested, Table table, Object row[]) {
 
@@ -96,10 +98,10 @@ class Transaction {
     }
 
     /**
-     * Method declaration
+     * Undoes the single row delete or insert represented by this object.
      *
-     *
-     * @throws HsqlException
+     * @param session the session context in which to perform the undo
+     * @throws HsqlException if a database access error occurs
      */
     void rollback(Session session) {
 

@@ -787,8 +787,9 @@ public class Library {
      * Returns the number of bytes in the given <code>String</code>.
      * This includes trailing blanks.
      *
-     * @param s the <code>String</code> for which to determine length
-     * @return the length of <code>s</code>, including trailing blanks
+     * @param s the <code>String</code> for which to determine the octet length
+     * @return the octet length of <code>s</code>, including trailing blanks
+     * @since HSQLDB 1.7.2
      */
     public static Integer octetLength(String s) {
         return s == null ? null
@@ -799,8 +800,9 @@ public class Library {
      * Returns the number of bits in the given <code>String</code>.
      * This includes trailing blanks.
      *
-     * @param s the <code>String</code> for which to determine length
-     * @return the length of <code>s</code>, including trailing blanks
+     * @param s the <code>String</code> for which to determine the bit length
+     * @return the bit length of <code>s</code>, including trailing blanks
+     * @since HSQLDB 1.7.2
      */
     public static Integer bitLength(String s) {
         return s == null ? null
@@ -842,7 +844,8 @@ public class Library {
     }
 
     /**
-     * As locate but from start positionl
+     * As locate but from start position l. <p>
+     *
      * @param search the <code>String</code> occurence to find in <code>s</code>
      * @param s the <code>String</code> within which to find the first
      *      occurence of <code>search</code>
@@ -980,10 +983,10 @@ public class Library {
 
     /**
      * Returns the rightmost <code>count</code> characters of the given
-     * <code>String</code>, <code>s</code>.
+     * <code>String</code>, <code>s</code>. <p>
      *
      * <b>Note:</b> boundry conditions are handled in the following order of
-     * precedence:
+     * precedence: <p>
      *
      * <UL>
      *  <LI> if <code>s</code> is <code>null</code>, <code>null</code> is returned
@@ -1034,6 +1037,31 @@ public class Library {
                              : s.substring(0, i + 1);
     }
 
+    /**
+     * Returns the character sequence <code>s</code>, with the leading,
+     * trailing or both the leading and trailing occurences of the first
+     * character of the character sequence <code>trimstr</code> removed. <p>
+     *
+     * This method is in support of the standard SQL String function TRIM.
+     * Ordinarily, the functionality of this method is accessed from SQL using
+     * the following syntax: <p>
+     *
+     * <pre class="SqlCodeExample">
+     * &lt;trim function&gt; ::= TRIM &lt;left paren&gt; &lt;trim operands&gt; &lt;right paren&gt;
+     * &lt;trim operands&gt; ::= [ [ &lt;trim specification&gt; ] [ &lt;trim character&gt; ] FROM ] &lt;trim source&gt;
+     * &lt;trim source&gt; ::= &lt;character value expression&gt;
+     * &lt;trim specification&gt; ::= LEADING | TRAILING | BOTH
+     * &lt;trim character&gt; ::= &lt;character value expression&gt;
+     * </pre>
+     *
+     * @param s the string to trim
+     * @param trimstr the character whose occurences will be removed
+     * @param leading if true, remove leading occurences
+     * @param trailing if true, remove trailing occurences
+     * @return s, with the leading, trailing or both the leading and trailing
+     *      occurences of the first character of <code>trimstr</code> removed
+     * @since HSQLDB 1.7.2
+     */
     public static String trim(String s, String trimstr, boolean leading,
                               boolean trailing) {
 

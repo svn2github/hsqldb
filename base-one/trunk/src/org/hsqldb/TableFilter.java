@@ -143,10 +143,9 @@ class TableFilter {
     }
 
     /**
-     * Method declaration
+     * Retrieves this object's filter Table object.
      *
-     *
-     * @return
+     * @return this object's filter Table object
      */
     Table getTable() {
         return filterTable;
@@ -440,11 +439,11 @@ class TableFilter {
     }
 
     /**
-     * This simply finds the first row in the table (using
-     * an index if there is one) and checks it against the eEnd (range) and
-     * eAnd (other conditions) Expression objects. (fredt)
+     * Finds the first row in the table (using an index if there is one) and
+     * checks it against the eEnd (range) and eAnd (other conditions)
+     * Expression objects. (fredt)
      *
-     * @return true if row was found
+     * @return true if first row was found, else false
      */
     boolean findFirst() throws HsqlException {
 
@@ -500,12 +499,11 @@ class TableFilter {
     }
 
     /**
-     * Method declaration
+     * Advances to the next available value. <p>
      *
+     * @return true if a next value is available upon exit
      *
-     * @return
-     *
-     * @throws HsqlException
+     * @throws HsqlException if a database access error occurs
      */
     boolean next() throws HsqlException {
 
@@ -546,10 +544,11 @@ class TableFilter {
     }
 
     /**
-     * Method declaration
+     * Forms a new conjunction using the given condition and this filter's
+     * pre-existing AND condition, or sets the given condition as this filter's
+     * AND condition when there is no such pre-exisiting object.
      *
-     *
-     * @param e
+     * @param e the condition to add
      */
     private void addAndCondition(Expression e) {
 
@@ -567,7 +566,7 @@ class TableFilter {
     }
 
     /**
-     * Remove referenc to Index to avoid possible memory leaks after alter
+     * Removes reference to Index to avoid possible memory leaks after alter
      * table or drop index
      */
     void setAsCheckFilter() {
@@ -575,6 +574,15 @@ class TableFilter {
     }
 
 // boucheb@users 20030415 - added for debugging support
+
+    /**
+     * Retreives a String representation of this obejct. <p>
+     *
+     * The returned String describes this object's table, alias
+     * access mode, index, join mode, Start, End and And conditions.
+     *
+     * @return a String representation of this object
+     */
     public String toString() {
 
         StringBuffer sb;
@@ -606,8 +614,8 @@ class TableFilter {
         sb.append("access=[").append(fullScan ? "FULL SCAN"
                                               : "INDEX PRED").append("]\n");
         sb.append("index=[");
-        sb.append(index == null ? null
-                                : index.getName() == null ? null
+        sb.append(index == null ? "NONE"
+                                : index.getName() == null ? "UNNAMED"
                                                           : index.getName()
                                                           .name);
         sb.append(hidden ? "[HIDDEN]]\n"

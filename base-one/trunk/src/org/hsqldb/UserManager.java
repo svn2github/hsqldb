@@ -81,14 +81,14 @@ import org.hsqldb.store.ValuePool;
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
 // fredt@users 20030613 - patch 1.7.2 - simplified data structures and reporting
 
+/*@todo fredt - move assert string literals to Trace*/
+
 /**
  * Contains a set of User objects, and supports operations for
  * creating, finding, modifying and deleting User objects for a Database.
  * @version  1.7.2
  * @see  User
  */
-
-/** @todo fredt - move assert string literals to Trace */
 class UserManager {
 
     /** Flag required to SELECT from a table. */
@@ -148,7 +148,7 @@ class UserManager {
      */
     UserManager() throws HsqlException {
         uUser   = new HashMappedList();
-        uPublic = createUser("PUBLIC", null, false);
+        uPublic = createUser(PUBLIC_USER_NAME, null, false);
     }
 
     /**
@@ -298,7 +298,7 @@ class UserManager {
      */
     void dropUser(String name) throws HsqlException {
 
-        Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
+        Trace.check(!name.equals(PUBLIC_USER_NAME), Trace.ACCESS_IS_DENIED);
 
         User u = (User) uUser.remove(name);
 
@@ -315,7 +315,7 @@ class UserManager {
      */
     User getUser(String name, String password) throws HsqlException {
 
-        Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
+        Trace.check(!name.equals(PUBLIC_USER_NAME), Trace.ACCESS_IS_DENIED);
 
         if (name == null) {
             name = "";
@@ -427,6 +427,9 @@ class UserManager {
     /** The user name reserved for the special SYS user. */
     static final String SYS_USER_NAME = "SYS";
 
+    /** The user name reserved for the special SYS user. */
+    static final String PUBLIC_USER_NAME = "PUBLIC";
+
     /**
      * An empty list that is returned from
      * {@link #listTablePrivileges listTablePrivileges} when
@@ -494,7 +497,7 @@ class UserManager {
 
             userName = user.getName();
 
-            if ("PUBLIC".equals(userName)) {
+            if (PUBLIC_USER_NAME.equals(userName)) {
                 if (andPublicUser) {
                     list.add(user);
                 }

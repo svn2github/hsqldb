@@ -43,7 +43,7 @@ import org.hsqldb.store.ValuePool;
  * at the time of writing and thus includes types that may not yet be
  * supported as table or procedure columns. <p>
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -173,10 +173,9 @@ final class DITypeInfo {
      * @return the fully-qualified name of the HSQLDB-provided java.sql
      *    interface implementation class whose instances would
      *    be manufactured by HSQLDB to retrieve column values of
-     *    this type, given that the the type does not have a
-     *    standard Java mapping and regardless of whether a class
-     *    with the indicated name is actually implemented or
-     *    available on the class path
+     *    this type, given that the type does not have a standard Java
+     *    mapping and regardless of whether a class with the indicated
+     *    name is actually implemented or available on the class path
      */
     String getCstMapClsName() {
 
@@ -205,21 +204,64 @@ final class DITypeInfo {
         }
     }
 
+// NOTES:
+// From recent usability testing, this patch and the corresponding patch in 
+// jdbcResultSetMetaData together provide better compatibility with existing
+// tools than through the previous method of dynamically scanning each result
+// in jdbcResultSetMetaData.  This is especially true given that many tools use
+// the display size to set their internal max # of characters reserved for
+// result columns at said position. Also, since adding implementation of
+// ResultSetMetaData retreived from PreparedStatement's getMetaData method,
+// there exists the case where there is no data to scan in order to determine
+// an approximation.  Finally, since for plain old Statement objects the only
+// way to get metadata is to execute the query and since the scan approximation
+// can vary from one execution to the next, it turns out it's much "safer" and
+// more usable in a tool setting to simply indicate a large but expected
+// acceptable number of characters, rather than report either a number generally
+// too large to handle or a number too small to hold the actual expected maximum
+// number of characters for result colums of CHAR or VARCHAR types
+
     /**
      * Retrieves the maximum length that a String representation of
-     * the type may have.  For character and datetime types, this is the
-     * same as the maximum length/precision, repectively. For numeric
-     * types, this is the precision, plus the length of the negation
-     * character (1), plus the maximum number of characters that may occupy
-     * the exponent character sequence.  For bit/boolean types, it is the
-     * length of the character sequence "false", the longer of the two
-     * boolean value String representations.  For any other types, the
-     * value is the result of whatever calculation must be performed to
-     * determine the maximum length of its String representation. If
-     * the size is unknown, unknowable or inapplicable, zero is returned. <p>
+     * the type may have. <p>
+     *
+     * The calculation follows these rules: <p>
+     *
+     * <ol>
+     * <li>Long character and datetime types:<p>
+     *
+     *     The maximum length/precision, repectively.<p>
+     *
+     * <li>CHAR and VARCHAR types: <p>
+     *
+     *      The value of the system property hsqldb.max_xxxchar_display_size
+     *      or the magic value 32766 (0x7FFE) (tested usable/accepted by most
+     *      tools and compatible with assumptions made by java.io read/write
+     *      UTF) when the system property is not defined or is not accessible,
+     *      due to security constraints. <p>
+     *
+     * <li>Number types: <p>
+     *
+     *     The max precision, plus the length of the negation character (1),
+     *     plus (if applicable) the maximum number of characters that may
+     *     occupy the exponent character sequence. <p>
+     *
+     * <li>BOOLEAN/BIT types: <p>
+     *
+     *     The length of the character sequence "false" (5), the longer of the
+     *     two boolean value String representations. <p>
+     *
+     * <li>All remaining types: <p>
+     *
+     *     The result of whatever calculation must be performed to determine
+     *     the maximum length of the type's String representation. If the
+     *     maximum display size is unknown, unknowable or inapplicable, then
+     *     zero is returned. <p>
+     *
+     * </ol>
      *
      * @return the maximum length that a String representation of
-     *      the type may have
+     *      the type may have, or zero (0) if unknown or unknowable
      */
     int getMaxDisplaySize() {
         return Types.getMaxDisplaySize(type);
@@ -434,11 +476,9 @@ final class DITypeInfo {
             case Types.INTEGER :
             case Types.SMALLINT :
             case Types.TINYINT :
-                return ValuePool.getInt(0);
-
             case Types.DECIMAL :
             case Types.NUMERIC :
-                return ValuePool.getInt(Short.MIN_VALUE);
+                return ValuePool.getInt(0);
 
             case Types.FLOAT :
             case Types.REAL :
@@ -461,16 +501,7 @@ final class DITypeInfo {
      *    for the type
      */
     Integer getMinScaleAct() {
-
-        switch (type) {
-
-            case Types.DECIMAL :
-            case Types.NUMERIC :
-                return ValuePool.getInt(Integer.MIN_VALUE);
-
-            default :
-                return getMinScale();
-        }
+        return getMinScale();
     }
 
     /**

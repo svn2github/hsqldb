@@ -42,18 +42,19 @@ import org.hsqldb.rowio.RowOutputText;
 import org.hsqldb.rowio.RowOutputTextQuoted;
 import org.hsqldb.scriptio.ScriptWriterText;
 
+// Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
+
+/** @todo fredt - file error messages to Trace */
+
 /**
- * Handles operations on a DatabaseFile object and uses signle
- * TextDdatbaseRowInput and TextDatabaseRowOutput objects to read and write
- * rows of data to the file in text table format.
+ * Acts as a buffer manager for a single TEXT table with respect its Row data.
+ *
+ * Handles read/write operations on the table's text format data file using a
+ * compatible pair of org.hsqldb.rowio input/output class instances.
  *
  * @author sqlbob@users (RMP)
  * @version 1.7.2
  */
-
-// Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
-
-/** @todo fredt - file error messages to Trace */
 public class TextCache extends DataFileCache {
 
     //state of Cache

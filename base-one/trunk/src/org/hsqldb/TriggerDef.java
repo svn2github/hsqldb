@@ -40,7 +40,10 @@ import org.hsqldb.lib.HsqlDeque;
 // fredt@users 20030727 - signature and other alterations
 
 /**
- *  TriggerDef class declaration Definition and execution of triggers
+ *  Represents an HSQLDB Trigger definition. <p>
+ *
+ *  Provides services regarding HSLDB Trigger execution and metadata. <p>
+ *
  *  Development of the trigger implementation sponsored by Logicscope
  *  Realisations Ltd
  *
@@ -55,17 +58,24 @@ class TriggerDef extends Thread {
     /**
      *  member variables
      */
-    static final int NUM_TRIGGER_OPS = 3;    // ie ins,del,upd
-    static final int NUM_TRIGS       = NUM_TRIGGER_OPS * 2 * 2;
+    static final int NUM_TRIGGER_OPS = 3;                          // {ins,del,upd}
+    static final int NUM_TRIGS       = NUM_TRIGGER_OPS * 2 * 2;    // {b, a},{fer, fes}
 
     // other variables
     HsqlName name;
     String   when;
     String   operation;
     boolean  forEachRow;
-    boolean  nowait;                         // block or overwrite if queue full
-    int      maxRowsQueued;                  // max size of queue of pending triggers
+    boolean  nowait;                                               // block or overwrite if queue full
+    int      maxRowsQueued;                                        // max size of queue of pending triggers
 
+    /**
+     *  Retrieves the queue size assigned to trigger definitions when no
+     *  queue size is explicitly declared. <p>
+     *
+     * @return the queue size assigned to trigger definitions when no
+     *      queue size is explicitly declared
+     */
     public static int getDefaultQueueSize() {
         return defaultQueueSize;
     }
@@ -84,23 +94,35 @@ class TriggerDef extends Thread {
     protected volatile boolean keepGoing = true;
 
     /**
-     *  Constructor declaration create an object from the components of an
-     *  SQL CREATE TRIGGER statement.
+     *  Constructs a new TriggerDef object to represent an HSQLDB trigger
+     *  declared in an SQL CREATE TRIGGER statement.
      *
-     *  Changes in 1.7.2 allows the queue size to be specified as 0. This
-     *  will force the the Trigger.fire() code to run in the main thread of
-     *  execution. Otherwise, the code is run in the Trigger's own thread.
+     *  Changes in 1.7.2 allow the queue size to be specified as 0. A zero
+     *  queue size causes the Trigger.fire() code to run in the main thread of
+     *  execution (fully inside the enclosing transation). Otherwise, the code
+     *  is run in the Trigger's own thread.
      *  (fredt@users)
      *
-     * @param  name
-     * @param  sWhen
-     * @param  sOper
-     * @param  bForEach
-     * @param  pTab
-     * @param  pTrig
-     * @param  sFire
-     * @param  bNowait do not wait for empty room in the queue
-     * @param  nQueueSize size of the row queue
+     * @param  name The trigger object's HsqlName
+     * @param  sWhen the String representation of whether the trigger fires
+     *      before or after the triggering event
+     * @param  sOper the String representation of the triggering operation;
+     *      currently insert, update, or delete
+     * @param  bForEach indicates whether the trigger is fired for each row
+     *      (true) or statement (false)
+     * @param  pTab the Table object upon which the indicated operation
+     *      fires the trigger
+     * @param  pTrig the specific instance of the org.hsqldb.Trigger interface
+     *      implementation providing the behaviour of the trigger body
+     * @param  sFire the fully qualified named of the class implementing
+     *      the org.hsqldb.Trigger (trigger body) interface
+     * @param  bNowait do not wait for available space on the pending queue; if
+     *      the pending queue does not have fewer than nQueueSize queued items,
+     *      then overwrite the current tail instead
+     * @param  nQueueSize the length to which the pending queue may grow before
+     *      further additions are either blocked or overwrite the tail entry,
+     *      as determined by bNowait
+     * @throws HsqlException never - reserved for future use
      */
     public TriggerDef(HsqlNameManager.HsqlName name, String sWhen,
                       String sOper, boolean bForEach, Table pTab,
@@ -131,9 +153,11 @@ class TriggerDef extends Thread {
     }
 
     /**
-     *  Method declaration
+     *  Retrieves the SQL character sequence required to (re)create the
+     *  trigger, as a StringBuffer
      *
-     * @return
+     * @return the SQL character sequence required to (re)create the
+     *  trigger
      */
     public StringBuffer getDDL() {
 

@@ -34,8 +34,8 @@ package org.hsqldb;
 import org.hsqldb.lib.IntValueHashMap;
 
 /**
- * Provides declaratin and enumeration of reserved and non-reserved SQL
- * keywords.<p>
+ * Defines and enumerates reserved and non-reserved SQL
+ * keywords. <p>
  *
  * @author  Nitin Chauhan
  * @since HSQLDB 1.7.2
@@ -366,6 +366,7 @@ public class Token {
     static final String T_REFERENTIAL_INTEGRITY = "REFERENTIAL_INTEGRITY";
     static final String        T_RENAME         = "RENAME";
     static final String        T_RESTART        = "RESTART";
+    static final String        T_RESTRICT       = "RESTRICT";
     static final String        T_SCRIPT         = "SCRIPT";
     static final String        T_SCRIPTFORMAT   = "SCRIPTFORMAT";
     static final String        T_SEQUENCE       = "SEQUENCE";

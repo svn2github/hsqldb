@@ -266,7 +266,7 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns true if a and be contain the same set of integers, not
+     * Returns true if arra and arrb contain the same set of integers, not
      * necessarily in the same order. This implies the arrays are of the same
      * length.
      */
@@ -373,7 +373,8 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns true if a and the first bcount elements of arrb share any element.
+     * Returns true if arra and the first bcount elements of arrb share any
+     * element. <p>
      *
      * Used for checks for any overlap between two arrays of column indexes.
      */
@@ -628,7 +629,7 @@ public class ArrayUtil {
      *
      */
     public static int countStartElementsAt(byte[] arra, int start,
-                                           byte arrb[]) {
+                                           byte[] arrb) {
 
         int k = 0;
 
@@ -650,7 +651,7 @@ public class ArrayUtil {
 
     /**
      * Returns the count of elements in arra from position start that are not
-     * among the the elements of arrb.
+     * among the elements of arrb.
      *
      */
     public static int countNonStartElementsAt(byte[] arra, int start,
@@ -750,8 +751,7 @@ public class ArrayUtil {
      * @param  dest
      * @param  addition
      * @param colindex
-     * @param  adjust +1 or 0 or -1
-     * return new, adjusted array or null if an element is removed
+     * @param  adjust +1, 0 or -1
      */
     public static void copyAdjustArray(Object[] source, Object[] dest,
                                        Object addition, int colindex,
@@ -780,21 +780,22 @@ public class ArrayUtil {
 
     /**
      * Returns a new array with the elements in collar adjusted to reflect
-     * changes at colindex.
+     * changes at colindex. <p>
      *
      * Each element in collarr represents an index into another array
-     * otherarr.
-     * colindex is the index at which an element is added or removed form
-     * otherarr. Each element in the result array represents the new,
-     * adjusted index to otherarr.
+     * otherarr. <p>
+     *
+     * colindex is the index at which an element is added or removed.
+     * Each element in the result array represents the new,
+     * adjusted index. <p>
+     *
      * For each element of collarr that represents an index equal to
      * colindex and adjust is -1, the result will not contain that element
      * and will be shorter than collar by one element.
      *
-     *
-     * @param  colarr
-     * @param  colindex
-     * @param  adjust +1 or 0 or -1
+     * @param  colarr the source array
+     * @param  colindex index at which to perform adjustement
+     * @param  adjust +1, 0 or -1
      * @return new, adjusted array
      */
     public static int[] toAdjustedColumnArray(int[] colarr, int colindex,
@@ -840,10 +841,15 @@ public class ArrayUtil {
     }
 
     /**
-     *  Copies some elements of row into colobject by using colindex as the
-     *  list of indexes into row. colindex and colobject are of equal length
-     *  and normally shorter than row;
+     *  Copies some elements of row into colobject by using colindex as
+     *  the list of indexes into row. <p>
      *
+     *  colindex and colobject are of equal length and are normally
+     *  shorter than row. <p>
+     *
+     *  @param row the source array
+     *  @param colindex the list of indexes into row
+     *  @param colobject the destination array
      */
     public static void copyColumnValues(Object row[], int colindex[],
                                         Object colobject[]) {

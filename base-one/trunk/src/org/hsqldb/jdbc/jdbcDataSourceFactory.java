@@ -38,14 +38,32 @@ import javax.naming.spi.ObjectFactory;
 
 import java.util.Hashtable;
 
+// boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
+
 /**
+ * A JNDI ObjectFactory for creating {@link jdbcDataSource jdbcDatasource}
+ * object instances.
+ *
  * @author deforest@users
  * @version 1.7.2
  */
 public class jdbcDataSourceFactory implements ObjectFactory {
 
-    public Object getObjectInstance(Object obj, Name name, Context ctx,
-                                    Hashtable env) throws Exception {
+    /**
+     * Creates a jdbcDatasource object using the location or reference
+     * information specified.
+     *
+     * @param obj The reference information used in creating a
+     *      jdbcDatasource object.
+     * @param name ignored
+     * @param nameCtx ignored
+     * @param environment ignored
+     * @return A newly created jdbcDataSource object; null if an object
+     *      cannot be created.
+     * @exception Exception never
+     */
+    public Object getObjectInstance(Object obj, Name name, Context nameCtx,
+                                    Hashtable environment) throws Exception {
 
         String    dsClass = "org.hsqldb.jdbc.jdbcDataSource";
         Reference ref     = (Reference) obj;

@@ -73,16 +73,17 @@ import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputInterface;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
-// fredt@users 20021205 - path 1.7.2 - enhancements
+// fredt@users 20020920 - patch 1.7.1 - refactoring to cut memory footprint
+// fredt@users 20021205 - patch 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
+// boucherb@users - 20040411 - doc 1.7.2 - javadoc comments
 
 /**
  *  In-memory representation of a disk-based database row object with  methods
- *  for serialization and de-serialization.<br>
+ *  for serialization and de-serialization. <p>
  *
  *  A CachedRow is normally part of a circular double linked list which
- *  contians all the Rows currently in the Cache for the database. It is
+ *  contains all of the Rows currently in the Cache for the database. It is
  *  unlinked from this list when it is freed from the Cache to make way for
  *  other rows.
  *
@@ -98,12 +99,12 @@ public class CachedRow extends Row {
     int              storageSize;
 
     /**
-     *  Flag indicating any change to the Nodes or table row data.
+     *  Flag indicating any change to Node data.
      */
     protected boolean hasChanged;
 
     /**
-     *  Flag indicating the row data has changed too.
+     *  Flag indicating both Row and Node data has changed.
      */
     protected boolean hasDataChanged;
 
@@ -113,11 +114,12 @@ public class CachedRow extends Row {
     CachedRow() {}
 
     /**
-     *  Constructor for new Rows. This is currently the only place where
-     *  hasDataChanged is set to true as the current implementation of
-     *  database row updates performs a delete followed by an insert. This
-     *  means that once a row is created its data cannot change.
-     *  (correct as of version 1_7_2_alpha_n)
+     *  Constructor for new Rows.  Variable hasDataChanged is set to true in
+     *  order to indicate the data needs saving.
+     *
+     * @param t table
+     * @param o row data
+     * @throws HsqlException if a database access error occurs
      */
     public CachedRow(Table t, Object o[]) throws HsqlException {
 
@@ -141,7 +143,12 @@ public class CachedRow extends Row {
     }
 
     /**
-     *  constructor when read from the disk into the Cache
+     *  Constructor when read from the disk into the Cache.
+     *
+     * @param t table
+     * @param in data source
+     * @throws IOException
+     * @throws HsqlException
      */
     public CachedRow(Table t,
                      RowInputInterface in) throws IOException, HsqlException {
@@ -172,6 +179,8 @@ public class CachedRow extends Row {
     /**
      *  This method is called only when the Row is deleted from the database
      *  table. The links with all the other objects are removed.
+     *
+     * @throws HsqlException
      */
     void delete() throws HsqlException {
 
@@ -188,6 +197,12 @@ public class CachedRow extends Row {
         nPrimaryNode = null;
     }
 
+    /**
+     * Sets the file position for the row and registers the row with
+     * the table.
+     *
+     * @param pos position in data file
+     */
     void setPos(int pos) {
 
         iPos = pos;
@@ -195,32 +210,53 @@ public class CachedRow extends Row {
         tTable.registerRow(this);
     }
 
+    /**
+     * Sets flag for Node data change.
+     */
     void setChanged() {
         hasChanged = true;
     }
 
+    /**
+     * Returns true if Node data has changed.
+     *
+     * @return boolean
+     */
     boolean hasChanged() {
         return hasChanged;
     }
 
+    /**
+     * Sets flag for Row data change.
+     */
     void setDataChanged() {
         hasDataChanged = true;
     }
 
+    /**
+     * Returns true if either Row or Node data.
+     *
+     * @return boolean
+     */
     boolean hasDataChanged() {
         return hasDataChanged;
     }
 
     /**
-     * Returns the table which this Row belongs to.
+     * Returns the Table to which this Row belongs.
+     *
+     * @return Table
      */
     public Table getTable() {
         return tTable;
     }
 
     /**
-     * Returns true if any of the Index Nodes for this row is a root node.
+     * Returns true if any of the Nodes for this row is a root node.
      * Used only in Cache.java to avoid removing the row from the cache.
+     *
+     * @return boolean
+     * @throws HsqlException
      */
     boolean isRoot() throws HsqlException {
 
@@ -242,10 +278,16 @@ public class CachedRow extends Row {
     }
 
     /**
-     *  Using the internal reference to the Table, returns the current valid
-     *  Row that represents the database row for this Object. Valid for
-     *  deleted rows only before any subsequent insert or update on any
-     *  cached table.
+     *  Using the internal reference to the Table, returns the current cached
+     *  Row. Valid for deleted rows only before any subsequent insert or
+     *  update on any cached table.<p>
+     *
+     *  Access to tables while performing the internal operations for an
+     *  SQL statement result in CachedRow objects to be cleared from the cache.
+     *  This method returns the CachedRow, loading it to the cache if it is not
+     *  there.
+     * @return the current Row in Cache for this Object
+     * @throws HsqlException
      */
     Row getUpdatedRow() throws HsqlException {
         return tTable == null ? null
@@ -258,6 +300,10 @@ public class CachedRow extends Row {
      *  changed. This situation accounts for the majority of invocations as
      *  for each row deleted or inserted, the Nodes for several other rows
      *  will change.
+     *
+     * @param output data source
+     * @throws IOException
+     * @throws HsqlException
      */
     void write(RowOutputInterface out) throws IOException, HsqlException {
 
@@ -272,8 +318,12 @@ public class CachedRow extends Row {
     }
 
     /**
-     *  The Nodes are stored first, immediately after the row size. This
-     *  methods writes this information out.
+     *  Writes the Nodes, immediately after the row size.
+     *
+     * @param out
+     *
+     * @throws IOException
+     * @throws HsqlException
      */
     private void writeNodes(RowOutputInterface out)
     throws IOException, HsqlException {
@@ -294,6 +344,8 @@ public class CachedRow extends Row {
     /**
      * Used to insert the Row into the linked list that includes all the rows
      * currently in the Cache.
+     *
+     * @param before the row before which to insert
      */
     void insert(CachedRow before) {
 
@@ -312,6 +364,9 @@ public class CachedRow extends Row {
 
     /**
      *  Removes the Row from the linked list of Rows in the Cache.
+     *
+     * @return the next Row in the linked list
+     * @throws HsqlException never
      */
     CachedRow free() throws HsqlException {
 
@@ -334,10 +389,8 @@ public class CachedRow extends Row {
      * If only deletes or only inserts have been performed, this method
      * remains valid. Otherwise it can return invalid results.
      *
-     * @param obj the reference object with which to compare.
-     * @return <code>true</code> if this object is the same as the obj argument;
-     *   <code>false</code> otherwise.
-     * @todo Implement this java.lang.Object method
+     * @param obj row to compare
+     * @return boolean
      */
     public boolean equals(Object obj) {
 
@@ -345,18 +398,17 @@ public class CachedRow extends Row {
             return true;
         }
 
-        if (obj == null ||!(obj instanceof CachedRow)) {
-            return false;
+        if (obj instanceof CachedRow) {
+            return ((CachedRow) obj).iPos == iPos;
         }
 
-        return ((CachedRow) obj).iPos == iPos;
+        return false;
     }
 
     /**
-     * Returns a hash code value for the object.
+     * Hash code is valid only until a modification to the cache
      *
-     * @return a hash code value for this object.
-     * @todo Implement this java.lang.Object method
+     * @return file position of row
      */
     public int hashCode() {
         return iPos;

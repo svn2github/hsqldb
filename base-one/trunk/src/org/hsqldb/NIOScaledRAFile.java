@@ -37,7 +37,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 /**
- * NIO version or DatabaseFile.This class is used only for storing a CACHED
+ * NIO version of ScaledRAFile. This class is used only for storing a CACHED
  * TABLE .data file and cannot be used for TEXT TABLE source files.
  *
  * Due to various issues with java.nio classes, this class will use a mapped

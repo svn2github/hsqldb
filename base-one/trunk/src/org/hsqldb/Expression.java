@@ -84,13 +84,13 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 20031005 - patch 1.7.2 - improved IN value lists
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
 
+/**@todo fredt - move error string literals to Trace*/
+
 /**
  * Expression class declaration
  *
  * @version    1.7.2
  */
-
-/** @todo fredt - move error string literals to Trace */
 public class Expression {
 
     // leaf types
@@ -1803,10 +1803,26 @@ public class Expression {
             case ADD :
 
                 // concat using + operator
+                // non-standard concat operator to be deprecated
                 if (Types.isCharacterType(eArg.dataType)
                         || Types.isCharacterType(eArg2.dataType)) {
                     exprType = Expression.CONCAT;
                     dataType = Types.VARCHAR;
+
+                    if (isFixedConstant()) {
+                        valueData = getValue(dataType, null);
+                        eArg      = null;
+                        eArg2     = null;
+                        exprType  = VALUE;
+                    } else {
+                        if (eArg.isParam) {
+                            eArg.dataType = Types.VARCHAR;
+                        }
+
+                        if (eArg2.isParam) {
+                            eArg2.dataType = Types.VARCHAR;
+                        }
+                    }
 
                     break;
                 }
@@ -2016,17 +2032,17 @@ public class Expression {
 
             case CASEWHEN :
 
-                // We use CASEWHEN as both parent type.
+                // We use CASEWHEN as parent type.
                 // In the parent, eArg is the condition, and eArg2 is
-                // the leaf, tagged as type ALTERNATIVE, and its eArg is
+                // the leaf, tagged as type ALTERNATIVE; its eArg is
                 // case 1 (how to get the value when the condition in
-                // the parent evaluates to true) and its eArg2 is case 2
+                // the parent evaluates to true), while its eArg2 is case 2
                 // (how to get the value when the condition in
-                // the parent evaluates to true)
+                // the parent evaluates to false).
                 if (eArg.isParam) {
 
                     // condition is a paramter marker,
-                    // as in casewhen(?, v1, v1)
+                    // as in casewhen(?, v1, v2)
                     eArg.dataType = Types.BOOLEAN;
                 }
 

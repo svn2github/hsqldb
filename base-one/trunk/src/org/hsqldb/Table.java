@@ -116,9 +116,8 @@ public class Table extends BaseTable {
     public static final int TEXT_TABLE      = 6;
     public static final int VIEW            = 7;
 
-// boucherb@users - added in antcipation of special (not created via SQL) system
-// view objects to implement a SQL9n or 200n INFORMATION_SCHEMA
-    static final int SYSTEM_VIEW = 7;
+// boucherb@users - for future implementation of SQL standard INFORMATION_SCHEMA
+    static final int SYSTEM_VIEW = 8;
 
     // name of the column added to tables without primary key
     static final String DEFAULT_PK = "";
@@ -228,6 +227,7 @@ public class Table extends BaseTable {
                 break;
 
             case VIEW :
+            case SYSTEM_VIEW :
                 isView = true;
                 break;
         }
