@@ -1,8 +1,11 @@
 Readme File
 
 
+Leading to final Release Candidate
+
 More tests are required to verify the improvements. Please perform tests and report any 
-issues.
+issues. Testers are needed for build scripts with different JVM's using both ANT and batch 
+builds.
 
 Improvements to cascading update operations, allowing full capability with
 FK's referencing the same table.

@@ -9,22 +9,22 @@ md classes
 del /s classes\*.class
 cd src
 mkdir ..\temp
-copy org\hsqldb\jdbcDataSource*.java ..\temp\
-copy org\hsqldb\jdbcSavepoint.java ..\temp\
-copy org\hsqldb\jdbcParameterMetaData.java ..\temp\
+copy org\hsqldb\jdbc\jdbcDataSource*.java ..\temp\
+copy org\hsqldb\jdbc\jdbcSavepoint.java ..\temp\
+copy org\hsqldb\jdbc\jdbcParameterMetaData.java ..\temp\
 copy org\hsqldb\NIOLockFile.java ..\temp\
 copy org\hsqldb\NIOScaledRAFile.java ..\temp\
-del org\hsqldb\jdbcDataSource*.java
-del org\hsqldb\jdbcSavepoint.java
-del org\hsqldb\jdbcParameterMetaData.java
+del org\hsqldb\jdbc\jdbcDataSource*.java
+del org\hsqldb\jdbc\jdbcSavepoint.java
+del org\hsqldb\jdbc\jdbcParameterMetaData.java
 del org\hsqldb\NIOLockFile.java
 del org\hsqldb\NIOScaledRAFile.java
 copy org\hsqldb\util\*Swing.java ..\temp\
 del org\hsqldb\util\*Swing.java
 javac -O -nowarn -d ../classes -classpath "%classpath%;../classes;../lib/servlet.jar;." ./*.java org/hsqldb/*.java org/hsqldb/lib/*.java org/hsqldb/util/*.java
-copy ..\temp\jdbcDataSource*.java org\hsqldb
-copy ..\temp\jdbcSavepoint.java org\hsqldb
-copy ..\temp\jdbcParameterMetaData.java org\hsqldb
+copy ..\temp\jdbcDataSource*.java org\hsqldb\jdbc
+copy ..\temp\jdbcSavepoint.java org\hsqldb\jdbc
+copy ..\temp\jdbcParameterMetaData.java org\hsqldb\jdbc
 copy ..\temp\NIOLockFile.java org\hsqldb
 copy ..\temp\NIOScaledRAFile.java org\hsqldb
 del ..\temp\jdbcDataSource*.java
