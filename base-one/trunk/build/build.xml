@@ -403,6 +403,7 @@ examples:
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset dir='classes'
                 includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/jdbcDriver*,
                           org/hsqldb/rowio/RowOutputBase*,
                           org/hsqldb/rowio/RowInputBase*,
                           org/hsqldb/rowio/RowOutputBinary*,
@@ -436,6 +437,7 @@ examples:
                           org/hsqldb/Column*,
                           org/hsqldb/Binary.*,
                           org/hsqldb/Record*,
+                          org/hsqldb/SessionInterface*,
                           org/hsqldb/Result.*,
                           org/hsqldb/Result$*,
                           org/hsqldb/Row*,
@@ -443,7 +445,6 @@ examples:
                           org/hsqldb/BinaryServer*,
                           org/hsqldb/DatabaseRow*,
                           org/hsqldb/HSQLClient*,
-                          org/hsqldb/Session*,
                           org/hsqldb/HsqlProperties*,
                           org/hsqldb/HsqlException*,
                           org/hsqldb/DatabaseManager*,
