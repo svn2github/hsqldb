@@ -82,9 +82,12 @@ sure that there is no line break after the text to display and before
 the closing </screen> or </programlisting> tag.
 Otherwise the resultant display will not look right.
 
-Don't capitalize words or phrases to emphasize them.
+Don't capitalize words or phrases to emphasize them (including in
+section titles or headings).
 If you want to emphasize something a certain way, then use a DocBook
 emphasis role, and leave the presentation decisions to the style sheets.
+It is very easy to set a CSS style to capitalize headings if you want
+them to appear that way.
 
 
 
