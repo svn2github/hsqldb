@@ -95,7 +95,7 @@ class Expression {
                      COLUMN    = 2,
                      QUERY     = 3,
                      TRUE      = 4,
-                     FALSE     = -4, // arbitrary                     
+                     FALSE     = -4,    // arbitrary                     
                      VALUELIST = 5,
                      ASTERIX   = 6,
                      FUNCTION  = 7;
@@ -180,7 +180,7 @@ class Expression {
 
     // COLUMN
     private String      sCatalog;
-    private String      sSchema;    
+    private String      sSchema;
     private String      sTable;
     private String      sColumn;
     private TableFilter tFilter;        // null if not yet resolved
@@ -197,7 +197,7 @@ class Expression {
     private boolean isDistinctAggregate;
 
     // PARAM
-    private boolean isParam;   
+    private boolean isParam;
 
     // does Expression stem from a JOIN <table> ON <expression> (only set for OUTER joins)
     private boolean      isInJoin;
@@ -420,10 +420,10 @@ class Expression {
             case TRUE :
                 buf.append("TRUE ");
                 break;
-                
+
             case FALSE :
                 buf.append("FALSE ");
-                break;                
+                break;
 
             case VALUELIST :
                 buf.append("VALUELIST ");
@@ -1044,9 +1044,9 @@ class Expression {
      */
     void resolve(TableFilter f) throws HsqlException {
 
-        if (isParam) {            
+        if (isParam) {
             return;
-        }                
+        }
 
         if ((f != null) && (iType == COLUMN)) {
             String tableName = f.getName();
@@ -1063,11 +1063,13 @@ class Expression {
                         tFilter == null
                         || tFilter.getName().equals(
                             tableName), Trace.COLUMN_NOT_FOUND, sColumn);
-                    
-                    tFilter      = f;
-                    iColumn      = i;
-                    sTable       = tableName;
+
+                    tFilter = f;
+                    iColumn = i;
+                    sTable  = tableName;
+
                     setTableColumnAttributes(table, i);
+
                     // COLUMN is leaf; we are done
                     return;
                 }
@@ -1101,7 +1103,7 @@ class Expression {
         switch (iType) {
 
             case FUNCTION :
-                iDataType = fFunction.getReturnType();                
+                iDataType = fFunction.getReturnType();
                 break;
 
             case QUERY : {
@@ -1115,10 +1117,10 @@ class Expression {
                             + " the operand of a unary negation operation");
 
                 iDataType = eArg.iDataType;
- 
+
                 if (isFixedConstant()) {
                     oData = getValue(iDataType);
-                    eArg = null;
+                    eArg  = null;
                     iType = VALUE;
                 }
                 break;
@@ -1134,34 +1136,30 @@ class Expression {
 
                 if (isFixedConstant()) {
                     iDataType = Column.getCombinedNumberType(eArg.iDataType,
-                                                             eArg2.iDataType, 
-                                                             iType);                    
+                            eArg2.iDataType, iType);
                     oData = getValue(iDataType);
-                    eArg = null;
+                    eArg  = null;
                     eArg2 = null;
                     iType = VALUE;
                 } else {
-                    
                     if (eArg.isParam) {
                         eArg.iDataType = eArg2.iDataType;
                     } else if (eArg2.isParam) {
                         eArg2.iDataType = eArg.iDataType;
                     }
-                    
+
                     // fredt@users 20011010 - patch 442993 by fredt
                     iDataType = Column.getCombinedNumberType(eArg.iDataType,
-                                                             eArg2.iDataType,
-                                                             iType);
+                            eArg2.iDataType, iType);
                 }
-                
                 break;
 
             case CONCAT :
                 iDataType = Types.VARCHAR;
-                
+
                 if (isFixedConstant()) {
                     oData = getValue(iDataType);
-                    eArg = null;
+                    eArg  = null;
                     eArg2 = null;
                     iType = VALUE;
                 } else {
@@ -1185,25 +1183,27 @@ class Expression {
                             Trace.COLUMN_TYPE_MISMATCH,
                             "it is ambiguous for both expressions of a "
                             + "comparison-predicate to be parameter markers");
-                
+
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE : FALSE;
-                    eArg = null;
+                    iType = test() ? TRUE
+                                   : FALSE;
+                    eArg  = null;
                     eArg2 = null;
                 } else if (eArg.isParam) {
                     eArg.iDataType = eArg2.iDataType;
+
                     if (eArg2.iType == COLUMN) {
                         eArg.setTableColumnAttributes(eArg2);
                     }
                 } else if (eArg2.isParam) {
                     eArg2.iDataType = eArg.iDataType;
+
                     if (eArg.iType == COLUMN) {
                         eArg2.setTableColumnAttributes(eArg);
                     }
                 }
 
                 iDataType = Types.BIT;
-
                 break;
 
             case LIKE :
@@ -1213,8 +1213,9 @@ class Expression {
                             + "comparison-predicate to be parameter markers");
 
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE : FALSE;
-                    eArg = null;
+                    iType = test() ? TRUE
+                                   : FALSE;
+                    eArg  = null;
                     eArg2 = null;
                 } else if (eArg.isParam) {
                     eArg.iDataType = Types.VARCHAR;
@@ -1228,14 +1229,15 @@ class Expression {
             case AND :
             case OR :
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE : FALSE;
-                    eArg = null;
+                    iType = test() ? TRUE
+                                   : FALSE;
+                    eArg  = null;
                     eArg2 = null;
                 } else {
                     if (eArg.isParam) {
                         eArg.iDataType = Types.BIT;
                     }
-                    
+
                     if (eArg2.isParam) {
                         eArg2.iDataType = Types.BIT;
                     }
@@ -1246,8 +1248,9 @@ class Expression {
 
             case NOT :
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE : FALSE;
-                    eArg = null;
+                    iType = test() ? TRUE
+                                   : FALSE;
+                    eArg  = null;
                 } else if (eArg.isParam) {
                     eArg.iDataType = Types.BIT;
                 }
@@ -1256,6 +1259,7 @@ class Expression {
                 break;
 
             case IN :
+
                 // TODO: maybe isFixedConditional() test for IN?
                 // depends on how IN list evaluation plan is
                 // refactored
@@ -1299,12 +1303,11 @@ class Expression {
 
                 // NOTE: both iDataType for this expr and for eArg (if isParm)
                 // are already set in Parser during read
-                
-                if(eArg.isFixedConstant() || eArg.isFixedConditional()) {
+                if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
                     oData = getValue(iDataType);
                     iType = VALUE;
-                    eArg = null;                    
-                } 
+                    eArg  = null;
+                }
                 break;
 
             case IFNULL :
@@ -1313,59 +1316,62 @@ class Expression {
                             "it is ambiguous for both operands of an IFNULL "
                             + "operation to be parameter markers");
 
-                if ((eArg.isFixedConstant() || eArg.isFixedConditional()) 
-                     && (eArg2.isFixedConstant() || eArg2.isFixedConditional())) {
-                         iType = VALUE;
-                         oData = eArg.getValue(eArg.iDataType);
-                         if (oData == null) {
-                            iDataType = eArg2.iDataType;
-                            oData = eArg2.getValue(iDataType);
-                         } else {
-                             iDataType = eArg.iDataType;
-                         }
+                if ((eArg.isFixedConstant() || eArg.isFixedConditional())
+                        && (eArg2.isFixedConstant()
+                            || eArg2.isFixedConditional())) {
+                    iType = VALUE;
+                    oData = eArg.getValue(eArg.iDataType);
+
+                    if (oData == null) {
+                        iDataType = eArg2.iDataType;
+                        oData     = eArg2.getValue(iDataType);
+                    } else {
+                        iDataType = eArg.iDataType;
+                    }
                 } else {
-                    if (eArg.isParam ||eArg.iDataType == Types.NULL) {
+                    if (eArg.isParam || eArg.iDataType == Types.NULL) {
                         eArg.iDataType = eArg2.iDataType;
-                    } else if (eArg2.isParam ||eArg2.iDataType == Types.NULL) {
+                    } else if (eArg2.isParam
+                               || eArg2.iDataType == Types.NULL) {
                         eArg2.iDataType = eArg.iDataType;
                     }
-                    
+
                     Trace.check(
-                        !(eArg.iDataType == Types.NULL 
-                                &&eArg.iDataType == Types.NULL),
+                        !(eArg.iDataType == Types.NULL && eArg.iDataType == Types.NULL),
                         Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both operands of an IFNULL " 
+                        "it is ambiguous for both operands of an IFNULL "
                         + "operation to be of type NULL");
 
-                    if (Types.isNumberType(eArg.iDataType) 
+                    if (Types.isNumberType(eArg.iDataType)
                             && Types.isNumberType(eArg2.iDataType)) {
-                        iDataType = 
-                            Column.getCombinedNumberType(eArg.iDataType, 
-                                                         eArg2.iDataType, 
+                        iDataType =
+                            Column.getCombinedNumberType(eArg.iDataType,
+                                                         eArg2.iDataType,
                                                          ADD);
                     } else if (Types.isCharacterType(eArg.iDataType)
-                                    && Types.isCharacterType(eArg2.iDataType)) {
+                               && Types.isCharacterType(eArg2.iDataType)) {
+
                         // Good enough for now
-                        iDataType = Types.LONGVARCHAR;            
+                        iDataType = Types.LONGVARCHAR;
                     } else if (Types.isDatetimeType(eArg.iDataType)
-                                    && Types.isDatetimeType(eArg2.iDataType)) {
-                         // This should be OK.
-                         iDataType = Types.TIMESTAMP;               
+                               && Types.isDatetimeType(eArg2.iDataType)) {
+
+                        // This should be OK.
+                        iDataType = Types.TIMESTAMP;
                     } else {
                         Trace.check(
-                        eArg.iDataType == eArg2.iDataType,
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "the output data type of an IFNULL operation is "
-                        + "currently ambiguous when the input types are "
-                        + Types.getTypeString(eArg.iDataType)
-                        + " and " 
-                        + Types.getTypeString(eArg.iDataType)); 
+                            eArg.iDataType == eArg2.iDataType,
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "the output data type of an IFNULL operation is "
+                            + "currently ambiguous when the input types are "
+                            + Types.getTypeString(eArg.iDataType) + " and "
+                            + Types.getTypeString(eArg.iDataType));
                     }
                 }
                 break;
 
             case CASEWHEN :
-                
+
                 // We use CASEWHEN as both parent and leaf type.
                 // In the parent, eArg is the condition, and eArg2 is
                 // the leaf, also tagged as type CASEWHEN, but its eArg is
@@ -1373,7 +1379,6 @@ class Expression {
                 // the parent evaluates to true) and its eArg2 is case 2
                 // (how to get the value when the condition in
                 // the parent evaluates to true)  
-                
                 if (eArg2.eArg == null) {
                     break;
                 }
@@ -1387,57 +1392,53 @@ class Expression {
 
                 Expression case1 = eArg2.eArg;
                 Expression case2 = eArg2.eArg2;
-                
-                Trace.check(
-                    !(case1.isParam && case2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the second and third "
-                    + "operands of a CASEWHEN operation to be"
-                    + "parameter markers");                               
 
-                if (case1.isParam ||case1.iDataType == Types.NULL) {
+                Trace.check(!(case1.isParam && case2.isParam),
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both the second and third "
+                            + "operands of a CASEWHEN operation to be"
+                            + "parameter markers");
+
+                if (case1.isParam || case1.iDataType == Types.NULL) {
                     case1.iDataType = case2.iDataType;
-                } else if (case2.isParam ||case2.iDataType == Types.NULL) {
+                } else if (case2.isParam || case2.iDataType == Types.NULL) {
                     case2.iDataType = case1.iDataType;
-                } 
-                
+                }
+
                 Trace.check(
-                    !(case1.iDataType == Types.NULL 
-                            &&case2.iDataType == Types.NULL),
+                    !(case1.iDataType == Types.NULL && case2.iDataType == Types.NULL),
                     Trace.COLUMN_TYPE_MISMATCH,
                     "it is ambiguous for both the second and third "
-                    + "operands of a CASEWHEN operation to be"
-                    + "NULL");                 
-                
-                if (Types.isNumberType(case1.iDataType) 
+                    + "operands of a CASEWHEN operation to be" + "NULL");
+
+                if (Types.isNumberType(case1.iDataType)
                         && Types.isNumberType(case2.iDataType)) {
-                    iDataType =
-                        Column.getCombinedNumberType(case1.iDataType, 
-                                                     case2.iDataType, 
-                                                     ADD); 
+                    iDataType = Column.getCombinedNumberType(case1.iDataType,
+                            case2.iDataType, ADD);
                 } else if (Types.isCharacterType(case1.iDataType)
-                                && Types.isCharacterType(case2.iDataType)) {
+                           && Types.isCharacterType(case2.iDataType)) {
+
                     // Good enough for now?
-                    iDataType = Types.LONGVARCHAR;            
+                    iDataType = Types.LONGVARCHAR;
                 } else if (Types.isDatetimeType(case1.iDataType)
-                                && Types.isDatetimeType(case2.iDataType)) {                     
-                     if (case1.iDataType == case2.iDataType) {
-                         iDataType = case1.iDataType;
-                     } else {
-                         // This should be OK.
-                        iDataType = Types.TIMESTAMP;  
-                     }
+                           && Types.isDatetimeType(case2.iDataType)) {
+                    if (case1.iDataType == case2.iDataType) {
+                        iDataType = case1.iDataType;
+                    } else {
+
+                        // This should be OK.
+                        iDataType = Types.TIMESTAMP;
+                    }
                 } else {
                     Trace.check(
-                    case1.iDataType == case2.iDataType,
-                    Trace.COLUMN_TYPE_MISMATCH,
-                    "the output data type of a CASEWHEN operation is currently  "
-                    + "ambiguous when the operand types are "
-                    + Types.getTypeString(case1.iDataType)
-                    + " and " 
-                    + Types.getTypeString(case2.iDataType)); 
+                        case1.iDataType == case2.iDataType,
+                        Trace.COLUMN_TYPE_MISMATCH,
+                        "the output data type of a CASEWHEN operation is currently  "
+                        + "ambiguous when the operand types are "
+                        + Types.getTypeString(case1.iDataType) + " and "
+                        + Types.getTypeString(case2.iDataType));
                 }
-                break;        
+                break;
         }
     }
 
@@ -1731,7 +1732,7 @@ class Expression {
 // tony_lai@users having >>>
             case TRUE :
                 return Boolean.TRUE;
-                
+
             case FALSE :
                 return Boolean.FALSE;
 
@@ -1945,11 +1946,13 @@ class Expression {
 
             case CASEWHEN :
                 if (eArg.test()) {
+
                     // CHECKME:
                     // Shouldn't this be
                     // eArg2.eArg.getValue(iDataType);
                     return eArg2.eArg.getValue();
                 } else {
+
                     // eArg2.eArg2.getValue(iDataType);
                     return eArg2.eArg2.getValue();
                 }
@@ -2011,7 +2014,7 @@ class Expression {
 
             case TRUE :
                 return true;
-                
+
             case FALSE :
                 return false;
 
@@ -2255,7 +2258,6 @@ class Expression {
 //        // any more, of the semantics should change
 //        //iDataType = type;
 //    }
-
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
     void bind(Object o) throws HsqlException {
@@ -2266,8 +2268,9 @@ class Expression {
     boolean isParam() {
         return isParam;
     }
-    
+
     boolean isFixedConstant() {
+
         switch (iType) {
 
             case VALUE :
@@ -2286,7 +2289,7 @@ class Expression {
 
         return false;
     }
-    
+
     boolean isFixedConditional() {
 
         switch (iType) {
@@ -2294,6 +2297,7 @@ class Expression {
             case TRUE :
             case FALSE :
                 return true;
+
             case EQUAL :
             case BIGGER_EQUAL :
             case BIGGER :
@@ -2301,7 +2305,8 @@ class Expression {
             case SMALLER_EQUAL :
             case NOT_EQUAL :
             case LIKE :
-            //case IN : TODO
+
+                //case IN : TODO
                 return eArg.isFixedConstant() && eArg2.isFixedConstant();
 
             case NOT :
@@ -2309,19 +2314,22 @@ class Expression {
 
             case AND :
             case OR :
-                return eArg.isFixedConditional() && eArg2.isFixedConditional();
+                return eArg.isFixedConditional()
+                       && eArg2.isFixedConditional();
 
             default :
                 return false;
-        }        
+        }
     }
-    
+
     boolean isProcedureCall() {
+
         // valid only after expression has been resolved
         return iType == FUNCTION && iDataType == Types.NULL;
     }
-    
-    void setTableColumnAttributes(Expression e) {        
+
+    void setTableColumnAttributes(Expression e) {
+
         iColumnSize  = e.iColumnSize;
         iColumnScale = e.iColumnScale;
         isIdentity   = e.isIdentity;
@@ -2330,24 +2338,28 @@ class Expression {
         sCatalog     = e.sCatalog;
         sSchema      = e.sSchema;
     }
-    
-    void setTableColumnAttributes(Table t, int i) {        
+
+    void setTableColumnAttributes(Table t, int i) {
+
         Column c;
-        
-        c            = t.getColumn(i);        
+
+        c            = t.getColumn(i);
         iDataType    = c.getType();
         iColumnSize  = c.getSize();
         iColumnScale = c.getScale();
         isIdentity   = c.isIdentity();
+
         // IDENTITY columns are not nullable; 
         // NULLs are converted into the next identity value for the table
-        nullability  = c.isNullable() &&!isIdentity ? NULLABLE : NO_NULLS;
-        isWritable   = t.isWritable();
-        sCatalog     = t.getCatalogName();
-        sSchema      = t.getSchemaName();
-    }        
-    
+        nullability = c.isNullable() &&!isIdentity ? NULLABLE
+                                                   : NO_NULLS;
+        isWritable  = t.isWritable();
+        sCatalog    = t.getCatalogName();
+        sSchema     = t.getSchemaName();
+    }
+
     String getValueClassName() {
+
         int        ditype;
         int        ditypesub;
         DITypeInfo ti;
@@ -2355,45 +2367,46 @@ class Expression {
         if (valueClassName != null) {
             return valueClassName;
         }
-                
+
         if (fFunction != null) {
             valueClassName = fFunction.getReturnClass().getName();
+
             return valueClassName;
         }
 
         if (iDataType == Types.VARCHAR_IGNORECASE) {
-            ditype = Types.VARCHAR;
+            ditype    = Types.VARCHAR;
             ditypesub = Types.TYPE_SUB_IGNORECASE;
         } else {
-            ditype = iDataType;
+            ditype    = iDataType;
             ditypesub = Types.TYPE_SUB_DEFAULT;
         }
 
         ti = new DITypeInfo();
-        
+
         ti.setTypeCode(ditype);
         ti.setTypeSub(ditypesub);
-        
+
         valueClassName = ti.getColStClsName();
-        
+
         return valueClassName;
     }
-    
+
     // parameter modes
     static final int PARAM_UNKNOWN = 0;
     static final int PARAM_IN      = 1;
     static final int PARAM_IN_OUT  = 2;
     static final int PARAM_OUT     = 4;
-    
+
     // result set (output column value) or parameter expression nullability
     static final int NO_NULLS         = 0;
     static final int NULLABLE         = 1;
     static final int NULLABLE_UNKNOWN = 2;
-    
+
     // output column and parameter expression metadata values
-    boolean isIdentity; // = false
-    int     nullability = NULLABLE_UNKNOWN; 
-    boolean isWritable;  // = false; true iff column of writable table
-    int     paramMode   = PARAM_UNKNOWN;
-    String  valueClassName; // = null
+    boolean isIdentity;        // = false
+    int     nullability = NULLABLE_UNKNOWN;
+    boolean isWritable;        // = false; true iff column of writable table
+    int     paramMode = PARAM_UNKNOWN;
+    String  valueClassName;    // = null
 }

@@ -153,6 +153,10 @@ implements DatabaseRowOutputInterface {
                                         int t)
                                         throws IOException, HsqlException;
 
+    public void setSystemId(boolean flag) {
+        skipSystemId = flag;
+    }
+
     /**
      *  This method is called to write data for a table
      *

@@ -190,6 +190,10 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     protected abstract Binary readBinary(int type)
     throws IOException, HsqlException;
 
+    public void setSystemId(boolean flag) {
+        makeSystemId = flag;
+    }
+
     /**
      *  reads row data from a stream using the JDBC types in colTypes
      *
@@ -206,8 +210,6 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
         if (makeSystemId) {
             l--;
-
-            data[l] = ValuePool.getInt(getPos());
         }
 
         Object o;

@@ -156,7 +156,7 @@ public class jdbcStatement implements java.sql.Statement {
      * when it is closed.
      */
     private boolean isClosed;
-    
+
     /**
      * Is escape processing enabled?
      */
@@ -187,12 +187,12 @@ public class jdbcStatement implements java.sql.Statement {
      * sqlExecDirect requests.
      */
     protected Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
-    
+
     /**
      * The Result used by this statement to hold batch execution data
      */
-    protected Result batch     = new Result(ResultConstants.DATA);
-    
+    protected Result batch = new Result(ResultConstants.DATA);
+
     /**
      * Whether the parent connection is to a network server instance.
      */
@@ -218,7 +218,8 @@ public class jdbcStatement implements java.sql.Statement {
      *          SQL statement produces anything other than a single
      *          <code>ResultSet</code> object
      */
-    public synchronized ResultSet executeQuery(String sql) throws SQLException {
+    public synchronized ResultSet executeQuery(String sql)
+    throws SQLException {
 
         // boucherb@users
         // NOTE:
@@ -226,7 +227,6 @@ public class jdbcStatement implements java.sql.Statement {
         // and thus it is theoretically possible that a race condition occurs
         // in which a different thread executes fetchResult(sql), replacing
         // resultIn before it gets assigned propery to the new result set.
-        
         checkClosed();
         fetchResult(sql);
 
@@ -254,7 +254,7 @@ public class jdbcStatement implements java.sql.Statement {
      *          SQL statement produces a <code>ResultSet</code> object
      */
     public synchronized int executeUpdate(String sql) throws SQLException {
-        
+
         // boucherb@users
         // NOTE:
         // This method is synchronized since resultIn is an instance attribute
@@ -262,7 +262,6 @@ public class jdbcStatement implements java.sql.Statement {
         // in which a different thread executes fetchResult(sql), replacing
         // resultIn before it is properly tested and/or its update count
         // returned.
-
         checkClosed();
         fetchResult(sql);
 
@@ -305,7 +304,7 @@ public class jdbcStatement implements java.sql.Statement {
      * bother individually closing each of the prepared or callable statement
      * objects derived from it.  This observation does not apply to plain old
      * Statement objects, however. <p>
-     * 
+     *
      * The reason it may be more efficient not to individually close statement
      * objects is that a call to close the parent connection essentially
      * batches the release of all the connection's resorces, including any open
@@ -318,7 +317,7 @@ public class jdbcStatement implements java.sql.Statement {
      * as many database execution invocations as there are open prepared and
      * callable statement objects. <p>
      *
-     * On the other hand, HSQLDB jdbcStatement objects certainly do consume 
+     * On the other hand, HSQLDB jdbcStatement objects certainly do consume
      * some resources, and both jdbcPreparedStatement and jdbcCallableStatement
      * object consume even more, part of which are located at the engine rather
      * than only in the JDBC objects.  As such, it may well be advisable to
@@ -333,7 +332,7 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      */
     public void close() throws SQLException {
-        closeImpl(/*isDisconnecting*/false);
+        closeImpl( /*isDisconnecting*/false);
     }
 
     //----------------------------------------------------------------------
@@ -711,7 +710,7 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getMoreResults
      */
     public synchronized boolean execute(String sql) throws SQLException {
-        
+
         // boucherb@users
         // NOTE:
         // this method is synchronized since resultIn is an instance attribute
@@ -720,7 +719,6 @@ public class jdbcStatement implements java.sql.Statement {
         // resultIn after this methods call to fetchResult but before it
         // calculates and returns the value of
         // resultIn.iMode == ResultConstants.DATA.
-        
         checkClosed();
         fetchResult(sql);
 
@@ -745,7 +743,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * @return the current result as a <code>ResultSet</code> object or
      *      <code>null</code> if the result is an update count or there
-            are no more results
+     *       are no more results
      * @exception SQLException if a database access error occurs
      * @see #execute
      */
@@ -759,9 +757,9 @@ public class jdbcStatement implements java.sql.Statement {
         // of the jdbcResultSet.        
         checkClosed();
 
-        return resultIn == null ||resultIn.iMode != ResultConstants.DATA
-            ? null
-            : new jdbcResultSet(this, resultIn, connection.connProperties);
+        return resultIn == null || resultIn.iMode != ResultConstants.DATA
+               ? null
+               : new jdbcResultSet(this, resultIn, connection.connProperties);
     }
 
     /**
@@ -786,10 +784,9 @@ public class jdbcStatement implements java.sql.Statement {
 // fredt - omit checkClosed() in order to be able to handle the result of a
 // SHUTDOWN query
 //        checkClosed();
-
-        return (resultIn == null ||resultIn.iMode == ResultConstants.DATA)
-            ? -1
-            : resultIn.getUpdateCount();
+        return (resultIn == null || resultIn.iMode == ResultConstants.DATA)
+               ? -1
+               : resultIn.getUpdateCount();
     }
 
     /**
@@ -1106,7 +1103,6 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public synchronized void clearBatch() throws SQLException {
-
         checkClosed();
         batch.trimResult(0, 0);
     }
@@ -1162,8 +1158,8 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * When the product is built under the JAVA1 target, an exception is never
      * thrown and is is the responsibility of the client software to scan the
-     * returned update count array for values of -3 
-     * (<code>EXECUTE_FAILED</code>) to determine if any batch items 
+     * returned update count array for values of -3
+     * (<code>EXECUTE_FAILED</code>) to determine if any batch items
      * failed. <p>
      *
      * </span>
@@ -1677,20 +1673,21 @@ public class jdbcStatement implements java.sql.Statement {
      * @param  type the kind of results this will return
      */
     jdbcStatement(jdbcConnection c, int type) {
+
         // PRE: assume connection is not null and is not closed
         // PRE: assume type is a valid result set type code
         connection = c;
         rsType     = type;
         isNetConn  = c.sessionProxy instanceof HSQLClientConnection;
     }
-    
+
     /**
      * Implements the public close() method so as to avoid excessive calls
      * to close this connection's open statment objects.
      *
      * @param isDisconnect if true, called from Connection.close, else from
      *      this.close
-     */    
+     */
     synchronized void closeImpl(boolean isDisconnect) throws SQLException {
 
         // For plain old jdbcStatement objects, there is no
@@ -1708,7 +1705,6 @@ public class jdbcStatement implements java.sql.Statement {
         // when it is done.
         // jdbcCallableStatement inherits this behaviour from
         // jdbcPreparedStatement.
-
         if (isClosed) {
             return;
         }
@@ -1717,12 +1713,13 @@ public class jdbcStatement implements java.sql.Statement {
             connection.statementSet.remove(this);
         }
 
-        batch      = null;
+        batch = null;
+
         // This is OK:
         // Despite setting this null, getConnection() will never return null
         // since it is now synchronized and calls checkClosed before 
         // returning connection
-        connection = null; 
+        connection = null;
         resultIn   = null;
         resultOut  = null;
         isClosed   = true;
@@ -1732,8 +1729,9 @@ public class jdbcStatement implements java.sql.Statement {
      * Retrieves whether this statement is closed.
      *
      * @throws SQLException when the connection is closed
-     */    
+     */
     synchronized boolean isClosed() throws SQLException {
+
         // There is no point to checking if the parent connection
         // is closed every time.  It's a waste.  When the parent connection
         // closes, it now closes all open jdbcXXXStatement objects
@@ -1758,6 +1756,7 @@ public class jdbcStatement implements java.sql.Statement {
 
 /** @todo fredt - message */
     synchronized void checkClosed() throws SQLException {
+
         // See comments internal to isClosed();
         if (isClosed) {
             throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
@@ -1777,11 +1776,11 @@ public class jdbcStatement implements java.sql.Statement {
      * @param sql a character sequence representing the SQL to be executed
      * @throws SQLException when a database access error occurs
      */
-    private /* synchronized */ void fetchResult(String sql) throws SQLException {
-        
+    private /* synchronized */ void fetchResult(String sql)
+    throws SQLException {
+
         // NOTE:  No longer synchronzied, since all calling methods are now
         //        synchronized instead, for the reasons noted in those methods.
-
         if (isEscapeProcessing) {
             sql = connection.nativeSQL(sql);
         }

@@ -237,7 +237,7 @@ class TableWorks {
             Table tn = table.moveDefinition(null, null,
                                             table.getColumnCount(), 0);
 
-            newindex = tn.createIndexStructure(col, name, unique);
+            newindex = tn.createIndexStructure(col, name, unique, false);
 
             tn.moveData(table, table.getColumnCount(), 0);
             tn.updateConstraints(table, table.getColumnCount(), 0);

@@ -419,12 +419,12 @@ class Types {
         }
     };
 /*
- SQL specifies predefined data types named by the following <key word>s: 
+ SQL specifies predefined data types named by the following <key word>s:
  CHARACTER, CHARACTER VARYING, CHARACTER LARGE OBJECT, BINARY LARGE OBJECT,
  NUMERIC, DECIMAL, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE PRECISION,
  BOOLEAN, DATE, TIME, TIMESTAMP, and INTERVAL.
  SQL 200n adds DATALINK in Part 9: Management of External Data (SQL/MED)
- and adds XML in Part 14: XML-Related Specifications (SQL/XML) 
+ and adds XML in Part 14: XML-Related Specifications (SQL/XML)
 */
 
     // CLI type list from Table 37
@@ -470,7 +470,7 @@ class Types {
     static final int SQL_INTERVAL_DAY_TO_SECOND    = 110;
     static final int SQL_INTERVAL_HOUR_TO_MINUTE   = 111;
     static final int SQL_INTERVAL_HOUR_TO_SECOND   = 112;
-    static final int SQL_INTERVAL_MINUTE_TO_SECOND = 113;    
+    static final int SQL_INTERVAL_MINUTE_TO_SECOND = 113;
 
     // These values are not in table 37 of the SQL CLI 200n FCD, but some
     // are found in tables 6-9 and some are found in Annex A1:
@@ -492,23 +492,23 @@ class Types {
     static final int SQL_XML              = 137;
 
     // SQL_UDT subcodes
-    static final int SQL_DISTINCT         = 1;
-    static final int SQL_SCTRUCTURED      = 2;
+    static final int SQL_DISTINCT    = 1;
+    static final int SQL_SCTRUCTURED = 2;
 
     // non-standard type not in JDBC or SQL CLI
-    static final int VARCHAR_IGNORECASE = 100;      
+    static final int VARCHAR_IGNORECASE = 100;
 
 // lookup for types
 // boucherb@users - access changed for metadata 1.7.2
     static IntValueHashMap typeAliases;
     static IntKeyHashMap   typeNames;
     static IntValueHashMap javaTypeNames;
-    
+
 //  boucherb@users - We can't handle method invocations in 
 //                   Function.java whose number class is
 //                   narrower than the corresponding internal
 //                   wrapper    
-    private static org.hsqldb.lib.HashSet  illegalParameterClasses;
+    private static org.hsqldb.lib.HashSet illegalParameterClasses;
 
     static {
         typeAliases = new IntValueHashMap(67, 1);
@@ -587,20 +587,20 @@ class Types {
         typeNames.put(Types.VARBINARY, "VARBINARY");
         typeNames.put(Types.LONGVARBINARY, "LONGVARBINARY");
         typeNames.put(Types.OTHER, "OBJECT");
-        
+
         //
         illegalParameterClasses = new org.hsqldb.lib.HashSet(13);
-        
+
         illegalParameterClasses.add(Byte.TYPE);
         illegalParameterClasses.add(Short.TYPE);
         illegalParameterClasses.add(Float.TYPE);
         illegalParameterClasses.add(Byte.class);
         illegalParameterClasses.add(Short.class);
-        illegalParameterClasses.add(Float.class);        
+        illegalParameterClasses.add(Float.class);
     }
 
     /**
-     * 
+     *
      * @param  SQL type string
      * @return java.sql.Types int value
      * @throws  HsqlException
@@ -620,83 +620,84 @@ class Types {
     static String getTypeString(int type) {
         return (String) typeNames.get(type);
     }
-    
+
     /**
      * Retieves the type number corresponding to the class
      * of an IN, IN OUT or OUT parameter.  <p>
      *
      * This method extends getTypeNr to return OTHER for
-     * primitive arrays, classes that directly implement 
+     * primitive arrays, classes that directly implement
      * java.io.Serializable and non-primitive arrays whose
-     * base component implements java.io.Serializable, 
-     * allowing, for instance, arguments and return types of 
-     * primitive arrays, Serializable objects and arrays, 
+     * base component implements java.io.Serializable,
+     * allowing, for instance, arguments and return types of
+     * primitive arrays, Serializable objects and arrays,
      * of Serializable objects.  Direct primitive types
      * other than those mapping directly to the internal
      * wrapper form are not yet handled.  That is, HSQLDB
      * cannot yet properly deal with CALLs involving methods
-     * with primitive byte, short, float or their 
-     * corresponding wrappers, due to the way internal 
+     * with primitive byte, short, float or their
+     * corresponding wrappers, due to the way internal
      * conversion works and lack of detection and narrowing
-     * code in Function to allow this.  In other words, 
+     * code in Function to allow this.  In other words,
      * passing in or retrieving any of the mentioned types
-     * always causes conversion to a wider internal wrapper 
+     * always causes conversion to a wider internal wrapper
      * which is genrally incompatible under reflective
      * invocation, resulting in an IllegalArgumentException.
-     * 
+     *
      * @param  c a Class instance
      * @return java.sql.Types int value
      * @throws  HsqlException
-     */    
+     */
     static int getParameterTypeNr(Class c) throws HsqlException {
-        
+
         String name;
         String msg;
         int    type;
-        
+
         Trace.doAssert(c != null, "c is null");
-        
+
         if (Void.TYPE.equals(c)) {
             return Types.NULL;
         }
-        
+
         name = c.getName();
         msg  = "Unsupported parameter/return value class: ";
-        
-        if (illegalParameterClasses.contains(c)) {            
-            throw Trace.error(Trace.WRONG_DATA_TYPE, msg + name); 
-        }                
-                
+
+        if (illegalParameterClasses.contains(c)) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE, msg + name);
+        }
+
         type = typeAliases.get(name, Integer.MIN_VALUE);
-        
+
         if (type == Integer.MIN_VALUE) {
+
             // byte[] is already covered as BINARY in typeAliases
             if (c.isArray()) {
-                while(c.isArray()) {
+                while (c.isArray()) {
                     c = c.getComponentType();
                 }
-                if (c.isPrimitive() 
-                    ||java.io.Serializable.class.isAssignableFrom(c)) {
-                        type = OTHER;
+
+                if (c.isPrimitive()
+                        || java.io.Serializable.class.isAssignableFrom(c)) {
+                    type = OTHER;
                 }
             } else if (java.io.Serializable.class.isAssignableFrom(c)) {
                 type = OTHER;
             }
         }
-       
-        Trace.check(type != Integer.MIN_VALUE, 
-                    Trace.WRONG_DATA_TYPE, 
+
+        Trace.check(type != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE,
                     msg + name);
 
         return type;
     }
-    
+
     /**
-     * Retrieves the SQL data type corrsponding to the 
+     * Retrieves the SQL data type corrsponding to the
      * Class of the "widest" (least restrictive) internal
      * represention in which the specified object can fit
-     * without a non-trivial conversion via 
-     * Column.convertObject(Object,int). <p> 
+     * without a non-trivial conversion via
+     * Column.convertObject(Object,int). <p>
      *
      * By trivial, it is meant converting an Object, o,
      * to a JavaObject holder for o. <p>
@@ -705,41 +706,42 @@ class Types {
      * if the input object is Integer and its value would fit
      * in the range of either TINYINT or SMALLINT, both of which
      * are also represented interally as Integer objects.
-     * 
+     *
      */
     static int getWidestTypeNrNoConvert(Object o) {
 
-       int type;
+        int type;
 
-       if (o == null) {
-           return NULL;
-       }
-       
-       type = getWidestTypeNrNoConvert(o.getClass());
+        if (o == null) {
+            return NULL;
+        }
 
-       // To optimize result of promotesWithoutConversion(t1,t2)
-       if (type == INTEGER) {
-           int val = ((Number)o).intValue();
-           if (val >= Byte.MIN_VALUE && val <= Byte.MAX_VALUE) {
-               type = TINYINT;
-           } else if (val >= Short.MIN_VALUE && val <= Short.MAX_VALUE) {
-               type = SMALLINT;
-           } 
-       }
+        type = getWidestTypeNrNoConvert(o.getClass());
 
-       return type;
+        // To optimize result of promotesWithoutConversion(t1,t2)
+        if (type == INTEGER) {
+            int val = ((Number) o).intValue();
+
+            if (val >= Byte.MIN_VALUE && val <= Byte.MAX_VALUE) {
+                type = TINYINT;
+            } else if (val >= Short.MIN_VALUE && val <= Short.MAX_VALUE) {
+                type = SMALLINT;
+            }
+        }
+
+        return type;
     }
 
     /**
-     * Retrieves the SQL data type corrsponding to the 
+     * Retrieves the SQL data type corrsponding to the
      * Class of the "widest" internal represention in
      * which instances of the specified Class can fit
-     * without a non-trivial conversion via 
-     * Column.convertObject(Object,int). <p> 
+     * without a non-trivial conversion via
+     * Column.convertObject(Object,int). <p>
      *
      * By trivial, it is meant converting an Object, o,
      * to a JavaObject holder for o.
-     */ 
+     */
     static int getWidestTypeNrNoConvert(Class c) {
 
         if (c == null || Void.TYPE.equals(c)) {
@@ -774,31 +776,30 @@ class Types {
         // conversion, so it's redundant here.
         // In other words, please note the NoConvert suffix
         // of the method name.  It's there for a reason.
-        
-        return OTHER;            
+        return OTHER;
     }
-    
+
     static boolean areSimilar(int t1, int t2) {
 
         if (t1 == t2) {
             return true;
         }
-        
+
         if (isNumberType(t1)) {
             return isNumberType(t2);
-        } 
-        
+        }
+
         if (isCharacterType(t1)) {
             return isCharacterType(t2);
-        } 
-        
+        }
+
         if (isBinaryType(t1)) {
             return isBinaryType(t2);
         }
 
         return false;
     }
-    
+
     static boolean haveSameInternalRepresentation(int t1, int t2) {
 
         if (t1 == t2) {
@@ -808,16 +809,18 @@ class Types {
         if (isCharacterType(t1)) {
             return isCharacterType(t2);
         }
-        
+
         if (isBinaryType(t1)) {
             return isBinaryType(t2);
         }
-        
-        switch(t1) {
+
+        switch (t1) {
+
             case TINYINT :
             case SMALLINT :
             case INTEGER : {
                 switch (t2) {
+
                     case TINYINT :
                     case SMALLINT :
                     case INTEGER : {
@@ -832,19 +835,21 @@ class Types {
             case REAL :
             case DOUBLE : {
                 switch (t2) {
+
                     case FLOAT :
                     case REAL :
-                    case DOUBLE : {                        
+                    case DOUBLE : {
                         return true;
                     }
                     default : {
                         return false;
                     }
-                }                
+                }
             }
             case DECIMAL :
             case NUMERIC : {
                 switch (t2) {
+
                     case DECIMAL :
                     case NUMERIC : {
                         return true;
@@ -857,44 +862,50 @@ class Types {
             default : {
                 return false;
             }
-        }        
+        }
     }
 
     static boolean promotesWithoutConversion(int t1, int t2) {
+
         if (t1 == t2) {
             return true;
         }
-        
+
         if (isCharacterType(t1)) {
             return isCharacterType(t2);
         }
-        
+
         if (isBinaryType(t1)) {
             return isBinaryType(t2);
         }
-        
+
 // if (isNumberType(t1)) is a tautology at this point
-        
-        switch(t1) {
+        switch (t1) {
+
             case TINYINT : {
-                switch(t2) {
+                switch (t2) {
+
 //                  case TINYINT : // covered by t1 == t2
                     case SMALLINT :
                     case INTEGER :
                         return true;
+
                     default :
                         return false;
                 }
             }
             case SMALLINT : {
                 switch (t2) {
+
 //                  case SMALLINT : // covered by t1 == t2
                     case INTEGER :
                         return true;
+
                     default :
                         return false;
                 }
             }
+
 // covered by t2 == t2 condition above
 //          case INTEGER :
 //          case BIGINT : {
@@ -903,25 +914,30 @@ class Types {
 // semi-redundant, but simpler than writing out individual cases to
 // avoid it
             case FLOAT :
-            case REAL:
+            case REAL :
             case DOUBLE : {
-                switch(t2) {
+                switch (t2) {
+
                     case FLOAT :
                     case REAL :
                     case DOUBLE :
                         return true;
+
                     default :
                         return false;
                 }
             }
+
 // semi-redundant, but simpler than writing out individual cases to
 // avoid it
             case DECIMAL :
             case NUMERIC : {
-                switch(t2) {
+                switch (t2) {
+
                     case DECIMAL :
                     case NUMERIC :
                         return true;
+
                     default :
                         return false;
                 }
@@ -931,9 +947,11 @@ class Types {
             }
         }
     }
-    
+
     static boolean isNumberType(int type) {
+
         switch (type) {
+
             case BIGINT :
             case DECIMAL :
             case DOUBLE :
@@ -944,13 +962,16 @@ class Types {
             case SMALLINT :
             case TINYINT :
                 return true;
+
             default :
                 return false;
         }
     }
-    
+
     static boolean isExactNumberType(int type) {
+
         switch (type) {
+
             case BIGINT :
             case DECIMAL :
             case INTEGER :
@@ -958,37 +979,47 @@ class Types {
             case SMALLINT :
             case TINYINT :
                 return true;
+
             default :
                 return false;
         }
     }
-    
+
     static boolean isStrictlyIntegralNumberType(int type) {
+
         switch (type) {
+
             case BIGINT :
             case INTEGER :
             case SMALLINT :
             case TINYINT :
                 return true;
+
             default :
                 return false;
         }
-    }    
-    
+    }
+
     static boolean isApproximateNumberType(int type) {
+
         switch (type) {
+
             case DOUBLE :
             case FLOAT :
             case REAL :
                 return true;
+
             default :
                 return false;
         }
-    }    
-    
+    }
+
     static boolean isCharacterType(int type) {
+
         switch (type) {
+
             case CHAR :
+
 // Not supported yet & would break:
 // promotesWithoutConversion & haveSameInternalRepresentation                 
 //          case CLOB : 
@@ -996,44 +1027,53 @@ class Types {
             case VARCHAR :
             case VARCHAR_IGNORECASE :
                 return true;
-            default : 
+
+            default :
                 return false;
         }
     }
-    
+
     static boolean isBinaryType(int type) {
+
         switch (type) {
+
             case BINARY :
+
 // Not supported yet & would break:
 // promotesWithoutConversion & haveSameInternalRepresentation                
 //          case BLOB :
             case LONGVARBINARY :
             case VARBINARY :
                 return true;
-            default :
-                return false;
-        }
-    } 
-    
-    static boolean isDatetimeType(int type) {
 
-        switch(type) {
-            case DATE :
-            case TIME :
-            case TIMESTAMP :
-                return true;
             default :
                 return false;
         }
     }
-    
+
+    static boolean isDatetimeType(int type) {
+
+        switch (type) {
+
+            case DATE :
+            case TIME :
+            case TIMESTAMP :
+                return true;
+
+            default :
+                return false;
+        }
+    }
+
     static boolean acceptsPrecisionCreateParam(int type) {
 
         switch (type) {
+
             case BINARY :
             case BLOB :
             case CHAR :
             case CLOB :
+
 // CHECKME:
 // I suppose we do/could, but, typically, other systems do not?             
 //            case LONGVARBINARY :
@@ -1043,34 +1083,41 @@ class Types {
             case DECIMAL :
             case NUMERIC :
             case FLOAT :
-                return true;               
+                return true;
+
             default :
                 return false;
         }
     }
-    
+
     static int numericPrecisionCreateParamRadix(int type) {
-        
+
         switch (type) {
+
             case Types.DECIMAL :
             case Types.NUMERIC :
                 return 10;
+
             case FLOAT :
-                return 2;               
+                return 2;
+
             default :
+
                 // to mean NOT APPLICABLE (i.e. NULL)
                 return 0;
         }
     }
-    
+
     static boolean acceptsScaleCreateParam(int type) {
 
         switch (type) {
+
             case Types.DECIMAL :
             case Types.NUMERIC :
-                return true;               
+                return true;
+
             default :
                 return false;
         }
-    }    
+    }
 }

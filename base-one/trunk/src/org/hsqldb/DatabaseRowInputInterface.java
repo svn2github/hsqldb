@@ -56,6 +56,8 @@ interface DatabaseRowInputInterface {
 
     public int available() throws IOException;
 
+    public void setSystemId(boolean flag);
+
     public Object[] readData(int[] colTypes)
     throws IOException, HsqlException;
 

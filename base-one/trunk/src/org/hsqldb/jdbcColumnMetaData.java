@@ -106,10 +106,10 @@ public final class jdbcColumnMetaData {
 
     /** Whether it is possible for a write on the column to succeed. */
     public boolean isWritable;
-    
     private String toString;
-    
+
     public String toString() {
+
         try {
             return toStringImpl();
         } catch (Exception e) {
@@ -118,29 +118,31 @@ public final class jdbcColumnMetaData {
     }
 
     private String toStringImpl() throws Exception {
+
         StringBuffer sb;
         Field[]      fields;
         Field        field;
-        
+
         sb = new StringBuffer();
-        
+
         //sb.append(super.toString());
         sb.append('[');
-        
+
         fields = getClass().getFields();
-        
-        for (int i = 0; i < fields.length; i++) {            
+
+        for (int i = 0; i < fields.length; i++) {
             field = fields[i];
+
             sb.append(field.getName());
             sb.append('=');
             sb.append(field.get(this));
             sb.append(',');
             sb.append(' ');
         }
-        
+
         sb.setLength(sb.length() - 2);
         sb.append(']');
-        
+
         return sb.toString();
     }
 }

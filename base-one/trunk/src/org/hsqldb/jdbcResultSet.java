@@ -424,8 +424,7 @@ public class jdbcResultSet implements ResultSet {
      * This is important for methods that return primitive values, since
      * there is no other way to check for this condition in those cases.
      */
-    private boolean bWasNull;
-    
+    private boolean           bWasNull;
     private ResultSetMetaData rsmd;
 
 // fredt@users 20020222 - patch 489917 by jytou@users - made optional
@@ -1678,9 +1677,11 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcResultSetMetaData
      */
     public ResultSetMetaData getMetaData() throws SQLException {
+
         if (rsmd == null) {
             rsmd = new jdbcResultSetMetaData(this, connProperties);
         }
+
         return rsmd;
     }
 

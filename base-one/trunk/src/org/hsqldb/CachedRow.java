@@ -117,7 +117,7 @@ class CachedRow extends Row {
      *  hasDataChanged is set to true as the current implementation of
      *  database row updates performs a delete followed by an insert. This
      *  means that once a row is created its data cannot change.
-     *  (correct as of version 1_7_2_alpha_i)
+     *  (correct as of version 1_7_2_alpha_n)
      */
     CachedRow(Table t, Object o[]) throws HsqlException {
 
@@ -137,7 +137,7 @@ class CachedRow extends Row {
         oData      = o;
         hasChanged = hasDataChanged = true;
 
-        t.putRow(this);
+        t.addRowToStore(this);
     }
 
     /**
@@ -164,7 +164,10 @@ class CachedRow extends Row {
 
         oData = in.readData(tTable.getColumnTypes());
 
-        Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+        setPos(iPos);
+
+        // change from 1.7.0 format - the check is no longer read or written
+        // Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
     }
 
     /**
@@ -187,7 +190,10 @@ class CachedRow extends Row {
     }
 
     void setPos(int pos) {
+
         iPos = pos;
+
+        tTable.registerRow(this);
     }
 
     void setChanged() {

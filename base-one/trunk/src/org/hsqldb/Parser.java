@@ -233,10 +233,10 @@ class Parser {
 
         subQueryLevel++;
 
-        se       = null;
-        s        = null;
-        sq       = new SubQuery();
-        sq.level = subQueryLevel;
+        se        = null;
+        s         = null;
+        sq        = new SubQuery();
+        sq.level  = subQueryLevel;
         sq.isView = isView;
 
         subQueryStack.push(sq);
@@ -670,10 +670,10 @@ class Parser {
         } else {
             tokenizer.checkUnexpectedParam("parametric table identifier");
 
-            t = database.getTable(token, session); 
-            
+            t = database.getTable(token, session);
+
             boolean checkSelectPriv = !isParsingView();
-                
+
             if (checkSelectPriv) {
                 session.check(t.getName(), UserManager.SELECT);
             }
@@ -1176,13 +1176,10 @@ class Parser {
 
                 read();
 
-                if (iToken == Expression.OPEN) {                   
-
+                if (iToken == Expression.OPEN) {
                     boolean checkPrivs = !isParsingView();
-                    
                     Function f = new Function(database.getAlias(name),
-                                              session,
-                                              checkPrivs);
+                                              session, checkPrivs);
                     int len = f.getArgCount();
                     int i   = 0;
 
@@ -1201,9 +1198,8 @@ class Parser {
                     }
 
                     readThis(Expression.CLOSE);
-                    
-                    // TODO: Maybe allow AS <alias> here
 
+                    // TODO: Maybe allow AS <alias> here
                     r = new Expression(f);
                 }
 
@@ -1343,15 +1339,17 @@ class Parser {
                 //       trim, pad, throw on overflow, etc.
                 int p = 0;
                 int s = 0;
-                
+
                 if (Types.acceptsPrecisionCreateParam(t)
-                    && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-                        p = tokenizer.getInt();
-                        if (Types.acceptsScaleCreateParam(t) 
+                        && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                    p = tokenizer.getInt();
+
+                    if (Types.acceptsScaleCreateParam(t)
                             && tokenizer.isGetThis(Token.T_COMMA)) {
-                                s = tokenizer.getInt();
-                        } 
-                        tokenizer.getThis(Token.T_CLOSEBRACKET);
+                        s = tokenizer.getInt();
+                    }
+
+                    tokenizer.getThis(Token.T_CLOSEBRACKET);
                 }
 
                 if (r.isParam()) {
@@ -1376,23 +1374,25 @@ class Parser {
                             Trace.UNEXPECTED_TOKEN, sToken);
                 read();
 
-                int t = Types.getTypeNr(sToken); 
-                
+                int t = Types.getTypeNr(sToken);
+
                 // For now, parse but ignore precision and scale
                 // TODO: definitely validate values (e.g. check non-neg) and
                 //       maybe even enforce in Expression.getValue(), incl. 
                 //       trim, pad, throw on overflow, etc.              
                 int p = 0;
                 int s = 0;
-                
+
                 if (Types.acceptsPrecisionCreateParam(t)
-                    && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-                        p = tokenizer.getInt();
-                        if (Types.acceptsScaleCreateParam(t) 
+                        && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                    p = tokenizer.getInt();
+
+                    if (Types.acceptsScaleCreateParam(t)
                             && tokenizer.isGetThis(Token.T_COMMA)) {
-                                s = tokenizer.getInt();
-                        } 
-                        tokenizer.getThis(Token.T_CLOSEBRACKET);
+                        s = tokenizer.getInt();
+                    }
+
+                    tokenizer.getThis(Token.T_CLOSEBRACKET);
                 }
 
                 if (r.isParam()) {
@@ -1944,11 +1944,10 @@ class Parser {
                                     String msg) throws HsqlException {
         Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg + msg);
     }
-    
+
     boolean isParsingView() {
-        return subQueryStack != null 
-               &&!subQueryStack.isEmpty() 
-               &&((SubQuery) subQueryStack.peek()).isView;     
+        return subQueryStack != null &&!subQueryStack.isEmpty()
+               && ((SubQuery) subQueryStack.peek()).isView;
     }
 
 // --

@@ -448,19 +448,19 @@ final class DINameSpace {
      * <LI> if the specified object is an <code>org.hsqldb.Table</code>
      *      instance and it is a temp table, then either the name of the
      *      owning session user is returned, or null is returned if the owning
-     *      session cannot be found in the context of this name space. 
+     *      session cannot be found in the context of this name space.
      *
      * <LI> if the specified object is an <code>org.hsqldb.Table</code>
      *      instance and it is has not been covered by any of the previous
      *      cases, then it is assumed to be a regular user-defined table
-     *      and "PUBLIC" is returned. 
+     *      and "PUBLIC" is returned.
      *
      * <LI> if the specified object is an <code>org.hsqldb.Index</code>
      *      instance, then either the name of the schema of the table
      *      containing the index is returned, or null is returned if no table
      *      containing the index object can be found in the context of this
-     *      name space.         
-     *    
+     *      name space.
+     *
      * <LI> if the specified object is a String instance, then it is checked to
      *      see if it names a built in DOMAIN or Class.  If it does, then
      *      "DEFINITION_SCHEMA" is returned.  If it does not, then an attempt
@@ -492,15 +492,17 @@ final class DINameSpace {
         if (!isReportSchemas() || o == null) {
             return null;
         }
-        
+
         if (o instanceof Table) {
-            return ((Table)o).getSchemaName();
+            return ((Table) o).getSchemaName();
         }
 
         if (o instanceof Index) {
             table = tableForIndex((Index) o);
-            return (table == null) ? null : table.getSchemaName(); 
-        }               
+
+            return (table == null) ? null
+                                   : table.getSchemaName();
+        }
 
         if (o instanceof String) {
 
@@ -521,6 +523,7 @@ final class DINameSpace {
             } catch (Exception e) {
                 return null;
             }
+
             // ----------
         }
 
@@ -531,11 +534,10 @@ final class DINameSpace {
         } else if (o instanceof Class) {
             c = (Class) o;
         }
-        
-        return (c == null) ? null 
-                           : isBuiltin(c) 
-                           ? DEFN_SCHEMA
-                           : PUB_SCHEMA;
+
+        return (c == null) ? null
+                           : isBuiltin(c) ? DEFN_SCHEMA
+                                          : PUB_SCHEMA;
     }
 
     /**

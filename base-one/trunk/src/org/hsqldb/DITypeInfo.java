@@ -124,12 +124,14 @@ final class DITypeInfo {
                 return "java.lang.Long";
 
             case Types.BINARY :
-            case Types.LONGVARBINARY :            
+            case Types.LONGVARBINARY :
             case Types.VARBINARY :
+
                 // but wrapped by org.hsqldb.Binary
                 return "[B";
-                
+
             case Types.OTHER :
+
                 // but wrapped by org.hsqldb.JavaObject
                 return "java.lang.Object";
 
@@ -797,6 +799,7 @@ final class DITypeInfo {
                 return ValuePool.getInt(Types.SQL_DATALINK);     // SQL_DATALINK
 
             case Types.DATE :
+
                 // NO:  This is the _concise_ code, whereas what we want to
                 //      return here is the Data Type Code column value from 
                 //      Table 38 in the SQL 200n FCD.  This method is used
@@ -854,6 +857,7 @@ final class DITypeInfo {
                 return ValuePool.getInt(Types.SQL_UDT);          // SQL_UDT
 
             case Types.TIME :
+
                 // NO:  This is the _concise_ code, whereas what we want to
                 //      return here is the Data Type Code column value from 
                 //      Table 38 in the SQL 200n FCD.  This method is used
@@ -866,6 +870,7 @@ final class DITypeInfo {
                 return ValuePool.getInt(Types.SQL_DATETIME);
 
             case Types.TIMESTAMP :
+
                 // NO:  This is the _concise_ code, whereas what we want to
                 //      return here is the Data Type Code column value from 
                 //      Table 38 in the SQL CLI 200n FCD.  This method is used

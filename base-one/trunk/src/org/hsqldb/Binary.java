@@ -90,7 +90,7 @@ public class Binary {
             return false;
         }
 
-        return ArrayUtil.startsWith(data, 0, ((Binary) other).data);
+        return ArrayUtil.containsAt(data, 0, ((Binary) other).data);
     }
 
     public int hashCode() {

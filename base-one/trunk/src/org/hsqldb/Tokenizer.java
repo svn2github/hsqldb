@@ -139,9 +139,9 @@ class Tokenizer {
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
             "DISTINCT", "EXISTS", "EXCEPT", /* "FALSE",*/ "FROM", "GROUP",
-            "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER", /* "LEFT" ,*/
+            "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",    /* "LEFT" ,*/
             "LIKE", "MAX", "MIN", /* "NULL", */ "NOT", "ON", "ORDER", "OR",
-            "OUTER", "PRIMARY", "SELECT", "SET", "SUM", "TO",    /* "TRUE",*/
+            "OUTER", "PRIMARY", "SELECT", "SET", "SUM", "TO",            /* "TRUE",*/
             "UNIQUE", "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT",
             "MINUS", "CALL", "HAVING"
         };
@@ -221,13 +221,13 @@ class Tokenizer {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
     }
-    
+
     /**
      * Method declaration
      *
      *
      * @param match
-     */    
+     */
     boolean isGetThis(String match) throws HsqlException {
 
         getToken();
@@ -236,6 +236,7 @@ class Tokenizer {
             return true;
         } else {
             back();
+
             return false;
         }
     }
@@ -406,7 +407,7 @@ class Tokenizer {
 
         return sToken;
     }
-    
+
     int getInt() throws HsqlException {
 
         getToken();
@@ -418,7 +419,7 @@ class Tokenizer {
             throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
         }
 
-        return ((Number)o).intValue();        
+        return ((Number) o).intValue();
     }
 
     /**

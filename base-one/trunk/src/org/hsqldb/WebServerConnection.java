@@ -198,28 +198,28 @@ class WebServerConnection implements Runnable {
             byte[] byteArray = rowOut.getBuffer();
             int    offset    = rowOut.size() - count;
 
-            if (ArrayUtil.startsWith(byteArray, offset, BYTES_POST)) {
+            if (ArrayUtil.containsAt(byteArray, offset, BYTES_POST)) {
                 method = REQUEST_TYPE_POST;
                 offset += BYTES_POST.length;
-            } else if (ArrayUtil.startsWith(byteArray, offset, BYTES_GET)) {
+            } else if (ArrayUtil.containsAt(byteArray, offset, BYTES_GET)) {
                 method = REQUEST_TYPE_GET;
                 offset += BYTES_GET.length;
-            } else if (ArrayUtil.startsWith(byteArray, offset, BYTES_HEAD)) {
+            } else if (ArrayUtil.containsAt(byteArray, offset, BYTES_HEAD)) {
                 method = REQUEST_TYPE_HEAD;
                 offset += BYTES_HEAD.length;
             } else {
                 throw new Exception();
             }
 
-            count = ArrayUtil.countStartElements(byteArray, offset,
-                                                 BYTES_WHITESPACE);
+            count = ArrayUtil.countStartElementsAt(byteArray, offset,
+                                                   BYTES_WHITESPACE);
 
             if (count == 0) {
                 throw new Exception();
             }
 
             offset += count;
-            count = ArrayUtil.countNonStartElements(byteArray, offset,
+            count = ArrayUtil.countNonStartElementsAt(byteArray, offset,
                     BYTES_WHITESPACE);
             name = new String(byteArray, offset, count, ENCODING);
 
@@ -270,7 +270,7 @@ class WebServerConnection implements Runnable {
             // be returned
             byte[] byteArray = rowOut.getBuffer();
 
-            if (!ArrayUtil.startsWith(byteArray, offset, BYTES_CONTENT)) {
+            if (!ArrayUtil.containsAt(byteArray, offset, BYTES_CONTENT)) {
                 throw new Exception();
             }
 

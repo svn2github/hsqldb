@@ -202,7 +202,6 @@ class Database {
         databaseProperties       = new HsqlDatabaseProperties(this);
 
         databaseProperties.load();
-
         setState(Database.DATABASE_SHUTDOWN);
     }
 
@@ -311,7 +310,7 @@ class Database {
                                  String password) throws HsqlException {
 
         User user = userManager.getUser(username.toUpperCase(),
-                                    password.toUpperCase());
+                                        password.toUpperCase());
         Session session = sessionManager.newSession(this, user,
             databaseReadOnly);
 

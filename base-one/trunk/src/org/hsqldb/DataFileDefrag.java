@@ -140,9 +140,6 @@ class DataFileDefrag {
         for (Node n = index.first(); n != null; count++) {
             CachedRow row = (CachedRow) n.getRow();
 
-            pointerPair[0] = row.iPos;
-            pointerPair[1] = (int) pos;
-
             pointerLookup.add(row.iPos, (int) pos);
 
 // erik            pos += row.storageSize / cacheFileScale;

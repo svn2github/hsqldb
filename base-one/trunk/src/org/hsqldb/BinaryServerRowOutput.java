@@ -97,9 +97,8 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         // fredt - this value is used in 1.7.0 when reading back, for a
         // 'data integrity' check
-        // will remove once compatibility is no longer necessary
-        writeInt(pos);
-
+        // has been removed in 1.7.2 as compatibility is no longer necessary
+        // writeInt(pos);
         for (; count < storageSize; ) {
             this.write(0);
         }
@@ -142,8 +141,9 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
+        int    cols   = row.getTable().getColumnCount();
 
-        return getSize(data, data.length, type);
+        return getSize(data, cols, type);
     }
 
 // fredt@users - comment - methods used for writing each SQL type

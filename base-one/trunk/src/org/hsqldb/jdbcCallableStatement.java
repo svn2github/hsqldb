@@ -228,10 +228,10 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  *
  * Please note that by using the internal API to build up results, one is
  * forgoing the SQL/Java integrity checks typically enforced by the engine
- * when building results purely via execution of SQL statements.  That is, 
+ * when building results purely via execution of SQL statements.  That is,
  * for instance, given the above example, one is free to add Object[] rows
  * to the output result object whose length do not match the column count
- * and whose elements are not String objects.  Be warned that doing so may 
+ * and whose elements are not String objects.  Be warned that doing so may
  * very well cause either obvious or subtle data integrity problems or
  * otherwise unexpected exceptions to be thrown. <p>
  *
@@ -247,18 +247,20 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  */
 public class jdbcCallableStatement extends jdbcPreparedStatement
 implements CallableStatement {
-        
+
     private String[]              parameterNames;
     private IntKeyIntValueHashMap outRegistrationMap;
 
     /** Creates a new instance of jdbcCallableStatement */
     public jdbcCallableStatement(jdbcConnection c, String sql,
                                  int type) throws HsqlException {
-        super(c, sql, type);         
+
+        super(c, sql, type);
+
         outRegistrationMap = new IntKeyIntValueHashMap();
         parameterNames     = pmdDescriptor.sName;
     }
-    
+
     /**
      * Performs an internal check for column index validity. <p>
      *
@@ -267,40 +269,45 @@ implements CallableStatement {
      *      no such column
      */
     private void checkIsGetParameterIndex(int i) throws SQLException {
-        
+
         String msg;
-        
+
         if (i < 1 || i > parameterModes.length) {
-            msg = "Parameter index out of bounds: " + i;            
+            msg = "Parameter index out of bounds: " + i;
+
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
-        
-        int mode = parameterModes[i-1];
-        
+
+        int mode = parameterModes[i - 1];
+
         switch (mode) {
+
             default :
-                msg = "Not OUT or IN OUT mode: " 
-                      + mode + 
-                      " for parameter: " 
+                msg = "Not OUT or IN OUT mode: " + mode + " for parameter: "
                       + i;
-                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+
+                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                              msg);
             case Expression.PARAM_IN_OUT :
             case Expression.PARAM_OUT :
                 break;
-                // this is OK
+
+            // this is OK
         }
     }
-    
+
     void checkIsRegisteredParameterIndex(int parameterIndex)
     throws SQLException {
+
         int    type;
         String msg;
 
         type = outRegistrationMap.get(parameterIndex, Integer.MIN_VALUE);
 
         if (type == Integer.MIN_VALUE) {
-           msg = "Parameter not registered: " + parameterIndex ;
-           throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            msg = "Parameter not registered: " + parameterIndex;
+
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
     }
 
@@ -346,10 +353,12 @@ implements CallableStatement {
      * @see java.sql.Types
      */
     public void registerOutParameter(int parameterIndex,
-                                     int sqlType) throws SQLException {   
+                                     int sqlType) throws SQLException {
+
         checkIsGetParameterIndex(parameterIndex);
         outRegistrationMap.put(parameterIndex, sqlType);
-        throw jdbcDriver.notSupported;                                         
+
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -418,7 +427,9 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public boolean wasNull() throws SQLException {
-        checkClosed();        
+
+        checkClosed();
+
         throw jdbcDriver.notSupported;
     }
 
@@ -456,8 +467,10 @@ implements CallableStatement {
      * @see #setString
      */
     public String getString(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -487,8 +500,10 @@ implements CallableStatement {
      * @see #setBoolean
      */
     public boolean getBoolean(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);       
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -518,8 +533,10 @@ implements CallableStatement {
      * @see #setByte
      */
     public byte getByte(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -549,8 +566,10 @@ implements CallableStatement {
      * @see #setShort
      */
     public short getShort(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -580,8 +599,10 @@ implements CallableStatement {
      * @see #setInt
      */
     public int getInt(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -611,8 +632,10 @@ implements CallableStatement {
      * @see #setLong
      */
     public long getLong(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -642,8 +665,10 @@ implements CallableStatement {
      * @see #setFloat
      */
     public float getFloat(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -673,8 +698,10 @@ implements CallableStatement {
      * @see #setDouble
      */
     public double getDouble(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -709,8 +736,10 @@ implements CallableStatement {
      */
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);                                        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -740,8 +769,10 @@ implements CallableStatement {
      * @see #setBytes
      */
     public byte[] getBytes(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -770,8 +801,10 @@ implements CallableStatement {
      * @see #setDate
      */
     public java.sql.Date getDate(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -801,8 +834,10 @@ implements CallableStatement {
      * @see #setTime
      */
     public java.sql.Time getTime(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -833,8 +868,10 @@ implements CallableStatement {
      */
     public java.sql.Timestamp getTimestamp(int parameterIndex)
     throws SQLException {
+
         checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -871,8 +908,10 @@ implements CallableStatement {
      * @see #setObject
      */
     public Object getObject(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -907,8 +946,10 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -945,8 +986,10 @@ implements CallableStatement {
      *   jdbcPreparedStatement)
      */
     public Object getObject(int i, Map map) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(i);        
+        checkIsRegisteredParameterIndex(i);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -978,8 +1021,10 @@ implements CallableStatement {
      * jdbcPreparedStatement)
      */
     public Ref getRef(int i) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(i);        
+        checkIsRegisteredParameterIndex(i);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1011,8 +1056,10 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Blob getBlob(int i) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(i);        
+        checkIsRegisteredParameterIndex(i);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1044,8 +1091,10 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Clob getClob(int i) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(i);        
+        checkIsRegisteredParameterIndex(i);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1077,8 +1126,10 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Array getArray(int i) throws SQLException {
+
         checkClosed();
-        checkIsRegisteredParameterIndex(i);        
+        checkIsRegisteredParameterIndex(i);
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1111,12 +1162,12 @@ implements CallableStatement {
      *      jdbcPreparedStatement)
      */
     public java.sql.Date getDate(int parameterIndex,
-                                 Calendar cal) throws SQLException {                                     
+                                 Calendar cal) throws SQLException {
 
         try {
             return HsqlDateTime.getDate(getString(parameterIndex), cal);
         } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE, 
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
                                           e.getMessage());
         }
     }
@@ -1189,7 +1240,6 @@ implements CallableStatement {
      */
     public java.sql.Timestamp getTimestamp(int parameterIndex,
                                            Calendar cal) throws SQLException {
-
 
         try {
             return HsqlDateTime.getTimestamp(getString(parameterIndex), cal);
@@ -1439,7 +1489,7 @@ implements CallableStatement {
 /*
     public java.net.URL getURL(int parameterIndex) throws SQLException {
         checkClosed();
-        checkIsRegisteredParameterIndex(parameterIndex);        
+        checkIsRegisteredParameterIndex(parameterIndex);
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2463,7 +2513,7 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public String getString(String parameterName) throws SQLException {     
+    public String getString(String parameterName) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
 */

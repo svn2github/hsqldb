@@ -45,7 +45,7 @@ package org.hsqldb;
 public interface ResultConstants {
 
     /** The offset at which HSQLDB API Result mode values start. */
-    int HSQL_API_BASE   = 0;    
+    int HSQL_API_BASE = 0;
 
     /**
      * Indicates that the Result object encapsulates an update
@@ -64,10 +64,10 @@ public interface ResultConstants {
      * set response.
      */
     int DATA = HSQL_API_BASE + 3;
-    
+
     /**
      * Indicates that the Result object encapsulates a response
-     * that communicates the acknowlegement of newly allocated 
+     * that communicates the acknowlegement of newly allocated
      * CompiledStatement object in the form of its statementID.
      */
     int PREPARE_ACK = HSQL_API_BASE + 4;
@@ -76,7 +76,6 @@ public interface ResultConstants {
      * Indicates that the Result object encapsulates multiple Result objects.
      */
     int MULTI = HSQL_API_BASE + 0;
-        
 
     /** The offset at which the standard SQL API Result mode values start. */
     int SQL_API_BASE = 0x00010000;
@@ -484,15 +483,15 @@ Implementation-defined termination type <0
     int ROLLBACK                = 1;
     int SAVEPOINT_NAME_ROLLBACK = 2;
     int SAVEPOINT_NAME_RELEASE  = 4;
-    
+
 // Batched execution constants:
-    
+
     /** batch item failed */
-    int EXECUTE_FAILED  = -3;
-    
+    int EXECUTE_FAILED = -3;
+
     /**
      * Batch item succeeded but does not generate an update count,
      * for example a call having no return value
      */
-    int SUCCESS_NO_INFO = -2;    
+    int SUCCESS_NO_INFO = -2;
 }

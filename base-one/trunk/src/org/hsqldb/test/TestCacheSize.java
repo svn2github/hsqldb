@@ -81,10 +81,10 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 16;
+    int    cacheScale = 12;
 
     // script format {TEXT, BINARY, COMPRESSED}
-    String  logType       = "COMPRESSED";
+    String  logType       = "TEXT";
     int     writeDelay    = 60;
     boolean indexZip      = true;
     boolean indexLastName = false;
@@ -92,14 +92,14 @@ public class TestCacheSize {
     boolean refIntegrity  = true;
 
     // speeds up inserts when tableType=="CACHED"
-    boolean createTempTable = true;
+    boolean createTempTable = false;
 
     // introduces fragmentation to the .data file during insert
-    boolean deleteWhileInsert         = true;
+    boolean deleteWhileInsert         = false;
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 20000;
+    int bigrows   = 40000;
     int smallrows = 0xfff;
 
     //
@@ -229,8 +229,6 @@ public class TestCacheSize {
             }
 
 //            sStatement.execute("CREATE INDEX idx3 ON tempTEST (zip);");
-
-
             System.out.println("Setup time: " + sw.elapsedTime());
             fillUpBigTable(filler, randomgen);
             sw.zero();
@@ -246,17 +244,18 @@ public class TestCacheSize {
         }
     }
 
-    private void fillUpBigTable(String filler, Random randomgen) throws
-        SQLException {
+    private void fillUpBigTable(String filler,
+                                Random randomgen) throws SQLException {
+
         StopWatch sw = new StopWatch();
-        int i;
+        int       i;
 
         for (i = 0; i <= smallrows; i++) {
             sStatement.execute("INSERT INTO zip VALUES(null);");
         }
 
-        sStatement.execute("SET REFERENTIAL_INTEGRITY "
-                           + this.refIntegrity + ";");
+        sStatement.execute("SET REFERENTIAL_INTEGRITY " + this.refIntegrity
+                           + ";");
 
         PreparedStatement ps = cConnection.prepareStatement(
             "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
@@ -300,8 +299,7 @@ public class TestCacheSize {
                     + (lastId - 4000) + " ;");
                 sStatement.execute("DELETE FROM test WHERE id > "
                                    + (lastId - 4000) + " ;");
-                sStatement.execute(
-                    "INSERT INTO test SELECT * FROM tempt;");
+                sStatement.execute("INSERT INTO test SELECT * FROM tempt;");
                 sStatement.execute("DROP TABLE tempt;");
             }
         }

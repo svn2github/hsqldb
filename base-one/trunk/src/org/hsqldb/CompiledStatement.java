@@ -42,9 +42,9 @@ import org.hsqldb.store.ValuePool;
  * @since HSQLDB 1.7.2
  */
 public class CompiledStatement {
-    
-    static final int UNKNOWN       = 0;
-    
+
+    static final int UNKNOWN = 0;
+
     // enumeration of allowable CompiledStatement types
     static final int INSERT_VALUES = 1;
     static final int INSERT_SELECT = 2;
@@ -54,8 +54,8 @@ public class CompiledStatement {
     static final int CALL          = 6;
 
     /** target table for INSERT_XXX, UPDATE and DELETE */
-    Table       targetTable;
-    
+    Table targetTable;
+
     /** table filter for UPDATE and DELETE */
     TableFilter tf;
 
@@ -205,6 +205,7 @@ public class CompiledStatement {
     void setAsUpdate(Table targetTable, int[] columnMap,
                      Expression[] columnValues, Expression updateCondition,
                      Expression[] parameters) throws HsqlException {
+
         clearAll();
 
         this.targetTable  = targetTable;
@@ -227,7 +228,7 @@ public class CompiledStatement {
             }
         }
 
-        if (updateCondition != null) {            
+        if (updateCondition != null) {
             condition = new Expression(updateCondition);
 
             condition.resolve(tf);
@@ -329,7 +330,9 @@ public class CompiledStatement {
         this.expression = expression;
 
         expression.resolve(null);
+
         expression.paramMode = Expression.PARAM_OUT;
+
         setParameters(parameters);
 
         type = CALL;
@@ -355,9 +358,9 @@ public class CompiledStatement {
         for (int i = 0; i < subqueries.length; i++) {
             sq = subqueries[i];
 
-            Table  t  = sq.table;
-            Select s  = sq.select;
-            Result r  = s.getResult(0);
+            Table  t = sq.table;
+            Select s = sq.select;
+            Result r = s.getResult(0);
 
             t.insertNoCheck(r, null);
         }
@@ -371,11 +374,14 @@ public class CompiledStatement {
     }
 
     private static final Result updateCount =
-        new Result(ResultConstants.UPDATECOUNT);             
+        new Result(ResultConstants.UPDATECOUNT);
 
     Result describeResultSet() {
+
         switch (type) {
+
             case CALL : {
+
                 // TODO:
                 //
                 // 1.) standard to register metadata for columns of
@@ -390,47 +396,50 @@ public class CompiledStatement {
                 // the return value.  If the expression generating the
                 // return value has a void return type, a result set
                 // is described whose single column is of type NULL 
-                
                 Expression e;
-                Result r;
-                
-                e = expression;                
-                r = Result.newSingleColumnResult("@0"/*e.getAlias()*/, 
+                Result     r;
+
+                e = expression;
+                r = Result.newSingleColumnResult("@0" /*e.getAlias()*/,
                                                  e.getDataType());
                 r.sClassName[0] = e.getValueClassName();
+
                 // no more setup for r; all the defaults apply
-                
                 return r;
             }
             case SELECT :
+
                 // PRE: select is not a select into, since we currently
                 // prevent this ever being the case here via checks
                 // elsewhere in the code
                 return select.describeResult();
-            case DELETE : 
+
+            case DELETE :
             case INSERT_SELECT :
             case INSERT_VALUES :
             case UPDATE :
+
                 // will result in 
                 return updateCount;
+
             default :
-                return new Result("Unknown Statement Type: " + type, 
-                                  "", Trace.UNEXPECTED_EXCEPTION);
+                return new Result("Unknown Statement Type: " + type, "",
+                                  Trace.UNEXPECTED_EXCEPTION);
         }
     }
-    
+
     Result describeParameters() {
 
         Result     out;
-        Expression e;        
+        Expression e;
         int        outlen;
         int        offset;
         int        idx;
         boolean    hasReturnValue;
-        
+
         outlen = parameters.length;
-        offset = 0;                
-        
+        offset = 0;
+
 // NO:  Not yet        
 //        hasReturnValue = (type == CALL && !expression.isProcedureCall());
 //        
@@ -438,9 +447,8 @@ public class CompiledStatement {
 //            outlen++;
 //            offset = 1;
 //        }
-                
         out = Result.newParameterDescriptionResult(outlen);
-        
+
 // NO: Not yet        
 //        if (hasReturnValue) {
 //            e = expression;          
@@ -453,26 +461,27 @@ public class CompiledStatement {
 //            out.isIdentity[0]  = false;
 //            out.paramMode[0]   = expression.PARAM_OUT;
 //        }        
-        
-        for (int i = 0; i < parameters.length; i++) {            
-            e       = parameters[i];
-            idx     = i + offset;
+        for (int i = 0; i < parameters.length; i++) {
+            e   = parameters[i];
+            idx = i + offset;
+
             // always i + 1.  We will use the convention of @0 to name the
             // return value OUT parameter
-            out.sName[idx]       = "@" + i + 1;
+            out.sName[idx] = "@" + i + 1;
+
             // sLabel is meaningless in this context.
             out.sClassName[idx]  = e.getValueClassName();
-            out.colType[idx]     = e.getDataType();  
+            out.colType[idx]     = e.getDataType();
             out.colSize[idx]     = e.getColumnSize();
             out.colScale[idx]    = e.getColumnScale();
             out.nullability[idx] = e.nullability;
             out.isIdentity[idx]  = e.isIdentity;
-            
+
             // currently will always be Expression.PARAM_IN
-            out.paramMode[idx]   = e.paramMode;
+            out.paramMode[idx] = e.paramMode;
         }
 
-        return out;      
+        return out;
     }
 
     /**

@@ -69,7 +69,6 @@ package org.hsqldb.test;
 
 import java.util.*;
 import org.hsqldb.lib.*;
-
 import junit.framework.*;
 
 /**
@@ -285,8 +284,8 @@ public class TestDataStructures extends TestCase {
                     }
 
                     this.printListCommandsCalled(listCommandsCalled);
-
                     fail("test failed");
+
                     //System.exit(0);
                 }
 
@@ -297,8 +296,8 @@ public class TestDataStructures extends TestCase {
                               vectorObject)) {
                 System.out.println("Objects returned inconsistent");
                 this.printListCommandsCalled(listCommandsCalled);
-
                 fail("test failed");
+
                 //System.exit(0);
             }
 
@@ -460,10 +459,11 @@ public class TestDataStructures extends TestCase {
 
         org.hsqldb.lib.Iterator it = d.iterator();
 
-        for (int i = 0; it.hasNext(); i++ ) {
+        for (int i = 0; it.hasNext(); i++) {
             Integer value = (Integer) it.next();
+
             System.out.println(value);
-            assertEquals (i, value.intValue());
+            assertEquals(i, value.intValue());
         }
 
         //-

@@ -679,8 +679,8 @@ class Session implements SessionInterface {
     CompiledStatementExecutor  compiledStatementExecutor;
     CompiledStatementManager   compiledStatementManager;
 
-    private CompiledStatement sqlCompileStatement(String sql, int type) 
-        throws HsqlException {
+    private CompiledStatement sqlCompileStatement(String sql,
+            int type) throws HsqlException {
 
         Tokenizer         tokenizer;
         String            token;
@@ -719,9 +719,10 @@ class Session implements SessionInterface {
             }
             case Token.CALL : {
                 if (type != CompiledStatement.CALL) {
-                    throw Trace.error(Trace.ASSERT_FAILED, 
+                    throw Trace.error(Trace.ASSERT_FAILED,
                                       "not a CALL statement");
                 }
+
                 cs = parser.compileCallStatement(null);
 
                 break;
@@ -765,20 +766,21 @@ class Session implements SessionInterface {
      * @return the result of executing the command
      */
     public Result execute(Result cmd) {
-        
+
         try {
             if (Trace.DOASSERT) {
                 Trace.doAssert(!isNestedTransaction);
             }
 
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
+                        "Session is closed");
 
             // CHECKME:  Can this ever happen?  I don't think so, as a shutdown
             // will close the session and that test is covered above
             Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
         } catch (Throwable t) {
             return new Result(t, null);
-        }        
+        }
 
         int type = cmd.iMode;
 
@@ -796,17 +798,17 @@ class Session implements SessionInterface {
                                              : sqlExecute(cmd);
                 }
                 case ResultConstants.SQLEXECDIRECT : {
-                    return cmd.getSize() > 0 ? sqlExecuteBatchDirect(cmd) 
+                    return cmd.getSize() > 0 ? sqlExecuteBatchDirect(cmd)
                                              : sqlExecuteDirectNoPreChecks(
-                                                    cmd.getMainString());
+                                                 cmd.getMainString());
                 }
                 case ResultConstants.SQLPREPARE : {
-                    return sqlPrepare(cmd.getMainString(), 
+                    return sqlPrepare(cmd.getMainString(),
                                       cmd.getStatementType());
                 }
                 case ResultConstants.SQLFREESTMT : {
                     return sqlFreeStatement(cmd.getStatementID());
-                }               
+                }
                 case ResultConstants.SQLGETSESSIONINFO : {
                     return getAttributes();
                 }
@@ -815,13 +817,16 @@ class Session implements SessionInterface {
                 }
                 case ResultConstants.SQLENDTRAN : {
                     switch (cmd.getEndTranType()) {
+
                         case ResultConstants.COMMIT :
                             commit();
                             break;
+
                         case ResultConstants.ROLLBACK :
                             rollback();
                             break;
-                    }                    
+                    }
+
                     return emptyUpdateCount;
                 }
                 default : {
@@ -842,24 +847,26 @@ class Session implements SessionInterface {
      * @return the result of the last sql statement in the list
      */
     synchronized Result sqlExecuteDirect(String sql) {
-        
+
         try {
             if (Trace.DOASSERT) {
                 Trace.doAssert(!isNestedTransaction);
             }
 
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
+                        "Session is closed");
 
-            synchronized(dDatabase) {
-                Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+            synchronized (dDatabase) {
+                Trace.check(!dDatabase.isShutdown(),
+                            Trace.DATABASE_IS_SHUTDOWN);
+
                 return dbCommandInterpreter.execute(sql);
             }
-
         } catch (Throwable t) {
             return new Result(t, null);
         }
     }
-    
+
     Result sqlExecuteDirectNoPreChecks(String sql) {
         return dbCommandInterpreter.execute(sql);
     }
@@ -877,28 +884,31 @@ class Session implements SessionInterface {
                 Trace.doAssert(!isNestedTransaction);
             }
 
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED, "Session is closed");
-            
-            synchronized(dDatabase) {
-                Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
+                        "Session is closed");
+
+            synchronized (dDatabase) {
+                Trace.check(!dDatabase.isShutdown(),
+                            Trace.DATABASE_IS_SHUTDOWN);
+
                 return compiledStatementExecutor.execute(cs);
-            }                       
+            }
         } catch (Throwable t) {
             return new Result(t, null);
         }
     }
-    
+
     Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs) {
         return compiledStatementExecutor.execute(cs);
     }
 
     /**
      * Retrieves a MULTI Result describing three aspects of the
-     * CompiledStatement prepared from the SQL argument for execution 
+     * CompiledStatement prepared from the SQL argument for execution
      * in this session context: <p>
      *
      * <ol>
-     * <li>An STMTID mode Result describing id of the statement 
+     * <li>An STMTID mode Result describing id of the statement
      *     prepared by this request.  This is used by the JDBC implementation
      *     to identify to the engine which prepared statement to execute.
      *
@@ -908,7 +918,7 @@ class Session implements SessionInterface {
      *
      * <li>A DATA mode result describing the statement's parameter metdata.
      *     This is used to by the JDBC implementation to determine
-     *     how to send parameters back to the engine when executing the 
+     *     how to send parameters back to the engine when executing the
      *     statement.  It is also used to construct the JDBC ParameterMetaData
      *     object for PreparedStatements and CallableStatements.
      *
@@ -918,8 +928,8 @@ class Session implements SessionInterface {
      */
     private Result sqlPrepare(String sql, int type) {
 
-        CompiledStatement cs    = null;
-        int               csid  = compiledStatementManager.getStatementID(sql);
+        CompiledStatement cs   = null;
+        int               csid = compiledStatementManager.getStatementID(sql);
         Result            rsmd;
         Result            pmd;
 
@@ -938,7 +948,7 @@ class Session implements SessionInterface {
         } catch (Throwable t) {
             return new Result(t, sql);
         }
-        
+
 // boucherb@users        
 // TODO:  It is still unclear to me as to whether, in the case of revalidation
 //        v.s. first compilation, the newly created CompiledStatement
@@ -964,16 +974,15 @@ class Session implements SessionInterface {
 //        change the positions of columns.  All other alterations to
 //        database objects should, in theory, allow the original
 //        CompiledStatement to operate correctly.        
-
-        if (csid <= 0) {          
+        if (csid <= 0) {
             csid = compiledStatementManager.registerStatement(cs);
         }
 
         compiledStatementManager.setValidated(csid, iId,
-                                              dDatabase.getDDLSCN());        
-        
-        rsmd   = cs.describeResultSet();
-        pmd    = cs.describeParameters();
+                                              dDatabase.getDDLSCN());
+
+        rsmd = cs.describeResultSet();
+        pmd  = cs.describeParameters();
 
         return Result.newPrepareResult(csid, rsmd, pmd);
     }
@@ -1026,8 +1035,8 @@ class Session implements SessionInterface {
 
                 in = compiledStatementExecutor.execute(cs);
             } catch (Throwable t) {
-                // t.printStackTrace();
 
+                // t.printStackTrace();
                 //System.out.println(t.toString());
                 // if (t instanceof OutOfMemoryError) {
                 // System.gc();
@@ -1166,6 +1175,7 @@ class Session implements SessionInterface {
             Result r = sqlPrepare(cs.sql, cs.type);
 
             if (r.iMode == ResultConstants.ERROR) {
+
                 // TODO:
                 // maybe compiledStatementManager.freeStatement(csid,iId);?
                 return r;

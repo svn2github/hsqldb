@@ -139,7 +139,7 @@ import org.hsqldb.lib.HashSet;
  * Connection c = DriverManager.<b>getConnection</b>
  * (url,user,password); </code><p>
  *
- * For HSQLDB connections, the <b>url</b> must start with 
+ * For HSQLDB connections, the <b>url</b> must start with
  * <b>'jdbc:hsqldb:'</b><p>
  *
  * Starting with 1.7.2, HSQLDB connection properties (key-value-pairs>) may be
@@ -160,27 +160,27 @@ import org.hsqldb.lib.HashSet;
  *         (with TLS).
  * </ol> <p>
  *
- * The 1.7.2 {@link WebServer WebServer} database <b>url</b> also 
+ * The 1.7.2 {@link WebServer WebServer} database <b>url</b> also
  * takes one of two new forms: <p>
  *
  * <ol>
  * <li> <b>'jdbc:hsqldb:http://host[:port][/alias][<key-value-pairs>]'</b>
- * <li> <b>'jdbc:hsqldb:https://host[:port][/alias][<key-value-pairs>]'</b> 
+ * <li> <b>'jdbc:hsqldb:https://host[:port][/alias][<key-value-pairs>]'</b>
         (with TLS).
  * </ol> <p>
  *
  * In both network server <b>url<b> forms, the optional <b>alias<b> is used to
  * distinguish between one of possibly several database instances hosted
- * by the indicated server.  If it is omitted, a connection is made to the 
+ * by the indicated server.  If it is omitted, a connection is made to the
  * server's default database instance (instance 0). For more information on
  * server configuration, please read the JavaDocs for {@link Server Server} and
- * the related general documentation. <p> 
+ * the related general documentation. <p>
  *
- * The 1.7.2 100% in-memory (diskless, in-process) database <B>url</B> 
+ * The 1.7.2 100% in-memory (diskless, in-process) database <B>url</B>
  * takes one of two new forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:.[<key-value-pairs>]'</b> 
+ * <li> <b>'jdbc:hsqldb:.[<key-value-pairs>]'</b>
         (the legacy form, extended)
  *
  * <li> <b>'jdbc:hsqldb:mem:name[<key-value-pairs>]'</b>
@@ -191,20 +191,20 @@ import org.hsqldb.lib.HashSet;
  * distinguished name of a 100% in-memory database instance and is thus used
  * as a key to look up such an instance among the collection of all such
  * instances already in existence in the current JVM.  If no such instance
- * exists, one may be automatically created and registered against the name, as 
+ * exists, one may be automatically created and registered against the name, as
  * governed by the 'ifexists' connection property.
  *
  * The 1.7.2 standalone (disk-based, in-process) database connection <b>url</b>
  * takes one of three new forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:name[<key-value-pairs>]'</b> 
+ * <li> <b>'jdbc:hsqldb:name[<key-value-pairs>]'</b>
         (the legacy form, extended)
  *
  * <li> <b>'jdbc:hsqldb:file:name[<key-value-pairs>]'</b>
         (same semantics as the legacy form)
  *
- * <li> <b>'jdbc:hsqldb:res:name[<key-value-pairs>]'</b> 
+ * <li> <b>'jdbc:hsqldb:res:name[<key-value-pairs>]'</b>
         (new 'files_in_jar' semantics form)
  * </ol>
  *
@@ -214,7 +214,7 @@ import org.hsqldb.lib.HashSet;
  * As of 1.7.2, although other files may be involved, such as transient working
  * files and/or TEXT table data source files, the essential set that may,
  * at any particular point in time, compose an HSQLDB database are: <p>
- * 
+ *
  * <ul>
  * <li><name>.properties
  * <li><name>.script
@@ -236,17 +236,17 @@ import org.hsqldb.lib.HashSet;
  *
  * Under most variations of UNIX, <b>'jdbc:hsqldb:file:/databases/test'</b>
  * connects to a database named <b>'test'</b> located in the
- * directory <b>'databases'</b> directly under root, which is composed 
+ * directory <b>'databases'</b> directly under root, which is composed
  * of some subset of the files listed above. <p>
  *
  * The new <b>'jdbc:hsqldb:res:name'</b> database connection <b>url</b> has
- * different semantics than the <b>'jdbc:hsqldb:file:name'</b> form.  The 
+ * different semantics than the <b>'jdbc:hsqldb:file:name'</b> form.  The
  * semantics are essentially those offered previously by setting the database
  * system property 'file_in_jar' true (now deprecated), which are in turn
  * similar to those of a 'files_read_only' database, with some additional
  * caveats.  That is, in addition to 'files_read_only' semantics being put in
  * effect, the <b>'name'</b> component is used to obtain URL objects which are
- * in turn used read in database content from resources on the class path and, 
+ * in turn used read in database content from resources on the class path and,
  * moreover, the obtained URL objects must point only to resources contained in
  * one or more jars on the class path, never files directly on the file system.
  * In short, a <b>'res:'<b> type database connection <b>url</b> is designed
@@ -307,7 +307,7 @@ import org.hsqldb.lib.HashSet;
  * all JDBC 2 methods can be called while executing under the version 1.1.x
  * <em>Java Runtime Environment</em><sup><font size="-2">TM</font></sup>.
  * However, in addition to this technique requiring explicit casts to the
- * org.hsqldb.jdbcXXX classes, some of the method calls also require 
+ * org.hsqldb.jdbcXXX classes, some of the method calls also require
  * <code>int</code> values that are defined only in the JDBC 2 or greater
  * version of
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
@@ -364,16 +364,16 @@ public class jdbcConnection implements Connection {
      * Is this an internal connection.
      */
     boolean isInternal;
-    
+
     /**
      * Is this connection closed?
      */
     boolean isClosed;
-    
-    /** 
+
+    /**
      * The set of Statement objects issued by this Connection via calls to
      * createStatement, prepareCall and prepareStatement.
-     */    
+     */
     org.hsqldb.lib.HashSet statementSet = new org.hsqldb.lib.HashSet();
 
 // ----------------------------------- JDBC 1 -------------------------------
@@ -430,11 +430,12 @@ public class jdbcConnection implements Connection {
     public Statement createStatement() throws SQLException {
 
         checkClosed();
-        
-        Statement stmt = new jdbcStatement(this, jdbcResultSet.TYPE_FORWARD_ONLY);
+
+        Statement stmt = new jdbcStatement(this,
+                                           jdbcResultSet.TYPE_FORWARD_ONLY);
 
         statementSet.add(stmt);
-        
+
         return stmt;
     }
 
@@ -510,9 +511,9 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcPreparedStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
-            
+
             statementSet.add(stmt);
-            
+
             return stmt;
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);
@@ -573,17 +574,17 @@ public class jdbcConnection implements Connection {
      * row whose single field is the SQL <code>NULL</code> value,
      * respectiviely.  Previously, calling such Java methods
      * in either context resulted in throwing a <code>SQLException</code>. <p>
-     *     
-     * Starting with 1.7.2, limited support has been 
+     *
+     * Starting with 1.7.2, limited support has been
      * added for Java stored procedures that return multi-column,
-     * multi-row results. As such, <code>CallableStatement</code> objects 
-     * can now return <code>TYPE_SCROLL_INSENSITIVE</code> 
+     * multi-row results. As such, <code>CallableStatement</code> objects
+     * can now return <code>TYPE_SCROLL_INSENSITIVE</code>
      * <code>ResultSet</code> objects. <p>
      *
      * Finally, up to and including 1.7.2, the returned
      * <code>CallableStatement</code> object does not support any
      * getXXX methods. That is, HSQLDB stored procedures still do not
-     * support <code>OUT</code> or <code>IN OUT</code> parameters. 
+     * support <code>OUT</code> or <code>IN OUT</code> parameters.
      * This may change before the final 1.7.2 release. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -600,18 +601,20 @@ public class jdbcConnection implements Connection {
      * @see #prepareCall(String,int,int)
      */
     public CallableStatement prepareCall(String sql) throws SQLException {
-        
-        CallableStatement stmt;        
 
-        checkClosed();                
+        CallableStatement stmt;
+
+        checkClosed();
 
         try {
             stmt = new jdbcCallableStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
+
             statementSet.add(stmt);
-            
+
             return stmt;
         } catch (HsqlException e) {
+
             //e.printStackTrace();
             throw jdbcDriver.sqlException(e);
         }
@@ -952,16 +955,14 @@ public class jdbcConnection implements Connection {
 
         if (isInternal || isClosed) {
             return;
-        }       
+        }
 
         closeAllStatements();
-
         sessionProxy.close();
 
         sessionProxy = null;
-        
-        isClosed = true;
-    }    
+        isClosed     = true;
+    }
 
     /**
      *  Tests to see if a Connection is closed.
@@ -970,6 +971,7 @@ public class jdbcConnection implements Connection {
      *      open
      */
     public boolean isClosed() {
+
         // There is no point to checking if the session proxy is null or
         // closed every time.  It's a waste.  The session proxy does not
         // call back to the database across the network each time its
@@ -1410,9 +1412,9 @@ public class jdbcConnection implements Connection {
         checkTypeConcurrency(type, concurrency);
 
         Statement stmt = new jdbcStatement(this, type);
-        
+
         statementSet.add(stmt);
-        
+
         return stmt;
     }
 
@@ -1482,9 +1484,9 @@ public class jdbcConnection implements Connection {
 
         try {
             stmt = new jdbcPreparedStatement(this, sql, type);
-            
+
             statementSet.add(stmt);
-            
+
             return stmt;
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);
@@ -2337,17 +2339,19 @@ public class jdbcConnection implements Connection {
         isInternal   = true;
         sessionProxy = c;
     }
-    
+
     /**
      * Closes all open statements derived from this connection.
      */
     private void closeAllStatements() {
+
         org.hsqldb.lib.Iterator i = statementSet.iterator();
         jdbcStatement           stmt;
-        
-        while(i.hasNext()) {
+
+        while (i.hasNext()) {
             try {
                 stmt = (jdbcStatement) i.next();
+
                 stmt.closeImpl(true);
             } catch (Exception e) {
                 if (Trace.TRACE) {
@@ -2356,8 +2360,8 @@ public class jdbcConnection implements Connection {
             }
         }
 
-        statementSet = null;        
-    }    
+        statementSet = null;
+    }
 
     /**
      *  The default implementation simply attempts to silently {@link

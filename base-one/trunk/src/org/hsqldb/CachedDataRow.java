@@ -70,11 +70,9 @@ class CachedDataRow extends CachedRow {
         tTable      = t;
         iPos        = in.getPos();
         storageSize = in.getSize();
+        oData       = in.readData(tTable.getColumnTypes());
 
-        ((TextDatabaseRowInput) in).setSystemId(tTable.iVisibleColumns
-         != tTable.iColumnCount);
-
-        oData = in.readData(tTable.getColumnTypes());
+        setPos(iPos);
     }
 
     /**
@@ -120,8 +118,6 @@ class CachedDataRow extends CachedRow {
     void write(DatabaseRowOutputInterface out)
     throws IOException, HsqlException {
 
-        ((TextDatabaseRowOutput) out).setSystemId(tTable.iVisibleColumns
-         != tTable.iColumnCount);
         out.writeSize(storageSize);
         out.writeData(oData, tTable);
         out.writePos(iPos);

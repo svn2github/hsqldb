@@ -119,11 +119,12 @@ Referential Constraint 4 SET DEFAULT
         iType      = UNIQUE;
         core.tMain = t;
         core.iMain = index;
-        /* fredt - in unique constraints column list for iColMain is that
-           of iMain
+        /* fredt - in unique constraints column list for iColMain is the
+           visible columns of iMain
         */
-        core.iColMain = index.getColumns();
-        core.iLen     = core.iColMain.length;
+        core.iColMain = ArrayUtil.arraySlice(index.getColumns(), 0,
+                                             index.getVisibleColumns());
+        core.iLen = core.iColMain.length;
     }
 
     /**
@@ -533,7 +534,7 @@ Referential Constraint 4 SET DEFAULT
     Node findFkRef(Object row[], boolean forDelete) throws HsqlException {
 
         // must be called synchronized because of oRef
-        if ( row == null ) {
+        if (row == null) {
             return null;
         }
 

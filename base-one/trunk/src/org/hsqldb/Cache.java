@@ -161,6 +161,7 @@ abstract class Cache {
     int                         cacheFileScale;
     int                         cachedRowPadding = 8;
     int cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
+    int                         rowStoreExtra;
     int                         cacheLength;
     int                         maxCacheSize;     // number of Rows
     long                        maxCacheBytes;    // number of bytes
@@ -171,8 +172,10 @@ abstract class Cache {
     private int[]               accessCount;
 
     // file format fields
-    static final int FREE_POS_POS     = 16;       // where iFreePos is saved
-    static final int INITIAL_FREE_POS = 32;
+    static final int FREE_POS_POS        = 16;    // where iFreePos is saved
+    static final int INITIAL_FREE_POS    = 32;
+    static final int ROW_STORE_EXTRA_160 = 8;
+    static final int ROW_STORE_EXTRA_170 = 4;
 
     // variable fields
 // boucherb@users - access changed for metadata 1.7.2
@@ -272,8 +275,16 @@ abstract class Cache {
     }
 
     protected void initBuffers() throws HsqlException {
+
         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
+
+        rowOut.setSystemId(true);
+        rowIn.setSystemId(true);
+
+        rowStoreExtra = rowOut instanceof BinaryServerRowOutput
+                        ? ROW_STORE_EXTRA_170
+                        : ROW_STORE_EXTRA_160;
     }
 
     abstract void open(boolean readonly) throws HsqlException;
@@ -292,9 +303,9 @@ abstract class Cache {
      */
     protected void setStorageSize(CachedRow r) throws HsqlException {
 
-        // iSize = 4 bytes, iPos = 4 bytes, each index = 32 bytes
+        // iSize = 4 bytes, each index = 32 bytes
         Table t    = r.getTable();
-        int   size = 8 + 16 * t.getIndexCount();
+        int   size = rowStoreExtra + 16 * t.getIndexCount();
 
         size += rowOut.getSize(r);
         size = ((size + cachedRowPadding - 1) / cachedRowPadding)

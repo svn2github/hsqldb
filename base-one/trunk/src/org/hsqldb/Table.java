@@ -129,8 +129,11 @@ class Table {
     int[]          bestRowIdentifierCols;      // column set for best index
     boolean        bestRowIdentifierStrict;    // true if it has no nullable column
     int[]          bestIndexForColumn;         // index of the 'best' index for each column
-    int            iIdentityColumn;            // -1 means no such row
-    long           iIdentityId;                // next value of identity column
+    boolean        needsRowID;
+    int[]          nullRowIDCols;
+    int            identityColumn;             // -1 means no such row
+    NumberSequence identitySequence;           // next value of identity column
+    NumberSequence rowIdSequence;              // next value of optional rowid
 
 // -----------------------------------------------------------------------
     HsqlArrayList     vConstraint;             // constrainst for the table
@@ -173,9 +176,10 @@ class Table {
     Table(Database db, HsqlName name, int type,
             int sessionid) throws HsqlException {
 
-        database       = db;
-        sqlEnforceSize = db.sqlEnforceSize;
-        iIdentityId    = db.firstIdentity;
+        database         = db;
+        sqlEnforceSize   = db.sqlEnforceSize;
+        identitySequence = new NumberSequence(db.firstIdentity);
+        rowIdSequence    = new NumberSequence(0);
 
         switch (type) {
 
@@ -231,14 +235,14 @@ class Table {
         }
 
         // type may have changed above for CACHED tables
-        tableType       = type;
-        tableName       = name;
-        iPrimaryKey     = null;
-        iIdentityColumn = -1;
-        vColumn         = new HashMappedList();
-        vIndex          = new HsqlArrayList();
-        vConstraint     = new HsqlArrayList();
-        vTrigs          = new HsqlArrayList[TriggerDef.numTrigs()];    // defer init...should be "pay to use"
+        tableType      = type;
+        tableName      = name;
+        iPrimaryKey    = null;
+        identityColumn = -1;
+        vColumn        = new HashMappedList();
+        vIndex         = new HsqlArrayList();
+        vConstraint    = new HsqlArrayList();
+        vTrigs         = new HsqlArrayList[TriggerDef.numTrigs()];    // defer init...should be "pay to use"
 
         for (int vi = 0; vi < TriggerDef.numTrigs(); vi++) {
             vTrigs[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
@@ -355,6 +359,9 @@ class Table {
         return vConstraint;
     }
 
+/** @todo fredt - this can be improved to ignore order of columns in
+     * multi-column indexes */
+
     /**
      *  Get the index supporting a constraint that can be used as an index
      *  of the given type and index column signature. Only Unique constraints
@@ -367,11 +374,9 @@ class Table {
      */
     Index getConstraintIndexForColumns(int[] col, boolean unique) {
 
-        Index currentIndex = getPrimaryIndex();
-
-        if (ArrayUtil.areEqual(currentIndex.getColumns(), col, col.length,
-                               unique)) {
-            return currentIndex;
+        if (ArrayUtil.areEqual(getPrimaryIndex().getColumns(), col,
+                               col.length, unique)) {
+            return getPrimaryIndex();
         }
 
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
@@ -381,11 +386,9 @@ class Table {
                 continue;
             }
 
-            currentIndex = c.getMainIndex();
-
-            if (ArrayUtil.areEqual(currentIndex.getColumns(), col,
-                                   col.length, unique)) {
-                return currentIndex;
+            if (ArrayUtil.areEqual(c.getMainColumns(), col, col.length,
+                                   unique)) {
+                return c.getMainIndex();
             }
         }
 
@@ -499,10 +502,10 @@ class Table {
                 column.getType() == Types.INTEGER
                 || column.getType() == Types.BIGINT, Trace.WRONG_DATA_TYPE,
                     column.columnName.name);
-            Trace.check(iIdentityColumn == -1, Trace.SECOND_PRIMARY_KEY,
+            Trace.check(identityColumn == -1, Trace.SECOND_PRIMARY_KEY,
                         column.columnName.name);
 
-            iIdentityColumn = iColumnCount;
+            identityColumn = iColumnCount;
         }
 
         Trace.doAssert(iPrimaryKey == null, "Table.addColumn");
@@ -536,7 +539,7 @@ class Table {
     /**
      *  Method declaration
      *
-     * @param  select
+     * @param  result
      * @throws  HsqlException
      */
     void addColumns(Select select) throws HsqlException {
@@ -752,7 +755,7 @@ class Table {
      * @return
      */
     int getIdentityColumn() {
-        return iIdentityColumn;
+        return identityColumn;
     }
 
     /**
@@ -818,12 +821,8 @@ class Table {
      * @throws  HsqlException
      */
     int[] getPrimaryKey() {
-
-        if (iVisibleColumns != iColumnCount) {
-            return null;
-        }
-
-        return getIndex(0).getColumns();
+        return (iPrimaryKey[0] == iVisibleColumns) ? null
+                                                   : iPrimaryKey;
     }
 
     int[] getBestRowIdentifiers() {
@@ -848,11 +847,12 @@ class Table {
      * It uses any type of visible index and accepts the first one (it doesn't
      * make any difference to performance).
      */
-    private void resetBestRowIdentifiers() {
+    private void setBestRowIdentifiers() {
 
-        int[]   briCols    = null;
-        boolean isStrict   = false;
-        int     nNullCount = 0;
+        int[]   briCols      = null;
+        int     briColsCount = 0;
+        boolean isStrict     = false;
+        int     nNullCount   = 0;
 
         // ignore if called prior to completion of primary key construction
         if (colNullable == null) {
@@ -860,14 +860,16 @@ class Table {
         }
 
         bestIndexForColumn = new int[vColumn.size()];
+        nullRowIDCols      = new int[vColumn.size()];
 
         for (int i = 0; i < bestIndexForColumn.length; i++) {
-            bestIndexForColumn[i] = -1;
+            nullRowIDCols[i] = bestIndexForColumn[i] = -1;
         }
 
         for (int i = 0; i < vIndex.size(); i++) {
-            Index index = (Index) vIndex.get(i);
-            int[] cols  = index.getColumns();
+            Index index     = (Index) vIndex.get(i);
+            int[] cols      = index.getColumns();
+            int   colsCount = index.getVisibleColumns();
 
             // ignore system primary keys
             if (i == 0 && getPrimaryKey() == null) {
@@ -884,40 +886,64 @@ class Table {
 
             int nnullc = 0;
 
-            for (int j = 0; j < cols.length; j++) {
+            for (int j = 0; j < colsCount; j++) {
                 if (!colNullable[cols[j]]) {
                     nnullc++;
+                } else {
+
+                    // set the nullable column of unique address
+                    nullRowIDCols[cols[j]] = cols[j];
                 }
             }
 
-            if (nnullc == cols.length) {
-                if (briCols == null || briCols.length != nNullCount
-                        || cols.length < briCols.length) {
+            if (nnullc == colsCount) {
+                if (briCols == null || briColsCount != nNullCount
+                        || colsCount < briColsCount) {
 
                     //  nothing found before ||
                     //  found but has null columns ||
                     //  found but has more columns than this index
-                    briCols    = cols;
-                    nNullCount = cols.length;
-                    isStrict   = true;
+                    briCols      = cols;
+                    briColsCount = colsCount;
+                    nNullCount   = colsCount;
+                    isStrict     = true;
                 }
 
                 continue;
             } else if (isStrict) {
                 continue;
-            } else if (briCols == null || cols.length < briCols.length
+            } else if (briCols == null || colsCount < briColsCount
                        || nnullc > nNullCount) {
 
                 //  nothing found before ||
                 //  found but has more columns than this index||
                 //  found but has fewer not null columns than this index
-                briCols    = cols;
-                nNullCount = nnullc;
+                briCols      = cols;
+                briColsCount = colsCount;
+                nNullCount   = nnullc;
             }
         }
 
-        bestRowIdentifierCols   = briCols;
+        // remove rowID column from bestRowIdentiferCols
+        bestRowIdentifierCols = briCols == null
+                                || briColsCount == briCols.length ? briCols
+                                                                  : ArrayUtil
+                                                                  .arraySlice(briCols,
+                                                                      0, briColsCount);
         bestRowIdentifierStrict = isStrict;
+
+        // not used
+        // make array of column indexes for nullable columns in UNIQUE indexes
+        ArrayUtil.sortArray(nullRowIDCols);
+
+        int skip = ArrayUtil.findNot(nullRowIDCols, -1);
+
+        nullRowIDCols = skip == -1 ? null
+                                   : ArrayUtil.arraySlice(nullRowIDCols, 0,
+                                   skip);
+
+        // always needs rowID if there is no primary key
+        needsRowID = getPrimaryKey() == null;
     }
 
     /**
@@ -1000,7 +1026,7 @@ class Table {
         HsqlStringBuffer s = new HsqlStringBuffer(roots);
 
         s.append(' ');
-        s.append(iIdentityId);
+        s.append(identitySequence.peek());
 
         return s.toString();
     }
@@ -1014,7 +1040,7 @@ class Table {
             getIndex(i).setRoot(null);
         }
 
-        iIdentityId = database.firstIdentity;
+        identitySequence.reset(database.firstIdentity);
     }
 
     /**
@@ -1072,8 +1098,7 @@ class Table {
         }
 
         setIndexRoots(roots);
-
-        iIdentityId = Integer.parseInt(s.substring(j));
+        identitySequence.reset(Long.parseLong(s.substring(j)));
     }
 
     /**
@@ -1134,16 +1159,16 @@ class Table {
 
         Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
+        Column column =
+            new Column(database.nameManager.newAutoName(DEFAULT_PK), false,
+                       Types.INTEGER, 0, 0, false, columns == null, null);
+
+        addColumn(column);
+
+        iVisibleColumns--;
+
         if (columns == null) {
-            columns = new int[]{ iColumnCount };
-
-            Column column =
-                new Column(database.nameManager.newAutoName(DEFAULT_PK),
-                           false, Types.INTEGER, 0, 0, true, true, null);
-
-            addColumn(column);
-
-            iVisibleColumns--;
+            columns = new int[]{ iVisibleColumns };
         } else {
             for (int i = 0; i < columns.length; i++) {
                 if (columnsNotNull) {
@@ -1162,7 +1187,7 @@ class Table {
                                            "SYS_PK", tableName.name,
                                            tableName.isNameQuoted);
 
-        createIndexStructure(columns, name, true);
+        createIndexStructure(columns, name, true, true);
 
         colTypes         = new int[iColumnCount];
         colDefaults      = new String[iVisibleColumns];
@@ -1171,8 +1196,7 @@ class Table {
         defaultColumnMap = new int[iVisibleColumns];
 
         for (int i = 0; i < iColumnCount; i++) {
-            Column column = getColumn(i);
-
+            column      = getColumn(i);
             colTypes[i] = column.getType();
 
             if (i < iVisibleColumns) {
@@ -1187,7 +1211,7 @@ class Table {
             }
         }
 
-        resetBestRowIdentifiers();
+        setBestRowIdentifiers();
     }
 
     /**
@@ -1214,7 +1238,7 @@ class Table {
         }
 
         return createIndexStructure(colarr, index.getName(),
-                                    index.isUnique());
+                                    index.isUnique(), false);
     }
 
     /**
@@ -1227,7 +1251,7 @@ class Table {
     Index createIndex(int column[], HsqlName name,
                       boolean unique) throws HsqlException {
 
-        Index newindex     = createIndexStructure(column, name, unique);
+        Index newindex = createIndexStructure(column, name, unique, false);
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
@@ -1277,7 +1301,7 @@ class Table {
 
         iIndexCount = vIndex.size();
 
-        resetBestRowIdentifiers();
+        setBestRowIdentifiers();
 
         throw Trace.error(error);
     }
@@ -1291,27 +1315,26 @@ class Table {
      * @return                Description of the Return Value
      * @throws  HsqlException
      */
-    Index createIndexStructure(int column[], HsqlName name,
-                               boolean unique) throws HsqlException {
+    Index createIndexStructure(int column[], HsqlName name, boolean unique,
+                               boolean pk) throws HsqlException {
 
         Trace.doAssert(iPrimaryKey != null, "createIndex");
 
         int s = column.length;
-        int t = iPrimaryKey.length;
+        int t = pk ? 0
+                   : iPrimaryKey.length;
 
-        // The primary key field is added for non-unique indexes
-        // making all indexes unique
-        int col[]  = new int[unique ? s
-                                    : s + t];
-        int type[] = new int[unique ? s
-                                    : s + t];
+        // The primary key fields are added for all indexes except primary
+        // key thus making all indexes unique
+        int col[]  = new int[s + t];
+        int type[] = new int[s + t];
 
         for (int j = 0; j < s; j++) {
             col[j]  = column[j];
             type[j] = getColumn(col[j]).getType();
         }
 
-        if (!unique) {
+        if (!pk) {
             for (int j = 0; j < t; j++) {
                 col[s + j]  = iPrimaryKey[j];
                 type[s + j] = getColumn(iPrimaryKey[j]).getType();
@@ -1329,7 +1352,7 @@ class Table {
 
         iIndexCount = vIndex.size();
 
-        resetBestRowIdentifiers();
+        setBestRowIdentifiers();
 
         return newindex;
     }
@@ -1469,7 +1492,7 @@ class Table {
 
                 iIndexCount = vIndex.size();
 
-                resetBestRowIdentifiers();
+                setBestRowIdentifiers();
 
                 break;
             }
@@ -1620,8 +1643,6 @@ class Table {
      * new, empty tables with no constraints, triggers
      * column default values, column size enforcement whatsoever.
      *
-     * The identity columns has to be set as they have no defined primary key.
-     *
      * Not used for INSERT INTO .... SELECT ... FROM queries
      */
     void insertNoCheck(Result result, Session c) throws HsqlException {
@@ -1729,39 +1750,25 @@ class Table {
     protected void setIdentityColumn(Object[] row,
                                      Session c) throws HsqlException {
 
-        long nextId = iIdentityId;
-
-        if (iIdentityColumn != -1) {
-            Number id = (Number) row[iIdentityColumn];
+        if (identityColumn != -1) {
+            Number id = (Number) row[identityColumn];
 
             if (id == null) {
-                if (colTypes[iIdentityColumn] == Types.INTEGER) {
-                    id = ValuePool.getInt((int) iIdentityId);
+                if (colTypes[identityColumn] == Types.INTEGER) {
+                    id = ValuePool.getInt((int) identitySequence.getValue());
                 } else {
-                    id = ValuePool.getLong(iIdentityId);
+                    id = ValuePool.getLong(identitySequence.getValue());
                 }
 
-                row[iIdentityColumn] = id;
+                row[identityColumn] = id;
             } else {
-                long columnId = id.longValue();
-
-                if (iIdentityId < 0) {
-                    throw Trace.error(Trace.ACCESS_IS_DENIED);
-                }
-
-                if (iIdentityId < columnId) {
-                    iIdentityId = columnId;
-                }
+                identitySequence.getValue(id.longValue());
             }
 
             // only do this if id is for a visible column
             if (c != null) {
                 c.setLastIdentity(id);
             }
-        }
-
-        if (iIdentityId >= nextId) {
-            iIdentityId++;
         }
     }
 
@@ -2673,7 +2680,7 @@ class Table {
         a.append(tableName.statementName);
         a.append(" WHERE ");
 
-        if (iVisibleColumns < iColumnCount) {
+        if (iPrimaryKey[0] == iVisibleColumns) {
             for (int i = 0; i < iVisibleColumns; i++) {
                 Column c = getColumn(i);
 
@@ -2723,12 +2730,28 @@ class Table {
         return null;
     }
 
-    void putRow(CachedRow r) throws HsqlException {
+    void addRowToStore(Row r) throws HsqlException {
 
-        int size = 0;
+        if (isCached && cache != null) {
+            cache.add((CachedRow) r);
 
-        if (cache != null) {
-            cache.add(r);
+//            r.getData()[iVisibleColumns] = new Integer(((CachedRow)r).iPos);
+//            r.getData()[iVisibleColumns] = ValuePool.getInt(((CachedRow)r).iPos);
+        } else if (needsRowID) {
+
+            // fredt - this is required when there is a non-primary index
+            // and a user defined pk - should reduce the cases where it is
+            // necessary
+//            r.getData()[iVisibleColumns] = new Integer((int)rowIdSequence.getValue());
+            r.getData()[iVisibleColumns] =
+                ValuePool.getInt((int) rowIdSequence.getValue());
+        }
+    }
+
+    void registerRow(Row r) {
+
+        if (isCached && cache != null && needsRowID) {
+            r.getData()[iVisibleColumns] = new Integer(((CachedRow) r).iPos);
         }
     }
 
@@ -2780,26 +2803,28 @@ class Table {
             cache.remove(this);
         }
     }
-    
+
     boolean isWritable() {
         return !isReadOnly &&!database.databaseReadOnly
-                    && !(database.filesReadOnly && (isCached ||isText));
+               &&!(database.filesReadOnly && (isCached || isText));
     }
-    
+
     String getCatalogName() {
-        
+
         if (database == null
-                ||database.getProperties().isPropertyTrue("hsqldb.catalogs")) {
+                || database.getProperties().isPropertyTrue(
+                    "hsqldb.catalogs")) {
             return null;
         }
-        
+
         return database.getPath();
     }
-    
+
     String getSchemaName() {
-        
+
         if (database == null
-                ||database.getProperties().isPropertyTrue("hsqldb.schemas")) {
+                || database.getProperties().isPropertyTrue(
+                    "hsqldb.schemas")) {
             return null;
         }
 
@@ -2808,12 +2833,13 @@ class Table {
         } else if (tableType == SYSTEM_VIEW) {
             return "INFORMATION_SCHEMA";
         } else if (isTemp) {
-            Session s  = database.sessionManager.getSession(ownerSessionId);
+            Session s = database.sessionManager.getSession(ownerSessionId);
 
-            return (s != null && s.getId() == ownerSessionId) ? s.getUsername() 
-                                                                : null;
+            return (s != null && s.getId() == ownerSessionId)
+                   ? s.getUsername()
+                   : null;
         } else {
             return "PUBLIC";
-        }        
+        }
     }
 }

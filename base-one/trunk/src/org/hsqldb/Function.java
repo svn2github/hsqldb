@@ -104,8 +104,8 @@ class Function {
     private Expression       eArg[];
     private boolean          bConnection;
     private static Hashtable methodCache = new Hashtable();
-    private int              fID;  
-    
+    private int              fID;
+
     /**
      * Constructs a new Function object with the given function call name
      * and using the specified Session context. <p>
@@ -135,20 +135,20 @@ class Function {
      * wherein tables and routines may be involved to which the session
      * user has been granted no privileges but should be allowed to
      * select from the VIEW regardless, by virtue of being granted SELECT
-     * on the VIEW object. 
+     * on the VIEW object.
      *
      * @param fqn the fully qualified name of a Java method
      * @param session the connected context in which this Function object will
      *      evaluate
-     * @param checkPrivs if true, the session user's routine invocation 
+     * @param checkPrivs if true, the session user's routine invocation
      *      privileges are checked against the declaring class of the fqn
      * @throws HsqlException if the specified function FQN corresponds to no
      *      Java method or the session user at the time of
      *      construction does not have the right to evaluate
      *      this Function.
-     */    
-    Function(String fqn, Session session, boolean checkPrivs) 
-    throws HsqlException {
+     */
+    Function(String fqn, Session session,
+             boolean checkPrivs) throws HsqlException {
 
         cSession  = session;
         sFunction = fqn;
@@ -197,15 +197,17 @@ class Function {
         }
 
         cReturnClass = mMethod.getReturnType();
-        
-        if (cReturnClass.equals(org.hsqldb.Result.class) 
+
+        if (cReturnClass.equals(org.hsqldb.Result.class)
                 || cReturnClass.equals(org.hsqldb.jdbcResultSet.class)) {
+
             // For now, people can write stored procedures with
             // descriptor having above return types to indicate
             // result of arbitrary arity.  Later, this must be 
             // replaced with a better system.
             iReturnType = Types.OTHER;
         } else {
+
             // Now we can return an object of any Class,
             // as long as it's a primitive array, directly
             // implements java.io.Serializable directly or is a
@@ -214,9 +216,8 @@ class Function {
             iReturnType = Types.getParameterTypeNr(cReturnClass);
         }
 
-        aArgClasses = mMethod.getParameterTypes();
-
-        iArgCount    = aArgClasses.length;        
+        aArgClasses  = mMethod.getParameterTypes();
+        iArgCount    = aArgClasses.length;
         iArgType     = new int[iArgCount];
         bArgNullable = new boolean[iArgCount];
 
@@ -229,10 +230,10 @@ class Function {
                 // TODO: make this obsolete, providing 
                 // jdbc:default:connection url functionality
                 // instead
-                
                 // only the first parameter can be a Connection                
                 bConnection = true;
             } else {
+
                 // Now we can pass values of any Class to args of any
                 // Class, as long as they are primitive arrays, directly
                 // implement java.io.Serializable or are non-primitive
@@ -246,10 +247,12 @@ class Function {
 
         if (bConnection) {
             iSqlArgCount--;
+
             iSqlArgStart = 1;
         } else {
             iSqlArgStart = 0;
-        };
+        }
+        ;
 
         eArg = new Expression[iArgCount];
         oArg = new Object[iArgCount];
@@ -268,7 +271,7 @@ class Function {
      * calling the Java
      * method underlying this object
      */
-    Object getValue() throws HsqlException {        
+    Object getValue() throws HsqlException {
 
         switch (fID) {
 
@@ -298,7 +301,7 @@ class Function {
                 return cSession.getDatabase().filesReadOnly ? Boolean.TRUE
                                                             : Boolean.FALSE;
         }
-        
+
         int i = 0;
 
         if (bConnection) {
@@ -344,12 +347,11 @@ class Function {
 
             //if (ret instanceof byte[] || ret instanceof Object) {
             // it's always an instanceof Object
-                //ret = 
-                return Column.convertObject(ret, iReturnType);
+            //ret = 
+            return Column.convertObject(ret, iReturnType);
+
             //}
-
             //return ret;
-
 // boucherb@users - patch 1.7.2 - better function invocation error reporting
         } catch (Throwable t) {
             String s = sFunction;
@@ -408,7 +410,8 @@ class Function {
             if (e != null) {
                 if (e.isParam()) {
                     e.setDataType(iArgType[i]);
-                    e.nullability = getArgNullability(i);
+
+                    e.nullability    = getArgNullability(i);
                     e.valueClassName = getArgClass(i).getName();
                 } else {
                     eArg[i].resolve(f);
@@ -491,7 +494,7 @@ class Function {
 
         return sb.toString();
     }
-    
+
     /**
      * Retrieves the Java Class of the object returned by getValue(). <p>
      *
@@ -501,23 +504,23 @@ class Function {
     Class getReturnClass() {
         return cReturnClass;
     }
-    
+
     /**
      * Retreives the Java Class of the i'th argument. <p>
      *
-     * @return the Java Class of the i'th argument 
+     * @return the Java Class of the i'th argument
      */
-    Class getArgClass(int i) {        
+    Class getArgClass(int i) {
         return aArgClasses[i];
     }
-    
+
     /**
      * Retrieves the SQL nullability code of the i'th argument. <p>
      *
      * @return the SQL nullability code of the i'th argument
      */
     int getArgNullability(int i) {
-        return bArgNullable[i] ? Expression.NULLABLE 
+        return bArgNullable[i] ? Expression.NULLABLE
                                : Expression.NO_NULLS;
     }
 }

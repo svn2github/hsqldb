@@ -97,6 +97,7 @@ class Index {
     private final int      colIndex[];
     private final int      colType[];
     private final boolean  isUnique;                 // DDL uniqueness
+    private final boolean  isExact;
     private final int      visibleColumns;
     private final int      colIndex_0, colType_0;    // just for tuning
     private Node           root;
@@ -120,6 +121,7 @@ class Index {
         colIndex_0          = colIndex[0];
         colType_0           = colType[0];
         this.visibleColumns = visibleColumns;
+        isExact             = colIndex.length == visibleColumns;
     }
 
     /**
@@ -253,7 +255,7 @@ class Index {
 
             Object nData[] = n.getData();
 
-            compare = compareRow(data, nData);
+            compare = compareRowUnique(data, nData);
 
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
@@ -628,7 +630,9 @@ class Index {
                 Trace.stop();
             }
 
-            boolean t = compareValue(value, x.getData()[colIndex_0]) >= iTest;
+            boolean t =
+                Column.compare(value, x.getData()[colIndex_0], colType_0)
+                >= iTest;
 
             if (t) {
                 Node r = x.getRight();
@@ -650,7 +654,8 @@ class Index {
         }
 
         while (x != null
-                && compareValue(value, x.getData()[colIndex_0]) >= iTest) {
+                && Column.compare(value, x.getData()[colIndex_0], colType_0)
+                   >= iTest) {
             if (Trace.STOP) {
                 Trace.stop();
             }
@@ -913,11 +918,11 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * compares two full table rows based on the columns of the index
      *
      *
-     * @param a
-     * @param b
+     * @param a a full row
+     * @param b a full row
      *
      * @return
      *
@@ -945,7 +950,7 @@ class Index {
     }
 
     /**
-     * Method declaration
+     * For inserting rows into unique indexes
      *
      *
      * @param a
@@ -955,7 +960,45 @@ class Index {
      *
      * @throws HsqlException
      */
-    private int compareValue(Object a, Object b) throws HsqlException {
-        return Column.compare(a, b, colType_0);
+    private int compareRowUnique(Object a[],
+                                 Object b[]) throws HsqlException {
+
+        Object value = a[colIndex_0];
+        int    i     = Column.compare(value, b[colIndex_0], colType_0);
+        int    j     = 1;
+
+        if (i != 0) {
+            return i;
+        }
+
+        for (; j < visibleColumns; j++) {
+            Object currentvalue = a[colIndex[j]];
+
+            i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
+
+            if (i != 0) {
+                return i;
+            }
+
+            if (currentvalue == null) {
+                value = null;
+            }
+        }
+
+        if (isExact || (isUnique && value != null)) {
+            return 0;
+        }
+
+        for (; j < colIndex.length; j++) {
+            Object currentvalue = a[colIndex[j]];
+
+            i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
+
+            if (i != 0) {
+                return i;
+            }
+        }
+
+        return 0;
     }
 }

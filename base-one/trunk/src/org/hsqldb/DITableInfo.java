@@ -692,7 +692,7 @@ final class DITableInfo {
      *
      * Be aware that this is not necessarily the value that will be assigned
      * to the identity column during the next insert or update.  This value is
-     * used iff NULL is either implicitly or explicity assigned. <p>
+     * used if NULL is either implicitly or explicity assigned. <p>
      *
      * @return the value of the next automatically assigned identity
      */
@@ -700,15 +700,11 @@ final class DITableInfo {
 
         Index pi;
 
-        if (table.iIdentityColumn < 0) {
+        if (table.identityColumn < 0) {
             return null;
         }
 
-        pi = table.getPrimaryIndex();
-
-        return (pi != null && pi.getVisibleColumns() > 0)
-               ? ValuePool.getLong(table.iIdentityId)
-               : null;
+        return ValuePool.getLong(table.identitySequence.peek());
     }
 
     /**

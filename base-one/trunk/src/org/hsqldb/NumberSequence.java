@@ -67,135 +67,45 @@
 
 package org.hsqldb;
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
-// fredt@users 20021215 - doc 1.7.2 - javadoc comments
+public class NumberSequence {
 
-/**
- * Base class for a database row object implementing rows for
- * memory resident tables.<p>
- *
- * A Row object references a linked list consisting of Node Objects
- * (one Node per index on the table), and an Object[] containing references
- * to the field values for the row.
- *
- * Subclass CachedRow implements rows for CACHED and TEXT tables with extra
- * links to other Row Objects
- *
- * @version 1.7.2
- */
-class Row {
+    long currValue;
+    long markValue;
 
-    protected Object oData[];
-    protected Node   nPrimaryNode;
+    NumberSequence(long value) {
+        currValue = markValue = value;
+    }
 
-    /**
-     *  Factory method instantiates a Row based on table type.
-     */
-    static Row newRow(Table t, Object o[]) throws HsqlException {
+    long getValue() {
+        return currValue++;
+    }
 
-        if (t.isText()) {
-            return new CachedDataRow(t, o);
-        } else if (t.isCached()) {
-            return new CachedRow(t, o);
+    long getValue(long value) {
+
+        if (value >= currValue) {
+            currValue = value;
+
+            return currValue++;
         } else {
-            return new Row(t, o);
+            return value;
         }
     }
 
-    /**
-     *  Default constructor used only in subclasses.
-     */
-    Row() {}
-
-    /**
-     *  Constructor for MEMORY table Row. The result is a Row with Nodes that
-     *  are not yet linked with other Nodes in the AVL indexes.
-     */
-    Row(Table t, Object o[]) throws HsqlException {
-
-        int index = t.getIndexCount();
-
-        nPrimaryNode = Node.newNode(this, 0, t);
-
-        Node n = nPrimaryNode;
-
-        for (int i = 1; i < index; i++) {
-            n.nNext = Node.newNode(this, i, t);
-            n       = n.nNext;
-        }
-
-        oData = o;
-
-        t.addRowToStore(this);
+    void mark() {
+        markValue = currValue;
     }
 
-    /**
-     * Returns the Node for a given Index, using the ordinal position of the
-     * Index within the Table Object.
-     */
-    Node getNode(int index) {
+    void reset() {
 
-        Node n = nPrimaryNode;
-
-        while (index-- > 0) {
-            n = n.nNext;
-        }
-
-        return n;
+        // no change if called before getValue() or called twice
+        currValue = markValue;
     }
 
-    /**
-     *  Returns the Node for the next Index on this database row, given the
-     *  Node for any Index.
-     */
-    Node getNextNode(Node n) {
-
-        if (n == null) {
-            n = nPrimaryNode;
-        } else {
-            n = n.nNext;
-        }
-
-        return n;
+    long peek() {
+        return currValue;
     }
 
-    /**
-     * Returns the array of fields in the database row. If the table has no
-     * primary index, an extra internal field is included in the last
-     * position of this array.
-     */
-    Object[] getData() {
-        return oData;
-    }
-
-    /**
-     * Returns the Row Object that currently represents the same database row.
-     * In current implementations of Row, this is always the same as the this
-     * Object for MEMORY tables, but could be a different Object for CachedRow
-     * or CachedDataRow implementation. For example the Row Object that
-     * represents a given database row can be freed from the Cache when other
-     * rows need to be loaded into the Cache. getUpdatedRow() returns a
-     * currently valid Row object that is in the Cache.
-     */
-    Row getUpdatedRow() throws HsqlException {
-        return this;
-    }
-
-    /**
-     *  Performs any required operation for unlinking the Row from its Nodes.
-     *  Is used only when the database row is deleted, not when it is freed
-     *  from the Cache.
-     */
-    void delete() throws HsqlException {
-
-        Record.memoryRecords++;
-
-        oData        = null;
-        nPrimaryNode = null;
-    }
-
-    boolean isDeleted() {
-        return nPrimaryNode == null;
+    void reset(long value) {
+        markValue = currValue = value;
     }
 }

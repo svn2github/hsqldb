@@ -71,6 +71,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         super(new byte[0]);
 
+        setSystemId(true);
+
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
             fieldSepEnd = true;
@@ -122,10 +124,6 @@ implements org.hsqldb.DatabaseRowInputInterface {
         line++;
 
         field = 0;
-    }
-
-    void setSystemId(boolean flag) {
-        makeSystemId = flag;
     }
 
     protected String getField(String sep, int sepLen,
@@ -358,14 +356,13 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
     public void reset() {
 
-        text         = "";
-        textLen      = 0;
-        filePos      = 0;
-        size         = 0;
-        nextPos      = 0;
-        next         = 0;
-        field        = 0;
-        line         = 0;
-        makeSystemId = false;
+        text    = "";
+        textLen = 0;
+        filePos = 0;
+        size    = 0;
+        nextPos = 0;
+        next    = 0;
+        field   = 0;
+        line    = 0;
     }
 }

@@ -270,12 +270,14 @@ class Select {
                 r.isLabelQuoted[i] = e.isAliasQuoted();
                 r.sTable[i]        = e.getTableName();
                 r.sName[i]         = e.getColumnName();
+
                 if (r.isTableColumn(i)) {
                     r.nullability[i] = e.nullability;
                     r.isIdentity[i]  = e.isIdentity;
                     r.isWritable[i]  = e.isWritable;
                 }
-                r.sClassName[i]     = e.getValueClassName();
+
+                r.sClassName[i] = e.getValueClassName();
             }
         }
 
@@ -338,11 +340,11 @@ class Select {
      * @return
      * @throws HsqlException
      */
+
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
 // for SELECT LIMIT n m DISTINCT
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
     Result getResult(int maxrows) throws HsqlException {
-
 
         Result r;
 
@@ -631,11 +633,11 @@ class Select {
         resolve();
         checkResolved();
 
-
         if (sUnion != null) {
-            if(sUnion.iResultLen != iResultLen) {
+            if (sUnion.iResultLen != iResultLen) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
+
             sUnion.resolveAll();
         }
 
@@ -748,9 +750,7 @@ class Select {
         r = new Result(ResultConstants.DATA, iResultLen);
 
         for (int i = 0; i < iResultLen; i++) {
-
-            e = eColumn[i];
-
+            e                  = eColumn[i];
             r.colType[i]       = e.getDataType();
             r.colSize[i]       = e.getColumnSize();
             r.colScale[i]      = e.getColumnScale();
@@ -770,8 +770,9 @@ class Select {
     }
 
     void resetResult() {
+
         if (rResult != null) {
-            rResult.trimResult(0,0);
+            rResult.trimResult(0, 0);
         }
     }
 }

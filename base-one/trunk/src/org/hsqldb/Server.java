@@ -124,7 +124,7 @@ import org.hsqldb.resources.BundleHandler;
  *  <b>1.7.2 Notes:</b> start() and stop() methods added and Server always
  *  runs in its own thread.  Default is now to set server.no_system_exit=true
  *  when calling start() directly, while setting server.no_system_exit=false
- *  by default when server is started by calling main(String[] args).  
+ *  by default when server is started by calling main(String[] args).
  *  main(String[] args) no longer blocks, because server runs in its own
  * thread. (boucherb@users)
  *
@@ -137,7 +137,6 @@ public class Server implements HsqlSocketRequestHandler {
 
 //
     static final String serverName = "HSQLDB/1.7.2";
-
     private static final int bhnd =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 

@@ -1665,7 +1665,6 @@ public class Library {
 //
 //        return result;
 //    }
-
 /*
 // test for soundex
     public static void main (String argv[]){
@@ -1732,9 +1731,10 @@ public class Library {
     static final int user                      = 54;
     static final int week                      = 55;
     static final int year                      = 56;
+
 // obsolete     
 //    static final int getCDColumnMetaData       = 57;
-    static final int isReadOnlyDatabaseFiles   = 57; // 58;
+    static final int isReadOnlyDatabaseFiles = 57;    // 58;
     private static final IntValueHashMap functionMap =
         new IntValueHashMap(117);
     static final Double piValue = new Double(Library.pi());
@@ -1798,6 +1798,7 @@ public class Library {
         functionMap.put("user", user);
         functionMap.put("week", week);
         functionMap.put("year", year);
+
 // obsolete         
 //        functionMap.put("getCDColumnMetaData", getCDColumnMetaData);
         functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
@@ -2005,6 +2006,7 @@ public class Library {
                 case year : {
                     return ValuePool.getInt(year((Date) parms[0]));
                 }
+
 // obsolete                
 //                case getCDColumnMetaData : {
 //                    return getCDColumnMetaData((Connection) parms[0],

@@ -50,10 +50,10 @@ import org.hsqldb.lib.StringUtil;
  */
 public final class CompiledStatementExecutor {
 
-    private Session        session;
-    private Database       database;
-    private Result         updateResult;
-    private Result         emptyResult;    
+    private Session  session;
+    private Database database;
+    private Result   updateResult;
+    private Result   emptyResult;
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -71,13 +71,13 @@ public final class CompiledStatementExecutor {
     /**
      * Executes a generic CompiledStatement. Execution includes first building
      * any subquery result dependencies and clearing them after the main result
-     * is built. 
+     * is built.
      *
      * @return the result of executing the statement
      * @param cs any valid CompiledStatement
      */
     Result execute(CompiledStatement cs) {
-        
+
         Result result = null;
 
         DatabaseManager.gc();
@@ -87,6 +87,7 @@ public final class CompiledStatementExecutor {
 
             result = executeImpl(cs);
         } catch (Throwable t) {
+
             //t.printStackTrace();
             result = new Result(t, cs.sql);
         }
@@ -104,7 +105,7 @@ public final class CompiledStatementExecutor {
     /**
      * Executes a generic CompiledStatement. Execution excludes building
      * subquery result dependencies and clearing them after the main result
-     * is built. 
+     * is built.
      *
      * @param cs any valid CompiledStatement
      * @throws HsqlException if a database access error occurs
@@ -134,6 +135,7 @@ public final class CompiledStatementExecutor {
 
             default :
                 String msg = "Unknown compiled statement type: " + cs.type;
+
                 throw Trace.error(Trace.OPERATION_NOT_SUPPORTED, msg);
         }
     }
@@ -160,7 +162,7 @@ public final class CompiledStatementExecutor {
             return ((jdbcResultSet) o).rResult;
         }
 
- // NO:
+        // NO:
 // boucherb@users patch 1.7.x - returning values from remote data sources
 //        if (o instanceof ResultSet) {
 //            return Result.newResult((ResultSet)o);
@@ -175,7 +177,7 @@ public final class CompiledStatementExecutor {
         r.add(row);
 
         return r;
-    }        
+    }
 
     /**
      * Executes a DELETE statement.  It is assumed that the argument is
@@ -188,20 +190,20 @@ public final class CompiledStatementExecutor {
     private Result executeDeleteStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t     = cs.targetTable; 
+        Table          t     = cs.targetTable;
         TableFilter    tf    = cs.tf;
         Expression     c     = cs.condition;    // delete condition
-        int            count = 0;        
+        int            count = 0;
         HsqlLinkedList del;                     // tuples to delete
-               
+
         if (tf.findFirst()) {
             del = new HsqlLinkedList();
-            
+
             if (c == null) {
                 do {
                     del.add(tf.currentRow);
                 } while (tf.next());
-                
+
                 count = t.delete(del, session);
             } else {
                 do {
@@ -209,7 +211,7 @@ public final class CompiledStatementExecutor {
                         del.add(tf.currentRow);
                     }
                 } while (tf.next());
-                
+
                 count = t.delete(del, session);
             }
         }
@@ -240,6 +242,7 @@ public final class CompiledStatementExecutor {
             }
             default :
                 String msg = "Unexpected compiled statement type: " + cs.type;
+
                 throw Trace.error(Trace.UNEXPECTED_EXCEPTION, msg);
         }
     }
@@ -356,7 +359,7 @@ public final class CompiledStatementExecutor {
      * @param cs a CompiledStatement of type CompiledStatement.UPDATE
      * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
-     */    
+     */
     private Result executeUpdateStatement(CompiledStatement cs)
     throws HsqlException {
 
@@ -377,8 +380,8 @@ public final class CompiledStatementExecutor {
         Object[]       ni;
 
         if (f.findFirst()) {
-            del = new HsqlLinkedList();
-            ins = new Result(ResultConstants.UPDATECOUNT);            
+            del  = new HsqlLinkedList();
+            ins  = new Result(ResultConstants.UPDATECOUNT);
             size = t.getColumnCount();
             len  = cm.length;
             ct   = t.getColumnTypes();

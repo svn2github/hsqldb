@@ -115,9 +115,11 @@ public class JavaObject {
 
         return object;
     }
-    
+
     public String toString() {
+
         String s = super.toString() + "[";
+
         try {
             return s + "getObject()=[" + String.valueOf(getObject()) + "]]";
         } catch (Exception e) {

@@ -60,6 +60,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         super();
 
+        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   "ASCII");
     }
@@ -70,6 +71,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         super();
 
+        setSystemId(true);
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
                                   encoding);
     }
@@ -136,10 +138,6 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         nextSep    = fieldSep;
         nextSepEnd = fieldSepEnd;
-    }
-
-    void setSystemId(boolean flag) {
-        skipSystemId = flag;
     }
 
     protected void writeVarString(String s) throws IOException {
@@ -324,8 +322,6 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         reset();
 
         try {
-            setSystemId(r.getTable().iColumnCount
-                        != r.getTable().iVisibleColumns);
             writeSize(0);
             writeData(r.getData(), r.getTable());
             writePos(0);

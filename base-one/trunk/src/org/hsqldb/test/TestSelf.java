@@ -113,7 +113,7 @@ class TestSelf {
      * <pre>
      * TestSelf [records [-m]]
      *
-     *</pre>
+     * </pre>
      *
      * -m means run the tests in-memory only
      *
@@ -272,8 +272,9 @@ class TestSelf {
             print("Opened test script file: " + testfile.getAbsolutePath());
 
             int startlineno = 1;
+
             for (int lineno = 1; ; lineno++) {
-                String line  = read.readLine();
+                String line = read.readLine();
 
                 if (line == null) {
                     break;
@@ -285,7 +286,7 @@ class TestSelf {
                     test(sStatement, s, startlineno);
 
                     startlineno = lineno;
-                    s = line;
+                    s           = line;
                 }
             }
 
@@ -371,7 +372,7 @@ class TestSelf {
             byte[]  b1n;
             boolean mismatch;
 
-            s = "select \"org.hsqldb.lib.ArrayUtil.startsWith\"(licence,0, ?) "
+            s = "select \"org.hsqldb.lib.ArrayUtil.containsAt\"(licence,0, ?) "
                 + "from TabProfile";
             p = cConnection.prepareStatement(s);
 

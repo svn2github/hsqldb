@@ -105,7 +105,6 @@ class DatabaseCommandInterpreter {
 
     /** Constructs a new DatabaseCommandInterpreter for the given Session */
     DatabaseCommandInterpreter(Session s) {
-
         session  = s;
         database = s.getDatabase();
     }
@@ -135,7 +134,6 @@ class DatabaseCommandInterpreter {
         logger = database.logger;
 
         try {
-
             tokenizer.reset(sql);
 
             // TODO:  make Parser resetable, like tokenizer.
@@ -186,7 +184,7 @@ class DatabaseCommandInterpreter {
     }
 
     private Result executePart(int cmd, String token,
-                       Parser parser) throws Throwable {
+                               Parser parser) throws Throwable {
 
         Result result = this.emptyResult;
 
@@ -195,7 +193,7 @@ class DatabaseCommandInterpreter {
             case Token.SELECT :
                 cs = parser.compileSelectStatement(cs);
 
-                Trace.doAssert(cs.parameters.length == 0, 
+                Trace.doAssert(cs.parameters.length == 0,
                                "direct execute with param count > 0");
 
                 if (cs.select.sIntoTable == null) {
@@ -220,7 +218,7 @@ class DatabaseCommandInterpreter {
                 cs = parser.compileUpdateStatement(cs);
 
                 Trace.doAssert(cs.parameters.length == 0,
-                              "direct execute with param count > 0");
+                               "direct execute with param count > 0");
 
                 result = session.sqlExecuteCompiledNoPreChecks(cs);
                 break;
@@ -2576,14 +2574,15 @@ class DatabaseCommandInterpreter {
                 break;
 
             default :
+
                 // - No real need to throw, so why bother?
                 // - Just return result with no rows for now
                 // - Later, maybe there will be plan desciptions
                 //   for other operations
                 return result;
         }
-        
-        lnr    = new LineNumberReader(new StringReader(cs.toString()));
+
+        lnr = new LineNumberReader(new StringReader(cs.toString()));
 
         while (null != (line = lnr.readLine())) {
             result.add(new Object[]{ line });
@@ -2619,9 +2618,9 @@ class DatabaseCommandInterpreter {
     }
 
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
-    TableWorks           tableWorks = new TableWorks(null);
-    Tokenizer            tokenizer  = new Tokenizer();
-    CompiledStatement    cs         = new CompiledStatement();
+    TableWorks          tableWorks  = new TableWorks(null);
+    Tokenizer           tokenizer   = new Tokenizer();
+    CompiledStatement   cs          = new CompiledStatement();
 
     private static class TempConstraint {
 

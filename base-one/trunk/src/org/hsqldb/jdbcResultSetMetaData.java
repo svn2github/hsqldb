@@ -105,7 +105,7 @@ import org.hsqldb.store.ValuePool;
  * vague. This causes potential incompatibility between interpretations of the
  * specification as realized in different JDBC driver implementations. As such,
  * deciding to what degree reporting ResultSetMetaData is accurate has been
- * considered very carefully. Hopefully, the design decisions made in light of 
+ * considered very carefully. Hopefully, the design decisions made in light of
  * these considerations have yeilded precisely the subset of full
  * ResultSetMetaData support that is most commonly needed and that is most
  * important, while also providing, under the most common use-cases, the
@@ -150,8 +150,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     private jdbcColumnMetaData[] columnMetaData;
 
     /** The number of columns in this object's parent ResultSet. */
-    private int columnCount;
-    
+    private int     columnCount;
     private boolean useColumnName;
 
     /**
@@ -172,9 +171,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     jdbcResultSetMetaData(jdbcResultSet rs,
                           HsqlProperties props) throws SQLException {
-        init(rs,props);                  
+        init(rs, props);
     }
-    
+
     /**
      * Constructs a new jdbcResultSetMetaData object from the specified
      * Result and HsqlProprties objects.
@@ -187,9 +186,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     jdbcResultSetMetaData(Result r,
                           HsqlProperties props) throws SQLException {
-        init(r, props);                  
-    }    
-    
+        init(r, props);
+    }
+
     /**
      * Initializes this jdbcResultSetMetaData object from the specified
      * jdbcResultSet and HsqlProperties objects.
@@ -197,20 +196,20 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @param rs the jdbcResultSet object from which to initialize this
      *        jdbcResultSetMetaData object
      * @param props the HsqlProperties object from which to initialize this
-     *        jdbcResultSetMetaData object     
+     *        jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
-     */     
+     */
     void init(jdbcResultSet rs, HsqlProperties props) throws SQLException {
+
         if (rs == null) {
             throw jdbcDriver.sqlException(
                 Trace.GENERAL_ERROR,
                 Trace.jdbcResultSetMetaData_jdbcResultSetMetaData, null);
         }
 
-        init(rs.rResult, props);       
-        
+        init(rs.rResult, props);
     }
-    
+
     /**
      * Initializes this jdbcResultSetMetaData object from the specified
      * Result and HsqlProperties objects.
@@ -218,9 +217,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @param rs the Result object from which to initialize this
      *        jdbcResultSetMetaData object
      * @param props the HsqlProperties object from which to initialize this
-     *        jdbcResultSetMetaData object     
+     *        jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
-     */    
+     */
     void init(Result r, HsqlProperties props) throws SQLException {
 
         jdbcColumnMetaData cmd;
@@ -234,12 +233,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                 Trace.GENERAL_ERROR,
                 Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_2, null);
         }
-                
 
-        if (r.iMode != ResultConstants.DATA) { 
+        if (r.iMode != ResultConstants.DATA) {
             return;
         }
-        
+
         columnCount    = r.getColumnCount();
         useColumnName  = props.isPropertyTrue("get_column_name");
         columnMetaData = new jdbcColumnMetaData[columnCount];
@@ -247,27 +245,33 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         for (int i = 0; i < columnCount; i++) {
             cmd               = new jdbcColumnMetaData();
-            columnMetaData[i] = cmd;            
+            columnMetaData[i] = cmd;
 
             // Typically, these null checks are not needed, but as
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.catalogName     = r.sCatalog[i] == null ? "" : r.sCatalog[i];
-            cmd.schemaName      = r.sSchema[i] == null ? "" : r.sSchema[i];
-            cmd.tableName       = r.sTable[i] == null ? "" : r.sTable[i];
-            cmd.columnName      = r.sName[i] == null ? "" : r.sName[i];
-            cmd.columnLabel     = r.sLabel[i] == null ? "" : r.sLabel[i];
+            cmd.catalogName     = r.sCatalog[i] == null ? ""
+                                                        : r.sCatalog[i];
+            cmd.schemaName      = r.sSchema[i] == null ? ""
+                                                       : r.sSchema[i];
+            cmd.tableName       = r.sTable[i] == null ? ""
+                                                      : r.sTable[i];
+            cmd.columnName      = r.sName[i] == null ? ""
+                                                     : r.sName[i];
+            cmd.columnLabel     = r.sLabel[i] == null ? ""
+                                                      : r.sLabel[i];
             cmd.columnType      = r.colType[i];
             cmd.columnTypeName  = Types.getTypeString(cmd.columnType);
             cmd.columnClassName = r.sClassName[i];
             cmd.isWritable      = r.isWritable[i];
             cmd.isReadOnly      = !cmd.isWritable;
+
             // default: cmd.isDefinitelyWritable = false;
             cmd.isAutoIncrement = r.isIdentity[i];
             cmd.isNullable      = r.nullability[i];
             ditype              = cmd.columnType;
-            
+
             if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
                 ditype     = Types.VARCHAR;
                 ditype_sub = Types.TYPE_SUB_IGNORECASE;
@@ -275,13 +279,13 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                 ditype_sub = Types.TYPE_SUB_IDENTITY;
             } else {
                 ditype_sub = Types.TYPE_SUB_DEFAULT;
-            }            
+            }
 
             ti.setTypeCode(ditype);
-            ti.setTypeSub(ditype_sub);            
-            
-            if (cmd.columnClassName == null 
-                    ||cmd.columnClassName.length() == 0) {
+            ti.setTypeSub(ditype_sub);
+
+            if (cmd.columnClassName == null
+                    || cmd.columnClassName.length() == 0) {
                 cmd.columnClassName = ti.getColStClsName();
             }
 
@@ -303,7 +307,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             cmd.isSearchable = sc != null
                                && sc.intValue()
                                   != DatabaseMetaData.typePredNone;
-
             cmd.columnDisplaySize = ti.getMaxDisplaySize();
 
             if (cmd.columnDisplaySize > 0
@@ -322,15 +325,15 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                 rc  = 0;
                 max = MIN_DISPLAY_SIZE;
                 rec = r.rRoot;
-                
+
                 while (rec != null && rc < MAX_SCAN) {
-                    
                     s = null;
-                    
+
                     try {
-                        s = (String) Column.convertObject(rec.data[i], 
+                        s = (String) Column.convertObject(rec.data[i],
                                                           Types.CHAR);
                     } catch (Exception e) {
+
                         // If this this fails for one, it
                         // will probably fail for all,
                         // due to the column being OTHER and
@@ -338,24 +341,25 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                         // deserialize, so break early.
                         break;
                     }
-                    
-                    len = (s == null) ? 3 // arbitrary: "null".length()
+
+                    len = (s == null) ? 3    // arbitrary: "null".length()
                                       : s.length();
-                    
+
                     if (len >= MAX_DISPLAY_SIZE) {
                         max = MAX_DISPLAY_SIZE;
-                        
+
                         break;
                     } else if (len > max) {
                         max = len;
                     }
-                    
+
                     rc++;
+
                     rec = rec.next;
                 }
 
                 cmd.columnDisplaySize = max;
-            }            
+            }
         }
     }
 
@@ -577,7 +581,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].isCurrency;
     }
 
-    /** <!-- start generic documentation -->
+    /**
+     * <!-- start generic documentation -->
      * Indicates the nullability of values in the designated column. <p>
      * <!-- end generic documentation -->
      *
@@ -652,7 +657,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].isSigned;
     }
 
-    /** <!-- start generic documentation -->
+    /**
+     * <!-- start generic documentation -->
      * Indicates the designated column's normal maximum width in
      * characters. <p>
      * <!-- end generic documentation -->
@@ -817,7 +823,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * returned "". <p>
      *
      * Staring with 1.7.2, schema name reporting is supported only as an
-     * optional, experimental feature that is disabled by default. 
+     * optional, experimental feature that is disabled by default.
      * Enabling this feature requires setting the database property
      * "hsqldb.schemas=true". <p>
      *
@@ -975,9 +981,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Up to and including 1.7.1, HSQLDB did not support the notion of
      * catalog and this method always returned "". <p>
      *
-     * Starting with 1.7.2, HSQLDB supports catalog reporting only as an 
+     * Starting with 1.7.2, HSQLDB supports catalog reporting only as an
      * optional, experimental feature that is disabled by default. Enabling
-     * this feature requires setting the database property 
+     * this feature requires setting the database property
      * "hsqldb.catalogs=true". When enabled, the catalog name for table columns
      * is reported as the name by which the hosting Database knows itself. <p>
      *
@@ -986,7 +992,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * DatabaseMetaData.supportsXXX() method return values. <p>
      *
      * Regardless, reporting is done only in system table content and is
-     * not yet carried over to ResultSetMetaData. <p>    
+     * not yet carried over to ResultSetMetaData. <p>
      *
      * For greater detail, see discussion at:
      * {@link jdbcDatabaseMetaData}. <p>
@@ -1067,7 +1073,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].columnTypeName;
     }
 
-    /** <!-- start generic documentation -->
+    /**
+     * <!-- start generic documentation -->
      * Indicates whether the designated column is definitely not writable.<p>
      * <!-- end generic documentation -->
      *
@@ -1098,7 +1105,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].isReadOnly;
     }
 
-    /** <!-- start generic documentation -->
+    /**
+     * <!-- start generic documentation -->
      * Indicates whether it is possible for a write on the designated
      * column to succeed. <p>
      * <!-- end generic documentation -->
@@ -1131,7 +1139,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         return columnMetaData[--column].isWritable;
     }
 
-    /** <!-- start generic documentation -->
+    /**
+     * <!-- start generic documentation -->
      * Indicates whether a write on the designated column will definitely
      * succeed. <p>
      * <!-- end generic documentation -->
@@ -1227,12 +1236,14 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     }
 
     public String toString() {
+
         StringBuffer sb = new StringBuffer();
 
         sb.append(super.toString());
 
         if (columnCount == 0) {
             sb.append("[columnCount=0]");
+
             return sb.toString();
         }
 
@@ -1270,5 +1281,5 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
                                           String.valueOf(column));
         }
-    }   
+    }
 }
