@@ -27,15 +27,23 @@ href="http://jakarta.apache.org/ant/manual/">Installing ANT page</a> and follow
   there is an Ant <code><span style='font-size:10.0pt;font-family:"Courier New"'>build.xml</span></code> 
   that builds the hsqldb.jar. (Ant must be already installed). To use it, change to <code><span style='font-size:10.0pt;
 font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
-<p>ant</p>
-<p>This displays the command line options which include</p>
+<p style='font-family: monospace'>ant -projecthelp</p>
+<p>This displays the available ant targets, which you can supply as
+command line arguments to ant.  These include</p>
+<!-- Why are we printing this table out?
+     We just told the user to run "ant -projecthelp", which will give them
+     an up-to-date and accurate listing for their exact version of hsqldb,
+     and we don't have to update this file to keep that accurate.
+     If the user is capable of using ant to make these targets, then they
+     are also capable of running "ant -projecthelp" for themselves.
+                                my $.02.  -->
 <table border=1 cellpadding=2 width="75%" cellspacing="0">
    
   <tr> 
       
     <td class="Normal"> 
          
-      <p>ant jar </p>
+      <p>jar </p>
     </td>
     <td class="Normal"> 
          
@@ -47,7 +55,7 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
       
     <td class="Normal"> 
          
-      <p>ant clean</p>
+      <p>clean</p>
     </td>
     <td class="Normal"> 
          
@@ -59,7 +67,7 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
       
     <td class="Normal"> 
          
-      <p>ant cleanall</p>
+      <p>cleanall</p>
     </td>
     <td class="Normal"> 
          
@@ -71,7 +79,7 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
       
     <td class="Normal"> 
          
-      <p>ant javadoc</p>
+      <p>javadoc</p>
     </td>
     <td class="Normal"> 
          
@@ -83,11 +91,35 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
       
     <td class="Normal"> 
          
-      <p>ant jarmain</p>
+      <p>jarmain</p>
     </td>
     <td class="Normal"> 
          
       <p>to build a smaller jar for hsqldb that does not contain utilities</p>
+    </td>
+  </tr>
+      
+    <td class="Normal"> 
+         
+      <p>jarclient</p>
+    </td>
+    <td class="Normal"> 
+         
+        <p>to build an extremely small jar containing only the 
+            client-side JDBC driver (does not support memory-only
+            or in-memory mode) </p>
+    </td>
+  </tr>
+  
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>jarmin</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to build a very small jar with no support for servers</p>
     </td>
   </tr>
    
@@ -95,7 +127,7 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
       
     <td class="Normal"> 
          
-      <p>ant jartest</p>
+      <p>jartest</p>
     </td>
     <td class="Normal"> 
          
@@ -103,30 +135,25 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
     </td>
   </tr>
   <tr>
-    <td class="Normal" colspan="2">... and more options</td>
+      <td class="Normal" colspan="2">... and many more targets</td>
   </tr>
   <tr> 
-      
-    <td class="Normal"> 
-         
-      <p>ant jarmin</p>
-    </td>
-    <td class="Normal"> 
-         
-      <p>to build a very small jar with no support for servers</p>
-    </td>
-  </tr>
   
+      <!-- What is this doing here?
   <tr>
     <td class="Normal">&nbsp;</td>
     <td class="Normal">&nbsp;</td>
   </tr>
+      -->
    
 </table>
 <p><br>
-  HSQLDB can be built in any combination of four different sizes and three JRE 
-  (Java Runtime Environment) versions. The smallest jar size (hsqldbmin.jar) 
-  contains only the standalone database (no servers) and JDBC support and is suitable for embedded applications. The default size (hsqldb.jar) also 
+  HSQLDB can be built in any combination of five different sizes and three JRE 
+  (Java Runtime Environment) versions. The smallest jar size (hsqljdbc.jar)
+  contains only the Hsqldb JDBC Driver client.  The next smallest jar
+  size (hsqldbmin.jar) contains only the standalone database (no servers) and 
+  JDBC support and is suitable for embedded applications. The default size 
+  (hsqldb.jar) also 
   contains server mode support and the utilities. The largest size (hsqldbtest.jar) includes some test 
   classes as well. </p>
 <p>You need the JUnit jar in the /lib directory in order to build and run the 
