@@ -10,9 +10,10 @@
 <h4>PRIMARY KEY CONSTRAINTS</h4>
 <p>Before 1.7.0, a<code> CONSTRAINT &lt;name&gt; PRIMARY KEY</code> was translated 
   internally to a unique index and, in addition, a hidden column was added to 
-  the table with an extra unique index. In 1.7.0 both single-column and multi-column 
+  the table with an extra unique index. From 1.7.0 both single-column and multi-column 
   PRIMARY KEY constraints are supported. They are supported by a unique index 
-  on the primary key column(s) specified and no extra hidden column is maintained for these indexes.</p>
+  on the primary key column(s) specified and no extra hidden column is maintained 
+  for these indexes.</p>
 <h4>UNIQUE CONSTRAINTS</h4>
 <p>According to the SQL standards, a unique constraint on a single column means no two values are equal unless one of them is NULL. This means you can have one or more rows where the column value is NULL.</p>
 <p>A unique constraint on multiple columns (c1, c2, c3, ..)  means that no two sets of values for the columns are equal unless at lease one of them is NULL. Each signle column taken by itself can have repeat values. The following example satisfies a UNIQUE constraint on the two columns:</p>
@@ -64,8 +65,46 @@
 <p><code>SELECT * FROM TA JOIN TB ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;</code></p>
 <p></p>
 <p><code>SELECT * FROM TB JOIN TA ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;</code></p>
-<p>The general rule is to put  first the table that has a narrowing condition on one of its columns.</p>
-<p>1.7.2 features automatic, on-the-fly indexes for views and subselects that are used in a query. An  index is added to a view when it is joined to a table or another view.</p>
+<p>The general rule is to put first the table that has a narrowing condition on 
+  one of its columns.</p>
+<p>1.7.2 features automatic, on-the-fly indexes for views and subselects that 
+  are used in a query. An index is added to a view when it is joined to a table 
+  or another view.</p>
+<h4>WHERE CONDITION OR JOIN</h4>
+<p>Using <code>WHERE </code>conditions to join tables is likely to reduce execution 
+  speed. For example the following query will generally be slow, even with indexes:</p>
+<p><code>SELECT ... FROM TA, TB, TC WHERE TC.COL3 = TA.COL1 AND TC.COL3=TB.COL2 
+  AND TC.COL4 = 1</code></p>
+<p>The query implies <code>TA.COL1 = TB.COL2</code> but does not explicitly set 
+  this condition. If TA and TB each contain 100 rows, 10000 combinations will 
+  be joined with TC to apply the column conditions, even though there may be indexes 
+  on the joined columns. With the JOIN keyword, the <code>TA.COL1 = TB.COL2</code> 
+  condition has to be explicit and will narrow down the combination of TA and 
+  TB rows before they are joined with TC, resulting in much faster execution with 
+  larger tables:</p>
+<p><code>SELECT ... FROM TA JOIN TB ON TA.COL1 = TB.COL2 JOIN TC ON TB.COL2 = 
+  TC.COL3 WHERE TC.COL4 = 1</code></p>
+<p>The query can be speeded up a lot more if the order of tables in joins are 
+  changed, so that <code>TC.COL1 = 1</code> is applied first and a smaller set 
+  of rows are joined together:</p>
+<p><code>SELECT ... FROM TC JOIN TB ON TC.COL3 = TB.COL2 JOIN TA ON TC.COL3 = 
+  TA.COL1 WHERE TC.COL4 = 1</code></p>
+<p>In the above example the engine automatically applies <code>TC.COL4 = 1</code> 
+  to TC and joins only the set of rows that satisfy this condition with other 
+  tables. Indexes on <code>TC.COL4</code>, <code>TB.COL2 </code>and <code>TA.COL1</code> 
+  will be used if present and will speed up the query. </p>
+<h4>SUBQUERIES AND JOINS</h4>
+Using joins and setting up the order of tables for maximum performance applies 
+to all areas. For example, the second query below should generally be much faster 
+if there are indexes on TA.COL1 and TB.COL3: 
+<p><code>SELECT ... FROM TA WHERE TA.COL1 = (SELECT MAX(TB.COL2) FROM TB WHERE 
+  TB.COL3 = 4)</code></p>
+<p><code>SELECT ... FROM (SELECT MAX(TB.COL2) C1 FROM TB WHERE TB.COL3 = 4) T2 
+  JOIN TA ON TA.COL1 = T2.C1</code></p>
+<p>The second query turns <code>MAX(TB.COL2)</code> into a single row table then 
+  joins it with TA. With an index on <code>TA.COL1</code>, this will be very fast. 
+  The first query will test each row in TA and evaluate <code>MAX(TB.COL2)</code> 
+  again and again.</p>
 <h4></h4>
 <h3>&nbsp;</h3>
 <h3>TYPES AND ARITHMETIC OPERATIONS</h3>
@@ -193,7 +232,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <h3>NEW FEATURES AND CHANGES</h3>
 <p>In 1.7.2 many enhancements have been made for better SQL support. These are listed in <a href="hsqlSyntax.html">hsqlSyntax.html</a> and in  <a href="changelog_1_7_2.txt">changelog_1_7_2.txt</a>. Functions and expressions such as SUBSTRING(), NULLIF(), COALESCE(), CASE ... WHEN .. ELSE etc. are among them. Other enhancements may not be very obvious in the documentation but can result in changes of behaviour from previous versions. Most significant among these are handling of NULL values in joins (null columns are no longer joined) and OUTER joins (the results are now correct). You should test your applications with the new version to ensure they do not rely on past incorrect behaviour of the engine. The engine will evolve in future versions towards full SQL standard support, so it is best not to rely on any non-standard feature of the current version.</p>
 <p>&nbsp;</p>
-<p>Author: Fred Toussi - 14 July 2002 - updated 09 March 2004</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 29 March 2004</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

@@ -84,7 +84,7 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 12;
+    int    cacheScale = 16;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,7 +102,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 40000;
+    int bigrows   = 1280000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -596,6 +596,7 @@ public class TestCacheSize {
             FileUtil.delete(path + ".script");
             FileUtil.delete(path + ".data");
             FileUtil.delete(path + ".log");
+            FileUtil.delete(path + ".lck");
         } catch (IOException e) {}
     }
 

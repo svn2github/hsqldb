@@ -607,7 +607,9 @@ class TableFilter {
                                               : "INDEX PRED").append("]\n");
         sb.append("index=[");
         sb.append(index == null ? null
-                                : index.getName().name);
+                                : index.getName() == null ? null
+                                                          : index.getName()
+                                                          .name);
         sb.append(hidden ? "[HIDDEN]]\n"
                          : "]\n");
         sb.append("isOuterJoin=[").append(isOuterJoin).append("]\n");

@@ -1106,11 +1106,6 @@ public class jdbcStatement implements java.sql.Statement {
 
         batchCount = batchResultOut.getSize();
 
-        if (batchCount == 0) {
-            throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
-                                        "Empty batch");
-        }
-
         try {
             resultIn = connection.sessionProxy.execute(batchResultOut);
         } catch (HsqlException e) {

@@ -125,6 +125,11 @@ public class StringConverter {
         byte data[] = new byte[l];
         int  j      = 0;
 
+        if (s.length() % 2 != 0) {
+            throw new IOException(
+                "hexadecimal string with odd number of characters");
+        }
+
         for (int i = 0; i < l; i++) {
             char c = s.charAt(j++);
             int  n, b;

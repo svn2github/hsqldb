@@ -210,7 +210,8 @@ public class TestDateTime extends TestBase {
 
         // Set different date, since when we are dealing with just time it
         // shouldn't matter
-        calGenerate.set(1975, 10, 16, 1, 2, 3);
+        // fredt - but make sure the date is in the same daylight saving range as today !
+        calGenerate.set(1975, 4, 16, 1, 2, 3);
 
         selectTime = new java.sql.Time(calGenerate.getTimeInMillis());
 

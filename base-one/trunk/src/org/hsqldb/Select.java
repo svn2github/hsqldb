@@ -209,7 +209,7 @@ class Select {
         }
     }
 
-    void setFilterConditions() throws HsqlException {
+    private void setFilterConditions() throws HsqlException {
 
         if (queryCondition == null) {
             return;
