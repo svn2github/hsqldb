@@ -1,11 +1,16 @@
-#!/bin/bash
-#
+
+# Bourne shell (and compatible) script, to be "source".
+
+# $Id$
+
 # functions used by the hsqldb Linux scripts
 #
 
 # using $JAVA_HOME
 use_java_home()
 {
+	# jdkhome is an unfortunate name, since it could just as well
+	# be a JRE home.  That's probably why Sun calls it JAVA_HOME.
 	if [ ! -z "$JAVA_HOME" -a -z "$jdkhome" ] ; then
     	jdkhome=$JAVA_HOME
 	fi
@@ -79,6 +84,10 @@ done
 
 
 append_jars_to_cp() {
+    # N.b.  This adds all the jars of a directory to $cp.
+    # That may be ok in some other situation, but you probably should
+    # NOT run "append_jars_to_cp $HSQLDB_HOME/lib" (for one thing, that
+    # directory may contain non-inter-compatible libraries).
     dir="$1"
     for ex in jar zip ; do
         if [ "`echo ${dir}/*.$ex`" != "${dir}/*.$ex" ] ; then
@@ -90,9 +99,69 @@ append_jars_to_cp() {
     done
 }
 
+prefixTo() {
+    # Purpose of this is to conditionally add the : delimiter.
+    # Reason is that an extra delimiter can implicitly add $PWD.
+    # Either arg may be null, but that may add $PWD to the resultant path.
+
+    # N.b.  1st arg should be (or eval to) a variable NAME, therefore
+    # it should usually be like 'cp', not like '$cp'.
+
+    [ $# -ne 2 ] && {
+	echo "ERROR.  Syntax:  origvar=`prefixto newprefix '$origvar'`" 1>&2
+	return
+    }
+    _VARNAME="$1"; shift
+    _NEWELEMENT="$1"; shift
+    eval _ORIGVAL="\${$_VARNAME}"
+    if [ -n "$_ORIGVAL" ]; then 
+	eval "$_VARNAME=${_NEWELEMENT}:${_ORIGVAL}"
+    else
+	eval "$_VARNAME=$_NEWELEMENT"
+    fi
+    unset _VARNAME
+    unset _NEWELEMENT
+    unset _ORIGVAL
+}
+
+appendTo() {
+    # Purpose of this is to conditionally add the : delimiter.
+    # Reason is that an extra delimiter can implicitly add $PWD.
+    # Either arg may be null, but that may add $PWD to the resultant path.
+
+    # N.b.  1st arg should be (or eval to) a variable NAME, therefore
+    # it should usually be like 'cp', not like '$cp'.
+
+    [ $# -ne 2 ] && {
+	echo "ERROR.  Syntax:  origvar=`prefixto newprefix '$origvar'`" 1>&2
+	return
+    }
+    _VARNAME="$1"; shift
+    _NEWELEMENT="$1"; shift
+    eval _ORIGVAL="\${$_VARNAME}"
+    if [ -n "$_ORIGVAL" ]; then 
+	eval "$_VARNAME=${_ORIGVAL}:$_NEWELEMENT"
+    else
+	eval "$_VARNAME=$_NEWELEMENT"
+    fi
+    unset _VARNAME
+    unset _NEWELEMENT
+    unset _ORIGVAL
+}
+
 build_cp() {
+    # N.b.  This rebuilds from scratch.  Does not add to an existing cp.
     base="$1"
-    append_jars_to_cp "${base}/lib"
+    cp=   # Clear any previous value
+
+    # Required for Java v. 1.1.  Put Java system libs right up front
+    [ -n "$jdkhome" ] && [ -r "$jdkhome/lib/classes.zip" ] &&
+     prefixTo cp "$jdkhome/lib/classes.zip"
+
+    [ -n "$base" ] || return   # Nothing to do if no arg given to this funct.
+    for Lib in hsqldb.jar servlet.jar; do
+	[ -r "$base/lib/$Lib" ] && appendTo cp "$base/lib/$Lib"
+    done
 }
 
 #
