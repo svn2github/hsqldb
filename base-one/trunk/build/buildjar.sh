@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.16 2002/12/06 19:53:44 unsaved Exp $
+# $Id: buildjar.sh,v 1.17 2002/12/06 19:54:59 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -36,6 +36,11 @@ while [ $# -gt 0 ]; do
 	*) break;;  # First non-switch arg encountered
     esac
 done
+[ $# -eq 0 ] || {
+    echo "SYNTAX:  $progname [-v]" 1>&2
+    exit 2
+}
+
 
 Failout() {
     [ "$#" -gt 0 ] || Failout "There is a bad Failout invocation in $progname"
