@@ -2023,7 +2023,6 @@ class Expression {
         }
         
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
-
         String likeStr = isRightArgFixedConstant
                          ? (String) eArg2.getValue(Types.VARCHAR)
                          : null;
@@ -2032,6 +2031,7 @@ class Expression {
         likeObject.setParams(likeStr, ignoreCase);
 
         if (!isRightArgFixedConstant) {
+
             // Then we are done here, since it's impossible
             // to determine at this point if the right expression 
             // will have a fixed prefix that can be used to optimize
@@ -2055,8 +2055,8 @@ class Expression {
             eArg2      = new Expression(Types.NULL, null);
             likeObject = null;
         } else {
-            
             if (eArg.exprType != Expression.COLUMN) {
+            
                 // Then we are done here, since range predicates are 
                 // not picked up for use to optimize table filters
                 // unless the predicate is on the first column of
@@ -2074,6 +2074,7 @@ class Expression {
             }
             
             if (!Types.isCharacterType(eArg.dataType)) {
+
                 // TODO:
                 // correct range low / range high generation for
                 // types other than XXXCHAR

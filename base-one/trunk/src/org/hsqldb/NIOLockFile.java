@@ -86,18 +86,19 @@ final class NIOLockFile extends LockFile {
         
         try {
             fl = fc.tryLock();
+
             trace("lockImpl(): fl = " + fl);
         } catch (Exception e) {
-            // CHECKME:
-            // This might not work with a localized JVM
-            // If not, then I suppose we could just use:
-            // trace(e.toString());
-            // although it is far lesss restrictive
+
+            // This will not work with a localized JVM
+            /*
             if (-1 == e.toString().indexOf("No locks available")) {
                 throw e;
             } else {
                 trace(e.toString());
             }
+            */
+            trace(e.toString());
         }
 
         trace("lockImpl(): f.deleteOnExit()");
