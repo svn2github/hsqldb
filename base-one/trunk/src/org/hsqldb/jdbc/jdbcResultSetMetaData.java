@@ -241,8 +241,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // a large-but-reasonable value or a value defined through system
             // properties that is expected to be unlikely to cause problems in
             // the majority of cases.
-            if (Types.isCharacterType(type)
-                    && Types.acceptsPrecisionCreateParam(type)) {
+
+
+            if (Types.acceptsPrecisionCreateParam(type)) {
                 if (rmd.colSize[i] == 0) {
                     cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
                 } else {

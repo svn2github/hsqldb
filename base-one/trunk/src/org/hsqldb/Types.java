@@ -931,20 +931,6 @@ public final class Types {
         }
     }
 
-    public static boolean isDateTimeType(int type) {
-
-        switch (type) {
-
-            case DATE :
-            case TIME :
-            case TIMESTAMP :
-                return true;
-
-            default :
-                return false;
-        }
-    }
-
     public static String getTypeName(int type) {
 
         switch (type) {

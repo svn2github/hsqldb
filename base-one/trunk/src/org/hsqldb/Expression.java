@@ -3008,6 +3008,17 @@ public class Expression {
         }
 
         if (eArg == null || eArg2 == null) {
+            if (exprType == COLUMN) {
+                if (dataType == Types.BOOLEAN
+                        || Types.isNumberType(dataType)) {
+                    Object value = Column.convertObject(getValue(session),
+                                                        Types.BOOLEAN);
+
+                    return value == null ? false
+                                         : ((Boolean) value).booleanValue();
+                }
+            }
+
             throw Trace.error(Trace.NULL_VALUE_AS_BOOLEAN);
         }
 

@@ -31,8 +31,10 @@
 
 package org.hsqldb;
 
-//import org.hsqldb.lib.UnifiedTable;
 import java.io.IOException;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 
 import org.hsqldb.lib.DoubleIntTable;
 import org.hsqldb.lib.HsqlArrayList;
@@ -40,20 +42,23 @@ import org.hsqldb.lib.StopWatch;
 import org.hsqldb.rowio.RowOutputBinary;
 
 /**
- *  Experimental routine to defrag the *.data file.
- *  This method iterates through the primary index of a table to find the
+ *  Routine to defrag the *.data file.
+ *
+ *  This method iterates over the primary index of a table to find the
  *  disk position for each row and stores it, together with the new position
  *  in an array.
+ *
  *  A second pass over the primary index writes each row to the new disk
- *  image after translating the old pointers to the
- *  new.
+ *  image after translating the old pointers to the new.
  *
  * @version    1.7.2
  * @author     fredt@users
  */
 class DataFileDefrag {
 
-    StopWatch stopw = new StopWatch();
+    BufferedOutputStream fileStreamOut;
+    long                 filePos;
+    StopWatch            stopw = new StopWatch();
 
     HsqlArrayList defrag(Database db,
                          String filename) throws IOException, HsqlException {
@@ -63,18 +68,26 @@ class DataFileDefrag {
         HsqlArrayList rootsList = new HsqlArrayList();
         HsqlArrayList tTable    = db.getTables();
 
-// erik        to specify scale;
-        ScaledRAFile dest = ScaledRAFile.newScaledRAFile(filename + ".new",
-            false, 1, ScaledRAFile.DATA_FILE_RAF);
+        try {
+            FileOutputStream fos = new FileOutputStream(filename + ".new",
+                false);
 
-// erik        desl.seek(Cache.INITIAL_FREE_POS / cacheFileScale);
-        dest.seek(Cache.INITIAL_FREE_POS);
+            fileStreamOut = new BufferedOutputStream(fos, 1 << 12);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, filename + ".new");
+        }
+
+        for (int i = 0; i < Cache.INITIAL_FREE_POS; i++) {
+            fileStreamOut.write(0);
+        }
+
+        filePos = Cache.INITIAL_FREE_POS;
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
             if (t.tableType == Table.CACHED_TABLE) {
-                int[] rootsArray = writeTableToDataFile(t, dest);
+                int[] rootsArray = writeTableToDataFile(t);
 
                 rootsList.add(rootsArray);
             } else {
@@ -84,12 +97,14 @@ class DataFileDefrag {
             Trace.printSystemOut(t.getName().name + " complete");
         }
 
-// erik        no change
-        int pos = (int) dest.getFilePointer();
+        fileStreamOut.flush();
+        fileStreamOut.close();
 
-// erik        desl.seek(Cache.FREE_POS_POS / cacheFileScale);
+        // write out the end of file position
+        RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
+
         dest.seek(Cache.FREE_POS_POS);
-        dest.writeInt(pos);
+        dest.writeInt((int) filePos);
         dest.close();
 
         for (int i = 0, size = rootsList.size(); i < size; i++) {
@@ -121,21 +136,16 @@ class DataFileDefrag {
         }
     }
 
-/** @todo fredt - use an upward estimate of number of rows based on Index */
-    int[] writeTableToDataFile(Table table,
-                               ScaledRAFile destFile)
-                               throws IOException, HsqlException {
+    /** @todo fredt - for pointerLookup use an upward estimate of number of rows based on Index */
+    int[] writeTableToDataFile(Table table)
+    throws IOException, HsqlException {
 
-        RowOutputBinary rowOut = new RowOutputBinary();
-
-//        rowOut.setSystemId(true);
-        DoubleIntTable pointerLookup = new DoubleIntTable(1000000);
-        int[]          rootsArray    = table.getIndexRootsArray();
-        Index          index         = table.getPrimaryIndex();
-
-// erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
-        long pos   = destFile.getFilePointer();
-        int  count = 0;
+        RowOutputBinary rowOut        = new RowOutputBinary();
+        DoubleIntTable  pointerLookup = new DoubleIntTable(1000000);
+        int[]           rootsArray    = table.getIndexRootsArray();
+        Index           index         = table.getPrimaryIndex();
+        long            pos           = filePos;
+        int             count         = 0;
 
         Trace.printSystemOut("lookup begins: " + stopw.elapsedTime());
 
@@ -145,13 +155,10 @@ class DataFileDefrag {
             pointerLookup.add(row.iPos, (int) pos);
 
             if (count % 50000 == 0) {
-
-//                System.gc();
                 Trace.printSystemOut("pointer pair for row " + count + " "
                                      + row.iPos + " " + pos);
             }
 
-// erik            pos += row.storageSize / cacheFileScale;
             pos += row.storageSize;
             n   = index.next(n);
         }
@@ -163,9 +170,6 @@ class DataFileDefrag {
 
         for (Node n = index.first(); n != null; count++) {
             CachedRow row = (CachedRow) n.getRow();
-
-// erik            int       rowPointer = (int) destFile.getFilePointer() / cacheFileScale;
-            int rowPointer = (int) destFile.getFilePointer();
 
             rowOut.reset();
 
@@ -181,11 +185,13 @@ class DataFileDefrag {
             }
 
             rowOut.writeData(row.getData(), row.getTable());
-            rowOut.writePos(rowPointer);
+            rowOut.writePos((int) filePos);
 
 // end
-            destFile.write(rowOut.getOutputStream().getBuffer(), 0,
-                           rowOut.size());
+            fileStreamOut.write(rowOut.getOutputStream().getBuffer(), 0,
+                                rowOut.size());
+
+            filePos += row.storageSize;
 
             if ((count) % 50000 == 0) {
                 Trace.printSystemOut(count + " rows " + stopw.elapsedTime());

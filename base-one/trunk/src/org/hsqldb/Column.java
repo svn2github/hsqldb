@@ -1057,8 +1057,8 @@ public class Column {
                         return org.hsqldb.lib.BooleanConverter.getBoolean(
                             (java.math.BigDecimal) o);
                     }
-                    break;
 
+                    throw Trace.error(Trace.WRONG_DATA_TYPE);
                 case Types.VARCHAR_IGNORECASE :
                 case Types.VARCHAR :
                 case Types.CHAR :
