@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.2 2004/04/15 21:42:50 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.3 2004/04/15 21:43:40 unsaved Exp $ -->
 
 <chapter>
     <title>SQL Issues</title>
@@ -12,14 +12,14 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/15 21:42:50 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/15 21:43:40 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
         </keywordset>
         <legalnotice><para>
-            Copyright 2002-2003 Fred Toussi. Permission is granted to 
+            Copyright 2002-2004 Fred Toussi. Permission is granted to 
             distribute this document without any alteration under the terms of 
             the HSQLDB license.
             Additional permission is granted to the HSQLDB Development Group to 
