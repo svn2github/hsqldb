@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.11 2004/02/16 22:21:21 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.12 2004/02/17 01:56:37 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -176,7 +176,10 @@ public class SqlTool {
         + "urlid [file1.sql...]\n" + "where arguments are:\n"
         + "    --help                   Prints this message\n"
         + "    --list                   List urlids in the rcfile\n"
-        + "    --debug                  print Debug info to stderr\n"
+        + "    --debug                  Print Debug info to stderr\n"
+    + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
++ "                             where \"SQL;\" consists of SQL command(s) like\n"
++ "                             in an SQL file, and may contain line breaks\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
         + "    --driver a.b.c.Driver    JDBC driver class ["
         + DEFAULT_JDBC_DRIVER + "]\n"
@@ -207,6 +210,8 @@ public class SqlTool {
          */
 
         String  rcFile      = null;
+        File    tmpFile     = null;
+        String  sqlText     = null;
         String  driver      = DEFAULT_JDBC_DRIVER;
         String  targetDb    = null;
         boolean debug       = false;
@@ -236,6 +241,13 @@ public class SqlTool {
                     rcFile = arg[i];
                     continue;
                 }
+                if (arg[i].substring(2).equals("sql")) {
+                    if (++i == arg.length) {
+                        throw bcl;
+                    }
+                    sqlText = arg[i];
+                    continue;
+                }
                 if (arg[i].substring(2).equals("debug")) {
                     debug = true;
                     continue;
@@ -256,21 +268,30 @@ public class SqlTool {
                 targetDb = arg[i];
             }
             int scriptIndex = 0;
-            if (arg.length > i + 1) {
-                interactive = false;
-                if (arg.length != i + 2 ||!arg[i + 1].equals("-")) {
-                    scriptFiles = new File[arg.length - i - 1];
-                    if (debug) {
-                        System.err.println("scriptFiles has "
-                                           + scriptFiles.length
-                                           + " elements");
-                    }
-                    while (i + 1 < arg.length) {
-                        scriptFiles[scriptIndex++] = new File(arg[++i]);
-                    }
+            if (sqlText != null) try {
+                tmpFile = File.createTempFile("sqltool-", ".sql");
+                //(new java.io.FileWriter(tmpFile)).write(sqlText);
+                java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
+                fw.write(sqlText);
+                fw.flush();
+                fw.close();
+            } catch (IOException ioe) {
+                System.err.println("Failed to write given sql to temp file: "
+                        + ioe);
+                System.exit(4);
+            }
+            interactive = (arg.length <= i + 1);
+            if ((arg.length > i + 1) &&
+                    (arg.length != i + 2 || !arg[i + 1].equals("-"))) {
+                scriptFiles = new File[arg.length - i - 1];
+                if (debug) {
+                    System.err.println("scriptFiles has "
+                                       + scriptFiles.length
+                                       + " elements");
                 }
-            } else {
-                interactive = true;
+                while (i + 1 < arg.length) {
+                    scriptFiles[scriptIndex++] = new File(arg[++i]);
+                }
             }
         } catch (BadCmdline bcl) {
             System.err.println(SYNTAX_MESSAGE);
@@ -308,10 +329,16 @@ public class SqlTool {
             // Let's not continuing as if nothing is wrong.
             throw new RuntimeException(e.getMessage());
         }
-        SqlFile[] sqlFiles = new SqlFile[scriptFiles.length];
+        SqlFile[] sqlFiles = new SqlFile[scriptFiles.length
+                + ((tmpFile == null) ? 0 : 1)];
         try {
+            int fileIndex = 0;
+            if (tmpFile != null) {
+                sqlFiles[fileIndex++] = new SqlFile(tmpFile, false);
+            }
             for (int j = 0; j < scriptFiles.length; j++) {
-                sqlFiles[j] = new SqlFile(scriptFiles[j], interactive);
+                sqlFiles[fileIndex++] =
+                        new SqlFile(scriptFiles[j], interactive);
             }
         } catch (IOException ioe) {
             try {
@@ -322,7 +349,7 @@ public class SqlTool {
         }
         int retval = 0;    // Value we will return via System.exit().
         try {
-            for (int j = 0; j < scriptFiles.length; j++) {
+            for (int j = 0; j < sqlFiles.length; j++) {
                 sqlFiles[j].execute(conn);
             }
         } catch (IOException ioe) {
@@ -339,6 +366,11 @@ public class SqlTool {
         try {
             conn.close();
         } catch (Exception e) {}
+        if (tmpFile != null && !tmpFile.delete()) {
+            System.err.println(
+                    "Error occurred while trying to remove temp file '"
+                    + tmpFile + "'");
+        }
         System.exit(retval);
     }
 }
