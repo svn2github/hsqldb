@@ -81,16 +81,16 @@ class ConnectionDialogCommon {
     private final static String sJDBCTypes[][] = {
         {
             "HSQL Database Engine In-Memory", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:."
+            "jdbc:hsqldb:mem:dbname"
         }, {
             "HSQL Database Engine Standalone", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:\u00ABdatabase?\u00BB"
+            "jdbc:hsqldb:file:\u00ABdatabase/path?\u00BB"
         }, {
             "HSQL Database Engine Server", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:hsql://localhost"
+            "jdbc:hsqldb:hsql://localhost/"
         }, {
             "HSQL Database Engine WebServer", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:http://\u00ABhost?\u00BB"
+            "jdbc:hsqldb:http://\u00ABhostname/?\u00BB"
         }, {
             "JDBC-ODBC Bridge from Sun", "sun.jdbc.odbc.JdbcOdbcDriver",
             "jdbc:odbc:\u00ABdatabase?\u00BB"
