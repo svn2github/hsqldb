@@ -76,6 +76,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.security.Security;
 import java.security.Provider;
+import org.hsqldb.lib.java.javaSystem;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // method rorganised to use new HsqlServerProperties class
@@ -164,7 +165,7 @@ public class WebServer extends Server {
                 "index.html");
 
         if (serverProperties.isPropertyTrue("server.trace")) {
-            jdbcSystem.setLogToSystem(true);
+            javaSystem.setLogToSystem(true);
         }
 
         traceMessages = !serverProperties.isPropertyTrue("server.silent",
@@ -182,7 +183,7 @@ public class WebServer extends Server {
         try {
             int port = serverProperties.getIntegerProperty("server.port",
                 isTls ? 443
-                      : 80);
+                     : 80);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);

@@ -5281,8 +5281,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     public java.net.URL getURL(int columnIndex) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5319,8 +5317,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     public java.net.URL getURL(String columnName) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5358,8 +5354,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                           java.sql.Ref x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5397,8 +5391,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                           java.sql.Ref x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5436,8 +5428,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                            java.sql.Blob x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5475,8 +5465,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                            java.sql.Blob x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5514,8 +5502,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                            java.sql.Clob x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5553,8 +5539,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                            java.sql.Clob x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5592,8 +5576,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                             java.sql.Array x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -5631,8 +5613,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
                             java.sql.Array x) throws SQLException {
         throw getNotSupportedJDBC3();
     }
-
-
 */
 
 //#endif JDBC3
@@ -6507,19 +6487,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
 
     //-------------------- Internal Implementation -------------------------
 // Support for JDBC 2 from JRE 1.1.x
-//#ifdef JAVA2
-//#else
-/*
-    public static final int FETCH_FORWARD               = 1000;
-    public static final int TYPE_FORWARD_ONLY           = 1003;
-    public static final int TYPE_SCROLL_INSENSITIVE     = 1004;
-    public static final int CONCUR_READ_ONLY            = 1007;
+    public static final int FETCH_FORWARD           = 1000;
+    public static final int TYPE_FORWARD_ONLY       = 1003;
+    public static final int TYPE_SCROLL_INSENSITIVE = 1004;
+    public static final int CONCUR_READ_ONLY        = 1007;
 
-
-
-*/
-
-//#endif
     //---------------------------- Private ---------------------------------
 
     /**

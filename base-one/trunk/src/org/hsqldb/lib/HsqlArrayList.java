@@ -52,7 +52,10 @@ public class HsqlArrayList implements HsqlList {
         private static int updateCounter = 0;
 
         Reporter() {
+
+            try {
             System.runFinalizersOnExit(true);
+            } catch (SecurityException e) {}
         }
 
         protected void finalize() {

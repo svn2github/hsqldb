@@ -523,11 +523,12 @@ public class CodeSwitcher {
      */
     boolean processFile(String name) {
 
-        File    f         = new File(name);
-        File    fnew      = new File(name + ".new");
-        int     state     = 0;    // 0=normal 1=inside_if 2=inside_else
-        boolean switchoff = false;
-        boolean working   = false;
+        File    f           = new File(name);
+        File    fnew        = new File(name + ".new");
+        int     state       = 0;    // 0=normal 1=inside_if 2=inside_else
+        boolean switchoff   = false;
+        boolean working     = false;
+        boolean filechanged = false;
 
         try {
             Vector v = getFileLines(f);
@@ -542,6 +543,8 @@ public class CodeSwitcher {
                 if (working) {
                     if (line.equals("/*") || line.equals("*/")) {
                         v.removeElementAt(i--);
+
+                        filechanged = true;
 
                         continue;
                     }
@@ -569,7 +572,8 @@ public class CodeSwitcher {
 
                             v.insertElementAt("/*", ++i);
 
-                            switchoff = true;
+                            filechanged = true;
+                            switchoff   = true;
                         }
 
                         if (vSwitches.indexOf(s) == -1) {
@@ -589,16 +593,21 @@ public class CodeSwitcher {
                             if (v.elementAt(i - 1).equals("")) {
                                 v.insertElementAt("*/", i - 1);
 
+                                filechanged = true;
+
                                 i++;
                             } else {
                                 v.insertElementAt("*/", i++);
+
+                                filechanged = true;
                             }
 
                             switchoff = false;
                         } else {
                             v.insertElementAt("/*", ++i);
 
-                            switchoff = true;
+                            filechanged = true;
+                            switchoff   = true;
                         }
                     } else if (line.startsWith("//#endif")) {
                         if (state == 0) {
@@ -613,9 +622,13 @@ public class CodeSwitcher {
                             if (v.elementAt(i - 1).equals("")) {
                                 v.insertElementAt("*/", i - 1);
 
+                                filechanged = true;
+
                                 i++;
                             } else {
                                 v.insertElementAt("*/", i++);
+
+                                filechanged = true;
                             }
                         }
 
@@ -628,6 +641,10 @@ public class CodeSwitcher {
                 printError("'#endif' missing");
 
                 return false;
+            }
+
+            if (!filechanged) {
+                return true;
             }
 
             writeFileLines(v, fnew);

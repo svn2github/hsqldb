@@ -77,7 +77,10 @@ public class HsqlHashMap implements HsqlMap {
         private static int updateCounter = 0;
 
         Reporter() {
-            System.runFinalizersOnExit(true);
+
+            try {
+                System.runFinalizersOnExit(true);
+            } catch (SecurityException e) {}
         }
 
         protected void finalize() {
@@ -89,12 +92,6 @@ public class HsqlHashMap implements HsqlMap {
 
     private static final int   DEFAULT_INITIAL_CAPACITY = 11;
     private static final float DEFAULT_LOAD_FACTOR      = 0.75f;
-
-    /** fredt - Used for rehashing */
-    private float loadFactor;
-
-    /** fredt - Used for rehashing */
-    private int initialCapacity;
 
     /** A java Hashtable that backs this implementation of HsqlHashMap */
     private Hashtable table;
@@ -128,11 +125,9 @@ public class HsqlHashMap implements HsqlMap {
 
         reporter.initCounter++;
 
-        table                = new Hashtable(initialCapacity, loadFactor);
-        this.loadFactor      = loadFactor;
-        this.initialCapacity = initialCapacity;
-        nullKeyExists        = false;
-        nullKeyMapping       = null;
+        table          = new Hashtable(initialCapacity, loadFactor);
+        nullKeyExists  = false;
+        nullKeyMapping = null;
     }
 
     /**

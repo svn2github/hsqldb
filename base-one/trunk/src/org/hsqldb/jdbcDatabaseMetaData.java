@@ -5043,8 +5043,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // JDBC specs say so (contrary to the impression given in JavaDoc)
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5078,8 +5076,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5116,8 +5112,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5150,8 +5144,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5212,7 +5204,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 /*
     public ResultSet getSuperTypes(String catalog, String schemaPattern,
                                    String typeNamePattern)
-                                       throws SQLException {
+                                   throws SQLException {
 
         // TODO: fredt@users - agreed, easy to implement :)
         // we could easily provide an empty table in DatabaseInformation or
@@ -5222,8 +5214,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return cConnection.execute("SELECT * FROM SYSTEM_SUPERTYPES");
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5277,7 +5267,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 /*
     public ResultSet getSuperTables(String catalog, String schemaPattern,
                                     String tableNamePattern)
-                                        throws SQLException {
+                                    throws SQLException {
 
         // TODO: fredt@users - as the method above
         // we could easily provide an empty table in DatabaseInformation or
@@ -5287,8 +5277,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return cConnection.execute("SELECT * FROM SYSTEM_SUPERTABLES");
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5381,7 +5369,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getAttributes(String catalog, String schemaPattern,
                                    String typeNamePattern,
                                    String attributeNamePattern)
-                                       throws SQLException {
+                                   throws SQLException {
 
         // TODO: fredt@users ditto
         // we could easily provide an empty table in DatabaseInformation or
@@ -5391,8 +5379,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return cConnection.execute("SELECT * FROM SYSTEM_ATTRIBUTES");
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5422,7 +5408,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 //#ifdef JDBC3
 /*
     public boolean supportsResultSetHoldability(int holdability)
-            throws SQLException {
+    throws SQLException {
 
         // TODO: fredt@users - sure
         // we should probably return false here
@@ -5431,8 +5417,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5471,8 +5455,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return ResultSet.CLOSE_CURSORS_AT_COMMIT; // ???
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5509,8 +5491,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5543,8 +5523,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5579,8 +5557,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5614,8 +5590,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5650,8 +5624,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-
-
 */
 
 //#endif JDBC3
@@ -5686,8 +5658,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-
-
 */
 
 //#endif JDBC3
@@ -5720,8 +5690,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-
-
 */
 
 //#endif JDBC3

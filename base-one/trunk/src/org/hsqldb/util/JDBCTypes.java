@@ -78,26 +78,30 @@ import java.util.*;
  */
 class JDBCTypes {
 
-    private Hashtable hStringJDBCtypes;
-    private Hashtable hIntJDBCtypes;
+    public final static int JAVA_OBJECT = 2000;
+    public final static int DISTINCT    = 2001;
+    public final static int STRUCT      = 2002;
+    public final static int ARRAY       = 2003;
+    public final static int BLOB        = 2004;
+    public final static int CLOB        = 2005;
+    public final static int REF         = 2006;
+    private Hashtable       hStringJDBCtypes;
+    private Hashtable       hIntJDBCtypes;
 
     JDBCTypes() {
 
         hStringJDBCtypes = new Hashtable();
         hIntJDBCtypes    = new Hashtable();
 
-//#ifdef JAVA2
-        hStringJDBCtypes.put(new Integer(java.sql.Types.ARRAY), "ARRAY");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.BLOB), "BLOB");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.CLOB), "CLOB");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.DISTINCT),
-                             "DISTINCT");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.JAVA_OBJECT),
-                             "JAVA_OBJECT");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.REF), "REF");
-        hStringJDBCtypes.put(new Integer(java.sql.Types.STRUCT), "STRUCT");
+        hStringJDBCtypes.put(new Integer(ARRAY), "ARRAY");
+        hStringJDBCtypes.put(new Integer(BLOB), "BLOB");
+        hStringJDBCtypes.put(new Integer(CLOB), "CLOB");
+        hStringJDBCtypes.put(new Integer(DISTINCT), "DISTINCT");
+        hStringJDBCtypes.put(new Integer(JAVA_OBJECT), "JAVA_OBJECT");
+        hStringJDBCtypes.put(new Integer(REF), "REF");
+        hStringJDBCtypes.put(new Integer(STRUCT), "STRUCT");
 
-//#endif JAVA2
+        //
         hStringJDBCtypes.put(new Integer(java.sql.Types.BIGINT), "BIGINT");
         hStringJDBCtypes.put(new Integer(java.sql.Types.BINARY), "BINARY");
         hStringJDBCtypes.put(new Integer(java.sql.Types.BIT), "BIT");
@@ -125,17 +129,16 @@ class JDBCTypes {
                              "VARBINARY");
         hStringJDBCtypes.put(new Integer(java.sql.Types.VARCHAR), "VARCHAR");
 
-//#ifdef JAVA2
-        hIntJDBCtypes.put("ARRAY", new Integer(java.sql.Types.ARRAY));
-        hIntJDBCtypes.put("BLOB", new Integer(java.sql.Types.BLOB));
-        hIntJDBCtypes.put("CLOB", new Integer(java.sql.Types.CLOB));
-        hIntJDBCtypes.put("DISTINCT", new Integer(java.sql.Types.DISTINCT));
-        hIntJDBCtypes.put("JAVA_OBJECT",
-                          new Integer(java.sql.Types.JAVA_OBJECT));
-        hIntJDBCtypes.put("REF", new Integer(java.sql.Types.REF));
-        hIntJDBCtypes.put("STRUCT", new Integer(java.sql.Types.STRUCT));
+        //
+        hIntJDBCtypes.put("ARRAY", new Integer(ARRAY));
+        hIntJDBCtypes.put("BLOB", new Integer(BLOB));
+        hIntJDBCtypes.put("CLOB", new Integer(CLOB));
+        hIntJDBCtypes.put("DISTINCT", new Integer(DISTINCT));
+        hIntJDBCtypes.put("JAVA_OBJECT", new Integer(JAVA_OBJECT));
+        hIntJDBCtypes.put("REF", new Integer(REF));
+        hIntJDBCtypes.put("STRUCT", new Integer(STRUCT));
 
-//#endif JAVA2
+        //
         hIntJDBCtypes.put("BIGINT", new Integer(java.sql.Types.BIGINT));
         hIntJDBCtypes.put("BINARY", new Integer(java.sql.Types.BINARY));
         hIntJDBCtypes.put("BIT", new Integer(java.sql.Types.BIT));

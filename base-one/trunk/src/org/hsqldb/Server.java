@@ -80,6 +80,7 @@ import java.io.FileNotFoundException;
 import java.io.File;
 import java.security.Security;
 import java.security.Provider;
+import org.hsqldb.lib.java.javaSystem;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // method rorganised to use new HsqlServerProperties class
@@ -175,7 +176,7 @@ public class Server {
                                     : jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
-            jdbcSystem.setLogToSystem(true);
+            javaSystem.setLogToSystem(true);
         }
 
         traceMessages = !serverProperties.isPropertyTrue("server.silent",

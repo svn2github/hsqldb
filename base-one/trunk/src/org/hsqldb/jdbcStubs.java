@@ -31,49 +31,15 @@
 
 package org.hsqldb;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.ResultSet;
 
-// fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
-// JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
-// with jdk 1.1.x surrogate interfaces are defined for JDBC interfaces that
-// are only part of JDBC 2. As HSQLDB does not currently support those
-// interfaces classes with any jdk (1.2.x and above), this arrangement works.
-// fredt@users 20021030 - patch 1.7.2 - updates
-
-/**
- * Handles the differences between jdk 1.1.x and 1.2.x and above
- * @author fredt@users
- * @version 1.7.0
- */
-class jdbcSystem {
-
-    static void setLogToSystem(boolean value) {
-
-//#ifdef JAVA2
-        try {
-            PrintWriter newPrintWriter = (value) ? new PrintWriter(System.out)
-                                                 : null;
-
-            DriverManager.setLogWriter(newPrintWriter);
-        } catch (SecurityException e) {}
-
-//#else
-/*
-        PrintStream newOutStream = (value) ? System.out
-                                           : null;
-
-        DriverManager.setLogStream(newOutStream);
-*/
-
-//#endif
-    }
+class jdbcStubs {
 }
 
 //#ifdef JAVA2
+
+
 //#else
 /*
 // surrogate for java.util.Map interface

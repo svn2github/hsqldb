@@ -52,6 +52,8 @@ import java.util.Calendar;
  */
 public class HsqlDateTime {
 
+    static Date tempDate = new Date(0);
+
     /**
      *  Converts a string in JDBC timestamp escape format to a
      *  <code>Timestamp</code> value.
@@ -71,6 +73,18 @@ public class HsqlDateTime {
         if (s.toUpperCase().equals("NOW")
                 || s.toUpperCase().equals("CURRENT_TIMESTAMP")) {
             return new Timestamp(System.currentTimeMillis());
+        }
+
+        // fredt - todo - treat Date as full days only
+        if (s.toUpperCase().equals("CURRENT_DATE")
+                || s.toUpperCase().equals("TODAY")
+                || s.toUpperCase().equals("SYSDATE")) {
+            tempDate.setTime(System.currentTimeMillis());
+
+            long      now = tempDate.getTime();
+            Timestamp ts  = new Timestamp(now);
+
+            return ts;
         }
 
         final String zerodatetime = "1970-01-01 00:00:00.000000000";
@@ -112,8 +126,9 @@ public class HsqlDateTime {
 
         s = s.toUpperCase();
 
+        // fredt - todo - treat Date as full days only
         if (s.equals("TODAY") || s.equals("NOW") || s.equals("CURRENT_DATE")
-                || s.equals("SYSDATE")) {
+                || s.equals("CURRENT_TIMESTAMP") || s.equals("SYSDATE")) {
             return new Date(System.currentTimeMillis());
         }
 

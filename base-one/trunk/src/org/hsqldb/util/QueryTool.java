@@ -74,6 +74,7 @@ import java.sql.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import org.hsqldb.lib.java.javaSystem;
 
 /**
  * Class declaration
@@ -140,6 +141,10 @@ implements WindowListener, ActionListener {
         fMain.addWindowListener(q);
     }
 
+
+    Connection cConn;
+    Statement  sStatement;
+
     /**
      * Initializes the window and the database and inserts some test data.
      */
@@ -179,7 +184,7 @@ implements WindowListener, ActionListener {
                 trace("password=" + password);
                 trace("test    =" + test);
                 trace("log     =" + log);
-                jdbcSystem.setLogToSystem(true);
+                javaSystem.setLogToSystem(true);
             }
 
             // As described in the JDBC FAQ:
@@ -191,6 +196,7 @@ implements WindowListener, ActionListener {
 
             cConn = DriverManager.getConnection(url + database, user,
                                                 password);
+
         } catch (Exception e) {
             System.out.println("QueryTool.init: " + e.getMessage());
             e.printStackTrace();
@@ -221,10 +227,6 @@ implements WindowListener, ActionListener {
     void trace(String s) {
         System.out.println(s);
     }
-
-    Connection cConn;
-    Statement  sStatement;
-
     /**
      * This is function handles the events when a button is clicked or
      * when the used double-clicked on the listbox of recent commands.

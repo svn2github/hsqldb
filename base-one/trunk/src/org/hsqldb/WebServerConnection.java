@@ -101,15 +101,15 @@ class WebServerConnection implements Runnable {
     private Socket           mSocket;
     private WebServer        mServer;
     private boolean          isTls;
-    private ClassLoader      loader                    = null;
+    private ClassLoader      loader                  = null;
     private Method           SSLSgetInputStreamMethod  = null,
                              SSLSgetOutputStreamMethod = null;
-    private static final int GET                       = 1,
-                             HEAD                      = 2,
-                             POST                      = 3,
-                             BAD_REQUEST               = 400,
-                             FORBIDDEN                 = 403,
-                             NOT_FOUND                 = 404;
+    private static final int GET                     = 1,
+                             HEAD                    = 2,
+                             POST                    = 3,
+                             BAD_REQUEST             = 400,
+                             FORBIDDEN               = 403,
+                             NOT_FOUND               = 404;
 
     /**
      *  Constructor declaration

@@ -75,6 +75,7 @@ import java.io.File;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
+import org.hsqldb.lib.java.javaSystem;
 
 // dmarshall@users - 20020101 - original swing port
 // sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
@@ -448,9 +449,9 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Restore")) {
             Transfer.work(new String[]{ "-r" });
         } else if (s.equals("Logging on")) {
-            jdbcSystem.setLogToSystem(true);
+            javaSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
-            jdbcSystem.setLogToSystem(false);
+            javaSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {

@@ -52,7 +52,10 @@ public final class HsqlStringBuffer {
         private static int toStringCounter     = 0;
 
         Reporter() {
-            System.runFinalizersOnExit(true);
+
+            try {
+                System.runFinalizersOnExit(true);
+            } catch (SecurityException e) {}
         }
 
         protected void finalize() {

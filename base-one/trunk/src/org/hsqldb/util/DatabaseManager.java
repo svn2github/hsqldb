@@ -74,6 +74,7 @@ import java.applet.*;
 import java.sql.*;
 import java.io.File;
 import java.util.*;
+import org.hsqldb.lib.java.javaSystem;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020401 - patch 537501 by ulrivo - command line arguments
@@ -480,9 +481,9 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Restore")) {
             Transfer.work(new String[]{ "-r" });
         } else if (s.equals("Logging on")) {
-            jdbcSystem.setLogToSystem(true);
+            javaSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
-            jdbcSystem.setLogToSystem(false);
+            javaSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {

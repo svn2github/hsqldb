@@ -33,11 +33,13 @@ package org.hsqldb;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.java.javaSystem;
 
 /**
  *  Provides methods for writing the data for a row to a
@@ -47,6 +49,17 @@ import org.hsqldb.lib.StringConverter;
  * @version  1.7.0
  */
 class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
+
+    private static Method unscaledValueMethod = null;
+
+    static {
+        try {
+            unscaledValueMethod =
+                java.math.BigInteger.class.getMethod("unscaledValue", null);
+        } catch (NoSuchMethodException e) {
+        } catch (SecurityException e) {
+        }
+    }
 
     int storageSize;
 
@@ -147,19 +160,18 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
     protected void writeDecimal(BigDecimal o)
     throws IOException, SQLException {
 
-        int scale = o.scale();
+        int        scale  = o.scale();
+        BigInteger bigint = null;
 
-//#ifdef JAVA2
-        BigInteger bigint = o.unscaledValue();
+        if (unscaledValueMethod == null) {
+            bigint = o.movePointRight(scale).toBigInteger();
+        } else {
+            try {
+                bigint = (BigInteger) unscaledValueMethod.invoke(o, null);
+            } catch (java.lang.reflect.InvocationTargetException e) {}
+            catch (IllegalAccessException e) {}
+        }
 
-//#else
-/*
-        BigInteger bigint = o.movePointRight(scale).toBigInteger();
-
-
-*/
-
-//#endif JAVA2
         byte[] bytearr = bigint.toByteArray();
 
         writeByteArray(bytearr);
@@ -269,23 +281,24 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.DECIMAL :
                         s += 8;
 
-//#ifdef JAVA2
-                        s += ((BigDecimal) o).unscaledValue().toByteArray()
-                            .length;
+                        if (unscaledValueMethod == null) {
+                            BigDecimal bigdecimal = (BigDecimal) o;
+                            int        scale      = bigdecimal.scale();
+                            BigInteger bigint = bigdecimal.movePointRight(
+                                scale).toBigInteger();
 
-//#else
-/*
-                        BigDecimal bigdecimal = (BigDecimal) o;
-                        int        scale      = bigdecimal.scale();
-                        BigInteger bigint     =
-                            bigdecimal.movePointRight(scale).toBigInteger();
+                            s += bigint.toByteArray().length;
+                        } else {
+                            try {
+                                BigInteger bigint =
+                                    (BigInteger) unscaledValueMethod.invoke(o,
+                                        null);
 
-                        s += bigint.toByteArray().length;
-
-
-*/
-
-//#endif JAVA2
+                                s += bigint.toByteArray().length;
+                            } catch (java.lang.reflect
+                                    .InvocationTargetException e) {}
+                            catch (IllegalAccessException e) {}
+                        }
                         break;
 
                     case Types.BIT :

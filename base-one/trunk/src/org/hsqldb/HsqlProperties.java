@@ -34,8 +34,11 @@ package org.hsqldb;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
+import org.hsqldb.lib.java.javaSystem;
 
 /**
  * Wrapper for java.util.Properties to limit values to String objects and
@@ -45,6 +48,18 @@ import java.util.Properties;
  * @verison 1.7.0
  */
 public class HsqlProperties {
+
+    private static Method savePropsMethod = null;
+
+    static {
+        try {
+            savePropsMethod = java.util.Properties.class.getMethod("store",
+                    new Class[] {
+                OutputStream.class, String.class
+            });
+        } catch (NoSuchMethodException e) {}
+        catch (SecurityException e) {}
+    }
 
     protected String     fileName;
     protected Properties stringProps;;
@@ -193,30 +208,39 @@ public class HsqlProperties {
                 "properties name is null or empty");
         }
 
-        File f = new File(fileName + ".properties");
-
-//#ifdef JAVA2
-        File parent = f.getParentFile();
+        String filestring = fileName + ".properties";
+        File   f          = new File(filestring);
+        String parent     = f.getParent();
 
         if (parent != null) {
-            parent.mkdirs();
+            new File(parent).mkdirs();
+        } else {
+
+            // workaround for jdk 1.1 bug (returns null when there is a parent)
+            parent = f.getPath();
+
+            int index = parent.lastIndexOf('/');
+
+            if (index > 0) {
+                parent = parent.substring(0, index);
+
+                new File(parent).mkdirs();
+            }
         }
 
-//#endif JAVA2
         FileOutputStream fos = new FileOutputStream(f);
 
-//#ifdef JAVA2
-        stringProps.store(fos, "HSQL database");
+        if (savePropsMethod == null) {
+            stringProps.save(fos, "HSQL database");
+        } else {
+            try {
+                savePropsMethod.invoke(stringProps, new Object[] {
+                    fos, "HSQL database"
+                });
+            } catch (java.lang.reflect.InvocationTargetException e) {}
+            catch (IllegalAccessException e) {}
+        }
 
-//#else
-/*
-        stringProps.save(fos,"HSQL database");
-
-
-
-*/
-
-//#endif JAVA2
         fos.close();
     }
 }
