@@ -107,7 +107,7 @@ mkdir $dbhome/classes || Failout "Failed to create directory '$dbhome/classes'"
 # Build jar
 cd ../classes || Failout "Failed to cd to '$dbhome/classes'"
 [ -f ../src/org/hsqldb/util/hsqldb.gif ] &&
- [ ../src/org/hsqldb/util/hsqldb.gif -nt org/hsqldb/util/hsqldb.gif ] && {
+  NewerThan ../src/org/hsqldb/util/hsqldb.gif org/hsqldb/util/hsqldb.gif && {
     cp -p ../src/org/hsqldb/util/hsqldb.gif org/hsqldb/util ||
      Failout "Failed to copy hsqldb.gif to class branch"
 }

@@ -114,7 +114,7 @@ cd $hsrcdir || Failout "Failed to cd to '$dbhome/src/org/hsqldb'"
 
 # Build CodeSwitcher.class if it needs to be rebuilt
 # Note that this test succeeds if the class file does not exist.
-[ util/CodeSwitcher.java -nt $hclsdir/util/CodeSwitcher.class ] && {
+NewerThan util/CodeSwitcher.java $hclsdir/util/CodeSwitcher.class && {
     "$jdkhome/bin/javac" -d $dbhome/classes util/CodeSwitcher.java ||
      Failout "Failed to rebuild CodeSwitcher"
 }
