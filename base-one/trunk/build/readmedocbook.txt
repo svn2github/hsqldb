@@ -1,7 +1,7 @@
 How to build Hsqldb documentation from DocBook source
 -----------------------------------------------------
 
-$Id: readmedocbook.txt,v 1.1 2004/04/11 17:28:03 unsaved Exp $
+$Id: readmedocbook.txt,v 1.2 2004/04/12 18:23:02 unsaved Exp $
 
 1.  OBTAIN REQUIRED LIBRARIES AND STYLE SHEETS
 
@@ -64,3 +64,39 @@ shows what is needed.
 (RPM users be aware that docbook-xsl-stylesheets installs the style
 sheets under /usr/share/sgml/docbook/docbook-xsl-stylesheets.  Run
 "rpm -ql docbook-xsl-stylesheets").
+
+
+
+THE REMAINDER OF THIS DOCUMENT IS ONLY FOR PEOPLE MESSING WITH THE
+BUILD FILE ITSELF.  There's no need to understand this stuff if you
+are only using external targets.
+
+RELATIONSHIPS AMONG THE HSQLDB DOCBOOK-RELATED ANT TARGETS:
+
+* denotes inheritall invocations.
+
+docbook
+    docbooks-html   ->                                     html
+    docbooks-chunk  ->  *-ddIterate ->*-condlGenBook  ->   chunk
+    docbooks-pdf    ->                                     pdf
+   [docbooks-ps     ->]                                    ps
+
+pdf/ps
+    fo
+    *-fop  ->  -initfop
+
+chunk/html/fo
+    -setXslFilesets
+    -preDocbook
+    *-htmlXslt/*-foXslt
+    -postDocbook
+
+
+-preDocbook  ->  *-sandwich
+
+-postDocbook
+
+
+(There's a good chance that this relationship "diagram" will get out-of-date.
+Best to use this as a guide and verify any assumptions against the real
+build.xml file).
