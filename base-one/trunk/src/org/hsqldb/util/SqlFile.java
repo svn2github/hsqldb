@@ -53,7 +53,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.81 2004/06/16 21:22:59 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.82 2004/06/16 21:33:09 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.81 $
+ * @version $Revision: 1.82 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -131,8 +131,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.81 $".substring("$Revision: ".length(),
-                "$Revision: 1.81 $".length() - 2);
+        revnum = "$Revision: 1.82 $".substring("$Revision: ".length(),
+                "$Revision: 1.82 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -180,8 +180,8 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\dt                  List tables\n"
-        + "    \\d TABLENAME         Describe table\n"
+        + "    \\d[tv*sa]            List names of Tbls/Views/all/System Tbls/Aliases\n"
+        + "    \\d OBJECT            Describe table or view\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
@@ -870,15 +870,16 @@ public class SqlFile {
                 stdprintln("HTML Mode is now set to: " + htmlMode);
                 return;
             case 'd':
-                if (arg1.length() > 1 && arg1.charAt(1) == 't') {
-                    listTables();
+                if (arg1.length() == 2) {
+                    listTables(arg1.charAt(1));
                     return;
                 }
                 if (arg1.length() == 1 && other != null) {
                     describe(other);
                     return;
                 }
-                break;
+                throw new BadSpecial("Describe commands must be like "
+                        + "'\\dX' or like '\\d OBJECTNAME'.");
             case 'o':
                 if (other == null) {
                     if (pwQuery == null) {
@@ -1543,56 +1544,47 @@ public class SqlFile {
     };
 
     /**
-     * Dimensions: [DB-TYPE][COLUMN IN TABLE MD RESULTSET][VALUES]
-     *     where 2nd dimension is column number starting at 0.
-     *     Nulls permitted.
-     */
-    static private final String[][][] requireMDTableVals = {
-        { null, null, null, { "TABLE" } },        // Default
-        { null, null, null, { "TABLE" } },        // HSQLDB
-        { null, null, null, { "TABLE" } },        // Oracle
-    };
-
-    /**
-     * Dimensions: [DB-TYPE][COLUMN IN TABLE MD RESULTSET][VALUES]
-     *     where 2nd dimension is column number starting at 0.
-     *     Nulls permitted.
-     */
-    static private final String[][][] prohibitMDTableVals = {
-        null,     // Default
-        null,     // HSQLDB
-        { null, { "SYS", "SYSTEM" } },        // Oracle
-    };
-
-    /**
      * Lists available database tables.
      * This method needs work.  See the implementation comments.
      */
-    private void listTables() throws SQLException {
+    private void listTables(char c) throws SQLException, BadSpecial {
         int[]                     listSet       = null;
-        String[][]                reqSet        = null;
-        String[][]                prohibSet     = null;
+        String[] types = null;
         java.sql.DatabaseMetaData md            = curConn.getMetaData();
         String                    dbProductName = md.getDatabaseProductName();
         //System.err.println("DB NAME = (" + dbProductName + ')');
         // Database-specific table filtering.
         String excludePrefix = null;
 
+        if (c != '*') {
+            types = new String[1];
+            switch(c) {
+                case 's':
+                    types[0] = "SYSTEM TABLE";
+                    break;
+                case 'a':
+                    types[0] = "ALIAS";
+                    break;
+                case 't':
+                    types[0] = "TABLE";
+                    break;
+                case 'v':
+                    types[0] = "VIEW";
+                    break;
+                default:
+                    throw new BadSpecial("Unknown describe option: '" + c
+                            + "'");
+            }
+        }
+
         if (dbProductName.indexOf("HSQL") > -1) {
             listSet   = listMDTableCols[HSQLDB_ELEMENT];
-            reqSet    = requireMDTableVals[HSQLDB_ELEMENT];
-            prohibSet = prohibitMDTableVals[HSQLDB_ELEMENT];
         } else if (dbProductName.indexOf("Oracle") > -1) {
             listSet   = listMDTableCols[ORACLE_ELEMENT];
-            reqSet    = requireMDTableVals[ORACLE_ELEMENT];
-            prohibSet = prohibitMDTableVals[ORACLE_ELEMENT];
         } else {
             listSet   = listMDTableCols[DEFAULT_ELEMENT];
-            reqSet    = requireMDTableVals[DEFAULT_ELEMENT];
-            prohibSet = prohibitMDTableVals[DEFAULT_ELEMENT];
         }
-        displayResultSet(null, md.getTables(null, null, null, null), listSet,
-                         reqSet, prohibSet);
+        displayResultSet(null, md.getTables(null, null, null, types), listSet);
     }
 
     /**
@@ -1612,8 +1604,7 @@ public class SqlFile {
         possiblyUncommitteds.set(true);
 
         statement.execute(plMode ? dereference(curCommand, true) : curCommand);
-        displayResultSet(statement, statement.getResultSet(), null, null,
-                         null);
+        displayResultSet(statement, statement.getResultSet(), null);
     }
 
     /**
@@ -1628,12 +1619,10 @@ public class SqlFile {
      *                  given, then other columns will be skipped).
      * @param requireVals  Require one of these Strings in the corresponding
      *                  field, or skip the record.
-     * @param prohibVals  Prohibit any of these Strings in the corresponding
-     *                  field.  If match, skip the record.
      */
     private void displayResultSet(Statement statement, ResultSet r,
-                                  int[] incCols, String[][] requireVals,
-                                  String[][] prohibVals) throws SQLException {
+                                  int[] incCols)
+    throws SQLException {
         int updateCount =
                 (statement == null) ? -1 : statement.getUpdateCount();
 
@@ -1700,31 +1689,6 @@ public class SqlFile {
                         if (fetchingVar != null) {
                             userVars.put(fetchingVar, val);
                             fetchingVar = null;
-                        }
-                        if (requireVals != null && requireVals.length >= i
-                                && requireVals[i - 1] != null) {
-                            ok = false;
-                            for (int j = 0; j < requireVals[i - 1].length;
-                                    j++) {
-                                if (requireVals[i - 1][j] != null
-                                        && requireVals[i - 1][j].equals(val)) {
-                                    ok = true;
-                                    break;
-                                }
-                            }
-                            if (!ok) {
-                                continue EACH_ROW;
-                            }
-                        }
-                        if (prohibVals != null && prohibVals.length >= i
-                                && prohibVals[i - 1] != null) {
-                            for (int j = 0; j < prohibVals[i - 1].length;
-                                    j++) {
-                                if (prohibVals[i - 1][j] != null
-                                        && prohibVals[i - 1][j].equals(val)) {
-                                    continue EACH_ROW;
-                                }
-                            }
                         }
                         if (incCols != null) {
                             skip = true;
