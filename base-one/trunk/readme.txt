@@ -1,6 +1,10 @@
 Readme File
 
 
+2003.02.09
+
+Added logging for sequence generation
+
 2003.02.07
 
 Refactoring groups of classes into new packages
