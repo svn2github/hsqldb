@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.8 2004/04/16 00:37:56 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.9 2004/04/16 03:58:54 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.8 $">
-    <!ENTITY date "$Date: 2004/04/16 00:37:56 $">
+    <!ENTITY revision "$Revision: 1.9 $">
+    <!ENTITY date "$Date: 2004/04/16 03:58:54 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -20,7 +20,8 @@
     <!ENTITY advancedtopics-chapter.xml SYSTEM "advancedtopics.xml">
     <!ENTITY texttables-chapter.xml SYSTEM "texttables.xml">
     <!ENTITY tls-chapter.xml SYSTEM "tls.xml">
-    <!ENTITY sqltool-appendix.xml SYSTEM "sqltool.xml">
+    <!ENTITY sqltool-chapter.xml SYSTEM "sqltool.xml">
+    <!ENTITY sqlsyntax-chapter.xml SYSTEM "sqlsyntax.xml">
 ]>
     
 <book>
@@ -77,9 +78,11 @@
     &advancedtopics-chapter.xml;
     &texttables-chapter.xml;
     &tls-chapter.xml;
-    <chapter><title>Place-holder for Syntax</title></chapter>
-    &sqltool-appendix.xml;
+    &sqltool-chapter.xml;
+    &sqlsyntax-chapter.xml;
     <appendix><title>Place-holder for Building</title></appendix>
     <appendix><title>Place-holder for First Example</title></appendix>
     <appendix><title>Place-holder for Recovery</title></appendix>
+
+    <index/>
 </book>
