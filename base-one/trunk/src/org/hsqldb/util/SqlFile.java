@@ -45,6 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.Iterator;
 import java.io.InputStream;
@@ -52,7 +53,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.80 2004/06/16 21:10:50 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.81 2004/06/16 21:22:59 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.80 $
+ * @version $Revision: 1.81 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -130,8 +131,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.80 $".substring("$Revision: ".length(),
-                "$Revision: 1.80 $".length() - 2);
+        revnum = "$Revision: 1.81 $".substring("$Revision: ".length(),
+                "$Revision: 1.81 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -1161,12 +1162,12 @@ public class SqlFile {
         }
         if (arg1.equals("list")) {
             if (toker.countTokens() == 0) {
-                stdprintln(new TreeMap(userVars).toString());
+                stdprint(formatNicely(userVars));
             } else {
                 tokenArray = getTokenArray(toker.nextToken(""));
                 for (int i = 0; i < tokenArray.length; i++) {
-                    stdprintln(tokenArray[i] + ": " 
-                            + userVars.get(tokenArray[i]));
+                    stdprintln("    " + tokenArray[i] + ": (" 
+                            + userVars.get(tokenArray[i]) + ')');
                 }
             }
             return;
@@ -2127,5 +2128,16 @@ public class SqlFile {
             pwQuery.print(s);
             pwQuery.flush();
         }
+    }
+
+    private static String formatNicely(Map map) {
+        String key;
+        StringBuffer sb = new StringBuffer();
+        Iterator it = (new TreeMap(map)).keySet().iterator();
+        while (it.hasNext()) {
+            key = (String) it.next();
+            sb.append("    " + key + ": (" + map.get(key) + ")\n");
+        }
+        return sb.toString();
     }
 }
