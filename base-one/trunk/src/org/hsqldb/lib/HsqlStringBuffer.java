@@ -40,6 +40,7 @@ package org.hsqldb.lib;
  */
 public final class HsqlStringBuffer {
 
+/*
     private static Reporter reporter = new Reporter();
 
     private static class Reporter {
@@ -73,9 +74,10 @@ public final class HsqlStringBuffer {
                                + toStringCounter);
         }
     }
-
+*/
 //    private int traceUpdated = 0;
 /*
+
 // fredt - this was used with TestSelf - there doesn't seem to be more than a handful of unused instances
     protected void finalize(){
         // trivial test
@@ -216,7 +218,7 @@ public final class HsqlStringBuffer {
      */
     public String toString() {
 
-        reporter.toStringCounter++;
+//        reporter.toStringCounter++;
 
         return new String(data, BEGINNING_OFFSET, charCount);
     }

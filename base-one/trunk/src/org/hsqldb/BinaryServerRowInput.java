@@ -68,9 +68,6 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return readShort();
     }
 
-    //public int getPos() throws IOException {
-    //    return pos;
-    //}
     public int readIntData() throws IOException {
         return readInt();
     }
@@ -79,6 +76,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         int    length = readInt();
         String s      = StringConverter.readUTF(buf, pos, length);
+// fredt - memory opt tests
+        s = s.intern();
 
         pos += length;
 
@@ -98,11 +97,15 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Integer readSmallint() throws IOException, SQLException {
-        return new Integer(readShort());
+// fredt - memory opt tests
+//        return new Integer(readShort());
+        return org.hsqldb.lib.ValuePool.getInt(readShort());
     }
 
     protected Integer readInteger() throws IOException, SQLException {
-        return new Integer(readInt());
+// fredt - memory opt tests
+//        return new Integer(readInt());
+        return org.hsqldb.lib.ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, SQLException {

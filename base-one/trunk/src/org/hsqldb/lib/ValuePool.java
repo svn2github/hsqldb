@@ -40,21 +40,29 @@ package org.hsqldb.lib;
  */
 public class ValuePool {
 
+    static IntegerPool intPool = new IntegerPool(16000,1,true);
+    static int testCounter;
     public static Short getShort(short val) {
         return new Short(val);
     }
 
     public static Integer getInt(int val) {
-        return new Integer(val);
+/*
+        testCounter++;
+        if (testCounter%10000 == 0){
+            System.out.println("Integer Pool Size at access " + testCounter + "  " +  intPool.size());
+        }
+*/
+        return intPool.get(val);
     }
 
     public static Long getLong(long val) {
         return new Long(val);
     }
-    
+
     public static Long getLong(Number n) {
-        return n == null 
-            ? null 
+        return n == null
+            ? null
             : (n instanceof Long)
                 ? (Long) n
                 : getLong(n.longValue());
@@ -67,9 +75,9 @@ public class ValuePool {
     public static Double getDouble(double val) {
         return new Double(val);
     }
-    
+
     public static Boolean getBoolean(boolean b) {
         return b ? Boolean.TRUE : Boolean.FALSE;
     }
-    
+
 }

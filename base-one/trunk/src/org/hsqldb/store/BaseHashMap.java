@@ -382,10 +382,10 @@ public class BaseHashMap {
         return returnValue;
     }
 
-    protected Integer getOrAddInteger(long longKey) {
+    protected Integer getOrAddInteger(int intKey) {
 
         Integer testValue;
-        int     hash       = (int) longKey;
+        int     hash       = intKey;
         int     index      = hashIndex.getHashIndex(hash);
         int     lookup     = hashIndex.hashTable[index];
         int     lastLookup = -1;
@@ -395,7 +395,7 @@ public class BaseHashMap {
                 lookup = hashIndex.getNextLookup(lookup)) {
             testValue = (Integer) objectKeyTable[lookup];
 
-            if (testValue.intValue() == longKey) {
+            if (testValue.intValue() == intKey) {
                 return testValue;
             }
         }
@@ -407,11 +407,11 @@ public class BaseHashMap {
                 rehash(hashIndex.hashTable.length * 2);
             }
 
-            return getOrAddInteger(longKey);
+            return getOrAddInteger(intKey);
         }
 
         lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new Integer((int) longKey);
+        testValue              = new Integer(intKey);
         objectKeyTable[lookup] = testValue;
 
         return testValue;

@@ -44,6 +44,7 @@ import java.util.NoSuchElementException;
 public class HsqlArrayList extends BaseList implements HsqlList {
 
 //fredt@users
+/*
     private static Reporter reporter = new Reporter();
 
     private static class Reporter {
@@ -65,7 +66,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
                                + updateCounter);
         }
     }
-
+*/
     private static final int   DEFAULT_INITIAL_CAPACITY = 10;
     private static final float DEFAULT_RESIZE_FACTOR    = 2.0f;
     private Object[]           elementData;
@@ -73,7 +74,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     /** Creates a new instance of HsqlArrayList */
     public HsqlArrayList() {
 
-        reporter.initCounter++;
+//        reporter.initCounter++;
 
         elementData  = new Object[DEFAULT_INITIAL_CAPACITY];
     }
@@ -81,7 +82,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     /** Creates a new instance with the given initial capacity */
     public HsqlArrayList(int initialCapacity) {
 
-        reporter.initCounter++;
+//        reporter.initCounter++;
 
         if (initialCapacity < 0) {
             throw new NegativeArraySizeException(
@@ -100,7 +101,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     /** Inserts an element at the given index */
     public void add(int index, Object element) {
 
-        reporter.updateCounter++;
+//        reporter.updateCounter++;
 
         if (index > elementCount) {
             throw new IndexOutOfBoundsException("Index out of bounds: "
@@ -128,7 +129,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     /** Appends an element to the end of the list */
     public boolean add(Object element) {
 
-        reporter.updateCounter++;
+//        reporter.updateCounter++;
 
         if (elementCount >= elementData.length) {
             increaseCapacity();

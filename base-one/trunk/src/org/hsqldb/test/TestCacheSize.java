@@ -67,7 +67,7 @@ public class TestCacheSize {
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = true;
+    boolean cachedTable     = false;
     int     cacheScale      = 12;
     int     logType         = 3;
     int     writeDelay      = 60;
@@ -82,7 +82,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows = 200000;
+    int bigrows = 50000;
 
     protected void setUp() {
 

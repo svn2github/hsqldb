@@ -32,7 +32,7 @@
 package org.hsqldb.store;
 
 /**
- * A chained bucket hash index implementationl
+ * A chained bucket hash index implementation.
  *
  * @author fredt@users
  * @version 1.7.2
@@ -55,6 +55,8 @@ class HashIndex {
     }
 
     /**
+     * Reset the structure with a new size as empty.
+     *
      * @param hashTableSize
      * @param capacity
      */
@@ -82,6 +84,8 @@ class HashIndex {
     }
 
     /**
+     * Return the array index for a hash.
+     *
      * @param hash the hash value used for indexing
      * @return either -1 or the first node for this hash value
      */
@@ -93,6 +97,8 @@ class HashIndex {
     }
 
     /**
+     * This looks from a given node, so the parameter is always > -1.
+     *
      * @param valid lookup node to look from
      * @return either -1 or the next node from this node
      */
@@ -101,7 +107,7 @@ class HashIndex {
     }
 
     /**
-     * reset the index as empty
+     * Reset the index as empty.
      */
     void clear() {
 
@@ -120,17 +126,17 @@ class HashIndex {
         }
 
         elementCount   = 0;
-        newNodePointer = 1;
+        newNodePointer = 0;
     }
 
     /**
-     * link a new node to the end of the linked for a hash index
+     * Link a new node to the end of the linked for a hash index.
+     *
      * @param index an index into hashTable
-     * @param lastLookup either 0 or the node to which the new node will be linked
+     * @param lastLookup either -1 or the node to which the new node will be linked
      * @return the new node
      */
-    int linkNode(int index,
-                 int lastLookup) throws ArrayIndexOutOfBoundsException {
+    int linkNode(int index, int lastLookup) {
 
         // get the first reclaimed slot
         int lookup = this.reclaimedNodePointer;
@@ -158,9 +164,10 @@ class HashIndex {
     }
 
     /**
-     * unlink a node a linked list and link into the reclaimed list
+     * Unlink a node from a linked list and link into the reclaimed list.
+     *
      * @param index an index into hashTable
-     * @param lastLookup either 0 or the node to which the target node is linked
+     * @param lastLookup either -1 or the node to which the target node is linked
      * @param lookup the node to remove
      */
     void unlinkNode(int index, int lastLookup, int lookup) {
@@ -180,7 +187,10 @@ class HashIndex {
     }
 
     /**
-     * remove a node that has already been unlinked
+     * Remove a node that has already been unlinked. This is not required
+     * for index operations. It is used only when the row needs to be removed
+     * from the data structures that store the actual indexed data.
+     *
      * @param lookup the node to remove
      * @return true if node found in unlinked state
      */

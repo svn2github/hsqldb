@@ -48,8 +48,4 @@ public class IntegerPool extends BaseHashMap {
 
         return super.getOrAddInteger(key);
     }
-
-    public void clear() {
-        super.clear();
-    }
 }
