@@ -171,7 +171,7 @@ class DatabaseScriptWriter {
     /**
      *  Called externally in write delay intervals.
      */
-    synchronized void sync() throws IOException {
+    synchronized void sync() {
 
         if (needsSync) {
             if (busyWriting) {
@@ -182,8 +182,15 @@ class DatabaseScriptWriter {
 
             Trace.printSystemOut("file sync interval: ", sw.elapsedTime());
             sw.zero();
-            fileStreamOut.flush();
-            outDescriptor.sync();
+
+            try {
+                fileStreamOut.flush();
+                outDescriptor.sync();
+            } catch (IOException e) {
+                Trace.printSystemOut("flush() or sync() error: ",
+                                     e.getMessage());
+            }
+
             Trace.printSystemOut("file sync: ", sw.elapsedTime());
             sw.zero();
 

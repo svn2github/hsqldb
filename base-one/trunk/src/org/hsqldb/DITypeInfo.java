@@ -177,43 +177,35 @@ final class DITypeInfo {
     }
 
     /**
-     * Retrieves a character sequence representing a localized CSV list, in
+     * Retrieves a character sequence representing a CSV list, in
      * DDL declaraion order, of the create parameters for the type. <p>
      *
-     * This value is meant for human consumption only. <p>
-     *
-     * @return a character sequence representing a localized CSV
+     * @return a character sequence representing a CSV
      *    list, in DDL declaraion order, of the create
      *    parameters for the type.
      */
     String getCreateParams() {
 
-        String key;
+        String names;
 
         switch (type) {
 
-            case Types.BINARY :
-            case Types.BLOB :
             case Types.CHAR :
-            case Types.CLOB :
-            case Types.LONGVARBINARY :
-            case Types.LONGVARCHAR :
-            case Types.VARBINARY :
             case Types.VARCHAR :
-                key = "SIZED";
+                names = "LENGTH";
                 break;
 
             case Types.DECIMAL :
             case Types.NUMERIC :
-                key = "DECIMAL";
+                names = "PRECISION,SCALE";
                 break;
 
             default :
-                key = null;
+                names = null;
                 break;
         }
 
-        return BundleHandler.getString(hnd_create_params, key);
+        return names;
     }
 
     /**
@@ -306,7 +298,7 @@ final class DITypeInfo {
                 return 5;                    // Math.max("true".length(),"false".length);
 
             case Types.DATALINK :
-                return 20004;                 // same as precision
+                return 20004;                // same as precision
 
             case Types.DECIMAL :
             case Types.NUMERIC :
@@ -801,11 +793,11 @@ final class DITypeInfo {
             case Types.DATE :
 
                 // NO:  This is the _concise_ code, whereas what we want to
-                //      return here is the Data Type Code column value from 
+                //      return here is the Data Type Code column value from
                 //      Table 38 in the SQL 200n FCD.  This method is used
-                //      by DatabaseInformationMain to list the sql type 
+                //      by DatabaseInformationMain to list the sql type
                 //      column in the SYSTEM_TYPEINFO table, which is specified
-                //      by JDBC as the sql data type code, not the concise code. 
+                //      by JDBC as the sql data type code, not the concise code.
                 //      That is why there is a sql datetime sub column
                 //      specified as well.
                 // return ValuePool.getInt(Types.SQL_DATE);         // fredt - was SQL_DATETIME
@@ -859,11 +851,11 @@ final class DITypeInfo {
             case Types.TIME :
 
                 // NO:  This is the _concise_ code, whereas what we want to
-                //      return here is the Data Type Code column value from 
+                //      return here is the Data Type Code column value from
                 //      Table 38 in the SQL 200n FCD.  This method is used
-                //      by DatabaseInformationMain to list the sql type 
+                //      by DatabaseInformationMain to list the sql type
                 //      column in the SYSTEM_TYPEINFO table, which is specified
-                //      by JDBC as the sql data type code, not the concise code. 
+                //      by JDBC as the sql data type code, not the concise code.
                 //      That is why there is a sql datetime sub column
                 //      specified as well.
                 // return ValuePool.getInt(Types.SQL_TIME);         // fredt - was SQL_DATETIME
@@ -872,13 +864,13 @@ final class DITypeInfo {
             case Types.TIMESTAMP :
 
                 // NO:  This is the _concise_ code, whereas what we want to
-                //      return here is the Data Type Code column value from 
+                //      return here is the Data Type Code column value from
                 //      Table 38 in the SQL CLI 200n FCD.  This method is used
-                //      by DatabaseInformationMain to list the sql type 
+                //      by DatabaseInformationMain to list the sql type
                 //      column in the SYSTEM_TYPEINFO table, which is specified
-                //      by JDBC as the sql data type code, not the concise code. 
+                //      by JDBC as the sql data type code, not the concise code.
                 //      That is why there is a sql datetime sub column
-                //      specified as well.               
+                //      specified as well.
                 // return ValuePool.getInt(Types.SQL_TIMESTAMP);    // fredt - was SQL_DATETIME
                 return ValuePool.getInt(Types.SQL_DATETIME);
 

@@ -96,7 +96,7 @@ public class HSQLClientConnection implements SessionInterface {
         if (resultIn.iMode == ResultConstants.ERROR) {
 
 /** @todo fredt - review error message */
-            throw new HsqlException(resultIn);
+            throw Trace.error(resultIn);
         }
 
         sessionID  = resultIn.sessionID;
@@ -208,7 +208,7 @@ public class HSQLClientConnection implements SessionInterface {
         Result resultIn = execute(resultOut);
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new HsqlException(resultIn);
+            throw Trace.error(resultIn);
         }
     }
 

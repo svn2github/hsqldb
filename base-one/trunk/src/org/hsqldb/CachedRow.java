@@ -87,9 +87,6 @@ import java.io.IOException;
  */
 class CachedRow extends Row {
 
-    // test variables
-    static int       node_write_counter;
-    static int       data_write_counter;
     static final int NO_POS = -1;
     protected Table  tTable;
     int              iLastAccess;
@@ -232,10 +229,6 @@ class CachedRow extends Row {
                 Trace.doAssert(n.getBalance() != -2);
             }
 
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             if (n.isRoot()) {
                 return true;
             }
@@ -272,21 +265,6 @@ class CachedRow extends Row {
             out.writePos(iPos);
         }
 
-// profiling stuff
-/*
-        node_write_counter++;
-
-        if (hasDataChanged) {
-            data_write_counter++;
-        }
-
-        if (data_write_counter % 10000 == 0) {
-            System.out.println("CachedRow.write Nodes: " + node_write_counter
-                               + " Data: " + data_write_counter);
-        }
-*/
-
-// end
         hasDataChanged = false;
     }
 

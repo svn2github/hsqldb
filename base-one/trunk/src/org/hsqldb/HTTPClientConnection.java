@@ -93,8 +93,6 @@ public class HTTPClientConnection extends HSQLClientConnection {
         for (;;) {
             int count = InOutUtil.readLine(dataInput, rowOut);
 
-//            int offset = rowOut.size() - count;
-//            String line = new String(rowOut.getBuffer(), offset, count, ENCODING);
             if (count <= 2) {
                 break;
             }

@@ -1264,10 +1264,6 @@ class Table {
 
         try {
             while (n != null) {
-                if (Trace.STOP) {
-                    Trace.stop();
-                }
-
                 Row  row     = n.getRow();
                 Node newnode = Node.newNode(row, iIndexCount - 1, this);
                 Node endnode = row.getNode(iIndexCount - 2);
@@ -1508,10 +1504,6 @@ class Table {
         Node  n            = primaryindex.first();
 
         while (n != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             int  i        = todrop - 1;
             Node backnode = n;
 
@@ -1546,10 +1538,6 @@ class Table {
         Node  n     = index.first();
 
         while (n != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             Object o[]      = n.getData();
             Object newrow[] = this.getNewRow();
 
@@ -1928,12 +1916,6 @@ class Table {
      * @param  trigDef
      */
     void addTrigger(TriggerDef trigDef) {
-
-        if (Trace.TRACE) {
-            Trace.trace("Trigger added "
-                        + String.valueOf(trigDef.vectorIndx));
-        }
-
         vTrigs[trigDef.vectorIndx].add(trigDef);
     }
 
@@ -1951,10 +1933,6 @@ class Table {
                 if (td.name.name.equals(name)) {
                     v.remove(tr);
                     td.terminate();
-
-                    if (Trace.TRACE) {
-                        Trace.trace("Trigger dropped " + name);
-                    }
                 }
             }
         }

@@ -83,14 +83,16 @@ class ScriptRunner {
     static void runScript(Database database, String scriptFilename,
                           int logType) throws HsqlException {
 
-        if (database.filesInJar) {
-            if (ScriptRunner.class.getClassLoader().getResource(
-                    scriptFilename) == null) {
+        try {
+            if (database.filesInJar) {
+                if (ScriptRunner.class.getClassLoader().getResource(
+                        scriptFilename) == null) {
+                    return;
+                }
+            } else if (!FileUtil.exists(scriptFilename)) {
                 return;
             }
-        } else if (!FileUtil.exists(scriptFilename)) {
-            return;
-        }
+        } catch (IOException e) {}
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
         Session       sysSession = database.sessionManager.getSysSession();

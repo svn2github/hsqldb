@@ -373,11 +373,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getColumnCount() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return columnCount;
     }
 
@@ -466,10 +461,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public boolean isAutoIncrement(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].isAutoIncrement;
@@ -500,10 +491,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isCaseSensitive(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -538,10 +525,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public boolean isSearchable(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].isSearchable;
@@ -572,10 +555,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isCurrency(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -617,10 +596,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public int isNullable(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].isNullable;
@@ -648,10 +623,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isSigned(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -719,10 +690,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public int getColumnDisplaySize(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].columnDisplaySize;
@@ -756,10 +723,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getColumnLabel(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -797,10 +760,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getColumnName(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -848,10 +807,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getSchemaName(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -901,10 +856,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public int getPrecision(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].precision;
@@ -942,10 +893,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public int getScale(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].scale;
@@ -960,10 +907,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getTableName(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -1008,10 +951,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public String getCatalogName(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].catalogName;
@@ -1041,10 +980,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public int getColumnType(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         int type = columnMetaData[--column].columnType;
@@ -1064,10 +999,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getColumnTypeName(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -1131,10 +1062,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     public boolean isWritable(int column) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkColumn(column);
 
         return columnMetaData[--column].isWritable;
@@ -1167,10 +1094,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isDefinitelyWritable(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 
@@ -1208,11 +1131,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * always caused an <code>SQLException</code> to be thrown,
      * stating that the function was not supported. <p>
      *
-     * Starting with HSQLDB 1.7.2, this method returns the value of
-     * SYSTEM_ALLTYPEINFO.COL_ST_CLS_NAME for the table row
-     * corresponding to the data type of the specified ResultSet
-     * column.
-     *
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -1226,10 +1144,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *      jdbcResultSet)
      */
     public String getColumnClassName(int column) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkColumn(column);
 

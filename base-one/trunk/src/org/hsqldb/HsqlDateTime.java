@@ -83,7 +83,8 @@ class HsqlDateTime {
     static Timestamp timestampValue(String s) {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException("null string");
+            throw new java.lang.IllegalArgumentException(
+                Trace.getMessage(Trace.HsqlDateTime_null_string));
         }
 
         if (s.indexOf('-') == -1) {
@@ -99,7 +100,8 @@ class HsqlDateTime {
                 return new Timestamp(getToday().getTime());
             }
 
-            throw new java.lang.IllegalArgumentException("invalid timestamp");
+            throw new java.lang.IllegalArgumentException(
+                Trace.getMessage(Trace.HsqlDateTime_invalid_timestamp));
         }
 
         final String zerodatetime = "1970-01-01 00:00:00.000000000";
@@ -136,7 +138,8 @@ class HsqlDateTime {
     static Date dateValue(String s) {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException("null date");
+            throw new java.lang.IllegalArgumentException(
+                Trace.getMessage(Trace.HsqlDateTime_null_date));
         }
 
         if (s.indexOf('-') == -1) {
@@ -148,7 +151,8 @@ class HsqlDateTime {
                 return getToday();
             }
 
-            throw new java.lang.IllegalArgumentException("invalid date");
+            throw new java.lang.IllegalArgumentException(
+                Trace.getMessage(Trace.HsqlDateTime_invalid_date));
         }
 
         if (s.length() > sdfdPattern.length()) {
@@ -171,7 +175,8 @@ class HsqlDateTime {
     static Time timeValue(String s) {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException("null string");
+            throw new java.lang.IllegalArgumentException(
+                Trace.getMessage(Trace.HsqlDateTime_null_string));
         }
 
         if (s.toUpperCase().equals("CURRENT_TIME")) {
@@ -323,9 +328,8 @@ class HsqlDateTime {
                            "2000-1-1 12:13:14.15" };
         for (int i = 0; i < tests.length; i++) {
             String test = tests[i];
-            System.out.print("test " + test + " = ");
             try {
-                System.out.println(HsqlDateTime.timestampValue(test));
+                Trace.printSystemOut("test " + test + " = " + HsqlDateTime.timestampValue(test));
             } catch (Exception e) {
                 System.out.println(e);
             }

@@ -114,6 +114,8 @@ public class FileUtil {
             }
 
             completed = true;
+        } catch (Throwable e) {
+            throw toIOException(e);
         } finally {
             try {
                 if (in != null) {
@@ -127,7 +129,9 @@ public class FileUtil {
                 if (!completed) {
                     delete(outfilename);
                 }
-            } catch (Exception e) {}
+            } catch (Throwable e) {
+                throw toIOException(e);
+            }
         }
     }
 
@@ -160,6 +164,8 @@ public class FileUtil {
             }
 
             completed = true;
+        } catch (Throwable e) {
+            throw toIOException(e);
         } finally {
             try {
                 if (f != null) {
@@ -173,30 +179,34 @@ public class FileUtil {
                 if (!completed) {
                     delete(outfilename);
                 }
-            } catch (Exception e) {}
+            } catch (Throwable e) {
+                throw toIOException(e);
+            }
         }
     }
 
     /**
      * Delete the named file
      */
-    static public void delete(String filename) {
+    static public void delete(String filename) throws IOException {
 
         try {
             (new File(filename)).delete();
-        } catch (Exception e) {}
+        } catch (Throwable e) {
+            throw toIOException(e);
+        }
     }
 
     /**
      * Return true or false based on whether the named file exists.
      */
-    static public boolean exists(String filename) {
+    static public boolean exists(String filename) throws IOException {
 
         try {
             return (new File(filename)).exists();
-        } catch (Exception e) {}
-
-        return false;
+        } catch (Throwable e) {
+            throw toIOException(e);
+        }
     }
 
     /**
@@ -204,7 +214,8 @@ public class FileUtil {
      * file does not exist. If a file named newname already exists, delete
      * it before ranaming.
      */
-    static public void renameOverwrite(String oldname, String newname) {
+    static public void renameOverwrite(String oldname,
+                                       String newname) throws IOException {
 
         try {
             if (exists(oldname)) {
@@ -214,6 +225,21 @@ public class FileUtil {
 
                 file.renameTo(new File(newname));
             }
-        } catch (Exception e) {}
+        } catch (Throwable e) {
+            throw toIOException(e);
+        }
+    }
+
+    static void printSystemOut(String message) {
+        System.out.println(message);
+    }
+
+    static IOException toIOException(Throwable e) {
+
+        if (e instanceof IOException) {
+            return (IOException) e;
+        } else {
+            return new IOException(e.getMessage());
+        }
     }
 }

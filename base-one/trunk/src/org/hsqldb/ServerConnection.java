@@ -78,7 +78,7 @@ import org.hsqldb.lib.ArrayUtil;
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
 // fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
-// fredt@users 20030618 - patch 1.7.2 by fredt - changed read -write
+// fredt@users 20030618 - patch 1.7.2 by fredt - changed read/write methods
 
 /**
  *  All ServerConnection objects are listed in a Set in server
@@ -119,7 +119,7 @@ class ServerConnection implements Runnable {
      * @param socket the network socket on which Server communication
      *      takes place
      * @param server the Server instance to which the object
-     *      represents a connection 
+     *      represents a connection
      */
     ServerConnection(Socket socket, Server server) {
 
@@ -154,7 +154,7 @@ class ServerConnection implements Runnable {
     private void close() {
 
         if (session != null) {
-            session.disconnect();
+            session.close();
         }
 
         session = null;
@@ -217,12 +217,6 @@ class ServerConnection implements Runnable {
             return;
         } catch (Exception e) {
             server.trace(mThread + ":couldn't connect " + user);
-
-            // why?  this is the first action of close(), which
-            // always gets called below
-            if (session != null) {
-                session.disconnect();
-            }
         }
 
         close();
@@ -256,7 +250,6 @@ class ServerConnection implements Runnable {
             } catch (HsqlException e) {
 
                 // fredt - is thrown while constructing the result
-                // String s = e.getMessage();
                 server.printStackTrace(e);
             }
 
@@ -268,8 +261,8 @@ class ServerConnection implements Runnable {
      * Retrieves the thread name to be used  when
      * this object is the Runnable object of a Thread.
      *
-     * @return the thread name to be used  when
-     *      this object is the Runnable object of a Thread.
+     * @return the thread name to be used  when this object is the Runnable
+     * object of a Thread.
      */
     String getConnectionThreadName() {
         return "HSQLDB Connection @" + Integer.toString(hashCode(), 16);

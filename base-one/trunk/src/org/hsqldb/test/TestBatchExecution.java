@@ -56,7 +56,7 @@ public class TestBatchExecution {
     static final String select_sql   = "select * from test where id = ?";
     static final String delete_sql   = "delete from test where id = ?";
     static final String call_sql     = "call   identity()";
-    static final String shutdown_sql = "shutdown";
+    static final String shutdown_sql = "shutdown compact";
     static final String def_db_path  = "batchtest";
     static final int    def_runs     = 5;
     static final int    rows         = 10000;
@@ -287,7 +287,6 @@ public class TestBatchExecution {
             for (int i = 1; i <= 4;
                     i++)    // [2, 3, 4]
             {
-                prep.clearParameters();
                 prep.setInt(1, i);
                 prep.addBatch();
                 System.out.println("executeBatch() for " + i);

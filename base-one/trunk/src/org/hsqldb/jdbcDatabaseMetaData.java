@@ -525,11 +525,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean allProceduresAreCallable() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -564,11 +559,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean allTablesAreSelectable() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -581,11 +571,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getURL() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return connection.getURL();
     }
 
@@ -597,10 +582,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getUserName() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         ResultSet r = execute("CALL USER()");
 
@@ -630,10 +611,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isReadOnly() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         ResultSet r =
             execute("CALL \"org.hsqldb.Library.isReadOnlyDatabase\"()");
@@ -665,11 +642,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean nullsAreSortedHigh() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -695,11 +667,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean nullsAreSortedLow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -720,11 +687,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean nullsAreSortedAtStart() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -745,11 +707,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean nullsAreSortedAtEnd() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -764,10 +721,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDatabaseProductName() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         ResultSet rs =
             execute("call \"org.hsqldb.Library.getDatabaseProductName\"()");
@@ -789,10 +742,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getDatabaseProductVersion() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         ResultSet rs = execute(
             "call \"org.hsqldb.Library.getDatabaseProductVersion\"()");
 
@@ -808,11 +757,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverName() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return jdbcDriver.PRODUCT + " Driver";
     }
 
@@ -823,11 +767,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getDriverVersion() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return jdbcDriver.VERSION;
     }
 
@@ -837,11 +776,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver major version
      */
     public int getDriverMajorVersion() {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return jdbcDriver.MAJOR;
     }
 
@@ -851,11 +785,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return JDBC driver minor version number
      */
     public int getDriverMinorVersion() {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return jdbcDriver.MINOR;
     }
 
@@ -893,11 +822,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean usesLocalFilePerTable() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -920,11 +844,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsMixedCaseIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -947,11 +866,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean storesUpperCaseIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -974,11 +888,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean storesLowerCaseIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1001,11 +910,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean storesMixedCaseIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1028,10 +932,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         return true;
 
@@ -1057,11 +957,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1082,11 +977,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1110,10 +1000,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
 
         // No: as case sensitive.
@@ -1135,10 +1021,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getIdentifierQuoteString() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         return "\"";
 
@@ -1170,10 +1052,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getSQLKeywords() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "BEFORE,BIGINT,BINARY,CACHED,DATETIME,"
                + "LIMIT,LONGVARBINARY,LONGVARCHAR,OBJECT,OTHER,SAVEPOINT,"
                + "TEMP,TEXT,TRIGGER,TINYINT,VARBINARY,VARCHAR_IGNORECASE";
@@ -1187,11 +1065,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getNumericFunctions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return StringUtil.getList(Library.sNumeric, ",", "");
     }
 
@@ -1203,11 +1076,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getStringFunctions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return StringUtil.getList(Library.sString, ",", "");
     }
 
@@ -1219,11 +1087,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getSystemFunctions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return StringUtil.getList(Library.sSystem, ",", "");
     }
 
@@ -1234,11 +1097,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getTimeDateFunctions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return StringUtil.getList(Library.sTimeDate, ",", "");
     }
 
@@ -1266,11 +1124,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getSearchStringEscape() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "\\";
     }
 
@@ -1293,11 +1146,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getExtraNameCharacters() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "";
     }
 
@@ -1321,11 +1169,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsAlterTableWithAddColumn() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1346,11 +1189,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsAlterTableWithDropColumn() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1375,10 +1213,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsColumnAliasing() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         return true;
 
@@ -1405,10 +1239,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean nullPlusNonNullIsNull() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
 
         // Access (odbcjt32.dll) returns false
@@ -1432,11 +1262,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsConvert() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1472,11 +1297,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsConvert(int fromType,
                                    int toType) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1497,11 +1317,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsTableCorrelationNames() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1524,11 +1339,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDifferentTableCorrelationNames()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1550,11 +1360,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsExpressionsInOrderBy() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1578,11 +1383,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsOrderByUnrelated() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1604,11 +1404,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsGroupBy() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1633,11 +1428,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsGroupByUnrelated() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1664,11 +1454,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsGroupByBeyondSelect() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1691,11 +1476,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsLikeEscapeClause() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1720,11 +1500,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsMultipleResultSets() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1747,11 +1522,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsMultipleTransactions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1773,11 +1543,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsNonNullableColumns() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1797,11 +1562,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsMinimumSQLGrammar() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1819,11 +1579,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCoreSQLGrammar() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1843,11 +1598,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsExtendedSQLGrammar() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1868,11 +1618,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsANSI92EntryLevelSQL() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1893,11 +1638,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsANSI92IntermediateSQL() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1918,11 +1658,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsANSI92FullSQL() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -1945,11 +1680,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsIntegrityEnhancementFacility()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1970,11 +1700,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsOuterJoins() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -1995,11 +1720,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsFullOuterJoins() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2020,11 +1740,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsLimitedOuterJoins() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2056,11 +1771,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getSchemaTerm() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "";
     }
 
@@ -2082,11 +1792,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getProcedureTerm() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "";
     }
 
@@ -2107,11 +1812,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getCatalogTerm() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "";
     }
 
@@ -2132,11 +1832,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean isCatalogAtStart() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2158,11 +1853,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public String getCatalogSeparator() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return "";
     }
 
@@ -2199,11 +1889,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2223,11 +1908,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2247,11 +1927,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2271,11 +1946,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2296,11 +1966,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInPrivilegeDefinitions()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2320,11 +1985,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2344,11 +2004,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2368,11 +2023,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2392,11 +2042,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2417,11 +2062,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInPrivilegeDefinitions()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2441,11 +2081,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsPositionedDelete() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2465,11 +2100,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsPositionedUpdate() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2489,11 +2119,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSelectForUpdate() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2516,11 +2141,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see jdbcConnection#prepareCall
      */
     public boolean supportsStoredProcedures() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2542,11 +2162,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSubqueriesInComparisons() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2568,11 +2183,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSubqueriesInExists() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2594,11 +2204,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSubqueriesInIns() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2620,13 +2225,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-
-            // todo: check if this is correct
-        }
-
         return true;
     }
 
@@ -2647,11 +2245,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2672,11 +2265,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsUnion() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2697,11 +2285,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsUnionAll() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2723,11 +2306,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2749,11 +2327,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2777,11 +2350,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2806,11 +2374,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenStatementsAcrossRollback()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -2842,10 +2405,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxBinaryLiteralLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -2870,10 +2429,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxCharLiteralLength() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // hard limit is Integer.MAX_VALUE
         return 0;
@@ -2900,10 +2455,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxColumnNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -2928,10 +2479,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxColumnsInGroupBy() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // hard limit is Integer.MAX_VALUE
         return 0;
@@ -2958,10 +2505,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxColumnsInIndex() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -2986,10 +2529,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxColumnsInOrderBy() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // hard limit is Integer.MAX_VALUE
         return 0;
@@ -3016,10 +2555,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxColumnsInSelect() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -3044,10 +2579,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxColumnsInTable() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // hard limit is Integer.MAX_VALUE
         return 0;
@@ -3074,10 +2605,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxConnections() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is (probably) Integer.MAX_VALUE
         return 0;
     }
@@ -3103,10 +2630,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxCursorNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // N/A => 0
         return 0;
     }
@@ -3131,10 +2654,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxIndexLength() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // N/A => 0?  This may change as cache implementation changes?
         return 0;
@@ -3162,10 +2681,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxSchemaNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // N/A => 0
         return 0;
     }
@@ -3191,10 +2706,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxProcedureNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -3219,10 +2730,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxCatalogNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // N/A => 0
         return 0;
     }
@@ -3245,11 +2752,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxRowSize() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return 0;
     }
 
@@ -3272,10 +2774,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // CHECKME: is this correct?  We return "unknown" (0) for getMaxRowSize
         // So, what does it mean to say that "unknown" does not include
@@ -3306,11 +2804,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxStatementLength() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return 0;
     }
 
@@ -3333,11 +2826,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxStatements() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return 0;
     }
 
@@ -3361,10 +2849,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxTableNameLength() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // hard limit is Integer.MAX_VALUE
         return 0;
@@ -3390,10 +2874,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public int getMaxTablesInSelect() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         // - soft limit is >>> than will ever be seen in any real stmnt
         // - exists a fixed (non statement dependent) hard limit?  No.
@@ -3423,10 +2903,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxUserNameLength() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // hard limit is Integer.MAX_VALUE
         return 0;
     }
@@ -3448,11 +2924,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see jdbcConnection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return Connection.TRANSACTION_READ_UNCOMMITTED;
     }
 
@@ -3474,11 +2945,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsTransactions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -3501,11 +2967,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsTransactionIsolationLevel(int level)
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return level == Connection.TRANSACTION_READ_UNCOMMITTED;
     }
 
@@ -3530,11 +2991,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -3559,11 +3015,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDataManipulationTransactionsOnly()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -3587,11 +3038,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean dataDefinitionCausesTransactionCommit()
     throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -3616,11 +3062,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5014,11 +4455,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *      for jdbcDatabaseMetaData)
      */
     public boolean supportsResultSetType(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return (type == jdbcResultSet.TYPE_FORWARD_ONLY
                 || type == jdbcResultSet.TYPE_SCROLL_INSENSITIVE);
     }
@@ -5043,11 +4479,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsResultSetConcurrency(int type,
             int concurrency) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return supportsResultSetType(type)
                && concurrency == jdbcResultSet.CONCUR_READ_ONLY;
     }
@@ -5075,11 +4506,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean ownUpdatesAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5105,11 +4531,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean ownDeletesAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5135,11 +4556,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean ownInsertsAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5166,11 +4582,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean othersUpdatesAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5197,11 +4608,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean othersDeletesAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5228,11 +4634,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean othersInsertsAreVisible(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5259,11 +4660,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean updatesAreDetected(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5294,11 +4690,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean deletesAreDetected(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5325,11 +4716,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean insertsAreDetected(int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -5351,11 +4737,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *     for jdbcDatabaseMetaData)
      */
     public boolean supportsBatchUpdates() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return true;
     }
 
@@ -5464,11 +4845,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *      for jdbcDatabaseMetaData)
      */
     public Connection getConnection() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return connection;
     }
 
@@ -5494,11 +4870,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsSavepoints() throws SQLException {
         return true;
     }
-*/
 
 //#endif JDBC3
 
@@ -5521,7 +4895,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsNamedParameters() throws SQLException {
 
         // TODO: fredt@users - sure
@@ -5530,7 +4903,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5556,7 +4928,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsMultipleOpenResults() throws SQLException {
 
         // TODO: fredt@users  - agreed on both
@@ -5566,7 +4937,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5591,7 +4961,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsGetGeneratedKeys() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -5599,7 +4968,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5658,7 +5026,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTypes(String catalog, String schemaPattern,
                                    String typeNamePattern)
                                    throws SQLException {
@@ -5675,7 +5042,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5727,7 +5093,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTables(String catalog, String schemaPattern,
                                     String tableNamePattern)
                                     throws SQLException {
@@ -5744,7 +5109,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5834,7 +5198,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getAttributes(String catalog, String schemaPattern,
                                    String typeNamePattern,
                                    String attributeNamePattern)
@@ -5853,7 +5216,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5879,12 +5241,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsResultSetHoldability(int holdability)
     throws SQLException {
         return holdability == jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
-*/
 
 //#endif JDBC3
 
@@ -5912,7 +5272,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getResultSetHoldability() throws SQLException {
 
 // JDBC 3.0 fr spec:
@@ -5946,7 +5305,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 // Our ResultSet objects are never closed as the result of a commit
         return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
-*/
 
 //#endif JDBC3
 
@@ -5974,12 +5332,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMajorVersion() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         ResultSet rs =
             execute("call \"org.hsqldb.Library.getDatabaseMajorVersion\"()");
@@ -5988,7 +5341,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -6016,12 +5368,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMinorVersion() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         ResultSet rs =
             execute("call \"org.hsqldb.Library.getDatabaseMinorVersion\"()");
@@ -6030,7 +5377,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -6055,11 +5401,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMajorVersion() throws SQLException {
         return 3;
     }
-*/
 
 //#endif JDBC3
 
@@ -6083,11 +5427,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMinorVersion() throws SQLException {
         return 0;
     }
-*/
 
 //#endif JDBC3
 
@@ -6113,7 +5455,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getSQLStateType() throws SQLException {
 
         // TODO: fredt@users we don't really. Need to review the codes.
@@ -6121,7 +5462,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -6144,7 +5484,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean locatorsUpdateCopy() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -6154,7 +5493,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -6176,7 +5514,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsStatementPooling() throws SQLException {
 
         // TODO:
@@ -6186,7 +5523,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
     //----------------------- Internal Implementation --------------------------
@@ -6320,10 +5656,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException is a database error occurs
      */
     private ResultSet execute(String sql) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(sql);
-        }
 
         // NOTE:
         // Need to create a jdbcStatement here so jdbcResultSet can return

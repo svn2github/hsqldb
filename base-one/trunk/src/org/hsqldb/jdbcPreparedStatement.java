@@ -1399,7 +1399,6 @@ implements java.sql.PreparedStatement {
 //        since Ref.getObject() is JDBC3-only.  Need SQLData support
 //        to do any better than this.
 //#ifdef JDBC3
-/*
         Object  o;
         int     inType;
         boolean searchPool;
@@ -1420,10 +1419,11 @@ implements java.sql.PreparedStatement {
         }
 
         setParameter(i, o, inType, searchPool);
-*/
 
 //#else
+/*
         throw jdbcDriver.notSupportedJDBC3;
+*/
 
 //#endif JDBC3
     }
@@ -1939,7 +1939,6 @@ implements java.sql.PreparedStatement {
      * @since JDK 1.4, HSQL 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void setURL(int parameterIndex,
                        java.net.URL x) throws SQLException {
 
@@ -1953,7 +1952,6 @@ implements java.sql.PreparedStatement {
         // succeed;
         setParameter(parameterIndex, x, Types.OTHER, false);
     }
-*/
 
 //#endif JDBC3
 
@@ -1979,7 +1977,6 @@ implements java.sql.PreparedStatement {
      * @since JDK 1.4, HSQL 1.7.0
      */
 //#ifdef JDBC3
-/*
     public ParameterMetaData getParameterMetaData() throws SQLException {
 
 // boucherb@users 20030801 - method implemented
@@ -1992,7 +1989,6 @@ implements java.sql.PreparedStatement {
         // NOTE:  pmd is declared as Object to avoid yet another #ifdef.
         return (ParameterMetaData) pmd;
     }
-*/
 
 //#endif JDBC3
     //-------------------- Internal Implementation -----------------------------

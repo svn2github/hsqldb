@@ -1726,7 +1726,7 @@ public class Library {
     public static void main (String argv[]){
         String [] names = {"Yyhiokkk","Washington","Lee","Gutierrez","Pfister","Jackson","Tymczak","Ashcraft","VanDeusen","Deusen","Van Deusen"};
         for (int i = 0 ; i < names.length; i++ ){
-            System.out.print( names[i] + " : " + soundex(names[i] + "\n"));
+            Trace.printSystemOut( names[i] + " : " + soundex(names[i] + "\n"));
         }
     }
 */

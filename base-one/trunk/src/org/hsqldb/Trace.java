@@ -94,8 +94,8 @@ import org.hsqldb.lib.FileUtil;
 // preserve the orignial erro code
 public class Trace extends PrintWriter {
 
-    public static boolean       TRACE          = false;
-    public static boolean       TRACESYSTEMOUT = false;
+    public static boolean       TRACE          = true;
+    public static boolean       TRACESYSTEMOUT = true;
     public static final boolean STOP           = false;
     public static final boolean DOASSERT       = true;
     private static final Trace  tTracer        = new Trace();
@@ -234,11 +234,20 @@ public class Trace extends PrintWriter {
      jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
 
     // new one
-    TableFilter_findFirst       = 122,
-     Table_moveDefinition       = 123,
-     STRING_DATA_TRUNCATION     = 124,
-     QUOTED_IDENTIFIER_REQUIRED = 125,
-     STATEMENT_IS_CLOSED        = 126
+    TableFilter_findFirst                = 122,
+     Table_moveDefinition                = 123,
+     STRING_DATA_TRUNCATION              = 124,
+     QUOTED_IDENTIFIER_REQUIRED          = 125,
+     STATEMENT_IS_CLOSED                 = 126,
+     DatabaseRowInput_skipBytes          = 127,
+     DatabaseRowInput_readLine           = 128,
+     DataFileDefrag_writeTableToDataFile = 129,
+     DiskNode_writeTranslatePointer      = 130,
+     HsqlDateTime_null_string            = 131,
+     HsqlDateTime_invalid_timestamp      = 132,
+     HsqlDateTime_null_date              = 133,
+     HsqlDateTime_invalid_date           = 134,
+     HsqlProperties_load                 = 135
     ;
 
     //
@@ -366,7 +375,16 @@ public class Trace extends PrintWriter {
         "37000 an index is required on table $$, column $$",            // TableFilter_findFirst
         "37000 there is an index on the column to be removed",          // Table_moveDefinition
         "22001 string too long", "00000 quoted identifier required",    // SET PROPERTY "name" "value"
-        "00000 statement is closed"                                     // SET PROPERTY "name" "value"
+        "00000 statement is closed",                                    // SET PROPERTY "name" "value"
+        "Method skipBytes() not yet implemented.",                      // DatabaseRowInput_skipBytes
+        "Method readLine() not yet implemented.",                       // DatabaseRowInput_readLine
+        "",                                                             // DataFileDefrag_writeTableToDataFile
+        "",                                                             // DiskNode_writeTranslatePointer
+        "null string",                                                  // HsqlDateTime_null_string
+        "invalid timestamp",                                            // HsqlDateTime_invalid_timestamp
+        "null date",                                                    // HsqlDateTime_null_date
+        "invalid date",                                                 // HsqlDateTime_invalid_date
+        "properties name is null or empty"                              // HsqlProperties_load
     };
 
     static {
@@ -477,16 +495,31 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * Return an error message given an error code.
+     * Return a new <code>HsqlException</code> according to the result parameter.
      *
-     * @param code  error code
-     *
-     * @return  the error message associated with the error code
+     * @param result    the <code>Result</code> associated with the exception
+     * @return a new <code>HsqlException</code> according to the result parameter
      */
-    static String getMessage(final int code) {
+    static HsqlException error(final Result result) {
+        return new HsqlException(result);
+    }
 
-        // todo check for bounds
-        return sDescription[code];
+    /**
+     * Returns the error message given the error code.<br/>
+     * Note: this method must be used when throwing exception other
+     * than <code>HsqlException</code>.
+     *
+     * @param errorCode    the error code associated to the error message
+     * @return  the error message associated with the error code
+     * @see #sDescription
+     */
+    public static String getMessage(final int errorCode) {
+
+        if (errorCode < 0 || errorCode >= sDescription.length) {
+            return "";
+        } else {
+            return sDescription[errorCode];
+        }
     }
 
     /**
@@ -695,50 +728,11 @@ public class Trace extends PrintWriter {
     /**
      * Method declaration
      *
-     */
-    static void trace() {
-        traceCaller("");
-    }
-
-    /**
-     * Method declaration
-     *
      *
      * @param s
      */
     static void trace(String s) {
         traceCaller(s);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @throws HsqlException
-     */
-    static void stop() throws HsqlException {
-        stop(null);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @throws HsqlException
-     */
-    static synchronized void stop(String s) throws HsqlException {
-
-        if (iStop++ % 10000 != 0) {
-            return;
-        }
-
-        if (FileUtil.exists("trace.stop")) {
-            printStack();
-
-            throw getError(EXTERNAL_STOP, s);
-        }
     }
 
 // fredt@users 20010701 - patch 418014 by deforest@users

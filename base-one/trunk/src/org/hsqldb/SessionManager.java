@@ -174,10 +174,7 @@ public class SessionManager {
     Result processDisconnect(Session session) {
 
         sessionMap.remove(session.getId());
-
-        if (!session.isClosed()) {
-            session.disconnect();
-        }
+        session.disconnect();
 
         return new Result(ResultConstants.UPDATECOUNT);
     }

@@ -424,12 +424,6 @@ class DatabaseInformationMain extends DatabaseInformation {
      */
     protected final void init() throws HsqlException {
 
-        StopWatch sw = null;
-
-        if (Trace.TRACE) {
-            sw = new StopWatch();
-        }
-
         ns = new DINameSpace(database);
 
         // flag the Session-dependent cached tables
@@ -475,10 +469,6 @@ class DatabaseInformationMain extends DatabaseInformation {
         }
 
         session = oldSession;
-
-        if (Trace.TRACE) {
-            Trace.trace(this + ".init() in " + sw.elapsedTime() + " ms.");
-        }
     }
 
     /**
@@ -582,18 +572,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             return t;
         }
 
-        StopWatch sw = null;
-
-        if (Trace.TRACE) {
-            sw = new StopWatch();
-        }
-
         if (isDirty) {
             cacheClear();
-
-            if (Trace.TRACE) {
-                Trace.trace("System table cache cleared.");
-            }
         }
 
         int     oldSessionId = sysTableSessions[tableIndex];
@@ -624,11 +604,6 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // t will be null at this point, if the implementation
         // does not support the particular table
-        if (Trace.TRACE) {
-            Trace.trace("generated system table: " + name + " in "
-                        + sw.elapsedTime() + " ms.");
-        }
-
         // send back what we found or generated
         return t;
     }
@@ -1005,21 +980,11 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         Result rs;
 
-        // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
         rs = session.sqlExecuteDirectNoPreChecks(
-            (new StringBuffer(185)).append("select").append(' ').append(
-                "a.").append("TABLE_CAT").append(',').append("a.").append(
-                "TABLE_SCHEM").append(',').append("a.").append(
-                "TABLE_NAME").append(',').append("b.").append(
-                "COLUMN_NAME").append(',').append("a.").append(
-                "GRANTOR").append(',').append("a.").append("GRANTEE").append(
-                ',').append("a.").append("PRIVILEGE").append(',').append(
-                "a.").append("IS_GRANTABLE").append(' ').append(
-                "from").append(' ').append("SYSTEM_TABLEPRIVILEGES").append(
-                " a,").append("SYSTEM_COLUMNS").append(" b ").append(
-                "where").append(' ').append("a.").append("TABLE_NAME").append(
-                "=").append("b.").append("TABLE_NAME").toString());
+            "select a.TABLE_CAT, a.TABLE_SCHEM, a.TABLE_NAME, b.COLUMN_NAME, "
+            + "a.GRANTOR, a.GRANTEE, a.PRIVILEGE, a.IS_GRANTABLE "
+            + "from  SYSTEM_TABLEPRIVILEGES a, SYSTEM_COLUMNS b where a.TABLE_NAME = b.TABLE_NAME;");
 
         t.insert(rs, session);
         t.setDataReadOnly(true);
@@ -2446,27 +2411,11 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         Result rs;
 
-        // - used appends to make class file constant pool smaller
-        // - saves ~ 150 bytes jar space
         rs = session.sqlExecuteDirectNoPreChecks(
-            (new StringBuffer(313)).append("select").append(' ').append(
-                "TYPE_NAME").append(',').append("DATA_TYPE").append(
-                ',').append("PRECISION").append(',').append(
-                "LITERAL_PREFIX").append(',').append("LITERAL_SUFFIX").append(
-                ',').append("CREATE_PARAMS").append(',').append(
-                "NULLABLE").append(',').append("CASE_SENSITIVE").append(
-                ',').append("SEARCHABLE").append(',').append(
-                "UNSIGNED_ATTRIBUTE").append(',').append(
-                "FIXED_PREC_SCALE").append(',').append(
-                "AUTO_INCREMENT").append(',').append(
-                "LOCAL_TYPE_NAME").append(',').append("MINIMUM_SCALE").append(
-                ',').append("MAXIMUM_SCALE").append(',').append(
-                "SQL_DATA_TYPE").append(',').append(
-                "SQL_DATETIME_SUB").append(',').append(
-                "NUM_PREC_RADIX").append(',').append("TYPE_SUB").append(
-                ' ').append("from").append(' ').append(
-                "SYSTEM_ALLTYPEINFO").append(' ').append("where").append(
-                ' ').append("AS_TAB_COL").append(" = true").toString());
+            "select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX, CREATE_PARAMS, NULLABLE, CASE_SENSITIVE, SEARCHABLE,"
+            + "UNSIGNED_ATTRIBUTE, FIXED_PREC_SCALE, AUTO_INCREMENT, LOCAL_TYPE_NAME, MINIMUM_SCALE, "
+            + "MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB, NUM_PREC_RADIX, TYPE_SUB "
+            + "from SYSTEM_ALLTYPEINFO  where AS_TAB_COL = true;");
 
         t.insert(rs, session);
         t.setDataReadOnly(true);

@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -49,7 +50,7 @@ import org.hsqldb.lib.ArrayUtil;
  * Is public because it is used in the org.hsqldb.test package.
  *
  * @author fredt@users
- * @verison 1.7.2
+ * @version 1.7.2
  * @since 1.7.0
  */
 public class HsqlProperties {
@@ -202,12 +203,12 @@ public class HsqlProperties {
         addProperties(props.stringProps);
     }
 
-    public boolean checkFileExists() {
+    public boolean checkFileExists() throws IOException {
         return checkFileExists(fileName, resource, getClass());
     }
 
     public static boolean checkFileExists(String fileName, boolean resource,
-                                          Class cla) {
+                                          Class cla) throws IOException {
 
         if (fileName == null || fileName.length() == 0) {
             return false;
@@ -227,7 +228,7 @@ public class HsqlProperties {
 
         if (fileName == null || fileName.length() == 0) {
             throw new java.io.FileNotFoundException(
-                "properties name is null or empty");
+                Trace.getMessage(Trace.HsqlProperties_load));
         }
 
         InputStream fis           = null;
@@ -254,7 +255,7 @@ public class HsqlProperties {
 
         if (fileName == null || fileName.length() == 0) {
             throw new java.io.FileNotFoundException(
-                "properties name is null or empty");
+                Trace.getMessage(Trace.HsqlProperties_load));
         }
 
         String filestring = fileName + ".properties";

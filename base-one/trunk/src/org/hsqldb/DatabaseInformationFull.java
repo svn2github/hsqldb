@@ -2703,7 +2703,7 @@ extends org.hsqldb.DatabaseInformationMain {
 // NEED TO REWORK TableFilter/Select INSTEAD TO PRESERVE FULL EXPESSION
 // TREE TO ARBITRARY NESTING DEPTH
 //    boolean collectTableColumn(HsqlHashMap tableNames) {
-//        //System.out.println("Processing: " + this);
+//        //Trace.printSystemOut("Processing: " + this);
 //        if (iType == COLUMN) {
 //            HashSet s = (HashSet) tableNames.get(sTable);
 //            if (s == null) {
@@ -2723,7 +2723,7 @@ extends org.hsqldb.DatabaseInformationMain {
 //            if (sSelect.havingCondition != null) {
 //                sSelect.havingCondition.collectAllTableColumns(tableNames);
 //            }
-//            //System.out.println("Processed Select: " + sSelect);
+//            //Trace.printSystemOut("Processed Select: " + sSelect);
 //            return true;
 //        } else if (iType == FUNCTION) {
 //            Expression eArg[] = fFunction.eArg;
@@ -2731,7 +2731,7 @@ extends org.hsqldb.DatabaseInformationMain {
 //            for (int i = 0; i < eArg.length; i++) {
 //                eArg[i].collectAllTableColumns(tableNames);
 //            }
-//            //System.out.println("Processed Function: " + fFunction);
+//            //Trace.printSystemOut("Processed Function: " + fFunction);
 //            return true;
 //        }
 //
@@ -2751,7 +2751,7 @@ extends org.hsqldb.DatabaseInformationMain {
 //    }
 //
 //    boolean collectRoutineName(HashSet routineNames) {
-//        //System.out.println("Processing: " + this);
+//        //Trace.printSystemOut("Processing: " + this);
 //
 //        if (iType == QUERY || iType == SELECT) {
 //            Expression eColumn[] = sSelect.eColumn;
@@ -2764,7 +2764,7 @@ extends org.hsqldb.DatabaseInformationMain {
 //            if (sSelect.havingCondition != null) {
 //                sSelect.havingCondition.collectAllRoutineNames(routineNames);
 //            }
-//            //System.out.println("Processed Select: " + sSelect);
+//            //Trace.printSystemOut("Processed Select: " + sSelect);
 //            return true;
 //        } else if (iType == FUNCTION) {
 //            Expression eArg[] = fFunction.eArg;
@@ -2777,7 +2777,7 @@ extends org.hsqldb.DatabaseInformationMain {
 //                }
 //            }
 //            routineNames.add(fFunction.fname);
-//            //System.out.println("Processed Function: " + fFunction);
+//            //Trace.printSystemOut("Processed Function: " + fFunction);
 //            return true;
 //        }
 //

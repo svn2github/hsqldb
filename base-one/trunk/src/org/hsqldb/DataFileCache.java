@@ -152,23 +152,34 @@ public class DataFileCache extends Cache {
         }
     }
 
+    /** @todo fredt - better error message */
+
     /**
      *  Writes out all the rows to a new file without fragmentation and
      *  returns an ArrayList containing new positions for index roots.
      *  Is called with the cache file closed.
+     *
+     *  Not possible with nio .data file as it can't be overwritten
      */
     void defrag() throws HsqlException {
 
+        if (rFile.isNio) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
+
         close();
 
-        // return here if *.data file was deleted because it was empty
-        if (!FileUtil.exists(sName)) {
-            init();
-            open(cacheReadonly);
-            Trace.printSystemOut("opened empty chache");
+        try {
 
-            return;
-        }
+            // return here if *.data file was deleted because it was empty
+            if (!FileUtil.exists(sName)) {
+                init();
+                open(cacheReadonly);
+                Trace.printSystemOut("opened empty chache");
+
+                return;
+            }
+        } catch (IOException e) {}
 
         HsqlArrayList indexRoots = null;
 
@@ -212,7 +223,7 @@ public class DataFileCache extends Cache {
                                                      indexRoots);
             }
 
-            Trace.printSystemOut("opened chache");
+            Trace.printSystemOut("opened cache");
         }
     }
 
@@ -221,7 +232,7 @@ public class DataFileCache extends Cache {
      */
     void closeFile() throws HsqlException {
 
-        System.out.println("DataFileCache.closeFile()");
+        Trace.printSystemOut("DataFileCache.closeFile()");
 
         if (rFile == null) {
             return;
@@ -284,9 +295,6 @@ public class DataFileCache extends Cache {
         int       i       = iFreePos;
 
         while (f != null) {
-            if (Trace.TRACE) {
-                Trace.stop();
-            }
 
             // first that is long enough
             if (f.iLength >= size) {
@@ -386,5 +394,17 @@ public class DataFileCache extends Cache {
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, "creating " + newName);
         }
+    }
+
+    static void resetFreePos(String filename) {
+
+        try {
+            ScaledRAFile raFile = ScaledRAFile.newScaledRAFile(filename,
+                false, 1, ScaledRAFile.DATA_FILE_RAF);
+
+            raFile.seek(Cache.FREE_POS_POS);
+            raFile.writeInt(Cache.INITIAL_FREE_POS);
+            raFile.close();
+        } catch (IOException e) {}
     }
 }

@@ -275,7 +275,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             iQueries++;
         } catch (HsqlException e) {}
 
-        // System.out.print("Queries processed: "+iQueries+"  \n");
+        // Trace.printSystemOut("Queries processed: "+iQueries+"  \n");
     }
 
     static private int iQueries;

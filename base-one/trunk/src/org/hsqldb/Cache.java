@@ -244,8 +244,8 @@ abstract class Cache {
             cacheFileScale = 1;
         }
 
-        System.out.println("cache_scale: " + cacheScale);
-        System.out.println("cache_size_scale: " + cacheSizeScale);
+        Trace.printSystemOut("cache_scale: " + cacheScale);
+        Trace.printSystemOut("cache_size_scale: " + cacheSizeScale);
     }
 
     /**
@@ -740,17 +740,17 @@ abstract class Cache {
         }
 
         saveAllTimer.stop();
-        System.out.println(
+        Trace.printSystemOut(
             saveAllTimer.elapsedTimeToMessage(
                 "Cache.saveRow() total row save time"));
-        System.out.println("Cache.saveRow() total row save count = "
-                           + saveRowCount);
-        System.out.println(
+        Trace.printSystemOut("Cache.saveRow() total row save count = "
+                             + saveRowCount);
+        Trace.printSystemOut(
             makeRowTimer.elapsedTimeToMessage(
                 "Cache.makeRow() total row load time"));
-        System.out.println("Cache.makeRow() total row load count = "
-                           + makeRowCount);
-        System.out.println(
+        Trace.printSystemOut("Cache.makeRow() total row load count = "
+                             + makeRowCount);
+        Trace.printSystemOut(
             sortTimer.elapsedTimeToMessage("Cache.sort() total time"));
     }
 

@@ -123,10 +123,6 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         int writecount = StringConverter.writeUTF(s, this);
 
-        if (writecount != count - temp - 4) {
-            System.out.println("writeUTF count mismatch");
-        }
-
         writeIntData(count - temp - 4, temp);
     }
 

@@ -142,7 +142,7 @@ class Index {
      * @param r
      */
     void setRoot(Node r) {
-        root = r;
+        root  = r;
         depth = 0;
     }
 
@@ -239,10 +239,6 @@ class Index {
         int     compare = -1;
 
         while (true) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             if (n == null) {
                 if (x == null) {
                     root = i;
@@ -275,10 +271,6 @@ class Index {
     private void balance(Node x, boolean isleft) throws HsqlException {
 
         while (true) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             int sign = isleft ? 1
                               : -1;
 
@@ -370,10 +362,6 @@ class Index {
             }
 */
             for (Node temp = x; (temp = temp.getRight()) != null; ) {
-                if (Trace.STOP) {
-                    Trace.stop();
-                }
-
                 x = temp;
             }
 
@@ -448,10 +436,6 @@ class Index {
         x.delete();
 
         while (n != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             x = n;
 
             int sign = isleft ? 1
@@ -535,10 +519,6 @@ class Index {
         }
 
         while (x != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             int i = this.comparePartialRowNonUnique(indexcoldata,
                 x.getData());
 
@@ -584,10 +564,6 @@ class Index {
         Node x = root;
 
         while (x != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             int c = compareRowNonUnique(d, x.getData());
 
             if (c == 0) {
@@ -628,10 +604,6 @@ class Index {
         }
 
         while (x != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             boolean t =
                 Column.compare(value, x.getData()[colIndex_0], colType_0)
                 >= iTest;
@@ -658,10 +630,6 @@ class Index {
         while (x != null
                 && Column.compare(value, x.getData()[colIndex_0], colType_0)
                    >= iTest) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             x = next(x);
         }
 
@@ -684,10 +652,6 @@ class Index {
              l = x;
 
         while (l != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             x = l;
             l = x.getLeft();
 
@@ -721,10 +685,6 @@ class Index {
             Node l = x.getLeft();
 
             while (l != null) {
-                if (Trace.STOP) {
-                    Trace.stop();
-                }
-
                 x = l;
                 l = x.getLeft();
             }
@@ -737,10 +697,6 @@ class Index {
         x = x.getParent();
 
         while (x != null && ch.equals(x.getRight())) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             ch = x;
             x  = x.getParent();
         }
@@ -824,10 +780,6 @@ class Index {
         Node x = root;
 
         while (x != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
             int c = compareRow(d, x.getData());
 
             if (c == 0) {

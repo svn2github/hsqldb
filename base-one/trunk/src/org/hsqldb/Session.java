@@ -884,6 +884,11 @@ class Session implements SessionInterface {
 
                     return emptyUpdateCount;
                 }
+                case ResultConstants.SQLDISCONNECT : {
+                    close();
+
+                    return emptyUpdateCount;
+                }
                 default : {
                     String msg = "operation type:" + type;
 
@@ -1092,7 +1097,7 @@ class Session implements SessionInterface {
             } catch (Throwable t) {
 
                 // t.printStackTrace();
-                //System.out.println(t.toString());
+                // Trace.printSystemOut(t.toString());
                 // if (t instanceof OutOfMemoryError) {
                 // System.gc();
                 // }

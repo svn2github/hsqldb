@@ -1513,11 +1513,6 @@ public class jdbcResultSet implements ResultSet {
      *    method is called on a closed result set
      */
     public SQLWarning getWarnings() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return null;
     }
 
@@ -1542,12 +1537,7 @@ public class jdbcResultSet implements ResultSet {
      *
      * @exception SQLException if a database access error occurs
      */
-    public void clearWarnings() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-    }
+    public void clearWarnings() throws SQLException {}
 
     /**
      * <!-- start generic documentation -->
@@ -1587,11 +1577,6 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      */
     public String getCursorName() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -1788,10 +1773,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public int findColumn(String columnName) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(columnName);
-        }
-
         for (int i = 0; i < iColumnCount; i++) {
             String name = rResult.metaData.sLabel[i];
 
@@ -1950,10 +1931,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean isBeforeFirst() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // Start Old Code
         //      if (bInit == false) {
         //          return true;
@@ -1988,10 +1965,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean isAfterLast() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // At afterLast condition exists when resultset has been traversed and
         // the current row is null.  iCurrentRow should also be set to
         // afterlast but no need to test
@@ -2022,11 +1995,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean isFirst() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return iCurrentRow == 1;
     }
 
@@ -2059,10 +2027,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean isLast() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // If the resultset has not been traversed, then exit with false
         if ((!bInit) || (nCurrent == null)) {
             return false;
@@ -2092,10 +2056,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void beforeFirst() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
@@ -2123,10 +2083,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void afterLast() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2160,10 +2116,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean first() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2203,10 +2155,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean last() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2253,11 +2201,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public int getRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return iCurrentRow;
     }
 
@@ -2304,10 +2247,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean absolute(int row) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2402,10 +2341,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean relative(int rows) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
@@ -2462,10 +2397,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean previous() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2554,10 +2485,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void setFetchDirection(int direction) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(direction);
-        }
-
         if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
             throw jdbcDriver.notSupported;
         }
@@ -2624,10 +2551,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void setFetchSize(int rows) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(rows);
-        }
-
         checkAvailable();
 
         if (rows > 1 || rows < 0) {
@@ -2658,11 +2581,6 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcStatement#setFetchSize
      */
     public int getFetchSize() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return 1;
     }
 
@@ -2690,11 +2608,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public int getType() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return rsType;
     }
 
@@ -2723,11 +2636,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public int getConcurrency() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return CONCUR_READ_ONLY;
     }
 
@@ -2761,11 +2669,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowUpdated() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2796,11 +2699,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowInserted() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2831,11 +2729,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowDeleted() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return false;
     }
 
@@ -2904,11 +2797,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBoolean(int columnIndex,
                               boolean x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -2942,11 +2830,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateByte(int columnIndex, byte x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -2978,11 +2861,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateShort(int columnIndex, short x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3015,11 +2893,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateInt(int columnIndex, int x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3052,11 +2925,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateLong(int columnIndex, long x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3089,11 +2957,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateFloat(int columnIndex, float x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3126,11 +2989,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateDouble(int columnIndex, double x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3165,11 +3023,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBigDecimal(int columnIndex,
                                  BigDecimal x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3202,11 +3055,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateString(int columnIndex, String x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3239,11 +3087,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateBytes(int columnIndex, byte x[]) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3277,11 +3120,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateDate(int columnIndex,
                            java.sql.Date x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3315,11 +3153,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateTime(int columnIndex,
                            java.sql.Time x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3354,11 +3187,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateTimestamp(int columnIndex,
                                 java.sql.Timestamp x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3393,11 +3221,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateAsciiStream(int columnIndex, java.io.InputStream x,
                                   int length) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3432,11 +3255,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBinaryStream(int columnIndex, java.io.InputStream x,
                                    int length) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3471,11 +3289,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateCharacterStream(int columnIndex, java.io.Reader x,
                                       int length) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3513,11 +3326,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateObject(int columnIndex, Object x,
                              int scale) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -3550,11 +3358,6 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public void updateObject(int columnIndex, Object x) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4217,11 +4020,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void insertRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4251,11 +4049,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void updateRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4285,11 +4078,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void deleteRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4335,11 +4123,6 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void refreshRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4375,11 +4158,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void cancelRowUpdates() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4421,11 +4199,6 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void moveToInsertRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4451,12 +4224,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
-    public void moveToCurrentRow() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-    }
+    public void moveToCurrentRow() throws SQLException {}
 
     /**
      * <!-- start generic documentation -->
@@ -4518,14 +4286,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Object getObject(int i, Map map) throws SQLException {
-
-        // ADDED:
-        // trace was missing.
-        // boucherb@users 20020413
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4556,11 +4316,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Ref getRef(int i) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4591,10 +4346,6 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Blob getBlob(int i) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         byte[] b = getBytes(i);
 
@@ -4630,10 +4381,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public Clob getClob(int i) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         String s = getString(i);
 
         return s == null ? null
@@ -4667,11 +4414,6 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public Array getArray(int i) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -4875,10 +4617,6 @@ public class jdbcResultSet implements ResultSet {
     public java.sql.Date getDate(int columnIndex,
                                  Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         java.sql.Date date = getDate(columnIndex);
 
         cal.setTime(date);
@@ -4961,10 +4699,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public java.sql.Time getTime(int columnIndex,
                                  Calendar cal) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         Time t = getTime(columnIndex);
 
@@ -5050,11 +4784,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public java.sql.Timestamp getTimestamp(int columnIndex,
                                            Calendar cal) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return getTimestamp(columnIndex);
     }
 
@@ -5132,11 +4861,9 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public java.net.URL getURL(int columnIndex) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5168,11 +4895,9 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public java.net.URL getURL(String columnName) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5204,12 +4929,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5241,12 +4964,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5278,12 +4999,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5315,12 +5034,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5352,12 +5069,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5389,12 +5104,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5426,12 +5139,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5463,12 +5174,10 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
         throw jdbcDriver.notSupportedJDBC3;
     }
-*/
 
 //#endif JDBC3
     //-------------------- Internal Implementation -------------------------

@@ -33,8 +33,12 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.PrivilegedAction;
+import java.security.AccessController;
+import java.lang.reflect.Method;
 
 /**
  * NIO version or DatabaseFile.This class is used only for storing a CACHED
@@ -49,7 +53,6 @@ class NIOScaledRAFile extends ScaledRAFile {
     MappedByteBuffer buffer;
     FileChannel      channel;
     long             fileLength;
-    int              FILE_LENGTH_INCREMENT = 0x800000;
 
     public NIOScaledRAFile(String name, boolean mode,
                            int multiplier)
@@ -57,13 +60,41 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
+        isNio      = true;
         channel    = file.getChannel();
         fileLength = 0;
 
-        enlargeBuffer(file.length());
+        Trace.printSystemOut("NIO file instance created. mode:  " + mode);
     }
 
-    private void enlargeBuffer(long newPos) throws IOException {
+    /** @todo fredt - better message */
+    private long newBufferSize(long newsize) throws IOException {
+
+        long bufsize;
+
+        for (int scale = 22; ; scale++) {
+            bufsize = 1 << scale;
+
+            if (bufsize > Integer.MAX_VALUE) {
+                bufsize = Integer.MAX_VALUE;
+
+                if (bufsize < newsize) {
+                    throw new IOException(
+                        Trace.getMessage(Trace.FILE_IO_ERROR));
+                }
+
+                break;
+            }
+
+            if (bufsize >= newsize) {
+                break;
+            }
+        }
+
+        return bufsize;
+    }
+
+    private void enlargeBuffer(long newSize) throws IOException {
 
         int position = 0;
 
@@ -73,13 +104,19 @@ class NIOScaledRAFile extends ScaledRAFile {
             buffer.force();
         }
 
-        while (fileLength <= newPos) {
-            fileLength += FILE_LENGTH_INCREMENT;
+        fileLength = newBufferSize(newSize);
+
+        Trace.printSystemOut("NIO next enlargeBuffer():  " + fileLength);
+
+        try {
+            buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
+                                          : FileChannel.MapMode.READ_WRITE, 0,
+                                          fileLength);
+        } catch (IOException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new IOException(e.getMessage());
         }
-
-        System.out.println("NIO next enlargeBuffer():  " + fileLength);
-
-        buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
 
         buffer.position(position);
     }
@@ -94,12 +131,7 @@ class NIOScaledRAFile extends ScaledRAFile {
             enlargeBuffer(newPos);
         }
 
-        try {
-            buffer.position((int) newPos);
-        } catch (Exception e) {
-            System.out.println(newPos);
-            e.printStackTrace();
-        }
+        buffer.position((int) newPos);
     }
 
     public long getFilePointer() throws IOException {
@@ -149,18 +181,19 @@ class NIOScaledRAFile extends ScaledRAFile {
 
     public void close() throws IOException {
 
-        System.out.println("NIO next close() - fileLength = " + fileLength);
-        System.out.println("NIO next buffer.force()");
+        Trace.printSystemOut("NIO next close() - fileLength = " + fileLength);
+        Trace.printSystemOut("NIO next buffer.force()");
         buffer.force();
 
         buffer = null;
 
-        System.out.println("NIO next channel.close()");
+        Trace.printSystemOut("NIO next channel.close()");
+        channel.force(true);
         channel.close();
 
         channel = null;
 
-        System.out.println("NIO next file.close()");
+        Trace.printSystemOut("NIO next file.close()");
         file.close();
     }
 }

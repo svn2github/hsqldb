@@ -325,11 +325,11 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
     public int skipBytes(int n) throws IOException {
         throw new java.lang.RuntimeException(
-            "Method skipBytes() not yet implemented.");
+            Trace.getMessage(Trace.DatabaseRowInput_skipBytes));
     }
 
     public String readLine() throws IOException {
         throw new java.lang.RuntimeException(
-            "Method readLine() not yet implemented.");
+            Trace.getMessage(Trace.DatabaseRowInput_readLine));
     }
 }

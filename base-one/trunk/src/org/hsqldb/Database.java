@@ -67,6 +67,7 @@
 
 package org.hsqldb;
 
+import java.io.IOException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
@@ -170,10 +171,6 @@ class Database {
 
         setState(Database.DATABASE_SHUTDOWN);
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         sName = name;
         sType = type;
         sPath = path;
@@ -193,9 +190,11 @@ class Database {
             classLoader = null;
         }
 
-        isNew = (sType == DatabaseManager.S_MEM
-                 ||!HsqlProperties.checkFileExists(path, isFilesInJar(),
-                     getClass()));
+        try {
+            isNew = (sType == DatabaseManager.S_MEM
+                     ||!HsqlProperties.checkFileExists(path, isFilesInJar(),
+                         getClass()));
+        } catch (IOException e) {}
 
         if (isNew && ifexists) {
             throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);

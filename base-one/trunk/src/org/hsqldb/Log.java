@@ -224,17 +224,17 @@ class Log {
 
         bRestoring = true;
 
-        if (dDatabase.filesInJar || FileUtil.exists(sFileScript)) {
-            try {
+        try {
+            if (dDatabase.filesInJar || FileUtil.exists(sFileScript)) {
                 DatabaseScriptReader scr =
                     DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
                         sFileScript, scriptFormat);
 
                 scr.readAll(dDatabase.sessionManager.getSysSession());
                 scr.close();
-            } catch (IOException e) {
-                throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
             }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
         }
 
         ScriptRunner.runScript(dDatabase, sFileLog,
@@ -279,22 +279,19 @@ class Log {
         boolean needbackup = false;
         String  state      = pProperties.getProperty("modified");
 
-        if (state.equals("yes-new-files")) {
-            FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
-            FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
-            FileUtil.delete(sFileLog);
-        } else if (state.equals("yes")) {
-/*
-            if (pProperties.isFileOpen()) {
-                throw Trace.error(Trace.DATABASE_ALREADY_IN_USE);
+        try {
+            if (state.equals("yes-new-files")) {
+                FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
+                FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
+                FileUtil.delete(sFileLog);
+            } else if (state.equals("yes")) {
+
+                // recovering after a crash (or forgot to close correctly)
+                restoreBackup();
+
+                needbackup = true;
             }
-*/
-
-            // recovering after a crash (or forgot to close correctly)
-            restoreBackup();
-
-            needbackup = true;
-        }
+        } catch (IOException e) {}
 
         pProperties.setProperty("modified", "yes");
         pProperties.save();
@@ -361,10 +358,6 @@ class Log {
      */
     void close(boolean compact, boolean cache) throws HsqlException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         boolean needsbackup = false;
 
         if (filesReadOnly) {
@@ -395,13 +388,16 @@ class Log {
         pProperties.setProperty("modified", "yes-new-files");
         pProperties.save();
 
-        // old files can be removed and new files renamed
-        FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
-        FileUtil.delete(sFileLog);
+        try {
 
-        if (cache && needsbackup &&!compact) {
-            FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
-        }
+            // old files can be removed and new files renamed
+            FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
+            FileUtil.delete(sFileLog);
+
+            if (cache && needsbackup &&!compact) {
+                FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
+            }
+        } catch (IOException e) {}
 
         // now its done completely
         pProperties.setProperty("modified", "no");
@@ -410,17 +406,20 @@ class Log {
         pProperties.save();
 
         if (compact) {
+            try {
 
-            // cancel the log sync task of this process (just for security)
-            stop();
+                // cancel the log sync task of this process (just for security)
+                stop();
 
-            // delete the .data so then a new file is created
-            FileUtil.delete(sFileCache);
-            FileUtil.delete(sFileBackup);
+                // delete the .data so then a new file is created
+                // delete won't always work with NIO so reset the file
+                if (FileUtil.exists(sFileCache)) {
+                    DataFileCache.resetFreePos(sFileCache);
+                }
 
-            // tony_lai@users 20020820
-            // The database re-open and close has been moved to
-            // Database#close(int closemode) for saving memory usage.
+                FileUtil.delete(sFileCache);
+                FileUtil.delete(sFileBackup);
+            } catch (IOException e) {}
         }
     }
 
@@ -576,13 +575,16 @@ class Log {
      */
     private void restoreBackup() throws HsqlException {
 
-        if (Trace.TRACE) {
-            Trace.trace("not closed last time!");
-        }
+        try {
 
-        // the cache file must be deleted anyway
-        // the backup may not exist because it was never made or is empty
-        FileUtil.delete(sFileCache);
+            // the cache file must be deleted anyway
+            // the backup may not exist because it was never made or is empty
+            if (FileUtil.exists(sFileCache)) {
+                DataFileCache.resetFreePos(sFileCache);
+            }
+
+            FileUtil.delete(sFileCache);
+        } catch (IOException e) {}
 
         try {
             if (Trace.TRACE) {
@@ -605,10 +607,6 @@ class Log {
      * @throws  HsqlException
      */
     private void openLog() throws HsqlException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         try {
             dbScriptWriter =
@@ -658,13 +656,11 @@ class Log {
      */
     private void writeScript(boolean full) throws HsqlException {
 
-        System.out.println("writeScript");
+        Trace.printSystemOut("writeScript");
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        FileUtil.delete(sFileScript + ".new");
+        try {
+            FileUtil.delete(sFileScript + ".new");
+        } catch (IOException e) {}
 
         // script; but only positions of cached tables, not full
         //fredt - to do - flag for chache set index

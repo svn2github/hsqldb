@@ -199,11 +199,6 @@ class HsqlNameManager {
         }
 
         public boolean equals(HsqlName other) {
-
-            if (Trace.TRACE) {
-                Trace.trace("HsqlName.equals()");
-            }
-
             return hashCode == other.hashCode;
         }
 

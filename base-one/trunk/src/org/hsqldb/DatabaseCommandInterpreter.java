@@ -332,23 +332,14 @@ class DatabaseCommandInterpreter {
     private Result processScript() throws IOException, HsqlException {
 
         String               token = tokenizer.getString();
-        StopWatch            sw    = null;
         DatabaseScriptWriter dsw;
 
         if (tokenizer.wasValue()) {
             token = (String) tokenizer.getAsValue();
             dsw   = new DatabaseScriptWriter(database, token, true, true);
 
-            if (Trace.TRACE) {
-                sw = new StopWatch();
-            }
-
             dsw.writeAll();
             dsw.close();
-
-            if (Trace.TRACE) {
-                Trace.trace(sw.elapsedTimeToMessage("text script"));
-            }
 
             return new Result(ResultConstants.UPDATECOUNT);
         } else {
@@ -1514,8 +1505,10 @@ class DatabaseCommandInterpreter {
 
                         return;
                     }
-                    case Token.COLUMN :
                     default : {
+                        tokenizer.back();
+                    }
+                    case Token.COLUMN : {
                         processAlterTableAddColumn(t);
 
                         return;
@@ -1527,13 +1520,13 @@ class DatabaseCommandInterpreter {
 
                 switch (Token.get(token)) {
 
-                    default : {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                    }
                     case Token.CONSTRAINT : {
                         processAlterTableDropConstraint(t);
 
                         return;
+                    }
+                    default : {
+                        tokenizer.back();
                     }
                     case Token.COLUMN : {
                         processAlterTableDropColumn(t);

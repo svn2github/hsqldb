@@ -99,7 +99,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 4000;
+    int bigrows   = 40000;
     int smallrows = 0xfff;
 
     //
@@ -498,11 +498,13 @@ public class TestCacheSize {
 
     static void deleteDatabase(String path) {
 
-        FileUtil.delete(path + ".backup");
-        FileUtil.delete(path + ".properties");
-        FileUtil.delete(path + ".script");
-        FileUtil.delete(path + ".data");
-        FileUtil.delete(path + ".log");
+        try {
+            FileUtil.delete(path + ".backup");
+            FileUtil.delete(path + ".properties");
+            FileUtil.delete(path + ".script");
+            FileUtil.delete(path + ".data");
+            FileUtil.delete(path + ".log");
+        } catch (IOException e) {}
     }
 
     public static void main(String argv[]) {

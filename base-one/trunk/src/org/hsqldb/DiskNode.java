@@ -351,7 +351,7 @@ class DiskNode extends Node {
             int i = lookup.find(0, pointer);
 
             if (i == -1) {
-                throw new HsqlException("", "", 0);
+                throw Trace.error(Trace.DiskNode_writeTranslatePointer);
             }
 
             newPointer = lookup.get(i, 1);

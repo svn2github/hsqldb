@@ -56,14 +56,14 @@ class DataFileDefrag {
     HsqlArrayList defrag(Database db, ScaledRAFile sourcenotused,
                          String filename) throws IOException, HsqlException {
 
-        System.out.println("Defrag Transfer begins");
+        Trace.printSystemOut("Defrag Transfer begins");
 
         HsqlArrayList rootsList = new HsqlArrayList();
         HsqlArrayList tTable    = db.getTables();
 
 // erik        to specify scale;
         ScaledRAFile dest = ScaledRAFile.newScaledRAFile(filename + ".new",
-            false, 1, ScaledRAFile.DATA_FILE_NIO);
+            false, 1, ScaledRAFile.DATA_FILE_RAF);
 
 // erik        desl.seek(Cache.INITIAL_FREE_POS / cacheFileScale);
         dest.seek(Cache.INITIAL_FREE_POS);
@@ -136,7 +136,7 @@ class DataFileDefrag {
         int[] pointerPair = new int[2];
         int   count       = 0;
 
-        System.out.println("lookup begins: " + stopw.elapsedTime());
+        Trace.printSystemOut("lookup begins: " + stopw.elapsedTime());
 
         for (Node n = index.first(); n != null; count++) {
             CachedRow row = (CachedRow) n.getRow();
@@ -188,7 +188,7 @@ class DataFileDefrag {
                            rowOut.size());
 
             if ((count) % 50000 == 0) {
-                System.out.println(count + " rows " + stopw.elapsedTime());
+                Trace.printSystemOut(count + " rows " + stopw.elapsedTime());
             }
 
             n = index.next(n);
@@ -198,7 +198,7 @@ class DataFileDefrag {
             int lookupIndex = pointerLookup.find(0, rootsArray[i]);
 
             if (lookupIndex == -1) {
-                throw new HsqlException("", "", 0);
+                throw Trace.error(Trace.DataFileDefrag_writeTableToDataFile);
             }
 
             rootsArray[i] = pointerLookup.get(lookupIndex, 1);

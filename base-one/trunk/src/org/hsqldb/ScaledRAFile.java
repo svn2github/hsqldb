@@ -57,6 +57,8 @@ class ScaledRAFile {
     final RandomAccessFile file;
     final int              scale;
     final boolean          readOnly;
+    final String           fileName;
+    boolean                isNio;
 
     static ScaledRAFile newScaledRAFile(String name, boolean readonly,
                                         int multiplier,
@@ -91,6 +93,7 @@ class ScaledRAFile {
                                                             : "rw");
         this.readOnly = readonly;
         scale         = multiplier;
+        fileName      = name;
     }
 
     long length() throws IOException {
