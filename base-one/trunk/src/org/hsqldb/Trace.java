@@ -88,6 +88,7 @@ import org.hsqldb.lib.FileUtil;
 // trace message to System.out
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
 // tony_lai@users 20020820 - patch 595073 - Duplicated exception msg
+// fredt@users 20021230 - patch 488118 by xclay@users - allow multithreading
 //
 // fredt - todo - 20021022 management of nested throws inside the program in
 // such a way that it is possible to return exactly the text of the error
@@ -99,7 +100,7 @@ public class Trace extends PrintWriter {
     public static boolean       TRACESYSTEMOUT = false;
     public static final boolean STOP           = false;
     public static final boolean DOASSERT       = true;
-    private static Trace        tTracer        = new Trace();
+    private static final Trace  tTracer        = new Trace();
     private static String       sTrace;
     private static int          iStop                               = 0;
     public static final int     DATABASE_ALREADY_IN_USE             = 1,
@@ -181,21 +182,21 @@ public class Trace extends PrintWriter {
     // use empty range for new messages
     // TLS error messages
     // N.b.  Typo in following line:
-    INVALIC_CHARACTER_ENCODING                         = 81,
-                            NO_CLASSLOADER_FOR_TLS     = 82,
-                            NO_JSSE                    = 83,
-                            NO_SSLSOCKETFACTORY_METHOD = 84,
-                            UNEXPECTED_EXCEPTION       = 85,
-                            TLS_ERROR                  = 86,
-                            MISSING_TLS_METHOD         = 87,
-                            TLS_SECURITY_ERROR         = 88,
-                            NO_TLS_DATA                = 89,
-                            NO_PRINCIPAL               = 90,
-                            INCOMPLETE_CERTIFICATE     = 91,
-                            TLS_HOSTNAME_MISMATCH      = 92,
-                            KEYSTORE_PROBLEM           = 93
+    INVALIC_CHARACTER_ENCODING                               = 81,
+                                  NO_CLASSLOADER_FOR_TLS     = 82,
+                                  NO_JSSE                    = 83,
+                                  NO_SSLSOCKETFACTORY_METHOD = 84,
+                                  UNEXPECTED_EXCEPTION       = 85,
+                                  TLS_ERROR                  = 86,
+                                  MISSING_TLS_METHOD         = 87,
+                                  TLS_SECURITY_ERROR         = 88,
+                                  NO_TLS_DATA                = 89,
+                                  NO_PRINCIPAL               = 90,
+                                  INCOMPLETE_CERTIFICATE     = 91,
+                                  TLS_HOSTNAME_MISMATCH      = 92,
+                                  KEYSTORE_PROBLEM           = 93
     ;
-    private static String[] sDescription               = {
+    private static final String[] sDescription               = {
         "NOT USED", "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
         "08003 The database is shutdown", "21000 Column count does not match",
@@ -246,8 +247,7 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
         "S1000 Out of Memory", "S1000 This operation is not supported",
-        "22019 Invalid identifier",
-        "22019 Invalid table source",
+        "22019 Invalid identifier", "22019 Invalid table source",
 
         //
         "", "", "", "", "",
@@ -485,44 +485,48 @@ public class Trace extends PrintWriter {
      */
     public void println(char c[]) {
 
-        String s = new String(c);
+        synchronized (Trace.class) {
+            String s = new String(c);
 
-        if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
-                && (s.indexOf("hsqldb") != -1)) {
-            int i = s.indexOf('.');
+            if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
+                    && (s.indexOf("hsqldb") != -1)) {
+                int i = s.indexOf('.');
 
-            if (i != -1) {
-                s = s.substring(i + 1);
+                if (i != -1) {
+                    s = s.substring(i + 1);
+                }
+
+                i = s.indexOf('(');
+
+                if (i != -1) {
+                    s = s.substring(0, i);
+                }
+
+                sTrace = s;
             }
-
-            i = s.indexOf('(');
-
-            if (i != -1) {
-                s = s.substring(0, i);
-            }
-
-            sTrace = s;
         }
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
     public void println(String s) {
 
-        if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
-                && (s.indexOf("hsqldb") != -1)) {
-            int i = s.indexOf('.');
+        synchronized (Trace.class) {
+            if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
+                    && (s.indexOf("hsqldb") != -1)) {
+                int i = s.indexOf('.');
 
-            if (i != -1) {
-                s = s.substring(i + 1);
+                if (i != -1) {
+                    s = s.substring(i + 1);
+                }
+
+                i = s.indexOf('(');
+
+                if (i != -1) {
+                    s = s.substring(0, i);
+                }
+
+                sTrace = s;
             }
-
-            i = s.indexOf('(');
-
-            if (i != -1) {
-                s = s.substring(0, i);
-            }
-
-            sTrace = s;
         }
     }
 
@@ -605,7 +609,7 @@ public class Trace extends PrintWriter {
      *
      * @throws SQLException
      */
-    static void stop(String s) throws SQLException {
+    static synchronized void stop(String s) throws SQLException {
 
         if (iStop++ % 10000 != 0) {
             return;
@@ -643,7 +647,7 @@ public class Trace extends PrintWriter {
         e.printStackTrace();
     }
 
-    private static void traceCaller(String s) {
+    private static synchronized void traceCaller(String s) {
 
         class TraceCallerException extends Exception {
 

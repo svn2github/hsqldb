@@ -861,10 +861,10 @@ class Column {
     /**
      *  Compare a with b and return int value as result.
      *
-     * @param  a
-     * @param  b
-     * @param  type
-     * @return result
+     * @param  a instance of Java wrapper, depending on type, but always same for a & b (can be null)
+     * @param  b instance of Java wrapper, depending on type, but always same for a & b (can be null)
+     * @param  type one of the java.sql.Types
+     * @return result 1 if a>b, 0 if a=b, -1 if b>a
      * @throws  SQLException
      */
     static int compare(Object a, Object b, int type) throws SQLException {
@@ -875,9 +875,9 @@ class Column {
             return 0;
         }
 
-        // null handling: null==null and smaller any value
-        // todo: implement standard SQL null handling
-        // it is also used for grouping ('null' is one group)
+        // Current null handling here: null==null and smaller any value
+        // Note, standard SQL null handling is handled by Expression.test() calling testNull() instead of this!
+        // Attention, this is also used for grouping ('null' is one group)
         if (a == null) {
             if (b == null) {
                 return 0;
@@ -1405,6 +1405,8 @@ class Column {
      * @return quoted SQL string
      */
     static String createSQLString(String s) {
+        if ( s == null )
+            return "NULL";
         return StringConverter.toQuotedString(s, '\'', true);
     }
 

@@ -187,6 +187,8 @@ class User {
         rightsMap.put(dbobject, n);
     }
 
+// boucher@users 20021230 - patch 643665 - remove rights object when empty
+
     /**
      * Method declaration
      *
@@ -199,12 +201,18 @@ class User {
         Integer n = (Integer) rightsMap.get(dbobject);
 
         if (n == null) {
-            n = new Integer(right);
-        } else {
-            n = new Integer(n.intValue() & (UserManager.ALL - right));
+            return;
         }
 
-        rightsMap.put(dbobject, n);
+        int rights = n.intValue() & (UserManager.ALL - right);
+
+        if (rights == 0) {
+            rightsMap.remove(dbobject);
+        } else {
+            n = new Integer(rights);
+
+            rightsMap.put(dbobject, n);
+        }
     }
 
     /**

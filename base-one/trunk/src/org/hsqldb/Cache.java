@@ -74,8 +74,8 @@ import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.FileUtil;
 
-// fredt@users 20011220 - patch 437174 by hjb@users - cache update
-// most changes and comments by HSB are kept unchanged
+// fredt@users 20011220 - patch 437174 by hjbusch@users - cache update
+// most changes and comments by HJB are kept unchanged
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - cache update
 // fredt@users 20020320 - doc 1.7.0 by boucherb@users - doc update
 // fredt@users 20021105 - patch 1.7.2 - refactoring and enhancements

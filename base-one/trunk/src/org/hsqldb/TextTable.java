@@ -180,6 +180,8 @@ class TextTable extends org.hsqldb.Table {
             s.checkAdmin();
         }
 
+        dataSourceNew = dataSourceNew.trim();
+
         //-- Open if descending, direction changed, or file changed.
         if (isReversedNew || (isReversedNew != isReversed)
                 ||!dataSource.equals(dataSourceNew)) {

@@ -36,7 +36,6 @@ import java.sql.SQLException;
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 
 // fredt - todo - disallow dropping tables used in views
-// fredt - todo - disallow views that use TEMP tables
 /**
  * Implementation of SQL VIEWS based on a SELECT query.
  *

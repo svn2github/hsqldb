@@ -143,17 +143,17 @@ public class StringConverter {
      */
     public static String byteToHex(byte b[]) {
 
-        int              len = b.length;
-        HsqlStringBuffer s   = new HsqlStringBuffer(len * 2);
+        int    len = b.length;
+        char[] s   = new char[len * 2];
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0, j = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
 
-            s.append(HEXCHAR[c >> 4 & 0xf]);
-            s.append(HEXCHAR[c & 0xf]);
+            s[j++] = HEXCHAR[c >> 4 & 0xf];
+            s[j++] = HEXCHAR[c & 0xf];
         }
 
-        return s.toString();
+        return new String(s);
     }
 
     /**
@@ -515,26 +515,64 @@ public class StringConverter {
      *
      * The reverse conversion is handled in Tokenizer.java
      */
-    public static String toQuotedString(String s, char quotechar,
-                                        boolean doublequote) {
+    public static String toQuotedString(String s, char quoteChar,
+                                        boolean extraQuote) {
 
+        // fredt - todo - check this
+/*
         if (s == null) {
             return "NULL";
         }
-
-        int              l = s.length();
-        HsqlStringBuffer b = new HsqlStringBuffer(l + 16).append(quotechar);
-
-        for (int i = 0; i < l; i++) {
-            char c = s.charAt(i);
-
-            if (doublequote && c == quotechar) {
-                b.append(c);
-            }
-
-            b.append(c);
+*/
+        if (s == null) {
+            return null;
         }
 
-        return b.append(quotechar).toString();
+        int    count = extraQuote ? count(s, quoteChar)
+                                  : 0;
+        int    len   = s.length();
+        char[] b     = new char[2 + count + len];
+        int    i     = 0;
+        int    j     = 0;
+
+        b[j++] = quoteChar;
+
+        for (; i < len; i++) {
+            char c = s.charAt(i);
+
+            b[j++] = c;
+
+            if (extraQuote && c == quoteChar) {
+                b[j++] = c;
+            }
+        }
+
+        b[j] = quoteChar;
+
+        return new String(b);
+    }
+
+    /**
+     * Counts Character c in String s
+     *
+     * @param String s
+     *
+     * @return int count
+     */
+    static int count(String s, char c) {
+
+        int count = 0;
+
+        if (s != null) {
+            for (int i = s.length(); --i >= 0; ) {
+                char chr = s.charAt(i);
+
+                if (chr == c) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
     }
 }
