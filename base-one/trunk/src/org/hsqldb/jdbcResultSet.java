@@ -1931,16 +1931,11 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean isBeforeFirst() throws SQLException {
 
-        // Start Old Code
-        //      if (bInit == false) {
-        //          return true;
-        //      }
-        //      return false;
-        // End Old Code
-        // Start New Cose
         // bInit indicates whether the resultset has not been traversed or not
         // true - it has ---- false it hasn't
-        return !bInit;
+        checkClosed();
+
+        return rResult.rRoot != null &&!bInit;
 
         // End New Cose
     }
@@ -1968,13 +1963,9 @@ public class jdbcResultSet implements ResultSet {
         // At afterLast condition exists when resultset has been traversed and
         // the current row is null.  iCurrentRow should also be set to
         // afterlast but no need to test
-        if (!bInit) {
-            return false;
-        }
+        checkClosed();
 
-        return nCurrent == null;
-
-        // why not just: return bInit ? (nCurrent == null) : false; ?
+        return rResult.rRoot != null && bInit && nCurrent == null;
     }
 
     /**
@@ -1995,6 +1986,9 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean isFirst() throws SQLException {
+
+        checkClosed();
+
         return iCurrentRow == 1;
     }
 
@@ -2027,13 +2021,12 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean isLast() throws SQLException {
 
-        // If the resultset has not been traversed, then exit with false
-        if ((!bInit) || (nCurrent == null)) {
-            return false;
-        }
+        checkClosed();
 
+        // If the resultset has not been traversed, then exit with false
         // At the last row if the next row is null
-        return nCurrent.next == null;
+        return rResult.rRoot != null && bInit && nCurrent != null
+               && nCurrent.next == null;
     }
 
     /**
@@ -2055,6 +2048,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void beforeFirst() throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2083,6 +2078,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void afterLast() throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2116,6 +2113,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean first() throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2155,6 +2154,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean last() throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2201,6 +2202,9 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public int getRow() throws SQLException {
+
+        checkClosed();
+
         return iCurrentRow;
     }
 
@@ -2247,6 +2251,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean absolute(int row) throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2341,6 +2347,8 @@ public class jdbcResultSet implements ResultSet {
      */
     public boolean relative(int rows) throws SQLException {
 
+        checkClosed();
+
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
@@ -2397,6 +2405,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public boolean previous() throws SQLException {
+
+        checkClosed();
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
             throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
@@ -2485,6 +2495,8 @@ public class jdbcResultSet implements ResultSet {
      */
     public void setFetchDirection(int direction) throws SQLException {
 
+        checkClosed();
+
         if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
             throw jdbcDriver.notSupported;
         }
@@ -2516,6 +2528,9 @@ public class jdbcResultSet implements ResultSet {
      * @see #setFetchDirection
      */
     public int getFetchDirection() throws SQLException {
+
+        checkClosed();
+
         return FETCH_FORWARD;
     }
 
@@ -2581,6 +2596,9 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcStatement#setFetchSize
      */
     public int getFetchSize() throws SQLException {
+
+        checkClosed();
+
         return 1;
     }
 
@@ -2608,6 +2626,9 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public int getType() throws SQLException {
+
+        checkClosed();
+
         return rsType;
     }
 
@@ -2636,6 +2657,9 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public int getConcurrency() throws SQLException {
+
+        checkClosed();
+
         return CONCUR_READ_ONLY;
     }
 
@@ -2669,6 +2693,9 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowUpdated() throws SQLException {
+
+        checkClosed();
+
         return false;
     }
 
@@ -2699,6 +2726,9 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowInserted() throws SQLException {
+
+        checkClosed();
+
         return false;
     }
 
@@ -2729,6 +2759,9 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public boolean rowDeleted() throws SQLException {
+
+        checkClosed();
+
         return false;
     }
 
@@ -2760,11 +2793,6 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2
      */
     public void updateNull(int columnIndex) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(columnIndex);
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -5228,6 +5256,18 @@ public class jdbcResultSet implements ResultSet {
     }
 
     /**
+     * Internal check.
+     *
+     * @throws  SQLException when no row data is available
+     */
+    private void checkClosed() throws SQLException {
+
+        if (rResult == null) {
+            throw jdbcDriver.sqlException(Trace.JDBC_RESULTSET_IS_CLOSED);
+        }
+    }
+
+    /**
      * Internal check for column index validity.
      *
      * @param columnIndex to check
@@ -5347,7 +5387,7 @@ public class jdbcResultSet implements ResultSet {
     }
 
     /**
-     * If executing my statement updated rows on the database, how many were
+     * If executing the statement updated rows on the database, how many were
      * affected?
      *
      * @return the number of rows affected by executing my statement

@@ -269,7 +269,8 @@ public class Trace extends PrintWriter {
      JDBC_STATEMENT_NOT_ROW_COUNT                   = 154,
      JDBC_STATEMENT_NOT_RESULTSET                   = 155,
      AMBIGUOUS_COLUMN_REFERENCE                     = 156,
-     CHECK_CONSTRAINT_VIOLATION                     = 157;
+     CHECK_CONSTRAINT_VIOLATION                     = 157,
+     JDBC_RESULTSET_IS_CLOSED                       = 158;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -377,8 +378,8 @@ public class Trace extends PrintWriter {
         "wrong data for insert operation",                                    // BinaryDatabaseScriptReader_readTableInit
         "SaveRow $$",                                                         // Cache_cleanUp
         "SaveRow $$",                                                         // Cache_saveAll
-        "$$ table: $$",                                                       // Constraint_checkInsert
-        "$$ table: $$",                                                       // Database_dropTable
+        " $$ table: $$",                                                      // Constraint_checkInsert
+        " $$ table: $$",                                                      // Database_dropTable
         "duplicate column in list",                                           // DatabaseCommandInterpreter_processColumnList
         "table has no primary key",                                           // DatabaseCommandInterpreter_processCreateConstraints
         "$$ has no primary key",                                              // DatabaseCommandInterpreter_processCreateFK
@@ -392,7 +393,7 @@ public class Trace extends PrintWriter {
         "legacy db support",                                                  // DatabaseRowOutput_newDatabaseRowOutput
         " line: $$ $$",                                                       // DatabaseScriptReader_readDDL
         " line: $$ $$",                                                       // DatabaseScriptReader_readExistingData
-        "$$ $$",                                                              // Function_Function
+        " $$ $$",                                                             // Function_Function
         "$$.properties $$",                                                   // HsqlDatabaseProperties_load
         "$$.properties $$",                                                   // HsqlDatabaseProperties_save
         "invalid scope value",                                                // jdbcDatabaseMetaData_getBestRowIdentifier
@@ -433,7 +434,7 @@ public class Trace extends PrintWriter {
         "00000 Statement does not generate a row count",
         "00000 Statement does not generate a result set",
         "S0022 ambiguous Column reference",                                   //
-        "23000 Check constraint violation",
+        "23000 Check constraint violation", "S1000 ResultSet is closed"
     };
 
     /** Used during tests. */

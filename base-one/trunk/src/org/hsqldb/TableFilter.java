@@ -105,12 +105,6 @@ class TableFilter {
     boolean isCurrentOuter;
 
     /**
-     */
-    TableFilter(Table t) {
-        filterTable = t;
-    }
-
-    /**
      * Constructor declaration
      *
      *
@@ -121,8 +115,8 @@ class TableFilter {
     TableFilter(Table t, String alias, boolean outerjoin) {
 
         filterTable = t;
-        tableAlias  = (alias != null) ? alias
-                                      : t.getName().name;
+        tableAlias  = alias == null ? t.getName().name
+                                    : alias;
         isOuterJoin = outerjoin;
         emptyData   = filterTable.getNewRow();
     }

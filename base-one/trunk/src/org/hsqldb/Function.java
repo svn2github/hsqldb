@@ -395,12 +395,31 @@ class Function {
     }
 
     /**
-     * Checks the arguments supplied to this Function object against the
+     * Remnoves the Table filters from Expression parameters to this Function.
+     *
+     * @throws HsqlException if there is a problem resolving a parameter
+     * against the specified TableFilter
+     */
+    void removeFilters() throws HsqlException {
+
+        Expression e;
+
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
+            e = eArg[i];
+
+            if (e != null) {
+                e.removeFilters();
+            }
+        }
+    }
+
+    /**
+     * Checks the Expresion parameters to this Function object against the
      * set of TableFilter.
      *
      * @param fa the array of TableFilter against which to resolve this Function
      * object's arguments
-     * @throws HsqlException if there is a problem resolving an argument
+     * @throws HsqlException if there is a problem resolving a parameter
      * against the specified TableFilter
      */
     void checkTables(HsqlArrayList fa) throws HsqlException {
@@ -417,12 +436,12 @@ class Function {
     }
 
     /**
-     * Resolves the arguments supplied to this Function object against the
+     * Resolves the Expression parameters to this Function object against the
      * specified TableFilter.
      *
      * @param f the TableFilter against which to resolve this Function
      * object's arguments
-     * @throws HsqlException if there is a problem resolving an argument
+     * @throws HsqlException if there is a problem resolving a parameter
      * against the specified TableFilter
      */
     void resolveTables(TableFilter f) throws HsqlException {

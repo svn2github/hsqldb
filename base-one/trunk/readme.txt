@@ -1,6 +1,6 @@
 Readme File
 
-2003.10.18
+2003.10.19
 
 Fixed name resolution issues in some IN (SELECT ...) and EXISTS (SELECT ...)
 queries.
@@ -8,6 +8,10 @@ queries.
 Fixed LIKE parameter bug.
 
 Support for CHECK constraints that apply to the modified/inserted row only.
+This can be added via ALTER TABLE ADD CHECK() or in table definition.
+
+Fixed the DATETIME normailisation issues.
+Fixed ResultSet.isAfterLast() issue.
 
 2003.10.12
 

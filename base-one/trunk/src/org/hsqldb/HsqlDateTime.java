@@ -67,8 +67,9 @@ class HsqlDateTime {
      * A reusable static value for today's date. Should only be accessed
      * by getToday()
      */
-    private static Date today    = new Date(0);
-    static Date         tempDate = new Date(0);
+    private static Date     today    = new Date(0);
+    static Date             tempDate = new Date(0);
+    private static Calendar tempCal  = new GregorianCalendar();
 
     /**
      *  Converts a string in JDBC timestamp escape format to a
@@ -324,6 +325,7 @@ class HsqlDateTime {
     }
 
     /** @todo fredt - write the methods using Calendar */
+/*
     static long getTimePart(Timestamp ts) {
         return ts.getTime();
     }
@@ -331,21 +333,63 @@ class HsqlDateTime {
     static long getDatePart(Timestamp ts) {
         return ts.getTime();
     }
-
+*/
     static Time getNormalisedTime(Time t) {
-        return t;
+
+        synchronized (tempCal) {
+            tempCal.setTimeInMillis(t.getTime());
+            tempCal.clear(Calendar.YEAR);
+            tempCal.clear(Calendar.MONTH);
+            tempCal.clear(Calendar.DAY_OF_MONTH);
+
+            long value = tempCal.getTimeInMillis();
+
+            return new Time(value);
+        }
     }
 
     static Time getNormalisedTime(Timestamp ts) {
-        return new Time(ts.getTime());
+
+        synchronized (tempCal) {
+            tempCal.setTimeInMillis(ts.getTime());
+            tempCal.clear(Calendar.YEAR);
+            tempCal.clear(Calendar.MONTH);
+            tempCal.clear(Calendar.DAY_OF_MONTH);
+
+            long value = tempCal.getTimeInMillis();
+
+            return new Time(value);
+        }
     }
 
     static Date getNormalisedDate(Timestamp ts) {
-        return new Date(ts.getTime());
+
+        synchronized (tempCal) {
+            tempCal.setTimeInMillis(ts.getTime());
+            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.clear(Calendar.MINUTE);
+            tempCal.clear(Calendar.SECOND);
+            tempCal.clear(Calendar.MILLISECOND);
+
+            long value = tempCal.getTimeInMillis();
+
+            return new Date(value);
+        }
     }
 
     static Date getNormalisedDate(Date d) {
-        return d;
+
+        synchronized (tempCal) {
+            tempCal.setTimeInMillis(d.getTime());
+            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.clear(Calendar.MINUTE);
+            tempCal.clear(Calendar.SECOND);
+            tempCal.clear(Calendar.MILLISECOND);
+
+            long value = tempCal.getTimeInMillis();
+
+            return new Date(value);
+        }
     }
 
     /**
@@ -353,17 +397,33 @@ class HsqlDateTime {
      */
     static Timestamp getNormalisedTimestamp(Time t) {
 
-        long value = getToday().getTime() + t.getTime();
+        synchronized (tempCal) {
+            long value = getToday().getTime();
 
-        return new Timestamp(value);
+            tempCal.setTimeInMillis(t.getTime());
+            tempCal.clear(Calendar.YEAR);
+            tempCal.clear(Calendar.MONTH);
+            tempCal.clear(Calendar.DAY_OF_MONTH);
+
+            value += tempCal.getTimeInMillis();
+
+            return new Timestamp(value);
+        }
     }
 
     static Timestamp getNormalisedTimestamp(Date d) {
 
-        // fredt - todo normalise d to DATE part only
-        long value = d.getTime();
+        synchronized (tempCal) {
+            tempCal.setTimeInMillis(d.getTime());
+            tempCal.clear(Calendar.HOUR_OF_DAY);
+            tempCal.clear(Calendar.MINUTE);
+            tempCal.clear(Calendar.SECOND);
+            tempCal.clear(Calendar.MILLISECOND);
 
-        return new Timestamp(value);
+            long value = tempCal.getTimeInMillis();
+
+            return new Timestamp(value);
+        }
     }
     /*
     public static void main(String[] args) {

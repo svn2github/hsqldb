@@ -1511,6 +1511,52 @@ class Expression {
     }
 
     /**
+     * Removes table filter resolution from an Expression tree.
+     */
+    void removeFilters() throws HsqlException {
+
+        if (eArg != null) {
+            eArg.removeFilters();
+        }
+
+        if (eArg2 != null) {
+            eArg2.removeFilters();
+        }
+
+        switch (exprType) {
+
+            case COLUMN :
+                tableFilter = null;
+
+                return;
+
+            case QUERY :
+                if (subSelect != null) {
+                    subSelect.removeFilters();
+                }
+                break;
+
+            case FUNCTION :
+                if (function != null) {
+                    function.removeFilters();
+                }
+                break;
+
+            case IN :
+                if (eArg2.exprType != QUERY) {
+                    Expression[] vl = eArg2.valueList;
+
+                    for (int i = 0; i < vl.length; i++) {
+                        vl[i].removeFilters();
+                    }
+                }
+                break;
+
+            default :
+        }
+    }
+
+    /**
      * Resolve the table names for columns
      *
      *
@@ -2947,6 +2993,29 @@ class Expression {
                    || exprType == Expression.BIGGER_EQUAL
                    || exprType == Expression.SMALLER
                    || exprType == Expression.SMALLER_EQUAL);
+    }
+
+    /**
+     * Returns a Select object that can be used for checking the contents
+     * of an existing table against the given CHECK search condition.
+     *
+     */
+    static Select getCheckSelect(Table t, Expression e) throws HsqlException {
+
+        Select s = new Select();
+
+        s.eColumn    = new Expression[1];
+        s.eColumn[0] = new Expression(VALUE, Boolean.TRUE);
+        s.tFilter    = new TableFilter[1];
+        s.tFilter[0] = new TableFilter(t, null, false);
+
+        Expression condition = new Expression(NOT, e, null);
+
+        s.eCondition = condition;
+
+        s.resolveAll(true);
+
+        return s;
     }
 
     /**

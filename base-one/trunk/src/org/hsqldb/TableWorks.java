@@ -297,23 +297,26 @@ class TableWorks {
                                HsqlName name) throws HsqlException {
 
         if (table.checkFilter == null) {
-            table.checkFilter = new TableFilter(table);
+            table.checkFilter = new TableFilter(table, null, false);
         }
+
+        // check the existing rows
+        Expression e = c.core.check;
+
+        // this workaround is here to stop LIKE optimisation (for proper scripting)
+        e.setLikeOptimised();
 
         c.core.checkFilter = table.checkFilter;
         c.core.mainTable   = table;
 
-        Expression e = c.core.check;
+        Select s = Expression.getCheckSelect(table, e);
+        Result r = s.getResult(1);
 
-        /** @todo fredt - need to check the existing rows too */
-        e.resolveTables(table.checkFilter);
+        if (r.getSize() != 0) {
+            throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION);
+        }
 
-        /** @todo fredt - this temp workaround is here to stop LIKE optimisation */
-        e.setLikeOptimised();
-        e.resolveTypes();
-        e.checkResolved(true);
-
-        /** @todo fredt - this temp workaround is here to ensure no subselects etc. are in contition */
+        // workaround is here to ensure no subselects etc. are in condition
         e.getDDL();
         table.addConstraint(c);
     }

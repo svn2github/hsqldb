@@ -1563,6 +1563,11 @@ class DatabaseCommandInterpreter {
 
                         return;
                     }
+                    case Token.CHECK : {
+                        processAlterTableAddCheckConstraint(t, null);
+
+                        return;
+                    }
                     default : {
                         tokenizer.back();
                     }
@@ -2477,6 +2482,11 @@ class DatabaseCommandInterpreter {
 
                 return;
             }
+            case Token.CHECK : {
+                processAlterTableAddCheckConstraint(t, cname);
+
+                return;
+            }
         }
     }
 
@@ -2872,8 +2882,30 @@ class DatabaseCommandInterpreter {
                                     tc.core.refColArray, tc.constName,
                                     tc.core.refTable, tc.core.deleteAction,
                                     tc.core.updateAction);
+    }
 
-        return;
+    private void processAlterTableAddCheckConstraint(Table t,
+            HsqlName n) throws HsqlException {
+
+        Constraint tc;
+
+        if (n == null) {
+            n = database.nameManager.newAutoName("CT");
+        }
+
+        tc = new Constraint(n, null, null, null, Constraint.CHECK, 0, 0);
+
+        tokenizer.getThis(Token.T_OPENBRACKET);
+
+        Parser     parser    = new Parser(database, tokenizer, session);
+        Expression condition = parser.parseExpression();
+
+        tc.core.check = condition;
+
+        tokenizer.getThis(Token.T_CLOSEBRACKET);
+        session.commit();
+        tableWorks.setTable(t);
+        tableWorks.createCheckConstraint(tc, n);
     }
 
     private void processReleaseSavepoint() throws HsqlException {

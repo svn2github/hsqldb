@@ -167,8 +167,9 @@ class Select {
     }
 
     /**
-     * Method declaration
-     *
+     * Resolves the tables for all the Expression in the Select object
+     * if it is possible to do so with the given TableFilter.
+     * Sets the types of all the expressions that have so far resolved.
      *
      * @param f
      * @param ownfilter
@@ -203,7 +204,8 @@ class Select {
     }
 
     /**
-     * Method declaration
+     * Check all Expression have resolved. Return true or false as a result.
+     * Throw if false and check parameter is true.
      *
      * @throws HsqlException
      */
@@ -221,6 +223,24 @@ class Select {
         }
 
         return result;
+    }
+
+    /**
+     * Removes all the TableFilters from the Expressions.
+     *
+     * @throws HsqlException
+     */
+    void removeFilters() throws HsqlException {
+
+        int len = eColumn.length;
+
+        for (int i = 0; i < len; i++) {
+            eColumn[i].removeFilters();
+        }
+
+        if (eCondition != null) {
+            eCondition.removeFilters();
+        }
     }
 
     /**
