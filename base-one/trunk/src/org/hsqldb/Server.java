@@ -1198,6 +1198,18 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         releaseDatabase(id);
+
+        boolean shutdown = true;
+
+        for (int i = 0; i < dbID.length; i++) {
+            if (dbAlias[i] != null) {
+                shutdown = false;
+            }
+        }
+
+        if (shutdown) {
+            releaseServerSocket();
+        }
     }
 
     /**
@@ -1205,7 +1217,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     void releaseDatabase(int id) {
 
-        boolean shutdown = true;
+        trace("releaseDatabase() entered");
 
         synchronized (serverConnSet) {
             for (int i = 0; i < dbID.length; i++) {
@@ -1226,21 +1238,12 @@ public class Server implements HsqlSocketRequestHandler {
 
                 if (sc.dbID == id) {
                     sc.signalClose();
+                    serverConnSet.remove(sc);
                 }
             }
         }
 
-        for (int i = 0; i < dbID.length; i++) {
-            if (dbAlias[i] != null) {
-                shutdown = false;
-            }
-        }
-
-        if (shutdown) {
-            shutdown();
-        }
-
-        trace("notifiy() exiting");
+        trace("releaseDatabase() exiting");
     }
 
     /**
@@ -1515,37 +1518,6 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Releases this server's database.  The result is to notify HsqlRuntime
-     * that this server is no longer using the database instance and to
-     * nullify the internal reference.
-     */
-    private final void releaseDB(int i) {
-
-        if (dbAlias[i] == null){
-            return;
-        }
-        trace("releaseDB() entered");
-
-        synchronized (mDatabase_mutex) {
-            try {
-/*
-                if (mDatabase != null) {
-*/
-                trace("Releasing database: [" + dbType[i] + dbPath[i] + "]");
-                DatabaseManager.releaseDatabase(dbType[i], dbPath[i]);
-/*
-                    mDatabase = null;
-                }
-*/
-            } catch (HsqlException e) {
-                trace("error releasing database");
-            }
-        }
-
-        trace("releaseDB() exiting");
-    }
-
-    /**
      * Puts this server into the SERVER_CLOSING state, closes the ServerSocket
      * and nullifies the reference to it. If the ServerSocket is already null,
      * this method exists immediately, otherwise, the result is to fully
@@ -1665,17 +1637,7 @@ public class Server implements HsqlSocketRequestHandler {
     /** Shuts down this server. */
     private final void shutdown() {
 
-        StopWatch sw;
-
-/*
-        // Paranoia.  Should never be the case, but can result
-        // in deadlock if it is.
-
-        if (Thread.currentThread() != serverThread) {
-            throw new IllegalStateException("" + Thread.currentThread());
-        }
-*/
-        sw = new StopWatch();
+        StopWatch sw = new StopWatch();
 
         print("Initiating shutdown sequence...");
         releaseServerSocket();
@@ -1685,12 +1647,21 @@ public class Server implements HsqlSocketRequestHandler {
         serverThread = null;
 
         for (int i = 0; i < dbPath.length; i++) {
-            releaseDB(i);
+            releaseDatabase(i);
         }
 
         // paranoia:  try { sctg.destroy() } is probably fine
         if (serverConnectionThreadGroup != null) {
             if (!serverConnectionThreadGroup.isDestroyed()) {
+                for (int i = 0; serverConnectionThreadGroup.activeCount() > 0;
+                        i++) {
+                    try {
+                        wait(100);
+                    } catch (Exception e) {
+                        // e.getMessage();
+                    }
+                }
+
                 try {
                     serverConnectionThreadGroup.destroy();
                 } catch (Throwable t) {

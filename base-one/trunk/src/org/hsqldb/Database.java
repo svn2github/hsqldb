@@ -220,7 +220,7 @@ class Database {
      */
     synchronized void open() throws HsqlException {
 
-        User    sysUser;
+        User sysUser;
 
         if (!isShutdown()) {
             return;
@@ -692,14 +692,8 @@ class Database {
      */
     void close(int closemode) throws HsqlException {
 
-        HsqlException he;
+        HsqlException he = null;
 
-        he = null;
-
-//        rt = HsqlRuntime.getHsqlRuntime();
-/*
-        synchronized (rt.findOrCreateDatabaseMutex(sName)) {
-*/
         setState(DATABASE_CLOSING);
 
         try {
@@ -725,12 +719,9 @@ class Database {
         classLoader = null;
 
         logger.releaseLock();
-        DatabaseManager.removeDatabase(this);
         setState(DATABASE_SHUTDOWN);
+        DatabaseManager.removeDatabase(this);
 
-/*
-        }
-*/
         if (he != null) {
             throw he;
         }

@@ -39,6 +39,11 @@ example:
       </echo>
    </target>
 
+   <target name="javajsse">
+      <available classname="javax.net.ssl.SSLSession" property="ant.java.hasjsse"/>
+      <echo message="ant.java.hasjsse=${ant.java.hasjsse}" />
+   </target>
+
    <target name="javaversion4">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
       <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
@@ -115,7 +120,7 @@ example:
       </javac>
     </target>
 
-    <target name="classes" depends="lib">
+    <target name="classes" depends="lib,javajsse">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -127,13 +132,14 @@ example:
          <include name="*.java"/>
          <include name="org/hsqldb/*.java"/>
          <include name="org/hsqldb/resources/*.java"/>
+         <exclude name="org/hsqldb/jmx/*.java"/>
          <exclude name="org/hsqldb/lib/*.java"/>
          <exclude name="org/hsqldb/test/*.java"/>
          <exclude name="org/hsqldb/sample/*.java"/>
          <exclude name="org/hsqldb/util/*.java"/>
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
          <exclude name="org/hsqldb/jdbcStubs.java"/>
-         <exclude name="org/hsqldb/HsqlSocketFactorySecure.java"/>
+         <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/NIOLockFile.java"/>
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
@@ -197,6 +203,7 @@ example:
         <jar jarfile="lib/hsqldbz.jar"
              basedir="classes"
          >
+         <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*Transfer*.*"/>
          <exclude name="org/hsqldb/util/*Swing*.*"/>
          <exclude name="org/hsqldb/util/DataAccess*.*"/>
@@ -233,6 +240,7 @@ example:
         <jar jarfile="lib/hsqldbtest.jar"
              basedir="classes"
          >
+         <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/sample/*.*"/>
          <exclude name="org/hsqldb/jdbcStubs.class"/>
          <exclude name="org/hsqldb/Array.class"/>
@@ -247,6 +255,7 @@ example:
         <jar jarfile="lib/hsqldbmain.jar"
              basedir="classes"
          >
+         <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
@@ -263,10 +272,12 @@ example:
         <jar jarfile="lib/hsqldbmin.jar"
              basedir="classes"
          >
+         <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/lib/java/*.*"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/resources/*.properties"/>
          <exclude name="hsqlServlet.class"/>
          <exclude name="org/hsqldb/Servlet.class"/>
          <exclude name="org/hsqldb/HsqlServerFactory.class"/>
@@ -292,6 +303,7 @@ example:
         <jar jarfile="lib/hsqldb.jar"
              basedir="classes"
          >
+         <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>
          <exclude name="org/hsqldb/util/Zaurus*.*"/>
          <exclude name="org/hsqldb/test/*.class"/>
