@@ -29,6 +29,7 @@
 <ul>
 <li><a href="#NonInteractive">Giving SQL on the Command Line</a>
 <li><a href="#NonInteractive">SQL Files</a>
+<li><a href="#NonInteractive">Comments</a>
 <li><a href="#NonInteractive">Special Commands and Buffer Commands in SQL Files</a>
 <li><a href="#NonInteractive">Getting Interactive Functionality with SQL Files</a>
 <li><a href="#NonInteractive">Character Encoding</a>
@@ -51,7 +52,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.20 $
+$Revision: 1.22 $
 
 <p>Note that these links are actually to a copy of the doc at the same
 location where you are viewing this from. 
@@ -117,7 +118,7 @@ If neither case applies to you, then you are looking at the wrong program.
 
 <p>To run SQLTool...
      <ol type=1 start=1>
-<li>Set up an authentication file, as documented in the
+<li>Set up an SqlTool  configuration file, as documented in the
 <em>Auth</em> section of this document.
 <br><p>
      <li>Set up your CLASSPATH to include the classes org.hsqldb.util.SqlTool,
@@ -132,8 +133,9 @@ your CLASSPATH variable).
      <pre class="example">              java org.hsqldb.util.SqlTool --help
           </pre>
      to see what command-line arguments are available. 
-Assuming that you set up your authentication file at the default location
-and you want to use the hsqldb JDBC driver, you will want to run either
+Assuming that you set up your SqlTool configuration file at the default
+location and you want to use the hsqldb JDBC driver, you will want to run
+either
      <pre class="example">              java org.hsqldb.util.SqlTool urlid
           </pre>
      for interactive use, or
@@ -146,7 +148,7 @@ and you want to use the hsqldb JDBC driver, you will want to run either
 For the filepaths, you can use whatever wildcards your operating system shell
 supports.
 
-     <p>The <em>urlid</em> in these commands is a key into your authentication file,
+     <p>The <em>urlid</em> in these commands is a key into your SqlTol configuration file,
 as explained in the <em>Auth</em> section of this document.
      </ol>
 
@@ -154,7 +156,7 @@ as explained in the <em>Auth</em> section of this document.
 file in the classpath (as explained in number 2 above), and you must tell
 SqlTool what the JDBC driver class name is. 
 The latter can be accomplished by either using the "--driver" switch, or
-setting "driver" in your authentication file. 
+setting "driver" in your config file. 
 The <em>Authentication</em> section of this document explains the second
 method. 
 Here's an example of the first method.
@@ -172,13 +174,10 @@ Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="unnumbered">Authentication</h2>
 
-<p>Authentication setup is accomplished by creating a text "authentication
-file".
-
-<p>(NOTE:  the authentication file has evolved so that it now contains
-some SqlTool settings which have nothing to do with authentication. 
-I see little reward, however, to undertake the work to rename it
-appropriately and change all the documentation).
+<p>Authentication setup is accomplished by creating a text SqlTool
+configuration file. 
+In this section, when I say <em>configuration</em> or <em>config</em> file,
+I mean an SqlTool configuration file (aka SqlTool RC file).
 
 <p>You can put this file anywhere you want to, and specify the location
 to SqlTool by using the "--rcfile" argument. 
@@ -187,12 +186,12 @@ situations where you would not want to), then use the default
 location and you won't have to give "--rcfile" arguments to SQLTool. 
 The default location is <em>sqltool.rc</em> in your home directory. 
 If you have any doubt about where that is, then just run SqlTool with
-a phoney urlid and it will tell you where it expects the authentication
+a phoney urlid and it will tell you where it expects the configuration
 file to be.
 <pre class="example">         java org.hsqldb.util.SqlTool x
      </pre>
 
-<p>The authentication file consists of stanza(s) like this:
+<p>The config file consists of stanza(s) like this:
 <pre class="example">         urlid web
          url jdbc:hsqldb:hsql://localhost
          username web
@@ -206,10 +205,10 @@ You can have as many blank lines and comments like
      </pre>
 in the file as you like. 
 The whole point is that the <em>urlid</em> that you give in your SqlTool
-command must match a <em>urlid</em> in your authentication file.
+command must match a <em>urlid</em> in your configuration file.
 
 <p><strong>IMPORTANT:
-Use whatever facilities are at  your disposal to protect your authentication
+Use whatever facilities are at  your disposal to protect your configuration
 file.</strong>
 It should be readable, both locally and remotely, only to users who need
 to use the records in it to run SqlTool. 
@@ -234,7 +233,7 @@ SqlTool switch <em>--driver</em>.
 Defaults to <code>org.hsqldb.jdbcDriver</code>. 
 </dl>
 Property and SqlTool command-line switches override settings made in
-the authentication file.
+the configuration file.
 
 <div class="node">
 <p><hr>
@@ -252,7 +251,7 @@ SqlTool command line.  Like this.
 <pre class="example">         java org.hsqldb.util.SqlTool urlid
      </pre>
 If it starts up and connects to the database (as specified in your
-authentication file as explained in the <em>Auth</em> section of this
+SqlTool configuration file as explained in the <em>Auth</em> section of this
 document), you will be shown a banner describing the different command
 types that you can give, as well as commands to list all of the specific
 commands available to you.
@@ -461,6 +460,16 @@ databases, then don't use any Special Commands.
 turn on continue-upon-error behavior. 
 As I say below, email me if you need this).
 
+<h4 class="unnumberedsubsec">Comments</h4>
+
+<p>You can use comments of the form <code>/* An sql comment */</code> inside or
+outside of SQL Statements. 
+You can also use <code>-- </code> style SQL comments. 
+<code>/*...*/</code> comments that are not intertwined with non-comment SQL,
+and <code>-- </code> always, are sent to the database. 
+Stand-alone <code>/*...*/</code> comments are just dropped, to avoid unnecessary
+network traffic and cluttering of command history.
+
 <h4 class="unnumberedsubsec">Special Commands and Buffer Commands in SQL Files</h4>
 
 <p>Don't use Buffer Commands in your sql files, because they won't work. 
@@ -516,7 +525,7 @@ You can use another character set by setting the system property
 <code>sqltool.charset</code>, like
 <pre class="example">         java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...
      </pre>
-You can also set this per urlid in the authentication file. 
+You can also set this per urlid in the SqlTool configuration file. 
 See the <em>Authentication</em> section of this document about that.
 
 <div class="node">
