@@ -131,6 +131,11 @@ public class jdbcDriver implements Driver {
         throw new SQLException(e.message, e.state, e.code);
     }
 
+    static final void throwError(Result r) throws SQLException {
+        throw new SQLException(r.getMainString(), r.getSubString(),
+                               r.getStatementID());
+    }
+
     static final SQLException sqlException(HsqlException e) {
         return new SQLException(e.message, e.state, e.code);
     }

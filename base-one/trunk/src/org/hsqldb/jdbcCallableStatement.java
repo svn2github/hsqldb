@@ -42,7 +42,7 @@ import org.hsqldb.lib.IntValueHashMap;
 // boucherb@users patch 1.7.2 - CallableStatement impl removed
 // from jdbcPreparedStatement and moved here; sundry changes elsewhere to
 // comply
-// TODO: 1.7.2 Alpha N
+// TODO: 1.7.2 Alpha N :: DONE
 //       maybe implement set-by-parameter-name.  We have an informal spec,
 //       being "@1" => 1, "@2" => 2, etc.  Problems: return value is "@0"
 //       and there is no support for registering the return value as an out
@@ -165,7 +165,7 @@ import org.hsqldb.lib.IntValueHashMap;
  * low level support for this in the engine.  In fact, the HSQLDB stored
  * procedure call mechanism is essentially a thin wrap of the HSQLDB SQL
  * function call mechanism, in combination with the more general HSQLDB
- * sql expression evaluation mechanism, allowing simple SQL expressions,
+ * SQL expression evaluation mechanism, allowing simple SQL expressions,
  * possibly containing Java method invocations, to be evaluated outside of
  * an <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> or
  * <code>SELECT</code> statement context. That is, issuing a

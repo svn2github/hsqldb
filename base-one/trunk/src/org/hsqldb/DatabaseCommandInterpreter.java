@@ -832,8 +832,16 @@ class DatabaseCommandInterpreter {
 
         if (token.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
-            token        = tokenizer.getString();
             isPrimaryKey = true;
+            token        = tokenizer.getString();
+        }
+
+        // fredt@users - workaround for some tools that add NOT NULL after IDENTITY
+        if (isNullable && token.equals(Token.T_NOT)) {
+            tokenizer.getThis(Token.T_NULL);
+
+            isNullable = false;
+            token        = tokenizer.getString();
         }
 
         if (token.equals(Token.T_PRIMARY)) {
@@ -2003,6 +2011,12 @@ class DatabaseCommandInterpreter {
         }
 
         if (toSavepoint) {
+            if (token.length() == 0) {
+                String msg = "missing or zero-length savepoint name";
+
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+            }
+
             session.rollbackToSavepoint(token);
         } else {
             session.rollback();
@@ -2021,7 +2035,9 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            String msg = "missing or zero-length savepoint name";
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
         }
 
         session.savepoint(token);
@@ -2853,7 +2869,7 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            String msg = "zero-length savepoint name";
+            String msg = "missing or zero-length savepoint name";
 
             throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
         }

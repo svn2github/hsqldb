@@ -112,7 +112,7 @@ class Result {
     // database name
     String subSubString;
 
-    // prepared statement id
+    // prepared statement id / error vendor code
     int statementID;
 
     // max rows (out) or update count (in)
@@ -354,8 +354,9 @@ class Result {
     /**
      *  Constructor for errors
      *
-     * @param  error
-     * @param  code   Description of the Parameter
+     * @param  error error message
+     * @param  state   sql state
+     * @param  code   vendor code
      */
     Result(String error, String state, int code) {
 

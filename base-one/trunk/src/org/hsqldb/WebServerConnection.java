@@ -402,6 +402,8 @@ class WebServerConnection implements Runnable {
 
             is = null;
 
+            server.trace("GET " + name);
+
             try {
                 is = new BufferedInputStream(
                     new FileInputStream(new File(name)));
@@ -519,9 +521,6 @@ class WebServerConnection implements Runnable {
      *      this object is the Runnable object of a Thread.
      */
     String getConnectionThreadName() {
-
-        String s = toString();
-
-        return s.substring(s.lastIndexOf('.') + 1);
+        return "HSQLDB HTTP Connection @" + Integer.toString(hashCode(), 16);
     }
 }

@@ -218,6 +218,8 @@ class ServerConnection implements Runnable {
         } catch (Exception e) {
             server.trace(mThread + ":couldn't connect " + user);
 
+            // why?  this is the first action of close(), which
+            // always gets called below
             if (session != null) {
                 session.disconnect();
             }
@@ -254,8 +256,7 @@ class ServerConnection implements Runnable {
             } catch (HsqlException e) {
 
                 // fredt - is thrown while constructing the result
-                String s = e.getMessage();
-
+                // String s = e.getMessage();
                 server.printStackTrace(e);
             }
 
@@ -271,9 +272,6 @@ class ServerConnection implements Runnable {
      *      this object is the Runnable object of a Thread.
      */
     String getConnectionThreadName() {
-
-        String s = toString();
-
-        return s.substring(s.lastIndexOf('.') + 1);
+        return "HSQLDB Connection @" + Integer.toString(hashCode(), 16);
     }
 }

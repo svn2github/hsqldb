@@ -101,6 +101,7 @@ class Index {
     private final int      visibleColumns;
     private final int      colIndex_0, colType_0;    // just for tuning
     private Node           root;
+    private int            depth;
 
     /**
      * Constructor declaration
@@ -142,6 +143,7 @@ class Index {
      */
     void setRoot(Node r) {
         root = r;
+        depth = 0;
     }
 
     /**
@@ -676,6 +678,8 @@ class Index {
      */
     Node first() throws HsqlException {
 
+        depth = 0;
+
         Node x = root,
              l = x;
 
@@ -686,6 +690,8 @@ class Index {
 
             x = l;
             l = x.getLeft();
+
+            depth++;
         }
 
         return x;

@@ -90,8 +90,9 @@ import java.util.StringTokenizer;
 import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.*;    // for Map
-import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -704,7 +705,7 @@ public class jdbcConnection implements Connection {
      * @return the native form of this statement
      * @throws SQLException if a database access error occurs <p>
      */
-    public String nativeSQL(String sql) throws SQLException {
+    public String nativeSQL(final String sql) throws SQLException {
 
         // boucherb@users 20030405
         // FIXME: does not work properly for nested escapes
@@ -756,7 +757,7 @@ public class jdbcConnection implements Connection {
                         state = outside_escape_inside_double_quotes;
                     } else if (c == '{') {
                         sb.setCharAt(i++, ' ');
-
+                        i = StringUtil.skipSpaces(sql,i);
                         if (sql.regionMatches(true, i, "fn ", 0, 3)
                                 || sql.regionMatches(true, i, "oj ", 0, 3)
                                 || sql.regionMatches(true, i, "ts ", 0, 3)) {
@@ -1842,7 +1843,7 @@ public class jdbcConnection implements Connection {
             jdbcDriver.throwError(e);
         }
 
-        sp = new jdbcSavepoint(name, sessionProxy.getId());
+        sp = new jdbcSavepoint(name, this);
 
         return sp;
     }
@@ -1909,23 +1910,20 @@ public class jdbcConnection implements Connection {
 //        }
         sp = (jdbcSavepoint) savepoint;
 
-        if (sp.sessionID != sessionProxy.getId()) {
-            msg = "" + savepoint + " was not issued on " + this;
+        if (this != sp.connection) {
+            msg = savepoint + " was not issued on this connection";
 
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        if (!sp.valid) {
-            msg = "" + savepoint + " was previously released or rolled back";
-
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-        }
-
-        sp.valid = false;
         req = Result.newRollbackToSavepointRequest(sp.name);
 
         try {
-            sessionProxy.execute(req);
+            Result result = sessionProxy.execute(req);
+
+            if (result.iMode == ResultConstants.ERROR) {
+                jdbcDriver.throwError(result);
+            }
         } catch (HsqlException e) {
             jdbcDriver.throwError(e);
         }
@@ -1979,23 +1977,20 @@ public class jdbcConnection implements Connection {
 //        }
         sp = (jdbcSavepoint) savepoint;
 
-        if (sp.sessionID != sessionProxy.getId()) {
-            msg = "" + savepoint + " was not issued on " + this;
+        if (this != sp.connection) {
+            msg = savepoint + " was not issued on this connection";
 
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        if (!sp.valid) {
-            msg = "" + savepoint + " was previously released or rolled back";
-
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-        }
-
-        sp.valid = false;
         req = Result.newReleaseSavepointRequest(sp.name);
 
         try {
-            sessionProxy.execute(req);
+            Result result = sessionProxy.execute(req);
+
+            if (result.iMode == ResultConstants.ERROR) {
+                jdbcDriver.throwError(result);
+            }
         } catch (HsqlException e) {
             jdbcDriver.throwError(e);
         }

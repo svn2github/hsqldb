@@ -962,9 +962,9 @@ class Session implements SessionInterface {
      * in this session context: <p>
      *
      * <ol>
-     * <li>An STMTID mode Result describing id of the statement
+     * <li>An PREPARE_ACK mode Result describing id of the statement
      *     prepared by this request.  This is used by the JDBC implementation
-     *     to identify to the engine which prepared statement to execute.
+     *     to later identify to the engine which prepared statement to execute.
      *
      * <li>A DATA mode result describing the statement's result set metadata.
      *     This is used to generate the JDBC ResultSetMetaData object returned
@@ -1117,7 +1117,7 @@ class Session implements SessionInterface {
                     // stored procedure calls to methods with
                     // void return type and select statements with
                     // a single row/column containg null
-                    updateCounts[count] = ResultConstants.SUCCESS_NO_INFO;
+                    updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
 
                     break;
                 }

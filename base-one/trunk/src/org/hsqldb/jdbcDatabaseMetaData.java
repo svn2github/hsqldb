@@ -1814,9 +1814,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB does not support the ODBC
-     * Core SQL grammar; this method
-     * always returns <code>false</code>.
+     * From 1.7.2 this method always returns <code>true</code>.
      * </span>
      * <!-- end release-specific documentation -->
      * @return <code>true</code> if so; <code>false</code> otherwise
@@ -1828,7 +1826,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -5500,7 +5498,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 //#ifdef JDBC3
 /*
     public boolean supportsSavepoints() throws SQLException {
-
         return true;
     }
 */

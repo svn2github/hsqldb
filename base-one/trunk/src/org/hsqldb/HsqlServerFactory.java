@@ -59,7 +59,7 @@ public class HsqlServerFactory {
         server.setProperties(props);
 
         try {
-            server.openDB();
+            server.openDatabases();
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);
         }
