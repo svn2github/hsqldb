@@ -1,10 +1,16 @@
 Readme File
 
 
+More tests are required to verify the improvements. Please perform tests and report any 
+issues.
 
-2004.03.21
 
-Improvements to ALTER tests with VIEWS
+2004.03.22 RC_4
+
+Included hsqldb.jar has been compiled with JDK 1.4 and will not work with JRE 1.3.x or
+earlier. Please recompile with JDK 1.3 for use with this or earlier JDK's.
+
+Improvements to ALTER TABLE when VIEWS reference the table
 Enhancements to Server
 
 Bug fixes for: 
