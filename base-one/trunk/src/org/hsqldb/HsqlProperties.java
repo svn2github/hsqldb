@@ -382,11 +382,12 @@ public class HsqlProperties {
     public boolean isEmpty() {
         return stringProps.isEmpty();
     }
-
+/*
     public static void main(String[] argv) {
 
         HsqlProperties props = delimitedArgPairsToProps(
             "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey;", "=",
             ";", "textdb");
     }
+*/
 }
