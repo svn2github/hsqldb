@@ -1332,15 +1332,16 @@ public class Table extends BaseTable {
 
         // tony_lai@users 20020820 - patch 595099
         HsqlName name = pkName != null ? pkName
-                                       : makeSysPKName(this);
+                                       : makeSysPKName();
 
         createPrimaryIndex(columns, name);
         setBestRowIdentifiers();
     }
 
-    static HsqlName makeSysPKName(Table table) throws HsqlException {
-        return table.database.nameManager.newHsqlName("SYS_PK",
-                table.tableName.name, table.tableName.isNameQuoted);
+    HsqlName makeSysPKName() throws HsqlException {
+        return isTemp ? database.nameManager.newAutoName("PK"):
+            database.nameManager.newHsqlName("SYS_PK",
+                tableName.name, tableName.isNameQuoted);
     }
 
     void createPrimaryIndex(int[] pkcols,

@@ -221,6 +221,10 @@ class TableWorks {
 
     void addPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
 
+        if (name == null) {
+            name = table.makeSysPKName();
+        }
+
         if (table.database.constraintNameList.containsName(name.name)) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
         }
@@ -550,6 +554,17 @@ class TableWorks {
             if (ArrayUtil.find(table.getPrimaryKey(), colindex) != -1) {
                 newCol.setNullable(false);
             }
+        } else if (table.hasPrimaryKey()) {
+            if (oldCol.isPrimaryKey()) {
+                newCol.setPrimaryKey(true);
+                newCol.setNullable(false);
+            } else if (newCol.isPrimaryKey()) {
+                throw Trace.error(Trace.SECOND_PRIMARY_KEY);
+            }
+        } else if (newCol.isPrimaryKey()) {
+
+            // use a better error message
+            throw Trace.error(Trace.SECOND_PRIMARY_KEY);
         }
 
         table.database.checkColumnIsInView(

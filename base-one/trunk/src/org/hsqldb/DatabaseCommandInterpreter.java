@@ -1215,15 +1215,16 @@ class DatabaseCommandInterpreter {
 
             Constraint primaryConst = (Constraint) tempConstraints.get(0);
 
-            if (primaryConst.constName != null) {
-                database.indexNameList.addName(primaryConst.constName.name,
-                                               t.getName(),
-                                               Trace.INDEX_ALREADY_EXISTS);
-                database.constraintNameList.addName(
-                    primaryConst.constName.name, t.getName(),
-                    Trace.CONSTRAINT_ALREADY_EXISTS);
+            if (primaryConst.constName == null) {
+                primaryConst.constName = t.makeSysPKName();
             }
 
+            database.indexNameList.addName(primaryConst.constName.name,
+                                           t.getName(),
+                                           Trace.INDEX_ALREADY_EXISTS);
+            database.constraintNameList.addName(
+                primaryConst.constName.name, t.getName(),
+                Trace.CONSTRAINT_ALREADY_EXISTS);
             t.createPrimaryKey(primaryConst.constName,
                                primaryConst.core.mainColArray, true);
 
