@@ -68,17 +68,52 @@
 package org.hsqldb.test;
 
 import java.sql.DriverManager;
-import java.sql.Connection;
+import java.sql.*;
 
 public class TestMultipleConnections {
 
     public TestMultipleConnections() {}
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+        // test for bug itme 500105 commit does not work with multiple con. FIXED
         TestMultipleConnections hs   = new TestMultipleConnections();
         Connection              con1 = hs.createObject();
         Connection              con2 = hs.createObject();
+        Connection              con3 = hs.createObject();
+
+        con1.setAutoCommit(false);
+
+        //connection1.commit();
+        con2.setAutoCommit(false);
+
+        //connection1.commit();
+        con3.setAutoCommit(false);
+
+        //connection1.commit();
+        Statement st = con3.createStatement();
+
+        st.execute("DROP TABLE T IF EXISTS");
+        st.execute("CREATE TABLE T (I INT)");
+        st.execute("INSERT INTO T VALUES (2)");
+
+        ResultSet rs = st.executeQuery("SELECT * FROM T");
+
+        rs.next();
+
+        int value = rs.getInt(1);
+
+        con2.commit();
+        con3.commit();
+        con1.commit();
+
+        rs = st.executeQuery("SELECT * FROM T");
+
+        rs.next();
+
+        if (value != rs.getInt(1)) {
+            throw new Exception("value doesn't exist");
+        }
     }
 
     /**
@@ -89,8 +124,8 @@ public class TestMultipleConnections {
         try {
             Class.forName("org.hsqldb.jdbcDriver");
 
-            return DriverManager.getConnection(
-                "jdbc:hsqldb:/hsql/testcache/test", "sa", "");
+            return DriverManager.getConnection("jdbc:hsqldb:/hsql/test/test",
+                                               "sa", "");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

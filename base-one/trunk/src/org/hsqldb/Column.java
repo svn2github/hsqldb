@@ -79,6 +79,7 @@ import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
 import org.hsqldb.store.ValuePool;
+import java.lang.Math;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions
@@ -951,10 +952,11 @@ class Column {
 
                     if (o instanceof java.lang.Integer
                             || o instanceof java.lang.Long) {
-                        int temp = ((Number) o).intValue();
+                        long temp = ((Number) o).longValue();
 
                         if (Byte.MAX_VALUE < temp || temp < Byte.MIN_VALUE) {
-                            throw new java.lang.NumberFormatException();
+                            throw Trace.error(
+                                Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
                         // fredt@users - no narrowing for Long values
@@ -964,6 +966,10 @@ class Column {
                     // fredt@users - direct conversion for JDBC setObject()
                     if (o instanceof java.lang.Byte) {
                         return ValuePool.getInt(((Number) o).intValue());
+                    }
+
+                    if (o instanceof java.lang.Number) {
+                        return convertObject(convertToInt(o), type);
                     }
                     break;
 
@@ -976,11 +982,12 @@ class Column {
 
                     if (o instanceof java.lang.Integer
                             || o instanceof java.lang.Long) {
-                        int temp = ((Number) o).intValue();
+                        long temp = ((Number) o).longValue();
 
                         if (Short.MAX_VALUE < temp
                                 || temp < Short.MIN_VALUE) {
-                            throw new java.lang.NumberFormatException();
+                            throw Trace.error(
+                                Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
                         // fredt@users - no narrowing for Long values
@@ -991,6 +998,10 @@ class Column {
                     if (o instanceof java.lang.Byte
                             || o instanceof java.lang.Short) {
                         return ValuePool.getInt(((Number) o).intValue());
+                    }
+
+                    if (o instanceof java.lang.Number) {
+                        return convertObject(convertToInt(o), type);
                     }
                     break;
 
@@ -1010,11 +1021,16 @@ class Column {
 
                         if (Integer.MAX_VALUE < temp
                                 || temp < Integer.MIN_VALUE) {
-                            throw new java.lang.NumberFormatException();
+                            throw Trace.error(
+                                Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
                         // fredt@users - narrowing needed for function calls
                         return ValuePool.getInt(((Number) o).intValue());
+                    }
+
+                    if (o instanceof java.lang.Number) {
+                        return convertToInt(o);
                     }
                     break;
 
@@ -1029,6 +1045,10 @@ class Column {
 
                     if (o instanceof java.lang.Integer) {
                         return ValuePool.getLong(((Integer) o).longValue());
+                    }
+
+                    if (o instanceof java.lang.Number) {
+                        return convertToLong(o);
                     }
                     break;
 
@@ -1050,7 +1070,7 @@ class Column {
                     }
 
                     if (o instanceof java.lang.Number) {
-                        return new Double(((Number) o).doubleValue());
+                        return convertToDouble(o);
                     }
                     break;
 
@@ -1344,6 +1364,85 @@ class Column {
         return StringConverter.toQuotedString(s, '\'', true);
     }
 
+// fredt@users 20030715 - patch 1.7.2 by fredt - type narrowing
+
+    /**
+     * Type narrowing from DECIMAL/NUMERIC to BIGINT / INT / SMALLINT / TINYINT
+     * following the SQL rules
+     */
+    static Integer convertToInt(Object o) throws HsqlException {
+
+        int val = ((Number) o).intValue();
+
+        if (o instanceof BigDecimal) {
+            BigDecimal bd     = (BigDecimal) o;
+            int        signum = bd.signum();
+            BigDecimal bo     = new BigDecimal(val + signum);
+
+            if (bo.compareTo(bd) != signum) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+
+            return ValuePool.getInt(val);
+        }
+
+        if (o instanceof Double) {
+            double d = ((Double) o).doubleValue();
+
+            if (Double.isNaN(d) || Math.abs(d - val) > 0) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+
+            return ValuePool.getInt(val);
+        }
+
+        throw Trace.error(Trace.INVALID_CONVERSION);
+    }
+
+    static Long convertToLong(Object o) throws HsqlException {
+
+        long val = ((Number) o).longValue();
+
+        if (o instanceof BigDecimal) {
+            BigDecimal bd     = (BigDecimal) o;
+            int        signum = bd.signum();
+            BigDecimal bo     = new BigDecimal(val + signum);
+
+            if (bo.compareTo(bd) != signum) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+
+            return ValuePool.getLong(val);
+        }
+
+        if (o instanceof Double) {
+            double d = ((Double) o).doubleValue();
+
+            if (Double.isNaN(d) || Math.abs(d - (double) val) > 0) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+
+            return ValuePool.getLong(val);
+        }
+        throw Trace.error(Trace.INVALID_CONVERSION);
+    }
+
+    static Double convertToDouble(Object o) throws HsqlException {
+
+        double val = ((Number) o).doubleValue();
+
+        if (o instanceof BigDecimal) {
+            BigDecimal bd     = (BigDecimal) o;
+            int        signum = bd.signum();
+            BigDecimal bo     = new BigDecimal(val + signum);
+            double test = bo.doubleValue();
+            if (bo.compareTo(bd) != signum) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+        }
+
+        return ValuePool.getDouble(Double.doubleToLongBits(val));
+    }
 // fredt@users 20020408 - patch 442993 by fredt - arithmetic expressions
 
     /**
