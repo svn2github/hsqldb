@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -86,17 +86,17 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
-    String  tableType      = "TEXT";
+    String  tableType      = "CACHED";
     int     cacheScale     = 12;
     int     cacheSizeScale = 10;
     boolean nioMode        = true;
 
     // script format {TEXT | BINARY | COMPRESSED}
-    String  logType       = "TEXT";
+    String  logType       = "BINARY";
     int     writeDelay    = 60;
     boolean indexZip      = false;
     boolean indexLastName = false;
-    boolean addForeignKey = false;
+    boolean addForeignKey = true;
     boolean refIntegrity  = true;
 
     // may speed up inserts when tableType=="CACHED"
@@ -107,10 +107,10 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 64000;
+    int bigrows = 256000;
 
     // number of ops
-    int bigops    = 64000;
+    int bigops    = 256000;
     int smallops  = 8000;
     int smallrows = 0xfff;
 
@@ -168,6 +168,7 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET WRITE_DELAY " + 60);
+                sStatement.execute("SET CHECKPOINT DEFRAG " + 100);
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 0);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_scale\" "
@@ -316,14 +317,17 @@ public class TestCacheSize {
 
         StopWatch sw = new StopWatch();
         int       i;
+        PreparedStatement ps =
+            cConnection.prepareStatement("INSERT INTO zip VALUES(null)");
 
         for (i = 0; i <= smallrows; i++) {
-            sStatement.execute("INSERT INTO zip VALUES(null)");
+            ps.execute();
         }
 
+        ps.close();
         sStatement.execute("SET REFERENTIAL_INTEGRITY " + this.refIntegrity);
 
-        PreparedStatement ps = cConnection.prepareStatement(
+        ps = cConnection.prepareStatement(
             "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
 
         ps.setString(1, "Julia");
@@ -332,16 +336,42 @@ public class TestCacheSize {
         for (i = 0; i < bigrows; i++) {
             ps.setInt(3, nextIntRandom(randomgen, smallrows));
 
-            long nextrandom   = randomgen.nextLong();
-            int  randomlength = (int) nextrandom & 0x7f;
+            {
 
-            if (randomlength > filler.length()) {
-                randomlength = filler.length();
+                // small rows
+                long nextrandom   = randomgen.nextLong();
+                int  randomlength = (int) nextrandom & 0x7f;
+
+                if (randomlength > filler.length()) {
+                    randomlength = filler.length();
+                }
+
+                String varfiller = filler.substring(0, randomlength);
+
+                ps.setString(4, nextrandom + varfiller);
             }
 
-            String varfiller = filler.substring(0, randomlength);
+/*
+            {
+                // big rows
+                long nextrandom   = randomgen.nextLong();
+                int  randomlength = (int) nextrandom & 0x7ff;
 
-            ps.setString(4, nextrandom + varfiller);
+                if (randomlength > filler.length() * 20) {
+                    randomlength = filler.length() * 20;
+                }
+
+                StringBuffer sb = new StringBuffer(0xff);
+
+                for (int j = 0; j < 20; j++) {
+                    sb.append(filler);
+                }
+
+                String varfiller = sb.substring(0, randomlength);
+
+                ps.setString(4, nextrandom + varfiller);
+            }
+*/
             ps.execute();
 
             if (reportProgress && (i + 1) % 10000 == 0) {
@@ -369,6 +399,8 @@ public class TestCacheSize {
                 sStatement.execute("DROP TABLE tempt");
             }
         }
+
+        ps.close();
 
 //            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
 //            sStatement.execute("DROP TABLE temptest;");
@@ -428,6 +460,7 @@ public class TestCacheSize {
             }
         }
 
+        ps.close();
         System.out.println("total multi key rows inserted: " + i);
         System.out.println("insert time: " + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
@@ -539,6 +572,8 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
+
+            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -572,6 +607,8 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
+
+            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -668,6 +705,8 @@ public class TestCacheSize {
                                        + (sw.elapsedTime() + 1));
                 }
             }
+
+            ps.close();
         } catch (SQLException e) {
             System.out.println("error : " + random);
             e.printStackTrace();
@@ -708,6 +747,50 @@ public class TestCacheSize {
                                        + (i * 1000 / (sw.elapsedTime() + 1)));
                 }
             }
+
+            ps.close();
+        } catch (SQLException e) {
+            System.out.println("error : " + random);
+            e.printStackTrace();
+        }
+
+        long time = sw.elapsedTime();
+        long rate = (i * 1000) / (time + 1);
+
+        storeResult("update with random id", i, time, rate);
+        System.out.println("update time with random id " + i + " rows  -- "
+                           + time + " ms -- " + rate + " tps");
+    }
+
+    void updateIDLinear() {
+
+        StopWatch        sw        = new StopWatch();
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
+        int              count     = 0;
+        int              random    = 0;
+
+        try {
+            PreparedStatement ps = cConnection.prepareStatement(
+                "UPDATE test SET zip = zip + 1 WHERE id = ? and zip <> "
+                + smallrows);
+
+            for (i = 0; i < bigops; i++) {
+                random = i;
+
+                ps.setInt(1, random);
+                ps.execute();
+
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Update " + (i + 1) + " : "
+                                       + sw.elapsedTime() + " rps: "
+                                       + (i * 1000 / (sw.elapsedTime() + 1)));
+                }
+            }
+
+            ps.close();
         } catch (SQLException e) {
             System.out.println("error : " + random);
             e.printStackTrace();
@@ -749,6 +832,8 @@ public class TestCacheSize {
                                        + (i * 1000 / (sw.elapsedTime() + 1)));
                 }
             }
+
+            ps.close();
         } catch (SQLException e) {
             System.out.println("error : " + random);
             e.printStackTrace();
@@ -791,6 +876,8 @@ public class TestCacheSize {
                                        + (i * 1000 / (sw.elapsedTime() + 1)));
                 }
             }
+
+            ps.close();
         } catch (SQLException e) {
             System.out.println("error : " + random);
             e.printStackTrace();

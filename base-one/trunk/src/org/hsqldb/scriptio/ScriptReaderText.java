@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -192,17 +192,13 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             if (statementType == INSERT_STATEMENT) {
                 colTypes = currentTable.getColumnTypes();
-                rowData =
-                    rowIn.readData(colTypes,
-                                   currentTable.getInvisibleColumnCount());
             } else if (currentTable.hasPrimaryKey()) {
                 colTypes = currentTable.getPrimaryKeyTypes();
-                rowData  = rowIn.readData(colTypes, colTypes.length);
             } else {
                 colTypes = currentTable.getColumnTypes();
-                rowData = rowIn.readData(colTypes,
-                                         currentTable.getColumnCount());
             }
+
+            rowData = rowIn.readData(colTypes);
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }

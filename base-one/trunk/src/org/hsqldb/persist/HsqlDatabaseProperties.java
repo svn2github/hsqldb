@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -121,8 +121,6 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         integralProperties.addAll(integralPropertiesNames);
 
         // user defined string properties
-// tytar@users 20041209 - provide to set default table type
-// added PROP_DEFAULT_TABLE_TYPE
         String[] stringPropertiesNames = {
             "textdb.fs", "textdb.vs", "textdb.lvs", "textdb.encoding",
             DEFAULT_TABLE_TYPE
@@ -202,13 +200,13 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // the default, "0" means no garbage collection is forced by
         // hsqldb (the Java Runtime will do it's own garbage collection
         // in any case).
-        setProperty("runtime.gc_interval", "0");
+        setProperty("runtime.gc_interval", 0);
 
         // this property is either 1 or 8
-        setProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE, "1");
+        setProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE, 1);
 
         // this property is between 6 - 20, default 8
-        setProperty("hsqldb.cache_size_scale", "8");
+        setProperty("hsqldb.cache_size_scale", 8);
 
         // number of rows from CACHED tables kept constantly in memory
         // the number of rows in up to 3 * (2 to the power of
@@ -216,16 +214,16 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // reduce the default 14 (3*16K rows) if memory is limited and rows
         // are large.
         // values between 8-16 are allowed
-        setProperty("hsqldb.cache_scale", "14");
+        setProperty("hsqldb.cache_scale", 14);
 
         // maximum size of .log file in megabytes
         setProperty("hsqldb.log_size", "200");
 
         // type of logging (0 : text , 1 : binary, 3 : compressed)
-        setProperty("hsqldb.script_format", "0");
+        setProperty("hsqldb.script_format", 0);
 
         // initial value of idendity columns
-        setProperty("hsqldb.first_identity", "0");
+        setProperty("hsqldb.first_identity", 0);
         setProperty("readonly", false);
         setProperty("modified", "no-new-files");
 
@@ -252,9 +250,10 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // settings for OOo integration
         if (db.isStoredFileAccess()) {
             setProperty(DEFAULT_TABLE_TYPE, "cached");
-            setProperty("hsqldb.cache_scale", "13");
-            setProperty("hsqldb.log_size", "10");
+            setProperty("hsqldb.cache_scale", 13);
+            setProperty("hsqldb.log_size", 10);
             setProperty("sql.enforce_strict_size", true);
+            setProperty("hsqldb.first_identity", 1);
         }
 
         setSystemVariables();

@@ -108,6 +108,7 @@ examples:
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/util/ConnectionDialogCommon.java
                     +JAVA1TARGET"/>
+
        </java>
     </target>
 
@@ -754,7 +755,7 @@ examples:
         <!-- Required Props:  book -->
         <mkdir dir='docwork/${book}/cdata'/>
         <if><not><uptodate targetfile='docwork/${book}/cdata/.status'>
-            <!-- Mappers don't work for shit with multiple patterns.
+            <!-- Mappers don't work with multiple patterns.
             Therefore, have to use a timestamp file.  -->
             <srcfiles dir='src/org/hsqldb/sample'
              includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg, *.sql'/>

@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -53,9 +53,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -446,7 +446,8 @@ class Constraint {
         }
 
         // a record must exist in the main table
-        boolean exists = core.mainIndex.exists(row, core.refColArray);
+        boolean exists = core.mainIndex.exists(session, row,
+                                               core.refColArray);
 
         if (!exists) {
 
@@ -512,7 +513,8 @@ class Constraint {
      * @return Node object or null
      * @throws  HsqlException
      */
-    RowIterator findFkRef(Object[] row, boolean delete) throws HsqlException {
+    RowIterator findFkRef(Session session, Object[] row,
+                          boolean delete) throws HsqlException {
 
         if (row == null || Index.isNull(row, core.mainColArray)) {
             return core.refIndex.emptyIterator();
@@ -541,8 +543,9 @@ class Constraint {
         }
 */
         return delete
-               ? core.refIndex.findFirstRowForDelete(row, core.mainColArray)
-               : core.refIndex.findFirstRow(row, core.mainColArray);
+               ? core.refIndex.findFirstRowForDelete(session, row,
+                   core.mainColArray)
+               : core.refIndex.findFirstRow(session, row, core.mainColArray);
     }
 
     /**
@@ -552,13 +555,14 @@ class Constraint {
      * If a valid row is found the corresponding <code>Node</code> is returned.
      * Otherwise a 'INTEGRITY VIOLATION' Exception gets thrown.
      */
-    boolean hasMainRef(Object[] row) throws HsqlException {
+    boolean hasMainRef(Session session, Object[] row) throws HsqlException {
 
         if (Index.isNull(row, core.refColArray)) {
             return false;
         }
 
-        boolean exists = core.mainIndex.exists(row, core.refColArray);
+        boolean exists = core.mainIndex.exists(session, row,
+                                               core.refColArray);
 
         // -- there has to be a valid node in the main table
         // --
@@ -586,7 +590,7 @@ class Constraint {
         }
 
         // else a record must exist in the main index
-        return mainIndex.exists(rowdata, rowColArray);
+        return mainIndex.exists(null, rowdata, rowColArray);
     }
 
     /**
@@ -597,7 +601,7 @@ class Constraint {
     static void checkReferencedRows(Table table, int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 
-        RowIterator it = table.rowIterator();
+        RowIterator it = table.rowIterator(null);
 
         while (true) {
             Row row = it.next();

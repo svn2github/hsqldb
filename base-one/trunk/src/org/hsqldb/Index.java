@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE HYPERSONIC SQL GROUP,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -53,9 +53,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -96,22 +96,21 @@ public class Index {
     static final int POINTER_INDEX = 2;
 
     // fields
-    private final HsqlName  indexName;
-    final boolean[]         colCheck;
-    private final int[]     colIndex;
-    private final int[]     colType;
-    final int[]             pkCols;
-    final int[]             pkTypes;
-    private final boolean   isUnique;                 // DDL uniqueness
-    boolean                 isConstraint;
-    boolean                 isForward;
-    private final boolean   isExact;
-    private final int       visibleColumns;
-    private final int       colIndex_0, colType_0;    // just for tuning
-    private Node            root;
-    private int             depth;
-    static IndexRowIterator emptyIterator = new IndexRowIterator(null, null);
-    IndexRowIterator        updatableIterators;
+    private final HsqlName indexName;
+    final boolean[]        colCheck;
+    private final int[]    colIndex;
+    private final int[]    colType;
+    final int[]            pkCols;
+    final int[]            pkTypes;
+    private final boolean  isUnique;    // DDL uniqueness
+    private final boolean  useRowId;
+    boolean                isConstraint;
+    boolean                isForward;
+    private Node           root;
+    private int            depth;
+    static IndexRowIterator emptyIterator = new IndexRowIterator(null, null,
+        null);
+    IndexRowIterator updatableIterators;
 
     /**
      * Constructor declaration
@@ -126,23 +125,21 @@ public class Index {
      * @param forward is this an auto-index for an FK that refers to a table defined after this table
      * @param visColumns count of visible columns
      */
-    Index(HsqlName name, Table table, int[] column, int[] type,
+    Index(HsqlName name, Table table, int[] column, int[] type, boolean isPk,
             boolean unique, boolean constraint, boolean forward,
-            int[] pkcols, int[] pktypes, int visColumns) {
+            int[] pkcols, int[] pktypes) {
 
-        indexName      = name;
-        colIndex       = column;
-        colType        = type;
-        pkCols         = pkcols;
-        pkTypes        = pktypes;
-        isUnique       = unique;
-        isConstraint   = constraint;
-        isForward      = forward;
-        colIndex_0     = colIndex[0];
-        colType_0      = colType[0];
-        visibleColumns = visColumns;
-        isExact = colIndex.length == visibleColumns || visibleColumns == 0;
-        colCheck       = table.getNewColumnCheckList();
+        indexName    = name;
+        colIndex     = column;
+        colType      = type;
+        pkCols       = pkcols;
+        pkTypes      = pktypes;
+        isUnique     = unique;
+        isConstraint = constraint;
+        isForward    = forward;
+        useRowId = (!isUnique && pkCols.length == 0)
+                   || (colIndex.length == 0);
+        colCheck = table.getNewColumnCheckList();
 
         ArrayUtil.intIndexesToBooleanArray(colIndex, colCheck);
 
@@ -185,7 +182,7 @@ public class Index {
      * Returns the count of visible columns used
      */
     int getVisibleColumns() {
-        return visibleColumns;
+        return colIndex.length;
     }
 
     /**
@@ -222,7 +219,7 @@ public class Index {
     int size() throws HsqlException {
 
         int         count = 0;
-        RowIterator it    = firstRow();
+        RowIterator it    = firstRow(null);
 
         while (it.hasNext()) {
             count++;
@@ -237,7 +234,7 @@ public class Index {
 
     public int sizeEstimate() throws HsqlException {
 
-        firstRow();
+        firstRow(null);
 
         return (int) (1L << depth);
     }
@@ -256,30 +253,27 @@ public class Index {
     /**
      * Insert a node into the index
      */
-    void insert(Node i) throws HsqlException {
+    void insert(Row row, int offset) throws HsqlException {
 
-        Object[] data    = i.getData();
-        Node     n       = root,
-                 x       = n;
-        boolean  isleft  = true;
-        int      compare = -1;
+        Node    n       = root,
+                x       = n;
+        boolean isleft  = true;
+        int     compare = -1;
 
         while (true) {
             if (n == null) {
                 if (x == null) {
-                    root = i;
+                    root = row.getNode(offset);
 
                     return;
                 }
 
-                set(x, isleft, i);
+                set(x, isleft, row.getNode(offset));
 
                 break;
             }
 
-            Object[] nData = n.getData();
-
-            compare = compareRowUnique(data, nData);
+            compare = compareRowUnique(row, n.getRow());
 
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
@@ -526,16 +520,16 @@ public class Index {
         }
     }
 
-    RowIterator findFirstRow(Object[] rowdata,
+    RowIterator findFirstRow(Session session, Object[] rowdata,
                              int[] rowColMap) throws HsqlException {
 
         Node node = findNotNull(rowdata, rowColMap, true);
 
         return node == null ? emptyIterator
-                            : new IndexRowIterator(this, node);
+                            : new IndexRowIterator(session, this, node);
     }
 
-    RowIterator findFirstRowForDelete(Object[] rowdata,
+    RowIterator findFirstRowForDelete(Session session, Object[] rowdata,
                                       int[] rowColMap) throws HsqlException {
 
         Node node = findNotNull(rowdata, rowColMap, true);
@@ -543,7 +537,7 @@ public class Index {
         if (node == null) {
             return emptyIterator;
         } else {
-            RowIterator it = new IndexRowIterator(this, node);
+            RowIterator it = new IndexRowIterator(session, this, node);
 
             updatableIterators.link((IndexRowIterator) it);
 
@@ -551,16 +545,17 @@ public class Index {
         }
     }
 
-    public Row findRow(Object[] data) throws HsqlException {
+    public Row findRow(Session session, Row row) throws HsqlException {
 
-        Node node = search(data);
+        Node node = search(row);
 
         return node == null ? null
                             : node.getRow();
     }
 
-    boolean exists(Object[] rowdata, int[] rowColMap) throws HsqlException {
-        return findNotNull(rowdata, rowColMap, false) != null;
+    boolean exists(Session session, Object[] rowdata,
+                   int[] rowColMap) throws HsqlException {
+        return findNotNull(rowdata, rowColMap, true) != null;
     }
 
     RowIterator emptyIterator() {
@@ -576,8 +571,8 @@ public class Index {
      * @return matching node or null
      * @throws HsqlException
      */
-    Node findNotNull(Object[] rowdata, int[] rowColMap,
-                     boolean first) throws HsqlException {
+    private Node findNotNull(Object[] rowdata, int[] rowColMap,
+                             boolean first) throws HsqlException {
 
         Node x      = root, n;
         Node result = null;
@@ -672,7 +667,7 @@ public class Index {
         for (int i = 0; i < count; i++) {
             int j = colIndex[i];
 
-            if (j < visibleColumns && row[j] == null) {
+            if (row[j] == null) {
                 return true;
             }
         }
@@ -688,7 +683,8 @@ public class Index {
      * @return matching node
      * @throws HsqlException
      */
-    RowIterator findFirstRow(Object[] rowdata) throws HsqlException {
+    RowIterator findFirstRow(Session session,
+                             Object[] rowdata) throws HsqlException {
 
         Node    x      = root;
         Node    found  = null;
@@ -713,7 +709,7 @@ public class Index {
         }
 
         return found == null ? emptyIterator
-                             : new IndexRowIterator(this, found);
+                             : new IndexRowIterator(session, this, found);
     }
 
     /**
@@ -727,7 +723,8 @@ public class Index {
      *
      * @throws HsqlException
      */
-    RowIterator findFirstRow(Object value, int compare) throws HsqlException {
+    RowIterator findFirstRow(Session session, Object value,
+                             int compare) throws HsqlException {
 
         boolean isEqual = compare == Expression.EQUAL
                           || compare == Expression.IS_NULL;
@@ -754,7 +751,7 @@ public class Index {
 */
         while (x != null) {
             boolean t =
-                Column.compare(value, x.getData()[colIndex_0], colType_0)
+                Column.compare(value, x.getData()[colIndex[0]], colType[0])
                 >= iTest;
 
             if (t) {
@@ -784,8 +781,8 @@ public class Index {
         }
 */
         while (x != null) {
-            Object colvalue = x.getData()[colIndex_0];
-            int    result   = Column.compare(value, colvalue, colType_0);
+            Object colvalue = x.getData()[colIndex[0]];
+            int    result   = Column.compare(value, colvalue, colType[0]);
 
             if (result >= iTest) {
                 x = next(x);
@@ -805,7 +802,7 @@ public class Index {
         }
 
         return x == null ? emptyIterator
-                         : new IndexRowIterator(this, x);
+                         : new IndexRowIterator(session, this, x);
     }
 
     /**
@@ -815,13 +812,14 @@ public class Index {
      *
      * @throws HsqlException
      */
-    RowIterator findFirstRowNotNull() throws HsqlException {
+    RowIterator findFirstRowNotNull(Session session) throws HsqlException {
 
         Node x = root;
 
         while (x != null) {
             boolean t =
-                Column.compare(null, x.getData()[colIndex_0], colType_0) >= 0;
+                Column.compare(null, x.getData()[colIndex[0]], colType[0])
+                >= 0;
 
             if (t) {
                 Node r = x.getRight();
@@ -843,7 +841,7 @@ public class Index {
         }
 
         while (x != null) {
-            Object colvalue = x.getData()[colIndex_0];
+            Object colvalue = x.getData()[colIndex[0]];
 
             if (colvalue == null) {
                 x = next(x);
@@ -853,7 +851,7 @@ public class Index {
         }
 
         return x == null ? emptyIterator
-                         : new IndexRowIterator(this, x);
+                         : new IndexRowIterator(session, this, x);
     }
 
     /**
@@ -863,7 +861,7 @@ public class Index {
      *
      * @throws HsqlException
      */
-    RowIterator firstRow() throws HsqlException {
+    RowIterator firstRow(Session session) throws HsqlException {
 
         depth = 0;
 
@@ -878,7 +876,7 @@ public class Index {
         }
 
         return x == null ? emptyIterator
-                         : new IndexRowIterator(this, x);
+                         : new IndexRowIterator(session, this, x);
     }
 
     /**
@@ -984,18 +982,19 @@ public class Index {
     /**
      * Find a node with matching data
      *
-     * @param d row data
+     * @param row row data
      *
      * @return matching node
      *
      * @throws HsqlException
      */
-    Node search(Object[] d) throws HsqlException {
+    Node search(Row row) throws HsqlException {
 
-        Node x = root;
+        Object[] d = row.getData();
+        Node     x = root;
 
         while (x != null) {
-            int c = compareRow(d, x.getData());
+            int c = compareRowUnique(row, x.getRow());
 
             if (c == 0) {
                 return x;
@@ -1026,7 +1025,7 @@ public class Index {
     int compareRowNonUnique(Object[] a, int[] rowColMap,
                             Object[] b) throws HsqlException {
 
-        int i = Column.compare(a[rowColMap[0]], b[colIndex_0], colType_0);
+        int i = Column.compare(a[rowColMap[0]], b[colIndex[0]], colType[0]);
 
         if (i != 0) {
             return i;
@@ -1034,42 +1033,8 @@ public class Index {
 
         int fieldcount = rowColMap.length;
 
-        if (fieldcount > visibleColumns) {
-            fieldcount = visibleColumns;
-        }
-
         for (int j = 1; j < fieldcount; j++) {
             i = Column.compare(a[rowColMap[j]], b[colIndex[j]], colType[j]);
-
-            if (i != 0) {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * Compares two full table rows based on the columns of the index
-     *
-     * @param a a full row
-     * @param b a full row
-     *
-     * @return comparison result, -1,0,+1
-     * @throws HsqlException
-     */
-    private int compareRow(Object[] a, Object[] b) throws HsqlException {
-
-        int i = Column.compare(a[colIndex_0], b[colIndex_0], colType_0);
-
-        if (i != 0) {
-            return i;
-        }
-
-        int fieldcount = colIndex.length;
-
-        for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(a[colIndex[j]], b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;
@@ -1115,43 +1080,49 @@ public class Index {
      *
      * @throws HsqlException
      */
-    private int compareRowUnique(Object[] a,
-                                 Object[] b) throws HsqlException {
+    private int compareRowUnique(Row left, Row right) throws HsqlException {
 
-        Object value = a[colIndex_0];
-        int    i     = Column.compare(value, b[colIndex_0], colType_0);
-        int    j     = 1;
+        Object[] a       = left.getData();
+        Object[] b       = right.getData();
+        int      j       = 0;
+        boolean  hasNull = false;
 
-        if (i != 0) {
-            return i;
-        }
-
-        for (; j < visibleColumns; j++) {
+        for (; j < colIndex.length; j++) {
             Object currentvalue = a[colIndex[j]];
-
-            i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
+            int i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;
             }
 
             if (currentvalue == null) {
-                value = null;
+                hasNull = true;
             }
         }
 
-        if (isExact || (isUnique && value != null)) {
+        if (isUnique &&!useRowId &&!hasNull) {
             return 0;
         }
 
-        for (; j < colIndex.length; j++) {
-            Object currentvalue = a[colIndex[j]];
-
-            i = Column.compare(currentvalue, b[colIndex[j]], colType[j]);
+        for (j = 0; j < pkCols.length; j++) {
+            Object currentvalue = a[pkCols[j]];
+            int    i = Column.compare(currentvalue, b[pkCols[j]], pkTypes[j]);
 
             if (i != 0) {
                 return i;
             }
+        }
+
+        if (useRowId) {
+            int difference = left.getPos() - right.getPos();
+
+            if (difference < 0) {
+                difference = -1;
+            } else if (difference > 0) {
+                difference = 1;
+            }
+
+            return difference;
         }
 
         return 0;
@@ -1195,7 +1166,7 @@ public class Index {
         protected IndexRowIterator last;
         protected IndexRowIterator next;
 
-        private IndexRowIterator(Index index, Node node) {
+        private IndexRowIterator(Session session, Index index, Node node) {
 
             if (index == null) {
                 return;

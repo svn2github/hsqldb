@@ -18,9 +18,9 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -32,8 +32,8 @@
 package org.hsqldb.scriptio;
 
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.hsqldb.Database;
@@ -43,7 +43,6 @@ import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
-import org.hsqldb.lib.InOutUtil;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.rowio.RowInputBase;
 import org.hsqldb.rowio.RowInputBinary;
@@ -141,8 +140,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
             return false;
         }
 
-        Object[] data = rowIn.readData(t.getColumnTypes(),
-                                       t.getColumnCount());
+        Object[] data = rowIn.readData(t.getColumnTypes());
 
         t.insertFromScript(data);
 
