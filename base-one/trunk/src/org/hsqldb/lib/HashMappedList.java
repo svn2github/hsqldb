@@ -92,7 +92,7 @@ public class HashMappedList extends HashMap {
     }
 
     public Object put(Object key, Object value) {
-        throw new RuntimeException();
+        return super.put(key,value);
     }
 
     public Object set(int index,

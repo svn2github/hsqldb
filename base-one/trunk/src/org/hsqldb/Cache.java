@@ -648,24 +648,6 @@ abstract class Cache {
     abstract protected void saveRow(CachedRow r) throws IOException, HsqlException;
 
     /**
-     * Writes out the first count rowTable Rows in iPos
-     * sorted order.
-     */
-    private void saveSorted(int count) throws HsqlException {
-
-        rowComparator.setType(rowComparator.COMPARE_POSITION);
-        sort(rowTable, rowComparator, 0, count - 1);
-
-        try {
-            for (int i = 0; i < count; i++) {
-                saveRow(rowTable[i]);
-            }
-        } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR, "saveSorted " + e);
-        }
-    }
-
-    /**
      * FastQSorts the [l,r] partition of the specfied array of Rows, based on
      * the contained Row objects' iPos (file offset) values.
      *

@@ -32,6 +32,7 @@
 package org.hsqldb.store;
 
 import java.util.NoSuchElementException;
+import org.hsqldb.lib.ArrayCounter;
 
 public class BaseHashMap {
 
@@ -96,13 +97,15 @@ public class BaseHashMap {
     protected Object[] objectValueTable;
 
     //
+    int   accessMin;
+    int   accessCount;
     int[] accessTable;
 
     //
     float         loadFactor;
     int           threshold;
     int           maxCapacity;
-    protected int purgePolicy = noPurge;
+    protected int purgePolicy = NO_PURGE;
 
     //
     boolean hasZeroKey;
@@ -115,20 +118,10 @@ public class BaseHashMap {
     protected static final int objectKeyOrValue = 3;
 
     // purgePolicy
-    protected static final int noPurge            = 0;
-    protected static final int purgeAll           = 1;
-    protected static final int purgeAlternateHalf = 2;
-    protected static final int purgeOldAccessHalf = 3;
-
-    protected BaseHashMap(int initialCapacity, int maxCapacity,
-                          int purgePolicy) throws IllegalArgumentException {
-
-        this(initialCapacity, 1, BaseHashMap.objectKeyOrValue,
-             BaseHashMap.noKeyOrValue);
-
-        this.maxCapacity = maxCapacity;
-        this.purgePolicy = purgePolicy;
-    }
+    protected static final int NO_PURGE      = 0;
+    protected static final int PURGE_ALL     = 1;
+    protected static final int PURGE_HALF    = 2;
+    protected static final int PURGE_QUARTER = 3;
 
     protected BaseHashMap(int initialCapacity, float loadFactor, int keyType,
                           int valueType) throws IllegalArgumentException {
@@ -138,8 +131,19 @@ public class BaseHashMap {
         }
 
         this.loadFactor = loadFactor;
-        threshold       = (int) (initialCapacity * loadFactor);
-        hashIndex       = new HashIndex(initialCapacity, threshold, true);
+        threshold       = initialCapacity;
+
+        if (threshold < 3) {
+            threshold = 3;
+        }
+
+        int hashtablesize = (int) (initialCapacity * loadFactor);
+
+        if (hashtablesize < 3) {
+            hashtablesize = 3;
+        }
+
+        hashIndex = new HashIndex(hashtablesize, initialCapacity, true);
 
         int arraySize = threshold;
 
@@ -426,211 +430,58 @@ public class BaseHashMap {
         return returnValue;
     }
 
-    protected Integer getOrAddInteger(int intKey) {
+    protected Object removeObject(Object objectKey) {
 
-        Integer testValue;
-        int     index      = hashIndex.getHashIndex(intKey);
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
-
-        for (; lookup >= 0;
-                lastLookup = lookup,
-                lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (Integer) objectKeyTable[lookup];
-
-            if (testValue.intValue() == intKey) {
-                return testValue;
-            }
-        }
-
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddInteger(intKey);
-        }
-
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new Integer(intKey);
-        objectKeyTable[lookup] = testValue;
-
-        return testValue;
-    }
-
-    protected Long getOrAddLong(long longKey) {
-
-        Long testValue;
-        int  index      = hashIndex.getHashIndex((int) longKey);
-        int  lookup     = hashIndex.hashTable[index];
-        int  lastLookup = -1;
+        int    hash        = objectKey.hashCode();
+        int    index       = hashIndex.getHashIndex(hash);
+        int    lookup      = hashIndex.hashTable[index];
+        int    lastLookup  = -1;
+        Object returnValue = null;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
                 lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (Long) objectKeyTable[lookup];
+            if (objectKeyTable[lookup].equals(objectKey)) {
+                objectKeyTable[lookup] = null;
 
-            if (testValue.longValue() == longKey) {
-                return testValue;
+                hashIndex.unlinkNode(index, lastLookup, lookup);
+
+                if (isObjectValue) {
+                    returnValue              = objectValueTable[lookup];
+                    objectValueTable[lookup] = null;
+                }
+
+                return returnValue;
             }
         }
 
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddLong(longKey);
-        }
-
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new Long(longKey);
-        objectKeyTable[lookup] = testValue;
-
-        return testValue;
+        // not found
+        return returnValue;
     }
 
-    /**
-     * This is dissimilar to normal hash map get() methods. The key Object
-     * should have an equals(String) method which should return true if the
-     * key.toString.equals(String) is true. Also the key.hashCode() method
-     * must return the same value as key.toString.hashCode().<p>
-     *
-     * The above is always true when the key is a String. But it means it is
-     * possible to submit special keys that fulfill the contract. For example
-     * a wrapper around a byte[] can be submitted as key to retrieve either
-     * a new String, which is the toString() method of the wrapper, or return
-     * an existing String which would be equal to the product of toString().
-     *
-     */
-    protected String getOrAddString(Object key) {
-
-        String testValue;
-        int    index      = hashIndex.getHashIndex(key.hashCode());
-        int    lookup     = hashIndex.hashTable[index];
-        int    lastLookup = -1;
-
-        for (; lookup >= 0;
-                lastLookup = lookup,
-                lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (String) objectKeyTable[lookup];
-
-            if (key.equals(testValue)) {
-                return testValue;
-            }
-        }
-
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddString(key);
-        }
-
-        testValue              = key.toString();
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        objectKeyTable[lookup] = testValue;
-
-        return testValue;
-    }
-
-    protected java.sql.Date getOrAddDate(long longKey) {
-
-        java.sql.Date testValue;
-
-        // the 10 least significant bits are generally similar
-        int hash       = (((int) longKey) >> 10) ^ (int) (longKey >> 32);
-        int index      = hashIndex.getHashIndex((int) longKey);
-        int lookup     = hashIndex.hashTable[index];
-        int lastLookup = -1;
-
-        for (; lookup >= 0;
-                lastLookup = lookup,
-                lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (java.sql.Date) objectKeyTable[lookup];
-
-            if (testValue.getTime() == longKey) {
-                return testValue;
-            }
-        }
-
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddDate(longKey);
-        }
-
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new java.sql.Date(longKey);
-        objectKeyTable[lookup] = testValue;
-
-        return testValue;
-    }
-
-    protected Double getOrAddDouble(long longKey) {
-
-        Double testValue;
-        int    index      = hashIndex.getHashIndex((int) longKey);
-        int    lookup     = hashIndex.hashTable[index];
-        int    lastLookup = -1;
-
-        for (; lookup >= 0;
-                lastLookup = lookup,
-                lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (Double) objectKeyTable[lookup];
-
-            if (Double.doubleToLongBits(testValue.doubleValue()) == longKey) {
-                return testValue;
-            }
-        }
-
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddDouble(longKey);
-        }
-
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new Double(Double.longBitsToDouble(longKey));
-        objectKeyTable[lookup] = testValue;
-
-        return testValue;
-    }
-
-    protected java.math.BigDecimal getOrAddBigDecimal(
-            java.math.BigDecimal key) {
-
-        java.math.BigDecimal testValue;
-        int                  index = hashIndex.getHashIndex(key.hashCode());
-        int                  lookup     = hashIndex.hashTable[index];
-        int                  lastLookup = -1;
-
-        for (; lookup >= 0;
-                lastLookup = lookup,
-                lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (java.math.BigDecimal) objectKeyTable[lookup];
-
-            if (testValue.equals(key)) {
-                return testValue;
-            }
-        }
-
-        if (hashIndex.elementCount >= threshold) {
-            reset();
-
-            return getOrAddBigDecimal(key);
-        }
-
-        lookup                 = hashIndex.linkNode(index, lastLookup);
-        objectKeyTable[lookup] = key;
-
-        return key;
-    }
-
-    private void reset() {
+    protected boolean reset() {
 
         if (maxCapacity == 0 || maxCapacity > threshold) {
             rehash(hashIndex.hashTable.length * 2);
-        } else if (purgePolicy == this.purgeAll) {
+
+            return true;
+        } else if (purgePolicy == PURGE_ALL) {
             clear();
-        } else {
-            clear();
+
+            return true;
+        } else if (purgePolicy == PURGE_QUARTER) {
+            clear(threshold / 4);
+
+            return true;
+        } else if (purgePolicy == PURGE_HALF) {
+            clear(threshold / 2);
+
+            return true;
+        } else if (purgePolicy == NO_PURGE) {
+            return false;
         }
+
+        return false;
     }
 
     /**
@@ -638,19 +489,17 @@ public class BaseHashMap {
      * put back into the arrays from the top, removing any gaps. any redundant
      * key / value pairs duplicated at the end of the array are then cleared.
      */
-    private void rehash(int newCapacity) {
+    protected void rehash(int newCapacity) {
 
         int     limitLookup     = hashIndex.newNodePointer;
         boolean oldZeroKey      = hasZeroKey;
         int     oldZeroKeyIndex = zeroKeyIndex;
 
-        {
-            hasZeroKey   = false;
-            zeroKeyIndex = 0;
-            threshold    = (int) (newCapacity * loadFactor);
+        hashIndex.reset((int) (newCapacity * loadFactor), newCapacity);
 
-            hashIndex.reset(newCapacity, threshold);
-        }
+        hasZeroKey   = false;
+        zeroKeyIndex = 0;
+        threshold    = newCapacity;
 
         for (int lookup = -1;
                 (lookup = nextLookup(lookup, limitLookup, oldZeroKey, oldZeroKeyIndex))
@@ -675,79 +524,110 @@ public class BaseHashMap {
             }
 
             addOrRemove(longKey, intValue, objectKey, objectValue, false);
+
+            if (accessTable != null) {
+                accessTable[hashIndex.elementCount - 1] = accessTable[lookup];
+            }
         }
 
-        resizeElementArrays(limitLookup, threshold);
+        resizeElementArrays(hashIndex.newNodePointer, newCapacity);
     }
 
     /**
      * resize the arrays contianing the key / value data
      */
-    private void resizeElementArrays(int oldLength, int newLength) {
+    private void resizeElementArrays(int dataLength, int newLength) {
 
         Object temp;
+        int    usedLength = newLength > dataLength ? dataLength
+                                                   : newLength;
 
         if (isIntKey) {
             temp        = intKeyTable;
             intKeyTable = new int[newLength];
 
-            System.arraycopy(temp, 0, intKeyTable, 0, oldLength);
+            System.arraycopy(temp, 0, intKeyTable, 0, usedLength);
         }
 
         if (isIntValue) {
             temp          = intValueTable;
             intValueTable = new int[newLength];
 
-            System.arraycopy(temp, 0, intValueTable, 0, oldLength);
+            System.arraycopy(temp, 0, intValueTable, 0, usedLength);
         }
 
         if (isObjectKey) {
             temp           = objectKeyTable;
             objectKeyTable = new Object[newLength];
 
-            System.arraycopy(temp, 0, objectKeyTable, 0, oldLength);
+            System.arraycopy(temp, 0, objectKeyTable, 0, usedLength);
         }
 
         if (isObjectValue) {
             temp             = objectValueTable;
             objectValueTable = new Object[newLength];
 
-            System.arraycopy(temp, 0, objectValueTable, 0, oldLength);
+            System.arraycopy(temp, 0, objectValueTable, 0, usedLength);
+        }
+
+        if (accessTable != null) {
+            temp        = accessTable;
+            accessTable = new int[newLength];
+
+            System.arraycopy(temp, 0, accessTable, 0, usedLength);
         }
     }
 
     /**
-     * clear all the key / value data
+     * clear all the key / value data in a range.
      */
-    private void clearElementArrays(int from, int to) {
+    private void clearElementArrays(final int from, final int to) {
 
         if (isIntKey) {
-            while (--to >= from) {
-                intKeyTable[to] = 0;
+            int counter = to;
+
+            while (--counter >= from) {
+                intKeyTable[counter] = 0;
             }
         }
 
         if (isLongKey) {
-            while (--to >= from) {
-                longKeyTable[to] = 0;
+            int counter = to;
+
+            while (--counter >= from) {
+                longKeyTable[counter] = 0;
             }
         }
 
         if (isObjectKey) {
-            while (--to >= from) {
-                objectKeyTable[to] = null;
+            int counter = to;
+
+            while (--counter >= from) {
+                objectKeyTable[counter] = null;
             }
         }
 
         if (isIntValue) {
-            while (--to >= from) {
-                intValueTable[to] = 0;
+            int counter = to;
+
+            while (--counter >= from) {
+                intValueTable[counter] = 0;
             }
         }
 
         if (isObjectValue) {
-            while (--to >= from) {
-                objectValueTable[to] = null;
+            int counter = to;
+
+            while (--counter >= from) {
+                objectValueTable[counter] = null;
+            }
+        }
+
+        if (accessTable != null) {
+            int counter = to;
+
+            while (--counter >= from) {
+                accessTable[counter] = 0;
             }
         }
     }
@@ -875,15 +755,59 @@ public class BaseHashMap {
     protected Object remove(int lookup) {
 
         if (isObjectKey) {
-            return this.addOrRemove(0, 0, objectKeyTable[lookup], null, true);
+            return addOrRemove(0, 0, objectKeyTable[lookup], null, true);
         } else {
-            return this.addOrRemove(intKeyTable[lookup], 0, null, null, true);
+            return addOrRemove(intKeyTable[lookup], 0, null, null, true);
         }
     }
 
     public void clear() {
+
+        accessCount  = 0;
+        accessMin    = accessCount;
+        hasZeroKey   = false;
+        zeroKeyIndex = 0;
+
         clearElementArrays(0, hashIndex.linkTable.length);
         hashIndex.clear();
+    }
+
+    public void clear(int count) {
+
+        int margin = threshold >> 8;
+
+        if (margin < 64) {
+            margin = 64;
+        }
+
+        int accessBase = ArrayCounter.rank(accessTable, count, accessMin,
+                                           accessCount, 64);
+
+        for (int lookup = 0; lookup < hashIndex.newNodePointer; lookup++) {
+            Object o = objectKeyTable[lookup];
+
+            if (o != null && accessTable[lookup] < accessBase) {
+                removeObject(o);
+            }
+        }
+
+        accessMin = accessBase;
+    }
+
+    void resetAccessCount() {
+
+        if (accessCount < Integer.MAX_VALUE / 2) {
+            return;
+        }
+
+        accessMin   >>= 2;
+        accessCount >>= 2;
+
+        int i = accessTable.length;
+
+        while (--i >= 2) {
+            accessTable[i] >>= 2;
+        }
     }
 
     public int size() {

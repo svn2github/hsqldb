@@ -42,94 +42,81 @@ package org.hsqldb.store;
 public class ValuePool {
 
     //
-    static int maxStringLength = 16;
+    static ValuePoolHashMap intPool;
+    static ValuePoolHashMap longPool;
+    static ValuePoolHashMap doublePool;
+    static ValuePoolHashMap bigdecimalPool;
+    static ValuePoolHashMap stringPool;
+    static ValuePoolHashMap datePool;
 
     //
-    static int intAccessCount;
-    static int longAccessCount;
-    static int doubleAccessCount;
-    static int bigdecimalAccessCount;
-    static int stringAccessCount;
-    static int dateAccessCount;
-
-    //
-    static BaseHashMap intPool;
-    static BaseHashMap longPool;
-    static BaseHashMap doublePool;
-    static BaseHashMap bigdecimalPool;
-    static BaseHashMap stringPool;
-    static BaseHashMap datePool;
-
-    //
-    static final int[]   defaultPoolLookupSize = new int[] {
-        1000, 1000, 1000, 1000, 1000, 1000
+    static final int[]        defaultPoolLookupSize = new int[] {
+        10000, 10000, 10000, 10000, 10000, 10000
     };
-    static final int     defaultSizeFactor     = 2;
-    static BaseHashMap[] poolList              = new BaseHashMap[6];
-    static int[]         poolLookupSize        = new int[6];
+    static final int          defaultSizeFactor     = 2;
+
+    static final int defaultMaxStringLength = 16;
+    //
+    static ValuePoolHashMap[] poolList;
+    //
+    static int maxStringLength;
+
 
     //
     static {
-        initPool(defaultPoolLookupSize, defaultSizeFactor);
+        initPool();
     }
 
-    public static void initPool(int sizeArray[], int sizeFactor) {
+    private static void initPool() {
+        int sizeArray[] = defaultPoolLookupSize;
+        int sizeFactor = defaultSizeFactor;
 
         synchronized (ValuePool.class) {
+            maxStringLength = defaultMaxStringLength;
+            poolList  = new ValuePoolHashMap[6];
             for (int i = 0; i < poolList.length; i++) {
                 int size = sizeArray[i];
 
-                poolLookupSize[i] = size;
-                poolList[i] = new BaseHashMap(size, size * sizeFactor,
-                                              BaseHashMap.purgeAll);
+                poolList[i] = new ValuePoolHashMap(size, size * sizeFactor,
+                                                   BaseHashMap.PURGE_HALF);
             }
 
-            intPool               = poolList[0];
-            longPool              = poolList[1];
-            doublePool            = poolList[2];
-            bigdecimalPool        = poolList[3];
-            stringPool            = poolList[4];
-            datePool              = poolList[5];
-            intAccessCount        = 0;
-            longAccessCount       = 0;
-            doubleAccessCount     = 0;
-            bigdecimalAccessCount = 0;
-            stringAccessCount     = 0;
-            dateAccessCount       = 0;
+            intPool        = poolList[0];
+            longPool       = poolList[1];
+            doublePool     = poolList[2];
+            bigdecimalPool = poolList[3];
+            stringPool     = poolList[4];
+            datePool       = poolList[5];
         }
     }
 
     public static void resetPool(int[] sizeArray, int sizeFactor) {
 
         for (int i = 0; i < poolList.length; i++) {
-            poolList[i].clear();
+            poolList[i].resetCapacity(sizeArray[i] * sizeFactor, BaseHashMap.PURGE_HALF);
         }
-
-        initPool(sizeArray, sizeFactor);
     }
 
     public static void resetPool() {
         resetPool(defaultPoolLookupSize, defaultSizeFactor);
     }
 
+    public static void clearPool() {
+
+        for (int i = 0; i < poolList.length; i++) {
+            poolList[i].clear();
+        }
+    }
+
     public static synchronized Integer getInt(int val) {
-
-        intAccessCount++;
-
         return intPool.getOrAddInteger(val);
     }
 
     public static synchronized Long getLong(long val) {
-
-        longAccessCount++;
-
         return longPool.getOrAddLong(val);
     }
 
     public static synchronized Double getDouble(long val) {
-
-        doubleAccessCount++;
-
         return doublePool.getOrAddDouble(val);
     }
 
@@ -139,24 +126,16 @@ public class ValuePool {
             return val;
         }
 
-        stringAccessCount++;
-
         return stringPool.getOrAddString(val);
     }
 
     public static synchronized java.sql.Date getDate(long val) {
-
-        dateAccessCount++;
-
         return datePool.getOrAddDate(val);
     }
 
     public static synchronized java.math.BigDecimal getBigDecimal(
             java.math.BigDecimal val) {
-
-        bigdecimalAccessCount++;
-
-        return bigdecimalPool.getOrAddBigDecimal(val);
+        return (java.math.BigDecimal) bigdecimalPool.getOrAddObject(val);
     }
 
     public static Boolean getBoolean(boolean b) {

@@ -79,7 +79,7 @@ public class HashSet extends BaseHashMap implements Set {
 
         int oldSize = size();
 
-        super.addOrRemove(0, 0, key, null, true);
+        super.removeObject(key);
 
         return oldSize != size();
     }

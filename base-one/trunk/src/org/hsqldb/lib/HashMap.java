@@ -63,7 +63,7 @@ public class HashMap extends BaseHashMap {
     }
 
     public Object remove(Object key) {
-        return super.addOrRemove(0, 0, key, null, true);
+        return super.removeObject(key);
     }
 
     public boolean containsKey(Object key) {

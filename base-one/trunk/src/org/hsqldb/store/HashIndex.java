@@ -76,9 +76,15 @@ class HashIndex {
      * @param capacity
      */
     void reset(int hashTableSize, int capacity) {
+        int[] newHT = new int[hashTableSize];
+        int[] newLT = new int[capacity];
+        // allocate memory before assigning
+        hashTable = newHT;
+        linkTable = newLT;
+        resetTables();
+    }
 
-        hashTable = new int[hashTableSize];
-
+    void resetTables(){
         int   to       = hashTable.length;
         int[] intArray = hashTable;
 
@@ -86,9 +92,23 @@ class HashIndex {
             intArray[to] = -1;
         }
 
-        linkTable      = new int[capacity];
         newNodePointer = 0;
         elementCount   = 0;
+        reclaimedNodePointer = -1;
+    }
+
+    /**
+     * Reset the index as empty.
+     */
+    void clear() {
+        int to       = linkTable.length;
+        int[] intArray = linkTable;
+
+        while (--to >= 0) {
+            intArray[to] = 0;
+        }
+
+        resetTables();
     }
 
     /**
@@ -122,29 +142,6 @@ class HashIndex {
     }
 
     /**
-     * Reset the index as empty.
-     */
-    void clear() {
-
-        int   to       = hashTable.length;
-        int[] intArray = hashTable;
-
-        while (--to >= 0) {
-            intArray[to] = -1;
-        }
-
-        to       = linkTable.length;
-        intArray = linkTable;
-
-        while (--to >= 0) {
-            intArray[to] = 0;
-        }
-
-        elementCount   = 0;
-        newNodePointer = 0;
-    }
-
-    /**
      * Link a new node to the end of the linked for a hash index.
      *
      * @param index an index into hashTable
@@ -154,7 +151,7 @@ class HashIndex {
     int linkNode(int index, int lastLookup) {
 
         // get the first reclaimed slot
-        int lookup = this.reclaimedNodePointer;
+        int lookup = reclaimedNodePointer;
 
         if (lookup == -1) {
             lookup = newNodePointer++;
@@ -215,7 +212,7 @@ class HashIndex {
         boolean found      = false;
         int     lastLookup = -1;
 
-        for (int i = this.reclaimedNodePointer; i >= 0;
+        for (int i = reclaimedNodePointer; i >= 0;
                 lastLookup = i, i = linkTable[i]) {
             if (i == lookup) {
                 if (lastLookup == -1) {
