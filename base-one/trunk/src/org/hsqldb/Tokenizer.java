@@ -128,7 +128,7 @@ class Tokenizer {
             "LIKE", "MAX", "MIN", "NULL", "NOT", "ON", "ORDER", "OR", "OUTER",
             "PRIMARY", "SELECT", "SET", "SUM", "TO", "TRUE", "UNIQUE",
             "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS",
-            "CALL"
+            "CALL", "HAVING"
         };
 
         for (int i = 0; i < keyword.length; i++) {

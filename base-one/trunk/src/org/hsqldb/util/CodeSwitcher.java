@@ -73,6 +73,8 @@ import java.util.*;
 // fredt@users 20020315 - patch 1.7.0 - minor fixes
 // changed line separator to System based value
 // moved the Profile class to org.hsqldb.test package
+// fredt@users 20021020 - patch 1.7.1 - formatting fix
+// avoid moving blank lines which would be interpreted as code change by CVS
 
 /**
  * Modifies the source code to support different JDK or profile settings. <p>
@@ -528,11 +530,10 @@ public class CodeSwitcher {
         boolean working   = false;
 
         try {
-            LineNumberReader read  = new LineNumberReader(new FileReader(f));
-            FileWriter       write = new FileWriter(fnew);
+            Vector v = getFileLines(f);
 
-            while (true) {
-                String line = read.readLine();
+            for (int i = 0; i < v.size(); i++) {
+                String line = (String) v.elementAt(i);
 
                 if (line == null) {
                     break;
@@ -540,12 +541,14 @@ public class CodeSwitcher {
 
                 if (working) {
                     if (line.equals("/*") || line.equals("*/")) {
+                        v.removeElementAt(i--);
+
                         continue;
                     }
                 }
 
                 if (!line.startsWith("//#")) {
-                    write.write(line + ls);
+
                 } else {
                     if (line.startsWith("//#ifdef ")) {
                         if (state != 0) {
@@ -554,8 +557,6 @@ public class CodeSwitcher {
 
                             return false;
                         }
-
-                        write.write(line + ls);
 
                         state = 1;
 
@@ -567,7 +568,7 @@ public class CodeSwitcher {
                         } else if (vSwitchOff.indexOf(s) != -1) {
                             working = true;
 
-                            write.write("/*" + ls);
+                            v.insertElementAt("/*",++i);
 
                             switchoff = true;
                         }
@@ -585,15 +586,20 @@ public class CodeSwitcher {
                         state = 2;
 
                         if (!working) {
-                            write.write(line + ls);
+
                         } else if (switchoff) {
-                            write.write("*/" + ls);
-                            write.write(line + ls);
+                            if (v.elementAt(i - 1).equals("")) {
+                                v.insertElementAt("*/",i - 1);
+
+                                i++;
+                            } else {
+                                v.insertElementAt( "*/",i++);
+                            }
 
                             switchoff = false;
                         } else {
-                            write.write(line + ls);
-                            write.write("/*" + ls);
+
+                            v.insertElementAt("/*",++i);
 
                             switchoff = true;
                         }
@@ -607,14 +613,18 @@ public class CodeSwitcher {
                         state = 0;
 
                         if (working && switchoff) {
-                            write.write("*/" + ls);
-                        }
+                            if (v.elementAt(i - 1).equals("")) {
+                                v.insertElementAt( "*/", i - 1);
 
-                        write.write(line + ls);
+                                i++;
+                            } else {
+                                v.insertElementAt("*/",i++ );
+                            }
+                        }
 
                         working = false;
                     } else {
-                        write.write(line + ls);
+
                     }
                 }
             }
@@ -625,9 +635,7 @@ public class CodeSwitcher {
                 return false;
             }
 
-            read.close();
-            write.flush();
-            write.close();
+            writeFileLines(v, fnew);
 
             File fbak = new File(name + ".bak");
 
@@ -645,6 +653,39 @@ public class CodeSwitcher {
 
             return false;
         }
+    }
+
+    static Vector getFileLines(File f) throws IOException {
+
+        LineNumberReader read = new LineNumberReader(new FileReader(f));
+        Vector           v    = new Vector();
+
+        for (;;) {
+            String line = read.readLine();
+
+            if (line == null) {
+                break;
+            }
+
+            v.addElement(line);
+        }
+
+        read.close();
+
+        return v;
+    }
+
+    static void writeFileLines(Vector v, File f) throws IOException {
+
+        FileWriter write = new FileWriter(f);
+
+        for (int i = 0; i < v.size(); i++) {
+            write.write((String) v.elementAt(i));
+            write.write(ls);
+        }
+
+        write.flush();
+        write.close();
     }
 
     /**

@@ -999,7 +999,9 @@ class Parser {
             do {
                 Expression e = parseExpression();
 
-                e = doOrderGroup(e, vcolumn);
+                // tony_lai@users having support:
+                // "group by" does not allow refering to other columns alias.
+                //e = doOrderGroup(e, vcolumn);
 
                 vcolumn.add(e);
 
@@ -1011,17 +1013,12 @@ class Parser {
             select.iGroupLen = len;
         }
 
+        // tony_lai@users - having support
         if (token.equals("HAVING")) {
-
-            //fredt - not yet!
-            Expression hcondition = null;
-
-            addCondition(hcondition, parseExpression());
-
-            select.havingCondition = hcondition;
+            select.iHavingIndex    = vcolumn.size();
+            select.havingCondition = parseExpression();
             token                  = tTokenizer.getString();
-
-            throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+            vcolumn.add(select.havingCondition);
         }
 
         if (token.equals("ORDER")) {
@@ -1032,7 +1029,7 @@ class Parser {
             do {
                 Expression e = parseExpression();
 
-                e     = doOrderGroup(e, vcolumn);
+                e     = checkOrderByColumns(e, vcolumn);
                 token = tTokenizer.getString();
 
                 if (token.equals("DESC")) {
@@ -1088,14 +1085,15 @@ class Parser {
     }
 
     /**
-     *  Description of the Method
+     * Checks Order By columns, and substitutes order by columns that is
+     * refering to select columns by alias or column index.
      *
      * @param  e                          Description of the Parameter
      * @param  vcolumn                    Description of the Parameter
      * @return                            Description of the Return Value
      * @exception  java.sql.SQLException  Description of the Exception
      */
-    private Expression doOrderGroup(Expression e,
+    private Expression checkOrderByColumns(Expression e,
                                     HsqlArrayList vcolumn)
                                     throws java.sql.SQLException {
 
@@ -1116,7 +1114,11 @@ class Parser {
             for (int i = 0, vSize = vcolumn.size(); i < vSize; i++) {
                 Expression ec = (Expression) vcolumn.get(i);
 
-                if (s.equals(ec.getAlias())) {
+                // We can only substitute alias defined in the select clause,
+                // since there may be more that one result column with the
+                // same column name.  For example:
+                //   "select 500-column1, column1 from table 1 order by column2"
+                if (s.equals(ec.getDefinedAlias())) {
                     e = ec;
 
                     break;
@@ -1318,33 +1320,33 @@ class Parser {
 
         read();
 
-        // todo: really this should be in readTerm
-        // but then grouping is much more complex
-        if (Expression.isAggregate(iToken)) {
+        Expression r = readOr();
+
+        tTokenizer.back();
+
+        return r;
+    }
+
+    private Expression readAggregate() throws SQLException {
             boolean distinct = false;
             int     type     = iToken;
 
             read();
-
             if (tTokenizer.getString().equals("DISTINCT")) {
                 distinct = true;
             } else {
                 tTokenizer.back();
             }
 
-            Expression r = new Expression(type, readOr(), null);
+        readThis(Expression.OPEN);
 
-            r.setDistinctAggregate(distinct);
-            tTokenizer.back();
+        Expression s = readOr();
 
-            return r;
-        }
+        readThis(Expression.CLOSE);
+        Expression aggregateExp = new Expression(type, s, null);
+        aggregateExp.setDistinctAggregate(distinct);
 
-        Expression r = readOr();
-
-        tTokenizer.back();
-
-        return r;
+        return aggregateExp;
     }
 
     /**
@@ -1744,6 +1746,8 @@ class Parser {
             r.setDataType(t);
             read();
             readThis(Expression.CLOSE);
+        } else if(Expression.isAggregate(iToken)){
+            r = readAggregate();
         } else {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }

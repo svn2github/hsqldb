@@ -253,7 +253,6 @@ class Select {
         int    groupByEnd   = groupByStart + iGroupLen;
 
         // tony_lai@users having
-//        int    orderByStart = groupByEnd;
         int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
                                              : groupByEnd;
         int orderByEnd   = orderByStart + iOrderLen;
@@ -405,9 +404,6 @@ class Select {
 
         for (int i = start; i < end; i++) {
             eColumn[i].collectInGroupByExpressions(colExps);
-
-//            Trace.check(inAggregateOrGroupByClause(eColumn[i]),
-//                Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, eColumn[i]);
         }
 
         for (int i = 0, vLen = colExps.size(); i < vLen; i++) {
@@ -487,7 +483,6 @@ class Select {
 
         GroupedResult gResult = new GroupedResult(this, r);
         int           len     = eColumn.length;
-        int           count   = 0;
         int           filter  = tFilter.length;
         boolean       first[] = new boolean[filter];
         int           level   = 0;
@@ -539,25 +534,13 @@ class Select {
                              ? eColumn[i].getAggregatingValue(row[i])
                              : eColumn[i].getValue();
                 }
-            }
-        }
 
-// tony_lai@users having
-/*
-        if(isAggregated) {
-            if(gResult.getRowCount() == 0)
-                gResult.addRow(new Object[len]);
-            for(Enumeration e=gResult.groups.keys(); e.hasMoreElements();) {
-                GroupedResult.ResultGroup group = (GroupedResult.ResultGroup)
-                    e.nextElement();
-                for (int i = 0; i < len; i++) {
-                    if(eColumn[i].isAggregate())
-                        group.row[i] = eColumn[i].getAggregatedValue(
-                            group.row[i]);
+                if (gResult.results.size() >= limitcount) {
+                    break;
                 }
             }
         }
-*/
+
         if ((isAggregated) && (gResult.results.size() == 0)) {
             gResult.addRow(new Object[len]);
         }
