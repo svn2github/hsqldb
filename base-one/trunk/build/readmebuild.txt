@@ -39,14 +39,19 @@ Different jar sizes
 
 HSQLDB can be built in any combination of four different sizes.
 
-The smallest jar size (hsqldbmin.jar) contains only the database
+The smallest jar, hsqljdbc.jar, contains only the client side
+of the JDBC driver, without any server or client standalone programs.
+The next smallest jar, hsqldbmin.jar, contains only the database
 and JDBC support for in-process mode databases. The next smallest
-jar size (hsqldbmain.jar) also contains support for server modes.
-The default size (hsqldb.jar) additionally contains the
+jar, hsqldbmain.jar, also contains support for server modes.
+The default size jar, hsqldb.jar, additionally contains the
 utilities such as Database Manager and Transfer Tool. The largest 
-size (hsqldbtest.jar) includes some test classes as well. You need
+jar, hsqldbtest.jar, includes some test classes as well. You need
 the JUnit jar in the /lib directory in order to build and run the
 test classes.
+
+Run "ant explainjars" to see a summary of the contents of the different
+pre-defined jar targets.
 
 
 
