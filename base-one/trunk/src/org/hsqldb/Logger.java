@@ -95,6 +95,12 @@ class Logger {
     Log lLog;
 
     /**
+     *  The LockFile object this Logger uses to cooperatively lock
+     *  the database files
+     */
+    LockFile lf;
+
+    /**
      *  Opens the specified Database object's database files and starts up
      *  the logging process. <p>
      *
@@ -111,9 +117,8 @@ class Logger {
      *      the specified files are in use by another process
      */
     void openLog(Database db, String name) throws SQLException {
-
+        aquireLock(name);
         lLog = new Log(db, name);
-
         lLog.open();
     }
 
@@ -320,5 +325,36 @@ class Logger {
         lLog.closeTextCache(name);
     }
 
-    void releaseLock() {}
+    void aquireLock(String name) throws SQLException {
+        boolean locked;
+        String  msg;
+
+        lf     = LockFile.newLockFile(name + ".lck");
+        locked = false;
+        msg    = "";
+
+        try {
+            locked = lf.tryLock();
+        } catch (Exception e) {
+            // e.printStackTrace();
+            msg = e.toString();
+        }
+
+        if (!locked) {
+            throw Trace.error(Trace.DATABASE_ALREADY_IN_USE, lf + ": " + msg);
+        }
+    }
+
+    void releaseLock() {
+        try {
+            if (lf != null) {
+                lf.tryRelease();
+            }
+        } catch (Exception e) {
+            if (Trace.TRACE) {
+                Trace.printSystemOut(e.toString());
+            }
+        }
+        lf = null;
+    }
 }

@@ -76,6 +76,7 @@ import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
 
@@ -127,7 +128,7 @@ index roots from the empty *.data file.
  *
  * @version 1.7.2
  */
-class Log implements Runnable {
+class Log {
 
     // block size for copying data
     private static final int       COPY_BLOCK_SIZE = 1 << 16;
@@ -143,15 +144,18 @@ class Log implements Runnable {
     private boolean                filesReadOnly;
 
     // metadata visibilty when not private
-    int            maxLogSize;
-    int            iLogCount;
-    int            logType;
-    private Thread tRunner;
+    int maxLogSize;
+    int iLogCount;
+    int logType;
+
+    //private Thread tRunner;
+    private Object timerTask;
     volatile int   writeDelay = 60;
     private Cache  cCache;
 
     // used for tracing
-    private StopWatch defaultTimer = new StopWatch();
+    private StopWatch              defaultTimer = new StopWatch();
+    private static final HsqlTimer timer = HsqlMasterRepository.getTimer();
 
     /**
      *  Constructor declaration
@@ -168,30 +172,25 @@ class Log implements Runnable {
         pProperties = db.getProperties();
 
         if (!db.filesReadOnly) {
-            tRunner = new Thread(this,
-                                 "HSQLDB " + jdbcDriver.VERSION + " logger");
+            Runnable r = new LogSyncRunner();
 
-            tRunner.start();
+            timerTask = timer.schedulePeriodicallyAfter(0, 1000, r, false);
         }
     }
 
-    /**
-     *  Method declaration
-     */
-    public void run() {
+    protected class LogSyncRunner implements Runnable {
 
-        int count = 0;
+        private int ticks = 0;
 
-        while (tRunner != null) {
+        public void run() {
+
             try {
-                tRunner.sleep(1000);
-
-                if (++count >= writeDelay && dbScriptWriter != null) {
+                if (++ticks >= writeDelay && dbScriptWriter != null) {
                     synchronized (dbScriptWriter) {
                         dbScriptWriter.sync();
                     }
 
-                    count = 0;
+                    ticks = 0;
                 }
 
                 // todo: try to do Cache.cleanUp() here, too
@@ -199,6 +198,9 @@ class Log implements Runnable {
 
                 // ignore exceptions
                 // may be InterruptedException or IOException
+                if (Trace.TRACE) {
+                    Trace.printSystemOut(e.toString());
+                }
             }
         }
     }
@@ -355,11 +357,11 @@ class Log implements Runnable {
      */
     void stop() {
 
-        if (tRunner != null) {
-            tRunner.stop();
-        }
+        if (timerTask != null) {
+            timer.cancel(timerTask);
 
-        tRunner = null;
+            timerTask = null;
+        }
     }
 
     /**
@@ -420,7 +422,7 @@ class Log implements Runnable {
 
         if (compact) {
 
-            // stop the runner thread of this process (just for security)
+            // cancel the log sync task of this process (just for security)
             stop();
 
             // delete the .data so then a new file is created
@@ -536,11 +538,7 @@ class Log implements Runnable {
      */
     void shutdown() throws SQLException {
 
-        if (tRunner != null) {
-            tRunner.stop();
-        }
-
-        tRunner = null;
+        stop();
 
         if (cCache != null) {
             cCache.closeFile();

@@ -2529,21 +2529,22 @@ class DatabaseCommandInterpreter implements DITypes {
         return classLoader == null ? Class.forName(fqn)
                                    : classLoader.loadClass(fqn);
     }
+    
+    private static boolean isCompile() {
+        try {
+            return !Boolean.getBoolean("org.hsqldb.Parser.shadow");
+        } catch (Exception e) {}
+        return true;
+    }  
+    
+    // -Dorg.hsqldb.Parser.shadow=true|false
+    static final boolean compile = isCompile();
 
     static final Result emptyResult = new Result();
-
-    // -Dorg.hsqldb.Parser.shadow=true|false
-    static boolean compile = true;
-
-    static {
-        try {
-            compile = !Boolean.getBoolean("org.hsqldb.Parser.shadow");
-        } catch (Exception e) {}
-    }
-
+        
     TableWorks        tableWorks = new TableWorks(null);
     Tokenizer         tokenizer  = new Tokenizer();
-    CompiledStatement cs         = new CompiledStatement();
+    CompiledStatement cs         = new CompiledStatement();    
 
     private static class TempConstraint {
 

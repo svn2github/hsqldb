@@ -29,36 +29,14 @@
  */
 
 
-package org.hsqldb;
-
-import java.net.Socket;
+package org.hsqldb.lib;
 
 /**
- * Interface HsqlSocketRequestHandlerImpl
  *
- * @version 1.7.0
- *
- * @see HsqlSocketRequestHandler
+ * @author  boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since HSQLDB 1.7.2
  */
-
-// fredt@users - patch 461556 by paul-h@users
-public class HsqlSocketRequestHandlerImpl
-implements org.hsqldb.HsqlSocketRequestHandler {
-
-    private Server mServer;
-
-    public HsqlSocketRequestHandlerImpl(Server server) {
-        mServer = server;
-    }
-
-    public void handleConnection(final Socket socket) {
-
-        ServerConnection sc = new ServerConnection(socket, mServer);
-
-        sc.run();
-    }
-
-    public void closeAllServerConnections() {
-        mServer.closeAllServerConnections();
-    }
+public interface ThreadFactory {
+    public Thread newThread(Runnable r);
 }

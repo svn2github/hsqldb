@@ -615,6 +615,9 @@ class Select {
         StringBuffer sb = new StringBuffer();
 
         sb.append(super.toString()).append("[\n");
+        if (sIntoTable != null) {
+           sb.append("into table=[").append(sIntoTable.name).append("]\n");
+        }        
         sb.append("start=[").append(limitStart).append("]\n");
         sb.append("limit=[").append(limitCount).append("]\n");
         sb.append("isDistinctSelect=[").append(isDistinctSelect).append(

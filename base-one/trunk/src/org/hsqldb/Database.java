@@ -106,6 +106,7 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20030401 - patch 1.7.2 by akede@users - data files readonly
 // fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
 // fredt@users 20030425 - from this version the DDL methods are not used, methods in Session.java are used instead
+// boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -147,115 +148,12 @@ class Database {
     private boolean                bReferentialIntegrity;
     SessionManager                 sessionManager;
     private HsqlDatabaseProperties databaseProperties;
-    private Tokenizer              tokenizer;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
     final static int               DATABASE_ONLINE   = 1;
     final static int               DATABASE_OPENING  = 4;
     final static int               DATABASE_CLOSING  = 8;
     final static int               DATABASE_SHUTDOWN = 16;
-
-    //for execute()
-    private static final int        CALL                  = 1;
-    private static final int        CHECKPOINT            = 2;
-    private static final int        COMMIT                = 3;
-    private static final int        CONNECT               = 4;
-    private static final int        CREATE                = 5;
-    private static final int        DELETE                = 6;
-    private static final int        DISCONNECT            = 7;
-    private static final int        DROP                  = 8;
-    private static final int        GRANT                 = 9;
-    private static final int        INSERT                = 10;
-    private static final int        REVOKE                = 11;
-    private static final int        ROLLBACK              = 12;
-    private static final int        SAVEPOINT             = 13;
-    private static final int        SCRIPT                = 14;
-    private static final int        SELECT                = 15;
-    private static final int        SET                   = 16;
-    private static final int        SHUTDOWN              = 17;
-    private static final int        UPDATE                = 18;
-    private static final int        SEMICOLON             = 19;
-    private static final int        ALTER                 = 20;
-    private static final int        ADD                   = 24;
-    private static final int        ALIAS                 = 35;
-    private static final int        AUTOCOMMIT            = 43;
-    private static final int        CACHED                = 31;
-    private static final int        COLUMN                = 27;
-    private static final int        CONSTRAINT            = 25;
-    private static final int        FOREIGN               = 26;
-    private static final int        IGNORECASE            = 41;
-    private static final int        INDEX                 = 22;
-    private static final int        LOGSIZE               = 39;
-    private static final int        LOGTYPE               = 40;
-    private static final int        MAXROWS               = 42;
-    private static final int        MEMORY                = 30;
-    private static final int        PASSWORD              = 37;
-    private static final int        PRIMARY               = 36;
-    private static final int        PROPERTY              = 47;
-    private static final int        READONLY              = 38;
-    private static final int        REFERENTIAL_INTEGRITY = 46;
-    private static final int        RENAME                = 23;
-    private static final int        SOURCE                = 44;
-    private static final int        TABLE                 = 21;
-    private static final int        TEXT                  = 29;
-    private static final int        TRIGGER               = 33;
-    private static final int        UNIQUE                = 28;
-    private static final int        USER                  = 34;
-    private static final int        VIEW                  = 32;
-    private static final int        WRITE_DELAY           = 45;
-    private static final HsqlObjectToIntMap commandSet = new HsqlObjectToIntMap(67);
-
-    static {
-        commandSet.put("ALTER", ALTER);
-        commandSet.put("CALL", CALL);
-        commandSet.put("CHECKPOINT", CHECKPOINT);
-        commandSet.put("COMMIT", COMMIT);
-        commandSet.put("CONNECT", CONNECT);
-        commandSet.put("CREATE", CREATE);
-        commandSet.put("DELETE", DELETE);
-        commandSet.put("DISCONNECT", DISCONNECT);
-        commandSet.put("DROP", DROP);
-        commandSet.put("GRANT", GRANT);
-        commandSet.put("INSERT", INSERT);
-        commandSet.put("REVOKE", REVOKE);
-        commandSet.put("ROLLBACK", ROLLBACK);
-        commandSet.put("SAVEPOINT", SAVEPOINT);
-        commandSet.put("SCRIPT", SCRIPT);
-        commandSet.put("SELECT", SELECT);
-        commandSet.put("SET", SET);
-        commandSet.put("SHUTDOWN", SHUTDOWN);
-        commandSet.put("UPDATE", UPDATE);
-        commandSet.put(";", SEMICOLON);
-
-        //
-        commandSet.put("TABLE", TABLE);
-        commandSet.put("INDEX", INDEX);
-        commandSet.put("RENAME", RENAME);
-        commandSet.put("ADD", ADD);
-        commandSet.put("CONSTRAINT", CONSTRAINT);
-        commandSet.put("FOREIGN", FOREIGN);
-        commandSet.put("COLUMN", COLUMN);
-        commandSet.put("UNIQUE", UNIQUE);
-        commandSet.put("TEXT", TEXT);
-        commandSet.put("MEMORY", MEMORY);
-        commandSet.put("CACHED", CACHED);
-        commandSet.put("VIEW", VIEW);
-        commandSet.put("TRIGGER", TRIGGER);
-        commandSet.put("USER", USER);
-        commandSet.put("ALIAS", ALIAS);
-        commandSet.put("PASSWORD", PASSWORD);
-        commandSet.put("PRIMARY", PRIMARY);
-        commandSet.put("PROPERTY", PROPERTY);
-        commandSet.put("READONLY", READONLY);
-        commandSet.put("LOGSIZE", LOGSIZE);
-        commandSet.put("LOGTYPE", LOGTYPE);
-        commandSet.put("IGNORECASE", IGNORECASE);
-        commandSet.put("MAXROWS", MAXROWS);
-        commandSet.put("AUTOCOMMIT", AUTOCOMMIT);
-        commandSet.put("SOURCE", SOURCE);
-        commandSet.put("WRITE_DELAY", WRITE_DELAY);
-        commandSet.put("REFERENTIAL_INTEGRITY", REFERENTIAL_INTEGRITY);
-    }
 
     /**
      *  Constructs a new Database object that mounts or creates the database
@@ -289,17 +187,18 @@ class Database {
     }
 
     /**
-     * Opens the database.  The database can be opened by the constructor,
+     *Opens this database.  The database can be opened by the constructor,
      * or reopened by the close(int closemode) method during a
      * "shutdown compact".
-     * @see close(int closemode)
+     *
+     * @see #close(int closemode)
+     * @throws SQLException if a database access error occurs
      */
     private void open() throws SQLException {
 
         tTable                = new HsqlArrayList();
         aAccess               = new UserManager();
         hAlias                = Library.getAliasMap();
-        tokenizer             = new Tokenizer();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
@@ -436,6 +335,21 @@ class Database {
         }
     }
 
+    /**
+     *  The main SQL statement executor. <p>
+     *
+     *  All requests to execute SQL statements against this Database object
+     *  eventually go through this method.
+     *
+     * @param  statement the SQL statement to execute
+     * @param  session an object representing a connected user and a
+     *      collection of session state attributes
+     * @return  the result of executing the specified statement, in a form
+     *      suitable for either wrapping in a local ResultSet object or for
+     *      transmitting to a remote client via the native HSQLDB protocol
+     * @deprecated from 1.7.2; Session is now the HSQLDB execution hub
+     */
+
     Result execute(String statement, Session session) {
 
         try {
@@ -449,220 +363,10 @@ class Database {
     }
 
     /**
-     *  The main SQL statement executor. <p>
-     *
-     *  All requests to execute SQL statements against this Database object
-     *  eventually go through this method.
-     *
-     * @param  statement the SQL statement to execute
-     * @param  session an object representing a connected user and a
-     *      collection of session state attributes
-     * @return  the result of executing the specified statement, in a form
-     *      suitable for either wrapping in a local ResultSet object or for
-     *      transmitting to a remote client via the native HSQLDB protocol
-     */
-    synchronized Result executeShadow(String statement, Session session) {
-
-        if (Record.gcFrequency != 0
-                && Record.memoryRecords > Record.gcFrequency) {
-            System.gc();
-            Trace.printSystemOut("gc at " + Record.memoryRecords);
-
-            Record.memoryRecords = 0;
-        }
-
-        if (Trace.TRACE) {
-            Trace.trace(statement);
-        }
-
-        Result rResult = null;
-
-        try {
-
-            //tokenizer.reset(statement);
-            Tokenizer tokenizer = new Tokenizer(statement);
-            Parser    p         = new Parser(this, tokenizer, session);
-
-            if (Trace.DOASSERT) {
-                Trace.doAssert(!session.isNestedTransaction());
-            }
-
-            Trace.check(session != null, Trace.ACCESS_IS_DENIED);
-            Trace.check(dbState != DATABASE_SHUTDOWN,
-                        Trace.DATABASE_IS_SHUTDOWN);
-
-            while (true) {
-                tokenizer.setPartMarker();
-                session.setScripting(false);
-
-                String sToken = tokenizer.getString();
-
-                if (sToken.length() == 0) {
-                    break;
-                }
-
-                switch (commandSet.get(sToken)) {
-
-                    case SELECT :
-                        rResult = p.processSelect();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(rResult);
-
-// --
-                        break;
-
-                    case INSERT :
-                        rResult = p.processInsert();
-                        break;
-
-                    case UPDATE :
-                        rResult = p.processUpdate();
-                        break;
-
-                    case DELETE :
-                        rResult = p.processDelete();
-                        break;
-
-                    case CALL :
-                        rResult = p.processCall();
-                        break;
-
-                    case SET :
-                        rResult = processSet(tokenizer, session);
-                        break;
-
-                    case COMMIT :
-                        rResult = processCommit(tokenizer, session);
-
-                        session.setScripting(true);
-                        break;
-
-                    case ROLLBACK :
-                        rResult = processRollback(tokenizer, session);
-
-                        session.setScripting(true);
-                        break;
-
-                    case SAVEPOINT :
-                        rResult = processSavepoint(tokenizer, session);
-
-                        session.setScripting(true);
-                        break;
-
-                    case CREATE :
-                        rResult = processCreate(tokenizer, session);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case ALTER :
-                        rResult = processAlter(tokenizer, session);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case DROP :
-                        rResult = processDrop(tokenizer, session);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case GRANT :
-                        rResult = processGrantOrRevoke(tokenizer, session,
-                                                       true);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case REVOKE :
-                        rResult = processGrantOrRevoke(tokenizer, session,
-                                                       false);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case CONNECT :
-                        rResult = processConnect(tokenizer, session);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        setMetaDirty(null);
-
-// --
-                        break;
-
-                    case DISCONNECT :
-                        rResult = sessionManager.processDisconnect(session);
-                        break;
-
-                    case SCRIPT :
-                        rResult = processScript(tokenizer, session);
-                        break;
-
-                    case SHUTDOWN :
-                        rResult = processShutdown(tokenizer, session);
-                        break;
-
-                    case CHECKPOINT :
-                        rResult = processCheckpoint(tokenizer, session);
-                        break;
-
-                    case SEMICOLON :
-                        break;
-
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-
-                if (session.getScripting()) {
-                    logger.writeToLog(session, tokenizer.getLastPart());
-                }
-            }
-        } catch (SQLException e) {
-
-            // e.printStackTrace();
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// tony_lai@users 20020820 - patch 595073
-//            rResult = new Result(Trace.getMessage(e) + " in statement ["
-            rResult = new Result(e.getMessage() + " in statement ["
-                                 + statement + "]", e.getErrorCode());
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            String s = Trace.getMessage(Trace.GENERAL_ERROR) + " " + e;
-
-            rResult = new Result(s + " in statement [" + statement + "]",
-                                 Trace.GENERAL_ERROR);
-        } catch (java.lang.OutOfMemoryError e) {
-            e.printStackTrace();
-
-            rResult = new Result("out of memory", Trace.GENERAL_ERROR);
-        }
-
-        return rResult == null ? new Result()
-                               : rResult;
-    }
-
-    /**
      *  Puts this Database object in global read-only mode. That is, after
      *  this call, all existing and future sessions are limited to read-only
      *  transactions. Any following attempts to update the state of the
-     *  database will result in throwing a SQLException.
+     *  database will result in throwing an SQLException.
      */
     void setReadOnly() {
         databaseReadOnly = true;
@@ -678,9 +382,9 @@ class Database {
      * After this call all tables that use a file based format will automaticly
      * be set to read-only modus.
      * All changes that are done to memory based tables (e.g. Temp-Tables or
-     * normall Memory-Tables will <b>NOT</b> be stored or updated in the script
+     * normal Memory-Tables will <b>NOT</b> be stored or updated in the script
      * file.
-     * This mode is speciall for all uses on read-only media but with the need
+     * This mode is special for all uses on read-only media but with the need
      * of using Temp-Tables for queries or not persistent changes.
      */
     void setFilesReadOnly() {
@@ -688,6 +392,7 @@ class Database {
     }
 
 // ----------------------------------------------------------------------------
+    /** Setter for fileInJar attribute */
     void setFilesInJar() {
         filesInJar = true;
     }
@@ -768,7 +473,7 @@ class Database {
 // temp tables should be accessed by the owner and not scripted in the log
 
     /**
-     *  Retrieves the specified user defined table or view visible within the
+     *  Retrieves the specified user-defined table or view visible within the
      *  context of the specified Session, or any system table of the given
      *  name. This excludes any temp tables created in different Sessions.
      *
@@ -793,12 +498,19 @@ class Database {
     }
 
     /**
-     *  get a user
+     * Retrieves the user table object with the specified
+     * name from this datbase, using the specified session
+     * context. In particular, this method will succeed iff
+     * such a table exists <i>and</i> it is considered visible
+     * by the specified session.
      *
-     * @param  name
-     * @param  session
-     * @return
-     * @throws  SQLException
+     * @param name of the table to retrieve
+     * @param session the retrieval context
+     * @return the user table object with the specified
+     *      name
+     * @throws SQLException if the user table object with the specified
+     *      name cannot be found, given the specified
+     *      session context
      */
     Table getUserTable(String name, Session session) throws SQLException {
 
@@ -811,6 +523,16 @@ class Database {
         return t;
     }
 
+    /**
+     * Retrieves the user table object with the specified
+     * name from this datbase.
+     *
+     * @param name of the table to retrieve
+     * @return the user table object with the specified
+     *      name
+     * @throws SQLException if the user table object with the specified
+     *      name cannot be found
+     */
     Table getUserTable(String name) throws SQLException {
 
         Table t = findUserTable(name);
@@ -822,6 +544,14 @@ class Database {
         return t;
     }
 
+    /**
+     * Retrieves the user table object with the specified
+     * name from this datbase.
+     *
+     * @param name of the table to retrieve
+     * @return the user table object with the specified
+     *  name, or null if not found
+     */
     Table findUserTable(String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
@@ -836,6 +566,17 @@ class Database {
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+    /**
+     * Retrieves the user table object with the specified
+     * name from this datbase, using the specified session
+     * context. In particular, this method will succeed iff
+     * such a table exists <i>and</i> it is considered visible
+     * by the specified session.
+     * @param name of the table to retrieve
+     * @param session the retrieval context
+     * @return the user table object with the specified
+     *  name, or null if not found
+     */    
     Table findUserTable(String name, Session session) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
@@ -860,6 +601,10 @@ class Database {
         tTable.add(t);
     }
 
+    /**
+     * Setter for the isIgnoreCase attribute.
+     * @param b the new value for the isIgnoreCase attribute
+     */
     void setIgnoreCase(boolean b) {
         bIgnoreCase = b;
     }
@@ -874,284 +619,14 @@ class Database {
     }
 
     /**
-     *  Responsible for parsing and executing the SCRIPT SQL statement
+     * Finds the table that has an index with the given name in the
+     * whole database and visible in this session.
      *
-     * @param  c the tokenized representation of the statement being processed
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processScript(Tokenizer c,
-                                 Session session)
-                                 throws java.io.IOException, SQLException {
-
-        String sToken = c.getString();
-
-        if (c.wasValue()) {
-            sToken = (String) c.getAsValue();
-
-            StopWatch stopw = new StopWatch();
-            DatabaseScriptWriter sw = new DatabaseScriptWriter(this, sToken,
-                true, true);
-
-            sw.writeAll();
-            sw.close();
-            System.out.println("text script" + stopw.elapsedTime());
-
-            return new Result();
-        } else {
-            c.back();
-            session.checkAdmin();
-
-            return DatabaseScript.getScript(this, false);
-        }
-    }
-
-    /**
-     *  Responsible for handling the parse and execution of CREATE SQL
-     *  statements.
-     *
-     *  All CREATE command require an ADMIN user except
-     *  CREATE TEMP [MEMORY] TABLE
-     *
-     * @param  c the tokenized representation of the statement being processed
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processCreate(Tokenizer c,
-                                 Session session) throws SQLException {
-
-        session.checkReadWrite();
-
-        String  sToken = c.getString();
-        boolean isTemp = false;
-
-        if (sToken.equals("TEMP")) {
-            isTemp = true;
-            sToken = c.getString();
-
-            switch (commandSet.get(sToken)) {
-
-                case TEXT :
-                    session.checkAdmin();
-                case TABLE :
-                case MEMORY :
-                    session.setScripting(false);
-                    break;
-
-                default :
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
-        } else {
-            session.checkAdmin();
-            session.checkDDLWrite();
-            session.setScripting(true);
-        }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        boolean unique    = false;
-        int     tableType = 0;
-
-        switch (commandSet.get(sToken)) {
-
-            case TABLE :
-                tableType = isTemp ? Table.TEMP_TABLE
-                                   : Table.MEMORY_TABLE;
-
-                processCreateTable(c, session, tableType);
-                break;
-
-            case MEMORY :
-                c.getThis("TABLE");
-
-                tableType = isTemp ? Table.TEMP_TABLE
-                                   : Table.MEMORY_TABLE;
-
-                processCreateTable(c, session, tableType);
-                break;
-
-            case CACHED :
-                c.getThis("TABLE");
-                processCreateTable(c, session, Table.CACHED_TABLE);
-                break;
-
-            case TEXT :
-                c.getThis("TABLE");
-
-                tableType = isTemp ? Table.TEMP_TEXT_TABLE
-                                   : Table.TEXT_TABLE;
-
-                processCreateTable(c, session, tableType);
-                break;
-
-            case VIEW :
-                processCreateView(c, session);
-                break;
-
-            case TRIGGER :
-                processCreateTrigger(c, session);
-                break;
-
-            case USER :
-                String u = c.getStringToken();
-
-                c.getThis("PASSWORD");
-
-                String  p     = c.getStringToken();
-                boolean admin = c.getString().equals("ADMIN");
-
-                aAccess.createUser(u, p, admin);
-                break;
-
-            case ALIAS :
-                String aName = c.getString();
-
-                sToken = c.getString();
-
-                Trace.check(sToken.equals("FOR"), Trace.UNEXPECTED_TOKEN,
-                            sToken);
-
-                sToken = c.getString();
-
-// fredt@users 20010701 - patch 1.6.1 by fredt - open <1.60 db files
-// convert org.hsql.Library aliases from versions < 1.60 to org.hsqldb
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - ABS function
-                if (sToken.startsWith("org.hsql.Library.")) {
-                    sToken = "org.hsqldb.Library."
-                             + sToken.substring("org.hsql.Library.".length());
-                } else if (sToken.equals("java.lang.Math.abs")) {
-                    sToken = "org.hsqldb.Library.abs";
-                }
-
-                hAlias.put(aName, sToken);
-                break;
-
-            case UNIQUE :
-                unique = true;
-
-                c.getThis("INDEX");
-
-            //fall thru
-            case INDEX :
-                String  name         = c.getName();
-                boolean isnamequoted = c.wasQuotedIdentifier();
-
-                c.getThis("ON");
-
-                Table t = getTable(c.getName(), session);
-
-                addIndexOn(c, session, name, isnamequoted, t, unique);
-                break;
-
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
-        }
-
-        return new Result();
-    }
-
-    /**
-     *  Process a bracketed column list as used in the declaration of SQL
-     *  CONSTRAINTS and return an array containing the indexes of the columns
-     *  within the table.
-     *
-     * @param  c
-     * @param  t table that contains the columns
-     * @return
-     * @throws  SQLException if a column is not found or is duplicated
-     */
-    private int[] processColumnList(Tokenizer c,
-                                    Table t) throws SQLException {
-
-        HsqlArrayList v = new HsqlArrayList();
-        HsqlHashMap   h = new HsqlHashMap();
-
-        c.getThis("(");
-
-        while (true) {
-            String colname = c.getName();
-
-            v.add(colname);
-            h.put(colname, colname);
-
-            String sToken = c.getString();
-
-            if (sToken.equals(",")) {
-                continue;
-            }
-
-            if (sToken.equals(")")) {
-                break;
-            }
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        int s = v.size();
-
-        if (s != h.size()) {
-            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS,
-                              "duplicate column in list");
-        }
-
-        int col[] = new int[s];
-
-        for (int i = 0; i < s; i++) {
-            col[i] = t.getColumnNr((String) v.get(i));
-        }
-
-        return col;
-    }
-
-    /**
-     *  Indexes defined in DDL scripts are handled by this method. If the
-     *  name of an existing index begins with "SYS_", the name is changed to
-     *  begin with "USER_". The name should be unique within the database.
-     *  For compatibility with old database, non-unique names are modified
-     *  and assigned a new name<p>
-     *
-     *  In 1.7.2 no new index is created if an equivalent already exists.
-     *  (fredt@users)
-     *
-     * @param  c
-     * @param  session
-     * @param  name
-     * @param  t
-     * @param  unique
-     * @param  namequoted The feature to be added to the IndexOn attribute
-     * @throws  SQLException
-     */
-    private void addIndexOn(Tokenizer c, Session session, String name,
-                            boolean namequoted, Table t,
-                            boolean unique) throws SQLException {
-
-        HsqlName indexname;
-        int      col[] = processColumnList(c, t);
-
-        if (HsqlName.isReservedIndexName(name)) {
-            indexname = HsqlName.newAutoName("USER", name);
-        } else {
-            indexname = new HsqlName(name, namequoted);
-        }
-
-        if (this.indexNameList.containsName(name)) {
-            throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
-        }
-
-        session.commit();
-        session.setScripting(!t.isTemp());
-
-        TableWorks tw = new TableWorks(t);
-
-        tw.createIndex(col, indexname, unique);
-    }
-
-    /**
-     *  Finds the table that has an index with the given name in the
-     *  whole database and visible in this session.
-     *
+     * @param name of index
+     * @param session visibility context
+     * @return the table that encloses the index with the specific name, 
+     *      or null if the table or index are not visible in the specified 
+     *      session context
      */
     Table findUserTableForIndex(String name, Session session) {
 
@@ -1166,7 +641,7 @@ class Database {
 
     /**
      *  Retrieves the index of a table or view in the HsqlArrayList that
-     *  contains these objects for a Database.
+     *  contains these objects for this Database.
      *
      * @param  table the Table object
      * @return  the index of the specified table or view, or -1 if not found
@@ -1184,1083 +659,12 @@ class Database {
         return -1;
     }
 
-    /**
-     *  Responsible for handling the execution of CREATE TRIGGER SQL
-     *  statements. <p>
-     *
-     *  typical sql is: CREATE TRIGGER tr1 AFTER INSERT ON tab1 CALL "pkg.cls"
-     *
-     * @param  c the tokenized representation of the statement being processed
-     * @param  session
-     * @throws  SQLException
+    /** Drops the index with the specified name from this database.
+     * @param indexname the name of the index to drop
+     * @param session the execution context
+     * @throws SQLException if the index does not exist, the session lacks the permission
+     *        or the operation violates database integrity
      */
-    private void processCreateTrigger(Tokenizer c,
-                                      Session session) throws SQLException {
-
-        Table   t;
-        boolean bForEach   = false;
-        boolean bNowait    = false;
-        int     nQueueSize = TriggerDef.getDefaultQueueSize();
-        String  sTrigName  = c.getName();
-        boolean namequoted = c.wasQuotedIdentifier();
-
-        Trace.doAssert(!triggerNameList.containsName(sTrigName),
-                       " trigger " + sTrigName + "exists");
-
-// --
-        String sWhen = c.getString();
-        String sOper = c.getString();
-
-        c.getThis("ON");
-
-        String sTableName = c.getString();
-
-        t = getTable(sTableName, session);
-
-// boucherb@users 20021128 - disallow triggers on system tables
-        if (t.isView() || t.tableType == Table.SYSTEM_TABLE) {
-            throw Trace.error(Trace.NOT_A_TABLE);
-        }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        session.setScripting(!t.isTemp());
-
-        // "FOR EACH ROW" or "CALL"
-        String tok = c.getString();
-
-        if (tok.equals("FOR")) {
-            tok = c.getString();
-
-            if (tok.equals("EACH")) {
-                tok = c.getString();
-
-                if (tok.equals("ROW")) {
-                    bForEach = true;
-                    tok      = c.getString();    // should be 'NOWAIT' or 'QUEUE' or 'CALL'
-                } else {
-                    throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, tok);
-                }
-            } else {
-                throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, tok);
-            }
-        }
-
-        if (tok.equals("NOWAIT")) {
-            bNowait = true;
-            tok     = c.getString();    // should be 'CALL' or 'QUEUE'
-        }
-
-        if (tok.equals("QUEUE")) {
-            nQueueSize = Integer.parseInt(c.getString());
-            tok        = c.getString();    // should be 'CALL'
-        }
-
-        if (!tok.equals("CALL")) {
-            throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, tok);
-        }
-
-        String     sClassName = c.getString();    // double quotes have been stripped
-        TriggerDef td;
-        Trigger    o;
-
-        try {
-            Class cl = Class.forName(sClassName);    // dynamically load class
-
-            o = (Trigger) cl.newInstance();          // dynamically instantiate it
-            td = new TriggerDef(sTrigName, namequoted, sWhen, sOper,
-                                bForEach, t, o, "\"" + sClassName + "\"",
-                                bNowait, nQueueSize);
-
-            if (td.isValid()) {
-                t.addTrigger(td);
-                td.start();                          // start the trigger thread
-            } else {
-                String msg = "Error in parsing trigger command ";
-
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
-            }
-        } catch (Exception e) {
-            String msg = "Exception in loading trigger class "
-                         + e.getMessage();
-
-            throw Trace.error(Trace.UNKNOWN_FUNCTION, msg);
-        }
-
-// boucherb@users 20021128 - enforce unique trigger names
-        triggerNameList.addName(sTrigName, t.getName());
-
-// --
-    }
-
-    /**
-     *  Responsible for handling the creation of table columns during the
-     *  process of executing CREATE TABLE statements.
-     *
-     * @param  c the tokenized representation of the statement being processed
-     * @param  t target table
-     * @return
-     * @throws  SQLException
-     */
-    private Column processCreateColumn(Tokenizer c,
-                                       Table t) throws SQLException {
-
-        boolean identity     = false;
-        boolean primarykey   = false;
-        String  sToken       = c.getString();
-        String  sColumn      = sToken;
-        boolean isnamequoted = c.wasQuotedIdentifier();
-        String  typestring   = c.getString();
-        int     iType        = Column.getTypeNr(typestring);
-
-        Trace.check(!sColumn.equals(Table.DEFAULT_PK),
-                    Trace.COLUMN_ALREADY_EXISTS, sColumn);
-
-        if (typestring.equals("IDENTITY")) {
-            identity   = true;
-            primarykey = true;
-        }
-
-        if (iType == Types.VARCHAR && bIgnoreCase) {
-            iType = Column.VARCHAR_IGNORECASE;
-        }
-
-        sToken = c.getString();
-
-        if (iType == Types.DOUBLE && sToken.equals("PRECISION")) {
-            sToken = c.getString();
-        }
-
-// fredt@users 20020130 - patch 491987 by jimbag@users
-        String sLen = "";
-
-        if (sToken.equals("(")) {
-
-            // read length
-            while (true) {
-                sToken = c.getString();
-
-                if (sToken.equals(")")) {
-                    break;
-                }
-
-                sLen += sToken;
-            }
-
-            sToken = c.getString();
-        }
-
-        int iLen   = 0;
-        int iScale = 0;
-
-        // see if we have a scale specified
-        int index;
-
-        if ((index = sLen.indexOf(",")) != -1) {
-            String sScale = sLen.substring(index + 1, sLen.length());
-
-            sLen = sLen.substring(0, index);
-
-            try {
-                iScale = Integer.parseInt(sScale.trim());
-            } catch (NumberFormatException ne) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
-            }
-        }
-
-        // convert the length
-        if (sLen.trim().length() > 0) {
-            try {
-                iLen = Integer.parseInt(sLen.trim());
-            } catch (NumberFormatException ne) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
-            }
-        }
-
-        String defaultvalue = null;
-
-        if (sToken.equals("DEFAULT")) {
-            defaultvalue = processCreateDefaultValue(c, iType, iLen);
-            sToken       = c.getString();
-        }
-
-        boolean nullable = true;
-
-        if (sToken.equals("NULL")) {
-            sToken = c.getString();
-        } else if (sToken.equals("NOT")) {
-            c.getThis("NULL");
-
-            nullable = false;
-            sToken   = c.getString();
-        }
-
-        if (sToken.equals("IDENTITY")) {
-            identity   = true;
-            sToken     = c.getString();
-            primarykey = true;
-        }
-
-        if (sToken.equals("PRIMARY")) {
-            c.getThis("KEY");
-
-            primarykey = true;
-        } else {
-            c.back();
-        }
-
-        return new Column(new HsqlName(sColumn, isnamequoted), nullable,
-                          iType, iLen, iScale, identity, primarykey,
-                          defaultvalue);
-    }
-
-    String processCreateDefaultValue(Tokenizer c, int iType,
-                                     int iLen) throws SQLException {
-
-        String  defaultvalue = c.getString();
-        boolean wasminus     = false;
-
-        // see if it is a negative number
-        if (defaultvalue.equals("-") && c.getType() != Types.VARCHAR) {
-            wasminus     = true;
-            defaultvalue += c.getString();
-        }
-
-        if (c.wasValue() && iType != Types.BINARY && iType != Types.OTHER) {
-            Object sv = c.getAsValue();
-
-            if (wasminus) {
-                sv = Column.negate(sv, iType);
-            }
-
-            if (sv != null) {
-
-                // check conversion of literals to values and size constraints
-                try {
-                    Column.convertObject(sv, iType);
-                } catch (Exception e) {
-                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
-                                      defaultvalue);
-                }
-
-                String tempdefaultvalue = Column.convertObject(sv);
-
-                // ensure char trimming does not affect the value
-                String testdefault =
-                    sqlEnforceSize
-                    ? (String) Table.enforceSize(tempdefaultvalue, iType,
-                                                 iLen, false)
-                    : tempdefaultvalue;
-
-                // if default value is too long for fixed size column
-                if (!tempdefaultvalue.equals(testdefault)) {
-                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
-                                      defaultvalue);
-                }
-            }
-        } else {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defaultvalue);
-        }
-
-        return defaultvalue;
-    }
-
-    private HsqlArrayList processCreateConstraints(Tokenizer c,
-            Session session, Table t, boolean constraint,
-            int[] primarykeycolumn) throws SQLException {
-
-        String sToken;
-
-// fredt@users 20020225 - comment
-// HSQLDB relies on primary index to be the first one defined
-// and needs original or system added primary key before any non-unique index
-// is created
-        HsqlArrayList tempConstraints = new HsqlArrayList();
-        TempConstraint tempConst = new TempConstraint(null, primarykeycolumn,
-            null, null, Constraint.MAIN, Constraint.NO_ACTION,
-            Constraint.NO_ACTION);
-
-// tony_lai@users 20020820 - patch 595099
-        HsqlName pkName = null;
-
-        tempConstraints.add(tempConst);
-
-        if (!constraint) {
-            return tempConstraints;
-        }
-
-        int i = 0;
-
-        while (true) {
-            sToken = c.getString();
-
-            HsqlName cname = null;
-
-            i++;
-
-            if (sToken.equals("CONSTRAINT")) {
-                cname  = new HsqlName(c.getName(), c.wasQuotedIdentifier());
-                sToken = c.getString();
-            }
-
-            switch (commandSet.get(sToken)) {
-
-                case PRIMARY : {
-                    c.getThis("KEY");
-
-// tony_lai@users 20020820 - patch 595099
-                    pkName = cname;
-
-                    int col[] = processColumnList(c, t);
-                    TempConstraint mainConst =
-                        (TempConstraint) tempConstraints.get(0);
-
-                    Trace.check(mainConst.localCol == null,
-                                Trace.SECOND_PRIMARY_KEY);
-
-                    mainConst.localCol = col;
-
-                    break;
-                }
-                case UNIQUE : {
-                    int col[] = processColumnList(c, t);
-
-                    if (cname == null) {
-                        cname = HsqlName.newAutoName("CT");
-                    }
-
-                    tempConst = new TempConstraint(cname, col, null, null,
-                                                   Constraint.UNIQUE,
-                                                   Constraint.NO_ACTION,
-                                                   Constraint.NO_ACTION);
-
-                    tempConstraints.add(tempConst);
-
-                    break;
-                }
-                case FOREIGN : {
-                    c.getThis("KEY");
-
-                    tempConst = processCreateFK(c, session, t, cname);
-
-                    if (tempConst.expCol == null) {
-                        TempConstraint mainConst =
-                            (TempConstraint) tempConstraints.get(0);
-
-                        tempConst.expCol = mainConst.localCol;
-
-                        if (tempConst.expCol == null) {
-                            throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                              "table has no primary key");
-                        }
-                    }
-
-                    if (tempConst.updateAction == Constraint.SET_DEFAULT
-                            || tempConst.deleteAction
-                               == Constraint.SET_DEFAULT) {
-                        for (int j = 0; j < tempConst.localCol.length; j++) {
-                            if (t.getColumn(tempConst.localCol[j])
-                                    .getDefaultString() == null) {
-                                throw Trace.error(
-                                    Trace.COLUMN_TYPE_MISMATCH,
-                                    "missing DEFAULT value on column '"
-                                    + t.getColumn(
-                                        tempConst.localCol[j]).columnName
-                                            .name + "'");
-                            }
-                        }
-                    }
-
-                    t.checkColumnsMatch(tempConst.localCol,
-                                        tempConst.expTable, tempConst.expCol);
-                    tempConstraints.add(tempConst);
-                }
-            }
-
-            sToken = c.getString();
-
-            if (sToken.equals(",")) {
-                continue;
-            }
-
-            if (sToken.equals(")")) {
-                break;
-            }
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        return tempConstraints;
-    }
-
-// fredt@users 20020225 - patch 509002 by fredt
-// temporary attributes for constraints used in processCreateTable()
-
-    /**
-     *  temporary attributes for constraints used in processCreateTable()
-     */
-    private class TempConstraint {
-
-        HsqlName name;
-        int[]    localCol;
-        Table    expTable;
-        int[]    expCol;
-        int      type;
-        int      deleteAction;
-        int      updateAction;
-
-        TempConstraint(HsqlName name, int[] localCol, Table expTable,
-                       int[] expCol, int type, int deleteAction,
-                       int updateAction) {
-
-            this.name         = name;
-            this.type         = type;
-            this.localCol     = localCol;
-            this.expTable     = expTable;
-            this.expCol       = expCol;
-            this.deleteAction = deleteAction;
-            this.updateAction = updateAction;
-        }
-    }
-
-// fredt@users 20020225 - patch 509002 by fredt
-// process constraints after parsing to include primary keys defined as
-// constraints
-// fredt@users 20020225 - patch 489777 by fredt
-// better error trapping
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Responsible for handling the execution CREATE TABLE SQL statements.
-     *
-     * @param  c
-     * @param  session
-     * @param  type Description of the Parameter
-     * @throws  SQLException
-     */
-    private void processCreateTable(Tokenizer c, Session session,
-                                    int type) throws SQLException {
-
-        Table   t;
-        String  sToken       = c.getName();
-        boolean isnamequoted = c.wasQuotedIdentifier();
-
-// boucherb@users - metadata 1.7.2
-        if (dInfo.isSystemTable(sToken)
-                || findUserTable(sToken, session) != null) {
-            throw Trace.error(Trace.TABLE_ALREADY_EXISTS, sToken);
-        }
-
-// --
-        if (type == Table.TEMP_TEXT_TABLE || type == Table.TEXT_TABLE) {
-            t = new TextTable(this, new HsqlName(sToken, isnamequoted), type,
-                              session.getId());
-        } else {
-            t = new Table(this, new HsqlName(sToken, isnamequoted), type,
-                          session.getId());
-        }
-
-        c.getThis("(");
-
-        int[]   primarykeycolumn = null;
-        int     column           = 0;
-        boolean constraint       = false;
-
-        while (true) {
-            sToken       = c.getString();
-            isnamequoted = c.wasQuotedIdentifier();
-
-// fredt@users 20020225 - comment
-// we can check here for reserved words used with quotes as column names
-            switch (commandSet.get(sToken)) {
-
-                case CONSTRAINT :
-                case PRIMARY :
-                case FOREIGN :
-                case UNIQUE :
-                    constraint = true;
-            }
-
-            c.back();
-
-            if (constraint) {
-                break;
-            }
-
-            Column newcolumn = processCreateColumn(c, t);
-
-            t.addColumn(newcolumn);
-
-            if (newcolumn.isPrimaryKey()) {
-                Trace.check(primarykeycolumn == null,
-                            Trace.SECOND_PRIMARY_KEY, "column " + column);
-
-                primarykeycolumn = new int[]{ column };
-            }
-
-            sToken = c.getString();
-
-            if (sToken.equals(",")) {
-                column++;
-
-                continue;
-            }
-
-            if (sToken.equals(")")) {
-                break;
-            }
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        HsqlArrayList tempConstraints = processCreateConstraints(c, session,
-            t, constraint, primarykeycolumn);
-
-        try {
-            session.commit();
-
-// fredt@users 20020225 - patch 509002 by fredt
-// it is essential to stay compatible with existing cached tables
-// so we create all constraints and indexes (even duplicates) for cached
-// tables
-// CONSTRAINT PRIMARY KEY can appear in user scripts and new tables only so
-// we can safely apply it correctly
-// first apply any primary key constraint
-// then set all the constriants
-// also, duplicate indexes can be avoided if we choose to in the future but
-// currently we have to accept them to stay compatible with existing cached
-// tables that include them
-            TempConstraint tempConst =
-                (TempConstraint) tempConstraints.get(0);
-
-// tony_lai@users 20020820 - patch 595099
-            t.createPrimaryKey(tempConst.name, tempConst.localCol, true);
-
-            boolean logDDL = false;
-
-            for (int i = 1; i < tempConstraints.size(); i++) {
-                tempConst = (TempConstraint) tempConstraints.get(i);
-
-                if (tempConst.type == Constraint.UNIQUE) {
-                    TableWorks tw = new TableWorks(t);
-
-                    tw.createUniqueConstraint(tempConst.localCol,
-                                              tempConst.name);
-
-                    t = tw.getTable();
-                }
-
-                if (tempConst.type == Constraint.FOREIGN_KEY) {
-                    TableWorks tw = new TableWorks(t);
-
-                    tw.createForeignKey(tempConst.localCol, tempConst.expCol,
-                                        tempConst.name, tempConst.expTable,
-                                        tempConst.deleteAction,
-                                        tempConst.updateAction);
-
-                    t = tw.getTable();
-                }
-            }
-
-            linkTable(t);
-        } catch (SQLException e) {
-
-// fredt@users 20020225 - comment
-// if a SQLException is thrown while creating table, any foreign key that has
-// been created leaves it modification to the expTable in place
-// need to undo those modifications. This should not happen in practice.
-            removeExportedKeys(t);
-
-            throw e;
-        }
-    }
-
-    TempConstraint processCreateFK(Tokenizer c, Session session, Table t,
-                                   HsqlName cname) throws SQLException {
-
-        int localcol[] = processColumnList(c, t);
-
-        c.getThis("REFERENCES");
-
-        String expTableName = c.getString();
-        Table  expTable;
-
-// fredt@users 20020221 - patch 520213 by boucherb@users - self reference FK
-// allows foreign keys that reference a column in the same table
-        if (t.equals(expTableName)) {
-            expTable = t;
-        } else {
-            expTable = getTable(expTableName, session);
-        }
-
-        int    expcol[] = null;
-        String sToken   = c.getString();
-
-        c.back();
-
-// fredt@users 20020503 - patch 1.7.0 by fredt -  FOREIGN KEY on table
-        if (sToken.equals("(")) {
-            expcol = processColumnList(c, expTable);
-        } else {
-
-            // the exp table must have a user defined primary key
-            Index expIndex = expTable.getPrimaryIndex();
-
-            if (expIndex != null) {
-                expcol = expIndex.getColumns();
-
-                if (expcol[0] == expTable.getColumnCount()) {
-                    throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                      expTableName + " has no primary key");
-                }
-            }
-
-            // with CREATE TABLE, (expIndex == null) when self referencing FK
-            // is declared in CREATE TABLE
-            // null will be returned for expCol and will be checked
-            // in caller method
-            // with ALTER TABLE, (expIndex == null) when table has no PK
-        }
-
-        sToken = c.getString();
-
-        // -- In a while loop we parse a maximium of two
-        // -- "ON" statements following the foreign key
-        // -- definition this can be
-        // -- ON [UPDATE|DELETE] [CASCADE|SET [NULL|DEFAULT]]
-        int deleteAction = Constraint.NO_ACTION;
-        int updateAction = Constraint.NO_ACTION;
-
-        while (sToken.equals("ON")) {
-            sToken = c.getString();
-
-            if (deleteAction == Constraint.NO_ACTION
-                    && sToken.equals("DELETE")) {
-                sToken = c.getString();
-
-                if (sToken.equals("SET")) {
-                    sToken = c.getString();
-
-                    if (sToken.equals("DEFAULT")) {
-                        deleteAction = Constraint.SET_DEFAULT;
-                    } else if (sToken.equals("NULL")) {
-                        deleteAction = Constraint.SET_NULL;
-                    } else {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    }
-                } else if (sToken.equals("CASCADE")) {
-                    deleteAction = Constraint.CASCADE;
-                } else {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-            } else if (updateAction == Constraint.NO_ACTION
-                       && sToken.equals("UPDATE")) {
-                sToken = c.getString();
-
-                if (sToken.equals("SET")) {
-                    sToken = c.getString();
-
-                    if (sToken.equals("DEFAULT")) {
-                        updateAction = Constraint.SET_DEFAULT;
-                    } else if (sToken.equals("NULL")) {
-                        updateAction = Constraint.SET_NULL;
-                    } else {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    }
-                } else if (sToken.equals("CASCADE")) {
-                    updateAction = Constraint.CASCADE;
-                }
-            } else {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
-
-            sToken = c.getString();
-        }
-
-        c.back();
-
-        if (cname == null) {
-            cname = HsqlName.newAutoName("FK");
-        }
-
-        return new TempConstraint(cname, localcol, expTable, expcol,
-                                  Constraint.FOREIGN_KEY, deleteAction,
-                                  updateAction);
-    }
-
-// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
-
-    /**
-     *  Responsible for handling the execution CREATE VIEW SQL statements.
-     *
-     * @param  session
-     * @param  c
-     * @throws  SQLException
-     */
-    private void processCreateView(Tokenizer c,
-                                   Session session) throws SQLException {
-
-        View   v;
-        String sToken      = c.getName();
-        int    logposition = c.getPartMarker();
-
-        if (findUserTable(sToken, session) != null) {
-            throw Trace.error(Trace.VIEW_ALREADY_EXISTS, sToken);
-        }
-
-        v = new View(this, new HsqlName(sToken, c.wasQuotedIdentifier()));
-
-        c.getThis("AS");
-        c.setPartMarker();
-        c.getThis("SELECT");
-
-        Result rResult;
-        Parser p       = new Parser(this, c, session);
-        int    maxRows = session.getMaxRows();
-
-        try {
-            Select select = p.parseSelect();
-
-            if (select.sIntoTable != null) {
-                throw (Trace.error(Trace.TABLE_NOT_FOUND));
-            }
-
-            select.setPreProcess();
-
-            rResult = select.getResult(1);
-        } catch (SQLException e) {
-            throw e;
-        }
-
-        v.setStatement(c.getLastPart());
-        v.addColumns(rResult);
-        session.commit();
-        tTable.add(v);
-        c.setPartMarker(logposition);
-    }
-
-    private void processRenameTable(Tokenizer c, Session session,
-                                    String tablename) throws SQLException {
-
-        String  newname  = c.getName();
-        boolean isquoted = c.wasQuotedIdentifier();
-        Table   t        = findUserTable(tablename);
-
-        // this ensures temp table belongs to this session
-        if (t == null ||!t.equals(tablename, session)) {
-            throw Trace.error(Trace.TABLE_NOT_FOUND, tablename);
-        }
-
-        Table ttemp = findUserTable(newname);
-
-        if (ttemp != null && ttemp.equals(ttemp.getName().name, session)) {
-            throw Trace.error(Trace.TABLE_ALREADY_EXISTS, tablename);
-        }
-
-        session.commit();
-        session.setScripting(!t.isTemp());
-        t.setName(newname, isquoted);
-    }
-
-    /**
-     * ALSTER TABLE statements.
-     * ALTER TABLE <name> RENAME TO <newname>
-     * ALTER INDEX <name> RENAME TO <newname>
-     *
-     * ALTER TABLE <name> ADD CONSTRAINT <constname> FOREIGN KEY (<col>, ...)
-     * REFERENCE <other table> (<col>, ...) [ON DELETE CASCADE]
-     *
-     * ALTER TABLE <name> ADD CONSTRAINT <constname> UNIQUE (<col>, ...)
-     *
-     * @param  c
-     * @param  session
-     * @return  Result
-     * @throws  SQLException
-     */
-    private Result processAlter(Tokenizer c,
-                                Session session) throws SQLException {
-
-        session.checkDDLWrite();
-        session.checkAdmin();
-        session.setScripting(true);
-
-        String sToken = c.getString();
-
-        switch (commandSet.get(sToken)) {
-
-            case TABLE :
-                processAlterTable(c, session);
-                break;
-
-            case INDEX :
-                processAlterIndex(c, session);
-                break;
-
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        return new Result();
-    }
-
-    private void processAlterTable(Tokenizer c,
-                                   Session session) throws SQLException {
-
-        String     tablename = c.getString();
-        Table      t         = getUserTable(tablename, session);
-        TableWorks tw        = new TableWorks(t);
-        String     sToken    = c.getString();
-
-        if (t.isView()) {
-            throw Trace.error(Trace.NOT_A_TABLE);
-        }
-
-        session.setScripting(!t.isTemp());
-
-        HsqlName cname = null;
-
-        switch (commandSet.get(sToken)) {
-
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            case RENAME :
-                c.getThis("TO");
-                processRenameTable(c, session, tablename);
-
-                return;
-
-            case ADD : {
-                sToken = c.getString();
-
-                switch (commandSet.get(sToken)) {
-
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    case CONSTRAINT :
-                        cname = new HsqlName(c.getName(),
-                                             c.wasQuotedIdentifier());
-                        sToken = c.getString();
-
-                        switch (commandSet.get(sToken)) {
-
-                            default :
-                                throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                                                  sToken);
-                            case UNIQUE :
-                                int col[] = processColumnList(c, t);
-
-                                session.commit();
-                                tw.createUniqueConstraint(col, cname);
-
-                                return;
-
-                            case FOREIGN :
-                                break;
-                        }
-                    case FOREIGN :
-                        c.getThis("KEY");
-
-                        TempConstraint tc = processCreateFK(c, session, t,
-                                                            cname);
-
-                        t.checkColumnsMatch(tc.localCol, tc.expTable,
-                                            tc.expCol);
-
-                        if (tc.deleteAction == Constraint.SET_DEFAULT
-                                || tc.deleteAction == Constraint.SET_NULL
-                                || tc.updateAction != Constraint.NO_ACTION) {
-                            throw Trace.error(
-                                Trace.FOREIGN_KEY_NOT_ALLOWED,
-                                "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
-                        }
-
-                        session.commit();
-                        tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                            tc.expTable, tc.deleteAction,
-                                            tc.updateAction);
-
-                        return;
-
-                    case COLUMN :
-                        int    colindex = t.getColumnCount();
-                        Column column   = processCreateColumn(c, t);
-
-                        sToken = c.getString();
-
-                        if (sToken.equals("BEFORE")) {
-                            sToken   = c.getName();
-                            colindex = t.getColumnNr(sToken);
-                        } else {
-                            c.back();
-                        }
-
-                        if (column.isIdentity() || column.isPrimaryKey()
-                                || (!t.isEmpty()
-                                    && column.isNullable() == false
-                                    && column.getDefaultString() == null)) {
-                            throw Trace.error(
-                                Trace.BAD_ADD_COLUMN_DEFINITION);
-                        }
-
-                        session.commit();
-                        tw.addOrDropColumn(column, colindex, 1);
-
-                        return;
-                }
-            }
-            case DROP : {
-                sToken = c.getString();
-
-                switch (commandSet.get(sToken)) {
-
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    case CONSTRAINT :
-                        String constname = c.getName();
-
-                        session.commit();
-                        tw.dropConstraint(constname);
-
-                        return;
-
-                    case COLUMN :
-                        sToken = c.getName();
-
-                        int colindex = t.getColumnNr(sToken);
-
-                        session.commit();
-                        tw.addOrDropColumn(null, colindex, -1);
-
-                        return;
-                }
-            }
-        }
-    }
-
-    private void processAlterIndex(Tokenizer c,
-                                   Session session) throws SQLException {
-
-        String indexname = c.getName();
-
-        c.getThis("RENAME");
-        c.getThis("TO");
-
-        String  newname  = c.getName();
-        boolean isQuoted = c.wasQuotedIdentifier();
-        Table   t        = findUserTableForIndex(indexname, session);
-
-        if (t == null) {
-            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
-        }
-
-        Table ttemp = findUserTableForIndex(newname, session);
-
-        if (ttemp != null) {
-            throw Trace.error(Trace.INDEX_ALREADY_EXISTS, indexname);
-        }
-
-        if (HsqlName.isReservedIndexName(indexname)) {
-            throw Trace.error(Trace.SYSTEM_INDEX, indexname);
-        }
-
-        if (HsqlName.isReservedIndexName(newname)) {
-            throw Trace.error(Trace.BAD_INDEX_CONSTRAINT_NAME, indexname);
-        }
-
-        session.setScripting(!t.isTemp());
-        session.commit();
-        t.getIndex(indexname).setName(newname, isQuoted);
-        indexNameList.rename(indexname, newname);
-    }
-
-// fredt@users 20020221 - patch 1.7.0 chnaged IF EXISTS syntax
-// new syntax DROP TABLE tablename IF EXISTS
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Method declaration
-     *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processDrop(Tokenizer c,
-                               Session session) throws SQLException {
-
-        session.checkReadWrite();
-        session.checkAdmin();
-        session.setScripting(true);
-
-        String  sToken = c.getString();
-        boolean isview = false;
-
-        switch (commandSet.get(sToken)) {
-
-            case VIEW :
-                isview = true;    //fall thru
-            case TABLE :
-                String  tablename = c.getString();
-                boolean dropmode  = false;
-
-                if (tablename.equals("IF")) {
-                    sToken = c.getString();
-
-                    if (sToken.equals("EXISTS")) {
-                        dropmode  = true;
-                        tablename = c.getString();
-                    } else if (sToken.equals("IF")) {
-                        c.getThis("EXISTS");
-
-                        dropmode = true;
-                    } else {
-                        c.back();
-                    }
-                } else {
-                    sToken = c.getString();
-
-                    if (sToken.equals("IF")) {
-                        c.getThis("EXISTS");
-
-                        dropmode = true;
-                    } else {
-                        c.back();
-                    }
-                }
-
-                Table t = findUserTable(tablename, session);
-
-                if (t != null &&!t.isTemp()) {
-                    session.checkDDLWrite();
-                }
-
-                dropTable(tablename, dropmode, isview, session);
-                break;
-
-            case USER :
-                session.checkDDLWrite();
-                aAccess.dropUser(c.getStringToken());
-                break;
-
-            case TRIGGER :
-                session.checkDDLWrite();
-                dropTrigger(c.getString(), session);
-                break;
-
-            case INDEX :
-                session.checkDDLWrite();
-
-                String indexname = c.getName();
-
-                dropIndex(indexname, session);
-                break;
-
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        return new Result();
-    }
-
     void dropIndex(String indexname, Session session) throws SQLException {
 
         Table t = findUserTableForIndex(indexname, session);
@@ -2281,383 +685,6 @@ class Database {
         tw.dropIndex(indexname);
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Responsible for handling the execution of GRANT and REVOKE SQL
-     *  statements.
-     *
-     * @param  c
-     * @param  session
-     * @param  grant
-     * @return  Description of the Return Value
-     * @throws  SQLException
-     */
-    private Result processGrantOrRevoke(Tokenizer c, Session session,
-                                        boolean grant) throws SQLException {
-
-        session.checkDDLWrite();
-        session.checkAdmin();
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        session.setScripting(true);
-
-        int    right = 0;
-        String sToken;
-
-        do {
-            String sRight = c.getString();
-
-            right  |= UserManager.getRight(sRight);
-            sToken = c.getString();
-        } while (sToken.equals(","));
-
-        if (!sToken.equals("ON")) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        String namestring = c.getString();
-        Object objectname = null;
-
-        if (namestring.equals("CLASS")) {
-
-            // object is saved as 'CLASS "java.lang.Math"'
-            // tables like 'CLASS "xy"' should not be created
-            objectname = c.getString();
-        } else {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// to make sure the table exists
-            Table t = getTable(namestring, session);
-
-            objectname = t.getName();
-
-            session.setScripting(!t.isTemp());
-        }
-
-        c.getThis("TO");
-
-        String user = c.getStringToken();
-
-        if (grant) {
-            aAccess.grant(user, objectname, right);
-        } else {
-            aAccess.revoke(user, objectname, right);
-        }
-
-        return new Result();
-    }
-
-    /**
-     *  Responsible for handling the execution CONNECT SQL statements
-     *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processConnect(Tokenizer c,
-                                  Session session) throws SQLException {
-
-        c.getThis("USER");
-
-        String username = c.getStringToken();
-
-        c.getThis("PASSWORD");
-
-        String password = c.getStringToken();
-        User   user     = aAccess.getUser(username, password);
-
-        session.commit();
-        session.setUser(user);
-
-        return new Result();
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Responsible for handling the execution SET SQL statements
-     *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processSet(Tokenizer c,
-                              Session session) throws SQLException {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        session.setScripting(true);
-
-        String sToken = c.getString();
-
-        switch (commandSet.get(sToken)) {
-
-            case PROPERTY :
-                session.checkAdmin();
-
-                sToken = c.getString().toLowerCase();
-
-                Trace.check(!databaseProperties.isProtected(sToken),
-                            Trace.ACCESS_IS_DENIED, sToken);
-                databaseProperties.setProperty(sToken, c.getString());
-
-                sToken = c.getString();
-                break;
-
-            case PASSWORD : {
-                session.checkDDLWrite();
-                session.setPassword(c.getStringToken());
-
-                break;
-            }
-            case READONLY : {
-                session.commit();
-                session.setReadOnly(processTrueOrFalse(c));
-
-                break;
-            }
-            case LOGSIZE : {
-                session.checkAdmin();
-                session.checkDDLWrite();
-
-                int i = Integer.parseInt(c.getString());
-
-                logger.setLogSize(i);
-
-                break;
-            }
-            case LOGTYPE : {
-                session.checkAdmin();
-                session.checkDDLWrite();
-                session.setScripting(false);
-
-                int i = Integer.parseInt(c.getString());
-
-                if (i == 0 || i == 1 || i == 3) {
-                    logger.setLogType(i);
-                }
-
-                break;
-            }
-            case IGNORECASE : {
-                session.checkAdmin();
-                session.checkDDLWrite();
-
-                bIgnoreCase = processTrueOrFalse(c);
-
-                break;
-            }
-            case MAXROWS : {
-                int i = Integer.parseInt(c.getString());
-
-                session.setMaxRows(i);
-
-                break;
-            }
-            case AUTOCOMMIT : {
-                session.setAutoCommit(processTrueOrFalse(c));
-
-                break;
-            }
-            case TABLE : {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// support for SET TABLE <table> READONLY [TRUE|FALSE]
-// sqlbob@users 20020427 support for SET TABLE <table> SOURCE "file" [DESC]
-                session.checkDDLWrite();
-
-                Table t = getTable(c.getString(), session);
-
-                sToken = c.getString();
-
-                session.setScripting(!t.isTemp());
-
-                switch (commandSet.get(sToken)) {
-
-                    case SOURCE : {
-                        if (!t.isTemp()) {
-                            session.checkAdmin();
-                        }
-
-                        sToken = c.getString();
-
-                        if (!c.wasQuotedIdentifier()) {
-                            throw Trace.error(Trace.TEXT_TABLE_SOURCE);
-                        }
-
-                        boolean isDesc = false;
-
-                        if (c.getString().equals("DESC")) {
-                            isDesc = true;
-                        } else {
-                            c.back();
-                        }
-
-                        t.setDataSource(sToken, isDesc, session);
-
-                        break;
-                    }
-                    case READONLY : {
-                        session.checkAdmin();
-                        t.setDataReadOnly(processTrueOrFalse(c));
-
-                        break;
-                    }
-                    case INDEX : {
-                        session.checkAdmin();
-                        c.getString();
-                        t.setIndexRoots((String) c.getAsValue());
-
-                        break;
-                    }
-                    default : {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    }
-                }
-
-                break;
-            }
-            case REFERENTIAL_INTEGRITY : {
-                session.checkAdmin();
-                session.checkDDLWrite();
-
-                bReferentialIntegrity = processTrueOrFalse(c);
-
-                break;
-            }
-            case WRITE_DELAY : {
-                session.checkAdmin();
-                session.checkDDLWrite();
-
-                int    delay = 0;
-                String s     = c.getString();
-
-                if (s.equals("TRUE")) {
-                    delay = 60;
-                } else if (s.equals("FALSE")) {
-                    delay = 0;
-                } else {
-                    delay = Integer.parseInt(s);
-                }
-
-                logger.setWriteDelay(delay);
-
-                break;
-            }
-            default : {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
-        }
-
-        return new Result();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  c
-     * @return
-     * @throws  SQLException
-     */
-    private boolean processTrueOrFalse(Tokenizer c) throws SQLException {
-
-        String sToken = c.getString();
-
-        if (sToken.equals("TRUE")) {
-            return true;
-        } else if (sToken.equals("FALSE")) {
-            return false;
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-    }
-
-    /**
-     *  Responsible for handling the execution COMMIT SQL statements
-     *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processCommit(Tokenizer c,
-                                 Session session) throws SQLException {
-
-        String sToken = c.getString();
-
-        if (!sToken.equals("WORK")) {
-            c.back();
-        }
-
-        session.commit();
-
-        return new Result();
-    }
-
-    /**
-     *  Responsible for handling the execution ROLLBACK SQL statementsn
-     *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processRollback(Tokenizer c,
-                                   Session session) throws SQLException {
-
-        String sToken = c.getString();
-
-        if (sToken.equals("TO")) {
-            String sToken1 = c.getString();
-
-            if (!sToken1.equals("SAVEPOINT")) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken1);
-            }
-
-            sToken1 = c.getString();
-
-            if (sToken1.length() == 0) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken1);
-            }
-
-            session.rollbackToSavepoint(sToken1);
-
-            return new Result();
-        }
-
-        if (!sToken.equals("WORK")) {
-            c.back();
-        }
-
-        session.rollback();
-
-        return new Result();
-    }
-
-    /**
-     *  Responsible for handling the execution of SAVEPOINT SQL statements.
-     *
-     * @param  c Description of the Parameter
-     * @param  session Description of the Parameter
-     * @return  Description of the Return Value
-     * @throws  SQLException
-     */
-    private Result processSavepoint(Tokenizer c,
-                                    Session session) throws SQLException {
-
-        String sToken = c.getString();
-
-        if (sToken.length() == 0) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        session.savepoint(sToken);
-
-        return new Result();
-    }
-
     /**
      *  Called by the garbage collector on this Databases object when garbage
      *  collection determines that there are no more references to it.
@@ -2671,10 +698,25 @@ class Database {
     }
 
     /**
-     *  Method declaration
+     *  Closes this Database using the specified mode. <p>
      *
-     * @param  closemode Description of the Parameter
-     * @throws  SQLException
+     * <ol>
+     *  <LI> closemode -1 performs SHUTDOWN IMMEDIATELY, equivalent
+     *       to  a poweroff or crash.
+     *
+     *  <LI> closemode 0 performs a normal SHUTDOWN that
+     *      checkpoints the database normally.
+     *
+     *  <LI> closemode 1 performs a shutdown compact that scripts
+     *       out the contents of any CACHED tables to the log then
+     *       deletes the existing *.data file that contains the data
+     *       for all CACHED table before the normal checkpoint process
+     *       which in turn creates a new, compact *.data file.
+     * </ol>
+     * 
+     * @param  closemode which type of close to perform
+     * @throws  SQLException if a database access error occurs
+     * @see Logger#closeLog(int)
      */
     void close(int closemode) throws SQLException {
 
@@ -2701,70 +743,10 @@ class Database {
     }
 
     /**
-     *  Responsible for handling the execution SHUTDOWN SQL statements
+     * Drops from this Database any temporary tables owned by the specified
+     * Session.
      *
-     * @param  c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processShutdown(Tokenizer c,
-                                   Session session) throws SQLException {
-
-        if (!session.isClosed()) {
-            session.checkAdmin();
-        }
-
-        int    closemode = 0;
-        String token     = c.getString();
-
-        // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.equals("IMMEDIATELY")) {
-            closemode = -1;
-        } else if (token.equals("COMPACT")) {
-            closemode = 1;
-        } else {
-            c.back();
-        }
-
-        sessionManager.closeAllSessions();
-        sessionManager.clearAll();
-        close(closemode);
-        sessionManager.processDisconnect(session);
-
-        return new Result();
-    }
-
-    /**
-     *  Responsible for handling the parse and execution of CHECKPOINT SQL
-     *  statements.
-     *
-     * @param c
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processCheckpoint(Tokenizer c,
-                                     Session session) throws SQLException {
-
-        session.checkAdmin();
-        session.checkDDLWrite();
-
-        boolean defrag = false;
-        String  token  = c.getString();
-
-        // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.equals("DEFRAG")) {
-            defrag = true;
-        }
-
-        logger.checkpoint(defrag);
-
-        return new Result();
-    }
-
-    /**
-     * @param  ownerSession
+     * @param  ownerSession the owning context
      */
     void dropTempTables(Session ownerSession) {
 
@@ -2806,8 +788,6 @@ class Database {
      *    <LI>
      *  </OL>
      *  <p>
-     *
-     *
      *
      * @param  name of the table or view to drop
      * @param  ifExists if true and if the Table to drop does not exist, fail
@@ -2927,11 +907,11 @@ class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
-     *  Method declaration
+     *  Drops a trigger with the specified name from this Database
      *
-     * @param  name
-     * @param  session
-     * @throws  SQLException
+     * @param name of the trigger to drop
+     * @param session execution context
+     * @throws SQLException if a database access error occurs
      */
     void dropTrigger(String name, Session session) throws SQLException {
 
@@ -2973,24 +953,26 @@ class Database {
     }
 
     /**
-     * Ensures that under the correct conditions the system table producer's table
-     * cache, if any, is set dirty so that up-to-date versions are generated if
-     * necessary in response to following system table requests. <p>
+     * Ensures that under the correct conditions the system table producer's
+     * table cache, if any, is set dirty. <p>
      *
-     * The result argument, if non-null, is checked for update status.  If it is an
-     * update result with an update count, then the call must have come from a
-     * successful SELECT INTO statement, in which a case a new table was created
-     * and all system tables reporting in the tables, columns, indexes, etc are
-     * dirty. <p>
+     * This call is require to ensure that up-to-date versions are
+     * generated if necessary in response to following system table
+     * requests. <p>
+     *
+     * The result argument, if non-null, is checked for update status.  
+     * If it is an update result with an update count, then the call must
+     * have come from a successful SELECT INTO statement, in which a case a
+     * new table was created and all system tables reporting in the tables,
+     * columns, indexes, etc. are dirty. <p>
      *
      * If the Result argument is null, then the call must have come from a DDL
-     * statement other than a set statement, in wich case a database object
+     * statement other than a set statement, in which case a database object
      * was created, dropped, altered or a permission was granted or revoked,
      * meaning that potentially all cached ssytem table are dirty.
      *
-     * @param r A Result to test for update status, indicating the a table was created as the
-     * result of executing a SELECT INTO statement.
-     *
+     * @param r A Result to test for update status, indicating the a table 
+     *      was created as the result of executing a SELECT INTO statement.
      */
     void setMetaDirty(Result r) {
 

@@ -133,6 +133,8 @@ example:
          <exclude name="org/hsqldb/util/*.java"/>
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
          <exclude name="org/hsqldb/jdbcStubs.java"/>
+         <exclude name="org/hsqldb/HsqlSocketFactorySecure.java"/>
+         <exclude name="org/hsqldb/NIOLockFile.java"/>
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
          <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
@@ -146,6 +148,7 @@ example:
                  optimize="${build.optimize}"
        >
       <include name="org/hsqldb/jdbcDataSource*.java"/>
+      <include name="org/hsqldb/NIOLockFile.java"/>
       </javac>
    </target>
 

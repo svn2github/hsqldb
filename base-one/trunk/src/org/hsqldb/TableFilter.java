@@ -80,6 +80,7 @@ import java.sql.SQLException;
 class TableFilter {
 
     private Table      tTable;
+            Select     sSelect;
     private String     sAlias;
     private Index      iIndex;
     private Node       nCurrent;
@@ -395,16 +396,21 @@ class TableFilter {
 // boucheb@users 20030415 - added for debugging support
     public String toString() {
         
-        StringBuffer sb = new StringBuffer();
-        Index index = iIndex;
-        Index primaryIndex = tTable.getPrimaryIndex();
-        int[] primaryKey = tTable.getPrimaryKey();
-        boolean hidden = false;
-        boolean fullScan = false;
+        StringBuffer sb;
+        Index        index;
+        Index        primaryIndex;
+        int[]        primaryKey;
+        boolean      hidden;
+        boolean      fullScan;        
         
-        fullScan = (eStart == null && eEnd == null) 
-                    ||(eStart.getType() == Expression.TRUE 
-                            &&eEnd.getType() == Expression.TRUE);
+        sb           = new StringBuffer();
+        index        = iIndex;
+        primaryIndex = tTable.getPrimaryIndex();
+        primaryKey   = tTable.getPrimaryKey();
+        hidden       = false;        
+        fullScan     = (eStart == null && eEnd == null) 
+                            ||(eStart.getType() == Expression.TRUE 
+                                   &&eEnd.getType() == Expression.TRUE);
         
         if (index == null) {
             index = primaryIndex;
@@ -418,7 +424,8 @@ class TableFilter {
         sb.append(super.toString()).append('\n');
         sb.append("table=[").append(tTable.getName().name).append("]\n");
         sb.append("alias=[").append(sAlias).append("]\n");
-        sb.append("access=[").append(fullScan?"FULL SCAN" : "INDEX PRED").append("]\n");
+        sb.append("access=[").append(fullScan ? "FULL SCAN" 
+                                              : "INDEX PRED").append("]\n");
         sb.append("index=[");
         sb.append(index == null ? null
                                 : index.getName().name);
@@ -427,6 +434,7 @@ class TableFilter {
         sb.append("eStart=[").append(eStart).append("]\n");
         sb.append("eEnd=[").append(eEnd).append("]\n");
         sb.append("eAnd=[").append(eEnd).append("]\n");
+        sb.append("sSelect=[").append(sSelect).append("]");
 
         return sb.toString();
 

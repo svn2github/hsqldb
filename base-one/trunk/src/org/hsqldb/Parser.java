@@ -1011,11 +1011,13 @@ class Parser {
 
         String token = tTokenizer.getString();
         Table  t     = null;
+        Select s     = null;
+        TableFilter  tf;        
 
         if (token.equals("(")) {
             tTokenizer.getThis("SELECT");
 
-            Select s = parseSelect();
+            s        = parseSelect();
             Result r = s.getResult(0);
 
             // it's not a problem that this table has not a unique name
@@ -1072,7 +1074,7 @@ class Parser {
                                      CurrentPos - TokenLength + 1);
                 tTokenizer.getThis("SELECT");
 
-                Select s = parseSelect();
+                s        = parseSelect();
                 Result r = s.getResult(0);
 
                 // it's not a problem that this table has not a unique name
@@ -1101,7 +1103,9 @@ class Parser {
             tTokenizer.back();
         }
 
-        return new TableFilter(t, sAlias, outerjoin);
+        tf = new TableFilter(t, sAlias, outerjoin);
+        tf.sSelect = s;
+        return tf;
     }
 
     /**
