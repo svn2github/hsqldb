@@ -1,8 +1,10 @@
-<!-- $Id: unix.xml,v 1.22 2004/06/02 20:30:44 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.23 2004/06/06 19:38:14 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
-    <subtitle>How to quickly get Hsqldb up and running on UNIX</subtitle>
+    <subtitle>
+        How to quickly get Hsqldb up and running on UNIX, including Mac OS X
+    </subtitle>
     <chapterinfo>
         <author>
             <firstname>Blaine</firstname><surname>Simpson</surname>
@@ -11,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.22 $</edition>
-        <pubdate>$Date: 2004/06/02 20:30:44 $</pubdate>
+        <edition>$Revision: 1.23 $</edition>
+        <pubdate>$Date: 2004/06/06 19:38:14 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -46,10 +48,15 @@
         </para> <para>
             Click the "hsqldb_1_7_2" link to find out what version of Java
             this binary HSQLDB distribution was built with.
+            Don't hold me to it, but if you get your distro from us at
+            SourceForge, it will probably be built with Java 1.4.
             Choose a binary package format that will work with your UNIX
             variant and which supports your Java version.
             Otherwise choose the hsqldb_1_7_2.zip file.
             Click the filename to download it.
+            (If you have an older version of Java and there's nothing 
+            preventing you from upgrading it, you'll probably be happier in
+            the end if you upgrade Java rather than downgrading HSQLDB).
         </para> <para>
             If you want an rpm, then click "hsqldb" in the "free section" of
             <ulink url='http://www.jpackage.org/'/>.
@@ -424,7 +431,11 @@
             a webserver.properties set up, adjust your URLs in
             <filename>sqltool.rc</filename>, and set TARGET_CLASS in the 
             config file.
-        </para>
+        </para> <simpara>
+            After you have the init script set up, root can use it anytime
+            to start or stop HSQLDB.
+            (I.e., not just at system bootup or shutdown).
+        </simpara>
         <section>
             <title>
                 Portability of <filename>hsqldb</filename> init script
@@ -453,9 +464,11 @@
                 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/bin</filename>
                 into the directory where init scripts live on your variety of 
                 UNIX.
-                The most common locations are <filename>/etc/init.d</filename>,
-                <filename>/etc/rc.d/init.d</filename>,
-                <filename>/usr/local/etc/rc.d</filename>.
+                The most common locations are <filename>/etc/init.d</filename>
+                or <filename>/etc/rc.d/init.d</filename> on System V style
+                UNIXes, <filename>/usr/local/etc/rc.d</filename> on BSD style
+                UNIXes, and <filename>/Library/StartupItems/hsqldb</filename>
+                on OS X (you'll need to create the directory for the last).
             </para></step> <step><para>
                 Look at the init script and see what the value of CFGFILE is
                 for your UNIX platform.
@@ -487,6 +500,13 @@
     server.database.0=file://home/hsqldb/data/db1
     server.urlid.0=localhostdb1</programlisting>
                 </example>
+                <warning><simpara>
+                    Make sure to add a urlid for each and every database
+                    instance.
+                    If you don't then the init script will never know about
+                    databases that become inaccessible and will give false
+                    diagnostics.
+                </simpara></warning>
                 <para>
                 For this example, you would need to define the urlid
                 <literal>localhostdb1</literal> in your
@@ -499,7 +519,48 @@
     username sa
     password secret</programlisting>
                 </example>
-            </step> <step><para>
+            </step> <step>
+            <simpara>
+                <emphasis role='bold'>Verify that the init script
+                works.</emphasis>
+            </simpara> <para>
+                Just run
+            <informalexample><screen>
+    /path/to/hsqldb</screen>
+            </informalexample>
+                as root to see the arguments you may use.
+                Notice that you can run
+            </para><informalexample><screen>
+    /path/to/hsqldb status</screen>
+            </informalexample><para>
+                at any time to see whether your HSQLDB
+                <classname>Server</classname> is running.
+            </para><simpara>
+                Re-run the script with each of the possible arguments to really
+                test it good.
+            </simpara><para>
+                If it fails with no useful message to your screen nor to the
+                log file, then there is most likely a problem with your
+                authentication setup.
+                Verify that you can su to the database owner account and
+                start the database; and verify that you can run 
+                <classname>SqlTool</classname> as root to connect to the 
+                instances.
+                (For the latter test, user the <literal>--rcfile</literal>
+                switch if you are setting <literal>AUTH_FILE</literal> in the 
+                init script config file).
+                You can always run the script in verbose mode to see exactly
+                what is happening
+                (and perhaps manually run the steps that are suspect).
+                To run an init script in verbose mode, use 
+                <literal>sh</literal> with the <literal>-x</literal> or
+                <literal>-v</literal> switch, like
+                <screen>
+    sh -x path/to/hsqldb start</screen>
+                See the man page for <literal>sh</literal> if you don't know 
+                the difference between <literal>-v</literal> and 
+                <literal>-x</literal>.
+            </para> </step> <step><para>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
                 If using a BSD variant, you must set "enable_hsqldb" to "YES" 
@@ -508,21 +569,34 @@
                 hard links or soft links either manually or with management 
                 tools (such as <literal>chkconfig</literal> or
                 <literal>insserv</literal>) or Gui's (like run level editors).
-            </para></step>
+            </para><para>
+                This paragraph is for Mac OS X users only.
+                If you followed the instructions above, your init script
+                should reside at
+                <filename>/Library/StartupItems/hsqldb/hsqldb</filename>.
+                Now copy the file <filename>StartupParameters.plist</filename>
+                from the directory <filename>src/org.hsqldb/sample</filename>
+                of your HSQLDB distribution to the same directory as the
+                init script.
+                As long as these two files reside in
+                <filename>/Library/StartupItems/hsqldb</filename>, your
+                init script is active (for portability reasons, it doesn't
+                check for a setting in <filename>/etc/hostconfig</filename>).
+                You can run it as a <emphasis>Startup Item</emphasis> by running
+                <screen>
+    SystemStarter {start|stop|restart} Hsqldb</screen>
+                Hsqldb is the service name.  See the man page for
+                <literal>SystemStarter</literal>.
+                To disable the init script, wipe out the 
+                <filename>/Library/StartupItems/hsqldb</filename> directory.
+                Hard to believe, but the Mac people tell me that during
+                system shutdown the Startup Items don't run at all.
+                Therefore, if you don't want your data corrupted, make
+                sure to run "SystemStarter stop Hsqldb" before shutting
+                down your Mac.
+            </para>
+        </step>
         </procedure>
         </section>
-        <para>
-            Just run
-        </para><informalexample><screen>
-        /path/to/hsqldb</screen>
-        </informalexample><para>
-            as root to see the arguments you may use.
-            Notice that you can run
-        </para><informalexample><screen>
-        /path/to/hsqldb status</screen>
-        </informalexample><para>
-            at any time to see whether your HSQLDB
-            <classname>Server</classname> is running.
-        </para>
     </section>
 </chapter>
