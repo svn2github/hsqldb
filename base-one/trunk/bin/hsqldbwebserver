@@ -12,11 +12,11 @@
 
 # Step 1: Specify your dbhome here
 # eg. dbhome="/usr/hsqldb/"
-dbhome="/usr/hsqldb/"
+dbhome="/usr/hsqldb"
 
 # Step 2: change this to point to your JDK directory.
 # eg. jdkhome="/usr/java/j2sdk1.4.0/"
-jdkhome="/usr/java/j2sdk1.4.0/"
+jdkhome="/usr/java/j2sdk1.4.1_01"
 
 # Step 3: change to the appropriate port, user and password
 dbport="80"
@@ -90,7 +90,7 @@ start()
 	ctr=0
 	while [ $ctr -lt $STARTUP_MAXSEC ]; do
 		let ctr=ctr+1
-		grep "^HSQLDB web server .* is running$" $STDOUTLOGFILE \
+		grep "Startup sequence completed" $STDOUTLOGFILE \
 		> /dev/null 2>&1 && echo_success && echo && echo "startup took $ctr sec" >> $STDOUTLOGFILE && return 0
 		echo -n
 		sleep 1
