@@ -77,6 +77,13 @@ public class TestSqlTool extends junit.framework.TestCase {
                 harness.execute(new File("special-q-arg.sql")));
     }
 
+    public void testSQL() throws Exception {
+        assertTrue("Blank line with SQL command, interactive",
+                harness.execute(new File("sql-blankint.sql")));
+        assertTrue("Blank line with SQL command, file mode",
+                harness.execute(new File("sql-blankfile.sql")));
+    }
+
     // public TestSqlTool() { super(); } necessary?
     public TestSqlTool(String s) { super(s); }
 
@@ -101,6 +108,7 @@ public class TestSqlTool extends junit.framework.TestCase {
         newSuite.addTest(new TestSqlTool("testComments"));
         newSuite.addTest(new TestSqlTool("testPL"));
         newSuite.addTest(new TestSqlTool("testSpecials"));
+        newSuite.addTest(new TestSqlTool("testSQL"));
         return newSuite;
     };
 }
