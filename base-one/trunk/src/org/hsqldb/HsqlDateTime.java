@@ -41,6 +41,7 @@ import java.util.GregorianCalendar;
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users
 // fredt@users 20020414 - patch 517028 by peterhudson@users - use of calendar
+// fredt@users 20020414 - patch 828957 by tjcrowder@users - JDK 1.3 compatibility
 
 /**
  *  collection of static methods to convert Date, Time and Timestamp strings
@@ -68,7 +69,7 @@ class HsqlDateTime {
      * by getToday()
      */
     private static Date     today    = new Date(0);
-    static Date             tempDate = new Date(0);
+    private static Date     tempDate = new Date(0);
     private static Calendar tempCal  = new GregorianCalendar();
 
     /**
@@ -334,15 +335,61 @@ class HsqlDateTime {
         return ts.getTime();
     }
 */
+
+    /**
+     * Sets the time in the given Calendar using the given milliseconds value; wrapper method to
+     * allow use of more efficient JDK1.4 method on JDK1.4 (was protected in earlier versions).
+     *
+     * @param       cal                             the Calendar
+     * @param       millis                  the time value in milliseconds
+     */
+    private static void setTimeInMillis(Calendar cal, long millis) {
+
+//#ifdef JDBC3
+/*
+                // Use method directly
+                cal.setTimeInMillis(millis);
+*/
+
+//#else
+        // Have to go indirect
+        tempDate.setTime(millis);
+        cal.setTime(tempDate);
+
+//#endif JDBC3
+    }
+
+    /**
+     * Gets the time from the given Calendar as a milliseconds value; wrapper method to
+     * allow use of more efficient JDK1.4 method on JDK1.4 (was protected in earlier versions).
+     *
+     * @param       cal                             the Calendar
+     * @return      the time value in milliseconds
+     */
+    private static long getTimeInMillis(Calendar cal) {
+
+//#ifdef JDBC3
+/*
+                // Use method directly
+                return (cal.getTimeInMillis());
+*/
+
+//#else
+        // Have to go indirect
+        return (cal.getTime().getTime());
+
+//#endif JDBC3
+    }
+
     static Time getNormalisedTime(Time t) {
 
         synchronized (tempCal) {
-            tempCal.setTimeInMillis(t.getTime());
+            setTimeInMillis(tempCal, t.getTime());
             tempCal.clear(Calendar.YEAR);
             tempCal.clear(Calendar.MONTH);
             tempCal.clear(Calendar.DAY_OF_MONTH);
 
-            long value = tempCal.getTimeInMillis();
+            long value = getTimeInMillis(tempCal);
 
             return new Time(value);
         }
@@ -351,12 +398,12 @@ class HsqlDateTime {
     static Time getNormalisedTime(Timestamp ts) {
 
         synchronized (tempCal) {
-            tempCal.setTimeInMillis(ts.getTime());
+            setTimeInMillis(tempCal, ts.getTime());
             tempCal.clear(Calendar.YEAR);
             tempCal.clear(Calendar.MONTH);
             tempCal.clear(Calendar.DAY_OF_MONTH);
 
-            long value = tempCal.getTimeInMillis();
+            long value = getTimeInMillis(tempCal);
 
             return new Time(value);
         }
@@ -365,13 +412,13 @@ class HsqlDateTime {
     static Date getNormalisedDate(Timestamp ts) {
 
         synchronized (tempCal) {
-            tempCal.setTimeInMillis(ts.getTime());
+            setTimeInMillis(tempCal, ts.getTime());
             tempCal.clear(Calendar.HOUR_OF_DAY);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);
 
-            long value = tempCal.getTimeInMillis();
+            long value = getTimeInMillis(tempCal);
 
             return new Date(value);
         }
@@ -380,13 +427,13 @@ class HsqlDateTime {
     static Date getNormalisedDate(Date d) {
 
         synchronized (tempCal) {
-            tempCal.setTimeInMillis(d.getTime());
+            setTimeInMillis(tempCal, d.getTime());
             tempCal.clear(Calendar.HOUR_OF_DAY);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);
 
-            long value = tempCal.getTimeInMillis();
+            long value = getTimeInMillis(tempCal);
 
             return new Date(value);
         }
@@ -400,12 +447,12 @@ class HsqlDateTime {
         synchronized (tempCal) {
             long value = getToday().getTime();
 
-            tempCal.setTimeInMillis(t.getTime());
+            setTimeInMillis(tempCal, t.getTime());
             tempCal.clear(Calendar.YEAR);
             tempCal.clear(Calendar.MONTH);
             tempCal.clear(Calendar.DAY_OF_MONTH);
 
-            value += tempCal.getTimeInMillis();
+            value += getTimeInMillis(tempCal);
 
             return new Timestamp(value);
         }
@@ -414,13 +461,13 @@ class HsqlDateTime {
     static Timestamp getNormalisedTimestamp(Date d) {
 
         synchronized (tempCal) {
-            tempCal.setTimeInMillis(d.getTime());
+            setTimeInMillis(tempCal, d.getTime());
             tempCal.clear(Calendar.HOUR_OF_DAY);
             tempCal.clear(Calendar.MINUTE);
             tempCal.clear(Calendar.SECOND);
             tempCal.clear(Calendar.MILLISECOND);
 
-            long value = tempCal.getTimeInMillis();
+            long value = getTimeInMillis(tempCal);
 
             return new Timestamp(value);
         }

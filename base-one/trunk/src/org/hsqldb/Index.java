@@ -613,6 +613,10 @@ class Index {
             iTest = 0;
         }
 
+        if (value == null && compare != Expression.EQUAL) {
+            return null;
+        }
+
 /*
         // this method returns the correct node only with the following conditions
         boolean check = compare == Expression.BIGGER
@@ -655,16 +659,73 @@ class Index {
         }
 */
         while (x != null) {
-            int result = Column.compare(value, x.getData()[colIndex_0],
-                                        colType_0);
+            Object colvalue = x.getData()[colIndex_0];
+            int    result   = Column.compare(value, colvalue, colType_0);
 
             if (result >= iTest) {
                 x = next(x);
             } else {
-                if (result < 0) {
+                if (compare == Expression.EQUAL) {
+                    if (result != 0) {
                     x = null;
                 }
+                } else if (colvalue == null) {
+                    x = next(x);
 
+                    continue;
+                }
+
+                break;
+            }
+        }
+
+        return x;
+    }
+
+    /**
+     * Finds the first node that is not null
+     *
+     *
+     * @param value
+     * @param compare
+     *
+     * @return
+     *
+     * @throws HsqlException
+     */
+    Node findFirstNotNull() throws HsqlException {
+
+        Node x = root;
+
+        while (x != null) {
+            boolean t =
+                Column.compare(null, x.getData()[colIndex_0], colType_0) >= 0;
+
+            if (t) {
+                Node r = x.getRight();
+
+                if (r == null) {
+                    break;
+                }
+
+                x = r;
+            } else {
+                Node l = x.getLeft();
+
+                if (l == null) {
+                    break;
+                }
+
+                x = l;
+            }
+        }
+
+        while (x != null) {
+            Object colvalue = x.getData()[colIndex_0];
+
+            if (colvalue == null) {
+                x = next(x);
+            } else {
                 break;
             }
         }

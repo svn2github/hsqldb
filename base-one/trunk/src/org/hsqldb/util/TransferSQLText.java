@@ -833,7 +833,7 @@ class TransferSQLText extends DataAccessPoint {
 
                                 i       = sbToken.lastIndexOf('\'');
                                 sbToken = sbToken.substring(0, i);
-                                Token   = sbToken.toString();
+                                Token   = sbToken;
 
                                 vColumnValues.addElement(Token);
                             }

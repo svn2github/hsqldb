@@ -477,11 +477,11 @@ class Expression {
      * so that table or column renaming is reflected in the precompiled
      * query.
      */
-    StringBuffer getDDL() throws HsqlException {
+    String getDDL() throws HsqlException {
 
         StringBuffer buf   = new StringBuffer(64);
-        StringBuffer left  = null;
-        StringBuffer right = null;
+        String       left  = null;
+        String       right = null;
 
         if (eArg != null) {
             left = eArg.getDDL();
@@ -493,7 +493,7 @@ class Expression {
                     && eArg.exprType != CONVERT) {
                 StringBuffer temp = new StringBuffer();
 
-                left = temp.append('(').append(left).append(')');
+                left = temp.append('(').append(left).append(')').toString();
             }
         }
 
@@ -507,7 +507,7 @@ class Expression {
                     && eArg2.exprType != CONVERT) {
                 StringBuffer temp = new StringBuffer();
 
-                right = temp.append('(').append(right).append(')');
+                right = temp.append('(').append(right).append(')').toString();
             }
         }
 
@@ -518,12 +518,10 @@ class Expression {
 
             case VALUE :
                 try {
-                    String val = Column.createSQLString(valueData, dataType);
-
-                    buf.append(val);
+                    return Column.createSQLString(valueData, dataType);
                 } catch (HsqlException e) {}
 
-                return buf;
+                return buf.toString();
 
             case COLUMN :
 
@@ -539,17 +537,13 @@ class Expression {
                 buf.append(
                     table.getColumn(columnIndex).columnName.statementName);
 
-                return buf;
+                return buf.toString();
 
             case TRUE :
-                buf.append(Token.T_TRUE);
-
-                return buf;
+                return Token.T_TRUE;
 
             case FALSE :
-                buf.append(Token.T_FALSE);
-
-                return buf;
+                return Token.T_FALSE;
 
             case VALUELIST :
                 for (int i = 0; i < valueList.length; i++) {
@@ -560,77 +554,77 @@ class Expression {
                     }
                 }
 
-                return buf;
+                return buf.toString();
 
             case ASTERIX :
                 buf.append('*');
 
-                return buf;
+                return buf.toString();
 
             case NEGATE :
                 buf.append('-').append(left);
 
-                return buf;
+                return buf.toString();
 
             case ADD :
                 buf.append(left).append('+').append(right);
 
-                return buf;
+                return buf.toString();
 
             case SUBTRACT :
                 buf.append(left).append('-').append(right);
 
-                return buf;
+                return buf.toString();
 
             case MULTIPLY :
                 buf.append(left).append('*').append(right);
 
-                return buf;
+                return buf.toString();
 
             case DIVIDE :
                 buf.append(left).append('/').append(right);
 
-                return buf;
+                return buf.toString();
 
             case CONCAT :
                 buf.append(left).append("||").append(right);
 
-                return buf;
+                return buf.toString();
 
             case NOT :
                 buf.append(Token.T_NOT).append(' ').append(left);
 
-                return buf;
+                return buf.toString();
 
             case EQUAL :
                 buf.append(left).append('=').append(right);
 
-                return buf;
+                return buf.toString();
 
             case BIGGER_EQUAL :
                 buf.append(left).append(">=").append(right);
 
-                return buf;
+                return buf.toString();
 
             case BIGGER :
                 buf.append(left).append('>').append(right);
 
-                return buf;
+                return buf.toString();
 
             case SMALLER :
                 buf.append(left).append('<').append(right);
 
-                return buf;
+                return buf.toString();
 
             case SMALLER_EQUAL :
                 buf.append(left).append("<=").append(right);
 
-                return buf;
+                return buf.toString();
 
             case NOT_EQUAL :
                 buf.append(left).append("!=").append(right);
 
-                return buf;
+                return buf.toString();
 
             case LIKE :
                 buf.append(left).append(' ').append(Token.T_LIKE).append(' ');
@@ -644,25 +638,25 @@ class Expression {
                     buf.append(' ');
                 }
 
-                return buf;
+                return buf.toString();
 
             case AND :
                 buf.append(left).append(' ').append(Token.T_AND).append(
                     ' ').append(right);
 
-                return buf;
+                return buf.toString();
 
             case OR :
                 buf.append(left).append(' ').append(Token.T_OR).append(
                     ' ').append(right);
 
-                return buf;
+                return buf.toString();
 
             case IN :
                 buf.append(left).append(' ').append(Token.T_IN).append(
                     ' ').append(right);
 
-                return buf;
+                return buf.toString();
 
             case CONVERT :
                 buf.append(' ').append(Token.T_CONVERT).append('(');
@@ -670,18 +664,18 @@ class Expression {
                 buf.append(Types.getTypeString(dataType));
                 buf.append(')');
 
-                return buf;
+                return buf.toString();
 
             case CASEWHEN :
                 buf.append(' ').append(Token.T_CASEWHEN).append('(');
                 buf.append(left).append(',').append(right).append(')');
 
-                return buf;
+                return buf.toString();
 
             case ALTERNATIVE :
                 buf.append(left).append(',').append(right);
 
-                return buf;
+                return buf.toString();
 
             case QUERY :
 /*

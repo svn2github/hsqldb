@@ -540,7 +540,7 @@ class Function {
      *
      * @return
      */
-    StringBuffer getDLL() throws HsqlException {
+    String getDLL() throws HsqlException {
 
         StringBuffer sb = new StringBuffer();
 
@@ -570,7 +570,7 @@ class Function {
             sb.append(Token.T_FROM).append(' ');
             sb.append(eArg[0].getDDL()).append(')');
 
-            return sb;
+            return sb.toString();
         }
 
         if (sFunction.equals(name)) {
@@ -589,7 +589,7 @@ class Function {
 
         sb.append(')');
 
-        return sb;
+        return sb.toString();
     }
 
     /**

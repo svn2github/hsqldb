@@ -415,7 +415,7 @@ class TableFilter {
         }
 
         if (eStart == null) {
-            currentNode = filterIndex.first();
+            currentNode = filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
             Object o    = eStart.getArg2().getValue(type);

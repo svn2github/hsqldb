@@ -82,7 +82,8 @@ example:
     <target name="switchtojdk11" depends="codeswitcher" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbcStatement.java -JAVA2 -JDBC3"/>
+                    ${src}/org/hsqldb/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
     </target>
@@ -95,7 +96,8 @@ example:
                     ${src}/org/hsqldb/jdbcCallableStatement.java
                     ${src}/org/hsqldb/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbcStatement.java +JAVA2 -JDBC3"/>
+                    ${src}/org/hsqldb/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
        </java>
     </target>
 
@@ -107,7 +109,8 @@ example:
                     ${src}/org/hsqldb/jdbcCallableStatement.java
                     ${src}/org/hsqldb/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbcStatement.java +JAVA2 +JDBC3"/>
+                    ${src}/org/hsqldb/jdbcStatement.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
        </java>
     </target>
 

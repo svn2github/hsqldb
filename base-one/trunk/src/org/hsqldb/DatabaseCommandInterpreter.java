@@ -1405,8 +1405,6 @@ class DatabaseCommandInterpreter {
         String   token;
         int      logposition;
         HsqlName viewHsqlName;
-
-//        Result   result;
         Parser parser;
         Select select;
 
@@ -1435,8 +1433,6 @@ class DatabaseCommandInterpreter {
             }
 
             select.prepareResult();
-
-//            result = select.getResult(1);
         } catch (HsqlException e) {
             throw e;
         }

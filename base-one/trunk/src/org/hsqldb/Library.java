@@ -1219,7 +1219,7 @@ public class Library {
 
         SimpleDateFormat f = new SimpleDateFormat("EEEE");
 
-        return f.format(d).toString();
+        return f.format(d);
     }
 
     /**
@@ -1340,7 +1340,7 @@ public class Library {
 
         SimpleDateFormat f = new SimpleDateFormat("MMMM");
 
-        return f.format(d).toString();
+        return f.format(d);
     }
 
     /**
