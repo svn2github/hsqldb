@@ -1,51 +1,15 @@
-/* Copyrights and Licenses
- *
- * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
- *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
- *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
- *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
- *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
- *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
- *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
- *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
- *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
- * This software is provided "as is" and any expressed or implied warranties, including, but
- * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
- * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
- * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
- * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
- * or business interruption). However caused any on any theory of liability, whether in contract,
- * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
- * This software consists of voluntary contributions made by many individuals on behalf of the
- * Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer, including earlier
- * license statements (above) and comply with all above license conditions.
+ * list of conditions and the following disclaimer.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, including earlier
- * license statements (above) and comply with all above license conditions.
+ * and/or other materials provided with the distribution.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -79,82 +43,88 @@ import java.util.Vector;
  */
 
 // a Choice for the GUI which implements ZaurusComponent
-
-// 
+//
 // in addition to a Choice, a ZaurusChoice saves a vector for values of the items
 // for instance: in the choice list, there are the labels A,B,C
 // the corresponding values are 100,200,300
-
 // during the defintion process, the values are provided by a second argument to add
 // getContent() answers the value !!
-
 public class ZaurusChoice extends Choice implements ZaurusComponent {
 
     final static private int MaxLenInZChoice = 15;
-
-    Vector values;
-    int countChanges;
+    Vector                   values;
+    int                      countChanges;
 
     public ZaurusChoice() {
-	super();
-	values = new Vector(20);
-	countChanges = 0;
+
+        super();
+
+        values       = new Vector(20);
+        countChanges = 0;
     }
 
     // restrict strings for the choice to MaxLenInZChoice characters
     public void add(String item, String value) {
-	int maxChar = MaxLenInZChoice;
-	if (item.length() < MaxLenInZChoice) maxChar = item.length();
-	super.add(item.substring(0,maxChar));
-	values.addElement(value);
+
+        int maxChar = MaxLenInZChoice;
+
+        if (item.length() < MaxLenInZChoice) {
+            maxChar = item.length();
+        }
+
+        super.add(item.substring(0, maxChar));
+        values.addElement(value);
     }
 
     public void clearChanges() {
-	countChanges = 0;
+        countChanges = 0;
     }
 
     public void clearContent() {
-	super.select(0);
+        super.select(0);
     }
 
     public String getContent() {
-	return (String) values.elementAt(super.getSelectedIndex());
+        return (String) values.elementAt(super.getSelectedIndex());
     }
 
     public boolean hasChanged() {
-	return countChanges > 0;
+        return countChanges > 0;
     }
 
     public void requestFocus() {
-	super.requestFocus();
+        super.requestFocus();
     }
 
     public void setChanged() {
-	countChanges++;
+        countChanges++;
     }
 
     // set the choice to the element in choice of the corresponding value
     public void setContent(String s) {
-	super.select(this.findValue(s));
+        super.select(this.findValue(s));
     }
 
     public void setEditable(boolean b) {
-	super.setEnabled(b);
-	if (b) {
-	    super.setBackground(Color.white);
-	} else {
-	    super.setBackground(Color.lightGray);
-	} // end of if (b)else
+
+        super.setEnabled(b);
+
+        if (b) {
+            super.setBackground(Color.white);
+        } else {
+            super.setBackground(Color.lightGray);
+        }    // end of if (b)else
     }
 
     // find for a given value the index in values
     private int findValue(String s) {
-	for (int i=0; i<values.size(); i++) {
-	    if (s.equals(values.elementAt(i))) {
-		return i;
-	    } // end of if (s.equals(values.elementAt(i)))
-	    
-	} // end of for (int i=0; i<values.size(); i++)
-	return -1;
+
+        for (int i = 0; i < values.size(); i++) {
+            if (s.equals(values.elementAt(i))) {
+                return i;
+            }    // end of if (s.equals(values.elementAt(i)))
+        }        // end of for (int i=0; i<values.size(); i++)
+
+        return -1;
     }
 }

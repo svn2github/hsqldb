@@ -1,51 +1,15 @@
-/* Copyrights and Licenses
- *
- * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
- *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
- *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
- *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
- *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
- *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
- *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
- *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
- *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
- * This software is provided "as is" and any expressed or implied warranties, including, but
- * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
- * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
- * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
- * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
- * or business interruption). However caused any on any theory of liability, whether in contract,
- * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
- * This software consists of voluntary contributions made by many individuals on behalf of the
- * Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer, including earlier
- * license statements (above) and comply with all above license conditions.
+ * list of conditions and the following disclaimer.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, including earlier
- * license statements (above) and comply with all above license conditions.
+ * and/or other materials provided with the distribution.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -85,30 +49,33 @@ import java.util.*;
  *
  */
 public class ZaurusDatabaseManager extends DatabaseManager
-        implements ActionListener, WindowListener, KeyListener {
+implements ActionListener, WindowListener, KeyListener {
 
     // (ulrivo): new buttons to switch the cards
-    Button           butTree;
-    Button           butCommand;
-    Button           butResult;
-    Button           butEditor;
+    Button butTree;
+    Button butCommand;
+    Button butResult;
+    Button butEditor;
+
     // (ulrivo): Panel pCard with CardLayout inside Frame fMain
-    Panel            pCard;
-    CardLayout       layoutCard;
+    Panel      pCard;
+    CardLayout layoutCard;
+
     // the editor/input form
-    ZaurusEditor           eEditor;
+    ZaurusEditor eEditor;
+
     // (ulrivo): variables set by arguments from the commandline
-    static String    defDriver;
-    static String    defURL;
-    static String    defUser;
-    static String    defPassword;
-    static String    defQuery;
-    static String    defDirectory;
-    static String    defDatabase;
-    static int       defWidth = 237;
-    static int       defHeight = 259;
-    static int       defLocX = 0;
-    static int       defLocY = 0;
+    static String defDriver;
+    static String defURL;
+    static String defUser;
+    static String defPassword;
+    static String defQuery;
+    static String defDirectory;
+    static String defDatabase;
+    static int    defWidth  = 237;
+    static int    defHeight = 259;
+    static int    defLocX   = 0;
+    static int    defLocY   = 0;
 
     /**
      * Method declaration
@@ -147,120 +114,154 @@ public class ZaurusDatabaseManager extends DatabaseManager
      * @param arg
      */
     public static void main(String arg[]) {
-	bMustExit = true;
 
-	// (ulrivo): read all arguments from the command line
-	int i = 0;
-	while (i < arg.length) {
-	    if (arg[i].equalsIgnoreCase("-driver") && (i+1 < arg.length)) {
-		i++; defDriver = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-url") && (i+1 < arg.length)) {
-		i++; defURL = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-width") && (i+1 < arg.length)) {
-		i++;
-		try { defWidth = Integer.parseInt(arg[i]);
-		} catch (Exception e) {}
-	    }
-	    else if (arg[i].equalsIgnoreCase("-height") && (i+1 < arg.length)) {
-		i++;
-		try { defHeight = Integer.parseInt(arg[i]);
-		} catch (Exception e) {}
-	    }
-	    else if (arg[i].equalsIgnoreCase("-locx") && (i+1 < arg.length)) {
-		i++;
-		try { defLocX = Integer.parseInt(arg[i]);
-		} catch (Exception e) {}
-	    }
-	    else if (arg[i].equalsIgnoreCase("-locy") && (i+1 < arg.length)) {
-		i++;
-		try { defLocY = Integer.parseInt(arg[i]);
-		} catch (Exception e) {}
-	    }
-	    else if (arg[i].equalsIgnoreCase("-user") && (i+1 < arg.length)) {
-		i++; defUser = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-password") && (i+1 < arg.length)) {
-		i++; defPassword = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-query") && (i+1 < arg.length)) {
-		i++; defQuery = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-defDirectory") && (i+1 < arg.length)) {
-		i++; defDirectory = arg[i];
-	    }
-	    else if (arg[i].equalsIgnoreCase("-database") && (i+1 < arg.length)) {
-		i++; defDatabase = arg[i];
-	    }
-	    else {
-		showUsage();
-		return;
-	    }
-	    i++;
-	}
+        bMustExit = true;
 
-	ZaurusDatabaseManager m = new ZaurusDatabaseManager();
+        // (ulrivo): read all arguments from the command line
+        int i = 0;
 
-	m.main();
+        while (i < arg.length) {
+            if (arg[i].equalsIgnoreCase("-driver") && (i + 1 < arg.length)) {
+                i++;
 
-	// (ulrivo): make default connection if arguments set via the command line
-	Connection c = null;
-	
-	if ((defDriver != null && defURL != null) || (defDatabase != null)) {
-	    if (defDatabase != null) {
-		defDriver = "org.hsqldb.jdbcDriver";
-		defURL = "jdbc:hsqldb:" + defDatabase;
-		defUser = "sa";
-		defPassword = "";
-	    }
-	    try {
-		Class.forName(defDriver).newInstance();
-		c = DriverManager.getConnection(defURL, defUser, defPassword);
-	    } catch (Exception e) {
-		System.out.println("No connection for "+defDriver+" at "+defURL);
+                defDriver = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-url")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defURL = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-width")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                try {
+                    defWidth = Integer.parseInt(arg[i]);
+                } catch (Exception e) {}
+            } else if (arg[i].equalsIgnoreCase("-height")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                try {
+                    defHeight = Integer.parseInt(arg[i]);
+                } catch (Exception e) {}
+            } else if (arg[i].equalsIgnoreCase("-locx")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                try {
+                    defLocX = Integer.parseInt(arg[i]);
+                } catch (Exception e) {}
+            } else if (arg[i].equalsIgnoreCase("-locy")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                try {
+                    defLocY = Integer.parseInt(arg[i]);
+                } catch (Exception e) {}
+            } else if (arg[i].equalsIgnoreCase("-user")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defUser = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-password")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defPassword = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-query")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defQuery = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-defDirectory")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defDirectory = arg[i];
+            } else if (arg[i].equalsIgnoreCase("-database")
+                       && (i + 1 < arg.length)) {
+                i++;
+
+                defDatabase = arg[i];
+            } else {
+                showUsage();
+
+                return;
+            }
+
+            i++;
+        }
+
+        ZaurusDatabaseManager m = new ZaurusDatabaseManager();
+
+        m.main();
+
+        // (ulrivo): make default connection if arguments set via the command line
+        Connection c = null;
+
+        if ((defDriver != null && defURL != null) || (defDatabase != null)) {
+            if (defDatabase != null) {
+                defDriver   = "org.hsqldb.jdbcDriver";
+                defURL      = "jdbc:hsqldb:" + defDatabase;
+                defUser     = "sa";
+                defPassword = "";
+            }
+
+            try {
+                Class.forName(defDriver).newInstance();
+
+                c = DriverManager.getConnection(defURL, defUser, defPassword);
+            } catch (Exception e) {
+                System.out.println("No connection for " + defDriver + " at "
+                                   + defURL);
                 e.printStackTrace();
-	    }
-	}
-	else {
-	    c = ZaurusConnectionDialog.createConnection(m.fMain, "Connect", 
-					   new Insets(defWidth, defHeight, defLocX, defLocY));
-	}
-	if (c == null) {
-	    return;
-	}
+            }
+        } else {
+            c = ZaurusConnectionDialog.createConnection(m.fMain, "Connect",
+                    new Insets(defWidth, defHeight, defLocX, defLocY));
+        }
 
+        if (c == null) {
+            return;
+        }
 
-	m.connect(c);
-
+        m.connect(c);
     }
 
     private static void showUsage() {
-	System.out.println("Usage: java org.hsqldb.util.ZaurusDatabaseManager [options]");
-	System.out.println("where options could be:");
-	System.out.println("If the next two options are set, the specified connection will be used:");
-	System.out.println("   -driver dr");
-	System.out.println("   -url address");
-	System.out.println("-user name");
-	System.out.println("-password passw");
-	System.out.println("Alternative the database argument is used,");
-	System.out.println("and the hsqldb Driver Standalone is choosen for user 'sa'.");
-	System.out.println("-database db");
-	System.out.println("-query qu                   the query qu will be read during initialization");
-	System.out.println("-defaultDirectory defdir    default dir for the file open dialog");
-	System.out.println("If the next two options are set, the frame will be set to the specified values:");
-	System.out.println("   -width width");
-	System.out.println("   -height height");
-	System.out.println("-locX positon left ");
-	System.out.println("-locY positon top ");
-	System.out.println("");
-	System.out.println("1. Example: java org.hsqldb.util.ZaurusDatabaseManager +");
-	System.out.println("  -driver 'org.hsqldb.jdbcDriver' +");
-	System.out.println("  -url 'jdbc:hsqldb:test'");
-	System.out.println("2. Example: java org.hsqldb.util.ZaurusDatabaseManager +");
-	System.out.println("  -database 'test'");
-    }
 
+        System.out.println(
+            "Usage: java org.hsqldb.util.ZaurusDatabaseManager [options]");
+        System.out.println("where options could be:");
+        System.out.println(
+            "If the next two options are set, the specified connection will be used:");
+        System.out.println("   -driver dr");
+        System.out.println("   -url address");
+        System.out.println("-user name");
+        System.out.println("-password passw");
+        System.out.println("Alternative the database argument is used,");
+        System.out.println(
+            "and the hsqldb Driver Standalone is choosen for user 'sa'.");
+        System.out.println("-database db");
+        System.out.println(
+            "-query qu                   the query qu will be read during initialization");
+        System.out.println(
+            "-defaultDirectory defdir    default dir for the file open dialog");
+        System.out.println(
+            "If the next two options are set, the frame will be set to the specified values:");
+        System.out.println("   -width width");
+        System.out.println("   -height height");
+        System.out.println("-locX positon left ");
+        System.out.println("-locY positon top ");
+        System.out.println("");
+        System.out.println(
+            "1. Example: java org.hsqldb.util.ZaurusDatabaseManager +");
+        System.out.println("  -driver 'org.hsqldb.jdbcDriver' +");
+        System.out.println("  -url 'jdbc:hsqldb:test'");
+        System.out.println(
+            "2. Example: java org.hsqldb.util.ZaurusDatabaseManager +");
+        System.out.println("  -database 'test'");
+    }
 
     /**
      * Method declaration
@@ -268,7 +269,7 @@ public class ZaurusDatabaseManager extends DatabaseManager
      */
     void main() {
 
-        fMain    = new Frame("HSQLDB Database Manager for Zaurus");
+        fMain = new Frame("HSQLDB Database Manager for Zaurus");
         imgEmpty = createImage(new MemoryImageSource(2, 2, new int[4 * 4], 2,
                 2));
 
@@ -286,9 +287,9 @@ public class ZaurusDatabaseManager extends DatabaseManager
         addMenu(bar, "File", fitems);
 
         String vitems[] = {
-            "-Refresh Tree", "--", 
-	    "-View Tree", "-View Command", "-View Result", "-View Editor", "--",
-	    "-Results in Grid", "-Results in Text"
+            "-Refresh Tree", "--", "-View Tree", "-View Command",
+            "-View Result", "-View Editor", "--", "-Results in Grid",
+            "-Results in Text"
         };
 
         addMenu(bar, "View", vitems);
@@ -309,17 +310,16 @@ public class ZaurusDatabaseManager extends DatabaseManager
 
         String soptions[] = {
             "-AutoCommit on", "-AutoCommit off", "-Commit", "-Rollback", "--",
-           "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
-            "-Logging off", "--", "-Insert test data" // , "-Transfer"
+            "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
+            "-Logging off", "--",
+            "-Insert test data"    // , "-Transfer"
         };
 
         addMenu(bar, "Options", soptions);
-        String shelp[] = {
-            "-Show HTML-Help in browser"
-        };
+
+        String shelp[] = { "-Show HTML-Help in browser" };
 
         addMenu(bar, "?", shelp);
-
         fMain.setMenuBar(bar);
         fMain.setSize(defWidth, defHeight);
         fMain.add("Center", this);
@@ -330,22 +330,25 @@ public class ZaurusDatabaseManager extends DatabaseManager
         Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = fMain.getSize();
 
-	// (ulrivo): arguments from command line or
-	// full size on screen with less than 640 width
-	if (d.width > 640) {
-	    fMain.setLocation((d.width - size.width) / 2,
-			      (d.height - size.height) / 2);
-	} else if (defWidth > 0 && defHeight > 0) {
-	    fMain.setLocation(defLocX,defLocY);
-	    fMain.setSize(defWidth, defHeight);
-	} else {
-	    fMain.setLocation(0,0);
-	    fMain.setSize(d);
-	}
+        // (ulrivo): arguments from command line or
+        // full size on screen with less than 640 width
+        if (d.width > 640) {
+            fMain.setLocation((d.width - size.width) / 2,
+                              (d.height - size.height) / 2);
+        } else if (defWidth > 0 && defHeight > 0) {
+            fMain.setLocation(defLocX, defLocY);
+            fMain.setSize(defWidth, defHeight);
+        } else {
+            fMain.setLocation(0, 0);
+            fMain.setSize(d);
+        }
+
         fMain.show();
 
-	// (ulrivo): load query from command line
-	if (defQuery != null) txtCommand.setText(DatabaseManagerCommon.readFile(defQuery));
+        // (ulrivo): load query from command line
+        if (defQuery != null) {
+            txtCommand.setText(DatabaseManagerCommon.readFile(defQuery));
+        }
 
         txtCommand.requestFocus();
     }
@@ -358,16 +361,18 @@ public class ZaurusDatabaseManager extends DatabaseManager
      */
     public void keyTyped(KeyEvent k) {
 
-	// Strg+Enter or Shift+Enter executes the actual SQL statement in command panel
-        if (k.getKeyChar() == '\n' && (k.isControlDown() || k.isShiftDown())) {
+        // Strg+Enter or Shift+Enter executes the actual SQL statement in command panel
+        if (k.getKeyChar() == '\n'
+                && (k.isControlDown() || k.isShiftDown())) {
             k.consume();
             execute();
-	    layoutCard.show(pCard, "result");
-	}
+            layoutCard.show(pCard, "result");
+        }
     }
 
     public void keyPressed(KeyEvent k) {
-	//	System.out.println("Key pressed: " + k.getKeyCode());
+
+        //  System.out.println("Key pressed: " + k.getKeyCode());
     }
 
     /**
@@ -390,15 +395,15 @@ public class ZaurusDatabaseManager extends DatabaseManager
 
         if (s.equals("Execute")) {
             execute();
-	    layoutCard.show(pCard, "result");
-	} else if (s.equals("Tree")) {
-	    layoutCard.show(pCard, "tree");
-	} else if (s.equals("Command")) {
-	    layoutCard.show(pCard, "command");
-	} else if (s.equals("Result")) {
-	    layoutCard.show(pCard, "result");
-	} else if (s.equals("Editor")) {
-	    layoutCard.show(pCard, "editor");
+            layoutCard.show(pCard, "result");
+        } else if (s.equals("Tree")) {
+            layoutCard.show(pCard, "tree");
+        } else if (s.equals("Command")) {
+            layoutCard.show(pCard, "command");
+        } else if (s.equals("Result")) {
+            layoutCard.show(pCard, "result");
+        } else if (s.equals("Editor")) {
+            layoutCard.show(pCard, "editor");
         } else if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Logging on")) {
@@ -407,66 +412,75 @@ public class ZaurusDatabaseManager extends DatabaseManager
             jdbcSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
-	    layoutCard.show(pCard, "tree");
+            layoutCard.show(pCard, "tree");
         } else if (s.startsWith("#")) {
             int i = Integer.parseInt(s.substring(1));
 
             txtCommand.setText(sRecent[i]);
         } else if (s.equals("Connect...")) {
             connect(ZaurusConnectionDialog.createConnection(fMain, "Connect",
-					   new Insets(defWidth, defHeight, defLocX, defLocY)));
-
+                    new Insets(defWidth, defHeight, defLocX, defLocY)));
             refreshTree();
-	    layoutCard.show(pCard, "tree");
+            layoutCard.show(pCard, "tree");
         } else if (s.equals("View Tree")) {
-	    layoutCard.show(pCard, "tree");
+            layoutCard.show(pCard, "tree");
         } else if (s.equals("View Command")) {
-	    layoutCard.show(pCard, "command");
+            layoutCard.show(pCard, "command");
         } else if (s.equals("View Result")) {
-	    layoutCard.show(pCard, "result");
+            layoutCard.show(pCard, "result");
         } else if (s.equals("View Editor")) {
-	    layoutCard.show(pCard, "editor");
+            layoutCard.show(pCard, "editor");
         } else if (s.equals("Results in Grid")) {
             iResult = 0;
 
             pResult.removeAll();
             pResult.add("Center", gResult);
             pResult.doLayout();
-	    layoutCard.show(pCard, "result");
+            layoutCard.show(pCard, "result");
         } else if (s.equals("Open Script...")) {
             FileDialog f = new FileDialog(fMain, "Open Script",
                                           FileDialog.LOAD);
 
-	    // (ulrivo): set default directory if set from command line
-	    if (defDirectory != null) f.setDirectory(defDirectory);
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
 
             f.show();
 
             String file = f.getFile();
 
             if (file != null) {
-                txtCommand.setText(DatabaseManagerCommon.readFile(f.getDirectory() + file));
+                txtCommand.setText(
+                    DatabaseManagerCommon.readFile(f.getDirectory() + file));
             }
-	    layoutCard.show(pCard, "command");
+
+            layoutCard.show(pCard, "command");
         } else if (s.equals("Save Script...")) {
             FileDialog f = new FileDialog(fMain, "Save Script",
                                           FileDialog.SAVE);
-	    // (ulrivo): set default directory if set from command line
-	    if (defDirectory != null) f.setDirectory(defDirectory);
+
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
 
             f.show();
 
             String file = f.getFile();
 
             if (file != null) {
-                DatabaseManagerCommon.writeFile(f.getDirectory() + file, txtCommand.getText());
+                DatabaseManagerCommon.writeFile(f.getDirectory() + file,
+                                                txtCommand.getText());
             }
         } else if (s.equals("Save Result...")) {
             FileDialog f = new FileDialog(fMain, "Save Result",
                                           FileDialog.SAVE);
 
-	    // (ulrivo): set default directory if set from command line
-	    if (defDirectory != null) f.setDirectory(defDirectory);
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
 
             f.show();
 
@@ -474,7 +488,8 @@ public class ZaurusDatabaseManager extends DatabaseManager
 
             if (file != null) {
                 showResultInText();
-                DatabaseManagerCommon.writeFile(f.getDirectory() + file, txtResult.getText());
+                DatabaseManagerCommon.writeFile(f.getDirectory() + file,
+                                                txtResult.getText());
             }
         } else if (s.equals("Results in Text")) {
             iResult = 1;
@@ -483,7 +498,7 @@ public class ZaurusDatabaseManager extends DatabaseManager
             pResult.add("Center", txtResult);
             pResult.doLayout();
             showResultInText();
-	    layoutCard.show(pCard, "result");
+            layoutCard.show(pCard, "result");
         } else if (s.equals("AutoCommit on")) {
             try {
                 cConn.setAutoCommit(true);
@@ -498,7 +513,7 @@ public class ZaurusDatabaseManager extends DatabaseManager
             } catch (SQLException e) {}
         } else if (s.equals("Insert test data")) {
             insertTestData();
-	    layoutCard.show(pCard, "result");
+            layoutCard.show(pCard, "result");
         } else if (s.equals("Rollback")) {
             try {
                 cConn.rollback();
@@ -538,17 +553,16 @@ public class ZaurusDatabaseManager extends DatabaseManager
         } else if (s.equals("Test Script")) {
             showHelp(DatabaseManagerCommon.testHelp);
         } else if (s.equals("Show HTML-Help in browser")) {
-	    try {
-		System.out.println("Starting Opera on index.html");
-		Runtime.getRuntime().exec(new String[] {"opera", 
-				"/home/QtPalmtop/help/html/hsqldb/index.html"});
-	    } catch (IOException e) {
-		System.out.println("A problem with Opera occured.");
-	    }
+            try {
+                System.out.println("Starting Opera on index.html");
+                Runtime.getRuntime().exec(new String[] {
+                    "opera", "/home/QtPalmtop/help/html/hsqldb/index.html"
+                });
+            } catch (IOException e) {
+                System.out.println("A problem with Opera occured.");
+            }
         }
     }
-
-
 
     /**
      * Method declaration
@@ -559,26 +573,31 @@ public class ZaurusDatabaseManager extends DatabaseManager
         Panel pQuery   = new Panel();
         Panel pCommand = new Panel();
 
-	// define a Panel pCard which takes four different cards/views:
-	// tree of tables, command SQL text area, result window and an editor/input form
-	pCard = new Panel();
-	layoutCard = new CardLayout(2, 2);
-	pCard.setLayout(layoutCard);
-	// four buttons at the top to quickly switch between the four views
-        butTree = new Button("Tree");
+        // define a Panel pCard which takes four different cards/views:
+        // tree of tables, command SQL text area, result window and an editor/input form
+        pCard      = new Panel();
+        layoutCard = new CardLayout(2, 2);
+
+        pCard.setLayout(layoutCard);
+
+        // four buttons at the top to quickly switch between the four views
+        butTree    = new Button("Tree");
         butCommand = new Button("Command");
-        butResult = new Button("Result");
-        butEditor = new Button("Editor");
+        butResult  = new Button("Result");
+        butEditor  = new Button("Editor");
+
         butTree.addActionListener(this);
         butCommand.addActionListener(this);
         butResult.addActionListener(this);
         butEditor.addActionListener(this);
-	Panel pButtons = new Panel();
-	pButtons.setLayout(new GridLayout(1,4,8,8));
-	pButtons.add(butTree);
-	pButtons.add(butCommand);
-	pButtons.add(butResult);
-	pButtons.add(butEditor);
+
+        Panel pButtons = new Panel();
+
+        pButtons.setLayout(new GridLayout(1, 4, 8, 8));
+        pButtons.add(butTree);
+        pButtons.add(butCommand);
+        pButtons.add(butResult);
+        pButtons.add(butEditor);
 
         pResult = new Panel();
 
@@ -600,7 +619,7 @@ public class ZaurusDatabaseManager extends DatabaseManager
         butExecute = new Button("Execute");
 
         butExecute.addActionListener(this);
-	pCommand.add("South", butExecute);
+        pCommand.add("South", butExecute);
         pCommand.add("Center", txtCommand);
 
         gResult = new Grid();
@@ -609,24 +628,24 @@ public class ZaurusDatabaseManager extends DatabaseManager
         pResult.add("Center", gResult);
 
         tTree = new Tree();
+
         tTree.setMinimumSize(new Dimension(200, 100));
         gResult.setMinimumSize(new Dimension(200, 300));
 
-	eEditor = new ZaurusEditor();
+        eEditor = new ZaurusEditor();
 
-	pCard.add("tree", tTree);
-	pCard.add("command", pCommand);
-	pCard.add("result", pResult);
-	pCard.add("editor", eEditor);
-
-	fMain.add("Center", pCard);
-	fMain.add("North", pButtons);
+        pCard.add("tree", tTree);
+        pCard.add("command", pCommand);
+        pCard.add("result", pResult);
+        pCard.add("editor", eEditor);
+        fMain.add("Center", pCard);
+        fMain.add("North", pButtons);
         doLayout();
         fMain.pack();
     }
 
     protected void refreshTree() {
-	super.refreshTree();
-	eEditor.refresh(cConn);
+        super.refreshTree();
+        eEditor.refresh(cConn);
     }
 }

@@ -1,51 +1,15 @@
- /* Copyrights and Licenses
- *
- * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
- *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
- *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
- *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
- *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
- *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
- *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
- *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
- *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
- * This software is provided "as is" and any expressed or implied warranties, including, but
- * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
- * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
- * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
- * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
- * or business interruption). However caused any on any theory of liability, whether in contract,
- * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
- * This software consists of voluntary contributions made by many individuals on behalf of the
- * Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer, including earlier
- * license statements (above) and comply with all above license conditions.
+ * list of conditions and the following disclaimer.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, including earlier
- * license statements (above) and comply with all above license conditions.
+ * and/or other materials provided with the distribution.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -83,36 +47,35 @@ import java.util.*;
  * @author ulrivo@users
  * @version 1.0.0.1
  */
-public class ZaurusConnectionDialog extends ConnectionDialog implements ActionListener,
-	ItemListener, KeyListener {
+public class ZaurusConnectionDialog extends ConnectionDialog
+implements ActionListener, ItemListener, KeyListener {
 
     final static String sJDBCTypes[][] = {
-	 {
-	    "HSQL In-Memory", "org.hsqldb.jdbcDriver",
-	    "jdbc:hsqldb:."
-	}, {
-	    "HSQL Standalone", "org.hsqldb.jdbcDriver",
-	    "jdbc:hsqldb:test"
-	},  {
-	    "MM.MySQL", "org.gjt.mm.mysql.Driver", 
-	    "jdbc:mysql://localhost/"
-	},{
-	    "JDBC-ODBC Brigde from Sun", "sun.jdbc.odbc.JdbcOdbcDriver",
-	    "jdbc:odbc:test"
-	}, {
-	    "Oracle", "oracle.jdbc.driver.OracleDriver", "jdbc:oracle:oci8:@"
-	}, {
-	    "IBM DB2", "COM.ibm.db2.jdbc.app.DB2Driver", "jdbc:db2:test"
-	}, {
-	    "Cloudscape RMI", "RmiJdbc.RJDriver",
-	    "jdbc:rmi://localhost:1099/jdbc:cloudscape:test;create=true"
-	}, {
-	    "InstantDb", "jdbc.idbDriver", "jdbc:idb:sample.prp"
-	}, {
-	    "PointBase", "com.pointbase.jdbc.jdbcUniversalDriver",
-	    "jdbc:pointbase://localhost/sample"
-	},    // PUBLIC / public
+        {
+            "HSQL In-Memory", "org.hsqldb.jdbcDriver", "jdbc:hsqldb:."
+        }, {
+            "HSQL Standalone", "org.hsqldb.jdbcDriver", "jdbc:hsqldb:test"
+        }, {
+            "MM.MySQL", "org.gjt.mm.mysql.Driver", "jdbc:mysql://localhost/"
+        }, {
+            "JDBC-ODBC Brigde from Sun", "sun.jdbc.odbc.JdbcOdbcDriver",
+            "jdbc:odbc:test"
+        }, {
+            "Oracle", "oracle.jdbc.driver.OracleDriver", "jdbc:oracle:oci8:@"
+        }, {
+            "IBM DB2", "COM.ibm.db2.jdbc.app.DB2Driver", "jdbc:db2:test"
+        }, {
+            "Cloudscape RMI", "RmiJdbc.RJDriver",
+            "jdbc:rmi://localhost:1099/jdbc:cloudscape:test;create=true"
+        }, {
+            "InstantDb", "jdbc.idbDriver", "jdbc:idb:sample.prp"
+        },
+        {
+            "PointBase", "com.pointbase.jdbc.jdbcUniversalDriver",
+            "jdbc:pointbase://localhost/sample"
+        },    // PUBLIC / public
     };
+
     /**
      * Constructor declaration
      *
@@ -121,8 +84,10 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
      * @param title
      */
     ZaurusConnectionDialog(Frame owner, String title) {
+
         super(owner, title);
-	addKeyListener(this);
+
+        addKeyListener(this);
     }
 
     /**
@@ -135,15 +100,15 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
         addKeyListener(this);
 
         Panel p = new Panel(new GridLayout(6, 2, 10, 10));
-	p.addKeyListener(this);
 
+        p.addKeyListener(this);
         p.setBackground(SystemColor.control);
         p.add(createLabel("Type:"));
 
         Choice types = new Choice();
 
         types.addItemListener(this);
-	types.addKeyListener(this);
+        types.addKeyListener(this);
 
         for (int i = 0; i < sJDBCTypes.length; i++) {
             types.add(sJDBCTypes[i][0]);
@@ -153,26 +118,26 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
         p.add(createLabel("Driver:"));
 
         mDriver = new TextField("org.hsqldb.jdbcDriver");
-	mDriver.addKeyListener(this);
 
+        mDriver.addKeyListener(this);
         p.add(mDriver);
         p.add(createLabel("URL:"));
 
         mURL = new TextField("jdbc:hsqldb:.");
-	mURL.addKeyListener(this);
 
+        mURL.addKeyListener(this);
         p.add(mURL);
         p.add(createLabel("User:"));
 
         mUser = new TextField("sa");
-	mUser.addKeyListener(this);
 
+        mUser.addKeyListener(this);
         p.add(mUser);
         p.add(createLabel("Password:"));
 
         mPassword = new TextField("");
-	mPassword.addKeyListener(this);
 
+        mPassword.addKeyListener(this);
         mPassword.setEchoChar('*');
         p.add(mPassword);
 
@@ -182,15 +147,15 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
 
         b.setActionCommand("ConnectCancel");
         b.addActionListener(this);
-	b.addKeyListener(this);
+        b.addKeyListener(this);
         p.add(b);
+
         b = new Button("Ok");
 
         b.setActionCommand("ConnectOk");
         b.addActionListener(this);
-	b.addKeyListener(this);
+        b.addKeyListener(this);
         p.add(b);
-
         setLayout(new BorderLayout());
         add("East", createLabel(" "));
         add("West", createLabel(" "));
@@ -198,10 +163,10 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
         mError = new Label("");
 
         Panel pMessage = createBorderPanel(mError);
-	pMessage.addKeyListener(this);
 
+        pMessage.addKeyListener(this);
         add("South", pMessage);
-	add("North", createLabel(""));
+        add("North", createLabel(""));
         add("Center", p);
         doLayout();
         pack();
@@ -209,19 +174,22 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
         Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = getSize();
 
-	if (d.width > 640) {
-	    setLocation((d.width - size.width) / 2,
-			      (d.height - size.height) / 2);
-	} else if (defInsets.top > 0 && defInsets.left > 0) {
-	    setLocation(defInsets.bottom, defInsets.right);
-	    setSize(defInsets.top, defInsets.left);
-	// full size on screen with less than 640 width
-	} else {
-	    setLocation(0,0);
-	    setSize(d);
-	}
-	show();
+        if (d.width > 640) {
+            setLocation((d.width - size.width) / 2,
+                        (d.height - size.height) / 2);
+        } else if (defInsets.top > 0 && defInsets.left > 0) {
+            setLocation(defInsets.bottom, defInsets.right);
+            setSize(defInsets.top, defInsets.left);
+
+            // full size on screen with less than 640 width
+        } else {
+            setLocation(0, 0);
+            setSize(d);
+        }
+
+        show();
     }
+
     /**
      * Method declaration
      *
@@ -232,23 +200,23 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
 
         String s = ev.getActionCommand();
 
-	//	System.out.println("Action performed " + s);
+        //  System.out.println("Action performed " + s);
         if (s.equals("ConnectOk")) {
-	    finishCreate();
+            finishCreate();
         } else if (s.equals("ConnectCancel")) {
             dispose();
         }
     }
 
     //    public boolean isFocusTraversable() { return true; }
-
     public void keyPressed(KeyEvent k) {
-	//	System.out.println("Key pressed: " + k.getKeyCode());
-	if (k.getKeyCode() == KeyEvent.VK_ENTER) {
-	    finishCreate();
-	} else if (k.getKeyCode() == KeyEvent.VK_ESCAPE) {
-	    dispose();
-	}
+
+        //  System.out.println("Key pressed: " + k.getKeyCode());
+        if (k.getKeyCode() == KeyEvent.VK_ENTER) {
+            finishCreate();
+        } else if (k.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            dispose();
+        }
     }
 
     public void keyTyped(KeyEvent k) {}
@@ -263,9 +231,8 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
      */
     public void windowClosing(WindowEvent ev) {
 
-	//	System.out.println("windowClosing");
+        //  System.out.println("windowClosing");
     }
-
 
     /**
      * Method declaration
@@ -273,17 +240,17 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
      *
      */
     protected void finishCreate() {
-	try {
-	    mConnection = createConnection(mDriver.getText(),
-					   mURL.getText(),
-					   mUser.getText(),
-					   mPassword.getText());
-	    
-	    dispose();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    mError.setText(e.toString());
-	}
+
+        try {
+            mConnection = createConnection(mDriver.getText(), mURL.getText(),
+                                           mUser.getText(),
+                                           mPassword.getText());
+
+            dispose();
+        } catch (Exception e) {
+            e.printStackTrace();
+            mError.setText(e.toString());
+        }
     }
 
     /**
@@ -295,14 +262,17 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
      *
      * @return
      */
-    public static Connection createConnection(Frame owner, String title, Insets defInsets) {
+    public static Connection createConnection(Frame owner, String title,
+            Insets defInsets) {
 
-        ZaurusConnectionDialog dialog = new ZaurusConnectionDialog(owner, title);
+        ZaurusConnectionDialog dialog = new ZaurusConnectionDialog(owner,
+            title);
 
         dialog.create(defInsets);
 
         return dialog.mConnection;
     }
+
     /**
      * Method declaration
      *
@@ -320,5 +290,4 @@ public class ZaurusConnectionDialog extends ConnectionDialog implements ActionLi
             }
         }
     }
-
 }
