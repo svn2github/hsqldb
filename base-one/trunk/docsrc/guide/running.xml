@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: running.xml,v 1.1 2004/04/15 04:26:11 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/15 04:26:11 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -27,6 +27,13 @@
             terms of the HSQLDB license.
         </para></legalnotice>
     </chapterinfo>
+    <section>
+       <title>Introduction</title>
+        <para>
+            The HSQLDB jar package is located in the /lib lirectory and contains 
+            several components and programs. Different commands are used to run 
+            each program.
+         </para>
     <itemizedlist>
         <title>Components of the HSQLDB jar package</title>
         <listitem><para>
@@ -43,11 +50,12 @@
             Sql Tool (command line)
         </para></listitem>
     </itemizedlist>
-    <para>
-        The HSQLDB RDBMS and JDBC Driver provide the core functionality.
-        The rest are general-purpose database tools that can be used with any 
-        database engine that has a JDBC driver.
-    </para>
+         <para>
+            The HSQLDB RDBMS and JDBC Driver provide the core functionality.
+            The rest are general-purpose database tools that can be used with any 
+            database engine that has a JDBC driver.
+        </para>
+    </section>
     <section>
         <title>Running Tools</title>
         <para>
@@ -156,10 +164,8 @@
             Several different programs can connect to the server and retrieve 
             or update information. Applications programs (clients) connect to 
             the server using the HSQLDB JDBC driver.
-            In all server modes, the server serves only one database that is 
-            specified at the time of running the server. 
-            If you need to provide connectivity to several databases, you 
-            should run several instances of the server each on a different port.
+            In most server modes, the server serves up to 10 databases that are 
+            specified at the time of running the server.
         </para> <para>
             Server modes can use preset properties or command line arguments 
             detailed in <ulink url='hsqlAdvancedGuide.html'/>.
@@ -179,7 +185,7 @@
                 &quot;mydb.*&quot;.
             </para>
             <informalexample><screen>
-    java -cp ../lib/hsqldb.jar org.hsqldb.Server -database mydb</screen>
+    java -cp ../lib/hsqldb.jar org.hsqldb.Server -database.0 mydb -dbname.0 xdb</screen>
             </informalexample>
             <para>
                 The command line argument <literal>-?</literal> can be used to 
@@ -244,7 +250,7 @@
                     used for the hsql protocol on the same machine:
                 </para>
                 <example>
-                    <title>Java code to connect to default local Server</title>
+                    <title>Java code to connect to the local Server above</title>
                     <programlisting>
     try {
         Class.forName("org.hsqldb.jdbcDriver" );
@@ -254,7 +260,7 @@
         return;
     }
 
-    Connection c = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost", "sa", "");</programlisting>
+    Connection c = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/xdb", "sa", "");</programlisting>
                 </example>
                 <para>
                     In some circumstances, you may have to use the following 
@@ -265,8 +271,8 @@
                 </informalexample>
                 <para>
                     Note in the above connection URL, there is no mention of 
-                    the database (file) as this was specified when running the 
-                    server.
+                    the database file, as this was specified when running the 
+                    server. Instead, the value defined for dbname.0 is used.
                     Also, see the Advanced Guide for the connection URL when 
                     there is more than one database per server instance.
                 </para>
