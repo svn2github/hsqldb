@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.11 2002/12/06 17:43:14 unsaved Exp $
+# $Id: buildjar.sh,v 1.12 2002/12/06 18:09:54 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -138,6 +138,7 @@ echo 'Generating jar content file list...'
 find * -name '*.class' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
     org/hsqldb/util/*Swing.class) [ -n "$NOSWING" ] || echo $file; continue;;
+    org/hsqldb/util/*Swing\$*.class) [ -n "$NOSWING" ] || echo $file; continue;;
     org/hsqldb/util/*) echo $file; continue;;
     org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
     org/hsqldb/jdbcStubs*.class) continue;;  # Why unnecessary??
