@@ -791,34 +791,6 @@ class Database {
     }
 
     /**
-     *  Generates a SQL script containing all or part of the SQL statements
-     *  required to recreate the current state of this Database object.
-     *
-     * @param  drop if true, include drop statements for each droppable
-     *      database object
-     * @param  insert if true, include the insert statements required to
-     *      populate each of this Database object's memory tables to match
-     *      their current state.
-     * @param  cached if true, include the insert statement required to
-     *      populate each of this Database object's CACHED tables to match
-     *      their current state.
-     * @param  session the Session in which to generate the requested SQL
-     *      script
-     * @return  A Result object consisting of one VARCHAR column with a row
-     *      for each statement in the generated script
-     * @throws  SQLException if the specified Session's currently connected
-     *      User does not have the right to call this method or there is some
-     *      problem generating the result
-     */
-    Result getScript(boolean drop, boolean insert, boolean cached,
-                     Session session) throws SQLException {
-
-        session.checkAdmin();
-
-        return DatabaseScript.getScript(this, drop, insert, cached);
-    }
-
-    /**
      *  Attempts to register the specified table or view with this Database
      *  object.
      *
@@ -877,10 +849,9 @@ class Database {
             return new Result();
         } else {
             c.back();
+            session.checkAdmin();
 
-// fredt@users - patch 1.7.0 - no DROP TABLE statements with SCRIPT command
-// try to script all but drop, insert; but no positions for cached tables
-            return getScript(false, true, false, session);
+            return DatabaseScript.getScript(this, false);
         }
     }
 
@@ -2818,7 +2789,9 @@ class Database {
      */
     void dropTempTables(Session ownerSession) {
 
-        for (int i = 0; i < tTable.size(); i++) {
+        int i = tTable.size();
+
+        while (i-- > 0) {
             Table toDrop = (Table) tTable.get(i);
 
             if (toDrop.isTemp() && toDrop.getOwnerSession() == ownerSession) {
@@ -3324,8 +3297,8 @@ class Database {
             int i = nameList.search(name);
 
             if (i != -1) {
-                nameList.setCell(i,0,newname);
-                nameList.sort(0,true);
+                nameList.setCell(i, 0, newname);
+                nameList.sort(0, true);
             }
         }
 
@@ -3344,7 +3317,9 @@ class Database {
 
         void removeOwner(HsqlName name) {
 
-            for (int i = 0; i < nameList.size(); i++) {
+            int i = nameList.size();
+
+            while (i-- > 0) {
                 Object owner = nameList.getCell(i, 1);
 
                 if (owner == name || (owner != null && owner.equals(name))) {

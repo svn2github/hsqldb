@@ -130,8 +130,8 @@ class Column {
     // lookup for types
 // boucherb@users - access changed for metadata 1.7.2
     static Hashtable hTypes;
-// --------------------------------------------------
 
+// --------------------------------------------------
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
     static final int numericTypes[] = {
         Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
@@ -336,12 +336,9 @@ class Column {
     }
 
     /**
-     *
-     * @param  type
-     * @return SQL type string for a java.sql.Types int value
-     * @throws  SQLException
+     * Returns SQL type string for a java.sql.Types int value
      */
-    static String getTypeString(int type) throws SQLException {
+    static String getTypeString(int type) {
 
         switch (type) {
 
@@ -412,7 +409,7 @@ class Column {
                 return "OBJECT";
 
             default :
-                throw Trace.error(Trace.WRONG_DATA_TYPE, type);
+                return "";
         }
     }
 
@@ -1376,7 +1373,7 @@ class Column {
         }
     }
 
-    static String createSQLString(double x) throws SQLException {
+    static String createSQLString(double x) {
 
         if (x == Double.NEGATIVE_INFINITY) {
             return "-1E0/0";

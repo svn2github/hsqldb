@@ -301,12 +301,12 @@ class Table {
         throw (Trace.error(Trace.TABLE_NOT_FOUND));
     }
 
-    protected String getDataSource() throws SQLException {
+    protected String getDataSource() {
         return null;
     }
 
-    protected boolean isDescDataSource() throws SQLException {
-        return (false);
+    protected boolean isDescDataSource() {
+        return false;
     }
 
     /**
@@ -741,7 +741,7 @@ class Table {
      *  Return the list of file pointers to root nodes for this table's
      *  indexes.
      */
-    int[] getIndexRootsArray() throws SQLException {
+    int[] getIndexRootsArray() {
 
         int[] roots = new int[iIndexCount];
 
@@ -761,9 +761,9 @@ class Table {
      * @return
      * @throws  SQLException
      */
-    String getIndexRoots() throws SQLException {
+    String getIndexRoots() {
 
-        Trace.doAssert(isCached, "Table.getIndexRootData");
+//        Trace.doAssert(isCached, "Table.getIndexRootData");
 
         String roots = StringUtil.getList(getIndexRootsArray(), " ", "");
         HsqlStringBuffer s = new HsqlStringBuffer(roots);

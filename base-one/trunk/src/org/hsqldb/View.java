@@ -102,7 +102,7 @@ class View extends Table {
         sStatement = s.substring(0, position);
     }
 
-    String getStatement() throws SQLException {
+    String getStatement() {
         return sStatement;
     }
 }

@@ -228,7 +228,7 @@ class DatabaseScriptWriter {
 
     protected void writeDDL() throws IOException, SQLException {
 
-        Result ddlPart = DatabaseScript.getScript(db, false, false,
+        Result ddlPart = DatabaseScript.getScript(db,
             !includeCachedData);
 
         writeSingleColumnResult(ddlPart);

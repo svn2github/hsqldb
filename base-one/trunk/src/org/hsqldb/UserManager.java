@@ -148,10 +148,9 @@ class UserManager {
      * Returns a comma separated list of right names corresponding to the
      * right flags set in the right argument. <p>
      */
-    static String getRight(int right) throws SQLException {
+    static String getRight(int right) {
 
-        checkValidFlags(right);
-
+//        checkValidFlags(right);
         if (right == ALL) {
             return "ALL";
         } else if (right == 0) {
@@ -215,10 +214,12 @@ class UserManager {
         }
 
         // -------------------------------------------------------
-        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
+        int i = uUser.size();
+
+        while (i-- > 0) {
             User u = (User) uUser.get(i);
 
-            if ((u != null) && u.getName().equals(name)) {
+            if (u != null && u.getName().equals(name)) {
                 throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
             }
         }
@@ -253,15 +254,19 @@ class UserManager {
 
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
-        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
+        int i = uUser.size();
+
+        while (i-- > 0) {
             User u = (User) uUser.get(i);
 
-            if ((u != null) && u.getName().equals(name)) {
-
+            if (u.getName().equals(name)) {
+                /*
                 // todo: find a better way. Problem: removeElementAt would not
                 // work correctly while others are connected
                 uUser.set(i, null);
-                u.revokeAll();    // in case the user is referenced in another way
+                */
+                uUser.remove(i);
+                u.revokeAll();    // in case the user is referenced in a Session
 
                 return;
             }
@@ -342,10 +347,12 @@ class UserManager {
      */
     private User get(String name) throws SQLException {
 
-        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
+        int i = uUser.size();
+
+        while (i-- > 0) {
             User u = (User) uUser.get(i);
 
-            if ((u != null) && u.getName().equals(name)) {
+            if (u != null && u.getName().equals(name)) {
                 return u;
             }
         }
@@ -353,13 +360,15 @@ class UserManager {
         throw Trace.error(Trace.USER_NOT_FOUND, name);
     }
 
-/**
+    /**
      * Removes all rights mappings for the database object identified by
      * the dbobject argument from all User objects in the set.
- */
+    */
     void removeDbObject(Object dbobject) {
 
-        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
+        int i = uUser.size();
+
+        while (i-- > 0) {
             User u = (User) uUser.get(i);
 
             if (u != null) {

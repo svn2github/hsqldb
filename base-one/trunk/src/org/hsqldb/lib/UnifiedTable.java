@@ -35,11 +35,13 @@ import java.lang.reflect.*;
 import java.util.Hashtable;
 
 // fredt@users - patch 1.7.2 - added support for Object storage and row removal
+// also changes so that no new object is created for each search.
 
 /**
  * Provides a reflection-based abstraction of Java array objects, allowing
  * table-like access to and manipulation of both primitive and object array
  * types through a single interface.
+ *
  * @author tony_lai@users.sourceforge.net
  * @version 1.7.2
  * @since 1.7.2
@@ -60,7 +62,8 @@ public class UnifiedTable {
 
     // Define Object class code using current hash code, for fast
     // searching for corresponding class comparator using a switch statement.
-    static final int OBJ_CLASS_CODE_BYTE   = 201;
+    static final int OBJ_CLASS_CODE_BYTE = 201;
+/*
     static final int OBJ_CLASS_CODE_CHAR   = Character.class.hashCode();
     static final int OBJ_CLASS_CODE_SHORT  = Short.class.hashCode();
     static final int OBJ_CLASS_CODE_INT    = Integer.class.hashCode();
@@ -68,9 +71,10 @@ public class UnifiedTable {
     static final int OBJ_CLASS_CODE_FLOAT  = Float.class.hashCode();
     static final int OBJ_CLASS_CODE_DOUBLE = Double.class.hashCode();
     static final int OBJ_CLASS_CODE_STRING = String.class.hashCode();
+*/
 
 // fredt
-    static final int OBJ_CLASS_CODE_COMPARABLE = Comparable.class.hashCode();
+    static final int OBJ_CLASS_CODE_OBJECT = Object.class.hashCode();
 
     static {
         classCodeMap.put(byte.class, new Integer(PRIM_CLASS_CODE_BYTE));
@@ -80,6 +84,7 @@ public class UnifiedTable {
         classCodeMap.put(long.class, new Integer(PRIM_CLASS_CODE_LONG));
         classCodeMap.put(float.class, new Integer(PRIM_CLASS_CODE_FLOAT));
         classCodeMap.put(double.class, new Integer(PRIM_CLASS_CODE_DOUBLE));
+/*
         classCodeMap.put(Byte.class, new Integer(OBJ_CLASS_CODE_BYTE));
         classCodeMap.put(Character.class, new Integer(OBJ_CLASS_CODE_SHORT));
         classCodeMap.put(Short.class, new Integer(OBJ_CLASS_CODE_SHORT));
@@ -88,8 +93,9 @@ public class UnifiedTable {
         classCodeMap.put(Float.class, new Integer(OBJ_CLASS_CODE_FLOAT));
         classCodeMap.put(Double.class, new Integer(OBJ_CLASS_CODE_DOUBLE));
         classCodeMap.put(String.class, new Integer(OBJ_CLASS_CODE_STRING));
+*/
         classCodeMap.put(Comparable.class,
-                         new Integer(OBJ_CLASS_CODE_COMPARABLE));
+                         new Integer(OBJ_CLASS_CODE_OBJECT));
     }
 
     protected SingleCellComparator getSingleCellComparator(int targetColumn) {
@@ -203,35 +209,131 @@ public class UnifiedTable {
     }
 
     public int search(byte value) {
-        return binarySearch(new Byte(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimByteCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(char value) {
-        return binarySearch(new Character(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimCharCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(short value) {
-        return binarySearch(new Short(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimShortCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(int value) {
-        return binarySearch(new Integer(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimIntCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(long value) {
-        return binarySearch(new Long(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimLongCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(float value) {
-        return binarySearch(new Float(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimFloatCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     public int search(double value) {
-        return binarySearch(new Double(value));
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            ((PrimDoubleCellComparator) rowComparator).setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
-    public int search(Object value) {
-        return binarySearch(value);
+    public int search(Comparable value) {
+
+        if (rowComparator == null) {
+            throw new IllegalArgumentException("Table is not sorted");
+        }
+
+        try {
+            rowComparator.setSearchTarget(value);
+        } catch (ClassCastException ccx) {
+            throw new IllegalArgumentException("Invalid search target: "
+                                               + value);
+        }
+
+        return binarySearch();
     }
 
     /**
@@ -282,6 +384,8 @@ public class UnifiedTable {
         return rowCount;
     }
 
+// fredt - support for removal as well as addition
+
     /**
      * Handles both addition and removal of rows
      */
@@ -289,62 +393,44 @@ public class UnifiedTable {
 
         int     newCount  = rowCount + rows;
         Object  data      = tableData;
-        boolean needsCopy = rowIndex < rowCount;
 
         if (newCount > rowAvailable) {
             rowAvailable += growth;
             data = Array.newInstance(cellType, rowAvailable * columns);
-            needsCopy    = true;
+
+            System.arraycopy(tableData, 0, data, 0, rowIndex * columns);
         }
 
-        if (needsCopy) {
-            System.arraycopy(tableData, 0, data, 0, rowIndex * columns);
+        if (rowIndex < rowCount) {
+            int source;
+            int target;
+            int size;
 
-            if (rowIndex < rowCount) {
-                int source;
-                int target;
-                int size;
-
-                if (rows >= 0) {
-                    source = rowIndex * columns;
-                    target = (rowIndex + rows) * columns;
-                    size   = (rowCount - rowIndex) * columns;
-                } else {
-                    source = (rowIndex - rows) * columns;
-                    target = rowIndex * columns;
-                    size   = (rowCount - rowIndex + rows) * columns;
-
-                    if (size < 0) {
-                        size = 0;
-                    }
-                }
-
-                System.arraycopy(tableData, source, data, target, size);
-
-                // after removing rows, leave the phantom rows at the end
+            if (rows >= 0) {
+                source = rowIndex * columns;
+                target = (rowIndex + rows) * columns;
+                size   = (rowCount - rowIndex) * columns;
+            } else {
+                source = (rowIndex - rows) * columns;
+                target = rowIndex * columns;
+                size   = (rowCount - rowIndex + rows) * columns;
             }
 
-            tableData = data;
+            if (size > 0) {
+                System.arraycopy(tableData, source, data, target, size);
+            }
+
+            // after removing rows, leave the phantom rows at the end
         }
 
+        tableData = data;
         rowCount = newCount;
 
         return rowIndex * columns;
     }
 
-// fredt - patched - this actually compares the rowCount column
-    private int binarySearch(Object target) {
-
-        if (rowComparator == null) {
-            throw new IllegalArgumentException("Table is not sorted");
-        }
-
-        try {
-            rowComparator.setSearchTarget(target);
-        } catch (ClassCastException ccx) {
-            throw new IllegalArgumentException("Invalid search target: "
-                                               + target);
-        }
+// fredt - patched - this actually compared the table[rowCount] column
+    private int binarySearch() {
 
         int low  = 0;
         int high = rowCount;
@@ -551,6 +637,13 @@ public class UnifiedTable {
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).byteValue();
         }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(byte target) {
+            mySearchTarget = target;
+        }
     }
 
     class PrimCharCellComparator extends SingleCellComparator {
@@ -598,6 +691,13 @@ public class UnifiedTable {
             mySearchTarget = (char) (((Number) target).intValue()
                                      & Character.MAX_VALUE);
         }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(char target) {
+            mySearchTarget = target;
+        }
     }
 
     class PrimShortCellComparator extends SingleCellComparator {
@@ -643,6 +743,13 @@ public class UnifiedTable {
          */
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).shortValue();
+        }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(short target) {
+            mySearchTarget = target;
         }
     }
 
@@ -690,6 +797,13 @@ public class UnifiedTable {
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).intValue();
         }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(int target) {
+            mySearchTarget = target;
+        }
     }
 
     class PrimLongCellComparator extends SingleCellComparator {
@@ -735,6 +849,13 @@ public class UnifiedTable {
          */
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).longValue();
+        }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(long target) {
+            mySearchTarget = target;
         }
     }
 
@@ -782,6 +903,13 @@ public class UnifiedTable {
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).floatValue();
         }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(float target) {
+            mySearchTarget = target;
+        }
     }
 
     class PrimDoubleCellComparator extends SingleCellComparator {
@@ -828,18 +956,25 @@ public class UnifiedTable {
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).doubleValue();
         }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(double target) {
+            mySearchTarget = target;
+        }
     }
 
     class PrimObjectCellComparator extends SingleCellComparator {
 
-        private Comparable[] myTableData;
-        private Comparable   mySearchTarget;
+        private Object[]   myTableData;
+        private Comparable mySearchTarget;
 
         PrimObjectCellComparator(int targetColumn) {
 
             super(targetColumn);
 
-            myTableData = (Comparable[]) tableData;
+            myTableData = (Object[]) tableData;
         }
 
         /**
@@ -847,7 +982,7 @@ public class UnifiedTable {
          */
         public boolean lessThan(int i, int j) {
             return compare(
-                myTableData[i * columns + targetColumn], myTableData[j * columns + targetColumn]) < 0;
+                (Comparable) myTableData[i * columns + targetColumn], (Comparable) myTableData[j * columns + targetColumn]) < 0;
         }
 
         /**
@@ -857,7 +992,7 @@ public class UnifiedTable {
          */
         public boolean lessThan(int i) {
             return compare(
-                myTableData[i * columns + targetColumn], mySearchTarget) < 0;
+                (Comparable) myTableData[i * columns + targetColumn], mySearchTarget) < 0;
         }
 
         /**
@@ -867,7 +1002,7 @@ public class UnifiedTable {
          */
         public boolean greaterThan(int i) {
             return compare(
-                myTableData[i * columns + targetColumn], mySearchTarget) > 0;
+                (Comparable) myTableData[i * columns + targetColumn], mySearchTarget) > 0;
         }
 
         private int compare(Comparable a, Comparable b) {
@@ -980,16 +1115,24 @@ public class UnifiedTable {
 
     public static void main(String[] args) {
 
-        UnifiedTable table = new UnifiedTable(int.class, 2);
+        StopWatch sw = new StopWatch();
 
-        for (int i = 0; i < 0x10000; i++) {
+        sw.start();
+
+        UnifiedTable table = new UnifiedTable(int.class, 2, 0x20000,
+                                              0x20000);
+
+        for (int i = 0; i < 0x100000; i++) {
             table.addRow(outputRow(i, new int[] {
                 (int) (Math.random() * Integer.MAX_VALUE),
                 (int) (Math.random() * Integer.MAX_VALUE)
             }));
         }
 
+        System.out.println("Create time: " + sw.elapsedTime());
+
         int size = table.size();
+
 /*
                 for(int i=0; i<size; i++) {
 //            outputRow(i, (int[])table.getRow(i));
@@ -999,12 +1142,11 @@ public class UnifiedTable {
 //                " column 2="+table.getCell(i, 1)+" class="+table.getCell(i, 1).getClass());
                 }
 */
-        long start = System.currentTimeMillis();
-
+        sw.zero();
         table.sort(0, true);
-        System.out.println("Sort time: "
-                           + (System.currentTimeMillis() - start) + " size: "
+        System.out.println("Sort time: " + sw.elapsedTime() + " size: "
                            + size);
+        sw.zero();
 
         for (int i = 1; i < size; i++) {
 
@@ -1017,6 +1159,10 @@ public class UnifiedTable {
 
 //                    " column 2="+table.getCell(i, 1)+" class="+table.getCell(i, 1).getClass());
         }
+
+        System.out.println("Access time: " + sw.elapsedTime() + " size: "
+                           + size);
+        sw.zero();
 
         for (int i = 1; i < size; i++) {
             int targetRow   = (int) (Math.random() * (size - 1));
@@ -1031,5 +1177,8 @@ public class UnifiedTable {
                                    + table.getCell(targetRow, 1));
             }
         }
+
+        System.out.println("Search time: " + sw.elapsedTime() + " size: "
+                           + size);
     }
 }

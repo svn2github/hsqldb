@@ -67,35 +67,27 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlStringBuffer;
 
 /**
  * Script generation.
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class DatabaseScript {
 
     /**
-     * Method declaration
-     *
-     *
-     * @param bDrop
-     * @param bInsert
-     * @param bCached
-     * @param session
-     *
-     * @return
-     *
-     * @throws SQLException
+     * Returns the DDL and all other statements for the database excluding
+     * INSERT and SET <tablename> READONLY statements.
+     * bCached indicates that SET <tablenmae> INDEX statements should be
+     * included
      */
-    static Result getScript(Database dDatabase, boolean bDrop,
-                            boolean bInsert,
-                            boolean bCached) throws SQLException {
+    static Result getScript(Database dDatabase, boolean bCached) {
 
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
@@ -107,25 +99,22 @@ class DatabaseScript {
         r.sLabel[0]  = "COMMAND";
         r.sName[0]   = "COMMAND";
 
-        StringBuffer a;
+        HsqlStringBuffer a;
 
+        // tables
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             if (t.isTemp() || t.isView()) {
                 continue;
             }
 
-            if (bDrop) {
-                addRow(r, "DROP TABLE " + t.getName().statementName);
-            }
-
-            a = new StringBuffer(128);
+            a = new HsqlStringBuffer(128);
 
             getTableDDL(dDatabase, t, i, forwardFK, forwardFKSource, a);
             addRow(r, a.toString());
 
+            // indexes for table
             for (int j = 1; j < t.getIndexCount(); j++) {
                 Index index = t.getIndex(j);
 
@@ -138,7 +127,7 @@ class DatabaseScript {
                     continue;
                 }
 
-                a = new StringBuffer(64);
+                a = new HsqlStringBuffer(64);
 
                 a.append("CREATE ");
 
@@ -158,22 +147,23 @@ class DatabaseScript {
                 addRow(r, a.toString());
             }
 
+            // readonly for TEXT tables only
             if (t.isText() && t.isDataReadOnly()) {
-                a = new StringBuffer("SET TABLE ");
+                a = new HsqlStringBuffer("SET TABLE ");
 
                 a.append(t.getName().statementName);
                 a.append(" READONLY TRUE");
                 addRow(r, a.toString());
             }
 
-// sqlbob@users 04/27/2002 Added data source support
+            // data source
             String dataSource = getDataSource(t);
 
             if (dataSource != null) {
                 addRow(r, dataSource);
             }
 
-            // trigger script
+            // triggers
             int numTrigs = TriggerDef.numTrigs();
 
             for (int tv = 0; tv < numTrigs; tv++) {
@@ -188,10 +178,11 @@ class DatabaseScript {
             }
         }
 
+        // forward referencing foreign keys
         for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
             Constraint c = (Constraint) forwardFK.get(i);
 
-            a = new StringBuffer(128);
+            a = new HsqlStringBuffer(128);
 
             a.append("ALTER TABLE ");
             a.append(c.getRef().getName().statementName);
@@ -200,6 +191,7 @@ class DatabaseScript {
             addRow(r, a.toString());
         }
 
+        // SET <tablename> INDEX statements
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
@@ -208,82 +200,22 @@ class DatabaseScript {
             }
         }
 
-        HsqlArrayList uv = dDatabase.getUserManager().getUsers();
+        // rights for classes and tables (not views)
+        addRightsStatements(dDatabase, r, false);
 
-        for (int i = 0, vSize = uv.size(); i < vSize; i++) {
-            User u = (User) uv.get(i);
-
-            // todo: this is not a nice implementation
-            if (u == null) {
-                continue;
-            }
-
-            String name = u.getName();
-
-            if (!name.equals("PUBLIC")) {
-                a = new StringBuffer(128);
-
-                a.append("CREATE USER ");
-                a.append(name);
-                a.append(" PASSWORD ");
-                a.append('"');
-                a.append(u.getPassword());
-                a.append('"');
-
-                if (u.isAdmin()) {
-                    a.append(" ADMIN");
-                }
-
-                addRow(r, a.toString());
-            }
-
-            HsqlHashMap rights = u.getRights();
-
-            if (rights == null) {
-                continue;
-            }
-
-            Enumeration e = rights.keys();
-
-            while (e.hasMoreElements()) {
-                Object object = e.nextElement();
-                int    right  = ((Integer) (rights.get(object))).intValue();
-
-                if (right == 0) {
-                    continue;
-                }
-
-                a = new StringBuffer(64);
-
-                a.append("GRANT ");
-                a.append(UserManager.getRight(right));
-                a.append(" ON ");
-
-                if (object instanceof String) {
-                    a.append("CLASS \"");
-                    a.append(object);
-                    a.append('\"');
-                } else {
-                    a.append(((HsqlName) object).statementName);
-                }
-
-                a.append(" TO ");
-                a.append(u.getName());
-                addRow(r, a.toString());
-            }
-        }
-
+        // ignorecase for future CREATE TABLE statements
         if (dDatabase.isIgnoreCase()) {
             addRow(r, "SET IGNORECASE TRUE");
         }
 
+        // aliases
         HsqlHashMap h = dDatabase.getAlias();
         Enumeration e = h.keys();
 
         while (e.hasMoreElements()) {
-            String       alias  = (String) e.nextElement();
-            String       java   = (String) h.get(alias);
-            StringBuffer buffer = new StringBuffer(64);
+            String           alias  = (String) e.nextElement();
+            String           java   = (String) h.get(alias);
+            HsqlStringBuffer buffer = new HsqlStringBuffer(64);
 
             buffer.append("CREATE ALIAS ");
             buffer.append(alias);
@@ -293,18 +225,14 @@ class DatabaseScript {
             addRow(r, buffer.toString());
         }
 
-// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
+        // views
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
             if (t.isView()) {
                 View v = (View) tTable.get(i);
 
-                if (bDrop) {
-                    addRow(r, "DROP VIEW " + v.getName().name);
-                }
-
-                a = new StringBuffer(128);
+                a = new HsqlStringBuffer(128);
 
                 a.append("CREATE ");
                 a.append("VIEW ");
@@ -315,55 +243,15 @@ class DatabaseScript {
             }
         }
 
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (bInsert == false || t.isTemp() || t.isView()
-                    || (t.isCached &&!bCached)
-                    || (t.isText() && t.isDataReadOnly())) {
-                continue;
-            }
-
-            Index   primary   = t.getPrimaryIndex();
-            Node    x         = primary.first();
-            boolean integrity = true;
-
-            if (x != null) {
-                integrity = false;
-
-                // fredt@users - this is necessary for forward ref FK's
-                // otherwise tables are in order and no rows break FK's
-                // addRow(r, "SET REFERENTIAL_INTEGRITY FALSE");
-            }
-
-            while (x != null) {
-                addRow(r, t.getInsertStatement(x.getData()));
-
-                x = primary.next(x);
-            }
-
-/*
-            if (!integrity) {
-                addRow(r, "SET REFERENTIAL_INTEGRITY TRUE");
-            }
-*/
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            if (t.isDataReadOnly()) {
-                a = new StringBuffer("SET TABLE ");
-
-                a.append(t.getName().statementName);
-                a.append(" READONLY TRUE");
-                addRow(r, a.toString());
-            }
-        }
+        // rights for views
+        addRightsStatements(dDatabase, r, true);
 
         return r;
     }
 
-    static String getIndexRootsDDL(Table t) throws SQLException {
+    static String getIndexRootsDDL(Table t) {
 
-        StringBuffer a = new StringBuffer(128);
+        HsqlStringBuffer a = new HsqlStringBuffer(128);
 
         a.append("SET TABLE ");
         a.append(t.getName().statementName);
@@ -377,12 +265,10 @@ class DatabaseScript {
     static void getTableDDL(Database dDatabase, Table t, int i,
                             HsqlArrayList forwardFK,
                             HsqlArrayList forwardFKSource,
-                            StringBuffer a) throws SQLException {
+                            HsqlStringBuffer a) {
 
         a.append("CREATE ");
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// required for Text Table support
         if (t.isText()) {
             a.append("TEXT ");
         } else if (t.isCached()) {
@@ -404,7 +290,6 @@ class DatabaseScript {
             a.append(colname);
             a.append(' ');
 
-// fredt@users 20020130 - patch 491987 by jimbag@users
             String sType = Column.getTypeString(column.getType());
 
             a.append(sType);
@@ -422,7 +307,6 @@ class DatabaseScript {
                 a.append(')');
             }
 
-// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
             if (column.getDefaultString() != null) {
                 a.append(" DEFAULT ");
                 a.append(Column.createSQLString(column.getDefaultString()));
@@ -500,7 +384,7 @@ class DatabaseScript {
      *
      * @return
      */
-    static String getDataSource(Table t) throws SQLException {
+    static String getDataSource(Table t) {
 
         String dataSource = t.getDataSource();
 
@@ -508,8 +392,8 @@ class DatabaseScript {
             return null;
         }
 
-        boolean      isDesc = t.isDescDataSource();
-        StringBuffer a      = new StringBuffer(128);
+        boolean          isDesc = t.isDescDataSource();
+        HsqlStringBuffer a      = new HsqlStringBuffer(128);
 
         a.append("SET TABLE ");
         a.append(t.getName().statementName);
@@ -536,7 +420,7 @@ class DatabaseScript {
      * @return
      */
     private static void getColumnList(Table t, int col[], int len,
-                                      StringBuffer a) {
+                                      HsqlStringBuffer a) {
 
         a.append('(');
 
@@ -560,8 +444,7 @@ class DatabaseScript {
      *
      * @return
      */
-    private static void getFKStatement(Constraint c,
-                                       StringBuffer a) throws SQLException {
+    private static void getFKStatement(Constraint c, HsqlStringBuffer a) {
 
         a.append("CONSTRAINT ");
         a.append(c.getName().statementName);
@@ -588,7 +471,7 @@ class DatabaseScript {
         }
     }
 
-    private static String getFKAction(int action) throws SQLException {
+    private static String getFKAction(int action) {
 
         switch (action) {
 
@@ -602,7 +485,7 @@ class DatabaseScript {
                 return "SET NULL";
 
             default :
-                throw (Trace.error(Trace.GENERAL_ERROR));
+                return "NO ACTION";
         }
     }
 
@@ -620,5 +503,92 @@ class DatabaseScript {
         s[0] = sql;
 
         r.add(s);
+    }
+
+    private static void addRightsStatements(Database dDatabase, Result r,
+            boolean views) {
+
+        // rights
+        HsqlStringBuffer a;
+        HsqlArrayList    uv = dDatabase.getUserManager().getUsers();
+
+        for (int i = 0, vSize = uv.size(); i < vSize; i++) {
+            User u = (User) uv.get(i);
+            /*
+            // todo: this is not a nice implementation
+            if (u == null) {
+                continue;
+            }
+            */
+            String name = u.getName();
+
+            if (!views &&!name.equals("PUBLIC")) {
+                a = new HsqlStringBuffer(128);
+
+                a.append("CREATE USER ");
+                a.append(name);
+                a.append(" PASSWORD ");
+                a.append('"');
+                a.append(u.getPassword());
+                a.append('"');
+
+                if (u.isAdmin()) {
+                    a.append(" ADMIN");
+                }
+
+                addRow(r, a.toString());
+            }
+
+            HsqlHashMap rights = u.getRights();
+
+            if (rights == null) {
+                continue;
+            }
+
+            Enumeration e = rights.keys();
+
+            while (e.hasMoreElements()) {
+                Object object = e.nextElement();
+                int    right  = ((Integer) (rights.get(object))).intValue();
+
+                //  zero rights will have been removed
+                /*
+                if (right == 0) {
+                    continue;
+                }
+                */
+                a = new HsqlStringBuffer(64);
+
+                a.append("GRANT ");
+                a.append(UserManager.getRight(right));
+                a.append(" ON ");
+
+                if (object instanceof String) {
+                    if (views) {
+                        continue;
+                    }
+
+                    a.append("CLASS \"");
+                    a.append((String) object);
+                    a.append('\"');
+                } else {
+                    Table table =
+                        dDatabase.findUserTable(((HsqlName) object).name);
+
+                    // assumes all non String objects are table names
+                    if (views == table.isView()) {
+                        a.append(((HsqlName) object).statementName);
+                    } else {
+                        continue;
+                    }
+                }
+
+                a.append(" TO ");
+                a.append(u.getName());
+                addRow(r, a.toString());
+            }
+        }
+
+        // end rights
     }
 }

@@ -327,7 +327,7 @@ class Session {
 
         int i = tTransaction.size();
 
-        while (--i >= 0) {
+        while (i-- > 0) {
             Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();
@@ -364,7 +364,7 @@ class Session {
         int i = tTransaction.size();
         int j = idx.intValue();
 
-        while (--i >= j) {
+        while (i-- > j) {
             Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();

@@ -34,8 +34,9 @@ package org.hsqldb;
 // peterhudson@users 20020130 - patch 478657 by peterhudson - triggers support
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // added new class as jdk 1.1 does not allow use of LinkedList
-import org.hsqldb.lib.HsqlDeque;
 import java.sql.SQLException;
+import org.hsqldb.lib.HsqlDeque;
+import org.hsqldb.lib.HsqlStringBuffer;
 
 /**
  *  TriggerDef class declaration Definition and execution of triggers
@@ -139,9 +140,9 @@ class TriggerDef extends Thread {
      *
      * @return
      */
-    public StringBuffer toBuf() {
+    public HsqlStringBuffer toBuf() {
 
-        StringBuffer a = new StringBuffer(256);
+        HsqlStringBuffer a = new HsqlStringBuffer(256);
 
         a.append("CREATE TRIGGER ");
         a.append(name.statementName);

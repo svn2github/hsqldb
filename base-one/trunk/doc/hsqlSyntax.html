@@ -356,8 +356,9 @@ A view can reference another view. For example, mealsjv presents information tha
     CREATE VIEW mealswebv AS
       SELECT name, author
         FROM mealsjv
-</pre></big>
-<br>
+</pre>
+</big>
+The SELECT statement in a VIEW definition should return columns with distinct names. If the names of two columns in the SELECT statement  are the same, use a column alias to distinguish between them.<br>
 </font>
 <p><font face="Arial">See also: <a href="#Expression">Expression</a>, <a href="#SELECT">SELECT</a>, <a href="#DROP VIEW">DROP VIEW</a>
 </font>

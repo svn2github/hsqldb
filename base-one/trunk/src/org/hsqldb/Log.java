@@ -93,8 +93,16 @@ import org.hsqldb.lib.StopWatch;
 // tony_lai@users 20020820 - changes to shutdown compact to save memory
 // fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
 // fredt@users 20021208 - ongoing revamp
-/* fredt - todo - 20021212 - do not rewrite the *.backup file if the *.data
-    file has not been updated in the current seesion.
+// fredt@users 20021212 - do not rewrite the *.backup file if the *.data
+// file has not been updated in the current seesion.
+
+/*
+todo - when a *.script file that has no properties file is opened, it is
+always assumed that the cache_version is 1.6.0, which may not be true;
+- when both *.script and *.backup exist, there is a problem openning. the
+backup does not get deflated into *.data and an attemp is made to read the
+index roots from the empty *.data file.
+
 */
 
 /**

@@ -70,8 +70,9 @@ package org.hsqldb;
 import java.sql.SQLException;
 import java.sql.Types;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.HsqlLinkedList;
+import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
 // support for sql standard quoted identifiers for column and table names
@@ -215,7 +216,7 @@ class Parser {
             return;
         }
 
-        StringBuffer tableDDL = new StringBuffer();
+        HsqlStringBuffer tableDDL = new HsqlStringBuffer();
 
         DatabaseScript.getTableDDL(dDatabase, t, 0, null, null, tableDDL);
 
@@ -244,7 +245,7 @@ class Parser {
         Object o    = e.getValue();
 
 // boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
-// return Results as Object, where object is Result or jdbcResultSet.     
+// return Results as Object, where object is Result or jdbcResultSet.
         if (o instanceof Result) {
             return (Result) o;
         }
@@ -253,7 +254,7 @@ class Parser {
             return ((jdbcResultSet) o).rResult;
         }
 
-// --------------------------------------------------------------------------        
+// --------------------------------------------------------------------------
         Result r = new Result(1);
 
         r.sTable[0]  = "";
@@ -1050,7 +1051,7 @@ class Parser {
                 String       sRight = tTokenizer.getPart(NewCurPos, sLength);
                 View         v         = (View) t;
                 String       sView     = v.getStatement();
-                StringBuffer sFromView = new StringBuffer(128);
+                HsqlStringBuffer sFromView = new HsqlStringBuffer(128);
 
                 sFromView.append(sLeft);
                 sFromView.append('(');

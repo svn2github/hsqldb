@@ -193,11 +193,11 @@ class TextTable extends org.hsqldb.Table {
         }
     }
 
-    protected String getDataSource() throws SQLException {
+    protected String getDataSource() {
         return dataSource;
     }
 
-    protected boolean isDescDataSource() throws SQLException {
+    protected boolean isDescDataSource() {
         return isReversed;
     }
 

@@ -67,7 +67,7 @@ public class TestCacheSize {
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = false;
+    boolean cachedTable     = true;
     int     cacheScale      = 12;
     int     logType         = 3;
     int     writeDelay      = 1;
@@ -134,7 +134,7 @@ public class TestCacheSize {
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "CREATE " + (cachedTable ? "CACHED"
+        String ddl3 = "CREATE " + (cachedTable ? "CACHED "
                                                : "") + "TABLE test( id INT IDENTITY,"
                                                    + " firstname VARCHAR, "
                                                    + " lastname VARCHAR, "
