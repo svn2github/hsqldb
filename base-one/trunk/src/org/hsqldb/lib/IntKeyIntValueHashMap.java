@@ -48,7 +48,7 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
                                  float loadFactor)
                                  throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.intKeyOrValue,
-              keyOrValueTypes.intKeyOrValue);
+              keyOrValueTypes.intKeyOrValue, noPurge);
     }
 
     public int get(int key) throws NoSuchElementException {

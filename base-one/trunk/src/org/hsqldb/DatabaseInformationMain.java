@@ -39,7 +39,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.WrapperIterator;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance

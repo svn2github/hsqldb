@@ -36,7 +36,7 @@ import java.sql.DatabaseMetaData;
 import java.util.Enumeration;
 import java.util.Locale;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
 /**

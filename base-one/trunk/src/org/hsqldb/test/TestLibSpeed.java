@@ -36,7 +36,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.lib.IntegerPool;
+import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.StopWatch;
 import java.util.NoSuchElementException;
 
@@ -267,11 +267,11 @@ public class TestLibSpeed {
             System.out.println("Object Cache Test " + sw.elapsedTime());
 
             Integer testValue = new Integer(-1);
-            IntegerPool hm = new IntegerPool(1000000,1,true);
+            ValuePool hm = new ValuePool(1000000);
             for (int j = 0; j < 10000000; j++) {
                 int r = randomgen.nextInt(1000000);
 
-                Integer h = hm.get(r);
+                Integer h = hm.getInt(r);
                 if (h.equals(testValue)){
                     System.out.println("Never prints this");
                 }
@@ -281,7 +281,7 @@ public class TestLibSpeed {
             System.out.println("Handle 10,000,000 Integers " + sw.elapsedTime());
             sw.zero();
 
-            hm = new IntegerPool(1000000,1,true);
+            hm = new ValuePool(1000000);
             for (int j = 0; j < 10000000; j++) {
                 int r = randomgen.nextInt(1000000);
 

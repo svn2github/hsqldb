@@ -51,7 +51,7 @@ public class HashMap extends BaseHashMap {
     public HashMap(int initialCapacity,
                    float loadFactor) throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.objectKeyOrValue,
-              keyOrValueTypes.objectKeyOrValue);
+              keyOrValueTypes.objectKeyOrValue, noPurge);
     }
 
     public Object get(Object key) {

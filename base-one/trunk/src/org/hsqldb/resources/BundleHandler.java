@@ -36,7 +36,7 @@ import java.util.ResourceBundle;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 
 /** A ResourceBundle helper class. <p>
  *

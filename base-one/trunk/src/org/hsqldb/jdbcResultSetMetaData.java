@@ -76,7 +76,7 @@ import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.StopWatch;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 
 /**
  * <!-- start generic documentation -->

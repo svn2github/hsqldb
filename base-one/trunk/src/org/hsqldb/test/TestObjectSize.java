@@ -72,7 +72,6 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.lib.IntegerPool;
 import org.hsqldb.lib.StopWatch;
 import java.util.NoSuchElementException;
 

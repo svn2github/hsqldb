@@ -38,7 +38,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
 /**

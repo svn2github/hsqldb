@@ -73,7 +73,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.StopWatch;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
@@ -103,7 +103,7 @@ public class Session {
     private int                nestedOldTransIndex;
     private boolean            isReadOnly;
     private int                iMaxRows;
-    private Object             iLastIdentity;
+    private Number             iLastIdentity;
     private boolean            isClosed;
     private int                iId;
     private IntValueHashMap savepoints;
@@ -189,7 +189,7 @@ public class Session {
      *
      * @param  i the new value
      */
-    void setLastIdentity(Object i) {
+    void setLastIdentity(Number i) {
         iLastIdentity = i;
     }
 
@@ -198,7 +198,7 @@ public class Session {
      *
      * @return the current value
      */
-    Object getLastIdentity() {
+    Number getLastIdentity() {
         return iLastIdentity;
     }
 

@@ -82,8 +82,20 @@ public class BaseHashMap {
         int objectKeyOrValue = 3;
     }
 
+    public static final int noPurge = 0;
+    public static final int purgeAll = 1;
+    public static final int purgeAlternateHalf = 2;
+    public static final int purgeOldAccessHalf = 3;
+
+    protected BaseHashMap(int initialCapacity, int maxCapacity, int purgePolicy) throws IllegalArgumentException {
+        this(initialCapacity, 1,
+        BaseHashMap.keyOrValueTypes.objectKeyOrValue,
+        BaseHashMap.keyOrValueTypes.noKeyOrValue, purgePolicy);
+    }
+
+
     protected BaseHashMap(int initialCapacity, float loadFactor, int keyType,
-                          int valueType) throws IllegalArgumentException {
+                          int valueType, int purgePolicy) throws IllegalArgumentException {
 
         if (initialCapacity <= 0 || loadFactor <= 0.0) {
             throw new IllegalArgumentException();
@@ -115,6 +127,8 @@ public class BaseHashMap {
         } else {
             isNoValue = true;
         }
+
+        this.clearWhenFull = (purgePolicy == purgeAll);
     }
 
     protected Object getObject(int key) {
@@ -385,8 +399,7 @@ public class BaseHashMap {
     protected Integer getOrAddInteger(int intKey) {
 
         Integer testValue;
-        int     hash       = intKey;
-        int     index      = hashIndex.getHashIndex(hash);
+        int     index      = hashIndex.getHashIndex(intKey);
         int     lookup     = hashIndex.hashTable[index];
         int     lastLookup = -1;
 
@@ -415,6 +428,184 @@ public class BaseHashMap {
         objectKeyTable[lookup] = testValue;
 
         return testValue;
+    }
+
+    protected Long getOrAddLong(long longKey) {
+
+        Long testValue;
+        int     index      = hashIndex.getHashIndex((int)longKey);
+        int     lookup     = hashIndex.hashTable[index];
+        int     lastLookup = -1;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            testValue = (Long) objectKeyTable[lookup];
+
+            if (testValue.longValue() == longKey) {
+                return testValue;
+            }
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (clearWhenFull) {
+                clear();
+            } else {
+                rehash(hashIndex.hashTable.length * 2);
+            }
+
+            return getOrAddLong(longKey);
+        }
+
+        lookup                 = hashIndex.linkNode(index, lastLookup);
+        testValue              = new Long(longKey);
+        objectKeyTable[lookup] = testValue;
+
+        return testValue;
+    }
+
+    /**
+     * This is dissimilar to normal hash map get() methods. The key Object
+     * should hava an equals(String) method which should return true if the
+     * key.toString.equals(String) is true. Also the key.hasCode() method
+     * must return the same value as key.toString.hashCode()
+     */
+
+    protected String getOrAddString(Object key) {
+
+        String testValue;
+        int     index      = hashIndex.getHashIndex(key.hashCode());
+        int     lookup     = hashIndex.hashTable[index];
+        int     lastLookup = -1;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            testValue = (String) objectKeyTable[lookup];
+
+            if (key.equals(testValue)) {
+                return testValue;
+            }
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (clearWhenFull) {
+                clear();
+            } else {
+                rehash(hashIndex.hashTable.length * 2);
+            }
+
+            return getOrAddString(key);
+        }
+
+        testValue = key.toString();
+        lookup                 = hashIndex.linkNode(index, lastLookup);
+        objectKeyTable[lookup] = testValue;
+
+        return testValue;
+    }
+
+    protected java.sql.Date getOrAddDate(long longKey) {
+
+        java.sql.Date testValue;
+        // the 10 least significant bits are generally similar
+        int     hash       = (((int) longKey) >> 10) ^ (int) (longKey >> 32);
+        int     index      = hashIndex.getHashIndex((int)longKey);
+        int     lookup     = hashIndex.hashTable[index];
+        int     lastLookup = -1;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            testValue = (java.sql.Date) objectKeyTable[lookup];
+
+            if (testValue.getTime() == longKey) {
+                return testValue;
+            }
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (clearWhenFull) {
+                clear();
+            } else {
+                rehash(hashIndex.hashTable.length * 2);
+            }
+
+            return getOrAddDate(longKey);
+        }
+
+        lookup                 = hashIndex.linkNode(index, lastLookup);
+        testValue              = new java.sql.Date(longKey);
+        objectKeyTable[lookup] = testValue;
+
+        return testValue;
+    }
+
+    protected Double getOrAddDouble(long longKey) {
+
+        Double testValue;
+        int     index      = hashIndex.getHashIndex((int)longKey);
+        int     lookup     = hashIndex.hashTable[index];
+        int     lastLookup = -1;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            testValue = (Double) objectKeyTable[lookup];
+
+            if (Double.doubleToLongBits(testValue.doubleValue()) == longKey) {
+                return testValue;
+            }
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (clearWhenFull) {
+                clear();
+            } else {
+                rehash(hashIndex.hashTable.length * 2);
+            }
+
+            return getOrAddDouble(longKey);
+        }
+
+        lookup                 = hashIndex.linkNode(index, lastLookup);
+        testValue              = new Double(Double.longBitsToDouble(longKey));
+        objectKeyTable[lookup] = testValue;
+
+        return testValue;
+    }
+
+    protected java.math.BigDecimal getOrAddBigDecimal(java.math.BigDecimal key) {
+
+        java.math.BigDecimal testValue;
+        int     index      = hashIndex.getHashIndex(key.hashCode());
+        int     lookup     = hashIndex.hashTable[index];
+        int     lastLookup = -1;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            testValue = (java.math.BigDecimal) objectKeyTable[lookup];
+
+            if (testValue.equals(key)) {
+                return testValue;
+            }
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (clearWhenFull) {
+                clear();
+            } else {
+                rehash(hashIndex.hashTable.length * 2);
+            }
+
+            return getOrAddBigDecimal(key);
+        }
+
+        lookup                 = hashIndex.linkNode(index, lastLookup);
+        objectKeyTable[lookup] = key;
+
+        return key;
     }
 
     /**

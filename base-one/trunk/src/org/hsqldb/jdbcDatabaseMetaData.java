@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.StringUtil;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 import java.util.Hashtable;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

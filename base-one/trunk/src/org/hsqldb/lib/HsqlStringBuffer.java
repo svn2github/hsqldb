@@ -36,6 +36,8 @@ package org.hsqldb.lib;
  * maintains an empty slot and the beginning and end to allow for the quick
  * addition of single quotation marks around the string.
  *
+ * the equals(String) method for this object returns true if the string and
+ * the buffer contain the same sequence of chars.
  * @author  dnordahl@users
  */
 public final class HsqlStringBuffer {
@@ -75,6 +77,7 @@ public final class HsqlStringBuffer {
         }
     }
 */
+
 //    private int traceUpdated = 0;
 /*
 
@@ -87,14 +90,15 @@ public final class HsqlStringBuffer {
     }
 */
 
-    // The offsets give an extra slot at the begining and end so single quotes
-    // can be efficiently added.
+    // The offsets give an extra slot at the begining and end so single
+    // quotes can be efficiently added.
     private final static int   BEGINNING_OFFSET         = 1;
     private final static int   END_OFFSET               = 1;
     private final static int   DEFAULT_INITIAL_CAPACITY = 16;
     private final static float DEFAULT_RESIZE_FACTOR    = 2.0f;
     private char[]             data;
     private int                charCount;
+    private int                hash;
 
     /** Creates a new instance of HsqlStringBuffer */
     public HsqlStringBuffer() {
@@ -109,14 +113,12 @@ public final class HsqlStringBuffer {
             throw new NegativeArraySizeException("Invalid length passed");
         }
 
-        if (length == 0) {    // this prevents the capacity increase amount being
-
-            // multiplied by zero
-            data = new char[BEGINNING_OFFSET + 1 + END_OFFSET];
-        } else {
-            data = new char[BEGINNING_OFFSET + length + END_OFFSET];
+        // this prevents the capacity increase amount being multiplied by zero
+        if (length == 0) {
+            length = 1;
         }
 
+        data      = new char[BEGINNING_OFFSET + length + END_OFFSET];
         charCount = 0;
     }
 
@@ -212,6 +214,7 @@ public final class HsqlStringBuffer {
         return this;
     }
 */
+
     /**
      * Gives the contents of the string buffer as a String without being
      * encapsulated in single quotes
@@ -219,14 +222,12 @@ public final class HsqlStringBuffer {
     public String toString() {
 
 //        reporter.toStringCounter++;
-
         return new String(data, BEGINNING_OFFSET, charCount);
     }
 
     /**
      * Returns the contents of the string buffer in single quotes.
      */
-/*
     public String toQuotedString() {
 
         data[0] = data[charCount + BEGINNING_OFFSET] = '\'';
@@ -238,19 +239,54 @@ public final class HsqlStringBuffer {
 
         return str;
     }
-*/
-    /**
-     * Returns false if the object being compared is not a HsqlStringBuffer.
-     */
-/*
-    public boolean equals(Object obj) {
 
-        if (!(obj instanceof HsqlStringBuffer)) {
+    /**
+     * returns true if the contents are equal.
+     *
+     */
+    public boolean equals(String str) {
+
+        if (str.length() != this.charCount) {
             return false;
+        } else {
+            for (int i = 0; i < this.charCount; i++) {
+                if (str.charAt(i) != this.data[BEGINNING_OFFSET + i]) {
+                    return false;
+                }
+            }
+
+            return true;
         }
+    }
+
+    /**
+     * returns false if the object being compared is not a
+     * HsqlStringBuffer.
+     */
+    public boolean equals(Object obj) {
 
         if (obj == this) {
             return true;
+        }
+
+        if (obj instanceof String) {
+            String str = (String) obj;
+
+            if (str.length() != this.charCount) {
+                return false;
+            } else {
+                for (int i = 0; i < this.charCount; i++) {
+                    if (str.charAt(i) != this.data[i]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        if (!(obj instanceof HsqlStringBuffer)) {
+            return false;
         }
 
         HsqlStringBuffer hsb = (HsqlStringBuffer) obj;
@@ -267,7 +303,22 @@ public final class HsqlStringBuffer {
             return true;
         }
     }
-*/
+
+    public int hashCode() {
+
+        int h = hash;
+
+        if (h == 0) {
+            for (int i = 0; i < this.charCount; i++) {
+                h = 31 * h + data[i++];
+            }
+
+            hash = h;
+        }
+
+        return h;
+    }
+
     /**
      * Compares the current HsqlStringBuffer to another returning results consistent with
      * String.compareTo
@@ -312,7 +363,6 @@ public final class HsqlStringBuffer {
      * Allows HsqlStringBuffer to be used by data structures requiring implementation of
      * Comparable such as maps.
      */
-/*
     public int compareTo(Object obj) {
 
         if (obj instanceof HsqlStringBuffer) {
@@ -323,7 +373,7 @@ public final class HsqlStringBuffer {
             throw new ClassCastException("Unsupported comparison attempted");
         }
     }
-*/
+
     /**
      * Returns the length of the buffer not including the empty slots for the
      * optional single quotes.
@@ -445,6 +495,7 @@ public final class HsqlStringBuffer {
     public HsqlStringBuffer append(long l) {
         return append(Long.toString(l));
     }
+
 /*
     public HsqlStringBuffer append(double db) {
         return append(Double.toString(db));
@@ -488,6 +539,7 @@ public final class HsqlStringBuffer {
                              : "false");
     }
 */
+
 //fredt@users temp methods - no tests - no error checks or proper interface and throw check against StringBuffer
     public char charAt(int pos) {
         return data[pos + BEGINNING_OFFSET];

@@ -40,7 +40,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.ValuePool;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -1092,7 +1092,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iautocmt]  = ValuePool.getBoolean(s.getAutoCommit());
             row[ireadonly] = ValuePool.getBoolean(s.isReadOnly());
             row[imaxrows]  = ValuePool.getInt(s.getMaxRows());
-            row[ilast_id]  = ValuePool.getLong((Number) s.getLastIdentity());
+            row[ilast_id]  = ValuePool.getLong(s.getLastIdentity().longValue());
             row[it_size]   = ValuePool.getInt(s.getTransactionSize());
 
             t.insert(row, session);

@@ -77,7 +77,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         int    length = readInt();
         String s      = StringConverter.readUTF(buf, pos, length);
 // fredt - memory opt tests
-        s = s.intern();
+        s = org.hsqldb.store.ValuePool.getString(s);
 
         pos += length;
 
@@ -99,21 +99,25 @@ implements org.hsqldb.DatabaseRowInputInterface {
     protected Integer readSmallint() throws IOException, SQLException {
 // fredt - memory opt tests
 //        return new Integer(readShort());
-        return org.hsqldb.lib.ValuePool.getInt(readShort());
+        return org.hsqldb.store.ValuePool.getInt(readShort());
     }
 
     protected Integer readInteger() throws IOException, SQLException {
 // fredt - memory opt tests
 //        return new Integer(readInt());
-        return org.hsqldb.lib.ValuePool.getInt(readInt());
+        return org.hsqldb.store.ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, SQLException {
-        return new Long(readLong());
+// fredt - memory opt tests
+//        return new Long(readLong());
+        return org.hsqldb.store.ValuePool.getLong(readLong());
     }
 
     protected Double readReal(int type) throws IOException, SQLException {
-        return new Double(Double.longBitsToDouble(readLong()));
+// fredt - memory opt tests
+//        return new Double(Double.longBitsToDouble(readLong()));
+        return org.hsqldb.store.ValuePool.getDouble(readLong());
     }
 
     protected BigDecimal readDecimal() throws IOException, SQLException {
@@ -122,7 +126,9 @@ implements org.hsqldb.DatabaseRowInputInterface {
         int        scale  = readInt();
         BigInteger bigint = new BigInteger(bytes);
 
-        return new BigDecimal(bigint, scale);
+// fredt - memory opt tests
+//        return new BigDecimal(bigint, scale);
+        return org.hsqldb.store.ValuePool.getBigDecimal(new BigDecimal(bigint, scale));
     }
 
     protected Boolean readBit() throws IOException, SQLException {
@@ -135,7 +141,9 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected java.sql.Date readDate() throws IOException, SQLException {
-        return new java.sql.Date(readLong());
+// fredt - memory opt tests
+//        return new java.sql.Date(readLong());
+        return org.hsqldb.store.ValuePool.getDate(readLong());
     }
 
     protected java.sql.Timestamp readTimestamp()
