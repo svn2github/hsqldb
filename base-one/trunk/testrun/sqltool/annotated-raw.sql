@@ -1,4 +1,6 @@
 /*
+    $Id$
+
     See readme.txt in this directory for how to unit test SqlTool.
 
     This is an annotated example.  Don't use this as a template.  See
@@ -62,13 +64,11 @@
 
     HARNESS_METADATA        BEGIN         
     requireStdoutRegex  Nonexistent string
-    arg --noinput
     arg --sql
     arg \p Print message from --sql argument.
-    arg mem */
-    \p Print message from normal SQL file area.
-    /*
+    arg mem 
     arg -
     HARNESS_METADATA        END       
 */
-\p bye
+
+\p Print message from normal SQL file area.
