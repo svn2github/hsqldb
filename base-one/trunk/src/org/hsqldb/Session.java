@@ -105,7 +105,6 @@ public class Session implements SessionInterface {
     private HsqlArrayList  transactionList;
     private boolean        isAutoCommit;
     private boolean        isNestedTransaction;
-    private boolean        isNestedOldAutoCommit;
     private int            nestedOldTransIndex;
     private boolean        isReadOnly;
     private int            currentMaxRows;
@@ -347,7 +346,7 @@ public class Session implements SessionInterface {
     void addTransactionDelete(Table table,
                               Object row[]) throws HsqlException {
 
-        if (!isAutoCommit) {
+        if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(true, isNestedTransaction, table,
                                             row);
 
@@ -365,7 +364,7 @@ public class Session implements SessionInterface {
     void addTransactionInsert(Table table,
                               Object row[]) throws HsqlException {
 
-        if (!isAutoCommit) {
+        if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(false, isNestedTransaction,
                                             table, row);
 
@@ -488,15 +487,7 @@ public class Session implements SessionInterface {
 
         index = oi.intValue();
 
-        int i = transactionList.size() - 1;
-
-        for (; i >= index; i--) {
-            Transaction t = (Transaction) transactionList.get(i);
-
-            t.rollback(this);
-            transactionList.remove(i);
-        }
-
+        rollbackToSavepoint(index);
         releaseSavepoint(name);
 
         try {
@@ -505,6 +496,19 @@ public class Session implements SessionInterface {
                                        + " " + Token.T_SAVEPOINT + " "
                                        + name);
         } catch (HsqlException e) {}
+    }
+
+    private void rollbackToSavepoint(int index) throws HsqlException {
+
+        int i = transactionList.size() - 1;
+
+        for (; i >= index; i--) {
+            Transaction t = (Transaction) transactionList.get(i);
+
+            t.rollback(this);
+        }
+
+        transactionList.setSize(index);
     }
 
     /**
@@ -535,10 +539,6 @@ public class Session implements SessionInterface {
 
         Trace.doAssert(!isNestedTransaction, "beginNestedTransaction");
 
-        isNestedOldAutoCommit = isAutoCommit;
-
-        // now all transactions are logged
-        isAutoCommit        = false;
         nestedOldTransIndex = transactionList.size();
         isNestedTransaction = true;
     }
@@ -554,21 +554,14 @@ public class Session implements SessionInterface {
         Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            int i = transactionList.size();
-
-            while (i-- > nestedOldTransIndex) {
-                Transaction t = (Transaction) transactionList.get(i);
-
-                t.rollback(this);
-            }
+            rollbackToSavepoint(nestedOldTransIndex);
         }
 
         // reset after the rollback
         isNestedTransaction = false;
-        isAutoCommit        = isNestedOldAutoCommit;
 
         if (isAutoCommit == true) {
-            transactionList.setSize(nestedOldTransIndex);
+            transactionList.clear();
         }
     }
 
@@ -804,10 +797,6 @@ public class Session implements SessionInterface {
     public Result execute(Result cmd) {
 
         try {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(!isNestedTransaction);
-            }
-
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
                         Trace.getMessage(Trace.Session_execute));
         } catch (Throwable t) {

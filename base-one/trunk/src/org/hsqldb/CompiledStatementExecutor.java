@@ -368,7 +368,7 @@ final class CompiledStatementExecutor {
                 success = true;
             } finally {
 
-                // update failed (constraint violation)
+                // update failed (constraint violation) or succeeded
                 session.endNestedTransaction(!success);
             }
         }

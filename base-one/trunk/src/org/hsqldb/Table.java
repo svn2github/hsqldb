@@ -1730,7 +1730,7 @@ public class Table extends BaseTable {
 
     /**
      *  Highest level multiple row insert method. Corresponds to an SQL
-     *  INSERT INTO statement.
+     *  INSERT INTO or SELECT .. INTO .. statement.
      */
     int insert(Result ins, Session c) throws HsqlException {
 
@@ -2470,7 +2470,7 @@ public class Table extends BaseTable {
 
                     if (update) {
                         ri.add(rnd);
-                        reftable.deleteNoRefCheck(n.getData(), session);
+                        reftable.deleteNoRefCheck(n.getRow(), session);
 
                         if (reftable == this) {
                             nextn = c.findFkRef(orow.getData(), false);
@@ -2542,20 +2542,6 @@ public class Table extends BaseTable {
         }
     }
 
-    /**
-     *  Mid level row cascade delete method. Fires triggers but no integrity
-     *  constraint checks.
-     */
-    private void deleteNoRefCheck(Object data[],
-                                  Session session) throws HsqlException {
-
-        fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
-        deleteNoCheck(data, session, true);
-
-        // fire the delete after statement trigger
-        fireAll(Trigger.DELETE_AFTER_ROW, data, null);
-    }
-
     /** @todo move trigger work into calling method above and make sure it is always called */
 
     /**
@@ -2581,43 +2567,12 @@ public class Table extends BaseTable {
     private void deleteNoCheck(Row r, Session c,
                                boolean log) throws HsqlException {
 
-        Node     node;
-        Object[] row = r.getData();
+        Object[] data = r.getData();
 
         r = r.getUpdatedRow();
 
         for (int i = iIndexCount - 1; i >= 0; i--) {
-            node = r.getNode(i);
-
-            getIndex(i).delete(node);
-        }
-
-        r = r.getUpdatedRow();
-
-        r.delete();
-
-        if (c != null) {
-            c.addTransactionDelete(this, row);
-        }
-
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, row);
-        }
-    }
-
-    /**
-     * Low level row delete method. Removes the row from the indexes and
-     * from the Cache.
-     */
-    void deleteNoCheck(Object data[], Session c,
-                       boolean log) throws HsqlException {
-
-        Node node = getIndex(0).search(data);
-        Row  r    = node.getRow();
-
-        for (int i = iIndexCount - 1; i >= 0; i--) {
-            node = r.getNode(i);
+            Node node = r.getNode(i);
 
             getIndex(i).delete(node);
         }
@@ -2640,10 +2595,10 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache. Used by rollback.
      */
-    void deleteNoCheckRollback(Object row[], Session c,
+    void deleteNoCheckRollback(Object data[], Session c,
                                boolean log) throws HsqlException {
 
-        Node node = getIndex(0).search(row);
+        Node node = getIndex(0).search(data);
         Row  r    = node.getRow();
 
         for (int i = iIndexCount - 1; i >= 0; i--) {
@@ -2658,7 +2613,7 @@ public class Table extends BaseTable {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, row);
+            database.logger.writeDeleteStatement(c, this, data);
         }
     }
 
