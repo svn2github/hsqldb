@@ -117,7 +117,7 @@ class TableFilter {
         sAlias      = (alias != null) ? alias
                                       : t.getName().name;
         isOuterJoin = outerjoin;
-        oEmptyData  = tTable.getNewRow();
+        oCurrentData = oEmptyData  = tTable.getNewRow();
     }
 
     /**
