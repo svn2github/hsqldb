@@ -189,7 +189,7 @@ public class TestDatabaseMetaData extends TestBase {
             int               c  = md.getScale(1);
             int               d  = md.getScale(2);
             String            e  = md.getColumnClassName(10);
-            boolean testresult = (x == y) && (x == 10) && (b == 10)
+            boolean testresult = (x == 10) && (y == 13) && (b == 10)
                                  && (c == 0) && (d == 2)
                                  && e.equals("java.sql.Timestamp");
 

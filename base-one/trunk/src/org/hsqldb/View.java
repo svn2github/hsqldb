@@ -127,7 +127,7 @@ class View extends Table {
         workingTable   = viewSubQuery.table;
         viewSelect     = viewSubQuery.select;
 
-        viewSelect.prepareResult();
+        viewSelect.prepareResult(database);
 
         Result.ResultMetaData metadata = viewSelect.resultMetaData;
         int                   columns  = viewSelect.iResultLen;

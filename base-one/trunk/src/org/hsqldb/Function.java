@@ -545,7 +545,7 @@ class Function {
      * Resolves the type of this expression and performs certain
      * transformations and optimisations of the expression tree.
      */
-    void resolveType() throws HsqlException {
+    void resolveType(Database database) throws HsqlException {
 
         Expression e;
 
@@ -559,7 +559,7 @@ class Function {
                     e.nullability    = getArgNullability(i);
                     e.valueClassName = getArgClass(i).getName();
                 } else {
-                    e.resolveTypes();
+                    e.resolveTypes(database);
                 }
             }
         }

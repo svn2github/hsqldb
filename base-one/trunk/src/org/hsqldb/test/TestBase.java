@@ -48,13 +48,12 @@ import junit.framework.TestCase;
 public abstract class TestBase extends TestCase {
 
     //  change the url to reflect your preferred db location and name
-    //  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
     String  serverProps;
     String  url;
     String  user     = "sa";
     String  password = "";
     Server  server;
-    boolean isNetwork = true;
+    boolean isNetwork = false;
 
     public TestBase(String name) {
         super(name);

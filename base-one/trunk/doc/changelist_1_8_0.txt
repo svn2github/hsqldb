@@ -7,9 +7,9 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
-2005.03.25
+2005.03.28
 
-Various bug fixes in query processing.
+Various bug fixes and enhancements in query processing.
 
 New alternative syntax for LIMIT at the end of the query:
 
@@ -21,6 +21,7 @@ SELECT statements in brackets that are terms of UNION and other set operations.
 
 Support for ALL(SELECT ....)
 
+Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
 2005.03.18
 

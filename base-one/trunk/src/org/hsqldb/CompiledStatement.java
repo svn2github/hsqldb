@@ -165,7 +165,8 @@ final class CompiledStatement {
      * @param deleteCondition
      * @param parameters
      */
-    CompiledStatement(TableFilter targetFilter, Expression deleteCondition,
+    CompiledStatement(Database database, TableFilter targetFilter,
+                      Expression deleteCondition,
                       Expression[] params) throws HsqlException {
 
         this.targetFilter = targetFilter;
@@ -175,7 +176,7 @@ final class CompiledStatement {
             condition = new Expression(deleteCondition);
 
             condition.resolveTables(targetFilter);
-            condition.resolveTypes();
+            condition.resolveTypes(database);
             targetFilter.setConditions(condition);
         }
 
@@ -193,8 +194,9 @@ final class CompiledStatement {
      * @param updateCondition
      * @param params
      */
-    CompiledStatement(TableFilter targetFilter, int[] columnMap,
-                      Expression[] columnValues, Expression updateCondition,
+    CompiledStatement(Database database, TableFilter targetFilter,
+                      int[] columnMap, Expression[] columnValues,
+                      Expression updateCondition,
                       Expression[] params) throws HsqlException {
 
         this.targetFilter = targetFilter;
@@ -213,7 +215,7 @@ final class CompiledStatement {
                 cve.setTableColumnAttributes(targetTable, columnMap[i]);
             } else {
                 cve.resolveTables(targetFilter);
-                cve.resolveTypes();
+                cve.resolveTypes(database);
             }
         }
 
@@ -221,7 +223,7 @@ final class CompiledStatement {
             condition = new Expression(updateCondition);
 
             condition.resolveTables(targetFilter);
-            condition.resolveTypes();
+            condition.resolveTypes(database);
             targetFilter.setConditions(condition);
         }
 
@@ -272,7 +274,7 @@ final class CompiledStatement {
      * @param select
      * @param params
      */
-    CompiledStatement(Table targetTable, int[] columnMap,
+    CompiledStatement(Database database, Table targetTable, int[] columnMap,
                       boolean[] checkColumns, Select select,
                       Expression[] params) throws HsqlException {
 
@@ -285,7 +287,7 @@ final class CompiledStatement {
         resolveInsertParameterTypes();
 
         // set select result metadata etc.
-        select.prepareResult();
+        select.prepareResult(database);
         setParameters(params);
 
         type = INSERT_SELECT;
@@ -297,7 +299,7 @@ final class CompiledStatement {
      * @param select
      * @param params
      */
-    CompiledStatement(Select select,
+    CompiledStatement(Database database, Select select,
                       Expression[] params) throws HsqlException {
 
         this.select = select;
@@ -312,7 +314,7 @@ final class CompiledStatement {
         }
 
         // set select result metadata etc.
-        select.prepareResult();
+        select.prepareResult(database);
         setParameters(params);
 
         type = SELECT;
@@ -324,12 +326,12 @@ final class CompiledStatement {
      * @param expression
      * @param params
      */
-    CompiledStatement(Expression expression,
+    CompiledStatement(Database database, Expression expression,
                       Expression[] params) throws HsqlException {
 
         this.expression = expression;
 
-        expression.resolveTypes();
+        expression.resolveTypes(database);
 
         expression.paramMode = Expression.PARAM_OUT;
 

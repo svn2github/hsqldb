@@ -264,7 +264,7 @@ class Parser {
 
         subQueryLevel--;
 
-        boolean isResolved = s.resolveAll(resolveAll);
+        boolean isResolved = s.resolveAll(database, resolveAll);
 
         sq.select     = s;
         sq.isResolved = isResolved;
@@ -585,7 +585,6 @@ class Parser {
                 brackets    += Parser.parseOpenBrackets(tokenizer) + 1;
             }
 
-//            tokenizer.matchThis(Token.T_SELECT);
             tokenizer.getThis(Token.T_SELECT);
 
             // accept ORDRY BY with LIMIT
@@ -783,9 +782,10 @@ class Parser {
         select.iOrderLen = len;
     }
 
-    private static void resolveSelectTableFilter(Select select,
-            HsqlArrayList vcolumn,
-            HsqlArrayList vfilter) throws HsqlException {
+    private void resolveSelectTableFilter(Select select,
+                                          HsqlArrayList vcolumn,
+                                          HsqlArrayList vfilter)
+                                          throws HsqlException {
 
         int           len     = vfilter.size();
         TableFilter[] filters = new TableFilter[len];
@@ -848,7 +848,7 @@ class Parser {
         for (int i = 0; i < len; i++) {
             Expression e = (Expression) (vcolumn.get(i));
 
-            e.resolveTypes();
+            e.resolveTypes(database);
         }
 
         select.iResultLen = len;
@@ -926,86 +926,6 @@ class Parser {
         }
 
         return e;
-    }
-
-    private static Expression resolveOrderByExpressionOld(Expression e,
-            Select select, HsqlArrayList vcolumn) throws HsqlException {
-
-        int     visiblecols = select.iResultLen;
-        boolean union       = select.unionSelect != null;
-
-        if (e.getType() == Expression.VALUE) {
-            return resolveOrderByColumnIndex(e, vcolumn, visiblecols);
-        }
-
-        if (e.getType() != Expression.COLUMN) {
-            if (union) {
-                throw Trace.error(Trace.INVALID_ORDER_BY);
-            }
-
-            return e;
-        }
-
-        String ordercolname   = e.getColumnName();
-        String ordertablename = e.getTableName();
-
-        // fully qualified column specification
-        if (ordertablename != null) {
-            for (int i = 0, size = visiblecols; i < size; i++) {
-                Expression colexpr = (Expression) vcolumn.get(i);
-
-                if (ordercolname.equals(colexpr.getColumnName())
-                        && ordertablename.endsWith(colexpr.getTableName())) {
-                    colexpr.joinedTableColumnIndex = i;
-
-                    return colexpr;
-                }
-            }
-
-            if (union) {
-                throw Trace.error(Trace.INVALID_ORDER_BY, ordercolname);
-            }
-
-            return e;
-        }
-
-        // column name only
-        Expression found = e;
-
-        for (int i = 0, size = vcolumn.size(); i < size; i++) {
-            Expression colexpr  = (Expression) vcolumn.get(i);
-            String     colalias = colexpr.getDefinedAlias();
-            String     colname  = colexpr.getColumnName();
-
-            if (ordercolname.equals(colalias)
-                    || ordercolname.equals(colname)) {
-
-                // check for ambiguity if two displayed cols have the same name
-                // do not check beyond as a column may be repeated for grouping purposes
-                if (found != e && i < visiblecols) {
-                    throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
-                                      ordercolname);
-                }
-
-                // choose the first expression
-                if (found == e) {
-                    found = colexpr;
-
-                    // set this for use in sorting
-                    found.joinedTableColumnIndex = i;
-                }
-            }
-        }
-
-        if (union) {
-            if (found == e || found.joinedTableColumnIndex >= visiblecols) {
-
-                // no column in select list is found
-                throw Trace.error(Trace.INVALID_ORDER_BY, ordercolname);
-            }
-        }
-
-        return found;
     }
 
     private static Expression resolveOrderByColumnIndex(Expression e,
@@ -1710,7 +1630,7 @@ class Parser {
                 // accept ORDRY BY with LIMIT
                 Select select = parseSelect(0, false, false, true, true);
 
-                select.resolve();
+                select.resolve(database);
 
                 r = new Expression(select, null, true);
 
@@ -2535,7 +2455,7 @@ class Parser {
         clearParameters();
 
         Expression expression = parseExpression();
-        CompiledStatement cs = new CompiledStatement(expression,
+        CompiledStatement cs = new CompiledStatement(database, expression,
             getParameters());
 
         cs.subqueries = getSortedSubqueries();
@@ -2564,8 +2484,8 @@ class Parser {
             tokenizer.back();
         }
 
-        CompiledStatement cs = new CompiledStatement(tableFilter, condition,
-            getParameters());
+        CompiledStatement cs = new CompiledStatement(database, tableFilter,
+            condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();
 
@@ -2590,7 +2510,7 @@ class Parser {
 
 //            cve.resolve(null);
             cve.resolveTables(null);
-            cve.resolveTypes();
+            cve.resolveTypes(database);
 
             acve[i] = cve;
             token   = tokenizer.getString();
@@ -2695,7 +2615,7 @@ class Parser {
                     throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
                 }
 
-                CompiledStatement cs = new CompiledStatement(table,
+                CompiledStatement cs = new CompiledStatement(database, table,
                     columnMap, columnCheckList, select, getParameters());
 
                 cs.subqueries = getSortedSubqueries();
@@ -2731,7 +2651,8 @@ class Parser {
             }
         }
 
-        CompiledStatement cs = new CompiledStatement(select, getParameters());
+        CompiledStatement cs = new CompiledStatement(database, select,
+            getParameters());
 
         cs.subqueries = getSortedSubqueries();
 
@@ -2795,8 +2716,8 @@ class Parser {
         colList  = (int[]) ArrayUtil.resizeArray(colList, len);
         exprList = (Expression[]) ArrayUtil.resizeArray(exprList, len);
 
-        CompiledStatement cs = new CompiledStatement(tableFilter, colList,
-            exprList, condition, getParameters());
+        CompiledStatement cs = new CompiledStatement(database, tableFilter,
+            colList, exprList, condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();
 

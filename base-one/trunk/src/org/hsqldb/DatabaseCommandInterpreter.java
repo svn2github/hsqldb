@@ -920,7 +920,7 @@ class DatabaseCommandInterpreter {
         Parser     parser = new Parser(session, database, tokenizer);
         Expression expr   = parser.readDefaultClause(type);
 
-        expr.resolveTypes();
+        expr.resolveTypes(database);
 
         if (expr.getType() == Expression.VALUE
                 || (expr.getType() == Expression.FUNCTION
@@ -1460,7 +1460,7 @@ class DatabaseCommandInterpreter {
             throw (Trace.error(Trace.TABLE_NOT_FOUND));
         }
 
-        select.prepareResult();
+        select.prepareResult(database);
 
         View view = new View(database, viewHsqlName, tokenizer.getLastPart(),
                              colList);

@@ -392,7 +392,9 @@ public class HsqlProperties {
 /*
     public static void main(String[] argv) {
 
-        HsqlProperties props = delimitedArgPairsToProps(
+        HsqlProperties props1 = delimitedArgPairsToProps("-dbname.0", "=",
+            ";", "server");
+        HsqlProperties props2 = delimitedArgPairsToProps(
             "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey;", "=",
             ";", "textdb");
     }

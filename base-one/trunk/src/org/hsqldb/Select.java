@@ -156,10 +156,10 @@ class Select {
      *
      * @throws HsqlException
      */
-    void resolve() throws HsqlException {
+    void resolve(Database database) throws HsqlException {
 
         resolveTables();
-        resolveTypes();
+        resolveTypes(database);
         setFilterConditions();
         setLimitCounts();
     }
@@ -184,16 +184,16 @@ class Select {
      *
      * @throws HsqlException
      */
-    void resolveTypes() throws HsqlException {
+    void resolveTypes(Database database) throws HsqlException {
 
         int len = exprColumns.length;
 
         for (int i = 0; i < len; i++) {
-            exprColumns[i].resolveTypes();
+            exprColumns[i].resolveTypes(database);
         }
 
         if (queryCondition != null) {
-            queryCondition.resolveTypes();
+            queryCondition.resolveTypes(database);
         }
     }
 
@@ -293,7 +293,7 @@ class Select {
      */
     Object getValue(Session session, int type) throws HsqlException {
 
-        resolve();
+        resolve(session.database);
 
         Result r    = getResult(session, 2);    // 2 records are (already) too much
         int    size = r.getSize();
@@ -321,9 +321,9 @@ class Select {
      * Prepares rResult having structure compatible with
      * internally building the set of rows returned from getResult().
      */
-    void prepareResult() throws HsqlException {
+    void prepareResult(Database database) throws HsqlException {
 
-        resolveAll(true);
+        resolveAll(database, true);
 
         if (iGroupLen > 0) {    // has been set in Parser
             isGrouped        = true;
@@ -586,7 +586,7 @@ class Select {
                                    int maxrows) throws HsqlException {
 
         if (resultMetaData == null) {
-            prepareResult();
+            prepareResult(session.database);
         }
 
         int newlimitcount = getLimitCount(maxrows);
@@ -990,7 +990,8 @@ class Select {
 
     boolean isResolved = false;
 
-    boolean resolveAll(boolean check) throws HsqlException {
+    boolean resolveAll(Database database,
+                       boolean check) throws HsqlException {
 
         boolean result = true;
 
@@ -998,7 +999,7 @@ class Select {
             return true;
         }
 
-        resolve();
+        resolve(database);
 
         result = result && checkResolved(check);
 
@@ -1007,7 +1008,7 @@ class Select {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            unionSelect.resolveAll(check);
+            unionSelect.resolveAll(database, check);
         }
 
         isResolved = result;

@@ -142,4 +142,75 @@ class TxManager {
     void addTransaction(Session session, Transaction transaction) {
         rowSessionMap.put(transaction.row.getId(), session.getId());
     }
+
+    /**
+     * Return an array of all transactions sorted by System Change No.
+     */
+    Transaction[] getTransactionList(Session[] sessions) {
+
+        int[]         tIndex = new int[sessions.length];
+        Transaction[] transactions;
+        int           transactionCount = 0;
+
+        {
+            int actioncount = 0;
+
+            for (int i = 0; i < sessions.length; i++) {
+                actioncount += sessions[i].getTransactionSize();
+            }
+
+            transactions = new Transaction[actioncount];
+        }
+
+        while (true) {
+            boolean found        = false;
+            long    minChangeNo  = Long.MAX_VALUE;
+            int     sessionIndex = 0;
+
+            // find the lowest available SCN across all sessions
+            for (int i = 0; i < sessions.length; i++) {
+                int tSize = sessions[i].getTransactionSize();
+
+                if (tIndex[i] < tSize) {
+                    Transaction current =
+                        (Transaction) sessions[i].transactionList.get(
+                            tIndex[i]);
+
+                    if (current.SCN < minChangeNo) {
+                        minChangeNo  = current.SCN;
+                        sessionIndex = i;
+                    }
+
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                break;
+            }
+
+            HsqlArrayList currentList =
+                sessions[sessionIndex].transactionList;
+
+            for (; tIndex[sessionIndex] < currentList.size(); ) {
+                Transaction current =
+                    (Transaction) currentList.get(tIndex[sessionIndex]);
+
+                // if the next change no is in this session, continue adding
+                if (current.SCN == minChangeNo + 1) {
+                    minChangeNo++;
+                }
+
+                if (current.SCN == minChangeNo) {
+                    transactions[transactionCount++] = current;
+
+                    tIndex[sessionIndex]++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return null;
+    }
 }

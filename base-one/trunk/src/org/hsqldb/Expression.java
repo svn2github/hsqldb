@@ -1874,19 +1874,23 @@ public class Expression {
         }
     }
 
-    void resolveTypes() throws HsqlException {
+    void resolveTypes(Database database) throws HsqlException {
+
+        Session session;
 
         if (isParam || exprType == Expression.VALUE) {
             return;
         }
 
         if (eArg != null) {
-            eArg.resolveTypes();
+            eArg.resolveTypes(database);
         }
 
         if (eArg2 != null) {
-            eArg2.resolveTypes();
+            eArg2.resolveTypes(database);
         }
+
+        session = database.sessionManager.getSysSession();
 
         switch (exprType) {
 
@@ -1894,13 +1898,13 @@ public class Expression {
                 break;
 
             case FUNCTION :
-                function.resolveType();
+                function.resolveType(database);
 
                 dataType = function.getReturnType();
                 break;
 
             case QUERY : {
-                subSelect.resolveTypes();
+                subSelect.resolveTypes(database);
 
                 dataType = subSelect.exprColumns[0].dataType;
 
@@ -1915,7 +1919,7 @@ public class Expression {
                 dataType = eArg.dataType;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(null, dataType);
+                    valueData = getValue(session, dataType);
                     eArg      = null;
                     exprType  = VALUE;
                 }
@@ -1931,7 +1935,7 @@ public class Expression {
                     dataType = Types.VARCHAR;
 
                     if (isFixedConstant()) {
-                        valueData = getValue(null, dataType);
+                        valueData = getValue(session, dataType);
                         eArg      = null;
                         eArg2     = null;
                         exprType  = VALUE;
@@ -1958,7 +1962,7 @@ public class Expression {
                 if (isFixedConstant()) {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
                             eArg2.dataType, exprType);
-                    valueData = getValue(null, dataType);
+                    valueData = getValue(session, dataType);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -1979,7 +1983,7 @@ public class Expression {
                 dataType = Types.VARCHAR;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(null, dataType);
+                    valueData = getValue(session, dataType);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -2006,7 +2010,7 @@ public class Expression {
                 }
 
                 if (isFixedConditional()) {
-                    Boolean result = test(null);
+                    Boolean result = test(session);
 
                     if (result == null) {
                         setNull();
@@ -2040,7 +2044,7 @@ public class Expression {
                 break;
 
             case LIKE :
-                resolveTypeForLike();
+                resolveTypeForLike(database);
 
                 dataType = Types.BOOLEAN;
                 break;
@@ -2048,9 +2052,9 @@ public class Expression {
             case AND : {
                 boolean argFixed  = eArg.isFixedConditional();
                 boolean arg2Fixed = eArg2.isFixedConditional();
-                Boolean arg       = argFixed ? (eArg.test(null))
+                Boolean arg       = argFixed ? (eArg.test(session))
                                              : null;
-                Boolean arg2      = arg2Fixed ? eArg2.test(null)
+                Boolean arg2      = arg2Fixed ? eArg2.test(session)
                                               : null;
 
                 if (argFixed && arg2Fixed) {
@@ -2085,9 +2089,9 @@ public class Expression {
             case OR : {
                 boolean argFixed  = eArg.isFixedConditional();
                 boolean arg2Fixed = eArg2.isFixedConditional();
-                Boolean arg       = argFixed ? (eArg.test(null))
+                Boolean arg       = argFixed ? (eArg.test(session))
                                              : null;
-                Boolean arg2      = arg2Fixed ? eArg2.test(null)
+                Boolean arg2      = arg2Fixed ? eArg2.test(session)
                                               : null;
 
                 if (argFixed && arg2Fixed) {
@@ -2121,8 +2125,8 @@ public class Expression {
             }
             case IS_NULL :
                 if (isFixedConditional()) {
-                    exprType = Boolean.TRUE.equals(test(null)) ? TRUE
-                                                               : FALSE;
+                    exprType = Boolean.TRUE.equals(test(session)) ? TRUE
+                                                                  : FALSE;
                     eArg     = null;
                 }
 
@@ -2131,7 +2135,7 @@ public class Expression {
 
             case NOT :
                 if (isFixedConditional()) {
-                    Boolean arg = test(null);
+                    Boolean arg = test(session);
 
                     if (arg == null) {
                         setNull();
@@ -2153,7 +2157,7 @@ public class Expression {
                 break;
 
             case IN :
-                resolveTypeForIn();
+                resolveTypeForIn(database);
 
                 dataType = Types.BOOLEAN;
                 break;
@@ -2198,7 +2202,7 @@ public class Expression {
                 // NOTE: both iDataType for this expr and for eArg (if isParm)
                 // are already set in Parser during read
                 if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
-                    valueData = getValue(null);
+                    valueData = getValue(session);
                     exprType  = VALUE;
                     eArg      = null;
                 }
@@ -2276,15 +2280,17 @@ public class Expression {
         }
     }
 
-    void resolveTypeForLike() throws HsqlException {
+    void resolveTypeForLike(Database database) throws HsqlException {
 
         if (eArg.isParam && eArg2.isParam) {
             throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                               Trace.Expression_resolveTypeForLike);
         }
 
+        Session session = database.sessionManager.getSysSession();
+
         if (isFixedConditional()) {
-            Boolean arg = test(null);
+            Boolean arg = test(session);
 
             if (arg == null) {
                 setNull();
@@ -2325,7 +2331,7 @@ public class Expression {
 
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
         String likeStr = isRightArgFixedConstant
-                         ? (String) eArg2.getValue(null, Types.VARCHAR)
+                         ? (String) eArg2.getValue(session, Types.VARCHAR)
                          : null;
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE
                              || eArg2.dataType == Types.VARCHAR_IGNORECASE;
@@ -2449,7 +2455,9 @@ public class Expression {
 //                             to be a parameter marker if the list is empty.
 // CHECKME:
 // Is an empty IN list legal?  Why would anyone ever use it?
-    void resolveTypeForIn() throws HsqlException {
+    void resolveTypeForIn(Database database) throws HsqlException {
+
+        Session session = database.sessionManager.getSysSession();
 
         if (eArg2.exprType == QUERY) {
             if (eArg.isParam) {
@@ -2498,7 +2506,7 @@ public class Expression {
                             e.dataType = dt;
                         }
                     } else {
-                        e.resolveTypes();
+                        e.resolveTypes(database);
                     }
                 }
             } else {
@@ -2516,7 +2524,7 @@ public class Expression {
                             e.dataType = dt;
                         }
                     } else {
-                        e.resolveTypes();
+                        e.resolveTypes(database);
                     }
                 }
             }
@@ -2537,7 +2545,7 @@ public class Expression {
 
                 for (int i = 0; i < len; i++) {
                     try {
-                        Object value = eArg2.valueList[i].getValue(null);
+                        Object value = eArg2.valueList[i].getValue(session);
 
                         value = Column.convertObject(value, eArg2.dataType);
 
@@ -2816,8 +2824,8 @@ public class Expression {
 
             case CONVERT :
                 return Column.convertObject(
-                    eArg.getAggregatedValue(session, currValue), dataType,
-                    precision, scale);
+                    session, eArg.getAggregatedValue(session, currValue),
+                    dataType, precision, scale);
         }
 
         // handle expressions
@@ -3071,7 +3079,7 @@ public class Expression {
                 }
 
                 valuePair[0] = eArg.updateAggregatingValue(session,
-                        currValue);
+                        valuePair[0]);
 
                 if (eArg2 != null) {
                     valuePair[1] = eArg2.getValue(session);
@@ -3091,7 +3099,7 @@ public class Expression {
                 }
 
                 valuePair[1] = eArg2.updateAggregatingValue(session,
-                        currValue);
+                        valuePair[1]);
 
                 return valuePair;
             }
@@ -3139,8 +3147,8 @@ public class Expression {
                 return test(session);
 
             case CONVERT :
-                return Column.convertObject(eArg.getValue(session), dataType,
-                                            precision, scale);
+                return Column.convertObject(session, eArg.getValue(session),
+                                            dataType, precision, scale);
 
             case CASEWHEN :
                 Boolean result = eArg.test(session);
@@ -3599,7 +3607,7 @@ public class Expression {
 
         s.queryCondition = condition;
 
-        s.resolveAll(true);
+        s.resolveAll(t.database, true);
 
         return s;
     }

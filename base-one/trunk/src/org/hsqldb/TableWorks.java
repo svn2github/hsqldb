@@ -586,8 +586,8 @@ class TableWorks {
             Row    row = it.next();
             Object o   = row.getData()[colindex];
 
-            Column.convertObject(o, newCol.getType(), newCol.getSize(),
-                                 newCol.getScale());
+            Column.convertObject(session, o, newCol.getType(),
+                                 newCol.getSize(), newCol.getScale());
         }
     }
 }

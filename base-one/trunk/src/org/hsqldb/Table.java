@@ -1678,7 +1678,7 @@ public class Table extends BaseTable {
             Object[] data = getEmptyRowData();
 
             if (adjust == 0 && colindex != -1) {
-                colvalue = Column.convertObject(o[colindex],
+                colvalue = Column.convertObject(session, o[colindex],
                                                 column.getType(),
                                                 column.getSize(),
                                                 column.getScale());

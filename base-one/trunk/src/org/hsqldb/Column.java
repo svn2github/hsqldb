@@ -1379,7 +1379,8 @@ public class Column {
      * For numeric conversions, scale is always converted to target first,
      * then precision is imposed. No truncation is allowed. (fredt)
      */
-    public static Object convertObject(Object o, int type, int precision,
+    public static Object convertObject(Session session, Object o, int type,
+                                       int precision,
                                        int scale) throws HsqlException {
 
         if (precision == 0) {
@@ -1410,6 +1411,15 @@ public class Column {
                 }
 
                 return enforceSize(o, type, precision, scale, true);
+
+            case Types.TIMESTAMP :
+                if (o instanceof Time) {
+                    long millis = session.currentDate.getTime()
+                                  + ((Time) o).getTime();
+
+                    return HsqlDateTime.getTimestamp(millis);
+                }
+            default :
         }
 
         return convertObject(o, type);
