@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.26 2004/06/30 21:29:34 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.27 2004/07/16 05:08:48 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -13,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.26 $</edition>
-        <pubdate>$Date: 2004/06/30 21:29:34 $</pubdate>
+        <edition>$Revision: 1.27 $</edition>
+        <pubdate>$Date: 2004/07/16 05:08:48 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -24,10 +24,10 @@
 
     <section>
         <title>Purpose</title>
-        <para>
+        <simpara>
             This chapter explains how to quickly install, run, and
             use HSQLDB version 1.7.2 on UNIX.
-        </para><para>
+        </simpara><simpara>
             HSQLDB has lots of great optional features.
             I intend to cover very few of them.
             I do intend to cover what I think is the most common UNIX setup:
@@ -35,17 +35,17 @@
             (By the latter I mean that data is stored to disk so that the
             data will persist across database shutdowns and startups).
             I also cover how to run Hsqldb as a system daemon.
-        </para>
+        </simpara>
     </section>
 
     <section>
         <title>Installation</title>
-        <para>
+        <simpara>
             Go to <ulink url="http://sourceforge.net/projects/hsqldb"/>
             and click on the "files" link.
             Look for "hsqldb_1_7_2" under lower-case "hsqldb".
             Click on "show only this release" link right after "hsqldb_1_7_2".
-        </para> <para>
+        </simpara> <simpara>
             Click the "hsqldb_1_7_2" link to find out what version of Java
             this binary HSQLDB distribution was built with.
             Don't hold me to it, but if you get your distro from us at
@@ -57,7 +57,7 @@
             (If you have an older version of Java and there's nothing 
             preventing you from upgrading it, you'll probably be happier in
             the end if you upgrade Java rather than downgrading HSQLDB).
-        </para> <para>
+        </simpara> <simpara>
             If you want an rpm, then click "hsqldb" in the "free section" of
             <ulink url='http://www.jpackage.org/'/>.
             Hopefully, the JPackage folk will document what JVM versions their
@@ -67,25 +67,25 @@
             1.7.2 of HSQLDB.
             (I really can't document how to download from a site that is
             totally beyond my control).
-        </para> <note><para>
+        </simpara> <note><simpara>
             It could very well happen that some of the file formats which I
             discuss here are not in fact offered.
             If so, then we have not gotten around to building them.
-        </para></note> <para>
+        </simpara></note> <simpara>
             Binary installation depends on the package format that you 
             downloaded.
-        </para><variablelist>
+        </simpara><variablelist>
         <varlistentry><term>Installing from a .pkg.Z file</term><listitem><para>
             This package is only for use by a Solaris super-user.
             It's a System V package.
             Download then uncompress the package with uncompress or gunzip
-            </para><informalexample><screen>
+            <informalexample><screen>
     uncompress filename.pkg.Z</screen>
-            </informalexample><para>
+            </informalexample>
                 You can read about the package by running
-            </para><informalexample><screen>
+            <informalexample><screen>
     pkginfo -l -d filename.pkg</screen>
-            </informalexample><para>
+            </informalexample>
                 Run pkgadd as root to install.
             </para><informalexample><screen>
     pkgadd filename.pkg</screen>
@@ -93,39 +93,39 @@
         <varlistentry><term>Installing from a .rpm file</term><listitem><para>
             This is a Linux rpm package.
             After you download the rpm, you can read about it by running
-            </para><informalexample><screen>
+            <informalexample><screen>
     rpm -qip /path/to/file.rpm</screen>
-            </informalexample><para>
+            </informalexample></para><para>
             Rpms can be installed or upgraded by running
-                </para><informalexample><screen>
+                <informalexample><screen>
     rpm -Uvh /path/to/file.rpm</screen>
-                </informalexample><para>
+                </informalexample>
                 as root.
             </para>
         </listitem></varlistentry>
-        <varlistentry><term>Installing from a .zip file</term><listitem><para>
+        <varlistentry><term>Installing from a .zip file</term><listitem><simpara>
             Extract the zip file to the parent directory of the new HSQLDB
             home.
             You don't need to create the
             <emphasis role='bold'>HSQLDB_HOME</emphasis> directory because
             the extraction will create it for you with the right name)
-            </para><informalexample><screen>
+            </simpara><informalexample><screen>
     cd parent/of/new/hsqldb/home
     unzip /path/to/file.zip</screen>
-            </informalexample><para>
+            </informalexample><simpara>
             All the files in the zip archive will be extracted to underneath
             a new <filename>hsqldb</filename> directory.
-            </para>
+            </simpara>
         </listitem></varlistentry>
         </variablelist>
-        <para>
+        <simpara>
             Take a look at the files you installed.
             (Under <filename>hsqldb</filename> for zip file installations.
             Otherwise, use the utilities for your packaging system).
             The most important file of the hsqldb system is
             <filename>hsqldb.jar</filename>, which resides in the directory
             <filename>lib</filename>.
-        </para> <important><para>
+        </simpara> <important><simpara>
             For the purposes of this chapter, I define
             <emphasis role='bold'>HSQLDB_HOME</emphasis> to be the parent
             directory of the lib directory that contains
@@ -134,12 +134,12 @@
             <filename>/a/b/hsqldb/lib/hsqldb.jar</filename>, then your
             <emphasis role='bold'>HSQLDB_HOME</emphasis> is
             <filename>/a/b/hsqldb</filename>.
-        </para></important> <para>
+        </simpara></important> <simpara>
             If the description of your distribution says that the hsqldb.jar
             file will work for your Java version, then you are finished with
             installation.
             Otherwise you need to build a new hsqldb.jar file.
-        </para> <para>
+        </simpara> <simpara>
             If you followed the instructions above and you still don't know
             what Java version your <filename>hsqldb.jar</filename> supports,
             then read
@@ -147,34 +147,34 @@
             and <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/index.html</filename>.
             If that still doesn't help, then you can just try your hsqldb.jar
             and see if it works, or build your own.
-        </para> <para>
-            To use the supplied <filename>hsqldb.jar</filename>, just skip to
-            the <link linkend='instance_setup-section'> next section of this 
+            </simpara> <simpara>
+                To use the supplied <filename>hsqldb.jar</filename>, just skip to
+                the <link linkend='instance_setup-section'> next section of this 
             document</link>.
             Otherwise build a new <filename>hsqldb.jar</filename>.
-        </para><procedure>
+        </simpara><procedure>
             <title>Building hsqldb.jar</title>
             <step><para>
                 If you don't already have Ant, download the latest stable 
                 binary version from <ulink url='http://ant.apache.org'/>.
                 cd to where you want Ant to live, and extract from the archive 
                 with
-                </para><informalexample><screen>
+                <informalexample><screen>
     unzip /path/to/file.zip</screen>
-                </informalexample><para>or</para><informalexample><screen>
+                </informalexample>or<informalexample><screen>
     tar -xzf /path/to/file.tar.gz</screen>
-                </informalexample><para>or</para><informalexample><screen>
+                </informalexample>or<informalexample><screen>
     bunzip2 -c /path/to/file.tar.bz2 | tar -xzf -</screen>
-                </informalexample><para>
+                </informalexample>
                 Everything will be installed into a new subdirectory named
                 <filename>apache-ant- + version</filename>.
                 You can rename the directory after the extraction if you wish.
             </para></step> <step><para>
                 Set the environmental variable <literal>JAVA_HOME</literal> to 
                 the base directory of your Java JRE or SDK, like
-                </para><informalexample><screen>
+                <informalexample><screen>
     export JAVA_HOME; JAVA_HOME=/usr/java/j2sdk1.4.0</screen>
-                </informalexample><para>
+                </informalexample>
                 The location is entirely dependent upon your variety of UNIX.
                 Sun's rpm distributions of Java normally install to
                 <filename>/usr/java/something</filename>.
@@ -184,28 +184,28 @@
                 <filename>/usr/java</filename> to the default version (so for 
                 Solaris you will usually set JAVA_HOME to 
                 <filename>/usr/java</filename>).
-            </para></step> <step><para>
+            </para></step> <step><simpara>
                 Remove the existing file
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
-            </para></step> <step><para>
+            </simpara></step> <step><para>
                 cd to
                 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/build</filename>.
                 Make sure that the bin directory under your Ant home is in your 
                 search path.
                 Run the following command.
-                </para><informalexample><screen>
+                <informalexample><screen>
     ant jar</screen>
-                </informalexample><para>
+                </informalexample>
                 This will build a new
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
                 </para>
             </step>
         </procedure>
-        <para>
+        <simpara>
             See the <link linkend='building-appendix' endterm='building-title'/>
             appendix if you want to build anything other than
             <filename>hsqldb.jar</filename> with all default settings.
-        </para>
+        </simpara>
     </section>
 
     <section id='instance_setup-section'>
@@ -214,7 +214,7 @@
             Server
         </title>
         <titleabbrev>Setting up Database Instance and Server</titleabbrev>
-        <para>
+        <simpara>
             If you installed from an OS-specific package, you may already
             have a database instance and server pre-configured.
             See if your package includes a file named 
@@ -222,8 +222,8 @@
             (make use of your packaging utilities).
             If you do, then I suggest that you still read this section while
             you poke around, in order to understand your setup.
-        </para> <procedure>
-            <step><para>
+        </simpara> <procedure>
+            <step><simpara>
                 Select a UNIX user to run the database as.
                 If this database is for the use of multiple users, or is a
                 production system (or to emulate a production system), you
@@ -232,26 +232,26 @@
                 In this chapter, I refer to this user as the 
                 <emphasis role='bold'>HSQLDB_OWNER</emphasis>, since that user 
                 will own the database instance files and processes.
-                </para> <para>
+                </simpara> <para>
                 If the account doesn't exist, then create it.
                 On all system-5 UNIXes and most hybrids (including Linux), 
                 you can run (as root) something like
-                </para><informalexample><screen>
+                <informalexample><screen>
     useradd -m -c 'HSQLDB Database Owner' -s /bin/ksh -m hsqldb</screen>
-                </informalexample><para>
+                </informalexample>
                     (BSD-variant users can use a similar
                     <literal>pw useradd hsqldb...</literal> command).
                 </para>
-            </step><step><para>
+            </step><step><simpara>
                 Become the <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
                 Copy the sample file 
                 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sample-server.properties</filename>
                 to the <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory and rename it to 
                 <filename>server.properties</filename>.
-            </para>
+            </simpara>
             <programlisting>&sample-server.properties-cdata;</programlisting>
-            <para>
+            <simpara>
                 Since the value of the first database
                 (<property>server.database.0</property>) begins with
                 <literal>file:</literal>, the database instance will be
@@ -262,40 +262,40 @@
                 port and many other things, in the 
                 <link linkend='advanced-chapter' endterm='advanced-title'/>
                 chapter.
-            </para></step><step><para>
+            </simpara></step><step><para>
                 Set and export the environmental variable
                 <literal>CLASSPATH</literal> to the value of
                 <emphasis role='bold'>HSQLDB_HOME</emphasis> (as described 
                 above) plus "/lib/hsqldb.jar", like
-                </para><informalexample><screen>
+                <informalexample><screen>
     export CLASSPATH; CLASSPATH=/path/to/hsqldb/lib/hsqldb.jar</screen>
-                </informalexample><para>
+                </informalexample>
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory, run</para>
                 <informalexample><screen>
     java org.hsqldb.Server &amp;</screen>
-                </informalexample><para>
+                </informalexample><simpara>
                     This will start the Server process in the background, and 
                     will create your new database instance "db0".
                     Continue on when you see the message containing
                     "HSQLDB server... is online".
-                </para>
+                </simpara>
             </step>
         </procedure>
     </section>
 
     <section>
         <title>Accessing your Database</title>
-        <para>
+        <simpara>
             Copy the file
             <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sqltool.rc</filename>
             to the
             <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
             Use <literal>chmod</literal> to make the file readable and
             writable only to <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
-        </para>
+        </simpara>
         <programlisting>&sqltool.rc-cdata;</programlisting>
-        <para>
+        <simpara>
             We will be using the "localhost-sa" sample urlid definition from 
             the config file.
             The JDBC URL for this urlid is
@@ -306,27 +306,28 @@
             other servers in the 
             <link linkend='advanced-chapter' endterm='advanced-title'/>
             chapter.
-        </para> <para>
+        </simpara> <para>
             Run <classname>SqlTool</classname>.
-        </para><informalexample><screen>
+        <informalexample><screen>
     java -jar path/to/hsqldb.jar localhost-sa</screen>
-        </informalexample><para>
+        </informalexample>
             If you get a prompt, then all is well.
             If security is of any concern to you at all, then you should change 
             the privileged password in the database.
             Use the command
             <link linkend='set_password-section'>SET PASSWORD</link>
             command to change SA's password.
-            </para><informalexample><programlisting>
+            <informalexample><programlisting>
     set password "newpassword";</programlisting>
-            </informalexample><para>
+            </informalexample></para>
+        <simpara>
             When you're finished playing, exit with the command
             <literal>\q</literal>.
-        </para> <para>
+        </simpara> <simpara>
             If you changed the SA password, then you need to
             fix the password in the <filename>sqltool.rc</filename> file
             accordingly.
-        </para> <para>
+        </simpara> <simpara>
             You can, of course, also access the database with any JDBC client
             program.
             See the
@@ -338,7 +339,7 @@
             <classname>org.hsqldb.util.DatabasManagerSwing</classname>,
             a graphical client with a similar purpose to
             <classname>SqlTool</classname>.
-        </para> <para>
+        </simpara> <simpara>
             You can use any normal UNIX account to run the JDBC clients,
             including <classname>SqlTool</classname>, as long as the account 
             has read access to the <filename>hsqldb.jar</filename> file and to 
@@ -347,18 +348,18 @@
             chapter about where to put <filename>sqltool.rc</filename>, how to
             execute sql files, and other <classname>SqlTool</classname> 
             features.
-        </para>
+        </simpara>
     </section>
 
     <section>
         <title>Create additional Accounts</title>
-        <para>
+        <simpara>
             Connect to the database as SA (or any other Administrative user)
             and run <link linkend='create_user-section'>CREATE USER</link>
             to create new accounts for your database instance.
             HSQLDB accounts are database-instance-specific, not 
             <classname>Server</classname>-specific.
-        </para> <para>
+        </simpara> <simpara>
             There are two classes of database accounts, Admin accounts and
             non-Admin accounts.
             Admins have privileges to do anything, non-Admins may be granted 
@@ -371,7 +372,7 @@
             these accounts are otherwise indistinguishable.
             These accounts are created by appending the keyword "ADMIN" to the 
             <link linkend='create_user-section'>CREATE USER</link> command.
-        </para> <para>
+        </simpara> <simpara>
             If you create a user without the ADMIN tag, it will be a Non-Admin 
             account.
             These users can not create or own objects, and, by default, they 
@@ -381,7 +382,7 @@
             To give the user additional privileges (even the privilege to read 
             data), an Admin user must grant those rights to the user (or to 
             PUBLIC).
-        </para> <para>
+        </simpara> <simpara>
             Since only people with a database account may do anything at all 
             with the database, it is often useful to permit other database 
             users to view the data in your tables.
@@ -390,7 +391,7 @@
             object that needs to be accessed by multiple database users (with 
             the significant exception of any data which you want to keep 
             secret).
-        </para>
+        </simpara>
     </section>
 
     <section>
@@ -400,9 +401,9 @@
             database instance.
             You need to connect up as SA or some other Admin user, of course.
             With SqlTool, you can run
-        </para><informalexample><screen>
+        <informalexample><screen>
     java -jar path/to/hsqldb.jar --noinput --sql 'shutdown;' localhost-sa</screen>
-    </informalexample><para>
+    </informalexample>
         You don't have to worry about stopping the
         <classname>Server</classname> because it shuts down automatically when 
         all served database instances are shut down.
@@ -411,7 +412,7 @@
 
     <section>
         <title>Running Hsqldb as a System Daemon</title>
-        <para>
+        <simpara>
             You can, of course, run HSQLDB through inittab on System V
             UNIXes, but usually an init script is more convenient and
             manageable.
@@ -419,7 +420,7 @@
             Our init script is only for use by root.
             (That is not to say that the <emphasis>Server</emphasis> will run
             as root-- it usually should not).
-        </para> <para>
+        </simpara> <simpara>
             The main purpose of the init script is to start up a Server with
             the database instances specified in your
             <filename>server.properties</filename> file; and to shut down all
@@ -431,7 +432,7 @@
             a webserver.properties set up, adjust your URLs in
             <filename>sqltool.rc</filename>, and set TARGET_CLASS in the 
             config file.
-        </para> <simpara>
+        </simpara> <simpara>
             After you have the init script set up, root can use it anytime
             to start or stop HSQLDB.
             (I.e., not just at system bootup or shutdown).
@@ -440,26 +441,26 @@
             <title>
                 Portability of <filename>hsqldb</filename> init script
             </title>
-            <para>
+            <simpara>
                 The primary design criterion of the init script is portabiliity.
                 It does not print pretty color startup/shutdown messages as is
                 common in late-model Linuxes and HPUX; and it does not keep 
                 subsystem state files or use the startup/shutdown functions
                 supplied by many UNIXes, because these features are all 
                 non-portable.
-            </para> <para>
+            </simpara> <simpara>
                 Offsetting these limitations, this one script does it's 
                 intended job great on the UNIX varieties I have tested, and can 
                 easily be modified to accommodate other UNIXes.
                 While you don't have tight integration with OS-specific
                 daemon administration guis, etc., you do have a well tested
                 and well behaved script that gives good, utilitarian feedback.
-            </para>
+            </simpara>
         </section>
         <section>
             <title>Init script Setup Procedure</title>
-        <procedure>
-            <step><para>
+            <procedure>
+            <step><simpara>
                 Copy the init script <filename>hsqldb</filename> from
                 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/bin</filename>
                 into the directory where init scripts live on your variety of 
@@ -469,16 +470,16 @@
                 UNIXes, <filename>/usr/local/etc/rc.d</filename> on BSD style
                 UNIXes, and <filename>/Library/StartupItems/hsqldb</filename>
                 on OS X (you'll need to create the directory for the last).
-            </para></step> <step><para>
+            </simpara></step> <step><simpara>
                 Look at the init script and see what the value of CFGFILE is
                 for your UNIX platform.
                 You need to copy the sample config file
                 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/src/org/hsqldb/sample/sample-hsqldb.cfg</filename>
                 to that location.
                 Edit the config file according to the instructions in it.
-                </para>
+                </simpara>
                 <programlisting>&sample-hsqldb.cfg-cdata;</programlisting>
-            </step> <step><para>
+            </step> <step><simpara>
                 Either copy <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s
                 <filename>sqltool.rc</filename> file into root's home 
                 directory, or set the value of AUTH_FILE to the absolute path
@@ -488,13 +489,13 @@
                 hsqldb as non-root (by setting HSQLDB_OWNER in the config file).
                 If you copy the file, make sure to use <literal>chmod</literal>
                 to restrict permissions on the new copy.
-            </para></step> <step><para>
+            </simpara></step> <step><simpara>
                 Edit your <filename>server.properties</filename> file.
                 For every <literal>server.database.X</literal> that you have
                 defined, set a property of name 
                 <literal>server.urlid.X</literal> to the urlid for an 
                 Administrative user for that database instance.
-                </para>
+                </simpara>
                 <example><title>server.properties fragment</title>
                     <programlisting>
     server.database.0=file://home/hsqldb/data/db1
@@ -507,11 +508,11 @@
                     databases that become inaccessible and will give false
                     diagnostics.
                 </simpara></warning>
-                <para>
+                <simpara>
                 For this example, you would need to define the urlid
                 <literal>localhostdb1</literal> in your
                 <filename>sqltool.rc</filename> file.
-                </para>
+                </simpara>
                 <example><title>example sqltool.rc stanza</title>
                     <programlisting>
     urlid localhostdb1
@@ -538,39 +539,10 @@
             </para><simpara>
                 Re-run the script with each of the possible arguments to really
                 test it good.
-            </simpara><para>
-                If it fails with no useful message to your screen nor to the
-                log file, then there is most likely a problem with your
-                authentication setup.
-                Verify that you can su to the database owner account and
-                start the database; and verify that you can run 
-                <classname>SqlTool</classname> as root to connect to the 
-                instances.
-                (For the latter test, user the <literal>--rcfile</literal>
-                switch if you are setting <literal>AUTH_FILE</literal> in the 
-                init script config file).
-                You can always run the script in verbose mode to see exactly
-                what is happening
-                (and perhaps manually run the steps that are suspect).
-                To run an init script in verbose mode, use 
-                <literal>sh</literal> with the <literal>-x</literal> or
-                <literal>-v</literal> switch, like
-                <screen>
-    sh -x path/to/hsqldb start</screen>
-                See the man page for <literal>sh</literal> if you don't know 
-                the difference between <literal>-v</literal> and 
-                <literal>-x</literal>.
-            </para><para>
-                If you want troubleshooting help, use the HSQLDB lists/forums
-                or email me at 
-                <ulink url='mailto:&blaineaddr;?Subject=hsqldb-unix'>
-                    &blaineaddr;</ulink>.
-                If you email me, make sure to include the revision number 
-                from your <filename>hsqldb</filename> init script (it's
-                towards the top in the "Id" line), and the output of a run of
-                <screen>
-    sh -x path/to/hsqldb start > /tmp/hstart.log 2>&amp;1</screen>
-            </para> </step> <step><para>
+                If anything doesn't work right, then see the
+                <link linkend='initscriptTrouble-section'
+                    endterm='initscriptTrouble-section-title'/> section.
+            </simpara> </step> <step><simpara>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
                 If you are using a UNIX variant that has 
@@ -584,7 +556,7 @@
                 hard links or soft links either manually or with management 
                 tools (such as <literal>chkconfig</literal> or
                 <literal>insserv</literal>) or Gui's (like run level editors).
-            </para><para>
+            </simpara><para>
                 This paragraph is for Mac OS X users only.
                 If you followed the instructions above, your init script
                 should reside at
@@ -609,9 +581,62 @@
                 Therefore, if you don't want your data corrupted, make
                 sure to run "SystemStarter stop Hsqldb" before shutting
                 down your Mac.
+            </para></step>
+            </procedure>
+        </section>
+        <section id='initscriptTrouble-section'>
+            <title id='initscriptTrouble-section-title'>
+                Troubleshooting the Init Script
+            </title>
+            <simpara>
+                Do a <literal>ps</literal> to look for processes containing
+                the string <literal>hsqldb</literal>, and try to connect to the 
+                database from any client.
+                If the init script starts up your database successfully, but 
+                incorrectly reports that it has not, then your problem is with
+                specification of urlid(s) or SqlTool setup.
+                If your database really did not start, then skip to the next
+                paragraph.
+                Verify that the urlid(s) listed in the
+                <filename>server.properties</filename> or
+                <filename>webserver.properties</filename> are correct.
+                and verify that you can run 
+                <classname>SqlTool</classname> as root to connect to the 
+                instances.
+                (For the latter test, use the <literal>--rcfile</literal>
+                switch if you are setting <literal>AUTH_FILE</literal> in the 
+                init script config file).
+            </simpara><simpara>
+                If your database really is not starting, then verify that
+                you can su to the database owner account and start the 
+                database.
+                If these don't pan out, then debug the init script or seek
+                help, as described below.
+            </simpara><para>
+                To debug the init script, run it in verbose mode to see exactly
+                what is happening
+                (and perhaps manually run the steps that are suspect).
+                To run an init script (in fact, any sh shell script) in verbose 
+                mode, use 
+                <literal>sh</literal> with the <literal>-x</literal> or
+                <literal>-v</literal> switch, like
+                <screen>
+    sh -x path/to/hsqldb start</screen>
+                See the man page for <literal>sh</literal> if you don't know 
+                the difference between <literal>-v</literal> and 
+                <literal>-x</literal>.
+            </para><para>
+                If you want troubleshooting help, use the HSQLDB lists/forums
+                or email me at 
+                <ulink url='mailto:&blaineaddr;?Subject=hsqldb-unix'>
+                    &blaineaddr;</ulink>.
+                If you email me, make sure to include the revision number 
+                from your <filename>hsqldb</filename> init script (it's
+                towards the top in the line that starts like "# $Id:"), and
+                the output of a run of
+                <screen>
+    sh -x path/to/hsqldb start > /tmp/hstart.log 2>&amp;1</screen>
             </para>
-        </step>
-        </procedure>
         </section>
     </section>
 </chapter>
