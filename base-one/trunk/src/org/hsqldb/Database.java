@@ -113,6 +113,7 @@ import org.hsqldb.lib.StopWatch;
 // rewrite of the majority of multiple if(){}else if(){} chains with switch()
 // boucherb@users 20020310 - class loader update for JDK 1.1 compliance
 // boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
+// fredt@users 20020314 - patch 1.7.2 by gilead@users - drop table syntax
 class Database {
 
     private String        sName;
@@ -128,14 +129,16 @@ class Database {
     private boolean isOpening;
 
 // ----------------------------------------------------------------------------
-    Logger                         logger;
-    boolean                        databaseReadOnly;    // all tables are readonly
+    Logger  logger;
+    boolean databaseReadOnly;    // all tables are readonly
+
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
-    /** true means that all file based table will automaticly become readonly */
-    boolean                        filesReadOnly;       // cached tables are readonly
-// ----------------------------------------------------------------------------
 
+    /** true means that all file based table will automaticly become readonly */
+    boolean filesReadOnly;       // cached tables are readonly
+
+// ----------------------------------------------------------------------------
     boolean                        sqlEnforceSize;
     private boolean                bShutdown;
     private HsqlHashMap            hAlias;
@@ -680,11 +683,12 @@ class Database {
      */
     void setReadOnly() {
         databaseReadOnly = true;
-        filesReadOnly = true;
+        filesReadOnly    = true;
     }
 
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
+
     /**
      * Puts this Database object in a special read-only mode that only
      * affects file bases tables such as cached or text tables.
@@ -2208,21 +2212,34 @@ class Database {
         switch (commandSet.get(sToken)) {
 
             case VIEW :
-                isview = true;
-
-            //fall thru
+                isview = true;    //fall thru
             case TABLE :
                 String  tablename = c.getString();
                 boolean dropmode  = false;
 
-                sToken = c.getString();
+                if (tablename.equals("IF")) {
+                    sToken = c.getString();
 
-                if (sToken.equals("IF")) {
-                    c.getThis("EXISTS");
+                    if (sToken.equals("EXISTS")) {
+                        dropmode  = true;
+                        tablename = c.getName();
+                    } else if (sToken.equals("IF")) {
+                        c.getThis("EXISTS");
 
-                    dropmode = true;
+                        dropmode = true;
+                    } else {
+                        c.back();
+                    }
                 } else {
-                    c.back();
+                    sToken = c.getString();
+
+                    if (sToken.equals("IF")) {
+                        c.getThis("EXISTS");
+
+                        dropmode = true;
+                    } else {
+                        c.back();
+                    }
                 }
 
                 dropTable(tablename, dropmode, isview, session);
