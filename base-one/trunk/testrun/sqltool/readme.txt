@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.5 2004/06/16 17:54:02 unsaved Exp $
+$Id: readme.txt,v 1.6 2004/06/16 18:08:05 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -26,6 +26,10 @@ To do anything at all with SqlTool unit testing, you need
     java classpath switch, for the exact same reason described for the
     previous item.
 
+    IF you are running JUnit tests (iėe., running a JUnit test manually
+    or invoking TestSqlTool), then you also need to put the junit.jar 
+    file into your classpath.
+
     Set up a urlid named "mem" in your sqltool.rc file, as documented in
     the SqlTool chapter of the HSQLDB User Guide.  If you started with
     the sample sqltool.rc file then you are all set (because that defines
@@ -47,11 +51,11 @@ To run the JUnit test suite for SqlTool.
 
     Graphical.
 
-        java org.hsqldb.util.TestSqlTool -gui
+        java org.hsqldb.test.TestSqlTool --gui
 
     Non-graphical
 
-        java org.hsqldb.util.TestSqlTool
+        java org.hsqldb.test.TestSqlTool
 
 
 To run tests of specific SQL files against SqlTool without JUnit.
