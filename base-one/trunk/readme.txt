@@ -1,46 +1,34 @@
 Readme File
 
 
-2003.12.28
+2003.12.28 RC_1
+
+Release Candidate 1 for HSQLDB version 1.7.2 includes most of the features of the release
+version. It is likely that by the time of the release, a small number of features will
+be added to the engine.
+
+One area that is likely to change is the SQL_STATE values for errors returned by
+JDBC.
+
+Changes since ALPHA_T
+
 
 Added referential integrity checks when a foreign key is added
 to a populated table.
 
-2003.12.27
-
 support for SQL style SEQUENCE objects.
-
-Fixed reported bugs.
-
-2003.12.05
 
 support for DROP INDEX <IDX> IF EXISTS
 
-2003.11.28
-
-Fixed some bugs.
-
 Changes to SET PROPERTY command with better error checking.
 
-2003.11.23
-
-Added support for LIMIT ? ? and TOP ?
-
-2003.11.23
+Added support for LIMIT ? ? and TOP ? (prepared statement)
 
 Fixed reported bugs including order by with UNION.
 
 Added support for aggregate functions in CASEWHEN, IFNULL, etc.
 
 Added support for aggregate functions as arguments to non-aggregate functions.
-
-2003.11.13
-
-Fixed reported bugs.
-
-2003.10.28
-
-Fixed reported bugs.
 
 Views and subqueries can appear in a view definition.
 
@@ -118,7 +106,6 @@ for an example.
 - COALESCE() can now take several arguments
 
 
-
 2003.09.24
 
 HSQLDB 1.7.2 ALPHA_Q
@@ -160,7 +147,6 @@ The rest of the information for ALPHA_N below applies to this version too.
 
 
 HSQLDB 1.7.2 ALPHA_N
-
 
 ALPHA_N is the ultimate ALPHA version for the 1.7.2 release cycle. Known
 deficiencies and reported bugs will be addressed for the first Release Candidate
