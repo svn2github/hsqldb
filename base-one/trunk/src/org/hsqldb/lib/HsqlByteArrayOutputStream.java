@@ -31,7 +31,11 @@
 
 package org.hsqldb.lib;
 
-import java.io.*;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UTFDataFormatException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * This class is a replacement for both java.io.ByteArrayOuputStream

@@ -117,7 +117,7 @@ abstract class BaseList {
         public void remove() {
 
             if (removed) {
-                throw new NoSuchElementException("Hash Iterator");
+                throw new NoSuchElementException("Iterator");
             }
 
             removed = true;

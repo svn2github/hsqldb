@@ -31,9 +31,6 @@
 
 package org.hsqldb.lib;
 
-import java.util.Enumeration;
-import java.util.NoSuchElementException;
-
 /**
  * Intended as an asynchronous alternative to HsqlArrayList.  Use HsqlArrayList if
  * the list won't be initialized sequentially and if frequent references to

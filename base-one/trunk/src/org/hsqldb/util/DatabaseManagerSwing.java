@@ -73,8 +73,10 @@ import java.awt.image.*;
 import java.sql.*;
 import java.io.File;
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.tree.*;
+
 import org.hsqldb.lib.java.javaSystem;
 
 // dmarshall@users - 20020101 - original swing port

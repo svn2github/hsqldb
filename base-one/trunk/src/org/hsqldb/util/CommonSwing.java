@@ -32,6 +32,7 @@
 package org.hsqldb.util;
 
 import javax.swing.*;
+
 import java.awt.Color;
 import java.awt.SystemColor;
 import java.awt.Image;

@@ -31,8 +31,6 @@
 
 package org.hsqldb.lib;
 
-import org.hsqldb.lib.Collection;
-import org.hsqldb.lib.Set;
 import org.hsqldb.store.BaseHashMap;
 
 public class HashMap extends BaseHashMap {

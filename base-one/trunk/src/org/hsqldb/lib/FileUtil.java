@@ -31,10 +31,8 @@
 
 package org.hsqldb.lib;
 
-import java.io.IOException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * A collection of static file management methods.

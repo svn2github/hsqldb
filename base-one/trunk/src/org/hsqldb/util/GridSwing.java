@@ -68,6 +68,7 @@
 package org.hsqldb.util;
 
 import java.util.Vector;
+
 import javax.swing.table.*;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements

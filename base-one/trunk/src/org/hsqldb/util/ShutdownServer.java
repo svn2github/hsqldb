@@ -32,6 +32,7 @@
 package org.hsqldb.util;
 
 import org.hsqldb.HsqlProperties;
+
 import java.sql.*;
 
 /*

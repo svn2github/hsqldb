@@ -34,6 +34,7 @@ package org.hsqldb.test;
 import java.sql.*;
 import java.io.*;
 import java.util.Properties;
+
 import junit.framework.*;
 
 /**

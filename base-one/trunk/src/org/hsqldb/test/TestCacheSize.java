@@ -32,10 +32,13 @@
 package org.hsqldb.test;
 
 import org.hsqldb.HsqlProperties;
+
 import java.io.*;
 import java.sql.*;
+
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.FileUtil;
+
 import java.util.Random;
 
 /**

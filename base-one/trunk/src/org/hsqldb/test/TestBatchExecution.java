@@ -32,6 +32,7 @@
 package org.hsqldb.test;
 
 import org.hsqldb.lib.StopWatch;
+
 import java.sql.*;
 
 /**

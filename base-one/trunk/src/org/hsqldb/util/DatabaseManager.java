@@ -38,6 +38,7 @@ import java.applet.*;
 import java.sql.*;
 import java.io.File;
 import java.util.*;
+
 import org.hsqldb.lib.java.javaSystem;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements

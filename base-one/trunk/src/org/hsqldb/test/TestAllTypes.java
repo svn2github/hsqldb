@@ -32,9 +32,11 @@
 package org.hsqldb.test;
 
 import org.hsqldb.HsqlProperties;
+
 import java.io.*;
 import java.sql.*;
 import java.util.Hashtable;
+
 import org.hsqldb.lib.StopWatch;
 
 /**

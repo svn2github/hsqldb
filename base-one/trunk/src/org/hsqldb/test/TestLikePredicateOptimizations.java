@@ -33,6 +33,7 @@ package org.hsqldb.test;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;

@@ -69,6 +69,7 @@ package org.hsqldb.test;
 
 import java.sql.*;
 import java.io.*;
+
 import org.hsqldb.lib.*;
 import org.hsqldb.jdbcDriver;
 

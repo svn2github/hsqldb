@@ -38,6 +38,7 @@ import java.sql.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+
 import org.hsqldb.lib.java.javaSystem;
 
 // fredt@users 20011220 - patch 481239 by yfl@users - new class

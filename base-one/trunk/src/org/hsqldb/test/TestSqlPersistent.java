@@ -33,6 +33,7 @@ package org.hsqldb.test;
 
 import java.sql.*;
 import java.io.*;
+
 import junit.framework.*;
 
 /**
@@ -42,9 +43,8 @@ import junit.framework.*;
 public class TestSqlPersistent extends TestCase {
 
     // change the url to reflect your preferred db location and name
-    String url = "jdbc:hsqldb:hsql://localhost/yourtest";
-
-//    String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
+    // String url = "jdbc:hsqldb:hsql://localhost/yourtest";
+    String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
     String     user;
     String     password;
     Statement  sStatement;

@@ -32,7 +32,9 @@
 package org.hsqldb.test;
 
 import java.util.*;
+
 import org.hsqldb.lib.*;
+
 import junit.framework.*;
 
 /**

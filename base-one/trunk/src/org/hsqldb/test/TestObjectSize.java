@@ -36,6 +36,7 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.StopWatch;
+
 import java.util.NoSuchElementException;
 
 public class TestObjectSize {

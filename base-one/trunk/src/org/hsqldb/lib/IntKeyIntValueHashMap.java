@@ -32,6 +32,7 @@
 package org.hsqldb.lib;
 
 import java.util.NoSuchElementException;
+
 import org.hsqldb.store.BaseHashMap;
 
 public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {

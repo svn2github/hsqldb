@@ -32,6 +32,7 @@
 package org.hsqldb.test;
 
 import org.hsqldb.*;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

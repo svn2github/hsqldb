@@ -32,6 +32,7 @@
 package org.hsqldb.store;
 
 import java.util.NoSuchElementException;
+
 import org.hsqldb.lib.ArrayCounter;
 
 public class BaseHashMap {

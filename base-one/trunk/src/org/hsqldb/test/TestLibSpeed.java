@@ -38,6 +38,7 @@ import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.StopWatch;
+
 import java.util.NoSuchElementException;
 
 /**

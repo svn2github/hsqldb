@@ -31,10 +31,10 @@
 
 package org.hsqldb.lib;
 
-import java.io.EOFException;
 import java.io.DataInput;
-import java.io.InputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This class is a replacement for both java.io.ByteArrayInputStream
@@ -42,6 +42,7 @@ import java.io.IOException;
  *
  * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
 public class HsqlByteArrayInputStream extends InputStream
 implements DataInput {

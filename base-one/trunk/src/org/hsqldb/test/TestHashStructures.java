@@ -32,7 +32,9 @@
 package org.hsqldb.test;
 
 import junit.framework.*;
+
 import java.util.*;
+
 import org.hsqldb.lib.DoubleIntTable;
 
 /**
