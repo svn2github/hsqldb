@@ -281,7 +281,10 @@ class Parser {
     Result processUpdate() throws SQLException {
 
         String token = tTokenizer.getString();
-        Table  table = dDatabase.getTable(token, cSession);
+
+        tTokenizer.checkUnexpectedParam("parametric table identifier");
+
+        Table table = dDatabase.getTable(token, cSession);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
 
@@ -419,7 +422,10 @@ class Parser {
         tTokenizer.getThis("FROM");
 
         String token = tTokenizer.getString();
-        Table  table = dDatabase.getTable(token, cSession);
+
+        tTokenizer.checkUnexpectedParam("parametric table identifier");
+
+        Table table = dDatabase.getTable(token, cSession);
 
         checkTableWriteAccess(table, UserManager.DELETE);
 
@@ -474,7 +480,10 @@ class Parser {
         tTokenizer.getThis("INTO");
 
         String token = tTokenizer.getString();
-        Table  t     = dDatabase.getTable(token, cSession);
+
+        tTokenizer.checkUnexpectedParam("parametric table identifier");
+
+        Table t = dDatabase.getTable(token, cSession);
 
         checkTableWriteAccess(t, UserManager.INSERT);
 
@@ -572,6 +581,7 @@ class Parser {
 
         while (true) {
             columns.add(tTokenizer.getString());
+            tTokenizer.checkUnexpectedParam("parametric column identifier");
 
             i++;
 
@@ -1019,6 +1029,8 @@ class Parser {
             // subquery creation can't fail because constraint violation
             t.insertNoCheck(r, cSession);
         } else {
+            tTokenizer.checkUnexpectedParam("parametric table identifier");
+
             t = dDatabase.getTable(token, cSession);
 
             cSession.check(t.getName(), UserManager.SELECT);
@@ -1320,6 +1332,8 @@ class Parser {
                             HsqlArrayList v = new HsqlArrayList();
 
                             while (true) {
+                                tTokenizer.checkUnexpectedParam(
+                                    "parametric IN list item");
                                 v.add(getValue(Types.VARCHAR));
                                 read();
 
@@ -1529,6 +1543,14 @@ class Parser {
 
                 break;
             }
+            case Expression.PARAM : {
+                r = new Expression(DITypes.NULL, null);
+
+                parameters.add(r);
+                read();
+
+                break;
+            }
             case Expression.SELECT : {
                 r = new Expression(parseSelect());
 
@@ -1707,6 +1729,7 @@ class Parser {
                 case Expression.CASEWHEN :
                 case Expression.CONCAT :
                 case Expression.END :
+                case Expression.PARAM :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
@@ -1768,5 +1791,322 @@ class Parser {
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
         tokenSet.put("CONCATE", Expression.CONCAT);
         tokenSet.put("IS", Expression.IS);
+        tokenSet.put("?", Expression.PARAM);
     }
+
+// boucherb@users 20030411 - patch 1.7.2 - for prepared statements
+// ---------------------------------------------------------------
+    HsqlArrayList parameters = new HsqlArrayList();
+
+    // TODO:  alter
+    Expression[] getParameters() {
+        return (Expression[]) parameters.toArray(
+            new Expression[parameters.size()]);
+    }
+
+    void clearParameters() {
+        parameters.setSize(0);
+    }
+
+    CompiledStatement compileStatement(CompiledStatement cs)
+    throws SQLException {
+
+        String token;
+
+        token = tTokenizer.getString();
+
+        if ("CALL".equals(token)) {
+            return compileCallStatement(cs);
+        } else if ("DELETE".equals(token)) {
+            return compileDeleteStatement(cs);
+        } else if ("INSERT".equals(token)) {
+            return compileInsertStatement(cs);
+        } else if ("UPDATE".equals(token)) {
+            return compileUpdateStatement(cs);
+        } else if ("SELECT".equals(token)) {
+            return compileSelectStatement(cs);
+        } else {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+    }
+
+    /**
+     * Retrieves a CALL-type CompiledStatement from this parse context.
+     */
+    CompiledStatement compileCallStatement(CompiledStatement cs)
+    throws SQLException {
+
+        Expression expression;
+
+        clearParameters();
+
+        expression = parseExpression();
+
+        if (cs == null) {
+            cs = new CompiledStatement();
+        }
+
+        cs.setAsCall(expression, getParameters());
+
+        return cs;
+    }
+
+    /**
+     * Retrieves a DELETE-type CompiledStatement from this parse context.
+     */
+    CompiledStatement compileDeleteStatement(CompiledStatement cs)
+    throws SQLException {
+
+        String     token;
+        Table      table;
+        Expression condition;
+
+        clearParameters();
+        tTokenizer.getThis("FROM");
+
+        token = tTokenizer.getString();
+
+        tTokenizer.checkUnexpectedParam("parametric table specificiation");
+
+        table = dDatabase.getTable(token, cSession);
+
+        checkTableWriteAccess(table, UserManager.DELETE);
+
+        token     = tTokenizer.getString();
+        condition = null;
+
+        if (token.equals("WHERE")) {
+            condition = parseExpression();
+        } else {
+            tTokenizer.back();
+        }
+
+        if (cs == null) {
+            cs = new CompiledStatement();
+        }
+
+        cs.setAsDelete(table, condition, getParameters());
+
+        return cs;
+    }
+
+    void getColumnValueExpressions(Table t, Expression[] acve,
+                                   int len) throws SQLException {
+
+        boolean    enclosed;
+        String     token;
+        Expression cve;
+        int        i;
+
+        enclosed = false;
+        i        = 0;
+
+        tTokenizer.getThis("(");
+
+        for (; i < len; i++) {
+            cve = parseExpression();
+
+            cve.resolve(null);
+
+            acve[i] = cve;
+            token   = tTokenizer.getString();
+
+            if (token.equals(",")) {
+                continue;
+            }
+
+            if (token.equals(")")) {
+                enclosed = true;
+
+                break;
+            }
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        if (!enclosed || i != len - 1) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        }
+    }
+
+    /**
+     * Retrieves an INSERT_XXX-type CompiledStatement from this parse context.
+     */
+    CompiledStatement compileInsertStatement(CompiledStatement cs)
+    throws SQLException {
+
+        String        token;
+        Table         t;
+        HsqlArrayList cNames;
+        boolean[]     ccl;
+        int[]         cm;
+        int           ci;
+        int           len;
+        Expression[]  acve;
+        Select        select;
+
+        clearParameters();
+        tTokenizer.getThis("INTO");
+
+        token = tTokenizer.getString();
+
+        tTokenizer.checkUnexpectedParam("parametric table specificiation");
+
+        t = dDatabase.getTable(token, cSession);
+
+        checkTableWriteAccess(t, UserManager.INSERT);
+
+        token  = tTokenizer.getString();
+        cNames = null;
+        ccl    = null;
+        cm     = t.getColumnMap();
+        len    = t.getColumnCount();
+
+        if (token.equals("(")) {
+            cNames = getColumnNames();
+
+            if (cNames.size() > len) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+
+            len = cNames.size();
+            ccl = t.getNewColumnCheckList();
+            cm  = t.getNewColumnMap();
+
+            for (int i = 0; i < len; i++) {
+                ci      = t.getColumnNr((String) cNames.get(i));
+                cm[i]   = ci;
+                ccl[ci] = true;
+            }
+
+            token = tTokenizer.getString();
+        }
+
+        if (token.equals("VALUES")) {
+            acve = new Expression[len];
+
+            getColumnValueExpressions(t, acve, len);
+
+            if (cs == null) {
+                cs = new CompiledStatement();
+            }
+
+            cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
+
+            return cs;
+        } else if (token.equals("SELECT")) {
+            select = parseSelect();
+
+            if (cs == null) {
+                cs = new CompiledStatement();
+            }
+
+            cs.setAsInsertSelect(t, cm, ccl, select, getParameters());
+
+            return cs;
+        } else {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+    }
+
+    /**
+     * Retrieves a SELECT-type CompiledStatement from this parse context.
+     */
+    CompiledStatement compileSelectStatement(CompiledStatement cs)
+    throws SQLException {
+
+        Select select;
+
+        clearParameters();
+
+        select = parseSelect();
+
+        if (cs == null) {
+            cs = new CompiledStatement();
+        }
+
+        cs.setAsSelect(select, getParameters());
+
+        return cs;
+    }
+
+    /**
+     * Retrieves an UPDATE-type CompiledStatement from this parse context.
+     */
+    CompiledStatement compileUpdateStatement(CompiledStatement cs)
+    throws SQLException {
+
+        String        token;
+        Table         table;
+        HsqlArrayList ciList;
+        HsqlArrayList cveList;
+        int           len;
+        Expression    cve;
+        Expression    condition;
+        int[]         cm;
+        Expression[]  acve;
+
+        clearParameters();
+
+        token = tTokenizer.getString();
+
+        tTokenizer.checkUnexpectedParam("parametric table identifier");
+
+        table = dDatabase.getTable(token, cSession);
+
+        checkTableWriteAccess(table, UserManager.UPDATE);
+        tTokenizer.getThis("SET");
+
+        ciList  = new HsqlArrayList();
+        cveList = new HsqlArrayList();
+        len     = 0;
+        token   = null;
+
+        do {
+            len++;
+
+            int ci = table.getColumnNr(tTokenizer.getString());
+
+            ciList.add(new Integer(ci));
+            tTokenizer.getThis("=");
+
+            cve = parseExpression();
+
+            // later.
+            // cve.resolve(filter);
+            cveList.add(cve);
+
+            token = tTokenizer.getString();
+        } while (token.equals(","));
+
+        condition = null;
+
+        if (token.equals("WHERE")) {
+            condition = parseExpression();
+
+            // later.
+            //condition.resolve(filter);
+            //filter.setCondition(condition);
+        } else {
+            tTokenizer.back();
+        }
+
+        cm   = new int[len];
+        acve = new Expression[len];
+
+        for (int i = 0; i < len; i++) {
+            cm[i]   = ((Integer) ciList.get(i)).intValue();
+            acve[i] = (Expression) cveList.get(i);
+        }
+
+        if (cs == null) {
+            cs = new CompiledStatement();
+        }
+
+        cs.setAsUpdate(table, cm, acve, condition, getParameters());
+
+        return cs;
+    }
+
+// --
 }

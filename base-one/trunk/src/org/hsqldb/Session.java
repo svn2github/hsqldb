@@ -131,6 +131,25 @@ class Session {
         tTransaction = new HsqlArrayList();
         isAutoCommit = autocommit;
         isReadOnly   = readonly;
+
+        boolean useShadow = false;
+
+        // system property: -Dorg.hsqldb.shadow=true|false
+        try {
+            useShadow = Boolean.getBoolean("org.hsqldb.shadow");
+        } catch (Exception e) {}
+
+        if (useShadow) {
+            /*
+            // temporary backward compatibility test
+            dbci = new DatabaseCommandInterpreterShadow(this);
+            */
+        } else {
+            dbci = new DatabaseCommandInterpreter(this);
+        }
+
+        cse = new CompiledStatementExecutor(this);
+        cs  = new CompiledStatement();
     }
 
     /**
@@ -260,7 +279,9 @@ class Session {
      * @throws  SQLException
      */
     void checkDDLWrite() throws SQLException {
-        boolean condition = uUser.isSys() || !dDatabase.filesReadOnly ;
+
+        boolean condition = uUser.isSys() ||!dDatabase.filesReadOnly;
+
         Trace.check(condition, Trace.DATABASE_IS_READONLY);
     }
 
@@ -577,5 +598,182 @@ class Session {
                            : uUser.getGrantedClassNames(andToPublic);
     }
 
-//----------------------------------------------------------------
+// boucherb@users 20030417 - patch 1.7.2 - compiled statement support
+//-------------------------------------------------------------------
+    DatabaseCommandInterpreter dbci;
+    CompiledStatement          cs;
+    CompiledStatementExecutor  cse;
+
+    /**
+     * Executes the command encapsulated by the command argument.
+     *
+     * @param command the command to execute
+     * @return the result of executing the command
+     */
+    Result execute(Result command) {
+
+        int type = command.iMode;
+
+// figure out what to do and what to return
+        switch (type) {
+
+//            case Result.EXEC_SQL_STRING:
+//                  return execute(command.getSQL());
+//            case Result.PREPARE_STATEMENT:
+//                  return prepareStatement(command.getSQL());
+//            case Result.EXEC_STATEMENT:
+//                  int id = command.getStatementID();
+//                  Object[] pvals = command.getParameterValues();
+//                  return executeStatement(id, pvals);
+//            case Result.CLOSE_STATEMENT:
+            default : {
+                return new Result("unknown operation type:" + type,
+                                  Trace.OPERATION_NOT_SUPPORTED);
+            }
+        }
+    }
+
+    /**
+     * Executes all of the sql statements in the sql document represented by
+     * the sql argument string.
+     *
+     * @param sql a sql string
+     * @return the result of the last sql statement in the sql document
+     */
+    Result execute(String sql) {
+        return dbci.execute(sql);
+    }
+
+    /**
+     * Executes the statement represented by the compiled statement argument.
+     *
+     * @param cs the compiled statement to execute
+     * @return the result of executing the compiled statement
+     */
+    Result execute(CompiledStatement cs) {
+        return cse.execute(cs);
+    }
+
+    /**
+     * Retrieves an encapsulation of a compiled statement
+     * object prepared for execution in this session context. <p>
+     *
+     * The result may encapsulate a newly constructed object
+     * or a compatible object retrieved from a repository of
+     * previously compiled objects.
+     *
+     * @param sql a string describing the desired statement object
+     * @throws SQLException is a database access error occurs
+     * @return the result of preparing the statement
+     */
+    Result prepareStatement(String sql) throws SQLException {
+
+        Tokenizer         tokenizer;
+        String            token;
+        Parser            parser;
+        int               cmd;
+        CompiledStatement cs;
+        Result            result;
+
+        result = null;
+
+        // validating get
+        // result = dDatabase.getStatement(sql,this);
+        if (result != null) {
+
+            //    return result;
+        }
+
+        // TODO:  Session and its command interpreter/statement executor
+        // can probably share a singe Parser and Tokenizer
+        // set up tokenizer and parser
+        // e.g. set tokenizer string and tell parser this is for prepare
+        tokenizer = new Tokenizer(sql);
+        parser    = new Parser(dDatabase, tokenizer, this);
+        token     = tokenizer.getString();
+
+        // get first token and its command id
+        cmd = Token.get(token);
+
+        switch (cmd) {
+
+            case Token.SELECT :
+                cs = parser.compileSelectStatement(null);
+                break;
+
+            case Token.INSERT :
+                cs = parser.compileInsertStatement(null);
+                break;
+
+            case Token.UPDATE :
+                cs = parser.compileUpdateStatement(null);
+                break;
+
+            case Token.DELETE :
+                cs = parser.compileDeleteStatement(null);
+                break;
+
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        if (tokenizer.getPosition() != tokenizer.getLength()) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sql);
+        }
+
+        // validating put
+        // result = dDatabase.putStatement(cs,sql,this);
+        return result;
+    }
+
+    /**
+     * Retrieves the result of executing the indicated prepared statement
+     * using the indicate parameter values.
+     *
+     * @param statementID the numeric identifier of the statement
+     * @param pvals the parameter values for the statement
+     * @param ptypes the parameter value types for the statement
+     * @throws SQLException if a database access error occurs
+     * @return the result of executing the statement
+     */
+    Result executeStatement(int statementID, Object[] pvals,
+                            int[] ptypes) throws SQLException {
+
+        CompiledStatement cs         = null;
+        Expression[]      parameters = null;
+
+        // validating get: throws if no such id or invalid stmnt in sess ctx
+        // cs = database.getStatement(id,this);
+        parameters = cs.parameters;
+
+        if (pvals.length != ptypes.length
+                || pvals.length < parameters.length) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        }
+
+        for (int i = 0; i < parameters.length; i++) {
+            parameters[i].bind(pvals[i], ptypes[i]);
+        }
+
+        return cse.execute(cs);
+    }
+
+    /**
+     * Retrieves the result of closing the statement with the given id.
+     *
+     * @param id the numeric identifier of the statement
+     * @throws SQLException if a database access error occurs
+     * @return the result of closing the indicated statement
+     */
+    Result closeStatement(int id) throws SQLException {
+
+        Result result;
+
+        result = null;
+
+        // result =  database.closeStatement(id);
+        return result;
+    }
+
+//------------------------------------------------------------------------------
 }

@@ -234,8 +234,10 @@ class Select {
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
     Result getResult(int maxrows) throws SQLException {
 
-        resolve();
-        checkResolved();
+        if (!isResolved) {
+            resolve();
+            checkResolved();
+        }
 
         if (sUnion != null && sUnion.iResultLen != iResultLen) {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
@@ -576,4 +578,99 @@ class Select {
             r.add(row);
         }
     }
+
+    // boucherb@users 20030418 - patch 1.7.2 - faster execution for compiled statements
+// -----------------------------------------------------------------------------
+    boolean isResolved = false;
+
+    void resolveAll() throws SQLException {
+
+        if (isResolved) {
+            return;
+        }
+
+        resolve();
+        checkResolved();
+
+        Select u = sUnion;
+
+        if (u != null) {
+
+            // recurse
+            u.resolveAll();
+        }
+
+        isResolved = true;
+    }
+
+    boolean isResolved() {
+        return isResolved;
+    }
+
+// --
+// boucherb@users 20030418 - patch 1.7.2 - explain plan support
+// -----------------------------------------------------------------------------
+    public String toString() {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(super.toString()).append("[\n");
+        sb.append("start=[").append(limitStart).append("]\n");
+        sb.append("limit=[").append(limitCount).append("]\n");
+        sb.append("isDistinctSelect=[").append(isDistinctSelect).append(
+            "]\n");
+        sb.append("isGrouped=[").append(isGrouped).append("]\n");
+        sb.append("isAggregated=[").append(isAggregated).append("]\n");
+        sb.append("columns=[");
+
+        int columns = eColumn.length - iOrderLen;
+
+        for (int i = 0; i < columns; i++) {
+            sb.append(eColumn[i]);
+        }
+
+        sb.append("\n]\n");
+        sb.append("tableFilters=[\n");
+
+        for (int i = 0; i < tFilter.length; i++) {
+            sb.append("[\n");
+            sb.append(tFilter[i]);
+            sb.append("\n]");
+        }
+
+        sb.append("]\n");
+        sb.append("eCondition=[").append(eCondition).append("]\n");
+        sb.append("havingCondition=[").append(havingCondition).append("]\n");
+        sb.append("groupColumns=[").append(groupColumnNames).append("]\n");
+
+        if (sUnion != null) {
+            switch (iUnionType) {
+
+                case EXCEPT :
+                    sb.append(" EXCEPT ");
+                    break;
+
+                case INTERSECT :
+                    sb.append(" INTERSECT ");
+                    break;
+
+                case UNION :
+                    sb.append(" UNION ");
+                    break;
+
+                case UNIONALL :
+                    sb.append(" UNION ALL ");
+                    break;
+
+                default :
+                    sb.append(" UNKNOWN SET OPERATION ");
+            }
+
+            sb.append("[\n").append(sUnion).append("]\n");
+        }
+
+        return sb.toString();
+    }
+
+// --
 }

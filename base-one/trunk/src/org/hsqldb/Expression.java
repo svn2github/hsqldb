@@ -97,6 +97,11 @@ class Expression {
                      ASTERIX   = 6,
                      FUNCTION  = 7;
 
+// boucherb@users 20020410 - parametric compiled statements
+    // new leaf type
+    static final int PARAM = 8;
+
+// --
     // operations
     static final int NEGATE   = 9,
                      ADD      = 10,
@@ -147,20 +152,20 @@ class Expression {
     private static final int AGGREGATE_LEFT  = 1;
     private static final int AGGREGATE_RIGHT = 2;
     private static final int AGGREGATE_BOTH  = 3;
-    private int              iType;
+    int                      iType;
 
     // nodes
     private Expression eArg, eArg2;
     private int        aggregateSpec = AGGREGATE_NONE;
 
     // VALUE, VALUELIST
-    private Object      oData;
+    Object              oData;
     private HsqlHashMap hList;
     private boolean     hListIsUpper;
     private int         iDataType;
 
     // QUERY (correlated subquery)
-    private Select sSelect;
+    Select sSelect;
 
     // FUNCTION
     private Function fFunction;
@@ -187,9 +192,7 @@ class Expression {
     static final Integer INTEGER_1 = new Integer(1);
 
     /**
-     * Constructor declaration
-     *
-     *
+     * Creates a new FUNCTION expression
      * @param f
      */
     Expression(Function f) {
@@ -198,10 +201,8 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
-     *
-     *
-     * @param e
+     * Copy Constructor
+     * @param e source expression
      */
     Expression(Expression e) {
 
@@ -217,9 +218,7 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
-     *
-     *
+     * Creates a new QUERY expression
      * @param s
      */
     Expression(Select s) {
@@ -228,9 +227,7 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
-     *
-     *
+     * Creates a new VALUELIST expression
      * @param v
      */
     Expression(HsqlArrayList v) {
@@ -250,12 +247,11 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
+     * Creates a new binary operation expression
      *
-     *
-     * @param type
-     * @param e
-     * @param e2
+     * @param type operator type
+     * @param e operand 1
+     * @param e2 operand 2
      */
     Expression(int type, Expression e, Expression e2) {
 
@@ -267,9 +263,7 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
-     *
-     *
+     * Creates a new ASTERIX or COLUMN expression
      * @param table
      * @param column
      */
@@ -285,6 +279,11 @@ class Expression {
         }
     }
 
+    /**
+     * Creates a new ASTERIX or possibly quoted COLUMN expression
+     * @param table
+     * @param column
+     */
     Expression(String table, String column, boolean isquoted) {
 
         sTable = table;
@@ -299,8 +298,7 @@ class Expression {
     }
 
     /**
-     * Constructor declaration
-     *
+     * Creates a new VALUE expression
      *
      * @param datatype
      * @param o
@@ -359,6 +357,12 @@ class Expression {
 
             case COLUMN :
                 buf.append("COLUMN ");
+
+                if (sTable != null) {
+                    buf.append(sTable);
+                    buf.append('.');
+                }
+
                 buf.append(sColumn);
 
                 return buf.toString();
@@ -375,6 +379,11 @@ class Expression {
 
             case VALUELIST :
                 buf.append("VALUELIST ");
+
+                if (hList != null) {
+                    buf.append(hList);
+                    buf.append(' ');
+                }
                 break;
 
             case ASTERIX :
@@ -521,12 +530,22 @@ class Expression {
         iDataType = type;
     }
 
+    int oldIType = -1;
+
     /**
      * Method declaration
      *
      */
     void setTrue() {
-        iType = TRUE;
+        oldIType = iType;
+        iType    = TRUE;
+    }
+
+    void resetTrue() {
+
+        if (oldIType != -1) {
+            iType = oldIType;
+        }
     }
 
     /**
@@ -1845,4 +1864,13 @@ class Expression {
 
         return iType != Expression.OR;
     }
+
+// boucherb@users 20030417 - patch 1.7.2 - compiled statement support
+//-------------------------------------------------------------------
+    void bind(Object o, int type) throws SQLException {
+        oData     = o;
+        iDataType = type;
+    }
+
+//-------------------------------------------------------------------
 }

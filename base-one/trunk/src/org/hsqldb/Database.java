@@ -102,9 +102,10 @@ import org.hsqldb.lib.StopWatch;
 // rewrite of the majority of multiple if(){}else if(){} chains with switch()
 // boucherb@users 20020310 - class loader update for JDK 1.1 compliance
 // boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
-// fredt@users 20020314 - patch 1.7.2 by gilead@users - drop table syntax
-// fredt@users 20020401 - patch 1.7.2 by akede@users - data files readonly
-// fredt@users 20020401 - patch 1.7.2 by Brendan Ryan - data files in Jar
+// fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table syntax
+// fredt@users 20030401 - patch 1.7.2 by akede@users - data files readonly
+// fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
+// fredt@users 20030425 - from this version the DDL methods are not used, methods in Session.java are used instead
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -155,55 +156,54 @@ class Database {
     final static int               DATABASE_SHUTDOWN = 16;
 
     //for execute()
-    private static final int CALL                  = 1;
-    private static final int CHECKPOINT            = 2;
-    private static final int COMMIT                = 3;
-    private static final int CONNECT               = 4;
-    private static final int CREATE                = 5;
-    private static final int DELETE                = 6;
-    private static final int DISCONNECT            = 7;
-    private static final int DROP                  = 8;
-    private static final int GRANT                 = 9;
-    private static final int INSERT                = 10;
-    private static final int REVOKE                = 11;
-    private static final int ROLLBACK              = 12;
-    private static final int SAVEPOINT             = 13;
-    private static final int SCRIPT                = 14;
-    private static final int SELECT                = 15;
-    private static final int SET                   = 16;
-    private static final int SHUTDOWN              = 17;
-    private static final int UPDATE                = 18;
-    private static final int SEMICOLON             = 19;
-    private static final int ALTER                 = 20;
-    private static final int ADD                   = 24;
-    private static final int ALIAS                 = 35;
-    private static final int AUTOCOMMIT            = 43;
-    private static final int CACHED                = 31;
-    private static final int COLUMN                = 27;
-    private static final int CONSTRAINT            = 25;
-    private static final int FOREIGN               = 26;
-    private static final int IGNORECASE            = 41;
-    private static final int INDEX                 = 22;
-    private static final int LOGSIZE               = 39;
-    private static final int LOGTYPE               = 40;
-    private static final int MAXROWS               = 42;
-    private static final int MEMORY                = 30;
-    private static final int PASSWORD              = 37;
-    private static final int PRIMARY               = 36;
-    private static final int PROPERTY              = 47;
-    private static final int READONLY              = 38;
-    private static final int REFERENTIAL_INTEGRITY = 46;
-    private static final int RENAME                = 23;
-    private static final int SOURCE                = 44;
-    private static final int TABLE                 = 21;
-    private static final int TEXT                  = 29;
-    private static final int TRIGGER               = 33;
-    private static final int UNIQUE                = 28;
-    private static final int USER                  = 34;
-    private static final int VIEW                  = 32;
-    private static final int WRITE_DELAY           = 45;
-    private static final HsqlObjectToIntMap commandSet =
-        new HsqlObjectToIntMap(67);
+    private static final int        CALL                  = 1;
+    private static final int        CHECKPOINT            = 2;
+    private static final int        COMMIT                = 3;
+    private static final int        CONNECT               = 4;
+    private static final int        CREATE                = 5;
+    private static final int        DELETE                = 6;
+    private static final int        DISCONNECT            = 7;
+    private static final int        DROP                  = 8;
+    private static final int        GRANT                 = 9;
+    private static final int        INSERT                = 10;
+    private static final int        REVOKE                = 11;
+    private static final int        ROLLBACK              = 12;
+    private static final int        SAVEPOINT             = 13;
+    private static final int        SCRIPT                = 14;
+    private static final int        SELECT                = 15;
+    private static final int        SET                   = 16;
+    private static final int        SHUTDOWN              = 17;
+    private static final int        UPDATE                = 18;
+    private static final int        SEMICOLON             = 19;
+    private static final int        ALTER                 = 20;
+    private static final int        ADD                   = 24;
+    private static final int        ALIAS                 = 35;
+    private static final int        AUTOCOMMIT            = 43;
+    private static final int        CACHED                = 31;
+    private static final int        COLUMN                = 27;
+    private static final int        CONSTRAINT            = 25;
+    private static final int        FOREIGN               = 26;
+    private static final int        IGNORECASE            = 41;
+    private static final int        INDEX                 = 22;
+    private static final int        LOGSIZE               = 39;
+    private static final int        LOGTYPE               = 40;
+    private static final int        MAXROWS               = 42;
+    private static final int        MEMORY                = 30;
+    private static final int        PASSWORD              = 37;
+    private static final int        PRIMARY               = 36;
+    private static final int        PROPERTY              = 47;
+    private static final int        READONLY              = 38;
+    private static final int        REFERENTIAL_INTEGRITY = 46;
+    private static final int        RENAME                = 23;
+    private static final int        SOURCE                = 44;
+    private static final int        TABLE                 = 21;
+    private static final int        TEXT                  = 29;
+    private static final int        TRIGGER               = 33;
+    private static final int        UNIQUE                = 28;
+    private static final int        USER                  = 34;
+    private static final int        VIEW                  = 32;
+    private static final int        WRITE_DELAY           = 45;
+    private static final HsqlObjectToIntMap commandSet = new HsqlObjectToIntMap(67);
 
     static {
         commandSet.put("ALTER", ALTER);
@@ -436,6 +436,18 @@ class Database {
         }
     }
 
+    Result execute(String statement, Session session) {
+
+        try {
+            Trace.check(session != null, Trace.ACCESS_IS_DENIED);
+        } catch (SQLException e) {
+            return new Result(e.getMessage() + " in statement [" + statement
+                              + "]", e.getErrorCode());
+        }
+
+        return session.execute(statement);
+    }
+
     /**
      *  The main SQL statement executor. <p>
      *
@@ -449,7 +461,7 @@ class Database {
      *      suitable for either wrapping in a local ResultSet object or for
      *      transmitting to a remote client via the native HSQLDB protocol
      */
-    synchronized Result execute(String statement, Session session) {
+    synchronized Result executeShadow(String statement, Session session) {
 
         if (Record.gcFrequency != 0
                 && Record.memoryRecords > Record.gcFrequency) {
@@ -848,6 +860,10 @@ class Database {
         tTable.add(t);
     }
 
+    void setIgnoreCase(boolean b) {
+        bIgnoreCase = b;
+    }
+
     /**
      *  isIgnoreCase attribute getter.
      *
@@ -1137,7 +1153,7 @@ class Database {
      *  whole database and visible in this session.
      *
      */
-    private Table findUserTableForIndex(String name, Session session) {
+    Table findUserTableForIndex(String name, Session session) {
 
         HsqlName hsqlname = indexNameList.getOwner(name);
 
@@ -2660,7 +2676,7 @@ class Database {
      * @param  closemode Description of the Parameter
      * @throws  SQLException
      */
-    private void close(int closemode) throws SQLException {
+    void close(int closemode) throws SQLException {
 
         dbState = DATABASE_CLOSING;
 
@@ -2723,6 +2739,7 @@ class Database {
      *  Responsible for handling the parse and execution of CHECKPOINT SQL
      *  statements.
      *
+     * @param c
      * @param  session
      * @return
      * @throws  SQLException
@@ -2916,8 +2933,7 @@ class Database {
      * @param  session
      * @throws  SQLException
      */
-    private void dropTrigger(String name,
-                             Session session) throws SQLException {
+    void dropTrigger(String name, Session session) throws SQLException {
 
         boolean found = false;
 
@@ -2976,7 +2992,7 @@ class Database {
      * result of executing a SELECT INTO statement.
      *
      */
-    private void setMetaDirty(Result r) {
+    void setMetaDirty(Result r) {
 
         if (r == null
                 || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {

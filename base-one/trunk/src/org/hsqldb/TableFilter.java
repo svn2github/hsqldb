@@ -391,4 +391,44 @@ class TableFilter {
 
         return e.test();
     }
+
+// boucheb@users 20030415 - added for debugging support
+    public String toString() {
+        
+        StringBuffer sb = new StringBuffer();
+        Index index = iIndex;
+        Index primaryIndex = tTable.getPrimaryIndex();
+        int[] primaryKey = tTable.getPrimaryKey();
+        boolean hidden = false;
+        boolean fullScan = false;
+        
+        fullScan = (eStart == null && eEnd == null) 
+                    ||(eStart.getType() == Expression.TRUE 
+                            &&eEnd.getType() == Expression.TRUE);
+        
+        if (index == null) {
+            index = primaryIndex;
+        }
+        
+        if (index == primaryIndex && primaryKey == null) {
+            hidden = true;
+            fullScan = true;
+        }
+
+        sb.append(super.toString()).append('\n');
+        sb.append("table=[").append(tTable.getName().name).append("]\n");
+        sb.append("alias=[").append(sAlias).append("]\n");
+        sb.append("access=[").append(fullScan?"FULL SCAN" : "INDEX PRED").append("]\n");
+        sb.append("index=[");
+        sb.append(index == null ? null
+                                : index.getName().name);
+        sb.append(hidden ? "[HIDDEN]]\n" : "]\n");
+        sb.append("bOuterJoin=[").append(bOuterJoin).append("]\n");
+        sb.append("eStart=[").append(eStart).append("]\n");
+        sb.append("eEnd=[").append(eEnd).append("]\n");
+        sb.append("eAnd=[").append(eEnd).append("]\n");
+
+        return sb.toString();
+
+    }
 }

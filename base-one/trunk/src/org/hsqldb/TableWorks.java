@@ -92,6 +92,11 @@ class TableWorks {
     Table getTable() {
         return table;
     }
+// boucherb@users 20030402 - patch 1.7.2 added for reuse of TableWorks object 
+// under command interpreter support
+    void setTable(Table table) {
+        this.table = table;
+    }
 
 // fredt@users 20020225 - patch 1.7.0 - require existing index for foreign key
 // fredt@users 20030309 - patch 1.7.2 - more rigorous rules

@@ -383,4 +383,22 @@ class Function {
 
         eArg[i] = e;
     }
+
+    public String toString() {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(super.toString()).append("=[\n");
+        sb.append(sFunction).append("(");
+
+        for (int i = 0; i < eArg.length; i++) {
+            sb.append("[").append(eArg[i]).append("]");
+        }
+
+        sb.append(")\n");
+        sb.append("returns ").append(mMethod.getReturnType());
+        sb.append("]\n");
+
+        return sb.toString();
+    }
 }
