@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
@@ -391,14 +391,14 @@ class TableWorks {
 
         int        j    = table.getConstraintIndex(name);
         Constraint c    = table.getConstraint(name);
-        HashMap    cmap = new HashMap();
-
-        cmap.put(c, c);
+        HashSet    cset = new HashSet();
 
         if (c == null) {
             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                               name + " in table: " + table.getName().name);
         }
+
+        cset.add(c);
 
         if (c.getType() == Constraint.MAIN) {
             throw Trace.error(Trace.DROP_SYSTEM_CONSTRAINT);
@@ -409,7 +409,7 @@ class TableWorks {
             Constraint mainConstraint =
                 mainTable.getConstraint(c.getPkName());
 
-            cmap.put(mainConstraint, mainConstraint);
+            cset.add(mainConstraint);
 
             int   k         = mainTable.getConstraintIndex(c.getPkName());
             Index mainIndex = mainConstraint.getMainIndex();
@@ -424,7 +424,7 @@ class TableWorks {
                 try {
 
                     // drop unless the index is used by other constraints
-                    mainTable.checkDropIndex(mainIndex.getName().name, cmap);
+                    mainTable.checkDropIndex(mainIndex.getName().name, cset);
 
                     candrop = true;
 
@@ -450,7 +450,7 @@ class TableWorks {
                 try {
 
                     // drop unless the index is used by other constraints
-                    table.checkDropIndex(refIndex.getName().name, cmap);
+                    table.checkDropIndex(refIndex.getName().name, cset);
                     dropIndex(refIndex.getName().name);
                 } catch (HsqlException e) {}
             }
@@ -460,7 +460,7 @@ class TableWorks {
         } else if (c.getType() == Constraint.UNIQUE) {
 
             // throw if the index for unique constraint is shared
-            table.checkDropIndex(c.getMainIndex().getName().name, cmap);
+            table.checkDropIndex(c.getMainIndex().getName().name, cset);
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);

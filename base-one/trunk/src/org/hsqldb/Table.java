@@ -71,6 +71,7 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -1352,7 +1353,7 @@ class Table {
      * @throws  HsqlException if index is used in a constraint
      */
     void checkDropIndex(String indexname,
-                        HashMap ignore) throws HsqlException {
+                        HashSet ignore) throws HsqlException {
 
         Index index = this.getIndex(indexname);
 
@@ -1367,7 +1368,7 @@ class Table {
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
-            if (ignore != null && ignore.get(c) != null) {
+            if (ignore != null && ignore.contains(c)) {
                 continue;
             }
 
@@ -2039,10 +2040,9 @@ class Table {
                 }
 
                 if (doIt) {
-                    if (!n.isDeleted()) {
+                    if ( ! n.isDeleted() ) {
                         reftable.deleteNoRefCheck(n.getRow(), session);
                     }
-
                     //  foreign key referencing own table
                     if (reftable == this) {
                         nextn = c.findFkRef(row.getData(), true);
@@ -2069,7 +2069,7 @@ class Table {
     }
 
     /**
-     * Check or perform and update cascade operation on a single row.
+     * Check or perform an update cascade operation on a single row.
      *   Check or cascade an update (delete/insert) operation.
      *   The method takes a pair of rows (new data,old data) and checks
      *   if Constraints permit the update operation.
@@ -2325,7 +2325,7 @@ class Table {
             checkCascadeDelete(r, session, doit);
         }
 
-        if (doit &&!r.isDeleted()) {
+        if (doit && !r.isDeleted() ) {
             deleteNoRefCheck(r, session);
         }
     }

@@ -86,8 +86,19 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * @since HSQLDB 1.7.2
  */
 
+// fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
+// fredt@users 20020405 - patch 1.7.0 - other ALTER TABLE statements
+// tony_lai@users 20020820 - patch 595099 - use user-defined PK name
+// tony_lai@users 20020820 - patch 595156 - violation of constraint name
+// fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
+// kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
+// kloska@users 20021112 - patch 1.7.2 - ON DELETE SET NULL | SET DEFAULT
+// boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
+// fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table syntax
+// boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users 20030425 - refactoring DDL into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
+
 class DatabaseCommandInterpreter {
 
     protected Database database;
@@ -2788,6 +2799,7 @@ class DatabaseCommandInterpreter {
 
         t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
 
+/*
         if (tc.deleteAction == Constraint.SET_DEFAULT
                 || tc.deleteAction == Constraint.SET_NULL
                 || tc.updateAction != Constraint.NO_ACTION) {
@@ -2796,7 +2808,7 @@ class DatabaseCommandInterpreter {
                 Trace.DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint,
                 null);
         }
-
+*/
         session.commit();
         tableWorks.setTable(t);
         tableWorks.createForeignKey(tc.localCol, tc.expCol, tc.name,

@@ -86,25 +86,17 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20020130 - patch 1.7.0 - use lookup for speed
 // idents listed in alpha-order for easy check of stats...
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
-// fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
-// fredt@users 20020405 - patch 1.7.0 - other ALTER TABLE statements
 // boucherb@users - doc 1.7.0 - added javadoc comments
-// tony_lai@users 20020820 - patch 595099 - use user-defined PK name
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
-// tony_lai@users 20020820 - patch 595156 - violation of constraint name
 // tony_lai@users 20020820 - changes to shutdown compact to save memory
 // boucherb@users 20020828 - allow reconnect to local db that has shutdown
 // fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
-// fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else if(){} chains with switch()
 // boucherb@users 20020310 - class loader update for JDK 1.1 compliance
-// boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
-// fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table syntax
 // fredt@users 20030401 - patch 1.7.2 by akede@users - data files readonly
 // fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
 // boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
-// boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users 20030510 - patch 1.7.2 - HsqlRuntime upgrade (close())
 
 /**
