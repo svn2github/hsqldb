@@ -188,7 +188,7 @@ public class LockFile {
      * heartbeat task.
      */
     protected static final HsqlTimer timer =
-        HsqlRuntime.getTimer();
+        HsqlRuntime.getHsqlRuntime().getTimer();
 
     /**
      * And opaque reference to this object's heatbeat task.

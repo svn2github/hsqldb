@@ -65,99 +65,101 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.lib;
 
-import java.io.File;
-import java.net.Socket;
-
-// fredt@users 20020215 - patch 1.7.0 by fredt
-// method rorganised to use new HsqlServerProperties class
-// unsaved@users 20021113 - patch 1.7.2 - SSL support
-// boucherb@users 20030510 - patch 1.7.2 - SSL support moved to factory interface
-// boucherb@users 20030510 - patch 1.7.2 - moved all common code to Server
-// boucherb@users 20030510 - patch 1.7.2 - general lint removal
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
- *  WebServer acts as an HTTP server and is one way of
- *  using the client / server mode of HSQL Database Engine. This server can
- *  deliver static files and can also process database queries. An applet
- *  will need only the JDBC classes to access the database. The WebServer
- *  can be configured with the file 'webserver.properties'. This is an
- *  example of the file:
- *
- * <pre>
- * server.port=80
- * server.database=test
- * server.root=./
- * server.default_page=index.html
- * server.silent=true
- *
- * .htm=text/html
- * .html=text/html
- * .txt=text/plain
- * .gif=image/gif
- * .class=application/octet-stream
- * .jpg=image/jpeg
- * .jgep=image/jpeg
- * .zip=application/x-zip-compressed
- * </pre>
- *
- *  Root: use / as separator even for DOS/Windows, it will be replaced<BR>
- *  Mime-types: file ending must be lowercase<BR>
- *
- * @since 1.x
- * @version 1.7.2
+ * Provides a static utility interface to an MD5 digest algorithm
+ * obtained through the java.security.MessageDigest spi
  */
-public class WebServer extends Server {
+public final class MD5 {
 
-    protected int serverProtocol = SC_PROTOCOL_HTTP;
+    /**
+     * The jce MD5 message digest generator.
+     */
+    private static MessageDigest md5;
 
-    public WebServer() {
-        super(SC_PROTOCOL_HTTP);
+    /**
+     * Retrieves a hexidecimal character sequence representing the MD5
+     * digest of the specified character sequence, using the specified
+     * encoding to first convert the character sequence into a byte sequence.
+     * If the specified encoding is null, then ISO-8859-1 is assumed
+     *
+     * @param string the string to encode.
+     * @param encoding the encoding used to convert the string into the
+     *      byte sequence to submit for MD5 digest
+     * @return a hexidecimal character sequence representing the MD5
+     *      digest of the specified string
+     * @throws UnsupportedOperationException if an MD5 digest
+     *       algorithm is not available through the
+     *       java.security.MessageDigest spi
+     */
+    public static final String encode(String string,
+                                      String encoding)
+                                      throws UnsupportedOperationException {
+        return StringConverter.byteToHex(digest(string, encoding));
     }
 
     /**
-     *  Starts a new WebServer.
+     * Retrieves a byte sequence representing the MD5 digest of the
+     * specified character sequence, using the specified encoding to
+     * first convert the character sequence into a byte sequence.
+     * If the specified encoding is not available, the default encoding
+     * is used.  If the specified encoding is null, then ISO-8859-1 is
+     * assumed.
      *
-     * @param  args the "command line" parameters with which to start
-     *      the WebServer.  "-?" will cause the command line arguments
-     *      help to be printed to the standard output
+     * @param string the string.
+     * @param encoding the character encoding.
+     * @return the digest as an array of 16 bytes.
+     * @throws UnsupportedOperationException if an MD5 digest
+     *      algorithm is not available through the
+     *      java.security.MessageDigest spi
      */
-    public static void main(String args[]) {
+    public static byte[] digest(String string,
+                                String encoding)
+                                throws UnsupportedOperationException {
 
-        WebServer      server;
-        HsqlProperties props;
-        String         propsPath;
+        byte[] data;
 
-        if (args.length > 0) {
-            String p = args[0];
+        if (encoding == null) {
+            encoding = "ISO-8859-1";
+        }
 
-            if ((p != null) && p.startsWith("-?")) {
-                printHelp("webserver.help");
+        try {
+            data = string.getBytes(encoding);
+        } catch (UnsupportedEncodingException x) {
+            data = string.getBytes();
+        }
 
-                return;
+        return digest(data);
+    }
+
+    /**
+     * Retrieves a byte sequence representing the MD5 digest of the
+     * specified the specified byte sequence.
+     *
+     * @param data the data to digest.
+     * @return the MD5 digest as an array of 16 bytes.
+     * @throws UnsupportedOperationException if an MD5 digest
+     *       algorithm is not available through the
+     *       java.security.MessageDigest spi
+     */
+    public static final byte[] digest(byte[] data)
+    throws UnsupportedOperationException {
+
+        synchronized (MD5.class) {
+            if (md5 == null) {
+                try {
+                    md5 = MessageDigest.getInstance("MD5");
+                } catch (NoSuchAlgorithmException e) {
+                    throw new UnsupportedOperationException(e.toString());
+                }
             }
+
+            return md5.digest(data);
         }
-
-        props = HsqlProperties.argArrayToProps(args, SC_KEY_PREFIX);
-
-        // Standard behaviour when started from the command line
-        // is to halt the VM when the server exits.  This may, of 
-        // course, be partially overridden with a security policy
-        props.setPropertyIfNotExists(SC_KEY_NO_SYSTEM_EXIT, "false");
-
-        server    = new WebServer();
-        propsPath = server.getDefaultPropertiesPath();
-
-        server.print("Invoked from main() method");
-        server.print("Loading properties from [" + propsPath + "]");
-
-        if (!server.putPropertiesFromFile(propsPath)) {
-            server.print("Could not load properties from file");
-            server.print("Using cli/default properties only");
-        }
-
-        server.setProperties(props);
-        server.start();
     }
 }

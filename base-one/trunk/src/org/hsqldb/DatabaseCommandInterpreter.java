@@ -73,7 +73,9 @@ import java.io.StringReader;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashSet;
+import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.StringUtil;
 
 /**
  * Provides SQL Interpreter services relative to a Session and
@@ -84,227 +86,219 @@ import org.hsqldb.lib.StopWatch;
  */
 class DatabaseCommandInterpreter implements DITypes {
 
-    protected Database database;
-    protected Session  session;
+    protected Database    database;
+    protected Session     session;
+    protected HsqlRuntime runtime;
 
+    /** Constructs a new DatabaseCommandInterpreter for the given Session */
     DatabaseCommandInterpreter(Session s) {
+
         session  = s;
         database = session.getDatabase();
+        runtime  = HsqlRuntime.getHsqlRuntime();
     }
 
-    Result execute(String statement) {
+    /**
+     * Executes the statment(s) represented by the given SQL String
+     *
+     * @return the result of executing the given SQL String
+     */
+    Result execute(String sql) {
 
         Parser parser;
         Result result;
+        String token;
+        String part;
         int    cmd;
+        Logger logger;
 
-        if (Record.gcFrequency != 0
-                && Record.memoryRecords > Record.gcFrequency) {
-            System.gc();
-            Trace.printSystemOut("gc at " + Record.memoryRecords);
-
-            Record.memoryRecords = 0;
-        }
+        runtime.gc();
 
         if (Trace.TRACE) {
-            Trace.trace(statement);
+            Trace.trace(sql);
         }
 
         result = null;
         cmd    = Token.UNKNOWN;
+        logger = database.logger;
 
         try {
-            tokenizer.reset(statement);
-
-            // Tokenizer tokenizer = new Tokenizer(statement);
-            parser = new Parser(database, tokenizer, session);
-
             if (Trace.DOASSERT) {
                 Trace.doAssert(!session.isNestedTransaction());
             }
 
             Trace.check(!session.isClosed(), Trace.ACCESS_IS_DENIED);
             Trace.check(!database.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
+            tokenizer.reset(sql);
+
+            // TODO:  make Parser resetable, like tokenizer.
+            // 4000 new Parsers immediately thrown away to
+            // execute the standard database manager script
+            // seems like a real waste.
+            parser = new Parser(database, tokenizer, session);
 
             while (true) {
                 tokenizer.setPartMarker();
                 session.setScripting(false);
 
-                String sToken = tokenizer.getString();
+                token = tokenizer.getString();
 
-                if (sToken.length() == 0) {
+                if (token.length() == 0) {
                     break;
                 }
 
-                cmd = Token.get(sToken);
+                cmd = Token.get(token);
 
-                switch (cmd) {
-
-                    case Token.SELECT :
-                        result = parser.processSelect();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(result);
-
-// --
-                        break;
-
-                    case Token.INSERT :
-                        result = compile
-                                 ? session.cse.executeInsertStatement(
-                                     parser.compileInsertStatement(cs))
-                                 : parser.processInsert();
-                        break;
-
-                    case Token.UPDATE :
-                        result = compile
-                                 ? session.cse.executeUpdateStatement(
-                                     parser.compileUpdateStatement(cs))
-                                 : parser.processUpdate();
-                        break;
-
-                    case Token.DELETE :
-                        result = compile
-                                 ? session.cse.executeDeleteStatement(
-                                     parser.compileDeleteStatement(cs))
-                                 : parser.processDelete();
-                        break;
-
-                    case Token.CALL :
-                        result = compile
-                                 ? session.cse.executeCallStatement(
-                                     parser.compileCallStatement(cs))
-                                 : parser.processCall();
-                        break;
-
-                    case Token.SET :
-                        processSet();
-                        break;
-
-                    case Token.COMMIT :
-                        processCommit();
-                        session.setScripting(true);
-                        break;
-
-                    case Token.ROLLBACK :
-                        processRollback();
-                        session.setScripting(true);
-                        break;
-
-                    case Token.SAVEPOINT :
-                        processSavepoint();
-                        session.setScripting(true);
-                        break;
-
-                    case Token.CREATE :
-                        processCreate();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.ALTER :
-                        processAlter();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.DROP :
-                        processDrop();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.GRANT :
-                        processGrantOrRevoke(true);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.REVOKE :
-                        processGrantOrRevoke(false);
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.CONNECT :
-                        processConnect();
-
-// boucherb@users  - metadata 1.7.2 - system tables
-                        database.setMetaDirty(null);
-
-// --
-                        break;
-
-                    case Token.DISCONNECT :
-                        processDisconnect();
-                        break;
-
-                    case Token.SCRIPT :
-                        result = processScript();
-                        break;
-
-                    case Token.SHUTDOWN :
-                        processShutdown();
-                        break;
-
-                    case Token.CHECKPOINT :
-                        processCheckpoint();
-                        break;
-
-                    case Token.SEMICOLON :
-                        break;
-
-                    case Token.EXPLAIN :
-                        result = processExplainPlan();
-                        break;
-
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                if (cmd == Token.SEMICOLON) {
+                    continue;
                 }
+
+                // TODO:  build up list of Results in session context 
+                // RE:    ability to gen/retrieve multiple result sets
+                // EX:    session.addResult(executePart(cmd, token, parser));
+                result = executePart(cmd, token, parser);
 
                 if (session.getScripting()) {
-                    database.logger.writeToLog(session,
-                                               tokenizer.getLastPart());
+                    logger.writeToLog(session, tokenizer.getLastPart());
                 }
             }
-        } catch (SQLException e) {
-
-            // e.printStackTrace();
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// tony_lai@users 20020820 - patch 595073
-//            rResult = new Result(Trace.getMessage(e) + " in statement ["
-            result = new Result(e.getMessage() + " in statement ["
-                                + statement + "]", e.getErrorCode());
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            String s = Trace.getMessage(Trace.GENERAL_ERROR) + " " + e;
-
-            result = new Result(s + " in statement [" + statement + "]",
-                                Trace.GENERAL_ERROR);
-        } catch (java.lang.OutOfMemoryError e) {
-            e.printStackTrace();
-
-            result = new Result("out of memory", Trace.GENERAL_ERROR);
+        } catch (Throwable t) {
+            result = new Result(t, tokenizer.getLastPart());
         }
 
         return result == null ? emptyResult
                               : result;
+    }
+
+    Result executePart(int cmd, String token,
+                       Parser parser) throws Throwable {
+
+        Result result;
+
+        result = null;
+
+        switch (cmd) {
+
+            case Token.SELECT :
+                cs = parser.compileSelectStatement(cs);
+
+                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+
+                if (cs.select.sIntoTable == null) {
+                    result = session.sqlExecuteCompiled(cs);
+                } else {
+                    result = processSelectInto(cs.select);
+
+                    database.setMetaDirty(result);
+                }
+                break;
+
+            case Token.INSERT :
+                cs = parser.compileInsertStatement(cs);
+
+                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+
+                result = session.sqlExecuteCompiled(cs);
+                break;
+
+            case Token.UPDATE :
+                cs = parser.compileUpdateStatement(cs);
+
+                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+
+                result = session.sqlExecuteCompiled(cs);
+                break;
+
+            case Token.DELETE :
+                cs = parser.compileDeleteStatement(cs);
+
+                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+
+                result = session.sqlExecuteCompiled(cs);
+                break;
+
+            case Token.CALL :
+                cs = parser.compileCallStatement(cs);
+
+                Trace.doAssert(cs.parameters.length < 1, "param count > 0");
+
+                result = session.sqlExecuteCompiled(cs);
+                break;
+
+            case Token.SET :
+                processSet();
+                break;
+
+            case Token.COMMIT :
+                processCommit();
+                session.setScripting(true);
+                break;
+
+            case Token.ROLLBACK :
+                processRollback();
+                session.setScripting(true);
+                break;
+
+            case Token.SAVEPOINT :
+                processSavepoint();
+                session.setScripting(true);
+                break;
+
+            case Token.CREATE :
+                processCreate();
+                database.setMetaDirty(null);
+                break;
+
+            case Token.ALTER :
+                processAlter();
+                database.setMetaDirty(null);
+                break;
+
+            case Token.DROP :
+                processDrop();
+                database.setMetaDirty(null);
+                break;
+
+            case Token.GRANT :
+                processGrantOrRevoke(true);
+                database.setMetaDirty(null);
+                break;
+
+            case Token.REVOKE :
+                processGrantOrRevoke(false);
+                database.setMetaDirty(null);
+                break;
+
+            case Token.CONNECT :
+                processConnect();
+                database.setMetaDirty(null);
+                break;
+
+            case Token.DISCONNECT :
+                processDisconnect();
+                break;
+
+            case Token.SCRIPT :
+                result = processScript();
+                break;
+
+            case Token.SHUTDOWN :
+                processShutdown();
+                break;
+
+            case Token.CHECKPOINT :
+                processCheckpoint();
+                break;
+
+            case Token.EXPLAIN :
+                result = processExplainPlan();
+                break;
+
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        return result;
     }
 
     /**
@@ -1429,6 +1423,17 @@ class DatabaseCommandInterpreter implements DITypes {
 
                         return;
                     }
+                    case Token.FOREIGN : {
+                        tokenizer.getThis("KEY");
+                        processAlterTableAddForeignKeyConstraint(t, null);
+
+                        return;
+                    }
+                    case Token.UNIQUE : {
+                        processAlterTableAddUniqueConstraint(t, null);
+
+                        return;
+                    }
                     case Token.COLUMN : {
                         processAlterTableAddColumn(t);
 
@@ -1681,6 +1686,7 @@ class DatabaseCommandInterpreter implements DITypes {
             }
             case Token.MAXROWS : {
                 session.setScripting(false);
+
                 int i = Integer.parseInt(tokenizer.getString());
 
                 session.setMaxRows(i);
@@ -1800,7 +1806,7 @@ class DatabaseCommandInterpreter implements DITypes {
     }
 
     /**
-     * Responsible for COMMIT
+     * Responsible for  handling the execution of COMMIT [WORK]
      *
      * @throws  SQLException
      */
@@ -2222,16 +2228,15 @@ class DatabaseCommandInterpreter implements DITypes {
 
     /**
      * Responsible for handling tail of
-     * ALTER TABLE ADD CONSTRAINT DDL.
+     * ALTER TABLE ADD CONSTRAINT ... DDL.
      *
      * @param t to which to add the constraint
      * @throws SQLException
      */
     private void processAlterTableAddConstraint(Table t) throws SQLException {
 
-        String         token;
-        HsqlName       cname;
-        TempConstraint tc;
+        String   token;
+        HsqlName cname;
 
         token = tokenizer.getName();
         cname = new HsqlName(token, tokenizer.wasQuotedIdentifier());
@@ -2244,39 +2249,12 @@ class DatabaseCommandInterpreter implements DITypes {
             }
             case Token.FOREIGN : {
                 tokenizer.getThis("KEY");
-
-                tc = processCreateFK(t, cname);
-
-                t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
-
-                if (tc.deleteAction == Constraint.SET_DEFAULT
-                        || tc.deleteAction == Constraint.SET_NULL
-                        || tc.updateAction != Constraint.NO_ACTION) {
-                    throw Trace.error(
-                        Trace.FOREIGN_KEY_NOT_ALLOWED,
-                        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
-                }
-
-                // CHECKME:
-                // shouldn't the commit come only *after* the DDL is
-                // actually successful?
-                session.commit();
-                tableWorks.setTable(t);
-                tableWorks.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                            tc.expTable, tc.deleteAction,
-                                            tc.updateAction);
+                processAlterTableAddForeignKeyConstraint(t, cname);
 
                 return;
             }
             case Token.UNIQUE : {
-                int col[] = processColumnList(t);
-
-                // CHECKME:
-                // shouldn't the commit come only *after* the DDL is
-                // actually successful?
-                session.commit();
-                tableWorks.setTable(t);
-                tableWorks.createUniqueConstraint(col, cname);
+                processAlterTableAddUniqueConstraint(t, cname);
 
                 return;
             }
@@ -2533,20 +2511,20 @@ class DatabaseCommandInterpreter implements DITypes {
     }
 
     private static boolean isCompile() {
+
         try {
             return !Boolean.getBoolean("org.hsqldb.Parser.shadow");
         } catch (Exception e) {}
+
         return true;
     }
 
     // -Dorg.hsqldb.Parser.shadow=true|false
-    static final boolean compile = isCompile();
-
-    static final Result emptyResult = new Result();
-
-    TableWorks        tableWorks = new TableWorks(null);
-    Tokenizer         tokenizer  = new Tokenizer();
-    CompiledStatement cs         = new CompiledStatement();
+    static final boolean compile     = isCompile();
+    static final Result  emptyResult = new Result();
+    TableWorks           tableWorks  = new TableWorks(null);
+    Tokenizer            tokenizer   = new Tokenizer();
+    CompiledStatement    cs          = new CompiledStatement();
 
     private static class TempConstraint {
 
@@ -2579,5 +2557,156 @@ class DatabaseCommandInterpreter implements DITypes {
             this.deleteAction = deleteAction;
             this.updateAction = updateAction;
         }
+    }
+
+    private Result processSelectInto(Select select) throws SQLException {
+
+        Table        t;
+        Result       r;
+        Result       uc;
+        int          sid;
+        int          intoType;
+        HsqlName     intoHsqlName;
+        String       intoName;
+        int          colCount;
+        Expression[] eColumn;
+        String       txtSrc;
+
+        // session level user rights
+        session.checkDDLWrite();
+
+        // fredt@users 20020215 - patch 497872 by Nitin Chauhan
+        // to require column labels in SELECT INTO TABLE
+        eColumn  = select.eColumn;
+        colCount = eColumn.length;
+
+        for (int i = 0; i < colCount; i++) {
+            if (eColumn[i].getAlias().length() == 0) {
+                throw Trace.error(Trace.LABEL_REQUIRED);
+            }
+        }
+
+        intoHsqlName = select.sIntoTable;
+        intoName     = intoHsqlName.name;
+
+        if (database.findUserTable(intoName, session) != null) {
+            throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
+        }
+
+        r        = select.getResult(0);
+        intoType = select.intoType;
+        sid      = session.getId();
+
+        // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        t = (intoType == Table.TEXT_TABLE)
+            ? new TextTable(database, intoHsqlName, intoType, sid)
+            : new Table(database, intoHsqlName, intoType, sid);
+
+        t.addColumns(r);
+        t.createPrimaryKey();
+        database.linkTable(t);
+
+        // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        if (intoType == Table.TEXT_TABLE) {
+            try {
+
+                // Use default lowercase name "<table>.csv" (with invalid
+                // char's converted to underscores):
+                txtSrc = StringUtil.toLowerSubset(intoName, '_') + ".csv";
+
+                t.setDataSource(txtSrc, false, session);
+                logTableDDL(t);
+                t.insertNoCheck(r, session);
+            } catch (SQLException e) {
+                database.dropTable(intoName, false, false, session);
+
+                throw (e);
+            }
+        } else {
+            logTableDDL(t);
+
+            // SELECT .. INTO can't fail because of constraint violation
+            t.insertNoCheck(r, session);
+        }
+
+        uc              = new Result();
+        uc.iUpdateCount = r.getSize();
+
+        return uc;
+    }
+
+    /**
+     *  Logs the DDL for a table created with INTO.
+     *  Uses three dummy arguments for getTableDDL() as the new table has no
+     *  FK constraints.
+     *
+     * @throws  SQLException
+     */
+    void logTableDDL(Table t) throws SQLException {
+
+        HsqlStringBuffer tableDDL;
+        String           sourceDDL;
+
+        if (t.isTemp()) {
+            return;
+        }
+
+        tableDDL = new HsqlStringBuffer();
+
+        DatabaseScript.getTableDDL(database, t, 0, null, null, tableDDL);
+
+        sourceDDL = DatabaseScript.getDataSource(t);
+
+        database.logger.writeToLog(session, tableDDL.toString());
+
+        if (sourceDDL != null) {
+            database.logger.writeToLog(session, sourceDDL);
+        }
+    }
+
+    private void processAlterTableAddUniqueConstraint(Table t,
+            HsqlName n) throws SQLException {
+
+        int col[];
+
+        col = processColumnList(t);
+
+        if (n == null) {
+            n = HsqlName.newAutoName("CT");
+        }
+
+        session.commit();
+        tableWorks.setTable(t);
+        tableWorks.createUniqueConstraint(col, n);
+    }
+
+    private void processAlterTableAddForeignKeyConstraint(Table t,
+            HsqlName n) throws SQLException {
+
+        TempConstraint tc;
+
+        if (n == null) {
+            n = HsqlName.newAutoName("FK");
+        }
+
+        tc = processCreateFK(t, n);
+
+        t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
+
+        if (tc.deleteAction == Constraint.SET_DEFAULT
+                || tc.deleteAction == Constraint.SET_NULL
+                || tc.updateAction != Constraint.NO_ACTION) {
+            throw Trace.error(
+                Trace.FOREIGN_KEY_NOT_ALLOWED,
+                "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
+        }
+
+        session.commit();
+        tableWorks.setTable(t);
+        tableWorks.createForeignKey(tc.localCol, tc.expCol, tc.name,
+                                    tc.expTable, tc.deleteAction,
+                                    tc.updateAction);
+
+        return;
     }
 }

@@ -88,6 +88,11 @@ public class CompiledStatement {
     Expression[] parameters;
 
     /**
+     * Subqueries in heaped inverse parse depth order
+     */
+    Parser.SubQuery[] subqueries;
+
+    /**
      * The type of this CompiledStatement. <p>
      *
      * One of: <p>
@@ -105,10 +110,19 @@ public class CompiledStatement {
     int type;
 
     /**
-     * The system change number at the time this expression was last
-     * resolved valid.
+     * The id of this compiled statement
      */
-    long scn;
+    int id;
+
+    /**
+     * The use count for this compiled statement
+     */
+    int use;
+
+    /**
+     * The SQL string that produced this compiled statement
+     */
+    String sql;
 
     /** Creates a new instance of CompiledStatement */
     CompiledStatement() {
@@ -140,8 +154,8 @@ public class CompiledStatement {
         parameters   = null;
         select       = null;
         targetTable  = null;
-        scn          = UNKNOWN;
         type         = UNKNOWN;
+        id           = UNKNOWN;
     }
 
     /**
@@ -252,6 +266,7 @@ public class CompiledStatement {
         this.select       = select;
 
         select.resolveAll();
+
         this.parameters = parameters;
         type            = INSERT_SELECT;
     }
@@ -268,6 +283,7 @@ public class CompiledStatement {
         this.select = select;
 
         select.resolveAll();
+
         this.parameters = parameters;
         type            = SELECT;
     }
@@ -295,6 +311,8 @@ public class CompiledStatement {
         try {
             return toStringImpl();
         } catch (Exception e) {
+            e.printStackTrace();
+
             return e.toString();
         }
     }
@@ -314,14 +332,18 @@ public class CompiledStatement {
         switch (type) {
 
             case SELECT : {
-                return select.toString();
+                sb.append(select.toString());
+                appendSubqueries(sb);
+
+                return sb.toString();
             }
             case INSERT_VALUES : {
                 sb.append("INSERT VALUES");
                 sb.append('[').append('\n');
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
-                appendParms(sb).append(']');
+                appendParms(sb).append('\n');
+                appendSubqueries(sb).append(']');
 
                 return sb.toString();
             }
@@ -331,7 +353,8 @@ public class CompiledStatement {
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
                 sb.append(select).append('\n');
-                appendParms(sb).append(']');
+                appendParms(sb).append('\n');
+                appendSubqueries(sb).append(']');
 
                 return sb.toString();
             }
@@ -341,7 +364,8 @@ public class CompiledStatement {
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
                 sb.append(tf).append('\n');
-                appendParms(sb).append(']');
+                appendParms(sb).append('\n');
+                appendSubqueries(sb).append(']');
 
                 return sb.toString();
             }
@@ -350,7 +374,8 @@ public class CompiledStatement {
                 sb.append('[').append('\n');
                 appendTable(sb).append('\n');
                 sb.append(tf).append('\n');
-                appendParms(sb).append(']');
+                appendParms(sb).append('\n');
+                appendSubqueries(sb).append(']');
 
                 return sb.toString();
             }
@@ -360,8 +385,8 @@ public class CompiledStatement {
                 sb.append("CALL");
                 sb.append('[');
                 sb.append(expression);
-                appendParms(sb);
-                sb.append(']');
+                appendParms(sb).append('\n');
+                appendSubqueries(sb).append(']');
 
                 return sb.toString();
             }
@@ -369,6 +394,22 @@ public class CompiledStatement {
                 return "UNKNOWN";
             }
         }
+    }
+
+    private StringBuffer appendSubqueries(StringBuffer sb) {
+
+        sb.append("SUBQUERIES[");
+
+        for (int i = 0; i < subqueries.length; i++) {
+            sb.append("\n[level=").append(subqueries[i].level).append(
+                '\n').append("org.hsqldb.Select@").append(
+                Integer.toHexString(subqueries[i].select.hashCode())).append(
+                "]");
+        }
+
+        sb.append(']');
+
+        return sb;
     }
 
     private StringBuffer appendTable(StringBuffer sb) {

@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.StringUtil;
 
 /**
  * Provides execution of CompiledStatement objects.
@@ -51,10 +52,11 @@ import org.hsqldb.lib.StopWatch;
  */
 public class CompiledStatementExecutor {
 
-    Session  session;
-    Database database;
-    Result   updateResult;
-    Result   emptyResult;
+    Session     session;
+    Database    database;
+    Result      updateResult;
+    Result      emptyResult;
+    HsqlRuntime runtime;
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -67,6 +69,7 @@ public class CompiledStatementExecutor {
         database     = session.getDatabase();
         updateResult = new Result();
         emptyResult  = new Result();
+        runtime      = HsqlRuntime.getHsqlRuntime();
     }
 
     /**
@@ -77,28 +80,23 @@ public class CompiledStatementExecutor {
      */
     Result execute(CompiledStatement cs) {
 
+        runtime.gc();
+
         // can be made more granular later, e.g. table-level locking
         synchronized (database) {
             Result result = null;
 
             try {
-                return executeImpl(cs);
-            } catch (SQLException e) {
-                result = new Result(e.getMessage(), e.getErrorCode());
-            } catch (Exception e) {
-                e.printStackTrace();
-
-                String s = Trace.getMessage(Trace.GENERAL_ERROR) + " " + e;
-
-                result = new Result(s, Trace.GENERAL_ERROR);
-            } catch (java.lang.OutOfMemoryError e) {
-                e.printStackTrace();
-
-                result = new Result("out of memory", Trace.GENERAL_ERROR);
+                result = executeImpl(cs);
+            } catch (Throwable t) {
+                result = new Result(t, cs.sql);
             }
 
-            return result == null ? emptyResult
-                                  : result;
+            if (result == null) {
+                result = emptyResult;
+            }
+
+            return result;
         }
     }
 
@@ -363,7 +361,8 @@ public class CompiledStatementExecutor {
 
     /**
      * Executes a SELECT statement.  It is assumed that the argument
-     * is of the correct type.
+     * is of the correct type and that it does not represent a
+     * SELECT ... INTO statement.
      *
      * @param cs a CompiledStatement of type CompiledStatement.SELECT
      * @throws SQLException if a database access error occurs

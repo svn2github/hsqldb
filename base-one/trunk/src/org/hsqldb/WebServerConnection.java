@@ -79,13 +79,16 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.StringTokenizer;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.resources.BundleHandler;
 import java.lang.reflect.Method;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 
 // fredt@users 20021002 - patch 1.7.1 - changed notification method
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
+// boucherb@users 20030510 - patch 1.7.2 - SSL support => factory interface
+// boucherb@users 20030510 - patch 1.7.2 - general lint removal
+// boucherb@users 20030514 - patch 1.7.2 - localized error responses
 
 /**
  *  A web server connection is a transient object that lasts for the duration
@@ -94,21 +97,25 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @version  1.7.1
  */
-class WebServerConnection implements Runnable {
+class WebServerConnection implements Runnable, ServerConstants {
 
-    static final String      ENCODING = "8859_1";
-    private Socket           mSocket;
-    private WebServer        mServer;
-    private boolean          isTls;
-    private ClassLoader      loader                    = null;
-    private Method           SSLSgetInputStreamMethod  = null,
-                             SSLSgetOutputStreamMethod = null;
-    private static final int GET                       = 1,
-                             HEAD                      = 2,
-                             POST                      = 3,
-                             BAD_REQUEST               = 400,
-                             FORBIDDEN                 = 403,
-                             NOT_FOUND                 = 404;
+    static final String               ENCODING = "8859_1";
+    private Socket                    mSocket;
+    private Server                    mServer;
+    private int                       bhnd;
+    private static final StringBuffer sb          = new StringBuffer();
+    private static final int          GET         = 1;
+    private static final int          HEAD        = 2;
+    private static final int          POST        = 3;
+    private static final int          BAD_REQUEST = 400;
+    private static final int          FORBIDDEN   = 403;
+    private static final int          NOT_FOUND   = 404;
+    private static final String       okh         = "HTTP/1.0 200 OK";
+    private static final String       brh = "HTTP/1.0 400 Bad Request";
+    private static final String       nfh         = "HTTP/1.0 404 Not Found";
+    private static final String       fbh         = "HTTP/1.0 403 Forbidden";
+    private static final String ctaoscl =
+        "Content-Type: application/octet-stream\nContent-Length: ";
 
     /**
      *  Constructor declaration
@@ -116,263 +123,270 @@ class WebServerConnection implements Runnable {
      * @param  socket
      * @param  server
      */
-    WebServerConnection(Socket socket, WebServer server, boolean bIn) {
+    WebServerConnection(Socket socket, Server server) {
+
+        ClassLoader cl;
 
         mServer = server;
         mSocket = socket;
-        isTls   = bIn;
+        cl      = null;
+
+        try {
+            cl = getClass().getClassLoader();
+        } catch (Exception e) {}
+
+        bhnd = BundleHandler.getBundleHandle("webserver", cl);
     }
 
     /**
-     *  Method declaration
+     * @throws Exception
+     * @return
+     */
+    private BufferedReader newInputStreamReader() throws Exception {
+        return new BufferedReader(
+            new InputStreamReader(mSocket.getInputStream(), ENCODING));
+    }
+
+    private String getMimeType(String name) {
+
+        int    pos;
+        String key;
+        String mimeType;
+
+        pos      = pos = name == null ? -1
+                                      : name.lastIndexOf(".");
+        mimeType = null;
+
+        if (pos < 0) {
+
+            // do nothing
+        } else {
+            key      = name.substring(pos).toLowerCase();
+            mimeType = mServer.serverProperties.getProperty(key);
+        }
+
+        if (mimeType == null) {
+
+            // CHECKME:  return error response?
+            mimeType = SC_DEFAULT_WEB_MIME;
+        }
+
+        return mimeType;
+    }
+
+    /**
+     * Retrieves an HTTP content type / content length line, given
+     * the supplied content name and length arguments.
+     *
+     * @param name the name of the content
+     * @param len the length of the content
+     * @return
+     */
+    private String getCTCL(String name, int len) {
+
+        String out;
+
+        synchronized (sb) {
+            sb.setLength(0);
+            sb.append("Content-Type: ").append(getMimeType(name)).append(
+                "\nContent-Length: ").append(len);
+
+            out = sb.toString();
+        }
+
+        return out;
+    }
+
+    /**
+     * Retrieves a new input stream for reading the file with the specified
+     * name.
+     *
+     * @param name the name of the file
+     * @throws Exception if a file i/o exception occurs
+     * @return a new input stream for reading the named file
+     */
+    private static InputStream newFileInputStream(String name)
+    throws Exception {
+        return new BufferedInputStream(new FileInputStream(new File(name)));
+    }
+
+    /**
+     * Retrieves a new output stream for writing to the connected socket.
+     *
+     * @throws Exception if an i/o or network exception occurs
+     * @return a new output stream
+     */
+    private DataOutputStream newDataOutputStream() throws Exception {
+        return new DataOutputStream(
+            new BufferedOutputStream(mSocket.getOutputStream()));
+    }
+
+    /**
+     * Causes this WebServerConnection to process its HTTP request
+     * in a blocking fashion until the request is fully processed
+     * or an exception occurs internally.
      */
     public void run() {
 
         try {
-            if (isTls) {
-                try {
-                    if (loader == null) {
-                        loader = getClass().getClassLoader();
-                    }
-
-                    if (loader == null) {
-                        throw new IncompatibleClassChangeError(
-                            "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
-                    }
-
-                    if (SSLSgetInputStreamMethod == null) {
-                        SSLSgetInputStreamMethod = loader.loadClass(
-                            "javax.net.ssl.SSLSocket").getMethod(
-                            "getInputStream", null);
-                    }
-
-                    if (SSLSgetOutputStreamMethod == null) {
-                        SSLSgetOutputStreamMethod = loader.loadClass(
-                            "javax.net.ssl.SSLSocket").getMethod(
-                            "getOutputStream", null);
-                    }
-                } catch (SecurityException se) {
-                    throw new Exception(
-                        "You do not have permission to use the needed SSL resources");
-                } catch (ClassNotFoundException cnfe) {
-                    throw new ClassNotFoundException("JSSE not installed");
-                } catch (NoSuchMethodException nsme) {
-                    throw new Exception(
-                        "Failed to find an SSL method even though JSSE "
-                        + "is installed:\n" + nsme);
-                }
-            }
-
-            // Assertion (would use "assert" if Java 1.4):
-            if (isTls && (SSLSgetInputStreamMethod == null
-                          || SSLSgetOutputStreamMethod == null)) {
-                throw new VerifyError("Unexpected SSL error encountered");
-            }
-
-            // At this point, if mode is SSL, then the *Method's are set
-            BufferedReader input = null;
-
-            try {
-                input = new BufferedReader(
-                    new InputStreamReader(
-                        (isTls
-                         ? (InputStream) SSLSgetInputStreamMethod.invoke(
-                             mSocket, null)
-                         : mSocket.getInputStream()), ENCODING));
-            } catch (IllegalAccessException iae) {
-                throw new Exception(
-                    "You do not have permission to use the needed SSL resources");
-
-                // Need to unwrap the following exceptions
-            } catch (InvocationTargetException ite) {
-                Throwable t = ite.getTargetException();
-
-                throw ((t instanceof Exception) ? ((Exception) t)
-                                                : ite);
-            } catch (ExceptionInInitializerError eiie) {
-                Throwable t = eiie.getException();
-
-                if (t instanceof Exception) {
-                    throw (Exception) t;
-                } else {
-                    throw eiie;
-                }
-            }
-
-            String request;
-            String name   = null;
-            int    method = BAD_REQUEST;
-            int    len    = -1;
-
-            while (true) {
-                request = input.readLine();
-
-                if (request == null) {
-                    break;
-                }
-
-                StringTokenizer tokenizer = new StringTokenizer(request, " ");
-
-                if (!tokenizer.hasMoreTokens()) {
-                    break;
-                }
-
-                String first = tokenizer.nextToken();
-
-                if (first.equals("GET")) {
-                    method = GET;
-                    name   = tokenizer.nextToken();
-                } else if (first.equals("HEAD")) {
-                    method = HEAD;
-                    name   = tokenizer.nextToken();
-                } else if (first.equals("POST")) {
-                    method = POST;
-                    name   = tokenizer.nextToken();
-                } else if (request.toUpperCase().startsWith(
-                        "CONTENT-LENGTH:")) {
-                    len = Integer.parseInt(tokenizer.nextToken());
-                }
-            }
-
-            switch (method) {
-
-                case BAD_REQUEST :
-                    processError(BAD_REQUEST);
-                    break;
-
-                case GET :
-                    processGet(name, true);
-                    break;
-
-                case HEAD :
-                    processGet(name, false);
-                    break;
-
-                case POST :
-                    processPost(input, name, len);
-                    break;
-            }
-
-            input.close();
+            runImpl();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            mServer.notify(Server.CONNECTION_CLOSED);
+            mServer.notify(SC_CONNECTION_CLOSED);
         }
     }
 
     /**
-     *  Method declaration
+     * Internal run implementation.
      *
-     * @param  name
-     * @param  send
+     * @throws Exception if there is a problem processing this connection's
+     *      HTTP request.
+     */
+    protected void runImpl() throws Exception {
+
+        BufferedReader  input;
+        String          request;
+        String          name;
+        int             method;
+        int             len;
+        StringTokenizer tokenizer;
+        String          first;
+
+        input  = newInputStreamReader();
+        name   = null;
+        method = BAD_REQUEST;
+        len    = -1;
+
+        while (true) {
+            request = input.readLine();
+
+            if (request == null) {
+                break;
+            }
+
+            tokenizer = new StringTokenizer(request, " ");
+
+            if (!tokenizer.hasMoreTokens()) {
+                break;
+            }
+
+            first = tokenizer.nextToken();
+
+            if (first.equals("GET")) {
+                method = GET;
+                name   = tokenizer.nextToken();
+            } else if (first.equals("HEAD")) {
+                method = HEAD;
+                name   = tokenizer.nextToken();
+            } else if (first.equals("POST")) {
+                method = POST;
+                name   = tokenizer.nextToken();
+            } else if (request.toUpperCase().startsWith("CONTENT-LENGTH:")) {
+                len = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+
+        switch (method) {
+
+            case BAD_REQUEST :
+                processError(BAD_REQUEST);
+                break;
+
+            case GET :
+                processGet(name, true);
+                break;
+
+            case HEAD :
+                processGet(name, false);
+                break;
+
+            case POST :
+                processPost(input, name, len);
+                break;
+        }
+
+        input.close();
+    }
+
+    /**
+     *  Processes an HTTP GET request
+     *
+     * @param  name the name of the content to get
+     * @param  send whether to send the content as well, or just the header
      */
     private void processGet(String name, boolean send) {
 
         try {
-            if (name.endsWith("/")) {
-                name = name + mServer.mDefaultFile;
-            }
-
-            if (name.indexOf("..") != -1) {
-                processError(FORBIDDEN);
-
-                return;
-            }
-
-            name = mServer.mRoot + name;
-
-            if (mServer.mPathSeparatorChar != '/') {
-                name = name.replace('/', mServer.mPathSeparatorChar);
-            }
-
-            String mime = null;
-            int    i    = name.lastIndexOf(".");
-
-            if (i != -1) {
-                String ending = name.substring(i).toLowerCase();
-
-                mime = mServer.serverProperties.getProperty(ending);
-            }
-
-            if (mime == null) {
-                mime = "text/html";
-            }
-
-            BufferedInputStream file = null;
-            String              header;
-
-            try {
-                file = new BufferedInputStream(
-                    new FileInputStream(new File(name)));
-
-                int len = file.available();
-
-                header = getHead("HTTP/1.0 200 OK",
-                                 "Content-Type: " + mime + "\n"
-                                 + "Content-Length: " + len);
-            } catch (IOException e) {
-                processError(NOT_FOUND);
-
-                return;
-            }
-
-            DataOutputStream output = null;
-
-            // Assertion (would use "assert" if Java 1.4):
-            if (isTls && SSLSgetOutputStreamMethod == null) {
-                throw new VerifyError("Unexpected SSL error encountered");
-            }
-
-            try {
-                output = new DataOutputStream(
-                    new BufferedOutputStream(
-                        isTls
-                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
-                            mSocket, null)
-                        : mSocket.getOutputStream()));
-            } catch (IllegalAccessException iae) {
-                throw new Exception(
-                    "You do not have permission to use the needed SSL resources");
-
-                // Need to unwrap the following exceptions
-            } catch (InvocationTargetException ite) {
-                Throwable t = ite.getTargetException();
-
-                throw ((t instanceof Exception) ? ((Exception) t)
-                                                : ite);
-            } catch (ExceptionInInitializerError eiie) {
-                Throwable t = eiie.getException();
-
-                if (t instanceof Exception) {
-                    throw (Exception) t;
-                } else {
-                    throw eiie;
-                }
-            }
-
-            output.write(header.getBytes(ENCODING));
-
-            if (send) {
-                int b;
-
-                while (true) {
-                    b = file.read();
-
-                    if (b == -1) {
-                        break;
-                    }
-
-                    output.writeByte(b);
-                }
-            }
-
-            output.flush();
-            output.close();
+            processGetImpl(name, send);
         } catch (Exception e) {
             mServer.traceError("processGet: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Internal get implementation.
+     *
+     * @param  name the name of the content to get
+     * @param  send whether to send the content as well, or just the header
+     * @throws Exception if there is a problem processing the get
+     */
+    private void processGetImpl(String name, boolean send) throws Exception {
+
+        String           hdr;
+        DataOutputStream os;
+        InputStream      is;
+        int              b;
+
+        if (name.endsWith("/")) {
+            name = name + mServer.getDefaultWebPage();
+        }
+
+        // traversing up the directory structure is forbidden.
+        if (name.indexOf("..") != -1) {
+            processError(FORBIDDEN);
+
+            return;
+        }
+
+        name = mServer.getWebRoot() + name;
+
+        if (mServer.mPathSeparatorChar != '/') {
+            name = name.replace('/', mServer.mPathSeparatorChar);
+        }
+
+        is = null;
+
+        try {
+            is  = newFileInputStream(name);
+            hdr = getHead(okh, getCTCL(name, is.available()));
+        } catch (IOException e) {
+            processError(NOT_FOUND);
+
+            return;
+        }
+
+        os = newDataOutputStream();
+
+        os.write(hdr.getBytes(ENCODING));
+
+        // TODO:
+        // Although we're using buffered input and output streams,
+        // this can still be made more efficient by using our own
+        // byte buffer and getting closer to the native bulk read
+        // and write methods.  Serveral thousand calls to byte read()
+        // and writeByte(b), even when backed by buffers, are always 
+        // bound to be less efficient than direct read(byte[]) and 
+        // write(byte[]) calls.
+        if (send) {
+            while (-1 != (b = is.read())) {
+                os.writeByte(b);
+            }
+        }
+
+        os.flush();
+        os.close();
     }
 
     /**
@@ -383,8 +397,20 @@ class WebServerConnection implements Runnable {
      * @return
      */
     private String getHead(String start, String end) {
-        return start + "\nAllow: GET, HEAD, POST\nMIME-Version: 1.0\n"
-               + "Server: " + mServer.mServerName + "\n" + end + "\n\n";
+
+        String out;
+
+        synchronized (sb) {
+            sb.setLength(0);
+            sb.append(start).append(
+                "\nAllow: GET, HEAD, POST\nMIME-Version: 1.0\nServer: ")
+                    .append(mServer.mServerName).append('\n').append(
+                        end).append("\n\n");
+
+            out = sb.toString();
+        }
+
+        return out;
     }
 
     /**
@@ -397,25 +423,32 @@ class WebServerConnection implements Runnable {
     private void processPost(BufferedReader input, String name,
                              int len) throws SQLException, IOException {
 
+        char   cbuf[];
+        String s;
+        int    p;
+        int    q;
+        String user;
+        String password;
+
         if (len < 0) {
             processError(BAD_REQUEST);
 
             return;
         }
 
-        char b[] = new char[len];
+        cbuf = new char[len];
 
         try {
-            input.read(b, 0, len);
+            input.read(cbuf, 0, len);
         } catch (IOException e) {
             processError(BAD_REQUEST);
 
             return;
         }
 
-        String s = new String(b);
-        int    p = s.indexOf('+');
-        int    q = s.indexOf('+', p + 1);
+        s = new String(cbuf);
+        p = s.indexOf('+');
+        q = s.indexOf('+', p + 1);
 
         if ((p == -1) || (q == -1)) {
             processError(BAD_REQUEST);
@@ -423,15 +456,20 @@ class WebServerConnection implements Runnable {
             return;
         }
 
-        String user = s.substring(0, p);
-
-        user = StringConverter.hexStringToUnicode(user);
-
-        String password = s.substring(p + 1, q);
-
-        password = StringConverter.hexStringToUnicode(password);
-        s        = s.substring(q + 1);
-        s        = StringConverter.hexStringToUnicode(s);
+        // TODO:
+        // Base64 encoding and decoding would make more efficient use
+        // of the character set and would reduce network traffic.
+        // Encoding to hexidicimal effectively doubles the size
+        // of a unicode string, while Base64 causes inflation by only
+        // a factor of 1.333... (every six bits becomes one byte).
+        // Use of compressed streams might be nice also.
+        // However, both paths imposes yet another step, more library code
+        // and, for compressed streams, an extra memory buffer allocation,
+        // reducing server-side processing speed and memory efficiency
+        // while possibly improving network load.
+        user     = StringConverter.hexStringToUnicode(s.substring(0, p));
+        password = StringConverter.hexStringToUnicode(s.substring(p + 1, q));
+        s        = StringConverter.hexStringToUnicode(s.substring(q + 1));
 
         processQuery(user, password, s);
     }
@@ -443,50 +481,41 @@ class WebServerConnection implements Runnable {
      */
     private void processError(int code) {
 
-        mServer.trace("processError " + code);
+        String           msg;
+        DataOutputStream os;
 
-        String message = null;
+        mServer.trace("processError " + code);
 
         switch (code) {
 
             case BAD_REQUEST :
-                message = getHead("HTTP/1.0 400 Bad Request", "")
-                          + "<HTML><BODY><H1>Bad Request</H1>"
-                          + "The server could not understand this request."
-                          + "<P></BODY></HTML>";
+                msg = getHead(brh, "");
+                msg += BundleHandler.getString(bhnd, "BAD_REQUEST");
                 break;
 
             case NOT_FOUND :
-                message =
-                    getHead("HTTP/1.0 404 Not Found", "")
-                    + "<HTML><BODY><H1>Not Found</H1>"
-                    + "The server could not find this file.<P></BODY></HTML>";
+                msg = getHead(nfh, "");
+                msg += BundleHandler.getString(bhnd, "NOT_FOUND");
                 break;
 
             case FORBIDDEN :
-                message = getHead("HTTP/1.0 403 Forbidden", "")
-                          + "<HTML><BODY><H1>Forbidden</H1>"
-                          + "Access is not allowed.<P></BODY></HTML>";
+                msg = getHead(fbh, "");
+                msg += BundleHandler.getString(bhnd, "FORBIDDEN");
                 break;
+
+            default :
+                msg = null;
         }
 
-        // No point in trying to write if SSL handshaking can't succeed
-        if (!isTls || SSLSgetOutputStreamMethod != null) {
-            try {
-                DataOutputStream output = new DataOutputStream(
-                    new BufferedOutputStream(
-                        isTls
-                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
-                            mSocket, null)
-                        : mSocket.getOutputStream()));
+        try {
+            os = newDataOutputStream();
 
-                output.write(message.getBytes(ENCODING));
-                output.flush();
-                output.close();
-            } catch (Exception e) {
-                mServer.traceError("processError: " + e.getMessage());
-                e.printStackTrace();
-            }
+            os.write(msg.getBytes(ENCODING));
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            mServer.traceError("processError: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -500,47 +529,20 @@ class WebServerConnection implements Runnable {
     private void processQuery(String user, String password,
                               String statement) {
 
+        byte             result[];
+        int              len;
+        String           header;
+        DataOutputStream output;
+
         try {
             mServer.trace(statement);
 
-            byte result[] = mServer.mDatabase.execute(user, password,
-                statement);
-            int len = result.length;
-            String header = getHead("HTTP/1.0 200 OK",
-                                    "Content-Type: application/octet-stream\n"
-                                    + "Content-Length: " + len);
-            DataOutputStream output = null;
-
-            if (isTls && SSLSgetOutputStreamMethod == null) {
-                throw new VerifyError("Unexpected SSL error encountered");
-            }
-
-            try {
-                output = new DataOutputStream(
-                    new BufferedOutputStream(
-                        isTls
-                        ? (OutputStream) SSLSgetOutputStreamMethod.invoke(
-                            mSocket, null)
-                        : mSocket.getOutputStream()));
-            } catch (IllegalAccessException iae) {
-                throw new Exception(
-                    "You do not have permission to use the needed SSL resources");
-
-                // Need to unwrap the following exceptions
-            } catch (InvocationTargetException ite) {
-                Throwable t = ite.getTargetException();
-
-                throw ((t instanceof Exception) ? ((Exception) t)
-                                                : ite);
-            } catch (ExceptionInInitializerError eiie) {
-                Throwable t = eiie.getException();
-
-                if (t instanceof Exception) {
-                    throw (Exception) t;
-                } else {
-                    throw eiie;
-                }
-            }
+            // TODO:  Stream the underlying result object instead of allocating
+            //        a potentially large intermediate byte-buffer
+            result = mServer.mDatabase.execute(user, password, statement);
+            len    = result.length;
+            header = getHead(okh, ctaoscl + len);
+            output = newDataOutputStream();
 
             output.write(header.getBytes(ENCODING));
             output.write(result);

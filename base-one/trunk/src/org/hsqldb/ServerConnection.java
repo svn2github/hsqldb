@@ -92,7 +92,7 @@ import java.sql.SQLException;
  *
  * @version 1.7.2
  */
-class ServerConnection implements Runnable {
+class ServerConnection implements Runnable, ServerConstants {
 
     private String           user;
     private Session          session;
@@ -128,7 +128,7 @@ class ServerConnection implements Runnable {
         } catch (IOException e) {}
 
         mServer.serverConnList.removeElement(this);
-        mServer.notify(Server.CONNECTION_CLOSED);
+        mServer.notify(SC_CONNECTION_CLOSED);
     }
 
     /**

@@ -107,6 +107,7 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
 // fredt@users 20030425 - from this version the DDL methods are not used, methods in Session.java are used instead
 // boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
+// boucherb@users 20030510 - patch 1.7.2 - HsqlRuntime upgrade (close())
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -183,11 +184,13 @@ class Database {
             classLoader = null;
         }
 
+        compiledStatementManager = new CompiledStatementManager(this);
+
         open();
     }
 
     /**
-     *Opens this database.  The database can be opened by the constructor,
+     * Opens this database.  The database can be opened by the constructor,
      * or reopened by the close(int closemode) method during a
      * "shutdown compact".
      *
@@ -196,25 +199,27 @@ class Database {
      */
     private void open() throws SQLException {
 
+        boolean newdatabase;
+        User    sysUser;
+
+        if (sName.length() == 0) {
+            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
+        }
+
+        setState(DATABASE_OPENING);
+        compiledStatementManager.reset();
+
         tTable                = new HsqlArrayList();
         aAccess               = new UserManager();
         hAlias                = Library.getAliasMap();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
-        dbState               = DATABASE_OPENING;
-
-        boolean newdatabase = false;
-
-        if (sName.length() == 0) {
-            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
-        }
-
-        User sysUser = aAccess.createSysUser(this);
-
-        sessionManager     = new SessionManager(this, sysUser);
-        databaseProperties = new HsqlDatabaseProperties(this);
-        dInfo              = DatabaseInformation.newDatabaseInformation(this);
+        newdatabase           = false;
+        sysUser               = aAccess.createSysUser(this);
+        sessionManager        = new SessionManager(this, sysUser);
+        databaseProperties    = new HsqlDatabaseProperties(this);
+        dInfo = DatabaseInformation.newDatabaseInformation(this);
 
         if (sName.equals(".")) {
             newdatabase = true;
@@ -231,8 +236,7 @@ class Database {
                     sessionManager.getSysSession());
         }
 
-        dbState = DATABASE_ONLINE;
-
+        setState(DATABASE_ONLINE);
         dInfo.setWithContent(true);
     }
 
@@ -261,7 +265,10 @@ class Database {
      * @return  the value of this Database object's isShutdown attribute
      */
     boolean isShutdown() {
-        return dbState == DATABASE_SHUTDOWN;
+
+        synchronized (dbState_mutex) {
+            return dbState == DATABASE_SHUTDOWN;
+        }
     }
 
     /**
@@ -349,17 +356,15 @@ class Database {
      *      transmitting to a remote client via the native HSQLDB protocol
      * @deprecated from 1.7.2; Session is now the HSQLDB execution hub
      */
-
     Result execute(String statement, Session session) {
 
         try {
             Trace.check(session != null, Trace.ACCESS_IS_DENIED);
         } catch (SQLException e) {
-            return new Result(e.getMessage() + " in statement [" + statement
-                              + "]", e.getErrorCode());
+            return new Result(e, statement);
         }
 
-        return session.execute(statement);
+        return session.sqlExecuteDirect(statement);
     }
 
     /**
@@ -392,6 +397,7 @@ class Database {
     }
 
 // ----------------------------------------------------------------------------
+
     /** Setter for fileInJar attribute */
     void setFilesInJar() {
         filesInJar = true;
@@ -566,6 +572,7 @@ class Database {
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+
     /**
      * Retrieves the user table object with the specified
      * name from this datbase, using the specified session
@@ -576,7 +583,7 @@ class Database {
      * @param session the retrieval context
      * @return the user table object with the specified
      *  name, or null if not found
-     */    
+     */
     Table findUserTable(String name, Session session) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
@@ -624,8 +631,8 @@ class Database {
      *
      * @param name of index
      * @param session visibility context
-     * @return the table that encloses the index with the specific name, 
-     *      or null if the table or index are not visible in the specified 
+     * @return the table that encloses the index with the specific name,
+     *      or null if the table or index are not visible in the specified
      *      session context
      */
     Table findUserTableForIndex(String name, Session session) {
@@ -659,7 +666,8 @@ class Database {
         return -1;
     }
 
-    /** Drops the index with the specified name from this database.
+    /**
+     * Drops the index with the specified name from this database.
      * @param indexname the name of the index to drop
      * @param session the execution context
      * @throws SQLException if the index does not exist, the session lacks the permission
@@ -691,9 +699,20 @@ class Database {
      */
     public void finalize() {
 
+        if (Trace.TRACE) {
+            Trace.trace(this + ".finalize(): state: " + getStateString());
+        }
+
+        if (getState() != DATABASE_ONLINE) {
+            return;
+        }
+
         try {
             close(-1);
         } catch (SQLException e) {    // it's too late now
+            if (Trace.TRACE) {
+                Trace.trace(e.toString());
+            }
         }
     }
 
@@ -713,33 +732,52 @@ class Database {
      *       for all CACHED table before the normal checkpoint process
      *       which in turn creates a new, compact *.data file.
      * </ol>
-     * 
+     *
      * @param  closemode which type of close to perform
      * @throws  SQLException if a database access error occurs
      * @see Logger#closeLog(int)
      */
     void close(int closemode) throws SQLException {
 
-        dbState = DATABASE_CLOSING;
+        SQLException se;
+        HsqlRuntime  rt;
 
-        logger.closeLog(closemode);
+        se = null;
+        rt = HsqlRuntime.getHsqlRuntime();
 
-        // tony_lai@users 20020820
-        // The database re-open and close has been moved from
-        // Log#close(int closemode) for saving memory usage.
-        // Doing so the instances of Log and other objects are no longer
-        // referenced, and therefore can be garbage collected if necessary.
-        if (closemode == 1) {
-            open();
-            logger.closeLog(0);
+        synchronized (rt.findOrCreateDatabaseMutex(sName)) {
+            setState(DATABASE_CLOSING);
+
+            try {
+                logger.closeLog(closemode);
+
+                // tony_lai@users 20020820
+                // The database re-open and close has been moved from
+                // Log#close(int closemode) for saving memory usage.
+                // Doing so the instances of Log and other objects are no longer
+                // referenced, and therefore can be garbage collected if necessary.
+                if (closemode == 1) {
+                    open();
+                    logger.closeLog(0);
+                }
+            } catch (Throwable t) {
+                if (t instanceof SQLException) {
+                    se = (SQLException) t;
+                } else {
+                    se = Trace.error(Trace.GENERAL_ERROR, t.toString());
+                }
+            }
+
+            classLoader = null;
+
+            logger.releaseLock();
+            rt.removeDatabase(this);
+            this.setState(DATABASE_SHUTDOWN);
         }
 
-        dbState = DATABASE_SHUTDOWN;
-
-        jdbcConnection.removeDatabase(this);
-        logger.releaseLock();
-
-        classLoader = null;
+        if (se != null) {
+            throw se;
+        }
     }
 
     /**
@@ -960,7 +998,7 @@ class Database {
      * generated if necessary in response to following system table
      * requests. <p>
      *
-     * The result argument, if non-null, is checked for update status.  
+     * The result argument, if non-null, is checked for update status.
      * If it is an update result with an update count, then the call must
      * have come from a successful SELECT INTO statement, in which a case a
      * new table was created and all system tables reporting in the tables,
@@ -971,14 +1009,129 @@ class Database {
      * was created, dropped, altered or a permission was granted or revoked,
      * meaning that potentially all cached ssytem table are dirty.
      *
-     * @param r A Result to test for update status, indicating the a table 
+     * @param r A Result to test for update status, indicating the a table
      *      was created as the result of executing a SELECT INTO statement.
      */
     void setMetaDirty(Result r) {
 
         if (r == null
                 || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {
+            nextDDLSCN();
             dInfo.setDirty();
+        }
+    }
+
+// boucherb@users - patch 1.7.2 - system change number support
+//
+// NOTE: dml_scn sketched in but not used.  Will only be required
+// when we start implementing various levels of read consistency.
+// This will require either a change in the .data file format and
+// changes to in-memory row representation, or changes only to
+// in-memory row representation along with pinning all dependency 
+// rows in memory until dependent transactions are committed or
+// rolled back.  Index scans will have to be changed to
+// ignore rows that are not in transaction or statement scn
+// scope (are not commited), and undo buffer items will have 
+// to be tagged for similar purposes.
+// --------------------------------- 
+    CompiledStatementManager compiledStatementManager;
+    private final Object     scn_mutex     = new Object();
+    private long             scn           = 0;
+    private final Object     ddl_mutex     = new Object();
+    private long             ddl_scn       = 0;
+    private final Object     dml_mutex     = new Object();
+    private long             dml_scn       = 0;
+    private final Object     dbState_mutex = new Object();
+
+    long getSCN() {
+
+        synchronized (scn_mutex) {
+            return scn;
+        }
+    }
+
+    private void setSCN(long l) {
+
+        synchronized (scn_mutex) {
+            scn = l;
+        }
+    }
+
+    private long nextSCN() {
+
+        synchronized (scn_mutex) {
+            scn++;
+
+            return scn;
+        }
+    }
+
+    long getDDLSCN() {
+
+        synchronized (ddl_mutex) {
+            return ddl_scn;
+        }
+    }
+
+    long getDMLSCN() {
+
+        synchronized (dml_mutex) {
+            return dml_scn;
+        }
+    }
+
+    long nextDDLSCN() {
+
+        synchronized (ddl_mutex) {
+            ddl_scn = nextSCN();
+
+            return ddl_scn;
+        }
+    }
+
+    long nextDMLSCN() {
+
+        synchronized (dml_mutex) {
+            dml_scn = nextSCN();
+
+            return dml_scn;
+        }
+    }
+
+    private void setState(int state) {
+
+        synchronized (dbState_mutex) {
+            dbState = state;
+        }
+    }
+
+    int getState() {
+
+        synchronized (dbState_mutex) {
+            return dbState;
+        }
+    }
+
+    String getStateString() {
+
+        int state = getState();
+
+        switch (state) {
+
+            case DATABASE_CLOSING :
+                return "DATABASE_CLOSING";
+
+            case DATABASE_ONLINE :
+                return "DATABASE_ONLINE";
+
+            case DATABASE_OPENING :
+                return "DATABASE_OPENING";
+
+            case DATABASE_SHUTDOWN :
+                return "DATABASE_SHUTDOWN";
+
+            default :
+                return "UNKNOWN";
         }
     }
 }

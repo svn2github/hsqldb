@@ -156,8 +156,9 @@ class Log {
     private Cache  cCache;
 
     // used for tracing
-    private StopWatch              defaultTimer = new StopWatch();
-    private static final HsqlTimer timer = HsqlRuntime.getTimer();
+    private StopWatch defaultTimer = new StopWatch();
+    private static final HsqlTimer timer =
+        HsqlRuntime.getHsqlRuntime().getTimer();
 
     /**
      *  Constructor declaration

@@ -333,6 +333,7 @@ class Expression {
 
     private String toString(int blanks) {
 
+        int          lIType;
         StringBuffer buf = new StringBuffer(64);
 
         buf.append('\n');
@@ -341,7 +342,14 @@ class Expression {
             buf.append(' ');
         }
 
-        switch (iType) {
+        if (oldIType != -1) {
+            buf.append("SET TRUE, WAS: ");
+        }
+
+        lIType = oldIType == -1 ? iType
+                                : oldIType;
+
+        switch (lIType) {
 
             case FUNCTION :
                 buf.append("FUNCTION ");
@@ -530,6 +538,14 @@ class Expression {
         iDataType = type;
     }
 
+// NOTES: boucherb@users.sourceforge.net 20030601    
+// setTrue()  is bad.  It is a destructive operation that
+// affects the ability to resolve an expression more than once.
+// the related methods below are useful only for now and only for toString()
+// under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
+// In the future, this all needs to be changed around to 
+// support clean reparameterization and reresolution of
+// expression trees.
     int oldIType = -1;
 
     /**
@@ -537,11 +553,19 @@ class Expression {
      *
      */
     void setTrue() {
-        oldIType = iType;
-        iType    = TRUE;
+
+        if (oldIType == -1) {
+            oldIType = iType;
+        }
+
+        iType = TRUE;
     }
 
-    void resetTrue() {
+    /**
+     * Method declaration
+     *
+     */
+    void unsetTrue() {
 
         if (oldIType != -1) {
             iType = oldIType;

@@ -73,7 +73,7 @@ import java.util.Enumeration;
 
 /**
  * Container that maintains a map of session id's to Session objects.
- * Responsible for managaing openning and closing of sessions.
+ * Responsible for managing opening and closing of sessions.
  */
 public class SessionManager {
 
@@ -82,17 +82,47 @@ public class SessionManager {
     private HsqlIntKeyHashMap sessionMap  = new HsqlIntKeyHashMap();
     Session                   sysSession;
 
+// TODO:
+//
+// Eliminate the Database-centric nature of SessionManager.
+// e.g. Sessions should be able to migrate from one Database instance
+// to another using session control language moderated by 
+// SessionManager interacting with HsqlRuntime (a.k.a. Connection.setCatalog()).
+// Possibly, make SessionManager an attribute of HsqlRuntime, rather than of
+// Database.
+
+    /**
+     * Constructs an new SessionManager handling the specified Database using
+     * the specified SYS User
+     */
     public SessionManager(Database db, User sysUser) {
         sysSession = newSession(db, sysUser, false);
     }
 
+// TODO:  
+//
+// It should be possible to create an initially 'disconnected' Session that
+// can execute general commands using a SessionCommandInterpreter.
+//    
+// EXAMPLES: Open a Session to start a Server, add/remove
+//           databases hosted by an existing Server, connect to a 
+//           Database...
+//
+// REQUIRES:  HsqlRuntime auth scheme independent of any particular
+//            Database instance 
+//            e.g. provide service to use /etc/passwd and /etc/groups, 
+//                 JAAS-plugin, etc.
+
     /**
-     *  Binds the specified Session object into this Database object's active
-     *  session registry. This method is typically called from {@link
-     *  #connect} as the final step, when a successful connection has been
-     *  made.
+     *  Binds the specified Session object into this SessionManager's active
+     *  Session registry. This method is typically called internally from
+     * {@link
+     *  Database#connect(String,String) Database.connect(username,password)}
+     *  as the final step, when a successful connection has been made.
      *
-     * @param  session the Session object to register
+     * @param db the database to which the new Session is initially connected
+     * @param user the initial Session User
+     * @param readonly the initial ReadOnly attribute for the new Session
      */
     Session newSession(Database db, User user, boolean readonly) {
 
@@ -103,10 +133,24 @@ public class SessionManager {
         return s;
     }
 
+// TODO:  
+// sig change should be either:  getSysSession(Database) or getSysSession(dbID)
+
+    /**
+     * Retrieves the special SYS Session.
+     *
+     * @return the special SYS Session
+     */
     Session getSysSession() {
         return sysSession;
     }
 
+// TODO:  
+// sig change should be either:  closeAllSessions(Database) or closeAllSessions(dbID)    
+
+    /**
+     * Closes all Sessions registered with this SessionManager.
+     */
     void closeAllSessions() {
 
         // don't disconnect system user; need it to save database
@@ -122,11 +166,11 @@ public class SessionManager {
     }
 
     /**
-     *  Responsible for handling the execution DISCONNECT SQL statements
+     *  Handles the work requested by specified Session as a rewult of
+     *  having issued the DISCONNECT SQL statement.
      *
-     * @param  session
-     * @return
-     * @throws  SQLException
+     * @param  session to disconnect
+     * @return the result of disconnecting the specified Session
      */
     Result processDisconnect(Session session) {
 
@@ -139,10 +183,21 @@ public class SessionManager {
         return new Result();
     }
 
+    /**
+     * Removes all Sessions registered with this SessionManager.
+     */
     void clearAll() {
         sessionMap.clear();
     }
 
+    /**
+     * Retrieves a list of the Sessions in this container that
+     * are visible to the specified Session, given the access rights of
+     * the Session User.
+     *
+     * @param session The Session determining visibility
+     * @return the Sessions visible to the specified Session
+     */
     HsqlArrayList listVisibleSessions(Session session) {
 
         HsqlArrayList out = new HsqlArrayList();
@@ -165,6 +220,10 @@ public class SessionManager {
         return out;
     }
 
+    /**
+     * Retrieves the Session with the specified Session identifier or null
+     * if no such Session is registered with this SessionManager.
+     */
     Session getSession(int id) {
         return (Session) sessionMap.get(id);
     }

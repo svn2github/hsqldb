@@ -79,8 +79,13 @@ import java.sql.SQLException;
  */
 class TableFilter {
 
+    static final int CONDITION_NONE      = -1;     // not a condition expression
+    static final int CONDITION_UNORDERED = 0;      // not candidate for eStart or eEnd
+    static final int   CONDITION_START_END = 1;    // candidate for eStart and eEnd
+    static final int   CONDITION_START     = 2;    // candidate for eStart
+    static final int   CONDITION_END       = 3;    // ccandidate for eEnd
     private Table      tTable;
-            Select     sSelect;
+    Select             sSelect;
     private String     sAlias;
     private Index      iIndex;
     private Node       nCurrent;
@@ -136,6 +141,41 @@ class TableFilter {
     }
 
     /**
+     * Retrieves a CONDITION_XXX code indicating the possible use for an
+     * expression of the given type, relative to a TableFilter.
+     *
+     * @param an expression type code
+     * @return
+     */
+    static final int toConditionType(int exprType) {
+
+        switch (exprType) {
+
+            case Expression.NOT_EQUAL :
+            case Expression.LIKE :    // todo: maybe use index
+            case Expression.IN : {
+                return CONDITION_UNORDERED;
+            }
+            case Expression.EQUAL : {
+                return CONDITION_START_END;
+            }
+            case Expression.BIGGER :
+            case Expression.BIGGER_EQUAL : {
+                return CONDITION_START;
+            }
+            case Expression.SMALLER :
+            case Expression.SMALLER_EQUAL : {
+                return CONDITION_END;
+            }
+            default : {
+
+                // not a condition so forget it
+                return CONDITION_NONE;
+            }
+        }
+    }
+
+    /**
      * Method declaration
      *
      *
@@ -156,38 +196,17 @@ class TableFilter {
             return;
         }
 
-        int candidate;
+        int conditionType = toConditionType(type);
 
-        switch (type) {
+        if (conditionType == CONDITION_NONE) {
 
-            case Expression.NOT_EQUAL :
-            case Expression.LIKE :    // todo: maybe use index
-            case Expression.IN :
-                candidate = 0;
-                break;
-
-            case Expression.EQUAL :
-                candidate = 1;
-                break;
-
-            case Expression.BIGGER :
-            case Expression.BIGGER_EQUAL :
-                candidate = 2;
-                break;
-
-            case Expression.SMALLER :
-            case Expression.SMALLER_EQUAL :
-                candidate = 3;
-                break;
-
-            default :
-
-                // not a condition so forget it
-                return;
+            // not a condition expression
+            return;
         }
 
         if (e1.getFilter() == this) {    // ok include this
-        } else if ((e2.getFilter() == this) && (candidate != 0)) {
+        } else if ((e2.getFilter() == this)
+                   && (conditionType != CONDITION_UNORDERED)) {
 
             // swap and try again to allow index usage
             e.swapCondition();
@@ -206,7 +225,7 @@ class TableFilter {
             return;
         }
 
-        if (candidate == 0) {
+        if (conditionType == CONDITION_UNORDERED) {
             addAndCondition(e);
 
             return;
@@ -217,7 +236,93 @@ class TableFilter {
 
         if ((index == null) || ((iIndex != index) && (iIndex != null))) {
 
-            // no index or already another index is used
+            // TODO: Optimize
+            //
+            // The current way always chooses eStart, eEnd conditions  
+            // using first encountered eligible index
+            //
+            // We should check if current index offers better selectivity/access
+            // path than previously assigned iIndex.
+            //
+            // EXAMPLE 1:
+            //
+            // CREATE TABLE t (c1 int, c2 int primary key)
+            // CREATE INDEX I1 ON t(c1)
+            // SELECT 
+            //      * 
+            // FROM 
+            //      t 
+            // WHERE 
+            //     c1 = | < | <= | >= | > ...
+            // AND 
+            //     c2 = | < | <= | >= | > ...
+            //
+            // currently always chooses iIndex / condition (c1/I1), over
+            // index / condition (c2/pk), whereas index / condition (c2/pk) 
+            // may well be better, especially if condition on c2 is equality
+            // (condition_start_end) and conditionon(s) on c1 involve range 
+            // (condition_start, condition_end, or some composite).
+            //
+            // Currently, the developer/client software must somehow know facts 
+            // both about the table, the query and the way HSQLDB forms its
+            // plans and, based on this knowlege, perhaps decide to reverse
+            // order by explicitly issuing instead:
+            //
+            // SELECT 
+            //      * 
+            // FROM 
+            //      t 
+            // WHERE 
+            //     c2 = | < | <= | >= | > ...
+            // AND 
+            //     c1 = | < | <= | >= | > ...
+            //
+            // to get optimal index choice.
+            //
+            // The same thing applies to and is even worse for joins.
+            // 
+            // Consider the following (highly artificial, but easy to 
+            // understand) case:
+            //
+            // CREATE TABLE T1(ID INTEGER PRIMARY KEY, C1 INTEGER) 
+            // CREATE INDEX I1 ON T1(C1)                                            
+            // CREATE TABLE T2(ID INTEGER PRIMARY KEY, C1 INTEGER) 
+            // CREATE INDEX I2 ON T2(C1)
+            //
+            // select * from t1, t2 where t1.c1 = t2.c1 and t1.id = t2.id 
+            //
+            // Consider the worst value distribution where t1 and t2 are both 
+            // 10,000 rows, c1 selectivity is nil (all values are identical) 
+            // for both tables, and, say, id values span the range 0..9999 
+            // for both tables.
+            //
+            // Then time to completion on 500 MHz Athlon testbed using memory
+            // tables is:  
+            //
+            // 10000 row(s) in 309114 ms
+            //
+            // whereas for:
+            //
+            // select * from t1, t2 where t1.id = t2.id and t1.c1 = t2.c1
+            //
+            // time to completion is: 
+            //
+            // 10000 row(s) in 471 ms
+            //
+            // Hence, the unoptimized query takes 656 times as long as the 
+            // optimized one!!!
+            //
+            // EXAMPLE 2: 
+            //
+            // If there are, say, two non-unique candidate indexes,
+            // and some range or equality predicates against
+            // them, preference should be given to the one with
+            // better selectivity (if the total row count of the
+            // table is large, otherwise the overhead of making
+            // the choice is probably large w.r.t. any possible
+            // savings).  Might require maintaining some basic
+            // statistics or performing appropriate index probes
+            // at the time the plan is being generated.
             addAndCondition(e);
 
             return;
@@ -225,44 +330,55 @@ class TableFilter {
 
         iIndex = index;
 
-        if (candidate == 1) {
+        switch (conditionType) {
 
-            // candidate for both start & end
-            if ((eStart != null) || (eEnd != null)) {
-                addAndCondition(e);
+            case CONDITION_START_END : {
 
-                return;
+                // candidate for both start & end
+                if ((eStart != null) || (eEnd != null)) {
+                    addAndCondition(e);
+
+                    return;
+                }
+
+                eStart = new Expression(e);
+                eEnd   = eStart;
+
+                break;
             }
+            case CONDITION_START : {
 
-            eStart = new Expression(e);
-            eEnd   = eStart;
-        } else if (candidate == 2) {
+                // candidate for start
+                if (eStart != null) {
+                    addAndCondition(e);
 
-            // candidate for start
-            if (eStart != null) {
-                addAndCondition(e);
+                    return;
+                }
 
-                return;
+                eStart = new Expression(e);
+
+                break;
             }
+            case CONDITION_END : {
 
-            eStart = new Expression(e);
-        } else if (candidate == 3) {
+                // candidate for end
+                if (eEnd != null) {
+                    addAndCondition(e);
 
-            // candidate for end
-            if (eEnd != null) {
-                addAndCondition(e);
+                    return;
+                }
 
-                return;
+                eEnd = new Expression(e);
+
+                break;
             }
-
-            eEnd = new Expression(e);
         }
 
         e.setTrue();
     }
 
     /**
-     * For inner joins this simply finds the first row in the table (using
+     * For inner joins, this simply finds the first row in the table (using
      * an index if there is one) and checks it against the eEnd (range) and
      * eAnd (other conditions) Expression objects.<p>
      *
@@ -395,41 +511,40 @@ class TableFilter {
 
 // boucheb@users 20030415 - added for debugging support
     public String toString() {
-        
+
         StringBuffer sb;
         Index        index;
         Index        primaryIndex;
         int[]        primaryKey;
         boolean      hidden;
-        boolean      fullScan;        
-        
+        boolean      fullScan;
+
         sb           = new StringBuffer();
         index        = iIndex;
         primaryIndex = tTable.getPrimaryIndex();
         primaryKey   = tTable.getPrimaryKey();
-        hidden       = false;        
-        fullScan     = (eStart == null && eEnd == null) 
-                            ||(eStart.getType() == Expression.TRUE 
-                                   &&eEnd.getType() == Expression.TRUE);
-        
+        hidden       = false;
+        fullScan     = (eStart == null && eEnd == null);
+
         if (index == null) {
             index = primaryIndex;
         }
-        
+
         if (index == primaryIndex && primaryKey == null) {
-            hidden = true;
+            hidden   = true;
             fullScan = true;
         }
 
         sb.append(super.toString()).append('\n');
         sb.append("table=[").append(tTable.getName().name).append("]\n");
         sb.append("alias=[").append(sAlias).append("]\n");
-        sb.append("access=[").append(fullScan ? "FULL SCAN" 
+        sb.append("access=[").append(fullScan ? "FULL SCAN"
                                               : "INDEX PRED").append("]\n");
         sb.append("index=[");
         sb.append(index == null ? null
                                 : index.getName().name);
-        sb.append(hidden ? "[HIDDEN]]\n" : "]\n");
+        sb.append(hidden ? "[HIDDEN]]\n"
+                         : "]\n");
         sb.append("bOuterJoin=[").append(bOuterJoin).append("]\n");
         sb.append("eStart=[").append(eStart).append("]\n");
         sb.append("eEnd=[").append(eEnd).append("]\n");
@@ -437,6 +552,5 @@ class TableFilter {
         sb.append("sSelect=[").append(sSelect).append("]");
 
         return sb.toString();
-
     }
 }

@@ -239,6 +239,9 @@ class Select {
             checkResolved();
         }
 
+// -------------------------------Start Prefix ---------------------------------     
+// TODO: Clean up the whole approach to setting up Select state variables, 
+// (re)resoving expression trees, (re) parameterizing expression trees         
         if (sUnion != null && sUnion.iResultLen != iResultLen) {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
@@ -326,6 +329,7 @@ class Select {
         int limitcount = issimplemaxrows ? limitStart + maxrows
                                          : Integer.MAX_VALUE;
 
+//------------------------------- End Prefix -----------------------------------                                      
         buildResult(r, limitcount);
 
         // the result is maybe bigger (due to group and order by)
@@ -579,7 +583,10 @@ class Select {
         }
     }
 
-    // boucherb@users 20030418 - patch 1.7.2 - faster execution for compiled statements
+// boucherb@users 20030418 - patch 1.7.2 - faster execution for compiled statements
+// TODO: improve/clean up the resolution system from the 50,000' perspective,
+// allowing efficient, understandable (from the developer's perspective) reuse
+// patterns under parameterized compiled statements.
 // -----------------------------------------------------------------------------
     boolean isResolved = false;
 
@@ -612,12 +619,23 @@ class Select {
 // -----------------------------------------------------------------------------
     public String toString() {
 
-        StringBuffer sb = new StringBuffer();
+        StringBuffer sb;
+
+        // temporary :  it is currently unclear whether this may affect
+        // later attempts to retrieve an actual results (calls getResult(-1)
+        // in preProcess mode).  Thus, toString() probably should not be called
+        // on Select objects that will actually be used to retrieve results,
+        // only on Select objects used by EXPLAIN PLAN FOR
+        preProcess();
+
+        sb = new StringBuffer();
 
         sb.append(super.toString()).append("[\n");
+
         if (sIntoTable != null) {
-           sb.append("into table=[").append(sIntoTable.name).append("]\n");
-        }        
+            sb.append("into table=[").append(sIntoTable.name).append("]\n");
+        }
+
         sb.append("start=[").append(limitStart).append("]\n");
         sb.append("limit=[").append(limitCount).append("]\n");
         sb.append("isDistinctSelect=[").append(isDistinctSelect).append(
@@ -675,5 +693,40 @@ class Select {
         return sb.toString();
     }
 
-// --
+// NOTES: boucherb@users.sourceforge.net 20030601    
+// setTrue()  is bad.  It is a destructive operation that
+// affects the ability to resolve an expression more than once.
+// The related methods below are useful only for now and only for toString()
+// under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
+// In the future, this all needs to be changed around to 
+// support clean reparameterization and reresolution of
+// expression trees.
+    // Used only be toString()
+    private void preProcess() {
+
+        boolean oldPreProcess;
+
+        oldPreProcess = isPreProcess;
+        isPreProcess  = true;
+
+        try {
+            getResult(-1);
+        } catch (SQLException e) {}
+
+        isPreProcess = oldPreProcess;
+    }
+
+    // Not used yet
+    Result describeResult() throws SQLException {
+
+        Result  r;
+        boolean oldPreProcess;
+
+        oldPreProcess = isPreProcess;
+        isPreProcess  = true;
+        r             = getResult(-1);
+        isPreProcess  = oldPreProcess;
+
+        return r;
+    }
 }

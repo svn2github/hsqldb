@@ -82,26 +82,23 @@ import java.sql.SQLException;
  *
  * @version    1.7.0
  */
-class Result {
+class Result implements ResultConstants {
 
-    private Record   rTail;
-    private int      iSize;
-    private int      iColumnCount;
-    static final int UPDATECOUNT = 0;
-    static final int ERROR       = 1;
-    static final int DATA        = 2;
-    int              iMode;
-    String           sError;
-    int              errorCode;
-    int              iUpdateCount;
-    Record           rRoot;
-    String           sLabel[];
-    String           sTable[];
-    String           sName[];
-    boolean          isLabelQuoted[];
-    int              colType[];
-    int              colSize[];
-    int              colScale[];
+    private Record rTail;
+    private int    iSize;
+    private int    iColumnCount;
+    int            iMode;
+    String         sError;
+    int            errorCode;
+    int            iUpdateCount;
+    Record         rRoot;
+    String         sLabel[];
+    String         sTable[];
+    String         sName[];
+    boolean        isLabelQuoted[];
+    int            colType[];
+    int            colSize[];
+    int            colScale[];
 
     /**
      *  Constructor declaration
@@ -664,6 +661,16 @@ class Result {
 
         out.writeIntData(iMode);
 
+//        switch (iMode) {
+//            case UPDATECOUNT: {
+//                
+//            }
+//            case ERROR: {
+//                
+//            }
+//            case 
+//            
+//        }
         if (iMode == UPDATECOUNT) {
             out.writeIntData(iUpdateCount);
         } else if (iMode == ERROR) {
@@ -706,5 +713,92 @@ class Result {
         colType       = new int[columns];
         colSize       = new int[columns];
         colScale      = new int[columns];
+    }
+
+// boucerb@users 20030513
+// ------------------- patch 1.7.2 --------------------
+    String getMode() {
+
+        switch (iMode) {
+
+            case DATA :
+                return "DATA";
+
+            case ERROR :
+                return "ERROR";
+
+            case UPDATECOUNT :
+                return "UPDATECOUNT";
+
+            case SQLEXECUTE :
+                return "SQLEXECUTE";
+
+            case SQLEXECDIRECT :
+                return "SQLEXECUTEDIRECT";
+
+            case SQLFREESTMT :
+                return "SQLFREESTMNT";
+
+            case SQLPREPARE :
+                return "SQLPREPARE";
+
+            default :
+                return "UNKNOWN";
+        }
+    }
+
+    Result(Throwable t, String statement) {
+
+        iMode = ERROR;
+
+        if (t instanceof SQLException) {
+            sError = t.getMessage();
+
+            if (statement != null) {
+                sError += " in statement [" + statement + "]";
+            }
+
+            errorCode = ((SQLException) t).getErrorCode();
+        } else if (t instanceof Exception) {
+            t.printStackTrace();
+
+            sError = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
+
+            if (statement != null) {
+                sError += " in statement [" + statement + "]";
+            }
+
+            errorCode = Trace.GENERAL_ERROR;
+        } else if (t instanceof OutOfMemoryError) {
+            t.printStackTrace();
+
+            sError    = "out of memory";
+            errorCode = Trace.GENERAL_ERROR;
+        }
+    }
+
+    int getStatementID() {
+        return errorCode;
+    }
+
+    void setStatementID(int id) {
+        errorCode = id;
+    }
+
+    String getStatement() {
+        return sError;
+    }
+
+    void setStatement(String sql) {
+        sError = sql;
+    }
+
+    Object[] getParameterData() {
+        return (rRoot == null) ? null
+                               : rRoot.data;
+    }
+
+    int[] getParameterTypes() {
+        return colType;
     }
 }

@@ -36,7 +36,7 @@ import java.net.Socket;
 /**
  * Interface HsqlSocketRequestHandlerImpl
  *
- * @version 1.7.0
+ * @version 1.7.2
  *
  * @see HsqlSocketRequestHandler
  */
@@ -52,10 +52,7 @@ implements org.hsqldb.HsqlSocketRequestHandler {
     }
 
     public void handleConnection(final Socket socket) {
-
-        ServerConnection sc = new ServerConnection(socket, mServer);
-
-        sc.run();
+        mServer.handleConnection(socket);
     }
 
     public void closeAllServerConnections() {

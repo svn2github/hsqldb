@@ -69,10 +69,12 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
@@ -121,114 +123,7 @@ class Parser {
         cSession   = session;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Result processSelect() throws SQLException {
-
-        Select select = parseSelect();
-
-        if (select.sIntoTable == null) {
-            return select.getResult(cSession.getMaxRows());
-        } else {
-
-            // session level user rights
-            cSession.checkDDLWrite();
-
-// fredt@users 20020215 - patch 497872 by Nitin Chauhan
-// to require column labels in SELECT INTO TABLE
-            for (int i = 0; i < select.eColumn.length; i++) {
-                if (select.eColumn[i].getAlias().length() == 0) {
-                    throw Trace.error(Trace.LABEL_REQUIRED);
-                }
-            }
-
-            if (dDatabase.findUserTable(select.sIntoTable.name, cSession)
-                    != null) {
-                throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
-                                  select.sIntoTable.name);
-            }
-
-            Result r = select.getResult(0);
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            Table t;
-
-            if (select.intoType == Table.TEXT_TABLE) {
-                t = new TextTable(dDatabase, select.sIntoTable,
-                                  select.intoType, cSession.getId());
-            } else {
-                t = new Table(dDatabase, select.sIntoTable, select.intoType,
-                              cSession.getId());
-            }
-
-            t.addColumns(r);
-            t.createPrimaryKey();
-            dDatabase.linkTable(t);
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            if (select.intoType == Table.TEXT_TABLE) {
-                try {
-
-                    // Use default lowercase name "<table>.csv" (with invalid
-                    // char's converted to underscores):
-                    String src =
-                        StringUtil.toLowerSubset(select.sIntoTable.name, '_')
-                        + ".csv";
-
-                    t.setDataSource(src, false, cSession);
-                    logTableDDL(t);
-                    t.insertNoCheck(r, cSession);
-                } catch (SQLException e) {
-                    dDatabase.dropTable(select.sIntoTable.name, false, false,
-                                        cSession);
-
-                    throw (e);
-                }
-            } else {
-                logTableDDL(t);
-
-                // SELECT .. INTO can't fail because of constraint violation
-                t.insertNoCheck(r, cSession);
-            }
-
-            int i = r.getSize();
-
-            r              = new Result();
-            r.iUpdateCount = i;
-
-            return r;
-        }
-    }
-
-    /**
-     *  Logs the DDL for a table created with INTO.
-     *  Uses three dummy arguments for getTableDDL() as the new table has no
-     *  FK constraints.
-     *
-     * @throws  SQLException
-     */
-    void logTableDDL(Table t) throws SQLException {
-
-        if (t.isTemp()) {
-            return;
-        }
-
-        HsqlStringBuffer tableDDL = new HsqlStringBuffer();
-
-        DatabaseScript.getTableDDL(dDatabase, t, 0, null, null, tableDDL);
-
-        String sourceDDL = DatabaseScript.getDataSource(t);
-
-        dDatabase.logger.writeToLog(cSession, tableDDL.toString());
-
-        if (sourceDDL != null) {
-            dDatabase.logger.writeToLog(cSession, sourceDDL);
-        }
-    }
+// No longer required; moved to DatabaseCommandInterpreter
 
     /**
      *  Method declaration
@@ -236,163 +131,273 @@ class Parser {
      * @return
      * @throws  SQLException
      */
-    Result processCall() throws SQLException {
-
-        Expression e = parseExpression();
-
-        e.resolve(null);
-
-        int    type = e.getDataType();
-        Object o    = e.getValue();
-
-// boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
-// return Results as Object, where object is Result or jdbcResultSet.
-        if (o instanceof Result) {
-            return (Result) o;
-        }
-
-        if (o instanceof jdbcResultSet) {
-            return ((jdbcResultSet) o).rResult;
-        }
-
-// --------------------------------------------------------------------------
-        Result r = new Result(1);
-
-        r.sTable[0]  = "";
-        r.colType[0] = type;
-        r.sLabel[0]  = "";
-        r.sName[0]   = "";
-
-        Object row[] = new Object[1];
-
-        row[0] = o;
-
-        r.add(row);
-
-        return r;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Result processUpdate() throws SQLException {
-
-        String token = tTokenizer.getString();
-
-        tTokenizer.checkUnexpectedParam("parametric table identifier");
-
-        Table table = dDatabase.getTable(token, cSession);
-
-        checkTableWriteAccess(table, UserManager.UPDATE);
-
-        TableFilter filter = new TableFilter(table, null, false);
-
-        tTokenizer.getThis(Token.T_SET);
-
-        HsqlArrayList vColumn = new HsqlArrayList();
-        HsqlArrayList eColumn = new HsqlArrayList();
-        int           len     = 0;
-
-        token = null;
-
-        do {
-            len++;
-
-            int i = table.getColumnNr(tTokenizer.getString());
-
-            vColumn.add(new Integer(i));
-            tTokenizer.getThis(Token.T_EQUALS);
-
-            Expression e = parseExpression();
-
-            e.resolve(filter);
-            eColumn.add(e);
-
-            token = tTokenizer.getString();
-        } while (token.equals(Token.T_COMMA));
-
-        Expression eCondition = null;
-
-        if (token.equals(Token.T_WHERE)) {
-            eCondition = parseExpression();
-
-            eCondition.resolve(filter);
-            filter.setCondition(eCondition);
-        } else {
-            tTokenizer.back();
-        }
-
-        Expression exp[] = new Expression[len];
-
-        eColumn.toArray(exp);
-
-        int col[]  = new int[len];
-        int type[] = new int[len];
-
-        //int csize[] = new int[len];
-        for (int i = 0; i < len; i++) {
-            col[i] = ((Integer) vColumn.get(i)).intValue();
-
-            Column column = table.getColumn(col[i]);
-
-            type[i] = column.getType();
-
-            //csize[i] = column.getSize();
-        }
-
-        int count = 0;
-
-        if (filter.findFirst()) {
-
-//            Result del  = new Result();    // don't need column count and so on
-//            Result ins  = new Result();
-            HsqlLinkedList del  = new HsqlLinkedList();
-            Result         ins  = new Result();
-            int            size = table.getColumnCount();
-
-            do {
-                if (eCondition == null || eCondition.test()) {
-                    Row row = filter.currentRow;
-
-                    del.add(row);
-
-                    Object ni[] = table.getNewRow();
-
-                    System.arraycopy(row.getData(), 0, ni, 0, size);
-
-                    for (int i = 0; i < len; i++) {
-                        ni[col[i]] = exp[i].getValue(type[i]);
-                    }
-
-                    ins.add(ni);
-                }
-            } while (filter.next());
-
-            cSession.beginNestedTransaction();
-
-            try {
-                count = table.update(del, ins, col, cSession);
-
-                cSession.endNestedTransaction(false);
-            } catch (SQLException e) {
-
-                // update failed (constraint violation)
-                cSession.endNestedTransaction(true);
-
-                throw e;
-            }
-        }
-
-        Result r = new Result();
-
-        r.iUpdateCount = count;
-
-        return r;
-    }
-
+//    Result processSelect() throws SQLException {
+//
+//        Select select = parseSelect();
+//
+//        if (select.sIntoTable == null) {
+//            return select.getResult(cSession.getMaxRows());
+//        } else {
+//
+//            // session level user rights
+//            cSession.checkDDLWrite();
+//
+//// fredt@users 20020215 - patch 497872 by Nitin Chauhan
+//// to require column labels in SELECT INTO TABLE
+//            for (int i = 0; i < select.eColumn.length; i++) {
+//                if (select.eColumn[i].getAlias().length() == 0) {
+//                    throw Trace.error(Trace.LABEL_REQUIRED);
+//                }
+//            }
+//
+//            if (dDatabase.findUserTable(select.sIntoTable.name, cSession)
+//                    != null) {
+//                throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
+//                                  select.sIntoTable.name);
+//            }
+//
+//            Result r = select.getResult(0);
+//
+//// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+//            Table t;
+//
+//            if (select.intoType == Table.TEXT_TABLE) {
+//                t = new TextTable(dDatabase, select.sIntoTable,
+//                                  select.intoType, cSession.getId());
+//            } else {
+//                t = new Table(dDatabase, select.sIntoTable, select.intoType,
+//                              cSession.getId());
+//            }
+//
+//            t.addColumns(r);
+//            t.createPrimaryKey();
+//            dDatabase.linkTable(t);
+//
+//// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+//            if (select.intoType == Table.TEXT_TABLE) {
+//                try {
+//
+//                    // Use default lowercase name "<table>.csv" (with invalid
+//                    // char's converted to underscores):
+//                    String src =
+//                        StringUtil.toLowerSubset(select.sIntoTable.name, '_')
+//                        + ".csv";
+//
+//                    t.setDataSource(src, false, cSession);
+//                    logTableDDL(t);
+//                    t.insertNoCheck(r, cSession);
+//                } catch (SQLException e) {
+//                    dDatabase.dropTable(select.sIntoTable.name, false, false,
+//                                        cSession);
+//
+//                    throw (e);
+//                }
+//            } else {
+//                logTableDDL(t);
+//
+//                // SELECT .. INTO can't fail because of constraint violation
+//                t.insertNoCheck(r, cSession);
+//            }
+//
+//            int i = r.getSize();
+//
+//            r              = new Result();
+//            r.iUpdateCount = i;
+//
+//            return r;
+//        }
+//    }
+// No longer required; moved to DatabaseCommandInterpreter
+//    /**
+//     *  Logs the DDL for a table created with INTO.
+//     *  Uses three dummy arguments for getTableDDL() as the new table has no
+//     *  FK constraints.
+//     *
+//     * @throws  SQLException
+//     */
+//    void logTableDDL(Table t) throws SQLException {
+//
+//        if (t.isTemp()) {
+//            return;
+//        }
+//
+//        HsqlStringBuffer tableDDL = new HsqlStringBuffer();
+//
+//        DatabaseScript.getTableDDL(dDatabase, t, 0, null, null, tableDDL);
+//
+//        String sourceDDL = DatabaseScript.getDataSource(t);
+//
+//        dDatabase.logger.writeToLog(cSession, tableDDL.toString());
+//
+//        if (sourceDDL != null) {
+//            dDatabase.logger.writeToLog(cSession, sourceDDL);
+//        }
+//    }
+// No longer required; refactored as Parser.compileCallStatement() and 
+// CompiledStatementExecutor.executeCallStatement()
+//    /**
+//     *  Method declaration
+//     *
+//     * @return
+//     * @throws  SQLException
+//     */
+//    Result processCall() throws SQLException {
+//
+//        Expression e = parseExpression();
+//
+//        e.resolve(null);
+//
+//        int    type = e.getDataType();
+//        Object o    = e.getValue();
+//
+//// boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
+//// return Results as Object, where object is Result or jdbcResultSet.
+//        if (o instanceof Result) {
+//            return (Result) o;
+//        }
+//
+//        if (o instanceof jdbcResultSet) {
+//            return ((jdbcResultSet) o).rResult;
+//        }
+//
+//// --------------------------------------------------------------------------
+//        Result r = new Result(1);
+//
+//        r.sTable[0]  = "";
+//        r.colType[0] = type;
+//        r.sLabel[0]  = "";
+//        r.sName[0]   = "";
+//
+//        Object row[] = new Object[1];
+//
+//        row[0] = o;
+//
+//        r.add(row);
+//
+//        return r;
+//    }
+// No longer required; refactored as Parser.compileUpdateStatement() and 
+// CompiledStatementExecutor.executeUpdateStatement()
+//    /**
+//     *  Method declaration
+//     *
+//     * @return
+//     * @throws  SQLException
+//     */
+//    Result processUpdate() throws SQLException {
+//
+//        String token = tTokenizer.getString();
+//
+//        tTokenizer.checkUnexpectedParam("parametric table identifier");
+//
+//        Table table = dDatabase.getTable(token, cSession);
+//
+//        checkTableWriteAccess(table, UserManager.UPDATE);
+//
+//        TableFilter filter = new TableFilter(table, null, false);
+//
+//        tTokenizer.getThis("SET");
+//
+//        HsqlArrayList vColumn = new HsqlArrayList();
+//        HsqlArrayList eColumn = new HsqlArrayList();
+//        int           len     = 0;
+//
+//        token = null;
+//
+//        do {
+//            len++;
+//
+//            int i = table.getColumnNr(tTokenizer.getString());
+//
+//            vColumn.add(new Integer(i));
+//            tTokenizer.getThis("=");
+//
+//            Expression e = parseExpression();
+//
+//            e.resolve(filter);
+//            eColumn.add(e);
+//
+//            token = tTokenizer.getString();
+//        } while (token.equals(","));
+//
+//        Expression eCondition = null;
+//
+//        if (token.equals("WHERE")) {
+//            eCondition = parseExpression();
+//
+//            eCondition.resolve(filter);
+//            filter.setCondition(eCondition);
+//        } else {
+//            tTokenizer.back();
+//        }
+//
+//        Expression exp[] = new Expression[len];
+//
+//        eColumn.toArray(exp);
+//
+//        int col[]  = new int[len];
+//        int type[] = new int[len];
+//
+//        //int csize[] = new int[len];
+//        for (int i = 0; i < len; i++) {
+//            col[i] = ((Integer) vColumn.get(i)).intValue();
+//
+//            Column column = table.getColumn(col[i]);
+//
+//            type[i] = column.getType();
+//
+//            //csize[i] = column.getSize();
+//        }
+//
+//        int count = 0;
+//
+//        if (filter.findFirst()) {
+//
+////            Result del  = new Result();    // don't need column count and so on
+////            Result ins  = new Result();
+//            HsqlLinkedList del  = new HsqlLinkedList();
+//            Result         ins  = new Result();
+//            int            size = table.getColumnCount();
+//
+//            do {
+//                if (eCondition == null || eCondition.test()) {
+//                    Row row = filter.currentRow;
+//
+//                    del.add(row);
+//
+//                    Object ni[] = table.getNewRow();
+//
+//                    System.arraycopy(row.getData(), 0, ni, 0, size);
+//
+//                    for (int i = 0; i < len; i++) {
+//                        ni[col[i]] = exp[i].getValue(type[i]);
+//                    }
+//
+//                    ins.add(ni);
+//                }
+//            } while (filter.next());
+//
+//            cSession.beginNestedTransaction();
+//
+//            try {
+//                count = table.update(del, ins, col, cSession);
+//
+//                cSession.endNestedTransaction(false);
+//            } catch (SQLException e) {
+//
+//                // update failed (constraint violation)
+//                cSession.endNestedTransaction(true);
+//
+//                throw e;
+//            }
+//        }
+//
+//        Result r = new Result();
+//
+//        r.iUpdateCount = count;
+//
+//        return r;
+//    }
     void checkTableWriteAccess(Table table,
                                int userRight) throws SQLException {
 
@@ -411,168 +416,170 @@ class Parser {
         table.checkDataReadOnly();
     }
 
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Result processDelete() throws SQLException {
-
-        tTokenizer.getThis(Token.T_FROM);
-
-        String token = tTokenizer.getString();
-
-        tTokenizer.checkUnexpectedParam("parametric table identifier");
-
-        Table table = dDatabase.getTable(token, cSession);
-
-        checkTableWriteAccess(table, UserManager.DELETE);
-
-        TableFilter filter = new TableFilter(table, null, false);
-
-        token = tTokenizer.getString();
-
-        Expression eCondition = null;
-
-        if (token.equals(Token.T_WHERE)) {
-            eCondition = parseExpression();
-
-            eCondition.resolve(filter);
-            filter.setCondition(eCondition);
-        } else {
-            tTokenizer.back();
-        }
-
-        int count = 0;
-
-        if (filter.findFirst()) {
-
-//            Result del = new Result();    // don't need column count and so on
-            HsqlLinkedList del = new HsqlLinkedList();
-
-            do {
-                if (eCondition == null || eCondition.test()) {
-
-//                    del.add(filter.oCurrentData);
-                    del.add(filter.currentRow);
-                }
-            } while (filter.next());
-
-            count = table.delete(del, cSession);
-        }
-
-        Result r = new Result();
-
-        r.iUpdateCount = count;
-
-        return r;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Result processInsert() throws SQLException {
-
-        tTokenizer.getThis(Token.T_INTO);
-
-        String token = tTokenizer.getString();
-
-        tTokenizer.checkUnexpectedParam("parametric table identifier");
-
-        Table t = dDatabase.getTable(token, cSession);
-
-        checkTableWriteAccess(t, UserManager.INSERT);
-
-        token = tTokenizer.getString();
-
-        HsqlArrayList colnames       = null;
-        boolean       checkcolumns[] = null;
-        int           columnmap[]    = t.getColumnMap();
-        int           len            = t.getColumnCount();
-
-        if (token.equals(Token.T_OPENBRACKET)) {
-            colnames = getColumnNames();
-
-            if (colnames.size() > len) {
-                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-            }
-
-            len          = colnames.size();
-            checkcolumns = t.getNewColumnCheckList();
-            columnmap    = t.getNewColumnMap();
-
-            for (int i = 0; i < len; i++) {
-                int colindex = t.getColumnNr((String) colnames.get(i));
-
-                columnmap[i]           = colindex;
-                checkcolumns[colindex] = true;
-            }
-
-            token = tTokenizer.getString();
-        }
-
-        int count = 0;
-
-        if (token.equals(Token.T_VALUES)) {
-            Object row[] = t.getNewRow(checkcolumns);
-
-            getColumnValues(t, row, columnmap, len);
-            t.insert(row, cSession);
-
-            count = 1;
-        } else if (token.equals(Token.T_SELECT)) {
-            int[]  columntypes = t.getColumnTypes();
-            Result result      = processSelect();
-            Record r           = result.rRoot;
-
-            Trace.check(len == result.getColumnCount(),
-                        Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-            cSession.beginNestedTransaction();
-
-            try {
-                while (r != null) {
-                    Object row[] = t.getNewRow(checkcolumns);
-
-                    for (int i = 0; i < len; i++) {
-                        int j = columnmap[i];
-
-                        if (columntypes[j] != result.colType[i]) {
-                            row[j] = Column.convertObject(r.data[i],
-                                                          columntypes[j]);
-                        } else {
-                            row[j] = r.data[i];
-                        }
-                    }
-
-                    r.data = row;
-                    r      = r.next;
-                }
-
-                count = t.insert(result, cSession);
-
-                cSession.endNestedTransaction(false);
-            } catch (SQLException e) {
-
-                // insert failed (violation of primary key)
-                cSession.endNestedTransaction(true);
-
-                throw e;
-            }
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-        }
-
-        Result r = new Result();
-
-        r.iUpdateCount = count;
-
-        return r;
-    }
-
+// No longer required; refactored as Parser.compileDeleteStatement() and 
+// CompiledStatementExecutor.executeDeleteStatement()
+//    /**
+//     *  Method declaration
+//     *
+//     * @return
+//     * @throws  SQLException
+//     */
+//    Result processDelete() throws SQLException {
+//
+//        tTokenizer.getThis("FROM");
+//
+//        String token = tTokenizer.getString();
+//
+//        tTokenizer.checkUnexpectedParam("parametric table identifier");
+//
+//        Table table = dDatabase.getTable(token, cSession);
+//
+//        checkTableWriteAccess(table, UserManager.DELETE);
+//
+//        TableFilter filter = new TableFilter(table, null, false);
+//
+//        token = tTokenizer.getString();
+//
+//        Expression eCondition = null;
+//
+//        if (token.equals("WHERE")) {
+//            eCondition = parseExpression();
+//
+//            eCondition.resolve(filter);
+//            filter.setCondition(eCondition);
+//        } else {
+//            tTokenizer.back();
+//        }
+//
+//        int count = 0;
+//
+//        if (filter.findFirst()) {
+//
+////            Result del = new Result();    // don't need column count and so on
+//            HsqlLinkedList del = new HsqlLinkedList();
+//
+//            do {
+//                if (eCondition == null || eCondition.test()) {
+//
+////                    del.add(filter.oCurrentData);
+//                    del.add(filter.currentRow);
+//                }
+//            } while (filter.next());
+//
+//            count = table.delete(del, cSession);
+//        }
+//
+//        Result r = new Result();
+//
+//        r.iUpdateCount = count;
+//
+//        return r;
+//    }
+// No longer required; refactored as Parser.compileInsertStatement() and 
+// CompiledStatementExecutor.executeInsertStatement()
+//    /**
+//     *  Method declaration
+//     *
+//     * @return
+//     * @throws  SQLException
+//     */
+//    Result processInsert() throws SQLException {
+//
+//        tTokenizer.getThis("INTO");
+//
+//        String token = tTokenizer.getString();
+//
+//        tTokenizer.checkUnexpectedParam("parametric table identifier");
+//
+//        Table t = dDatabase.getTable(token, cSession);
+//
+//        checkTableWriteAccess(t, UserManager.INSERT);
+//
+//        token = tTokenizer.getString();
+//
+//        HsqlArrayList colnames       = null;
+//        boolean       checkcolumns[] = null;
+//        int           columnmap[]    = t.getColumnMap();
+//        int           len            = t.getColumnCount();
+//
+//        if (token.equals("(")) {
+//            colnames = getColumnNames();
+//
+//            if (colnames.size() > len) {
+//                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+//            }
+//
+//            len          = colnames.size();
+//            checkcolumns = t.getNewColumnCheckList();
+//            columnmap    = t.getNewColumnMap();
+//
+//            for (int i = 0; i < len; i++) {
+//                int colindex = t.getColumnNr((String) colnames.get(i));
+//
+//                columnmap[i]           = colindex;
+//                checkcolumns[colindex] = true;
+//            }
+//
+//            token = tTokenizer.getString();
+//        }
+//
+//        int count = 0;
+//
+//        if (token.equals("VALUES")) {
+//            Object row[] = t.getNewRow(checkcolumns);
+//
+//            getColumnValues(t, row, columnmap, len);
+//            t.insert(row, cSession);
+//
+//            count = 1;
+//        } else if (token.equals("SELECT")) {
+//            int[]  columntypes = t.getColumnTypes();
+//            Result result      = processSelect();
+//            Record r           = result.rRoot;
+//
+//            Trace.check(len == result.getColumnCount(),
+//                        Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+//            cSession.beginNestedTransaction();
+//
+//            try {
+//                while (r != null) {
+//                    Object row[] = t.getNewRow(checkcolumns);
+//
+//                    for (int i = 0; i < len; i++) {
+//                        int j = columnmap[i];
+//
+//                        if (columntypes[j] != result.colType[i]) {
+//                            row[j] = Column.convertObject(r.data[i],
+//                                                          columntypes[j]);
+//                        } else {
+//                            row[j] = r.data[i];
+//                        }
+//                    }
+//
+//                    r.data = row;
+//                    r      = r.next;
+//                }
+//
+//                count = t.insert(result, cSession);
+//
+//                cSession.endNestedTransaction(false);
+//            } catch (SQLException e) {
+//
+//                // insert failed (violation of primary key)
+//                cSession.endNestedTransaction(true);
+//
+//                throw e;
+//            }
+//        } else {
+//            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+//        }
+//
+//        Result r = new Result();
+//
+//        r.iUpdateCount = count;
+//
+//        return r;
+//    }
     HsqlArrayList getColumnNames() throws SQLException {
 
         HsqlArrayList columns = new HsqlArrayList();
@@ -634,6 +641,42 @@ class Parser {
         if (!enclosed || i != len - 1) {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
+    }
+
+    Select parseSubquery() throws SQLException {
+
+        SQLException se;
+        Select       s;
+
+        se                = null;
+        s                 = null;
+        isParsingSubquery = true;
+
+        subQueryLevel++;
+
+        try {
+            s = parseSelect();
+        } catch (SQLException e) {
+            se = e;
+        }
+
+        isParsingSubquery = false;
+
+        if (se != null) {
+            throw se;
+        }
+
+        SubQuery sq = new SubQuery();
+
+        sq.level  = subQueryLevel;
+        sq.select = s;
+
+        subQueryHeap.add(sq);
+
+        subQueryLevel--;
+
+        //System.out.println("subQueryHeap: " + subQueryHeap);
+        return s;
     }
 
     /**
@@ -762,8 +805,8 @@ class Parser {
                     token = tTokenizer.getString();
                 }
 
-                Trace.check(token.equals(Token.T_JOIN), Trace.UNEXPECTED_TOKEN,
-                            token);
+                Trace.check(token.equals(Token.T_JOIN),
+                            Trace.UNEXPECTED_TOKEN, token);
                 vfilter.add(parseTableFilter(true));
                 tTokenizer.getThis(Token.T_ON);
 
@@ -942,7 +985,8 @@ class Parser {
 
             select.iUnionType = Select.INTERSECT;
             select.sUnion     = parseSelect();
-        } else if (token.equals(Token.T_EXCEPT) || token.equals(Token.T_MINUS)) {
+        } else if (token.equals(Token.T_EXCEPT)
+                   || token.equals(Token.T_MINUS)) {
             tTokenizer.getThis(Token.T_SELECT);
 
             select.iUnionType = Select.EXCEPT;
@@ -1009,15 +1053,19 @@ class Parser {
     private TableFilter parseTableFilter(boolean outerjoin)
     throws SQLException {
 
-        String token = tTokenizer.getString();
-        Table  t     = null;
-        Select s     = null;
-        TableFilter  tf;
+        String      token = tTokenizer.getString();
+        Table       t     = null;
+        Select      s     = null;
+        TableFilter tf;
 
+        // TODO: - delay s.getResult until CompiledStatement is evaulated
+        //       - subquery might have parameters 
         if (token.equals(Token.T_OPENBRACKET)) {
             tTokenizer.getThis(Token.T_SELECT);
 
-            s        = parseSelect();
+            s = parseSubquery();
+
+            // Result r = s.describeResult();
             Result r = s.getResult(0);
 
             // it's not a problem that this table has not a unique name
@@ -1026,8 +1074,15 @@ class Parser {
 
             tTokenizer.getThis(Token.T_CLOSEBRACKET);
             t.addColumns(r);
+
+            // TODO:
+            // We loose / do not exploit index info here.
+            // Look at what, if any, indexes the query might benefit from
+            // and create or carry them across here if it might speed up
+            // subsequent access.
             t.createPrimaryKey();
 
+            // TODO:  this should be delayed until CompiledStatement is evaulated
             // subquery creation can't fail because constraint violation
             t.insertNoCheck(r, cSession);
         } else {
@@ -1074,7 +1129,9 @@ class Parser {
                                      CurrentPos - TokenLength + 1);
                 tTokenizer.getThis(Token.T_SELECT);
 
-                s        = parseSelect();
+                s = parseSubquery();
+
+                // Result r = s.describeResult();
                 Result r = s.getResult(0);
 
                 // it's not a problem that this table has not a unique name
@@ -1084,8 +1141,15 @@ class Parser {
 
                 tTokenizer.getThis(Token.T_CLOSEBRACKET);
                 t.addColumns(r);
+
+                // TODO:
+                // We loose / do not exploit index info here.
+                // Look at what, if any, indexes the query might benefit from
+                // and create or carry them across here if it might speed up 
+                // subsequent access.               
                 t.createPrimaryKey();
 
+                // TODO:  this should be delayed until CompiledStatement is evaulated
                 // subquery creation can't fail because constraint violation
                 t.insertNoCheck(r, cSession);
             }
@@ -1103,8 +1167,13 @@ class Parser {
             tTokenizer.back();
         }
 
-        tf = new TableFilter(t, sAlias, outerjoin);
+        // table filter, underlying table, six of one, ... of the other
+        // SYSTEM_SUBQUERY seems so generic, but is never used anyway
+        // This might be of some use in debugging, though?
+        // t.getName().name = t.getName().name + "[" + sAlias + "]";
+        tf         = new TableFilter(t, sAlias, outerjoin);
         tf.sSelect = s;
+
         return tf;
     }
 
@@ -1634,8 +1703,8 @@ class Parser {
 
                 r = readOr();
 
-                Trace.check(sToken.equals(Token.T_AS), Trace.UNEXPECTED_TOKEN,
-                            sToken);
+                Trace.check(sToken.equals(Token.T_AS),
+                            Trace.UNEXPECTED_TOKEN, sToken);
                 read();
 
                 int t = Column.getTypeNr(sToken);
@@ -1800,16 +1869,47 @@ class Parser {
 
 // boucherb@users 20030411 - patch 1.7.2 - for prepared statements
 // ---------------------------------------------------------------
-    HsqlArrayList parameters = new HsqlArrayList();
+    HsqlArrayList                     parameters   = new HsqlArrayList();
+    private static final Expression[] noParameters = new Expression[0];
+    private static final SubQuery[]   noSubqueries = new SubQuery[0];
 
-    // TODO:  alter
     Expression[] getParameters() {
-        return (Expression[]) parameters.toArray(
-            new Expression[parameters.size()]);
+
+        return parameters.size() == 0 ? noParameters
+                                      : (Expression[]) parameters.toArray(
+                                          new Expression[parameters.size()]);
     }
 
     void clearParameters() {
-        parameters.setSize(0);
+        parameters.clear();
+    }
+
+    // destructive get, but that's OK
+    SubQuery[] getSubqueries() {
+
+        SubQuery[] subqueries;
+        int        size;
+
+        size = subQueryHeap.size();
+
+        if (size == 0) {
+            return noSubqueries;
+        }
+
+        subqueries = new SubQuery[size];
+
+        // order matters: we want deepest subqueries first, since higher
+        // level select table filters depend on the content of lower level
+        // ones.  In general, order at depth n in tree is inconsequential,
+        // hence the use of heap ADT, v.s. a full tree.
+        for (int i = 0; i < size; i++) {
+            subqueries[i] = (SubQuery) subQueryHeap.remove();
+        }
+
+        subQueryLevel     = 0;
+        isParsingSubquery = false;
+
+        return subqueries;
     }
 
     CompiledStatement compileStatement(CompiledStatement cs)
@@ -1852,6 +1952,8 @@ class Parser {
 
         cs.setAsCall(expression, getParameters());
 
+        cs.subqueries = getSubqueries();
+
         return cs;
     }
 
@@ -1890,6 +1992,8 @@ class Parser {
         }
 
         cs.setAsDelete(table, condition, getParameters());
+
+        cs.subqueries = getSubqueries();
 
         return cs;
     }
@@ -1997,6 +2101,8 @@ class Parser {
 
             cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
 
+            cs.subqueries = cs.subqueries = getSubqueries();
+
             return cs;
         } else if (token.equals(Token.T_SELECT)) {
             select = parseSelect();
@@ -2006,6 +2112,8 @@ class Parser {
             }
 
             cs.setAsInsertSelect(t, cm, ccl, select, getParameters());
+
+            cs.subqueries = getSubqueries();
 
             return cs;
         } else {
@@ -2030,6 +2138,8 @@ class Parser {
         }
 
         cs.setAsSelect(select, getParameters());
+
+        cs.subqueries = getSubqueries();
 
         return cs;
     }
@@ -2109,7 +2219,26 @@ class Parser {
 
         cs.setAsUpdate(table, cm, acve, condition, getParameters());
 
+        cs.subqueries = getSubqueries();
+
         return cs;
+    }
+
+    private boolean isParsingSubquery = false;
+    private int     subQueryLevel     = 0;
+    private HsqlArrayHeap subQueryHeap = new HsqlArrayHeap(16,
+        new SubQueryLevelComparator());
+
+    static class SubQuery {
+        int    level;
+        Select select;
+    }
+
+    static class SubQueryLevelComparator implements ObjectComparator {
+
+        public int compare(Object a, Object b) {
+            return ((SubQuery) b).level - ((SubQuery) a).level;
+        }
     }
 
 // --

@@ -73,6 +73,8 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.StopWatch;
+import org.hsqldb.lib.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
@@ -80,13 +82,18 @@ import org.hsqldb.lib.HsqlObjectToIntMap;
 // additions in different parts to support savepoint transactions
 // fredt@users 20020910 - patch 1.7.1 by fredt - database readonly enforcement
 // fredt@users 20020912 - patch 1.7.1 by fredt - permanent internal connection
+// boucherb@users 20030512 - patch 1.7.2 - compiled statements 
+//                                       - session becomes execution hub
+// boucherb@users 20050510 - patch 1.7.2 - generalized Result packet passing 
+//                                         based command execution
+//                                       - batch execution handling
 
 /**
  *  Implementation of a user session with the database.
  *
  * @version  1.7.2
  */
-class Session {
+public class Session {
 
     private Database           dDatabase;
     private User               uUser;
@@ -114,13 +121,13 @@ class Session {
     }
 
     /**
-     *  Constructor declaration
+     * Constructs a new Session object.
      *
-     * @param  db
-     * @param  user
-     * @param  autocommit
-     * @param  readonly
-     * @param  id
+     * @param  db the database to which this represents a connection
+     * @param  user the initial user
+     * @param  autocommit the initial autocommit value
+     * @param  readonly the initial readonly value
+     * @param  id the session identifier, as known to the database
      */
     Session(Database db, User user, boolean autocommit, boolean readonly,
             int id) {
@@ -131,40 +138,26 @@ class Session {
         tTransaction = new HsqlArrayList();
         isAutoCommit = autocommit;
         isReadOnly   = readonly;
-
-        boolean useShadow = false;
-
-        // system property: -Dorg.hsqldb.shadow=true|false
-        try {
-            useShadow = Boolean.getBoolean("org.hsqldb.shadow");
-        } catch (Exception e) {}
-
-        if (useShadow) {
-            /*
-            // temporary backward compatibility test
-            dbci = new DatabaseCommandInterpreterShadow(this);
-            */
-        } else {
-            dbci = new DatabaseCommandInterpreter(this);
-        }
-
-        cse = new CompiledStatementExecutor(this);
-        cs  = new CompiledStatement();
+        dbci         = new DatabaseCommandInterpreter(this);
+        cse          = new CompiledStatementExecutor(this);
+        cs           = new CompiledStatement();
+        csm          = db.compiledStatementManager;
     }
 
     /**
-     *  Method declaration
+     *  Retrieves the session identifier for this Session.
      *
-     * @return
+     * @return the session identifier for this Session
      */
     int getId() {
         return iId;
     }
 
     /**
-     *  Method declaration
+     * Closes this Session, freeing any resources associated with it
+     * and rolling back any uncommited transaction it may have open.
      *
-     * @throws  SQLException
+     * @throws SQLException if a database access error occurs
      */
     void disconnect() {
 
@@ -184,83 +177,91 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Retrieves whether this Session is closed.
      *
-     * @return
+     * @return true if this Session is closed
      */
     boolean isClosed() {
         return isClosed;
     }
 
     /**
-     *  Method declaration
+     * Setter for iLastIdentity attribute.
      *
-     * @param  i
+     * @param  i the new value
      */
     void setLastIdentity(Object i) {
         iLastIdentity = i;
     }
 
     /**
-     *  Method declaration
+     * Getter for iLastIdentity attribute.
      *
-     * @return
+     * @return the current value
      */
     Object getLastIdentity() {
         return iLastIdentity;
     }
 
     /**
-     *  Method declaration
+     * Retrieves the Database instance to which this
+     * Session represents a connection
      *
-     * @return
+     * @return the Database object to which this Session is connected
      */
     Database getDatabase() {
         return dDatabase;
     }
 
     /**
-     *  Method declaration
+     * Retrieves the name, as known to the database, of the
+     * user currently controlling this Session.
      *
-     * @return
+     * @return the name of the user currently connected within this Session
      */
     String getUsername() {
         return uUser.getName();
     }
 
     /**
-     *  Method declaration
+     * Retrieves the User object representing the user currently controlling
+     * this session
      *
-     * @return
+     * @return this Session's User object
      */
     User getUser() {
         return uUser;
     }
 
     /**
-     *  Method declaration
+     * Sets this Session's User object to the one specified by the
+     * user argument.
      *
-     * @param  user
+     * @param  user the new User object for this session
      */
     void setUser(User user) {
         uUser = user;
     }
 
     /**
-     *  Method declaration
+     * Checks whether this Session's current User has the privileges of
+     * the ADMIN role.
      *
-     * @throws  SQLException
+     * @throws SQLException if this Session's User does not have the
+     *      privileges of the ADMIN role.
      */
     void checkAdmin() throws SQLException {
         uUser.checkAdmin();
     }
 
     /**
-     *  Check for a class name
+     * Checks whether this Session's current User has the set of rights
+     * specified by the right argument, in relation to the database
+     * object identifier specified by the object argument.
      *
-     * @param  object
-     * @param  right
-     * @throws  SQLException
+     * @param  object the database object to check
+     * @param  right the rights to check for
+     * @throws  SQLException if the Session User does not have such rights
      */
     void check(Object object, int right) throws SQLException {
         uUser.check(object, right);
@@ -286,7 +287,7 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Sets the session user's password to the value of the argument, s.
      *
      * @param  s
      */
@@ -295,10 +296,10 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     *  Adds a single-row deletion step to the transaction UNDO buffer.
      *
-     * @param  table
-     * @param  row
+     * @param  table the table from which the row was deleted
+     * @param  row the deleted row
      * @throws  SQLException
      */
     void addTransactionDelete(Table table, Object row[]) throws SQLException {
@@ -312,10 +313,10 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     *  Adds a single-row inssertion step to the transaction UNDO buffer.
      *
-     * @param  table
-     * @param  row
+     * @param  table the table into which the row was inserted
+     * @param  row the inserted row
      * @throws  SQLException
      */
     void addTransactionInsert(Table table, Object row[]) throws SQLException {
@@ -329,9 +330,9 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     *  Setter for the autocommit attribute.
      *
-     * @param  autocommit
+     * @param  autocommit the new value
      * @throws  SQLException
      */
     void setAutoCommit(boolean autocommit) throws SQLException {
@@ -344,7 +345,7 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Commits any uncommited transaction this Session may have open
      *
      * @throws  SQLException
      */
@@ -357,6 +358,11 @@ class Session {
         }
     }
 
+    /**
+     * Rolls back any uncommited transaction this Session may have open.
+     *
+     * @throws  SQLException
+     */
     void rollback() {
 
         int i = tTransaction.size();
@@ -375,7 +381,7 @@ class Session {
     }
 
     /**
-     *  Implements a transaction SAVEPOIINT. Application may do a partial
+     *  Implements a transaction SAVEPOIINT. Applications may do a partial
      *  rollback by calling rollbackToSavepoint(). A new SAVEPOINT with the
      *  name of an existing one, replaces the old SAVEPOINT.
      *
@@ -395,7 +401,7 @@ class Session {
      *  Implements a partial transaction ROLLBACK.
      *
      * @param  name Name of savepoint that was marked before by savepoint()
-     * call
+     *      call
      * @throws  SQLException
      */
     void rollbackToSavepoint(String name) throws SQLException {
@@ -430,7 +436,7 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Starts a nested transaction.
      *
      * @throws  SQLException
      */
@@ -447,9 +453,9 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Ends a nested transaction.
      *
-     * @param  rollback
+     * @param  rollback true to roll back or false to commit the nested transaction
      * @throws  SQLException
      */
     void endNestedTransaction(boolean rollback) throws SQLException {
@@ -476,9 +482,9 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     * Setter for readonly attribute.
      *
-     * @param  readonly
+     * @param  readonly the new value
      */
     void setReadOnly(boolean readonly) throws SQLException {
 
@@ -490,45 +496,45 @@ class Session {
     }
 
     /**
-     *  Method declaration
+     *  Getter for readonly attribute.
      *
-     * @return
+     * @return the current value
      */
     boolean isReadOnly() {
         return isReadOnly;
     }
 
     /**
-     *  Method declaration
+     *  Setter for maxRows attribute
      *
-     * @param  max
+     * @param  max the new value
      */
     void setMaxRows(int max) {
         iMaxRows = max;
     }
 
     /**
-     *  Method declaration
+     *  Getter for maxRows attribute
      *
-     * @return
+     * @return the current value
      */
     int getMaxRows() {
         return iMaxRows;
     }
 
     /**
-     *  Method declaration
+     *  Getter for nestedTransaction attribute.
      *
-     * @return
+     * @return the current value
      */
     boolean isNestedTransaction() {
         return isNestedTransaction;
     }
 
     /**
-     *  Method declaration
+     *  Getter for autoCommite attribute.
      *
-     * @return
+     * @return the current value
      */
     boolean getAutoCommit() {
         return isAutoCommit;
@@ -536,7 +542,7 @@ class Session {
 
     /**
      *  A switch to set scripting on the basis of type of statement executed.
-     *  A method in Database.jave sets this value to false before other
+     *  A method in Database.java sets this value to false before other
      *  methods are called to act on an SQL statement, which may set this to
      *  true. Afterwards the method reponsible for logging uses
      *  getScripting() to determine if logging is required for the executed
@@ -549,6 +555,8 @@ class Session {
     }
 
     /**
+     * Getter for scripting attribute.
+     *
      * @return  scripting for the last statement.
      */
     boolean getScripting() {
@@ -561,6 +569,9 @@ class Session {
     }
 
     /**
+     * Retrieves a Connection object equivalent to the one
+     * that created this Session.
+     *
      * @return  internal connection.
      */
     jdbcConnection getInternalConnection() throws SQLException {
@@ -577,22 +588,59 @@ class Session {
     private final long connectTime = System.currentTimeMillis();
 
 // more effecient for MetaData concerns than checkAdmin
+
+    /**
+     * Getter for admin attribute.
+     *
+     * @ return the current value
+     */
     boolean isAdmin() {
         return uUser.isAdmin();
     }
 
+    /**
+     * Getter for connectTime attribute.
+     *
+     * @return the value
+     */
     long getConnectTime() {
         return connectTime;
     }
 
+    /**
+     * Getter for transactionSise attribute.
+     *
+     * @return the current value
+     */
     int getTransactionSize() {
         return tTransaction.size();
     }
 
+    /**
+     * Retrieves whether the database object identifier by the dbobject
+     * argument is accessible by the current Session User.
+     *
+     * @return true if so, else false
+     */
     boolean isAccessible(Object dbobject) throws SQLException {
         return uUser.isAccessible(dbobject);
     }
 
+    /**
+     * Retrieves the set of the fully qualified names of the classes on
+     * which this Session's current user has been granted execute access.
+     * If the current user has the privileges of the ADMIN role, the
+     * set of all class grants made to all users is returned, including
+     * the PUBLIC user, regardless of the value of the andToPublic argument.
+     * In reality, ADMIN users have the right to invoke the methods of any
+     * and all classes on the class path, but this list is still useful in
+     * an ADMIN user context, for other reasons.
+     *
+     * @param andToPublic if true, grants to public are included
+     * @return the list of the fully qualified names of the classes on
+     *      which this Session's current user has been granted execute
+     *      access.
+     */
     HsqlHashSet getGrantedClassNames(boolean andToPublic) {
         return (isAdmin()) ? dDatabase.getUserManager().getGrantedClassNames()
                            : uUser.getGrantedClassNames(andToPublic);
@@ -603,44 +651,122 @@ class Session {
     DatabaseCommandInterpreter dbci;
     CompiledStatement          cs;
     CompiledStatementExecutor  cse;
+    CompiledStatementManager   csm;
+
+    CompiledStatement sqlCompileStatement(String sql) throws SQLException {
+
+        Tokenizer         tokenizer;
+        String            token;
+        Parser            parser;
+        int               cmd;
+        CompiledStatement cs;
+        boolean           cmdok;
+
+        tokenizer = new Tokenizer(sql);
+        parser    = new Parser(dDatabase, tokenizer, this);
+        token     = tokenizer.getString();
+
+        // get first token and its command id
+        cmd   = Token.get(token);
+        cmdok = true;
+
+        switch (cmd) {
+
+            case Token.SELECT : {
+                cs = parser.compileSelectStatement(null);
+
+                break;
+            }
+            case Token.INSERT : {
+                cs = parser.compileInsertStatement(null);
+
+                break;
+            }
+            case Token.UPDATE : {
+                cs = parser.compileUpdateStatement(null);
+
+                break;
+            }
+            case Token.DELETE : {
+                cs = parser.compileDeleteStatement(null);
+
+                break;
+            }
+            case Token.CALL : {
+                cs = parser.compileCallStatement(null);
+
+                break;
+            }
+            default : {
+                cmdok = false;
+                cs    = null;
+
+                break;
+            }
+        }
+
+        // In addition to requiring that the compilation was successful,
+        // we also require that the submitted sql represents a _single_ 
+        // valid DML statement.
+        if (!cmdok || tokenizer.getPosition() != tokenizer.getLength()) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        // - need to be able to key cs against its sql in statement pool
+        // - also need to be able to revalidate its sql occasionally
+        cs.sql = sql;
+
+        return cs;
+    }
 
     /**
-     * Executes the command encapsulated by the command argument.
+     * Executes the sql command encapsulated by the cmd argument.
      *
-     * @param command the command to execute
+     * @param cmd the command to execute
      * @return the result of executing the command
      */
-    Result execute(Result command) {
+    Result executeCommand(Result cmd) {
 
-        int type = command.iMode;
+        int type;
 
-// figure out what to do and what to return
+        HsqlRuntime.getHsqlRuntime().gc();
+
+        type = cmd.iMode;
+
         switch (type) {
 
-//            case Result.EXEC_SQL_STRING:
-//                  return execute(command.getSQL());
-//            case Result.PREPARE_STATEMENT:
-//                  return prepareStatement(command.getSQL());
-//            case Result.EXEC_STATEMENT:
-//                  int id = command.getStatementID();
-//                  Object[] pvals = command.getParameterValues();
-//                  return executeStatement(id, pvals);
-//            case Result.CLOSE_STATEMENT:
+            case Result.SQLEXECUTE : {
+                if (cmd.getSize() > 1) {
+                    return sqlExecuteBatch(cmd);
+                } else {
+                    return sqlExecute(cmd);
+                }
+            }
+            case Result.SQLEXECDIRECT : {
+                return sqlExecuteDirect(cmd.getStatement());
+            }
+            case Result.SQLPREPARE : {
+                return sqlPrepare(cmd.getStatement());
+            }
+            case Result.SQLFREESTMT : {
+                return sqlFreeStatement(cmd.getStatementID());
+            }
             default : {
-                return new Result("unknown operation type:" + type,
-                                  Trace.OPERATION_NOT_SUPPORTED);
+                String msg = "operation type:" + type;
+
+                return new Result(msg, Trace.OPERATION_NOT_SUPPORTED);
             }
         }
     }
 
     /**
-     * Executes all of the sql statements in the sql document represented by
-     * the sql argument string.
+     * Directly executes all of the sql statements in the collection
+     * represented by the sql argument string.
      *
      * @param sql a sql string
-     * @return the result of the last sql statement in the sql document
+     * @return the result of the last sql statement in the collection
      */
-    Result execute(String sql) {
+    Result sqlExecuteDirect(String sql) {
         return dbci.execute(sql);
     }
 
@@ -650,7 +776,7 @@ class Session {
      * @param cs the compiled statement to execute
      * @return the result of executing the compiled statement
      */
-    Result execute(CompiledStatement cs) {
+    Result sqlExecuteCompiled(CompiledStatement cs) {
         return cse.execute(cs);
     }
 
@@ -660,118 +786,224 @@ class Session {
      *
      * The result may encapsulate a newly constructed object
      * or a compatible object retrieved from a repository of
-     * previously compiled objects.
+     * previously compiled statement objects.
      *
      * @param sql a string describing the desired statement object
      * @throws SQLException is a database access error occurs
      * @return the result of preparing the statement
      */
-    Result prepareStatement(String sql) throws SQLException {
+    Result sqlPrepare(String sql) {
 
-        Tokenizer         tokenizer;
-        String            token;
-        Parser            parser;
-        int               cmd;
         CompiledStatement cs;
+        int               csid;
         Result            result;
+        boolean           hasSubqueries;
 
-        result = null;
+        result        = null;
+        cs            = null;
+        hasSubqueries = false;
 
-        // validating get
-        // result = dDatabase.getStatement(sql,this);
-        if (result != null) {
+        // get...
+        csid = csm.getStatementID(sql);
 
-            //    return result;
+        // ...check valid...
+        if (csid > 0 && csm.isValid(csid, iId)) {
+            result       = new Result();
+            result.iMode = Result.SQLPREPARE;
+
+            result.setStatementID(csid);
+
+            return result;
         }
 
-        // TODO:  Session and its command interpreter/statement executor
-        // can probably share a singe Parser and Tokenizer
-        // set up tokenizer and parser
-        // e.g. set tokenizer string and tell parser this is for prepare
-        tokenizer = new Tokenizer(sql);
-        parser    = new Parser(dDatabase, tokenizer, this);
-        token     = tokenizer.getString();
+        // ...compile or (re)validate
+        try {
+            cs = sqlCompileStatement(sql);
 
-        // get first token and its command id
-        cmd = Token.get(token);
-
-        switch (cmd) {
-
-            case Token.SELECT :
-                cs = parser.compileSelectStatement(null);
-                break;
-
-            case Token.INSERT :
-                cs = parser.compileInsertStatement(null);
-                break;
-
-            case Token.UPDATE :
-                cs = parser.compileUpdateStatement(null);
-                break;
-
-            case Token.DELETE :
-                cs = parser.compileDeleteStatement(null);
-                break;
-
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            Trace.doAssert(
+                cs.parameters.length == 0 || cs.subqueries.length == 0,
+                "subqueries in parametric statements not yet supported");
+        } catch (Throwable t) {
+            return new Result(t, sql);
         }
 
-        if (tokenizer.getPosition() != tokenizer.getLength()) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sql);
+        if (csid <= 0) {
+            csid = csm.registerStatement(cs);
         }
 
-        // validating put
-        // result = dDatabase.putStatement(cs,sql,this);
+        csm.setValidated(csid, iId, dDatabase.getDDLSCN());
+
+        result       = new Result();
+        result.iMode = Result.SQLPREPARE;
+
+        result.setStatementID(csid);
+
         return result;
     }
 
-    /**
-     * Retrieves the result of executing the indicated prepared statement
-     * using the indicate parameter values.
-     *
-     * @param statementID the numeric identifier of the statement
-     * @param pvals the parameter values for the statement
-     * @param ptypes the parameter value types for the statement
-     * @throws SQLException if a database access error occurs
-     * @return the result of executing the statement
-     */
-    Result executeStatement(int statementID, Object[] pvals,
-                            int[] ptypes) throws SQLException {
+    Result sqlExecuteBatch(Result cmd) {
 
-        CompiledStatement cs         = null;
-        Expression[]      parameters = null;
+        int               csid;
+        Object[]          pvals;
+        int[]             ptypes;
+        Record            record;
+        Result            in;
+        Result            out;
+        Result            err;
+        CompiledStatement cs;
+        int               batchStatus;
+        Expression[]      parameters;
+        int[]             updateCounts;
+        int               count;
 
-        // validating get: throws if no such id or invalid stmnt in sess ctx
-        // cs = database.getStatement(id,this);
-        parameters = cs.parameters;
+        csid = cmd.getStatementID();
+        cs   = csm.getStatement(csid);
 
-        if (pvals.length != ptypes.length
-                || pvals.length < parameters.length) {
-            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        if (cs == null) {
+            String msg = "Statement not prepared for csid: " + csid + ").";
+
+            return new Result(msg, Trace.INVALID_IDENTIFIER);
         }
 
-        for (int i = 0; i < parameters.length; i++) {
-            parameters[i].bind(pvals[i], ptypes[i]);
+        if (!csm.isValid(csid, iId)) {
+            out = sqlPrepare(cs.sql);
+
+            if (out.iMode == Result.ERROR) {
+                return out;
+            }
         }
 
-        return cse.execute(cs);
+        parameters     = cs.parameters;
+        ptypes         = cmd.getParameterTypes();
+        count          = 0;
+        updateCounts   = new int[cmd.getSize()];
+        record         = cmd.rRoot;
+        out            = new Result(1);
+        out.colType[0] = DITypes.INTEGER;
+        err            = new Result();
+        err.iMode      = Result.ERROR;
+
+        while (record != null) {
+            pvals = record.data;
+            in    = err;
+
+            try {
+                for (int i = 0; i < parameters.length; i++) {
+                    parameters[i].bind(pvals[i], ptypes[i]);
+                }
+
+                in = sqlExecuteCompiled(cs);
+            } catch (Throwable t) {
+
+                // if (t instanceof OutOfMemoryError) {
+                // System.gc();
+                // }
+                // "in" alread equals "err"
+                // maybe test for OOME and do a gc() ?
+                // t.printStackTrace();
+            }
+
+            // On the client side, iterate over the vals and throw
+            // a BatchUpdateException if a batch status value of
+            // -3 is encountered in the result
+            switch (in.iMode) {
+
+                case Result.UPDATECOUNT : {
+                    batchStatus = in.iUpdateCount;
+
+                    break;
+                }
+                case Result.DATA : {
+
+                    // FIXME:  we don't have what it takes yet
+                    // to differentiate between things like
+                    // stored procedure calls to methods with 
+                    // void return type and select statements with 
+                    // a single row/column containg null
+                    batchStatus = -2;
+                }
+                case Result.ERROR :
+                default : {
+                    batchStatus = -3;
+                }
+            }
+
+            updateCounts[count] = batchStatus;
+            record              = record.next;
+        }
+
+        out.add(new Object[]{ updateCounts });
+
+        return out;
     }
 
     /**
-     * Retrieves the result of closing the statement with the given id.
+     * Retrieves the result of executing the prepared statement whose csid
+     * and parameter values/types are encapsulated by the cmd argument.
      *
-     * @param id the numeric identifier of the statement
-     * @throws SQLException if a database access error occurs
-     * @return the result of closing the indicated statement
+     * @return the result of executing the statement
      */
-    Result closeStatement(int id) throws SQLException {
+    Result sqlExecute(Result cmd) {
 
-        Result result;
+        int               csid;
+        Object[]          pvals;
+        int[]             ptypes;
+        CompiledStatement cs;
+        Expression[]      parameters;
 
-        result = null;
+        csid   = cmd.getStatementID();
+        pvals  = cmd.getParameterData();
+        ptypes = cmd.getParameterTypes();
+        cs     = csm.getStatement(csid);
 
-        // result =  database.closeStatement(id);
+        if (cs == null) {
+            String msg = "Statement not prepared for csid: " + csid + ").";
+
+            return new Result(msg, Trace.INVALID_IDENTIFIER);
+        }
+
+        if (!csm.isValid(csid, iId)) {
+            Result r = sqlPrepare(cs.sql);
+
+            if (r.iMode == Result.ERROR) {
+                return r;
+            }
+        }
+
+        parameters = cs.parameters;
+
+        // don't bother with array length checks...trust the client
+        // to send pvals and ptyptes with length at least as long 
+        // as parameters array
+        try {
+            for (int i = 0; i < parameters.length; i++) {
+                parameters[i].bind(pvals[i], ptypes[i]);
+            }
+        } catch (Throwable t) {
+            return new Result(t, cs.sql);
+        }
+
+        return sqlExecuteCompiled(cs);
+    }
+
+    /**
+     * Retrieves the result of freeing the statement with the given id.
+     *
+     * @param csid the numeric identifier of the statement
+     * @return the result of freeing the indicated statement
+     */
+    Result sqlFreeStatement(int csid) {
+
+        boolean existed;
+        Result  result;
+
+        existed = csm.freeStatement(csid, iId);
+        result  = new Result();
+
+        if (existed) {
+            result.iUpdateCount = 1;
+        }
+
         return result;
     }
 

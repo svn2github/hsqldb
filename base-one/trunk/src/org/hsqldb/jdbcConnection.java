@@ -87,11 +87,6 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
-import java.lang.reflect.InvocationTargetException;
-import java.security.Security;
-import java.security.Provider;
-import java.security.Principal;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.*;    // for Map
@@ -277,18 +272,6 @@ public class jdbcConnection implements Connection {
     private boolean isTls = false;
 
     /**
-     *  Whether we have attempted to add an TLS provider for this JVM
-     */
-    static private boolean isTlsProvided = false;
-
-    /**
-     *  JVM-shared SSL Socket Factory
-     *  Instantiated upon the first attempt to use any SSL connection.
-     *  (stored as an Object in order to satisfy non-JSSE JREs)
-     */
-    static private Object sslFactory = null;
-
-    /**
      *  The name of this connection's {@link Database Database}, as
      *  known to this connection. <p>
      *
@@ -353,77 +336,6 @@ public class jdbcConnection implements Connection {
      * #INTERNAL INTERNAL}. <p>
      */
     private int iType;
-
-    /**
-     * Entirely for purpose of generating clsInt.
-     * Java provides no more direct means to generate clsInt.
-     */
-    static final int IARRAY[] = { 1 };
-
-    /**
-     * Valid Class for primitive type "int"
-     */
-    final static private Class clsInt = IARRAY.getClass().getComponentType();
-
-    /**
-     * Classloader for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private ClassLoader loader = null;
-
-    /**
-     * Class reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Class FactoryClass = null;
-
-    /**
-     * Class reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Class SSLSocketClass = null;
-
-    /**
-     * Class reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Class X590Class = null;
-
-    /**
-     * Class reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Class SessionClass = null;
-
-    /**
-     * Method reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Method CreateSocketMethod = null;
-
-    /**
-     * Method reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Method ShakeMethod = null;
-
-    /**
-     * Method reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Method GetSesMethod = null;
-
-    /**
-     * Method reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Method ChainMethod = null;
-
-    /**
-     * Method reference for dynamic TLS setup.
-     * (Used only for URLs of type jdbc:hsqldb:hsqls:)
-     */
-    static private Method GetSubjDNMethod = null;
 
 // ----------------- In-process Database Connection Attributes -------------
 
@@ -532,8 +444,6 @@ public class jdbcConnection implements Connection {
      *  The http url of this connection's {@link WebServer WebServer}
      *  mode {@link Database Database}, when this connection is of
      *  type {@link #HTTP HTTP}. <p>
-     *
-     *
      */
     private String sConnect;
 
@@ -544,8 +454,6 @@ public class jdbcConnection implements Connection {
      *  This is the user name that this connection uses to log on to
      *  its <code>Database</code>, when this connection is of type
      *  {@link #HTTP HTTP}. <p>
-     *
-     *
      */
     private String sUser;
 
@@ -553,8 +461,6 @@ public class jdbcConnection implements Connection {
      *  The password this connection uses to log on to its {@link
      *  WebServer WebServer} mode <code>Database</code>, when this
      *  connection is of type {@link #HTTP HTTP}. <p>
-     *
-     *
      */
     private String sPassword;
 
@@ -836,6 +742,10 @@ public class jdbcConnection implements Connection {
      */
     public String nativeSQL(String sql) throws SQLException {
 
+        //boucherb@users 20030405
+        //FIXME: does not properly escape even the JDBC escape syntax we 
+        //       say we support.
+        //       e.g.  {call ...(...,{dt '...'},....)} does not work
         checkClosed();
 
         if (sql.indexOf('{') == -1) {
@@ -1158,6 +1068,8 @@ public class jdbcConnection implements Connection {
      */
     public void close() throws SQLException {
 
+        SQLException se;
+
         if (Trace.TRACE) {
             Trace.trace();
         }
@@ -1170,23 +1082,25 @@ public class jdbcConnection implements Connection {
             return;
         }
 
-        // FIXME:
-        // closeStandalone() should only get called for STANDALONE
-        // calling close on an internal connection should do nothing
-        // Internal connections should not execute DISCONNECT or set
-        // bClosed true
-        // Only one instance of internal connection should exist for
-        // each Session, and it should be open for the life of
-        // its Session
-        // boucherb@users 20020409
-// fredt - patch 1.7.1 - implemented the above
+        se = null;
+
         if (iType == STANDALONE) {
             closeStandalone();
         } else {
-            execute("DISCONNECT");
+            try {
+                execute("DISCONNECT");
+            } catch (SQLException e) {
+                se = e;
+            }
+
+            closeSocket();
         }
 
         bClosed = true;
+
+        if (se != null) {
+            throw se;
+        }
     }
 
     /**
@@ -1590,15 +1504,15 @@ public class jdbcConnection implements Connection {
      */
 
     // bourcherb@users - 20020828 - patch 1.7.1 by boucherb@users
-    static void removeDatabase(Database database) {
-
-        if (database == null) {
-            return;
-        }
-
-        tDatabase.remove(database.getName());
-        iUsageCount.remove(database);
-    }
+//    static void removeDatabase(Database database) {
+//
+//        if (database == null) {
+//            return;
+//        }
+//
+//        tDatabase.remove(database.getName());
+//        iUsageCount.remove(database);
+//    }
 
     /**
      * <!-- start generic documentation -->
@@ -2908,6 +2822,8 @@ public class jdbcConnection implements Connection {
      */
     private void reconnectHSQL() throws SQLException {
 
+        HsqlSocketFactory factory;
+
         try {
             StringTokenizer st   = new StringTokenizer(sConnect, ":");
             String          host = st.hasMoreTokens() ? st.nextToken()
@@ -2916,11 +2832,9 @@ public class jdbcConnection implements Connection {
                                           : (isTls ? DEFAULT_HSQLSDB_PORT
                                                    : DEFAULT_HSQLDB_PORT);
 
-            sSocket = (isTls ? newSslSocket(host, port)
-                             : (new Socket(host, port)));
+            sSocket = newSocket(host, port, isTls);
 
-            sSocket.setTcpNoDelay(true);
-
+            //sSocket.setTcpNoDelay(true);
             dOutput = new DataOutputStream(
                 new BufferedOutputStream(sSocket.getOutputStream()));
             dInput = new DataInputStream(
@@ -3022,25 +2936,15 @@ public class jdbcConnection implements Connection {
     private void openStandalone(String user,
                                 String password) throws SQLException {
 
-        synchronized (jdbcConnection.class) {
-            dDatabase = (Database) tDatabase.get(sDatabaseName);
+        try {
+            dDatabase = runtime.getDatabase(sDatabaseName, this);
+            cSession  = dDatabase.connect(user, password);
+        } catch (SQLException se) {
+            try {
+                close();
+            } catch (Exception e) {}
 
-            int usage;
-
-            if (dDatabase == null) {
-                dDatabase = new Database(sDatabaseName);
-
-                tDatabase.put(sDatabaseName, dDatabase);
-
-                usage = 1;
-            } else {
-                usage =
-                    1 + ((Integer) iUsageCount.get(sDatabaseName)).intValue();
-            }
-
-            iUsageCount.put(sDatabaseName, new Integer(usage));
-
-            cSession = dDatabase.connect(user, password);
+            throw se;
         }
     }
 
@@ -3050,13 +2954,13 @@ public class jdbcConnection implements Connection {
      */
     public void finalize() {
 
-        // TODO:
-        // we should add some ability to trace or track
-        // close() failures here.
-        // boucherb@users 20020509
         try {
             close();
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            if (Trace.TRACE) {
+                Trace.trace(e.toString());
+            }
+        }
     }
 
     /**
@@ -3069,48 +2973,10 @@ public class jdbcConnection implements Connection {
      */
     private void closeStandalone() throws SQLException {
 
-        synchronized (jdbcConnection.class) {
+        runtime.releaseDatabase(dDatabase, this);
 
-            // FIXME:
-            // Should check first if sDatabase is null and
-            // throw appropriate SQLException?
-            // boucherb@user 20020509
-            // fredt - too many different flags are used in all of this
-            // code, it should all be reorganised
-            Integer i = (Integer) iUsageCount.get(sDatabaseName);
-
-            if (i == null) {
-
-                // It was already closed - ignore it.
-                return;
-            }
-
-            int usage = i.intValue() - 1;
-
-            if (usage == 0) {
-                iUsageCount.remove(sDatabaseName);
-                tDatabase.remove(sDatabaseName);
-
-                /*bad.  What if user is not admin*/
-
-                // fredt - because standalone is used only as part of an
-                // application there should not be a need to keep
-                // the database open when the last connection is closed.
-                // alternatively openning and closing the database, as opposed
-                // to connections to it, can be handled by separate, non-JDBC
-                // method call, similar to server modes.
-                if (!dDatabase.isShutdown()) {
-                    execute("SHUTDOWN");
-                }
-
-                /**/
-                dDatabase = null;
-                cSession  = null;
-            } else {
-                iUsageCount.put(sDatabaseName, new Integer(usage));
-                execute("DISCONNECT");
-            }
-        }
+        dDatabase = null;
+        cSession  = null;
     }
 
     /**
@@ -3148,345 +3014,39 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     *  Convenience method to clean up socket which may still be open
-     *
-     * @param  s  Socket to be closed (null is ok)
-     *
+     *  Convenience method to clean up the socket which may still be open
      */
-    static private void condClose(Socket s) {
+    private void closeSocket() {
 
-        if (s == null) {
-            return;
-        }
-
-        try {
-            s.close();
-        } catch (Exception e) {}
-    }
-
-    /**
-     *  Static method that returns a new SSL Socket.
-     *
-     *  Input parameters should be validated BEFORE calling this method.
-     *  <P> This is done statically so that we can safely reuse the TLS
-     *  resources (note that the method is sychronized).  The TLS
-     *  resources can take a LOT of system resources and can be very slow,
-     *  especially with older JSSE implementations.
-     *
-     * @param  strHost A validated node name
-     * @param  intPort A port number
-     * @return  the new Socket
-     * @throws  SQLException for any TLS/resource/network error
-     *
-     */
-    static synchronized private Socket newSslSocket(String strHost,
-            int intPort) throws SQLException {
-
-        Socket ssls = null;
-
-        if (loader == null) {
-            loader = jdbcConnection.class.getClassLoader();
-        }
-
-        if (loader == null) {
-
-            // NO_CLASSLOADER_FOR_TLS
-            throw new SQLException(
-                "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
-        }
-
-        if (!isTlsProvided) {
+        if (sSocket != null) {
             try {
+                sSocket.close();
+            } catch (Exception e) {
+                if (Trace.TRACE) {
+                    Trace.trace(e.toString());
+                }
+            }
 
-                // Providers may be added to the JSSE config file too
-                // http://java.sun.com/j2se/1.4/docs/guide/security/ +
-                //  jsse/JSSERefGuide.html#ProviderCust
-                isTlsProvided = true;
-
-                Security
-                    .addProvider((Provider) loader
-                        .loadClass("com.sun.net.ssl.internal.ssl.Provider")
-                        .newInstance());    // Throws nothing
-
-                // No big deal if Sun's provider not found.  User might have a
-                // different provider.  Error will be caught later on if none.
-            } catch (Exception e) {}
+            sSocket = null;
         }
-
-        try {
-            if (FactoryClass == null) {
-                FactoryClass =
-                    loader.loadClass("javax.net.ssl.SSLSocketFactory");
-            }
-
-            if (sslFactory == null) {
-                Method GetDefaultMethod = FactoryClass.getMethod("getDefault",
-                    null);
-
-                sslFactory = GetDefaultMethod.invoke(null, null);
-            }
-
-            if (SSLSocketClass == null) {
-                SSLSocketClass = loader.loadClass("javax.net.ssl.SSLSocket");
-            }
-
-            if (X590Class == null) {
-                X590Class =
-                    loader.loadClass("javax.security.cert.X509Certificate");
-            }
-
-            if (SessionClass == null) {
-                SessionClass = loader.loadClass("javax.net.ssl.SSLSession");
-            }
-        } catch (ClassNotFoundException cnfe) {
-
-            // NO_JSSE
-            throw new SQLException("JSSE not installed:  " + cnfe);
-        } catch (NoSuchMethodException nsme) {
-
-            // NO_SSLSOCKETFACTORY_METHOD
-            throw new SQLException(
-                "Failed to find method SSLSocketFactory.getDefault()");
-
-            // Need to unwrap the following exceptions
-        } catch (InvocationTargetException ite) {
-
-            // UNEXPECTED_EXCEPTION
-            // JSSE classes are available, but the JSSE methods threw Excepts
-            // I don't think that getDefault() throws any.  Should not get here.
-            throw new SQLException(ite.getTargetException().toString());
-        } catch (IllegalAccessException iae) {
-
-            // ACCESS_IS_DENIED
-            throw new SQLException(
-                "You do not have permission to use the needed SSL resources");
-        } catch (Exception e) {
-
-            // UNEXPECTED_EXCEPTION
-            // Just pass through remaing, including IllegalArgExcept,
-            // which should not be possible if we compiled successfully.
-            throw new SQLException(e.toString());
-        }
-
-        try {
-            if (CreateSocketMethod == null) {
-                Class carray[] = {
-                    String.class, clsInt
-                };
-
-                CreateSocketMethod = FactoryClass.getMethod("createSocket",
-                        carray);
-            }
-
-            if (ShakeMethod == null) {
-                ShakeMethod = SSLSocketClass.getMethod("startHandshake",
-                                                       null);
-            }
-
-            if (GetSesMethod == null) {
-                GetSesMethod = SSLSocketClass.getMethod("getSession", null);
-            }
-
-            if (ChainMethod == null) {
-                ChainMethod =
-                    SessionClass.getMethod("getPeerCertificateChain", null);
-            }
-
-            if (GetSubjDNMethod == null) {
-                GetSubjDNMethod = X590Class.getMethod("getSubjectDN", null);
-            }
-
-            // These first ones are not going to occur.  From the forNames.
-        } catch (ExceptionInInitializerError eiie) {
-
-            // SSL_ERROR
-            Throwable t = eiie.getException();
-
-            throw new SQLException((t instanceof Exception) ? t.toString()
-                                                            : eiie
-                                                            .toString());
-        } catch (LinkageError le) {
-
-            // SSL_ERROR
-            throw new SQLException(le.toString());
-        } catch (NoSuchMethodException nsme) {
-
-            // MISSING_SSL_METHOD
-            throw new SQLException("Failed to find an SSL method: " + nsme);
-        } catch (SecurityException se) {
-
-            // SSL_SECURITY_ERROR
-            throw new SQLException(se.toString());
-        }
-
-        Object csObjectArray[] = {
-            strHost, new Integer(intPort)
-        };
-
-        try {
-            ssls = (Socket) CreateSocketMethod.invoke(sslFactory,
-                    csObjectArray);
-
-            /* N.b.  BEWARE:  The following handshake will hang for a long
-             * time if you try to connect to a valid TCP socket
-             * that is not running TLS.  In that case, this thread
-             * is WAITING for the other side to send TLS info.
-             * TODO:  Start up another thread to interrupt this thread if
-             * a MAX_HANDSHAKE_TIME is exceeded
-             */
-            ShakeMethod.invoke(ssls, null);
-
-            // Need to unwrap the following exceptions
-        } catch (InvocationTargetException ite) {
-            condClose(ssls);
-
-            /* JSSE classes are available, but the JSSE methods threw Excepts
-             * Could be one of...
-             * javax.net.ssl.SSLException sslee) {
-             * java.net.ConnectException ce) {
-             * SecurityException se) {
-             * java.net.UnknownHostException uhe) {
-             * java.io.IOException ioe) {
-             */
-            throw new SQLException(ite.getTargetException().toString());
-        } catch (IllegalAccessException iae) {
-            condClose(ssls);
-
-            // ACCESS_IS_DENIED
-            throw new SQLException(
-                "You don't have permissions for SSLSocketFactory.createSocket() "
-                + "or SSLSocket.startHandshake()");
-        } catch (Exception e) {
-
-            // UNEXPECTED_EXCEPTION
-            // incl. IllegalArgumentException which should not get at runtime
-            condClose(ssls);
-
-            throw new SQLException(e.toString());
-        }
-
-        Principal p = null;
-
-        try {
-            Object ses = GetSesMethod.invoke(ssls, null);    // Throws nothing
-
-            if (ses == null) {
-                condClose(ssls);
-
-                // NO_TLS_DATA
-                throw new SQLException(
-                    "Failed to obtain session data from TLS connection");
-            }
-
-            // throws javax.net.ssl.SSLPeerUnverifiedException
-            Object captr = ChainMethod.invoke(ses, null);
-
-            if (captr == null || (!captr.getClass().isArray())
-                    ||!(captr.getClass().getComponentType().isAssignableFrom(
-                        X590Class))) {
-                condClose(ssls);
-
-                // NO_TLS_DATA
-                throw new SQLException(
-                    "Failed to obtain session data from TLS connection");
-            }
-
-            Object caarray[] = (Object[]) captr;
-
-            if (caarray.length < 0) {
-                condClose(ssls);
-
-                // NO_TLS_DATA
-                throw new SQLException(
-                    "Failed to obtain session data from TLS connection");
-            }
-
-            p = (Principal) GetSubjDNMethod.invoke(caarray[0], null);
-
-            // Need to unwrap the following exceptions
-        } catch (InvocationTargetException ite) {
-            condClose(ssls);
-
-            /* JSSE classes are available, but the JSSE methods threw Excepts
-             * Could be one of...
-             * javax.net.ssl.SSLPeerUnverifiedException
-             */
-
-            // TLS_ERROR
-            throw new SQLException(ite.getTargetException().toString());
-        } catch (IllegalAccessException iae) {
-            condClose(ssls);
-
-            // ACCESS_IS_DENIED
-            throw new SQLException(
-                "You don't have permissions for a TLS socket operation");
-        } catch (Exception e) {
-
-            // Include IllegalArgumentException
-            condClose(ssls);
-
-            // UNEXPECTED_EXCEPTION
-            throw new SQLException(e.toString());
-        }
-
-        // It would be a hell of a lot easier to pull out the CN with
-        // Java 1.4 Regexes.
-        if (p == null) {
-            condClose(ssls);
-
-            // NO_PRINCIPAL
-            throw new SQLException(
-                "Somehow failed to retrieve Principal from Server");
-        }
-
-        String Dn = p.toString();
-
-        if (Dn == null) {
-            condClose(ssls);
-
-            // INCOMPLETE_CERTIFICATE
-            throw new SQLException(
-                "Failed to obtain 'Distinguished Name' from Server certificate");
-        }
-
-        int istart = Dn.indexOf("CN=");
-
-        if (istart < 0) {
-            condClose(ssls);
-
-            // INCOMPLETE_CERTIFICATE
-            throw new SQLException(
-                "Failed to obtain 'Common Name' from Server certificate");
-        }
-
-        istart += 3;
-
-        int    istop = Dn.indexOf(',', istart);
-        String CN    = Dn.substring(istart, (istop > -1) ? istop
-                                                         : Dn.length());
-
-        if (CN.length() < 1) {
-            condClose(ssls);
-
-            // INCOMPLETE_CERTIFICATE
-            throw new SQLException("Server returned a null Common Name");
-        }
-
-        // DEBUG Code.
-        // System.err.println("Hostname vs. CommonName: (" +
-        //  strHost + ") vs (" + CN + ')');
-        // For https protocol, the protocol handler should do this verification
-        // (Sun's implementation does), but if we change this class to not
-        // use the Protocol handler (only available in Java >= 1.4), and
-        // for hsqls now, we need to do the validation: hostname == cert CN
-        if (!CN.equalsIgnoreCase(strHost)) {
-
-            // TLS_HOSTNAME_MISMATCH
-            throw new SQLException("Server cert Common Name '" + CN
-                                   + "' does not match given "
-                                   + "network node name '" + strHost + "'");
-        }
-
-        return ssls;
     }
+
+    /** Retrieves a new Socket object */
+    private static synchronized Socket newSocket(String host, int port,
+            boolean isTLS) throws SQLException {
+
+        try {
+            return HsqlSocketFactory.getInstance(isTLS).createSocket(host,
+                                                 port);
+        } catch (Exception e) {
+
+            // TODO:  wrap this better; we have lots of Trace codes we could
+            // use for TLS and maybe a few better than GENERAL_ERROR
+            // for plain sockets.
+            throw isTLS ? Trace.error(Trace.TLS_ERROR, e.toString())
+                        : Trace.error(Trace.GENERAL_ERROR, e.toString());
+        }
+    }
+
+    private static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
 }
