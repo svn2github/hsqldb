@@ -1,4 +1,4 @@
-<!-- $Id: texttables.xml,v 1.1 2004/04/14 22:35:00 unsaved Exp $ -->
+<!-- $Id: texttables.xml,v 1.2 2004/04/15 04:28:53 unsaved Exp $ -->
 
 <chapter>
     <title>Text Tables</title>
@@ -20,8 +20,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/14 22:35:00 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/15 04:28:53 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
@@ -154,8 +154,8 @@
                 (|) and vs as the period (.) then the data in the CSV file for 
                 a row will look like:
             </para> <screen>
-                First field data|Second field data.Third field data
-            </screen><para>
+    First field data|Second field data.Third field data</screen>
+            <para>
                 The following example shows how to change the default separator 
                 to the pipe (|), VARCHAR separator to the period (.) and the 
                 LONGVARCHAR separator to the tilde (~).
