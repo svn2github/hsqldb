@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.28 2004/06/05 06:52:33 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.29 2004/06/05 14:32:05 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.28 $
+ * @version $Revision: 1.29 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -182,11 +182,14 @@ public class SqlTool {
         + "    --list                   List urlids in the rcfile\n"
         + "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
         + "    --debug                  Print Debug info to stderr\n"
-        + "    --noauto                 Do not execute auto.sql from home dir\n"
+        + "    --noAutoFile             Do not execute auto.sql from home dir\n"
+        + "    --autoCommit             Auto-commit JDBC DML commands\n"
         + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
         + "                             where \"SQL;\" consists of SQL command(s) like\n"
         + "                             in an SQL file, and may contain line breaks\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
+        + "    --abortOnErr             Abort on Error (overrides defaults)\n"
+        + "    --continueOnErr          Continue on Error (overrides defaults)\n"
         + "    --setvar NAME1=val1[,NAME2=val2...]   PL variables\n"
         + "    --driver a.b.c.Driver*   JDBC driver class ["
         + DEFAULT_JDBC_DRIVER + "]\n"
@@ -269,7 +272,9 @@ public class SqlTool {
         boolean listMode    = false;
         boolean interactive = false;
         boolean noinput     = false;
-        boolean noauto      = false;
+        boolean noautoFile  = false;
+        boolean autoCommit  = false;
+        Boolean coeOverride = null;
 
         noexit = System.getProperty("sqltool.noexit") != null;
         try {
@@ -281,6 +286,24 @@ public class SqlTool {
                 if (arg[i].substring(2).equals("help")) {
                     exitMain(0, SYNTAX_MESSAGE);
                     return;
+                }
+                if (arg[i].substring(2).equals("abortOnErr")) {
+                    if (coeOverride != null) {
+                        exitMain(0, "Switches '--abortOnErr' and "
+                                + "'--continueOnErr' are mutually exclusive");
+                        return;
+                    }
+                    coeOverride = Boolean.FALSE;
+                    continue;
+                }
+                if (arg[i].substring(2).equals("continueOnErr")) {
+                    if (coeOverride != null) {
+                        exitMain(0, "Switches '--abortOnErr' and "
+                                + "'--continueOnErr' are mutually exclusive");
+                        return;
+                    }
+                    coeOverride = Boolean.TRUE;
+                    continue;
                 }
                 if (arg[i].substring(2).equals("list")) {
                     listMode = true;
@@ -311,8 +334,12 @@ public class SqlTool {
                     debug = true;
                     continue;
                 }
-                if (arg[i].substring(2).equals("noauto")) {
-                    noauto = true;
+                if (arg[i].substring(2).equals("noAutoFile")) {
+                    noautoFile = true;
+                    continue;
+                }
+                if (arg[i].substring(2).equals("autoCommit")) {
+                    autoCommit = true;
                     continue;
                 }
                 if (arg[i].substring(2).equals("noinput")) {
@@ -404,6 +431,7 @@ public class SqlTool {
             Class.forName(driver).newInstance();
             conn = DriverManager.getConnection(conData.url, conData.username,
                                                conData.password);
+            conn.setAutoCommit(autoCommit);
         } catch (Exception e) {
             //e.printStackTrace();
             // Let's not continue as if nothing is wrong.
@@ -414,7 +442,7 @@ public class SqlTool {
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
         File autoFile = null;
-        if (!noauto) {
+        if (!noautoFile) {
             autoFile = new File(System.getProperty("user.home") + "/auto.sql");
             if ((!autoFile.isFile()) || !autoFile.canRead()) {
                 autoFile = null;
@@ -472,7 +500,7 @@ public class SqlTool {
         int retval = 0;    // Value we will return via System.exit().
         try {
             for (int j = 0; j < sqlFiles.length; j++) {
-                sqlFiles[j].execute(conn);
+                sqlFiles[j].execute(conn, coeOverride);
             }
         } catch (IOException ioe) {
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
