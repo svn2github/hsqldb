@@ -26,7 +26,7 @@ usage:
 
    ant -Dnoswing=true jarmain   exclude swing classes
    hsqldb.jar     : default dirstibution jar
-   hsqljdbc.jar   : JDBC driver only (no support for memory-only mode)
+   hsqljdbc.jar   : JDBC driver only (no memory-only nor in-mem mode)
    hsqldbmain.jar : no utility programs
    hsqldbmin.jar  : no utility or server programs
    hsqldbtest.jar : all including test classes
