@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.3 2004/06/08 05:41:12 unsaved Exp $
+# $Id: sqltool.rc,v 1.4 2004/06/10 00:14:22 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -28,6 +28,16 @@ password
 
 
 # Template for a urlid for an Oracle database.
+# You will need to put the oracle.jdbc.OracleDriver class into your 
+# classpath.
+# In the great majority of cases, you want to use the file classes12.zip
+# (which you can get from the directory $ORACLE_HOME/jdbc/lib of any
+# Oracle installation compatible with your server).
+# Since you need to add to the classpath, you can't invoke SqlTool with
+# the jar switch, like "java -jar .../hsqldb.jar..." or 
+# "java -jar .../hsqlsqltool.jar...".
+# Put both the HSQLDB jar and classes12.zip in your classpath (and export!)
+# and run something like "java org.hsqldb.util.SqlTool...".
 
 #urlid cardiff2
 #url jdbc:oracle:thin:@aegir.admc.com:1522:TRAFFIC_SID
