@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.11 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.12 2004/06/07 19:53:59 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.11 $</edition>
-    <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+    <edition>$Revision: 1.12 $</edition>
+    <pubdate>$Date: 2004/06/07 19:53:59 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -112,7 +112,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
     <section id="alter_table-section">
         <title id="alter_table-title">ALTER TABLE<footnoteref linkend='posthyper'/></title>
         <programlisting>
-            ALTER TABLE &lt;tablename&gt; ADD COLUMN &lt;columnname&gt; <link linkend='datatypes-section'>Datatype</link> [(columnSize[,precision])]
+ALTER TABLE &lt;tablename&gt; ADD COLUMN &lt;columnname&gt; <link linkend='datatypes-section'>Datatype</link> [(columnSize[,precision])]
 [DEFAULT &lt;defaultValue&gt; [NOT NULL]] [BEFORE &lt;existingcolumn&gt;];</programlisting>
         <para>
             Adds the column to the end of the column list.
@@ -301,6 +301,11 @@ CREATE SEQUENCE &lt;sequencename&gt; [AS {INTEGER | BIGINT}] [START WITH &lt;sta
             If a sequence goes beyond Integer.MAXVALUE or Long.MAXVALUE, the 
             next result is determined by 2's complement arithmetic.
         </para> <para>
+			The next value for a sequence can be included in SELECT, INSERT and
+			UPDATE statements as in the following example:
+        </para> <para><informalexample><programlisting>
+	SELECT [...,] NEXT VALUE FOR &lt;sequencename&gt; [, ...] FROM &lt;tablename&gt;</programlisting>
+	</informalexample></para> <para>
             In the proposed SQL 200n and in the current version, there is no 
             way of retreiving the last returned value of a sequence.
         </para>
@@ -333,18 +338,19 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                     <title>Allowed Default Values in Column Definitions</title>
                     <listitem><para>
                         For character column, a single-quoted string or NULL.
+						The only SQL function that can be used is CURRRENT_USER.
                     </para></listitem> <listitem><para>
                         For datetime columns, a single-quoted DATE, TIME or 
-                        TIMESTAMP value or NULL. Or an appropriate SQL function
-                        such as CURRENT_USER, CURRENT_DATE, 
+                        TIMESTAMP value or NULL. Or a datetime SQL function
+                        such as CURRENT_DATE, 
                         CURRENT_TIME, CURRENT_TIMESTAMP, TODAY, NOW.
-                        Each functions is allowed for a certain column type.
+                        Each function is allowed for a certain datetime type.
                     </para></listitem> <listitem><para>
                         For BOOLEAN columns, the literals FALSE, TRUE, NULL.
                     </para></listitem> <listitem><para>
-                        For numeric columns, any valid number.
+                        For numeric columns, any valid number or NULL.
                     </para></listitem> <listitem><para>
-                        For binary columns, any valid hex string.
+                        For binary columns, any valid hex string or NULL.
                     </para></listitem>
                 </itemizedlist><para>
                     Only one identity column is allowed in each table.  
@@ -427,8 +433,9 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             In 1.7.2 the implementation has been changed and enhanced.
             When the 'fire' method is called, it is passed the following 
             arguments:
-        </para> <programlisting>
-    fire (String name, String table, Object row1[], Object row2[])</programlisting>
+        </para><informalexample><programlisting>
+    fire (String name, String table, Object row1[], Object row2[])
+	</programlisting></informalexample>
         <para>
             where 'row1' and 'row2' represent the 'before' and 'after' states 
             of the row acted on, with each column being a member of the array.
@@ -1975,13 +1982,13 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <listitem>
             <itemizedlist>
                 <listitem><para>
-                A 'date' value starts and ends with ' (singlequote), the format 
+                A DATE literal starts and ends with ' (singlequote), the format 
                 is yyyy-mm-dd (see <classname>java.sql.Date</classname>.
                 </para></listitem><listitem><para>
-                A 'time' value starts and ends with ' (singlequote), the format 
+                A TIME liteal starts and ends with ' (singlequote), the format 
                 is hh:mm:ss (see <classname>java.sql.Time</classname>).
                 </para></listitem><listitem><para>
-                A 'timestamp' or 'datetime' value starts and ends with '
+                A TIMESTAMP or DATETIME literal starts and ends with '
                 (singlequote), the format is yyyy-mm-dd hh:mm:ss.SSSSSSSSS (see 
                 <classname>java.sql.Timestamp</classname>).
                 </para></listitem>
@@ -1989,12 +1996,13 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <para>
                 When specifying default values for date / time columns in 
                 CREATE TABLE statements, or in SELECT,INSERT, and UPDATE 
-                statements, special values NOW, TODAY, CURRENT_TIMESTAMP, 
-                SYSDATE, CURRENT_TIME and CURRENT_DATE (case independent) can 
+                statements, special SQL functions: CURRANT_USER,
+				NOW, SYSDATE, TODAY, CURRENT_TIMESTAMP, 
+                CURRENT_TIME and CURRENT_DATE (case independent) can 
                 be used. NOW is used for TIME and TIMESTAMP columns, TODAY is 
                 used for DATE columns.
-                The three variants CURRENT_* are SQL standard versions and 
-                should be used in preference to others. Example: 
+                The data and time variants CURRENT_* are SQL standard versions
+				and should be used in preference to others. Example: 
             </para><programlisting>
     CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
     CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);</programlisting>
