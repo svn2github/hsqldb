@@ -327,8 +327,5 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
             "Method readLine() not yet implemented.");
     }
 
-    public String readUTF() throws IOException {
-        throw new java.lang.RuntimeException(
-            "Method readUTF() not yet implemented.");
-    }
+
 }

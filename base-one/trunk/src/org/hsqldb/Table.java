@@ -1673,7 +1673,7 @@ class Table {
     void checkCascadeDelete(Object[] row, Session session,
                             boolean doIt) throws SQLException {
 
-        for (int i = 0; i < vConstraint.size(); i++) {
+        for (int i = 0, cSize = vConstraint.size(); i < cSize; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
             if (c.getType() != Constraint.MAIN || c.getRef() == null) {

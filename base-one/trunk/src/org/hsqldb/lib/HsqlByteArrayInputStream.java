@@ -202,13 +202,17 @@ implements DataInput {
 
     public String readUTF() throws IOException {
 
-        int bytecount = this.readUnsignedShort();
+        int bytecount = readUnsignedShort();
 
         if (pos + bytecount >= count) {
             throw new EOFException();
         }
 
-        return StringConverter.readUTF(buf, pos, bytecount);
+        String result = StringConverter.readUTF(buf, pos, bytecount);
+
+        pos += bytecount;
+
+        return result;
     }
 
 // methods that extend java.io.InputStream

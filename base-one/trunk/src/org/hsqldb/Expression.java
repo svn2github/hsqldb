@@ -245,7 +245,7 @@ class Expression {
             Object o = v.get(i);
 
             if (o != null) {
-                hList.put(o, this.INTEGER_1);
+                hList.put(o, Expression.INTEGER_1);
             } else {
                 this.hListHasNull = true;
             }

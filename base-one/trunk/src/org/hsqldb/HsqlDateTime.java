@@ -90,15 +90,13 @@ class HsqlDateTime {
         if (s.indexOf('-') == -1) {
             s = s.toUpperCase();
 
-            if (s.toUpperCase().equals("NOW")
-                    || s.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+            if (s.equals("NOW") || s.equals("CURRENT_TIMESTAMP")) {
                 return new Timestamp(System.currentTimeMillis());
             }
 
             // fredt - treat Date as full days only
-            if (s.toUpperCase().equals("CURRENT_DATE")
-                    || s.toUpperCase().equals("TODAY")
-                    || s.toUpperCase().equals("SYSDATE")) {
+            if (s.equals("CURRENT_DATE") || s.equals("TODAY")
+                    || s.equals("SYSDATE")) {
                 return new Timestamp(getToday().getTime());
             }
 
