@@ -1223,7 +1223,7 @@ public class Library {
      * @return a time value representing the current local time
      */
     public static java.sql.Time curtime() {
-        return new java.sql.Time(System.currentTimeMillis());
+        return HsqlDateTime.getCurrentTime();
     }
 
     /**

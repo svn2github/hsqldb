@@ -1086,11 +1086,11 @@ public class Column {
                          */
                         return new JavaObject(
                             StringConverter.hexToByte((String) o));
-                    } else if (o instanceof Binary){
+                    } else if (o instanceof Binary) {
                         return new JavaObject(((Binary) o).getBytes(), false);
                     }
 
-                    return new JavaObject(o,false);
+                    return new JavaObject(o, false);
 
                 default :
             }

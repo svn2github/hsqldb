@@ -59,9 +59,10 @@ public class Binary {
      * clone is true.
      */
     public Binary(byte[] data, boolean clone) {
-        if (clone){
+
+        if (clone) {
             data = (byte[]) ArrayUtil.duplicateArray(data);
-    }
+        }
 
         this.data = data;
     }

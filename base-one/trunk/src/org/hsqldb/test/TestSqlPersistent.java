@@ -316,12 +316,13 @@ public class TestSqlPersistent extends TestCase {
 
             // Array as object
             ps.setObject(1, arrayValue, Types.OTHER);
-/*
+
             // file as binary - works fine but file path and name has to be modified for test environment
-            int length = (int) new File("c://ft/Rel.bmp").length();
-            FileInputStream fis = new FileInputStream("c://ft/Rel.bmp");
+            /*
+            int length = (int) new File("c://ft/db.jar").length();
+            FileInputStream fis = new FileInputStream("c://ft/db.jar");
             ps.setBinaryStream(2,fis,length);
-*/
+            */
             ps.execute();
 
             ResultSet rs =

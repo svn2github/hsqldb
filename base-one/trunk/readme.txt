@@ -1,5 +1,17 @@
 Readme File
 
+2004.02.16
+
+Fixes various reported bugs.
+
+Values for BOOLEAN expressions containing AND, OR, LIKE and used in columns
+returned by queries are now correct.
+
+Library function CURTIME() changed to return CURRENT_TIME instead of CURRENT_TIMESTAMP
+
+Added mutable object cloning and serialization on PrepredStatement parameter entry points
+for in-process connections. Isolates the stored objects (DATETIME, BINARY and OTHER) from
+subsequent changes made to the copy used for setting the parameter. To do same for Result.
 
 2004.02.14
 

@@ -190,7 +190,16 @@ public class HsqlDateTime {
             return new Time(time);
         }
 
-        return Time.valueOf(s);
+        return getNormalisedTime(Time.valueOf(s));
+    }
+
+    public static Time getCurrentTime() {
+
+        long time = System.currentTimeMillis() - getToday().getTime();
+
+        time = (time / 1000) * 1000;
+
+        return new Time(time);
     }
 
     private static final String sdftPattern  = "HH:mm:ss";

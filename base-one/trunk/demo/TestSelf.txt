@@ -12,6 +12,10 @@
 --   u <count>    Update count <count> expected
 --   e            Exception must occur
 
+-- Miscelaneous tests by fredt
+-- bug #897591
+/*rgood*/CALL CASEWHEN(CURTIME() BETWEEN CAST('0:0:0'  AS  TIME) AND CAST('23:59:59'  AS TIME), 'good', 'bad')
+
 -- Referential integrity with cascading delete
 -- identity column
 create table main(id int identity,name varchar)

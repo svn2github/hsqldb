@@ -2733,7 +2733,11 @@ public class Expression {
             case NEGATE :
                 return Column.negate(eArg.getValue(dataType), dataType);
 
+            case AND :
+            case OR :
+            case LIKE :
             case EXISTS :
+            case IN :
                 return test() ? Boolean.TRUE
                               : Boolean.FALSE;
 
@@ -2788,8 +2792,7 @@ public class Expression {
 
             default :
 
-                // must be comparion
-                // todo: make sure it is
+                /** @todo fredt - make sure the expression type is always comparison here */
                 return test() ? Boolean.TRUE
                               : Boolean.FALSE;
         }

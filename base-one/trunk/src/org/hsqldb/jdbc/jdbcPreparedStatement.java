@@ -1842,22 +1842,22 @@ implements java.sql.PreparedStatement {
                     throw jdbcUtil.sqlException(
                         Trace.error(Trace.INVALID_CONVERSION));
                 }
+
                 o = new Binary((byte[]) o, !connection.isNetConn);
-            } else if ( !connection.isNetConn){
+            } else if (!connection.isNetConn) {
                 Object oldobject = o;
 
                 o = Column.convertObject(o, outType);
 
                 if (o == oldobject) {
                     if (outType == Types.DATE) {
-                        o = ( (java.sql.Date) o).clone();
+                        o = ((java.sql.Date) o).clone();
                     } else if (outType == Types.TIME) {
-                        o = ( (java.sql.Time) o).clone();
+                        o = ((java.sql.Time) o).clone();
                     } else if (outType == Types.TIMESTAMP) {
-                        o = ( (java.sql.Timestamp) o).clone();
+                        o = ((java.sql.Timestamp) o).clone();
                     }
                 }
-
             } else {
                 o = Column.convertObject(o, outType);
             }
