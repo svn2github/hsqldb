@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.7 2004/01/20 23:36:39 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.9 2004/02/07 14:32:02 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -48,7 +48,12 @@ import java.util.StringTokenizer;
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
  *
- * @version $Revision: 1.7 $
+ * See JavaDocs for the main method for syntax of how to run.
+ *
+ * @see @main()
+ *
+ * @version $Revision: 1.9 $
+ * @author Blaine Simpson
  */
 public class SqlTool {
 
@@ -67,6 +72,9 @@ public class SqlTool {
      */
     private static class ConnectData {
 
+        /**
+         * Just for testing and debugging.
+         */
         public void report() {
 
             System.err.println("urlid: " + id + ", url: " + url
@@ -74,6 +82,13 @@ public class SqlTool {
                                + password);
         }
 
+        /**
+         * Creates a ConnectDataObject by looking up the given key in the
+         * given authentication file.
+         *
+         * @param String dbKey Key to look up in the file.
+         * @param inFile File containing the authentication information.
+         */
         public ConnectData(String inFile, String dbKey) throws Exception {
 
             File file = new File((inFile == null) ? DEFAULT_RCFILE
@@ -184,18 +199,25 @@ public class SqlTool {
         + "                             "
         + "(Use '-' for non-interactively stdin)";
 
-    private static class BadCmdline extends Exception {}
-    ;
+    /** Utility nested class for internal use. */
+    private static class BadCmdline extends Exception {};
 
+    /** Utility object for internal use. */
     private static BadCmdline bcl = new BadCmdline();
 
     /**
-     * Main method.
+     * Connect to a JDBC Database and execute the commands given on
+     * stdin or in SQL file(s).
      * Like most main methods, this is not intended to be thread-safe.
      *
-     * @param arg
+     * @param arg  Run "java... org.hsqldb.util.SqlTool --help" for syntax.
      */
     public static void main(String arg[]) {
+        /*
+         * The big picture is, we parse input args; load a ConnectData;
+         * get a JDBC Connection with the ConnectData; instantiate and
+         * execute as many SqlFiles as we need to.
+         */
 
         String  rcFile      = null;
         String  driver      = DEFAULT_JDBC_DRIVER;

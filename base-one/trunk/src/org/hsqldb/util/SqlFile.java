@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.30 2004/02/16 18:38:20 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.31 2004/02/16 21:20:13 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -80,6 +80,9 @@ import java.util.StringTokenizer;
  *
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
+ *
+ * @version $Revision$
+ * @author Blaine Simpson
  */
 public class SqlFile {
 
