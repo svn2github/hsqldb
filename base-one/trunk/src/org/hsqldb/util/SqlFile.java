@@ -49,7 +49,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.52 2004/06/01 18:20:24 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.53 2004/06/02 13:10:08 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +85,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.52 $
+ * @version $Revision: 1.53 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -765,7 +765,7 @@ public class SqlFile {
     }
 
     /**
-     * Process the currenct command as an SQL Statement
+     * Process the current command as an SQL Statement
      */
     private void processStatement() throws SQLException {
         Statement statement = curConn.createStatement();
