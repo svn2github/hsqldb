@@ -75,6 +75,8 @@ import java.sql.SQLException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Vector;
+import java.lang.reflect.InvocationTargetException;
+import java.io.FileNotFoundException;
 
 /**
  * Server acts as a database server and is one way of using
@@ -121,6 +123,8 @@ public class Server {
     protected boolean      traceMessages;
     private boolean        restartOnShutdown;
     private boolean        noSystemExit;
+    boolean                bSsl = false;
+    public int             _int_;  // Trick to get a Class for a primitive
 
     /**
      * Method declaration
@@ -148,7 +152,6 @@ public class Server {
     }
 
     void setProperties(HsqlProperties props) {
-
         serverProperties = new HsqlProperties("server");
 
         try {
@@ -158,11 +161,13 @@ public class Server {
                 "server.properties"
                 + " not found, using command line or default properties");
         }
+	bSsl = (System.getProperty("javax.net.ssl.keyStore") != null);
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
-        serverProperties.setPropertyIfNotExists("server.port",
-                String.valueOf(jdbcConnection.DEFAULT_HSQLDB_PORT));
+        serverProperties.setPropertyIfNotExists("server.port", String.valueOf(
+          bSsl ?  jdbcConnection.DEFAULT_HSQLSDB_PORT :
+	   jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
             jdbcSystem.setLogToSystem(true);
@@ -194,15 +199,69 @@ public class Server {
     private void run() {
 
         try {
-            int port = serverProperties.getIntegerProperty("server.port",
-                jdbcConnection.DEFAULT_HSQLDB_PORT);
+            int    port     =
+                serverProperties.getIntegerProperty("server.port",
+                 bSsl ? jdbcConnection.DEFAULT_HSQLSDB_PORT :
+                    jdbcConnection.DEFAULT_HSQLDB_PORT
+		);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
             printTraceMessages();
             openDB();
 
-            socket = new ServerSocket(port);
+	    if (bSsl) try {
+	    	// We can not get here unless the property is non-null
+	    	java.io.File fil = new java.io.File(
+		 System.getProperty("javax.net.ssl.keyStore"));
+		if (!(fil.isFile()))
+		 throw new FileNotFoundException("Keystore '" + fil +
+		  "' not found");
+		if (!(fil.canRead()))
+		 throw new IOException("Failed to read keystore '" + fil + "'");
+	    	ClassLoader loader = getClass().getClassLoader();
+		Class clsProvider = loader.loadClass("java.security.Provider");
+		Class[] caProvider = { clsProvider };
+		Object objProvider =
+		 loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
+		 newInstance();
+		Object[] oaProvider = { objProvider };
+		Class[] caInt = { getClass().getField("_int_").getType() };
+		Object[] oaInt = { new Integer(port) };
+		loader.loadClass("java.security.Security").
+		 getMethod("addProvider", caProvider).invoke(null, oaProvider);
+		Class clsSSF =
+		 loader.loadClass("javax.net.ServerSocketFactory");
+		socket = (ServerSocket)
+		clsSSF.getMethod("createServerSocket", caInt).invoke(
+		 loader.loadClass("javax.net.ssl.SSLServerSocketFactory").
+		  getMethod("getDefault", null).invoke(null, null), oaInt);
+            	Trace.printSystemOut(
+                 new java.util.Date(System.currentTimeMillis())
+                 + " Running with TLS/SSL-encrypted JDBC");
+	    } catch(SecurityException se) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    } catch (IllegalAccessException iae) {
+            	throw new Exception(
+	    	 "You do not have permission to use the needed SSL resources");
+	    } catch (ClassNotFoundException cnfe) {
+	    	throw new Exception("JSSE not installed:  " + cnfe);
+	    } catch (NoSuchMethodException nsme) {
+	    	throw new Exception(
+	  	 "Failed to find an SSL method even though JSSE " +
+		 "is installed:\n" + nsme);
+	    } catch (InvocationTargetException ite) {
+	    	Throwable t = ite.getCause();
+		throw((t instanceof Exception) ? ((Exception) t) : ite);
+	    } catch (ExceptionInInitializerError eiie) {
+	    	Throwable t = eiie.getCause();
+		if (t instanceof Exception) throw (Exception) t;
+		else throw eiie;
+	    // Any remaining exception will fall through to the outer "try"
+	    // IllegalArgumentException, NullPointerException, Instantiaion
+	    // should not get thrown if this compiles correctly.
+	    } else socket = new ServerSocket(port);
 
             Trace.printSystemOut(
                 new java.util.Date(System.currentTimeMillis())
