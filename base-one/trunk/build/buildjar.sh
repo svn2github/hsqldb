@@ -2,6 +2,8 @@
 
 #  N.b.:   NOT FUNCTIONAL YET!!!!!
 
+NOSWING=   # I don't know when we want this set
+
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -78,45 +80,57 @@ rm -r -f classes
 cd src || Failout "Failed to cd to '$dbhome/src'"
 mkdir $dbhome/classes || Failout "Failed to create directory '$dbhome/classes'"
 
-[ "$JDKVER" = 1.4 ] || {
-    # Following will fail if user interrupted a previous invocation and "temp"
-    # is still populated.
-    mkdir ../temp
-    # Following will fail if user interrupted a previous invocation and these
-    # files are already moved to "temp".
-    cp -p org/hsqldb/jdbcDataSource*.java ../temp/
-    rm -f org/hsqldb/jdbcDataSource*.java
-}
-[ "$JDKVER" = 1.1 ] && {
-    # Following will fail if user interrupted a previous invocation and these
-    # files are already moved to "temp".
-    cp -p org/hsqldb/util/*Swing.java ../temp/
-    rm -f org/hsqldb/util/*Swing.java
-}
+LISTFILE=/tmp/list.$$
+rm -f $LISTFILE
+[ -f $LISTFILE ] && Failout "Failed to remove temp list file '$LISTFILE'"
+touch $LISTFILE || Failout "Failed to create temporary list file '$LISTFILE'"
+find * -name '*.java' -print | while read file; do case "$file" in
+    org/hsqldb/lib/*) echo $file; continue;;
+    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
+    org/hsqldb/util/*Swing.java) [ "$NOSWING" ] || echo $file; continue;;
+    org/hsqldb/util/*) echo $file; continue;;
+    org/hsqldb/jdbcStubs.java) continue;;  # Why unnecessary??
+    org/hsqldb/jdbcDataSource*.java)
+        [ "$JDKVER" = 1.4 ] && echo $file; continue;;
+    org/hsqldb/*) echo $file; continue;;
+    */*) Failout "File '$file' is at an unexpected location";;
+    *) echo $file; continue;;  # This is at top level: src/X.java
+esac; done > $LISTFILE
+
+# TODO:  Use NewerThan() on the $LISTFILE records to exclude the java
+#        files that are not newer than the main corresponding class file.
 
 # Main Compile
-"$jdkhome/bin/javac" -O -nowarn -d ../classes -classpath "$cp:../classes" *.java org/hsqldb/*.java org/hsqldb/lib/*.java org/hsqldb/util/*.java
-
-[ "$JDKVER" = 1.1 ] && {
-    cp -p ../temp/*Swing.java org/hsqldb/util ||
-     Failout "Failed to restore *Swing.java files"
-    rm -f ../temp/*Swing.java
-}
-[ "$JDKVER" = 1.4 ] || {
-    cp -p ../temp/jdbcDataSource*.java org/hsqldb ||
-     Failout "Failed to restore jdbcDataSource*.java files"
-    rm -f ../temp/jdbcDataSource*.java
-    rm -r -f ../temp
-}
+"$jdkhome/bin/javac" -O -nowarn -d ../classes -classpath "$cp:../classes" `cat $LISTFILE`
 
 # Build jar
 cd ../classes || Failout "Failed to cd to '$dbhome/classes'"
 [ -f ../src/org/hsqldb/util/hsqldb.gif ] &&
   NewerThan ../src/org/hsqldb/util/hsqldb.gif org/hsqldb/util/hsqldb.gif && {
-    cp -p ../src/org/hsqldb/util/hsqldb.gif org/hsqldb/util ||
+    [ -d  org/hsqldb/util ] || mkdir -p org/hsqldb/util
+    cp -p ../src/org/hsqldb/util/hsqldb.gif org/hsqldb/util/hsqldb.gif ||
      Failout "Failed to copy hsqldb.gif to class branch"
 }
 HSQLDB_GIF=
 [ "$JDKVER" != 1.1 ] && [ -f org/hsqldb/util/hsqldb.gif ] &&
  HSQLDB_GIF=org/hsqldb/util/hsqldb.gif
-exec "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar *.class org/hsqldb/*.class org/hsqldb/lib/*.class org/hsqldb/util/*.class $HSQLDB_GIF
+
+find * -name '*.class' -print | while read file; do case "$file" in
+    org/hsqldb/lib/*) echo $file; continue;;
+    org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
+    org/hsqldb/util/*Swing.java) [ "$NOSWING" ] || echo $file; continue;;
+    org/hsqldb/util/*) echo $file; continue;;
+    org/hsqldb/jdbcStubs*.class) continue;;  # Why unnecessary??
+    org/hsqldb/jdbcDataSource*.class)
+        [ "$JDKVER" = 1.4 ] && echo $file; continue;;
+    org/hsqldb/Array*.class) continue;;
+    org/hsqldb/Blob*.class) continue;;
+    org/hsqldb/Clob*.class) continue;;
+    org/hsqldb/Ref*.class) continue;;
+    org/hsqldb/Map*.class) continue;;
+    org/hsqldb/*.class) echo $file; continue;;
+    */*) Failout "File '$file' is at an unexpected location";;
+    *) echo $file; continue;;  # This is at top level: src/X.java
+esac; done > $LISTFILE
+
+exec "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
