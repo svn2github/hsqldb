@@ -255,6 +255,27 @@ public final class HsqlHashSet implements HsqlSet {
         return obj;
     }
 
+    public String toString() {
+
+        StringBuffer sb = new StringBuffer();
+        Enumeration  e  = map.keys();
+
+        sb.append(super.toString());
+        sb.append('[');
+
+        while (e.hasMoreElements()) {
+            sb.append(e.nextElement());
+
+            if (e.hasMoreElements()) {
+                sb.append(',');
+            }
+        }
+
+        sb.append(']');
+
+        return sb.toString();
+    }
+
     /**
      * Returns the hash code value for this set. The hash code of a set is
      * defined to be the sum of the hash codes of the elements in the set.

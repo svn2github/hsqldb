@@ -95,7 +95,9 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
 // fredt@users 20021208 - ongoing revamp
 // fredt@users 20021212 - do not rewrite the *.backup file if the *.data
-// file has not been updated in the current seesion.
+// file has not been updated in the current session.
+// boucherb@users 20030510 - patch 1.7.2 consolidated all periodic database
+// tasks in one timed task queue
 /*
 todo - when a *.script file that has no properties file is opened, it is
 always assumed that the cache_version is 1.6.0, which may not be true;
@@ -155,7 +157,7 @@ class Log {
 
     // used for tracing
     private StopWatch              defaultTimer = new StopWatch();
-    private static final HsqlTimer timer = HsqlMasterRepository.getTimer();
+    private static final HsqlTimer timer = HsqlRuntime.getTimer();
 
     /**
      *  Constructor declaration

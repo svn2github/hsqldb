@@ -54,7 +54,7 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
-    protected static boolean JARFILE         = false;
+    protected static boolean JARFILE;
     private static Method    savePropsMethod = null;
 
     static {
@@ -114,7 +114,7 @@ public class HsqlProperties {
         return setProperty(key, value);
     }
 
-    public Properties getProperties(){
+    public Properties getProperties() {
         return stringProps;
     }
 
@@ -176,6 +176,10 @@ public class HsqlProperties {
 
     public void addProperties(Properties props) {
 
+        if (props == null) {
+            return;
+        }
+
         Enumeration keys = props.keys();
 
         while (keys.hasMoreElements()) {
@@ -186,6 +190,11 @@ public class HsqlProperties {
     }
 
     public void addProperties(HsqlProperties props) {
+
+        if (props == null) {
+            return;
+        }
+
         addProperties(props.stringProps);
     }
 

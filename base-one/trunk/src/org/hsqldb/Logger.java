@@ -69,6 +69,8 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
+// boucherb@users 20030510 - patch 1.7.2 - added cooperative file locking
+
 /**
  *  Transitional interface for log and cache management. In the future,
  *  this will form the basis for the public interface of logging and cache

@@ -164,7 +164,6 @@ public class HsqlArrayHeap implements HsqlHeap {
 
         count--;
 
-        // CHANGED:  ****short-circuit****
         if (count == 0) {
             heap[0] = null;
 
@@ -275,29 +274,31 @@ public class HsqlArrayHeap implements HsqlHeap {
 //        return a;
 //    }
 //
-//    public synchronized String toString() {
-//        StringBuffer sb = new StringBuffer();
-//
-//        sb.append(super.toString());
-//        sb.append(" : size=");
-//        sb.append(count);
-//        sb.append(' ');
-//        sb.append('[');
-//
-//        for (int i = 0; i < count; i++) {
-//            sb.append(heap[i]);
-//            sb.append(',');
-//            sb.append(' ');
-//        }
-//
-//        if (count > 0) {
-//            sb.setLength(sb.length() - 2);
-//        }
-//
-//        sb.append(']');
-//
-//        return sb.toString();
-//    }
+    public synchronized String toString() {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(super.toString());
+        sb.append(" : size=");
+        sb.append(count);
+        sb.append(' ');
+        sb.append('[');
+
+        for (int i = 0; i < count; i++) {
+            sb.append(heap[i]);
+            sb.append(',');
+            sb.append(' ');
+        }
+
+        if (count > 0) {
+            sb.setLength(sb.length() - 2);
+        }
+
+        sb.append(']');
+
+        return sb.toString();
+    }
+
 //
 //    public void trim() {
 //
@@ -327,58 +328,64 @@ public class HsqlArrayHeap implements HsqlHeap {
     }
 
 // ------------------------------- tests ---------------------------------------
-//    public static void main(String[] args) {
-//        ObjectComparator oc = new ObjectComparator() {
-//            public int compare(Object a, Object b) {
-//                if (a == b) {
-//                    return 0;
-//                }
-//
-//                // null==null and smaller than any value
-//                if (a == null) {
-//                    if (b == null) {
-//                        return 0;
-//                    }
-//
-//                    return -1;
-//                }
-//
-//                if (b == null) {
-//                    return 1;
-//                }
-//
-//                return ((Integer)a).intValue() - ((Integer)b).intValue();
-//            }
-//        };
-//
-//        HsqlHeap ah = new HsqlArrayHeap(6, oc);
-//
-//        System.out.println("isEmpty() : " + ah.isEmpty());
-//
-//        int[] ai = new int[] {3,99,7,9,-42,2,1,23,-7};
-//
-//        int least = Integer.MIN_VALUE;
-//
-//        for (int i = 0; i < ai.length; i++) {
-//            System.out.println("add()     : new Integer(" + ai[i] + ")");
-//            ah.add( new Integer(ai[i]) );
-//            System.out.println("size()    : " + ah.size());
-//        }
-//
-//        while (ah.size() > 0) {
-//            int current = ((Integer) ah.remove()).intValue();
-//            if (current < least) {
-//                throw new RuntimeException("bad heap invariant");
-//            }
-//            least = current;
-//            System.out.println("remove()  : " + current);
-//            System.out.println("size()    : " + ah.size());
-//        }
-//
-//        System.out.println("isEmpty() : " + ah.isEmpty());
-//        System.out.println("remove()  : " + ah.remove());
-//        System.out.println("size()    : " + ah.size());
-//        System.out.println("isEmpty() : " + ah.isEmpty());
-//
-//    }
+    public static void main(String[] args) {
+
+        ObjectComparator oc = new ObjectComparator() {
+
+            public int compare(Object a, Object b) {
+
+                if (a == b) {
+                    return 0;
+                }
+
+                // null==null and smaller than any value
+                if (a == null) {
+                    if (b == null) {
+                        return 0;
+                    }
+
+                    return -1;
+                }
+
+                if (b == null) {
+                    return 1;
+                }
+
+                return ((Integer) a).intValue() - ((Integer) b).intValue();
+            }
+        };
+        HsqlHeap ah = new HsqlArrayHeap(6, oc);
+
+        System.out.println("isEmpty() : " + ah.isEmpty());
+
+        int[] ai    = new int[] {
+            3, 99, 7, 9, -42, 2, 1, 23, -7
+        };
+        int   least = Integer.MIN_VALUE;
+
+        for (int i = 0; i < ai.length; i++) {
+            System.out.println("add()     : new Integer(" + ai[i] + ")");
+            ah.add(new Integer(ai[i]));
+            System.out.println("size()    : " + ah.size());
+        }
+
+        while (ah.size() > 0) {
+            int current = ((Integer) ah.remove()).intValue();
+
+            if (current < least) {
+                throw new RuntimeException("bad heap invariant");
+            }
+
+            least = current;
+
+            System.out.println("remove()  : " + current);
+            System.out.println("size()    : " + ah.size());
+        }
+
+        System.out.println("peak() : " + ah.peek());
+        System.out.println("isEmpty() : " + ah.isEmpty());
+        System.out.println("remove()  : " + ah.remove());
+        System.out.println("size()    : " + ah.size());
+        System.out.println("isEmpty() : " + ah.isEmpty());
+    }
 }

@@ -1,15 +1,51 @@
-/* Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyrights and Licenses
+ *
+ * This product includes Hypersonic SQL.
+ * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
+ *
+ * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: 
+ *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
+ *         and the following disclaimer. 
+ *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
+ *         conditions and the following disclaimer in the documentation and/or other materials
+ *         provided with the distribution. 
+ *     -  All advertising materials mentioning features or use of this software must display the
+ *        following acknowledgment: "This product includes Hypersonic SQL." 
+ *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
+ *        "Hypersonic SQL" appear in their names without prior written permission of the
+ *         Hypersonic SQL Group. 
+ *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
+ *          product includes Hypersonic SQL." 
+ * This software is provided "as is" and any expressed or implied warranties, including, but
+ * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
+ * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
+ * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
+ * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
+ * or business interruption). However caused any on any theory of liability, whether in contract,
+ * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
+ * software, even if advised of the possibility of such damage. 
+ * This software consists of voluntary contributions made by many individuals on behalf of the
+ * Hypersonic SQL Group.
+ *
+ *
+ * For work added by the HSQL Development Group:
+ *
+ * Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
+ * list of conditions and the following disclaimer, including earlier
+ * license statements (above) and comply with all above license conditions.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
+ * and/or other materials provided with the distribution, including earlier
+ * license statements (above) and comply with all above license conditions.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -45,7 +81,7 @@ import org.hsqldb.lib.HsqlTimer;
  *
  * @author  campbell
  */
-public final class HsqlMasterRepository {
+public final class HsqlRuntime {
 
     private static final String rtgName  = "hsqldb-system";
     private static final String dbtgName = "hsqldb-databases";
@@ -62,7 +98,7 @@ public final class HsqlMasterRepository {
     private static HsqlTimer    timer;
 
     /** Construction disabled */
-    private HsqlMasterRepository() {}
+    private HsqlRuntime() {}
 
     private static void initStatic() {
 
@@ -501,7 +537,7 @@ public final class HsqlMasterRepository {
         Database database;
 
         private DatabaseReference(String name) throws SQLException {
-            database = HsqlMasterRepository.getDatabase(name, this);
+            database = HsqlRuntime.getDatabase(name, this);
         }
 
         public static synchronized DatabaseReference newReference(String name)
@@ -512,7 +548,7 @@ public final class HsqlMasterRepository {
         public synchronized void clear() {
 
             if (database != null) {
-                HsqlMasterRepository.removeDatabase(database);
+                HsqlRuntime.removeDatabase(database);
 
                 database = null;
 

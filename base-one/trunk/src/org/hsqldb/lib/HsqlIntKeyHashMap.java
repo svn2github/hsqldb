@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
  *
  * @author boucherb@users.sourceforge.net
  * @version 1.7.2
- * @since 1.7.2 
+ * @since 1.7.2
  */
 public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
 
@@ -107,29 +107,43 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
 
         /**
          * Tests if this enumeration contains more elements.
+         *
          * @return true if and only if this enumeration object contains at
          *      least one more element to provide; false otherwise
          */
         public boolean hasMoreElements() {
 
+            if (table == null) {
+                return false;
+            }
+
             while (entry == null && index-- > 0) {
                 entry = table[index];
             }
 
-            return (entry == null) ? false
-                                   : true;
+            if (entry == null) {
+
+                // prevent memory leaks by releasing this
+                // immediately for garbage collection
+                table = null;
+
+                return false;
+            }
+
+            return true;
         }
 
         /**
          * Returns the next element of this enumeration if this enumeration
          * object has at least one more element to provide.
+         *
          * @return the next element of this enumeration
          * @throws NoSuchElementException if no more elements exist.
          */
         public Object nextElement() throws NoSuchElementException {
 
             if (hasMoreElements()) {
-                Object element = keys ? new Integer(entry.key)
+                Object element = keys ? ValuePool.getInt(entry.key)
                                       : entry.value;
 
                 entry = entry.next;
@@ -156,6 +170,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
     /**
      * Constructs a an empty map with the specified initial
      * capacity and load factor.
+     *
      * @param initialCapacity the initial capacity
      * @param loadFactor the load factor.
      * @throws IllegalArgumentException if either the initial capacity
@@ -177,6 +192,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
     /**
      * Constructs an empty map with the specified initial
      * capacity and the default load factor (0.75).
+     *
      * @param initialCapacity the initial capacity
      * @throws IllegalArgumentException if the initial capacity is non-positive.
      */
@@ -238,6 +254,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
     /**
      * Returns <code>true</code> if this map maps one or more keys to this
      * value.
+     *
      * @param value - value whose presence in this map is to be tested.
      * @return <code>true</code> if this map maps one or more keys to the
      *      specified value.
@@ -325,6 +342,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
      * v such that <code>(key == k)</code>, then this method returns
      * <code>v</code>; otherwise it returns <code>null</code> (there can be at
      * most one such mapping).
+     *
      * @return the value to which this map maps the specified key, or null if
      *        either this map either contains no mapping for this key or
      *        explicitly maps it to <code>null</code>.
@@ -354,6 +372,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
      * v such that <code>(((Number)key).intValue() == k)</code>, then this
      * method returns <code>v</code>; otherwise it returns <code>null</code>
      * (there can be at most one such mapping).
+     *
      * @return the value to which this map maps the specified key, or null if
      *        this map either contains no mapping for this key or explicitly
      *        maps it to null.
@@ -379,9 +398,9 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
         int   i;
         Entry old;
         Entry oldTable[] = table;
-        Entry newTable[] = new Entry[table.length * 2 + 1];
 
         // then these
+        Entry newTable[]  = new Entry[table.length * 2 + 1];
         int   oldCapacity = table.length;
         int   newCapacity = oldCapacity * 2 + 1;
         Entry e;
@@ -407,6 +426,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
      * replaced by the specified value. A map m is said to contain a mapping
      * for a key k if and only if <code>m.containsKey(k)</code> would return
      * <code>true</code>.
+     *
      * @return previous value associated with specified key, or
      *        <code>null</code> if either there was no mapping for it in
      *        this map or is was explicitly mapped to <code>null</code>.
@@ -490,6 +510,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
      *
      * It is guaranteed that under single-threaded access, this map will not
      * contain a mapping for the specified key at the point this method returns.
+     *
      * @param key key whose mapping is to be removed from this map.
      * @return previous value associated with specified key, or
      *        <code>null</code> if either there was no
@@ -536,6 +557,7 @@ public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
      *
      * It is guaranteed that under single-threaded access, this map will not
      * contain a mapping for the specified key at the point this method returns.
+     *
      * @return previous value associated with specified key, or
      *        <code>null</code> if either there was no
      *        mapping for key or it was explicitly mapped

@@ -39,77 +39,88 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
+import java.sql.Timestamp;
 import org.hsqldb.lib.HsqlTimer;
 
 /**
- * Base cooperative file-based locking implementation and factory. <p>
+ * The base HSQLDB cooperative file locking implementation and factory. <p>
+ *
+ * <hr>
  *
  * Here is the way this class operates: <p>
  *
  * <ol>
- * <li>A lock file with a well-known path relative to each database instance
+ * <li>A file with a well-known path relative to each database instance
  *     is used to implement cooperative locking of database files across
  *     process boundaries (database instances running in different JVM
- *     host processes).<p>
+ *     host processes) and class loader contexts (databases whose classes
+ *     have been loaded by distinct class loaders such that their open
+ *     database repositories are distinct and are inaccessible across
+ *     the class loader context boundaries).<p>
  *
- * <li>A background thread in a timer object executes a Runnable so as
- *     to write the current time as a <code>long</code> to the first 8 bytes
- *     of this object's lock file at {@link #HEARTBEAT_INTERVAL} millisecond
- *     intervals, which acts as a heartbeat to indicate that a lock is still
- *     held.<p>
+ * <li>A background thread periodically writes a timestamp to this object's
+ *     lock file at {@link #HEARTBEAT_INTERVAL} millisecond intervals,
+ *     acting as a heartbeat to indicate that a lock is still held.<p>
  *
  * <li>The generic lock attempt rules are: <p>
  *    <ul>
  *    <li>If a lock condition is already held by this object, do nothing and
- *        signify that this lock attempt was successful, else...<p>
+ *        signify that the lock attempt was successful, else...<p>
  *
  *    <li>If no lock file exists, go ahead and create one, silently issue the
  *        {@link java.io.File#deleteOnExit File.deleteOnExit()} directive via
- *        refelective method invocation (i.e. inside a try-catch block with no
- *        handler), add thread and signify that this lock attempt
+ *        refelective method invocation (in order to stay JDK 1.1 compliant),
+ *        schedule a periodic heartbeat task and signify that the lock attempt
  *        was successful, else...<p>
  *
- *    <li>The file to use already exists, so try to read the first 8 bytes.
- *        If the read fails, assume the file is locked by another process
- *        and signify that this attempt failed, else if the read in value is
- *        less than <code>HEARTBEAT_INTERVAL</code> milliseconds previous to
- *        the current time, assume that the file is locked by another
- *        process and signify that this lock attempt failed, else assume
- *        that the file is not in use, shedule the periodic heartbeat task
- *        with a global timed task queue and signify that this lock attempt
- *        was successful.<p>
+ *    <li>The lock file must already exist, so try to read its heartbeat
+ *        timestamp. If the read fails, assume that a lock condition is held by
+ *        another process or a database in an inaccessible class loader context
+ *        and signify that the attempt failed, else if the read value
+ *        is less than <code>HEARTBEAT_INTERVAL</code> milliseconds into the
+ *        past, assume that a lock condition is held by another process or a
+ *        database in an inaccessible class loader context and signify that the
+ *        lock attempt failed, else assume that the file is not in use, shedule
+ *        a periodic heartbeat task and signify that the lock attempt was
+ *        successful.<p>
  *
  *    </ul>
  * <li>The generic release attempt rules are:<p>
  *    <ul>
- *    <li>If a lock condition is not currently held, do nothing and signify that
- *        this release attempt was successful, else...<p>
+ *    <li>If a lock condition is not currently held, do nothing and signify
+ *        that the release attempt was successful, else...<p>
  *
- *    <li>A lock condition is currently held, so try to release it.  If the
- *        release is successful, cancel the periodic heartbeat task and signify
- *        that the release succeeded, else signify that the release attempt
- *        failed.<p>
- *
+ *    <li>A lock condition is currently held, so try to release it.  By
+ *        default, releasing the lock condition consists of closing and
+ *        nullifying any objects that have a file descriptor open on the
+ *        lock file. If the release is successful, cancel the periodic
+ *        heartbeat task and signify that the release succeeded, else signify
+ *        that the release attempt failed.<p>
  *    </ul>
  * </ol> <p>
  *
- * In addition to the generic locking rules, the protected methods
+ * In addition to the generic lock and release rules, the protected methods
  * {@link #lockImpl() lockImpl()} and {@link #releaseImpl() releaseImpl()}
  * are called during lock and release attempts, respectively.  This allows
- * the transaprent integration of extended strategies/capabilities for
- * locking and releasing, based on reflective construction of specializations
- * in the factory method {@link #getInstance getInstance()}, determined
- * by information gathered at run-time. <p>
+ * transparent, JDK 1.1 compliant integration of extended strategies for
+ * locking and releasing, based on subclassing and reflective construction
+ * of such specializations in the factory method
+ * {@link #newLockFile newLockFile()}, determined by information gathered
+ * at run-time. <p>
  *
- * In particular, if it is available at runtime, then this class retrieves
- * instances of {@link NIOLockFile  NIOLockFile} to capitalize, when possible,
- * on the existence of the {@link java.nio.channels.FileLock FileLock} class.
- * If the <code>NIOLockFile</code> class does not exist at run-time or the
- * java.nio classes it uses are not supported under the run-time JVM, then
- * getInstance() produces vanilla LockFile instances, meaning that only
- * purely cooperative locking takes place, as opposed to possibly O/S-enforced
- * file locking which, theoretically, is made available through the
- * {@link java.nio.channels} package). <p>
+ * In particular, if it is available at runtime, then newLockFile() retrieves
+ * instances of {@link org.hsqldb.NIOLockFile  NIOLockFile} to capitalize,
+ * when possible, on the existence of the {@link java.nio.channels.FileLock
+ * FileLock} class. If the <code>NIOLockFile</code> class does not exist at
+ * run-time or the java.nio classes it uses are not supported under the
+ * run-time JVM, then newLockFile() produces vanilla LockFile instances,
+ * meaning that only purely cooperative locking takes place, as opposed to
+ * possibly O/S-enforced file locking which, at least in theory, is made
+ * available through the {@link java.nio.channels} package). However, it
+ * must be noted that even if a JVM implementation provides the full
+ * java.nio.channels package, it is not absolutely required to guarantee
+ * that the underlying platform (the current operating system) provides
+ * true process-wide file locking. <p>
  *
  * <b>Note:</b> <p>
  *
@@ -118,20 +129,23 @@ import org.hsqldb.lib.HsqlTimer;
  * does not always exhibit the correct/desired behaviour under reflective
  * method invocation. That is, it has been discovered that under some operating
  * system/JVM combinations, after calling <code>FileLock.release()</code>
- * via a reflective method invocation, deletion of the lock file is not possible
- * from the owning object (this) and it is impossible for a different
- * <code>LockFile</code> instances to successfully obtain a lock
- * condition on (read from or write to) the same file, despite the fact of the
- * <code>FileLock</code> object reporting that its lock is invalid (released
- * successfully), until the JVM in which the <code>FileLock.tryLock()</code>
- * method was reflectively invoked is shut down. <p>
+ * via a reflective method invocation, the lock is not released properly,
+ * deletion of the lock file is not possible even from the owning object
+ * (this) and it is impossible for other <code>LockFile</code> instances
+ * or any other objects or processes to successfully obtain a lock
+ * condition on the lock file, despite the fact that the <code>FileLock</code>
+ * object reports that its lock is invalid (was released successfully).
+ * Frustratingly, this condition appears to persist until full exit of the
+ * JVM process in which the <code>FileLock.tryLock()</code> method was
+ * reflectively invoked. <p>
  *
  * To solve this, the original <code>LockFile</code> class was split in two and
- * instead reflection-based class instantiation is now performed at the level
- * of the <code>newLockFile()</code> factory method. Similarly, the HSQLDB ANT
- * build script detects the presence or abscence of JDK 1.4 features such as
- * java.nio and only attempts to build and deploy <code>NIOLockFile</code> to
- * the hsqldb.jar if such features are present. </p>
+ * instead of reflective method invocation, reflection-based class
+ * instantiation is now performed at the level of the <code>newLockFile()</code>
+ * factory method. Similarly, the HSQLDB ANT build script detects the presence
+ * or abscence of JDK 1.4 features such as java.nio and only attempts to build
+ * and deploy <code>NIOLockFile</code> to the hsqldb.jar if such features are
+ * reported present. </p>
  *
  * @author boucherb@users.sourceforge.net
  * @version 1.7.2
@@ -139,7 +153,7 @@ import org.hsqldb.lib.HsqlTimer;
  */
 public class LockFile {
 
-    /** References this object's lock file. */
+    /** Reference to this object's lock file. */
     protected File f;
 
     /** Cached value of the lock file's absolute path. */
@@ -147,44 +161,61 @@ public class LockFile {
 
     /**
      * A RandomAccessFile constructed from this object's reference, f, to its
-     * lock file.
+     * lock file. <p>
      *
-     * This RandomAccessFile is used to periodically write the first 8 bytes
-     * of this object's lock file with the current time, as a long.
+     * This RandomAccessFile is used to periodically write out the heartbeat
+     * timestamp to this object's lock file.
      */
     protected RandomAccessFile raf;
 
     /**
-     * Number of milliseconds to wait between writing the the current
-     * time, as a long, to the first 8 bytes of this object's lock file.
+     * The period, in milliseconds, at which heartbeat timestamps are written
+     * to this object's lock file.
      */
-    public static final long   HEARTBEAT_INTERVAL = 10000;
-    public static final byte[] MAGIC              = "HSQLLOCK".getBytes();
-
-    /** Indicates whether this object has a lock condition on its lock file. */
-    protected boolean                locked;
-    protected static final HsqlTimer timer = HsqlMasterRepository.getTimer();
-    private Object                   timerTask;
+    public static final long HEARTBEAT_INTERVAL = 10000;
 
     /**
-     * Attempts to read the first 8 bytes of this object's lock file as a
-     * <code>long</code> and compare it with the current time.  <p>
+     * A magic value to place at the beginning of the lock file to
+     * differentiate it from other files. The value is "HSQLLOCK".getBytes().
+     */
+    public static final byte[] MAGIC = "HSQLLOCK".getBytes();
+
+    /** Indicates whether this object has a lock condition on its lock file. */
+    protected boolean locked;
+
+    /**
+     * The the timed shceduler with which to register this object's
+     * heartbeat task.
+     */
+    protected static final HsqlTimer timer =
+        HsqlRuntime.getTimer();
+
+    /**
+     * And opaque reference to this object's heatbeat task.
+     */
+    private Object timerTask;
+
+    /**
+     * Attempts to read the hearbeat timestamp from this object's lock file
+     * and compare it with the current time. <p>
      *
      * An exception is thrown if it must be presumned that another process has
      * locked the file, using the following rules: <p>
      *
      * <ol>
      * <li>If the file does not exist, this method returns immediately.
-     * <li>If an exception is raised reading the file, then an exeption is thrown.
-     * <li>If the read is successful and the time read is less than
-     *     <code>HEARTBEAT_INTERVAL</code> milliseconds before the current time,
-     *      then an exception is thrown.
+     *
+     * <li>If an exception is raised reading the file, then an exeption is
+     *     thrown.
+     *
+     * <li>If the read is successful and the timestamp read in is less than
+     *     <code>HEARTBEAT_INTERVAL</code> milliseconds into the past,
+     *     then an exception is thrown.
+     *
      * <li>If no exception is thrown in 2.) or 3.), this method simply returns.
      * </ol>
      * @throws Exception if it must be presumed that another process
-     *        currently has a lock condition on
-     *        this object's lock file
-     * @see #readTouchTime
+     *        currently has a lock condition on this object's lock file
      */
     private void checkHeartbeat() throws Exception {
 
@@ -204,8 +235,7 @@ public class LockFile {
         }
 
         if (f.length() != 16) {
-            trace(mn + path
-                  + " length != 16; not an HSQLDB lock file. Check OK.");
+            trace(mn + path + " length != 16; Check OK.");
 
             return;
         }
@@ -281,7 +311,7 @@ public class LockFile {
      * Provides any specialized locking actions for the
      * {@link #tryLock() tryLock()} method. <p>
      *
-     * Desendents are free to provide additional functionality here,
+     * Descendents are free to provide additional functionality here,
      * using the following rules:
      *
      * <pre>
@@ -290,10 +320,13 @@ public class LockFile {
      * This method is only called if tryLock() thinks it needs to get a lock
      * condition, so it can be assumed the locked == false upon entry, raf is
      * a non-null instance that can be used to get a FileChannel if desired,
-     * and the lock file is at the very least readable.  Further, this object's
-     * heatbeat task is definitely cancelled and/or has not yet been scheduled,
-     * so whatever is in the first 8 bytes of the lock file, if it exists, is
-     * what was left by a previous writer, if any.
+     * and the lock file is, at the very least, readable.  Further, this
+     * object's heatbeat task is definitely cancelled and/or has not yet been
+     * scheduled, so whatever timestamp is recorded in the lock file, if it
+     * exists, is what was written by a previous locker, if any.  A timestamp
+     * value in a preexisting file is only considered valid if the file is
+     * of the correct length and its first eight bytes are
+     * the value {@link #MAGIC MAGIC}.
      *
      * POST:
      *
@@ -302,8 +335,8 @@ public class LockFile {
      * </pre>
      *
      * The default implementation of this method reflectively (for JDK1.1
-     * compliance) invokes f.deleteOnExit() in a silent manner (in a try
-     * catch block with an empty handler) and always returns true. <p>
+     * compliance) invokes f.deleteOnExit() in a silent manner and always
+     * returns true. <p>
      *
      * @throws Exception if a situation is encountered that absolutely
      *        prevents the status of the lock condtion
@@ -350,17 +383,17 @@ public class LockFile {
     }
 
     /**
-     * Retrieves the first 8 bytes from this object's lock file,
-     * as a <code>long</code> value.  If this object's lock file
+     * Retrieves the last written hearbeat timestamp from
+     * this object's lock file.  If this object's lock file
      * does not exist, <code>Long.MIN_VALUE</code> (the earliest
      * time representable as a long in Java) is retrieved. <p>
      *
-     * @throws Exception if an error occurs while reading the first 8
-     *      bytes of this object's lock file.
-     * @return the first 8 bytes from this object's lock file, as a
-     *      <code>long</code> value, or Long.MIN_VALUE, the earliest
-     *      time representable as a long in Java, if this object's lock
-     *      file does not exist.
+     * @throws Exception if an error occurs while reading the hearbeat
+     *      timestamp from this object's lock file.
+     * @return the he hearbeat timestamp from this object's lock file,
+     *      as a <code>long</code> value or, if this object's lock
+     *      file does not exist, Long.MIN_VALUE, the earliest time
+     *      representable as a long in Java,
      */
     private long readHeartbeat() throws Exception {
 
@@ -375,8 +408,7 @@ public class LockFile {
         trace(mn + "entered.");
 
         if (!f.exists()) {
-            trace(mn + path + " does not exist.  returning '" + heartbeat
-                  + "'");
+            trace(mn + path + " does not exist. Return  '" + heartbeat + "'");
 
             return heartbeat;
         }
@@ -387,8 +419,8 @@ public class LockFile {
 
         for (int i = 0; i < MAGIC.length; i++) {
             if (MAGIC[i] != dis.readByte()) {
-                trace(mn + path + " is not an HSQLDB lock file.  returning '"
-                      + heartbeat + "'");
+                trace(mn + path + " is not lock file. Return '" + heartbeat
+                      + "'");
 
                 return heartbeat;
             }
@@ -396,8 +428,7 @@ public class LockFile {
 
         heartbeat = dis.readLong();
 
-        trace(mn + " read: " + heartbeat + " ["
-              + new java.sql.Timestamp(heartbeat) + "]");
+        trace(mn + " read:  [" + new Timestamp(heartbeat) + "]");
         dis.close();
         trace(mn + " closed " + dis);
 
@@ -405,8 +436,10 @@ public class LockFile {
     }
 
     /**
-     * Provides any specialized releasing actions for the tryRelease() method. <p>
-     * @return true if there are no specialized releasing
+     * Provides any specialized release actions for the tryRelease()
+     * method. <p>
+     *
+     * @return true if there are no specialized release
      *        actions performed or they succeed,
      *        else false
      * @throws Exception if a situation is encountered that absolutely
@@ -431,7 +464,7 @@ public class LockFile {
         if (timerTask == null || timer.isCancelled(timerTask)) {
             r = new HeartbeatRunner();
 
-            // now, periodic at HEARTBEAT_INTERVAL, runing this, fixed rate
+            // now, periodic at HEARTBEAT_INTERVAL, running this, fixed rate
             timerTask = timer.schedulePeriodicallyAfter(0,
                     HEARTBEAT_INTERVAL, r, true);
 
@@ -457,6 +490,13 @@ public class LockFile {
         trace(mn + "exited");
     }
 
+    /**
+     * Writes a magic value to this object's lock file that distiguishes
+     * it as an HSQLDB lock file.
+     *
+     * @throws Exception if the magic value cannot be written to
+     *      the lock file
+     */
     private void writeMagic() throws Exception {
 
         String mn   = "writeMagic(): ";
@@ -471,10 +511,11 @@ public class LockFile {
     }
 
     /**
-     * Writes the current time as a long to the first 8 bytes of this
+     * Writes the current hearbeat timestamp value to this
      * object's lock file. <p>
      *
-     * @throws Exception if an IOException occurs
+     * @throws Exception if the current heartbeat timestamp value
+     *      cannot be written
      */
     private void writeHeartbeat() throws Exception {
 
@@ -494,11 +535,11 @@ public class LockFile {
     }
 
     /**
-     * Retrieves a <code>LockFile</code> instance initialized with a
+     * Retrieves a <code>LockFile</code> instance, initialized with a
      * <code>File</code> object whose path is the one specified by
      * the <code>path</code> argument. <p>
      *
-     * @return an <code>LockFile</code> instance initialized with a
+     * @return a <code>LockFile</code> instance initialized with a
      *        <code>File</code> object whose path is the one specified
      *        by the <code>path</code> argument.
      * @param path the path of the <code>File</code> object with
@@ -598,7 +639,7 @@ public class LockFile {
      * <b>Note:</b>  Due to the retrictions placed on the JVM by
      * platform-independence, it is very possible to successfully
      * obtain and hold a cooperative lock on a lock file and yet for
-     * the lock to become invalid while held.  <p>
+     * the lock to become invalid while held. <p>
      *
      * For instance, under JVMs with no <code>java.nio</code> package or
      * operating systems that cannot live up to the contracts set forth for
@@ -642,7 +683,7 @@ public class LockFile {
      * For internal use only. <p>
      *
      * This Runnable class provides the implementation for the timed task
-     * that periodically writes out a heartbeat value to the lock file.<p>
+     * that periodically writes out a heartbeat timestamp to the lock file.<p>
      */
     protected class HeartbeatRunner implements Runnable {
 
@@ -754,7 +795,7 @@ public class LockFile {
                 releaseImpl();
                 closeRAF();
             } catch (Exception e) {
-                trace("tryLock(): " + e.toString());
+                trace(mn + e.toString());
             }
         }
 
@@ -778,6 +819,7 @@ public class LockFile {
     public boolean tryRelease() throws Exception {
 
         String mn = "tryRelease(): ";
+        String path;
 
         trace(mn + "entered.");
 
@@ -808,16 +850,17 @@ public class LockFile {
         // without a small delay, the following delete may occasionally fail
         // and return false on some systems, when really it should succeed
         // and return true.
+        trace(mn + "Starting Thread.sleep(100).");
+
         try {
-            trace(mn + "Starting Thread.sleep(100).");
             Thread.sleep(100);
         } catch (Exception e) {
-            trace(mn + e);
+            trace(mn + e.toString());
         }
 
         trace(mn + "Finished Thread.sleep(100).");
 
-        String path = "[" + getAbsolutePath() + "]";
+        path = "[" + getAbsolutePath() + "]";
 
         if (f.exists()) {
             trace(mn + path + " exists.");
@@ -846,11 +889,9 @@ public class LockFile {
      */
     protected void trace(Object o) {
 
-//        if (Trace.TRACE) {
-//            Trace.printSystemOut(super.toString() + ": " + o);
-//        }
-        // just for debugging until released
-//        System.out.println(super.toString() + ": " + o);
+        if (Trace.TRACE) {
+            Trace.printSystemOut("[" + super.toString() + "]: " + o);
+        }
     }
 
     /**
