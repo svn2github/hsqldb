@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.13 2004/04/23 19:42:22 unsaved Exp $
+# $Id: hsqldb,v 1.14 2004/05/12 18:37:47 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -88,6 +88,7 @@ SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 
 # Time to allow for java process to die, if it's not able to start up,
 # And for it to shutdown after it receives the last SQL "shutdown" command.
+# This gets overridden by optional setting in the config file.
 MAX_STARTSTOP_SECS=1
 
 CFGFILE=
