@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.17 2004/06/06 04:35:10 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.18 2004/06/06 08:40:50 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.17 $</edition>
-        <pubdate>$Date: 2004/06/06 04:35:10 $</pubdate>
+        <edition>$Revision: 1.18 $</edition>
+        <pubdate>$Date: 2004/06/06 08:40:50 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -843,8 +843,9 @@
                 <literal>while (*checkvar)</literal>.
             </simpara> <simpara>
                 The <literal>*VARNAME</literal> occurrences are expanded late
-                so that the result of <literal>while *LOOPVAR</literal> will
-                change depending on the current value of LOOPVAR.
+                so that, for example, the result of 
+                <literal>while *LOOPVAR</literal> will change depending on the 
+                current value of LOOPVAR.
             </simpara> <simpara>
                 This does not work with quoting of any type, not with values
                 containing white space.
