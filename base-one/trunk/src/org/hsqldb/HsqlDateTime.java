@@ -36,6 +36,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
 // replaces patch by deforest@users
@@ -50,6 +51,7 @@ import java.util.Calendar;
  * @author  fredt@users
  * @version 1.7.0
  */
+// fredt - 20030103 - currently under review for 1.7.2
 public class HsqlDateTime {
 
     static Date tempDate = new Date(0);
@@ -70,21 +72,27 @@ public class HsqlDateTime {
             throw new java.lang.IllegalArgumentException("null string");
         }
 
-        if (s.toUpperCase().equals("NOW")
-                || s.toUpperCase().equals("CURRENT_TIMESTAMP")) {
-            return new Timestamp(System.currentTimeMillis());
-        }
+        if (s.indexOf('-') == -1) {
+            s = s.toUpperCase();
 
-        // fredt - todo - treat Date as full days only
-        if (s.toUpperCase().equals("CURRENT_DATE")
-                || s.toUpperCase().equals("TODAY")
-                || s.toUpperCase().equals("SYSDATE")) {
-            tempDate.setTime(System.currentTimeMillis());
+            if (s.toUpperCase().equals("NOW")
+                    || s.toUpperCase().equals("CURRENT_TIMESTAMP")) {
+                return new Timestamp(System.currentTimeMillis());
+            }
 
-            long      now = tempDate.getTime();
-            Timestamp ts  = new Timestamp(now);
+            // fredt - todo - treat Date as full days only
+            if (s.toUpperCase().equals("CURRENT_DATE")
+                    || s.toUpperCase().equals("TODAY")
+                    || s.toUpperCase().equals("SYSDATE")) {
+                tempDate.setTime(System.currentTimeMillis());
 
-            return ts;
+                long      now = tempDate.getTime();
+                Timestamp ts  = new Timestamp(now);
+
+                return ts;
+            }
+
+            throw new java.lang.IllegalArgumentException("invalid timestamp");
         }
 
         final String zerodatetime = "1970-01-01 00:00:00.000000000";
@@ -121,18 +129,27 @@ public class HsqlDateTime {
     public static Date dateValue(String s) {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException("null string");
+            throw new java.lang.IllegalArgumentException("null date");
         }
 
-        s = s.toUpperCase();
+        if (s.indexOf('-') == -1) {
+            s = s.toUpperCase();
 
-        // fredt - todo - treat Date as full days only
-        if (s.equals("TODAY") || s.equals("NOW") || s.equals("CURRENT_DATE")
-                || s.equals("CURRENT_TIMESTAMP") || s.equals("SYSDATE")) {
-            return new Date(System.currentTimeMillis());
+            // fredt - todo - treat Date as full days only
+            if (s.equals("TODAY") || s.equals("NOW")
+                    || s.equals("CURRENT_DATE")
+                    || s.equals("CURRENT_TIMESTAMP") || s.equals("SYSDATE")) {
+                return new Date(System.currentTimeMillis());
+            }
+
+            throw new java.lang.IllegalArgumentException("invalid date");
         }
 
-        return Date.valueOf(s.substring(0, sdfdPattern.length()));
+        if (s.length() > sdfdPattern.length()) {
+            return Date.valueOf(s.substring(0, sdfdPattern.length()));
+        }
+
+        return Date.valueOf(s);    // BCompatiblity...if no leading zero in mm/dd!
     }
 
     /**
@@ -225,7 +242,7 @@ public class HsqlDateTime {
 
         sdft.setCalendar(cal);
 
-        return sdft.format(new java.util.Date(x.getTime()));
+        return sdft.format(x);
     }
 
     public static String getDateString(Date x,
@@ -235,7 +252,18 @@ public class HsqlDateTime {
 
         sdfd.setCalendar(cal);
 
-        return sdfd.format(new java.util.Date(x.getTime()));
+        return sdfd.format(x);
+    }
+
+    static SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
+
+    static {
+        sdfd.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
+    }
+
+    public static String getGMTDateString(Date x,
+                                          Calendar cal) throws Exception {
+        return sdfd.format(x);
     }
     /*
     public static void main(String[] args) {

@@ -363,7 +363,7 @@ class Constraint {
 
             core.iMain = core.tMain.getIndex(core.iMain.getName().name);
             core.iColMain = ArrayUtil.toAdjustedColumnArray(core.iColMain,
-                     colindex, adjust);
+                    colindex, adjust);
         }
 
         if (oldt == core.tRef) {
@@ -377,8 +377,7 @@ class Constraint {
                 if (core.iRef != core.iMain) {
                     core.iColRef =
                         ArrayUtil.toAdjustedColumnArray(core.iColRef,
-                                                         colindex,
-                                                         adjust);
+                                                        colindex, adjust);
                 }
             }
         }

@@ -70,7 +70,6 @@ package org.hsqldb;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Enumeration;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris

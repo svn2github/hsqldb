@@ -141,7 +141,6 @@ implements WindowListener, ActionListener {
         fMain.addWindowListener(q);
     }
 
-
     Connection cConn;
     Statement  sStatement;
 
@@ -196,7 +195,6 @@ implements WindowListener, ActionListener {
 
             cConn = DriverManager.getConnection(url + database, user,
                                                 password);
-
         } catch (Exception e) {
             System.out.println("QueryTool.init: " + e.getMessage());
             e.printStackTrace();
@@ -227,6 +225,7 @@ implements WindowListener, ActionListener {
     void trace(String s) {
         System.out.println(s);
     }
+
     /**
      * This is function handles the events when a button is clicked or
      * when the used double-clicked on the listbox of recent commands.

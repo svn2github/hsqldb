@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.FileUtil;
@@ -140,15 +139,19 @@ class Cache {
     protected boolean storeOnInsert;
 
     // post openning constant fields
-    boolean           cacheReadonly;
-    private int       cacheScale;
-    private int       cacheRowScale;
-    private int       cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
-    private int       cacheLength;
-    private int       writerLength;
-    private int       maxCacheSize;            // number of Rows
-    private int       maxCacheBytes;           // number of bytes
-    private int       multiplierMask;
+    boolean cacheReadonly;
+
+    // this flag is used externally to determine if a backup is required
+    boolean           fileModified;
+    // outside access to all below allowed only for metadata
+    int       cacheScale;
+    int       cacheRowScale;
+    int       cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
+    int       cacheLength;
+    int       writerLength;
+    int       maxCacheSize;            // number of Rows
+    int       maxCacheBytes;           // number of bytes
+    int       multiplierMask;
     private CachedRow rData[];
     private CachedRow rWriter[];
 
@@ -165,10 +168,10 @@ class Cache {
     private CachedRow        rLastChecked;     // can be any row
     private static final int MAX_FREE_COUNT = 1024;
 
-    //
-    private CacheFree fRoot;
-    private int       iFreeCount;
-    private int       iCacheSize;
+    // outside access allowed to all below only for metadata
+    CacheFree fRoot;
+    int       iFreeCount;
+    int       iCacheSize;
 
     // reusable input / output streams
     DatabaseRowInputInterface  rowIn;
@@ -351,13 +354,16 @@ class Cache {
     }
 
     /**
-     * Adds the file space for a row to the list of free positions.
+     * Used when a row is deleted as a result of some DML or DDL command.
+     * Adds the file space for the row to the list of free positions.
      * If there exists more than MAX_FREE_COUNT free positions,
      * then they are probably all too small, so we start a new list. <p>
      * todo: This is wrong when deleting lots of records <p>
      * Then remove the row from the cache data structures.
      */
     void free(CachedRow r) throws SQLException {
+
+        fileModified = true;
 
         iFreeCount++;
 
@@ -398,6 +404,8 @@ class Cache {
      * created<p>
      */
     void add(CachedRow r) throws SQLException {
+
+        fileModified = true;
 
         if (iCacheSize >= maxCacheSize) {
             cleanUp();
@@ -654,7 +662,8 @@ class Cache {
     /**
      * Removes all Row objects for a table from this Cache object. This is
      * done when a table is dropped. Necessary because the Rows corresponding
-     * to index roots will never be removed otherwise.
+     * to index roots will never be removed otherwise. This doesn't add the
+     * Rows to the free list and does not by itself modify the *.data file.
      */
     protected void remove(Table t) throws SQLException {
 

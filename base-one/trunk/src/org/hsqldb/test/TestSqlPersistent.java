@@ -144,6 +144,7 @@ public class TestSqlPersistent extends TestCase {
             ps.setCharacterStream(
                 2, new java.io.StringReader("Array Type Object 3"), 19);
             */
+
             // ps.setObject(3, arrayValue, Types.OTHER); should work too
             ps.setObject(3, arrayValue);
             ps.execute();
@@ -155,6 +156,7 @@ public class TestSqlPersistent extends TestCase {
             ps.setCharacterStream(
                 2, new java.io.StringReader("byte Array Type Object 3"), 19);
             */
+
             // ps.setObject(3, bytearrayValue); will fail
             // must use this to indicate we are inserting into an OTHER column
             ps.setObject(3, bytearrayValue, Types.OTHER);
@@ -200,6 +202,7 @@ public class TestSqlPersistent extends TestCase {
                 System.out.print((char) c);
             }
             */
+
             // retrieving objects inserted into the third column
             stringValueResult = rs.getObject(3);
 
@@ -255,6 +258,7 @@ public class TestSqlPersistent extends TestCase {
                               (Double[]) arrayValueResult);
         */
         boolean success = true;
+
         assertEquals(true, success);
     }
 

@@ -68,10 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
-import java.io.File;
 import java.sql.SQLException;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
@@ -168,7 +165,7 @@ class ScriptRunner {
             }
 
             if (Trace.TRACE) {
-                Trace.trace(sw.elapsedTime());
+                Trace.trace("restore time: " + sw.elapsedTime());
             }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);

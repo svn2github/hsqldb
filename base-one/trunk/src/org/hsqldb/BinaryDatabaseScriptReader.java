@@ -64,11 +64,20 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     protected void readSingleColumnResult(Session session)
     throws IOException, SQLException {
 
-        byte[] bytes = new byte[dataStreamIn.readInt()];
+        readRow(rowIn, 0, dataStreamIn);
 
-        dataStreamIn.read(bytes);
-
-        Result r = new Result(bytes);
+/*
+        rowIn.reset();
+        dataStreamIn.read(rowIn.getBuffer(),0,4);
+        int length = rowIn.readInt();
+        rowIn.resetRow(0,length);
+        int count = 0;
+        while ( dataStreamIn.available() > 0 && count < length ){
+            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
+        }
+        // trouble if count != length
+*/
+        Result r = new Result(rowIn);
         Record n = r.rRoot;
         String s;
 
@@ -115,15 +124,27 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     // BinaryServerRowInput : row (column values)
     protected boolean readRow(Table t) throws IOException, SQLException {
 
-        int size = dataStreamIn.readInt();
+        boolean more = readRow(rowIn, 0, dataStreamIn);
 
-        if (size == 0) {
+        if (!more) {
             return false;
         }
 
-        rowIn.resetRow(0, size);
-        dataStreamIn.read(rowIn.getBuffer(), 4, size - 4);
+/*
+        rowIn.reset();
+        dataStreamIn.read(rowIn.getBuffer(),0,4);
+        int length = rowIn.readInt();
 
+        if (length == 0) {
+            return false;
+        }
+
+        rowIn.resetRow(0, length);
+        int count = 4;
+        while ( dataStreamIn.available() > 0 && count < length ){
+            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
+        }
+*/
         Object[] row = rowIn.readData(t.getColumnTypes());
 
         t.insertNoCheck(row, null, false);
@@ -134,24 +155,36 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     // int : rowcount
     protected int readTableTerm() throws IOException, SQLException {
 
-        rowIn.resetRow(0, 8);
-        dataStreamIn.read(rowIn.getBuffer(), 4, 4);
+        rowIn.reset();
+        dataStreamIn.read(rowIn.getBuffer(), 0, 4);
 
-        return rowIn.readIntData();
+        return rowIn.readInt();
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
     protected String readTableInit() throws IOException, SQLException {
 
-        int size = dataStreamIn.readInt();
+        boolean more = readRow(rowIn, 0, dataStreamIn);
 
-        if (size == 0) {
+        if (!more) {
             return null;
         }
 
-        rowIn.resetRow(0, size);
-        dataStreamIn.read(rowIn.getBuffer(), 4, size - 4);
+/*
+        rowIn.reset();
+        dataStreamIn.read(rowIn.getBuffer(),0,4);
+        int length = rowIn.readInt();
 
+        if (length == 0) {
+            return null;
+        }
+
+        rowIn.resetRow(0, length);
+        int count = 4;
+        while ( dataStreamIn.available() > 0 && count < length ){
+            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
+        }
+*/
         String s = rowIn.readString();
 
         // operation is always INSERT
@@ -163,5 +196,35 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         }
 
         return s;
+    }
+
+    boolean readRow(DatabaseRowInput rowIn, int pos,
+                    InputStream streamIn) throws IOException {
+
+        rowIn.reset();
+
+        int count  = 0;
+        int length = 4;
+
+        while (streamIn.available() > 0 && count < length) {
+            count += dataStreamIn.read(rowIn.getBuffer(), count,
+                                       length - count);
+        }
+
+        length = rowIn.readInt();
+
+        if (length == 0) {
+            return false;
+        }
+
+        rowIn.resetRow(pos, length);
+
+        while (streamIn.available() > 0 && count < length) {
+            count += dataStreamIn.read(rowIn.getBuffer(), count,
+                                       length - count);
+        }
+
+        // problem if count != length
+        return true;
     }
 }

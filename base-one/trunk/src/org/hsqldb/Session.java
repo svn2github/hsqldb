@@ -325,7 +325,9 @@ class Session {
      */
     void rollback() throws SQLException {
 
-        for (int i = tTransaction.size() - 1; i >= 0; i--) {
+        int i = tTransaction.size();
+
+        while (--i >= 0) {
             Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();
@@ -359,7 +361,10 @@ class Session {
 
         Trace.check(idx != null, Trace.SAVEPOINT_NOT_FOUND, name);
 
-        for (int i = tTransaction.size() - 1; i >= idx.intValue(); i--) {
+        int i = tTransaction.size();
+        int j = idx.intValue();
+
+        while (--i >= j) {
             Transaction t = (Transaction) tTransaction.get(i);
 
             t.rollback();
@@ -397,8 +402,9 @@ class Session {
         Trace.doAssert(bNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            for (int i = tTransaction.size() - 1; i >= iNestedOldTransIndex;
-                    i--) {
+            int i = tTransaction.size();
+
+            while (--i >= iNestedOldTransIndex) {
                 Transaction t = (Transaction) tTransaction.get(i);
 
                 t.rollback();

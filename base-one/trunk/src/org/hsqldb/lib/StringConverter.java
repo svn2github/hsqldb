@@ -67,17 +67,11 @@
 
 package org.hsqldb.lib;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.IOException;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.UTFDataFormatException;
 
 /**
@@ -513,17 +507,14 @@ public class StringConverter {
      * doublequote argument indicates whether each instance of quotechar
      * inside the string is doubled.<p>
      *
+     * null string argument returns null. If the caller needs the literal
+     * "NULL" it should created it itself <p>
+     *
      * The reverse conversion is handled in Tokenizer.java
      */
     public static String toQuotedString(String s, char quoteChar,
                                         boolean extraQuote) {
 
-        // fredt - todo - check this
-/*
-        if (s == null) {
-            return "NULL";
-        }
-*/
         if (s == null) {
             return null;
         }

@@ -2541,7 +2541,7 @@ class Table {
 
     void drop() throws SQLException {
 
-        if (cCache != null) {
+        if (cCache != null &&!isEmpty()) {
             cCache.remove(this);
         }
     }

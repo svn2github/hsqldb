@@ -68,23 +68,11 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.LineNumberReader;
-import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import java.util.*;
 
 //import java.util.zip.
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -143,13 +131,14 @@ class Log implements Runnable {
     private String                 sFileScript;
     private String                 sFileCache;
     private String                 sFileBackup;
+    private String                 sFileLog;
     private boolean                bRestoring;
     private boolean                bReadOnly;
     private int                    maxLogSize;
     private int                    iLogCount;
     private int                    logType;
     private Thread                 tRunner;
-    private volatile boolean       bWriteDelay;
+    private volatile int           writeDelay = 60;
     private int                    mLastId;
     private Cache                  cCache;
 
@@ -169,7 +158,8 @@ class Log implements Runnable {
         dDatabase   = db;
         sName       = name;
         pProperties = db.getProperties();
-        tRunner     = new Thread(this, "HSQLDB " + jdbcDriver.VERSION);
+        tRunner = new Thread(this,
+                             "HSQLDB " + jdbcDriver.VERSION + " logger");
 
         tRunner.start();
     }
@@ -179,10 +169,19 @@ class Log implements Runnable {
      */
     public void run() {
 
+        int count = 0;
+
         while (tRunner != null) {
             try {
                 tRunner.sleep(1000);
-                dbScriptWriter.flush();
+
+                if (++count >= writeDelay && dbScriptWriter != null) {
+                    synchronized (dbScriptWriter) {
+                        dbScriptWriter.sync();
+                    }
+
+                    count = 0;
+                }
 
                 // todo: try to do Cache.cleanUp() here, too
             } catch (Exception e) {
@@ -198,8 +197,11 @@ class Log implements Runnable {
      *
      * @param  delay
      */
-    void setWriteDelay(boolean delay) {
-        bWriteDelay = delay;
+    void setWriteDelay(int delay) {
+
+        writeDelay = delay;
+
+        dbScriptWriter.setWriteDelay(delay);
     }
 
     /**
@@ -224,6 +226,7 @@ class Log implements Runnable {
         pProperties.load();
 
         sFileScript = sName + ".script";
+        sFileLog    = sName + ".log";
         sFileCache  = sName + ".data";
         sFileBackup = sName + ".backup";
 
@@ -270,6 +273,7 @@ class Log implements Runnable {
         if (state.equals("yes-new-files")) {
             FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
             FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
+            FileUtil.delete(sFileLog);
         } else if (state.equals("yes")) {
             if (pProperties.isFileOpen()) {
                 throw Trace.error(Trace.DATABASE_ALREADY_IN_USE);
@@ -293,6 +297,8 @@ class Log implements Runnable {
         bRestoring = true;
 
         ScriptRunner.runScript(dDatabase, sFileScript, logType);
+        ScriptRunner.runScript(dDatabase, sFileLog,
+                               DatabaseScriptWriter.SCRIPT_TEXT_170);
 
         bRestoring = false;
 
@@ -347,6 +353,8 @@ class Log implements Runnable {
             Trace.trace();
         }
 
+        boolean needsbackup = false;
+
         if (bReadOnly) {
             return;
         }
@@ -359,13 +367,17 @@ class Log implements Runnable {
 
         // flush the cache (important: after writing the script)
         if (cCache != null) {
+            needsbackup = cCache.fileModified;
+
             cCache.flush();
         }
 
         closeAllTextCaches(compact);
 
         // create '.backup.new' using the '.data'
-        backup();
+        if (needsbackup &&!compact) {
+            backup();
+        }
 
         // we have the new files
         pProperties.setProperty("modified", "yes-new-files");
@@ -373,7 +385,11 @@ class Log implements Runnable {
 
         // old files can be removed and new files renamed
         FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
-        FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
+        FileUtil.delete(sFileLog);
+
+        if (needsbackup &&!compact) {
+            FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
+        }
 
         // now its done completely
         pProperties.setProperty("modified", "no");
@@ -493,7 +509,7 @@ class Log implements Runnable {
         try {
             dbScriptWriter.writeLogStatement(s);
         } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }
 
         if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
@@ -527,10 +543,6 @@ class Log implements Runnable {
      * @throws  SQLException
      */
     private void backup() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         try {
             if (Trace.TRACE) {
@@ -592,9 +604,10 @@ class Log implements Runnable {
         try {
             dbScriptWriter =
                 DatabaseScriptWriter.newDatabaseScriptWriter(this.dDatabase,
-                    sFileScript, false, false, logType);
+                    sFileLog, false, false,
+                    DatabaseScriptWriter.SCRIPT_TEXT_170);
 
-            dbScriptWriter.setWriteDelay(bWriteDelay);
+            dbScriptWriter.setWriteDelay(writeDelay);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }

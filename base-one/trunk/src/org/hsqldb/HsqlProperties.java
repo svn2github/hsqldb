@@ -38,7 +38,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
-import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.ArrayUtil;
 

@@ -76,7 +76,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.*;    // for Savepoint
+import java.sql.*;     // for Savepoint
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -94,7 +94,7 @@ import java.security.Principal;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.Properties;
-import java.util.*; // for Map
+import java.util.*;    // for Map
 import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
@@ -972,8 +972,12 @@ public class jdbcConnection implements Connection {
      * @see #getAutoCommit
      */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        execute("SET AUTOCOMMIT " + (autoCommit ? "TRUE"
-                                                : "FALSE"));
+
+        if (autoCommit) {
+            execute("SET AUTOCOMMIT TRUE");
+        } else {
+            execute("SET AUTOCOMMIT FALSE");
+        }
     }
 
     /**
@@ -2537,10 +2541,7 @@ public class jdbcConnection implements Connection {
         sDatabaseName = s;
         s             = s.toUpperCase();
 
-        if (s.toUpperCase().startsWith("HTTP://")
-                || s.toUpperCase().startsWith("HTTPS://")) {
-            iType = HTTP;
-
+        if (s.startsWith("HTTP://") || s.startsWith("HTTPS://")) {
             openHTTP(user, password);
         } else if (s.startsWith("HSQLS://")) {
             iType = HSQLDB;
@@ -2792,12 +2793,10 @@ public class jdbcConnection implements Connection {
         byte result[];
 
         try {
-            URL    url = new URL(sConnect);
-            String p   = StringConverter.unicodeToHexString(sUser);
-
-            p += "+" + StringConverter.unicodeToHexString(sPassword);
-            p += "+" + StringConverter.unicodeToHexString(s);
-
+            URL url = new URL(sConnect);
+            String p = StringConverter.unicodeToHexString(sUser) + "+"
+                       + StringConverter.unicodeToHexString(sPassword) + "+"
+                       + StringConverter.unicodeToHexString(s);
             URLConnection c = url.openConnection();
 
             c.setDoOutput(true);
@@ -3176,7 +3175,8 @@ public class jdbcConnection implements Connection {
         }
 
         if (loader == null) {
-        // NO_CLASSLOADER_FOR_TLS
+
+            // NO_CLASSLOADER_FOR_TLS
             throw new SQLException(
                 "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
         }
@@ -3225,27 +3225,30 @@ public class jdbcConnection implements Connection {
                 SessionClass = loader.loadClass("javax.net.ssl.SSLSession");
             }
         } catch (ClassNotFoundException cnfe) {
-        // NO_JSSE
+
+            // NO_JSSE
             throw new SQLException("JSSE not installed:  " + cnfe);
         } catch (NoSuchMethodException nsme) {
-        // NO_SSLSOCKETFACTORY_METHOD
+
+            // NO_SSLSOCKETFACTORY_METHOD
             throw new SQLException(
                 "Failed to find method SSLSocketFactory.getDefault()");
 
             // Need to unwrap the following exceptions
         } catch (InvocationTargetException ite) {
-        // UNEXPECTED_EXCEPTION
 
+            // UNEXPECTED_EXCEPTION
             // JSSE classes are available, but the JSSE methods threw Excepts
             // I don't think that getDefault() throws any.  Should not get here.
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
-        // ACCESS_IS_DENIED
+
+            // ACCESS_IS_DENIED
             throw new SQLException(
                 "You do not have permission to use the needed SSL resources");
         } catch (Exception e) {
-        // UNEXPECTED_EXCEPTION
 
+            // UNEXPECTED_EXCEPTION
             // Just pass through remaing, including IllegalArgExcept,
             // which should not be possible if we compiled successfully.
             throw new SQLException(e.toString());
@@ -3281,20 +3284,24 @@ public class jdbcConnection implements Connection {
 
             // These first ones are not going to occur.  From the forNames.
         } catch (ExceptionInInitializerError eiie) {
-        // SSL_ERROR
+
+            // SSL_ERROR
             Throwable t = eiie.getException();
 
             throw new SQLException((t instanceof Exception) ? t.toString()
                                                             : eiie
                                                             .toString());
         } catch (LinkageError le) {
-        // SSL_ERROR
+
+            // SSL_ERROR
             throw new SQLException(le.toString());
         } catch (NoSuchMethodException nsme) {
-        // MISSING_SSL_METHOD
+
+            // MISSING_SSL_METHOD
             throw new SQLException("Failed to find an SSL method: " + nsme);
         } catch (SecurityException se) {
-        // SSL_SECURITY_ERROR
+
+            // SSL_SECURITY_ERROR
             throw new SQLException(se.toString());
         }
 
@@ -3330,14 +3337,14 @@ public class jdbcConnection implements Connection {
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
             condClose(ssls);
-        // ACCESS_IS_DENIED
 
+            // ACCESS_IS_DENIED
             throw new SQLException(
                 "You don't have permissions for SSLSocketFactory.createSocket() "
                 + "or SSLSocket.startHandshake()");
         } catch (Exception e) {
-        // UNEXPECTED_EXCEPTION
 
+            // UNEXPECTED_EXCEPTION
             // incl. IllegalArgumentException which should not get at runtime
             condClose(ssls);
 
@@ -3351,8 +3358,8 @@ public class jdbcConnection implements Connection {
 
             if (ses == null) {
                 condClose(ssls);
-        // NO_TLS_DATA
 
+                // NO_TLS_DATA
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
             }
@@ -3365,7 +3372,7 @@ public class jdbcConnection implements Connection {
                         X590Class))) {
                 condClose(ssls);
 
-        // NO_TLS_DATA
+                // NO_TLS_DATA
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
             }
@@ -3375,7 +3382,7 @@ public class jdbcConnection implements Connection {
             if (caarray.length < 0) {
                 condClose(ssls);
 
-        // NO_TLS_DATA
+                // NO_TLS_DATA
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
             }
@@ -3390,12 +3397,13 @@ public class jdbcConnection implements Connection {
              * Could be one of...
              * javax.net.ssl.SSLPeerUnverifiedException
              */
-        // TLS_ERROR
+
+            // TLS_ERROR
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
             condClose(ssls);
 
-        // ACCESS_IS_DENIED
+            // ACCESS_IS_DENIED
             throw new SQLException(
                 "You don't have permissions for a TLS socket operation");
         } catch (Exception e) {
@@ -3403,7 +3411,7 @@ public class jdbcConnection implements Connection {
             // Include IllegalArgumentException
             condClose(ssls);
 
-        // UNEXPECTED_EXCEPTION
+            // UNEXPECTED_EXCEPTION
             throw new SQLException(e.toString());
         }
 
@@ -3412,7 +3420,7 @@ public class jdbcConnection implements Connection {
         if (p == null) {
             condClose(ssls);
 
-        // NO_PRINCIPAL
+            // NO_PRINCIPAL
             throw new SQLException(
                 "Somehow failed to retrieve Principal from Server");
         }
@@ -3422,7 +3430,7 @@ public class jdbcConnection implements Connection {
         if (Dn == null) {
             condClose(ssls);
 
-        // INCOMPLETE_CERTIFICATE
+            // INCOMPLETE_CERTIFICATE
             throw new SQLException(
                 "Failed to obtain 'Distinguished Name' from Server certificate");
         }
@@ -3432,7 +3440,7 @@ public class jdbcConnection implements Connection {
         if (istart < 0) {
             condClose(ssls);
 
-        // INCOMPLETE_CERTIFICATE
+            // INCOMPLETE_CERTIFICATE
             throw new SQLException(
                 "Failed to obtain 'Common Name' from Server certificate");
         }
@@ -3446,7 +3454,7 @@ public class jdbcConnection implements Connection {
         if (CN.length() < 1) {
             condClose(ssls);
 
-        // INCOMPLETE_CERTIFICATE
+            // INCOMPLETE_CERTIFICATE
             throw new SQLException("Server returned a null Common Name");
         }
 
@@ -3458,7 +3466,8 @@ public class jdbcConnection implements Connection {
         // use the Protocol handler (only available in Java >= 1.4), and
         // for hsqls now, we need to do the validation: hostname == cert CN
         if (!CN.equalsIgnoreCase(strHost)) {
-        // TLS_HOSTNAME_MISMATCH
+
+            // TLS_HOSTNAME_MISMATCH
             throw new SQLException("Server cert Common Name '" + CN
                                    + "' does not match given "
                                    + "network node name '" + strHost + "'");

@@ -71,8 +71,6 @@ import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;

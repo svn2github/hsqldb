@@ -46,30 +46,41 @@ import org.hsqldb.lib.StringConverter;
  */
 class DatabaseScriptReader {
 
-    DataInputStream dataStreamIn;
-    Database        db;
-    int             count;
-    BufferedReader  d;
+    InputStream dataStreamIn;
+    Database    db;
+    int         count;
+
+    // this is used only to enable reading one logged line at a time
+    BufferedReader d;
+    String         fileName;
 
     static DatabaseScriptReader newDatabaseScriptReader(Database db,
             String file, int scriptType) throws SQLException, IOException {
 
         if (scriptType == DatabaseScriptWriter.SCRIPT_TEXT_170) {
             return new DatabaseScriptReader(db, file);
-        } else {
+        } else if (scriptType == DatabaseScriptWriter.SCRIPT_BINARY_172) {
             return new BinaryDatabaseScriptReader(db, file);
+        } else {
+            return new ZippedDatabaseScriptReader(db, file);
         }
     }
 
     DatabaseScriptReader(Database db,
                          String file) throws SQLException, IOException {
 
-        this.db      = db;
-        dataStreamIn = new DataInputStream(new FileInputStream(file));
-        d = new BufferedReader(new InputStreamReader(dataStreamIn));
+        this.db  = db;
+        fileName = file;
+
+        openFile();
     }
 
     void readAll(Session session) throws IOException, SQLException {}
+
+    protected void openFile() throws IOException {
+        dataStreamIn = new DataInputStream(new FileInputStream(fileName));
+        d = new BufferedReader(new InputStreamReader(dataStreamIn));
+    }
 
     protected String readLoggedStatement() {
 

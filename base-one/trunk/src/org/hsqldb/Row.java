@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)

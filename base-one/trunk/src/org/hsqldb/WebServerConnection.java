@@ -77,7 +77,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Observable;
 import java.util.StringTokenizer;
 import org.hsqldb.lib.StringConverter;
 import java.lang.reflect.Method;
@@ -101,15 +100,15 @@ class WebServerConnection implements Runnable {
     private Socket           mSocket;
     private WebServer        mServer;
     private boolean          isTls;
-    private ClassLoader      loader                  = null;
+    private ClassLoader      loader                    = null;
     private Method           SSLSgetInputStreamMethod  = null,
                              SSLSgetOutputStreamMethod = null;
-    private static final int GET                     = 1,
-                             HEAD                    = 2,
-                             POST                    = 3,
-                             BAD_REQUEST             = 400,
-                             FORBIDDEN               = 403,
-                             NOT_FOUND               = 404;
+    private static final int GET                       = 1,
+                             HEAD                      = 2,
+                             POST                      = 3,
+                             BAD_REQUEST               = 400,
+                             FORBIDDEN                 = 403,
+                             NOT_FOUND                 = 404;
 
     /**
      *  Constructor declaration
@@ -121,7 +120,7 @@ class WebServerConnection implements Runnable {
 
         mServer = server;
         mSocket = socket;
-        isTls    = bIn;
+        isTls   = bIn;
     }
 
     /**
@@ -166,7 +165,7 @@ class WebServerConnection implements Runnable {
 
             // Assertion (would use "assert" if Java 1.4):
             if (isTls && (SSLSgetInputStreamMethod == null
-                         || SSLSgetOutputStreamMethod == null)) {
+                          || SSLSgetOutputStreamMethod == null)) {
                 throw new VerifyError("Unexpected SSL error encountered");
             }
 
@@ -174,10 +173,12 @@ class WebServerConnection implements Runnable {
             BufferedReader input = null;
 
             try {
-                input = new BufferedReader(new InputStreamReader((isTls
-                        ? (InputStream) SSLSgetInputStreamMethod.invoke(mSocket,
-                            null)
-                        : mSocket.getInputStream()), ENCODING));
+                input = new BufferedReader(
+                    new InputStreamReader(
+                        (isTls
+                         ? (InputStream) SSLSgetInputStreamMethod.invoke(
+                             mSocket, null)
+                         : mSocket.getInputStream()), ENCODING));
             } catch (IllegalAccessException iae) {
                 throw new Exception(
                     "You do not have permission to use the needed SSL resources");

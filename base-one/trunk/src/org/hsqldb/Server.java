@@ -70,10 +70,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Vector;
 import java.lang.reflect.InvocationTargetException;
 import java.io.FileNotFoundException;
@@ -173,7 +170,7 @@ public class Server {
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port",
                 String.valueOf(isTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
-                                    : jdbcConnection.DEFAULT_HSQLDB_PORT));
+                                     : jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
             javaSystem.setLogToSystem(true);
@@ -207,7 +204,7 @@ public class Server {
         try {
             int port = serverProperties.getIntegerProperty("server.port",
                 isTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
-                     : jdbcConnection.DEFAULT_HSQLDB_PORT);
+                      : jdbcConnection.DEFAULT_HSQLDB_PORT);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
@@ -248,7 +245,7 @@ public class Server {
                         // If not, error will be caught later
                     } catch (Exception e) {}
 
-                    Class[] caInt = { int.class };
+                    Class[]  caInt = { int.class };
                     Object[] oaInt = { new Integer(port) };
                     Class clsSSF =
                         loader.loadClass("javax.net.ServerSocketFactory");

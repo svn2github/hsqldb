@@ -70,7 +70,6 @@ package org.hsqldb;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.*;
-import java.util.*;
 import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 

@@ -41,13 +41,16 @@ import org.hsqldb.lib.StringConverter;
  * Handles all logging to file operations. A log consists of three blocks:<p>
  *
  * DDL BLOCK: definition of DB objects, users and rights at startup time<br>
- * DATA BLOCK: All data for MEMORY tables at startup time<br>
+ * DATA BLOCK: all data for MEMORY tables at startup time<br>
  * LOG BLOCK: SQL statements logged since startup or the last CHECKPOINT<br>
  *
  * The implementation of this class and its subclasses determines the format
  * used for writing the data. In versions up to 1.7.2, this data is written
  * to the *.script file for the database. Since 1.7.2 the data can also be
  * written as binray in order to speed up shutdown and startup.<p>
+ *
+ * In 1.7.2, two separate files are used, one for the DDL + DATA BLOCK and
+ * the other for the LOG BLOCK.<p>
  *
  * A related use for this class is for saving a current snapshot of the
  * database data to a user-defined file. This happens in the SHUTDOWN COMPACT
@@ -68,27 +71,29 @@ import org.hsqldb.lib.StringConverter;
 
 // todo - can lock the database engine as readonly in a wrapper for this when
 // used at checkpoint
-// todo - rework the semantics of READONLY TRUE - it should be possible to
-// treat this in the DDL block as a delayed setting that comes into effect
+// todo - rework the semantics of SET READONLY TRUE encountered in the script
+// or log files. It should be possible
+// to treat this in the DDL block as a delayed setting that comes into effect
 // after processing the DATA block and before the LOG block
 // at the moment READLONLY is not supported for binary logging
 class DatabaseScriptWriter {
 
     Database          db;
     String            outFile;
-    FileOutputStream  fileStreamOut;
+    OutputStream      fileStreamOut;
+    FileDescriptor    outDescriptor;
     DatabaseRowOutput binaryOut = new BinaryServerRowOutput();
     int               tableRowCount;
 
     /**
-     * this determines if the script is the normal logging script (false) or a
-     * user initiated snapshot of the DB (true)
+     * this determines if the script is the normal script (false) used
+     * internally by the engine or a user-initiated snapshot of the DB (true)
      */
     boolean          includeCachedData;
-    long             count;
-    boolean          noWriteDelay = true;
-    boolean          needsFlush   = false;
-    static final int INSERT       = 0;
+    long             byteCount;
+    int              writeDelay = 0;
+    boolean          needsSync = false;
+    static final int INSERT     = 0;
 
     // todo - perhaps move this gloabal into a lib utility class
     static byte[] lineSep;
@@ -103,8 +108,9 @@ class DatabaseScriptWriter {
         }
     }
 
-    final static int SCRIPT_TEXT_170   = 0;
-    final static int SCRIPT_BINARY_172 = 1;
+    final static int SCRIPT_TEXT_170          = 0;
+    final static int SCRIPT_BINARY_172        = 1;
+    final static int SCRIPT_ZIPPED_BINARY_172 = 3;
 
     static DatabaseScriptWriter newDatabaseScriptWriter(Database db,
             String file, boolean includeCachedData, boolean newFile,
@@ -113,8 +119,11 @@ class DatabaseScriptWriter {
         if (scriptType == SCRIPT_TEXT_170) {
             return new DatabaseScriptWriter(db, file, includeCachedData,
                                             newFile);
-        } else {
+        } else if (scriptType == SCRIPT_BINARY_172) {
             return new BinaryDatabaseScriptWriter(db, file,
+                                                  includeCachedData, newFile);
+        } else {
+            return new ZippedDatabaseScriptWriter(db, file,
                                                   includeCachedData, newFile);
         }
     }
@@ -128,7 +137,7 @@ class DatabaseScriptWriter {
             if (newFile) {
                 throw Trace.error(Trace.FILE_IO_ERROR, file);
             } else {
-                count = newFileFile.length();
+                byteCount = newFileFile.length();
             }
         }
 
@@ -136,27 +145,24 @@ class DatabaseScriptWriter {
         this.includeCachedData = includeCachedData;
         outFile                = file;
 
-        try {
-            fileStreamOut = new FileOutputStream(file, true);
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, file);
-        }
+        openFile();
     }
 
-    void setWriteDelay(boolean delay) {
-        noWriteDelay = !delay;
+    void setWriteDelay(int delay) {
+        writeDelay = delay;
     }
 
-/**
- *  Only use externally.
- */
-    void flush() throws IOException {
+    /**
+     *  Called externally if write delay is on.
+     */
+    void sync() throws IOException {
 
-        if (needsFlush) {
+        if (needsSync) {
             fileStreamOut.flush();
+            outDescriptor.sync();
         }
 
-        needsFlush = false;
+        needsSync = false;
     }
 
     void close() throws IOException {
@@ -165,7 +171,7 @@ class DatabaseScriptWriter {
     }
 
     long size() {
-        return count;
+        return byteCount;
     }
 
     void writeAll() throws SQLException {
@@ -173,10 +179,29 @@ class DatabaseScriptWriter {
         try {
             writeDDL();
             writeExistingData();
-            fileStreamOut.flush();
+            finishStream();
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR);
         }
+    }
+
+    protected void openFile() throws SQLException {
+
+        try {
+            FileOutputStream fos = new FileOutputStream(outFile, true);
+
+            outDescriptor = fos.getFD();
+            fileStreamOut = fos;
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, outFile);
+        }
+    }
+
+    /**
+     * This is not really useful in the current usage but may be if this
+     * class is used in a different way.
+     */
+    protected void finishStream() throws IOException {
     }
 
     protected void writeDDL() throws IOException, SQLException {
@@ -274,12 +299,8 @@ class DatabaseScriptWriter {
         binaryOut.write(lineSep);
         fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
 
-        count += binaryOut.size();
-
-        if (noWriteDelay) {
-            fileStreamOut.flush();
-        } else {
-            needsFlush = true;
-        }
+        byteCount      += binaryOut.size();
+        needsSync = true;
+        fileStreamOut.flush();
     }
 }

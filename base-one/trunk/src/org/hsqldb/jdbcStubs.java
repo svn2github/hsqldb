@@ -34,12 +34,9 @@ package org.hsqldb;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 
-class jdbcStubs {
-}
+class jdbcStubs {}
 
 //#ifdef JAVA2
-
-
 //#else
 /*
 // surrogate for java.util.Map interface

@@ -128,7 +128,9 @@ class Column {
     static final int VARCHAR_IGNORECASE = 100;
 
     // lookup for types
-    private static Hashtable hTypes;
+// boucherb@users - access changed for metadata 1.7.2
+    static Hashtable hTypes;
+// --------------------------------------------------
 
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
     static final int numericTypes[] = {
@@ -1405,8 +1407,11 @@ class Column {
      * @return quoted SQL string
      */
     static String createSQLString(String s) {
-        if ( s == null )
+
+        if (s == null) {
             return "NULL";
+        }
+
         return StringConverter.toQuotedString(s, '\'', true);
     }
 

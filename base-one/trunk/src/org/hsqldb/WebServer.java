@@ -71,7 +71,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.DriverManager;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.security.Security;
@@ -114,7 +113,7 @@ public class WebServer extends Server {
     String              mRoot;
     String              mDefaultFile;
     char                mPathSeparatorChar;
-    boolean             isTls = false;
+    boolean             isTls        = false;
     private Method      AcceptMethod = null;
 
     /**
@@ -157,7 +156,7 @@ public class WebServer extends Server {
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port", isTls ? "443"
-                                                                    : "80");
+                                                                     : "80");
 
         mRoot = serverProperties.setPropertyIfNotExists("server.root", "./");
         mDefaultFile =
@@ -183,7 +182,7 @@ public class WebServer extends Server {
         try {
             int port = serverProperties.getIntegerProperty("server.port",
                 isTls ? 443
-                     : 80);
+                      : 80);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
@@ -195,8 +194,8 @@ public class WebServer extends Server {
 
             if (isTls) {
                 try {
-                    Object[] oaInt = { new Integer(port) };
-                    Class[] caInt = { int.class };
+                    Object[]    oaInt  = { new Integer(port) };
+                    Class[]     caInt  = { int.class };
                     ClassLoader loader = getClass().getClassLoader();
 
                     if (loader == null) {

@@ -457,31 +457,35 @@ class DatabaseScript {
         for (int j = 0, vSize = v.size(); j < vSize; j++) {
             Constraint c = (Constraint) v.get(j);
 
-            if (c.getType() == Constraint.UNIQUE) {
-                a.append(",CONSTRAINT ");
-                a.append(c.getName().statementName);
-                a.append(" UNIQUE");
+            switch (c.getType()) {
 
-                int col[] = c.getMainColumns();
+                case Constraint.UNIQUE :
+                    a.append(",CONSTRAINT ");
+                    a.append(c.getName().statementName);
+                    a.append(" UNIQUE");
 
-                getColumnList(c.getMain(), col, col.length, a);
-            } else if (c.getType() == Constraint.FOREIGN_KEY) {
+                    int col[] = c.getMainColumns();
 
-                // forward referencing FK
-                Table maintable      = c.getMain();
-                int   maintableindex = dDatabase.getTableIndex(maintable);
+                    getColumnList(c.getMain(), col, col.length, a);
+                    break;
 
-                if (maintableindex > i) {
-                    if (i >= forwardFKSource.size()) {
-                        forwardFKSource.setSize(i + 1);
+                case Constraint.FOREIGN_KEY :
+
+                    // forward referencing FK
+                    Table maintable      = c.getMain();
+                    int   maintableindex = dDatabase.getTableIndex(maintable);
+
+                    if (maintableindex > i) {
+                        if (i >= forwardFKSource.size()) {
+                            forwardFKSource.setSize(i + 1);
+                        }
+
+                        forwardFKSource.set(i, c);
+                        forwardFK.add(c);
+                    } else {
+                        a.append(',');
+                        getFKStatement(c, a);
                     }
-
-                    forwardFKSource.set(i, c);
-                    forwardFK.add(c);
-                } else {
-                    a.append(',');
-                    getFKStatement(c, a);
-                }
             }
         }
 

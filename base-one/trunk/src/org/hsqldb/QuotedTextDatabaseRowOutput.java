@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
 
 /**

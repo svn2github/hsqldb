@@ -48,12 +48,11 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
     protected void writeSingleColumnResult(Result r)
     throws IOException, SQLException {
 
-        byte[] bytes = r.getBytes();
-
         binaryOut.reset();
-        binaryOut.writeSize(bytes.length);
+        binaryOut.writeSize(0);
+        r.write(binaryOut);
+        binaryOut.writeIntData(binaryOut.size(), 0);
         fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
-        fileStreamOut.write(bytes);
     }
 
     // int : row size (0 if no more rows) ,

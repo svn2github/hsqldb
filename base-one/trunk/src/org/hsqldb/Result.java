@@ -141,6 +141,8 @@ class Result {
     /**
      *  Constructor declaration
      *
+     *  fredt - will be removed
+     *
      * @param  b
      * @exception  SQLException  Description of the Exception
      */
@@ -149,6 +151,50 @@ class Result {
         try {
             DatabaseRowInputInterface in = new BinaryServerRowInput(b);
 
+            iMode = in.readIntData();
+
+            if (iMode == ERROR) {
+
+// tony_lai@users 20020820 - patch 595073
+                int code = in.readIntData();
+
+                throw Trace.getError(in.readString(), code);
+
+//                throw Trace.getError(in.readIntData(), in.readString());
+            } else if (iMode == UPDATECOUNT) {
+                iUpdateCount = in.readIntData();
+            } else if (iMode == DATA) {
+                int l = in.readIntData();
+
+                prepareData(l);
+
+                iColumnCount = l;
+
+                for (int i = 0; i < l; i++) {
+                    colType[i] = in.readType();
+                    sLabel[i]  = in.readString();
+                    sTable[i]  = in.readString();
+                    sName[i]   = in.readString();
+                }
+
+                while (in.available() != 0) {
+                    add(in.readData(colType));
+                }
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.TRANSFER_CORRUPTED);
+        }
+    }
+
+    /**
+     *  Constructor declaration
+     *
+     * @param  b
+     * @exception  SQLException  Description of the Exception
+     */
+    Result(DatabaseRowInputInterface in) throws SQLException {
+
+        try {
             iMode = in.readIntData();
 
             if (iMode == ERROR) {
@@ -638,37 +684,43 @@ class Result {
         try {
             DatabaseRowOutputInterface out = new BinaryServerRowOutput();
 
-            out.writeIntData(iMode);
-
-            if (iMode == UPDATECOUNT) {
-                out.writeIntData(iUpdateCount);
-            } else if (iMode == ERROR) {
-                out.writeIntData(errorCode);
-                out.writeString(sError);
-            } else {
-                int l = iColumnCount;
-
-                out.writeIntData(l);
-
-                Record n = rRoot;
-
-                for (int i = 0; i < l; i++) {
-                    out.writeType(colType[i]);
-                    out.writeString(sLabel[i]);
-                    out.writeString(sTable[i]);
-                    out.writeString(sName[i]);
-                }
-
-                while (n != null) {
-                    out.writeData(l, colType, n.data);
-
-                    n = n.next;
-                }
-            }
+            write(out);
 
             return out.getOutputStream().toByteArray();
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
+        }
+    }
+
+    void write(DatabaseRowOutputInterface out)
+    throws IOException, SQLException {
+
+        out.writeIntData(iMode);
+
+        if (iMode == UPDATECOUNT) {
+            out.writeIntData(iUpdateCount);
+        } else if (iMode == ERROR) {
+            out.writeIntData(errorCode);
+            out.writeString(sError);
+        } else {
+            int l = iColumnCount;
+
+            out.writeIntData(l);
+
+            Record n = rRoot;
+
+            for (int i = 0; i < l; i++) {
+                out.writeType(colType[i]);
+                out.writeString(sLabel[i]);
+                out.writeString(sTable[i]);
+                out.writeString(sName[i]);
+            }
+
+            while (n != null) {
+                out.writeData(l, colType, n.data);
+
+                n = n.next;
+            }
         }
     }
 

@@ -72,10 +72,8 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Observable;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit

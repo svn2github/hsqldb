@@ -471,9 +471,10 @@ class Database {
         Result rResult = null;
 
         try {
+
             //tokenizer.reset(statement);
             Tokenizer tokenizer = new Tokenizer(statement);
-            Parser    p = new Parser(this, tokenizer, session);
+            Parser    p         = new Parser(this, tokenizer, session);
 
             if (Trace.DOASSERT) {
                 Trace.doAssert(!session.isNestedTransaction());
@@ -484,7 +485,6 @@ class Database {
 
             while (true) {
                 tokenizer.setPartMarker();
-
                 session.setScripting(false);
 
                 String sToken = tokenizer.getString();
@@ -558,11 +558,13 @@ class Database {
                         break;
 
                     case GRANT :
-                        rResult = processGrantOrRevoke(tokenizer, session, true);
+                        rResult = processGrantOrRevoke(tokenizer, session,
+                                                       true);
                         break;
 
                     case REVOKE :
-                        rResult = processGrantOrRevoke(tokenizer, session, false);
+                        rResult = processGrantOrRevoke(tokenizer, session,
+                                                       false);
                         break;
 
                     case CONNECT :
@@ -2428,7 +2430,7 @@ class Database {
 
                 int i = Integer.parseInt(c.getString());
 
-                if (i == 0 || i == 1) {
+                if (i == 0 || i == 1 || i == 3) {
                     logger.setLogType(i);
                 }
 
@@ -2530,7 +2532,16 @@ class Database {
             case WRITE_DELAY : {
                 session.checkAdmin();
 
-                boolean delay = processTrueOrFalse(c);
+                int    delay = 0;
+                String s     = c.getString();
+
+                if (s.equals("TRUE")) {
+                    delay = 60;
+                } else if (s.equals("FALSE")) {
+                    delay = 0;
+                } else {
+                    delay = Integer.parseInt(s);
+                }
 
                 logger.setWriteDelay(delay);
 
@@ -3186,7 +3197,7 @@ class Database {
          * @param  delay if true, used a delayed write strategy, else use an
          *      immediate write strategy
          */
-        void setWriteDelay(boolean delay) {
+        void setWriteDelay(int delay) {
 
             if (lLog != null) {
                 lLog.setWriteDelay(delay);

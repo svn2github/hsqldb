@@ -64,11 +64,17 @@ public class TestCacheSize {
     String           password;
     Statement        sStatement;
     Connection       cConnection;
-    boolean          indexZip        = true;
-    boolean          indexLastName   = false;
-    boolean          addForeignKey   = false;
-    boolean          refIntegrity    = true;
-    boolean          createTempTable = false;
+
+    // prameters
+    boolean reportProgress  = false;
+    boolean cachedTable     = false;
+    int     cacheScale      = 12;
+    int     logType         = 3;
+    boolean indexZip        = true;
+    boolean indexLastName   = false;
+    boolean addForeignKey   = false;
+    boolean refIntegrity    = true;
+    boolean createTempTable = false;
 
     // introduces fragmentation to the .data file
     boolean deleteWhileInsert         = false;
@@ -96,12 +102,12 @@ public class TestCacheSize {
                         user, password);
                 sStatement = cConnection.createStatement();
 
+                sStatement.execute("SET LOGTYPE " + logType);
+                sStatement.execute("SET LOGSIZE " + 400);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
                 props.load();
-                props.setProperty("hsqldb.log_size", "400");
-                props.setProperty("hsqldb.cache_scale", "12");
-                props.setProperty("hsqldb.log_type", "0");
+                props.setProperty("hsqldb.cache_scale", "" + cacheScale);
                 props.save();
 
                 cConnection = DriverManager.getConnection(url + filepath,
@@ -127,9 +133,12 @@ public class TestCacheSize {
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "CREATE CACHED TABLE test( id INT IDENTITY,"
-                      + " firstname VARCHAR, " + " lastname VARCHAR, "
-                      + " zip INTEGER, " + " filler VARCHAR); ";
+        String ddl3 = "CREATE " + (cachedTable ? "CACHED"
+                                               : "") + "TABLE test( id INT IDENTITY,"
+                                                   + " firstname VARCHAR, "
+                                                   + " lastname VARCHAR, "
+                                                   + " zip INTEGER, "
+                                                   + " filler VARCHAR); ";
 
         // adding extra index will slow down inserts a bit
         String ddl4 = "CREATE INDEX idx1 ON TEST (lastname);";
@@ -163,6 +172,7 @@ public class TestCacheSize {
 
             java.util.Random randomgen = new java.util.Random();
 
+            sStatement.execute("SET WRITE_DELAY 60");
             sStatement.execute(ddl1);
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
@@ -219,7 +229,7 @@ public class TestCacheSize {
                 ps.setString(4, nextrandom + varfiller);
                 ps.execute();
 
-                if ((i + 1) % 10000 == 0) {
+                if (reportProgress && (i + 1) % 10000 == 0) {
                     System.out.println("Insert " + (i + 1) + " : "
                                        + sw.elapsedTime());
                 }
@@ -249,10 +259,9 @@ public class TestCacheSize {
 //            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
 //            sStatement.execute("DROP TABLE temptest;");
 //            sStatement.execute(ddl7);
-            long endTime = System.currentTimeMillis();
-
             System.out.println("Total insert: " + i);
-            System.out.println("Insert time: " + sw.elapsedTime());
+            System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
+                               + (i * 1000 / sw.elapsedTime()));
             sw.zero();
             sStatement.execute("SHUTDOWN");
             cConnection.close();
@@ -277,6 +286,8 @@ public class TestCacheSize {
             sw.zero();
 
             sStatement = cConnection.createStatement();
+
+            sStatement.execute("SET WRITE_DELAY TRUE");
 
             // the tests use different indexes
             // use primary index
@@ -327,15 +338,18 @@ public class TestCacheSize {
                     slow = true;
                 }
 
-                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
                     System.out.println("Select " + (i + 1) + " : "
-                                       + sw.elapsedTime());
+                                       + sw.elapsedTime() + " rps: "
+                                       + (i * 1000 / sw.elapsedTime()));
                 }
             }
         } catch (SQLException e) {}
 
         System.out.println("Select random zip " + i + " rows : "
-                           + sw.elapsedTime());
+                           + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / sw.elapsedTime()));
         sw.zero();
 
         try {
@@ -346,7 +360,8 @@ public class TestCacheSize {
                 ps.setInt(1, randomgen.nextInt(bigrows - 1));
                 ps.execute();
 
-                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
                     System.out.println("Select " + (i + 1) + " : "
                                        + sw.elapsedTime());
                 }
@@ -354,7 +369,8 @@ public class TestCacheSize {
         } catch (SQLException e) {}
 
         System.out.println("Select random id " + i + " rows : "
-                           + sw.elapsedTime());
+                           + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / sw.elapsedTime()));
     }
 
     private void checkUpdates() {
@@ -376,7 +392,7 @@ public class TestCacheSize {
 
                 count += ps.executeUpdate();
 
-                if (count % 10000 < 20) {
+                if (reportProgress && count % 10000 < 20) {
                     System.out.println("Update " + count + " : "
                                        + sw.elapsedTime());
                 }
@@ -385,7 +401,8 @@ public class TestCacheSize {
 
         System.out.println("Update with random zip " + i
                            + " UPDATE commands, " + count + " rows : "
-                           + sw.elapsedTime());
+                           + sw.elapsedTime() + " rps: "
+                           + (count * 1000 / sw.elapsedTime()));
         sw.zero();
 
         try {
@@ -397,15 +414,18 @@ public class TestCacheSize {
                 ps.setInt(1, random);
                 ps.execute();
 
-                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
                     System.out.println("Update " + (i + 1) + " : "
-                                       + sw.elapsedTime());
+                                       + sw.elapsedTime() + " rps: "
+                                       + (i * 1000 / sw.elapsedTime()));
                 }
             }
         } catch (SQLException e) {}
 
         System.out.println("Update with random id " + i + " rows : "
-                           + sw.elapsedTime());
+                           + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / sw.elapsedTime()));
     }
 
     public static void main(String argv[]) {
@@ -413,7 +433,6 @@ public class TestCacheSize {
         TestCacheSize test = new TestCacheSize();
 
         test.setUp();
-
         test.testFillUp();
         test.tearDown();
         test.checkResults();

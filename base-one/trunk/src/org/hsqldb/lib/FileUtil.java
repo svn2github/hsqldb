@@ -67,20 +67,10 @@
 
 package org.hsqldb.lib;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.LineNumberReader;
-import java.io.Writer;
-import java.sql.SQLException;
-import java.util.Enumeration;
 
 //import java.util.zip.
 import java.util.zip.Deflater;
@@ -210,8 +200,9 @@ public class FileUtil {
     }
 
     /**
-     * Rename the file with oldname to newname. If a file named newname
-     * already exists, delete it before ranaming.
+     * Rename the file with oldname to newname. Do nothing if the oldname
+     * file does not exist. If a file named newname already exists, delete
+     * it before ranaming.
      */
     static public void renameOverwrite(String oldname, String newname) {
 

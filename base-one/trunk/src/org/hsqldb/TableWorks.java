@@ -350,11 +350,11 @@ class TableWorks {
                               name + " in table: " + table.getName().name);
         }
 
-        if (c.getType() == c.MAIN) {
+        if (c.getType() == Constraint.MAIN) {
             throw Trace.error(Trace.DROP_SYSTEM_CONSTRAINT);
         }
 
-        if (c.getType() == c.FOREIGN_KEY) {
+        if (c.getType() == Constraint.FOREIGN_KEY) {
             Table mainTable = c.getMain();
             Constraint mainConstraint =
                 mainTable.getConstraint(c.getPkName());
@@ -407,7 +407,7 @@ class TableWorks {
 
             mainTable.vConstraint.remove(k);
             table.vConstraint.remove(j);
-        } else if (c.getType() == c.UNIQUE) {
+        } else if (c.getType() == Constraint.UNIQUE) {
 
             // throw if the index for unique constraint is shared
             table.checkDropIndex(c.getMainIndex().getName().name, cmap);

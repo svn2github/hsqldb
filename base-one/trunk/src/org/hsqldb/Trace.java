@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.io.File;
 import java.io.PrintWriter;
 import org.hsqldb.lib.FileUtil;
 

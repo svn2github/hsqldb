@@ -92,16 +92,18 @@ class ConstraintCore {
 
     // Main is the sole table in a UNIQUE constraint
     // Or the table that is referenced by FOREIGN KEY ... REFERENCES
-    Table    tMain;
-    int[]    iColMain;
-    Index    iMain;
+    Table tMain;
+    int[] iColMain;
+    Index iMain;
+
     // empty table row used for selective filling and comparison
     Object[] oMain;
 
     // Ref is the table that has a reference to the main table
-    Table    tRef;
-    int[]    iColRef;
-    Index    iRef;
+    Table tRef;
+    int[] iColRef;
+    Index iRef;
+
     // empty table row used for selective filling and comparison
     Object[] oRef;
 

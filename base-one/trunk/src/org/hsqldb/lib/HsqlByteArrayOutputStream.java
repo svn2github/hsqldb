@@ -51,13 +51,13 @@ implements DataOutput {
     protected int  count;
 
     public HsqlByteArrayOutputStream() {
-        this(64);
+        this(128);
     }
 
     public HsqlByteArrayOutputStream(int size) {
 
-        if (size < 64) {
-            size = 64;
+        if (size < 128) {
+            size = 128;
         }
 
         buf = new byte[size];
@@ -90,6 +90,7 @@ implements DataOutput {
     public final void writeBytes(String s) {
 
         int len = s.length();
+
         ensureRoom(len);
 
         for (int i = 0; i < len; i++) {
@@ -110,7 +111,7 @@ implements DataOutput {
         ensureRoom(1);
 
         buf[count++] = (byte) (v ? 1
-                                  : 0);
+                                 : 0);
     }
 
     public void writeByte(int v) throws IOException {

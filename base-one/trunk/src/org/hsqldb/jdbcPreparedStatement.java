@@ -71,7 +71,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.sql.*;    // for Array, Blob, Clob, Ref
+import java.sql.*;     // for Array, Blob, Clob, Ref
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -80,7 +80,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.*; // for Map
+import java.util.*;    // for Map
 import java.util.Calendar;
 import java.util.Vector;
 import org.hsqldb.lib.StringConverter;
@@ -2569,13 +2569,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
-     *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
      * </span>
      * <!-- end release-specific documentation -->
      *

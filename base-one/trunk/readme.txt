@@ -1,5 +1,41 @@
 Readme File
 
+2003.01.03 CVS hsqldb-dev
+
+various patches and fixes
+
+-OUTER with multiple column joins is now supported while OR is
+disallowed in the join expression. It is now possible to specify
+a range or equality condition on the OUTER columns returned.
+
+-submitted patch for exclusion of NULL values from results of
+range queries has been applied. e.g. 
+WHERE columnvalue < 3
+will exclude from the result all rows with NULL in columnvalue.
+
+further enhancements to logging. 
+-The *.script file now contains only the DDL and data that is 
+written at CHECKPOINT or SHUTDOWN.
+The statements logged while the engine is running are stored
+in a *.log file.
+-The format of the *.script file can now be one of TEXT,
+BINARY or COMPRESSED. The SET LOGTYPE {0|1|3} will reset the 
+format. A checkpoint is performed at this point if the format
+is different from the existing one.
+The COMPRESSED format has the side benefit of hiding the DDL
+and the admin password.
+-The behaviour of SET WRITE_DELAY has changed with the
+introduction of the sync() method to force the log to be
+written out completely to disk at given intervals.
+SET WRITE_DELAY {TRUE | FALSE} is interpreted as synch every
+60 seconds or 1 second. SET WRITE_DELAY <n> where n is an integer
+is interpreted as synch every n seconds. The current default is
+5 seconds which seems too frequent and has a measurable impact on
+performance. This command will be further refined in the near
+future.
+
+Further enhancements and fine-tuning to the above will be committed
+in the next few days.
 
 HSQLDB 1.7.2 ALPHA_J
 

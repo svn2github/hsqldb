@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -39,7 +38,6 @@ import java.math.BigInteger;
 import java.sql.Types;
 import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.lib.java.javaSystem;
 
 /**
  *  Provides methods for writing the data for a row to a

@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
