@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.35 2004/02/17 01:56:37 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.36 2004/02/17 02:18:37 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.35 $
+ * @version $Revision: 1.36 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -118,8 +118,8 @@ public class SqlFile {
         + "    :?          Help\n"
         + "    :a          Enter append mode with contents of buffer as current command\n"
         + "    :l          List current contents of buffer\n"
-        + "    :s/from/to/ Switch all occurrences of \"from\" to \"to\"\n"
-        + "                ('$'s in \"from\" and \"to\" represent line separators)\n"
+        + "    :s/from/to/ Substitute \"to\" for all occurrences of \"from\"\n"
+        + "                ('$'s in \"from\" and \"to\" represent line breaks)\n"
         + "                (use \":s/from//\" to delete 'from' strings)\n"
         + "    :;          Execute current buffer as an SQL Statement\n"
         ;
