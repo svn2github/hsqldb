@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.12 2004/06/07 19:53:59 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.13 2004/06/14 11:44:23 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.12 $</edition>
-    <pubdate>$Date: 2004/06/07 19:53:59 $</pubdate>
+    <edition>$Revision: 1.13 $</edition>
+    <pubdate>$Date: 2004/06/14 11:44:23 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -183,6 +183,17 @@ This will work only if the values of the column list for the existing rows are  
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; RENAME TO &lt;newname&gt;;</programlisting>
         </informalexample>
+    </section>
+
+    <section id="alter_user-section">
+        <title id="alter_user-title">ALTER USER<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+    ALTER USER &lt;username&gt; SET PASSWORD &lt;password&gt;;</programlisting>
+        <para>
+            Changes the password for an existing user.
+        </para> <para>
+            Only an administrator can do this. 
+        </para>
     </section>
 
     <section id="call-section">
@@ -519,6 +530,9 @@ CREATE USER username PASSWORD password [ADMIN];</programlisting>
         <para>
             Creates a new user or new administrator in this database.
             Empty password can be made using "".
+            You can change a password afterward using an
+            <link linkend='alter_user-section' endterm='alter_user-title'/>
+            command.
         </para> <para>
             Only an administrator can do this. 
         </para> <para>
@@ -526,6 +540,7 @@ CREATE USER username PASSWORD password [ADMIN];</programlisting>
             <link linkend='connect-section' endterm='connect-title'/>,
             <link linkend='grant-section' endterm='grant-title'/>,
             <link linkend='revoke-section' endterm='revoke-title'/>.
+            <link linkend='alter_user-section' endterm='alter_user-title'/>,
         </para>
     </section>
 
