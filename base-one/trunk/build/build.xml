@@ -13,7 +13,7 @@
         rephrase the question to yourself as "Can I run 'ant -Dx=...?"
         Do not address questions about property file(s) to anybody in the
         hsqldb community. -->
-   <property file='build.properties'/>
+   <property file='build/build.properties'/>
 
    <property name="src" value="${basedir}/src"/>
    <property name="build.debug" value="off"/>
