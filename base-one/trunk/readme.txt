@@ -4,6 +4,8 @@ Readme File
 
 Fixed reported bugs
 Minor changes
+Added a procedural language to SqlTool.  Made error handling and control more
+robust.  Implemented several new features.
 
 2004.05.31 RC_6b
 
@@ -48,6 +50,8 @@ default values.
 Improvements to PreparedStatement set stream methods.
 
 Improvements to Clob and Blob implementations.
+
+Much of the UNIX init script redesigned.  Now supports TLS and WebServer.
 
 2004.05.01
 
