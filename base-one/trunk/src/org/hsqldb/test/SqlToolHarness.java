@@ -42,7 +42,7 @@ import java.io.FileNotFoundException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-// $Id: SqlToolHarness.java,v 1.2 2004/06/16 07:46:34 unsaved Exp $
+// $Id: SqlToolHarness.java,v 1.3 2004/06/16 17:32:42 unsaved Exp $
 
 /**
  * Runs SqlTool tests based upon metacommands embedded in comments in SQL 
@@ -190,9 +190,12 @@ public class SqlToolHarness {
         throws FileNotFoundException, IOException {
             String name, val;
             String metaBlock = getHarnessMetaBlock(inFile);
+            /*  This really only needed for debugging this class itself
+             *  (SqlToolHarness).
             if (Verbose) {
                 System.err.println("METABLOCK {\n" + metaBlock + "}");
             }
+            */
             Pattern directivePattern = Pattern.compile(
                     "(?m)^\\s*(\\w+)\\s+(.*\\S+)?");
             Matcher directiveMatcher = directivePattern.matcher(metaBlock);
