@@ -768,95 +768,95 @@ final class DITypeInfo {
         switch (type) {
 
             case Types.ARRAY :
-                return ValuePool.getInt(50);                   // SQL_ARRAY
+                return ValuePool.getInt(Types.SQL_ARRAY);        // SQL_ARRAY
 
             case Types.BIGINT :
-                return ValuePool.getInt(25);                   // SQL_BIGINT
+                return ValuePool.getInt(Types.SQL_BIGINT);       // SQL_BIGINT
 
             case Types.BINARY :
-                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
+                return ValuePool.getInt(Types.SQL_BLOB);         // fredt- was SQL_BIT_VARYING
 
             case Types.BIT :
             case Types.BOOLEAN :
-                return ValuePool.getInt(16);                   // SQL_BOOLEAN
+                return ValuePool.getInt(Types.SQL_BOOLEAN);      // SQL_BOOLEAN
 
             case Types.BLOB :
-                return ValuePool.getInt(30);                   // SQL_BLOB
+                return ValuePool.getInt(Types.SQL_BLOB);         // SQL_BLOB
 
             case Types.CHAR :
-                return ValuePool.getInt(1);                    // SQL_CHAR
+                return ValuePool.getInt(Types.SQL_CHAR);         // SQL_CHAR
 
             case Types.CLOB :
-                return ValuePool.getInt(40);                   // SQL_CLOB
+                return ValuePool.getInt(Types.SQL_CLOB);         // SQL_CLOB
 
             case Types.DATALINK :
-                return ValuePool.getInt(70);                   // SQL_DATALINK
+                return ValuePool.getInt(Types.SQL_DATALINK);     // SQL_DATALINK
 
             case Types.DATE :
-                return ValuePool.getInt(9);                    // SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_DATE);         // fredt - was SQL_DATETIME
 
             case Types.DECIMAL :
-                return ValuePool.getInt(3);                    // SQL_DECIMAL
+                return ValuePool.getInt(Types.SQL_DECIMAL);      // SQL_DECIMAL
 
             case Types.DISTINCT :
-                return ValuePool.getInt(17);                   // SQL_UDT
+                return ValuePool.getInt(Types.SQL_UDT);          // SQL_UDT
 
             case Types.DOUBLE :
-                return ValuePool.getInt(8);                    // SQL_DOUBLE
+                return ValuePool.getInt(Types.SQL_DOUBLE);       // SQL_DOUBLE
 
             case Types.FLOAT :
-                return ValuePool.getInt(6);                    // SQL_FLOAT
+                return ValuePool.getInt(Types.SQL_FLOAT);        // SQL_FLOAT
 
             case Types.INTEGER :
-                return ValuePool.getInt(4);                    // SQL_INTEGER
+                return ValuePool.getInt(Types.SQL_INTEGER);      // SQL_INTEGER
 
             case Types.JAVA_OBJECT :
-                return ValuePool.getInt(Types.JAVA_OBJECT);    // N/A - maybe SQL_UDT?
+                return ValuePool.getInt(Types.JAVA_OBJECT);      // N/A - maybe SQL_UDT?
 
             case Types.LONGVARBINARY :
-                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
+                return ValuePool.getInt(Types.SQL_BLOB);         // was SQL_BIT_VARYING
 
             case Types.LONGVARCHAR :
-                return ValuePool.getInt(Types.LONGVARCHAR);    // N/A
+                return ValuePool.getInt(Types.SQL_CLOB);         //
 
             case Types.NULL :
-                return ValuePool.getInt(0);                    // SQL_ALL_TYPES
+                return ValuePool.getInt(Types.SQL_ALL_TYPES);    // SQL_ALL_TYPES
 
             case Types.NUMERIC :
-                return ValuePool.getInt(2);                    // SQL_NUMERIC
+                return ValuePool.getInt(Types.SQL_NUMERIC);      // SQL_NUMERIC
 
             case Types.OTHER :
-                return ValuePool.getInt(Types.OTHER);          // N/A - maybe SQL_UDT?
+                return ValuePool.getInt(Types.OTHER);            // N/A - maybe SQL_UDT?
 
             case Types.REAL :
-                return ValuePool.getInt(7);                    // SQL_REAL
+                return ValuePool.getInt(Types.SQL_REAL);         // SQL_REAL
 
             case Types.REF :
-                return ValuePool.getInt(20);                   // SQL_REF
+                return ValuePool.getInt(Types.SQL_REF);          // SQL_REF
 
             case Types.SMALLINT :
-                return ValuePool.getInt(5);                    // SQL_SMALLINTEGER
+                return ValuePool.getInt(Types.SQL_SMALLINT);     // SQL_SMALLINTEGER
 
             case Types.STRUCT :
-                return ValuePool.getInt(17);                   // SQL_UDT
+                return ValuePool.getInt(Types.SQL_UDT);          // SQL_UDT
 
             case Types.TIME :
-                return ValuePool.getInt(9);                    // SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_TIME);         // fredt - was SQL_DATETIME
 
             case Types.TIMESTAMP :
-                return ValuePool.getInt(9);                    // SQL_DATETIME
+                return ValuePool.getInt(Types.SQL_TIMESTAMP);    // fredt - sqs SQL_DATETIME
 
             case Types.TINYINT :
-                return ValuePool.getInt(Types.TINYINT);        // N/A
+                return ValuePool.getInt(Types.TINYINT);          // N/A
 
             case Types.VARBINARY :
-                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
+                return ValuePool.getInt(Types.SQL_BLOB);         // SQL_BIT_VARYING
 
             case Types.VARCHAR :
-                return ValuePool.getInt(12);                   // SQL_VARCHAR
+                return ValuePool.getInt(Types.SQL_VARCHAR);      // SQL_VARCHAR
 
             case Types.XML :
-                return ValuePool.getInt(137);                  // SQL_XML
+                return ValuePool.getInt(Types.SQL_XML);          // SQL_XML
 
             default :
                 return null;

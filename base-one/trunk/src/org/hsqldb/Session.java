@@ -797,12 +797,12 @@ class Session implements SessionInterface {
                     return setAttributes(cmd);
 
                 case ResultConstants.SQLENDTRAN :
-                    commit();
-
-                    return emptyUpdateCount;
-
-                case ResultConstants.SQLSTARTTRAN :
-                    rollback();
+                    if (cmd.getUpdateCount() == ResultConstants.COMMIT) {
+                        commit();
+                    } else if (cmd.getUpdateCount()
+                               == ResultConstants.ROLLBACK) {
+                        rollback();
+                    }
 
                     return emptyUpdateCount;
 

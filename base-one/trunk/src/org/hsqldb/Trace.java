@@ -103,7 +103,7 @@ public class Trace extends PrintWriter {
     private static int          iStop = 0;
 
     //
-    public static final int                             //
+    public static final int                                 //
          DATABASE_ALREADY_IN_USE             = 1,
      CONNECTION_IS_CLOSED                = 2,
      CONNECTION_IS_BROKEN                = 3,
@@ -202,54 +202,58 @@ public class Trace extends PrintWriter {
 
     // more errors
     DATABASE_NOT_EXISTS = 94,
-     INVALID_CONVERSION = 95
+     INVALID_CONVERSION = 95,
+
+    //--- wsonic
+    BinaryDatabaseScriptReader_readExistingData = 96,
+     BinaryDatabaseScriptReader_readTableInit   = 97;
     ;
 
     //
     private static final String[] sDescription = {
-        "NOT USED",                                     //
+        "NOT USED",                                         //
         "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
-        "08003 The database is shutdown",               //
-        "21000 Column count does not match",            //
-        "22012 Division by zero",                       //
+        "08003 The database is shutdown",                   //
+        "21000 Column count does not match",                //
+        "22012 Division by zero",                           //
         "22019 Invalid escape character",
         "23000 Integrity constraint violation",
         "23000 Violation of unique index",
         "23000 Try to insert null into a non-nullable column",
-        "37000 Unexpected token",                       //
-        "37000 Unexpected end of command",              //
-        "37000 Unknown function",                       //
+        "37000 Unexpected token",                           //
+        "37000 Unexpected end of command",                  //
+        "37000 Unknown function",                           //
         "37000 Need aggregate function or group by",
-        "37000 Sum on non-numeric data not allowed",    //
-        "37000 Wrong data type",                        //
-        "37000 Single value expected",                  //
-        "40001 Serialization failure",                  //
-        "40001 Transfer corrupted",                     //
-        "IM001 This function is not supported",         //
-        "S0001 Table already exists",                   //
-        "S0002 Table not found",                        //
+        "37000 Sum on non-numeric data not allowed",        //
+        "37000 Wrong data type",                            //
+        "37000 Single value expected",                      //
+        "40001 Serialization failure",                      //
+        "40001 Transfer corrupted",                         //
+        "IM001 This function is not supported",             //
+        "S0001 Table already exists",                       //
+        "S0002 Table not found",                            //
         "S0011 Index already exists",
         "S0011 Attempt to define a second primary key",
-        "S0011 Attempt to drop the primary key",        //
+        "S0011 Attempt to drop the primary key",            //
         "S0012 Index not found", "S0021 Column already exists",
-        "S0022 Column not found",                       //
-        "S1000 File input/output error",                //
+        "S0022 Column not found",                           //
+        "S1000 File input/output error",                    //
         "S1000 Wrong database file version",
         "S1000 The database is in read only mode",
-        "S1000 The table data is read only",            //
-        "S1000 Access is denied",                       //
-        "S1000 InputStream error",                      //
-        "S1000 No data is available",                   //
-        "S1000 User already exists",                    //
-        "S1000 User not found",                         //
-        "S1000 Assert failed",                          //
-        "S1000 External stop request",                  //
-        "S1000 General error",                          //
-        "S1009 Wrong OUT parameter",                    //
-        "S1010 Error in function",                      //
-        "S0002 Trigger not found",                      //
-        "S1011 Savepoint not found",                    //
+        "S1000 The table data is read only",                //
+        "S1000 Access is denied",                           //
+        "S1000 InputStream error",                          //
+        "S1000 No data is available",                       //
+        "S1000 User already exists",                        //
+        "S1000 User not found",                             //
+        "S1000 Assert failed",                              //
+        "S1000 External stop request",                      //
+        "S1000 General error",                              //
+        "S1009 Wrong OUT parameter",                        //
+        "S1010 Error in function",                          //
+        "S0002 Trigger not found",                          //
+        "S1011 Savepoint not found",                        //
         "37000 Label required for value list",
         "37000 Wrong data type or data too long in DEFAULT clause",
         "S0011 Foreign key not allowed",
@@ -257,7 +261,7 @@ public class Trace extends PrintWriter {
         "S0000 User-defined index or constraint name cannot begin with SYS_",
         "S0011 Attempt to drop a foreign key index",
         "S1000 ResultSet was set to forward only",
-        "S0003 View already exists",                    //
+        "S0003 View already exists",                        //
         "S0004 View not found", "S0005 Not a View", "S0005 Not a Table",
         "S0011 Attempt to drop or rename a system index",
         "S0021 Column types do not match",
@@ -274,14 +278,14 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in HAVING clause",
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
-        "S1000 Out of Memory",                          //
+        "S1000 Out of Memory",                              //
         "S1000 This operation is not supported", "22019 Invalid identifier",
         "22019 Invalid TEXT table source string",
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
-        "S1000 error in script file",                   //
-        "37000 NULL in value list",                     //
-        "08000 socket creation error",                  //
+        "S1000 error in script file",                       //
+        "37000 NULL in value list",                         //
+        "08000 socket creation error",                      //
         "37000 invalid character encoding",
         "08000 reserved for NO_CLASSLOADER_FOR_TLS",
         "08000 reserved for NO_JSSE",
@@ -290,15 +294,19 @@ public class Trace extends PrintWriter {
         "08000 reserved for TLS_ERROR",
         "08000 reserved for MISSING_TLS_METHOD",
         "08000 reserved for TLS_SECURITY_ERROR",
-        "08000 reserved for NO_TLS_DATA",               //
+        "08000 reserved for NO_TLS_DATA",                   //
         "08000 reserved for NO_PRINCIPAL",
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
         "08000 reserved for KEYSTORE_PROBLEM",
 
         //
-        "08003 Database does not exists",               //
+        "08003 Database does not exists",                   //
         "22003 Type Conversion not supported",
+
+        //--- wsonic
+        "table $$ row count error : $$ read, needed $$",    // BinaryDatabaseScriptReader_readExistingData
+        "wrong data for insert operation",                  // BinaryDatabaseScriptReader_readTableInit
     };
 
     static {
@@ -313,40 +321,71 @@ public class Trace extends PrintWriter {
      * in placeholders within the error message. The message string contains
      * $$ markers for each context variable. Context variables are supplied in
      * the add parameters.
+     *
+     * @param code      main error code
+     * @param subCode   sub error code (if 0 => no subMessage!)
+     * @param   add     optional parameters
+     *
+     * @return an <code>HsqlException</code>
      */
-    static HsqlException error(int code, String[] add) {
+    static HsqlException error(int code, int subCode, final Object[] add) {
 
+        // in case of negative code
         code = Math.abs(code);
 
-        String s     = getMessage(code);
-        String state = s.substring(0, 5);
+        String       mainErrorMessage = getMessage(code);
+        final String state            = mainErrorMessage.substring(0, 5);
 
-        s = s.substring(6);
+        mainErrorMessage = mainErrorMessage.substring(6);
 
-        StringBuffer sb        = new StringBuffer(s.length() + 32);
+        if (subCode != 0) {
+            mainErrorMessage += getMessage(Math.abs(subCode));
+        }
+
+        StringBuffer sb = new StringBuffer(mainErrorMessage.length() + 32);
         int          lastIndex = 0;
-        int          escIndex  = s.length();
+        int          escIndex  = mainErrorMessage.length();
 
         if (add != null) {
-            for (int i = 0; i < add.length; i++) {
-                escIndex = s.indexOf("$$");
+
+            // removed test: i < add.length
+            // because if mainErrorMessage is equal to "blabla $$"
+            // then the statement escIndex = mainErrorMessage.length();
+            // is never reached!  ???
+            for (int i = 0; i < add.length ; i++) {
+                escIndex = mainErrorMessage.indexOf("$$", lastIndex);
 
                 if (escIndex == -1) {
-                    escIndex = s.length();
+                    escIndex = mainErrorMessage.length();
 
                     break;
                 }
 
-                sb.append(s.substring(lastIndex, escIndex));
-                sb.append(add[i]);
+                sb.append(mainErrorMessage.substring(lastIndex, escIndex));
+                sb.append(add[i].toString());
 
                 lastIndex = escIndex + "$$".length();
             }
         }
 
-        sb.append(s.substring(lastIndex, escIndex));
+        sb.append(mainErrorMessage.substring(lastIndex, escIndex));
 
         return new HsqlException(sb.toString(), state, -code);
+    }
+
+    /**
+     * Compose error message by inserting the strings in the add parameters
+     * in placeholders within the error message. The message string contains
+     * $$ markers for each context variable. Context variables are supplied in
+     * the add parameters.
+     *
+     * @param code      main error code
+     * @param   add     optional parameters
+     *
+     * @return an <code>HsqlException</code>
+     */
+    static HsqlException error(int code, final Object[] add) {
+        return error(code, 0, add);
     }
 
     /**
@@ -399,20 +438,20 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * Method declaration
+     * Return an error message given an error code.
      *
+     * @param code  error code
      *
-     * @param code
-     *
-     * @return
+     * @return  the error message associated with the error code
      */
-    static String getMessage(int code) {
+    static String getMessage(final int code) {
+
+        // todo check for bounds
         return sDescription[code];
     }
 
     /**
      * Method declaration
-     *
      *
      * @param e
      *
@@ -523,7 +562,7 @@ public class Trace extends PrintWriter {
      *
      * @param condition
      * @param code
-     * @param s
+     * @param add
      *
      * @throws HsqlException
      */
@@ -539,9 +578,8 @@ public class Trace extends PrintWriter {
      * Method declaration
      *
      *
-     * @param condition
      * @param code
-     * @param s
+     * @param add
      *
      * @throws HsqlException
      */
@@ -745,5 +783,16 @@ public class Trace extends PrintWriter {
         } else {
             DriverManager.println(s);
         }
+    }
+
+    public static void main(String[] args) {
+
+        System.out.println(
+            Trace.error(
+                Trace.ERROR_IN_SCRIPT_FILE,
+                Trace.BinaryDatabaseScriptReader_readExistingData,
+                new Object[] {
+            "tablename", new Integer(3), new Integer(2)
+        }));
     }
 }

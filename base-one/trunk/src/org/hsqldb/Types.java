@@ -418,25 +418,68 @@ class Types {
             XML, TYPE_SUB_DEFAULT
         }
     };
+/* SQL defines predefined data types named by the following <key word>s: CHARACTER, CHARACTER
+VARYING, CHARACTER LARGE OBJECT, BINARY LARGE OBJECT, NUMERIC, DECIMAL,
+SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE PRECISION, BOOLEAN, DATE,
+TIME, TIMESTAMP, and INTERVAL.
+*/
+
+    // CLI type list from Table 37
+    static final int SQL_CHARACTER                 = 1;
+    static final int SQL_CHAR                      = 1;
+    static final int SQL_NUMERIC                   = 2;
+    static final int SQL_DECIMAL                   = 3;
+    static final int SQL_DEC                       = 3;
+    static final int SQL_INTEGER                   = 4;
+    static final int SQL_INT                       = 4;
+    static final int SQL_SMALLINT                  = 5;
+    static final int SQL_FLOAT                     = 6;
+    static final int SQL_REAL                      = 7;
+    static final int SQL_DOUBLE                    = 8;
+    static final int SQL_CHARACTER_VARYING         = 12;
+    static final int SQL_CHAR_VARYING              = 12;
+    static final int SQL_VARCHAR                   = 12;
+    static final int SQL_BOOLEAN                   = 16;
+    static final int SQL_USER_DEFINED_TYPE         = 17;
+    static final int SQL_ROW                       = 19;
+    static final int SQL_REF                       = 20;
+    static final int SQL_BIGINT                    = 25;
+    static final int SQL_BINARY_LARGE_OBJECT       = 30;
+    static final int SQL_BLOB                      = 30;
+    static final int SQL_CHARACTER_LARGE_OBJECT    = 40;
+    static final int SQL_CLOB                      = 40;
+    static final int SQL_ARRAY                     = 50;     // not predefined
+    static final int SQL_MULTISET                  = 55;     //
+    static final int SQL_DATE                      = 91;
+    static final int SQL_TIME                      = 92;
+    static final int SQL_TIMESTAMP                 = 93;     //
+    static final int SQL_TIME_WITH_TIME_ZONE       = 94;
+    static final int SQL_TIMESTAMP_WITH_TIME_ZONE  = 95;     //
+    static final int SQL_INTERVAL_YEAR             = 101;    //
+    static final int SQL_INTERVAL_MONTH            = 102;
+    static final int SQL_INTERVAL_DAY              = 103;
+    static final int SQL_INTERVAL_HOUR             = 104;
+    static final int SQL_INTERVAL_MINUTE           = 105;
+    static final int SQL_INTERVAL_SECOND           = 106;
+    static final int SQL_INTERVAL_YEAR_TO_MONTH    = 107;
+    static final int SQL_INTERVAL_DAY_TO_HOUR      = 108;
+    static final int SQL_INTERVAL_DAY_TO_MINUTE    = 109;
+    static final int SQL_INTERVAL_DAY_TO_SECOND    = 110;
+    static final int SQL_INTERVAL_HOUR_TO_MINUTE   = 111;
+    static final int SQL_INTERVAL_HOUR_TO_SECOND   = 112;
+    static final int SQL_INTERVAL_MINUTE_TO_SECOND = 113;
+
+    // these are not in the table
+    static final int SQL_BIT_VARYING = 15;                   // is in SQL99 but removed from 2002
+    static final int SQL_DATALINK    = 70;
+    static final int SQL_UDT         = 17;
+    static final int SQL_ALL_TYPES   = 0;
+    static final int SQL_DATATIME    = 9;                    // collective name
+    static final int SQL_INTERVAL    = 10;                   // collective name
+    static final int SQL_XML         = 137;
 
     // non-standard type not in JDBC
     static final int VARCHAR_IGNORECASE = 100;
-
-    // java types used in engine or supported for direct conversion in
-    // JDBC interface methods
-    static final int JAVA_BOOLEAN = 1;
-    static final int JAVA_STRING  = 2;
-    static final int JAVA_BYTE    = 3;
-    static final int JAVA_SHORT   = 4;
-    static final int JAVA_INTEGER = 5;
-    static final int JAVA_LONG    = 6;
-    static final int JAVA_BIGDEC  = 7;
-    static final int JAVA_DOUBLE  = 8;
-    static final int JAVA_SQLDATE = 9;
-    static final int JAVA_SQLTIME = 10;
-    static final int JAVA_SQLTS   = 11;
-    static final int JAVA_JAVAOBJECT  = 12;
-    static final int JAVA_BINARY  = 13;
 
 // lookup for types
 // boucherb@users - access changed for metadata 1.7.2
@@ -521,25 +564,6 @@ class Types {
         typeNames.put(Types.VARBINARY, "VARBINARY");
         typeNames.put(Types.LONGVARBINARY, "LONGVARBINARY");
         typeNames.put(Types.OTHER, "OBJECT");
-
-        // java class names used internally for each type
-/*
-        javaTypeNames = new IntValueHashMap(23, 1);
-
-        javaTypeNames.put(Boolean.class.getName(), JAVA_BOOLEAN);
-        javaTypeNames.put(String.class.getName(), JAVA_STRING);
-        javaTypeNames.put(Byte.class.getName(), JAVA_BYTE);
-        javaTypeNames.put(Short.class.getName(), JAVA_SHORT);
-        javaTypeNames.put(Integer.class.getName(), JAVA_INTEGER);
-        javaTypeNames.put(Long.class.getName(), JAVA_LONG);
-        javaTypeNames.put(java.math.BigDecimal.class.getName(), JAVA_BIGDEC);
-        javaTypeNames.put(Double.class.getName(), JAVA_DOUBLE);
-        javaTypeNames.put(java.sql.Date.class.getName(), JAVA_SQLDATE);
-        javaTypeNames.put(java.sql.Time.class.getName(), JAVA_SQLTIME);
-        javaTypeNames.put(java.sql.Timestamp.class.getName(), JAVA_SQLTS);
-        javaTypeNames.put(org.hsqldb.JavaObject.class.getName(), JAVA_JAVAOBJECT);
-        javaTypeNames.put(org.hsqldb.Binary.class.getName(), JAVA_BINARY);
-*/
     }
 
 /**

@@ -53,19 +53,25 @@ public interface ResultConstants {
      * Indicates that the Result object encapsulates an update
      * count response.
      */
-    int UPDATECOUNT = HSQL_API_BASE + 0;
+    int UPDATECOUNT = HSQL_API_BASE + 1;
 
     /**
      * Indicates that the Result object encapsualtes an
      * error response.
      */
-    int ERROR = HSQL_API_BASE + 1;
+    int ERROR = HSQL_API_BASE + 2;
 
     /**
      * Indicates that the Result object encapsulates a result
      * set response.
      */
-    int DATA = HSQL_API_BASE + 2;
+    int DATA = HSQL_API_BASE + 3;
+
+    /**
+     * Indicates that the Result object encapsulates multiple Result objects.
+     */
+
+    int MULTI = HSQL_API_BASE + 0;
 
     /** The offset at which the standard SQL API Result mode values start. */
     int SQL_API_BASE = 0x00010000;
@@ -458,4 +464,19 @@ public interface ResultConstants {
 //     * tables described by the Information Schema of the connected data source.
 //     */
 //    int SQLTABLEPRIVILEGES  = SQL_API_BASE + 70;
+/*
+Codes for transaction termination:
+
+COMMIT 0
+ROLLBACK 1
+SAVEPOINT NAME ROLLBACK 2
+SAVEPOINT NAME RELEASE 4
+COMMIT AND CHAIN 6
+ROLLBACK AND CHAIN 7
+Implementation-defined termination type <0
+*/
+    int COMMIT   = 0;
+    int ROLLBACK = 1;
+    int SAVEPOINT_NAME_ROLLBACK = 2;
+    int SAVEPOINT_NAME_RELEASE = 4;
 }

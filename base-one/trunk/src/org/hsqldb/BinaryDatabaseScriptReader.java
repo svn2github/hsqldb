@@ -101,8 +101,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
             if (j != checkCount) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  "table " + s + " row count error : " + j
-                                  + " read, needed " + checkCount);
+                                  Trace.BinaryDatabaseScriptReader_readExistingData,
+                                  new Object[]{ s, new Integer( j ), new Integer( checkCount ) } );
             }
         }
     }
@@ -156,7 +156,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
         if (checkOp != DatabaseScriptWriter.INSERT) {
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                              "wrong data for insert operation");
+                              Trace.BinaryDatabaseScriptReader_readTableInit,
+                              null);
         }
 
         return s;

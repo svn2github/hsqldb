@@ -92,7 +92,8 @@ class Result {
     private int significantColumns;
 
     // type of result
-    int iMode;
+    int     iMode;
+    boolean isMulti;
 
     // database ID
     int databaseID;
@@ -174,7 +175,14 @@ class Result {
     Result(DatabaseRowInputInterface in) throws HsqlException {
 
         try {
-            iMode      = in.readIntData();
+            iMode = in.readIntData();
+
+            if (iMode == ResultConstants.MULTI) {
+                readMultiResult(in);
+
+                return;
+            }
+
             databaseID = in.readIntData();
             sessionID  = in.readIntData();
 
@@ -182,7 +190,6 @@ class Result {
 
                 case ResultConstants.SQLGETSESSIONINFO :
                 case ResultConstants.SQLDISCONNECT :
-                case ResultConstants.SQLENDTRAN :
                 case ResultConstants.SQLSTARTTRAN :
                     break;
 
@@ -207,6 +214,11 @@ class Result {
 
                 case ResultConstants.UPDATECOUNT :
                     iUpdateCount = in.readIntData();
+                    break;
+
+                case ResultConstants.SQLENDTRAN :
+                    iUpdateCount = in.readIntData();
+                    mainString   = in.readString();
                     break;
 
                 case ResultConstants.SQLEXECUTE :
@@ -751,6 +763,14 @@ class Result {
     void write(DatabaseRowOutputInterface out)
     throws IOException, HsqlException {
 
+        if (isMulti) {
+            writeMulti(out);
+
+            return;
+        }
+
+        int startPos = out.size();
+
         out.writeSize(0);
         out.writeIntData(iMode);
         out.writeIntData(databaseID);
@@ -760,7 +780,6 @@ class Result {
 
             case ResultConstants.SQLGETSESSIONINFO :
             case ResultConstants.SQLDISCONNECT :
-            case ResultConstants.SQLENDTRAN :
             case ResultConstants.SQLSTARTTRAN :
                 break;
 
@@ -783,6 +802,11 @@ class Result {
 
             case ResultConstants.UPDATECOUNT :
                 out.writeIntData(iUpdateCount);
+                break;
+
+            case ResultConstants.SQLENDTRAN :
+                out.writeIntData(iUpdateCount);
+                out.writeString(mainString);
                 break;
 
             case ResultConstants.SQLEXECUTE :
@@ -836,7 +860,45 @@ class Result {
                     0);
         }
 
-        out.writeIntData(out.size(), 0);
+        out.writeIntData(out.size(), startPos);
+    }
+
+    void readMultiResult(DatabaseRowInputInterface in)
+    throws HsqlException, IOException {
+
+        isMulti    = true;
+        iMode      = in.readIntData();
+        databaseID = in.readIntData();
+        sessionID  = in.readIntData();
+
+        int count = in.readIntData();
+
+        for (int i = 0; i < count; i++) {
+            add(new Object[]{ new Result(in) });
+        }
+    }
+
+    private void writeMulti(DatabaseRowOutputInterface out)
+    throws IOException, HsqlException {
+
+        int startPos = out.size();
+
+        out.writeSize(0);
+        out.writeIntData(ResultConstants.MULTI);
+        out.writeIntData(iMode);
+        out.writeIntData(databaseID);
+        out.writeIntData(sessionID);
+        out.writeIntData(iSize);
+
+        Record n = rRoot;
+
+        while (n != null) {
+            ((Result) n.data[0]).write(out);
+
+            n = n.next;
+        }
+
+        out.writeIntData(out.size(), startPos);
     }
 
     /**

@@ -84,16 +84,25 @@ import org.hsqldb.lib.ArrayUtil;
  */
 class Constraint {
 
-    static final int       NO_ACTION   = 0,
-                           CASCADE     = 1,
-                           SET_DEFAULT = 2,
-                           SET_NULL    = 3;
-    static final int       FOREIGN_KEY = 0,
-                           MAIN        = 1,
-                           UNIQUE      = 2;
-    private ConstraintCore core;
-    private HsqlName       constName;
-    private int            iType;
+/*
+SQL CLI codes
+
+Referential Constraint 0 CASCADE
+Referential Constraint 1 RESTRICT
+Referential Constraint 2 SET NULL
+Referential Constraint 3 NO ACTION
+Referential Constraint 4 SET DEFAULT
+*/
+    static final int CASCADE     = 0,
+                             SET_NULL    = 2,
+                             NO_ACTION   = 3,
+                             SET_DEFAULT = 4;
+    static final int         FOREIGN_KEY = 0,
+                             MAIN        = 1,
+                             UNIQUE      = 2;
+    private ConstraintCore   core;
+    private HsqlName         constName;
+    private int              iType;
 
     /**
      *  Constructor declaration
