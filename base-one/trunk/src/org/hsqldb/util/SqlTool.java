@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.24 2004/04/12 19:49:11 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.25 2004/05/14 15:19:44 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.24 $
+ * @version $Revision: 1.25 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -112,11 +112,11 @@ public class SqlTool {
                 if (tokenizer.countTokens() == 1) {
                     keyword = tokenizer.nextToken();
                     value   = "";
-                } else if (tokenizer.countTokens() == 2) {
+                } else if (tokenizer.countTokens() > 1) {
                     keyword = tokenizer.nextToken();
-                    value   = tokenizer.nextToken();
+                    value   = tokenizer.nextToken("").trim();
                 } else {
-                    throw new Exception("Bad line " + linenum + " in '"
+                    throw new Exception("Corrupt line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
                 if (dbKey == null) {
