@@ -126,7 +126,7 @@ public class Table extends BaseTable {
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
     public HashMappedList columnList;                 // columns in table
-    private HsqlArrayList indexList;                  // vIndex(0) is the primary key index
+    private Index[]       indexList;                  // vIndex(0) is the primary key index
     private int[]         primaryKeyCols;             // column numbers for primary key
     int[]                 bestRowIdentifierCols;      // column set for best index
     boolean               bestRowIdentifierStrict;    // true if it has no nullable column
@@ -245,7 +245,7 @@ public class Table extends BaseTable {
         primaryKeyCols = null;
         identityColumn = -1;
         columnList     = new HashMappedList();
-        indexList      = new HsqlArrayList();
+        indexList      = new Index[0];
         constraintList = new Constraint[0];
         triggerLists   = new HsqlArrayList[TriggerDef.NUM_TRIGS];
 
@@ -852,7 +852,7 @@ public class Table extends BaseTable {
      *  Returns the count of indexes on this table.
      */
     int getIndexCount() {
-        return indexList.size();
+        return indexList.length;
     }
 
     /**
@@ -952,8 +952,8 @@ public class Table extends BaseTable {
             nullRowIDCols[i] = bestIndexForColumn[i] = -1;
         }
 
-        for (int i = 0; i < indexList.size(); i++) {
-            Index index     = (Index) indexList.get(i);
+        for (int i = 0; i < indexList.length; i++) {
+            Index index     = (Index) indexList[i];
             int[] cols      = index.getColumns();
             int   colsCount = index.getVisibleColumns();
 
@@ -1093,8 +1093,8 @@ public class Table extends BaseTable {
         Index indexChoice = null;
         int   colCount    = 0;
 
-        for (int i = 0; i < indexList.size(); i++) {
-            Index index = (Index) indexList.get(i);
+        for (int i = 0; i < indexList.length; i++) {
+            Index index = (Index) indexList[i];
             boolean result = ArrayUtil.containsAllTrueElements(columnCheck,
                 index.colCheck);
 
@@ -1327,7 +1327,7 @@ public class Table extends BaseTable {
 
         int newindexNo = createIndexStructureGetNo(column, name, false,
             unique, constraint, forward);
-        Index newindex     = (Index) indexList.get(newindexNo);
+        Index newindex     = indexList[newindexNo];
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
@@ -1371,7 +1371,9 @@ public class Table extends BaseTable {
             n              = primaryindex.next(n);
         }
 
-        indexList.remove(newindex);
+        indexList = (Index[]) ArrayUtil.toAdjustedArray(indexList, null,
+                newindexNo, -1);
+
         setBestRowIdentifiers();
 
         throw Trace.error(error);
@@ -1383,8 +1385,11 @@ public class Table extends BaseTable {
     Index createIndexStructure(int column[], HsqlName name, boolean pk,
                                boolean unique, boolean constraint,
                                boolean forward) throws HsqlException {
-        return (Index) indexList.get(createIndexStructureGetNo(column, name,
-                pk, unique, constraint, forward));
+
+        int i = createIndexStructureGetNo(column, name, pk, unique,
+                                          constraint, forward);
+
+        return indexList[i];
     }
 
     int createIndexStructureGetNo(int column[], HsqlName name, boolean pk,
@@ -1432,8 +1437,8 @@ public class Table extends BaseTable {
 
         int i = 0;
 
-        for (; i < indexList.size(); i++) {
-            Index current = (Index) indexList.get(i);
+        for (; i < indexList.length; i++) {
+            Index current = indexList[i];
             int order = index.getIndexOrderValue()
                         - current.getIndexOrderValue();
 
@@ -1442,7 +1447,8 @@ public class Table extends BaseTable {
             }
         }
 
-        indexList.add(i, index);
+        indexList = (Index[]) ArrayUtil.toAdjustedArray(indexList, index, i,
+                1);
 
         return i;
     }
@@ -1571,7 +1577,9 @@ public class Table extends BaseTable {
             Index tempidx = getIndex(todrop);
 
             if (tempidx.getName().name.equals(indexname)) {
-                indexList.remove(todrop);
+                indexList = (Index[]) ArrayUtil.toAdjustedArray(indexList,
+                        null, todrop, -1);
+
                 setBestRowIdentifiers();
 
                 break;
@@ -2932,7 +2940,7 @@ public class Table extends BaseTable {
      *  Returns the Index object at the given index
      */
     protected Index getIndex(int i) {
-        return (Index) indexList.get(i);
+        return indexList[i];
     }
 
     /**
