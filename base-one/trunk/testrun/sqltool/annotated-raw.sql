@@ -1,5 +1,5 @@
 /*
-    $Id$
+    $Id: annotated-raw.sql,v 1.4 2004/06/16 18:51:43 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -57,7 +57,7 @@
 
 
     This specific example emulates the command:
-        SqlTool --sql '\p Print message from --sql argument.' -
+        SqlTool --sql '\p Print message from --sql argument.' mem -
     Then pipes this entire file into stdin of SqlTool.
     This test will INTENTIONALLY FAIL since the required regular expression
     does not show up in Stdout.
