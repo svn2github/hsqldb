@@ -71,6 +71,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
+import org.hsqldb.lib.HashMappedList;
+
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 
@@ -86,7 +88,7 @@ implements ActionListener, ItemListener {
     protected TextField       mName, mDriver, mURL, mUser, mPassword;
     protected Label           mError;
     private String            connTypes[][];
-    private ConnectionSetting settings[];
+    private HashMappedList settings;
     private Choice            types, recent;
 
     /**
@@ -169,13 +171,8 @@ implements ActionListener, ItemListener {
             ioe.printStackTrace();
         }
 
-        if (settings == null) {
-            settings = new ConnectionSetting[]{
-                ConnectionDialogCommon.emptySetting };
-        }
-
-        for (int i = 0; i < settings.length; i++) {
-            recent.add(settings[i].getName());
+        for (int i = 0; i < settings.size(); i++) {
+            recent.add(((ConnectionSetting) settings.get(i)).getName());
         }
 
         recent.addItemListener(new ItemListener() {
@@ -183,22 +180,15 @@ implements ActionListener, ItemListener {
             public void itemStateChanged(ItemEvent e) {
 
                 String s = (String) e.getItem();
+                ConnectionSetting setting =
+                    (ConnectionSetting) settings.get(s);
 
-                for (int i = 0; i < settings.length; i++) {
-                    if (s.equals(
-                            ConnectionDialogCommon.emptySetting.getName())) {
-                        continue;
-                    }
-
-                    if (s.equals(settings[i].getName())) {
-                        mName.setText(settings[i].getName());
-                        mDriver.setText(settings[i].getDriver());
-                        mURL.setText(settings[i].getUrl());
-                        mUser.setText(settings[i].getUser());
-                        mPassword.setText(settings[i].getPassword());
-
-                        break;
-                    }
+                if (setting != null) {
+                    mName.setText(setting.getName());
+                    mDriver.setText(setting.getDriver());
+                    mURL.setText(setting.getUrl());
+                    mUser.setText(setting.getUser());
+                    mPassword.setText(setting.getPassword());
                 }
             }
         });
@@ -215,9 +205,10 @@ implements ActionListener, ItemListener {
 
                 ConnectionDialogCommon.deleteRecentConnectionSettings();
 
-                settings = new ConnectionSetting[]{
-                    ConnectionDialogCommon.emptySetting };
+                settings = new HashMappedList();
 
+                settings.add(ConnectionDialogCommon.emptySetting.getName(),
+                             ConnectionDialogCommon.emptySetting);
                 recent.removeAll();
                 recent.add(ConnectionDialogCommon.emptySetting.getName());
                 mName.setText(null);
@@ -381,19 +372,15 @@ implements ActionListener, ItemListener {
 
                 if (mName.getText() != null
                         && mName.getText().trim().length() != 0) {
-                    ConnectionSetting[] newSettings =
-                        (ConnectionSetting[]) org.hsqldb.lib.ArrayUtil
-                            .resizeArray(settings, settings.length + 1);
-
-                    newSettings[settings.length] =
+                    ConnectionSetting newSetting =
                         new ConnectionSetting(mName.getText(),
                                               mDriver.getText(),
                                               mURL.getText(),
                                               mUser.getText(),
                                               mPassword.getText());
 
-                    ConnectionDialogCommon.storeRecentConnectionSettings(
-                        newSettings);
+                    ConnectionDialogCommon.addToRecentConnectionSettings(
+                        settings, newSetting);
                 }
 
                 dispose();

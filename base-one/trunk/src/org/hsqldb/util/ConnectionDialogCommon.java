@@ -70,11 +70,14 @@ package org.hsqldb.util;
 import java.io.*;
 import java.util.Vector;
 
+import org.hsqldb.lib.HashMappedList;
+
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// fredt@users - 20040508 - modified patch by lonbinder@users for saving settings
 
 /**
  * Common code in the Swing and AWT versions of ConnectionDialog
- * @version 1.7.0
+ * @version 1.7.2
  */
 class ConnectionDialogCommon {
 
@@ -174,14 +177,17 @@ class ConnectionDialogCommon {
     private final static String fileName       = "hsqlprefs.dat";
     private static File         recentSettings = null;
 
-    static ConnectionSetting[] loadRecentConnectionSettings()
-    throws IOException {
+    static HashMappedList loadRecentConnectionSettings() throws IOException {
 
         if (recentSettings == null) {
             String dir = getTempDir();
 
             if (dir == null) {
-                return new ConnectionSetting[]{ emptySetting };
+                HashMappedList list = new HashMappedList();
+
+                list.add(emptySetting.getName(), emptySetting);
+
+                return list;
             }
 
             recentSettings = new File(dir + fileName);
@@ -189,19 +195,26 @@ class ConnectionDialogCommon {
             if (!recentSettings.exists()) {
                 recentSettings.createNewFile();
 
-                return new ConnectionSetting[]{ emptySetting };
+                HashMappedList list = new HashMappedList();
+
+                list.add(emptySetting.getName(), emptySetting);
+
+                return list;
             }
         }
 
         FileInputStream   in        = new FileInputStream(recentSettings);
         ObjectInputStream objStream = null;
-        Vector            v         = new Vector();
+        HashMappedList    list      = new HashMappedList();
 
         try {
             objStream = new ObjectInputStream(in);
 
             while (true) {
-                v.addElement(objStream.readObject());
+                ConnectionSetting setting =
+                    (ConnectionSetting) objStream.readObject();
+
+                list.add(setting.getName(), setting);
             }
         } catch (EOFException eof) {
 
@@ -209,6 +222,9 @@ class ConnectionDialogCommon {
         } catch (ClassNotFoundException cnfe) {
             throw (IOException) new IOException("Unrecognized class type "
                                                 + cnfe.getMessage());
+        } catch (ClassCastException cce) {
+            throw (IOException) new IOException("Unrecognized class type "
+                                                + cce.getMessage());
         } finally {
             if (objStream != null) {
                 objStream.close();
@@ -217,21 +233,24 @@ class ConnectionDialogCommon {
             in.close();
         }
 
-        if (v.size() == 0) {
-            return new ConnectionSetting[]{ emptySetting };
+        if (list.size() == 0) {
+            list.add(emptySetting.getName(), emptySetting);
         }
 
-        ConnectionSetting[] newSettings = new ConnectionSetting[v.size()];
-
-        for (int i = 0; i < v.size(); i++) {
-            newSettings[i] = (ConnectionSetting) v.elementAt(i);
-        }
-
-        return newSettings;
+        return list;
     }
 
     static ConnectionSetting emptySetting =
         new ConnectionSetting("Recent settings...", null, null, null, null);
+
+    /**
+     * Adds the new settings name if it does not nexist, or overwrites the old one.
+     */
+    static void addToRecentConnectionSettings(HashMappedList settings,
+            ConnectionSetting newSetting) throws IOException {
+        settings.put(newSetting.getName(), newSetting);
+        ConnectionDialogCommon.storeRecentConnectionSettings(settings);
+    }
 
     /**
      * Here's a non-secure method of storing recent connection settings.
@@ -239,7 +258,7 @@ class ConnectionDialogCommon {
      * @param settings ConnectionSetting[]
      * @throw IOException if something goes wrong while writing
      */
-    static void storeRecentConnectionSettings(ConnectionSetting[] settings)
+    private static void storeRecentConnectionSettings(HashMappedList settings)
     throws IOException {
 
         if (recentSettings == null) {
@@ -256,7 +275,7 @@ class ConnectionDialogCommon {
             }
         }
 
-        if (settings == null || settings.length == 0) {
+        if (settings == null || settings.size() == 0) {
             return;
         }
 
@@ -264,8 +283,8 @@ class ConnectionDialogCommon {
         FileOutputStream   out       = new FileOutputStream(recentSettings);
         ObjectOutputStream objStream = new ObjectOutputStream(out);
 
-        for (int i = 0; i < settings.length; i++) {
-            objStream.writeObject(settings[i]);
+        for (int i = 0; i < settings.size(); i++) {
+            objStream.writeObject(settings.get(i));
         }
 
         objStream.flush();
