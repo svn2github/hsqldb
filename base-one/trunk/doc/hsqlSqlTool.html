@@ -3,7 +3,7 @@
 <title>SqlTool HOWTO</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="SqlTool HOWTO">
-<meta name="generator" content="makeinfo 4.5">
+<meta name="generator" content="makeinfo 4.3">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
 </head>
 <body>
@@ -21,14 +21,17 @@
 <ul>
 <li><a href="#Interactive">Essential Special Commands</a>
 <li><a href="#Interactive">Buffer Commands</a>
+<li><a href="#Interactive">Raw mode</a>
 </li></ul>
 </li></ul>
-<li><a name="toc_SQLFiles" href="#SQLFiles">SQL Files</a>
+<li><a name="toc_NonInteractive" href="#NonInteractive">Non-Interactive</a>
 <ul>
 <ul>
-<li><a href="#SQLFiles">Special Commands and Buffer Commands in SQL Files</a>
-<li><a href="#SQLFiles">Getting Interactive Functionality with SQL Files</a>
-<li><a href="#SQLFiles">Character Encoding</a>
+<li><a href="#NonInteractive">Giving SQL on the Command Line</a>
+<li><a href="#NonInteractive">SQL Files</a>
+<li><a href="#NonInteractive">Special Commands and Buffer Commands in SQL Files</a>
+<li><a href="#NonInteractive">Getting Interactive Functionality with SQL Files</a>
+<li><a href="#NonInteractive">Character Encoding</a>
 </li></ul>
 </li></ul>
 <li><a name="toc_Webapp" href="#Webapp">Web Application</a>
@@ -48,7 +51,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.14 $
+$Revision: 1.15 $
 
 <p>Note that these links are actually to a copy of the doc at the same
 location where you are viewing this from. 
@@ -73,7 +76,7 @@ of with a web browser, and without losing the linking features).
 <li><a accesskey="2" href="#BareBones">BareBones</a>:  The Bare Minimum You Need to Know to Run SqlTool
 <li><a accesskey="3" href="#Auth">Auth</a>:  Authentication
 <li><a accesskey="4" href="#Interactive">Interactive</a>:  Interactive
-<li><a accesskey="5" href="#SQLFiles">SQLFiles</a>:  SQL Files
+<li><a accesskey="5" href="#NonInteractive">NonInteractive</a>:  Non-Interactive
 <li><a accesskey="6" href="#Webapp">Webapp</a>:  Web Application
 </ul>
 
@@ -134,6 +137,9 @@ and you want to use the hsqldb JDBC driver, you will want to run either
      <pre class="example">              java org.hsqldb.util.SqlTool urlid
           </pre>
      for interactive use, or
+     <pre class="example">              java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
+          </pre>
+     or
      <pre class="example">              java org.hsqldb.util.SqlTool urlid filepath1.sql...
           </pre>
      where the arguments following the <em>urlid</em> are paths to text SQL files. 
@@ -201,7 +207,7 @@ via NFS, FTP or Samba).
 <div class="node">
 <p><hr>
 Node:<a name="Interactive">Interactive</a>,
-Next:<a rel="next" accesskey="n" href="#SQLFiles">SQLFiles</a>,
+Next:<a rel="next" accesskey="n" href="#NonInteractive">NonInteractive</a>,
 Previous:<a rel="previous" accesskey="p" href="#Auth">Auth</a>,
 Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
@@ -340,20 +346,60 @@ are just deleted.  For example
      would remove all occurrences of "this". 
 </dl>
 
+<h4 class="unnumberedsubsec">Raw mode</h4>
+
+<p>If for some reason you want SqlTool to process your commands as if it
+were reading an SQL file, i.e., without giving a login banner or command
+prompts, and aborting upon failure by default, then specify a SQL filepath
+of "-", like
+<pre class="example">         java org.hsqldb.util.SqlTool urlid -
+     </pre>
+You may want to do this if you are redirecting or tee-ing output to a
+log file, and you don't want the user-interaction messages ending up
+in the log file.
+
 <div class="node">
 <p><hr>
-Node:<a name="SQLFiles">SQLFiles</a>,
+Node:<a name="NonInteractive">NonInteractive</a>,
 Next:<a rel="next" accesskey="n" href="#Webapp">Webapp</a>,
 Previous:<a rel="previous" accesskey="p" href="#Interactive">Interactive</a>,
 Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
-<h2 class="unnumbered">SQL Files</h2>
+<h2 class="unnumbered">Non-Interactive</h2>
+
+<p>Read the <em>Interactive</em> section if you have not already, because
+much of what is in this section builds upon that. 
+Even if your plans are to run SqlTool non-interactively, you should
+really learn to run it interactively because it's such a powerful
+debugging tool, and you can use it to prototype sql scripts.
+
+<h4 class="unnumberedsubsec">Giving SQL on the Command Line</h4>
+
+<p>If you just have a couple SQL commands to run, you can run them directly
+from the comand-line or from a shell script without an SQL file, like this.
+<pre class="example">         java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
+     </pre>
+Since SqlTool executes SQL statements only when a statement line is
+terminated with ";", you can only execute more than one SQL statement
+this way if your OS shell has some mechanism to pass linebreaks in
+arguments through to the target program. 
+With any Bourne-compatible shell, you can include linebreaks in the
+SQL statements like this.
+<pre class="example">         java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
+             SQL statement number one;
+             SQL statement
+                 number two;
+             SQL statement three;
+         ' urlid
+     </pre>
+If you don't give the <code>--noinput</code> switch, then after executing the
+given statements, an interactive session will be started.
+
+<h4 class="unnumberedsubsec">SQL Files</h4>
 
 <p>Just give paths to sql text file(s) on the command line after the <em>urlid</em>.
-
-<p>Read the <em>Interactive</em> section if you have not already.
 
 <p>Often, you will want to redirect output to a file, like
 <pre class="example">         java org.hsqldb.util.SqlTool urlid filepath1.sql... &gt; /tmp/log.sql 2&gt;&amp;1
@@ -431,7 +477,7 @@ You can use another character set by setting the system property
 <div class="node">
 <p><hr>
 Node:<a name="Webapp">Webapp</a>,
-Previous:<a rel="previous" accesskey="p" href="#SQLFiles">SQLFiles</a>,
+Previous:<a rel="previous" accesskey="p" href="#NonInteractive">NonInteractive</a>,
 Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
