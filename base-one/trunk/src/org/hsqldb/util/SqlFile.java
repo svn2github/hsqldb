@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.59 2004/06/05 06:53:00 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.60 2004/06/05 07:08:02 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.59 $
+ * @version $Revision: 1.60 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.59 $".substring("$Revision: ".length(),
-                "$Revision: 1.59 $".length() - 2);
+        revnum = "$Revision: 1.60 $".substring("$Revision: ".length(),
+                "$Revision: 1.60 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -583,7 +583,7 @@ public class SqlFile {
             throw new BadSpecial("Null special command");
         }
         if (plMode) {
-            inString = dereference(inString);
+            inString = dereference(inString, false);
         }
         StringTokenizer toker = new StringTokenizer(inString);
         arg1 = toker.nextToken();
@@ -722,12 +722,13 @@ public class SqlFile {
      * @throws SQLException  This is really an inappropriate exception
      * type.  Only using it because I don't have time to do things properly.
      */
-    private String dereference(String inString) throws SQLException {
+    private String dereference(String inString, boolean permitAlias)
+    throws SQLException {
         String varName, varValue;
         StringBuffer expandBuffer = new StringBuffer(inString);
         int b, e; // begin and end
 
-        if (inString.charAt(0) == '*') {
+        if (permitAlias && inString.charAt(0) == '*') {
             Iterator it = userVars.keySet().iterator();
             while (it.hasNext()) {
                 varName = (String) it.next();
@@ -769,13 +770,16 @@ public class SqlFile {
      * @throws BadSpecial Runtime error()
      */
     private void processPL(String inString)
-    throws BadSpecial, SqlToolError {
+    throws BadSpecial, SqlToolError, SQLException {
         if (inString.length() < 1) {
             throw new BadSpecial("Null PL command");
         }
         if (inString.charAt(0) == '?') {
             stdprintln(PL_HELP_TEXT);
             return;
+        }
+        if (plMode) {
+            inString = dereference(inString, false);
         }
         StringTokenizer toker = new StringTokenizer(inString);
         String arg1 = toker.nextToken();
@@ -993,7 +997,7 @@ public class SqlFile {
     private void processStatement() throws SQLException {
         Statement statement = curConn.createStatement();
 
-        statement.execute(plMode ? dereference(curCommand) : curCommand);
+        statement.execute(plMode ? dereference(curCommand, true) : curCommand);
         displayResultSet(statement, statement.getResultSet(), null, null,
                          null);
     }
