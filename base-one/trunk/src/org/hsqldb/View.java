@@ -163,6 +163,21 @@ class View extends Table {
         throw Trace.error(Trace.NOT_A_TABLE);
     }
 
+    boolean hasView(View view) {
+
+        if (view == this) {
+            return false;
+        }
+
+        for (int i = 0; i < viewSubqueries.length; i++) {
+            if (viewSubqueries[i].view == view) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Returns true if the view references any column of the named table.
      */

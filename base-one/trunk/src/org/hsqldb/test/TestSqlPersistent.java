@@ -92,13 +92,12 @@ public class TestSqlPersistent extends TestCase {
         String  message            = "DB operation completed";
 
         try {
-            String sqlString =
-                "DROP TABLE PREFERENCE IF EXISTS;"
+            String sqlString = "DROP TABLE PREFERENCE IF EXISTS;"
                 + "CREATE CACHED TABLE PREFERENCE ("
                 + "User_Id INTEGER NOT NULL, "
                 + "Pref_Name VARCHAR(30) NOT NULL, "
                 + "Pref_Value OBJECT NOT NULL, "
-                + "DateCreated DATETIME DEFAULT 'NOW' NOT NULL, "
+                               + "DateCreated DATETIME DEFAULT NOW NOT NULL, "
                 + "PRIMARY KEY(User_Id, Pref_Name) )";
 
             sStatement.execute(sqlString);

@@ -784,8 +784,13 @@ public class Database {
             session.checkDDLWrite();
         }
 
+        if (isView) {
+            checkViewIsInView((View) toDrop);
+        } else {
         checkTableIsReferenced(toDrop);
         checkTableIsInView(toDrop.tableName.name);
+        }
+
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
         userManager.removeDbObject(toDrop.getName());
@@ -844,6 +849,19 @@ public class Database {
     }
 
     /**
+     * Throws if the view is referenced in a view.
+     */
+    void checkViewIsInView(View view) throws HsqlException {
+
+        View[] views = getViewsWithView(view);
+
+        if (views != null) {
+            throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
+                              views[0].getName().name);
+        }
+    }
+
+    /**
      * Throws if the table is referenced in a view.
      */
     void checkTableIsInView(String table) throws HsqlException {
@@ -868,6 +886,33 @@ public class Database {
             throw Trace.error(Trace.COLUMN_IS_REFERENCED,
                               views[0].getName().name);
         }
+    }
+
+    /**
+     * Returns an array of views that reference another view.
+     */
+    private View[] getViewsWithView(View view) {
+
+        HsqlArrayList list = null;
+
+        for (int i = 0; i < tTable.size(); i++) {
+            Table t = (Table) tTable.get(i);
+
+            if (t.isView()) {
+                boolean found = ((View) t).hasView(view);
+
+                if (found) {
+                    if (list == null) {
+                        list = new HsqlArrayList();
+                    }
+
+                    list.add(t);
+                }
+            }
+        }
+
+        return list == null ? null
+                            : (View[]) list.toArray(new View[list.size()]);
     }
 
     /**
