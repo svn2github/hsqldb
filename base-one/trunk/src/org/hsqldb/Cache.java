@@ -80,8 +80,10 @@ import org.hsqldb.lib.Sort;
 // fredt@users 20021105 - patch 1.7.2 - refactoring and enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments rewritten
 
-/**
- * fredt - todo 20021022
+/** @todo - string literal - PrintSystemOut()*/
+
+/** @todo -
+ * fredt20021022
  * Check for MAX_INTEGER size.
  * Optional file size limit below MAX_INTEGER.
  * Optional defrag when limit reached.

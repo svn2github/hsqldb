@@ -118,8 +118,10 @@ public class DataFileCache extends Cache {
 
             initBuffers();
         } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " opening file " + sName);
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_open,
+                              new Object[] {
+                e, sName
+            });
         }
     }
 
@@ -147,8 +149,10 @@ public class DataFileCache extends Cache {
                 new File(sName).delete();
             }
         } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " closing file " + sName);
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_close,
+                              new Object[] {
+                e, sName
+            });
         }
     }
 
@@ -212,8 +216,11 @@ public class DataFileCache extends Cache {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " defrag file " + sName);
+
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.DataFileCache_defrag, new Object[] {
+                e, sName
+            });
         } finally {
             init();
             open(cacheReadonly);
@@ -243,8 +250,10 @@ public class DataFileCache extends Cache {
 
             rFile = null;
         } catch (Exception e) {
-            Trace.throwerror(Trace.FILE_IO_ERROR,
-                             "error " + e + " in shutdown file " + sName);
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.DataFileCache_closeFile, new Object[] {
+                sName, e
+            });
         }
     }
 
@@ -358,8 +367,10 @@ public class DataFileCache extends Cache {
 
             r = new CachedRow(t, rowIn);
         } catch (IOException e) {
-            e.printStackTrace();
-            Trace.throwerror(Trace.FILE_IO_ERROR, "reading file : " + e);
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.DataFileCache_makeRow, new Object[] {
+                e, sName
+            });
         }
 
         return r;

@@ -299,8 +299,21 @@ public class Trace extends PrintWriter {
      TextDatabaseRowInput_getField2                 = 183,
      TextDatabaseRowInput_getField3                 = 184;
 
+    // reserved slots to 200
     //
-    static String MESSAGE_TAG = "$$";
+    static String MESSAGE_TAG                                      = "$$";
+    static int    INTERNAL_unknown_internal_statement_type         = 201,
+                  INTERNAL_session_operation_not_supported         = 202,
+                  INTERNAL_ivalid_compiled_statement_id            = 203,
+                  DatabaseCommandInterpreter_processCreateTrigger1 = 204,
+                  DatabaseCommandInterpreter_processCreateTrigger2 = 205,
+                  DatabaseCommandInterpreter_processSavepoint      = 206,
+                  DataFileCache_defrag                             = 207,
+                  DataFileCache_closeFile                          = 208,
+                  DataFileCache_makeRow                            = 209,
+                  DataFileCache_open                               = 210,
+                  DataFileCache_close                              = 211
+    ;
 
     //
     private static final String[] sDescription = {
@@ -484,6 +497,33 @@ public class Trace extends PrintWriter {
         "No end sep.",                                                        // TextDatabaseRowInput_getField
         "No end sep.",                                                        // TextDatabaseRowInput_getField2
         "field $$ ($$)",                                                      // TextDatabaseRowInput_getField3
+        "reserved 185",                                                       //
+        "reserved 186",                                                       //
+        "reserved 187",                                                       //
+        "reserved 188",                                                       //
+        "reserved 189",                                                       //
+        "reserved 190",                                                       //
+        "reserved 191",                                                       //
+        "reserved 192",                                                       //
+        "reserved 193",                                                       //
+        "reserved 194",                                                       //
+        "reserved 195",                                                       //
+        "reserved 196",                                                       //
+        "reserved 197",                                                       //
+        "reserved 198",                                                       //
+        "reserved 199",                                                       //
+        "reserved 200",                                                       //
+        "s1000 Internal Error : Unknown SQL Statement Type:",                 //
+        "s1000 Internal Error : Unknown Session Operation Type:",             //
+        "s1000 Internal Error : Invalid Compiled Statement ID:",              //
+        "parsing trigger command ",                                           //DatabaseCommandInterpreter_processCreateTrigger1
+        "loading trigger class ",                                             //DatabaseCommandInterpreter_processCreateTrigger2
+        "missing or zero-length savepoint name",                              //DatabaseCommandInterpreter_processSavepoint
+        "error $$ during defrag - file $$",                                   //DataFielCache_defrag
+        "error $$ during shutdown - file $$",                                 //DataFielCache_closeFile
+        "error $$ reading row - file $$",                                     //DataFielCache_makeRow
+        "error $$ opening file - file $$",                                    //DataFielCache_makeRow
+        "error $$ closing file - file $$",                                    //DataFielCache_makeRow
     };
 
     /** Used during tests. */
@@ -606,6 +646,26 @@ public class Trace extends PrintWriter {
      */
     static HsqlException error(final Result result) {
         return new HsqlException(result);
+    }
+
+    /**
+     * Return a new <code>Result</code> of type error.
+     *
+     * @param result    the <code>Result</code> associated with the exception
+     * @return a new <code>HsqlException</code> according to the result parameter
+     */
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+
+    /**
+     *  Constructor for errors
+     *
+     * @param  error error message
+     * @param  state   sql state
+     * @param  code   vendor code
+     */
+    static Result toResult(HsqlException e) {
+        return new Result(e.getMessage(), e.getSQLState(), e.getErrorCode());
     }
 
     /**

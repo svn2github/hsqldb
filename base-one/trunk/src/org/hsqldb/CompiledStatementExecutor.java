@@ -132,9 +132,8 @@ final class CompiledStatementExecutor {
                 return executeCallStatement(cs);
 
             default :
-                String msg = "Unknown compiled statement type: " + cs.type;
-
-                throw Trace.error(Trace.OPERATION_NOT_SUPPORTED, msg);
+                throw Trace.error(
+                    Trace.INTERNAL_unknown_internal_statement_type);
         }
     }
 

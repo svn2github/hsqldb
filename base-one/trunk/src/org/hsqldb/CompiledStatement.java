@@ -442,8 +442,9 @@ final class CompiledStatement {
                 return updateCount;
 
             default :
-                return new Result("Unknown Statement Type: " + type, "",
-                                  Trace.UNEXPECTED_EXCEPTION);
+                return Trace.toResult(
+                    Trace.error(
+                        Trace.INTERNAL_unknown_internal_statement_type));
         }
     }
 

@@ -675,14 +675,15 @@ class DatabaseCommandInterpreter {
                 // start the trigger thread
                 td.start();
             } else {
-                String msg = "parsing trigger command ";
-
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+                throw Trace.error(
+                    Trace.UNEXPECTED_TOKEN,
+                    Trace.DatabaseCommandInterpreter_processCreateTrigger1);
             }
         } catch (Exception e) {
-            String msg = "loading trigger class " + e.getMessage();
-
-            throw Trace.error(Trace.UNKNOWN_FUNCTION, msg);
+            throw Trace.error(
+                Trace.UNKNOWN_FUNCTION,
+                Trace.DatabaseCommandInterpreter_processCreateTrigger2,
+                e.getMessage());
         }
 
 // boucherb@users 20021128 - enforce unique trigger names
@@ -2072,9 +2073,9 @@ class DatabaseCommandInterpreter {
 
         if (toSavepoint) {
             if (token.length() == 0) {
-                String msg = "missing or zero-length savepoint name";
-
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+                throw Trace.error(
+                    Trace.UNEXPECTED_TOKEN,
+                    Trace.DatabaseCommandInterpreter_processSavepoint);
             }
 
             session.rollbackToSavepoint(token);
@@ -2095,9 +2096,9 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            String msg = "missing or zero-length savepoint name";
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+            throw Trace.error(
+                Trace.UNEXPECTED_TOKEN,
+                Trace.DatabaseCommandInterpreter_processSavepoint);
         }
 
         session.savepoint(token);
@@ -2924,9 +2925,9 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            String msg = "missing or zero-length savepoint name";
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+            throw Trace.error(
+                Trace.UNEXPECTED_TOKEN,
+                Trace.DatabaseCommandInterpreter_processSavepoint);
         }
 
         session.releaseSavepoint(token);

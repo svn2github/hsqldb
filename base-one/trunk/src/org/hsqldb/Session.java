@@ -896,10 +896,9 @@ class Session implements SessionInterface {
                     return emptyUpdateCount;
                 }
                 default : {
-                    String msg = "operation type:" + type;
-
-                    return new Result(msg, "s1000",
-                                      Trace.OPERATION_NOT_SUPPORTED);
+                    return Trace.toResult(
+                        Trace.error(
+                            Trace.INTERNAL_session_operation_not_supported));
                 }
             }
         }
@@ -1070,9 +1069,8 @@ class Session implements SessionInterface {
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            String msg = "Statement not prepared for csid: " + csid;
-
-            return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
+            return Trace.toResult(
+                Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {
@@ -1232,9 +1230,8 @@ class Session implements SessionInterface {
         cs    = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            String msg = "Statement not prepared for csid: " + csid;
-
-            return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
+            return Trace.toResult(
+                Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
         }
 
         if (!compiledStatementManager.isValid(csid, iId)) {

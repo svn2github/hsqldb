@@ -92,7 +92,7 @@ import org.hsqldb.store.ValuePool;
  * @version    1.7.2
  */
 
-/** @todo fredt - move error and assert string literals to Trace */
+/** @todo fredt - move error string literals to Trace */
 class Expression {
 
     // leaf types
