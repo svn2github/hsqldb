@@ -1,5 +1,5 @@
 /*
-    $Id: special-q-arg.sql,v 1.1 2004/06/17 02:30:52 unsaved Exp $
+    $Id: special-q-arg.sql,v 1.2 2004/06/17 02:50:25 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -8,6 +8,7 @@
     HARNESS_METADATA        BEGIN         
     arg                 --noAutoFile
     requireStdoutRegex  PRE-QUIT
+    requireErroutRegex  Abort message here
     rejectStdoutRegex   POST-QUIT
     arg                 mem 
     exitValue           2
