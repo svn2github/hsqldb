@@ -1556,8 +1556,10 @@ class DatabaseCommandInterpreter {
 
         session.commit();
         session.setScripting(!t.isTemp());
+
         int i = t.getColumnNr(column.columnName.name);
-        t.vColumn.setKey(i,newName);
+
+        t.vColumn.setKey(i, newName);
         column.columnName.rename(newName, isquoted);
     }
 

@@ -104,6 +104,17 @@ public class IntValueHashMap extends BaseHashMap {
             return containsKey(o);
         }
 
+        public Object get(Object key) {
+
+            int lookup = IntValueHashMap.this.getLookup(key, key.hashCode());
+
+            if (lookup < 0) {
+                return null;
+            } else {
+                return IntValueHashMap.this.objectKeyTable[lookup];
+            }
+        }
+
         public boolean add(Object value) {
             throw new RuntimeException();
         }

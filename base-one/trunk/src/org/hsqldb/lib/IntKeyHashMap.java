@@ -101,6 +101,10 @@ public class IntKeyHashMap extends BaseHashMap {
             throw new RuntimeException();
         }
 
+        public Object get(Object key) {
+            throw new RuntimeException();
+        }
+
         public boolean add(Object value) {
             throw new RuntimeException();
         }

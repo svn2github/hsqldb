@@ -103,13 +103,13 @@ public class DataFileCache extends Cache {
                 exists = true;
             }
 
-            rFile = new DatabaseFile(sName, readonly ? "r"
-                                                     : "rw", 2048);
+            rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
+                                                 ScaledRAFile.DATA_FILE_NIO);
 
             if (exists) {
-                rFile.readSeek(FREE_POS_POS);
+                rFile.seek(FREE_POS_POS);
 
-                iFreePos = rFile.readInteger();
+                iFreePos = rFile.readInt();
             } else {
 
 // erik - iFreePos = INITIAL_FREE_POS / cacheFileScale;
@@ -144,7 +144,7 @@ public class DataFileCache extends Cache {
 
         try {
             rFile.seek(FREE_POS_POS);
-            rFile.writeInteger(iFreePos);
+            rFile.writeInt(iFreePos);
             saveAll();
             rFile.close();
 
@@ -202,6 +202,8 @@ public class DataFileCache extends Cache {
  *  Closes this object's database file without flushing pending writes.
  */
     void closeFile() throws HsqlException {
+
+        System.out.println("DataFileCache.closeFile()");
 
         if (rFile == null) {
             return;
@@ -319,9 +321,9 @@ public class DataFileCache extends Cache {
         try {
 
 // erik -  rFile.readSeek(pos*cacheFileScale);
-            rFile.readSeek(pos);
+            rFile.seek(pos);
 
-            int size = rFile.readInteger();
+            int size = rFile.readInt();
 
             rowIn.resetRow(pos, size);
             rFile.read(rowIn.getBuffer(), 4, size - 4);

@@ -174,7 +174,7 @@ abstract class Cache {
 
     // variable fields
 // boucherb@users - access changed for metadata 1.7.2
-    protected DatabaseFile rFile;
+    protected ScaledRAFile rFile;
     protected int          iFreePos;
 
 // ---------------------------------------------------
@@ -192,7 +192,8 @@ abstract class Cache {
     DatabaseRowOutputInterface rowOut;
 
     // for testing
-    StopWatch sw;
+    StopWatch saveAllTimer = new StopWatch(false);
+    StopWatch makeRowTimer = new StopWatch(false);
 
     static Cache newCache(String name, Database db,
                           int type) throws HsqlException {
@@ -203,10 +204,8 @@ abstract class Cache {
                 return new DataFileCache(name, db);
 
             case CACHE_TYPE_TEXT :
-                return new TextCache(name, db);
-
             case CACHE_TYPE_REVERSE_TEXT :
-                return new ReverseTextCache(name, db);
+                return new TextCache(name, db);
         }
 
         return null;
@@ -361,9 +360,13 @@ abstract class Cache {
             cleanUp();
         }
 
+        makeRowTimer.start();
+
         //-- makeRow in text tables may change iPos because of blank lines
         //-- row can be null at the end of csv file
         r = makeRow(pos, t);
+
+        makeRowTimer.stop();
 
         if (r == null) {
             return r;
@@ -427,12 +430,6 @@ abstract class Cache {
      */
     private void cleanUp() throws HsqlException {
 
-        if (sw == null) {
-            sw = new StopWatch();
-        }
-
-        sw.start();
-
         // put all rows in the array
         for (int i = 0; i < iCacheSize; i++) {
             rowTable[i] = rFirst;
@@ -441,10 +438,8 @@ abstract class Cache {
 
         // sort by access count
         rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
-        sw.mark();
         sort(rowTable, rowComparator, 0, iCacheSize - 1);
 
-//        System.out.println(sw.currentElapsedTimeToMessage("new cleanup method sort :"));
         // sort by file position
         int removecount = iCacheSize / 3;
 
@@ -456,7 +451,9 @@ abstract class Cache {
 
             try {
                 if (r.hasChanged()) {
+                    saveAllTimer.start();
                     saveRow(r);
+                    saveAllTimer.stop();
                 }
 
                 if (!r.isRoot()) {
@@ -475,9 +472,6 @@ abstract class Cache {
         }
 
         resetAccessCount();
-        sw.stop();
-
-//        System.out.println(sw.currentElapseTimeToMessage("new cleanup method clean "));
     }
 
     /**
@@ -611,12 +605,7 @@ abstract class Cache {
      */
     protected void saveAll() throws HsqlException {
 
-        if (sw == null) {
-            sw = new StopWatch();
-        }
-
-        System.out.println(
-            sw.elapsedTimeToMessage("Cache.saveAll total cleanup time"));
+        saveAllTimer.start();
 
         if (rFirst == null) {
             return;
@@ -651,6 +640,14 @@ abstract class Cache {
                                   new Object[]{ e });
             }
         }
+
+        saveAllTimer.stop();
+        System.out.println(
+            saveAllTimer.elapsedTimeToMessage(
+                "Cache.saveAll total row save time"));
+        System.out.println(
+            makeRowTimer.elapsedTimeToMessage(
+                "Cache.makeRow total row load time"));
     }
 
     abstract protected void saveRow(CachedRow r)

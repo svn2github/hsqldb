@@ -376,7 +376,7 @@ class Table {
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
-            if( c.getType() != Constraint.UNIQUE ) {
+            if (c.getType() != Constraint.UNIQUE) {
                 continue;
             }
 
@@ -1663,6 +1663,7 @@ class Table {
 
         Row r = Row.newRow(this, row);
 
+        // this handles the UNIQUE constraints
         indexRow(r);
 
         if (c != null) {
@@ -2088,9 +2089,10 @@ class Table {
      *
      */
 
-// fredt - todo - cascading updates will be allowed only for backward
-// referencing FK's (will be disallowed in ALTER TABLE when FK is forward
-// referencing) so any cyclic condiiton will be limited to same-table FK's
+// fredt - cyclic conditions are avoided by limits imposed on the definition
+// of cascading updates in DDL.  CASCASE is allowed only for backward
+// referencing FK's (is disallowed in ALTER TABLE when FK is forward
+// referencing) so any cyclic condition will be limited to same-table FK's
 // which can be spotted within this routine.
     void checkCascadeUpdate(Object[] orow, Object[] nrow, Session session,
                             int[] cols, Table ref,
@@ -2477,8 +2479,15 @@ class Table {
     }
 
     /**
-     *  Highest level multiple row update method. Corresponds to an SQL
-     *  UPDATE.
+     * Highest level multiple row update method. Corresponds to an SQL
+     * UPDATE. To DEAL with unique constraints we need to perform all
+     * deletes at once before the inserts. If there is a UNIQUE constraint
+     * violation limited only to the duration of updating multiple rows,
+     * we don't want to abort the operation. Example:
+     * UPDATE MYTABLE SET UNIQUECOL = UNIQUECOL + 1
+     * After performing each cascade update, delete the main row.
+     * After all cascade ops and deletes have been performed, insert new
+     * rows. (fredt)
      */
     int update(HsqlLinkedList del, Result ins, int[] col,
                Session c) throws HsqlException {
@@ -2494,7 +2503,11 @@ class Table {
             // this means the identity column can be set to null to force
             // creation of a new identity value
             setIdentityColumn(ni.data, null);
-            update(row, ni.data, col, c, false);
+
+            if (database.isReferentialIntegrity()) {
+                checkCascadeUpdate(row.getData(), ni.data, c, col, null,
+                                   false);
+            }
 
             ni = ni.next;
         }
@@ -2507,7 +2520,21 @@ class Table {
         while (it.hasNext() && ni != null) {
             Row row = (Row) it.next();
 
-            update(row, ni.data, col, c, true);
+            checkCascadeUpdate(row.getData(), ni.data, c, col, null, true);
+            deleteNoCheck(row, c, true);
+
+            ni = ni.next;
+        }
+
+        it = del.iterator();
+        ni = ins.rRoot;
+
+        while (it.hasNext() && ni != null) {
+            Row row = (Row) it.next();
+
+            fireAll(TriggerDef.UPDATE_BEFORE_ROW, row.getData(), ni.data);
+            insertNoCheck(ni.data, c, true);
+            fireAll(TriggerDef.UPDATE_AFTER_ROW, row.getData(), ni.data);
 
             ni = ni.next;
         }
@@ -2515,85 +2542,6 @@ class Table {
         fireAll(TriggerDef.UPDATE_AFTER);
 
         return del.size();
-    }
-
-    /**
-     *  High level row update method. Fires triggers and performs integrity
-     *  constraint checks. Parameter doit indicates whether only to check
-     *  integrity or to perform the update.
-     */
-    private void update(Row oldr, Object[] newrow, int[] col, Session c,
-                        boolean doit) throws HsqlException {
-
-        if (database.isReferentialIntegrity()) {
-            checkCascadeUpdate(oldr.getData(), newrow, c, col, null, doit);
-        }
-
-        if (doit) {
-            updateNoRefCheck(oldr, newrow, c, true);
-        }
-    }
-
-    /**
-     * Mid level row update method. Fires triggers.
-     */
-/*
-    private void updateNoRefCheck(Object[] oldrow, Object[] newrow,
-                                  Session c,
-                                  boolean log) throws HsqlException {
-
-        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldrow, newrow);
-        updateNoCheck(oldrow, newrow, c, log);
-        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow, newrow);
-    }
-*/
-
-    /**
-     * Mid level row update method. Fires triggers.
-     */
-    private void updateNoRefCheck(Row oldr, Object[] newrow, Session c,
-                                  boolean log) throws HsqlException {
-
-        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldr.getData(), newrow);
-        updateNoCheck(oldr, newrow, c, log);
-        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldr.getData(), newrow);
-    }
-
-    /**
-     * Low level row update method. Updates the row and the indexes.
-     */
-/*
-    private void updateNoCheck(Object[] oldrow, Object[] newrow, Session c,
-                               boolean log) throws HsqlException {
-        deleteNoCheck(oldrow, c, log);
-        insertNoCheck(newrow, c, log);
-    }
-*/
-
-    /**
-     * Low level row update method. Updates the row and the indexes.
-     */
-    private void updateNoCheck(Row oldr, Object[] newrow, Session c,
-                               boolean log) throws HsqlException {
-        deleteNoCheck(oldr, c, log);
-        insertNoCheck(newrow, c, log);
-    }
-
-    /**
-     * Unused since support for cascading updates was introduced.
-     */
-    void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws HsqlException {
-
-        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
-
-        if (database.isReferentialIntegrity()) {
-            for (int i = 0, size = vConstraint.size(); i < size; i++) {
-                Constraint v = (Constraint) vConstraint.get(i);
-
-                v.checkUpdate(col, deleted, inserted);
-            }
-        }
     }
 
     /**

@@ -595,8 +595,7 @@ class Parser {
      * @exception  java.sql.HsqlException  Description of the Exception
      */
     private static Expression checkOrderByColumns(Expression e,
-                                           HsqlArrayList vcolumn)
-                                           throws HsqlException {
+            HsqlArrayList vcolumn) throws HsqlException {
 
         if (e.getType() == Expression.VALUE) {
 

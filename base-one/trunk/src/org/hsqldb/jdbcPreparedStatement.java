@@ -1616,7 +1616,9 @@ implements java.sql.PreparedStatement {
 //#ifdef JDBC3
 /*
     public ParameterMetaData getParameterMetaData() throws SQLException {
+
         checkClosed();
+
         return new jdbcParameterMetaData(types);
     }
 */

@@ -47,6 +47,12 @@ public interface Set extends Collection {
 */
     boolean add(Object o);
 
+    /**
+     * This method returns the Object that is already in the set and is
+     * equal to the argument o.
+     */
+    Object get(Object o);
+
     boolean remove(Object o);
 
 /*

@@ -258,7 +258,7 @@ class Select {
                                              : groupByEnd;
         int orderByEnd   = orderByStart + iOrderLen;
 
-        if (iGroupLen > 0) {                     // has been set in Parser
+        if (iGroupLen > 0) {    // has been set in Parser
             isGrouped        = true;
             groupColumnNames = new HashSet();
 
@@ -495,7 +495,7 @@ class Select {
 
     private void buildResult(Result r, int limitcount) throws HsqlException {
 
-        GroupedResult gResult = new GroupedResult(this, r);
+        GroupedResult gResult = new GroupedResult(this);
         int           len     = eColumn.length;
         int           filter  = tFilter.length;
         boolean       first[] = new boolean[filter];
@@ -555,7 +555,7 @@ class Select {
             }
         }
 
-        if (isAggregated && !isGrouped && gResult.results.size() == 0) {
+        if (isAggregated &&!isGrouped && gResult.results.size() == 0) {
             gResult.addRow(new Object[len]);
         }
 

@@ -249,8 +249,8 @@ class TextCache extends DataFileCache {
     void open(boolean readonly) throws HsqlException {
 
         try {
-            rFile    = new DatabaseFile(sName, (readonly) ? "r"
-                                                          : "rw", 4096);
+            rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
+                                                 ScaledRAFile.DATA_FILE_RAF);
             iFreePos = (int) rFile.length();
 
             if ((iFreePos == 0) && ignoreFirst) {
@@ -380,7 +380,7 @@ class TextCache extends DataFileCache {
                 int c;
                 int next;
 
-                rFile.readSeek(pos);
+                rFile.seek(pos);
 
                 //-- The following should work for DOS, MAC, and Unix line
                 //-- separators regardless of host OS.

@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 
 /**
  * This class is used for grouping select results, especially for select
@@ -61,24 +62,28 @@ import org.hsqldb.lib.HashMap;
  * @version   1.7.2
  * @since   1.7.2
  */
+
+// fredt@users - patch 1.7.2 - minor mods to use new HashSet class
 class GroupedResult {
 
-    Select        select;
-    HsqlArrayList results = new HsqlArrayList();
-    int           groupBegin;
-    int           groupEnd;
-    boolean       isGrouped;
-    HashMap       groups = new HashMap();
-    ResultGroup   currGroup;
+    private Select        select;
+    HsqlArrayList         results = new HsqlArrayList();
+    int                   groupBegin;
+    int                   groupEnd;
+    private final boolean isGrouped;
+    private HashSet       groups;
+    private ResultGroup   currGroup;
 
-    GroupedResult(Select select, Result result) {
+    GroupedResult(Select select) {
 
         this.select = select;
+        groupBegin  = select.iResultLen;
+        groupEnd    = groupBegin + select.iGroupLen;
+        isGrouped   = groupBegin != groupEnd;
 
-//        this.result = result;
-        groupBegin = select.iResultLen;
-        groupEnd   = groupBegin + select.iGroupLen;
-        isGrouped  = groupBegin != groupEnd;
+        if (isGrouped) {
+            groups = new HashSet();
+        }
     }
 
     Object[] addRow(Object[] row) {
@@ -91,13 +96,12 @@ class GroupedResult {
             if (currGroup == null) {
                 currGroup = newGroup;
 
-                groups.put(currGroup, currGroup);
+                groups.add(currGroup);
                 results.add(row);
             }
         } else if (currGroup == null) {
             currGroup = new ResultGroup(row);
 
-            groups.put(currGroup, currGroup);
             results.add(row);
         } else if (!select.isAggregated) {
             results.add(row);
@@ -108,17 +112,12 @@ class GroupedResult {
         return currGroup.row;
     }
 
-/*
-    int getRowCount0() {
-        return results.size();
-    }
-*/
     class ResultGroup {
 
         Object[] row;
         int      hashCode;
 
-        public ResultGroup(Object[] row) {
+        private ResultGroup(Object[] row) {
 
             this.row = row;
             hashCode = 0;
@@ -136,12 +135,12 @@ class GroupedResult {
 
         public boolean equals(Object obj) {
 
-            if (obj == null) {
-                return false;
-            }
-
             if (obj == this) {
                 return true;
+            }
+
+            if (obj == null ||!(obj instanceof ResultGroup)) {
+                return false;
             }
 
             ResultGroup group = (ResultGroup) obj;
@@ -153,14 +152,6 @@ class GroupedResult {
             }
 
             return true;
-        }
-
-        public Object getResult(int index) {
-            return row[index];
-        }
-
-        public void setResult(int index, Object result) {
-            row[index] = result;
         }
 
         private boolean equals(Object o1, Object o2) {

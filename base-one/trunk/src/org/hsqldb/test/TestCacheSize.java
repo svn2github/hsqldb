@@ -56,14 +56,13 @@ import org.hsqldb.lib.FileUtil;
  */
 public class TestCacheSize {
 
-    protected boolean filedb   = false;
-    protected boolean shutdown = false;
+    protected boolean filedb   = true;
+    protected boolean shutdown = true;
     protected String  url      = "jdbc:hsqldb:";
 
 //    protected String  filepath = "hsql://localhost";
-    protected String filepath = "mem:test";
-
-//    protected String filepath = "/hsql/testcache/test";
+//    protected String filepath = "mem:test";
+    protected String filepath = "/hsql/testcache/test";
     String     user;
     String     password;
     Statement  sStatement;

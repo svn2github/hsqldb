@@ -117,6 +117,17 @@ public class HashMap extends BaseHashMap {
             return containsKey(o);
         }
 
+        public Object get(Object key) {
+
+            int lookup = HashMap.this.getLookup(key, key.hashCode());
+
+            if (lookup < 0) {
+                return null;
+            } else {
+                return HashMap.this.objectKeyTable[lookup];
+            }
+        }
+
         public boolean add(Object value) {
             throw new RuntimeException();
         }

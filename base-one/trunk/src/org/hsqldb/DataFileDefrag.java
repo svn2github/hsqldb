@@ -53,15 +53,18 @@ class DataFileDefrag {
 
     StopWatch stopw = new StopWatch();
 
-    HsqlArrayList defrag(Database db, DatabaseFile sourcenotused,
+    HsqlArrayList defrag(Database db, ScaledRAFile sourcenotused,
                          String filename) throws IOException, HsqlException {
 
         System.out.println("Transfer begins");
 
-        HsqlArrayList    rootsList = new HsqlArrayList();
-        HsqlArrayList    tTable    = db.getTables();
-        RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
+        HsqlArrayList rootsList = new HsqlArrayList();
+        HsqlArrayList tTable    = db.getTables();
 
+// erik        to specify scale;
+        ScaledRAFile dest = new ScaledRAFile(filename + ".new", false, 1);
+
+// erik        desl.seek(Cache.INITIAL_FREE_POS / cacheFileScale);
         dest.seek(Cache.INITIAL_FREE_POS);
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
@@ -78,9 +81,10 @@ class DataFileDefrag {
             Trace.printSystemOut(t.getName().name + " complete");
         }
 
-// erik        int pos = (int) dest.getFilePointer() / cacheFileScale;
+// erik        no change
         int pos = (int) dest.getFilePointer();
 
+// erik        desl.seek(Cache.FREE_POS_POS / cacheFileScale);
         dest.seek(Cache.FREE_POS_POS);
         dest.writeInt(pos);
         dest.close();
@@ -115,7 +119,7 @@ class DataFileDefrag {
     }
 
     int[] writeTableToDataFile(Table table,
-                               RandomAccessFile destFile)
+                               ScaledRAFile destFile)
                                throws IOException, HsqlException {
 
         BinaryServerRowOutput rowOut = new BinaryServerRowOutput();
@@ -203,7 +207,7 @@ class DataFileDefrag {
             int lookupIndex = pointerLookup.search(rootsArray[i]);
 
             if (lookupIndex == -1) {
-                throw new HsqlException("","", 0);
+                throw new HsqlException("", "", 0);
             }
 
             rootsArray[i] = pointerLookup.getIntCell(lookupIndex, 1);

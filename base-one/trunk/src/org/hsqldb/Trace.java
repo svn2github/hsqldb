@@ -232,8 +232,9 @@ public class Trace extends PrintWriter {
      jdbcResultSetMetaData_jdbcResultSetMetaData   = 119,
      jdbcResultSetMetaData_jdbcResultSetMetaData_2 = 120,
      jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
-     // new one
-     TableFilter_findFirst = 122,
+
+    // new one
+    TableFilter_findFirst = 122,
      Table_moveDefinition = 123
     ;
 
@@ -360,8 +361,7 @@ public class Trace extends PrintWriter {
         "result set is closed",                                       // jdbcResultSetMetaData_jdbcResultSetMetaData_2
         "connection is closed",                                       // jdbcResultSetMetaData_jdbcResultSetMetaData_3
         "37000 an index is required on table $$, column $$",          // TableFilter_findFirst
-        "37000 there is an index on the column to be removed",       // Table_moveDefinition
-
+        "37000 there is an index on the column to be removed",        // Table_moveDefinition
     };
 
     static {
@@ -372,6 +372,7 @@ public class Trace extends PrintWriter {
     }
 
     static String MESSAGE_TAG = "$$";
+
     /**
      * Compose error message by inserting the strings in the add parameters
      * in placeholders within the error message. The message string contains

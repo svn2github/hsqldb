@@ -67,7 +67,15 @@ public class StopWatch {
 
     /** Creates, zeros, and starts a new StopWatch */
     public StopWatch() {
-        zero();
+        this(true);
+    }
+
+    /** Creates, zeros, and starts a new StopWatch */
+    public StopWatch(boolean start) {
+
+        if (start) {
+            start();
+        }
     }
 
     /**

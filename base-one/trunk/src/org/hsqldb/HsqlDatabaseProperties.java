@@ -210,7 +210,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         boolean exists;
 
-        if ( database.getType() == DatabaseManager.S_MEM) {
+        if (database.getType() == DatabaseManager.S_MEM) {
             return true;
         }
 
@@ -275,9 +275,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     public void save() throws HsqlException {
 
-        if ( database.getType() == DatabaseManager.S_MEM ||
-             database.isFilesReadOnly() ||
-             database.isFilesInJar()  ) {
+        if (database.getType() == DatabaseManager.S_MEM
+                || database.isFilesReadOnly() || database.isFilesInJar()) {
             return;
         }
 
