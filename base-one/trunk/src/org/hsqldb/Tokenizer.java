@@ -138,17 +138,30 @@ class Tokenizer {
         }
     }
 
-    /**
-     * Constructor declaration
-     *
-     *
-     * @param s
-     */
+    Tokenizer(){
+    }
+
     Tokenizer(String s) {
 
         sCommand = s;
         iLength  = s.length();
         iIndex   = 0;
+    }
+
+    void reset(String s) {
+
+        sCommand       = s;
+        iLength        = s.length();
+        iIndex         = 0;
+        oValue         = null;
+        tokenIndex     = 0;
+        nextTokenIndex = 0;
+        beginIndex     = 0;
+        iType          = 0;
+        sToken         = null;
+        sLongNameFirst = null;
+        sLongNameLast  = null;
+        bWait          = false;
     }
 
     /**

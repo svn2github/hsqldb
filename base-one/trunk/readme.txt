@@ -1,5 +1,15 @@
 Readme File
 
+
+HSQLDB 1.7.2 ALPHA_J
+
+2002.12.24
+CVS hsqldb-dev module tag: HSQLDB_1_7_2_ALPHA_J
+
+-More work on text tables. See hsqlTextTables.html.
+-Some refactoring of Table.java and Parser.java
+
+
 HSQLDB 1.7.2 ALPHA_I
 
 2002.12.16
@@ -10,9 +20,12 @@ More work on core classes to consolidate previous changes
 -reducing data file writes esp. with big rows
 -preventing Cache related error in ON DELETE CASCADE 
 
-2002.12.11
 
+HSQLDB 1.7.2 ALPHA_H
+
+2002.12.11
 CVS hsqldb-dev module tag: HSQLDB_1_7_2_ALPHA_H
+
 
 Reduction in JDK / JRE dependencies (see readmebuild.txt)
 Extensive refactoring of some of the larger classes.

@@ -69,12 +69,15 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Enumeration;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
 
+// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
 // for sql standard quoted identifiers for column and table names and aliases
 // applied to different places
@@ -124,6 +127,7 @@ class Table {
     private int[]         colSizes;           // fredt - copy of SIZE values for columns
     private boolean[]     colNullable;        // fredt - modified copy of isNullable() values
     private String[] colDefaults;             // fredt - copy of DEFAULT values
+    private int[]    defaultColumnMap;        // fred - holding 0,1,2,3,...
     private boolean  hasDefaultValues;        //fredt - shortcut for above
     private boolean  isSystem;
     private boolean  isText;
@@ -893,10 +897,11 @@ class Table {
 
         createIndexStructure(columns, name, true);
 
-        colTypes    = new int[iColumnCount];
-        colDefaults = new String[iVisibleColumns];
-        colSizes    = new int[iVisibleColumns];
-        colNullable = new boolean[iVisibleColumns];
+        colTypes         = new int[iColumnCount];
+        colDefaults      = new String[iVisibleColumns];
+        colSizes         = new int[iVisibleColumns];
+        colNullable      = new boolean[iVisibleColumns];
+        defaultColumnMap = new int[iVisibleColumns];
 
         for (int i = 0; i < iColumnCount; i++) {
             Column column = getColumn(i);
@@ -911,13 +916,14 @@ class Table {
 
                 // when insert or update values are processed, IDENTITY column can be null
                 colNullable[i] = column.isNullable() || column.isIdentity();
+                defaultColumnMap[i] = i;
             }
         }
     }
 
     /**
-     *  Create new index taking into account removal or addition a column of
-     *  the table.
+     *  Create new index taking into account removal or addition of a column
+     *  to the table.
      *
      * @param  index
      * @param  colindex
@@ -928,8 +934,11 @@ class Table {
     private Index createAdjustedIndex(Index index, int colindex,
                                       int adjust) throws SQLException {
 
-        int[] colarr = ArrayUtil.getAdjustedColumnArray(index.getColumns(),
-            index.getVisibleColumns(), colindex, adjust);
+        int[] indexcolumns =
+            (int[]) ArrayUtil.newResizedArray(index.getColumns(),
+                                              index.getVisibleColumns());
+        int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns,
+            colindex, adjust);
 
         if (colarr.length != index.getVisibleColumns()) {
             return null;
@@ -1128,10 +1137,17 @@ class Table {
     }
 
     /**
-     * Returns empty Object array for a new row.
+     * Returns direct mapping array
      */
-    Object[] getNewRow() {
-        return new Object[iColumnCount];
+    int[] getColumnMap() {
+        return defaultColumnMap;
+    }
+
+    /**
+     * Returns empty mapping array.
+     */
+    int[] getNewColumnMap() {
+        return new int[iVisibleColumns];
     }
 
     /**
@@ -1139,6 +1155,13 @@ class Table {
      */
     boolean[] getNewColumnCheckList() {
         return new boolean[iVisibleColumns];
+    }
+
+    /**
+     * Returns empty Object array for a new row.
+     */
+    Object[] getNewRow() {
+        return new Object[iColumnCount];
     }
 
     /**
@@ -1707,7 +1730,10 @@ class Table {
                 }
 
                 if (doIt) {
-                    reftable.deleteNoRefCheck(n.getData(), session);
+
+                    // fredt - replace with a method that gets
+                    // a Row argument to avoid searching for the row
+                    reftable.deleteNoRefCheck(n.getRow(), session);
 
                     //  foreign key referencing own table
                     if (reftable == this) {
@@ -1953,6 +1979,37 @@ class Table {
     }
 
     /**
+     *  Highest level multiple row delete method. Corresponds to an SQL
+     *  DELETE.
+     */
+    int delete(HsqlLinkedList del, Session c) throws SQLException {
+
+        Enumeration en    = del.elements();
+        int         count = 0;
+        Row         r;
+
+        while (en.hasMoreElements()) {
+            r = (Row) en.nextElement();
+
+            delete(r, c, false);
+        }
+
+        fireAll(TriggerDef.DELETE_BEFORE);
+
+        en = del.elements();
+
+        while (en.hasMoreElements()) {
+            r = (Row) en.nextElement();
+
+            delete(r, c, true);
+        }
+
+        fireAll(TriggerDef.DELETE_AFTER);
+
+        return del.size();
+    }
+
+    /**
      *  High level row delete method. Fires triggers and performs integrity
      *  constraint checks.
      */
@@ -1965,6 +2022,22 @@ class Table {
 
         if (doit) {
             deleteNoRefCheck(row, session);
+        }
+    }
+
+    /**
+     *  High level row delete method. Fires triggers and performs integrity
+     *  constraint checks.
+     */
+    private void delete(Row r, Session session,
+                        boolean doit) throws SQLException {
+
+        if (dDatabase.isReferentialIntegrity()) {
+            checkCascadeDelete(r.getData(), session, doit);
+        }
+
+        if (doit) {
+            deleteNoRefCheck(r, session);
         }
     }
 
@@ -1983,6 +2056,20 @@ class Table {
     }
 
     /**
+     *  Mid level row delete method. Fires triggers but no integrity
+     *  constraint checks.
+     */
+    private void deleteNoRefCheck(Row r,
+                                  Session session) throws SQLException {
+
+        fireAll(TriggerDef.DELETE_BEFORE_ROW, r.getData());
+        deleteNoCheck(r, session, true);
+
+        // fire the delete after statement trigger
+        fireAll(TriggerDef.DELETE_AFTER_ROW, r.getData());
+    }
+
+    /**
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
@@ -1991,6 +2078,38 @@ class Table {
 
         Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
+
+        for (int i = iIndexCount - 1; i >= 0; i--) {
+            node = r.getNode(i);
+
+            getIndex(i).delete(node);
+        }
+
+        r = r.getUpdatedRow();
+
+        r.delete();
+
+        if (c != null) {
+            c.addTransactionDelete(this, row);
+        }
+
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+        }
+    }
+
+    /**
+     * Low level row delete method. Removes the row from the indexes and
+     * from the Cache.
+     */
+    private void deleteNoCheck(Row r, Session c,
+                               boolean log) throws SQLException {
+
+        Node     node;
+        Object[] row = r.getData();
+
+        r = r.getUpdatedRow();
 
         for (int i = iIndexCount - 1; i >= 0; i--) {
             node = r.getNode(i);
@@ -2052,6 +2171,47 @@ class Table {
     }
 
     /**
+     *  Highest level multiple row update method. Corresponds to an SQL
+     *  UPDATE.
+     */
+    int update(HsqlLinkedList del, Result ins, int[] col,
+               Session c) throws SQLException {
+
+        Enumeration en = del.elements();
+        Record      ni = ins.rRoot;
+
+        while (en.hasMoreElements() && ni != null) {
+            Row row = (Row) en.nextElement();
+
+            enforceFieldValueLimits(ni.data, col);
+
+            // this means the identity column can be set to null to force
+            // creation of a new identity value
+            setIdentityColumn(ni.data, null);
+            update(row, ni.data, col, c, false);
+
+            ni = ni.next;
+        }
+
+        fireAll(TriggerDef.UPDATE_BEFORE);
+
+        en = del.elements();
+        ni = ins.rRoot;
+
+        while (en.hasMoreElements() && ni != null) {
+            Row row = (Row) en.nextElement();
+
+            update(row, ni.data, col, c, true);
+
+            ni = ni.next;
+        }
+
+        fireAll(TriggerDef.UPDATE_AFTER);
+
+        return del.size();
+    }
+
+    /**
      *  High level row update method. Fires triggers and performs integrity
      *  constraint checks. Parameter doit indicates whether only to check
      *  integrity or to perform the update.
@@ -2069,6 +2229,23 @@ class Table {
     }
 
     /**
+     *  High level row update method. Fires triggers and performs integrity
+     *  constraint checks. Parameter doit indicates whether only to check
+     *  integrity or to perform the update.
+     */
+    private void update(Row oldr, Object[] newrow, int[] col, Session c,
+                        boolean doit) throws SQLException {
+
+        if (dDatabase.isReferentialIntegrity()) {
+            checkCascadeUpdate(oldr.getData(), newrow, c, col, null, doit);
+        }
+
+        if (doit) {
+            updateNoRefCheck(oldr, newrow, c, true);
+        }
+    }
+
+    /**
      * Mid level row update method. Fires triggers.
      */
     private void updateNoRefCheck(Object[] oldrow, Object[] newrow,
@@ -2081,11 +2258,31 @@ class Table {
     }
 
     /**
+     * Mid level row update method. Fires triggers.
+     */
+    private void updateNoRefCheck(Row oldr, Object[] newrow, Session c,
+                                  boolean log) throws SQLException {
+
+        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldr.getData());
+        updateNoCheck(oldr, newrow, c, log);
+        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldr.getData());
+    }
+
+    /**
      * Low level row update method. Updates the row and the indexes.
      */
     private void updateNoCheck(Object[] oldrow, Object[] newrow, Session c,
                                boolean log) throws SQLException {
         deleteNoCheck(oldrow, c, log);
+        insertNoCheck(newrow, c, log);
+    }
+
+    /**
+     * Low level row update method. Updates the row and the indexes.
+     */
+    private void updateNoCheck(Row oldr, Object[] newrow, Session c,
+                               boolean log) throws SQLException {
+        deleteNoCheck(oldr, c, log);
         insertNoCheck(newrow, c, log);
     }
 

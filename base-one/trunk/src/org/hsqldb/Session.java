@@ -137,7 +137,7 @@ class Session {
         uUser        = user;
         tTransaction = new HsqlArrayList();
         bAutoCommit  = autocommit;
-        bReadOnly    = db.bReadOnly || readonly;
+        bReadOnly    = readonly;
         hSavepoints  = new HsqlHashMap();
     }
 

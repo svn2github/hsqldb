@@ -187,6 +187,9 @@ public class FileUtil {
         }
     }
 
+    /**
+     * Delete the named file
+     */
     static public void delete(String filename) {
 
         try {
@@ -194,6 +197,9 @@ public class FileUtil {
         } catch (Exception e) {}
     }
 
+    /**
+     * Return true or false based on whether the named file exists.
+     */
     static public boolean exists(String filename) {
 
         try {
@@ -203,6 +209,10 @@ public class FileUtil {
         return false;
     }
 
+    /**
+     * Rename the file with oldname to newname. If a file named newname
+     * already exists, delete it before ranaming.
+     */
     static public void renameOverwrite(String oldname, String newname) {
 
         try {

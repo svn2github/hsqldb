@@ -67,19 +67,19 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.StringUtil;
 import java.sql.SQLException;
 import java.sql.Types;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.StringUtil;
+import org.hsqldb.lib.HsqlLinkedList;
 
-// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
-// changes applied to different parts of this method
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
 // support for sql standard quoted identifiers for column and table names
 // fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
 // support for default values for table columns
 // fredt@users 20020425 - patch 548182 by skitt@users - DEFAULT enhancement
 // thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
+// fredt@users 20021229 - patch 473613 by fredt - new solution for above
 // fredt@users 20020420 - patch 523880 by leptipre@users - VIEW support
 // fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
@@ -87,6 +87,7 @@ import java.sql.Types;
 // kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
+// fredt@users 20021228 - patch 1.7.2 - refactoring
 
 /**
  *  Class declaration
@@ -328,19 +329,22 @@ class Parser {
         int count = 0;
 
         if (filter.findFirst()) {
-            Result del  = new Result();    // don't need column count and so on
-            Result ins  = new Result();
-            int    size = table.getColumnCount();
+
+//            Result del  = new Result();    // don't need column count and so on
+//            Result ins  = new Result();
+            HsqlLinkedList del  = new HsqlLinkedList();
+            Result         ins  = new Result();
+            int            size = table.getColumnCount();
 
             do {
                 if (eCondition == null || eCondition.test()) {
-                    Object nd[] = filter.oCurrentData;
+                    Row row = filter.currentRow;
 
-                    del.add(nd);
+                    del.add(row);
 
                     Object ni[] = table.getNewRow();
 
-                    System.arraycopy(nd, 0, ni, 0, size);
+                    System.arraycopy(row.getData(), 0, ni, 0, size);
 
                     for (int i = 0; i < len; i++) {
                         ni[col[i]] = exp[i].getValue(type[i]);
@@ -420,17 +424,18 @@ class Parser {
             tTokenizer.back();
         }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        Trace.check(!table.isDataReadOnly(), Trace.DATA_IS_READONLY);
-
         int count = 0;
 
         if (filter.findFirst()) {
-            Result del = new Result();    // don't need column count and so on
+
+//            Result del = new Result();    // don't need column count and so on
+            HsqlLinkedList del = new HsqlLinkedList();
 
             do {
                 if (eCondition == null || eCondition.test()) {
-                    del.add(filter.oCurrentData);
+
+//                    del.add(filter.oCurrentData);
+                    del.add(filter.currentRow);
                 }
             } while (filter.next());
 
@@ -461,38 +466,26 @@ class Parser {
 
         token = tTokenizer.getString();
 
-        HsqlArrayList vcolumns       = null;
+        HsqlArrayList colnames       = null;
         boolean       checkcolumns[] = null;
+        int           columnmap[]    = t.getColumnMap();
+        int           len            = t.getColumnCount();
 
         if (token.equals("(")) {
-            vcolumns     = new HsqlArrayList();
-            checkcolumns = t.getNewColumnCheckList();
+            colnames = getColumnNames();
 
-            int i = 0;
-
-            while (true) {
-                vcolumns.add(tTokenizer.getString());
-
-                i++;
-
-                token = tTokenizer.getString();
-
-                if (token.equals(",")) {
-                    continue;
-                }
-
-                if (token.equals(")")) {
-                    break;
-                }
-
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            if (colnames.size() > len) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            int len = vcolumns.size();
+            len          = colnames.size();
+            checkcolumns = t.getNewColumnCheckList();
+            columnmap    = t.getNewColumnMap();
 
-            for (i = 0; i < len; i++) {
-                int colindex = t.getColumnNr((String) vcolumns.get(i));
+            for (int i = 0; i < len; i++) {
+                int colindex = t.getColumnNr((String) colnames.get(i));
 
+                columnmap[i]           = colindex;
                 checkcolumns[colindex] = true;
             }
 
@@ -500,79 +493,21 @@ class Parser {
         }
 
         int count = 0;
-        int len;
 
-        if (vcolumns == null) {
-            len = t.getColumnCount();
-        } else {
-            len = vcolumns.size();
-        }
-
-// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
         if (token.equals("VALUES")) {
-            tTokenizer.getThis("(");
+            Object row[] = t.getNewRow(checkcolumns);
 
-            Object  row[]    = t.getNewRow(checkcolumns);
-            boolean enclosed = false;
-            int     i        = 0;
-
-            for (; i < len; i++) {
-                int colindex;
-
-                if (vcolumns == null) {
-                    colindex = i;
-                } else {
-                    colindex = t.getColumnNr((String) vcolumns.get(i));
-                }
-
-                Column column = t.getColumn(colindex);
-
-                row[colindex] = getValue(column.getType());
-                token         = tTokenizer.getString();
-
-                if (token.equals(",")) {
-                    continue;
-                }
-
-                if (token.equals(")")) {
-                    enclosed = true;
-
-                    break;
-                }
-
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
-
-            if (!enclosed || i != len - 1) {
-                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-            }
-
+            getColumnValues(t, row, columnmap, len);
             t.insert(row, cSession);
 
             count = 1;
         } else if (token.equals("SELECT")) {
-            Result result = processSelect();
-            Record r      = result.rRoot;
+            int[]  columntypes = t.getColumnTypes();
+            Result result      = processSelect();
+            Record r           = result.rRoot;
 
             Trace.check(len == result.getColumnCount(),
                         Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-
-            int col[]  = new int[len];
-            int type[] = new int[len];
-
-            for (int i = 0; i < len; i++) {
-                int j;
-
-                if (vcolumns == null) {
-                    j = i;
-                } else {
-                    j = t.getColumnNr((String) vcolumns.get(i));
-                }
-
-                col[i]  = j;
-                type[i] = t.getColumn(j).getType();
-            }
-
             cSession.beginNestedTransaction();
 
             try {
@@ -580,11 +515,13 @@ class Parser {
                     Object row[] = t.getNewRow(checkcolumns);
 
                     for (int i = 0; i < len; i++) {
-                        if (type[i] != result.colType[i]) {
-                            row[col[i]] = Column.convertObject(r.data[i],
-                                                               type[i]);
+                        int j = columnmap[i];
+
+                        if (columntypes[j] != result.colType[i]) {
+                            row[j] = Column.convertObject(r.data[i],
+                                                          columntypes[j]);
                         } else {
-                            row[col[i]] = r.data[i];
+                            row[j] = r.data[i];
                         }
                     }
 
@@ -611,6 +548,68 @@ class Parser {
         r.iUpdateCount = count;
 
         return r;
+    }
+
+    HsqlArrayList getColumnNames() throws SQLException {
+
+        HsqlArrayList columns = new HsqlArrayList();
+        int           i       = 0;
+        String        token;
+
+        while (true) {
+            columns.add(tTokenizer.getString());
+
+            i++;
+
+            token = tTokenizer.getString();
+
+            if (token.equals(",")) {
+                continue;
+            }
+
+            if (token.equals(")")) {
+                break;
+            }
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        return columns;
+    }
+
+    void getColumnValues(Table t, Object[] row, int[] columnmap,
+                         int len) throws SQLException {
+
+        boolean enclosed = false;
+        int     i        = 0;
+        String  token;
+        int[]   columntypes = t.getColumnTypes();
+
+        tTokenizer.getThis("(");
+
+        for (; i < len; i++) {
+            int colindex;
+
+            colindex      = columnmap[i];
+            row[colindex] = getValue(columntypes[colindex]);
+            token         = tTokenizer.getString();
+
+            if (token.equals(",")) {
+                continue;
+            }
+
+            if (token.equals(")")) {
+                enclosed = true;
+
+                break;
+            }
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        if (!enclosed || i != len - 1) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        }
     }
 
     /**
@@ -748,9 +747,12 @@ class Parser {
 // we now call parseJoinCondition() because a limitation of HSQLDB results
 // in incorrect results for OUTER JOINS that have anything other than
 // tableA.colA=tableB.colB type expressions
-                //condition = addCondition(condition, parseExpression());
-                condition = addCondition(condition,
-                                         parseOuterJoinCondition());
+                condition = addCondition(condition, parseExpression());
+
+//                System.out.print(condition);
+                if (!condition.canBeInOuterJoin()) {
+                    throw Trace.error(Trace.OUTER_JOIN_CONDITION);
+                }
             } else if (token.equals("INNER")) {
                 tTokenizer.getThis("JOIN");
                 vfilter.add(parseTableFilter(false));
@@ -1112,50 +1114,6 @@ class Parser {
         r.resolve(null);
 
         return r.getValue(type);
-    }
-
-// thertz@users 20020320 - patch 473613 - outer join condition bug
-
-    /**
-     * parses the expression that can be used behind a
-     * [..] JOIN table ON (exp).
-     * This expression should always be in the form "tab.col=tab2.col"
-     * with optional brackets (to support automated query tools).<br>
-     * this method is used from the parseSelect method
-     *
-     * @return the expression
-     * @throws  SQLException if the syntax was not correct
-     */
-    private Expression parseOuterJoinCondition() throws SQLException {
-
-        boolean parens = false;
-
-        read();
-
-        if (iToken == Expression.OPEN) {
-            parens = true;
-
-            read();
-        }
-
-        Trace.check(iToken == Expression.COLUMN, Trace.OUTER_JOIN_CONDITION);
-
-        Expression left = new Expression(sTable, sToken);
-
-        read();
-        Trace.check(iToken == Expression.EQUAL, Trace.OUTER_JOIN_CONDITION);
-        read();
-        Trace.check(iToken == Expression.COLUMN, Trace.OUTER_JOIN_CONDITION);
-
-        Expression right = new Expression(sTable, sToken);
-
-        if (parens) {
-            read();
-            Trace.check(iToken == Expression.CLOSE,
-                        Trace.OUTER_JOIN_CONDITION);
-        }
-
-        return new Expression(Expression.EQUAL, left, right);
     }
 
     /**

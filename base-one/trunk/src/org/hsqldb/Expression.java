@@ -77,6 +77,7 @@ import org.hsqldb.lib.HsqlHashMap;
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
+// vorburger@users 20021229 - patch 1.7.2 - null handling
 
 /**
  * Expression class declaration
@@ -332,8 +333,18 @@ class Expression {
     }
 
     public String toString() {
+        return toString(0);
+    }
 
-        StringBuffer buf = new StringBuffer(32);
+    private String toString(int blanks) {
+
+        StringBuffer buf = new StringBuffer(64);
+
+        buf.append('\n');
+
+        for (int i = 0; i < blanks; i++) {
+            buf.append(' ');
+        }
 
         switch (iType) {
 
@@ -344,7 +355,7 @@ class Expression {
                 return buf.toString();
 
             case VALUE :
-                buf.append("VALUE =");
+                buf.append("VALUE = ");
                 buf.append(oData);
 
                 return buf.toString();
@@ -480,13 +491,13 @@ class Expression {
 
         if (eArg != null) {
             buf.append(" arg1=[");
-            buf.append(eArg);
+            buf.append(eArg.toString(blanks + 1));
             buf.append(']');
         }
 
         if (eArg2 != null) {
             buf.append(" arg2=[");
-            buf.append(eArg2);
+            buf.append(eArg2.toString(blanks + 1));
             buf.append(']');
         }
 
@@ -1661,8 +1672,13 @@ class Expression {
 
         Trace.check(eArg2 != null, Trace.GENERAL_ERROR);
 
-        Object o2     = eArg2.getValue(type);
-        int    result = Column.compare(o, o2, type);
+        Object o2 = eArg2.getValue(type);
+
+        if ((o == null) || (o2 == null)) {
+            return testNull(o, o2, iType);
+        }
+
+        int result = Column.compare(o, o2, type);
 
         switch (iType) {
 
@@ -1688,6 +1704,48 @@ class Expression {
         Trace.doAssert(false, "Expression.test2");
 
         return false;
+    }
+
+// vorburger@users 20021229 - patch 1.7.2 - null handling
+
+    /**
+     * Special test to perform comparison with correct handling of SQL
+     * null values. Called by test() only if a logical operation with at
+     * least one of the operands being null is invoked.<p>
+     *
+     * Works according to the following logic:
+     *
+     * <pre>
+     *                 Both a and b null      Either a or b null
+     * EQUAL                 true                   false
+     * NOT_EQUAL             false                  true
+     * BIGGER                false                  false
+     * BIGGER_EQUAL          true                   false
+     * SMALLER               false                  false
+     * SMALLER_EQUAL         true                   false
+     * </pre>
+     *
+     * @return
+     * @throws SQLException
+     */
+    boolean testNull(Object a, Object b,
+                     int logicalOperation) throws SQLException {
+
+        switch (logicalOperation) {
+
+            case NOT_EQUAL :
+                return !(a == null && b == null);
+
+            case EQUAL :
+            case BIGGER_EQUAL :
+            case SMALLER_EQUAL :
+                return a == null && b == null;
+
+            case BIGGER :
+            case SMALLER :
+            default :
+                return false;
+        }
     }
 
     /**
@@ -1739,5 +1797,25 @@ class Expression {
         }
 
         throw Trace.error(Trace.WRONG_DATA_TYPE);
+    }
+
+    /**
+     * Tests the join condition Expression (that has been built by parsing
+     * the query) for the existence of any OR clause which is not permitted
+     * in OUTER joins in HSQLDB.<p>
+     *
+     * There are still expressions (e.g. arithmetic) that should not be used
+     * in an OUTER join because they change it into an inner join but which
+     * are not caught by this method.(fredt@users)
+     */
+    boolean canBeInOuterJoin() {
+
+        if (eArg2 != null) {
+            if (eArg2.canBeInOuterJoin() == false) {
+                return false;
+            }
+        }
+
+        return iType != Expression.OR;
     }
 }

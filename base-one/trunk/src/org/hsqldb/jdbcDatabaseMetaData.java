@@ -143,12 +143,12 @@ import java.sql.SQLException;
  * However, some of these method calls require <code>int</code> values that
  * are defined only in the JDBC 2 or greater version of
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <CODE>ResultSet</CODE></a> interface.  For this reason, when the
+ * <code>ResultSet</code></a> interface.  For this reason, when the
  * product is compiled under JDK 1.1.x, these values are defined in
  * {@link jdbcResultSet jdbcResultSet}.<p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
- * JDBC2-only <CODE>ResultSet</CODE> values can be achieved by referring
+ * JDBC2-only <code>ResultSet</code> values can be achieved by referring
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
@@ -157,7 +157,7 @@ import java.sql.SQLException;
  * jdbcResultSet.TYPE_FORWARD_ONLY<br>
  * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
  * jdbcResultSet.CONCUR_READ_ONLY<br>
- * </CODE> <p>
+ * </code> <p>
  *
  * However, please note that code written in such a manner will not be
  * compatible for use with other JDBC 2 drivers, since they expect and use
@@ -223,11 +223,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Up to and including 1.7.1, HSQLDB will, by default, throw an exception
      * for any non-admin user calling <code>getTables</code>, while any
-     * admin user can <CODE>SELECT</CODE> from any table.  As such, this
+     * admin user can <code>SELECT</code> from any table.  As such, this
      * method always returns <code>true</code>.  However, if an admin user
-     * grants <CODE>SELECT</CODE> access to <CODE>SYSTEM_TABLES</CODE> to
+     * grants <code>SELECT</code> access to <code>SYSTEM_TABLES</code> to
      * a non-admin user, then it is possible for that user to be denied
-     * <CODE>SELECT</CODE> access to tables listed when he/she calls
+     * <code>SELECT</code> access to tables listed when he/she calls
      * <code>getTables</code>.  This behaviour will be corrected in 1.7.2. <p>
      *
      * </span>

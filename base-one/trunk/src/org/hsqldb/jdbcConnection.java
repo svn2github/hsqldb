@@ -150,7 +150,7 @@ import org.hsqldb.lib.StringConverter;
  * The {@link WebServer WebServer} database <B>url</B> is <B>
  * 'jdbc:hsqldb:http://host[:port]'</B> <BR>
  * OR<BR>
- * <B>'jdbc:hsqldb:http://host[:port]'</B> (with TLS). <p>
+ * <B>'jdbc:hsqldb:https://host[:port]'</B> (with TLS). <p>
  *
  * The In-Memory (diskless, in-process) database <B>url</B> is <B>
  * 'jdbc:hsqldb:.'</B> . <p>
@@ -215,12 +215,12 @@ import org.hsqldb.lib.StringConverter;
  * However, some of these method calls require <code>int</code> values that
  * are defined only in the JDBC 2 or greater version of
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <CODE>ResultSet</CODE></a> interface.  For this reason, when the
- * product is compiled under JDK 1.1.x, these values are defined here in
- * this class.<p>
+ * <code>ResultSet</code></a> interface.  For this reason, when the
+ * product is compiled under JDK 1.1.x, these values are defined
+ * in <code>org.hsqldb.jdbcResultSet</code>. <p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
- * JDBC2-only <CODE>ResultSet</CODE> values can be achieved by referring
+ * JDBC2-only <code>ResultSet</code> values can be achieved by referring
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
@@ -229,7 +229,7 @@ import org.hsqldb.lib.StringConverter;
  * jdbcResultSet.TYPE_FORWARD_ONLY<br>
  * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
  * jdbcResultSet.CONCUR_READ_ONLY<br>
- * </CODE> <p>
+ * </code> <p>
  *
  * However, please note that code written in such a manner will not be
  * compatible for use with other JDBC 2 drivers, since they expect and use
@@ -775,12 +775,12 @@ public class jdbcConnection implements Connection {
      * a SQL <code>NULL</code> value or a result with one column and one
      * row whose single field is the SQL <code>NULL</code> value,
      * respectiviely.  Previously, calling such Java methods
-     * in either context resulted in throwing a <CODE>SQLException</CODE>.
+     * in either context resulted in throwing a <code>SQLException</code>.
      *
      * Finally, up to and including 1.7.1, the returned
      * <code>CallableStatement</code> object does not support any
      * getXXX methods. That is, HSQLDB stored procedures do not
-     * support <CODE>OUT</CODE> or <CODE>IN OUT</CODE> parameters. This
+     * support <code>OUT</code> or <code>IN OUT</code> parameters. This
      * behaviour <I>may</I> change at some point in the 1.7.x series, but
      * no decisions have yet been made. <p>
      *
@@ -1461,7 +1461,7 @@ public class jdbcConnection implements Connection {
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB always returns
-     * <CODE>Connection.TRANSACTION_READ_UNCOMMITED</CODE>. <p>
+     * <code>Connection.TRANSACTION_READ_UNCOMMITED</code>. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1571,7 +1571,7 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     * An internal method for removing a databas that has been shutdown
+     * An internal method for removing a database that has been shutdown
      *
      * @param database path/name of database to remove
      */
@@ -1599,7 +1599,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, <CODE>SQLWarning</CODE> is not
+     * Up to and including HSQLDB 1.7.0, <code>SQLWarning</code> is not
      * supported, and calls to this method are simply ignored. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1639,11 +1639,11 @@ public class jdbcConnection implements Connection {
      * <code>TYPE_FORWARD_ONLY</code>, <I>and</I>
      * <code>TYPE_SCROLL_INSENSITIVE</code>,
      * with concurrency <code>CONCUR_READ_ONLY</code>. Specifying
-     * any other values will throw a <CODE>SQLException</CODE>.<p>
+     * any other values will throw a <code>SQLException</code>.<p>
      *
      * <B>Notes:</B> <p>
      *
-     * Up to 1.6.1, calling this method returned <CODE>null</CODE> if the
+     * Up to 1.6.1, calling this method returned <code>null</code> if the
      * connection was already closed and a supported combination of type and
      * concurrency was specified. This was possibly counter-intuitive
      * to the expectation that an exception would be thrown for
@@ -1709,7 +1709,7 @@ public class jdbcConnection implements Connection {
      *
      * <B>Notes:</B> <p>
      *
-     * Up to 1.6.1, calling this method returned <CODE>null</CODE> if the
+     * Up to 1.6.1, calling this method returned <code>null</code> if the
      * connection was already closed and a supported combination of type and
      * concurrency was specified. This was possibly counter-intuitive
      * to the expectation that an exception would be thrown for
@@ -1794,17 +1794,17 @@ public class jdbcConnection implements Connection {
      * <code>CallableStatement</code> objects that return
      * <code>TYPE_FORWARD_ONLY</code> <code>ResultSet</code> objects. <p>
      *
-     * New to 1.7.0, HSQLDB now allows calling <CODE>void</CODE> Java
+     * New to 1.7.0, HSQLDB now allows calling <code>void</code> Java
      * methods as SQL functions and stored procedures, the result being a
-     * SQL <CODE>NULL</CODE> value or a result with one column and one row
-     * whose single field is the SQL <CODE>NULL</CODE> value, respectiviely.
+     * SQL <code>NULL</code> value or a result with one column and one row
+     * whose single field is the SQL <code>NULL</code> value, respectiviely.
      * Previously, calling such Java methods in either context resulted in
-     * throwing a <CODE>SQLException</CODE>.
+     * throwing a <code>SQLException</code>.
      *
      * Finally, up to and including 1.7.1, the returned
      * <code>CallableStatement</code> object does not support any
      * getXXX methods. That is, HSQLDB stored procedures do not
-     * support <CODE>OUT</CODE> or <CODE>IN OUT</CODE> parameters.
+     * support <code>OUT</code> or <code>IN OUT</code> parameters.
      * This behaviour <I>may</I> change at some point in the 1.7.x series,
      * but no decisions have yet been made. <p>
      *
@@ -1850,7 +1850,7 @@ public class jdbcConnection implements Connection {
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB 1.7.1 does not support this feature. Calling this
-     * method always throws a <CODE>SQLException</CODE>, stating that the
+     * method always throws a <code>SQLException</code>, stating that the
      * function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1879,7 +1879,7 @@ public class jdbcConnection implements Connection {
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB 1.7.1 does not support this feature. Calling this
-     * method always throws a <CODE>SQLException</CODE>, stating that
+     * method always throws a <code>SQLException</code>, stating that
      * the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1916,7 +1916,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1954,7 +1954,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1989,7 +1989,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2024,7 +2024,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2063,7 +2063,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2101,7 +2101,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2140,7 +2140,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2195,7 +2195,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2252,7 +2252,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2326,7 +2326,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2393,7 +2393,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -2457,7 +2457,7 @@ public class jdbcConnection implements Connection {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -3176,7 +3176,7 @@ public class jdbcConnection implements Connection {
         }
 
         if (loader == null) {
-	    // NO_CLASSLOADER_FOR_TLS
+        // NO_CLASSLOADER_FOR_TLS
             throw new SQLException(
                 "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
         }
@@ -3225,26 +3225,26 @@ public class jdbcConnection implements Connection {
                 SessionClass = loader.loadClass("javax.net.ssl.SSLSession");
             }
         } catch (ClassNotFoundException cnfe) {
-	    // NO_JSSE
+        // NO_JSSE
             throw new SQLException("JSSE not installed:  " + cnfe);
         } catch (NoSuchMethodException nsme) {
-	    // NO_SSLSOCKETFACTORY_METHOD
+        // NO_SSLSOCKETFACTORY_METHOD
             throw new SQLException(
                 "Failed to find method SSLSocketFactory.getDefault()");
 
             // Need to unwrap the following exceptions
         } catch (InvocationTargetException ite) {
-	    // UNEXPECTED_EXCEPTION
+        // UNEXPECTED_EXCEPTION
 
             // JSSE classes are available, but the JSSE methods threw Excepts
             // I don't think that getDefault() throws any.  Should not get here.
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
-	    // ACCESS_IS_DENIED
+        // ACCESS_IS_DENIED
             throw new SQLException(
                 "You do not have permission to use the needed SSL resources");
         } catch (Exception e) {
-	    // UNEXPECTED_EXCEPTION
+        // UNEXPECTED_EXCEPTION
 
             // Just pass through remaing, including IllegalArgExcept,
             // which should not be possible if we compiled successfully.
@@ -3281,20 +3281,20 @@ public class jdbcConnection implements Connection {
 
             // These first ones are not going to occur.  From the forNames.
         } catch (ExceptionInInitializerError eiie) {
-	    // SSL_ERROR
+        // SSL_ERROR
             Throwable t = eiie.getException();
 
             throw new SQLException((t instanceof Exception) ? t.toString()
                                                             : eiie
                                                             .toString());
         } catch (LinkageError le) {
-	    // SSL_ERROR
+        // SSL_ERROR
             throw new SQLException(le.toString());
         } catch (NoSuchMethodException nsme) {
-	    // MISSING_SSL_METHOD
+        // MISSING_SSL_METHOD
             throw new SQLException("Failed to find an SSL method: " + nsme);
         } catch (SecurityException se) {
-	    // SSL_SECURITY_ERROR
+        // SSL_SECURITY_ERROR
             throw new SQLException(se.toString());
         }
 
@@ -3330,13 +3330,13 @@ public class jdbcConnection implements Connection {
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
             condClose(ssls);
-	    // ACCESS_IS_DENIED
+        // ACCESS_IS_DENIED
 
             throw new SQLException(
                 "You don't have permissions for SSLSocketFactory.createSocket() "
                 + "or SSLSocket.startHandshake()");
         } catch (Exception e) {
-	    // UNEXPECTED_EXCEPTION
+        // UNEXPECTED_EXCEPTION
 
             // incl. IllegalArgumentException which should not get at runtime
             condClose(ssls);
@@ -3351,7 +3351,7 @@ public class jdbcConnection implements Connection {
 
             if (ses == null) {
                 condClose(ssls);
-		// NO_TLS_DATA
+        // NO_TLS_DATA
 
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
@@ -3365,7 +3365,7 @@ public class jdbcConnection implements Connection {
                         X590Class))) {
                 condClose(ssls);
 
-		// NO_TLS_DATA
+        // NO_TLS_DATA
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
             }
@@ -3375,7 +3375,7 @@ public class jdbcConnection implements Connection {
             if (caarray.length < 0) {
                 condClose(ssls);
 
-		// NO_TLS_DATA
+        // NO_TLS_DATA
                 throw new SQLException(
                     "Failed to obtain session data from TLS connection");
             }
@@ -3390,12 +3390,12 @@ public class jdbcConnection implements Connection {
              * Could be one of...
              * javax.net.ssl.SSLPeerUnverifiedException
              */
-	    // TLS_ERROR
+        // TLS_ERROR
             throw new SQLException(ite.getTargetException().toString());
         } catch (IllegalAccessException iae) {
             condClose(ssls);
 
-	    // ACCESS_IS_DENIED
+        // ACCESS_IS_DENIED
             throw new SQLException(
                 "You don't have permissions for a TLS socket operation");
         } catch (Exception e) {
@@ -3403,7 +3403,7 @@ public class jdbcConnection implements Connection {
             // Include IllegalArgumentException
             condClose(ssls);
 
-	    // UNEXPECTED_EXCEPTION
+        // UNEXPECTED_EXCEPTION
             throw new SQLException(e.toString());
         }
 
@@ -3412,7 +3412,7 @@ public class jdbcConnection implements Connection {
         if (p == null) {
             condClose(ssls);
 
-	    // NO_PRINCIPAL
+        // NO_PRINCIPAL
             throw new SQLException(
                 "Somehow failed to retrieve Principal from Server");
         }
@@ -3422,7 +3422,7 @@ public class jdbcConnection implements Connection {
         if (Dn == null) {
             condClose(ssls);
 
-	    // INCOMPLETE_CERTIFICATE
+        // INCOMPLETE_CERTIFICATE
             throw new SQLException(
                 "Failed to obtain 'Distinguished Name' from Server certificate");
         }
@@ -3432,7 +3432,7 @@ public class jdbcConnection implements Connection {
         if (istart < 0) {
             condClose(ssls);
 
-	    // INCOMPLETE_CERTIFICATE
+        // INCOMPLETE_CERTIFICATE
             throw new SQLException(
                 "Failed to obtain 'Common Name' from Server certificate");
         }
@@ -3446,7 +3446,7 @@ public class jdbcConnection implements Connection {
         if (CN.length() < 1) {
             condClose(ssls);
 
-	    // INCOMPLETE_CERTIFICATE
+        // INCOMPLETE_CERTIFICATE
             throw new SQLException("Server returned a null Common Name");
         }
 
@@ -3458,7 +3458,7 @@ public class jdbcConnection implements Connection {
         // use the Protocol handler (only available in Java >= 1.4), and
         // for hsqls now, we need to do the validation: hostname == cert CN
         if (!CN.equalsIgnoreCase(strHost)) {
-	    // TLS_HOSTNAME_MISMATCH
+        // TLS_HOSTNAME_MISMATCH
             throw new SQLException("Server cert Common Name '" + CN
                                    + "' does not match given "
                                    + "network node name '" + strHost + "'");

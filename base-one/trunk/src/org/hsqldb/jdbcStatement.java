@@ -113,12 +113,12 @@ import java.sql.SQLWarning;
  * However, some of these method calls require <code>int</code> values that
  * are defined only in the JDBC 2 or greater version of
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <CODE>ResultSet</CODE></a> interface.  For this reason, when the
+ * <code>ResultSet</code></a> interface.  For this reason, when the
  * product is compiled under JDK 1.1.x, these values are defined in
  * {@link jdbcResultSet jdbcResultSet}.<p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
- * JDBC2-only <CODE>ResultSet</CODE> values can be achieved by referring
+ * JDBC2-only <code>ResultSet</code> values can be achieved by referring
  * to them in parameter specifications and return value comparisons,
  * respectively, as follows: <p>
  *
@@ -127,7 +127,7 @@ import java.sql.SQLWarning;
  * jdbcResultSet.TYPE_FORWARD_ONLY<br>
  * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
  * jdbcResultSet.CONCUR_READ_ONLY<br>
- * </CODE> <p>
+ * </code> <p>
  *
  * However, please note that code written in such a manner will not be
  * compatible for use with other JDBC 2 drivers, since they expect and use
@@ -625,7 +625,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including HSQLDB 1.7.0, <CODE>SQLWarning</CODE> objects are
+     * Up to and including HSQLDB 1.7.0, <code>SQLWarning</code> objects are
      * never produced, and calls to this method are simply ignored. <p>
      *
      * </span>
@@ -870,7 +870,7 @@ public class jdbcStatement implements java.sql.Statement {
      * Up to and including 1.7.1, HSQLDB supports only
      * <code>FETCH_FORWARD</code>. <p>
      *
-     * Setting any other value will throw a <CODE>SQLException</CODE>,
+     * Setting any other value will throw a <code>SQLException</code>,
      * stating the the function is not supported.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1113,7 +1113,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1150,7 +1150,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1218,7 +1218,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1294,7 +1294,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1337,7 +1337,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1371,7 +1371,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1417,7 +1417,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1459,7 +1459,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1512,7 +1512,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1573,7 +1573,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1631,7 +1631,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>
@@ -1673,7 +1673,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * HSQLDB 1.7.1 does not support this feature. <p>
      *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
+     * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
      *
      * </span>

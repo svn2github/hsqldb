@@ -317,6 +317,7 @@ class Result {
             }
         }
 
+        iSize  = limitcount;
         n.next = null;
         rTail  = n;
     }

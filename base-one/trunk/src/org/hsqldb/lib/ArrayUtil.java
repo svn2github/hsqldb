@@ -88,7 +88,7 @@ public class ArrayUtil {
 
     /**
      * Returns true if the first count elements of a and b are identical sets
-     * of integers
+     * of integers.
      *
      */
     public static boolean haveEqualSets(int[] a, int[] b, int count) {
@@ -101,11 +101,9 @@ public class ArrayUtil {
             return a[0] == b[0];
         }
 
-        int[] tempa = new int[count];
-        int[] tempb = new int[count];
+        int[] tempa = (int[]) newResizedArray(a, count);
+        int[] tempb = (int[]) newResizedArray(b, count);
 
-        copyArray(a, tempa, count);
-        copyArray(b, tempb, count);
         sortArray(tempa);
         sortArray(tempb);
 
@@ -235,11 +233,33 @@ public class ArrayUtil {
         return k;
     }
 
+    /**
+     * Convenience wrapper for System.arraycopy()
+     */
     public static void copyArray(Object source, Object dest, int count) {
         System.arraycopy(source, 0, dest, 0, count);
     }
 
-    public static Object resizeArray(Object source, int newsize) {
+    /**
+     * Returns a duplicates of an array.
+     */
+    public static Object duplicateArray(Object source) {
+
+        int size = Array.getLength(source);
+        Object newarray =
+            Array.newInstance(source.getClass().getComponentType(), size);
+
+        System.arraycopy(source, 0, newarray, 0, size);
+
+        return newarray;
+    }
+
+    /**
+     * Returns a new array of given size, containing as many elements of
+     * the original array as it can hold. N.B. Always returns a new array
+     * even if newsize parameter is the same as the old size.
+     */
+    public static Object newResizedArray(Object source, int newsize) {
 
         Object newarray =
             Array.newInstance(source.getClass().getComponentType(), newsize);
@@ -296,7 +316,7 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns new array with the elements in collar ajusted to reflect
+     * Returns a new array with the elements in collar adjusted to reflect
      * changes at colindex.
      *
      * Each element in collarr represents an index into another array
@@ -312,7 +332,7 @@ public class ArrayUtil {
      * @param  colarr
      * @param  colindex
      * @param  adjust +1 or 0 or -1
-     * return new, adjusted array
+     * @return new, adjusted array
      */
     public static int[] toAdjustedColumnArray(int[] colarr, int colindex,
             int adjust) {
@@ -354,20 +374,6 @@ public class ArrayUtil {
         }
 
         return intarr;
-    }
-
-    /**
-     * Convenience wrapper for toAdjustedColumnArray() that creates the new
-     * array.
-     */
-    public static int[] getAdjustedColumnArray(int[] colarr, int size,
-            int colindex, int adjust) {
-
-        int[] newarr = new int[size];
-
-        copyArray(colarr, newarr, size);
-
-        return toAdjustedColumnArray(newarr, colindex, adjust);
     }
 
     /**

@@ -69,11 +69,13 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
+// fredt@users 20021229 - patch 1.7.2 - fix for OUTER JOIN conditions bug
+
 /**
- * Class declaration
+ * This class performs a join between two tables, or a self-join, using
+ * indexes if they are availabe.
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class TableFilter {
 
@@ -88,6 +90,7 @@ class TableFilter {
 
     // this is public to improve performance
     Object oCurrentData[];
+    Row    currentRow;
 
     // Object[] getCurrent() {
     // return oCurrentData;
@@ -258,14 +261,18 @@ class TableFilter {
     }
 
     /**
-     * Method declaration
+     * For inner joins this simply finds the first row in the table (using
+     * an index if there is one) and checks it against the eEnd (range) and
+     * eAnd (other conditions) Expression objects.<p>
      *
+     * For outer joins, application of the eAnd condition is more complex. It
+     * returns true only if a real row was found and passed the test, or if no
+     * row was found but the all-null row passed the test. (fredt)
      *
-     * @return
-     *
-     * @throws SQLException
      */
     boolean findFirst() throws SQLException {
+
+        boolean andtested = false;
 
         if (iIndex == null) {
             iIndex = tTable.getPrimaryIndex();
@@ -282,6 +289,7 @@ class TableFilter {
 
         while (nCurrent != null) {
             oCurrentData = nCurrent.getData();
+            currentRow   = nCurrent.getRow();
 
             if (!test(eEnd)) {
                 break;
@@ -291,13 +299,17 @@ class TableFilter {
                 return true;
             }
 
-            nCurrent = iIndex.next(nCurrent);
+            andtested = true;
+            nCurrent  = iIndex.next(nCurrent);
         }
 
         oCurrentData = oEmptyData;
+        currentRow   = null;
 
         if (bOuterJoin) {
-            return true;
+            return eAnd == null ? true
+                                : andtested ? false
+                                            : test(eAnd);
         }
 
         return false;
@@ -313,7 +325,7 @@ class TableFilter {
      */
     boolean next() throws SQLException {
 
-        if (bOuterJoin && (nCurrent == null)) {
+        if (bOuterJoin && nCurrent == null) {
             return false;
         }
 
@@ -321,6 +333,7 @@ class TableFilter {
 
         while (nCurrent != null) {
             oCurrentData = nCurrent.getData();
+            currentRow   = nCurrent.getRow();
 
             if (!test(eEnd)) {
                 break;
@@ -334,6 +347,7 @@ class TableFilter {
         }
 
         oCurrentData = oEmptyData;
+        currentRow   = null;
 
         return false;
     }

@@ -126,6 +126,7 @@ class Database {
     private HsqlArrayList          cSession;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
+    private Tokenizer              tokenizer = new Tokenizer();
 
     //for execute()
     private static final int CALL                  = 1;
@@ -470,10 +471,10 @@ class Database {
         Result rResult = null;
 
         try {
-            Tokenizer c = new Tokenizer(statement);
-            Parser    p = new Parser(this, c, session);
+            //tokenizer.reset(statement);
+            Tokenizer tokenizer = new Tokenizer(statement);
+            Parser    p = new Parser(this, tokenizer, session);
 
-//            logger.cleanUp();
             if (Trace.DOASSERT) {
                 Trace.doAssert(!session.isNestedTransaction());
             }
@@ -482,18 +483,16 @@ class Database {
             Trace.check(!bShutdown, Trace.DATABASE_IS_SHUTDOWN);
 
             while (true) {
-                c.setPartMarker();
+                tokenizer.setPartMarker();
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
                 session.setScripting(false);
 
-                String sToken = c.getString();
+                String sToken = tokenizer.getString();
 
                 if (sToken.length() == 0) {
                     break;
                 }
 
-// boucherb@users 20020306 - patch 1.7.0 - use lookup for tokens
                 Integer command = (Integer) hCommands.get(sToken);
 
                 if (command == null) {
@@ -525,49 +524,49 @@ class Database {
                         break;
 
                     case SET :
-                        rResult = processSet(c, session);
+                        rResult = processSet(tokenizer, session);
                         break;
 
                     case COMMIT :
-                        rResult = processCommit(c, session);
+                        rResult = processCommit(tokenizer, session);
 
                         session.setScripting(true);
                         break;
 
                     case ROLLBACK :
-                        rResult = processRollback(c, session);
+                        rResult = processRollback(tokenizer, session);
 
                         session.setScripting(true);
                         break;
 
                     case SAVEPOINT :
-                        rResult = processSavepoint(c, session);
+                        rResult = processSavepoint(tokenizer, session);
 
                         session.setScripting(true);
                         break;
 
                     case CREATE :
-                        rResult = processCreate(c, session);
+                        rResult = processCreate(tokenizer, session);
                         break;
 
                     case ALTER :
-                        rResult = processAlter(c, session);
+                        rResult = processAlter(tokenizer, session);
                         break;
 
                     case DROP :
-                        rResult = processDrop(c, session);
+                        rResult = processDrop(tokenizer, session);
                         break;
 
                     case GRANT :
-                        rResult = processGrantOrRevoke(c, session, true);
+                        rResult = processGrantOrRevoke(tokenizer, session, true);
                         break;
 
                     case REVOKE :
-                        rResult = processGrantOrRevoke(c, session, false);
+                        rResult = processGrantOrRevoke(tokenizer, session, false);
                         break;
 
                     case CONNECT :
-                        rResult = processConnect(c, session);
+                        rResult = processConnect(tokenizer, session);
                         break;
 
                     case DISCONNECT :
@@ -575,15 +574,15 @@ class Database {
                         break;
 
                     case SCRIPT :
-                        rResult = processScript(c, session);
+                        rResult = processScript(tokenizer, session);
                         break;
 
                     case SHUTDOWN :
-                        rResult = processShutdown(c, session);
+                        rResult = processShutdown(tokenizer, session);
                         break;
 
                     case CHECKPOINT :
-                        rResult = processCheckpoint(c, session);
+                        rResult = processCheckpoint(tokenizer, session);
                         break;
 
                     case SEMICOLON :
@@ -591,7 +590,7 @@ class Database {
                 }
 
                 if (session.getScripting()) {
-                    logger.writeToLog(session, c.getLastPart());
+                    logger.writeToLog(session, tokenizer.getLastPart());
                 }
             }
         } catch (SQLException e) {

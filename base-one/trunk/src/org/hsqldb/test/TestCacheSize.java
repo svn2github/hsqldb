@@ -67,12 +67,15 @@ public class TestCacheSize {
     boolean          indexZip        = true;
     boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
-    boolean          refIntegrity    = false;
+    boolean          refIntegrity    = true;
     boolean          createTempTable = false;
 
     // introduces fragmentation to the .data file
-    boolean deleteWhileInsert         = true;
+    boolean deleteWhileInsert         = false;
     int     deleteWhileInsertInterval = 10000;
+
+    //
+    int bigrows = 100000;
 
     protected void setUp() {
 
@@ -119,7 +122,6 @@ public class TestCacheSize {
     public void testFillUp() {
 
         StopWatch sw        = new StopWatch();
-        int       bigrows   = 1000000;
         int       smallrows = 0xfff;
         double    value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
@@ -203,7 +205,7 @@ public class TestCacheSize {
             ps.setString(2, "Clancy");
 
             for (i = 0; i < bigrows; i++) {
-                ps.setInt(3, randomgen.nextInt() & smallrows);
+                ps.setInt(3, randomgen.nextInt(smallrows));
 
                 long nextrandom   = randomgen.nextLong();
                 int  randomlength = (int) nextrandom & 0x7f;
@@ -296,6 +298,7 @@ public class TestCacheSize {
             System.out.println("Row Count: " + rs.getInt(1));
             System.out.println("Time to count: " + sw.elapsedTime());
             checkSelects();
+            checkUpdates();
             sw.zero();
             cConnection.close();
             System.out.println("Closed database:" + sw.elapsedTime());
@@ -310,14 +313,24 @@ public class TestCacheSize {
         int              smallrows = 0xfff;
         java.util.Random randomgen = new java.util.Random();
         int              i         = 0;
+        boolean          slow      = false;
 
         try {
-            for (; i < 100000; i++) {
+            for (; i < bigrows; i++) {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "SELECT TOP 1 firstname,lastname,zip,filler FROM test WHERE zip = ?");
 
-                ps.setInt(1, randomgen.nextInt() & smallrows);
+                ps.setInt(1, randomgen.nextInt(smallrows));
                 ps.execute();
+
+                if ((i + 1) == 100 && sw.elapsedTime() > 5000) {
+                    slow = true;
+                }
+
+                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Select " + (i + 1) + " : "
+                                       + sw.elapsedTime());
+                }
             }
         } catch (SQLException e) {}
 
@@ -326,16 +339,72 @@ public class TestCacheSize {
         sw.zero();
 
         try {
-            for (i = 0; i < 100000; i++) {
+            for (i = 0; i < bigrows; i++) {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "SELECT firstname,lastname,zip,filler FROM test WHERE id = ?");
 
-                ps.setInt(1, randomgen.nextInt() & 0xfffff);
+                ps.setInt(1, randomgen.nextInt(bigrows - 1));
                 ps.execute();
+
+                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Select " + (i + 1) + " : "
+                                       + sw.elapsedTime());
+                }
             }
         } catch (SQLException e) {}
 
         System.out.println("Select random id " + i + " rows : "
+                           + sw.elapsedTime());
+    }
+
+    private void checkUpdates() {
+
+        StopWatch        sw        = new StopWatch();
+        int              smallrows = 0xfff;
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
+        int              count     = 0;
+
+        try {
+            for (; i < smallrows; i++) {
+                PreparedStatement ps = cConnection.prepareStatement(
+                    "UPDATE test SET filler = filler || zip WHERE zip = ?");
+                int random = randomgen.nextInt(smallrows - 1);
+
+                ps.setInt(1, random);
+
+                count += ps.executeUpdate();
+
+                if (count % 10000 < 20) {
+                    System.out.println("Update " + count + " : "
+                                       + sw.elapsedTime());
+                }
+            }
+        } catch (SQLException e) {}
+
+        System.out.println("Update with random zip " + i
+                           + " UPDATE commands, " + count + " rows : "
+                           + sw.elapsedTime());
+        sw.zero();
+
+        try {
+            for (i = 0; i < bigrows; i++) {
+                PreparedStatement ps = cConnection.prepareStatement(
+                    "UPDATE test SET zip = zip + 1 WHERE id = ?");
+                int random = randomgen.nextInt(bigrows - 1);
+
+                ps.setInt(1, random);
+                ps.execute();
+
+                if ((i + 1) % 10000 == 0 || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Update " + (i + 1) + " : "
+                                       + sw.elapsedTime());
+                }
+            }
+        } catch (SQLException e) {}
+
+        System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime());
     }
 
@@ -345,8 +414,8 @@ public class TestCacheSize {
 
         test.setUp();
 
-//        test.testFillUp();
-//        test.tearDown();
+        test.testFillUp();
+        test.tearDown();
         test.checkResults();
     }
 }

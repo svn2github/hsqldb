@@ -258,9 +258,9 @@ public class HsqlProperties {
      */
     private void addError(int code, String key) {
 
-        errorCodes = (int[]) ArrayUtil.resizeArray(errorCodes,
+        errorCodes = (int[]) ArrayUtil.newResizedArray(errorCodes,
                 errorCodes.length + 1);
-        errorKeys = (String[]) ArrayUtil.resizeArray(errorKeys,
+        errorKeys = (String[]) ArrayUtil.newResizedArray(errorKeys,
                 errorKeys.length + 1);
         errorCodes[errorCodes.length - 1] = code;
         errorKeys[errorKeys.length - 1]   = key;

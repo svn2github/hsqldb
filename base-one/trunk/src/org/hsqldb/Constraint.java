@@ -362,8 +362,8 @@ class Constraint {
             setTableRows();
 
             core.iMain = core.tMain.getIndex(core.iMain.getName().name);
-            core.iColMain = ArrayUtil.getAdjustedColumnArray(core.iColMain,
-                    core.iLen, colindex, adjust);
+            core.iColMain = ArrayUtil.toAdjustedColumnArray(core.iColMain,
+                     colindex, adjust);
         }
 
         if (oldt == core.tRef) {
@@ -376,8 +376,8 @@ class Constraint {
 
                 if (core.iRef != core.iMain) {
                     core.iColRef =
-                        ArrayUtil.getAdjustedColumnArray(core.iColRef,
-                                                         core.iLen, colindex,
+                        ArrayUtil.toAdjustedColumnArray(core.iColRef,
+                                                         colindex,
                                                          adjust);
                 }
             }

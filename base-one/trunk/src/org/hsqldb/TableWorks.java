@@ -78,7 +78,8 @@ import org.hsqldb.lib.HsqlHashMap;
  * The methods in this class perform alterations to the structure of an
  * existing table which may result in a new Table object
  *
- * @version 1.7.0
+ * @version 1.7.2
+ * @since 1.7.0
  */
 class TableWorks {
 
