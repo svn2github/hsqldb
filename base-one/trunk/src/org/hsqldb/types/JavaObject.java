@@ -29,9 +29,13 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.types;
 
 import java.io.Serializable;
+
+import org.hsqldb.HsqlException;
+import org.hsqldb.Trace;
+import org.hsqldb.lib.InOutUtil;
 
 /**
  * Represents of an instance of an OTHER field value. <p>
@@ -78,7 +82,12 @@ public class JavaObject {
      * If parameter serialize is true, the Object is serialized for storage.
      */
     public JavaObject(Serializable o) throws HsqlException {
-        data = Column.serialize(o);
+
+        try {
+            data = InOutUtil.serialize(o);
+        } catch (Exception e) {
+            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
+        }
     }
 
     public byte[] getBytes() throws HsqlException {
@@ -96,7 +105,12 @@ public class JavaObject {
      * of a classe that is not available.
      */
     public Serializable getObject() throws HsqlException {
-        return Column.deserialize(data);
+
+        try {
+            return InOutUtil.deserialize(data);
+        } catch (Exception e) {
+            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
+        }
     }
 
     /**

@@ -29,7 +29,7 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.types;
 
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.ArrayUtil;
