@@ -1322,6 +1322,43 @@ class Parser {
 
                 break;
             }
+            case Expression.CASE : {
+                int type = Expression.CASEWHEN;
+
+                read();
+
+                if (iToken == Expression.WHEN) {
+                    readThis(Expression.WHEN);
+
+                    r = readOr();
+                } else {
+                    r = readOr();
+
+                    readThis(Expression.WHEN);
+
+                    r = new Expression(Expression.EQUAL, r, readOr());
+                }
+
+                readThis(Expression.THEN);
+
+                Expression thenelse = readOr();
+                Expression exprelse;
+
+                if (iToken == Expression.ELSE) {
+                    readThis(Expression.ELSE);
+
+                    exprelse = readOr();
+                } else {
+                    exprelse = new Expression(Types.NULL, null);
+                }
+
+                readThis(Expression.ENDWHEN);
+
+                thenelse = new Expression(type, thenelse, exprelse);
+                r        = new Expression(type, r, thenelse);
+
+                break;
+            }
             case Expression.NULLIF : {
 
                 // turn into a CASEWHEN
@@ -1460,7 +1497,7 @@ class Parser {
                 String type = sToken;
 
                 if (Expression.SQL_TRIM_SPECIFICATION.contains(type)) {
-                    readToken();
+                    read();
                 } else {
                     type = Token.T_BOTH;
                 }
@@ -1611,6 +1648,11 @@ class Parser {
                 case Expression.NULLIF :
                 case Expression.CONVERT :
                 case Expression.CAST :
+                case Expression.CASE :
+                case Expression.WHEN :
+                case Expression.THEN :
+                case Expression.ELSE :
+                case Expression.ENDWHEN :
                 case Expression.CASEWHEN :
                 case Expression.CONCAT :
                 case Expression.EXTRACT :
@@ -1620,6 +1662,9 @@ class Parser {
                 case Expression.END :
                 case Expression.PARAM :
                 case Expression.TRIM :
+                case Expression.LEADING :
+                case Expression.TRAILING :
+                case Expression.BOTH :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
@@ -1644,6 +1689,9 @@ class Parser {
         }
     }
 
+    /**
+     * a workaround to read MONTH, DAY, YEAR etc. with EXTRACT while not making them SQL KEYWORDS in Tokenizer
+     */
     private void readToken() throws HsqlException {
         sToken = tokenizer.getString();
         iToken = tokenSet.get(sToken, -1);
@@ -1684,6 +1732,11 @@ class Parser {
         tokenSet.put("NULLIF", Expression.NULLIF);
         tokenSet.put("CONVERT", Expression.CONVERT);
         tokenSet.put("CAST", Expression.CAST);
+        tokenSet.put(Token.T_CASE, Expression.CASE);
+        tokenSet.put(Token.T_WHEN, Expression.WHEN);
+        tokenSet.put(Token.T_THEN, Expression.THEN);
+        tokenSet.put(Token.T_ELSE, Expression.ELSE);
+        tokenSet.put(Token.T_END, Expression.ENDWHEN);
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
         tokenSet.put("CONCAT", Expression.CONCAT);
         tokenSet.put(Token.T_EXTRACT, Expression.EXTRACT);

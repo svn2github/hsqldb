@@ -144,7 +144,8 @@ class Expression {
                      POSITION  = 64,
                      TRIM      = 65,
                      SUBSTRING = 66,
-                     NULLIF    = 67;
+                     NULLIF    = 67,
+                     CASE      = 68;
 
     // temporary used during paring
     static final int PLUS         = 100,
@@ -157,9 +158,24 @@ class Expression {
                      CAST         = 107,
                      END          = 108,
                      IS           = 109,
+                     WHEN         = 110,
+                     THEN         = 111,
+                     ELSE         = 112,
+                     ENDWHEN      = 113,
 
     // used inside brackets for system functions
-    FROM                                         = 110;
+    FROM                                         = 114,
+                         BOTH                    = 115,
+                         LEADING                 = 116,
+                         TRAILING                = 117,
+                         YEAR                    = 118,
+                         MONTH                   = 119,
+                         DAY                     = 120,
+                         HOUR                    = 121,
+                         MINUTE                  = 122,
+                         SECOND                  = 123,
+                         TIMEZONE_HOUR           = 124,
+                         T_TIMEZONE_MINUTE       = 125;
     static final HashSet SQL_EXTRACT_FIELD_NAMES = new HashSet();
     static final HashSet SQL_TRIM_SPECIFICATION  = new HashSet();
 
@@ -170,7 +186,7 @@ class Expression {
             Token.T_TIMEZONE_MINUTE
         });
         SQL_TRIM_SPECIFICATION.addAll(new Object[] {
-            "LEADING", "TRAILING", "BOTH"
+            Token.T_LEADING, Token.T_TRAILING, Token.T_BOTH
         });
     }
 

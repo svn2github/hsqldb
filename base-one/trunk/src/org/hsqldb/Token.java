@@ -69,6 +69,7 @@ class Token {
     static final String T_CACHED                = "CACHED";
     static final String T_CALL                  = "CALL";
     static final String T_CASCADE               = "CASCADE";
+    static final String T_CASE                  = "CASE";
     static final String T_CHECKPOINT            = "CHECKPOINT";
     static final String T_CLASS                 = "CLASS";
     static final String T_COLUMN                = "COLUMN";
@@ -87,6 +88,8 @@ class Token {
     static final String T_DISTINCT              = "DISTINCT";
     static final String T_DROP                  = "DROP";
     static final String T_EACH                  = "EACH";
+    static final String T_ELSE                  = "ELSE";
+    static final String T_END                   = "END";
     static final String T_ESCAPE                = "ESCAPE";
     static final String T_EXCEPT                = "EXCEPT";
     static final String T_EXISTS                = "EXISTS";
@@ -154,6 +157,7 @@ class Token {
     static final String T_TABLE                 = "TABLE";
     static final String T_TEMP                  = "TEMP";
     static final String T_TEXT                  = "TEXT";
+    static final String T_THEN                  = "THEN";
     static final String T_TIMEZONE_HOUR         = "TIMEZONE_HOUR";
     static final String T_TIMEZONE_MINUTE       = "TIMEZONE_MINUTE";
     static final String T_TO                    = "TO";
@@ -168,6 +172,7 @@ class Token {
     static final String T_USER                  = "USER";
     static final String T_VALUES                = "VALUES";
     static final String T_VIEW                  = "VIEW";
+    static final String T_WHEN                  = "WHEN";
     static final String T_WHERE                 = "WHERE";
     static final String T_WORK                  = "WORK";
     static final String T_WRITE_DELAY           = "WRITE_DELAY";

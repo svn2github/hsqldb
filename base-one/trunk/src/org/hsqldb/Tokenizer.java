@@ -136,10 +136,12 @@ class Tokenizer {
         // literals not allowed as table / column names
         hKeyword = new HashMap(67);
 
+        // fredt - if we add MONTH, DAY, YEAR etc. MONTH(), DAY() et al will no longer work
         String keyword[] = {
-            "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
-            "DISTINCT", "EXISTS", "EXCEPT", "EXTRACT", /* "FALSE",*/ "FROM",
-            "GROUP", "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",
+            "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASE", "WHEN",
+            "THEN", "ELSE", "END", "CASEWHEN", "DISTINCT", "EXISTS", "EXCEPT",
+            "EXTRACT", /* "FALSE",*/ "FROM", "GROUP", "IF", "INTO", "IFNULL",
+            "IS", "IN", "INTERSECT", "INNER", "LEADING", "TRAILING", "BOTH",
 
             /* "LEFT" ,*/
             "LIKE", "MAX", "MIN", /* "NULL", */ "NULLIF", "NOT", "ON",
