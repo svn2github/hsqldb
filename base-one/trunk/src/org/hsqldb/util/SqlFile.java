@@ -53,7 +53,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.85 2004/07/06 14:46:41 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.86 2004/07/06 16:23:26 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.85 $
+ * @version $Revision: 1.86 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -131,8 +131,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.85 $".substring("$Revision: ".length(),
-                "$Revision: 1.85 $".length() - 2);
+        revnum = "$Revision: 1.86 $".substring("$Revision: ".length(),
+                "$Revision: 1.86 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -1706,9 +1706,9 @@ public class SqlFile {
                                 continue;
                             }
                         }
-                        // Don't depend on r.wasNull()!!!  In some cases,
-                        // Oracle returns value of null even when r.wasNull()
-                        // is false.
+                        if (val == null && !r.wasNull()) {
+                            val = "NON-CONVERTIBLETYPE!";
+                        }
                         if (filter != null
                                 && val.toUpperCase().indexOf(filter) > -1) {
                             filteredOut = false;
