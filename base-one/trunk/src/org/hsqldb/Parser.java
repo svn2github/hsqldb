@@ -757,10 +757,6 @@ class Parser {
                 vfilter.add(parseTableFilter(true));
                 tTokenizer.getThis("ON");
 
-// thertz@users 20020320 - patch 473613 - outer join condition bug
-// we now call parseJoinCondition() because a limitation of HSQLDB results
-// in incorrect results for OUTER JOINS that have anything other than
-// tableA.colA=tableB.colB type expressions
                 condition = addCondition(condition, parseExpression());
 
 //                System.out.print(condition);
@@ -1049,9 +1045,9 @@ class Parser {
 
                 String sLeft = tTokenizer.getPart(0, CurrentPos
                                                   - TokenLength);
-                String       sRight = tTokenizer.getPart(NewCurPos, sLength);
-                View         v         = (View) t;
-                String       sView     = v.getStatement();
+                String sRight = tTokenizer.getPart(NewCurPos, sLength);
+                View             v         = (View) t;
+                String           sView     = v.getStatement();
                 HsqlStringBuffer sFromView = new HsqlStringBuffer(128);
 
                 sFromView.append(sLeft);
@@ -1735,8 +1731,7 @@ class Parser {
         }
     }
 
-    private static HsqlObjectToIntMap tokenSet =
-        new HsqlObjectToIntMap(37);
+    private static HsqlObjectToIntMap tokenSet = new HsqlObjectToIntMap(37);
 
     static {
         tokenSet.put(",", Expression.COMMA);

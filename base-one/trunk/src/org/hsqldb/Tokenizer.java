@@ -67,10 +67,11 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlHashMap;
 import java.sql.Types;
 import java.sql.SQLException;
 import java.math.BigDecimal;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlObjectToIntMap;
 
 // fredt@users 20020218 - patch 455785 by hjbusch@users - large DECIMAL inserts
 // also Long.MIM_VALUE (bug 473388) inserts - applied to different parts
@@ -93,19 +94,25 @@ import java.math.BigDecimal;
  */
 class Tokenizer {
 
-    private static final int NAME      = 1,
+    private static final int NO_TYPE   = 0,
+                             NAME      = 1,
                              LONG_NAME = 2,
                              SPECIAL   = 3,
                              NUMBER    = 4,
                              FLOAT     = 5,
                              STRING    = 6,
                              LONG      = 7,
-                             DECIMAL   = 8;
+                             DECIMAL   = 8,
+                             BOOLEAN   = 9,
+                             DATE      = 10,
+                             TIME      = 11,
+                             TIMESTAMP = 12,
+                             NULL      = 13;
 
     // used only internally
-    private static final int   QUOTED_IDENTIFIER = 9,
-                               REMARK_LINE       = 10,
-                               REMARK            = 11;
+    private static final int   QUOTED_IDENTIFIER = 14,
+                               REMARK_LINE       = 15,
+                               REMARK            = 16;
     private String             sCommand;
     private int                iLength;
     private Object             oValue;
@@ -119,23 +126,40 @@ class Tokenizer {
     private String             sLongNameLast;
     private boolean            bWait;
     private static HsqlHashMap hKeyword;
+    static HsqlObjectToIntMap  valueTokens;
 
     static {
+
+        // both maps are used as sets only
+        // literals not allowed as table / column names
         hKeyword = new HsqlHashMap(67);
 
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
-            "DISTINCT", "EXISTS", "EXCEPT", "FALSE", "FROM", "GROUP", "IF",
-            "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER", "LEFT",
-            "LIKE", "MAX", "MIN", "NULL", "NOT", "ON", "ORDER", "OR", "OUTER",
-            "PRIMARY", "SELECT", "SET", "SUM", "TO", "TRUE", "UNIQUE",
-            "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS",
-            "CALL", "HAVING"
+            "DISTINCT", "EXISTS", "EXCEPT", /* "FALSE",*/ "FROM", "GROUP",
+            "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER", "LEFT",
+            "LIKE", "MAX", "MIN", /* "NULL", */ "NOT", "ON", "ORDER", "OR",
+            "OUTER", "PRIMARY", "SELECT", "SET", "SUM", "TO",    /* "TRUE",*/
+            "UNIQUE", "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT",
+            "MINUS", "CALL", "HAVING"
         };
 
         for (int i = 0; i < keyword.length; i++) {
             hKeyword.put(keyword[i], hKeyword);
         }
+
+        // literals that are values
+        valueTokens = new HsqlObjectToIntMap(17);
+
+        valueTokens.put("NULL", NULL);
+        valueTokens.put("TRUE", BOOLEAN);
+        valueTokens.put("FALSE", BOOLEAN);
+        valueTokens.put("CURRENT_DATE", DATE);
+        valueTokens.put("CURRENT_TIME", TIME);
+        valueTokens.put("CURRENT_TIMESTAMP", TIMESTAMP);
+        valueTokens.put("SYSDATE", DATE);
+        valueTokens.put("NOW", TIMESTAMP);
+        valueTokens.put("TODAY", DATE);
     }
 
     Tokenizer() {}
@@ -156,7 +180,7 @@ class Tokenizer {
         tokenIndex     = 0;
         nextTokenIndex = 0;
         beginIndex     = 0;
-        iType          = 0;
+        iType          = NO_TYPE;
         sToken         = null;
         sLongNameFirst = null;
         sLongNameLast  = null;
@@ -225,10 +249,8 @@ class Tokenizer {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * this methode is called before other wasXXX methods and takes
+     * precedence
      */
     boolean wasValue() {
 
@@ -239,19 +261,16 @@ class Tokenizer {
             case LONG :
             case FLOAT :
             case DECIMAL :
+            case BOOLEAN :
+            case DATE :
+            case TIME :
+            case TIMESTAMP :
+            case NULL :
                 return true;
-        }
 
-        if (sToken.length() == 0) {
-            return false;
+            default :
+                return false;
         }
-
-        return sToken.equals("NULL") || sToken.equals("TRUE")
-               || sToken.equals("FALSE") || sToken.equals("CURRENT_DATE")
-               || sToken.equals("CURRENT_TIME")
-               || sToken.equals("CURRENT_TIMESTAMP")
-               || sToken.equals("SYSDATE") || sToken.equals("NOW")
-               || sToken.equals("TODAY");
     }
 
     boolean wasQuotedIdentifier() {
@@ -368,6 +387,18 @@ class Tokenizer {
             case DECIMAL :
                 return Types.DECIMAL;
 
+            case BOOLEAN :
+                return Types.BIT;
+
+            case DATE :
+                return Types.DATE;
+
+            case TIME :
+                return Types.TIME;
+
+            case TIMESTAMP :
+                return Types.TIMESTAMP;
+
             default :
                 return Types.NULL;
         }
@@ -389,12 +420,12 @@ class Tokenizer {
 
         switch (iType) {
 
-            case STRING : {
+            case STRING :
 
                 //fredt - no longer returning string with a singlequote as last char
                 return sToken;
-            }
-            case NUMBER : {
+
+            case NUMBER :
 
                 // fredt - this returns unsigned values which are later negated.
                 // as a result Integer.MIN_VALUE or Long.MIN_VALUE are promoted
@@ -432,23 +463,31 @@ class Tokenizer {
                 iType = DECIMAL;
 
                 return new BigDecimal(sToken);
-            }
-            case FLOAT : {
+
+            case FLOAT :
                 return new Double(sToken);
-            }
-            case DECIMAL : {
+
+            case DECIMAL :
                 return new BigDecimal(sToken);
-            }
+
+            case BOOLEAN :
+                return Boolean.valueOf(sToken);
+
+            case DATE :
+                return HsqlDateTime.dateValue(sToken);
+
+            case TIME :
+                return HsqlDateTime.timeValue(sToken);
+
+            case TIMESTAMP :
+                return HsqlDateTime.timestampValue(sToken);
+
+            case NULL :
+                return null;
+
+            default :
+                return sToken;
         }
-
-        if (sToken.equals("NULL")) {
-
-            // convert NULL to null String if not a String
-            // todo: make this more straightforward
-            return null;
-        }
-
-        return sToken;
     }
 
     /**
@@ -531,7 +570,7 @@ class Tokenizer {
         tokenIndex = iIndex;
 
         if (iIndex >= iLength) {
-            iType = 0;
+            iType = NO_TYPE;
 
             return;
         }
@@ -656,7 +695,7 @@ class Tokenizer {
                         break;
                     }
 
-                    // fredt - new char[] will back sToken
+                    // fredt - todo new char[] to back sToken
                     sToken = sCommand.substring(start, iIndex).toUpperCase();
 
                     if (c == '.') {
@@ -669,6 +708,17 @@ class Tokenizer {
                         sLongNameLast = sToken;
                         iType         = LONG_NAME;
                         sToken        = sLongNameFirst + "." + sLongNameLast;
+                    } else if (c == '(') {
+
+                        // it is a function call
+                    } else {
+
+                        // if in value list then it is a value
+                        int type = valueTokens.get(sToken);
+
+                        if (type != -1) {
+                            iType = type;
+                        }
                     }
 
                     return;
@@ -684,7 +734,7 @@ class Tokenizer {
 
                         // unfinished remark
                         // maybe print error here
-                        iType = 0;
+                        iType = NO_TYPE;
 
                         return;
                     } else if (c == '*') {
@@ -705,7 +755,7 @@ class Tokenizer {
 
                 case REMARK_LINE :
                     if (end) {
-                        iType = 0;
+                        iType = NO_TYPE;
 
                         return;
                     } else if (c == '\r' || c == '\n') {

@@ -1551,6 +1551,10 @@ class Table {
      */
     static Object enforceSize(Object obj, int type, int size, boolean pad) {
 
+        if (size == 0) {
+            return obj;
+        }
+
         // todo: need to handle BINARY like this as well
         switch (type) {
 

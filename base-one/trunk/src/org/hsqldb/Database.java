@@ -1375,37 +1375,8 @@ class Database {
         String defaultvalue = null;
 
         if (sToken.equals("DEFAULT")) {
-            String s = c.getString();
-
-            if (c.wasValue() && iType != Types.BINARY
-                    && iType != Types.OTHER) {
-                Object sv = c.getAsValue();
-
-                if (sv != null) {
-                    defaultvalue = String.valueOf(sv);
-
-                    try {
-                        Column.convertObject(defaultvalue, iType);
-                    } catch (Exception e) {
-                        throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
-                                          defaultvalue);
-                    }
-
-                    String testdefault =
-                        (String) Table.enforceSize(defaultvalue, iType, iLen,
-                                                   false);
-
-                    // if default value is too long for fixes size column
-                    if (defaultvalue.equals(testdefault) == false) {
-                        throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
-                                          defaultvalue);
-                    }
-                }
-            } else {
-                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, s);
-            }
-
-            sToken = c.getString();
+            defaultvalue = processCreateDefaultValue(c, iType, iLen);
+            sToken       = c.getString();
         }
 
         boolean nullable = true;
@@ -1436,6 +1407,59 @@ class Database {
         return new Column(new HsqlName(sColumn, isnamequoted), nullable,
                           iType, iLen, iScale, identity, primarykey,
                           defaultvalue);
+    }
+
+    String processCreateDefaultValue(Tokenizer c, int iType,
+                                     int iLen) throws SQLException {
+
+        String  defaultvalue = null;
+        String  s            = c.getString();
+        boolean wasminus     = false;
+
+        // see if it is a negative number
+        if (s.equals("-") && c.getType() != Types.VARCHAR) {
+            wasminus = true;
+            s        = c.getString();
+        }
+
+        if (c.wasValue() && iType != Types.BINARY && iType != Types.OTHER) {
+
+            // see if it is a literal
+            boolean wasliteral = !(Tokenizer.valueTokens.get(s) == -1);
+            Object  sv         = wasliteral ? s
+                                            : c.getAsValue();
+
+            if (wasminus) {
+                sv = Column.negate(sv, iType);
+            }
+
+            if (sv != null) {
+                defaultvalue = Column.convertObject(sv);
+
+                try {
+                    Column.convertObject(defaultvalue, iType);
+                } catch (Exception e) {
+                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
+                                      defaultvalue);
+                }
+
+                String testdefault =
+                    sqlEnforceSize
+                    ? (String) Table.enforceSize(defaultvalue, iType, iLen,
+                                                 false)
+                    : defaultvalue;
+
+                // if default value is too long for fixed size column
+                if (defaultvalue.equals(testdefault) == false) {
+                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
+                                      defaultvalue);
+                }
+            }
+        } else {
+            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, s);
+        }
+
+        return defaultvalue;
     }
 
     private HsqlArrayList processCreateConstraints(Tokenizer c,

@@ -307,9 +307,30 @@ class DatabaseScript {
                 a.append(')');
             }
 
-            if (column.getDefaultString() != null) {
+            String defaultString = column.getDefaultString();
+
+            if (defaultString != null) {
+                switch (column.getType()) {
+
+                    case Types.DATE :
+                    case Types.TIMESTAMP :
+                        if (defaultString.indexOf('-') == -1) {
+                            break;
+                        }
+                    case Types.TIME :
+                        if (defaultString.indexOf(':') == -1) {
+                            break;
+                        }
+                    case Types.CHAR :
+                    case Types.VARCHAR :
+                    case Column.VARCHAR_IGNORECASE :
+                    case Types.LONGVARCHAR :
+                        defaultString = Column.createSQLString(defaultString);
+                    default :
+                }
+
                 a.append(" DEFAULT ");
-                a.append(Column.createSQLString(column.getDefaultString()));
+                a.append(defaultString);
             }
 
             if (!column.isNullable()) {

@@ -166,7 +166,7 @@ class HsqlDateTime {
      * <code>Time</code> value.
      *
      * @param s date in format <code>hh:mm:ss</code>
-     * 'CURRENT_TIME' or 'NOW' (case independent)
+     * 'CURRENT_TIME' (case independent)
      * @return  corresponding <code>Time</code> value
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>hh:mm:ss</code>
@@ -177,8 +177,7 @@ class HsqlDateTime {
             throw new java.lang.IllegalArgumentException("null string");
         }
 
-        if (s.toUpperCase().equals("NOW")
-                || s.toUpperCase().equals("CURRENT_TIME")) {
+        if (s.toUpperCase().equals("CURRENT_TIME")) {
             return new Time(System.currentTimeMillis()
                             - getToday().getTime());
         }

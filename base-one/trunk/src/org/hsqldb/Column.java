@@ -1014,7 +1014,7 @@ class Column {
      * @param  o
      * @return result (null value for null object)
      */
-    private static String convertObject(Object o) {
+    static String convertObject(Object o) {
 
         if (o == null) {
             return null;
