@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.5 2004/04/20 23:00:04 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.6 2004/04/21 18:01:00 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.5 $</edition>
-    <pubdate>$Date: 2004/04/20 23:00:04 $</pubdate>
+    <edition>$Revision: 1.6 $</edition>
+    <pubdate>$Date: 2004/04/21 18:01:00 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -212,7 +212,7 @@ CHECKPOINT [DEFRAG<footnoteref linkend="posthyper"/>];</programlisting>
             its minimal size.
         </para> <para>
             In the current version DEFRAG is not allowed if 
-            <literal>java.nio</literal> is used.
+            <classname>java.nio</classname> is used.
         </para> <para>
             See also:
             <link linkend='shutdown-section' endterm='shutdown-title'/>,
@@ -412,7 +412,7 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
 CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;table&gt; [FOR EACH ROW] [QUEUE n] [NOWAIT] CALL &lt;TriggerClass&gt;;</programlisting>
         <para>
             TriggerClass is an application-supplied class that implements the
-            <literal>org.hsqldb.Trigger</literal> interface e.g.
+            <classname>org.hsqldb.Trigger</classname> interface e.g.
             "mypackage.TrigClass".
             It is the fire method of this class that is invoked when the 
             trigger event occurs.
@@ -432,7 +432,7 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             specified in 
             <link linkend='datatypes-section' endterm='datatypes-title'/>.
             For example, BIGINT is represented by a
-            <literal>java.lange.Long Object</literal>.
+            <filename>java.lang.Long Object</filename>.
             Note that the number of elements in the row arrays is larger than 
             the number of columns by one or two  elements.
             Never modify the last elements of the array, which are not part of 
@@ -470,9 +470,9 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
         </para> <para>
             Please refer to the code for 
             <ulink url='../src/org/hsqldb/Trigger.html'>
-            org.hsqldb.sample.Trigger</ulink>
+            <classname>org.hsqldb.sample.Trigger</classname></ulink>
             and <ulink url='../src/org/hsqldb/sample/TriggerSample.html'>
-            org.hsqldb.sample.TriggerSample</ulink>
+            <classname>org.hsqldb.sample.TriggerSample</classname></ulink>
             for more information on how to write a trigger class.
         </para> <para>
             See also:
@@ -1140,83 +1140,83 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <tbody>
             <row>
                 <entry>INTEGER | INT</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>int | java.lang.Integer</literal></entry>
+                <entry>as Java type</entry>
+                <entry><literal>int</literal> | <classname>java.lang.Integer</classname></entry>
             </row>
             <row>
                 <entry>DOUBLE [PRECISION] | FLOAT</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>double | java.lang.Double</literal></entry>
+                <entry>as Java type</entry>
+                <entry><literal>double</literal> | <classname>java.lang.Double</classname></entry>
             </row>
             <row>
                 <entry>VARCHAR</entry>
                 <entry>as Integer.MAXVALUE</entry>
-                <entry><literal>java.lang.String</literal></entry>
+                <entry><classname>java.lang.String</classname></entry>
             </row>
             <row>
                 <entry>VARCHAR_IGNORECASE</entry>
                 <entry>as Integer.MAXVALUE</entry>
-                <entry><literal>java.lang.String</literal></entry>
+                <entry><classname>java.lang.String</classname></entry>
             </row>
             <row>
                 <entry>CHAR | CHARACTER</entry>
                 <entry>as Integer.MAXVALUE</entry>
-                <entry><literal>java.lang.String</literal></entry>
+                <entry><classname>java.lang.String</classname></entry>
             </row>
             <row>
                 <entry>LONGVARCHAR</entry>
                 <entry>as Integer.MAXVALUE</entry>
-                <entry><literal>java.lang.String</literal></entry>
+                <entry><classname>java.lang.String</classname></entry>
             </row>
             <row>
                 <entry>DATE</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>java.sql.Date</literal></entry>
+                <entry>as Java type</entry>
+                <entry><classname>java.sql.Date</classname></entry>
             </row>
             <row>
                 <entry>TIME</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>java.sql.Time</literal></entry>
+                <entry>as Java type</entry>
+                <entry><classname>java.sql.Time</classname></entry>
             </row>
             <row>
                 <entry>TIMESTAMP | DATETIME</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>java.sql.Timestamp</literal></entry>
+                <entry>as Java type</entry>
+                <entry><classname>java.sql.Timestamp</classname></entry>
             </row>
             <row>
                 <entry>DECIMAL</entry>
                 <entry>as No limit</entry>
-                <entry><literal>java.math.BigDecimal</literal></entry>
+                <entry><classname>java.math.BigDecimal</classname></entry>
             </row>
             <row>
                 <entry>NUMERIC</entry>
                 <entry>as No limit</entry>
-                <entry><literal>java.math.BigDecimal</literal></entry>
+                <entry><classname>java.math.BigDecimal</classname></entry>
             </row>
             <row>
                 <entry>BOOLEAN | BIT</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>boolean | java.lang.Boolean</literal></entry>
+                <entry>as Java type</entry>
+                <entry><literal>boolean</literal> | <classname>java.lang.Boolean</classname></entry>
             </row>
             <row>
                 <entry>TINYINT</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>byte | java.lang.Byte</literal></entry>
+                <entry>as Java type</entry>
+                <entry><literal>byte</literal> | <classname>java.lang.Byte</classname></entry>
             </row>
             <row>
-                <entry>short | java.lang.Short</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>short | java.lang.Short</literal></entry>
+                <entry>SMALLINT</entry>
+                <entry>as Java type</entry>
+                <entry><literal>short</literal> | <classname>java.lang.Short</classname></entry>
             </row>
             <row>
                 <entry>BIGINT</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>long | java.lang.Long</literal></entry>
+                <entry>as Java type</entry>
+                <entry><filename>long</filename> | <classname>java.lang.Long</classname></entry>
             </row>
             <row>
                 <entry>REAL</entry>
-                <entry>as as Java type</entry>
-                <entry><literal>double | java.lang.Double<footnoteref linkend="posthyper"/></literal></entry>
+                <entry>as Java type</entry>
+                <entry><literal>double</literal> | <classname>java.lang.Double</classname><footnoteref linkend="posthyper"/></entry>
             </row>
             <row>
                 <entry>BINARY</entry>
@@ -1236,7 +1236,7 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <row>
                 <entry>OTHER | OBJECT</entry>
                 <entry>as Integer.MAXVALUE</entry>
-                <entry><literal>java.lang.Object</literal></entry>
+                <entry><classname>java.lang.Object</classname></entry>
             </row>
             </tbody>
         </tgroup>
@@ -1934,14 +1934,14 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
             <itemizedlist>
                 <listitem><para>
                 A 'date' value starts and ends with ' (singlequote), the format 
-                is yyyy-mm-dd (see <literal>java.sql.Date</literal>.
+                is yyyy-mm-dd (see <classname>java.sql.Date</classname>.
                 </para></listitem><listitem><para>
                 A 'time' value starts and ends with ' (singlequote), the format 
-                is hh:mm:ss (see <literal>java.sql.Time</literal>).
+                is hh:mm:ss (see <classname>java.sql.Time</classname>).
                 </para></listitem><listitem><para>
                 A 'timestamp' or 'datetime' value starts and ends with '
                 (singlequote), the format is yyyy-mm-dd hh:mm:ss.SSSSSSSSS (see 
-                <literal>java.sql.Timestamp</literal>).
+                <classname>java.sql.Timestamp</classname>).
                 </para></listitem>
             </itemizedlist>
             <para>

@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.4 2004/04/21 18:01:03 unsaved Exp $ -->
+<!-- $Id: testutility.xml,v 1.5 2004/04/21 19:21:24 unsaved Exp $ -->
 
 <appendix>
     <title>Hsqldb Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/21 18:01:03 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/21 19:21:24 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -15,19 +15,19 @@
     <para>
         The <literal>org.hsqldb.test</literal> package contains a number of 
         tests for various functions of the database engine.
-        Among these, the <literal>TestSelf</literal> class performs the tests 
-        that are based on scripts.
+        Among these, the <classname>TestSelf</classname> class performs the 
+        tests that are based on scripts.
         To run the tests, you should compile the
         <filename>hsqldbtest.jar</filename> target with Ant.
     </para> <para>
-        For <literal>TestSelf</literal>, a batch file is provided in the demo 
+        For <classname>TestSelf</classname>, a batch file is provided in the demo 
         directory.
         To start the application in Windows, type:
     </para><screen>
     runtest TestSelf</screen>
     <para>
-        The new version of <literal>TestSelf</literal> runs multiple SQL test 
-        files to test different SQL operations of the database.
+        The new version of <classname>TestSelf</classname> runs multiple SQL 
+        test files to test different SQL operations of the database.
         All files in the working directory with names matching
         TestSelf*.txt are processed in alphabetical order.
     </para> <para>

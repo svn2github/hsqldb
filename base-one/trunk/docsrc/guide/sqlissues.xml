@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.8 2004/04/20 18:35:56 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.9 2004/04/20 22:42:26 unsaved Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/04/20 22:42:26 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -127,7 +127,7 @@
                 A non-unique index is automatically created on columns
                 <literal>(c1, c2)</literal> in the table named "child".
                 Columns <literal>p1</literal> and <literal>c1</literal> must be 
-                of the same type (INTEGER). Columns<literal> p2</literal> 
+                of the same type (INTEGER). Columns <literal>p2</literal> 
                 and <literal>c2</literal> must be of the same type (VARCHAR).
             </para>
         </section>
@@ -253,7 +253,7 @@
                 <literal>TC.COL4 = 1</literal> to TC and joins only the set of 
                 rows that satisfy this condition with other tables.
                 Indexes on <literal>TC.COL4</literal>,
-                <literal>TB.COL2</literal>and <literal>TA.COL1</literal> 
+                <literal>TB.COL2</literal> and <literal>TA.COL1</literal> 
                 will be used if present and will speed up the query.
             </para>
         </section>
@@ -307,12 +307,12 @@
             held in a field of each type.
             For example the value range for TINYINT is -128 to +127, although 
             the actual Java type used for handling TINYINT is
-            <literal>java.lang.Integer</literal>.
+            <classname>java.lang.Integer</classname>.
         </para> <para>
             REAL, FLOAT, DOUBLE are all mapped to double in Java.
         </para> <para>
             DECIMAL and NUMERIC are mapped to
-            <literal>java.math.BigDecimal</literal> and can have very large 
+            <classname>java.math.BigDecimal</classname> and can have very large 
             numbers of digits before or after the decimal point.
         </para>
         <section>
@@ -322,9 +322,11 @@
                 a decimal point) are fully interchangeable internally, and no 
                 data narrowing takes place.
                 Depending on the types of the operands, the result of the 
-                operations is returned in a JDBC <literal>ResultSet</literal>
-                in any of related Java types: <literal>Integer</literal>,
-                <literal>Long</literal> or <literal>BigDecimal</literal>. 
+                operations is returned in a JDBC 
+                <classname>ResultSet</classname>
+                in any of related Java types: <classname>Integer</classname>,
+                <classname>Long</classname> or 
+                <classname>BigDecimal</classname>. 
                 The <literal>ResultSet.getXXXX()</literal> methods can be used 
                 to retrieve the values so long as the returned value can be 
                 represented by the resulting type.
@@ -343,25 +345,25 @@
             </informalexample>
             <para>
                 would return a result set where the type of the first column is 
-                <literal>java.lang.Integer</literal> and the second column is 
-                <literal>java.lang.Long</literal>.
+                <filename>java.lang.Integer</filename> and the second column is 
+                <filename>java.lang.Long</filename>.
                 However,
             </para> <informalexample><programlisting>
     SELECT MAX(a) + 0, MAX(b) + 0 FROM t;</programlisting>
             </informalexample>
             <para>
-                would return <literal>java.lang.Long</literal> and
-                <literal>BigDecimal</literal> values, generated as a result of 
-                uniform type promotion for all the return values.
+                would return <filename>java.lang.Long</filename> and
+                <classname>BigDecimal</classname> values, generated as a result 
+                of uniform type promotion for all the return values.
             </para> <para>
                 There is no built-in limit on the size of intermediate integral 
                 values in expressions. 
                 As a result, you should check for the type of the
-                <literal>ResultSet</literal> column and choose an appropriate
-                <literal>getXXXX()</literal> method to retrieve it.
+                <classname>ResultSet</classname> column and choose an 
+                appropriate <literal>getXXXX()</literal> method to retrieve it.
                 Alternatively, you can use the <literal>getObject()</literal>
-                method, then cast the result to <literal>java.lang.Number
-                </literal> and use the<literal> intValue()</literal> or 
+                method, then cast the result to <classname>java.lang.Number
+                </classname> and use the <literal>intValue()</literal> or 
                 <literal>longValue()</literal> methods on the result.
             </para> <para>
                 When the result of an expression is stored in a column of a 
@@ -378,7 +380,7 @@
             <para>
                 In SQL statements, numbers with a decimal point are treated as 
                 DECIMAL unless they are written with an exponent.
-                Thus <literal>0.2 </literal>is considered a DECIMAL value but
+                Thus <literal>0.2</literal> is considered a DECIMAL value but
                 <literal>0.2E0</literal> is considered a DOUBLE value.
             </para> <para>
                 When <literal>PreparedStatement.setDouble()</literal> or 
@@ -390,7 +392,8 @@
             </para> <para>
                 Otherwise, when no DOUBLE value exists, if a DECIMAL or NUMBER 
                 value is part an expression, the type of the result is DECIMAL.
-                The result can be retrieved from a <literal>ResultSet</literal>
+                The result can be retrieved from a
+                <classname>ResultSet</classname>
                 in the required type so long as it can be represented. 
                 This means DECIMAL values can be converted to DOUBLE unless 
                 they are beyond the <literal>Double.MIN_VALUE - 
@@ -414,7 +417,7 @@
                 the two terms when multiplication is performed.
             </para> <para>
                 REAL, FLOAT and DOUBLE values are all stored in the database as 
-                <literal>java.lang.Double</literal> objects.
+                <classname>java.lang.Double</classname> objects.
                 Special values such as NaN and +-Infinity are also stored and 
                 supported.
                 These values can be submitted to the database via JDBC 
@@ -491,7 +494,7 @@
                 So you cannot rely on a test such as <literal>CAST (mycol AS 
                 VARCHAR(2)) = 'xy'</literal> to find the values beginning with 
                 'xy'.
-                Use <literal> SUBSTRING(mycol FROM 1 FOR 2)</literal> instead.
+                Use <literal>SUBSTRING(mycol FROM 1 FOR 2)</literal> instead.
             </para>
         </section>
     </section>

@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: unix.xml,v 1.1 2004/04/21 22:32:30 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/21 22:32:30 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -71,39 +71,41 @@
         <varlistentry><term>Installing from a .pkg.Z file</term><listitem><para>
             This package is only for use by a Solaris super-user.
             It's a System V package.
-            Download the package, and run
+            Download then uncompress the package with uncompress or gunzip
             <para><screen>
-    pkgadd filename.pkg.Z</screen>
+    uncompress filename.pkg.Z</screen>
             <para>
-                as root.
-                You can also read about the package by running
-                </para><screen>
-    pkginfo -l d filename.pkg.Z
+                You can read about the package by running
+            </para><screen>
+    pkginfo -l -d filename.pkg
+            </screen><para>
+                Run pkgadd as root to install.
+            </para><screen>
+    pkgadd filename.pkg</screen>
         </listitem></varlistentry>
         <varlistentry><term>Installing from a .rpm file</term><listitem><para>
             This is a Linux rpm package.
-            Rpms can be installed or upgraded by running<screen>
+            After you download the rpm, you can read about it by running
+            </para><screen>
+    rpm -qip /path/to/file.rpm</screen>
+            <para>
+            Rpms can be installed or upgraded by running
+            </para><screen>
     $rpm -Uvh /path/to/file.rpm</screen>
             <para>
                 as root.
-                You can also read about the package by running
+            </para>
+        </listitem></varlistentry>
+        <varlistentry><term>Installing from a .zip file</term><listitem><para>
+            Extract the zip file to wherever you want the hsqldb system to
+            reside (the $HSQLDB_HOME).
             </para><screen>
-    rpm -qip /path/to/file.rpm</screen>
-
-Extract the zip file to wherever you want the hsqldb system to
-reside (the $HSQLDB_HOME).
-The contents of production hsqldb archives contain a version-specific
-base directory (like <I>hsqldb_v.1.61</I>) as is customary.  However,
-at least some non-production archives do not contain a base directory
-(i.e., the contents are all <B>relative</B> to an unnamed $HSQLDB_HOME
-base directory).
-So, after you download the archive, do a <I>unzip -v</I>.
-<P>
-<P>
-<P>
-Look through $HSQLDB_HOME/readme.txt and/or $HSQLDB_HOME/index.html.  
-(They may or may not be there, depending on whether you are working 
-with a production release, etc.).
+    cd parent/of/new/hsqldb/home
+    unzip /path/to/file.zip<screen>
+            <para>
+            This will make a subdirectory <filename>hsqldb</filename> and 
+            everything else will be extracted within it.
+        </para>
 The most important file of the hsqldb system is hsqldb.jar, which
 resides at $HSQLDB_HOME/lib/hsqldb.jar.
 Your index.html or readme.txt file should say what version of Java

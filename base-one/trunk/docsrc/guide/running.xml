@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.5 2004/04/21 18:00:58 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.6 2004/04/21 18:02:28 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/21 18:00:58 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/21 18:02:28 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -75,17 +75,17 @@
     java -cp hsqldb.jar org.hsqldb.util.DatabaseManager</screen>
         <itemizedlist>
             <title>Main classes for the Hsqldb tools</title>
-            <listitem><para><literal>
+            <listitem><para><classname>
                 org.hsqldb.util.DatabaseManager
-            </literal></para></listitem> <listitem><para><literal>
+            </classname></para></listitem> <listitem><para><classname>
                 org.hsqldb.util.DatabaseManagerSwing
-            </literal></para></listitem> <listitem><para><literal>
+            </classname></para></listitem> <listitem><para><classname>
                 org.hsqldb.util.Transfer
-            </literal></para></listitem> <listitem><para><literal>
+            </classname></para></listitem> <listitem><para><classname>
                 org.hsqldb.util.QueryTool
-            </literal></para></listitem> <listitem><para><literal>
+            </classname></para></listitem> <listitem><para><classname>
                 org.hsqldb.util.SqlTool
-            </literal></para></listitem>
+            </classname></para></listitem>
         </itemizedlist>
         <para>
             Some tools, such as the Database Manager or SQL Tool, can use 
@@ -224,7 +224,7 @@
                 server) such as Tomcat or Resin provides access to the database.
                 The Servlet Mode cannot be started independently from the 
                 servlet engine.
-                The <literal>hsqlServlet</literal> class, in the HSQLDB jar, 
+                The <filename>hsqlServlet</filename> class, in the HSQLDB jar, 
                 should be installed on the application server to provide the 
                 connection.
                 The database is specified using an application server property.
@@ -245,8 +245,8 @@
                     Full information on how to connect to a server is provided 
                     in the Java Documentation for 
                     <ulink url='../src/org/hsqldb/jdbcConnection.html'>
-                    <literal>jdbcConnection</literal></ulink> (located in the
-                    <filename>/doc/src</filename> directory of HSQLDB 
+                    <classname>jdbcConnection</classname></ulink> (located in 
+                    the <filename>/doc/src</filename> directory of HSQLDB 
                     distribution.
                     A common example is connection to the default port (9001)
                     used for the hsql protocol on the same machine:
@@ -336,7 +336,7 @@
             <para>
                 Refer to Javadoc for
                 <ulink url='../src/org/hsqldb/jdbcConnection.html'>
-                <literal>jdbcConnection</literal></ulink> for more details.
+                <classname>jdbcConnection</classname></ulink> for more details.
             </para>
         </section>
         <section>
@@ -424,25 +424,25 @@
             Once a connection is established to a database in any mode, JDBC 
             methods are used to interact with the database.
             The Javadoc for <ulink url='../src/org/hsqldb/jdbcConnection.html'>
-            <literal>jdbcConnection</literal> </ulink>,
+            <classname>jdbcConnection</classname> </ulink>,
             <ulink url="../src/org/hsqldb/jdbcDriver.html">
-            <literal>jdbcDriver</literal></ulink>,
+            <classname>jdbcDriver</classname></ulink>,
             <ulink url="../src/org/hsqldb/jdbcDatabaseMetaData.html">
-            <literal>jdbcDatabaseMetadata</literal></ulink>,
+            <classname>jdbcDatabaseMetadata</classname></ulink>,
             <ulink url="../src/org/hsqldb/jdbcResultSet.html">
-            <literal>jdbcResultSet</literal> </ulink>,
+            <classname>jdbcResultSet</classname> </ulink>,
             <ulink url="../src/org/hsqldb/jdbcStatement.html">
-            <literal>jdbcStatement</literal></ulink>,
+            <classname>jdbcStatement</classname></ulink>,
             and <ulink url="../src/org/hsqldb/jdbcPreparedStatement.html">
-            <literal>jdbcPreparedStatement</literal></ulink> list all the 
+            <classname>jdbcPreparedStatement</classname></ulink> list all the 
             supported JDBC methods together with information that is specific 
             to HSQLDB.
             JDBC methods are broadly divided into: connection related methods, 
             metadata methods and database access methods.
             The database access methods use SQL commands to perform actions on 
             the database and return the results either as a Java primitive 
-            type or as an instance of the <literal>java.sql.ResultSet</literal>
-            class.
+            type or as an instance of the 
+            <classname>java.sql.ResultSet</classname> class.
         </para> <para>
             You can use Database Manager or other Java database access tools to 
             explore your database and update it with SQL commands.

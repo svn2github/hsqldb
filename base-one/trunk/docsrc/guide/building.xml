@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.2 2004/04/19 21:26:55 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.3 2004/04/20 18:35:56 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='buiding-title'>Building Hsqldb version 1.7.2</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/19 21:26:55 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -279,7 +279,7 @@
         ...</programlisting>
         </example> <para>
             For detailed information on the command line options run
-            <literal>java org.hsqldb.util.CodeSwitcher</literal>.
+            <classname>java org.hsqldb.util.CodeSwitcher</classname>.
             Usage examples can be found in the switchtojdk1*.bat files in the 
             <filename>/build</filename> directory.
         </para>

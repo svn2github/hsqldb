@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.3 2004/04/20 22:42:26 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.4 2004/04/21 18:01:03 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.3 $</edition>
-        <pubdate>$Date: 2004/04/20 22:42:26 $</pubdate>
+        <edition>$Revision: 1.4 $</edition>
+        <pubdate>$Date: 2004/04/21 18:01:03 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -114,8 +114,8 @@
                 If you added the cert to a system trust store, then you are 
                 finished.
                 Otherwise, you will need to set the sytem property
-                <literal>javax.net.ssl.trustStore</literal> every time that you 
-                run your client program.
+                <classname>javax.net.ssl.trustStore</classname> every time that 
+                you run your client program.
                 For example
             </para><example>
         <title>Running a Hsqldb JDBC client with your own trust store</title>
@@ -147,7 +147,7 @@
                 containing a private key</link>.
                 Then set the system property javax.net.ssl.keyStore to the path 
                 to that file, and
-                <literal>javax.net.ssl.keyStorePassword</literal> to the 
+                <classname>javax.net.ssl.keyStorePassword</classname> to the 
                 password of the keystore (and to the private key-- they have 
                 to be the same).
             </para>
@@ -214,7 +214,7 @@
                 Assuming that you have a standard pem-style private key 
                 certificate, here's how you can use
                 <ulink url="http://www.openssl.org">openssl</ulink> and the 
-                program <literal>DERImport</literal> to get it into a JKS 
+                program <classname>DERImport</classname> to get it into a JKS 
                 keystore.
             </para> <para>
                 Because I have spent a lot of time on this document already, I 

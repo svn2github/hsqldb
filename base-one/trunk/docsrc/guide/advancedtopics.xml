@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.5 2004/04/20 22:42:13 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.6 2004/04/21 18:00:45 unsaved Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/20 22:42:13 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/21 18:00:45 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -165,7 +165,7 @@
                     the server and an optional port number.
                     The database to connect to is specified by an alias.
                     This alias is defined in the
-                    <filename>server.properties</filename> to refer to an 
+                    <classname>server.properties</classname> to refer to an 
                     actual database on the file system of the  server or a 
                     transient, in-memory database on the server.
                     The following example lines in <filename>server.properties
@@ -328,7 +328,7 @@
                     <entry><filename>webserver.properties</filename></entry>
                     <entry>
                         the directory where the command to run the
-                        <literal>WebServer</literal> class is issued
+                        <classname>WebServer</classname> class is issued
                     </entry>
                     <entry>
                         settings for running HSQLDB as a database server 
@@ -497,7 +497,7 @@
                 create an instance of Server or Web Server, then assign the 
                 properties in the form of a String and start the Server.
                 An example of this can be find in the
-                <literal>org.hsqldb.test.TestBase</literal> source.
+                <classname>org.hsqldb.test.TestBase</classname> source.
             </para> <note><para>
                 Upgrading: If you have existing custom properties files, change 
                 the values to the new naming convention.
@@ -815,12 +815,12 @@
             All changes have been documented in the Javadoc for the jdbcXXX 
             classes.
         </para> <para>
-            Since 1.7.0, the <literal>ResultSet</literal> interface methods,
+            Since 1.7.0, the <classname>ResultSet</classname> interface methods,
             <literal>getAsciiStream()</literal>,
             <literal>getUnicodeStream()</literal> and
             <literal>getCharacterStream()</literal> are supported to return 
             byte or char values from CHARACTER columns and its variants.
-            Complementary methods in <literal>PreparedStatement</literal>,
+            Complementary methods in <classname>PreparedStatement</classname>,
             <literal>setAsciiStream()</literal>,
             <literal>setUnicodeStream()</literal> and 
             <literal>setCharacterStream()</literal> are also supported.
@@ -903,8 +903,8 @@
             each row. Each MEMORY table row is a Java object that has 2 slots 
             for int or reference variables (10 slots in previous versions).
             It contains an array of objects for the fields in the row.
-            Each field is an object such as <literal>Integer</literal>,
-            <literal>Long</literal>, <literal>String</literal>, etc.
+            Each field is an object such as <classname>Integer</classname>,
+            <classname>Long</classname>, <classname>String</classname>, etc.
             In addition each index on the table adds a node object to the row.
             Each node object has 6 slots for int or reference variables (12 
             slots in previous versions). 
@@ -921,7 +921,8 @@
             In server mode databases, the result set memory is released from 
             the server once the database server has returned the result set.
             In-process databases release the memory when the application 
-            program releases the <literal>java.sql.ResultSet</literal> object. 
+            program releases the <classname>java.sql.ResultSet</classname> 
+            object. 
             Server modes require additional memory for returning result sets,
             as they convert the full result set into an array of bytes which is 
             then transmitted to the client.
