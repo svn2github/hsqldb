@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.5 2002/10/29 16:42:17 unsaved Exp $
+$Id: readme.txt,v 1.6 2002/11/10 21:50:34 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -116,8 +116,8 @@ have to change the port if your $OWNER is not root (see the
 configuration section above).
 
     mkdir /usr/hsqldb/data/db2
-    print server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
     chown -R hsqldb:hsqldb /usr/hsqldb/data/db2
+    print server.port=9009 > /usr/hsqldb/data/db2/webserver.properties
     /etc/init.d/hsqldb start
 
 
