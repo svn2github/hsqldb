@@ -39,8 +39,9 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
+import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.25 2004/05/14 15:19:44 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.26 2004/05/27 15:49:20 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +52,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.25 $
+ * @version $Revision: 1.26 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -181,10 +182,12 @@ public class SqlTool {
         + "    --list                   List urlids in the rcfile\n"
         + "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
         + "    --debug                  Print Debug info to stderr\n"
+        + "    --noauto                 Do not execute auto.sql from home dir\n"
         + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
         + "                             where \"SQL;\" consists of SQL command(s) like\n"
         + "                             in an SQL file, and may contain line breaks\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
+        + "    --setvar NAME1=val1[,NAME2=val2...]   PL variables\n"
         + "    --driver a.b.c.Driver*   JDBC driver class ["
         + DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
@@ -259,12 +262,14 @@ public class SqlTool {
         String  sqlText     = null;
         String  driver      = null;
         String  targetDb    = null;
+        String  varSettings = null;
         boolean debug       = false;
         File[]  scriptFiles = null;
         int     i           = -1;
         boolean listMode    = false;
         boolean interactive = false;
         boolean noinput     = false;
+        boolean noauto      = false;
 
         noexit = System.getProperty("sqltool.noexit") != null;
         try {
@@ -288,6 +293,13 @@ public class SqlTool {
                     rcFile = arg[i];
                     continue;
                 }
+                if (arg[i].substring(2).equals("setvar")) {
+                    if (++i == arg.length) {
+                        throw bcl;
+                    }
+                    varSettings = arg[i];
+                    continue;
+                }
                 if (arg[i].substring(2).equals("sql")) {
                     if (++i == arg.length) {
                         throw bcl;
@@ -297,6 +309,10 @@ public class SqlTool {
                 }
                 if (arg[i].substring(2).equals("debug")) {
                     debug = true;
+                    continue;
+                }
+                if (arg[i].substring(2).equals("noauto")) {
+                    noauto = true;
                     continue;
                 }
                 if (arg[i].substring(2).equals("noinput")) {
@@ -394,6 +410,13 @@ public class SqlTool {
         }
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
+        File autoFile = null;
+        if (!noauto) {
+            autoFile = new File(System.getProperty("user.home") + "/auto.sql");
+            if ((!autoFile.isFile()) || !autoFile.canRead()) {
+                autoFile = null;
+            }
+        }
         if (scriptFiles == null) {
             // I.e., if no SQL files given on command-line.
             // Input file list is either nothing or {null} to read stdin.
@@ -401,15 +424,40 @@ public class SqlTool {
                                    : singleNullFileArray);
         }
         SqlFile[] sqlFiles = new SqlFile[scriptFiles.length
-                + ((tmpFile == null) ? 0 : 1)];
+                + ((tmpFile == null) ? 0 : 1)
+                + ((autoFile == null) ? 0 : 1)];
+        HashMap userVars = new HashMap();
+        if (varSettings != null) {
+            int equals;
+            String curSetting, var, val;
+            StringTokenizer allvars = new StringTokenizer(varSettings, ",");
+            while (allvars.hasMoreTokens()) {
+                curSetting = allvars.nextToken().trim();
+                equals = curSetting.indexOf('=');
+                if (equals < 1) {
+                    exitMain(24, "Var settings not of format NAME=var[,...]");
+                    return;
+                }
+                var = curSetting.substring(0, equals).trim();
+                val = curSetting.substring(equals + 1).trim();
+                if (var.length() < 1 || val.length() < 1) {
+                    exitMain(24, "Var settings not of format NAME=var[,...]");
+                    return;
+                }
+                userVars.put(var, val);
+            }
+        }
         try {
             int fileIndex = 0;
+            if (autoFile != null) {
+                sqlFiles[fileIndex++] = new SqlFile(autoFile, false, userVars);
+            }
             if (tmpFile != null) {
-                sqlFiles[fileIndex++] = new SqlFile(tmpFile, false);
+                sqlFiles[fileIndex++] = new SqlFile(tmpFile, false, userVars);
             }
             for (int j = 0; j < scriptFiles.length; j++) {
                 sqlFiles[fileIndex++] = new SqlFile(scriptFiles[j],
-                                                    interactive);
+                                                    interactive, userVars);
             }
         } catch (IOException ioe) {
             try {
@@ -432,14 +480,15 @@ public class SqlTool {
             retval = 2;
         } catch (SQLException se) {
             retval = 1;
-        }
-        try {
-            conn.close();
-        } catch (Exception e) {}
-        if (tmpFile != null &&!tmpFile.delete()) {
-            System.err.println(
-                "Error occurred while trying to remove temp file '" + tmpFile
-                + "'");
+        } finally {
+            try {
+                conn.close();
+            } catch (Exception e) {}
+            if (tmpFile != null &&!tmpFile.delete()) {
+                System.err.println(
+                    "Error occurred while trying to remove temp file '" 
+                    + tmpFile + "'");
+            }
         }
         exitMain(retval);
         return;
