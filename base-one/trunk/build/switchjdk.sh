@@ -1,7 +1,7 @@
 #!/bin/sh +u
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
-# Send any questions to fchoong@user.sourceforge.net
+# Post questions to the appropriate hsqldb forum at sourceforge.net
 # -----------------------------------------------------
 
 # the value set here will override the value passed by $JAVA_HOME
@@ -123,5 +123,5 @@ cd $hsrcdir || Failout "Failed to cd to '$dbhome/src/org/hsqldb'"
 # may consist of multiple argument tokens.
 # This script set those values above, so you don't have to worry about
 # spaces inside the individual tokens (there aren't any).
-"$jdkhome/bin/java" -classpath "$dbhome/classes:$cp"  \
+exec "$jdkhome/bin/java" -classpath "$dbhome/classes:$cp"  \
  org.hsqldb.util.CodeSwitcher $TARGET_SRCFILES $CS_LABELS
