@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.8 2004/05/30 17:38:11 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.9 2004/05/31 00:38:36 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.8 $</edition>
-    <pubdate>$Date: 2004/05/30 17:38:11 $</pubdate>
+    <edition>$Revision: 1.9 $</edition>
+    <pubdate>$Date: 2004/05/31 00:38:36 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -739,13 +739,11 @@ ON { table | CLASS "package.class" } TO { username | PUBLIC };</programlisting>
         <title id="insert-title">INSERT</title>
         <programlisting>
 INSERT INTO table [( column [,...] )]
-{ VALUES(<link linkend='expression-section'>Expression</link> [,...]) | <link linkend='select-section'>SelectStatement</link></programlisting>
+{ VALUES(<link linkend='expression-section'>Expression</link> [,...]) | <link linkend='select-section'>SelectStatement</link>};</programlisting>
         <para>
             Adds one or more new rows of data into a table. 
         </para>
     </section>
-};
-
     <section id="revoke-section">
         <title id="revoke-title">REVOKE</title>
         <programlisting>
