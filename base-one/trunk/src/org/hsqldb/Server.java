@@ -793,7 +793,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         checkRunning(false);
 
-        if (path == null || path.trim().length() == 0) {
+        if (org.hsqldb.lib.StringUtil.isEmpty(path)) {
             path = getDefaultPropertiesPath();
         } else {
             path = (new File(path)).getAbsolutePath();
@@ -1807,7 +1807,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         address = p.getProperty(ServerConstants.SC_KEY_ADDRESS);
 
-        if (address == null || address.trim().length() == 0) {
+        if (org.hsqldb.lib.StringUtil.isEmpty(address)) {
             p.setProperty(ServerConstants.SC_KEY_ADDRESS,
                           ServerConstants.SC_DEFAULT_ADDRESS);
         }

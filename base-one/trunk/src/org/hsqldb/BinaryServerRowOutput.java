@@ -249,6 +249,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
             if (o != null) {
                 switch (type[i]) {
 
+                    case Types.NULL :
                     case Types.CHAR :
                     case Types.VARCHAR :
                     case Types.VARCHAR_IGNORECASE :

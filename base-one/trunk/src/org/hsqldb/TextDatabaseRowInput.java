@@ -316,7 +316,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             return null;
         }
 
-        return Boolean.valueOf(s);
+        return org.hsqldb.lib.BooleanConverter.getBoolean(s);
     }
 
     protected Object readOther() throws IOException, HsqlException {
@@ -330,7 +330,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         data = Column.hexToByteArray(s);
 
-        return new JavaObject(data,true);
+        return new JavaObject(data, true);
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {

@@ -170,7 +170,8 @@ public class HsqlProperties {
         String value = stringProps.getProperty(key, defaultValue ? "true"
                                                                  : "false");
 
-        return Boolean.valueOf(value).booleanValue();
+        return value == null ? false
+                             : value.toLowerCase().equals("true");
     }
 
     public void removeProperty(String key) {
@@ -208,22 +209,17 @@ public class HsqlProperties {
     public static boolean checkFileExists(String fileName, boolean resource,
                                           Class cla) {
 
-        String propFilename;
-
         if (fileName == null || fileName.length() == 0) {
             return false;
         }
 
-        propFilename = fileName + ".properties";
+        String propFilename = fileName + ".properties";
 
         return resource ? null != cla.getResource(propFilename)
                         : FileUtil.exists(propFilename);
     }
 
     public boolean load() throws Exception {
-
-        InputStream fis;
-        String      propsFilename;
 
         if (!checkFileExists()) {
             return false;
@@ -234,8 +230,8 @@ public class HsqlProperties {
                 "properties name is null or empty");
         }
 
-        fis           = null;
-        propsFilename = fileName + ".properties";
+        InputStream fis           = null;
+        String      propsFilename = fileName + ".properties";
 
         try {
             fis = resource ? getClass().getResourceAsStream(propsFilename)

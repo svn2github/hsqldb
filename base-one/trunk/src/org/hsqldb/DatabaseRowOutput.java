@@ -188,6 +188,7 @@ implements DatabaseRowOutputInterface {
 
             switch (t) {
 
+                case Types.NULL :
                 case Types.CHAR :
                 case Types.VARCHAR :
                 case Types.VARCHAR_IGNORECASE :

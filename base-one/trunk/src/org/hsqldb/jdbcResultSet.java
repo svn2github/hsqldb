@@ -1810,7 +1810,7 @@ public class jdbcResultSet implements ResultSet {
             }
         }
 
-        throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND);
+        throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND, columnName);
     }
 
     //--------------------------JDBC 2.0-----------------------------------

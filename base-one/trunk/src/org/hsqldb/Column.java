@@ -73,6 +73,7 @@ import java.io.ObjectOutputStream;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.Collator;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StringConverter;
@@ -138,9 +139,6 @@ class Column {
     private boolean isPrimaryKey;
     String          defaultString;
 
-    // helper values
-    private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
-
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
     static final int numericTypes[] = {
         Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
@@ -151,9 +149,13 @@ class Column {
         Types.LONGVARCHAR, Types.CHAR, Types.VARCHAR, Types.DATE, Types.TIME,
         Types.TIMESTAMP, Types.OTHER
     };
-    static final int[][] typesArray = {
+    static final int[][]    typesArray = {
         Column.numericTypes, Column.otherTypes
     };
+    static final BigInteger MAX_LONG   = BigInteger.valueOf(Long.MAX_VALUE);
+    static final BigInteger MIN_LONG   = BigInteger.valueOf(Long.MIN_VALUE);
+    static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
+    static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 
@@ -299,13 +301,14 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad + bd));
 
 //                return new Double(ad + bd);
+            }
             case Types.VARCHAR :
             case Types.CHAR :
             case Types.LONGVARCHAR :
@@ -313,26 +316,26 @@ class Column {
                 return (String) a + (String) b;
 
             case Types.NUMERIC :
-            case Types.DECIMAL :
+            case Types.DECIMAL : {
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.add(bbd);
-
+            }
             case Types.TINYINT :
             case Types.SMALLINT :
-            case Types.INTEGER :
+            case Types.INTEGER : {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
                 return ValuePool.getInt(ai + bi);
-
-            case Types.BIGINT :
+            }
+            case Types.BIGINT : {
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return ValuePool.getLong(longa + longb);
-
+            }
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
         }
@@ -378,12 +381,13 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = -((Number) a).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad));
 
 //                return new Double(-((Number) a).doubleValue());
+            }
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).negate();
@@ -430,33 +434,33 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad * bd));
-
+            }
             case Types.NUMERIC :
-            case Types.DECIMAL :
+            case Types.DECIMAL : {
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.multiply(bbd);
-
+            }
             case Types.TINYINT :
             case Types.SMALLINT :
-            case Types.INTEGER :
+            case Types.INTEGER : {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
                 return ValuePool.getInt(ai * bi);
-
-            case Types.BIGINT :
+            }
+            case Types.BIGINT : {
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return ValuePool.getLong(longa * longb);
-
+            }
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
         }
@@ -484,14 +488,14 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad / bd));
-
+            }
             case Types.NUMERIC :
-            case Types.DECIMAL :
+            case Types.DECIMAL : {
                 BigDecimal abd   = (BigDecimal) a;
                 BigDecimal bbd   = (BigDecimal) b;
                 int        scale = abd.scale() > bbd.scale() ? abd.scale()
@@ -500,24 +504,24 @@ class Column {
                 return (bbd.signum() == 0) ? null
                                            : abd.divide(bbd, scale,
                                            BigDecimal.ROUND_HALF_DOWN);
-
+            }
             case Types.TINYINT :
             case Types.SMALLINT :
-            case Types.INTEGER :
+            case Types.INTEGER : {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
                 Trace.check(bi != 0, Trace.DIVISION_BY_ZERO);
 
                 return ValuePool.getInt(ai / bi);
-
-            case Types.BIGINT :
+            }
+            case Types.BIGINT : {
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return (longb == 0) ? null
                                     : ValuePool.getLong(longa / longb);
-
+            }
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
         }
@@ -546,33 +550,33 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad - bd));
-
+            }
             case Types.NUMERIC :
-            case Types.DECIMAL :
+            case Types.DECIMAL : {
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.subtract(bbd);
-
+            }
             case Types.TINYINT :
             case Types.SMALLINT :
-            case Types.INTEGER :
+            case Types.INTEGER : {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
                 return ValuePool.getInt(ai - bi);
-
-            case Types.BIGINT :
+            }
+            case Types.BIGINT : {
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return ValuePool.getLong(longa - longb);
-
+            }
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
         }
@@ -604,13 +608,14 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad + bd));
 
 //                return new Double(((Number) a).doubleValue() + ((Number) b).doubleValue());
+            }
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).add((BigDecimal) b);
@@ -654,13 +659,14 @@ class Column {
 
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Double) a).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad
                         / count));
 
 //                return new Double(((Double) a).doubleValue() / count);
+            }
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).divide(new BigDecimal(count),
@@ -810,32 +816,32 @@ class Column {
 
             case Types.TINYINT :
             case Types.SMALLINT :
-            case Types.INTEGER :
+            case Types.INTEGER : {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
                 return (ai > bi) ? 1
                                  : (bi > ai ? -1
                                             : 0);
-
-            case Types.BIGINT :
+            }
+            case Types.BIGINT : {
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return (longa > longb) ? 1
                                        : (longb > longa ? -1
                                                         : 0);
-
+            }
             case Types.REAL :
             case Types.FLOAT :
-            case Types.DOUBLE :
+            case Types.DOUBLE : {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
                 return (ad > bd) ? 1
                                  : (bd > ad ? -1
                                             : 0);
-
+            }
             case Types.NUMERIC :
             case Types.DECIMAL :
                 i = ((BigDecimal) a).compareTo((BigDecimal) b);
@@ -865,14 +871,14 @@ class Column {
                 } else {
                     return 0;
                 }
-            case Types.BIT :
+            case Types.BIT : {
                 boolean boola = ((Boolean) a).booleanValue();
                 boolean boolb = ((Boolean) b).booleanValue();
 
                 return (boola == boolb) ? 0
                                         : (boolb ? -1
                                                  : 1);
-
+            }
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
@@ -1084,34 +1090,32 @@ class Column {
 
                 case Types.BIT :
                     if (o instanceof java.lang.Boolean) {
-                        return o;
+                        return (Boolean) o;
                     }
 
                     if (o instanceof java.lang.String) {
-                        return new Boolean((String) o);
+                        return org.hsqldb.lib.BooleanConverter.getBoolean(
+                            (String) o);
                     }
 
-                    if (o instanceof Integer || o instanceof Long) {
-                        boolean bit = ((Number) o).longValue() == 0L ? false
-                                                                     : true;
+                    if (o instanceof Integer) {
+                        return org.hsqldb.lib.BooleanConverter.getBoolean(
+                            (Integer) o);
+                    }
 
-                        return new Boolean(bit);
+                    if (o instanceof Long) {
+                        return org.hsqldb.lib.BooleanConverter.getBoolean(
+                            (Long) o);
                     }
 
                     if (o instanceof java.lang.Double) {
-                        boolean bit = ((Double) o).doubleValue() == 0.0
-                                      ? false
-                                      : true;
-
-                        return new Boolean(bit);
+                        return org.hsqldb.lib.BooleanConverter.getBoolean(
+                            (Double) o);
                     }
 
                     if (o instanceof java.math.BigDecimal) {
-                        boolean bit = ((BigDecimal) o).compareTo(BIGDECIMAL_0)
-                                      == 0 ? false
-                                           : true;
-
-                        return new Boolean(bit);
+                        return org.hsqldb.lib.BooleanConverter.getBoolean(
+                            (java.math.BigDecimal) o);
                     }
                     break;
 
@@ -1252,7 +1256,7 @@ class Column {
                 return new BigDecimal(s.trim());
 
             case Types.BIT :
-                return new Boolean(s);
+                return org.hsqldb.lib.BooleanConverter.getBoolean(s);
 
             case Types.BINARY :
             case Types.VARBINARY :
@@ -1376,11 +1380,9 @@ class Column {
         int val = ((Number) o).intValue();
 
         if (o instanceof BigDecimal) {
-            BigDecimal bd     = (BigDecimal) o;
-            int        signum = bd.signum();
-            BigDecimal bo     = new BigDecimal(val + signum);
+            BigInteger bi = ((BigDecimal) o).toBigInteger();
 
-            if (bo.compareTo(bd) != signum) {
+            if (bi.compareTo(MAX_INT) > 0 || bi.compareTo(MIN_INT) < 0) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
@@ -1390,7 +1392,8 @@ class Column {
         if (o instanceof Double) {
             double d = ((Double) o).doubleValue();
 
-            if (Double.isNaN(d) || Math.abs(d - val) > 0) {
+            if (Double.isNaN(d) || d >= (double) Integer.MAX_VALUE + 1
+                    || d <= (double) Integer.MIN_VALUE - 1) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
@@ -1405,11 +1408,9 @@ class Column {
         long val = ((Number) o).longValue();
 
         if (o instanceof BigDecimal) {
-            BigDecimal bd     = (BigDecimal) o;
-            int        signum = bd.signum();
-            BigDecimal bo     = new BigDecimal(val + signum);
+            BigInteger bi = ((BigDecimal) o).toBigInteger();
 
-            if (bo.compareTo(bd) != signum) {
+            if (bi.compareTo(MAX_LONG) > 0 || bi.compareTo(MIN_LONG) < 0) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 
@@ -1419,7 +1420,8 @@ class Column {
         if (o instanceof Double) {
             double d = ((Double) o).doubleValue();
 
-            if (Double.isNaN(d) || Math.abs(d - (double) val) > 0) {
+            if (Double.isNaN(d) || d >= (double) Long.MAX_VALUE + 1
+                    || d <= (double) Long.MIN_VALUE - 1) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
 

@@ -68,7 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
@@ -92,7 +92,7 @@ class Select {
     boolean          isDistinctSelect;
     boolean          isAggregated;
     private boolean  isGrouped;
-    private HashMap  groupColumnNames;
+    private HashSet  groupColumnNames;
     private int      aggregateCount;
     TableFilter      tFilter[];
     Expression       eCondition;           // null means no condition
@@ -260,7 +260,7 @@ class Select {
 
         if (iGroupLen > 0) {                     // has been set in Parser
             isGrouped        = true;
-            groupColumnNames = new HashMap();    // TODO size !!
+            groupColumnNames = new HashSet();
 
             for (int i = groupByStart; i < groupByEnd; i++) {
                 eColumn[i].collectColumnName(groupColumnNames);
@@ -411,17 +411,19 @@ class Select {
     private void checkAggregateOrGroupByColumns(int start,
             int end) throws HsqlException {
 
-        HsqlArrayList colExps = new HsqlArrayList();
+        if (start < end) {
+            HsqlArrayList colExps = new HsqlArrayList();
 
-        for (int i = start; i < end; i++) {
-            eColumn[i].collectInGroupByExpressions(colExps);
-        }
+            for (int i = start; i < end; i++) {
+                eColumn[i].collectInGroupByExpressions(colExps);
+            }
 
-        for (int i = 0, size = colExps.size(); i < size; i++) {
-            Expression exp = (Expression) colExps.get(i);
+            for (int i = 0, size = colExps.size(); i < size; i++) {
+                Expression exp = (Expression) colExps.get(i);
 
-            Trace.check(inAggregateOrGroupByClause(exp),
-                        Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, exp);
+                Trace.check(inAggregateOrGroupByClause(exp),
+                            Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, exp);
+            }
         }
     }
 
@@ -470,9 +472,9 @@ class Select {
      * Check if all the column names used in the given expression is defined
      * in the given defined column names.
      */
-    boolean allColumnsAreDefinedIn(Expression exp, HashMap definedColumns) {
+    boolean allColumnsAreDefinedIn(Expression exp, HashSet definedColumns) {
 
-        HashMap colNames = new HashMap();    // TODO size !!
+        HashSet colNames = new HashSet();
 
         exp.collectAllColumnNames(colNames);
 
@@ -480,10 +482,10 @@ class Select {
             return false;
         }
 
-        Iterator i = colNames.keySet().iterator();
+        Iterator i = colNames.iterator();
 
         while (i.hasNext()) {
-            if (!definedColumns.containsValue(i.next())) {
+            if (!definedColumns.contains(i.next())) {
                 return false;
             }
         }
@@ -553,7 +555,7 @@ class Select {
             }
         }
 
-        if ((isAggregated) && (gResult.results.size() == 0)) {
+        if (isAggregated && !isGrouped && gResult.results.size() == 0) {
             gResult.addRow(new Object[len]);
         }
 

@@ -70,6 +70,7 @@ package org.hsqldb;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -681,10 +682,10 @@ class Expression {
      * Collect column name used in this expression.
      * @return if a column name is used in this expression
      */
-    boolean collectColumnName(HashMap columnNames) {
+    boolean collectColumnName(HashSet columnNames) {
 
         if (iType == COLUMN) {
-            columnNames.put(sColumn, sColumn);
+            columnNames.add(sColumn);
         }
 
         return iType == COLUMN;
@@ -694,7 +695,7 @@ class Expression {
      * Collect all column names used in this expression or any of nested
      * expression.
      */
-    void collectAllColumnNames(HashMap columnNames) {
+    void collectAllColumnNames(HashSet columnNames) {
 
         if (!collectColumnName(columnNames)) {
             if (eArg != null) {
@@ -1086,8 +1087,8 @@ class Expression {
                 // expressions where possible
                 // if (eArg.iType = VALUE && !eArg.isParam) {
                 //      oData = getValue(iDataType)
-                //      eArg = null;  
-                //      iType = VALUE; 
+                //      eArg = null;
+                //      iType = VALUE;
                 // }
                 break;
 
@@ -1111,10 +1112,10 @@ class Expression {
                         eArg2.iDataType, iType);
                 /*
                  if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
-                    oData = getValue(iDataType);
-                    eArg = null;
-                    eArg2 = null;
-                    iType = VALUE;
+                        oData = getValue(iDataType);
+                        eArg = null;
+                        eArg2 = null;
+                        iType = VALUE;
                  *}
                  */
                 break;
@@ -1131,10 +1132,10 @@ class Expression {
                 }
                 /*
                  if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
-                    oData = getValue(iDataType);
-                    eArg = null;
-                    eArg2 = null;
-                    iType = VALUE;
+                        oData = getValue(iDataType);
+                        eArg = null;
+                        eArg2 = null;
+                        iType = VALUE;
                  *}
                  */
                 break;
@@ -1163,10 +1164,10 @@ class Expression {
                 // also calculate whether TRUE == TRUE, FALSE == TRUE, etc.
                 /*
                  if (eArg.iType == VALUE  && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
-                    oData = test();
-                    eArg = null;
-                    eArg2 = null;
-                    iType = Boolean.TRUE == oData ? TRUE : VALUE;
+                        oData = test();
+                        eArg = null;
+                        eArg2 = null;
+                        iType = Boolean.TRUE == oData ? TRUE : VALUE;
                  *}
                  */
                 break;
@@ -1186,10 +1187,10 @@ class Expression {
                 iDataType = Types.BIT;
                 /*
                  if (eArg.iType == VALUE && !eArg.isParam && eArg2.iType == VALUE && !eArg2.isParam) {
-                    oData = test();
-                    eArg = null;
-                    eArg2 = null;
-                    iType = VALUE;
+                        oData = test();
+                        eArg = null;
+                        eArg2 = null;
+                        iType = VALUE;
                  *}
                  */
 
@@ -1232,6 +1233,7 @@ class Expression {
                 iDataType = Types.BIT;
                 break;
 
+            /** @todo fredt - set the correct return type */
             case COUNT :
                 Trace.check(
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
@@ -1250,7 +1252,7 @@ class Expression {
                     "it is ambiguous for a parameter marker to be the "
                     + "argument of a set-function-reference");
 
-                iDataType = eArg.iDataType;
+                iDataType = SetFunction.getType(iType, eArg.iDataType);
                 break;
 
             case CONVERT :
@@ -1363,22 +1365,22 @@ class Expression {
                     //    CASEWHEN must have the same data type is not that bad
                     //    an idea.  Thoughts?
                     /* fredt -
-                          ... WHERE ? = CASEWHEN(condition, expr1, expr2)
-                          this must require both expr1 and expr2 to have the
-                          same type as otherwise the context is ambiguous
+                              ... WHERE ? = CASEWHEN(condition, expr1, expr2)
+                              this must require both expr1 and expr2 to have the
+                              same type as otherwise the context is ambiguous
 
-                          UPDATE T SET C1 = CASEWHEN(condition, 'hello', 1)
-                          type of the expression must be the the same as C1 so
-                          it should be resolved in the context of
-                          C1 = expression
+                              UPDATE T SET C1 = CASEWHEN(condition, 'hello', 1)
+                              type of the expression must be the the same as C1 so
+                              it should be resolved in the context of
+                              C1 = expression
 
-                          UPDATE T SET C1 = CASEWHEN(c, '2', CAST(1 AS VARCHAR))
-                          this is the form that should be accepted if instead
-                          of '2' there was a ?
+                              UPDATE T SET C1 = CASEWHEN(c, '2', CAST(1 AS VARCHAR))
+                              this is the form that should be accepted if instead
+                              of '2' there was a ?
 
-                         in normal statements, there is no need to require both
-                         arguments to CASEWHEN to have the same type, but in
-                         parameterized statements they should
+                             in normal statements, there is no need to require both
+                             arguments to CASEWHEN to have the same type, but in
+                             parameterized statements they should
                     */
 
                     //
@@ -1623,6 +1625,9 @@ class Expression {
         return Column.convertObject(o, type);
     }
 
+/** @todo fredt - should be rewritten to handle only set function operation,
+     *  with other operations handled in the normal way */
+
     /**
      * Method declaration
      *
@@ -1637,6 +1642,7 @@ class Expression {
             return currValue;
         }
 
+        // handles results of aggregates plus NEGATE and CONVERT
         switch (iType) {
 
             case COUNT :
@@ -1644,25 +1650,17 @@ class Expression {
                     return INTEGER_0;
                 }
 
-                return ((AggregatingValue) currValue).currentValue;
+                return ((SetFunction) currValue).getValue();
 
             case MAX :
             case MIN :
             case SUM :
-                if (currValue == null) {
-                    return null;
-                }
-
-                return ((AggregatingValue) currValue).currentValue;
-
             case AVG :
                 if (currValue == null) {
                     return null;
                 }
 
-                return Column.avg(
-                    ((AggregatingValue) currValue).currentValue, iDataType,
-                    ((AggregatingValue) currValue).acceptedValueCount);
+                return ((SetFunction) currValue).getValue();
 
             case NEGATE :
                 return Column.negate(eArg.getAggregatedValue(currValue),
@@ -1673,6 +1671,7 @@ class Expression {
                     eArg.getAggregatedValue(currValue), iDataType);
         }
 
+        // handle expressions
         Object leftValue  = null,
                rightValue = null;
 
@@ -1702,6 +1701,7 @@ class Expression {
                 break;
         }
 
+        // handle other operations
         switch (iType) {
 
 // tony_lai@users having >>>
@@ -1711,15 +1711,20 @@ class Expression {
             case NOT :
                 Trace.doAssert(eArg2 == null, "Expression.test");
 
-                return new Boolean(!((Boolean) leftValue).booleanValue());
+                return ((Boolean) leftValue).booleanValue() ? Boolean.FALSE
+                                                            : Boolean.TRUE;
 
             case AND :
-                return new Boolean(((Boolean) leftValue).booleanValue()
-                                   && ((Boolean) rightValue).booleanValue());
+                return ((Boolean) leftValue).booleanValue()
+                       && ((Boolean) rightValue).booleanValue() ? Boolean.TRUE
+                                                                : Boolean
+                                                                .FALSE;
 
             case OR :
-                return new Boolean(((Boolean) leftValue).booleanValue()
-                                   || ((Boolean) rightValue).booleanValue());
+                return ((Boolean) leftValue).booleanValue()
+                       || ((Boolean) rightValue).booleanValue() ? Boolean.TRUE
+                                                                : Boolean
+                                                                .FALSE;
 
             case LIKE :
 
@@ -1747,24 +1752,9 @@ class Expression {
                                        : Boolean.FALSE;
 
 // tony_lai@users having <<<
-            case ADD :
-                return Column.add(leftValue, rightValue, iDataType);
-
-            case SUBTRACT :
-                return Column.subtract(leftValue, rightValue, iDataType);
-
-            case MULTIPLY :
-                return Column.multiply(leftValue, rightValue, iDataType);
-
-            case DIVIDE :
-                return Column.divide(leftValue, rightValue, iDataType);
-
-            case CONCAT :
-                return Column.concat(leftValue, rightValue);
-
-// tony_lai@users having >>>
         }
 
+        // handle comparisons
         int valueType = eArg.isColumn() ? eArg.iDataType
                                         : eArg2.iDataType;
         int result    = Column.compare(leftValue, rightValue, valueType);
@@ -1794,53 +1784,39 @@ class Expression {
             case NOT_EQUAL :
                 return result != 0 ? Boolean.TRUE
                                    : Boolean.FALSE;
+        }
+
+        // handle arithmetic and concat operations
+        if (leftValue != null) {
+            leftValue = eArg.getValue(iDataType);
+        }
+
+        if (rightValue != null) {
+            rightValue = eArg.getValue(iDataType);
+        }
+
+        switch (iType) {
+
+            case ADD :
+                return Column.add(leftValue, rightValue, iDataType);
+
+            case SUBTRACT :
+                return Column.subtract(leftValue, rightValue, iDataType);
+
+            case MULTIPLY :
+                return Column.multiply(leftValue, rightValue, iDataType);
+
+            case DIVIDE :
+                return Column.divide(leftValue, rightValue, iDataType);
+
+            case CONCAT :
+                return Column.concat(leftValue, rightValue);
 
             default :
                 Trace.check(false, Trace.NEED_AGGREGATE, this.toString());
 
                 return null;    // Not reachable.
         }
-
-// tony_lai@users having <<<
-    }
-
-    Object getSelfAggregatingValue(Object currValue) throws HsqlException {
-
-        AggregatingValue aggValue =
-            AggregatingValue.getAggregatingValue(currValue,
-                isDistinctAggregate);
-        Object newValue = eArg.iType == ASTERIX ? INTEGER_1
-                                                : eArg.getValue();
-
-        if (aggValue.isValueAcceptable(newValue)) {
-            switch (iType) {
-
-                case COUNT :
-                    aggValue.currentValue = Column.sum(aggValue.currentValue,
-                                                       newValue == null
-                                                       ? INTEGER_0
-                                                       : INTEGER_1, iDataType);
-                    break;
-
-                case AVG :
-                case SUM :
-                    aggValue.currentValue = Column.sum(aggValue.currentValue,
-                                                       newValue, iDataType);
-                    break;
-
-                case MAX :
-                    aggValue.currentValue = Column.max(aggValue.currentValue,
-                                                       newValue, iDataType);
-                    break;
-
-                case MIN :
-                    aggValue.currentValue = Column.min(aggValue.currentValue,
-                                                       newValue, iDataType);
-                    break;
-            }
-        }
-
-        return aggValue;
     }
 
     /**
@@ -1858,7 +1834,18 @@ class Expression {
         }
 
         if (aggregateSpec == AGGREGATE_SELF) {
-            return getSelfAggregatingValue(currValue);
+            if (currValue == null) {
+                currValue = new SetFunction(iType, iDataType,
+                                            isDistinctAggregate);
+            }
+
+            Object newValue = eArg.iType == ASTERIX ? INTEGER_1
+                                                    : eArg.getValue();
+
+            ((SetFunction) currValue).add(newValue);
+
+//            return getSelfAggregatingValue((AggregatingValue) currValue);
+            return currValue;
         }
 
         Object leftCurrValue  = currValue;

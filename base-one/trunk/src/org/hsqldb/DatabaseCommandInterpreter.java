@@ -169,7 +169,7 @@ class DatabaseCommandInterpreter {
                     break;
                 }
 
-                 if (session.getScripting()) {
+                if (session.getScripting()) {
                     logger.writeToLog(session, tokenizer.getLastPart());
                 }
             }
@@ -786,7 +786,7 @@ class DatabaseCommandInterpreter {
         }
 
         // convert the length
-        if (sLen.trim().length() > 0) {
+        if (!org.hsqldb.lib.StringUtil.isEmpty(sLen)) {
             try {
                 length = Integer.parseInt(sLen.trim());
             } catch (NumberFormatException ne) {

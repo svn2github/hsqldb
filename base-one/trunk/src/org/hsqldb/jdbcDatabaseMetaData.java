@@ -4984,7 +4984,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // } else {
         //    analyze(conn, catalog, schema, table)
         // }
-        Boolean nu = (unique) ? Boolean.valueOf("false")
+        Boolean nu = (unique) ? Boolean.FALSE
                               : null;
         StringBuffer select =
             toQueryPrefix("SYSTEM_INDEXINFO").append(and("TABLE_CAT", "=",

@@ -97,10 +97,20 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
 
 /**
- *  Class declaration
+ *  This class is responsible for parsing non-DDL statements.
  *
  *@version    1.7.0
  */
+
+/** @todo fredt - implement numeric value functions (SQL92 6.6)
+ *
+ * POSITION(string IN string)
+ * {CHAR_LENGTH | CHARACTER_LENGTH | OCTET_LENGTH | BIT_LENGTH} (string)
+ * EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
+ *
+ *
+ *  */
+
 class Parser {
 
     private Database  database;

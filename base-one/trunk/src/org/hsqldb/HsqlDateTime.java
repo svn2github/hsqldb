@@ -261,16 +261,16 @@ class HsqlDateTime {
     }
 
 /*
-    // experimental stuff
-    static SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
+        // experimental stuff
+        static SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
-    static {
-        sdfd.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-    }
+        static {
+                sdfd.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
+        }
 
-    static String getGMTDateString(Date x, Calendar cal) throws Exception {
-        return sdfd.format(x);
-    }
+        static String getGMTDateString(Date x, Calendar cal) throws Exception {
+                return sdfd.format(x);
+        }
 */
 
     /**
@@ -308,13 +308,12 @@ class HsqlDateTime {
      */
     synchronized private static void resetToday() {
 
-        long now = System.currentTimeMillis();
-
+        //long now = System.currentTimeMillis();
 // fredt - this needs tests and review to ensure core time zone is always GMT
 //        Calendar c   = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
         Calendar c = new GregorianCalendar();
 
-        c.setTime(new Date(now));
+        //c.setTime(new Date(now));
         resetToDate(c);
 
         today = new Date(c.getTime().getTime());

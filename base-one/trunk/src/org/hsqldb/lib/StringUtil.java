@@ -182,4 +182,25 @@ public class StringUtil {
         b.append(s2);
         b.append(terminator);
     }
+
+/**
+ * Checks if text is empty (characters <= space)
+ * Creation date: (19/07/03 1:10:12 PM)
+ * @author: Nitin Chauhan
+ * @return boolean true if text is null or empty, false otherwise
+ * @param s java.lang.String
+ */
+    public static boolean isEmpty(String s) {
+
+        int i = s == null ? 0
+                          : s.length();
+
+        while (i > 0) {
+            if (s.charAt(--i) > ' ') {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

@@ -76,15 +76,16 @@ import org.hsqldb.lib.HashSet;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private static HashSet  protectedProperties      = new HashSet();
-    private static String[] protectedPropertiesNames = {
-        "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-        "hsqldb.original_version", "hsqldb.script_format",
-        "hsqldb.files_readonly", "hsqldb.files_in_jar", "readonly",
-        "modified", "sql.compare_in_locale"
-    };
+    private static HashSet protectedProperties = new HashSet();
 
     static {
+        String[] protectedPropertiesNames = {
+            "version", "hsqldb.compatible_version", "hsqldb.cache_version",
+            "hsqldb.original_version", "hsqldb.script_format",
+            "hsqldb.files_readonly", "hsqldb.files_in_jar", "readonly",
+            "modified", "sql.compare_in_locale"
+        };
+
         protectedProperties.addAll(protectedPropertiesNames);
     }
 
@@ -129,24 +130,24 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // once created, this won't change if db is used with a future version
         setProperty("hsqldb.original_version", "1.7.2");
         /*
-            garbage collection with gc_interval
-            Setting this value can be useful when HSQLDB is used as an
-            in-process part of an application. The minimum practical
-            amount is probably "10000" and the maximum "1000000"
+                garbage collection with gc_interval
+                Setting this value can be useful when HSQLDB is used as an
+                in-process part of an application. The minimum practical
+                amount is probably "10000" and the maximum "1000000"
 
-            In some versions of Java, such as 1.3.1_02 on windows,
-            when the application runs out of memory it runs the gc AND
-            requests more memory from the OS. Setting this property
-            forces the DB to live inside its memory budget but the
-            maximum amount of memory can still be set with the
-            java -Xmx argument to provide the memory needed by other
-            parts of the app to do graphics and networking.
+                In some versions of Java, such as 1.3.1_02 on windows,
+                when the application runs out of memory it runs the gc AND
+                requests more memory from the OS. Setting this property
+                forces the DB to live inside its memory budget but the
+                maximum amount of memory can still be set with the
+                java -Xmx argument to provide the memory needed by other
+                parts of the app to do graphics and networking.
 
-            Of course there is a speed penalty for setting the value
-            too low and doing garbage collection too often.
+                Of course there is a speed penalty for setting the value
+                too low and doing garbage collection too often.
 
-            This was introduced as a result of tests by Karl Meissner
-            (meissnersd@users)
+                This was introduced as a result of tests by Karl Meissner
+                (meissnersd@users)
         */
 
         // garbage collect per Record or Cache Row objects created

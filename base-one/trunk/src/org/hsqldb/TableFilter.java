@@ -321,7 +321,6 @@ class TableFilter {
         Index index = tTable.getIndexForColumn(i);
 
         if ((index == null) || ((iIndex != index) && (iIndex != null))) {
-
             addAndCondition(e);
 
             return;

@@ -131,7 +131,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Boolean readBit() throws IOException, HsqlException {
-        return Boolean.valueOf(readString());
+        return org.hsqldb.lib.BooleanConverter.getBoolean(readString());
     }
 
 /** @todo fredt - get time and data longs then normalise before fetching value */
@@ -166,7 +166,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             data = Column.hexToByteArray(binarystring);
         }
 
-        return new JavaObject(data,true);
+        return new JavaObject(data, true);
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {
@@ -176,7 +176,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         if (hexstring.equals("**")) {
 
             // hsql - new format
-            return new Binary(readByteArray(),true);
+            return new Binary(readByteArray(), true);
         } else {
 
             // hsql - old format
