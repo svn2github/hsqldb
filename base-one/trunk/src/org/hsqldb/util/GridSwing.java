@@ -84,7 +84,7 @@ import java.awt.Component;
 class GridSwing extends AbstractTableModel {
 
     JTable   jtable = null;
-    String[] headers;
+    Object[] headers;
     Vector   rows;
 
     /**
@@ -94,7 +94,7 @@ class GridSwing extends AbstractTableModel {
 
         super();
 
-        headers = new String[0];    // initially empty
+        headers = new Object[0];    // initially empty
         rows    = new Vector();     // initially empty
     }
 
@@ -102,7 +102,16 @@ class GridSwing extends AbstractTableModel {
      * Get the name for the specified column.
      */
     public String getColumnName(int i) {
-        return headers[i];
+        return headers[i].toString();
+    }
+
+    public Class getColumnClass(int i) {
+
+        if (rows.size() > 0) {
+            return getValueAt(0, i).getClass();
+        }
+
+        return super.getColumnClass(i);
     }
 
     /**
@@ -122,7 +131,7 @@ class GridSwing extends AbstractTableModel {
     /**
      * Get the current column headings.
      */
-    public String[] getHead() {
+    public Object[] getHead() {
         return headers;
     }
 
@@ -141,15 +150,15 @@ class GridSwing extends AbstractTableModel {
      * Get the object at the specified cell location.
      */
     public Object getValueAt(int row, int col) {
-        return ((String[]) rows.elementAt(row))[col];
+        return ((Object[]) rows.elementAt(row))[col];
     }
 
     /**
      * Set the name of the column headings.
      */
-    public void setHead(String[] h) {
+    public void setHead(Object[] h) {
 
-        headers = new String[h.length];
+        headers = new Object[h.length];
 
         // System.arraycopy(h, 0, headers, 0, h.length);
         for (int i = 0; i < h.length; i++) {
@@ -160,9 +169,9 @@ class GridSwing extends AbstractTableModel {
     /**
      * Append a tuple to the end of the table.
      */
-    public void addRow(String[] r) {
+    public void addRow(Object[] r) {
 
-        String[] row = new String[r.length];
+        Object[] row = new Object[r.length];
 
         // System.arraycopy(r, 0, row, 0, r.length);
         for (int i = 0; i < r.length; i++) {
@@ -206,12 +215,12 @@ class GridSwing extends AbstractTableModel {
 
         for (int i = 0; i < table.getColumnCount(); i++) {
             column = table.getColumnModel().getColumn(i);
-            comp = headerRenderer.getTableCellRendererComponent(null,
+            comp = headerRenderer.getTableCellRendererComponent(table,
                     column.getHeaderValue(), false, false, 0, 0);
             headerWidth  = comp.getPreferredSize().width + 10;
             maxCellWidth = Integer.MIN_VALUE;
 
-            for (int j = 0; j < model.getRowCount(); j++) {
+            for (int j = 0; j < Math.min(model.getRowCount(), 30); j++) {
                 TableCellRenderer r = table.getCellRenderer(j, i);
 
                 comp = r.getTableCellRendererComponent(table,

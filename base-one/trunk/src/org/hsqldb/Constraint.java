@@ -145,7 +145,7 @@ Referential Constraint 4 SET DEFAULT
      * @param  iref index on the referencing table
      * @param  deleteAction triggered action on delete
      * @param  updateAction triggered action on update
-     * @exception  HsqlException  Description of the Exception
+     * @exception  HsqlException
      */
     Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
                int colmain[], int colref[], Index imain, Index iref,
@@ -310,12 +310,7 @@ Referential Constraint 4 SET DEFAULT
      *  a unique constraint. Used for tests before dropping an index.
      */
     boolean isIndexUnique(Index index) {
-
-        if (constType == UNIQUE && core.mainIndex == index) {
-            return true;
-        }
-
-        return false;
+        return (constType == UNIQUE && core.mainIndex == index);
     }
 
     /**

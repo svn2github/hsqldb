@@ -67,6 +67,8 @@
 
 package org.hsqldb.util;
 
+import org.hsqldb.lib.java.javaSystem;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -77,7 +79,12 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
-import org.hsqldb.lib.java.javaSystem;
+import java.lang.Thread;
+import java.lang.System;
+
+import javax.swing.table.DefaultTableModel;
+
+import java.math.BigDecimal;
 
 // dmarshall@users - 20020101 - original swing port
 // sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
@@ -129,9 +136,19 @@ implements ActionListener, WindowListener, KeyListener {
     JSplitPane             ewSplitPane;    // Contains tree beside nsSplitPane
     boolean                bHelp;
     JFrame                 fMain;
-    static boolean         bMustExit;
     String                 ifHuge = "";
     JToolBar               jtoolbar;
+    boolean                exitOnClose = true;
+
+    // variables to hold the default cursors for these top level swing objects
+    // so we can restore them when we exit our thread
+    Cursor fMainCursor;
+    Cursor txtCommandCursor;
+
+    /**
+     * Wait Cursor
+     */
+    private static final Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
 
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
@@ -165,12 +182,16 @@ implements ActionListener, WindowListener, KeyListener {
         String  lowerArg;
         boolean autoConnect = false;
 
-        bMustExit = true;
-
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
 
             i++;
+
+            if (i == arg.length) {
+                showUsage();
+
+                return;
+            }
 
             if (lowerArg.equals("-driver")) {
                 defDriver   = arg[i];
@@ -188,10 +209,6 @@ implements ActionListener, WindowListener, KeyListener {
                 defDirectory = arg[i];
             } else if (lowerArg.equals("-script")) {
                 defScript = arg[i];
-            } else if (lowerArg.equals("-noexit")) {
-                bMustExit = false;
-
-                i--;
             } else {
                 showUsage();
 
@@ -258,8 +275,7 @@ implements ActionListener, WindowListener, KeyListener {
             + "    -user <name>         username used for connection\n"
             + "    -password <password> password for this user\n"
             + "    -dir <path>          default directory\n"
-            + "    -script <file>       reads from script file\n"
-            + "    -noexit              do not call system.exit()");
+            + "    -script <file>       reads from script file\n");
     }
 
     private void insertTestData() {
@@ -282,10 +298,13 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
+    public void setExitOnClose(boolean b) {
+        this.exitOnClose = b;
+    }
+
     public void main() {
 
-        CommonSwing.setDefaultColor();
-
+//         CommonSwing.setDefaultColor();
         fMain = new JFrame("HSQL Database Manager");
 
         // (ulrivo): An actual icon.
@@ -642,16 +661,18 @@ implements ActionListener, WindowListener, KeyListener {
 
     public void windowClosing(WindowEvent ev) {
 
+        fMain.dispose();
+
+        if (!exitOnClose) {
+            return;
+        }
+
         try {
             cConn.close();
         } catch (Exception e) {}
 
-        fMain.dispose();
-
-        if (bMustExit) {
             System.exit(0);
         }
-    }
 
     private void clear() {
 
@@ -660,8 +681,45 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.setText(ifHuge);
     }
 
+    static Thread runningThread = null;
+
     private void execute() {
 
+        if (runningThread != null && runningThread.isAlive()) {
+            Toolkit.getDefaultToolkit().beep();
+
+            return;
+        }
+
+        runningThread = new ExecuteThread();
+
+        runningThread.start();
+    }
+
+    public void setWaiting(boolean waiting) {
+
+        if (waiting) {
+
+            // save the old cursors
+            fMainCursor      = fMain.getCursor();
+            txtCommandCursor = txtCommand.getCursor();
+
+            // set the cursors to the wait cursor
+            fMain.setCursor(waitCursor);
+            txtCommand.setCursor(waitCursor);
+        } else {
+
+            // restore the cursors we saved
+            fMain.setCursor(fMainCursor);
+            txtCommand.setCursor(txtCommandCursor);
+        }
+    }
+
+    private class ExecuteThread extends Thread {
+
+        public void run() {
+
+            setWaiting(true);
         gResult.clear();
 
         String sCmd = null;
@@ -721,6 +779,8 @@ implements ActionListener, WindowListener, KeyListener {
 
         updateResult();
         System.gc();
+            setWaiting(false);
+        }
     }
 
     private void updateResult() {
@@ -764,7 +824,7 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             ResultSetMetaData m   = r.getMetaData();
             int               col = m.getColumnCount();
-            String            h[] = new String[col];
+            Object            h[] = new Object[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
@@ -774,7 +834,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             while (r.next()) {
                 for (int i = 1; i <= col; i++) {
-                    h[i - 1] = r.getString(i);
+                    h[i - 1] = r.getObject(i);
 
                     if (r.wasNull()) {
                         h[i - 1] = "(null)";
@@ -873,7 +933,7 @@ implements ActionListener, WindowListener, KeyListener {
      */
     private void showResultInText() {
 
-        String col[]  = gResult.getHead();
+        Object col[]  = gResult.getHead();
         int    width  = col.length;
         int    size[] = new int[width];
         Vector data   = gResult.getData();
@@ -881,7 +941,7 @@ implements ActionListener, WindowListener, KeyListener {
         int    height = data.size();
 
         for (int i = 0; i < width; i++) {
-            size[i] = col[i].length();
+            size[i] = col[i].toString().length();
         }
 
         for (int i = 0; i < height; i++) {
@@ -901,7 +961,7 @@ implements ActionListener, WindowListener, KeyListener {
         for (int i = 0; i < width; i++) {
             b.append(col[i]);
 
-            for (int l = col[i].length(); l <= size[i]; l++) {
+            for (int l = col[i].toString().length(); l <= size[i]; l++) {
                 b.append(' ');
             }
         }
@@ -1000,7 +1060,13 @@ implements ActionListener, WindowListener, KeyListener {
         pCommand.add(txtCommandScroll, BorderLayout.CENTER);
 
         gResult      = new GridSwing();
-        gResultTable = new JTable(gResult);
+
+        TableSorter sorter = new TableSorter(gResult);
+
+        gResultTable = new JTable(sorter);
+
+        sorter.setTableHeader(gResultTable.getTableHeader());
+
         gScrollPane  = new JScrollPane(gResultTable);
 
         gResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -1123,10 +1189,10 @@ implements ActionListener, WindowListener, KeyListener {
                 ResultSet ind = dMeta.getIndexInfo(null, null, name, false,
                                                    false);
                 String                 oldiname  = null;
-                DefaultMutableTreeNode indexNode = null;
 
                 // A child node to contain each index - and its attributes
                 while (ind.next()) {
+                    DefaultMutableTreeNode indexNode = null;
                     boolean nonunique = ind.getBoolean(4);
                     String  iname     = ind.getString(6);
 

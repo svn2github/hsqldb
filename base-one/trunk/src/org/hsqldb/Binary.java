@@ -84,7 +84,7 @@ public class Binary {
             return true;
         }
 
-        if (other == null ||!(other instanceof Binary)) {
+        if (!(other instanceof Binary)) {
             return false;
         }
 
