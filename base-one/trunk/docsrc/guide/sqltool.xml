@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.9 2004/04/23 00:47:18 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.10 2004/05/13 02:39:44 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/04/23 00:47:18 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/05/13 02:39:44 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -28,10 +28,10 @@
             reads your SQL text file or stdin, and executes the SQL 
             commands therein against a JDBC database.
         </para><para>
-            If this document comes from a hsqldb distribution, then it 
+            If this document comes from a HSQLDB distribution, then it 
             covers the version of SqlTool bundled in this distribution.
             Otherwise, this document applies to the version of SqlTool 
-            which ships with hsqldb version 1.7.2.
+            which ships with HSQLDB version 1.7.2.
         </para>
     </section>
 
@@ -52,10 +52,10 @@
                     secure access to it if your home directory is accessible
                     to anybody else.
                     This file will work as-is for a Memory Only database
-                    instance; or if your target is a hsqldb Server 
+                    instance; or if your target is a HSQLDB Server 
                     running on your local computer with default settings
                     and the password for the "sa" account is blank
-                    (the sa password is blank when new hsqldb database 
+                    (the sa password is blank when new HSQLDB database 
                     instances are created).
                     Edit the file if you need to change the target Server URL, 
                     username, password, character set, or JDBD driver,
@@ -66,10 +66,10 @@
                     <classname>org.hsqldb.util.SqlTool</classname>,
                     <classname>org.hsqldb.util.SqlFile</classname>, and the 
                     JDBC driver that you want to use.  If you are using a 
-                    hsqldb database, this is most easily accomplished by
+                    HSQLDB database, this is most easily accomplished by
                     setting (and exporting) CLASSPATH to the path to 
                     <filename>hsqldb.jar </filename> (which lives in the 
-                    <filename>lib</filename> subdirectory of the hsqldb 
+                    <filename>lib</filename> subdirectory of the HSQLDB 
                     distribution).  (You can, of course, use a classpath 
                     argument to java instead of setting your CLASSPATH 
                     variable).
@@ -80,7 +80,7 @@
                 </informalexample><para>
                     to see what command-line arguments are available.
                     Assuming that you set up your SqlTool configuration file 
-                    at the default location and you want to use the hsqldb 
+                    at the default location and you want to use the HSQLDB 
                     JDBC driver, you will want to run either
                 </para><informalexample><screen>
     java org.hsqldb.util.SqlTool mem</screen>
@@ -112,7 +112,7 @@
                 </para></step>
             </procedure>
         <para>
-            To use a JDBC Driver other than the hsqldb driver, you must put 
+            To use a JDBC Driver other than the HSQLDB driver, you must put 
             the jar/zip file in the classpath (as explained in number 2 above), 
             and you must tell SqlTool what the JDBC driver class name is.
             The latter can be accomplished by either using the "--driver" 
@@ -298,10 +298,12 @@
             </para></listitem></varlistentry>
         </variablelist>
         <para>
-            N.b. that there are other useful Special Commands which you
-            can list by running <literal>\?</literal>.
-            I hava listed on the <emphasis>essential</emphasis> Special
-            Commands here.
+            This chapter documents only the <emphasis>essential</emphasis> 
+            Special Commands, but n.b. that there are other useful Special 
+            Commands which you can list by running <literal>\?</literal>.
+            (You can, for example, list the available tables, list table
+            columns, execute external commands, execute SQL from external 
+            SQL files, and save your interactive SQL commands to files).
         </para>
         <para>
             Be aware that the <literal>\!</literal> Special Command does
