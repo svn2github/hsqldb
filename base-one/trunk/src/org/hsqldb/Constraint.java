@@ -82,6 +82,10 @@ import java.sql.SQLException;
  */
 class Constraint {
 
+    static final int       NO_ACTION   = 0,
+                           CASCADE     = 1,
+                           SET_DEFAULT = 2,
+                           SET_NULL    = 3;
     static final int       FOREIGN_KEY = 0,
                            MAIN        = 1,
                            UNIQUE      = 2;
@@ -135,11 +139,13 @@ class Constraint {
      * @param  colref
      * @param  imain
      * @param  iref
+     * @param  deleteAction
+     * @param  updateAction
      * @exception  SQLException  Description of the Exception
      */
     Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
                int colmain[], int colref[], Index imain, Index iref,
-               boolean cascade) throws SQLException {
+               int deleteAction, int updateAction) throws SQLException {
 
         core        = new ConstraintCore();
         core.pkName = pkname;
@@ -152,13 +158,14 @@ class Constraint {
            identical sets to visible columns of iMain and iRef respectively
            but the order of columns can be different and must be maintained
         */
-        core.iColMain = colmain;
-        core.iLen     = core.iColMain.length;
-        core.iColRef  = colref;
-        core.oColRef  = new Object[core.iColRef.length];
-        core.iMain    = imain;
-        core.iRef     = iref;
-        core.bCascade = cascade;
+        core.iColMain     = colmain;
+        core.iLen         = core.iColMain.length;
+        core.iColRef      = colref;
+        core.oColRef      = new Object[core.iColRef.length];
+        core.iMain        = imain;
+        core.iRef         = iref;
+        core.deleteAction = deleteAction;
+        core.updateAction = updateAction;
 
         setTableRows();
     }
@@ -252,12 +259,21 @@ class Constraint {
     }
 
     /**
-     *  Does (foreign key) constraint cascade on delete
+     *  The action of (foreign key) constraint on delete
      *
      * @return
      */
-    boolean isCascade() {
-        return core.bCascade;
+    int getDeleteAction() {
+        return core.deleteAction;
+    }
+
+    /**
+     *  The action of (foreign key) constraint on update
+     *
+     * @return
+     */
+    int getUpdateAction() {
+        return core.updateAction;
     }
 
     /**
@@ -449,10 +465,11 @@ class Constraint {
      * (fredt@users)
      *
      * @param  array of objects for a database row
+     * @param  forDelete should we allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
      * @return Node object or null
      * @throws  SQLException
      */
-    Node findFkRef(Object row[]) throws SQLException {
+    Node findFkRef(Object row[], boolean forDelete) throws SQLException {
 
         // must be called synchronized because of oRef
         for (int i = 0; i < core.iLen; i++) {
@@ -468,12 +485,17 @@ class Constraint {
         }
 
         // there must be no record in the 'slave' table
-        Node node = core.iRef.findSimple(core.oColRef, core.bCascade);
+        // sebastian@scienion -- dependent on forDelete | forUpdate
+        boolean findfirst = forDelete ? core.deleteAction != NO_ACTION :
+                                        core.updateAction != NO_ACTION;
+        Node node = core.iRef.findSimple(core.oColRef, findfirst);
 
         // tony_lai@users 20020820 - patch 595156
-        Trace.check((node == null) || core.bCascade,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name + " table: " + core.tRef.getName().name);
+        // sebastian@scienion -- check wether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
+        Trace.check(node == null || findfirst,
+                        Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                        core.fkName.name + " table: "
+                        + core.tRef.getName().name);
 
         return node;
     }

@@ -126,14 +126,15 @@ class TableWorks {
      *
      * @param  fkcol
      * @param  expcol
-     * @param  fkname           foreign key name
+     * @param  fkname         foreign key name
      * @param  expTable
-     * @param  cascade        foreign key enforces cascading deletes
+     * @param  deleteAction
+     * @param  updateAction
      * @throws SQLException
      */
     void createForeignKey(int fkcol[], int expcol[], HsqlName fkname,
-                          Table expTable,
-                          boolean cascade) throws SQLException {
+                          Table expTable, int deleteAction,
+                          int updateAction) throws SQLException {
 
         if (table.getConstraint(fkname.name) != null) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
@@ -185,7 +186,7 @@ class TableWorks {
         HsqlName pkname = HsqlName.makeAutoName("REF", fkname.name);
         Constraint c = new Constraint(pkname, fkname, expTable, table,
                                       expcol, fkcol, exportindex, fkindex,
-                                      cascade);
+                                      deleteAction, updateAction);
 
         table.addConstraint(c);
         expTable.addConstraint(new Constraint(pkname, c));

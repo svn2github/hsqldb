@@ -1332,17 +1332,20 @@ class Database {
         Table    expTable;
         int[]    expCol;
         int      type;
-        boolean  cascade;
+        int      deleteAction;
+        int      updateAction;
 
         TempConstraint(HsqlName name, int[] localCol, Table expTable,
-                       int[] expCol, int type, boolean cascade) {
+                       int[] expCol, int type, int deleteAction,
+                       int updateAction) {
 
-            this.name     = name;
-            this.type     = type;
-            this.localCol = localCol;
-            this.expTable = expTable;
-            this.expCol   = expCol;
-            this.cascade  = cascade;
+            this.name         = name;
+            this.type         = type;
+            this.localCol     = localCol;
+            this.expTable     = expTable;
+            this.expCol       = expCol;
+            this.deleteAction = deleteAction;
+            this.updateAction = updateAction;
         }
     }
 
@@ -1436,7 +1439,8 @@ class Database {
 // is created
             HsqlArrayList tempConstraints = new HsqlArrayList();
             TempConstraint tempConst = new TempConstraint(null,
-                primarykeycolumn, null, null, Constraint.MAIN, false);
+                primarykeycolumn, null, null, Constraint.MAIN,
+                Constraint.NO_ACTION, Constraint.NO_ACTION);
 
 // tony_lai@users 20020820 - patch 595099
             HsqlName pkName = null;
@@ -1483,7 +1487,8 @@ class Database {
                         tempConst = new TempConstraint(cname, col, null,
                                                        null,
                                                        Constraint.UNIQUE,
-                                                       false);
+                                                       Constraint.NO_ACTION,
+                                                       Constraint.NO_ACTION);
 
                         tempConstraints.add(tempConst);
                     } else if (sToken.equals("FOREIGN")) {
@@ -1558,7 +1563,8 @@ class Database {
 
                     tw.createForeignKey(tempConst.localCol, tempConst.expCol,
                                         tempConst.name, tempConst.expTable,
-                                        tempConst.cascade);
+                                        tempConst.deleteAction,
+                                        tempConst.updateAction);
 
                     t = tw.getTable();
                 }
@@ -1627,23 +1633,34 @@ class Database {
         sToken = c.getString();
 
 // fredt@users 20020305 - patch 1.7.0 - cascading deletes
-        boolean cascade = false;
+        int deleteAction = Constraint.NO_ACTION;
+        int updateAction = Constraint.NO_ACTION;
 
-        if (sToken.equals("ON")) {
-            c.getThis("DELETE");
+        while (sToken.equals("ON")) {
+            sToken = c.getString();
+
+            if (deleteAction == Constraint.NO_ACTION && sToken.equals("DELETE")) {
+                deleteAction = Constraint.CASCADE;
+            } else if (updateAction == Constraint.NO_ACTION && sToken.equals("UPDATE")) {
+                updateAction = Constraint.CASCADE;
+            } else {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            }
+
             c.getThis("CASCADE");
 
-            cascade = true;
-        } else {
-            c.back();
+            sToken = c.getString();
         }
+
+        c.back();
 
         if (cname == null) {
             cname = HsqlName.makeAutoName("FK");
         }
 
         return new TempConstraint(cname, localcol, expTable, expcol,
-                                  Constraint.FOREIGN_KEY, cascade);
+                                  Constraint.FOREIGN_KEY, deleteAction,
+                                  updateAction);
     }
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
@@ -1787,7 +1804,8 @@ class Database {
                     t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
                     session.commit();
                     tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                        tc.expTable, tc.cascade);
+                                        tc.expTable, tc.deleteAction,
+                                        tc.updateAction);
 
                     return;
                 } else if (sToken.equals("UNIQUE")) {

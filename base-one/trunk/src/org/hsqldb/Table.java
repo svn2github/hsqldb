@@ -1273,7 +1273,7 @@ class Table {
                 continue;
             }
 
-            Node refnode = c.findFkRef(row);
+            Node refnode = c.findFkRef(row, true);
 
             if (refnode == null) {
 
@@ -1314,7 +1314,7 @@ class Table {
 
                     //  foreign key referencing own table
                     if (reftable == this) {
-                        nextn = c.findFkRef(row);
+                        nextn = c.findFkRef(row, true);
                     }
                 }
 

@@ -814,6 +814,10 @@ class DatabaseInformation {
         new Short((short) DatabaseMetaData.importedKeyNoAction);
     static final Short importedKeyCascadeShort =
         new Short((short) DatabaseMetaData.importedKeyCascade);
+    static final Short importedKeySetDefaultShort =
+        new Short((short) DatabaseMetaData.importedKeySetDefault);
+    static final Short importedKeySetNullShort =
+        new Short((short) DatabaseMetaData.importedKeySetNull);
     static final Short importedKeyNotDeferrableShort =
         new Short((short) DatabaseMetaData.importedKeyNotDeferrable);
 
@@ -873,10 +877,13 @@ class DatabaseInformation {
                     o[6] = refTableName;
                     o[7] = constraint.getRef().getColumn(
                         fkcols[k]).columnName.name;
-                    o[8]  = new Short((short) (k + 1));
-                    o[9]  = importedKeyNoActionShort;
-                    o[10] = constraint.isCascade() ? importedKeyCascadeShort
-                                                   : importedKeyNoActionShort;
+                    o[8] = new Short((short) (k + 1));
+                    o[9] = constraint.getUpdateAction()
+                           == Constraint.NO_ACTION ? importedKeyNoActionShort
+                                                   : importedKeyCascadeShort;
+                    o[10] = constraint.getDeleteAction()
+                            == Constraint.NO_ACTION ? importedKeyNoActionShort
+                                                    : importedKeyCascadeShort;
                     o[11] = constraint.getFkName();
                     o[12] = constraint.getPkName();
                     o[13] = importedKeyNotDeferrableShort;

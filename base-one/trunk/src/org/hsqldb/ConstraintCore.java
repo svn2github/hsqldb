@@ -86,5 +86,6 @@ class ConstraintCore {
     Index    iRef;
     Object[] oRef;
     Object[] oColRef;
-    boolean  bCascade;
+    int      deleteAction;
+    int      updateAction;
 }

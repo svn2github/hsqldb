@@ -542,7 +542,7 @@ class Expression {
     /**
      * Check if this expression defines a constant value.
      * <p>
-     * It is, if itself is a constant value expression, or all the argument
+     * It does, if it is a constant value expression, or all the argument
      * expressions define constant values.
      */
     boolean isConstant() {

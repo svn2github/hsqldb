@@ -551,7 +551,8 @@ class DatabaseScript {
      *
      * @return
      */
-    private static void getFKStatement(Constraint c, StringBuffer a) {
+    private static void getFKStatement(Constraint c,
+                                       StringBuffer a) throws SQLException {
 
         a.append("CONSTRAINT ");
         a.append(c.getName().statementName);
@@ -567,8 +568,32 @@ class DatabaseScript {
 
         getColumnList(c.getMain(), col, col.length, a);
 
-        if (c.isCascade()) {
-            a.append(" ON DELETE CASCADE");
+        if (c.getDeleteAction() != Constraint.NO_ACTION) {
+            a.append(" ON DELETE ");
+            a.append(getFKAction(c.getDeleteAction()));
+        }
+
+        if (c.getUpdateAction() != Constraint.NO_ACTION) {
+            a.append(" ON UPDATE ");
+            a.append(getFKAction(c.getDeleteAction()));
+        }
+    }
+
+    private static String getFKAction(int action) throws SQLException {
+
+        switch (action) {
+
+            case Constraint.CASCADE :
+                return "CASCADE";
+
+            case Constraint.SET_DEFAULT :
+                return "SET DEFAULT";
+
+            case Constraint.SET_NULL :
+                return "SET NULL";
+
+            default :
+                throw (Trace.error(Trace.GENERAL_ERROR));
         }
     }
 
