@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.79 2004/06/16 20:37:10 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.80 2004/06/16 21:10:50 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.79 $
+ * @version $Revision: 1.80 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -130,8 +130,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.79 $".substring("$Revision: ".length(),
-                "$Revision: 1.79 $".length() - 2);
+        revnum = "$Revision: 1.80 $".substring("$Revision: ".length(),
+                "$Revision: 1.80 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -1122,7 +1122,9 @@ public class SqlFile {
         String[] tokenArray = null;
         // If user runs any PL command, we turn PL mode on.
         plMode = true;
-        if (userVars == null) userVars = new HashMap();
+        if (userVars == null) {
+            userVars = new HashMap();
+        }
         if (arg1.equals("end")) {
             throw new BadSpecial("PL end statements may only occur inside of "
                     + "a PL block");
