@@ -45,8 +45,11 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.48 2004/04/12 20:13:21 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.49 2004/04/12 21:51:41 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -82,7 +85,7 @@ import java.io.InputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.48 $
+ * @version $Revision: 1.49 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -131,6 +134,7 @@ public class SqlFile {
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
         + "    \\?                   Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
+        + "    \\w file/path         Append current buffer to file\n"
         + "    \\dt                  List tables\n"
         + "    \\d TABLENAME         Describe table\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -532,6 +536,26 @@ public class SqlFile {
                     return;
                 }
                 break;
+            case 'w':
+                if (other == null) {
+                    throw new BadSpecial(
+                            "You must supply a destination file name");
+                }
+                if (commandFromHistory(0).length() == 0) {
+                    throw new BadSpecial("Empty command in buffer");
+                }
+                try {
+                    java.io.PrintWriter pw = new PrintWriter(
+                            new OutputStreamWriter(
+                                    new FileOutputStream(other, true)));
+                    pw.println(commandFromHistory(0) + ';');
+                    pw.flush();
+                    pw.close();
+                } catch (Exception e) {
+                    throw new BadSpecial("Failed to append to file '"
+                            + other + "':  " + e);
+                }
+                return;
             case 'p':
                 if (other == null) {
                     stdprintln();
