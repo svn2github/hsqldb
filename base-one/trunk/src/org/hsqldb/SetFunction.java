@@ -82,6 +82,11 @@ public class SetFunction {
 
     void add(Object item) throws HsqlException {
 
+        if (setType == Expression.COUNT ){
+            count++;
+            return;
+        }
+
         if (item == null) {
             return;
         }
@@ -166,14 +171,15 @@ public class SetFunction {
 
     Object getValue() throws HsqlException {
 
+        if (setType == Expression.COUNT ){
+            return new Integer(count);
+        }
+
         if (count == 0) {
             return null;
         }
 
         switch (setType) {
-
-            case Expression.COUNT :
-                return new Integer(count);
 
             case Expression.AVG : {
                 switch (type) {
