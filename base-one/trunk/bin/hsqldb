@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.5 2004/02/20 00:02:42 unsaved Exp $
+# $Id: hsqldb,v 1.6 2004/02/20 00:03:34 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -237,7 +237,7 @@ running with pid $HSQLDB_PID."
                 exit 1
             }
             # Some OSes choke if there are newlines in this string.
-            nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > $PIDFILE && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
+            nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
             exit 0
         }
         cd "$SERVER_HOME" || {
