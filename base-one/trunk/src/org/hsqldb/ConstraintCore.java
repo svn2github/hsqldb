@@ -98,23 +98,12 @@ class ConstraintCore {
     int[] mainColArray;
     Index mainIndex;
 
-    // empty table row used for selective filling and comparison
-    Object[] tempMainData;
-
     // Ref is the table that has a reference to the main table
     Table refTable;
     int[] refColArray;
     Index refIndex;
-
-/** @todo fredt - reused structure to be reviewed for multi-threading */
-
-    // empty table row used for selective filling and comparison
-    Object[] tempRefData;
-
-    //
-    Object[] tempRefColData;
-    int      deleteAction;
-    int      updateAction;
+    int   deleteAction;
+    int   updateAction;
 
     //
     Expression  check;

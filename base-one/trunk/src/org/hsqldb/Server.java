@@ -722,7 +722,9 @@ public class Server implements HsqlSocketRequestHandler {
 
         // Maybe set up socket options, SSL
         // Session tracing/callbacks, etc.
-        socketFactory.configureSocket(s);
+        if (socketFactory != null) {
+            socketFactory.configureSocket(s);
+        }
 
         if (serverProtocol == ServerConstants.SC_PROTOCOL_HSQL) {
             r   = new ServerConnection(s, this);

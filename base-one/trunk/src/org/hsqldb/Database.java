@@ -926,13 +926,13 @@ class Database {
     /**
      * Throws if the table is referenced in a view.
      */
-    private void checkTableIsInView(Table toDrop) throws HsqlException {
+    void checkTableIsInView(Table table) throws HsqlException {
 
         for (int i = 0; i < tTable.size(); i++) {
             Table t = (Table) tTable.get(i);
 
             if (t.isView()) {
-                if (((View) t).hasTable(toDrop)) {
+                if (((View) t).hasTable(table)) {
                     throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
                                       t.getName().name);
                 }

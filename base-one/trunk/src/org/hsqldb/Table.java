@@ -373,18 +373,16 @@ class Table {
      * multi-column indexes */
 
     /**
-     *  Get the index supporting a constraint that can be used as an index
-     *  of the given type and index column signature. Only Unique constraints
-     *  are considered.
+     *  Get the index supporting a constraint with the given column signature.
+     *  Only Unique constraints are considered.
      *
      * @param  col column list array
-     * @param  unique for the index
      * @return
      */
-    Index getConstraintIndexForColumns(int[] col, boolean unique) {
+    Index getConstraintIndexForColumns(int[] col) {
 
         if (ArrayUtil.areEqual(getPrimaryIndex().getColumns(), col,
-                               col.length, unique)) {
+                               col.length, true)) {
             return getPrimaryIndex();
         }
 
@@ -396,7 +394,7 @@ class Table {
             }
 
             if (ArrayUtil.areEqual(c.getMainColumns(), col, col.length,
-                                   unique)) {
+                                   true)) {
                 return c.getMainIndex();
             }
         }
@@ -2042,14 +2040,12 @@ class Table {
             Index    refindex    = c.getRefIndex();
             int      m_columns[] = c.getMainColumns();
             int      r_columns[] = c.getRefColumns();
-            Object[] m_objects   = new Object[m_columns.length];
-
-            ArrayUtil.copyColumnValues(row.getData(), m_columns, m_objects);
+            Object[] mdata       = row.getData();
 
             // walk the index for all the nodes that reference delnode
             for (Node n = refnode;
-                    !n.isDeleted() && refindex.comparePartialRowNonUnique(
-                        m_objects, n.getData()) == 0; ) {
+                    !n.isDeleted() && refindex.compareRowNonUnique(
+                        mdata, m_columns, n.getData()) == 0; ) {
 
                 // deleting rows can free n out of the cache so we
                 // make sure it is loaded with up-to-date left-right-parent
@@ -2275,20 +2271,17 @@ class Table {
                 // -- unused shortcut when update table has no imported constraint
                 boolean hasref =
                     reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
-                Index    refindex    = c.getRefIndex();
-                Object[] mainobjects = new Object[m_columns.length];
-                Object[] refobjects  = new Object[r_columns.length];
+                Index    refindex   = c.getRefIndex();
+                Object[] refobjects = new Object[r_columns.length];
 
-                ArrayUtil.copyColumnValues(orow.getData(), m_columns,
-                                           mainobjects);
                 ArrayUtil.copyColumnValues(nrow, r_columns, refobjects);
 
                 // -- walk the index for all the nodes that reference update node
                 Result ri = new Result(ResultConstants.DATA);
 
                 for (Node n = refnode;
-                        refindex.comparePartialRowNonUnique(
-                            mainobjects, n.getData()) == 0; ) {
+                        refindex.compareRowNonUnique(
+                            orow.getData(), m_columns, n.getData()) == 0; ) {
 
                     // deleting rows can free n out of the cache so we
                     // make sure it is loaded with up-to-date left-right-parent

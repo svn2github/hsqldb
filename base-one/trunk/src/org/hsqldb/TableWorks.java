@@ -108,24 +108,17 @@ class TableWorks {
      *  the referencing (child) and referenced (parent) tables.
      *  <p>
      *  In versions 1.7.0 and 1.7.1 some non-standard features were supported
-     *  for compatibility with older databases as follows:
+     *  for compatibility with older databases. These allowed foreign keys
+     *  to be created without the prior existence of a unique constraint on
+     *  the referenced columns.
      *  <p>
-     *  If sql.strict_fk is set (default for new databases) a pre-existing
-     *  primary key or unique index is required on the referenced columns
-     *  of the referenced table (1.7.1).
-     *  <p>
-     *  When there is no primary key or unique index, a new index is created
-     *  automatically. If sql.strong_fk is set in the abasence of
-     *  sql.strict_fk, this automatic index will be a unique index. Otherwise
-     *  (for compatibility with existing data created with HSQLDB 1.61 or
-     *  earlier) it will be an ordinary index (1.7.1).
-     *  <p>
-     *  In version 1.7.2, the semantics of sql.strict_fk are enforced
-     *  regardless of the database properties settings (which are now obsolete).
+     *  In version 1.7.2, a unique constraint on the referenced columns must
+     *  exist.
      *
-     *  The non-unique index on the referencing table is created unless
-     *  PK or unique constraint index on the columns exist. This is becuase the
-     *  index must always be created before the foreign key DDL is processed.
+     *  The non-unique index on the referencing table is now always created
+     *  whether or not a PK or unique constraint index on the columns exist.
+     *  This closes the loopholes opened by the introduction of ALTER TABLE
+     *  for adding foreign keys.
      *
      *  Foriegn keys on temp tables can reference other temp tables with the
      *  same rules above. Foreign keys on permanent tables cannot reference
@@ -133,17 +126,14 @@ class TableWorks {
      *
      *  Duplicate foreign keys are now disallowed.
      *
-     *  The introduction of ALTER TABLE for adding foreign keys opened some
-     *  loopholes that were closed in version 1.7.2 :
-     *
-     *  -- The unique index on the referenced table must also belong to a
-     *  constraint (PK or UNIQUE) when the foreign key is referencing the
-     *  same table. Otherwise after a SHUTDOWN and restart the index will not
-     *  exist at the time of creation of the foreign key.
+     *  -- The unique index on the referenced table must always belong to a
+     *  constraint (PK or UNIQUE). Otherwise after a SHUTDOWN and restart the
+     *  index will not exist at the time of creation of the foreign key when
+     *  the foreign key is referencing the  same table.
      *
      *  -- The non-unique index on the referencing table is always created
-     *  unless there is an index belonging to a PK or UNIQUE constraint that
-     *  can be used instead.
+     *  regardless of any existing index. This allows the foreign key
+     *  constraint to be dropped when required.
      *
      *
      *  (fred@users)
@@ -176,19 +166,19 @@ class TableWorks {
 
         boolean isforward = table.database.getTableIndex(table)
                             < table.database.getTableIndex(expTable);
-        Index exportindex = expTable.getConstraintIndexForColumns(expcol,
-            true);
+        Index exportindex = expTable.getConstraintIndexForColumns(expcol);
 
         if (exportindex == null) {
             throw Trace.error(Trace.SQL_CONSTRAINT_REQUIRED,
                               expTable.getName().statementName);
         }
 
-        Index    fkindex = table.getConstraintIndexForColumns(fkcol, false);
+        // existing rows, value checks
+        Constraint.checkReferencedRows(table, fkcol, exportindex);
+
+        // create
         HsqlName iname   = table.database.nameManager.newAutoName("IDX");
-
-        fkindex = createIndex(fkcol, iname, false, true, isforward);
-
+        Index    fkindex = createIndex(fkcol, iname, false, true, isforward);
         HsqlName pkname = table.database.nameManager.newAutoName("REF",
             fkname.name);
         Constraint c = new Constraint(pkname, fkname, expTable, table,
@@ -365,6 +355,11 @@ class TableWorks {
 
         if (table.isText()) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+        }
+
+        // only allow add column at the end if referenced in a view
+        if (colindex != table.getColumnCount()) {
+            table.database.checkTableIsInView(table);
         }
 
         Table tn = table.moveDefinition(null, column, colindex, adjust);

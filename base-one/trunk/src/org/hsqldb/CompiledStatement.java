@@ -159,14 +159,17 @@ final class CompiledStatement {
 
     void clearAll() {
 
-        checkColumns = null;
+        targetTable  = null;
+        tf           = null;
+        condition    = null;
         columnMap    = null;
         columnValues = null;
-        condition    = null;
+        checkColumns = null;
+        expression   = null;
+        select       = null;
         parameters   = null;
         paramTypes   = null;
-        select       = null;
-        targetTable  = null;
+        subqueries   = null;
         type         = UNKNOWN;
         id           = UNKNOWN;
     }

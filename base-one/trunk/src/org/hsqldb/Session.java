@@ -144,7 +144,7 @@ class Session implements SessionInterface {
         dbCommandInterpreter      = new DatabaseCommandInterpreter(this);
         compiledStatementExecutor = new CompiledStatementExecutor(this);
         compiledStatementManager  = db.compiledStatementManager;
-        tokenizer                 = new Tokenizer("");
+        tokenizer                 = new Tokenizer();
         parser                    = new Parser(dDatabase, tokenizer, this);
     }
 

@@ -102,9 +102,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 class DatabaseCommandInterpreter {
 
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
-    TableWorks          tableWorks  = new TableWorks(null);
     Tokenizer           tokenizer   = new Tokenizer();
-    CompiledStatement   cs          = new CompiledStatement();
+    CompiledStatement   cStatement  = new CompiledStatement();
     protected Database  database;
     protected Session   session;
 
@@ -143,10 +142,6 @@ class DatabaseCommandInterpreter {
         try {
             tokenizer.reset(sql);
 
-            // TODO:  make Parser resetable, like tokenizer.
-            // 4000 new Parsers immediately thrown away to
-            // execute the standard database manager script
-            // seems like a real waste.
             parser = new Parser(database, tokenizer, session);
 
             while (true) {
@@ -198,54 +193,55 @@ class DatabaseCommandInterpreter {
         switch (cmd) {
 
             case Token.SELECT :
-                cs = parser.compileSelectStatement(cs, false);
+                cStatement = parser.compileSelectStatement(cStatement, false);
 
-                Trace.doAssert(cs.parameters.length == 0,
+                Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
-                if (cs.select.sIntoTable == null) {
-                    result = session.sqlExecuteCompiledNoPreChecks(cs);
+                if (cStatement.select.sIntoTable == null) {
+                    result =
+                        session.sqlExecuteCompiledNoPreChecks(cStatement);
                 } else {
-                    result = processSelectInto(cs.select);
+                    result = processSelectInto(cStatement.select);
 
                     database.setMetaDirty(result);
                 }
                 break;
 
             case Token.INSERT :
-                cs = parser.compileInsertStatement(cs);
+                cStatement = parser.compileInsertStatement(cStatement);
 
-                Trace.doAssert(cs.parameters.length == 0,
+                Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
-                result = session.sqlExecuteCompiledNoPreChecks(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
                 break;
 
             case Token.UPDATE :
-                cs = parser.compileUpdateStatement(cs);
+                cStatement = parser.compileUpdateStatement(cStatement);
 
-                Trace.doAssert(cs.parameters.length == 0,
+                Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
-                result = session.sqlExecuteCompiledNoPreChecks(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
                 break;
 
             case Token.DELETE :
-                cs = parser.compileDeleteStatement(cs);
+                cStatement = parser.compileDeleteStatement(cStatement);
 
-                Trace.doAssert(cs.parameters.length == 0,
+                Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
-                result = session.sqlExecuteCompiledNoPreChecks(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
                 break;
 
             case Token.CALL :
-                cs = parser.compileCallStatement(cs);
+                cStatement = parser.compileCallStatement(cStatement);
 
-                Trace.doAssert(cs.parameters.length < 1,
+                Trace.doAssert(cStatement.parameters.length < 1,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
-                result = session.sqlExecuteCompiledNoPreChecks(cs);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
                 break;
 
             case Token.SET :
@@ -323,6 +319,8 @@ class DatabaseCommandInterpreter {
             default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
+
+        cStatement.clearAll();
 
         return result;
     }
@@ -569,7 +567,9 @@ class DatabaseCommandInterpreter {
 
         session.commit();
         session.setScripting(!t.isTemp());
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.createIndex(indexColumns, indexHsqlName, unique, false,
                                false);
     }
@@ -1239,7 +1239,8 @@ class DatabaseCommandInterpreter {
                 tempConst = (Constraint) tempConstraints.get(i);
 
                 if (tempConst.constType == Constraint.UNIQUE) {
-                    tableWorks.setTable(t);
+                    TableWorks tableWorks = new TableWorks(t);
+
                     tableWorks.createUniqueConstraint(
                         tempConst.core.mainColArray, tempConst.constName);
 
@@ -1247,7 +1248,8 @@ class DatabaseCommandInterpreter {
                 }
 
                 if (tempConst.constType == Constraint.FOREIGN_KEY) {
-                    tableWorks.setTable(t);
+                    TableWorks tableWorks = new TableWorks(t);
+
                     tableWorks.createForeignKey(tempConst.core.mainColArray,
                                                 tempConst.core.refColArray,
                                                 tempConst.constName,
@@ -1259,7 +1261,8 @@ class DatabaseCommandInterpreter {
                 }
 
                 if (tempConst.constType == Constraint.CHECK) {
-                    tableWorks.setTable(t);
+                    TableWorks tableWorks = new TableWorks(t);
+
                     tableWorks.createCheckConstraint(tempConst,
                                                      tempConst.constName);
 
@@ -2461,11 +2464,10 @@ class DatabaseCommandInterpreter {
             tokenizer.back();
         }
 
-        // CHECKME:
-        // shouldn't the commit come only *after* the DDL is
-        // actually successful?
         session.commit();
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.addOrDropColumn(column, colindex, 1);
 
         return;
@@ -2532,7 +2534,9 @@ class DatabaseCommandInterpreter {
         // actually successful?
         // fredt - no, uncommitted data may include the column
         session.commit();
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.addOrDropColumn(null, colindex, -1);
     }
 
@@ -2553,7 +2557,9 @@ class DatabaseCommandInterpreter {
         // shouldn't the commit come only *after* the DDL is
         // actually successful?
         session.commit();
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.dropConstraint(cname);
 
         return;
@@ -2949,7 +2955,9 @@ class DatabaseCommandInterpreter {
         }
 
         session.commit();
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.createUniqueConstraint(col, n);
     }
 
@@ -2967,7 +2975,9 @@ class DatabaseCommandInterpreter {
         t.checkColumnsMatch(tc.core.mainColArray, tc.core.refTable,
                             tc.core.refColArray);
         session.commit();
-        tableWorks.setTable(t);
+
+        TableWorks tableWorks = new TableWorks(t);
+
         tableWorks.createForeignKey(tc.core.mainColArray,
                                     tc.core.refColArray, tc.constName,
                                     tc.core.refTable, tc.core.deleteAction,
@@ -2977,25 +2987,27 @@ class DatabaseCommandInterpreter {
     private void processAlterTableAddCheckConstraint(Table t,
             HsqlName n) throws HsqlException {
 
-        Constraint tc;
+        Constraint check;
 
         if (n == null) {
             n = database.nameManager.newAutoName("CT");
         }
 
-        tc = new Constraint(n, null, null, null, Constraint.CHECK, 0, 0);
+        check = new Constraint(n, null, null, null, Constraint.CHECK, 0, 0);
 
         tokenizer.getThis(Token.T_OPENBRACKET);
 
         Parser     parser    = new Parser(database, tokenizer, session);
         Expression condition = parser.parseExpression();
 
-        tc.core.check = condition;
+        check.core.check = condition;
 
         tokenizer.getThis(Token.T_CLOSEBRACKET);
         session.commit();
-        tableWorks.setTable(t);
-        tableWorks.createCheckConstraint(tc, n);
+
+        TableWorks tableWorks = new TableWorks(t);
+
+        tableWorks.createCheckConstraint(check, n);
     }
 
     private void processReleaseSavepoint() throws HsqlException {

@@ -148,7 +148,7 @@
 </font>
 <hr>
 <p><font color="#cc0000" ><b><font>ALTER INDEX </font></b><font>&lt;indexname&gt;</font><b><font> RENAME TO </font></b><font>&lt;newname&gt;;</font></font></p>
-<p><font>Names can be changed so long as they do not conflict with other user-defined or sytem-defined names.</font></p>
+<p><font>Index names can be changed so long as they do not conflict with other user-defined or sytem-defined names.</font></p>
 <font>
 <p><br>
   <a name="ALTER_SEQUENCE"></a>
@@ -166,18 +166,22 @@
 <p><font ><br>
    <b><font color="#cc0000">ALTER TABLE</font></b><font color="#cc0000"> &lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> ADD COLUMN</font></b><font> &lt;columnname&gt; </font><font> <a href="#Datatypes">Datatype</a> [(columnSize[,precision])] [DEFAULT &lt;defaultValue&gt; [NOT NULL]] </font><font>[BEFORE &lt;existingcolumn&gt;];</font></font></p>
 <p><font>Adds the column to the end of the column list. Optional attributes, size and default value (with or without  NOT NULL)  can be specified. The optional BEFORE &lt;existingcolumn&gt; can be used to specify the name of an existing column so that the new column is inserted in a position just before the &lt;existingcolumn&gt;. If NOT NULL is specified and the table is not empty, then a default value must be specified.</font></p>
+<p>This will fail if the  BEFORE clause is used and an SQL view  includes the table.</p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> DROP COLUMN </font></b><font>&lt;columnname&gt;;</font></font></p>
 <p><font>Drops the column from the table. Will not work if column is part of a primary key, unique or foreign key constraint.</font></p>
+<p>This will fail if an SQL view  includes the table.</p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> ALTER COLUMN </font></b><font>&lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</font></font></p>
 <p><font>Changes column name. Or adds or drops the default value.</font></p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> ADD [CONSTRAINT </font></b><font>&lt;constraintname&gt;]</font><b><font> CHECK (</font></b><font>&lt;search condition&gt;</font><b><font>);</font></b></font></p>
-<p><font>Adds a check  constraint to the table. A check constraint is currently limited in that it can have references only to the row being inserted or updated.</font></p>
+<p><font>Adds a check  constraint to the table. In the current version, a check constraint can reference only  the row being inserted or updated.</font></p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> ADD [CONSTRAINT </font></b><font>&lt;constraintname&gt;]</font><b><font> UNIQUE (</font></b><font>&lt;column list&gt;</font><b><font>);</font></b></font></p>
 <p><font>Adds a unique constraint to the table. This will not work if there is already  a unique constraint covering exactly the same &lt;column list&gt;.</font></p>
+<p><font>This will work only if the values of the column list for the existing rows are  unique or include a null value.</font></p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> ADD [CONSTRAINT </font></b><font>&lt;constraintname&gt;</font><b><font>] FOREIGN KEY (</font></b><font>&lt;column list&gt;</font><b><font>) REFERENCES </font></b><font>&lt;exptablename&gt;</font><b><font> (</font></b><font>&lt;column list&gt;</font><b><font>)</font></b> 
  
   [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}]<font>;</font></font></p>
 <p><font>Adds a foreign key constraint to the table, using the same constraint syntax as when the foreign key is specified in a table definition.</font></p>
+<p>This will fail if for each existing row in the referring table, a matching row (with equal values for the  column list) is not found in  the referenced  tables.</p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> DROP CONSTRAINT </font></b><font>&lt;constraintname&gt;;</font></font></p>
 <p><font>Drops a named unique, check or foreign key constraint from the table.</font></p>
 <p><font ><b><font color="#cc0000">ALTER TABLE </font></b><font color="#cc0000">&lt;tablename&gt;</font></font><font color="#cc0000" ><b><font> RENAME TO </font></b><font>&lt;newname&gt;;</font></font></p>
@@ -203,8 +207,10 @@
 <br>
 <b>CHECKPOINT</b> <font color="#cc0000">[DEFRAG]</font>;
 
-<p>Closes the database files, rewrites the script file, deletes the log file and opens the database. If DEFRAG is specified,
-shrinks the data file.
+<p>Closes the database files, rewrites the script file, deletes the log file and opens the database.
+<p>If DEFRAG is specified,
+this command also shrinks the .data file to its minimal size.
+<p>In the current version DEFRAG is not allowed if java.nio is used.
 <p>See also: <a href="#SHUTDOWN">SHUTDOWN</a>, <a href="#SET_LOGSIZE">SET LOGSIZE</a>. 
 
 <p> <br>
@@ -250,7 +256,7 @@ shrinks the data file.
 <b>CREATE</b> [UNIQUE] <b>INDEX</b> &lt;index&gt; <b>ON</b> &lt;table&gt; (&lt;column&gt; [, ...]) [DESC];
 
 <p>Creates an index on one or more columns in a table. <br>
-  Creating an index on searched columns may improve performance. The qualifier DESC can be present for compatibility with other databases but it has no effect.
+  Creating an index on searched columns may improve performance. The qualifier DESC can be present for command compatibility with other databases but it has no effect.
 <p>See also: <a href="#CREATE_TABLE">CREATE TABLE</a>, <a href="#DROP INDEX">DROP 
   INDEX</a> 
 
@@ -261,6 +267,7 @@ shrinks the data file.
 <hr>
 <p><font color="#cc0000" ><b><font>CREATE SEQUENCE </font></b><font>&lt;sequencename&gt;</font><font> [AS {INTEGER | BIGINT}] [START WITH &lt;startvalue&gt;] [INCREMENT BY &lt;incrementvalue&gt;];</font></font></p>
 <p><font>Creates a sequence. The default type is INTEGER. The default start value is 0 and the increment 1. Negative values are not allowed. If a sequence goes beyond Integer.MAXVALUE or Long.MAXVALUE, the next result is determined by 2's complement arithmetic.</font></p>
+<p>In the proposed SQL 200n and in the current version, there is no way of retreiving the last returned value of a sequence.</p>
 <font>
 <p><a name="CREATE_TABLE"></a>
 
@@ -269,7 +276,8 @@ shrinks the data file.
 <b>CREATE</b> [ MEMORY | CACHED |<font color="#cc0000"> TEMP | TEXT   </font>] <b>TABLE</b> &lt;name&gt; <br>
 ( &lt;columnDefinition&gt; [, ...] [, &lt;constraintDefinition&gt;...]) ;
 
-<p>Creates a tables in the memory (default) or on disk and only cached in memory.
+<p>Creates a tables in memory (default) or on disk and only cached in memory.
+If the database is all-in-memory, both MEMORY and CACHED forms of CREATE TABLE return a MEMORY table. If the database is file based, then MEMORY table contents are persisted to disk.
 <p>columnDefinition: <br>
   columnname <a href="#Datatypes">Datatype</a><font color="#cc0000"> [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; | GENERATED BY DEFAULT AS IDENTITY (START WITH &lt;n&gt;)}]</font> |  [[NOT] NULL] [IDENTITY] 
   [PRIMARY KEY] 
@@ -279,6 +287,8 @@ shrinks the data file.
   <li><font>For character column,   a single-quoted string or NULL.</font></li>
   <li><font>For datetime columns, a single-quoted DATE, TIME or TIMESTAMP value or NULL. Or an appropriate SQL function such as CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, TODAY, NOW. Each functions is allowed for a certain column type.</font></li>
   <li><font>For BOOLEAN columns, the literals   FALSE, TRUE, NULL.</font></li>
+  <li>For numeric columns, any valid number.</li>
+  <li>For binary columns, any valid hex string.</li>
 </ul>
 <p><font>Only one identity column is allowed in each table.  
   Identity columns are autoincrement columns. They must be of  INTEGER or BIGINT type 
@@ -303,7 +313,9 @@ shrinks the data file.
 <p>search condition:<br>
   A search condition is similar to the set of conditions in a WHERE clause. In the current version of HSQLDB, the conditions for a CHECK constraint can only reference the current row, meaning there should be no SELECT clause. Sample table definitions with CHECK constraints   are in TestSelfCheckConstraints.txt
 <p>Gernral syntax limitations:
+<p>Any supplied column size and precision for numeric types is not enforced and serves only for command compatibility with other databases. With character types (CHARACTER and VARCHAR) these are enforced only if the database property, sql.enforce_strict_size has be set to true.
 <p>NOT NULL constraints can be part of the column definition only. Other constraints cannot be part of the column definition and must appear at the end of the column definition list.
+<p>&nbsp;
 <p>See also: <a href="#DROP_TABLE">DROP TABLE</a> 
 
 <p> <a name="CREATE_TRIGGER"></a>
@@ -498,7 +510,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <br>
 <b>DROP TABLE</b> &lt;table&gt;  [IF EXISTS]
 ;
-<p>Removes a table, the data and indexes from the database. When IF EXIST is used, the statement returns true if the table does not exist.  
+<p>Removes a table, the data and indexes from the database. When IF EXIST is used, the statement returns without an error even if the table does not exist.  
 
 <p>See also: <a href="#CREATE_TABLE">CREATE TABLE</a> 
 
@@ -533,7 +545,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <font  color="#cc0000"><br>
 <b>DROP VIEW</b> &lt;viewname&gt;  [IF EXISTS]
 ;</font>
-<p>Removes a view from the database. When IF EXIST is used, the statement returns true if the view does not exist.  
+<p>Removes a view from the database. When IF EXIST is used, the statement returns without an error  if the view does not exist.  
 
 <p>See also: <a href="#CREATE_VIEW">CREATE VIEW</a> 
 
@@ -719,7 +731,9 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <p><font>This commands enables / disables the referential integrity checking (foreign 
   keys). Normally it should be switched on (this is the default) but when importing 
   data (and the data is imported in the 'wrong' order) the checking can be switched 
-  off. <br>
+  off. </font>
+<p>Warning: Note that when referential integrity is switched back on, no check is made that the changes to the data are consistent with the existing referential integrity constraints.
+<p><font>
   Only an administrator may do this. 
 </font>
 <p><font>See also: <a href="#CREATE_TABLE">CREATE TABLE</a> 
@@ -1257,7 +1271,7 @@ An important implication of this is the for accessing columns names via JDBC Dat
   <br>
    <font color="#cc0000">Items in dark red indicate features added by HSQL Development Group since April 2001<br>
    Based on original Hypersonic documentation. Updates by Peter Hudson, Joe Maher and Fred Toussi<br>
-  Last update 2003.12.27</font>
+  Last update 2003.12.28</font>
 <p>&nbsp; 
 </font> 
 </body></html>

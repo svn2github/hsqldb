@@ -528,19 +528,19 @@ class Index {
      *
      * @throws HsqlException
      */
-    Node findSimple(Object indexcoldata[],
+    Node findSimple(Object rowdata[], int[] rowColArray,
                     boolean first) throws HsqlException {
 
         Node x      = root, n;
         Node result = null;
 
-        if (indexcoldata[0] == null) {
+        if (rowdata[0] == null) {
             return null;
         }
 
         while (x != null) {
-            int i = this.comparePartialRowNonUnique(indexcoldata,
-                x.getData());
+            int i = this.compareRowNonUnique(rowdata, rowColArray,
+                                             x.getData());
 
             if (i == 0) {
                 if (first == false) {
@@ -577,12 +577,12 @@ class Index {
      * @return
      * @throws HsqlException
      */
-    Node find(Object d[]) throws HsqlException {
+    Node find(Object rowdata[], int[] rowColIndex) throws HsqlException {
 
         Node x = root;
 
         while (x != null) {
-            int c = compareRowNonUnique(d, x.getData());
+            int c = compareRowNonUnique(rowdata, rowColIndex, x.getData());
 
             if (c == 0) {
                 return x;
@@ -615,14 +615,14 @@ class Index {
      * @return
      * @throws HsqlException
      */
-    Node findFirst(Object d[]) throws HsqlException {
+    Node findFirst(Object rowdata[]) throws HsqlException {
 
         Node    x      = root;
         Node    found  = null;
-        boolean unique = isUnique && isNotNull(d);
+        boolean unique = isUnique && isNotNull(rowdata);
 
         while (x != null) {
-            int c = compareRowNonUnique(d, x.getData());
+            int c = compareRowNonUnique(rowdata, this.colIndex, x.getData());
 
             if (c == 0) {
                 found = x;
@@ -941,76 +941,36 @@ class Index {
     }
 
     /**
-     * This method is used for finding foreign key references.
+     * compares two table rows based on the columns of the index. The aColIndex
+     * parameter specifies which columns of the other table are to be compared
+     * with the colIndex columns of this index. The aColIndex can cover all
+     * or only some columns of this index.
      *
-     * It finds a row by comparing the values set in a[] and mapping to b[].
-     * a[] contains only the column values which correspond to the columns
-     * of the index. It does not necessarily cover
-     * all the columns of the index, only the first a.length columns.
-     *
-     * b[] contains all the visible columns in a row of the table.
-     *
-     *
-     * @param a a set of column values
-     * @param b a full row
+     * @param a row from another table
+     * @param aColIndex column indexes in the other table
+     * @param b a full row in this table
      *
      * @return
      *
      * @throws HsqlException
      */
-    int comparePartialRowNonUnique(Object a[],
-                                   Object b[]) throws HsqlException {
+    int compareRowNonUnique(Object a[], int[] aColIndex,
+                            Object b[]) throws HsqlException {
 
-        int i = Column.compare(a[0], b[colIndex_0], colType_0);
-
-        if (i != 0) {
-            return i;
-        }
-
-        int fieldcount = visibleColumns;
-
-        for (int j = 1; j < a.length && j < fieldcount; j++) {
-            Object o = a[j];
-
-            if (o == null) {
-                continue;
-            }
-
-            i = Column.compare(o, b[colIndex[j]], colType[j]);
-
-            if (i != 0) {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    // todo: this is a hack
-
-    /**
-     * compares two full table rows based on the columns of the index
-     *
-     * @param a a full row
-     * @param b a full row
-     *
-     * @return
-     *
-     * @throws HsqlException
-     */
-    private int compareRowNonUnique(Object a[],
-                                    Object b[]) throws HsqlException {
-
-        int i = Column.compare(a[colIndex_0], b[colIndex_0], colType_0);
+        int i = Column.compare(a[aColIndex[0]], b[colIndex_0], colType_0);
 
         if (i != 0) {
             return i;
         }
 
-        int fieldcount = visibleColumns;
+        int fieldcount = aColIndex.length;
+
+        if (fieldcount > visibleColumns) {
+            fieldcount = visibleColumns;
+        }
 
         for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(a[colIndex[j]], b[colIndex[j]], colType[j]);
+            i = Column.compare(a[aColIndex[j]], b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;

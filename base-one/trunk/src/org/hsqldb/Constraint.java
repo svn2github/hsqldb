@@ -172,16 +172,13 @@ Referential Constraint 4 SET DEFAULT
            identical sets to visible columns of iMain and iRef respectively
            but the order of columns can be different and must be preserved
         */
-        core.mainColArray   = colmain;
-        core.colLen         = core.mainColArray.length;
-        core.refColArray    = colref;
-        core.tempRefColData = new Object[core.refColArray.length];
-        core.mainIndex      = imain;
-        core.refIndex       = iref;
-        core.deleteAction   = deleteAction;
-        core.updateAction   = updateAction;
-
-        setTableRows();
+        core.mainColArray = colmain;
+        core.colLen       = core.mainColArray.length;
+        core.refColArray  = colref;
+        core.mainIndex    = imain;
+        core.refIndex     = iref;
+        core.deleteAction = deleteAction;
+        core.updateAction = updateAction;
     }
 
     /**
@@ -201,15 +198,6 @@ Referential Constraint 4 SET DEFAULT
     }
 
     private Constraint() {}
-
-    private void setTableRows() throws HsqlException {
-
-        core.tempMainData = core.mainTable.getNewRow();
-
-        if (core.refTable != null) {
-            core.tempRefData = core.refTable.getNewRow();
-        }
-    }
 
     HsqlName getName() {
         return constName;
@@ -403,9 +391,6 @@ Referential Constraint 4 SET DEFAULT
 
         if (oldt == core.mainTable) {
             core.mainTable = newt;
-
-            setTableRows();
-
             core.mainIndex =
                 core.mainTable.getIndex(core.mainIndex.getName().name);
             core.mainColArray =
@@ -415,8 +400,6 @@ Referential Constraint 4 SET DEFAULT
 
         if (oldt == core.refTable) {
             core.refTable = newt;
-
-            setTableRows();
 
             if (core.refIndex != null) {
                 core.refIndex =
@@ -483,7 +466,7 @@ Referential Constraint 4 SET DEFAULT
             return;
         }
 
-        // must be called synchronized because of oMain
+        // just check for nulls
         for (int i = 0; i < core.colLen; i++) {
             Object o = row[core.refColArray[i]];
 
@@ -492,12 +475,12 @@ Referential Constraint 4 SET DEFAULT
                 // if one column is null then integrity is not checked
                 return;
             }
-
-            core.tempMainData[core.mainColArray[i]] = o;
         }
 
         // a record must exist in the main table
-        if (core.mainIndex.find(core.tempMainData) == null) {
+        if (core.mainIndex.find(row, core.refColArray) == null) {
+
+            // special case: self referencing table and self referencing row
             if (core.mainTable == core.refTable) {
                 boolean match = true;
 
@@ -542,12 +525,10 @@ Referential Constraint 4 SET DEFAULT
                 // if one column is null then integrity is not checked
                 return;
             }
-
-            core.tempRefData[core.refColArray[i]] = o;
         }
 
         // there must be no record in the 'slave' table
-        Node node = core.refIndex.find(core.tempRefData);
+        Node node = core.refIndex.find(row, core.mainColArray);
 
         // tony_lai@users 20020820 - patch 595156
         if (node != null) {
@@ -577,7 +558,6 @@ Referential Constraint 4 SET DEFAULT
      */
     Node findFkRef(Object row[], boolean forDelete) throws HsqlException {
 
-        // must be called synchronized because of oRef
         if (row == null) {
             return null;
         }
@@ -590,18 +570,17 @@ Referential Constraint 4 SET DEFAULT
                 // if one column is null then integrity is not checked
                 return null;
             }
-
-            core.tempRefColData[i] = o;
         }
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
         boolean findfirst = forDelete ? core.deleteAction != NO_ACTION
                                       : core.updateAction != NO_ACTION;
-        Node node = core.refIndex.findSimple(core.tempRefColData, findfirst);
+        Node node = core.refIndex.findSimple(row, core.mainColArray,
+                                             findfirst);
 
         // tony_lai@users 20020820 - patch 595156
-        // sebastian@scienion -- check wether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
+        // sebastian@scienion -- check whether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
         if (!(node == null || findfirst)) {
             throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
                               Trace.Constraint_violation, new Object[] {
@@ -636,11 +615,9 @@ Referential Constraint 4 SET DEFAULT
                 // if one column is null then integrity is not checked
                 return null;
             }
-
-            core.tempRefColData[i] = o;
         }
 
-        Node node = core.mainIndex.findSimple(core.tempRefColData, true);
+        Node node = core.mainIndex.findSimple(row, core.refColArray, true);
 
         // -- there has to be a valid node in the main table
         // --
@@ -698,7 +675,7 @@ Referential Constraint 4 SET DEFAULT
             while (r != null) {
 
                 // if an identical record exists we don't have to test
-                if (core.mainIndex.find(r.data) == null) {
+                if (core.mainIndex.find(r.data, core.mainColArray) == null) {
                     checkDelete(r.data);
                 }
 
@@ -718,6 +695,57 @@ Referential Constraint 4 SET DEFAULT
 
                 r = r.next;
             }
+        }
+    }
+
+    static boolean hasReferencedRow(Object[] rowdata, int[] rowColArray,
+                                    Index mainIndex) throws HsqlException {
+
+        // check for nulls and return true if any
+        for (int i = 0; i < rowColArray.length; i++) {
+            Object o = rowdata[rowColArray[i]];
+
+            if (o == null) {
+                return true;
+            }
+        }
+
+        // else a record must exist in the main index
+        if (mainIndex.find(rowdata, rowColArray) == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static void checkReferencedRows(Table table, int[] rowColArray,
+                                    Index mainIndex) throws HsqlException {
+
+        Index index = table.getPrimaryIndex();
+        Node  node  = index.first();
+
+        while (node != null) {
+            Object[] rowdata = node.getData();
+
+            if (!Constraint.hasReferencedRow(rowdata, rowColArray,
+                                             mainIndex)) {
+                String colvalues = "";
+
+                for (int i = 0; i < rowColArray.length; i++) {
+                    Object o = rowdata[rowColArray[i]];
+
+                    colvalues += o;
+                    colvalues += ",";
+                }
+
+                throw Trace.error(
+                    Trace.INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT,
+                    Trace.Constraint_violation, new Object[] {
+                    colvalues, table.getName().name
+                });
+            }
+
+            node = index.next(node);
         }
     }
 }
