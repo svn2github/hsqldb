@@ -931,9 +931,7 @@ class Database {
                 for (int tr = v.size() - 1; tr >= 0; tr--) {
                     TriggerDef td = (TriggerDef) v.get(tr);
 
-                    if (td.name.equals(name)) {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+                    if (td.name.name.equals(name)) {
                         session.setScripting(!td.table.isTemp());
                         v.remove(tr);
 
@@ -948,11 +946,7 @@ class Database {
         }
 
         Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
-
-// boucherb@users 20021128 - enforce unique trigger names
         triggerNameList.removeName(name);
-
-// ---
     }
 
     /**
