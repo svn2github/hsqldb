@@ -112,7 +112,7 @@ import org.hsqldb.lib.WrapperIterator;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-class DatabaseInformationMain extends DatabaseInformation implements Types {
+class DatabaseInformationMain extends DatabaseInformation {
 
     // HsqlName objects for the system tables
 
@@ -764,19 +764,19 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_BESTROWIDENTIFIER]);
 
-            addColumn(t, "SCOPE", SMALLINT, false);            // not null
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);       // not null
-            addColumn(t, "DATA_TYPE", SMALLINT, false);        // not null
-            addColumn(t, "TYPE_NAME", VARCHAR, false);         // not null
-            addColumn(t, "COLUMN_SIZE", INTEGER);
-            addColumn(t, "BUFFER_LENGTH", INTEGER);
-            addColumn(t, "DECIMAL_DIGITS", SMALLINT);
-            addColumn(t, "PSEUDO_COLUMN", SMALLINT, false);    // not null
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);        // not null
-            addColumn(t, "NULLABLE", SMALLINT, false);         // not null
-            addColumn(t, "IN_KEY", BIT, false);                // not null
+            addColumn(t, "SCOPE", Types.SMALLINT, false);            // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);       // not null
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);        // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "COLUMN_SIZE", Types.INTEGER);
+            addColumn(t, "BUFFER_LENGTH", Types.INTEGER);
+            addColumn(t, "DECIMAL_DIGITS", Types.SMALLINT);
+            addColumn(t, "PSEUDO_COLUMN", Types.SMALLINT, false);    // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
+            addColumn(t, "NULLABLE", Types.SMALLINT, false);         // not null
+            addColumn(t, "IN_KEY", Types.BIT, false);                // not null
 
             // order: SCOPE
             // for unique:  TABLE_CAT, TABLE_SCHEM, TABLE_NAME, COLUMN_NAME
@@ -914,7 +914,7 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CATALOGS]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR, false);    // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR, false);    // not null
 
             // order:  TABLE_CAT
             // true PK
@@ -978,14 +978,14 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_COLUMNPRIVILEGES]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);     // not null
-            addColumn(t, "GRANTOR", VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
 
             // order: COLUMN_NAME, PRIVILEGE
             // for unique: GRANTEE, GRANTOR, TABLE_NAME, TABLE_SCHEM, TABLE_CAT
@@ -1071,29 +1071,29 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_COLUMNS]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);          // not null
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);         // not null
-            addColumn(t, "DATA_TYPE", SMALLINT, false);          // not null
-            addColumn(t, "TYPE_NAME", VARCHAR, false);           // not null
-            addColumn(t, "COLUMN_SIZE", INTEGER);
-            addColumn(t, "BUFFER_LENGTH", INTEGER);
-            addColumn(t, "DECIMAL_DIGITS", INTEGER);
-            addColumn(t, "NUM_PREC_RADIX", INTEGER);
-            addColumn(t, "NULLABLE", INTEGER, false);            // not null
-            addColumn(t, "REMARKS", VARCHAR);
-            addColumn(t, "COLUMN_DEF", VARCHAR);
-            addColumn(t, "SQL_DATA_TYPE", INTEGER);
-            addColumn(t, "SQL_DATETIME_SUB", INTEGER);
-            addColumn(t, "CHAR_OCTET_LENGTH", INTEGER);
-            addColumn(t, "ORDINAL_POSITION", INTEGER, false);    // not null
-            addColumn(t, "IS_NULLABLE", VARCHAR, false);         // not null
-            addColumn(t, "SCOPE_CATLOG", VARCHAR);
-            addColumn(t, "SCOPE_SCHEMA", VARCHAR);
-            addColumn(t, "SCOPE_TABLE", VARCHAR);
-            addColumn(t, "SOURCE_DATA_TYPE", VARCHAR);
-            addColumn(t, "TYPE_SUB", INTEGER, false);            // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);          // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);          // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);           // not null
+            addColumn(t, "COLUMN_SIZE", Types.INTEGER);
+            addColumn(t, "BUFFER_LENGTH", Types.INTEGER);
+            addColumn(t, "DECIMAL_DIGITS", Types.INTEGER);
+            addColumn(t, "NUM_PREC_RADIX", Types.INTEGER);
+            addColumn(t, "NULLABLE", Types.INTEGER, false);            // not null
+            addColumn(t, "REMARKS", Types.VARCHAR);
+            addColumn(t, "COLUMN_DEF", Types.VARCHAR);
+            addColumn(t, "SQL_DATA_TYPE", Types.INTEGER);
+            addColumn(t, "SQL_DATETIME_SUB", Types.INTEGER);
+            addColumn(t, "CHAR_OCTET_LENGTH", Types.INTEGER);
+            addColumn(t, "ORDINAL_POSITION", Types.INTEGER, false);    // not null
+            addColumn(t, "IS_NULLABLE", Types.VARCHAR, false);         // not null
+            addColumn(t, "SCOPE_CATLOG", Types.VARCHAR);
+            addColumn(t, "SCOPE_SCHEMA", Types.VARCHAR);
+            addColumn(t, "SCOPE_TABLE", Types.VARCHAR);
+            addColumn(t, "SOURCE_DATA_TYPE", Types.VARCHAR);
+            addColumn(t, "TYPE_SUB", Types.INTEGER, false);            // not null
 
             // order: TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION
             // added for unique: TABLE_CAT
@@ -1236,20 +1236,20 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CROSSREFERENCE]);
 
-            addColumn(t, "PKTABLE_CAT", VARCHAR);
-            addColumn(t, "PKTABLE_SCHEM", VARCHAR);
-            addColumn(t, "PKTABLE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "PKCOLUMN_NAME", VARCHAR, false);     // not null
-            addColumn(t, "FKTABLE_CAT", VARCHAR);
-            addColumn(t, "FKTABLE_SCHEM", VARCHAR);
-            addColumn(t, "FKTABLE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "FKCOLUMN_NAME", VARCHAR, false);     // not null
-            addColumn(t, "KEY_SEQ", SMALLINT, false);          // not null
-            addColumn(t, "UPDATE_RULE", SMALLINT, false);      // not null
-            addColumn(t, "DELETE_RULE", SMALLINT, false);      // not null
-            addColumn(t, "FK_NAME", VARCHAR);
-            addColumn(t, "PK_NAME", VARCHAR);
-            addColumn(t, "DEFERRABILITY", SMALLINT, false);    // not null
+            addColumn(t, "PKTABLE_CAT", Types.VARCHAR);
+            addColumn(t, "PKTABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "PKTABLE_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "PKCOLUMN_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "FKTABLE_CAT", Types.VARCHAR);
+            addColumn(t, "FKTABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "FKTABLE_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "FKCOLUMN_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "KEY_SEQ", Types.SMALLINT, false);          // not null
+            addColumn(t, "UPDATE_RULE", Types.SMALLINT, false);      // not null
+            addColumn(t, "DELETE_RULE", Types.SMALLINT, false);      // not null
+            addColumn(t, "FK_NAME", Types.VARCHAR);
+            addColumn(t, "PK_NAME", Types.VARCHAR);
+            addColumn(t, "DEFERRABILITY", Types.SMALLINT, false);    // not null
 
             // order: FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ
             // added for unique: FK_NAME
@@ -1509,19 +1509,19 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_INDEXINFO]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);           // NOT NULL
-            addColumn(t, "NON_UNIQUE", BIT, false);               // NOT NULL
-            addColumn(t, "INDEX_QUALIFIER", VARCHAR);
-            addColumn(t, "INDEX_NAME", VARCHAR);
-            addColumn(t, "TYPE", SMALLINT, false);                // NOT NULL
-            addColumn(t, "ORDINAL_POSITION", SMALLINT, false);    // NOT NULL
-            addColumn(t, "COLUMN_NAME", VARCHAR);
-            addColumn(t, "ASC_OR_DESC", VARCHAR);
-            addColumn(t, "CARDINALITY", INTEGER);
-            addColumn(t, "PAGES", INTEGER);
-            addColumn(t, "FILTER_CONDITION", VARCHAR);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);           // NOT NULL
+            addColumn(t, "NON_UNIQUE", Types.BIT, false);               // NOT NULL
+            addColumn(t, "INDEX_QUALIFIER", Types.VARCHAR);
+            addColumn(t, "INDEX_NAME", Types.VARCHAR);
+            addColumn(t, "TYPE", Types.SMALLINT, false);                // NOT NULL
+            addColumn(t, "ORDINAL_POSITION", Types.SMALLINT, false);    // NOT NULL
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR);
+            addColumn(t, "ASC_OR_DESC", Types.VARCHAR);
+            addColumn(t, "CARDINALITY", Types.INTEGER);
+            addColumn(t, "PAGES", Types.INTEGER);
+            addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
 
             // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
             // added for unique: INDEX_QUALIFIER
@@ -1682,12 +1682,12 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_PRIMARYKEYS]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);     // not null
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);    // not null
-            addColumn(t, "KEY_SEQ", SMALLINT, false);       // not null
-            addColumn(t, "PK_NAME", VARCHAR);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "KEY_SEQ", Types.SMALLINT, false);       // not null
+            addColumn(t, "PK_NAME", Types.VARCHAR);
 
             // order: COLUMN_NAME
             // added for unique: TABLE_NAME, TABLE_SCHEM, TABLE_CAT
@@ -1839,29 +1839,29 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             // ----------------------------------------------------------------
             // required
             // ----------------------------------------------------------------
-            addColumn(t, "PROCEDURE_CAT", VARCHAR);
-            addColumn(t, "PROCEDURE_SCHEM", VARCHAR);
-            addColumn(t, "PROCEDURE_NAME", VARCHAR, false);    // not null
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);       // not null
-            addColumn(t, "COLUMN_TYPE", SMALLINT, false);      // not null
-            addColumn(t, "DATA_TYPE", SMALLINT, false);        // not null
-            addColumn(t, "TYPE_NAME", VARCHAR, false);         // not null
-            addColumn(t, "PRECISION", INTEGER);
-            addColumn(t, "LENGTH", INTEGER);
-            addColumn(t, "SCALE", SMALLINT);
-            addColumn(t, "RADIX", SMALLINT);
-            addColumn(t, "NULLABLE", SMALLINT, false);         // not null
-            addColumn(t, "REMARKS", VARCHAR);
+            addColumn(t, "PROCEDURE_CAT", Types.VARCHAR);
+            addColumn(t, "PROCEDURE_SCHEM", Types.VARCHAR);
+            addColumn(t, "PROCEDURE_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);       // not null
+            addColumn(t, "COLUMN_TYPE", Types.SMALLINT, false);      // not null
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);        // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "PRECISION", Types.INTEGER);
+            addColumn(t, "LENGTH", Types.INTEGER);
+            addColumn(t, "SCALE", Types.SMALLINT);
+            addColumn(t, "RADIX", Types.SMALLINT);
+            addColumn(t, "NULLABLE", Types.SMALLINT, false);         // not null
+            addColumn(t, "REMARKS", Types.VARCHAR);
 
             // ----------------------------------------------------------------
             // extended (and required for JDBC sort contract w.r.t. overloading)
             // ----------------------------------------------------------------
-            addColumn(t, "SIGNATURE", VARCHAR, false);         // not null
+            addColumn(t, "SIGNATURE", Types.VARCHAR, false);         // not null
 
             // ----------------------------------------------------------------
             // just required for JDBC sort contract
             // ----------------------------------------------------------------
-            addColumn(t, "SEQ", INTEGER, false);               // not null
+            addColumn(t, "SEQ", Types.INTEGER, false);               // not null
 
             // ----------------------------------------------------------------
             // order: PROCEDURE_SCHEM, PROCEDURE_NAME, SIGNATURE, SEQ
@@ -1925,23 +1925,23 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             // ----------------------------------------------------------------
             // required
             // ----------------------------------------------------------------
-            addColumn(t, "PROCEDURE_CAT", VARCHAR);
-            addColumn(t, "PROCEDURE_SCHEM", VARCHAR);
-            addColumn(t, "PROCEDURE_NAME", VARCHAR, false);     // not null
-            addColumn(t, "NUM_INPUT_PARAMS", INTEGER);
-            addColumn(t, "NUM_OUTPUT_PARAMS", INTEGER);
-            addColumn(t, "NUM_RESULT_SETS", INTEGER);
-            addColumn(t, "REMARKS", VARCHAR);
+            addColumn(t, "PROCEDURE_CAT", Types.VARCHAR);
+            addColumn(t, "PROCEDURE_SCHEM", Types.VARCHAR);
+            addColumn(t, "PROCEDURE_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "NUM_INPUT_PARAMS", Types.INTEGER);
+            addColumn(t, "NUM_OUTPUT_PARAMS", Types.INTEGER);
+            addColumn(t, "NUM_RESULT_SETS", Types.INTEGER);
+            addColumn(t, "REMARKS", Types.VARCHAR);
 
             // basically: function (returns result), procedure (no return value)
             // or unknown (say, a trigger callout routine)
-            addColumn(t, "PROCEDURE_TYPE", SMALLINT, false);    // not null
+            addColumn(t, "PROCEDURE_TYPE", Types.SMALLINT, false);    // not null
 
             // ----------------------------------------------------------------
             // extended
             // ----------------------------------------------------------------
-            addColumn(t, "ORIGIN", VARCHAR, false);             // not null
-            addColumn(t, "SIGNATURE", VARCHAR, false);          // not null
+            addColumn(t, "ORIGIN", Types.VARCHAR, false);             // not null
+            addColumn(t, "SIGNATURE", Types.VARCHAR, false);          // not null
 
             // ----------------------------------------------------------------
             // order: PROCEDURE_SCHEM and PROCEDURE_NAME.
@@ -1990,8 +1990,8 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_SCHEMAS]);
 
-            addColumn(t, "TABLE_SCHEM", VARCHAR, false);    // not null
-            addColumn(t, "TABLE_CATALOG", VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
 
             // order: TABLE_SCHEM
             // true PK, as rows never have null TABLE_SCHEM
@@ -2053,13 +2053,13 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TABLEPRIVILEGES]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "GRANTOR", VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
 
             // order: TABLE_SCHEM, TABLE_NAME, and PRIVILEGE,
             // added for unique:  GRANTEE, GRANTOR, TABLE_CAT
@@ -2193,26 +2193,26 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             // -------------------------------------------------------------
             // required
             // -------------------------------------------------------------
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);    // not null
-            addColumn(t, "TABLE_TYPE", VARCHAR, false);    // not null
-            addColumn(t, "REMARKS", VARCHAR);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "TABLE_TYPE", Types.VARCHAR, false);    // not null
+            addColumn(t, "REMARKS", Types.VARCHAR);
 
             // -------------------------------------------------------------
             // JDBC3
             // -------------------------------------------------------------
-            addColumn(t, "TYPE_CAT", VARCHAR);
-            addColumn(t, "TYPE_SCHEM", VARCHAR);
-            addColumn(t, "TYPE_NAME", VARCHAR);
-            addColumn(t, "SELF_REFERENCING_COL_NAME", VARCHAR);
-            addColumn(t, "REF_GENERATION", VARCHAR);
+            addColumn(t, "TYPE_CAT", Types.VARCHAR);
+            addColumn(t, "TYPE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR);
+            addColumn(t, "SELF_REFERENCING_COL_NAME", Types.VARCHAR);
+            addColumn(t, "REF_GENERATION", Types.VARCHAR);
 
             // -------------------------------------------------------------
             // extended
             // ------------------------------------------------------------
-            addColumn(t, "HSQLDB_TYPE", VARCHAR);
-            addColumn(t, "READ_ONLY", BIT, false);         // not null
+            addColumn(t, "HSQLDB_TYPE", Types.VARCHAR);
+            addColumn(t, "READ_ONLY", Types.BIT, false);         // not null
 
             // ------------------------------------------------------------
             // order TABLE_TYPE, TABLE_SCHEM and TABLE_NAME
@@ -2329,7 +2329,7 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TABLETYPES]);
 
-            addColumn(t, "TABLE_TYPE", VARCHAR, false);    // not null
+            addColumn(t, "TABLE_TYPE", Types.VARCHAR, false);    // not null
 
             // order: TABLE_TYPE
             // true PK
@@ -2410,29 +2410,29 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             //-------------------------------------------
             // required by JDBC:
             // ------------------------------------------
-            addColumn(t, "TYPE_NAME", VARCHAR, false);
-            addColumn(t, "DATA_TYPE", SMALLINT, false);
-            addColumn(t, "PRECISION", INTEGER);
-            addColumn(t, "LITERAL_PREFIX", VARCHAR);
-            addColumn(t, "LITERAL_SUFFIX", VARCHAR);
-            addColumn(t, "CREATE_PARAMS", VARCHAR);
-            addColumn(t, "NULLABLE", SMALLINT);
-            addColumn(t, "CASE_SENSITIVE", BIT);
-            addColumn(t, "SEARCHABLE", SMALLINT);
-            addColumn(t, "UNSIGNED_ATTRIBUTE", BIT);
-            addColumn(t, "FIXED_PREC_SCALE", BIT);
-            addColumn(t, "AUTO_INCREMENT", BIT);
-            addColumn(t, "LOCAL_TYPE_NAME", VARCHAR);
-            addColumn(t, "MINIMUM_SCALE", SMALLINT);
-            addColumn(t, "MAXIMUM_SCALE", SMALLINT);
-            addColumn(t, "SQL_DATA_TYPE", INTEGER);
-            addColumn(t, "SQL_DATETIME_SUB", INTEGER);
-            addColumn(t, "NUM_PREC_RADIX", INTEGER);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);
+            addColumn(t, "PRECISION", Types.INTEGER);
+            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR);
+            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
+            addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
+            addColumn(t, "NULLABLE", Types.SMALLINT);
+            addColumn(t, "CASE_SENSITIVE", Types.BIT);
+            addColumn(t, "SEARCHABLE", Types.SMALLINT);
+            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BIT);
+            addColumn(t, "FIXED_PREC_SCALE", Types.BIT);
+            addColumn(t, "AUTO_INCREMENT", Types.BIT);
+            addColumn(t, "LOCAL_TYPE_NAME", Types.VARCHAR);
+            addColumn(t, "MINIMUM_SCALE", Types.SMALLINT);
+            addColumn(t, "MAXIMUM_SCALE", Types.SMALLINT);
+            addColumn(t, "SQL_DATA_TYPE", Types.INTEGER);
+            addColumn(t, "SQL_DATETIME_SUB", Types.INTEGER);
+            addColumn(t, "NUM_PREC_RADIX", Types.INTEGER);
 
             //-------------------------------------------
             // for JDBC sort contract:
             //-------------------------------------------
-            addColumn(t, "TYPE_SUB", INTEGER);
+            addColumn(t, "TYPE_SUB", Types.INTEGER);
 
             // order: DATA_TYPE, TYPE_SUB
             // true PK
@@ -2557,36 +2557,36 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             //-------------------------------------------
             // same as SYSTEM_TYPEINFO:
             // ------------------------------------------
-            addColumn(t, "TYPE_NAME", VARCHAR, false);
-            addColumn(t, "DATA_TYPE", SMALLINT, false);
-            addColumn(t, "PRECISION", INTEGER);
-            addColumn(t, "LITERAL_PREFIX", VARCHAR);
-            addColumn(t, "LITERAL_SUFFIX", VARCHAR);
-            addColumn(t, "CREATE_PARAMS", VARCHAR);
-            addColumn(t, "NULLABLE", SMALLINT);
-            addColumn(t, "CASE_SENSITIVE", BIT);
-            addColumn(t, "SEARCHABLE", SMALLINT);
-            addColumn(t, "UNSIGNED_ATTRIBUTE", BIT);
-            addColumn(t, "FIXED_PREC_SCALE", BIT);
-            addColumn(t, "AUTO_INCREMENT", BIT);
-            addColumn(t, "LOCAL_TYPE_NAME", VARCHAR);
-            addColumn(t, "MINIMUM_SCALE", SMALLINT);
-            addColumn(t, "MAXIMUM_SCALE", SMALLINT);
-            addColumn(t, "SQL_DATA_TYPE", INTEGER);
-            addColumn(t, "SQL_DATETIME_SUB", INTEGER);
-            addColumn(t, "NUM_PREC_RADIX", INTEGER);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);
+            addColumn(t, "PRECISION", Types.INTEGER);
+            addColumn(t, "LITERAL_PREFIX", Types.VARCHAR);
+            addColumn(t, "LITERAL_SUFFIX", Types.VARCHAR);
+            addColumn(t, "CREATE_PARAMS", Types.VARCHAR);
+            addColumn(t, "NULLABLE", Types.SMALLINT);
+            addColumn(t, "CASE_SENSITIVE", Types.BIT);
+            addColumn(t, "SEARCHABLE", Types.SMALLINT);
+            addColumn(t, "UNSIGNED_ATTRIBUTE", Types.BIT);
+            addColumn(t, "FIXED_PREC_SCALE", Types.BIT);
+            addColumn(t, "AUTO_INCREMENT", Types.BIT);
+            addColumn(t, "LOCAL_TYPE_NAME", Types.VARCHAR);
+            addColumn(t, "MINIMUM_SCALE", Types.SMALLINT);
+            addColumn(t, "MAXIMUM_SCALE", Types.SMALLINT);
+            addColumn(t, "SQL_DATA_TYPE", Types.INTEGER);
+            addColumn(t, "SQL_DATETIME_SUB", Types.INTEGER);
+            addColumn(t, "NUM_PREC_RADIX", Types.INTEGER);
 
             //-------------------------------------------
             // SQL CLI / ODBC - not in JDBC spec
             // ------------------------------------------
-            addColumn(t, "INTERVAL_PRECISION", INTEGER);
+            addColumn(t, "INTERVAL_PRECISION", Types.INTEGER);
 
             //-------------------------------------------
             // extended:
             //-------------------------------------------
             // level of support
             //-------------------------------------------
-            addColumn(t, "AS_TAB_COL", BIT);
+            addColumn(t, "AS_TAB_COL", Types.BIT);
 
             // for instance, some executable methods take Connection
             // or return non-serializable Object such as ResultSet, neither
@@ -2595,56 +2595,56 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
             // Also, triggers take Object[] row, which we show as ARRAY
             // presently, although STRUCT would probably be better in the
             // future, as the row can actually contain mixed data types.
-            addColumn(t, "AS_PROC_COL", BIT);
+            addColumn(t, "AS_PROC_COL", Types.BIT);
 
             //-------------------------------------------
             // actual values for attributes that cannot be represented
             // within the limitations of the SQL CLI / JDBC interface
             //-------------------------------------------
-            addColumn(t, "MAX_PREC_ACT", BIGINT);
-            addColumn(t, "MIN_SCALE_ACT", INTEGER);
-            addColumn(t, "MAX_SCALE_ACT", INTEGER);
+            addColumn(t, "MAX_PREC_ACT", Types.BIGINT);
+            addColumn(t, "MIN_SCALE_ACT", Types.INTEGER);
+            addColumn(t, "MAX_SCALE_ACT", Types.INTEGER);
 
             //-------------------------------------------
             // how do we store this internally as a column value?
             //-------------------------------------------
-            addColumn(t, "COL_ST_CLS_NAME", VARCHAR);
-            addColumn(t, "COL_ST_IS_SUP", BIT);
+            addColumn(t, "COL_ST_CLS_NAME", Types.VARCHAR);
+            addColumn(t, "COL_ST_IS_SUP", Types.BIT);
 
             //-------------------------------------------
             // what is the standard Java mapping for the type?
             //-------------------------------------------
-            addColumn(t, "STD_MAP_CLS_NAME", VARCHAR);
-            addColumn(t, "STD_MAP_IS_SUP", BIT);
+            addColumn(t, "STD_MAP_CLS_NAME", Types.VARCHAR);
+            addColumn(t, "STD_MAP_IS_SUP", Types.BIT);
 
             //-------------------------------------------
             // what, if any, custom mapping do we provide?
             // (under the current build options and hosting VM)
             //-------------------------------------------
-            addColumn(t, "CST_MAP_CLS_NAME", VARCHAR);
-            addColumn(t, "CST_MAP_IS_SUP", BIT);
+            addColumn(t, "CST_MAP_CLS_NAME", Types.VARCHAR);
+            addColumn(t, "CST_MAP_IS_SUP", Types.BIT);
 
             //-------------------------------------------
             // what is the max representable and actual
             // character octet length, if applicable?
             //-------------------------------------------
-            addColumn(t, "MCOL_JDBC", INTEGER);
-            addColumn(t, "MCOL_ACT", BIGINT);
+            addColumn(t, "MCOL_JDBC", Types.INTEGER);
+            addColumn(t, "MCOL_ACT", Types.BIGINT);
 
             //-------------------------------------------
             // what is the default or fixed scale, if applicable?
             //-------------------------------------------
-            addColumn(t, "DEF_OR_FIXED_SCALE", INTEGER);
+            addColumn(t, "DEF_OR_FIXED_SCALE", Types.INTEGER);
 
             //-------------------------------------------
             // Any type-specific, localized remarks can go here
             //-------------------------------------------
-            addColumn(t, "REMARKS", VARCHAR);
+            addColumn(t, "REMARKS", Types.VARCHAR);
 
             //-------------------------------------------
             // required for JDBC sort contract:
             //-------------------------------------------
-            addColumn(t, "TYPE_SUB", INTEGER);
+            addColumn(t, "TYPE_SUB", Types.INTEGER);
 
             // order:  DATA_TYPE, TYPE_SUB
             // true primary key
@@ -2726,9 +2726,9 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
 
         ti = new DITypeInfo();
 
-        for (int i = 0; i < ALL_TYPES.length; i++) {
-            ti.setTypeCode(ALL_TYPES[i][0]);
-            ti.setTypeSub(ALL_TYPES[i][1]);
+        for (int i = 0; i < Types.ALL_TYPES.length; i++) {
+            ti.setTypeCode(Types.ALL_TYPES[i][0]);
+            ti.setTypeSub(Types.ALL_TYPES[i][1]);
 
             row                      = t.getNewRow();
             row[itype_name]          = ti.getTypeName();
@@ -2816,8 +2816,8 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_USERS]);
 
-            addColumn(t, "USER", VARCHAR, false);
-            addColumn(t, "ADMIN", BIT, false);
+            addColumn(t, "USER", Types.VARCHAR, false);
+            addColumn(t, "ADMIN", Types.BIT, false);
 
             // order: USER
             // true PK

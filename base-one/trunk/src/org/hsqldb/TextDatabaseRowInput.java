@@ -209,7 +209,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                 return readString();
 
             case Types.VARCHAR :
-            case Column.VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
                 return readVarString();
 
             case Types.LONGVARCHAR :
@@ -321,16 +321,16 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
     protected Object readOther() throws IOException, HsqlException {
 
-        byte[] o;
+        byte[] data;
         String s = readString();
 
         if (s == null) {
             return null;
         }
 
-        o = Column.hexToByteArray(s);
+        data = Column.hexToByteArray(s);
 
-        return Column.deserialize(o);
+        return new JavaObject(data,true);
     }
 
     protected byte[] readBinary(int type) throws IOException, HsqlException {

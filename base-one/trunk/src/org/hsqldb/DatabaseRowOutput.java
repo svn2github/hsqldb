@@ -190,7 +190,7 @@ implements DatabaseRowOutputInterface {
 
                 case Types.CHAR :
                 case Types.VARCHAR :
-                case Column.VARCHAR_IGNORECASE :
+                case Types.VARCHAR_IGNORECASE :
                 case Types.LONGVARCHAR :
                     writeChar((String) o, t);
                     break;

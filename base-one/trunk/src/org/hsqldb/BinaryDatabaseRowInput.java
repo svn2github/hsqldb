@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.DataInputStream;
 import java.io.IOException;
 import org.hsqldb.store.ValuePool;
+
 /**
  *  Provides methods for reading the data for a row from a
  *  byte array. The format of data is that used for storage of cached
@@ -83,7 +84,9 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Integer readSmallint() throws IOException, HsqlException {
+
         int val = Integer.parseInt(readNumericString());
+
         return org.hsqldb.store.ValuePool.getInt(val);
     }
 
@@ -92,8 +95,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Long readBigint() throws IOException, HsqlException {
+
 //        return Long.valueOf(readNumericString());
         long l = Long.parseLong(readNumericString());
+
         return org.hsqldb.store.ValuePool.getLong(l);
     }
 
@@ -102,23 +107,26 @@ implements org.hsqldb.DatabaseRowInputInterface {
         if (type == Types.REAL) {
 
 //            return Double.valueOf(readNumericString());
-
             double d = Double.parseDouble(readNumericString());
-            long l = Double.doubleToLongBits(d);
+            long   l = Double.doubleToLongBits(d);
+
             return ValuePool.getDouble(l);
 
             // some JDKs have a problem with this:
             // o=new Double(readDouble());
         } else {
+
 //            return new Double(Double.longBitsToDouble(readLong()));
             long l = readLong();
+
             return ValuePool.getDouble(l);
         }
     }
 
     protected java.math.BigDecimal readDecimal()
     throws IOException, HsqlException {
-        return ValuePool.getBigDecimal(new java.math.BigDecimal(readNumericString()));
+        return ValuePool.getBigDecimal(
+            new java.math.BigDecimal(readNumericString()));
     }
 
     protected Boolean readBit() throws IOException, HsqlException {
@@ -144,20 +152,20 @@ implements org.hsqldb.DatabaseRowInputInterface {
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // objects are / were stored as serialized byte[]
 // now they are deserialized before retrieval
-        byte[] o;
+        byte[] data;
         String binarystring = readString();
 
         if (binarystring.equals("**")) {
 
             // hsql - new format
-            o = readByteArray();
+            data = readByteArray();
         } else {
 
             // hsql - old format
-            o = Column.hexToByteArray(binarystring);
+            data = Column.hexToByteArray(binarystring);
         }
 
-        return Column.deserialize(o);
+        return new JavaObject(data,true);
     }
 
     protected byte[] readBinary(int type) throws IOException, HsqlException {

@@ -47,8 +47,8 @@ public class InOutUtil {
 /**
  * Implementation only supports unix line-end format.
  */
-    public static int readLine(
-                               InputStream in,OutputStream out) throws IOException {
+    public static int readLine(InputStream in,
+                               OutputStream out) throws IOException {
 
         int count = 0;
 

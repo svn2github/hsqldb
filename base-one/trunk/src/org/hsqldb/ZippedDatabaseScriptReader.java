@@ -49,8 +49,9 @@ class ZippedDatabaseScriptReader extends BinaryDatabaseScriptReader {
 
     protected void openFile() throws IOException {
 
-        dataStreamIn = new InflaterInputStream(new FileInputStream(fileName),
-                                               new Inflater());
+        dataStreamIn = new DataInputStream(
+            new InflaterInputStream(
+                new FileInputStream(fileName), new Inflater()));
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }
 }

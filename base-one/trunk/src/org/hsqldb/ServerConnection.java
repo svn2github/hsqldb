@@ -110,6 +110,7 @@ class ServerConnection implements Runnable {
     BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(bufferSize);
     BinaryServerRowInput    rowIn      = new BinaryServerRowInput(rowOut);
     Thread                  runnerThread;
+
     /**
      *
      * @param socket
@@ -130,11 +131,12 @@ class ServerConnection implements Runnable {
     }
 
     void signalClose() {
+
         keepAlive = false;
+
         if (!runnerThread.equals(Thread.currentThread())) {
             close();
         }
-
     }
 
     private void close() {
@@ -164,7 +166,8 @@ class ServerConnection implements Runnable {
     private void init() {
 
         runnerThread = Thread.currentThread();
-        keepAlive = true;
+        keepAlive    = true;
+
         try {
             socket.setTcpNoDelay(true);
 

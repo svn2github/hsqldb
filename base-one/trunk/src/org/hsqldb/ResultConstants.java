@@ -157,17 +157,18 @@ public interface ResultConstants {
 //     */
 //    int SQLDESCRIBECOL      = SQL_API_BASE + 8;
 //
+
     /**
      * Indicates that Result encapsulates a request to terminate an
      * established connection.
      */
-    int SQLDISCONNECT       = SQL_API_BASE + 9;
+    int SQLDISCONNECT = SQL_API_BASE + 9;
 
     /**
      * Indicates that Result encapsulates a request to terminate an
      * SQL-transaction.
      */
-    int SQLENDTRAN          = SQL_API_BASE + 1005;
+    int SQLENDTRAN = SQL_API_BASE + 1005;
 
 //    /**
 //     * Indicates that Result encapsulates a request to return diagnostic
@@ -360,7 +361,6 @@ public interface ResultConstants {
 //     * result columns of a prepared or executed statement.
 //     */
 //    int SQLNUMRESULTCOLS = SQL_API_BASE + 18;
-
 //    /**
 //     * Indicates that Result encapsulates a request to process a deferred
 //     * parameter value. For example, a streamed or locator identified
@@ -435,11 +435,12 @@ public interface ResultConstants {
 //     */
 //    int SQLSPECIALCOLUMNS   = SQL_API_BASE + 52;
 //
+
     /**
      * Indicates that Result encapsulates a request to explicitly start an
      * SQL-transaction and set its characteristics.
      */
-    int SQLSTARTTRAN        = SQL_API_BASE + 74;
+    int SQLSTARTTRAN = SQL_API_BASE + 74;
 
 //    /**
 //     * Indicates that Result encapsulates a request to return a result set that

@@ -221,7 +221,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         switch (type) {
 
             case Types.VARCHAR :
-            case Column.VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
                 nextSep    = varSep;
                 nextSepEnd = varSepEnd;
                 break;
@@ -252,7 +252,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                 return;
 
             case Types.VARCHAR :
-            case Column.VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
                 writeVarString(s);
 
                 return;
@@ -308,7 +308,8 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, HsqlException {
 
-        byte[] ba = Column.serialize(o);
+        JavaObject jo = (JavaObject) o;
+        byte[]     ba = jo.getBytes();
 
         writeByteArray(ba);
     }

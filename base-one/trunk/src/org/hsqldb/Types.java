@@ -67,6 +67,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.IntKeyHashMap;
+
 /**
  * Defines the constants that are used to identify SQL types for HSQLDB JDBC
  * inteface type reporting. The actual type constant values are equivalent
@@ -78,7 +81,7 @@ package org.hsqldb;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public interface Types {
+class Types {
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -87,28 +90,28 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int ARRAY = 2003;
+    static final int ARRAY = 2003;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIGINT</code>.
      */
-    int BIGINT = -5;
+    static final int BIGINT = -5;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BINARY</code>.
      */
-    int BINARY = -2;
+    static final int BINARY = -2;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>BIT</code>.
      */
-    int BIT = -7;
+    static final int BIT = -7;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -117,7 +120,7 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int BLOB = 2004;
+    static final int BLOB = 2004;
 
     /**
      * The constant in the Java programming language, somtimes referred to
@@ -126,14 +129,14 @@ public interface Types {
      *
      * @since JDK 1.4
      */
-    int BOOLEAN = 16;
+    static final int BOOLEAN = 16;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>CHAR</code>.
      */
-    int CHAR = 1;
+    static final int CHAR = 1;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -142,7 +145,7 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int CLOB = 2005;
+    static final int CLOB = 2005;
 
     /**
      * The constant in the Java programming language, somtimes referred to
@@ -150,21 +153,21 @@ public interface Types {
      *
      * @since JDK 1.4
      */
-    int DATALINK = 70;
+    static final int DATALINK = 70;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DATE</code>.
      */
-    int DATE = 91;
+    static final int DATE = 91;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DECIMAL</code>.
      */
-    int DECIMAL = 3;
+    static final int DECIMAL = 3;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -173,28 +176,28 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int DISTINCT = 2001;
+    static final int DISTINCT = 2001;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>DOUBLE</code>.
      */
-    int DOUBLE = 8;
+    static final int DOUBLE = 8;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>FLOAT</code>.
      */
-    int FLOAT = 6;
+    static final int FLOAT = 6;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>INTEGER</code>.
      */
-    int INTEGER = 4;
+    static final int INTEGER = 4;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -203,35 +206,35 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int JAVA_OBJECT = 2000;
+    static final int JAVA_OBJECT = 2000;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARBINARY</code>.
      */
-    int LONGVARBINARY = -4;
+    static final int LONGVARBINARY = -4;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>LONGVARCHAR</code>.
      */
-    int LONGVARCHAR = -1;
+    static final int LONGVARCHAR = -1;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NULL</code>.
      */
-    int NULL = 0;
+    static final int NULL = 0;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>NUMERIC</code>.
      */
-    int NUMERIC = 2;
+    static final int NUMERIC = 2;
 
     /**
      * The constant in the Java programming language that indicates
@@ -239,14 +242,14 @@ public interface Types {
      * gets mapped to a Java object that can be accessed via
      * the methods <code>getObject</code> and <code>setObject</code>.
      */
-    int OTHER = 1111;
+    static final int OTHER = 1111;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>REAL</code>.
      */
-    int REAL = 7;
+    static final int REAL = 7;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -255,14 +258,14 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int REF = 2006;
+    static final int REF = 2006;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>SMALLINT</code>.
      */
-    int SMALLINT = 5;
+    static final int SMALLINT = 5;
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -271,42 +274,42 @@ public interface Types {
      *
      * @since JDK 1.2
      */
-    int STRUCT = 2002;
+    static final int STRUCT = 2002;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIME</code>.
      */
-    int TIME = 92;
+    static final int TIME = 92;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TIMESTAMP</code>.
      */
-    int TIMESTAMP = 93;
+    static final int TIMESTAMP = 93;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>TINYINT</code>.
      */
-    int TINYINT = -6;
+    static final int TINYINT = -6;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARBINARY</code>.
      */
-    int VARBINARY = -3;
+    static final int VARBINARY = -3;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
      * to as a type code, that identifies the generic SQL type
      * <code>VARCHAR</code>.
      */
-    int VARCHAR = 12;
+    static final int VARCHAR = 12;
 
     /**
      * <P>The constant in the Java programming language, sometimes referred
@@ -315,14 +318,14 @@ public interface Types {
      *
      * @since SQL 200n
      */
-    int XML = 137;
+    static final int XML = 137;
 
     /**
      * The default HSQLODB type sub-identifier. This indicates that an
      * HSQLDB type with this sub-type, if supported, is the very closest
      * thing HSQLDB offerers to the JDBC/SQL200n type
      */
-    int TYPE_SUB_DEFAULT = 1;
+    static final int TYPE_SUB_DEFAULT = 1;
 
     /**
      * The IDENTITY type sub-identifier. This indicates that an HSQLDB type
@@ -330,21 +333,21 @@ public interface Types {
      * to the JDBC/SQL200n type, except that it also provides autoincrement
      * behaviour
      */
-    int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
+    static final int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
 
     /**
      * The IGNORECASE type sub-identifier. This indicates that an HSQLDB type
      * with this sub-type, if supported,  is the closest thing HSQLDB offerers
      * to the JDBC/SQL200n type, except that case is ignored in comparisons
      */
-    int TYPE_SUB_IGNORECASE = TYPE_SUB_DEFAULT << 2;
+    static final int TYPE_SUB_IGNORECASE = TYPE_SUB_DEFAULT << 2;
 
     /**
      * Every (type,type-sub) combination known in the HSQLDB context.
      * Not every combination need be supported as a table or procedure
      * column type -- such determinations are handled in DITypeInfo.
      */
-    int[][] ALL_TYPES = {
+    static final int[][] ALL_TYPES = {
         {
             ARRAY, TYPE_SUB_DEFAULT
         }, {
@@ -415,4 +418,149 @@ public interface Types {
             XML, TYPE_SUB_DEFAULT
         }
     };
+
+    // non-standard type not in JDBC
+    static final int VARCHAR_IGNORECASE = 100;
+
+    // java types used in engine or supported for direct conversion in
+    // JDBC interface methods
+    static final int JAVA_BOOLEAN = 1;
+    static final int JAVA_STRING  = 2;
+    static final int JAVA_BYTE    = 3;
+    static final int JAVA_SHORT   = 4;
+    static final int JAVA_INTEGER = 5;
+    static final int JAVA_LONG    = 6;
+    static final int JAVA_BIGDEC  = 7;
+    static final int JAVA_DOUBLE  = 8;
+    static final int JAVA_SQLDATE = 9;
+    static final int JAVA_SQLTIME = 10;
+    static final int JAVA_SQLTS   = 11;
+    static final int JAVA_JAVAOBJECT  = 12;
+    static final int JAVA_BINARY  = 13;
+
+// lookup for types
+// boucherb@users - access changed for metadata 1.7.2
+    static IntValueHashMap typeAliases;
+    static IntKeyHashMap   typeNames;
+    static IntValueHashMap javaTypeNames;
+
+    static {
+        typeAliases = new IntValueHashMap(67, 1);
+
+        typeAliases.put("INTEGER", Types.INTEGER);
+        typeAliases.put("INT", Types.INTEGER);
+        typeAliases.put("int", Types.INTEGER);
+        typeAliases.put("java.lang.Integer", Types.INTEGER);
+        typeAliases.put("IDENTITY", Types.INTEGER);
+        typeAliases.put("DOUBLE", Types.DOUBLE);
+        typeAliases.put("double", Types.DOUBLE);
+        typeAliases.put("java.lang.Double", Types.DOUBLE);
+        typeAliases.put("FLOAT", Types.FLOAT);
+        typeAliases.put("REAL", Types.REAL);
+        typeAliases.put("VARCHAR", Types.VARCHAR);
+        typeAliases.put("java.lang.String", Types.VARCHAR);
+        typeAliases.put("CHAR", Types.CHAR);
+        typeAliases.put("CHARACTER", Types.CHAR);
+        typeAliases.put("LONGVARCHAR", Types.LONGVARCHAR);
+        typeAliases.put("VARCHAR_IGNORECASE", VARCHAR_IGNORECASE);
+        typeAliases.put("DATE", Types.DATE);
+        typeAliases.put("java.sql.Date", Types.DATE);
+        typeAliases.put("TIME", Types.TIME);
+        typeAliases.put("java.sql.Time", Types.TIME);
+        typeAliases.put("TIMESTAMP", Types.TIMESTAMP);
+        typeAliases.put("java.sql.Timestamp", Types.TIMESTAMP);
+        typeAliases.put("DATETIME", Types.TIMESTAMP);
+        typeAliases.put("DECIMAL", Types.DECIMAL);
+        typeAliases.put("java.math.BigDecimal", Types.DECIMAL);
+        typeAliases.put("NUMERIC", Types.NUMERIC);
+        typeAliases.put("BIT", Types.BIT);
+        typeAliases.put("boolean", Types.BIT);
+        typeAliases.put("java.lang.Boolean", Types.BIT);
+        typeAliases.put("TINYINT", Types.TINYINT);
+        typeAliases.put("byte", Types.TINYINT);
+        typeAliases.put("java.lang.Byte", Types.TINYINT);
+        typeAliases.put("SMALLINT", Types.SMALLINT);
+        typeAliases.put("short", Types.SMALLINT);
+        typeAliases.put("java.lang.Short", Types.SMALLINT);
+        typeAliases.put("BIGINT", Types.BIGINT);
+        typeAliases.put("long", Types.BIGINT);
+        typeAliases.put("java.lang.Long", Types.BIGINT);
+        typeAliases.put("BINARY", Types.BINARY);
+        typeAliases.put("[B", Types.BINARY);
+        typeAliases.put("VARBINARY", Types.VARBINARY);
+        typeAliases.put("LONGVARBINARY", Types.LONGVARBINARY);
+        typeAliases.put("OTHER", Types.OTHER);
+        typeAliases.put("OBJECT", Types.OTHER);
+        typeAliases.put("java.lang.Object", Types.OTHER);
+        typeAliases.put("NULL", Types.NULL);
+        typeAliases.put("void", Types.NULL);
+        typeAliases.put("java.lang.Void", Types.NULL);
+
+        //
+        typeNames = new IntKeyHashMap(37);
+
+        typeNames.put(Types.NULL, "NULL");
+        typeNames.put(Types.INTEGER, "INTEGER");
+        typeNames.put(Types.DOUBLE, "DOUBLE");
+        typeNames.put(VARCHAR_IGNORECASE, "VARCHAR_IGNORECASE");
+        typeNames.put(Types.VARCHAR, "VARCHAR");
+        typeNames.put(Types.CHAR, "CHAR");
+        typeNames.put(Types.LONGVARCHAR, "LONGVARCHAR");
+        typeNames.put(Types.DATE, "DATE");
+        typeNames.put(Types.TIME, "TIME");
+        typeNames.put(Types.DECIMAL, "DECIMAL");
+        typeNames.put(Types.BIT, "BIT");
+        typeNames.put(Types.TINYINT, "TINYINT");
+        typeNames.put(Types.SMALLINT, "SMALLINT");
+        typeNames.put(Types.BIGINT, "BIGINT");
+        typeNames.put(Types.REAL, "REAL");
+        typeNames.put(Types.FLOAT, "FLOAT");
+        typeNames.put(Types.NUMERIC, "NUMERIC");
+        typeNames.put(Types.TIMESTAMP, "TIMESTAMP");
+        typeNames.put(Types.BINARY, "BINARY");
+        typeNames.put(Types.VARBINARY, "VARBINARY");
+        typeNames.put(Types.LONGVARBINARY, "LONGVARBINARY");
+        typeNames.put(Types.OTHER, "OBJECT");
+
+        //
+/*
+        javaTypeNames = new IntValueHashMap(23, 1);
+
+        javaTypeNames.put(Boolean.class.getName(), JAVA_BOOLEAN);
+        javaTypeNames.put(String.class.getName(), JAVA_STRING);
+        javaTypeNames.put(Byte.class.getName(), JAVA_BYTE);
+        javaTypeNames.put(Short.class.getName(), JAVA_SHORT);
+        javaTypeNames.put(Integer.class.getName(), JAVA_INTEGER);
+        javaTypeNames.put(Long.class.getName(), JAVA_LONG);
+        javaTypeNames.put(java.math.BigDecimal.class.getName(), JAVA_BIGDEC);
+        javaTypeNames.put(Double.class.getName(), JAVA_DOUBLE);
+        javaTypeNames.put(java.sql.Date.class.getName(), JAVA_SQLDATE);
+        javaTypeNames.put(java.sql.Time.class.getName(), JAVA_SQLTIME);
+        javaTypeNames.put(java.sql.Timestamp.class.getName(), JAVA_SQLTS);
+        javaTypeNames.put(org.hsqldb.JavaObject.class.getName(), JAVA_JAVAOBJECT);
+        javaTypeNames.put(org.hsqldb.Binary.class.getName(), JAVA_BINARY);
+*/
+    }
+
+/**
+ *
+ * @param  SQL type string
+ * @return java.sql.Types int value
+ * @throws  HsqlException
+ */
+    static int getTypeNr(String type) throws HsqlException {
+
+        int i = typeAliases.get(type, Integer.MIN_VALUE);
+
+        Trace.check(i != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE, type);
+
+        return i;
+    }
+
+/**
+ * Returns SQL type string for a java.sql.Types int value
+ */
+    static String getTypeString(int type) {
+        return (String) typeNames.get(type);
+    }
 }

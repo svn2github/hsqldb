@@ -79,7 +79,7 @@ public class UnifiedTable {
             case ArrayUtil.CLASS_CODE_DOUBLE :
                 return new PrimDoubleCellComparator(targetColumn);
 
-            case ArrayUtil.CLASS_CODE_BOOLEAN     :
+            case ArrayUtil.CLASS_CODE_BOOLEAN :
                 return new PrimBooleanCellComparator(targetColumn);
 
             default :
@@ -415,7 +415,8 @@ public class UnifiedTable {
 
             // leave the phantom rows at the end if not Objects
             if (rows < 0 && cellTypeCode == ArrayUtil.CLASS_CODE_OBJECT) {
-                ArrayUtil.clearArray(cellTypeCode,tableData, newCount * columns, rowCount * columns);
+                ArrayUtil.clearArray(cellTypeCode, tableData,
+                                     newCount * columns, rowCount * columns);
             }
         }
 
@@ -990,8 +991,8 @@ public class UnifiedTable {
          * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
-            return !myTableData[i * columns + targetColumn] &&
-                   myTableData[j * columns + targetColumn];
+            return !myTableData[i * columns + targetColumn]
+                   && myTableData[j * columns + targetColumn];
         }
 
         /**
@@ -1009,7 +1010,7 @@ public class UnifiedTable {
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
-            return myTableData[i * columns + targetColumn] && !mySearchTarget;
+            return myTableData[i * columns + targetColumn] &&!mySearchTarget;
         }
 
         /**
@@ -1026,6 +1027,7 @@ public class UnifiedTable {
             mySearchTarget = target;
         }
     }
+
     class PrimObjectCellComparator extends SingleCellComparator {
 
         private Object[] myTableData;

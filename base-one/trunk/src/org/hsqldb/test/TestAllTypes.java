@@ -46,7 +46,10 @@ public class TestAllTypes {
     protected String url = "jdbc:hsqldb:";
 
 //    protected String filepath = ".";
-    protected String filepath = "/hsql/testalltypes/test";
+//    protected String filepath = "/hsql/testalltypes/test";
+    protected String filepath = "hsql://localhost/yourtest";
+
+    boolean network = true;
     String           user;
     String           password;
     Statement        sStatement;
@@ -85,12 +88,12 @@ public class TestAllTypes {
 
             Class.forName("org.hsqldb.jdbcDriver");
 
-            if (fileexists == false) {
+            if (!network && !fileexists == false) {
                 cConnection = DriverManager.getConnection(url + filepath,
                         user, password);
                 sStatement = cConnection.createStatement();
 
-                sStatement.execute("SET LOGTYPE " + logType);
+                sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 400);
                 sStatement.execute("SET WRITE_DELAY " + writeDelay);
                 sStatement.execute("SHUTDOWN");
@@ -244,7 +247,9 @@ public class TestAllTypes {
             System.out.println("Insert time: " + sw.elapsedTime() + " rps: "
                                + (i * 1000 / sw.elapsedTime()));
             sw.zero();
-            sStatement.execute("SHUTDOWN");
+            if (!network ){
+                sStatement.execute("SHUTDOWN");
+            }
             cConnection.close();
             System.out.println("Shutdown Time: " + sw.elapsedTime());
         } catch (SQLException e) {
@@ -293,7 +298,7 @@ public class TestAllTypes {
             checkUpdates();
             sw.zero();
             cConnection.close();
-            System.out.println("Closed database: " + sw.elapsedTime());
+            System.out.println("Closed connection: " + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }

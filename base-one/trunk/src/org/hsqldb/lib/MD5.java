@@ -101,9 +101,8 @@ public final class MD5 {
      *      java.security.MessageDigest spi or the requested
      *      encoding is not available
      */
-    public static final String encodeString(String string, String encoding)
-            throws RuntimeException {
-
+    public static final String encodeString(String string,
+            String encoding) throws RuntimeException {
         return StringConverter.byteToHex(digestString(string, encoding));
     }
 
@@ -122,8 +121,9 @@ public final class MD5 {
      *      java.security.MessageDigest spi or the requested
      *      encoding is not available
      */
-    public static byte[] digestString(String string, String encoding)
-            throws RuntimeException {
+    public static byte[] digestString(String string,
+                                      String encoding)
+                                      throws RuntimeException {
 
         byte[] data;
 

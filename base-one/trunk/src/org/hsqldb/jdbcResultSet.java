@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;     // for Array, Blob, Clob, Ref
 import java.sql.SQLException;
@@ -1691,7 +1692,6 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcResultSetMetaData
      */
     public ResultSetMetaData getMetaData() throws SQLException {
-
         return new jdbcResultSetMetaData(this, connProperties);
     }
 
@@ -1745,11 +1745,31 @@ public class jdbcResultSet implements ResultSet {
         checkNull(o);
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
-// all objects are stored in Result as the original java object,
-// Deserialization of OTHER is now handled in BinaryServerRowInput
-// when reconstructing a Result from a bytestream.
-// fredt@users 200021001 - BINARY is now returned as byte[]
-        return o;
+// fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
+/*
+        try {
+            int t = rResult.colType[columnIndex];
+
+            if (t == org.hsqldb.Types.OTHER) {
+                return Column.deserialize((byte[]) o);
+            } else {
+                return o;
+            }
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
+*/
+        if (o instanceof JavaObject) {
+            try {
+                return ((JavaObject) o).getObject();
+            } catch (HsqlException e) {
+                throw jdbcDriver.sqlException(Trace.error(Trace.SERIALIZATION_FAILURE));
+            } catch (IOException e) {
+                throw jdbcDriver.sqlException(Trace.error(Trace.SERIALIZATION_FAILURE));
+            }
+        } else {
+            return o;
+        }
     }
 
     /**
@@ -2639,11 +2659,12 @@ public class jdbcResultSet implements ResultSet {
         if (Trace.TRACE) {
             Trace.trace(rows);
         }
-        checkAvailable();
-        if ( rows > 1 || rows < 0 ){
-                    throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
-        }
 
+        checkAvailable();
+
+        if (rows > 1 || rows < 0) {
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
     }
 
     /**
@@ -4492,7 +4513,6 @@ public class jdbcResultSet implements ResultSet {
      */
     public Statement getStatement() throws SQLException {
         return sqlStatement;
-
     }
 
     /**
@@ -5582,8 +5602,8 @@ public class jdbcResultSet implements ResultSet {
         try {
             return Column.convertObject(o, type);
         } catch (Exception e) {
-            String s = "type: " + Column.getTypeString(t) + " (" + t
-                       + ") expected: " + Column.getTypeString(type)
+            String s = "type: " + Types.getTypeString(t) + " (" + t
+                       + ") expected: " + Types.getTypeString(type)
                        + " value: " + o.toString();
 
             throw jdbcDriver.sqlException(Trace.WRONG_DATA_TYPE, s);
@@ -5602,8 +5622,10 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
      */
-    jdbcResultSet(Statement s, Result r, HsqlProperties props) throws SQLException {
-        sqlStatement = s;
+    jdbcResultSet(Statement s, Result r,
+                  HsqlProperties props) throws SQLException {
+
+        sqlStatement   = s;
         connProperties = props;
 
         if (r.iMode == ResultConstants.UPDATECOUNT) {
@@ -5613,7 +5635,8 @@ public class jdbcResultSet implements ResultSet {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            throw (Trace.getError(r.errorCode, r.sError));
-            throw new SQLException(r.getMainString(), null, r.getStatementID());
+            throw new SQLException(r.getMainString(), null,
+                                   r.getStatementID());
         } else {
             iUpdateCount = -1;
             rResult      = r;

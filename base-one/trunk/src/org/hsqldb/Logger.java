@@ -78,6 +78,7 @@ class Logger {
      *      the specified files are in use by another process
      */
     void openLog(Database db) throws HsqlException {
+
         String path;
 
         // NOTE:
@@ -128,7 +129,7 @@ class Logger {
 
         switch (closemode) {
 
-            case Database.CLOSEMODE_IMMEDIATELY:
+            case Database.CLOSEMODE_IMMEDIATELY :
                 lLog.shutdown();
                 break;
 
@@ -338,6 +339,7 @@ class Logger {
     }
 
     private void checkFilesInJar(String path) throws HsqlException {
+
         URL    url;
         String sScript;
 
@@ -347,11 +349,9 @@ class Logger {
         url     = getClass().getResource(sScript);
 
         Trace.check(url != null, Trace.FILE_IO_ERROR,
-                "non-existent resource: " + sScript);
-
-        Trace.check(
-            "jar".equalsIgnoreCase(url.getProtocol()),
-            Trace.ACCESS_IS_DENIED,
-            "wrong resource protocol: " + url);
+                    "non-existent resource: " + sScript);
+        Trace.check("jar".equalsIgnoreCase(url.getProtocol()),
+                    Trace.ACCESS_IS_DENIED,
+                    "wrong resource protocol: " + url);
     }
 }

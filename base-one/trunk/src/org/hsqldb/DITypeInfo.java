@@ -46,7 +46,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DITypeInfo implements Types {
+final class DITypeInfo {
 
     /** BundleHandler id for create params resource bundle. */
     private int hnd_create_params = -1;
@@ -58,10 +58,10 @@ final class DITypeInfo implements Types {
     private int hnd_remarks = -1;
 
     /** The SQL type code on which this object is reporting. */
-    private int type = NULL;
+    private int type = Types.NULL;
 
     /** The HSQLDB subtype code on which this object is reporting. */
-    private int typeSub = TYPE_SUB_DEFAULT;
+    private int typeSub = Types.TYPE_SUB_DEFAULT;
 
     /** Creates a new DITypeInfo object having the default Locale. */
     public DITypeInfo() {
@@ -90,12 +90,12 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case CHAR :
-            case LONGVARCHAR :
-            case VARCHAR :
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR :
                 return ValuePool.getLong(2L * Integer.MAX_VALUE);
 
-            case CLOB :
+            case Types.CLOB :
                 return ValuePool.getLong(Long.MAX_VALUE);
 
             default :
@@ -120,49 +120,49 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
+            case Types.BIGINT :
                 return "java.lang.Long";
 
-            case BINARY :
-            case LONGVARBINARY :
-            case OTHER :
-            case VARBINARY :
+            case Types.BINARY :
+            case Types.LONGVARBINARY :
+            case Types.OTHER :
+            case Types.VARBINARY :
                 return "[B";
 
-            case BIT :
-            case BOOLEAN :
+            case Types.BIT :
+            case Types.BOOLEAN :
                 return "java.lang.Boolean";
 
-            case CHAR :
-            case LONGVARCHAR :
-            case VARCHAR :
-            case XML :    //?
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR :
+            case Types.XML :    //?
                 return "java.lang.String";
 
-            case DATALINK :
+            case Types.DATALINK :
                 return "java.net.URL";
 
-            case DATE :
+            case Types.DATE :
                 return "java.sql.Date";
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return "java.math.BigDecimal";
 
-            case DOUBLE :
-            case FLOAT :
-            case REAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
                 return "java.lang.Double";
 
-            case INTEGER :
-            case SMALLINT :
-            case TINYINT :
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return "java.lang.Integer";
 
-            case TIME :
+            case Types.TIME :
                 return "java.sql.Time";
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return "java.sql.Timestamp";
 
             default :
@@ -186,19 +186,19 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case BLOB :
-            case CHAR :
-            case CLOB :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case VARBINARY :
-            case VARCHAR :
+            case Types.BINARY :
+            case Types.BLOB :
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
                 key = "SIZED";
                 break;
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 key = "DECIMAL";
                 break;
 
@@ -239,22 +239,22 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY :
+            case Types.ARRAY :
                 return "org.hsqldb.jdbcArray";
 
-            case BLOB :
+            case Types.BLOB :
                 return "org.hsqldb.jdbcBlob";
 
-            case CLOB :
+            case Types.CLOB :
                 return "org.hsqldb.jdbcClob";
 
-            case DISTINCT :
+            case Types.DISTINCT :
                 return "org.hsqldb.jdbcDistinct";
 
-            case REF :
+            case Types.REF :
                 return "org.hsqldb.jdbcRef";
 
-            case STRUCT :
+            case Types.STRUCT :
                 return "org.hsqldb.jdbcStruct";
 
             default :
@@ -282,51 +282,51 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case CHAR :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case OTHER :
-            case VARBINARY :
-            case VARCHAR :
-            case XML :
+            case Types.BINARY :
+            case Types.CHAR :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
+            case Types.XML :
                 return Integer.MAX_VALUE;    // same as precision
 
-            case BIGINT :
+            case Types.BIGINT :
                 return 20;                   // precision + "-".length();
 
-            case BIT :
-            case BOOLEAN :
+            case Types.BIT :
+            case Types.BOOLEAN :
                 return 5;                    // Math.max("true".length(),"false".length);
 
-            case DATALINK :
+            case Types.DATALINK :
                 return 2004;                 // same as precision
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return 646456995;            // precision + "-.".length()
 
-            case DATE :
+            case Types.DATE :
                 return 10;                   // same as precision
 
-            case INTEGER :
+            case Types.INTEGER :
                 return 11;                   // precision + "-".length();
 
-            case FLOAT :
-            case REAL :
-            case DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
                 return 23;                   // String.valueOf(-Double.MAX_VALUE).length();
 
-            case TIME :
+            case Types.TIME :
                 return 8;                    // same as precision
 
-            case SMALLINT :
+            case Types.SMALLINT :
                 return 6;                    // precision + "-".length();
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return 29;                   // same as precision
 
-            case TINYINT :
+            case Types.TINYINT :
                 return 4;                    // precision + "-".length();
 
             default :
@@ -365,10 +365,10 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case INTEGER :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return ValuePool.getInt(0);
 
             default :
@@ -394,32 +394,32 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case BLOB :
-            case CHAR :
-            case CLOB :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case VARBINARY :
-            case VARCHAR :
+            case Types.BINARY :
+            case Types.BLOB :
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
                 return "'";
 
-            case DATALINK :
+            case Types.DATALINK :
                 return "'";    // hypothetically: "{url '";
 
-            case DATE :
+            case Types.DATE :
                 return "'";    // or JDBC escape: "{d '";
 
-            case OTHER :
+            case Types.OTHER :
                 return "'";    // hypothetically: "{o '"; or new "pkg.cls"(...)
 
-            case TIME :
+            case Types.TIME :
                 return "'";    // or JDBC escape: "{t '";
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return "'";    // or JDBC escape: "{ts '";
 
-            case XML :
+            case Types.XML :
                 return "'";    // hypothetically: "{xml '";
 
             default :
@@ -436,22 +436,22 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case BLOB :
-            case CHAR :
-            case CLOB :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case VARBINARY :
-            case VARCHAR :
+            case Types.BINARY :
+            case Types.BLOB :
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
                 return "'";
 
-            case DATALINK :
-            case DATE :
-            case OTHER :
-            case TIME :
-            case TIMESTAMP :
-            case XML :
+            case Types.DATALINK :
+            case Types.DATE :
+            case Types.OTHER :
+            case Types.TIME :
+            case Types.TIMESTAMP :
+            case Types.XML :
                 return "'";    // or JDBC close escape: "'}";
 
             default :
@@ -469,7 +469,7 @@ final class DITypeInfo implements Types {
 
         String key = this.getTypeName();
 
-        if (typeSub == TYPE_SUB_IDENTITY) {
+        if (typeSub == Types.TYPE_SUB_IDENTITY) {
             key = key.replace(' ', '_');
         }
 
@@ -487,24 +487,24 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case DATE :
-            case INTEGER :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.DATE :
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return ValuePool.getInt(0);
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return ValuePool.getInt(Short.MAX_VALUE);
 
-            case FLOAT :
-            case REAL :
-            case DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
                 return ValuePool.getInt(306);
 
-//            case FLOAT :
-//            case REAL :
+//            case Types.FLOAT :
+//            case Types.REAL :
 //                return ValuePool.getInt(38);
             default :
                 return null;
@@ -522,8 +522,8 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return ValuePool.getInt(Integer.MAX_VALUE);
 
             default :
@@ -542,24 +542,24 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case DATE :
-            case INTEGER :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.DATE :
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return ValuePool.getInt(0);
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return ValuePool.getInt(Short.MIN_VALUE);
 
-            case FLOAT :
-            case REAL :
-            case DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
                 return ValuePool.getInt(-324);
 
-//            case FLOAT :
-//            case REAL :
+//            case Types.FLOAT :
+//            case Types.REAL :
 //                return ValuePool.getInt(-45);
             default :
                 return null;
@@ -577,8 +577,8 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return ValuePool.getInt(Integer.MIN_VALUE);
 
             default :
@@ -594,7 +594,7 @@ final class DITypeInfo implements Types {
      */
     Integer getNullability() {
 
-        return (typeSub == TYPE_SUB_IDENTITY)
+        return (typeSub == Types.TYPE_SUB_IDENTITY)
                ? ValuePool.getInt(DatabaseMetaData.columnNoNulls)
                : ValuePool.getInt(DatabaseMetaData.columnNullable);
     }
@@ -610,15 +610,15 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case DECIMAL :
-            case DOUBLE :
-            case FLOAT :
-            case INTEGER :
-            case NUMERIC :
-            case REAL :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.DECIMAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.INTEGER :
+            case Types.NUMERIC :
+            case Types.REAL :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return ValuePool.getInt(10);
 
             default :
@@ -637,30 +637,30 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case CHAR :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case OTHER :
-            case VARBINARY :
-            case VARCHAR :
-            case XML :
+            case Types.BINARY :
+            case Types.CHAR :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.VARBINARY :
+            case Types.VARCHAR :
+            case Types.XML :
                 return ValuePool.getInt(Integer.MAX_VALUE);
 
-            case BIGINT :
+            case Types.BIGINT :
                 return ValuePool.getInt(19);
 
-            case BIT :
-            case BOOLEAN :
+            case Types.BIT :
+            case Types.BOOLEAN :
                 return ValuePool.getInt(1);
 
-            case DATALINK :
+            case Types.DATALINK :
 
                 // from SQL CLI spec.  TODO:  Interpretation?
                 return ValuePool.getInt(2004);
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
 
 // Integer.MAX_VALUE bit 2's complement number:
 // (Integer.MAX_VALUE-1) / ((ln(10)/ln(2)) bits per decimal digit)
@@ -669,27 +669,27 @@ final class DITypeInfo implements Types {
 // report Integer.MAX_VALUE here
                 return ValuePool.getInt(646456993);
 
-            case DATE :
-            case INTEGER :
+            case Types.DATE :
+            case Types.INTEGER :
                 return ValuePool.getInt(10);
 
-            case FLOAT :
-            case REAL :
-            case DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
                 return ValuePool.getInt(17);
 
-//            case FLOAT :
-//            case REAL :
-            case TIME :
+//            case Types.FLOAT :
+//            case Types.REAL :
+            case Types.TIME :
                 return ValuePool.getInt(8);
 
-            case SMALLINT :
+            case Types.SMALLINT :
                 return ValuePool.getInt(5);
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return ValuePool.getInt(29);
 
-            case TINYINT :
+            case Types.TINYINT :
                 return ValuePool.getInt(3);
 
             default :
@@ -724,7 +724,7 @@ final class DITypeInfo implements Types {
 
         String key = this.getTypeName();
 
-        if (typeSub == TYPE_SUB_IDENTITY) {
+        if (typeSub == Types.TYPE_SUB_IDENTITY) {
             key = key.replace(' ', '_');
         }
 
@@ -740,14 +740,14 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY :
-            case BLOB :
-            case CLOB :
-            case JAVA_OBJECT :
-            case STRUCT :
+            case Types.ARRAY :
+            case Types.BLOB :
+            case Types.CLOB :
+            case Types.JAVA_OBJECT :
+            case Types.STRUCT :
                 return ValuePool.getInt(DatabaseMetaData.typePredNone);
 
-            case OTHER :    // CHECK ME:
+            case Types.OTHER :    // CHECK ME:
                 return ValuePool.getInt(DatabaseMetaData.typePredChar);
 
             default :
@@ -767,96 +767,96 @@ final class DITypeInfo implements Types {
         // was no corresponding value in SQL CLI
         switch (type) {
 
-            case ARRAY :
-                return ValuePool.getInt(50);             // SQL_ARRAY
+            case Types.ARRAY :
+                return ValuePool.getInt(50);                   // SQL_ARRAY
 
-            case BIGINT :
-                return ValuePool.getInt(25);             // SQL_BIGINT
+            case Types.BIGINT :
+                return ValuePool.getInt(25);                   // SQL_BIGINT
 
-            case BINARY :
-                return ValuePool.getInt(15);             // SQL_BIT_VARYING
+            case Types.BINARY :
+                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
 
-            case BIT :
-            case BOOLEAN :
-                return ValuePool.getInt(16);             // SQL_BOOLEAN
+            case Types.BIT :
+            case Types.BOOLEAN :
+                return ValuePool.getInt(16);                   // SQL_BOOLEAN
 
-            case BLOB :
-                return ValuePool.getInt(30);             // SQL_BLOB
+            case Types.BLOB :
+                return ValuePool.getInt(30);                   // SQL_BLOB
 
-            case CHAR :
-                return ValuePool.getInt(1);              // SQL_CHAR
+            case Types.CHAR :
+                return ValuePool.getInt(1);                    // SQL_CHAR
 
-            case CLOB :
-                return ValuePool.getInt(40);             // SQL_CLOB
+            case Types.CLOB :
+                return ValuePool.getInt(40);                   // SQL_CLOB
 
-            case DATALINK :
-                return ValuePool.getInt(70);             // SQL_DATALINK
+            case Types.DATALINK :
+                return ValuePool.getInt(70);                   // SQL_DATALINK
 
-            case DATE :
-                return ValuePool.getInt(9);              // SQL_DATETIME
+            case Types.DATE :
+                return ValuePool.getInt(9);                    // SQL_DATETIME
 
-            case DECIMAL :
-                return ValuePool.getInt(3);              // SQL_DECIMAL
+            case Types.DECIMAL :
+                return ValuePool.getInt(3);                    // SQL_DECIMAL
 
-            case DISTINCT :
-                return ValuePool.getInt(17);             // SQL_UDT
+            case Types.DISTINCT :
+                return ValuePool.getInt(17);                   // SQL_UDT
 
-            case DOUBLE :
-                return ValuePool.getInt(8);              // SQL_DOUBLE
+            case Types.DOUBLE :
+                return ValuePool.getInt(8);                    // SQL_DOUBLE
 
-            case FLOAT :
-                return ValuePool.getInt(6);              // SQL_FLOAT
+            case Types.FLOAT :
+                return ValuePool.getInt(6);                    // SQL_FLOAT
 
-            case INTEGER :
-                return ValuePool.getInt(4);              // SQL_INTEGER
+            case Types.INTEGER :
+                return ValuePool.getInt(4);                    // SQL_INTEGER
 
-            case JAVA_OBJECT :
-                return ValuePool.getInt(JAVA_OBJECT);    // N/A - maybe SQL_UDT?
+            case Types.JAVA_OBJECT :
+                return ValuePool.getInt(Types.JAVA_OBJECT);    // N/A - maybe SQL_UDT?
 
-            case LONGVARBINARY :
-                return ValuePool.getInt(15);             // SQL_BIT_VARYING
+            case Types.LONGVARBINARY :
+                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
 
-            case LONGVARCHAR :
-                return ValuePool.getInt(LONGVARCHAR);    // N/A
+            case Types.LONGVARCHAR :
+                return ValuePool.getInt(Types.LONGVARCHAR);    // N/A
 
-            case NULL :
-                return ValuePool.getInt(0);              // SQL_ALL_TYPES
+            case Types.NULL :
+                return ValuePool.getInt(0);                    // SQL_ALL_TYPES
 
-            case NUMERIC :
-                return ValuePool.getInt(2);              // SQL_NUMERIC
+            case Types.NUMERIC :
+                return ValuePool.getInt(2);                    // SQL_NUMERIC
 
-            case OTHER :
-                return ValuePool.getInt(OTHER);          // N/A - maybe SQL_UDT?
+            case Types.OTHER :
+                return ValuePool.getInt(Types.OTHER);          // N/A - maybe SQL_UDT?
 
-            case REAL :
-                return ValuePool.getInt(7);              // SQL_REAL
+            case Types.REAL :
+                return ValuePool.getInt(7);                    // SQL_REAL
 
-            case REF :
-                return ValuePool.getInt(20);             // SQL_REF
+            case Types.REF :
+                return ValuePool.getInt(20);                   // SQL_REF
 
-            case SMALLINT :
-                return ValuePool.getInt(5);              // SQL_SMALLINTEGER
+            case Types.SMALLINT :
+                return ValuePool.getInt(5);                    // SQL_SMALLINTEGER
 
-            case STRUCT :
-                return ValuePool.getInt(17);             // SQL_UDT
+            case Types.STRUCT :
+                return ValuePool.getInt(17);                   // SQL_UDT
 
-            case TIME :
-                return ValuePool.getInt(9);              // SQL_DATETIME
+            case Types.TIME :
+                return ValuePool.getInt(9);                    // SQL_DATETIME
 
-            case TIMESTAMP :
-                return ValuePool.getInt(9);              // SQL_DATETIME
+            case Types.TIMESTAMP :
+                return ValuePool.getInt(9);                    // SQL_DATETIME
 
-            case TINYINT :
-                return ValuePool.getInt(TINYINT);        // N/A
+            case Types.TINYINT :
+                return ValuePool.getInt(Types.TINYINT);        // N/A
 
-            case VARBINARY :
-                return ValuePool.getInt(15);             // SQL_BIT_VARYING
+            case Types.VARBINARY :
+                return ValuePool.getInt(15);                   // SQL_BIT_VARYING
 
-            case VARCHAR :
-                return ValuePool.getInt(12);             // SQL_VARCHAR
+            case Types.VARCHAR :
+                return ValuePool.getInt(12);                   // SQL_VARCHAR
 
-            case XML :
-                return ValuePool.getInt(137);            // SQL_XML
+            case Types.XML :
+                return ValuePool.getInt(137);                  // SQL_XML
 
             default :
                 return null;
@@ -872,13 +872,13 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case DATE :
+            case Types.DATE :
                 return ValuePool.getInt(1);
 
-            case TIME :
+            case Types.TIME :
                 return ValuePool.getInt(2);
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return ValuePool.getInt(3);
 
             default :
@@ -898,78 +898,78 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY :
+            case Types.ARRAY :
                 return "java.sql.Array";
 
-            case BIGINT :
+            case Types.BIGINT :
                 return "long";
 
-            case BINARY :
-            case LONGVARBINARY :
-            case VARBINARY :
+            case Types.BINARY :
+            case Types.LONGVARBINARY :
+            case Types.VARBINARY :
                 return "[B";
 
-            case BIT :
-            case BOOLEAN :
+            case Types.BIT :
+            case Types.BOOLEAN :
                 return "boolean";
 
-            case BLOB :
+            case Types.BLOB :
                 return "java.sql.Blob";
 
-            case CHAR :
-            case LONGVARCHAR :
-            case VARCHAR :
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR :
                 return "java.lang.String";
 
-            case CLOB :
+            case Types.CLOB :
                 return "java.sql.Clob";
 
-            case DATALINK :
+            case Types.DATALINK :
                 return "java.net.URL";
 
-            case DATE :
+            case Types.DATE :
                 return "java.sql.Date";
 
-            case DECIMAL :
-            case NUMERIC :
+            case Types.DECIMAL :
+            case Types.NUMERIC :
                 return "java.math.BigDecimal";
 
-            case DISTINCT :
-            case JAVA_OBJECT :
-            case OTHER :
-            case XML :    // ???
+            case Types.DISTINCT :
+            case Types.JAVA_OBJECT :
+            case Types.OTHER :
+            case Types.XML :    // ???
                 return "java.lang.Object";
 
-            case FLOAT :
-            case REAL :
-            case DOUBLE :
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.DOUBLE :
                 return "double";
 
-//            case FLOAT :
-//            case REAL :
+//            case Types.FLOAT :
+//            case Types.REAL :
 //                return "float";
-            case INTEGER :
+            case Types.INTEGER :
                 return "int";
 
-            case NULL :
+            case Types.NULL :
                 return "null";
 
-            case REF :
+            case Types.REF :
                 return "java.sql.Ref";
 
-            case SMALLINT :
+            case Types.SMALLINT :
                 return "short";
 
-            case STRUCT :
+            case Types.STRUCT :
                 return "java.sql.Struct";
 
-            case TIME :
+            case Types.TIME :
                 return "java.sql.Time";
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return "java.sql.Timestamp";
 
-            case TINYINT :
+            case Types.TINYINT :
                 return "byte";
 
             default :
@@ -999,100 +999,103 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY :
+            case Types.ARRAY :
                 return "ARRAY";
 
-            case BIGINT :
-                return (typeSub == TYPE_SUB_IDENTITY) ? "BIGINT IDENTITY"
-                                                      : "BIGINT";
+            case Types.BIGINT :
+                return (typeSub == Types.TYPE_SUB_IDENTITY)
+                       ? "BIGINT IDENTITY"
+                       : "BIGINT";
 
-            case BINARY :
+            case Types.BINARY :
                 return "BINARY";
 
-            case BIT :
+            case Types.BIT :
                 return "BIT";
 
-            case BLOB :
+            case Types.BLOB :
                 return "BLOB";
 
-            case BOOLEAN :
+            case Types.BOOLEAN :
                 return "BOOLEAN";
 
-            case CHAR :
+            case Types.CHAR :
                 return "CHAR";
 
-            case CLOB :
+            case Types.CLOB :
                 return "CLOB";
 
-            case DATALINK :
-                return "DATALINK";
+            case Types.DATALINK :
+                return "Types.DATALINK";
 
-            case DATE :
+            case Types.DATE :
                 return "DATE";
 
-            case DECIMAL :
+            case Types.DECIMAL :
                 return "DECIMAL";
 
-            case DISTINCT :
+            case Types.DISTINCT :
                 return "DISTINCT";
 
-            case DOUBLE :
+            case Types.DOUBLE :
                 return "DOUBLE";
 
-            case FLOAT :
+            case Types.FLOAT :
                 return "FLOAT";
 
-            case INTEGER :
-                return (typeSub == TYPE_SUB_IDENTITY) ? "INTEGER IDENTITY"
-                                                      : "INTEGER";
+            case Types.INTEGER :
+                return (typeSub == Types.TYPE_SUB_IDENTITY)
+                       ? "INTEGER IDENTITY"
+                       : "INTEGER";
 
-            case JAVA_OBJECT :
+            case Types.JAVA_OBJECT :
                 return "JAVA_OBJECT";
 
-            case LONGVARBINARY :
+            case Types.LONGVARBINARY :
                 return "LONGVARBINARY";
 
-            case LONGVARCHAR :
+            case Types.LONGVARCHAR :
                 return "LONGVARCHAR";
 
-            case NULL :
+            case Types.NULL :
                 return "NULL";
 
-            case NUMERIC :
+            case Types.NUMERIC :
                 return "NUMERIC";
 
-            case OTHER :
+            case Types.OTHER :
                 return "OTHER";
 
-            case REAL :
+            case Types.REAL :
                 return "REAL";
 
-            case REF :
+            case Types.REF :
                 return "REF";
 
-            case SMALLINT :
+            case Types.SMALLINT :
                 return "SMALLINT";
 
-            case STRUCT :
+            case Types.STRUCT :
                 return "STUCT";
 
-            case TIME :
+            case Types.TIME :
                 return "TIME";
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return "TIMESTAMP";
 
-            case TINYINT :
+            case Types.TINYINT :
                 return "TINYINT";
 
-            case VARBINARY :
+            case Types.VARBINARY :
                 return "VARBINARY";
 
-            case VARCHAR :
-                return (typeSub == TYPE_SUB_IGNORECASE) ? "VARCHAR_IGNORECASE"
-                                                        : "VARCHAR";
+            case Types.VARCHAR :
+                return (typeSub == Types.TYPE_SUB_IGNORECASE)
+                       ? "VARCHAR_IGNORECASE"
+                       : "VARCHAR";
 
-            case XML :
+            case Types.XML :
                 return "XML";
 
             default :
@@ -1118,18 +1121,19 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case DECIMAL :
-            case DOUBLE :
-            case FLOAT :
-            case NUMERIC :
-            case REAL :
-            case SMALLINT :
-            case TINYINT :
+            case Types.DECIMAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.NUMERIC :
+            case Types.REAL :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return Boolean.FALSE;
 
-            case BIGINT :
-            case INTEGER :
-                return ValuePool.getBoolean(typeSub == TYPE_SUB_IDENTITY);
+            case Types.BIGINT :
+            case Types.INTEGER :
+                return ValuePool.getBoolean(typeSub
+                                            == Types.TYPE_SUB_IDENTITY);
 
             default :
                 return null;
@@ -1147,25 +1151,26 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY :
-            case BLOB :
-            case CLOB :
-            case DISTINCT :
-            case JAVA_OBJECT :
-            case NULL :
-            case REF :
-            case STRUCT :
+            case Types.ARRAY :
+            case Types.BLOB :
+            case Types.CLOB :
+            case Types.DISTINCT :
+            case Types.JAVA_OBJECT :
+            case Types.NULL :
+            case Types.REF :
+            case Types.STRUCT :
                 return null;
 
-            case CHAR :
-            case DATALINK :
-            case LONGVARCHAR :
-            case OTHER :
-            case XML :
+            case Types.CHAR :
+            case Types.DATALINK :
+            case Types.LONGVARCHAR :
+            case Types.OTHER :
+            case Types.XML :
                 return Boolean.TRUE;
 
-            case VARCHAR :
-                return ValuePool.getBoolean(typeSub != TYPE_SUB_IGNORECASE);
+            case Types.VARCHAR :
+                return ValuePool.getBoolean(typeSub
+                                            != Types.TYPE_SUB_IGNORECASE);
 
             default :
                 return Boolean.FALSE;
@@ -1183,8 +1188,10 @@ final class DITypeInfo implements Types {
      *    type in table columns
      */
     Boolean isColStClsSupported() {
-        return ValuePool.getBoolean(type == NULL ? true
-                                                 : getColStClsName() != null);
+
+        return ValuePool.getBoolean(type == Types.NULL ? true
+                                                       : getColStClsName()
+                                                       != null);
     }
 
     /**
@@ -1198,15 +1205,15 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case DECIMAL :
-            case DOUBLE :
-            case FLOAT :
-            case INTEGER :
-            case NUMERIC :
-            case REAL :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.DECIMAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.INTEGER :
+            case Types.NUMERIC :
+            case Types.REAL :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return Boolean.FALSE;
 
             default :
@@ -1231,7 +1238,7 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case ARRAY : {
+            case Types.ARRAY : {
                 try {
                     Class.forName("java.sql.Array");
 
@@ -1242,7 +1249,7 @@ final class DITypeInfo implements Types {
 
                 break;
             }
-            case BLOB : {
+            case Types.BLOB : {
                 try {
                     Class.forName("java.sql.Blob");
 
@@ -1253,7 +1260,7 @@ final class DITypeInfo implements Types {
 
                 break;
             }
-            case CLOB : {
+            case Types.CLOB : {
                 try {
                     Class.forName("java.sql.Clob");
 
@@ -1264,12 +1271,12 @@ final class DITypeInfo implements Types {
 
                 break;
             }
-            case DISTINCT : {
+            case Types.DISTINCT : {
                 isSup = false;
 
                 break;
             }
-            case REF : {
+            case Types.REF : {
                 try {
                     Class.forName("java.sql.Ref");
 
@@ -1280,7 +1287,7 @@ final class DITypeInfo implements Types {
 
                 break;
             }
-            case STRUCT : {
+            case Types.STRUCT : {
                 try {
                     Class.forName("java.sql.Struct");
 
@@ -1314,11 +1321,11 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case NULL :           // - for void return type
-            case JAVA_OBJECT :    // - for Connection as first parm and
+            case Types.NULL :           // - for void return type
+            case Types.JAVA_OBJECT :    // - for Connection as first parm and
 
             //   Object for return type
-            case ARRAY :          // - for Object[] row of Trigger.fire()
+            case Types.ARRAY :          // - for Object[] row of Trigger.fire()
                 return Boolean.TRUE;
 
             default :
@@ -1339,14 +1346,13 @@ final class DITypeInfo implements Types {
 
         String columnTypeName;
 
-        if (type == NULL) {
+        if (type == Types.NULL) {
             return Boolean.FALSE;
         }
 
-        columnTypeName = Column.getTypeString(type);
+        columnTypeName = Types.getTypeString(type);
 
-        return ValuePool.getBoolean(columnTypeName != null
-                                    && columnTypeName.length() > 0);
+        return ValuePool.getBoolean(columnTypeName != null);
     }
 
     /**
@@ -1358,15 +1364,15 @@ final class DITypeInfo implements Types {
 
         switch (type) {
 
-            case BIGINT :
-            case DECIMAL :
-            case DOUBLE :
-            case FLOAT :
-            case INTEGER :
-            case NUMERIC :
-            case REAL :
-            case SMALLINT :
-            case TINYINT :
+            case Types.BIGINT :
+            case Types.DECIMAL :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.INTEGER :
+            case Types.NUMERIC :
+            case Types.REAL :
+            case Types.SMALLINT :
+            case Types.TINYINT :
                 return Boolean.FALSE;
 
             default :

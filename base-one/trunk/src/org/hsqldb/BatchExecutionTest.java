@@ -40,7 +40,7 @@ import org.hsqldb.lib.StopWatch;
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
-public class BatchExecutionTest implements Types {
+public class BatchExecutionTest {
 
     static final String drop_table_sql = "drop table test if exists";
     static final String create_cached  = "create cached ";
@@ -51,15 +51,15 @@ public class BatchExecutionTest implements Types {
                                     + "varchar, zip int)";
     static final String insert_sql    = "insert into test values(?,?,?,?)";
     static final int[]  insert_ptypes = new int[] {
-        INTEGER, VARCHAR, VARCHAR, INTEGER
+        Types.INTEGER, Types.VARCHAR, Types.VARCHAR, Types.INTEGER
     };
     static final String update_sql =
         "update test set fname = 'Hans' where id = ?";
-    static final int[]  update_ptypes = new int[]{ INTEGER };
+    static final int[]  update_ptypes = new int[]{ Types.INTEGER };
     static final String select_sql    = "select * from test where id = ?";
-    static final int[]  select_ptypes = new int[]{ INTEGER };
+    static final int[]  select_ptypes = new int[]{ Types.INTEGER };
     static final String delete_sql    = "delete from test where id = ?";
-    static final int[]  delete_ptypes = new int[]{ INTEGER };
+    static final int[]  delete_ptypes = new int[]{ Types.INTEGER };
     static final String def_db_path   = ".";
     static final int    def_runs      = 3;
     static final int    rows          = 10000;

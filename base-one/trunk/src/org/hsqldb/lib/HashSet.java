@@ -86,16 +86,14 @@ public class HashSet extends BaseHashMap implements Set {
 
     public Object[] toArray(Object a[]) {
 
-        synchronized (this) {
-            if (a.length < size()) {
-                a = new Object[size()];
-            }
+        if (a.length < size()) {
+            a = new Object[size()];
+        }
 
-            Iterator it = iterator();
+        Iterator it = iterator();
 
-            for (int i = 0; it.hasNext(); i++) {
-                a[i] = it.next();
-            }
+        for (int i = 0; it.hasNext(); i++) {
+            a[i] = it.next();
         }
 
         return a;

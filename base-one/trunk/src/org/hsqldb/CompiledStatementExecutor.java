@@ -39,9 +39,9 @@ import org.hsqldb.lib.StringUtil;
  * Provides execution of CompiledStatement objects.
  *
  * If multiple threads access a CompiledStatementExecutor concurrently,
- * and at least one of the threads calls an executeXXX method, 
- * it must be synchronized externally, relative to both this object's Session 
- * and the Session's Database. Internally, this is accomplished by 
+ * and at least one of the threads calls an executeXXX method,
+ * it must be synchronized externally, relative to both this object's Session
+ * and the Session's Database. Internally, this is accomplished by
  * synchronizing on the Session object's Database object.
  *
  * @author  boucherb@users.sourceforge.net
@@ -50,10 +50,10 @@ import org.hsqldb.lib.StringUtil;
  */
 public class CompiledStatementExecutor {
 
-    Session     session;
-    Database    database;
-    Result      updateResult;
-    Result      emptyResult;
+    Session  session;
+    Database database;
+    Result   updateResult;
+    Result   emptyResult;
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -66,6 +66,7 @@ public class CompiledStatementExecutor {
         database     = session.getDatabase();
         updateResult = new Result(ResultConstants.UPDATECOUNT);
         emptyResult  = new Result(ResultConstants.UPDATECOUNT);
+
 //        runtime      = HsqlRuntime.getHsqlRuntime();
     }
 
@@ -76,22 +77,23 @@ public class CompiledStatementExecutor {
      * @param cs any valid CompiledStatement
      */
     Result execute(CompiledStatement cs) {
+
         Result result;
 
         DatabaseManager.gc();
-        
+
         result = null;
-        
+
         try {
             result = executeImpl(cs);
         } catch (Throwable t) {
             result = new Result(t, cs.sql);
         }
-        
+
         if (result == null) {
             result = emptyResult;
         }
-        
+
         return result;
     }
 
@@ -165,10 +167,10 @@ public class CompiledStatementExecutor {
 //        if (o instanceof Statement) {
 //            return Result.newResult(((Statement)o).getResultSet());
 //        }
-        r            = Result.newSingleColumnResult("",e.getDataType());
-        r.sTable[0]  = "";
-        row          = new Object[1];
-        row[0]       = o;
+        r           = Result.newSingleColumnResult("", e.getDataType());
+        r.sTable[0] = "";
+        row         = new Object[1];
+        row[0]      = o;
 
         r.add(row);
 

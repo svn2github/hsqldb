@@ -70,6 +70,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -86,7 +87,7 @@ import org.hsqldb.lib.StringUtil;
 
 // boucherb@users 20030425 - refactoring DDL into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
-class DatabaseCommandInterpreter implements org.hsqldb.Types {
+class DatabaseCommandInterpreter {
 
     protected Database database;
     protected Session  session;
@@ -167,6 +168,9 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 }
             }
         } catch (Throwable t) {
+
+/** @todo fredt - when out of memory error is thrown it does not get classified
+ *   making scriptRunner vulnerable */
             result = new Result(t, tokenizer.getLastPart());
         }
 
@@ -708,7 +712,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
         isQuoted     = tokenizer.wasQuotedIdentifier();
         typeName     = tokenizer.getString();
-        type         = Column.getTypeNr(typeName);
+        type         = Types.getTypeNr(typeName);
         isIdentity   = false;
         isPrimaryKey = false;
         isNullable   = true;
@@ -721,17 +725,19 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
             isPrimaryKey = true;
         }
 
-        // CHECKME:
-        // when the database is taken out of ignorecase mode, what then?
-        // This seems strange...we don't convert the columns all back
-        // to "not ignore case"..., so why do we convert when is?
-        if (type == VARCHAR && database.isIgnoreCase()) {
-            type = Column.VARCHAR_IGNORECASE;
+        // fredt - when SET IGNORECASE is in effect, all new VARCHAR columns are defined as VARCHAR_IGNORECASE
+
+        /**
+         * @todo fredt - drop support for SET IGNORECASE and replace the
+         * type name with a qualifier specifying the case sensitivity of VARCHAR
+         */
+        if (type == Types.VARCHAR && database.isIgnoreCase()) {
+            type = Types.VARCHAR_IGNORECASE;
         }
 
         token = tokenizer.getString();
 
-        if (type == DOUBLE && token.equals(Token.T_PRECISION)) {
+        if (type == Types.DOUBLE && token.equals(Token.T_PRECISION)) {
             token = tokenizer.getString();
         }
 
@@ -833,12 +839,13 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
         wasminus = false;
 
         // see if it is a negative number
-        if (dv.equals("-") && tokenizer.getType() != VARCHAR) {
+        if (dv.equals("-") && tokenizer.getType() != Types.VARCHAR) {
             wasminus = true;
             dv       += tokenizer.getString();
         }
 
-        if (iType == BINARY || iType == OTHER ||!tokenizer.wasValue()) {
+        if (iType == Types.BINARY || iType == Types.OTHER
+                ||!tokenizer.wasValue()) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
         }
 
@@ -1738,10 +1745,14 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 session.checkDDLWrite();
                 session.setScripting(false);
 
-                int i = Integer.parseInt(tokenizer.getString());
+                token = tokenizer.getString();
+
+                int i = ArrayUtil.find(Token.LIST_SCRIPT_FORMATS, token);
 
                 if (i == 0 || i == 1 || i == 3) {
                     database.logger.setScriptType(i);
+                } else {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                 }
 
                 break;
@@ -1753,7 +1764,6 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
-
             case Token.MAXROWS : {
                 session.setScripting(false);
 
@@ -1763,7 +1773,6 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
-
             case Token.AUTOCOMMIT : {
                 session.setAutoCommit(processTrueOrFalse());
 
@@ -2535,7 +2544,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
-        result = Result.newSingleColumnResult("OPERATION", VARCHAR);
+        result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
         lnr    = new LineNumberReader(new StringReader(cs.toString()));
 
         while (null != (line = lnr.readLine())) {

@@ -95,9 +95,9 @@ class DatabaseScript {
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
         HsqlArrayList forwardFKSource = new HsqlArrayList();
-        Result        r               = Result.newSingleColumnResult("COMMAND",Types.VARCHAR);
+        Result r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
 
-        r.sTable[0]  = "SYSTEM_SCRIPT";
+        r.sTable[0] = "SYSTEM_SCRIPT";
 
         HsqlStringBuffer a;
 
@@ -206,7 +206,7 @@ class DatabaseScript {
         }
 
         // aliases
-        HashMap  h       =dDatabase.getAlias();
+        HashMap  h       = dDatabase.getAlias();
         HashMap  builtin = Library.getAliasMap();
         Iterator e       = h.keySet().iterator();
 
@@ -294,7 +294,7 @@ class DatabaseScript {
             a.append(colname);
             a.append(' ');
 
-            String sType = Column.getTypeString(column.getType());
+            String sType = Types.getTypeString(column.getType());
 
             a.append(sType);
 
@@ -330,7 +330,7 @@ class DatabaseScript {
 
                     case Types.CHAR :
                     case Types.VARCHAR :
-                    case Column.VARCHAR_IGNORECASE :
+                    case Types.VARCHAR_IGNORECASE :
                     case Types.LONGVARCHAR :
                         quote = true;
                     default :
@@ -533,10 +533,10 @@ class DatabaseScript {
     private static void addRightsStatements(Database dDatabase, Result r) {
 
         HsqlStringBuffer a;
-        HashMappedList    uv = dDatabase.getUserManager().getUsers();
+        HashMappedList   uv = dDatabase.getUserManager().getUsers();
+        Iterator         it = uv.values().iterator();
 
-        Iterator it = uv.values().iterator();
-        for (;it.hasNext();) {
+        for (; it.hasNext(); ) {
             User   u    = (User) it.next();
             String name = u.getName();
 
@@ -567,7 +567,7 @@ class DatabaseScript {
 
             while (e.hasNext()) {
                 Object object = e.next();
-                int    right  = rights.get(object,0);
+                int    right  = rights.get(object, 0);
 
                 a = new HsqlStringBuffer(64);
 

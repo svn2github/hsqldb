@@ -57,10 +57,10 @@ import org.hsqldb.lib.StopWatch;
 public class TestCacheSize {
 
     protected boolean filedb = false;
-    protected String  url     = "jdbc:hsqldb:";
+    protected String  url    = "jdbc:hsqldb:";
 
-    protected String  filepath = "hsql://localhost";
-//    protected String filepath = "mem:test";
+//    protected String  filepath = "hsql://localhost";
+    protected String filepath = "mem:test";
 
 //    protected String filepath = "/hsql/testcache/test";
     String     user;
@@ -70,7 +70,7 @@ public class TestCacheSize {
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = true;
+    boolean cachedTable     = false;
     int     cacheScale      = 12;
     int     logType         = 3;
     int     writeDelay      = 60;
@@ -85,7 +85,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows   = 100000;
+    int bigrows   = 150000;
     int smallrows = 0xfff;
 
     protected void setUp() {
@@ -268,10 +268,10 @@ public class TestCacheSize {
                                + (i * 1000 / (sw.elapsedTime() + 1)));
             sw.zero();
 
-            if ( filedb ){
-            sStatement.execute("SHUTDOWN");
-            cConnection.close();
-            System.out.println("Shutdown Time: " + sw.elapsedTime());
+            if (filedb) {
+                sStatement.execute("SHUTDOWN");
+                cConnection.close();
+                System.out.println("Shutdown Time: " + sw.elapsedTime());
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());

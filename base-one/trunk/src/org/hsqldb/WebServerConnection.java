@@ -304,13 +304,10 @@ class WebServerConnection implements Runnable {
                 try {
                     int dbIndex = ArrayUtil.find(server.dbAlias,
                                                  resultIn.subSubString);
-
                     int dbID = server.dbID[dbIndex];
+                    Session session = DatabaseManager.newSession(dbID,
+                        resultIn.getMainString(), resultIn.getSubString());
 
-                    Session session =
-                        DatabaseManager.newSession(dbID,
-                                                   resultIn.getMainString(),
-                                                   resultIn.getSubString());
                     resultOut = new Result(ResultConstants.UPDATECOUNT);
                     resultOut.databaseID = dbID;
                     resultOut.sessionID  = session.getId();

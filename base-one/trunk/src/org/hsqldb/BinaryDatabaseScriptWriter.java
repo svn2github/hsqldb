@@ -47,11 +47,14 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
     protected void writeSingleColumnResult(Result r)
     throws IOException, HsqlException {
 
+        HSQLClientConnection.write(r, binaryOut, fileStreamOut);
+/*
         binaryOut.reset();
         binaryOut.writeSize(0);
         r.write(binaryOut);
         binaryOut.writeIntData(binaryOut.size(), 0);
         fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+*/
     }
 
     // int : row size (0 if no more rows) ,

@@ -441,7 +441,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *        jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
      */
-    jdbcResultSetMetaData(jdbcResultSet rs, HsqlProperties props) throws SQLException {
+    jdbcResultSetMetaData(jdbcResultSet rs,
+                          HsqlProperties props) throws SQLException {
 
         Statement          stmnt;
         jdbcColumnMetaData cmd;
@@ -452,7 +453,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         }
 
         useColumnName = props.isPropertyTrue("get_column_name");
-        rResult = rs.rResult;
+        rResult       = rs.rResult;
 
         if (rResult != null && rResult.iMode != ResultConstants.DATA) {
 
@@ -517,10 +518,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
 // TODO: maybe some of this could be moved to the jdbcColumnMetaData.<init>?
         for (int i = 0; i < columnCount; i++) {
-            cmd             = new jdbcColumnMetaData();
-            columnMetaData[i]         = cmd;
-            cmd.catalogName = "";
-            cmd.schemaName  = "";
+            cmd               = new jdbcColumnMetaData();
+            columnMetaData[i] = cmd;
+            cmd.catalogName   = "";
+            cmd.schemaName    = "";
 
             // Typically, these null checks are not needed, but as
             // above, it is not _guaranteed_ that these values
@@ -544,7 +545,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             cmd.columnType = rResult.colType[i];
 
             // CHECKME: this might be null...it that OK? or do we want ""?
-            cmd.columnTypeName = Column.getTypeString(cmd.columnType);
+            cmd.columnTypeName = Types.getTypeString(cmd.columnType);
 
             // This is the only explicit boolean initializer required, as
             // the JVM's implicit false init value for boolean is the correct
@@ -1331,8 +1332,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // (e.g. using high bytes for extention info and low bytes for SQL
         // type), reducing transport overhead.
         // (see: org.hsqldb.Library.getCDColumnMetaData)
-        return type == Column.VARCHAR_IGNORECASE ? Types.VARCHAR
-                                                 : type;
+        return type == Types.VARCHAR_IGNORECASE ? Types.VARCHAR
+                                                : type;
     }
 
     /**
@@ -1658,7 +1659,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             int ditype     = cmd.columnType;
             int ditype_sub = Types.TYPE_SUB_DEFAULT;
 
-            if (cmd.columnType == Column.VARCHAR_IGNORECASE) {
+            if (cmd.columnType == Types.VARCHAR_IGNORECASE) {
                 ditype     = Types.VARCHAR;
                 ditype_sub = Types.TYPE_SUB_IGNORECASE;
             }

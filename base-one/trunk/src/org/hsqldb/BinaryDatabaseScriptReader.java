@@ -61,9 +61,11 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     protected void readSingleColumnResult(Session session)
     throws IOException, HsqlException {
 
+        Result r = HSQLClientConnection.read(rowIn, dataStreamIn);
+/*
         readRow(rowIn, 0, dataStreamIn);
-
         Result r = new Result(rowIn);
+*/
         Record n = r.rRoot;
         String s;
 

@@ -47,7 +47,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DITableInfo implements Types {
+final class DITableInfo {
 
     /** Used in buffer size and character octet length determinations. */
     private static final int HALF_MAX_INT = Integer.MAX_VALUE >>> 1;
@@ -172,10 +172,10 @@ final class DITableInfo implements Types {
 
         switch (type) {
 
-            case CHAR :
-            case CLOB :
-            case LONGVARCHAR :
-            case VARCHAR : {
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR : {
                 size = column.getSize();
 
                 if (size == 0) {}
@@ -187,33 +187,33 @@ final class DITableInfo implements Types {
 
                 break;
             }
-            case BINARY :
-            case BLOB :
-            case LONGVARBINARY :
-            case VARBINARY : {
+            case Types.BINARY :
+            case Types.BLOB :
+            case Types.LONGVARBINARY :
+            case Types.VARBINARY : {
                 size = column.getSize();
 
                 break;
             }
-            case BIGINT :
-            case DOUBLE :
-            case FLOAT :
-            case DATE :
-            case REAL :
-            case TIME :
-            case TIMESTAMP : {
+            case Types.BIGINT :
+            case Types.DOUBLE :
+            case Types.FLOAT :
+            case Types.DATE :
+            case Types.REAL :
+            case Types.TIME :
+            case Types.TIMESTAMP : {
                 size = 8;
 
                 break;
             }
-            case INTEGER :
-            case SMALLINT :
-            case TINYINT : {
+            case Types.INTEGER :
+            case Types.SMALLINT :
+            case Types.TINYINT : {
                 size = 4;
 
                 break;
             }
-            case BIT : {
+            case Types.BIT : {
                 size = 1;
 
                 break;
@@ -250,10 +250,10 @@ final class DITableInfo implements Types {
 
         switch (type) {
 
-            case CHAR :
-            case CLOB :
-            case LONGVARCHAR :
-            case VARCHAR : {
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.LONGVARCHAR :
+            case Types.VARCHAR : {
                 size = column.getSize();
 
                 if (size == 0) {}
@@ -430,8 +430,8 @@ final class DITableInfo implements Types {
 
         switch (type) {
 
-            case DECIMAL :
-            case NUMERIC : {
+            case Types.DECIMAL :
+            case Types.NUMERIC : {
                 return ValuePool.getInt(column.getScale());
             }
             default :
@@ -491,16 +491,16 @@ final class DITableInfo implements Types {
         switch (type) {
 
             // sized or decimal types
-            case BINARY :
-            case BLOB :
-            case CHAR :
-            case CLOB :
-            case DECIMAL :
-            case LONGVARBINARY :
-            case LONGVARCHAR :
-            case NUMERIC :
-            case VARBINARY :
-            case VARCHAR : {
+            case Types.BINARY :
+            case Types.BLOB :
+            case Types.CHAR :
+            case Types.CLOB :
+            case Types.DECIMAL :
+            case Types.LONGVARBINARY :
+            case Types.LONGVARCHAR :
+            case Types.NUMERIC :
+            case Types.VARBINARY :
+            case Types.VARCHAR : {
                 size = column.getSize();
 
                 break;

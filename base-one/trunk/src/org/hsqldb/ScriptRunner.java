@@ -134,6 +134,8 @@ class ScriptRunner {
 
                     if (result != null
                             && result.iMode == ResultConstants.ERROR) {
+
+/** @todo fredt - must catch out of  memory erros and terminate */
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());

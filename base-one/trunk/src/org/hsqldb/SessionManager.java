@@ -78,7 +78,7 @@ import org.hsqldb.lib.Iterator;
 public class SessionManager {
 
     int                   sessionIdCount;
-    private IntKeyHashMap sessionMap  = new IntKeyHashMap();
+    private IntKeyHashMap sessionMap = new IntKeyHashMap();
     Session               sysSession;
 
 // TODO:
@@ -128,6 +128,7 @@ public class SessionManager {
         Session s = new Session(db, user, true, readonly, sessionIdCount);
 
         sessionMap.put(sessionIdCount, s);
+
         sessionIdCount++;
 
         return s;

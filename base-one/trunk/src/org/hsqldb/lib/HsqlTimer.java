@@ -47,8 +47,8 @@ import java.util.Enumeration;
 public class HsqlTimer implements ObjectComparator {
 
     /** The priority queue for the scheduled tasks. */
-    protected final TaskQueue taskQueue = 
-        new TaskQueue(16, (ObjectComparator) this);
+    protected final TaskQueue taskQueue = new TaskQueue(16,
+        (ObjectComparator) this);
 
     /** The inner runnable that executes tasks in the background thread. */
     protected final TaskRunner taskRunner = new TaskRunner();

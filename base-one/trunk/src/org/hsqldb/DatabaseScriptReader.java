@@ -46,10 +46,10 @@ import org.hsqldb.lib.StringConverter;
  */
 class DatabaseScriptReader {
 
-    InputStream dataStreamIn;
-    Database    db;
-    int         lineCount;
-    String      lastLine;
+    DataInputStream dataStreamIn;
+    Database        db;
+    int             lineCount;
+    String          lastLine;
 
 //    int         byteCount;
     // this is used only to enable reading one logged line at a time
@@ -142,11 +142,10 @@ class DatabaseScriptReader {
         // or anywhere else.
         // In fact, getClass().getResourceAsStream() is preferred, as
         // it is not subject to the same security restrictions
-        dataStreamIn = db.isFilesInJar()
-            ? getClass().getResourceAsStream(fileName)
+        dataStreamIn =
+            db.isFilesInJar()
+            ? new DataInputStream(getClass().getResourceAsStream(fileName))
             : new DataInputStream(new FileInputStream(fileName));
-
-
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }
 

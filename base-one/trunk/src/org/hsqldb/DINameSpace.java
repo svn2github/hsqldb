@@ -491,7 +491,8 @@ final class DINameSpace {
         if (o instanceof String) {
 
             // maybe the name of a DOMAIN?
-            if (Column.hTypes.get(o) != null) {
+            if (Types.typeAliases.get(o, Integer.MIN_VALUE)
+                    != Integer.MIN_VALUE) {
                 return DEFN_SCHEMA;
             }
 

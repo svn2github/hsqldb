@@ -3,6 +3,33 @@ Readme File
 
 leading to HSQLDB 1.7.2 ALPHA_N
 
+2003.07.09
+
+- change to command previously named SET LOGTYPE (discussed below for
+earlier alphas) new form is:
+SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED }
+
+The new binary and compressed formats are not compatible with previous
+ones, so you should change any old 1.7.2 ALPHA_? database to text
+mode with SET LOGTYPE 0 before openning with the new version.
+
+- change to handling of OTHER columns. It is no longer required that
+the classes for objects stored in OTHER columns to be available on
+the path of an HSQLDB engine running as a server. Classes must be
+available on the JDBC client's path.
+
+- the new Object pool has been incorporated. This reduces memory
+usage to varying degrees depending on the contents of database
+tables and speeds up the database in most cases.
+
+- a new property, ifexists={true|false? can be specified for connections
+to in-process databases. The default is false and corresponds to
+current behaviour. if set true, the connection is opened only if
+the database files have already been created -- otherwise no new database
+is created and the connection attemp will fail. Example:
+
+jdbc:hsqldb:hsql:mydb;ifexists=true
+
 2003.07.04
 
 - support for real PreparedStatements - major speedup
@@ -39,12 +66,20 @@ jdbc:hsqldb:hsql://localhost/alias_for_the_database
 where alias_for_the_database is the same string as defined in
 server.properties.
 
+The default for server.dbname.0 is "" (empty string) so that
+the old URL types continue to work.
+
 Multiple memory-only database are supported by the use of:
 
 jdbc:hsqldb:mem:alias_for_the_first_database
 jdbc:hsqldb:mem:alias_for_the_second_database
 
 Example: jdbc:hsqldb:mem:db1 jdbc:hsqldb:mem:mydb
+
+The conneciton type, 'file', can be used for file database
+connections. example below:
+
+jdbc:hsqldb:hsql:file:mydb;ifexists=true
 
 
 The URL for connecting to a Servlet HTTP server must have a 

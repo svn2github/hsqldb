@@ -211,9 +211,9 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, HsqlException {
 
-        byte[] ba = Column.serialize(o);
+        JavaObject jo = (JavaObject) o;
 
-        writeByteArray(ba);
+        writeByteArray(jo.getBytes());
     }
 
     protected void writeBinary(byte[] o,
@@ -251,7 +251,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
                     case Types.CHAR :
                     case Types.VARCHAR :
-                    case Column.VARCHAR_IGNORECASE :
+                    case Types.VARCHAR_IGNORECASE :
                     case Types.LONGVARCHAR :
                         s += getUTFSize((String) o);
                         break;
@@ -317,13 +317,15 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
                         break;
 
                     case Types.OTHER :
+                        JavaObject jo = (JavaObject) o;
+
                         s += 4;
-                        s += Column.serialize(o).length;
+                        s += jo.getBytesLength();
                         break;
 
                     default :
                         Trace.throwerror(Trace.FUNCTION_NOT_SUPPORTED,
-                                         Column.getTypeString(type[i]));
+                                         Types.getTypeString(type[i]));
                 }
             }
         }
@@ -359,7 +361,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         return l;
     }
 
-    public void ensureRoom(int extra){
+    public void ensureRoom(int extra) {
         super.ensureRoom(extra);
     }
 }

@@ -502,43 +502,14 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     private void convertParameterTypes() throws HsqlException {
 
         for (int i = 0; i < types.length; i++) {
-            int id = -2;
-
-            if (parameters[i] != null) {
-                String  type   = parameters[i].getClass().getName();
-                Integer lookup = (Integer) Column.hTypes.get(type);
-
-                if (lookup != null) {
-                    id = lookup.intValue();
-                }
-            } else {
-                id = -1;
+            if (parameters[i] == null) {
+                continue;
             }
 
-            switch (id) {
-
-                case Types.INTEGER :
-                case Types.DOUBLE :
-                case Types.VARCHAR :
-                case Types.DATE :
-                case Types.TIME :
-                case Types.TIMESTAMP :
-                case Types.DECIMAL :
-                case Types.BIT :
-                case Types.TINYINT :
-                case Types.SMALLINT :
-                case Types.BIGINT :
-                    parameters[i] = Column.convertObject(parameters[i],
-                                                         types[i]);
-                    break;
-
-                case -1 :
-                    break;
-
-                default :
-                    parameters[i] = Column.convertObject(parameters[i],
-                                                         types[i]);
-//                    parameters[i] = Column.serializeToString(parameters[i]);
+            if (types[i] == Types.OTHER) {
+                parameters[i] = new JavaObject(parameters[i]);
+            } else {
+                parameters[i] = Column.convertObject(parameters[i], types[i]);
             }
         }
     }
@@ -684,7 +655,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20020325 - patch 448691 NaN by fredt
 // fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        long l = Double.doubleToLongBits((double)x);
+
+        long l = Double.doubleToLongBits((double) x);
+
         setParameter(parameterIndex, ValuePool.getDouble(l));
 /*
         if (Float.isInfinite(x) || Float.isNaN(x)) {
@@ -729,6 +702,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setDouble(int parameterIndex, double x) throws SQLException {
 
         long l = Double.doubleToLongBits(x);
+
         setParameter(parameterIndex, ValuePool.getDouble(l));
 /*
         if (Double.isInfinite(x) || Double.isNaN(x)) {
@@ -764,8 +738,10 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setBigDecimal(int parameterIndex,
                               BigDecimal x) throws SQLException {
+
         BigDecimal bd = ValuePool.getBigDecimal(x);
-                setParameter(parameterIndex, bd);
+
+        setParameter(parameterIndex, bd);
     }
 
     /**
@@ -787,7 +763,9 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setString(int parameterIndex, String x) throws SQLException {
+
         String s = ValuePool.getString(x);
+
         setParameter(parameterIndex, s);
     }
 
@@ -1130,6 +1108,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      * @see java.sql.Types
      */
+
+    /** @todo fredt - implement SQLData support */
     public void setObject(int parameterIndex, Object x, int targetSqlType,
                           int scale) throws SQLException {
         setObject(parameterIndex, x, targetSqlType);
@@ -1230,6 +1210,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs or the type
      *      of the given object is ambiguous
      */
+
+    /** @todo fredt - implement SQLData support */
     public void setObject(int parameterIndex, Object x) throws SQLException {
 
         if (x == null) {

@@ -195,7 +195,7 @@ class User {
             return;
         }
 
-        int n = rightsMap.get(dbobject,0);
+        int n = rightsMap.get(dbobject, 0);
 
         n |= rights;
 
@@ -282,7 +282,7 @@ class User {
             return true;
         }
 
-        int n =  rightsMap.get(dbobject,0);
+        int n = rightsMap.get(dbobject, 0);
 
         if (n != 0) {
             return (n & rights) != 0;
@@ -340,12 +340,12 @@ class User {
      */
     HashSet getGrantedClassNames(boolean andToPublic) {
 
-        IntValueHashMap  rights;
-        HashSet  out;
-        HashSet  pub;
-        Object   key;
-        int  right;
-        Iterator i;
+        IntValueHashMap rights;
+        HashSet         out;
+        HashSet         pub;
+        Object          key;
+        int             right;
+        Iterator        i;
 
         rights = rightsMap;
         out    = new HashSet();
@@ -355,7 +355,7 @@ class User {
             key = i.next();
 
             if (key instanceof String) {
-                right = rights.get(key,0);
+                right = rights.get(key, 0);
 
                 if (right == UserManager.ALL) {
                     out.add(key);
@@ -371,7 +371,7 @@ class User {
                 key = i.next();
 
                 if (key instanceof String) {
-                    right = rights.get(key,0);
+                    right = rights.get(key, 0);
 
                     if (right == UserManager.ALL) {
                         out.add(key);
@@ -395,7 +395,6 @@ class User {
      *
      */
     String[] listTablePrivileges(HsqlName name) {
-
         return UserManager.getRightsArray(rightsMap.get(name));
     }
 }

@@ -94,146 +94,171 @@ import org.hsqldb.lib.FileUtil;
 // preserve the orignial erro code
 public class Trace extends PrintWriter {
 
-    public static boolean         TRACE          = false;
-    public static boolean         TRACESYSTEMOUT = false;
-    public static final boolean   STOP           = false;
-    public static final boolean   DOASSERT       = true;
-    private static final Trace    tTracer        = new Trace();
-    private static String         sTrace;
-    private static int            iStop                               = 0;
-    public static final int       DATABASE_ALREADY_IN_USE             = 1,
-                                  CONNECTION_IS_CLOSED                = 2,
-                                  CONNECTION_IS_BROKEN                = 3,
-                                  DATABASE_IS_SHUTDOWN                = 4,
-                                  COLUMN_COUNT_DOES_NOT_MATCH         = 5,
-                                  DIVISION_BY_ZERO                    = 6,
-                                  INVALID_ESCAPE                      = 7,
-                                  INTEGRITY_CONSTRAINT_VIOLATION      = 8,
-                                  VIOLATION_OF_UNIQUE_INDEX           = 9,
-                                  TRY_TO_INSERT_NULL                  = 10,
-                                  UNEXPECTED_TOKEN                    = 11,
-                                  UNEXPECTED_END_OF_COMMAND           = 12,
-                                  UNKNOWN_FUNCTION                    = 13,
-                                  NEED_AGGREGATE                      = 14,
-                                  SUM_OF_NON_NUMERIC                  = 15,
-                                  WRONG_DATA_TYPE                     = 16,
-                                  SINGLE_VALUE_EXPECTED               = 17,
-                                  SERIALIZATION_FAILURE               = 18,
-                                  TRANSFER_CORRUPTED                  = 19,
-                                  FUNCTION_NOT_SUPPORTED              = 20,
-                                  TABLE_ALREADY_EXISTS                = 21,
-                                  TABLE_NOT_FOUND                     = 22,
-                                  INDEX_ALREADY_EXISTS                = 23,
-                                  SECOND_PRIMARY_KEY                  = 24,
-                                  DROP_PRIMARY_KEY                    = 25,
-                                  INDEX_NOT_FOUND                     = 26,
-                                  COLUMN_ALREADY_EXISTS               = 27,
-                                  COLUMN_NOT_FOUND                    = 28,
-                                  FILE_IO_ERROR                       = 29,
-                                  WRONG_DATABASE_FILE_VERSION         = 30,
-                                  DATABASE_IS_READONLY                = 31,
-                                  DATA_IS_READONLY                    = 32,
-                                  ACCESS_IS_DENIED                    = 33,
-                                  INPUTSTREAM_ERROR                   = 34,
-                                  NO_DATA_IS_AVAILABLE                = 35,
-                                  USER_ALREADY_EXISTS                 = 36,
-                                  USER_NOT_FOUND                      = 37,
-                                  ASSERT_FAILED                       = 38,
-                                  EXTERNAL_STOP                       = 39,
-                                  GENERAL_ERROR                       = 40,
-                                  WRONG_OUT_PARAMETER                 = 41,
-                                  ERROR_IN_FUNCTION                   = 42,
-                                  TRIGGER_NOT_FOUND                   = 43,
-                                  SAVEPOINT_NOT_FOUND                 = 44,
-                                  LABEL_REQUIRED                      = 45,
-                                  WRONG_DEFAULT_CLAUSE                = 46,
-                                  FOREIGN_KEY_NOT_ALLOWED             = 47,
-                                  UNKNOWN_DATA_SOURCE                 = 48,
-                                  BAD_INDEX_CONSTRAINT_NAME           = 49,
-                                  DROP_FK_INDEX                       = 50,
-                                  RESULTSET_FORWARD_ONLY              = 51,
-                                  VIEW_ALREADY_EXISTS                 = 52,
-                                  VIEW_NOT_FOUND                      = 53,
-                                  NOT_A_VIEW                          = 54,
-                                  NOT_A_TABLE                         = 55,
-                                  SYSTEM_INDEX                        = 56,
-                                  COLUMN_TYPE_MISMATCH                = 57,
-                                  BAD_ADD_COLUMN_DEFINITION           = 58,
-                                  DROP_SYSTEM_CONSTRAINT              = 59,
-                                  CONSTRAINT_ALREADY_EXISTS           = 60,
-                                  CONSTRAINT_NOT_FOUND                = 61,
-                                  INVALID_JDBC_ARGUMENT               = 62,
-                                  DATABASE_IS_MEMORY_ONLY             = 63,
-                                  OUTER_JOIN_CONDITION                = 64,
-                                  NUMERIC_VALUE_OUT_OF_RANGE          = 65,
-                                  MISSING_SOFTWARE_MODULE             = 66,
-                                  NOT_IN_AGGREGATE_OR_GROUP_BY        = 67,
-                                  INVALID_GROUP_BY                    = 68,
-                                  INVALID_HAVING                      = 69,
-                                  INVALID_ORDER_BY                    = 70,
-                                  INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
-                                  OUT_OF_MEMORY                       = 72,
-                                  OPERATION_NOT_SUPPORTED             = 73,
-                                  INVALID_IDENTIFIER                  = 74,
-                                  TEXT_TABLE_SOURCE                   = 75,
-                                  TEXT_FILE                           = 76,
-                                  BAD_IDENTITY_VALUE                  = 77,
-                                  ERROR_IN_SCRIPT_FILE                = 78,
-                                  NULL_IN_VALUE_LIST                  = 79,
-                                  // socket errors
-                                  SOCKET_ERROR                        = 80,
+    public static boolean       TRACE          = false;
+    public static boolean       TRACESYSTEMOUT = false;
+    public static final boolean STOP           = false;
+    public static final boolean DOASSERT       = true;
+    private static final Trace  tTracer        = new Trace();
+    private static String       sTrace;
+    private static int          iStop = 0;
 
-                                  INVALID_CHARACTER_ENCODING          = 81,
-                                  NO_CLASSLOADER_FOR_TLS              = 82,
-                                  NO_JSSE                             = 83,
-                                  NO_SSLSOCKETFACTORY_METHOD          = 84,
-                                  UNEXPECTED_EXCEPTION                = 85,
-                                  TLS_ERROR                           = 86,
-                                  MISSING_TLS_METHOD                  = 87,
-                                  TLS_SECURITY_ERROR                  = 88,
-                                  NO_TLS_DATA                         = 89,
-                                  NO_PRINCIPAL                        = 90,
-                                  INCOMPLETE_CERTIFICATE              = 91,
-                                  TLS_HOSTNAME_MISMATCH               = 92,
-                                  KEYSTORE_PROBLEM                    = 93,
-                                  // more errors
-                                  DATABASE_NOT_EXISTS                 = 94
+    //
+    public static final int                             //
+         DATABASE_ALREADY_IN_USE             = 1,
+     CONNECTION_IS_CLOSED                = 2,
+     CONNECTION_IS_BROKEN                = 3,
+     DATABASE_IS_SHUTDOWN                = 4,
+     COLUMN_COUNT_DOES_NOT_MATCH         = 5,
+     DIVISION_BY_ZERO                    = 6,
+     INVALID_ESCAPE                      = 7,
+     INTEGRITY_CONSTRAINT_VIOLATION      = 8,
+     VIOLATION_OF_UNIQUE_INDEX           = 9,
+     TRY_TO_INSERT_NULL                  = 10,
+     UNEXPECTED_TOKEN                    = 11,
+     UNEXPECTED_END_OF_COMMAND           = 12,
+     UNKNOWN_FUNCTION                    = 13,
+     NEED_AGGREGATE                      = 14,
+     SUM_OF_NON_NUMERIC                  = 15,
+     WRONG_DATA_TYPE                     = 16,
+     SINGLE_VALUE_EXPECTED               = 17,
+     SERIALIZATION_FAILURE               = 18,
+     TRANSFER_CORRUPTED                  = 19,
+     FUNCTION_NOT_SUPPORTED              = 20,
+     TABLE_ALREADY_EXISTS                = 21,
+     TABLE_NOT_FOUND                     = 22,
+     INDEX_ALREADY_EXISTS                = 23,
+     SECOND_PRIMARY_KEY                  = 24,
+     DROP_PRIMARY_KEY                    = 25,
+     INDEX_NOT_FOUND                     = 26,
+     COLUMN_ALREADY_EXISTS               = 27,
+     COLUMN_NOT_FOUND                    = 28,
+     FILE_IO_ERROR                       = 29,
+     WRONG_DATABASE_FILE_VERSION         = 30,
+     DATABASE_IS_READONLY                = 31,
+     DATA_IS_READONLY                    = 32,
+     ACCESS_IS_DENIED                    = 33,
+     INPUTSTREAM_ERROR                   = 34,
+     NO_DATA_IS_AVAILABLE                = 35,
+     USER_ALREADY_EXISTS                 = 36,
+     USER_NOT_FOUND                      = 37,
+     ASSERT_FAILED                       = 38,
+     EXTERNAL_STOP                       = 39,
+     GENERAL_ERROR                       = 40,
+     WRONG_OUT_PARAMETER                 = 41,
+     ERROR_IN_FUNCTION                   = 42,
+     TRIGGER_NOT_FOUND                   = 43,
+     SAVEPOINT_NOT_FOUND                 = 44,
+     LABEL_REQUIRED                      = 45,
+     WRONG_DEFAULT_CLAUSE                = 46,
+     FOREIGN_KEY_NOT_ALLOWED             = 47,
+     UNKNOWN_DATA_SOURCE                 = 48,
+     BAD_INDEX_CONSTRAINT_NAME           = 49,
+     DROP_FK_INDEX                       = 50,
+     RESULTSET_FORWARD_ONLY              = 51,
+     VIEW_ALREADY_EXISTS                 = 52,
+     VIEW_NOT_FOUND                      = 53,
+     NOT_A_VIEW                          = 54,
+     NOT_A_TABLE                         = 55,
+     SYSTEM_INDEX                        = 56,
+     COLUMN_TYPE_MISMATCH                = 57,
+     BAD_ADD_COLUMN_DEFINITION           = 58,
+     DROP_SYSTEM_CONSTRAINT              = 59,
+     CONSTRAINT_ALREADY_EXISTS           = 60,
+     CONSTRAINT_NOT_FOUND                = 61,
+     INVALID_JDBC_ARGUMENT               = 62,
+     DATABASE_IS_MEMORY_ONLY             = 63,
+     OUTER_JOIN_CONDITION                = 64,
+     NUMERIC_VALUE_OUT_OF_RANGE          = 65,
+     MISSING_SOFTWARE_MODULE             = 66,
+     NOT_IN_AGGREGATE_OR_GROUP_BY        = 67,
+     INVALID_GROUP_BY                    = 68,
+     INVALID_HAVING                      = 69,
+     INVALID_ORDER_BY                    = 70,
+     INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
+     OUT_OF_MEMORY                       = 72,
+     OPERATION_NOT_SUPPORTED             = 73,
+     INVALID_IDENTIFIER                  = 74,
+     TEXT_TABLE_SOURCE                   = 75,
+     TEXT_FILE                           = 76,
+     BAD_IDENTITY_VALUE                  = 77,
+     ERROR_IN_SCRIPT_FILE                = 78,
+     NULL_IN_VALUE_LIST                  = 79,
+
+    // socket errors
+    SOCKET_ERROR                = 80,
+     INVALID_CHARACTER_ENCODING = 81,
+     NO_CLASSLOADER_FOR_TLS     = 82,
+     NO_JSSE                    = 83,
+     NO_SSLSOCKETFACTORY_METHOD = 84,
+     UNEXPECTED_EXCEPTION       = 85,
+     TLS_ERROR                  = 86,
+     MISSING_TLS_METHOD         = 87,
+     TLS_SECURITY_ERROR         = 88,
+     NO_TLS_DATA                = 89,
+     NO_PRINCIPAL               = 90,
+     INCOMPLETE_CERTIFICATE     = 91,
+     TLS_HOSTNAME_MISMATCH      = 92,
+     KEYSTORE_PROBLEM           = 93,
+
+    // more errors
+    DATABASE_NOT_EXISTS = 94,
+     INVALID_CONVERSION = 95
     ;
-    private static final String[] sDescription                        = {
-        "NOT USED", "08001 The database is already in use by another process",
+
+    //
+    private static final String[] sDescription = {
+        "NOT USED",                                     //
+        "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
-        "08003 The database is shutdown", "21000 Column count does not match",
-        "22012 Division by zero", "22019 Invalid escape character",
+        "08003 The database is shutdown",               //
+        "21000 Column count does not match",            //
+        "22012 Division by zero",                       //
+        "22019 Invalid escape character",
         "23000 Integrity constraint violation",
         "23000 Violation of unique index",
         "23000 Try to insert null into a non-nullable column",
-        "37000 Unexpected token", "37000 Unexpected end of command",
-        "37000 Unknown function", "37000 Need aggregate function or group by",
-        "37000 Sum on non-numeric data not allowed", "37000 Wrong data type",
-        "37000 Single value expected", "40001 Serialization failure",
-        "40001 Transfer corrupted", "IM001 This function is not supported",
-        "S0001 Table already exists", "S0002 Table not found",
+        "37000 Unexpected token",                       //
+        "37000 Unexpected end of command",              //
+        "37000 Unknown function",                       //
+        "37000 Need aggregate function or group by",
+        "37000 Sum on non-numeric data not allowed",    //
+        "37000 Wrong data type",                        //
+        "37000 Single value expected",                  //
+        "40001 Serialization failure",                  //
+        "40001 Transfer corrupted",                     //
+        "IM001 This function is not supported",         //
+        "S0001 Table already exists",                   //
+        "S0002 Table not found",                        //
         "S0011 Index already exists",
         "S0011 Attempt to define a second primary key",
-        "S0011 Attempt to drop the primary key", "S0012 Index not found",
-        "S0021 Column already exists", "S0022 Column not found",
-        "S1000 File input/output error", "S1000 Wrong database file version",
+        "S0011 Attempt to drop the primary key",        //
+        "S0012 Index not found", "S0021 Column already exists",
+        "S0022 Column not found",                       //
+        "S1000 File input/output error",                //
+        "S1000 Wrong database file version",
         "S1000 The database is in read only mode",
-        "S1000 The table data is read only", "S1000 Access is denied",
-        "S1000 InputStream error", "S1000 No data is available",
-        "S1000 User already exists", "S1000 User not found",
-        "S1000 Assert failed", "S1000 External stop request",
-        "S1000 General error", "S1009 Wrong OUT parameter",
-        "S1010 Error in function", "S0002 Trigger not found",
-        "S1011 Savepoint not found", "37000 Label required for value list",
+        "S1000 The table data is read only",            //
+        "S1000 Access is denied",                       //
+        "S1000 InputStream error",                      //
+        "S1000 No data is available",                   //
+        "S1000 User already exists",                    //
+        "S1000 User not found",                         //
+        "S1000 Assert failed",                          //
+        "S1000 External stop request",                  //
+        "S1000 General error",                          //
+        "S1009 Wrong OUT parameter",                    //
+        "S1010 Error in function",                      //
+        "S0002 Trigger not found",                      //
+        "S1011 Savepoint not found",                    //
+        "37000 Label required for value list",
         "37000 Wrong data type or data too long in DEFAULT clause",
         "S0011 Foreign key not allowed",
         "S1000 The table's data source for this connection is not known",
         "S0000 User-defined index or constraint name cannot begin with SYS_",
         "S0011 Attempt to drop a foreign key index",
         "S1000 ResultSet was set to forward only",
-        "S0003 View already exists", "S0004 View not found",
-        "S0005 Not a View", "S0005 Not a Table",
+        "S0003 View already exists",                    //
+        "S0004 View not found", "S0005 Not a View", "S0005 Not a Table",
         "S0011 Attempt to drop or rename a system index",
         "S0021 Column types do not match",
         "s0021 Column constraints are not acceptable",
@@ -249,16 +274,14 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in HAVING clause",
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
-        "S1000 Out of Memory", "S1000 This operation is not supported",
-        "22019 Invalid identifier", "22019 Invalid TEXT table source string",
+        "S1000 Out of Memory",                          //
+        "S1000 This operation is not supported", "22019 Invalid identifier",
+        "22019 Invalid TEXT table source string",
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
-        "S1000 error in script file", "37000 NULL in value list",
-
-        //
-        "08000 socket creation error",
-
-        //
+        "S1000 error in script file",                   //
+        "37000 NULL in value list",                     //
+        "08000 socket creation error",                  //
         "37000 invalid character encoding",
         "08000 reserved for NO_CLASSLOADER_FOR_TLS",
         "08000 reserved for NO_JSSE",
@@ -267,12 +290,15 @@ public class Trace extends PrintWriter {
         "08000 reserved for TLS_ERROR",
         "08000 reserved for MISSING_TLS_METHOD",
         "08000 reserved for TLS_SECURITY_ERROR",
-        "08000 reserved for NO_TLS_DATA", "08000 reserved for NO_PRINCIPAL",
+        "08000 reserved for NO_TLS_DATA",               //
+        "08000 reserved for NO_PRINCIPAL",
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
         "08000 reserved for KEYSTORE_PROBLEM",
+
         //
-        "08003 Database does not exists",
+        "08003 Database does not exists",               //
+        "22003 Type Conversion not supported",
     };
 
     static {
@@ -283,24 +309,26 @@ public class Trace extends PrintWriter {
     }
 
     /**
-     * compose error message by inserting the strings in the add parameters
-     * in placeholders within the error message
+     * Compose error message by inserting the strings in the add parameters
+     * in placeholders within the error message. The message string contains
+     * $$ markers for each context variable. Context variables are supplied in
+     * the add parameters.
      */
-
     static HsqlException error(int code, String[] add) {
 
         code = Math.abs(code);
 
-        String       s         = getMessage(code);
-
+        String s     = getMessage(code);
         String state = s.substring(0, 5);
+
         s = s.substring(6);
+
         StringBuffer sb        = new StringBuffer(s.length() + 32);
         int          lastIndex = 0;
         int          escIndex  = s.length();
 
         if (add != null) {
-            for (int i = 0;i < add.length; i++) {
+            for (int i = 0; i < add.length; i++) {
                 escIndex = s.indexOf("$$");
 
                 if (escIndex == -1) {

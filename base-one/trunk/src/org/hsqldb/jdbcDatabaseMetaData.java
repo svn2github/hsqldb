@@ -876,7 +876,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean usesLocalFiles() throws SQLException {
-
         return false;
     }
 

@@ -112,28 +112,28 @@ public class ValuePool {
         resetPool(defaultPoolLookupSize, defaultSizeFactor);
     }
 
-    public static Integer getInt(int val) {
+    public static synchronized Integer getInt(int val) {
 
         intAccessCount++;
 
         return intPool.getOrAddInteger(val);
     }
 
-    public static Long getLong(long val) {
+    public static synchronized Long getLong(long val) {
 
         longAccessCount++;
 
         return longPool.getOrAddLong(val);
     }
 
-    public static Double getDouble(long val) {
+    public static synchronized Double getDouble(long val) {
 
         doubleAccessCount++;
 
         return doublePool.getOrAddDouble(val);
     }
 
-    public static String getString(String val) {
+    public static synchronized String getString(String val) {
 
         if (val.length() > maxStringLength) {
             return val;
@@ -144,14 +144,14 @@ public class ValuePool {
         return stringPool.getOrAddString(val);
     }
 
-    public static java.sql.Date getDate(long val) {
+    public static synchronized java.sql.Date getDate(long val) {
 
         dateAccessCount++;
 
         return datePool.getOrAddDate(val);
     }
 
-    public static java.math.BigDecimal getBigDecimal(
+    public static synchronized java.math.BigDecimal getBigDecimal(
             java.math.BigDecimal val) {
 
         bigdecimalAccessCount++;

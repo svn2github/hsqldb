@@ -47,7 +47,6 @@ public class BaseHashMap {
  * @version 1.7.2
  * @since 1.7.2
  */
-
 /*
 
     data store:

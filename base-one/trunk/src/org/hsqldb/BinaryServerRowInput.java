@@ -68,7 +68,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         this.out = out;
     }
 
-    byte[] readByteArray() throws IOException {
+    protected byte[] readByteArray() throws IOException {
 
         byte[] b = new byte[readInt()];
 
@@ -175,9 +175,9 @@ implements org.hsqldb.DatabaseRowInputInterface {
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // objects are / were stored as serialized byte[]
 // now they are deserialized before retrieval
-        byte[] o = readByteArray();
+        byte[] data = readByteArray();
 
-        return Column.deserialize(o);
+        return new JavaObject(data,true);
     }
 
     protected byte[] readBinary(int type) throws IOException, HsqlException {

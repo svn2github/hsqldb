@@ -224,7 +224,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
                 case Types.CHAR :
                 case Types.VARCHAR :
-                case Column.VARCHAR_IGNORECASE :
+                case Types.VARCHAR_IGNORECASE :
                 case Types.LONGVARCHAR :
                     o = readChar(type);
                     break;

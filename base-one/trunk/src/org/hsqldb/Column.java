@@ -123,28 +123,7 @@ import org.hsqldb.store.ValuePool;
  */
 class Column {
 
-    // non-standard type not in JDBC
-    static final int VARCHAR_IGNORECASE = 100;
-
-    // lookup for types
-// boucherb@users - access changed for metadata 1.7.2
-    static HashMap hTypes;
-
 // --------------------------------------------------
-    // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
-    static final int numericTypes[] = {
-        Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
-        Types.NUMERIC, Types.DECIMAL, Types.FLOAT, Types.REAL, Types.DOUBLE
-    };
-    static final int otherTypes[] = {
-        Types.BIT, Types.LONGVARBINARY, Types.VARBINARY, Types.BINARY,
-        Types.LONGVARCHAR, Types.CHAR, Types.VARCHAR, Types.DATE, Types.TIME,
-        Types.TIMESTAMP, Types.OTHER
-    };
-    static final int[][] typesArray = {
-        Column.numericTypes, Column.otherTypes
-    };
-
     // DDL name, size, scale, null, identity and default values
     // most variables are final but not declared so because of a bug in
     // JDK 1.1.8 compiler
@@ -160,59 +139,19 @@ class Column {
     // helper values
     private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
 
-    static {
-        hTypes = new HashMap(67, 1);
-
-        hTypes.put("INTEGER", ValuePool.getInt(Types.INTEGER));
-        hTypes.put("INT", ValuePool.getInt(Types.INTEGER));
-        hTypes.put("int", ValuePool.getInt(Types.INTEGER));
-        hTypes.put("java.lang.Integer", ValuePool.getInt(Types.INTEGER));
-        hTypes.put("IDENTITY", ValuePool.getInt(Types.INTEGER));
-        hTypes.put("DOUBLE", ValuePool.getInt(Types.DOUBLE));
-        hTypes.put("double", ValuePool.getInt(Types.DOUBLE));
-        hTypes.put("java.lang.Double", ValuePool.getInt(Types.DOUBLE));
-        hTypes.put("FLOAT", ValuePool.getInt(Types.FLOAT));
-        hTypes.put("REAL", ValuePool.getInt(Types.REAL));
-        hTypes.put("VARCHAR", ValuePool.getInt(Types.VARCHAR));
-        hTypes.put("java.lang.String", ValuePool.getInt(Types.VARCHAR));
-        hTypes.put("CHAR", ValuePool.getInt(Types.CHAR));
-        hTypes.put("CHARACTER", ValuePool.getInt(Types.CHAR));
-        hTypes.put("LONGVARCHAR", ValuePool.getInt(Types.LONGVARCHAR));
-        hTypes.put("VARCHAR_IGNORECASE",
-                   ValuePool.getInt(VARCHAR_IGNORECASE));
-        hTypes.put("DATE", ValuePool.getInt(Types.DATE));
-        hTypes.put("java.sql.Date", ValuePool.getInt(Types.DATE));
-        hTypes.put("TIME", ValuePool.getInt(Types.TIME));
-        hTypes.put("java.sql.Time", ValuePool.getInt(Types.TIME));
-        hTypes.put("TIMESTAMP", ValuePool.getInt(Types.TIMESTAMP));
-        hTypes.put("java.sql.Timestamp", ValuePool.getInt(Types.TIMESTAMP));
-        hTypes.put("DATETIME", ValuePool.getInt(Types.TIMESTAMP));
-        hTypes.put("DECIMAL", ValuePool.getInt(Types.DECIMAL));
-        hTypes.put("java.math.BigDecimal", ValuePool.getInt(Types.DECIMAL));
-        hTypes.put("NUMERIC", ValuePool.getInt(Types.NUMERIC));
-        hTypes.put("BIT", ValuePool.getInt(Types.BIT));
-        hTypes.put("boolean", ValuePool.getInt(Types.BIT));
-        hTypes.put("java.lang.Boolean", ValuePool.getInt(Types.BIT));
-        hTypes.put("TINYINT", ValuePool.getInt(Types.TINYINT));
-        hTypes.put("byte", ValuePool.getInt(Types.TINYINT));
-        hTypes.put("java.lang.Byte", ValuePool.getInt(Types.TINYINT));
-        hTypes.put("SMALLINT", ValuePool.getInt(Types.SMALLINT));
-        hTypes.put("short", ValuePool.getInt(Types.SMALLINT));
-        hTypes.put("java.lang.Short", ValuePool.getInt(Types.SMALLINT));
-        hTypes.put("BIGINT", ValuePool.getInt(Types.BIGINT));
-        hTypes.put("long", ValuePool.getInt(Types.BIGINT));
-        hTypes.put("java.lang.Long", ValuePool.getInt(Types.BIGINT));
-        hTypes.put("BINARY", ValuePool.getInt(Types.BINARY));
-        hTypes.put("[B", ValuePool.getInt(Types.BINARY));
-        hTypes.put("VARBINARY", ValuePool.getInt(Types.VARBINARY));
-        hTypes.put("LONGVARBINARY", ValuePool.getInt(Types.LONGVARBINARY));
-        hTypes.put("OTHER", ValuePool.getInt(Types.OTHER));
-        hTypes.put("OBJECT", ValuePool.getInt(Types.OTHER));
-        hTypes.put("java.lang.Object", ValuePool.getInt(Types.OTHER));
-        hTypes.put("NULL", ValuePool.getInt(Types.NULL));
-        hTypes.put("void", ValuePool.getInt(Types.NULL));
-        hTypes.put("java.lang.Void", ValuePool.getInt(Types.NULL));
-    }
+    // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
+    static final int numericTypes[] = {
+        Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
+        Types.NUMERIC, Types.DECIMAL, Types.FLOAT, Types.REAL, Types.DOUBLE
+    };
+    static final int otherTypes[] = {
+        Types.BIT, Types.LONGVARBINARY, Types.VARBINARY, Types.BINARY,
+        Types.LONGVARCHAR, Types.CHAR, Types.VARCHAR, Types.DATE, Types.TIME,
+        Types.TIMESTAMP, Types.OTHER
+    };
+    static final int[][] typesArray = {
+        Column.numericTypes, Column.otherTypes
+    };
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 
@@ -303,13 +242,13 @@ class Column {
     }
 
     int getDIType() {
-        return colType == VARCHAR_IGNORECASE ? Types.VARCHAR
-                                             : colType;
+        return colType == Types.VARCHAR_IGNORECASE ? Types.VARCHAR
+                                                   : colType;
     }
 
     int getDITypeSub() {
 
-        if (colType == VARCHAR_IGNORECASE) {
+        if (colType == Types.VARCHAR_IGNORECASE) {
             return Types.TYPE_SUB_IGNORECASE;
         } else if (isIdentity) {
             return Types.TYPE_SUB_IDENTITY;
@@ -334,99 +273,6 @@ class Column {
      */
     int getScale() {
         return colScale;
-    }
-
-    /**
-     *
-     * @param  SQL type string
-     * @return java.sql.Types int value
-     * @throws  HsqlException
-     */
-    static int getTypeNr(String type) throws HsqlException {
-
-        Integer i = (Integer) hTypes.get(type);
-
-        Trace.check(i != null, Trace.WRONG_DATA_TYPE, type);
-
-        return i.intValue();
-    }
-
-    /**
-     * Returns SQL type string for a java.sql.Types int value
-     */
-    static String getTypeString(int type) {
-
-        switch (type) {
-
-            case Types.NULL :
-                return "NULL";
-
-            case Types.INTEGER :
-                return "INTEGER";
-
-            case Types.DOUBLE :
-                return "DOUBLE";
-
-            case VARCHAR_IGNORECASE :
-                return "VARCHAR_IGNORECASE";
-
-            case Types.VARCHAR :
-                return "VARCHAR";
-
-            case Types.CHAR :
-                return "CHAR";
-
-            case Types.LONGVARCHAR :
-                return "LONGVARCHAR";
-
-            case Types.DATE :
-                return "DATE";
-
-            case Types.TIME :
-                return "TIME";
-
-            case Types.DECIMAL :
-                return "DECIMAL";
-
-            case Types.BIT :
-                return "BIT";
-
-            case Types.TINYINT :
-                return "TINYINT";
-
-            case Types.SMALLINT :
-                return "SMALLINT";
-
-            case Types.BIGINT :
-                return "BIGINT";
-
-            case Types.REAL :
-                return "REAL";
-
-            case Types.FLOAT :
-                return "FLOAT";
-
-            case Types.NUMERIC :
-                return "NUMERIC";
-
-            case Types.TIMESTAMP :
-                return "TIMESTAMP";
-
-            case Types.BINARY :
-                return "BINARY";
-
-            case Types.VARBINARY :
-                return "VARBINARY";
-
-            case Types.LONGVARBINARY :
-                return "LONGVARBINARY";
-
-            case Types.OTHER :
-                return "OBJECT";
-
-            default :
-                return "";
-        }
     }
 
     /**
@@ -461,7 +307,7 @@ class Column {
             case Types.VARCHAR :
             case Types.CHAR :
             case Types.LONGVARCHAR :
-            case VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
                 return (String) a + (String) b;
 
             case Types.NUMERIC :
@@ -950,7 +796,7 @@ class Column {
                 }
                 break;
 
-            case VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
                 if (sql_compare_in_locale) {
                     i = i18nCollator.compare(((String) a).toUpperCase(),
                                              ((String) b).toUpperCase());
@@ -1240,7 +1086,7 @@ class Column {
                     }
                     break;
 
-                case VARCHAR_IGNORECASE :
+                case Types.VARCHAR_IGNORECASE :
                 case Types.VARCHAR :
                 case Types.CHAR :
                 case Types.LONGVARCHAR :
@@ -1278,15 +1124,23 @@ class Column {
                     break;
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
-// currently String objects cannot be stored directly in OTHER columns
-// all strings are treated as a hex representation of a serialized Object
-// a new escape pattern needs to be established to differentiate between
-// SQL strings that are normal strings and those that represent a hex version
-// of the BINARY or OTHER data
+// fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
+                /*
+                     Prior to 1.7.0 there were problems storing Objets of normal column types
+                     in columns of the type OTHER. In 1.7.0 changes were made to allow this,
+                     but as all the conversion took place inside the engine, it introduced a
+                     requirement for all classes stored in OTHER columns to be available in the
+                     class path of the engine.
+                     In 1.7.2, the introduction of real preprared statement support allows us
+                     to revert to the pre 1.7.0 behaviour without the artificial limitations.
+                 */
                 case Types.OTHER :
-                    if (o instanceof String == false) {
+                    if (o instanceof JavaObject) {
                         return o;
                     }
+
+                    return new JavaObject(o);
+
                 default :
             }
 
@@ -1334,7 +1188,7 @@ class Column {
 
                 return ValuePool.getDouble(l);
 
-            case VARCHAR_IGNORECASE :
+            case Types.VARCHAR_IGNORECASE :
             case Types.VARCHAR :
             case Types.CHAR :
             case Types.LONGVARCHAR :
@@ -1359,13 +1213,11 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                return hexToByteArray(s);
 
             case Types.OTHER :
-                return deserialize(hexToByteArray(s));
 
             default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+                throw Trace.error(Trace.INVALID_CONVERSION, type);
         }
     }
 
@@ -1408,10 +1260,15 @@ class Column {
                     StringConverter.byteToHex((byte[]) o), '\'', false);
 
             case Types.OTHER :
-                return StringConverter.toQuotedString(serializeToString(o),
-                                                      '\'', false);
+                if (!(o instanceof JavaObject)) {
+                    throw Trace.error(Trace.SERIALIZATION_FAILURE);
+                }
 
-            case VARCHAR_IGNORECASE :
+                return StringConverter.toQuotedString(
+                    StringConverter.byteToHex(((JavaObject) o).getBytes()),
+                    '\'', false);
+
+            case Types.VARCHAR_IGNORECASE :
             case Types.VARCHAR :
             case Types.CHAR :
             case Types.LONGVARCHAR :

@@ -185,7 +185,7 @@ class Function {
 
         Class returnclass = mMethod.getReturnType();
 
-        iReturnType = Column.getTypeNr(returnclass.getName());
+        iReturnType = Types.getTypeNr(returnclass.getName());
 
         Class arg[] = mMethod.getParameterTypes();
 
@@ -207,7 +207,7 @@ class Function {
 //                if (type.equals("[B")) {
 //                    type = "byte[]";
 //                }
-                iArgType[i]     = Column.getTypeNr(type);
+                iArgType[i]     = Types.getTypeNr(type);
                 bArgNullable[i] = !a.isPrimitive();
             }
         }
@@ -348,9 +348,11 @@ class Function {
      * against the specified TableFilter
      */
     void resolve(TableFilter f) throws HsqlException {
+
         int i;
 
-        i = bConnection ? 1 : 0;
+        i = bConnection ? 1
+                        : 0;
 
         for (; i < iArgCount; i++) {
             if (eArg[i] != null) {

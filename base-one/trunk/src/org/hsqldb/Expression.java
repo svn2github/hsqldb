@@ -129,9 +129,9 @@ class Expression {
                      MIN   = 42,
                      MAX   = 43,
                      AVG   = 44;
+
 // TODO: Standard Deviation and maybe some other statistical aggregate functions
 //                   STDDEV  = 45;
-
     // system functions
     static final int IFNULL   = 60,
                      CONVERT  = 61,
@@ -193,7 +193,6 @@ class Expression {
     static final Integer INTEGER_1 = ValuePool.getInt(1);
 
     // PARAM
-
     private boolean isParam;
 
     /**
@@ -323,7 +322,9 @@ class Expression {
      * @param isParam true if this is to be a PARAM VALUE expression
      */
     Expression(int datatype, Object o, boolean isParam) {
+
         this(datatype, o);
+
         this.isParam = isParam;
     }
 
@@ -375,7 +376,6 @@ class Expression {
                 return buf.toString();
 
             case VALUE :
-
                 if (isParam) {
                     buf.append("PARAM ");
                 }
@@ -384,7 +384,7 @@ class Expression {
                 buf.append(oData);
 
                 if (isParam) {
-                    buf.append(", TYPE = " + Column.getTypeString(iDataType));
+                    buf.append(", TYPE = " + Types.getTypeString(iDataType));
                 }
 
                 return buf.toString();
@@ -522,7 +522,7 @@ class Expression {
 
             case CONVERT :
                 buf.append("CONVERT ");
-                buf.append(Column.getTypeString(iDataType));
+                buf.append(Types.getTypeString(iDataType));
                 buf.append(' ');
                 break;
 
@@ -1013,7 +1013,7 @@ class Expression {
      */
     void resolve(TableFilter f) throws HsqlException {
 
-        if(isParam) {
+        if (isParam) {
             return;
         }
 
@@ -1079,10 +1079,10 @@ class Expression {
                 break;
 
             case NEGATE :
-                Trace.check(!eArg.isParam,
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for a parameter marker to be " +
-                            " the operand of a unary negation operation");
+                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for a parameter marker to be "
+                            + " the operand of a unary negation operation");
+
                 iDataType = eArg.iDataType;
                 break;
 
@@ -1090,17 +1090,16 @@ class Expression {
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :
+                Trace.check(!(eArg.isParam && eArg2.isParam),
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both operands of a binary "
+                            + "aritmentic operator to be parameter markers");
 
-                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both operands of a binary " +
-                        "aritmentic operator to be parameter markers");
-
-                 if (eArg.isParam) {
-                     eArg.iDataType = eArg2.iDataType;
-                 } else if(eArg2.isParam) {
-                     eArg2.iDataType = eArg.iDataType;
-                 }
+                if (eArg.isParam) {
+                    eArg.iDataType = eArg2.iDataType;
+                } else if (eArg2.isParam) {
+                    eArg2.iDataType = eArg.iDataType;
+                }
 
 // fredt@users 20011010 - patch 442993 by fredt
                 iDataType = Column.getCombinedNumberType(eArg.iDataType,
@@ -1110,15 +1109,14 @@ class Expression {
             case CONCAT :
                 iDataType = Types.VARCHAR;
 
-                 if (eArg.isParam) {
-                     eArg.iDataType = Types.VARCHAR;
-                 }
+                if (eArg.isParam) {
+                    eArg.iDataType = Types.VARCHAR;
+                }
 
-                 if(eArg2.isParam) {
-                     eArg2.iDataType = Types.VARCHAR;
-                 }
+                if (eArg2.isParam) {
+                    eArg2.iDataType = Types.VARCHAR;
+                }
                 break;
-
 
             case EQUAL :
             case BIGGER_EQUAL :
@@ -1126,87 +1124,75 @@ class Expression {
             case SMALLER :
             case SMALLER_EQUAL :
             case NOT_EQUAL :
+                Trace.check(!(eArg.isParam && eArg2.isParam),
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both expressions of a "
+                            + "comparison-predicate to be parameter markers");
 
-                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both expressions of a " +
-                        "comparison-predicate to be parameter markers");
-
-                 if (eArg.isParam) {
-                     eArg.iDataType = eArg2.iDataType;
-                 } else if(eArg2.isParam) {
-                     eArg2.iDataType = eArg.iDataType;
-                 }
-
-                 iDataType = Types.BIT;
-
-                 break;
-
-            case LIKE :
-
-                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both expressions of a LIKE " +
-                        "comparison-predicate to be parameter markers");
-
-                 if (eArg.isParam) {
-                     eArg.iDataType = Types.VARCHAR;
-                 } else if(eArg2.isParam) {
-                     eArg2.iDataType = Types.VARCHAR;
-                 }
-
-                 iDataType = Types.BIT;
-
-                 break;
-
-            case AND :
-            case OR :
-
-                 if (eArg.isParam) {
-                     eArg.iDataType = Types.BIT;
-                 }
-
-                 if(eArg2.isParam) {
-                     eArg2.iDataType = Types.BIT;
-                 }
-
-                 iDataType = Types.BIT;
-
-                 break;
-
-            case NOT :
-
-                 if (eArg.isParam) {
-                     eArg.iDataType = Types.BIT;
-                 }
-
-                 iDataType = Types.BIT;
-
-                 break;
-
-            case IN :
-
-                 if (eArg.isParam) {
+                if (eArg.isParam) {
                     eArg.iDataType = eArg2.iDataType;
-                 }
-
-                 iDataType = Types.BIT;
-
-                 break;
-
-            case EXISTS :
-
-                // note: no such thing as a param arg if expression is EXISTS
+                } else if (eArg2.isParam) {
+                    eArg2.iDataType = eArg.iDataType;
+                }
 
                 iDataType = Types.BIT;
                 break;
 
-            case COUNT :
+            case LIKE :
+                Trace.check(!(eArg.isParam && eArg2.isParam),
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both expressions of a LIKE "
+                            + "comparison-predicate to be parameter markers");
 
-                 Trace.check(!eArg.isParam,
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for a parameter marker to be the " +
-                        "argument of a set-function-reference");
+                if (eArg.isParam) {
+                    eArg.iDataType = Types.VARCHAR;
+                } else if (eArg2.isParam) {
+                    eArg2.iDataType = Types.VARCHAR;
+                }
+
+                iDataType = Types.BIT;
+                break;
+
+            case AND :
+            case OR :
+                if (eArg.isParam) {
+                    eArg.iDataType = Types.BIT;
+                }
+
+                if (eArg2.isParam) {
+                    eArg2.iDataType = Types.BIT;
+                }
+
+                iDataType = Types.BIT;
+                break;
+
+            case NOT :
+                if (eArg.isParam) {
+                    eArg.iDataType = Types.BIT;
+                }
+
+                iDataType = Types.BIT;
+                break;
+
+            case IN :
+                if (eArg.isParam) {
+                    eArg.iDataType = eArg2.iDataType;
+                }
+
+                iDataType = Types.BIT;
+                break;
+
+            case EXISTS :
+
+                // note: no such thing as a param arg if expression is EXISTS
+                iDataType = Types.BIT;
+                break;
+
+            case COUNT :
+                Trace.check(
+                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for a parameter marker to be the "
+                    + "argument of a set-function-reference");
 
                 iDataType = Types.INTEGER;
                 break;
@@ -1215,11 +1201,10 @@ class Expression {
             case MIN :
             case SUM :
             case AVG :
-
-                 Trace.check(!eArg.isParam,
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for a parameter marker to be the " +
-                        "argument of a set-function-reference");
+                Trace.check(
+                    !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for a parameter marker to be the "
+                    + "argument of a set-function-reference");
 
                 iDataType = eArg.iDataType;
                 break;
@@ -1228,31 +1213,29 @@ class Expression {
 
                 // iDataType for this and for eArg (if isParm)
                 // is already set in Parser
-
                 break;
 
             case IFNULL :
+                Trace.check(!(eArg.isParam && eArg2.isParam),
+                            Trace.COLUMN_TYPE_MISMATCH,
+                            "it is ambiguous for both operands of an IFNULL "
+                            + "operation to be parameter markers");
 
-                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both operands of an IFNULL " +
-                        "operation to be parameter markers");
+                if (eArg.isParam) {
+                    eArg.iDataType = eArg2.iDataType;
+                } else if (eArg2.isParam) {
+                    eArg2.iDataType = eArg.iDataType;
+                }
 
-                 if (eArg.isParam) {
-                     eArg.iDataType = eArg2.iDataType;
-                 } else if(eArg2.isParam) {
-                     eArg2.iDataType = eArg.iDataType;
-                 }
-
-                 // checkme: fishy...
-                 // if eArg.getValue() != null, then this.getValue(this.iType)
-                 // might try to make an unecessary (even disallowed) conversion?
+                // checkme: fishy...
+                // if eArg.getValue() != null, then this.getValue(this.iType)
+                // might try to make an unecessary (even disallowed) conversion?
                 iDataType = eArg2.iDataType;
                 break;
 
             case CASEWHEN :
-
                 if (eArg2.eArg == null) {
+
                     // We use CASEWHEN as both parent and leaf type.
                     // In the parent, eArg is the condition, and eArg2 is
                     // the leaf, also tagged as type CASEWHEN, but its eArg is
@@ -1264,6 +1247,7 @@ class Expression {
                 }
 
                 if (eArg.isParam) {
+
                     // condition is a paramter marker,
                     // as in casewhen(?, v1, v1)
                     eArg.iDataType = Types.BIT;
@@ -1272,19 +1256,21 @@ class Expression {
                 Expression case1 = eArg2.eArg;
                 Expression case2 = eArg2.eArg2;
 
-                Trace.check(!(case1.isParam && case2.isParam),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both the second and third " +
-                        "operands of a CASEWHEN operation to be parameter "+
-                        "markers");
+                Trace.check(
+                    !(case1.isParam && case2.isParam),
+                    Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both the second and third "
+                    + "operands of a CASEWHEN operation to be parameter "
+                    + "markers");
 
                 if (case1.isParam) {
-                    iDataType = case2.iDataType;
+                    iDataType       = case2.iDataType;
                     case1.iDataType = iDataType;
                 } else if (case2.isParam) {
-                    iDataType = case1.iDataType;
+                    iDataType       = case1.iDataType;
                     case2.iDataType = iDataType;
                 } else {
+
                     // boucherb@users 20030705
                     //
                     // CHECKME:
@@ -1350,6 +1336,7 @@ class Expression {
                          arguments to CASEWHEN to have the same type, but in
                          parameterized statemnents they should
                     */
+
                     //
                     // TODO:
                     //
@@ -1370,17 +1357,15 @@ class Expression {
                     //     Of course, the big qeustion is:
                     //
                     //          What is more flexible type?
-
                     // NO:
                     // AFAICT, under both the old and current resolution
                     // scheme, this will always be zero, which is the same as
                     // Types.NULL, which I really doubt this is what we want.
                     // iDataType = eArg2.iDataType;
-
                     // best effort until CHECKME/TODO is resolved
                     iDataType = (case1.iDataType == Types.NULL)
-                        ? case2.iDataType
-                        : case1.iDataType;
+                                ? case2.iDataType
+                                : case1.iDataType;
                 }
                 break;
         }
@@ -1699,7 +1684,7 @@ class Expression {
                     Types.VARCHAR);
                 int type = eArg.iDataType;
                 Like l = new Like(s, cLikeEscape,
-                                  type == Column.VARCHAR_IGNORECASE);
+                                  type == Types.VARCHAR_IGNORECASE);
                 String c = (String) Column.convertObject(leftValue,
                     Types.VARCHAR);
 
@@ -1947,7 +1932,8 @@ class Expression {
                 // boucherb@users 20030704 - ack!
                 // a new Boolean for each test is a _huge_ waste
                 // return new Boolean(test());
-                return test() ? Boolean.TRUE : Boolean.FALSE;
+                return test() ? Boolean.TRUE
+                              : Boolean.FALSE;
         }
     }
 
@@ -1983,7 +1969,7 @@ class Expression {
                 String s    = (String) eArg2.getValue(Types.VARCHAR);
                 int    type = eArg.iDataType;
                 Like l = new Like(s, cLikeEscape,
-                                  type == Column.VARCHAR_IGNORECASE);
+                                  type == Types.VARCHAR_IGNORECASE);
                 String c = (String) eArg.getValue(Types.VARCHAR);
 
                 return l.compare(c);
@@ -2101,7 +2087,7 @@ class Expression {
                 o = Column.convertObject(o, iDataType);
             }
 
-            if (o != null && datatype == Column.VARCHAR_IGNORECASE) {
+            if (o != null && datatype == Types.VARCHAR_IGNORECASE) {
                 if (!hListIsUpper) {
                     HashMap  newMap = new HashMap(hList.size(), 1);
                     Iterator it     = hList.keySet().iterator();
@@ -2175,7 +2161,9 @@ class Expression {
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
 //-------------------------------------------------------------------
     void bind(Object o, int type) throws HsqlException {
-        oData     = o;
+
+        oData = o;
+
         // TODO:  now that PARAM expressions are resolved to their
         // correct data type, this stuff needs to be cleaned up
         // depends on client and protocol, so I leave the first stages
@@ -2187,7 +2175,7 @@ class Expression {
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
     void bind(Object o) throws HsqlException {
-        oData     = o;
+        oData = o;
     }
 
 //-------------------------------------------------------------------

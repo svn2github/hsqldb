@@ -235,7 +235,8 @@ public class jdbcStatement implements java.sql.Statement {
             throw new SQLException(
                 "executeUpdate() cannot be used with this statement");
         } else if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(), resultIn.getSubString(),
+            throw new SQLException(resultIn.getMainString(),
+                                   resultIn.getSubString(),
                                    resultIn.getStatementID());
         }
 

@@ -32,11 +32,9 @@
 package org.hsqldb.resources;
 
 import java.lang.reflect.Method;
-
 import java.util.MissingResourceException;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
@@ -89,7 +87,8 @@ public final class BundleHandler {
      * @return Value of property locale.
      */
     public static Locale getLocale() {
-        synchronized(mutex) {
+
+        synchronized (mutex) {
             return locale;
         }
     }
@@ -102,7 +101,7 @@ public final class BundleHandler {
      */
     public static void setLocale(Locale l) throws IllegalArgumentException {
 
-        synchronized(mutex) {
+        synchronized (mutex) {
             if (l == null) {
                 throw new IllegalArgumentException("null locale");
             }
@@ -125,30 +124,35 @@ public final class BundleHandler {
      */
     public static int getBundleHandle(String name, ClassLoader cl) {
 
-        Integer         bundleHandle;
-        ResourceBundle  bundle;
-        String          bundleName;
-        String          bundleKey;
+        Integer        bundleHandle;
+        ResourceBundle bundle;
+        String         bundleName;
+        String         bundleKey;
 
         bundleName = prefix + name;
 
-        synchronized(mutex) {
+        synchronized (mutex) {
             bundleKey    = locale.toString() + bundleName;
             bundleHandle = (Integer) bundleHandleMap.get(bundleKey);
 
             if (bundleHandle == null) {
                 try {
                     bundle = getBundle(bundleName, locale, cl);
+
                     bundleList.add(bundle);
+
                     bundleHandle = ValuePool.getInt(bundleList.size() - 1);
+
                     bundleHandleMap.put(bundleKey, bundleHandle);
                 } catch (Exception e) {
+
                     //e.printStackTrace();
                 }
             }
         }
 
-        return bundleHandle == null ? -1 : bundleHandle.intValue();
+        return bundleHandle == null ? -1
+                                    : bundleHandle.intValue();
     }
 
     /**
@@ -168,7 +172,7 @@ public final class BundleHandler {
         ResourceBundle bundle;
         String         s;
 
-        synchronized(mutex) {
+        synchronized (mutex) {
             if (handle < 0 || handle >= bundleList.size() || key == null) {
                 bundle = null;
             } else {
@@ -194,11 +198,14 @@ public final class BundleHandler {
      * having ClassLoader in the signature.
      */
     private static Method getNewGetBundleMethod() {
+
         Class   clazz;
         Class[] args;
 
         clazz = ResourceBundle.class;
-        args  = new Class[] {String.class, Locale.class, ClassLoader.class};
+        args  = new Class[] {
+            String.class, Locale.class, ClassLoader.class
+        };
 
         try {
             return clazz.getMethod("getBundle", args);
@@ -222,18 +229,22 @@ public final class BundleHandler {
      * @param cl the class loader from which to load the resource bundle
      */
     public static ResourceBundle getBundle(String name, Locale locale,
-            ClassLoader cl) throws NullPointerException,
-                                   MissingResourceException {
+                                           ClassLoader cl)
+                                           throws NullPointerException,
+                                               MissingResourceException {
+
         if (cl == null) {
-            return ResourceBundle.getBundle(name,locale);
+            return ResourceBundle.getBundle(name, locale);
         } else if (newGetBundleMethod == null) {
-            return ResourceBundle.getBundle(name,locale);
+            return ResourceBundle.getBundle(name, locale);
         } else {
             try {
-                return (ResourceBundle) newGetBundleMethod
-                        .invoke(null, new Object[] {name, locale, cl});
+                return (ResourceBundle) newGetBundleMethod.invoke(null,
+                        new Object[] {
+                    name, locale, cl
+                });
             } catch (Exception e) {
-                return ResourceBundle.getBundle(name,locale);
+                return ResourceBundle.getBundle(name, locale);
             }
         }
     }

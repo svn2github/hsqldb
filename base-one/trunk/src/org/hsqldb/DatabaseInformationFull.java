@@ -55,7 +55,8 @@ import org.hsqldb.store.ValuePool;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DatabaseInformationFull extends DatabaseInformationMain {
+final class DatabaseInformationFull
+extends org.hsqldb.DatabaseInformationMain {
 
     /** Provides SQL function/procedure reporting support. */
     protected DIProcedureInfo pi;
@@ -178,13 +179,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_ALIASES]);
 
-            addColumn(t, "OBJECT_TYPE", VARCHAR, false);    // not null
-            addColumn(t, "OBJECT_CAT", VARCHAR);
-            addColumn(t, "OBJECT_SCHEM", VARCHAR);
-            addColumn(t, "OBJECT_NAME", VARCHAR, false);    // not null
-            addColumn(t, "ALIAS_CAT", VARCHAR);
-            addColumn(t, "ALIAS_SCHEM", VARCHAR);
-            addColumn(t, "ALIAS", VARCHAR, false);          // not null
+            addColumn(t, "OBJECT_TYPE", Types.VARCHAR, false);    // not null
+            addColumn(t, "OBJECT_CAT", Types.VARCHAR);
+            addColumn(t, "OBJECT_SCHEM", Types.VARCHAR);
+            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "ALIAS_CAT", Types.VARCHAR);
+            addColumn(t, "ALIAS_SCHEM", Types.VARCHAR);
+            addColumn(t, "ALIAS", Types.VARCHAR, false);          // not null
 
             // order: OBJECT_TYPE, OBJECT_NAME, ALIAS.
             // true PK.
@@ -250,7 +251,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         // must have create/alter table rights to see domain aliases
         if (session.isAdmin()) {
-            Iterator typeAliases = Column.hTypes.keySet().iterator();
+            Iterator typeAliases = Types.typeAliases.keySet().iterator();
 
             objType = "DOMAIN";
 
@@ -258,9 +259,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                 row   = t.getNewRow();
                 alias = (String) typeAliases.next();
 
-                Integer tn = (Integer) Column.hTypes.get(alias);
+                int tn = Types.typeAliases.get(alias, Integer.MIN_VALUE);
 
-                objName = Column.getTypeString(tn.intValue());
+                objName = Types.getTypeString(tn);
 
                 if (alias.equals(objName)) {
                     continue;
@@ -347,19 +348,19 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CACHEINFO]);
 
-            addColumn(t, "CACHE_CLASS", VARCHAR, false);           // not null
-            addColumn(t, "CACHE_HASH", INTEGER, false);            // not null
-            addColumn(t, "CACHE_FILE", VARCHAR, false);            // not null
-            addColumn(t, "CACHE_LENGTH", INTEGER, false);          // not null
-            addColumn(t, "CACHE_SIZE", INTEGER, false);            // not null
-            addColumn(t, "FREE_BYTES", INTEGER, false);            // not null
-            addColumn(t, "SMALLEST_FREE_ITEM", INTEGER, false);    // not null
-            addColumn(t, "LARGEST_FREE_ITEM", INTEGER, false);     // not null
-            addColumn(t, "FREE_COUNT", INTEGER, false);            // not null
-            addColumn(t, "FREE_POS", INTEGER, false);              // not null
-            addColumn(t, "MAX_CACHE_SIZE", INTEGER, false);        // not null
-            addColumn(t, "MULTIPLIER_MASK", VARCHAR, false);       // not null
-            addColumn(t, "WRITER_LENGTH", INTEGER, false);         // not null
+            addColumn(t, "CACHE_CLASS", Types.VARCHAR, false);           // not null
+            addColumn(t, "CACHE_HASH", Types.INTEGER, false);            // not null
+            addColumn(t, "CACHE_FILE", Types.VARCHAR, false);            // not null
+            addColumn(t, "CACHE_LENGTH", Types.INTEGER, false);          // not null
+            addColumn(t, "CACHE_SIZE", Types.INTEGER, false);            // not null
+            addColumn(t, "FREE_BYTES", Types.INTEGER, false);            // not null
+            addColumn(t, "SMALLEST_FREE_ITEM", Types.INTEGER, false);    // not null
+            addColumn(t, "LARGEST_FREE_ITEM", Types.INTEGER, false);     // not null
+            addColumn(t, "FREE_COUNT", Types.INTEGER, false);            // not null
+            addColumn(t, "FREE_POS", Types.INTEGER, false);              // not null
+            addColumn(t, "MAX_CACHE_SIZE", Types.INTEGER, false);        // not null
+            addColumn(t, "MULTIPLIER_MASK", Types.VARCHAR, false);       // not null
+            addColumn(t, "WRITER_LENGTH", Types.INTEGER, false);         // not null
 
             // order: CACHE_CLASS, CACHE_FILE
             // added for unique: CACHE_HASH
@@ -503,13 +504,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CLASSPRIVILEGES]);
 
-            addColumn(t, "CLASS_CAT", VARCHAR);
-            addColumn(t, "CLASS_SCHEM", VARCHAR);
-            addColumn(t, "CLASS_NAME", VARCHAR, false);      // not null
-            addColumn(t, "GRANTOR", VARCHAR, false);         // not null
-            addColumn(t, "GRANTEE", VARCHAR, false);         // not null
-            addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
-            addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
+            addColumn(t, "CLASS_CAT", Types.VARCHAR);
+            addColumn(t, "CLASS_SCHEM", Types.VARCHAR);
+            addColumn(t, "CLASS_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR, false);         // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
+            addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
             t.createPrimaryKey(null, new int[] {
                 2, 4, 5
             }, true);
@@ -643,8 +644,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_SESSIONINFO]);
 
-            addColumn(t, "KEY", VARCHAR, false);      // not null
-            addColumn(t, "VALUE", VARCHAR, false);    // not null
+            addColumn(t, "KEY", Types.VARCHAR, false);      // not null
+            addColumn(t, "VALUE", Types.VARCHAR, false);    // not null
             t.createPrimaryKey(null);
 
             return t;
@@ -767,11 +768,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_PROPERTIES]);
 
-            addColumn(t, "PROPERTY_SCOPE", VARCHAR, false);
-            addColumn(t, "PROPERTY_NAMESPACE", VARCHAR, false);
-            addColumn(t, "PROPERTY_NAME", VARCHAR, false);
-            addColumn(t, "PROPERTY_VALUE", VARCHAR);
-            addColumn(t, "PROPERTY_CLASS", VARCHAR, false);
+            addColumn(t, "PROPERTY_SCOPE", Types.VARCHAR, false);
+            addColumn(t, "PROPERTY_NAMESPACE", Types.VARCHAR, false);
+            addColumn(t, "PROPERTY_NAME", Types.VARCHAR, false);
+            addColumn(t, "PROPERTY_VALUE", Types.VARCHAR);
+            addColumn(t, "PROPERTY_CLASS", Types.VARCHAR, false);
 
             // order PROPERTY_SCOPE, PROPERTY_NAMESPACE, PROPERTY_NAME
             // true PK
@@ -1046,17 +1047,17 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_SESSIONS]);
 
-            addColumn(t, "SESSION_ID", INTEGER, false);
-            addColumn(t, "CONNECTED", TIMESTAMP, false);
-            addColumn(t, "USER_NAME", VARCHAR, false);
-            addColumn(t, "IS_ADMIN", BIT, false);
-            addColumn(t, "AUTOCOMMIT", BIT, false);
-            addColumn(t, "READONLY", BIT, false);
-            addColumn(t, "MAXROWS", INTEGER, false);
+            addColumn(t, "SESSION_ID", Types.INTEGER, false);
+            addColumn(t, "CONNECTED", Types.TIMESTAMP, false);
+            addColumn(t, "USER_NAME", Types.VARCHAR, false);
+            addColumn(t, "IS_ADMIN", Types.BIT, false);
+            addColumn(t, "AUTOCOMMIT", Types.BIT, false);
+            addColumn(t, "READONLY", Types.BIT, false);
+            addColumn(t, "MAXROWS", Types.INTEGER, false);
 
             // Note: some sessions may have a NULL LAST_IDENTITY value
-            addColumn(t, "LAST_IDENTITY", BIGINT);
-            addColumn(t, "TRANSACTION_SIZE", INTEGER, false);
+            addColumn(t, "LAST_IDENTITY", Types.BIGINT);
+            addColumn(t, "TRANSACTION_SIZE", Types.INTEGER, false);
 
             // order:  SESSION_ID
             // true primary key
@@ -1132,10 +1133,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_SUPERTABLES]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);         // not null
-            addColumn(t, "SUPERTABLE_NAME", VARCHAR, false);    // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "SUPERTABLE_NAME", Types.VARCHAR, false);    // not null
             t.createPrimaryKey(null);
 
             return t;
@@ -1173,12 +1174,12 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_SUPERTYPES]);
 
-            addColumn(t, "TYPE_CAT", VARCHAR);
-            addColumn(t, "TYPE_SCHEM", VARCHAR);
-            addColumn(t, "TYPE_NAME", VARCHAR, false);         // not null
-            addColumn(t, "SUPERTYPE_CAT", VARCHAR);
-            addColumn(t, "SUPERTYPE_SCHEM", VARCHAR);
-            addColumn(t, "SUPERTYPE_NAME", VARCHAR, false);    // not null
+            addColumn(t, "TYPE_CAT", Types.VARCHAR);
+            addColumn(t, "TYPE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "SUPERTYPE_CAT", Types.VARCHAR);
+            addColumn(t, "SUPERTYPE_SCHEM", Types.VARCHAR);
+            addColumn(t, "SUPERTYPE_NAME", Types.VARCHAR, false);    // not null
             t.createPrimaryKey(null);
 
             return t;
@@ -1225,18 +1226,18 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TEXTTABLES]);
 
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);    // not null
-            addColumn(t, "DATA_SOURCE_DEFINTION", VARCHAR);
-            addColumn(t, "FILE_PATH", VARCHAR);
-            addColumn(t, "FILE_ENCODING", VARCHAR);
-            addColumn(t, "FIELD_SEPARATOR", VARCHAR);
-            addColumn(t, "VARCHAR_SEPARATOR", VARCHAR);
-            addColumn(t, "LONGVARCHAR_SEPARATOR", VARCHAR);
-            addColumn(t, "IS_IGNORE_FIRST", BIT);
-            addColumn(t, "IS_ALL_QUOTED", BIT);
-            addColumn(t, "IS_DESC", BIT);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "DATA_SOURCE_DEFINTION", Types.VARCHAR);
+            addColumn(t, "FILE_PATH", Types.VARCHAR);
+            addColumn(t, "FILE_ENCODING", Types.VARCHAR);
+            addColumn(t, "FIELD_SEPARATOR", Types.VARCHAR);
+            addColumn(t, "VARCHAR_SEPARATOR", Types.VARCHAR);
+            addColumn(t, "LONGVARCHAR_SEPARATOR", Types.VARCHAR);
+            addColumn(t, "IS_IGNORE_FIRST", Types.BIT);
+            addColumn(t, "IS_ALL_QUOTED", Types.BIT);
+            addColumn(t, "IS_DESC", Types.BIT);
 
             // ------------------------------------------------------------
             t.createPrimaryKey();
@@ -1332,15 +1333,15 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TRIGGERCOLUMNS]);
 
-            addColumn(t, "TRIGGER_CAT", VARCHAR);
-            addColumn(t, "TRIGGER_SCHEM", VARCHAR);
-            addColumn(t, "TRIGGER_NAME", VARCHAR);
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR);
-            addColumn(t, "COLUMN_NAME", VARCHAR);
-            addColumn(t, "COLUMN_LIST", VARCHAR);
-            addColumn(t, "COLUMN_USAGE", VARCHAR);
+            addColumn(t, "TRIGGER_CAT", Types.VARCHAR);
+            addColumn(t, "TRIGGER_SCHEM", Types.VARCHAR);
+            addColumn(t, "TRIGGER_NAME", Types.VARCHAR);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR);
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR);
+            addColumn(t, "COLUMN_LIST", Types.VARCHAR);
+            addColumn(t, "COLUMN_USAGE", Types.VARCHAR);
 
             // order:  all columns, in order, as each column
             // of each table may eventually be listed under various capacities
@@ -1425,22 +1426,22 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_TRIGGERS]);
 
-            addColumn(t, "TRIGGER_CAT", VARCHAR);
-            addColumn(t, "TRIGGER_SCHEM", VARCHAR);
-            addColumn(t, "TRIGGER_NAME", VARCHAR, false);
-            addColumn(t, "TRIGGER_TYPE", VARCHAR, false);
-            addColumn(t, "TRIGGERING_EVENT", VARCHAR, false);
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "BASE_OBJECT_TYPE", VARCHAR, false);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);
-            addColumn(t, "COLUMN_NAME", VARCHAR);
-            addColumn(t, "REFERENCING_NAMES", VARCHAR, false);
-            addColumn(t, "WHEN_CLAUSE", VARCHAR);
-            addColumn(t, "STATUS", VARCHAR, false);
-            addColumn(t, "DESCRIPTION", VARCHAR, false);
-            addColumn(t, "ACTION_TYPE", VARCHAR, false);
-            addColumn(t, "TRIGGER_BODY", VARCHAR, false);
+            addColumn(t, "TRIGGER_CAT", Types.VARCHAR);
+            addColumn(t, "TRIGGER_SCHEM", Types.VARCHAR);
+            addColumn(t, "TRIGGER_NAME", Types.VARCHAR, false);
+            addColumn(t, "TRIGGER_TYPE", Types.VARCHAR, false);
+            addColumn(t, "TRIGGERING_EVENT", Types.VARCHAR, false);
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "BASE_OBJECT_TYPE", Types.VARCHAR, false);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR);
+            addColumn(t, "REFERENCING_NAMES", Types.VARCHAR, false);
+            addColumn(t, "WHEN_CLAUSE", Types.VARCHAR);
+            addColumn(t, "STATUS", Types.VARCHAR, false);
+            addColumn(t, "DESCRIPTION", Types.VARCHAR, false);
+            addColumn(t, "ACTION_TYPE", Types.VARCHAR, false);
+            addColumn(t, "TRIGGER_BODY", Types.VARCHAR, false);
 
             // order: TRIGGER_TYPE, TRIGGER_SCHEM, TRIGGER_NAME
             // added for unique: TRIGGER_CAT
@@ -1646,27 +1647,27 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_UDTATTRIBUTES]);
 
-            addColumn(t, "TYPE_CAT", VARCHAR);
-            addColumn(t, "TYPE_SCHEM", VARCHAR);
-            addColumn(t, "TYPE_NAME", VARCHAR, false);           // not null
-            addColumn(t, "ATTR_NAME", VARCHAR, false);           // not null
-            addColumn(t, "DATA_TYPE", SMALLINT, false);          // not null
-            addColumn(t, "ATTR_TYPE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "ATTR_SIZE", INTEGER);
-            addColumn(t, "DECIMAL_DIGITS", INTEGER);
-            addColumn(t, "NUM_PREC_RADIX", INTEGER);
-            addColumn(t, "NULLABLE", INTEGER);
-            addColumn(t, "REMARKS", VARCHAR);
-            addColumn(t, "ATTR_DEF", VARCHAR);
-            addColumn(t, "SQL_DATA_TYPE", INTEGER);
-            addColumn(t, "SQL_DATETIME_SUB", INTEGER);
-            addColumn(t, "CHAR_OCTET_LENGTH", INTEGER);
-            addColumn(t, "ORDINAL_POSITION", INTEGER, false);    // not null
-            addColumn(t, "IS_NULLABLE", VARCHAR, false);         // not null
-            addColumn(t, "SCOPE_CATALOG", VARCHAR);
-            addColumn(t, "SCOPE_SCHEMA", VARCHAR);
-            addColumn(t, "SCOPE_TABLE", VARCHAR);
-            addColumn(t, "SOURCE_DATA_TYPE", SMALLINT);
+            addColumn(t, "TYPE_CAT", Types.VARCHAR);
+            addColumn(t, "TYPE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);           // not null
+            addColumn(t, "ATTR_NAME", Types.VARCHAR, false);           // not null
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);          // not null
+            addColumn(t, "ATTR_TYPE_NAME", Types.VARCHAR, false);      // not null
+            addColumn(t, "ATTR_SIZE", Types.INTEGER);
+            addColumn(t, "DECIMAL_DIGITS", Types.INTEGER);
+            addColumn(t, "NUM_PREC_RADIX", Types.INTEGER);
+            addColumn(t, "NULLABLE", Types.INTEGER);
+            addColumn(t, "REMARKS", Types.VARCHAR);
+            addColumn(t, "ATTR_DEF", Types.VARCHAR);
+            addColumn(t, "SQL_DATA_TYPE", Types.INTEGER);
+            addColumn(t, "SQL_DATETIME_SUB", Types.INTEGER);
+            addColumn(t, "CHAR_OCTET_LENGTH", Types.INTEGER);
+            addColumn(t, "ORDINAL_POSITION", Types.INTEGER, false);    // not null
+            addColumn(t, "IS_NULLABLE", Types.VARCHAR, false);         // not null
+            addColumn(t, "SCOPE_CATALOG", Types.VARCHAR);
+            addColumn(t, "SCOPE_SCHEMA", Types.VARCHAR);
+            addColumn(t, "SCOPE_TABLE", Types.VARCHAR);
+            addColumn(t, "SOURCE_DATA_TYPE", Types.SMALLINT);
             t.createPrimaryKey(null);
 
             return t;
@@ -1718,13 +1719,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_UDTS]);
 
-            addColumn(t, "TYPE_CAT", VARCHAR);
-            addColumn(t, "TYPE_SCHEM", VARCHAR);
-            addColumn(t, "TYPE_NAME", VARCHAR, false);     // not null
-            addColumn(t, "CLASS_NAME", VARCHAR, false);    // not null
-            addColumn(t, "DATA_TYPE", VARCHAR, false);     // not null
-            addColumn(t, "REMARKS", VARCHAR);
-            addColumn(t, "BASE_TYPE", SMALLINT);
+            addColumn(t, "TYPE_CAT", Types.VARCHAR);
+            addColumn(t, "TYPE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);     // not null
+            addColumn(t, "CLASS_NAME", Types.VARCHAR, false);    // not null
+            addColumn(t, "DATA_TYPE", Types.VARCHAR, false);     // not null
+            addColumn(t, "REMARKS", Types.VARCHAR);
+            addColumn(t, "BASE_TYPE", Types.SMALLINT);
             t.createPrimaryKey(null);
 
             return t;
@@ -1782,21 +1783,21 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             // ----------------------------------------------------------------
             // required by DatabaseMetaData.getVersionColumns result set
             // ----------------------------------------------------------------
-            addColumn(t, "SCOPE", INTEGER);
-            addColumn(t, "COLUMN_NAME", VARCHAR, false);       // not null
-            addColumn(t, "DATA_TYPE", SMALLINT, false);        // not null
-            addColumn(t, "TYPE_NAME", VARCHAR, false);         // not null
-            addColumn(t, "COLUMN_SIZE", SMALLINT);
-            addColumn(t, "BUFFER_LENGTH", INTEGER);
-            addColumn(t, "DECIMAL_DIGITS", SMALLINT);
-            addColumn(t, "PSEUDO_COLUMN", SMALLINT, false);    // not null
+            addColumn(t, "SCOPE", Types.INTEGER);
+            addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);       // not null
+            addColumn(t, "DATA_TYPE", Types.SMALLINT, false);        // not null
+            addColumn(t, "TYPE_NAME", Types.VARCHAR, false);         // not null
+            addColumn(t, "COLUMN_SIZE", Types.SMALLINT);
+            addColumn(t, "BUFFER_LENGTH", Types.INTEGER);
+            addColumn(t, "DECIMAL_DIGITS", Types.SMALLINT);
+            addColumn(t, "PSEUDO_COLUMN", Types.SMALLINT, false);    // not null
 
             // -----------------------------------------------------------------
             // required by DatabaseMetaData.getVersionColumns filter parameters
             // -----------------------------------------------------------------
-            addColumn(t, "TABLE_CAT", VARCHAR);
-            addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);        // not null
+            addColumn(t, "TABLE_CAT", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
 
             // -----------------------------------------------------------------
             t.createPrimaryKey(null);
@@ -1850,13 +1851,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEWS]);
 
-            addColumn(t, "TABLE_CATALOG", VARCHAR);
-            addColumn(t, "TABLE_SCHEMA", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, true);         // not null
-            addColumn(t, "VIEW_DEFINITION", VARCHAR, true);    // not null
-            addColumn(t, "CHECK_OPTION", VARCHAR, true);       // not null
-            addColumn(t, "IS_UPDATABLE", VARCHAR, true);       // not null
-            addColumn(t, "VALID", BIT, true);                  // not null
+            addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
+            addColumn(t, "TABLE_SCHEMA", Types.VARCHAR);
+            addColumn(t, "TABLE_NAME", Types.VARCHAR, true);         // not null
+            addColumn(t, "VIEW_DEFINITION", Types.VARCHAR, true);    // not null
+            addColumn(t, "CHECK_OPTION", Types.VARCHAR, true);       // not null
+            addColumn(t, "IS_UPDATABLE", Types.VARCHAR, true);       // not null
+            addColumn(t, "VALID", Types.BIT, true);                  // not null
 
             // order TABLE_NAME
             // added for unique: TABLE_SCHEMA, TABLE_CATALOG
@@ -2013,7 +2014,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         // no such thing as identity or ignorecase return/parameter
         // procedure columns.  Future: may need to worry about this if
         // result columns are ever reported
-        ti.setTypeSub(TYPE_SUB_DEFAULT);
+        ti.setTypeSub(Types.TYPE_SUB_DEFAULT);
 
         // Do it.
         while (methods.hasNext()) {

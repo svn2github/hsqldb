@@ -48,7 +48,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DIProcedureInfo implements Types {
+final class DIProcedureInfo {
 
     private Class         clazz;
     private Class[]       colClasses;
@@ -121,36 +121,36 @@ final class DIProcedureInfo implements Types {
 
         switch (type) {
 
-            case BINARY :
-            case LONGVARBINARY :
-            case VARBINARY : {
+            case Types.BINARY :
+            case Types.LONGVARBINARY :
+            case Types.VARBINARY : {
                 size = Integer.MAX_VALUE;
 
                 break;
             }
-            case BIGINT :
-            case DOUBLE :
-            case DATE :
-            case TIME :
-            case TIMESTAMP : {
+            case Types.BIGINT :
+            case Types.DOUBLE :
+            case Types.DATE :
+            case Types.TIME :
+            case Types.TIMESTAMP : {
                 size = 8;
 
                 break;
             }
-            case FLOAT :
-            case REAL :
-            case INTEGER : {
+            case Types.FLOAT :
+            case Types.REAL :
+            case Types.INTEGER : {
                 size = 4;
 
                 break;
             }
-            case SMALLINT : {
+            case Types.SMALLINT : {
                 size = 2;
 
                 break;
             }
-            case TINYINT :
-            case BIT : {
+            case Types.TINYINT :
+            case Types.BIT : {
                 size = 1;
 
                 break;
@@ -318,23 +318,23 @@ final class DIProcedureInfo implements Types {
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcArray");
 
-            typeMap.put(c, ValuePool.getInt(ARRAY));
+            typeMap.put(c, ValuePool.getInt(Types.ARRAY));
         } catch (Exception e) {}
 
         // BIGINT
-        type = ValuePool.getInt(BIGINT);
+        type = ValuePool.getInt(Types.BIGINT);
 
         typeMap.put(Long.TYPE, type);
         typeMap.put(Long.class, type);
 
         // BIT
-        type = ValuePool.getInt(BIT);
+        type = ValuePool.getInt(Types.BIT);
 
         typeMap.put(Boolean.TYPE, type);
         typeMap.put(Boolean.class, type);
 
         // BLOB
-        type = ValuePool.getInt(BLOB);
+        type = ValuePool.getInt(Types.BLOB);
 
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcBlob");
@@ -343,7 +343,7 @@ final class DIProcedureInfo implements Types {
         } catch (Exception e) {}
 
         // CHAR
-        type = ValuePool.getInt(CHAR);
+        type = ValuePool.getInt(Types.CHAR);
 
         typeMap.put(Character.TYPE, type);
         typeMap.put(Character.class, type);
@@ -351,7 +351,7 @@ final class DIProcedureInfo implements Types {
         typeMap.put(char[].class, type);
 
         // CLOB
-        type = ValuePool.getInt(CLOB);
+        type = ValuePool.getInt(Types.CLOB);
 
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcClob");
@@ -360,18 +360,18 @@ final class DIProcedureInfo implements Types {
         } catch (Exception e) {}
 
         // DATALINK
-        type = ValuePool.getInt(DATALINK);
+        type = ValuePool.getInt(Types.DATALINK);
 
         typeMap.put(java.net.URL.class, type);
 
         // DATE
-        type = ValuePool.getInt(DATE);
+        type = ValuePool.getInt(Types.DATE);
 
         typeMap.put(java.util.Date.class, type);
         typeMap.put(java.sql.Date.class, type);
 
         // DECIMAL
-        type = ValuePool.getInt(DECIMAL);
+        type = ValuePool.getInt(Types.DECIMAL);
 
         try {
             c = nameSpace.classForName("java.math.BigDecimal");
@@ -383,50 +383,50 @@ final class DIProcedureInfo implements Types {
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcDistinct");
 
-            typeMap.put(c, ValuePool.getInt(DISTINCT));
+            typeMap.put(c, ValuePool.getInt(Types.DISTINCT));
         } catch (Exception e) {}
 
         // DOUBLE
-        type = ValuePool.getInt(DOUBLE);
+        type = ValuePool.getInt(Types.DOUBLE);
 
         typeMap.put(Double.TYPE, type);
         typeMap.put(Double.class, type);
 
         // FLOAT
-        type = ValuePool.getInt(FLOAT);
+        type = ValuePool.getInt(Types.FLOAT);
 
         typeMap.put(Float.TYPE, type);
         typeMap.put(Float.class, type);
 
         // INTEGER
-        type = ValuePool.getInt(INTEGER);
+        type = ValuePool.getInt(Types.INTEGER);
 
         typeMap.put(Integer.TYPE, type);
         typeMap.put(Integer.class, type);
 
         // JAVA_OBJECT
-        type = ValuePool.getInt(JAVA_OBJECT);
+        type = ValuePool.getInt(Types.JAVA_OBJECT);
 
         typeMap.put(Object.class, type);
 
         // LONGVARBINARY
-        type = ValuePool.getInt(LONGVARBINARY);
+        type = ValuePool.getInt(Types.LONGVARBINARY);
 
         typeMap.put(byte[].class, type);
 
         // LONGVARCHAR
-        type = ValuePool.getInt(LONGVARCHAR);
+        type = ValuePool.getInt(Types.LONGVARCHAR);
 
         typeMap.put(String.class, type);
 
         // NULL
-        type = ValuePool.getInt(NULL);
+        type = ValuePool.getInt(Types.NULL);
 
         typeMap.put(Void.TYPE, type);
         typeMap.put(Void.class, type);
 
         // REF
-        type = ValuePool.getInt(REF);
+        type = ValuePool.getInt(Types.REF);
 
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcRef");
@@ -435,13 +435,13 @@ final class DIProcedureInfo implements Types {
         } catch (Exception e) {}
 
         // SMALLINT
-        type = ValuePool.getInt(SMALLINT);
+        type = ValuePool.getInt(Types.SMALLINT);
 
         typeMap.put(Short.TYPE, type);
         typeMap.put(Short.class, type);
 
         // STRUCT
-        type = ValuePool.getInt(STRUCT);
+        type = ValuePool.getInt(Types.STRUCT);
 
         try {
             c = nameSpace.classForName("org.hsqldb.jdbcStruct");
@@ -450,23 +450,23 @@ final class DIProcedureInfo implements Types {
         } catch (Exception e) {}
 
         // TIME
-        type = ValuePool.getInt(TIME);
+        type = ValuePool.getInt(Types.TIME);
 
         typeMap.put(java.sql.Time.class, type);
 
         // TIMESTAMP
-        type = ValuePool.getInt(TIMESTAMP);
+        type = ValuePool.getInt(Types.TIMESTAMP);
 
         typeMap.put(java.sql.Timestamp.class, type);
 
         // TINYINT
-        type = ValuePool.getInt(TINYINT);
+        type = ValuePool.getInt(Types.TINYINT);
 
         typeMap.put(Byte.TYPE, type);
         typeMap.put(Byte.class, type);
 
         // XML
-        type = ValuePool.getInt(XML);
+        type = ValuePool.getInt(Types.XML);
 
         try {
             c = nameSpace.classForName("org.w3c.dom.Document");
@@ -540,14 +540,14 @@ final class DIProcedureInfo implements Types {
         // be required if/when we support ARRAY in a broader
         // sense
         if (c.isArray() &&!c.getComponentType().isArray()) {
-            return ARRAY;
+            return Types.ARRAY;
         }
 
         try {
             to = Class.forName("java.sql.Array");
 
             if (to.isAssignableFrom(c)) {
-                return ARRAY;
+                return Types.ARRAY;
             }
         } catch (Exception e) {}
 
@@ -556,7 +556,7 @@ final class DIProcedureInfo implements Types {
         // already been covered by lookup in typeMap.
         // They are all final, so this is OK.
         if (Number.class.isAssignableFrom(c)) {
-            return NUMERIC;
+            return Types.NUMERIC;
         }
 
         // TIMESTAMP
@@ -564,7 +564,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Timestamp");
 
             if (to.isAssignableFrom(c)) {
-                return TIMESTAMP;
+                return Types.TIMESTAMP;
             }
         } catch (Exception e) {}
 
@@ -573,7 +573,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Time");
 
             if (to.isAssignableFrom(c)) {
-                return TIMESTAMP;
+                return Types.TIMESTAMP;
             }
         } catch (Exception e) {}
 
@@ -582,7 +582,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Date");
 
             if (to.isAssignableFrom(c)) {
-                return DATE;
+                return Types.DATE;
             }
         } catch (Exception e) {}
 
@@ -591,7 +591,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Blob");
 
             if (to.isAssignableFrom(c)) {
-                return BLOB;
+                return Types.BLOB;
             }
         } catch (Exception e) {}
 
@@ -600,7 +600,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Clob");
 
             if (to.isAssignableFrom(c)) {
-                return TIMESTAMP;
+                return Types.TIMESTAMP;
             }
         } catch (Exception e) {}
 
@@ -609,7 +609,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Ref");
 
             if (to.isAssignableFrom(c)) {
-                return REF;
+                return Types.REF;
             }
         } catch (Exception e) {}
 
@@ -618,7 +618,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.sql.Struct");
 
             if (to.isAssignableFrom(c)) {
-                return STRUCT;
+                return Types.STRUCT;
             }
         } catch (Exception e) {}
 
@@ -629,7 +629,7 @@ final class DIProcedureInfo implements Types {
             to = Class.forName("java.lang.CharSequence");
 
             if (to.isAssignableFrom(c)) {
-                return LONGVARCHAR;
+                return Types.LONGVARCHAR;
             }
         } catch (Exception e) {}
 
@@ -639,12 +639,12 @@ final class DIProcedureInfo implements Types {
                 || Externalizable.class.isAssignableFrom(c)) {
 
             // Yes: it is storable, as an OTHER.
-            return OTHER;
+            return Types.OTHER;
         }
 
         // No: It is not storable (by HSQLDB)...
         // but it may be possible to pass to a procedure,
         // so return the most generic type.
-        return JAVA_OBJECT;
+        return Types.JAVA_OBJECT;
     }
 }

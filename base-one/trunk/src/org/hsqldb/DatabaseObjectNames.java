@@ -42,6 +42,7 @@ import org.hsqldb.lib.*;
  * @since 1.7.2
  */
 class DatabaseObjectNames {
+
 /*
     UnifiedTable nameList = new UnifiedTable(Object.class, 2);
     Object[]     tempName = new Object[2];
@@ -115,11 +116,9 @@ class DatabaseObjectNames {
         }
     }
 */
-
     HashMap nameList = new HashMap();
 
-    DatabaseObjectNames() {
-    }
+    DatabaseObjectNames() {}
 
     boolean containsName(String name) {
         return nameList.containsKey(name);
@@ -135,30 +134,37 @@ class DatabaseObjectNames {
         if (containsName(name)) {
             throw Trace.error(Trace.GENERAL_ERROR);
         }
-        nameList.put(name,owner);
+
+        nameList.put(name, owner);
     }
 
     void rename(String name, String newname) throws HsqlException {
+
         Object value = nameList.get(name);
-        addName(newname,value);
+
+        addName(newname, value);
         nameList.remove(name);
     }
 
     void removeName(String name) throws HsqlException {
-        if ( nameList.remove(name) == null ) {
+
+        if (nameList.remove(name) == null) {
+
             // should contain name
             throw Trace.error(Trace.GENERAL_ERROR);
         }
     }
 
     void removeOwner(Object value) {
+
         Iterator it = nameList.values().iterator();
-        while ( it.hasNext()){
+
+        while (it.hasNext()) {
             Object currentvalue = it.next();
+
             if (value.equals(currentvalue)) {
                 it.remove();
             }
         }
     }
-
 }

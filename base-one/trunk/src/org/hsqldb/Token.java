@@ -63,6 +63,7 @@ class Token {
     static final String T_ASC                   = "ASC";
     static final String T_AUTOCOMMIT            = "AUTOCOMMIT";
     static final String T_BEFORE                = "BEFORE";
+    static final String T_BINARY                = "BINARY";
     static final String T_BY                    = "BY";
     static final String T_CACHED                = "CACHED";
     static final String T_CALL                  = "CALL";
@@ -72,6 +73,7 @@ class Token {
     static final String T_COLUMN                = "COLUMN";
     static final String T_COMMIT                = "COMMIT";
     static final String T_COMPACT               = "COMPACT";
+    static final String T_COMPRESSED            = "COMPRESSED";
     static final String T_CONNECT               = "CONNECT";
     static final String T_CONSTRAINT            = "CONSTRAINT";
     static final String T_CREATE                = "CREATE";
@@ -276,6 +278,10 @@ class Token {
 
         return commandSet;
     }
+
+    static String[] LIST_SCRIPT_FORMATS = new String[] {
+        T_TEXT, T_BINARY, null, T_COMPRESSED
+    };
 
     static int get(String token) {
         return commandSet.get(token, -1);

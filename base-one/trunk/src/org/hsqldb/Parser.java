@@ -1293,7 +1293,7 @@ class Parser {
 
                 readThis(Expression.COMMA);
 
-                int t = Column.getTypeNr(sToken);
+                int t = Types.getTypeNr(sToken);
 
                 if (r.isParam()) {
                     r.setDataType(t);
@@ -1317,7 +1317,7 @@ class Parser {
                             Trace.UNEXPECTED_TOKEN, sToken);
                 read();
 
-                int t = Column.getTypeNr(sToken);
+                int t = Types.getTypeNr(sToken);
 
                 if (r.isParam()) {
                     r.setDataType(t);

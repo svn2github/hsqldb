@@ -174,9 +174,8 @@ public class CompiledStatement {
 
         clearAll();
 
-        this.targetTable = targetTable;        
-
-        tf = new TableFilter(targetTable, null, false);
+        this.targetTable = targetTable;
+        tf               = new TableFilter(targetTable, null, false);
 
         if (deleteCondition != null) {
             condition = new Expression(deleteCondition);
@@ -184,7 +183,7 @@ public class CompiledStatement {
             condition.resolve(tf);
             tf.setCondition(condition);
         }
-        
+
         setParameters(parameters);
 
         type = DELETE;
@@ -208,19 +207,19 @@ public class CompiledStatement {
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
-        this.checkColumns = checkColumns;        
-
-        tf = new TableFilter(targetTable, null, false);
+        this.checkColumns = checkColumns;
+        tf                = new TableFilter(targetTable, null, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
-            
+
             // CHECKME:  expressions are resolved previously in
             // Parser.getColumnValueExpressions.  Can this cause problems
             // for some types of expressions?  What about column values
             // derived from (correlated) subqueries?
             if (cve.isParam()) {
-                cve.setDataType(targetTable.getColumn(columnMap[i]).getType());
+                cve.setDataType(
+                    targetTable.getColumn(columnMap[i]).getType());
             } else {
                 cve.resolve(tf);
             }
@@ -232,7 +231,7 @@ public class CompiledStatement {
             condition.resolve(tf);
             tf.setCondition(condition);
         }
-        
+
         setParameters(parameters);
 
         type = UPDATE;
@@ -256,18 +255,19 @@ public class CompiledStatement {
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.checkColumns = checkColumns;
-        this.columnValues = columnValues;        
-        
+        this.columnValues = columnValues;
+
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
-            
+
             // If its not a param, its already been resolved in 
             // Parser.getColumnValueExpressions
             if (cve.isParam()) {
-                cve.setDataType(targetTable.getColumn(columnMap[i]).getType());
+                cve.setDataType(
+                    targetTable.getColumn(columnMap[i]).getType());
             }
         }
-        
+
         setParameters(parameters);
 
         type = INSERT_VALUES;
@@ -322,12 +322,12 @@ public class CompiledStatement {
      * @param expression
      * @param parameters
      */
-    void setAsCall(Expression expression, Expression[] parameters) throws HsqlException {
+    void setAsCall(Expression expression,
+                   Expression[] parameters) throws HsqlException {
 
         this.expression = expression;
-        
-        expression.resolve(null);
 
+        expression.resolve(null);
         setParameters(parameters);
 
         type = CALL;
@@ -496,10 +496,11 @@ public class CompiledStatement {
 
         return sb;
     }
-    
+
     private StringBuffer appendCondition(StringBuffer sb) {
-      return condition== null
-        ? sb.append("CONDITION[]\n")
-        : sb.append("CONDITION[").append(condition).append("]\n");
+
+        return condition == null ? sb.append("CONDITION[]\n")
+                                 : sb.append("CONDITION[").append(
+                                     condition).append("]\n");
     }
 }

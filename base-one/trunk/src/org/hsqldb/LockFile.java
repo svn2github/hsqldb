@@ -187,8 +187,7 @@ public class LockFile {
      * The the timed shceduler with which to register this object's
      * heartbeat task.
      */
-    protected static final HsqlTimer timer =
-        DatabaseManager.getTimer();
+    protected static final HsqlTimer timer = DatabaseManager.getTimer();
 
     /**
      * And opaque reference to this object's heatbeat task.
@@ -669,14 +668,18 @@ public class LockFile {
      * @param path the path to test
      */
     public static boolean isLocked(String path) {
+
         LockFile        lf;
         FileInputStream fis;
 
         try {
             lf = LockFile.newLockFile(path);
+
             lf.checkHeartbeat();
+
             if (lf.f.exists() && lf.f.isFile()) {
                 fis = new FileInputStream(lf.f);
+
                 fis.read();
                 fis.close();
             }

@@ -163,7 +163,7 @@ class JDBCBench {
 
         if (DriverName.length() == 0 || DBUrl.length() == 0) {
             System.out.println(
-                "usage: java JDBCBench -driver [driver_class_name] -url [url_to_db] -user [username] -password [password] [-v] [-init] [-tpc n] [-clients]");
+                "usage: java JDBCBench -driver [driver_class_name] -url [url_to_db] -user [username] -password [password] [-v] [-init] [-tpc n] [-clients n]");
             System.out.println();
             System.out.println("-v          verbose error messages");
             System.out.println("-init       initialize the tables");
@@ -201,15 +201,14 @@ class JDBCBench {
 
     public JDBCBench(String url, String user, String password, boolean init) {
 
-        Vector      vClient = new Vector();
-        Thread      Client  = null;
-        Enumeration e       = null;
-        Connection guardian = null;
+        Vector      vClient  = new Vector();
+        Thread      Client   = null;
+        Enumeration e        = null;
+        Connection  guardian = null;
 
         try {
-            
-            guardian = connect(url,user,password);
-            
+            guardian = connect(url, user, password);
+
             if (init) {
                 System.out.println("Start: "
                                    + (new java.util.Date()).toString());
@@ -228,7 +227,6 @@ class JDBCBench {
 
             transactions  = false;
             prepared_stmt = false;
-            
             start_time    = System.currentTimeMillis();
 
             for (int i = 0; i < n_clients; i++) {
@@ -340,8 +338,7 @@ class JDBCBench {
                 MemoryWatcher.join();
 
                 if (ShutdownCommand.length() > 0) {
-
-                    Statement  Stmt = guardian.createStatement();
+                    Statement Stmt = guardian.createStatement();
 
                     Stmt.execute(ShutdownCommand);
                     Stmt.close();

@@ -155,9 +155,8 @@ class Log {
     private Cache  cCache;
 
     // used for tracing
-    private StopWatch defaultTimer = new StopWatch();
-    private static final HsqlTimer timer =
-        DatabaseManager.getTimer();
+    private StopWatch              defaultTimer = new StopWatch();
+    private static final HsqlTimer timer        = DatabaseManager.getTimer();
 
     /**
      *  Constructor declaration
@@ -630,8 +629,7 @@ class Log {
 
                 if (session.isAutoCommit() == false) {
                     dbScriptWriter.writeLogStatement(
-                        session.getAutoCommitStatement(),
-                        session.getId());
+                        session.getAutoCommitStatement(), session.getId());
                 }
             }
         } catch (Exception e) {

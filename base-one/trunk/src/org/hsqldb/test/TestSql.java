@@ -277,6 +277,7 @@ public class TestSql extends TestCase {
         }
 
         System.out.println("testMetaData complete");
+
         // assert equality of exported and imported with xref
         assertEquals(result1, result2);
         assertEquals(result3, result4);
@@ -401,6 +402,7 @@ public class TestSql extends TestCase {
         }
 
         System.out.println("testDoubleNaN complete");
+
         // assert new behaviour
         assertEquals(true, wasEqual);
     }
@@ -430,6 +432,7 @@ public class TestSql extends TestCase {
             e.printStackTrace();
             System.out.println("TestSql.testAny() error: " + e.getMessage());
         }
+
         System.out.println("testAny complete");
     }
 

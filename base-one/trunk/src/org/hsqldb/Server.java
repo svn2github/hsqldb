@@ -301,7 +301,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  impact="ACTION"
      *  description="Closes all open connections"
      */
-    public void closeAllServerConnections() {
+    public synchronized void closeAllServerConnections() {
 
         ServerConnection sc;
 
@@ -1215,31 +1215,29 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * This releases the resources used for a database
      */
-    void releaseDatabase(int id) {
+    synchronized void releaseDatabase(int id) {
 
         trace("releaseDatabase() entered");
 
-        synchronized (serverConnSet) {
-            for (int i = 0; i < dbID.length; i++) {
-                if (dbID[i] == id) {
-                    dbID[i]    = 0;
-                    dbAlias[i] = null;
-                    dbPath[i]  = null;
-                    dbType[i]  = null;
-                }
+        for (int i = 0; i < dbID.length; i++) {
+            if (dbID[i] == id) {
+                dbID[i]    = 0;
+                dbAlias[i] = null;
+                dbPath[i]  = null;
+                dbType[i]  = null;
             }
+        }
 
-            Object[] connections =
-                serverConnSet.toArray(new Object[serverConnSet.size()]);
-            Iterator it = new WrapperIterator(connections);
+        Object[] connections =
+            serverConnSet.toArray(new Object[serverConnSet.size()]);
+        Iterator it = new WrapperIterator(connections);
 
-            while (it.hasNext()) {
-                ServerConnection sc = (ServerConnection) it.next();
+        while (it.hasNext()) {
+            ServerConnection sc = (ServerConnection) it.next();
 
-                if (sc.dbID == id) {
-                    sc.signalClose();
-                    serverConnSet.remove(sc);
-                }
+            if (sc.dbID == id) {
+                sc.signalClose();
+                serverConnSet.remove(sc);
             }
         }
 
@@ -1658,6 +1656,7 @@ public class Server implements HsqlSocketRequestHandler {
                     try {
                         wait(100);
                     } catch (Exception e) {
+
                         // e.getMessage();
                     }
                 }
