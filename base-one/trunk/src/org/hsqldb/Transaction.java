@@ -102,12 +102,14 @@ class Transaction {
      *
      * @throws SQLException
      */
-    void rollback() throws SQLException {
+    void rollback() {
 
-        if (bDelete) {
-            tTable.insertNoCheck(oRow, null, false);
-        } else {
-            tTable.deleteNoCheck(oRow, null, false);
-        }
+        try {
+            if (bDelete) {
+                tTable.insertNoCheck(oRow, null, false);
+            } else {
+                tTable.deleteNoCheck(oRow, null, false);
+            }
+        } catch (Exception e) {}
     }
 }

@@ -868,7 +868,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                           StringConverter.inputStreamToString(x));
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.INVALIC_CHARACTER_ENCODING);
+            throw Trace.error(Trace.INVALID_CHARACTER_ENCODING);
         }
     }
 

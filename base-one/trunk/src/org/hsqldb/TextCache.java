@@ -317,20 +317,22 @@ class TextCache extends org.hsqldb.Cache {
      */
     void free(CachedRow r) throws SQLException {
 
-        int pos    = r.iPos;
-        int length = r.storageSize - DatabaseScriptWriter.lineSep.length;
+        if (storeOnInsert &&!isIndexingSource) {
+            int pos    = r.iPos;
+            int length = r.storageSize - DatabaseScriptWriter.lineSep.length;
 
-        rowOut.reset();
+            rowOut.reset();
 
-        HsqlByteArrayOutputStream out = rowOut.getOutputStream();
+            HsqlByteArrayOutputStream out = rowOut.getOutputStream();
 
-        try {
-            out.fill(' ', length);
-            out.write(DatabaseScriptWriter.lineSep);
-            rFile.seek(pos);
-            rFile.write(out.getBuffer(), 0, out.size());
-        } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
+            try {
+                out.fill(' ', length);
+                out.write(DatabaseScriptWriter.lineSep);
+                rFile.seek(pos);
+                rFile.write(out.getBuffer(), 0, out.size());
+            } catch (IOException e) {
+                throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
+            }
         }
 
         remove(r);
@@ -464,12 +466,14 @@ class TextCache extends org.hsqldb.Cache {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-
-            throw Trace.error(Trace.FILE_IO_ERROR, "reading: " + e);
+            throw Trace.getError(Trace.TEXT_FILE, e);
         }
 
         return r;
+    }
+
+    int getLineNumber() {
+        return rowIn.getLineNumber();
     }
 
     void setSourceIndexing(boolean mode) {

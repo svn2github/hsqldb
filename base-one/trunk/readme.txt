@@ -1,5 +1,19 @@
 Readme File
 
+HSQLDB 1.7.2 ALPHA_L
+
+2003.01.16
+
+various patches and fixes
+
+-fixes new issues reported with ALPHA_K
+-fixes old issues related to uncommited transactions in
+abnormal shutdown
+-fixes old issues with SAVEPOINT names
+-enhances TEXT table handling and reporting of errors in
+CSV (source) filrs
+
+
 HSQLDB 1.7.2 ALPHA_K
 
 2003.01.10

@@ -67,9 +67,10 @@
 
 package org.hsqldb;
 
+import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
-import java.sql.SQLException;
+import org.hsqldb.lib.UnifiedTable;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
@@ -81,7 +82,7 @@ import java.sql.SQLException;
 /**
  *  Implementation of a user session with the database.
  *
- * @version  1.7.0
+ * @version  1.7.2
  */
 class Session {
 
@@ -97,7 +98,7 @@ class Session {
     private int            iLastIdentity;
     private boolean        bClosed;
     private int            iId;
-    private HsqlHashMap    hSavepoints;
+    private UnifiedTable   savepoints;
     private boolean        script;
     private jdbcConnection intConnection;
 
@@ -138,7 +139,9 @@ class Session {
         tTransaction = new HsqlArrayList();
         bAutoCommit  = autocommit;
         bReadOnly    = readonly;
-        hSavepoints  = new HsqlHashMap();
+        savepoints   = new UnifiedTable(Object.class, 2, 4, 4);
+
+        savepoints.sort(0, true);
     }
 
     /**
@@ -155,19 +158,19 @@ class Session {
      *
      * @throws  SQLException
      */
-    void disconnect() throws SQLException {
+    void disconnect() {
 
         if (bClosed) {
             return;
         }
 
         rollback();
-        this.dDatabase.dropTempTables(this);
+        dDatabase.dropTempTables(this);
 
         dDatabase     = null;
         uUser         = null;
         tTransaction  = null;
-        hSavepoints   = null;
+        savepoints    = null;
         intConnection = null;
         bClosed       = true;
     }
@@ -303,9 +306,11 @@ class Session {
      */
     void setAutoCommit(boolean autocommit) throws SQLException {
 
-        commit();
+        if (autocommit != bAutoCommit) {
+            commit();
 
-        bAutoCommit = autocommit;
+            bAutoCommit = autocommit;
+        }
     }
 
     /**
@@ -315,15 +320,10 @@ class Session {
      */
     void commit() throws SQLException {
         tTransaction.clear();
-        hSavepoints.clear();
+        savepoints.clear();
     }
 
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
-    void rollback() throws SQLException {
+    void rollback() {
 
         int i = tTransaction.size();
 
@@ -334,18 +334,29 @@ class Session {
         }
 
         tTransaction.clear();
-        hSavepoints.clear();
+        savepoints.clear();
     }
 
     /**
      *  Implements a transaction SAVEPOIINT. Application may do a partial
-     *  rollback by calling rollbackToSavepoint()
+     *  rollback by calling rollbackToSavepoint(). A new SAVEPOINT with the
+     *  name of an existing one, replaces the old SAVEPOINT.
      *
      * @param  name Name of savepoint
      * @throws  SQLException
      */
     void savepoint(String name) throws SQLException {
-        hSavepoints.put(name, new Integer(tTransaction.size()));
+
+        int rowindex = savepoints.search(name);
+
+        if (rowindex < 0) {
+            savepoints.addRow(new Object[] {
+                name, new Integer(tTransaction.size())
+            });
+            savepoints.sort(0, true);
+        } else {
+            savepoints.setCell(rowindex, 1, new Integer(tTransaction.size()));
+        }
     }
 
     /**
@@ -357,12 +368,13 @@ class Session {
      */
     void rollbackToSavepoint(String name) throws SQLException {
 
-        Integer idx = (Integer) hSavepoints.get(name);
+        int index = savepoints.search(name);
 
-        Trace.check(idx != null, Trace.SAVEPOINT_NOT_FOUND, name);
+        Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
 
-        int i = tTransaction.size();
-        int j = idx.intValue();
+        Integer tidx = (Integer) savepoints.getCell(index, 1);
+        int     i    = tTransaction.size();
+        int     j    = tidx.intValue();
 
         while (i-- > j) {
             Transaction t = (Transaction) tTransaction.get(i);
@@ -371,7 +383,16 @@ class Session {
             tTransaction.remove(i);
         }
 
-        hSavepoints.remove(name);
+        // remove all rows above tidx
+        i = savepoints.size();
+
+        while (i-- > 0) {
+            Integer level = (Integer) savepoints.getCell(i, 1);
+
+            if (level.intValue() >= tidx.intValue()) {
+                savepoints.removeRow(i);
+            }
+        }
     }
 
     /**

@@ -90,7 +90,7 @@ import java.sql.SQLException;
  *  object remains and everything else will be garbage collected.
  *  (fredt@users)<p>
  *
- * @version 1.7.1
+ * @version 1.7.2
  */
 class ServerConnection implements Runnable {
 
@@ -203,8 +203,8 @@ class ServerConnection implements Runnable {
             } catch (IOException e) {
                 mServer.trace(mThread + ":disconnected " + user);
 
-// fredt - todo - after the client abrubtly drops, should perform equivalent
-// of Session.disconnect() to clear any TEMP tables
+                // fredt - after the client abrubtly drops clear the session
+                session.disconnect();
             } catch (SQLException e) {
 
                 // is thrown by Result.getBytes()
@@ -226,7 +226,7 @@ class ServerConnection implements Runnable {
      * @throws IOException
      */
 
-    // fredt - todo - rewrite for reusing the ouput buffer
+    // fredt - todo - rewrite for reusing the output buffer
     void write(DatabaseRowOutputInterface binImage) throws IOException {
 
         mOutput.writeInt(binImage.getOutputStream().size());

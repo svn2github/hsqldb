@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.StopWatch;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -3246,86 +3245,6 @@ class Database {
          */
         void closeTextCache(HsqlName name) throws SQLException {
             lLog.closeTextCache(name);
-        }
-    }
-
-    /**
-     * Transitional container for object names that are unique across the
-     * DB instance but are owned by different DB objects. Currently names for
-     * Index and Trigger objects.
-     */
-    class DatabaseObjectNames {
-
-        UnifiedTable nameList = new UnifiedTable(Comparable.class, 2);
-        Object[]     tempName = new Object[2];
-
-        DatabaseObjectNames() {
-            nameList.sort(0, true);
-        }
-
-        boolean containsName(String name) {
-            return nameList.search(name) != -1;
-        }
-
-        HsqlName getOwner(String name) {
-
-            int i = nameList.search(name);
-
-            if (i == -1) {
-                return null;
-            }
-
-            return (HsqlName) nameList.getCell(i, 1);
-        }
-
-        void addName(String name, Object owner) throws SQLException {
-
-            // should not contain name
-            if (containsName(name)) {
-                throw Trace.error(Trace.GENERAL_ERROR);
-            }
-
-            tempName[0] = name;
-            tempName[1] = owner;
-
-            nameList.addRow(tempName);
-            nameList.sort(0, true);
-        }
-
-        void rename(String name, String newname) throws SQLException {
-
-            int i = nameList.search(name);
-
-            if (i != -1) {
-                nameList.setCell(i, 0, newname);
-                nameList.sort(0, true);
-            }
-        }
-
-        void removeName(String name) throws SQLException {
-
-            int i = nameList.search(name);
-
-            if (i != -1) {
-                nameList.removeRow(i);
-            } else {
-
-                // should contain name
-                throw Trace.error(Trace.GENERAL_ERROR);
-            }
-        }
-
-        void removeOwner(HsqlName name) {
-
-            int i = nameList.size();
-
-            while (i-- > 0) {
-                Object owner = nameList.getCell(i, 1);
-
-                if (owner == name || (owner != null && owner.equals(name))) {
-                    nameList.removeRow(i);
-                }
-            }
         }
     }
 }

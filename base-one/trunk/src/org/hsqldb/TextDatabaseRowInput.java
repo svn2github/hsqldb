@@ -149,7 +149,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                 s = null;
             }
         } catch (Exception e) {
-            throw (new IOException("line " + line + ", field " + field + " ("
+            throw (new IOException("field " + field + " ("
                                    + e.getMessage() + ")"));
         }
 
@@ -330,6 +330,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
         }
 
         return Column.hexToByteArray(s);
+    }
+
+    int getLineNumber(){
+        return line;
     }
 
     void setNextPos(int pos) {

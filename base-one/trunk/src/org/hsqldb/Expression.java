@@ -1674,7 +1674,7 @@ class Expression {
 
         Object o2 = eArg2.getValue(type);
 
-        if ((o == null) || (o2 == null)) {
+        if (o == null || o2 == null) {
             return testNull(o, o2, iType);
         }
 
@@ -1786,7 +1786,7 @@ class Expression {
             while (n != null) {
                 Object o2 = n.data[0];
 
-                if ((o2 != null) && o2.equals(o)) {
+                if (o2 != null && Column.compare(o2, o, type) == 0) {
                     return true;
                 }
 

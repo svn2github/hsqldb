@@ -62,8 +62,8 @@ public class UnifiedTable {
 
     // Define Object class code using current hash code, for fast
     // searching for corresponding class comparator using a switch statement.
-    static final int OBJ_CLASS_CODE_BYTE = 201;
 /*
+    static final int OBJ_CLASS_CODE_BYTE = 201;
     static final int OBJ_CLASS_CODE_CHAR   = Character.class.hashCode();
     static final int OBJ_CLASS_CODE_SHORT  = Short.class.hashCode();
     static final int OBJ_CLASS_CODE_INT    = Integer.class.hashCode();
@@ -94,7 +94,7 @@ public class UnifiedTable {
         classCodeMap.put(Double.class, new Integer(OBJ_CLASS_CODE_DOUBLE));
         classCodeMap.put(String.class, new Integer(OBJ_CLASS_CODE_STRING));
 */
-        classCodeMap.put(Comparable.class,
+        classCodeMap.put(Object.class,
                          new Integer(OBJ_CLASS_CODE_OBJECT));
     }
 
@@ -168,6 +168,10 @@ public class UnifiedTable {
 // fredt@users - 20030109 - new method
     public void removeRow(int rowIndex) {
         makeRoom(rowIndex, -1);
+    }
+
+    public void clear() {
+        rowCount = 0;
     }
 
     public void setCell(int rowIndex, int colIndex, Object cellData) {
@@ -391,8 +395,8 @@ public class UnifiedTable {
      */
     protected int makeRoom(int rowIndex, int rows) {
 
-        int     newCount  = rowCount + rows;
-        Object  data      = tableData;
+        int    newCount = rowCount + rows;
+        Object data     = tableData;
 
         if (newCount > rowAvailable) {
             rowAvailable += growth;
@@ -424,7 +428,7 @@ public class UnifiedTable {
         }
 
         tableData = data;
-        rowCount = newCount;
+        rowCount  = newCount;
 
         return rowIndex * columns;
     }
@@ -1119,8 +1123,7 @@ public class UnifiedTable {
 
         sw.start();
 
-        UnifiedTable table = new UnifiedTable(int.class, 2, 0x20000,
-                                              0x20000);
+        UnifiedTable table = new UnifiedTable(int.class, 2, 0x20000, 0x20000);
 
         for (int i = 0; i < 0x100000; i++) {
             table.addRow(outputRow(i, new int[] {

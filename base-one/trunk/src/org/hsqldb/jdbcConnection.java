@@ -2887,7 +2887,9 @@ public class jdbcConnection implements Connection {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
 
-        return new jdbcResultSet(new Result(result), connProperties);
+        BinaryServerRowInput rowin = new BinaryServerRowInput(result);
+
+        return new jdbcResultSet(new Result(rowin), connProperties);
     }
 
     /**
@@ -3037,7 +3039,9 @@ public class jdbcConnection implements Connection {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
 
-        return new jdbcResultSet(new Result(result), connProperties);
+        BinaryServerRowInput rowin = new BinaryServerRowInput(result);
+
+        return new jdbcResultSet(new Result(rowin), connProperties);
     }
 
     /**

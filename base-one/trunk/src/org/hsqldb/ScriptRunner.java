@@ -144,8 +144,6 @@ class ScriptRunner {
                                              + " line: "
                                              + scr.getLineNumber());
                         Trace.printSystemOut(result.sError);
-
-                        break;
                     }
                 }
 

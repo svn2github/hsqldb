@@ -47,11 +47,11 @@ import org.hsqldb.lib.StringConverter;
 class BinaryServerRowInput extends org.hsqldb.DatabaseRowInput
 implements org.hsqldb.DatabaseRowInputInterface {
 
-    public BinaryServerRowInput() throws IOException {
+    public BinaryServerRowInput(){
         super();
     }
 
-    public BinaryServerRowInput(byte buf[]) throws IOException {
+    public BinaryServerRowInput(byte buf[]){
         super(buf);
     }
 

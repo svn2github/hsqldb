@@ -78,11 +78,7 @@ class TextTable extends org.hsqldb.Table {
 
         cCache = null;
 
-        int count = getIndexCount();
-
-        for (int i = 0; i < count; i++) {
-            getIndex(i).setRoot(null);
-        }
+        setIndexRootsNull();
 
         // Open new cache:
         if (dataSourceNew.length() > 0) {
@@ -105,12 +101,16 @@ class TextTable extends org.hsqldb.Table {
 
                 ((TextCache) cCache).setSourceIndexing(false);
             } catch (SQLException e) {
+                int linenumber = cCache == null ? 0
+                                                : ((TextCache) cCache)
+                                                    .getLineNumber();
+
                 if (!dataSource.equals(dataSourceNew)
                         || isReversedNew != isReversed
                         || isReadOnlyNew != isReadOnly) {
 
                     // Restore old cache.
-                    // fredt - todo - recursion works - but not very clearly
+                    // fredt - todo - recursion works - but code is not clear
                     openCache(dataSource, isReversed, isReadOnly);
                 } else {
                     if (cCache != null) {
@@ -123,12 +123,12 @@ class TextTable extends org.hsqldb.Table {
                     isReversed = false;
                 }
 
-                // fredt - todo - must make sure everything is in order
-                // here.
+                // everything is in order here.
                 // At this point table should either have a valid (old) data
                 // source and cache or have an empty source and null cache.
-                // Have fixed the open cache issue when indexing throws.
-                throw e;
+                throw Trace.error(Trace.TEXT_FILE,
+                                  "Line number: " + linenumber + " "
+                                  + e.getMessage());
             }
         }
 

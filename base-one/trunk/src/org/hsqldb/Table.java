@@ -764,7 +764,6 @@ class Table {
     String getIndexRoots() {
 
 //        Trace.doAssert(isCached, "Table.getIndexRootData");
-
         String roots = StringUtil.getList(getIndexRootsArray(), " ", "");
         HsqlStringBuffer s = new HsqlStringBuffer(roots);
 
@@ -775,7 +774,21 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Currently used for text tables.
+     */
+    void setIndexRootsNull() {
+
+        for (int i = 0; i < iIndexCount; i++) {
+            getIndex(i).setRoot(null);
+        }
+    }
+
+    /**
+     *  Sets the index roots of a cached/text table to specified file
+     *  pointers. If a
+     *  file pointer is -1 then the particular index root is null. A null index
+     *  root signifies an empty table. Accordingly, all index roots should be
+     *  null or all should be a valid file pointer/reference.
      *
      * @param  s
      * @throws  SQLException

@@ -1516,7 +1516,7 @@ class Column {
         try {
             return StringConverter.hexToByte(hexString);
         } catch (IOException e) {
-            throw Trace.error(Trace.INVALIC_CHARACTER_ENCODING);
+            throw Trace.error(Trace.INVALID_CHARACTER_ENCODING);
         }
     }
 
