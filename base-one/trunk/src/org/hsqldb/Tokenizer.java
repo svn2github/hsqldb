@@ -124,7 +124,7 @@ class Tokenizer {
     private int              iType;
     private String           sToken;
     private String           sLongNameFirst;
-    private String           sLongNameLast;
+//    private String           sLongNameLast;
     private boolean          bWait;
     private static HashMap   hKeyword;
     static IntValueHashMap   valueTokens;
@@ -184,7 +184,7 @@ class Tokenizer {
         iType          = NO_TYPE;
         sToken         = null;
         sLongNameFirst = null;
-        sLongNameLast  = null;
+//        sLongNameLast  = null;
         bWait          = false;
     }
 
@@ -284,16 +284,18 @@ class Tokenizer {
      *
      * @return
      */
+
     boolean wasLongName() {
         return iType == LONG_NAME;
     }
 
     /**
-     * Method declaration
-     *
+     * Name means all quoted and unquoted identifiers plus any word not in the
+     * hKeyword list.
      *
      * @return
      */
+
     boolean wasName() {
 
         if (iType == QUOTED_IDENTIFIER) {
@@ -307,8 +309,21 @@ class Tokenizer {
         return !hKeyword.containsKey(sToken);
     }
 
+    boolean wasIdentifier() {
+
+        if (iType == QUOTED_IDENTIFIER) {
+            return true;
+        }
+
+        if (iType != NAME) {
+            return false;
+        }
+
+        return !hKeyword.containsKey(sToken);
+    }
+
     /**
-     * Method declaration
+     * Return first part of long name
      *
      *
      * @return
@@ -318,15 +333,16 @@ class Tokenizer {
     }
 
     /**
-     * Method declaration
+     * Return second part of long name
      *
      *
      * @return
      */
+/*
     String getLongNameLast() {
         return sLongNameLast;
     }
-
+*/
     /**
      * Method declaration
      *
@@ -346,8 +362,19 @@ class Tokenizer {
         return sToken;
     }
 
+    String getIdentifier() throws SQLException {
+
+        getToken();
+
+        if (!wasIdentifier()) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+        }
+
+        return sToken;
+    }
+
     /**
-     * Method declaration
+     * Return any token.
      *
      *
      * @return
@@ -362,7 +389,7 @@ class Tokenizer {
     }
 
     /**
-     * Method declaration
+     *
      *
      *
      * @return
@@ -615,9 +642,9 @@ class Tokenizer {
 // after the dot - the same with NAME
                         getToken();
 
-                        sLongNameLast = sToken;
+//                        sLongNameLast = sToken;
                         iType         = LONG_NAME;
-
+/*
                         StringBuffer sb =
                             new StringBuffer(sLongNameFirst.length() + 1
                                              + sLongNameLast.length());
@@ -627,6 +654,7 @@ class Tokenizer {
                         sb.append(sLongNameLast);
 
                         sToken = sb.toString();
+*/
                     }
 
                     return;
@@ -691,9 +719,9 @@ class Tokenizer {
 
                         getToken();    // todo: eliminate recursion
 
-                        sLongNameLast = sToken;
+//                        sLongNameLast = sToken;
                         iType         = LONG_NAME;
-                        sToken        = sLongNameFirst + "." + sLongNameLast;
+//                        sToken        = sLongNameFirst + "." + sLongNameLast;
                     } else if (c == '(') {
 
                         // it is a function call

@@ -49,7 +49,7 @@ public class IntValueHashMap extends BaseHashMap {
     public IntValueHashMap(int initialCapacity,
                            float loadFactor) throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.objectKeyOrValue,
-              keyOrValueTypes.intKeyOrValue, noPurge);
+              keyOrValueTypes.intKeyOrValue);
     }
 
     public int get(Object key) throws NoSuchElementException {
@@ -77,7 +77,7 @@ public class IntValueHashMap extends BaseHashMap {
     }
 
     public boolean containsValue(int value) {
-        throw new java.lang.UnsupportedOperationException();
+        throw new RuntimeException();
     }
     public Set keySet() {
 
@@ -103,7 +103,7 @@ public class IntValueHashMap extends BaseHashMap {
         }
 
         public boolean add(Object value) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean remove(Object o) {

@@ -36,18 +36,28 @@ import java.util.NoSuchElementException;
 public class BaseHashMap {
 
 /*
-   array of primitive | array of objects
-   objects support : compare, equals
+    data store:
+    keys: {array of primitive | array of object}
+    values: {none | array of primitive | array of object} same size as keys
+    objects support : hashCode(), equals()
 
-   map:
-   hashTable: fixed size int[] array for hash lookup into keyTable
-   objectKeyTable: variable size Object[] array for values OR
-   intKeyTable: variable size int[] for values
-   linkTable: pointer to the next key ; same size as keyTable
-   objectValueTable: Object[] array for values
-   intValueTable: int[] array for values
+    implemented keys:
+    {objectKeyTable: variable size Object[] array for keys |
+    intKeyTable: variable size int[] for keys |
+    longKeyTable: variable size long[] for keys }
 
-   variable size int[] array for access count
+    implemented values:
+    {objectValueTable: variable size Object[] array for values |
+    intValueTable: variable size int[] for values }
+
+    hash index:
+    hashTable: fixed size int[] array for hash lookup into keyTable
+    linkTable: pointer to the next key ; size not dependent on keyTable but
+    equal to the keys table
+
+    access count table:
+    {none |
+    variable size int[] array for access count} same size as keys table
 */
 
     //
@@ -59,20 +69,29 @@ public class BaseHashMap {
     boolean isObjectValue;
 
     //
-    protected int[]     intKeyTable;
-    protected Object[]  objectKeyTable;
-    protected long[]    longKeyTable;
-    protected int[]     intValueTable;
-    protected Object[]  objectValueTable;
-    int[]               accessTable;
-    float               loadFactor;
-    int                 threshold;
-    boolean             hasZeroKey;
-    int                 zeroKeyIndex;
     protected HashIndex hashIndex;
 
-    // experimental
-    protected boolean clearWhenFull;
+    //
+    protected int[]    intKeyTable;
+    protected Object[] objectKeyTable;
+    protected long[]   longKeyTable;
+
+    //
+    protected int[]    intValueTable;
+    protected Object[] objectValueTable;
+
+    //
+    int[] accessTable;
+
+    //
+    float         loadFactor;
+    int           threshold;
+    int           maxCapacity;
+    protected int purgePolicy = noPurge;
+
+    //
+    boolean hasZeroKey;
+    int     zeroKeyIndex;
 
     public interface keyOrValueTypes {
 
@@ -82,20 +101,24 @@ public class BaseHashMap {
         int objectKeyOrValue = 3;
     }
 
-    public static final int noPurge = 0;
-    public static final int purgeAll = 1;
+    public static final int noPurge            = 0;
+    public static final int purgeAll           = 1;
     public static final int purgeAlternateHalf = 2;
     public static final int purgeOldAccessHalf = 3;
 
-    protected BaseHashMap(int initialCapacity, int maxCapacity, int purgePolicy) throws IllegalArgumentException {
+    protected BaseHashMap(int initialCapacity, int maxCapacity,
+                          int purgePolicy) throws IllegalArgumentException {
+
         this(initialCapacity, 1,
-        BaseHashMap.keyOrValueTypes.objectKeyOrValue,
-        BaseHashMap.keyOrValueTypes.noKeyOrValue, purgePolicy);
+             BaseHashMap.keyOrValueTypes.objectKeyOrValue,
+             BaseHashMap.keyOrValueTypes.noKeyOrValue);
+
+        this.maxCapacity = maxCapacity;
+        this.purgePolicy = purgePolicy;
     }
 
-
     protected BaseHashMap(int initialCapacity, float loadFactor, int keyType,
-                          int valueType, int purgePolicy) throws IllegalArgumentException {
+                          int valueType) throws IllegalArgumentException {
 
         if (initialCapacity <= 0 || loadFactor <= 0.0) {
             throw new IllegalArgumentException();
@@ -128,7 +151,7 @@ public class BaseHashMap {
             isNoValue = true;
         }
 
-        this.clearWhenFull = (purgePolicy == purgeAll);
+        this.purgePolicy = purgePolicy;
     }
 
     protected Object getObject(int key) {
@@ -355,11 +378,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return addOrRemove(longKey, intValue, objectKey, objectValue,
                                remove);
@@ -414,11 +433,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddInteger(intKey);
         }
@@ -433,9 +448,9 @@ public class BaseHashMap {
     protected Long getOrAddLong(long longKey) {
 
         Long testValue;
-        int     index      = hashIndex.getHashIndex((int)longKey);
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
+        int  index      = hashIndex.getHashIndex((int) longKey);
+        int  lookup     = hashIndex.hashTable[index];
+        int  lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -448,11 +463,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddLong(longKey);
         }
@@ -470,13 +481,12 @@ public class BaseHashMap {
      * key.toString.equals(String) is true. Also the key.hasCode() method
      * must return the same value as key.toString.hashCode()
      */
-
     protected String getOrAddString(Object key) {
 
         String testValue;
-        int     index      = hashIndex.getHashIndex(key.hashCode());
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
+        int    index      = hashIndex.getHashIndex(key.hashCode());
+        int    lookup     = hashIndex.hashTable[index];
+        int    lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -489,16 +499,12 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddString(key);
         }
 
-        testValue = key.toString();
+        testValue              = key.toString();
         lookup                 = hashIndex.linkNode(index, lastLookup);
         objectKeyTable[lookup] = testValue;
 
@@ -508,11 +514,12 @@ public class BaseHashMap {
     protected java.sql.Date getOrAddDate(long longKey) {
 
         java.sql.Date testValue;
+
         // the 10 least significant bits are generally similar
-        int     hash       = (((int) longKey) >> 10) ^ (int) (longKey >> 32);
-        int     index      = hashIndex.getHashIndex((int)longKey);
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
+        int hash       = (((int) longKey) >> 10) ^ (int) (longKey >> 32);
+        int index      = hashIndex.getHashIndex((int) longKey);
+        int lookup     = hashIndex.hashTable[index];
+        int lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -525,11 +532,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddDate(longKey);
         }
@@ -544,9 +547,9 @@ public class BaseHashMap {
     protected Double getOrAddDouble(long longKey) {
 
         Double testValue;
-        int     index      = hashIndex.getHashIndex((int)longKey);
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
+        int    index      = hashIndex.getHashIndex((int) longKey);
+        int    lookup     = hashIndex.hashTable[index];
+        int    lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -559,11 +562,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddDouble(longKey);
         }
@@ -575,12 +574,13 @@ public class BaseHashMap {
         return testValue;
     }
 
-    protected java.math.BigDecimal getOrAddBigDecimal(java.math.BigDecimal key) {
+    protected java.math.BigDecimal getOrAddBigDecimal(
+            java.math.BigDecimal key) {
 
         java.math.BigDecimal testValue;
-        int     index      = hashIndex.getHashIndex(key.hashCode());
-        int     lookup     = hashIndex.hashTable[index];
-        int     lastLookup = -1;
+        int                  index = hashIndex.getHashIndex(key.hashCode());
+        int                  lookup     = hashIndex.hashTable[index];
+        int                  lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -593,11 +593,7 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            if (clearWhenFull) {
-                clear();
-            } else {
-                rehash(hashIndex.hashTable.length * 2);
-            }
+            reset();
 
             return getOrAddBigDecimal(key);
         }
@@ -606,6 +602,17 @@ public class BaseHashMap {
         objectKeyTable[lookup] = key;
 
         return key;
+    }
+
+    private void reset() {
+
+        if (maxCapacity == 0 || maxCapacity > threshold) {
+            rehash(hashIndex.hashTable.length * 2);
+        } else if (purgePolicy == this.purgeAll) {
+            clear();
+        } else {
+            clear();
+        }
     }
 
     /**
@@ -847,12 +854,12 @@ public class BaseHashMap {
         removeFromElementArrays(lookup);
     }
 
-    void remove(int lookup) {
+    protected Object remove(int lookup) {
 
         if (isObjectKey) {
-            this.addOrRemove(0, 0, objectKeyTable[lookup], null, true);
+            return this.addOrRemove(0, 0, objectKeyTable[lookup], null, true);
         } else {
-            this.addOrRemove(intKeyTable[lookup], 0, null, null, true);
+            return this.addOrRemove(intKeyTable[lookup], 0, null, null, true);
         }
     }
 

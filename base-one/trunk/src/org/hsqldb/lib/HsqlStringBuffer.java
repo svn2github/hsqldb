@@ -269,22 +269,6 @@ public final class HsqlStringBuffer {
             return true;
         }
 
-        if (obj instanceof String) {
-            String str = (String) obj;
-
-            if (str.length() != this.charCount) {
-                return false;
-            } else {
-                for (int i = 0; i < this.charCount; i++) {
-                    if (str.charAt(i) != this.data[i]) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        }
-
         if (!(obj instanceof HsqlStringBuffer)) {
             return false;
         }
@@ -309,8 +293,8 @@ public final class HsqlStringBuffer {
         int h = hash;
 
         if (h == 0) {
-            for (int i = 0; i < this.charCount; i++) {
-                h = 31 * h + data[i++];
+            for (int i = 0; i < charCount; i++) {
+                h = 31 * h + data[BEGINNING_OFFSET + i];
             }
 
             hash = h;

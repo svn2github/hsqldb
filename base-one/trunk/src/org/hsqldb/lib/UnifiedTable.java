@@ -1266,7 +1266,7 @@ public class UnifiedTable {
                 return 1;
             }
 
-            return a.toString().compareTo(b);
+            return a.toString().compareTo((String)b);
         }
     }
 
@@ -1276,7 +1276,7 @@ public class UnifiedTable {
 //        System.out.println("Row: "+index+" column 1="+row[0]+" column 2="+row[1]);
         return row;
     }
-
+/*
     public static void main(String[] args) {
 
         StopWatch sw = new StopWatch();
@@ -1296,15 +1296,6 @@ public class UnifiedTable {
 
         int size = table.size();
 
-/*
-                for(int i=0; i<size; i++) {
-//            outputRow(i, (int[])table.getRow(i));
-                        System.out.println("Row: "+i+
-                                " column 1="+table.getIntCell(i, 0)+
-                                " column 2="+table.getCell(i, 1));
-//                " column 2="+table.getCell(i, 1)+" class="+table.getCell(i, 1).getClass());
-                }
-*/
         sw.zero();
         table.sort(0, true);
         System.out.println("Sort time: " + sw.elapsedTime() + " size: "
@@ -1362,4 +1353,5 @@ public class UnifiedTable {
         System.out.println("Re-sort time: " + sw.elapsedTime() + " size: "
                            + size);
     }
+*/
 }

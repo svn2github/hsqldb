@@ -34,6 +34,21 @@ package org.hsqldb.store;
 /**
  * A chained bucket hash index implementation.
  *
+ * hashTable and linkTable are arrays of signed integral types. This
+ * implementation uses int as the type but short or byte can be used for
+ * smaller index sizes (cardinality).
+ *
+ * hashTable[index] contains the pointer to the first node with
+ * (index == hash modulo hashTable.length) or -1 if there is no corresponding
+ * node. linkTable[{0,newNodePointer}] (the range between 0 and newNodePointer)
+ * contains either the pointer to the next node or -1 if there is no
+ * such node. reclaimedNodeIndex contains a pointer to an element
+ * of linkTable which is the first element in the list of reclaimed nodes
+ * (nodes no longer in index) or -1 if there is no such node.
+ *
+ * elemenet at and above linkTable[newNodePointer] have never been used
+ * as a node and their contents is not significant.
+ *
  * @author fredt@users
  * @version 1.7.2
  * @since 1.7.2
@@ -189,7 +204,8 @@ class HashIndex {
     /**
      * Remove a node that has already been unlinked. This is not required
      * for index operations. It is used only when the row needs to be removed
-     * from the data structures that store the actual indexed data.
+     * from the data structures that store the actual indexed data and the
+     * nodes need to be contiguous.
      *
      * @param lookup the node to remove
      * @return true if node found in unlinked state

@@ -51,7 +51,7 @@ public class IntKeyHashMap extends BaseHashMap {
                                  float loadFactor)
                                  throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.intKeyOrValue,
-              keyOrValueTypes.objectKeyOrValue, noPurge);
+              keyOrValueTypes.objectKeyOrValue);
     }
 
     public Object get(int key) {
@@ -99,15 +99,15 @@ public class IntKeyHashMap extends BaseHashMap {
         }
 
         public boolean contains(Object o) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean add(Object value) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean remove(Object o) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean isEmpty() {
@@ -130,15 +130,15 @@ public class IntKeyHashMap extends BaseHashMap {
         }
 
         public boolean contains(Object o) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean add(Object value) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean remove(Object o) {
-            throw new java.lang.UnsupportedOperationException();
+            throw new RuntimeException();
         }
 
         public boolean isEmpty() {

@@ -249,10 +249,10 @@ public class Trace extends PrintWriter {
         "22019 Invalid identifier", "22019 Invalid TEXT table source string",
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
-        "S1000 error in script file",
-        "37000 NULL in value list",
+        "S1000 error in script file", "37000 NULL in value list",
+
         //
-         "",
+        "",
 
         //
         "37000 invalid character encoding",
@@ -634,30 +634,28 @@ public class Trace extends PrintWriter {
      *  tracing so you can more easily differentiate between a
      *  Exception and a TraceException.
      */
-    private static void printStack() {
+    static class TraceException extends Exception {
 
-        class TraceException extends Exception {
-
-            TraceException() {
-                super("Trace");
-            }
+        TraceException() {
+            super("Trace");
         }
-        ;
+    }
+
+    private static void printStack() {
 
         Exception e = new TraceException();
 
         e.printStackTrace();
     }
 
-    private static synchronized void traceCaller(String s) {
+    static class TraceCallerException extends Exception {
 
-        class TraceCallerException extends Exception {
-
-            TraceCallerException() {
-                super("TraceCaller");
-            }
+        TraceCallerException() {
+            super("TraceCaller");
         }
-        ;
+    }
+
+    private static synchronized void traceCaller(String s) {
 
         Exception e = new TraceCallerException();
 

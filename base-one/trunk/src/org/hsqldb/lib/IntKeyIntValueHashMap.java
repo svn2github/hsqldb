@@ -48,7 +48,7 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
                                  float loadFactor)
                                  throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.intKeyOrValue,
-              keyOrValueTypes.intKeyOrValue, noPurge);
+              keyOrValueTypes.intKeyOrValue);
     }
 
     public int get(int key) throws NoSuchElementException {
@@ -67,7 +67,7 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
         super.addOrRemove(key, value, null, null,false);
     }
 
-    public void remove(int key) {
-        super.addOrRemove(key,0,null,null,true);
+    public Object remove(int key) {
+        return super.addOrRemove(key,0,null,null,true);
     }
 }

@@ -705,8 +705,8 @@ class Parser {
             String limEnd   = tTokenizer.getString();
 
             try {
-                select.limitStart = new Integer(limStart).intValue();
-                select.limitCount = new Integer(limEnd).intValue();
+                select.limitStart = Integer.parseInt(limStart);
+                select.limitCount = Integer.parseInt(limEnd);
             } catch (NumberFormatException ex) {
 
                 // todo: add appropriate error type and message to Trace.java
@@ -719,7 +719,7 @@ class Parser {
 
             try {
                 select.limitStart = 0;
-                select.limitCount = new Integer(limEnd).intValue();
+                select.limitCount = Integer.parseInt(limEnd);
             } catch (NumberFormatException ex) {
 
                 // todo: add appropriate error type and message to Trace.java
@@ -1761,7 +1761,7 @@ class Parser {
             sTable = null;
         } else if (tTokenizer.wasLongName()) {
             sTable = tTokenizer.getLongNameFirst();
-            sToken = tTokenizer.getLongNameLast();
+//            sToken = tTokenizer.getLongNameLast();
 
             if (sToken.equals(Token.T_ASTERISK)) {
                 iToken = Expression.MULTIPLY;
