@@ -3,8 +3,8 @@
 <meta http-equiv=Content-Type content="text/html; charset=us-ascii">
 <title>HSQLDB Database Files and Recovery</title>
 </head>
-<body>
-<h3>hsqldb version 1.7.0 Database Files and Recovery</h3>
+<body bgcolor="#FFFFFF">
+<h2>HSQLDB Database Files and Recovery</h2>
 <p>The Standalone and Client/Server modes will in most cases use files to store 
   all data to disk in a persistent and safe way. This document describes 
   the meaning of the files and the mechanisms. </p>
@@ -73,10 +73,11 @@
   test.backup file) and the current test.script, the database can be made up-to-date: 
 </p>
 <ul type=disc>
-  <li style='     '>Restore the old test.data file from the backup (uncompress 
+   <li style='     '>Restore the old test.data file from the backup (uncompress 
     the test.backup) </li>
-  <li style='     '>Execute all commands in the test.script file. </li>
-  <li style='     '>Close the database correctly (including a backup). </li>
+   <li style='     '>Execute all commands in the test.script file. </li>
+   <li style='     '>Close the database correctly (including a backup).</li>
 </ul>
+<p><font size="-1">This text is based on HypersonicSQL documentation, updated to reflect the latest version of HSQLDB</font></p>
 </body>
 </html>
