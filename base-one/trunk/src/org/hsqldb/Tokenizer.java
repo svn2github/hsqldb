@@ -1008,23 +1008,4 @@ class Tokenizer {
     int getLength() {
         return iLength;
     }
-
-// boucherb@users - patch 1.7.2 - convenience method to allow parser to perform
-// atomic test and throw in places where parameter tokens are illegal, i.e.
-// column lists items, table list items, as aliases, etc.
-
-    /**
-     * A check for whether or not a parameter token ('?') is unexpected
-     * in the current tokenizing context
-     *
-     * @param msg to display in exception if check determines
-     * @throws HsqlException if current token string value is '?' and the
-     * class of the token is not SPECIAL
-     */
-    void checkUnexpectedParam(String msg) throws HsqlException {
-
-        if ("?".equals(sToken)) {
-            Trace.check(iType != SPECIAL, Trace.UNEXPECTED_TOKEN, msg);
-        }
-    }
 }

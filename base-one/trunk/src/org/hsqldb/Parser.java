@@ -351,10 +351,12 @@ class Parser {
 
             select.sIntoTable = database.nameManager.newHsqlName(token,
                     tokenizer.wasQuotedIdentifier());
-
-            tokenizer.checkUnexpectedParam("parametric table identifier");
-
             token = tokenizer.getString();
+
+            if ("?".equals(sToken)) {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                  Trace.PARAMETRIC_TABLE_NAME);
+            }
         }
 
         if (!token.equals(Token.T_FROM)) {

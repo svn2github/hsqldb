@@ -1,5 +1,9 @@
 Readme File
 
+2003.01.15
+
+Fixed some reported bugs
+
 2003.01.12
 
 Fixed reported bugs

@@ -381,6 +381,27 @@ class Function {
         return oArg;
     }
 
+    /**
+     * returns null if any non-nullable element of values is null
+     */
+    private Object[] getNotNull(Object[] values) throws HsqlException {
+
+        int i = bConnection ? 1
+                            : 0;
+
+        for (; i < iArgCount; i++) {
+            Object o = values[i];
+
+            if (o == null &&!bArgNullable[i]) {
+
+                // null argument for primitive datatype: don't call
+                return null;
+            }
+        }
+
+        return values;
+    }
+
     Object getAggregatedValue(Object currValue) throws HsqlException {
 
         Object[] valueArray = (Object[]) currValue;
@@ -393,8 +414,16 @@ class Function {
             Expression e = eArg[i];
 
             if (eArg[i] != null) {
-                valueArray[i] = e.getAggregatedValue(valueArray[i]);
+                valueArray[i] = eArg[i].isAggregate()
+                                ? e.getAggregatedValue(valueArray[i])
+                                : e.getValue();
             }
+        }
+
+        valueArray = getNotNull(valueArray);
+
+        if (valueArray == null) {
+            return null;
         }
 
         return getValue(valueArray);

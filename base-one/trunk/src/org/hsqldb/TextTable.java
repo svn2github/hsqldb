@@ -31,6 +31,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.FileUtil;
+import java.io.IOException;
+
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
 /**
@@ -48,8 +51,9 @@ class TextTable extends org.hsqldb.Table {
      *  Constructor declaration
      *
      * @param  db
-     * @param  isTemp is a temp text table
      * @param  name
+     * @param  type (normal or temp text table)
+     * @param  sessionid
      * @exception  HsqlException  Description of the Exception
      */
     TextTable(Database db, HsqlNameManager.HsqlName name, int type,
@@ -167,10 +171,11 @@ class TextTable extends org.hsqldb.Table {
 
     /**
      * High level command to assign a data source to the table definition.
-     * Reassings only if the data source or direction has changed.
+     * Reassigns only if the data source or direction has changed.
      */
     protected void setDataSource(String dataSourceNew, boolean isReversedNew,
-                                 Session s) throws HsqlException {
+                                 Session s,
+                                 boolean newFile) throws HsqlException {
 
         if (isTemp) {
             Trace.check(s.getId() == ownerSessionId, Trace.ACCESS_IS_DENIED);
@@ -178,7 +183,15 @@ class TextTable extends org.hsqldb.Table {
             s.checkAdmin();
         }
 
-        dataSourceNew = dataSourceNew.trim();
+        try {
+            dataSourceNew = dataSourceNew.trim();
+
+            if (newFile && FileUtil.exists(dataSourceNew)) {
+                throw Trace.error(Trace.TEXT_SOURCE_EXISTS, dataSourceNew);
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+        }
 
         //-- Open if descending, direction changed, or file changed.
         if (isReversedNew || (isReversedNew != isReversed)

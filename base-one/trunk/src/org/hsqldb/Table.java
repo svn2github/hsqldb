@@ -335,8 +335,8 @@ class Table {
         return ownerSessionId;
     }
 
-    protected void setDataSource(String source, boolean isDesc,
-                                 Session s) throws HsqlException {
+    protected void setDataSource(String source, boolean isDesc, Session s,
+                                 boolean newFile) throws HsqlException {
 
         // Same exception as setIndexRoots.
         throw (Trace.error(Trace.TABLE_NOT_FOUND));

@@ -1980,7 +1980,7 @@ class DatabaseCommandInterpreter {
                             tokenizer.back();
                         }
 
-                        t.setDataSource(token, isDesc, session);
+                        t.setDataSource(token, isDesc, session, false);
 
                         break;
                     }
@@ -2891,7 +2891,7 @@ class DatabaseCommandInterpreter {
                 // char's converted to underscores):
                 txtSrc = StringUtil.toLowerSubset(intoName, '_') + ".csv";
 
-                t.setDataSource(txtSrc, false, session);
+                t.setDataSource(txtSrc, false, session, true);
                 logTableDDL(t);
                 t.insertIntoTable(r, session);
             } catch (HsqlException e) {

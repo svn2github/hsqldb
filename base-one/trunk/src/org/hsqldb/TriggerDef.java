@@ -139,30 +139,30 @@ class TriggerDef extends Thread {
 
         StringBuffer a = new StringBuffer(256);
 
-        a.append(Token.T_CREATE).append(' ').append(Token.T_TRIGGER);
-        a.append(name.statementName);
-        a.append(' ');
-        a.append(when);
-        a.append(' ');
-        a.append(operation);
-        a.append(' ').append(Token.T_ON).append(' ');
-        a.append(table.getName().statementName);
+        a.append(Token.T_CREATE).append(' ');
+        a.append(Token.T_TRIGGER).append(' ');
+        a.append(name.statementName).append(' ');
+        a.append(when).append(' ');
+        a.append(operation).append(' ');
+        a.append(Token.T_ON).append(' ');
+        a.append(table.getName().statementName).append(' ');
 
         if (forEachRow) {
-            a.append(' ').append(Token.T_FOR).append(' ').append(
-                Token.T_EACH).append(' ').append(Token.T_ROW).append(' ');
+            a.append(Token.T_FOR).append(' ');
+            a.append(Token.T_EACH).append(' ');
+            a.append(Token.T_ROW).append(' ');
         }
 
         if (nowait) {
-            a.append(' ').append(Token.T_NOWAIT).append(' ');
+            a.append(Token.T_NOWAIT).append(' ');
         }
 
         if (maxRowsQueued != getDefaultQueueSize()) {
-            a.append(' ').append(Token.T_QUEUE).append(' ');
-            a.append(maxRowsQueued);    // no need for trailing space
+            a.append(Token.T_QUEUE).append(' ');
+            a.append(maxRowsQueued).append(' ');
         }
 
-        a.append(' ').append(Token.T_CALL).append(' ');
+        a.append(Token.T_CALL).append(' ');
         a.append(fire);
 
         return a;

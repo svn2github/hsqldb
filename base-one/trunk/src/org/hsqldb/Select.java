@@ -671,7 +671,15 @@ class Select {
         }
 
         if (isAggregated &&!isGrouped && gResult.size() == 0) {
-            gResult.addRow(new Object[len]);
+            Object row[] = new Object[len];
+
+            for (int i = 0; i < len; i++) {
+                row[i] = exprColumns[i].isAggregate() ? null
+                                                      : exprColumns[i]
+                                                      .getValue();
+            }
+
+            gResult.addRow(row);
         }
 
         Iterator it = gResult.iterator();

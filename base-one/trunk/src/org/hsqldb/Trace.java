@@ -308,6 +308,8 @@ public class Trace extends PrintWriter {
      SEQUENCE_ALREADY_EXISTS                        = 192,
      TABLE_REFERENCED_CONSTRAINT                    = 193,
      TABLE_REFERENCED_VIEW                          = 194,
+     PARAMETRIC_TABLE_NAME                          = 195,
+     TEXT_SOURCE_EXISTS                             = 196,
 
     //
     INTERNAL_unknown_internal_statement_type                       = 201,
@@ -533,8 +535,8 @@ public class Trace extends PrintWriter {
         "S1000 Sequence already exists",    //
         "23000 Table is referenced by a constraint in table",                                                                   //
         "23000 Table is referenced by view",    //
-        "reserved 195",    //
-        "reserved 196",    //
+        "parametric table identifier",    //Parser
+        "S1000 text source file already exists",    // SELECT INTO TEXT <name>
         "reserved 197",    //
         "reserved 198",    //
         "reserved 199",    //

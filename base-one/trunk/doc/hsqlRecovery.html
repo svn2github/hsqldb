@@ -7,7 +7,7 @@
 <h2>HSQLDB Database Files and Recovery</h2>
 <p>The Standalone and Client/Server modes will in most cases use files to store 
   all data to disk in a persistent and safe way. This document describes 
-  the meaning of the files and the mechanisms. </p>
+  the meaning of the files, the states and the procedures followed by the engine to recover the data. </p>
 <p>A database named 'test' is used in this description. The database files will 
   be 'test.script', 'test.properties', 'test.data' and 'test.backup'.</p>
 <h3>Database Files</h3>
@@ -21,7 +21,7 @@
   <li style='     '><strong>test.data</strong><br>
     This file contains the (binary) data records for CACHED tables only </li>
   <li style='     '><strong>test.backup</strong><br>
-    This is compressed file that contains the backup of the old test.data file at the time of last checkpoint. </li>
+    This is compressed file that contains the complete backup of the old test.data file at the time of last checkpoint. </li>
   <li style='     '><strong>test.log</strong><br>
     This file contains the extra SQL statements that have modified the database since the last checkpoint (something 
     like the 'Redo-log' or 'Transaction-log', but just text) 
@@ -29,36 +29,42 @@
   </li>
 </ul>
 <p>&nbsp;</p>
-<h3>Mechanisms</h3>
-<p><strong>Database is opened</strong> </p>
+<h3>States</h3>
+<p><strong>Database is closed correctly</strong> </p>
+<p>This is the state after using the command, SHUTDOWN</p>
 <ul type=disc>
-  <li style='     '>Check if the database files are in use (by checking a sepecial test.lck file).</li>
-  <li>See if the test.properties file exists, otherwise create it.</li>
-  <li style='     '>Check in the test.properties file if 'modified=yes'. This 
-    would mean last time it was not closed correctly, and thus the test.data file 
-    may be corrupted or incomplete. In this case the 'REPAIR' algorithm is executed (see below) 
-    otherwise </li>
-  <li style='     '>If in the test.properties file 'modified=yes-new-files', then 
-    the (old) test.backup and test.script files are deleted and the new test.script.new 
-    file is renamed to test.script. </li>
-  <li style='     '>Open the test.script file and execute the commands </li>
-  <li>Create the test.log and append new commands</li>
+  <li style='     '>The test.data file is fully updated</li>
+  <li style='     '>The test.backup contains the compressed 
+    test.data file</li>
+  <li style='     '>The  test.script contains  the information 
+    in the database, excluding data for CACHED and TEXT tables. </li>
+  <li style='     '>The test.properties contains the entry 'modified'  set to 'no' </li>
+  <li style='     '>There is no test.log  file</li>
 </ul>
-<p><strong>Database is aborted</strong> </p>
+<p><strong>Database is closed correctly with SHUTDOWN SCRIPT</strong></p>
+<p>This is the state after using the command, SHUTDOWN SCRIPT</p>
+<ul type=disc>
+  <li style='     '>The test.data file does not exist; all CACHED table data is in the test.script file</li>
+  <li style='     '>The test.backup does not exist.</li>
+  <li style='     '>The  test.script contains  the information 
+    in the database, including data for CACHED and TEXT tables.</li>
+  <li style='     '>The test.properties contains the entry 'modified'  set to 'no' </li>
+  <li style='     '>There is no test.log  file</li>
+</ul>
+<p><strong></strong><strong>Database is aborted</strong> </p>
 <p>This may happen by sudden power off, Ctrl+C in Windows, but may be simulated 
   using the command SHUTDOWN IMMEDIATELY. </p>
 <ul type=disc>
-  <li style='     '>All files are closed; but the test.script and test.log files contain all 
-    information to re-do all changes. </li>
+  <li style='     '>The test.properties still containes 'modified=yes' </li>
+  <li>The test.script contains a snapshot of the database at the last checkpoint and is OK</li>
   <li style='     '>The test.data file may be corrupt because the cache in memory 
     was not written completely. </li>
-  <li>The test.backup file corresponds to test.script</li>
-  <li style='     '>The test.properties still containes 'modified=yes' </li>
-  <li style='     '>All files are closed (maybe by the operating system) </li>
+  <li>The test.backup file contains a snapshot of test.data that corresponds to test.script</li>
+  <li style='     '>The  test.log file contain all 
+    information to re-do all changes since the snanapshot. As a result of abnormal termination, this file may be partially corrupt. </li>
 </ul>
+<h3>Procedures</h3>
 <p><strong>Database is closed correctly</strong> </p>
-<p>This may be done using the command SHUTDOWN, in the Standalone version using 
-  Connection.close() </p>
 <ul type=disc>
   <li style='     '>The test.data file is written completely </li>
   <li style='     '>The test.backup.new is created (containing the compressed 
@@ -71,19 +77,32 @@
   <li style='     '>The file test.script.new is renamed to test.script </li>
   <li style='     '>The file test.backup is deleted </li>
   <li style='     '>The file test.backup.new is renamed to test.backup </li>
-  <li style='     '>The entry 'modified' is set to 'no' </li>
+  <li style='     '>The entry 'modified' is set to 'yes' </li>
   <li>The file test.log is deleted</li>
+</ul>
+<p><strong>Database is opened</strong> </p>
+<ul type=disc>
+  <li style='     '>Check if the database files are in use (by checking a sepecial test.lck file).</li>
+  <li>See if the test.properties file exists, otherwise create it.</li>
+  <li style='     '>Check in the test.properties file if 'modified=yes'. This 
+    would mean last time it was not closed correctly, and thus the test.data file 
+    may be corrupted or incomplete. In this case the 'REPAIR' algorithm is executed (see below) 
+    otherwise </li>
+  <li style='     '>If in the test.properties file 'modified=yes-new-files', then 
+    the (old) test.backup and test.script files are deleted and the new test.script.new 
+    file is renamed to test.script. </li>
+  <li style='     '>Open the test.script file and execute the commands </li>
+  <li>Create the empty test.log to  append new commands</li>
 </ul>
 <p><strong>Repair</strong> </p>
 <p>The current test.data file is corrupt, but with the old test.data (from the 
-  test.backup file and test.script) and the current test.log, the database can be made up-to-date: 
-</p>
+  test.backup file and test.script) and the current test.log, the database is made up-to-date. The database engine takes these steps:</p>
 <ul type=disc>
    
   <li style='     '>Restore the old test.data file from the backup (uncompress 
     the test.backup) </li>
   <li style='     '>Execute all commands in the test.script file. </li>
-  <li>Exedute all commands in the test.log file.</li>
+  <li>Exedute all commands in the test.log file. If due to corruption, an exception is thrown, the rest of the lines of command in the test.log file are ignored.</li>
   <li style='     '>Close the database correctly (including a backup).</li>
 </ul>
 <p><font size="-1">This text is based on HypersonicSQL documentation, updated to reflect the latest version 1.7.2 of HSQLDB</font></p>
