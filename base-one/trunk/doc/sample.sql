@@ -1,10 +1,10 @@
 /*
-    $Id: sample.sql,v 1.3 2004/03/08 17:27:54 blaine Exp $
+    $Id: sample.sql,v 1.1 2004/03/08 17:20:44 unsaved Exp $
     Examplifies use of SqlTool.
     PCTASK Table creation
 */
 
-/* Ignore error for this statement */
+/* Ignore error for these two statements */
 \* true
 DROP TABLE pctasklist;
 DROP TABLE pctask;
