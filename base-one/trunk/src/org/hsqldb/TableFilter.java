@@ -368,7 +368,9 @@ class TableFilter {
         }
 
         if (conditionType == CONDITION_UNORDERED) {
+            if (!isOuterJoin) {
             addAndCondition(e);
+            }
 
             return;
         }

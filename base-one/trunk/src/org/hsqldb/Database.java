@@ -297,6 +297,12 @@ public class Database {
      */
     void clearStructures() {
 
+        for (int i = 0; i < tTable.size(); i++) {
+            Table table = (Table) tTable.get(i);
+
+            table.dropTriggers();
+        }
+
         isNew              = false;
         tTable             = null;
         userManager        = null;
@@ -797,6 +803,7 @@ public class Database {
         triggerNameList.removeOwner(toDrop.tableName);
         indexNameList.removeOwner(toDrop.tableName);
         constraintNameList.removeOwner(toDrop.tableName);
+        toDrop.dropTriggers();
         toDrop.drop();
         session.setScripting(!toDrop.isTemp());
         session.commit();

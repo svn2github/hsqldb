@@ -1,6 +1,14 @@
 Readme File
 
-2004.05.07 RC_6
+2004.05.26
+
+Fixes for minor bugs
+
+2004.05.18 RC_6a
+
+Fix for two bugs, some doc updates, etc.
+
+2004.05.17 RC_6
 Final Release Candidate
 
 This is the final release candidate for 1.7.2.

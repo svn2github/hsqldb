@@ -177,3 +177,19 @@ INSERT INTO employee (id, name, bossid) VALUES (3, 'wally', null);
 /*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid);
 /*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid AND e.name='dilbert');
 /*c2*/SELECT * FROM employee e LEFT JOIN boss b ON (b.id=e.bossid AND b.name='dilbert');
+
+--bug #959678
+
+CREATE CACHED TABLE propertyvalue (
+ id INT, name CHAR(36), value CHAR(255));
+INSERT INTO propertyvalue VALUES (1, 'title', 'Foo');
+INSERT INTO propertyvalue VALUES (2, 'title', 'Bar');
+/*r
+ 2,2,Bar
+*/ SELECT * FROM
+ (SELECT id FROM propertyvalue WHERE name = 'title') AS id
+ LEFT JOIN
+ (SELECT id, value FROM propertyvalue WHERE name = 'title') AS title
+ ON id.id = title.id
+ WHERE title.value != 'Foo'
+

@@ -843,7 +843,10 @@ public class Trace {
      * @param message message to print
      */
     public static void printSystemOut(String message) {
+
+        if (TRACESYSTEMOUT) {
         System.out.println(message);
+    }
     }
 
     /**
@@ -854,8 +857,11 @@ public class Trace {
      * @param message2 message to print
      */
     public static void printSystemOut(String message1, long message2) {
+
+        if (TRACESYSTEMOUT) {
         System.out.print(message1);
         System.out.println(message2);
+        }
     }
 
     /**

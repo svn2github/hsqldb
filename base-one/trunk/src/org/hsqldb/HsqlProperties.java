@@ -322,7 +322,7 @@ public class HsqlProperties {
 
         HsqlProperties props = new HsqlProperties();
 
-        for (int i = 0; i < arg.length - 1; i++) {
+        for (int i = 0; i < arg.length; i++) {
             String p = arg[i];
 
             if (p.startsWith("-?")) {

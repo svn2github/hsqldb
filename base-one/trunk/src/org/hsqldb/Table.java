@@ -2041,7 +2041,6 @@ public class Table extends BaseTable {
 
         // look in each trigger list of each type of trigger
         int     numTrigs = TriggerDef.NUM_TRIGS;
-        boolean removed  = false;
 
         for (int tv = 0; tv < numTrigs; tv++) {
             HsqlArrayList v = triggerLists[tv];
@@ -2056,14 +2055,37 @@ public class Table extends BaseTable {
                 if (td.name.name.equals(name)) {
                     v.remove(tr);
                     td.terminate();
-
-                    removed = true;
                 }
             }
 
             if (v.isEmpty()) {
                 triggerLists[tv] = null;
             }
+        }
+    }
+
+    /**
+     * Drops all triggers.
+     */
+    void dropTriggers() {
+
+        // look in each trigger list of each type of trigger
+        int numTrigs = TriggerDef.NUM_TRIGS;
+
+        for (int tv = 0; tv < numTrigs; tv++) {
+            HsqlArrayList v = triggerLists[tv];
+
+            if (v == null) {
+                continue;
+            }
+
+            for (int tr = v.size() - 1; tr >= 0; tr--) {
+                TriggerDef td = (TriggerDef) v.get(tr);
+
+                td.terminate();
+            }
+
+            triggerLists[tv] = null;
         }
     }
 

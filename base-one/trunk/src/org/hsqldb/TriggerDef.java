@@ -97,7 +97,7 @@ class TriggerDef extends Thread {
      *
      *  Changes in 1.7.2 allow the queue size to be specified as 0. A zero
      *  queue size causes the Trigger.fire() code to run in the main thread of
-     *  execution (fully inside the enclosing transation). Otherwise, the code
+     *  execution (fully inside the enclosing transaction). Otherwise, the code
      *  is run in the Trigger's own thread.
      *  (fredt@users)
      *

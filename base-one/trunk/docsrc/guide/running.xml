@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.8 2004/04/22 03:49:13 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.9 2004/04/23 17:10:14 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/04/22 03:49:13 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/04/23 17:10:14 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -282,7 +282,7 @@
                 </para>
             </section>
             <section>
-                <title>Security Condiderations</title>
+                <title>Security Considerations</title>
                 <para>
                     When HSQLDB is run as server, the port should be adequately 
                     protected with a firewall.
@@ -301,14 +301,17 @@
                 program in the same Java Virtual Machine.
                 For some applications this mode can be faster, as the data is 
                 not converted and sent over the network.
-                The main drawback is that it is not possible to connect to the 
-                database from outside your application. 
+                The main drawback is that it is not possible by default to connect
+                to the database from outside your application. 
                 As a result you cannot check the contents of the database with 
                 external tools such as Database Manager while your application 
-                is running.
-                The recommended way of using this mode in an application is to 
-                use an HSQLDB Server instance for the database while developing 
-                the application and then switch to In-Process mode for 
+                is running. In 1.7.2, you can run a server instance in a thread
+                from the same virtual machine as your application and provide 
+                external access to your in-process database.
+            </para> <para>
+                The recommended way of using the in-process mode in an application
+                is to use an HSQLDB Server instance for the database while 
+                developing the application and then switch to In-Process mode for 
                 deployment.
             </para> <para>
                 An In-Process Mode database is started from JDBC, with the 
@@ -334,7 +337,9 @@
             <programlisting>
     Connection c = DriverManager.getConnection("jdbc:hsqldb:file:/opt/db/testdb", "sa", "");</programlisting>
             <para>
-                Refer to Javadoc for
+                When using relative paths, these paths will be taken relative to
+                the directory in which the shell command to start the Java Virtual
+                Machine was executed. Refer to Javadoc for
                 <ulink url='../src/org/hsqldb/jdbcConnection.html'>
                 <classname>jdbcConnection</classname></ulink> for more details.
             </para>
@@ -351,7 +356,7 @@
             </para><programlisting>
     Connection c = DriverManager.getConnection("jdbc:hsqldb:mem:aname", "sa", "");</programlisting>
             <para>
-                You can also run a memory only server instance by specifying 
+                You can also run a memory-only server instance by specifying 
                 the same URL in the <filename>server.properties</filename>.
                 This usage is not common and is limited to special applications 
                 where the database server is used only for exchanging 
