@@ -278,11 +278,11 @@ class Database {
     // tony_lai@users 20020820
     private void open() throws SQLException {
 
-        tTable   = new HsqlArrayList();
-        aAccess  = new UserManager();
-        cSession = new HsqlArrayList();
+        tTable         = new HsqlArrayList();
+        aAccess        = new UserManager();
+        cSession       = new HsqlArrayList();
         sessionIdCount = 0;
-        hAlias   = Library.getAliasMap();
+        hAlias         = Library.getAliasMap();
 
 //        logger                = new Logger();
         tokenizer             = new Tokenizer();
@@ -298,7 +298,6 @@ class Database {
         User sysUser = aAccess.createSysUser(this);
 
 // -------------------------------------------------------------------
-
         sysSession = newSession(sysUser, false);
 
         registerSession(sysSession);
@@ -406,9 +405,10 @@ class Database {
         return session;
     }
 
-    Session newSession(User user, boolean readonly){
+    Session newSession(User user, boolean readonly) {
         return new Session(this, user, true, readonly, sessionIdCount++);
     }
+
     /**
      *  Binds the specified Session object into this Database object's active
      *  session registry. This method is typically called from {@link
@@ -435,7 +435,8 @@ class Database {
         cSession.set(i, session);
     }
 
-    void closeAllSessions(){
+    void closeAllSessions() {
+
         // don't disconnect system user; need it to save database
         for (int i = 1, tsize = cSession.size(); i < tsize; i++) {
             Session d = (Session) cSession.get(i);
@@ -1472,14 +1473,13 @@ class Database {
     String processCreateDefaultValue(Tokenizer c, int iType,
                                      int iLen) throws SQLException {
 
-        String  defaultvalue = null;
-        String  s            = c.getString();
+        String  defaultvalue = c.getString();
         boolean wasminus     = false;
 
         // see if it is a negative number
-        if (s.equals("-") && c.getType() != Types.VARCHAR) {
-            wasminus = true;
-            s        = c.getString();
+        if (defaultvalue.equals("-") && c.getType() != Types.VARCHAR) {
+            wasminus     = true;
+            defaultvalue += c.getString();
         }
 
         if (c.wasValue() && iType != Types.BINARY && iType != Types.OTHER) {
@@ -1499,23 +1499,23 @@ class Database {
                                       defaultvalue);
                 }
 
-                defaultvalue = Column.convertObject(sv);
+                String tempdefaultvalue = Column.convertObject(sv);
 
                 // ensure char trimming does not affect the value
                 String testdefault =
                     sqlEnforceSize
-                    ? (String) Table.enforceSize(defaultvalue, iType, iLen,
-                                                 false)
-                    : defaultvalue;
+                    ? (String) Table.enforceSize(tempdefaultvalue, iType,
+                                                 iLen, false)
+                    : tempdefaultvalue;
 
                 // if default value is too long for fixed size column
-                if (!defaultvalue.equals(testdefault)) {
+                if (!tempdefaultvalue.equals(testdefault)) {
                     throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE,
                                       defaultvalue);
                 }
             }
         } else {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, s);
+            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defaultvalue);
         }
 
         return defaultvalue;
@@ -2755,6 +2755,7 @@ class Database {
         } else {
             c.back();
         }
+
         closeAllSessions();
         cSession.clear();
         close(closemode);

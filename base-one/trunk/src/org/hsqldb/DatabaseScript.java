@@ -310,23 +310,30 @@ class DatabaseScript {
             String defaultString = column.getDefaultString();
 
             if (defaultString != null) {
+                boolean quote = false;
+
                 switch (column.getType()) {
 
+                    // do not quote CURRENT_DATE etc.
                     case Types.DATE :
                     case Types.TIMESTAMP :
-                        if (defaultString.indexOf('-') == -1) {
-                            break;
-                        }
+                        quote = defaultString.indexOf('-') != -1;
+                        break;
+
                     case Types.TIME :
-                        if (defaultString.indexOf(':') == -1) {
-                            break;
-                        }
+                        quote = defaultString.indexOf(':') != -1;
+                        break;
+
                     case Types.CHAR :
                     case Types.VARCHAR :
                     case Column.VARCHAR_IGNORECASE :
                     case Types.LONGVARCHAR :
-                        defaultString = Column.createSQLString(defaultString);
+                        quote = true;
                     default :
+                }
+
+                if (quote) {
+                    defaultString = Column.createSQLString(defaultString);
                 }
 
                 a.append(" DEFAULT ");
