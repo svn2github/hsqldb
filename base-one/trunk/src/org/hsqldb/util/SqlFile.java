@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.37 2004/02/17 12:26:16 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.38 2004/02/17 13:20:25 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.37 $
+ * @version $Revision: 1.38 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -195,6 +195,8 @@ public class SqlFile {
      */
     private boolean continueOnError = false;
 
+    static private final String DEFAULT_CHARSET = "US-ASCII";
+
     /**
      * Process all the commands in the file (or stdin) associated with
      * "this" object.
@@ -202,6 +204,9 @@ public class SqlFile {
      *
      * This is synchronized so that I can use object variables to keep
      * track of current line number, command, connection, i/o streams, etc.
+     *
+     * Sets encoding character set to that specified with System Property
+     * 'sqlfile.charset'.  Defaults to "US-ASCII".
      *
      * @param conn The JDBC connection to use for SQL Commands.
      */
@@ -222,11 +227,16 @@ public class SqlFile {
 
         continueOnError = interactive;
         BufferedReader br = null;
+        String specifiedCharSet = System.getProperty("sqlfile.charset");
 
         try {
-            br = new BufferedReader(new InputStreamReader((file == null)
+            br = new BufferedReader(new InputStreamReader(
+                    (file == null)
                     ? System.in
-                    : new FileInputStream(file)));
+                    : new FileInputStream(file), ((specifiedCharSet == null)
+                            ? DEFAULT_CHARSET 
+                            : specifiedCharSet)
+            ));
             curLinenum = 0;
             if (interactive) {
                 stdprint(BANNER);
