@@ -5,7 +5,7 @@ hsqldb 1.7.3 in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.02.23 1.7.3.3
+2004.02.23 1.7.3.4
 
 Fixed NPE when defining self referencing FK's with no primary key
 
