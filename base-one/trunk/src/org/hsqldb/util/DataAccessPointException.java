@@ -32,14 +32,11 @@
 package org.hsqldb.util;
 
 /**
- * Title:        Database Transfer Tool<br>
- * Description:<br>
- * Copyright:    Copyright (c) 2002<br>
- * Company:      INGENICO
- * @author Nicolas BAZIN
+ *
+ * @author Nicolas BAZIN, INGENICO
  * @version 1.7.0
  */
-public class DataAccessPointException extends Exception {
+class DataAccessPointException extends Exception {
 
     public DataAccessPointException() {
         super();

@@ -116,8 +116,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("hsqldb.compatible_version", "1.6.0");
 
         // the version that created this database
-        // this is changed when a new database is created with a future version
-        setProperty("hsqldb.original_version", "1.7.0");
+        // once created, this won't change if db is used with a future version
+        setProperty("hsqldb.original_version", "1.7.1");
 
         // data format of the cache file
         // this is set to 1.7.0 when new cache is created
@@ -150,7 +150,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // reduce the default 15 (32K rows) if memory is limited and rows
         // are large.
         // values between 8-16 are allowed
-        //setProperty("hsqldb.cache_scale","15"));
+        setProperty("hsqldb.cache_scale", "15");
+
+        // maximum size of .script file in megabytes
+        setProperty("hsqldb.log_size", "200");
         setProperty("readonly", false);
         setProperty("modified", "no");
 
@@ -202,8 +205,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
      * @throws  SQLException
      */
     public void save() throws SQLException {
-
-        File f = new File(fileName + ".properties");
 
         close();
 

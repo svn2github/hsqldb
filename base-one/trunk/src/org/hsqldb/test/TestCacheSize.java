@@ -34,41 +34,53 @@ package org.hsqldb.test;
 import org.hsqldb.HsqlProperties;
 import java.io.*;
 import java.sql.*;
-import junit.framework.*;
 
 /**
  * Test large cached tables by setting up a cached table of 100000 records
- * or more and a much smaller memory table with about 1/100th row count.
+ * or more and a much smaller memory table with about 1/100th rows used.
  * Populate both tables so that an indexed column of the cached table has a
- * foreign key reference to the the main table.
+ * foreign key reference to the main table.
  *
  * This database can be used to demonstrate efficient queries to retrieve
  * the data from the cached table.
  *
+ * insert timings for 100000 rows, cache scale 12:
+ * simple table, no extra index: 52 s
+ * with index on lastname only: 56 s
+ * with index on zip only: 211 s
+ * foreign key, referential_integrity true: 216 s
  *
  * @author fredt@users
  */
-public class TestCacheSize extends TestCase {
+public class TestCacheSize {
 
-    protected String url      = "jdbc:hsqldb:";
-    protected String filepath = "/hsql/test/testcachesize";
+    protected String url = "jdbc:hsqldb:";
+
+//    protected String filepath = ".";
+    protected String filepath = "/hsql/testcache/test";
     String           user;
     String           password;
     Statement        sStatement;
     Connection       cConnection;
+    boolean          indexZip        = false;
+    boolean          indexLastName   = true;
+    boolean          addForeignKey   = false;
+    boolean          refIntegrity    = false;
+    boolean          createTempTable = false;
 
-    public TestCacheSize(String name) {
-        super(name);
-    }
+    // introduces fragmentation to the .data file
+    boolean deleteWhileInsert         = true;
+    int     deleteWhileInsertInterval = 100000;
 
     protected void setUp() {
 
-        user        = "sa";
-        password    = "";
-        sStatement  = null;
-        cConnection = null;
+        user     = "sa";
+        password = "";
 
         try {
+            sStatement  = null;
+            cConnection = null;
+
             HsqlProperties props      = new HsqlProperties(filepath);
             boolean        fileexists = props.checkFileExists();
 
@@ -90,7 +102,8 @@ public class TestCacheSize extends TestCase {
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
                 props.load();
-                props.setProperty("hsqldb.cache_scale", "12");
+                props.setProperty("hsqldb.log_size", "400");
+                props.setProperty("hsqldb.cache_scale", "16");
                 props.save();
 
                 cConnection = DriverManager.getConnection(url + filepath,
@@ -110,32 +123,75 @@ public class TestCacheSize extends TestCase {
      */
     public void testFillUp() {
 
-        int    bigrows   = 100000;
+        int    bigrows   = 1000000;
         int    smallrows = 0xfff;
         double value     = 0;
-        String ddl1      = "DROP TABLE zip IF EXISTS;";
-        String ddl2      = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "DROP TABLE test IF EXISTS;"
-                      + "CREATE CACHED TABLE test( id INT IDENTITY,"
+        String ddl1 = "DROP TABLE test IF EXISTS;"
+                      + "DROP TABLE zip IF EXISTS;";
+        String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
+        String ddl3 = "CREATE CACHED TABLE test( id INT IDENTITY,"
                       + " firstname VARCHAR, " + " lastname VARCHAR, "
-                      + " zip INTEGER, " + " filler VARCHAR, "
-                      + " FOREIGN KEY (zip) REFERENCES zip(zip) );";
+                      + " zip INTEGER, " + " filler VARCHAR); ";
+
+        // adding extra index will slow down inserts a bit
+        String ddl4 = "CREATE INDEX idx1 ON TEST (lastname);";
+
+        // adding this index will slow down  inserts a lot
+        String ddl5 = "CREATE INDEX idx2 ON TEST (zip);";
+
+        // referential integrity checks will slow down inserts a bit
+        String ddl6 =
+            "ALTER TABLE test add constraint c1 FOREIGN KEY (zip) REFERENCES zip(zip);";
+        String ddl7 = "CREATE TEMP TABLE temptest( id INT,"
+                      + " firstname VARCHAR, " + " lastname VARCHAR, "
+                      + " zip INTEGER, " + " filler VARCHAR); ";
         String filler =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         try {
+            cConnection = null;
+            sStatement  = null;
+            cConnection = DriverManager.getConnection(url + filepath, user,
+                    password);
+            sStatement = cConnection.createStatement();
+
             java.util.Random randomgen = new java.util.Random();
 
             sStatement.execute(ddl1);
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
+            System.out.println("test table with no index");
 
+            if (indexLastName) {
+                sStatement.execute(ddl4);
+                System.out.println("create index on lastname");
+            }
+
+            if (indexZip) {
+                sStatement.execute(ddl5);
+                System.out.println("create index on zip");
+            }
+
+            if (addForeignKey) {
+                sStatement.execute(ddl6);
+                System.out.println("add foreign key");
+            }
+
+            if (createTempTable) {
+                sStatement.execute(ddl7);
+                System.out.println("temp table");
+            }
+
+//            sStatement.execute("CREATE INDEX idx3 ON tempTEST (zip);");
             int i;
 
             for (i = 0; i <= smallrows; i++) {
                 sStatement.execute("INSERT INTO zip VALUES(null);");
             }
+
+            sStatement.execute("SET REFERENTIAL_INTEGRITY "
+                               + this.refIntegrity + ";");
 
             PreparedStatement ps = cConnection.prepareStatement(
                 "INSERT INTO test (firstname,lastname,zip,filler) VALUES (?,?,?,?)");
@@ -143,21 +199,59 @@ public class TestCacheSize extends TestCase {
             ps.setString(1, "Julia");
             ps.setString(2, "Clancy");
 
+            long startTime = System.currentTimeMillis();
+
             for (i = 0; i < bigrows; i++) {
                 ps.setInt(3, randomgen.nextInt() & smallrows);
-                ps.setString(4, randomgen.nextLong() + filler);
+
+                long nextrandom   = randomgen.nextLong();
+                int  randomlength = (int) nextrandom & 0x7f;
+
+                if (randomlength > filler.length()) {
+                    randomlength = filler.length();
+                }
+
+                String varfiller = filler.substring(0, randomlength);
+
+                ps.setString(4, nextrandom + varfiller);
                 ps.execute();
 
-                if (i % 10000 == 0) {
+                if (i != 0 && i % 50000 == 0) {
                     System.out.println(i);
                     System.out.println(
                         new java.util.Date(System.currentTimeMillis()));
                 }
+
+                // delete and add 4000 rows to introduce fragmentation
+                if (deleteWhileInsert && i != 0
+                        && i % deleteWhileInsertInterval == 0) {
+                    sStatement.execute("CALL IDENTITY();");
+
+                    ResultSet rs = sStatement.getResultSet();
+
+                    rs.next();
+
+                    int lastId = rs.getInt(1);
+
+                    sStatement.execute(
+                        "SELECT * INTO TEMP tempt FROM test WHERE id > "
+                        + (lastId - 4000) + " ;");
+                    sStatement.execute("DELETE FROM test WHERE id > "
+                                       + (lastId - 4000) + " ;");
+                    sStatement.execute(
+                        "INSERT INTO test SELECT * FROM tempt;");
+                    sStatement.execute("DROP TABLE tempt;");
+                }
             }
 
+//            sStatement.execute("INSERT INTO test SELECT * FROM temptest;");
+//            sStatement.execute("DROP TABLE temptest;");
+//            sStatement.execute(ddl7);
+            long endTime = System.currentTimeMillis();
+
             System.out.println(i);
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            System.out.println(new java.util.Date(endTime));
+            System.out.println("Insert Time:" + (endTime - startTime));
             sStatement.execute("SHUTDOWN");
             System.out.println("shutdown");
             System.out.println(
@@ -165,8 +259,6 @@ public class TestCacheSize extends TestCase {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-
-        assertEquals(true, true);
     }
 
     protected void tearDown() {
@@ -181,8 +273,10 @@ public class TestCacheSize extends TestCase {
 
     public static void main(String argv[]) {
 
-        TestCase testC = new TestCacheSize("testFillUp");
+        TestCacheSize test = new TestCacheSize();
 
-        testC.run();
+        test.setUp();
+        test.testFillUp();
+        test.tearDown();
     }
 }

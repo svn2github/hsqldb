@@ -48,7 +48,7 @@ public class HsqlServerFactory {
 
         HsqlProperties props = new HsqlProperties();
 
-        props.setProperty("server.dbname", dbFilePath);
+        props.setProperty("server.database", dbFilePath);
         props.setProperty("server.trace", debugMessages);
         props.setProperty("server.silent", silentMode);
 

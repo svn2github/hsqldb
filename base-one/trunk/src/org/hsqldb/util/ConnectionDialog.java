@@ -71,15 +71,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
+// sqlbob@users 20020325 - patch 1.7.0 - enhancements
+// sqlbob@users 20020407 - patch 1.7.0 - reengineering
+
 /**
  * Opens a connection to a database
  *
  * @version 1.7.0
  */
-
-// sqlbob@users 20020325 - patch 1.7.0 - enhancements
-// sqlbob@users 20020407 - patch 1.7.0 - reengineering
-public class ConnectionDialog extends Dialog
+class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
     private Connection mConnection;

@@ -97,7 +97,7 @@ public class HsqlDateTime {
 
     /**
      *  Converts a string in JDBC date escape format to a <code>Date</code>
-     *  value.
+     *  value. Also accepts Timestamp values.
      *
      * @param s date in format <code>yyyy-mm-dd</code>,
      *  'TODAY', 'NOW', 'CURRENT_DATE', 'SYSDATE' (case independent)
@@ -118,7 +118,7 @@ public class HsqlDateTime {
             return new Date(System.currentTimeMillis());
         }
 
-        return Date.valueOf(s);
+        return Date.valueOf(s.substring(0, sdfdPattern.length()));
     }
 
     /**

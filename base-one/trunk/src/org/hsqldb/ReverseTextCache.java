@@ -93,16 +93,16 @@ class ReverseTextCache extends org.hsqldb.TextCache {
      * @throws  SQLException
      */
     void flush() throws SQLException {
-        shutdown();
+        closeFile();
     }
 
     void purge() throws SQLException {
-        shutdown();
+        closeFile();
     }
 
-    protected Row makeRow(int pos, Table t) throws SQLException {
+    protected CachedRow makeRow(int pos, Table t) throws SQLException {
 
-        Row r = null;
+        CachedRow r = null;
 
         try {
             StringBuffer buffer   = new StringBuffer(80);
@@ -193,7 +193,7 @@ class ReverseTextCache extends org.hsqldb.TextCache {
                 in.setSource(buffer.toString(), pos);
                 in.setNextPos(nextPos);
 
-                r = new Row(t, in);
+                r = new CachedRow(t, in);
             }
         } catch (IOException e) {
             e.printStackTrace();

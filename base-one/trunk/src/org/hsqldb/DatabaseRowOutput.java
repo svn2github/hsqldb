@@ -106,7 +106,7 @@ implements org.hsqldb.DatabaseRowOutputInterface {
     protected abstract void writeOther(Object o)
     throws IOException, SQLException;
 
-    protected abstract void writeBinary(ByteArray o,
+    protected abstract void writeBinary(byte[] o,
                                         int t)
                                         throws IOException, SQLException;
 
@@ -209,7 +209,7 @@ implements org.hsqldb.DatabaseRowOutputInterface {
                 case Types.BINARY :
                 case Types.VARBINARY :
                 case Types.LONGVARBINARY :
-                    writeBinary((ByteArray) o, t);
+                    writeBinary((byte[]) o, t);
                     break;
 
                 default :

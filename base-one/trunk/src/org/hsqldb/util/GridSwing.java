@@ -70,13 +70,13 @@ package org.hsqldb.util;
 import java.util.Vector;
 import javax.swing.table.*;
 
+// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
+
 /** Simple table model to represent a grid of tuples.
  *
  * @version 1.7.0
  */
-
-// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
-public class GridSwing extends AbstractTableModel {
+class GridSwing extends AbstractTableModel {
 
     String[] headers;
     Vector   rows;

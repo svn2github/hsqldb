@@ -75,6 +75,7 @@ import java.sql.SQLException;
 // methods for set operations moved here from Select.java
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // rewrite of LIMIT n m to apply to each select statement separately
+// tony_lai@users 20020820 - patch 595073 by tlai@users - duplicated exception msg
 
 /**
  *  Class declaration
@@ -151,7 +152,13 @@ class Result {
             iMode = in.readIntData();
 
             if (iMode == ERROR) {
-                throw Trace.getError(in.readIntData(), in.readString());
+
+// tony_lai@users 20020820 - patch 595073
+                int code = in.readIntData();
+
+                throw Trace.getError(in.readString(), code);
+
+//                throw Trace.getError(in.readIntData(), in.readString());
             } else if (iMode == UPDATECOUNT) {
                 iUpdateCount = in.readIntData();
             } else if (iMode == DATA) {

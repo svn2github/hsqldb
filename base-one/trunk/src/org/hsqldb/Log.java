@@ -90,13 +90,16 @@ import java.util.zip.InflaterInputStream;
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to move operations on the database.properties files to new
 // class HsqlDatabaseProperties
-// fredt@users 20020220 - patch 488200 by xclay@users - throw exception
+// fredt@users 20020220 - patch 488200 by xclayl@users - throw exception
 // throw addded to all methods relying on file io
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020405 - patch 1.7.0 by fredt - no change in db location
 // because important information about the database is now stored in the
 // *.properties file, all database files should be in the same folder as the
 // *.properties file
+// tony_lai@users 20020820 - export hsqldb.log_size to .properties file
+// tony_lai@users 20020820 - modification to shutdown compact process to save memory usage
+// fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
 
 /**
  *  This class is responsible for most file handling. A HSQL database
@@ -128,20 +131,19 @@ class Log implements Runnable {
     private Database               dDatabase;
     private Session                sysSession;
     private Writer                 wScript;
+    private File                   scriptChecker;
     private String                 sFileScript;
     private String                 sFileCache;
     private String                 sFileBackup;
     private boolean                bRestoring;
     private boolean                bReadOnly;
-
-    // default: .script file is max 200 MB big
-    private int              iLogSize = 200;
-    private int              iLogCount;
-    private Thread           tRunner;
-    private volatile boolean bNeedFlush;
-    private volatile boolean bWriteDelay;
-    private int              mLastId;
-    private Cache            cCache;
+    private int                    iLogSize;
+    private int                    iLogCount;
+    private Thread                 tRunner;
+    private volatile boolean       bNeedFlush;
+    private volatile boolean       bWriteDelay;
+    private int                    mLastId;
+    private Cache                  cCache;
 
 // boucherb@users - comment - FIXME
 //  boolean                  stopped;
@@ -249,9 +251,15 @@ class Log implements Runnable {
         // todo: some parts are not necessary for ready-only access
         pProperties.load();
 
-        sFileScript = sName + ".script";
-        sFileCache  = sName + ".data";
-        sFileBackup = sName + ".backup";
+        sFileScript   = sName + ".script";
+        sFileCache    = sName + ".data";
+        sFileBackup   = sName + ".backup";
+        scriptChecker = new File(sFileScript);
+
+        // tony_lai@users 20020820
+        // Allows the user to modify log size from the properties file.
+        iLogSize = pProperties.getIntegerProperty("hsqldb.log_size",
+                iLogSize);
 
         String version = pProperties.getProperty("hsqldb.compatible_version");
 
@@ -406,10 +414,9 @@ class Log implements Runnable {
             (new File(sFileCache)).delete();
             (new File(sFileBackup)).delete();
 
-            // all files are closed now; simply open & close this database
-            Database db = new Database(sName);
-
-            db.logger.closeLog(0);
+            // tony_lai@users 20020820
+            // The database re-open and close has been moved to
+            // Database#close(int closemode) for saving memory usage.
         }
     }
 
@@ -438,7 +445,10 @@ class Log implements Runnable {
      * @param  mb
      */
     void setLogSize(int mb) {
+
         iLogSize = mb;
+
+        pProperties.setProperty("hsqldb.log_size", iLogSize);
     }
 
     /**
@@ -478,11 +488,11 @@ class Log implements Runnable {
                 throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
             }
 
+            // fredt@users - todo - eliminate new File() calls
             if (iLogSize > 0 && iLogCount++ > 100) {
                 iLogCount = 0;
 
-                if ((new File(sFileScript)).length()
-                        > iLogSize * 1024 * 1024) {
+                if (scriptChecker.length() > iLogSize * 1024 * 1024) {
                     checkpoint();
                 }
             }
@@ -499,7 +509,7 @@ class Log implements Runnable {
         tRunner = null;
 
         if (cCache != null) {
-            cCache.shutdown();
+            cCache.closeFile();
 
             cCache = null;
         }
@@ -528,7 +538,11 @@ class Log implements Runnable {
         }
 
         try {
-            long time = System.currentTimeMillis();
+            long time = 0;
+
+            if (Trace.TRACE) {
+                time = System.currentTimeMillis();
+            }
 
             // only ddl commands; needs not so much memory
             Result r;
@@ -583,10 +597,8 @@ class Log implements Runnable {
 
             w.close();
 
-            time = System.currentTimeMillis() - time;
-
             if (Trace.TRACE) {
-                Trace.trace(time);
+                Trace.trace(time - System.currentTimeMillis());
             }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, file + " " + e);
@@ -601,14 +613,18 @@ class Log implements Runnable {
     private void renameNewToCurrent(String file) {
 
         // even if it crashes here, recovering is no problem
-        if ((new File(file + ".new")).exists()) {
+        File newFile = new File(file + ".new");
+
+        if (newFile.exists()) {
 
             // if we have a new file
             // delete the old (maybe already deleted)
-            (new File(file)).delete();
+            File oldFile = new File(file);
+
+            oldFile.delete();
 
             // rename the new to the current
-            new File(file + ".new").renameTo(new File(file));
+            newFile.renameTo(oldFile);
         }
     }
 
@@ -618,8 +634,8 @@ class Log implements Runnable {
             Trace.trace(sName);
         }
 
-        pProperties.setProperty("modified", "no");
         pProperties.setProperty("version", jdbcDriver.VERSION);
+        pProperties.setProperty("sql.strict_fk", true);
         pProperties.save();
     }
 
@@ -655,7 +671,7 @@ class Log implements Runnable {
     }
 
     /**
-     *  Method declaration
+     *  Saves the *.data file as compressed *.backup.
      *
      * @throws  SQLException
      */
@@ -672,7 +688,11 @@ class Log implements Runnable {
         }
 
         try {
-            long time = System.currentTimeMillis();
+            long time = 0;
+
+            if (Trace.TRACE) {
+                time = System.currentTimeMillis();
+            }
 
             // create a '.new' file; rename later
             DeflaterOutputStream f = new DeflaterOutputStream(
@@ -694,10 +714,8 @@ class Log implements Runnable {
             f.close();
             in.close();
 
-            time = System.currentTimeMillis() - time;
-
             if (Trace.TRACE) {
-                Trace.trace(time);
+                Trace.trace(time - System.currentTimeMillis());
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
@@ -725,7 +743,12 @@ class Log implements Runnable {
         }
 
         try {
-            long time = System.currentTimeMillis();
+            long time = 0;
+
+            if (Trace.TRACE) {
+                time = System.currentTimeMillis();
+            }
+
             InflaterInputStream f =
                 new InflaterInputStream(new FileInputStream(sFileBackup),
                                         new Inflater());
@@ -745,10 +768,8 @@ class Log implements Runnable {
             cache.close();
             f.close();
 
-            time = System.currentTimeMillis() - time;
-
             if (Trace.TRACE) {
-                Trace.trace(time);
+                Trace.trace(time - System.currentTimeMillis());
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
@@ -824,7 +845,12 @@ class Log implements Runnable {
         Session current = sysSession;
 
         try {
-            long time = System.currentTimeMillis();
+            long time = 0;
+
+            if (Trace.TRACE) {
+                time = System.currentTimeMillis();
+            }
+
             LineNumberReader r =
                 new LineNumberReader(new FileReader(sFileScript));
 
@@ -883,10 +909,8 @@ class Log implements Runnable {
                 }
             }
 
-            time = System.currentTimeMillis() - time;
-
             if (Trace.TRACE) {
-                Trace.trace(time);
+                Trace.trace(time - System.currentTimeMillis());
             }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);
@@ -929,8 +953,14 @@ class Log implements Runnable {
     private static final String lineSep = System.getProperty("line.separator",
         "\n");
 
-    private static void writeLine(Writer w, String s) throws IOException {
-        w.write(StringConverter.unicodeToAscii(s).append(lineSep).toString());
+    private static int writeLine(Writer w, String s) throws IOException {
+
+        String logLine =
+            StringConverter.unicodeToAscii(s).append(lineSep).toString();
+
+        w.write(logLine);
+
+        return logLine.length();
     }
 
     /**
@@ -1026,7 +1056,7 @@ class Log implements Runnable {
 
         for (Enumeration e =
                 textCacheList.elements(); e.hasMoreElements(); ) {
-            ((TextCache) e.nextElement()).shutdown();
+            ((TextCache) e.nextElement()).closeFile();
         }
 
         textCacheList = new Hashtable();

@@ -34,14 +34,14 @@ package org.hsqldb.util;
 import java.sql.*;
 
 /**
- * Base class for conversion from a different databases
+ * Helper class for conversion from a different databases
  *
  * @author sqlbob@users
  * @version 1.7.0
  */
-public class McKoiTransferHelper extends TransferHelper {
+class McKoiTransferHelper extends TransferHelper {
 
-    public McKoiTransferHelper() {
+    McKoiTransferHelper() {
         super();
     }
 
@@ -49,7 +49,7 @@ public class McKoiTransferHelper extends TransferHelper {
                               String columnType, ResultSet columnDesc,
                               int columnIndex) throws SQLException {
 
-        String CompareString = "UNIQUEKEY(\'" + t.sDestTable + "\'";
+        String CompareString = "UNIQUEKEY(\'" + t.Stmts.sDestTable + "\'";
 
         if (columnType.indexOf(CompareString) > 0) {
             /*
@@ -70,8 +70,8 @@ public class McKoiTransferHelper extends TransferHelper {
                                int columnIndex) throws SQLException {
 
         if (columnType.equals("SERIAL")) {
-            columnType = "INTEGER DEFAULT UNIQUEKEY (\'" + t.sSourceTable
-                         + "\')";
+            columnType = "INTEGER DEFAULT UNIQUEKEY (\'"
+                         + t.Stmts.sSourceTable + "\')";
         }
 
         return (columnType);

@@ -125,8 +125,8 @@
 </font>
 <hr>
 <p><font face="Arial"><br>
-   <b><font size="2" color="#FF0000">ALTER TABLE</font></b><font size="2" color="#FF0000"> &lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD COLUMN</font></b><font size="2"> &lt;column definition&gt; [BEFORE &lt;existingcolumn&gt;];</font></font></p>
-<p><font face="Arial" size="2">Adds the column to the end of the column list. &lt;column definition&gt; consists of the name,  type and other (optional) attributes of the new column being added. The optional BEFORE &lt;existingcolumn&gt; can be used to specify the name of an existing column so that the new column is inserted in a position just before the &lt;existingcolumn&gt;</font></p>
+   <b><font size="2" color="#FF0000">ALTER TABLE</font></b><font size="2" color="#FF0000"> &lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD COLUMN</font></b><font size="2"> &lt;columnname&gt; </font><font face="Arial, Helvetica" size="2"><font face="Arial"> <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT 'defaultValue' [NOT NULL]]</font> </font></font><font size="2">[BEFORE &lt;existingcolumn&gt;];</font></font></p>
+<p><font face="Arial" size="2">Adds the column to the end of the column list. Optional attributes, size and default value (with or without  NOT NULL)  can be specified. The optional BEFORE &lt;existingcolumn&gt; can be used to specify the name of an existing column so that the new column is inserted in a position just before the &lt;existingcolumn&gt;. If NOT NULL is specified and the table is not empty, then a default value must be specified.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> DROP COLUMN </font></b><font size="2">&lt;columnname&gt;;</font></font></p>
 <p><font face="Arial" size="2">Drops the column from the table. Will not work if column is part of a primary key, unique or foreign key constraint.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;</font><b><font size="2"> UNIQUE (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">);</font></b></font></p>
@@ -231,7 +231,7 @@
   INSERT INTO Test (Id, Name) VALUES (NULL,'Test'); CALL IDENTITY();
 </font>
 <p><font face="Arial">columnDefinition: <br>
-  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT defaultValue]</font> [[NOT] NULL] [IDENTITY] 
+  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT 'defaultValue']</font> [[NOT] NULL] [IDENTITY] 
   [PRIMARY KEY] </font>
 <p>the default value must be enclosed in singlequotes
 <p><font face="Arial">constraintDefinition: <br>
@@ -396,6 +396,7 @@ A view can reference another view. For example, mealsjv presents information tha
 </font>
 <p><font face="Arial">Removes the specified index from the database. 
 </font>
+Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <p><font face="Arial">See also: <a href="#CREATE INDEX">CREATE INDEX</a> 
 </font>
 <p> <font face="Arial"><br>
@@ -670,9 +671,7 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
   performance of applications that makes a lot of inserts/updates/deletes. When 
   switched off (this is the default) then all SQL commands are written into the 
   log file (.script) just after they are executed. <br>
-  Only an administrator may do this. 
-</font>
-<p>&nbsp;
+  Only an administrator may do this.</font>
 </font>
 <p> <font face="Arial" size="2"><br>
   <a name="SHUTDOWN"></a>
@@ -777,7 +776,7 @@ This command should not be used as the routine method of closing the database.</
    </tr>
    <tr>
 	   <td><font size="2">REAL</font></td>
-      <td><font size="2">"float" |<font color="#FF0000"> "java.lang.Double" </font></font></td>
+      <td><font size="2" color="#FF0000">"double" | "java.lang.Double" </font></td>
    </tr>
    <tr>
 	   <td><font size="2">BINARY</font></td>
@@ -995,13 +994,17 @@ strings.</font>
   exactly one character. To search for '%' itself, '\%' must be used, for '_' 
   use '\_'; or any other escaping character may be set using the ESCAPE clause.</font>
 <p><font face="Arial">name: <br>
-  </font><font face="Arial, Helvetica" size="2"><font face="Arial"> The character set for identifiers in HSQLDB is Unicode.</font></font> <font face="Arial">A name (identifier) starts with a letter and is followed by any number of letters or digits. 
-  Lowercase characters in identifiers are converted to uppercase except for  quoted identifiers. 
-  Because of this, unquoted names are not case sensitive when used in SQL statements. Quoted identifiers can be used as names (for tables, constraints, indexes or columns). Quoted identifiers start and ends with " </font><font face="Arial, Helvetica" size="2"><font face="Arial">(doublequote)</font></font><font face="Arial">. A quoted identifier can contain any Unicode character. In a quoted 
-  identifier use "" (two doubleQuotes) to create a " (one doublequote). With quoted identifiers it is possible to create 
+  </font><font face="Arial, Helvetica" size="2"><font face="Arial"> The character set for identifiers (names) in HSQLDB is Unicode.</font></font>
+<p><font face="Arial">A unquoted identifier (name) starts with a letter and is followed by any number of letters or digits. 
+  </font><font face="Arial, Helvetica" size="2"><font face="Arial"> In  unquoted identifiers</font></font>, l<font face="Arial">owercase characters are converted to uppercase. 
+  Because of this, unquoted names are not case sensitive when used in SQL statements.</font>
+<p><font face="Arial">Quoted identifiers can be used as names (for tables, columns, constraints or indexes). Quoted identifiers start and end with " </font><font face="Arial, Helvetica" size="2"><font face="Arial">(one doublequote)</font></font><font face="Arial">. A quoted identifier can contain any Unicode character, including space. In a quoted 
+  identifier use "" (two doublequotes) to create a " (one doublequote). With quoted identifiers it is possible to create 
   mixed-case table and column names. Example: CREATE TABLE "Address" ("Nr" INTEGER,"Name" 
-  VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address"; Quoted identifiers are not strings.
-Quoting can sometimes be used for identifiers when there is an ambiguity. For example:</font>
+  VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address";</font>
+<p><font face="Arial">The equivalent quoted identifier can be used for an unquoted identifer by converting the identifier to all uppercase and quoting it. For example, if a table  name is defined as  Address2 (unquoted), it can be referred to by its  quoted form, &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers should not be confused with SQL strings.</font>
+<p><font face="Arial">Quoting can sometimes be used for identifiers when there is an ambiguity. For example:</font>
+
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
 <p>Portability between different JRE locales is an issue when accented characters are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
 <p>When using JDBC methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included in the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.

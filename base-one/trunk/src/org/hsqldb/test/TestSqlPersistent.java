@@ -82,6 +82,7 @@ public class TestSqlPersistent extends TestCase {
         Object  stringValue        = null;
         Object  integerValue       = null;
         Object  arrayValue         = null;
+        Object  bytearrayValue     = null;
         Object  stringValueResult  = null;
         Object  integerValueResult = null;
         Object  arrayValueResult   = null;
@@ -114,6 +115,9 @@ public class TestSqlPersistent extends TestCase {
                 new Double(Double.NEGATIVE_INFINITY),
                 new Double(Double.POSITIVE_INFINITY)
             };
+            bytearrayValue = new byte[] {
+                1, 2, 3, 4, 5, 6,
+            };
 
             // String as Object
             ps.setInt(1, 1);
@@ -139,8 +143,19 @@ public class TestSqlPersistent extends TestCase {
             ps.setCharacterStream(
                 2, new java.io.StringReader("Array Type Object 3"), 19);
 
-//            ps.setObject(3, arrayValue, Types.OTHER); should work too
+            // ps.setObject(3, arrayValue, Types.OTHER); should work too
             ps.setObject(3, arrayValue);
+            ps.execute();
+
+            // byte arrray as object
+            ps.setInt(1, 3);
+            ps.setString(2, "byte Array Type Object 3");
+            ps.setCharacterStream(
+                2, new java.io.StringReader("byte Array Type Object 3"), 19);
+
+            // ps.setObject(3, bytearrayValue); will fail
+            // must use this to indicate we are inserting into an OTHER column
+            ps.setObject(3, bytearrayValue, Types.OTHER);
             ps.execute();
 
             ResultSet rs =
@@ -174,7 +189,7 @@ public class TestSqlPersistent extends TestCase {
 
             System.out.println();
 
-            // uncomment next block if using JAVA 2
+            // JAVA 2 specific
             // as character stream via a Reader
             Reader re = rs.getCharacterStream(2);
 
@@ -200,8 +215,34 @@ public class TestSqlPersistent extends TestCase {
             String   castStringValue      = (String) stringValueResult;
             Integer  castIntegerValue     = (Integer) integerValueResult;
             Double[] castDoubleArrayValue = (Double[]) arrayValueResult;
+
+            {
+                sqlString = "DELETE FROM PREFERENCE WHERE user_id = ?";
+
+                PreparedStatement st =
+                    cConnection.prepareStatement(sqlString);
+
+                st.setString(1, "2");
+
+                int ret = st.executeUpdate();
+
+                // here, ret is equal to 1, that is expected
+                //conn.commit(); // not needed, as far as AUTO_COMMIT is set to TRUE
+                st.close();
+
+                st = cConnection.prepareStatement(
+                    "SELECT user_id FROM PREFERENCE WHERE user_id=?");
+
+                st.setString(1, "2");
+
+                rs = st.executeQuery();
+
+                while (rs.next()) {
+                    System.out.println(rs.getString(1));
+                }
+            }
         } catch (SQLException e) {
-            message = e.getMessage();
+            System.out.println(e.getMessage());
         } catch (IOException e1) {}
 
         boolean success = stringValue.equals(stringValueResult)

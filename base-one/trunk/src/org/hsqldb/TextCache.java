@@ -53,6 +53,7 @@ class TextCache extends org.hsqldb.Cache {
     protected boolean                  readOnly;
     protected TextDatabaseRowInput     in;
     protected boolean                  ignoreFirst;
+    protected String                   ignoredFirst = NL;
 
     private class TextSource {
 
@@ -295,9 +296,9 @@ class TextCache extends org.hsqldb.Cache {
             iFreePos = (int) rFile.length();
 
             if ((iFreePos == 0) && ignoreFirst) {
-                rFile.write(NL.getBytes());
+                rFile.write(ignoredFirst.getBytes());
 
-                iFreePos = NL.length();
+                iFreePos = ignoredFirst.length();
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
@@ -367,7 +368,10 @@ class TextCache extends org.hsqldb.Cache {
         }
     }
 
-    void free(Row r, int pos, int length) throws SQLException {
+    void free(CachedRow r) throws SQLException {
+
+        int pos    = r.iPos;
+        int length = r.storageSize;
 
         //-- Change to blank line:
         StringBuffer blank = new StringBuffer(length);
@@ -390,7 +394,7 @@ class TextCache extends org.hsqldb.Cache {
         remove(r);
     }
 
-    protected int getStorageSize(Row r) throws SQLException {
+    protected void setStorageSize(CachedRow r) throws SQLException {
 
         int size;
 
@@ -402,12 +406,12 @@ class TextCache extends org.hsqldb.Cache {
             throw (Trace.error(Trace.FILE_IO_ERROR, e + ""));
         }
 
-        return (size);
+        r.storageSize = size;
     }
 
-    protected Row makeRow(int pos, Table t) throws SQLException {
+    protected CachedRow makeRow(int pos, Table t) throws SQLException {
 
-        Row r = null;
+        CachedRow r = null;
 
         try {
             StringBuffer buffer   = new StringBuffer(80);
@@ -435,8 +439,14 @@ class TextCache extends org.hsqldb.Cache {
                     if (c == '\n') {
                         buffer.append('\n');
 
-                        //-- Ignore blanks and first line.
-                        if (!blank && (!ignoreFirst || (pos != 0))) {
+                        //-- Store first line.
+                        if (ignoreFirst && pos == 0) {
+                            ignoredFirst = buffer.toString();
+                            blank        = true;
+                        }
+
+                        //-- Ignore blanks
+                        if (!blank) {
                             complete = true;
 
                             break;
@@ -474,8 +484,14 @@ class TextCache extends org.hsqldb.Cache {
 
                         buffer.append('\n');
 
-                        //-- Ignore blanks and first line.
-                        if (!blank && (!ignoreFirst || (pos != 0))) {
+                        //-- Store first line.
+                        if (ignoreFirst && pos == 0) {
+                            ignoredFirst = buffer.toString();
+                            blank        = true;
+                        }
+
+                        //-- Ignore blanks.
+                        if (!blank) {
                             complete = true;
 
                             break;
@@ -505,7 +521,7 @@ class TextCache extends org.hsqldb.Cache {
             if (complete) {
                 in.setSource(buffer.toString(), pos);
 
-                r = new Row(t, in);
+                r = new CachedRow(t, in);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -516,7 +532,7 @@ class TextCache extends org.hsqldb.Cache {
         return (r);
     }
 
-    protected void saveRow(Row r) throws IOException, SQLException {
+    protected void saveRow(CachedRow r) throws IOException, SQLException {
 
         rFile.seek(r.iPos);
         r.write(out);

@@ -12,15 +12,18 @@
 usage:
    ant -help          display ant help screen
    ant help           display this message
-   ant jar            build the hsqldb.jar file in the /lib directory
-   ant jarmain        build the hsqldbmain.jar file in the /lib directory
-   ant jartest        build the hsqldbtest.jar file in the /lib directory
-   ant clean          delete the /classes directory created by other ant tasks
+   ant jar            build the default hsqldb.jar 
+   ant jarmain        build the hsqldbmain.jar (no utilities)
+   ant jarmin         build the hsqldbmin.jar (no servers)
+   ant jartest        build the hsqldbtest.jar (default plus test classes)
+   ant clean          delete the /classes directory created by ant tasks
    ant cleanall       same as clean but delete the jar files as well
    ant javadoc        create javadoc for the distribution package
 
-   hsqldb.jar     : dirstibution jar      hsqldbmain.jar  : no util classes
-   hsqldbtest.jar : all including tests
+   hsqldb.jar     : default dirstibution jar      
+   hsqldbmain.jar : no utility programs
+   hsqldbmin.jar  : no utility or server programs
+   hsqldbtest.jar : all including test classes
 
    the script detects the JDK in use and builds compatible jars
    no Swing based util classes are generated with JDK 1.1.x
@@ -74,6 +77,7 @@ example:
                     ${src}/org/hsqldb/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlProperties.java
                     ${src}/org/hsqldb/BinaryServerRowOutput.java
+                    ${src}/org/hsqldb/util/JDBCTypes.java
                     ${src}/org/hsqldb/util/TransferDb.java
                     ${src}/org/hsqldb/util/TransferHelper.java
                     ${src}/org/hsqldb/util/TransferSQLText.java
@@ -92,6 +96,7 @@ example:
                     ${src}/org/hsqldb/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlProperties.java
                     ${src}/org/hsqldb/BinaryServerRowOutput.java
+                    ${src}/org/hsqldb/util/JDBCTypes.java
                     ${src}/org/hsqldb/util/TransferDb.java
                     ${src}/org/hsqldb/util/TransferHelper.java
                     ${src}/org/hsqldb/util/TransferSQLText.java
@@ -110,6 +115,7 @@ example:
                     ${src}/org/hsqldb/jdbcStatement.java
                     ${src}/org/hsqldb/HsqlProperties.java
                     ${src}/org/hsqldb/BinaryServerRowOutput.java
+                    ${src}/org/hsqldb/util/JDBCTypes.java
                     ${src}/org/hsqldb/util/TransferDb.java
                     ${src}/org/hsqldb/util/TransferHelper.java
                     ${src}/org/hsqldb/util/TransferSQLText.java
@@ -118,22 +124,17 @@ example:
 	</target>
 
 
-	<target name="util" depends="prepare">
-      <javac srcdir="${src}/org/hsqldb/util"
+	<target name="lib" depends="codeswitcher">
+      <javac srcdir="${src}/org/hsqldb/lib"
              destdir="classes"
 				 debug="${build.debug}"
 				 optimize="${build.optimize}"
 	   >
-         <exclude name="*Swing.java"/>
+         <exclude name="HsqlDateTime.java"/>
       </javac>
-      <copy todir="classes/org/hsqldb/util">
-      <fileset dir="${src}/org/hsqldb/util">
-         <include name="hsqldb.gif"/>
-      </fileset>
-    </copy>
 	</target>
 
-   <target name="classes12" depends="prepare" if="ant.java.iscjava12">
+   <target name="classes12" depends="lib" if="ant.java.iscjava12">
       <javac srcdir="${src}"
              destdir="classes"
 				 debug="${build.debug}"
@@ -146,7 +147,7 @@ example:
       </javac>
    </target>
 
-   <target name="classes14" depends="prepare" if="ant.java.iscjava14">
+   <target name="classes14" depends="lib" if="ant.java.iscjava14">
       <javac srcdir="${src}"
              destdir="classes"
 				 debug="${build.debug}"
@@ -159,7 +160,7 @@ example:
       </javac>
    </target>
 
-	<target name="classes" depends="switchtojdk11,switchtojdk12,switchtojdk14,util,classes12,classes14">
+	<target name="classes" depends="switchtojdk11,switchtojdk12,switchtojdk14,classes12,classes14">
       <javac srcdir="${src}"
              destdir="classes"
 				 debug="${build.debug}"
@@ -178,6 +179,24 @@ example:
       </javac>
 	</target>
 
+	<target name="util" depends="classes">
+      <javac srcdir="${src}/org/hsqldb/util"
+             destdir="classes"
+				 debug="${build.debug}"
+				 optimize="${build.optimize}"
+	   >
+         <classpath>
+            <pathelement location="lib"/>
+         </classpath>
+         <exclude name="*Swing.java"/>
+      </javac>
+      <copy todir="classes/org/hsqldb/util">
+      <fileset dir="${src}/org/hsqldb/util">
+         <include name="hsqldb.gif"/>
+      </fileset>
+    </copy>
+	</target>
+
    <target name="test" depends="classes">
       <javac srcdir="${src}"
              destdir="classes"
@@ -189,6 +208,7 @@ example:
             <pathelement location="lib/dbunit.jar"/>
          </classpath>
          <include name="org/hsqldb/test/*.java"/>
+         <exclude name="org/hsqldb/test/TestSqlPersistent.java"/>
          <exclude name="org/hsqldb/sample/*.java"/>
       </javac>
    </target>
@@ -197,7 +217,7 @@ example:
 		<jar jarfile="lib/hsqldbtest.jar"
              basedir="classes"
          >
-         <exclude name="org/hsqldb/sample/*.class"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
       </jar>
 	</target>
 
@@ -205,10 +225,32 @@ example:
 		<jar jarfile="lib/hsqldbmain.jar"
              basedir="classes"
          >
-         <exclude name="org/hsqldb/util/*.class"/>
-         <exclude name="org/hsqldb/test/*.class"/>
-         <exclude name="org/hsqldb/sample/*.class"/>
+         <exclude name="org/hsqldb/util/*.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
       </jar>
+	</target>
+
+	<target name="jarmin" depends="classes">
+		<jar jarfile="lib/hsqldbmin.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/util/*.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="hsqlServlet.class"/>
+         <exclude name="org/hsqldb/Servlet.class"/>
+         <exclude name="org/hsqldb/HsqlServerFactory.class"/>
+         <exclude name="org/hsqldb/HsqlServerProperties.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
+         <exclude name="org/hsqldb/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbcDataSourceFactory.class"/>
+         <exclude name="org/hsqldb/Server.class"/>
+         <exclude name="org/hsqldb/ServerConnection.class"/>
+         <exclude name="org/hsqldb/WebServer.class"/>
+         <exclude name="org/hsqldb/WebServerConnection.class"/>
+       </jar>
 	</target>
 
 	<target name="jar" depends="classes,util">

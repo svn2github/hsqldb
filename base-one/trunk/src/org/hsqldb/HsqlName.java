@@ -182,4 +182,8 @@ class HsqlName {
             return false;
         }
     }
+
+    public boolean isReservedName() {
+        return isReservedName(name);
+    }
 }

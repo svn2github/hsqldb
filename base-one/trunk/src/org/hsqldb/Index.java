@@ -71,6 +71,7 @@ import java.sql.SQLException;
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
 // a number of changes to support this feature
+// tony_lai@users 20020820 - patch 595052 by tlai@users - better error message
 
 /**
  * Index class declaration
@@ -80,7 +81,14 @@ import java.sql.SQLException;
  */
 class Index {
 
+    // types of index
+    static final int MEMORY_INDEX  = 0;
+    static final int DISK_INDEX    = 1;
+    static final int POINTER_INDEX = 2;
+
+    // fields
     private HsqlName   indexName;
+    private Table      table;
     private int        iFields;
     private int        iColumn[];
     private int        iType[];
@@ -89,6 +97,7 @@ class Index {
     private Node       root;
     private int        iColumn_0, iType_0;    // just for tuning
     private static int iNeedCleanUp;
+    private boolean    cleanUp;
 
     /**
      * Constructor declaration
@@ -99,10 +108,12 @@ class Index {
      * @param type
      * @param unique
      */
-    Index(HsqlName name, int column[], int type[], boolean unique,
-            int visibleColumns) {
+    Index(HsqlName name, Table table, int column[], int type[],
+            boolean unique, int visibleColumns) {
 
         indexName           = name;
+        this.table          = table;
+        cleanUp             = table.isCached();    // fredt - see if isIndexCached() can do
         iFields             = column.length;
         iColumn             = column;
         iType               = type;
@@ -252,7 +263,11 @@ class Index {
 
             compare = compareRow(data, nData);
 
-            Trace.check(compare != 0, Trace.VIOLATION_OF_UNIQUE_INDEX);
+// tony.lai@users - patch 595052
+            if (compare == 0) {
+                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
+                                  indexName.name);
+            }
 
             way = compare < 0;
             x   = n;
@@ -263,6 +278,7 @@ class Index {
         balance(x, way);
     }
 
+// fredt - only used by text tables
     Node insertUncached(Node i) throws SQLException {
 
         Object  data[]  = i.getData();
@@ -296,8 +312,14 @@ class Index {
             }
 
             way = (compare < 0);
+
+// fredt
+/*
             n   = (way) ? x.nLeft
                         : x.nRight;
+*/
+            n = (way) ? x.getLeft()
+                      : x.getRightPointer();
         }
 
         balance(x, way);
@@ -361,7 +383,7 @@ class Index {
                 return;
             }
 
-            way = from(x);
+            way = x.from();
             x   = x.getParent();
         }
     }
@@ -465,7 +487,7 @@ class Index {
             x = d;
         }
 
-        boolean way = from(x);
+        boolean way = x.from();
 
         replace(x, n);
 
@@ -541,7 +563,7 @@ class Index {
                     }
             }
 
-            way = from(x);
+            way = x.from();
             n   = x.getParent();
         }
     }
@@ -740,14 +762,12 @@ class Index {
      */
     Node next(Node x) throws SQLException {
 
-        // if(x==null) {
-        // return null;
-        // }
-        if ((++iNeedCleanUp & 127) == 0) {
+        if (x == null) {
+            return null;
+        }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            //x.rData.cleanUpCache();
-            x.getRow().getTable().cleanUp();
+        if (cleanUp && (++iNeedCleanUp & 127) == 0) {
+            table.cleanUp();
         }
 
         Node r = x.getRight();
@@ -819,7 +839,7 @@ class Index {
                 n.setParent(null);
             }
         } else {
-            set(x.getParent(), from(x), n);
+            set(x.getParent(), x.from(), n);
         }
     }
 
@@ -843,36 +863,6 @@ class Index {
 
         if (n != null) {
             n.setParent(x);
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param x
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private boolean from(Node x) throws SQLException {
-
-        if (x.equals(root)) {
-            return true;
-        }
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(x.getParent() != null);
-        }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        Node parent = x.getParent();
-
-        if (parent.iLeft != Node.NO_POS) {
-            return (x.getKey() == parent.iLeft);
-        } else {
-            return x.equals(parent.getLeft());
         }
     }
 
@@ -912,7 +902,7 @@ class Index {
     /**
      * This method is used for finding foreign key references.
      *
-     * If finds a row by comparing the values set in a[] and mapping to b[].
+     * It finds a row by comparing the values set in a[] and mapping to b[].
      * a[] contains only the column values which correspond to the columns
      * of the index. It does not necessarily cover
      * all the columns of the index, only the first a.length columns.

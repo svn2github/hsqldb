@@ -118,16 +118,21 @@ class Column {
     private static Hashtable hTypes;
 
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
-    static final int TYPES[] = {
-        Types.BIT, Types.TINYINT, Types.BIGINT, Types.LONGVARBINARY,
-        Types.VARBINARY, Types.BINARY, Types.LONGVARCHAR, Types.CHAR,
-        Types.NUMERIC, Types.DECIMAL, Types.INTEGER, Types.SMALLINT,
-        Types.FLOAT, Types.REAL, Types.DOUBLE, Types.VARCHAR, Types.DATE,
-        Types.TIME, Types.TIMESTAMP, Types.OTHER
+    static final int numericTypes[] = {
+        Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
+        Types.NUMERIC, Types.DECIMAL, Types.FLOAT, Types.REAL, Types.DOUBLE
+    };
+    static final int otherTypes[] = {
+        Types.BIT, Types.LONGVARBINARY, Types.VARBINARY, Types.BINARY,
+        Types.LONGVARCHAR, Types.CHAR, Types.VARCHAR, Types.DATE, Types.TIME,
+        Types.TIMESTAMP, Types.OTHER
+    };
+    static final int[][] typesArray = {
+        Column.numericTypes, Column.otherTypes
     };
 
     // DDL name, size, scale, null, identity and default values
-    // all variables are final but not declared so because of a bug in
+    // most variables are final but not declared so because of a bug in
     // JDK 1.1.8 compiler
     HsqlName        columnName;
     private int     colType;
@@ -142,53 +147,56 @@ class Column {
     private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
 
     static {
-        hTypes = new Hashtable();
+        hTypes = new Hashtable(67, 1);
 
-        addTypes(Types.INTEGER, "INTEGER", "int", "java.lang.Integer");
-        addTypes(Types.INTEGER, "INT", "IDENTITY", null);
-        addTypes(Types.DOUBLE, "DOUBLE", "double", "java.lang.Double");
-        addType(Types.FLOAT, "FLOAT");                       // this is a Double
-        addType(Types.REAL, "REAL");                         // fredt - this is a Double as of 1.7.0
-        addTypes(Types.VARCHAR, "VARCHAR", "java.lang.String", null);
-        addTypes(Types.CHAR, "CHAR", "CHARACTER", null);
-        addType(Types.LONGVARCHAR, "LONGVARCHAR");
-
-        // for ignorecase data types, the 'original' type name is lost
-        addType(VARCHAR_IGNORECASE, "VARCHAR_IGNORECASE");
-        addTypes(Types.DATE, "DATE", "java.sql.Date", null);
-        addTypes(Types.TIME, "TIME", "java.sql.Time", null);
-
-        // DATETIME is for compatibility with MS SQL 7
-        addTypes(Types.TIMESTAMP, "TIMESTAMP", "java.sql.Timestamp",
-                 "DATETIME");
-        addTypes(Types.DECIMAL, "DECIMAL", "java.math.BigDecimal", null);
-        addType(Types.NUMERIC, "NUMERIC");
-        addTypes(Types.BIT, "BIT", "java.lang.Boolean", "boolean");
-        addTypes(Types.TINYINT, "TINYINT", "java.lang.Byte", "byte");
-        addTypes(Types.SMALLINT, "SMALLINT", "java.lang.Short", "short");
-        addTypes(Types.BIGINT, "BIGINT", "java.lang.Long", "long");
-        addTypes(Types.BINARY, "BINARY", "byte[]", null);    // maybe better "[B"
-        addType(Types.VARBINARY, "VARBINARY");
-        addType(Types.LONGVARBINARY, "LONGVARBINARY");
-        addTypes(Types.OTHER, "OTHER", "java.lang.Object", "OBJECT");
-
-// boucherb@users 20020306 - handle calling void methods
-        addTypes(Types.NULL, "NULL", "java.lang.Void", "void");
-    }
-
-    private static void addTypes(int type, String name, String n2,
-                                 String n3) {
-
-        addType(type, name);
-        addType(type, n2);
-        addType(type, n3);
-    }
-
-    private static void addType(int type, String name) {
-
-        if (name != null) {
-            hTypes.put(name, new Integer(type));
-        }
+        hTypes.put("INTEGER", new Integer(Types.INTEGER));
+        hTypes.put("INT", new Integer(Types.INTEGER));
+        hTypes.put("int", new Integer(Types.INTEGER));
+        hTypes.put("java.lang.Integer", new Integer(Types.INTEGER));
+        hTypes.put("IDENTITY", new Integer(Types.INTEGER));
+        hTypes.put("DOUBLE", new Integer(Types.DOUBLE));
+        hTypes.put("double", new Integer(Types.DOUBLE));
+        hTypes.put("java.lang.Double", new Integer(Types.DOUBLE));
+        hTypes.put("FLOAT", new Integer(Types.FLOAT));
+        hTypes.put("REAL", new Integer(Types.REAL));
+        hTypes.put("VARCHAR", new Integer(Types.VARCHAR));
+        hTypes.put("java.lang.String", new Integer(Types.VARCHAR));
+        hTypes.put("CHAR", new Integer(Types.CHAR));
+        hTypes.put("CHARACTER", new Integer(Types.CHAR));
+        hTypes.put("LONGVARCHAR", new Integer(Types.LONGVARCHAR));
+        hTypes.put("VARCHAR_IGNORECASE", new Integer(VARCHAR_IGNORECASE));
+        hTypes.put("DATE", new Integer(Types.DATE));
+        hTypes.put("java.sql.Date", new Integer(Types.DATE));
+        hTypes.put("TIME", new Integer(Types.TIME));
+        hTypes.put("java.sql.Time", new Integer(Types.TIME));
+        hTypes.put("TIMESTAMP", new Integer(Types.TIMESTAMP));
+        hTypes.put("java.sql.Timestamp", new Integer(Types.TIMESTAMP));
+        hTypes.put("DATETIME", new Integer(Types.TIMESTAMP));
+        hTypes.put("DECIMAL", new Integer(Types.DECIMAL));
+        hTypes.put("java.math.BigDecimal", new Integer(Types.DECIMAL));
+        hTypes.put("NUMERIC", new Integer(Types.NUMERIC));
+        hTypes.put("BIT", new Integer(Types.BIT));
+        hTypes.put("boolean", new Integer(Types.BIT));
+        hTypes.put("java.lang.Boolean", new Integer(Types.BIT));
+        hTypes.put("TINYINT", new Integer(Types.TINYINT));
+        hTypes.put("byte", new Integer(Types.TINYINT));
+        hTypes.put("java.lang.Byte", new Integer(Types.TINYINT));
+        hTypes.put("SMALLINT", new Integer(Types.SMALLINT));
+        hTypes.put("short", new Integer(Types.SMALLINT));
+        hTypes.put("java.lang.Short", new Integer(Types.SMALLINT));
+        hTypes.put("BIGINT", new Integer(Types.BIGINT));
+        hTypes.put("long", new Integer(Types.BIGINT));
+        hTypes.put("java.lang.Long", new Integer(Types.BIGINT));
+        hTypes.put("BINARY", new Integer(Types.BINARY));
+        hTypes.put("B[", new Integer(Types.BINARY));
+        hTypes.put("VARBINARY", new Integer(Types.VARBINARY));
+        hTypes.put("LONGVARBINARY", new Integer(Types.LONGVARBINARY));
+        hTypes.put("OTHER", new Integer(Types.OTHER));
+        hTypes.put("OBJECT", new Integer(Types.OTHER));
+        hTypes.put("java.lang.Object", new Integer(Types.OTHER));
+        hTypes.put("NULL", new Integer(Types.NULL));
+        hTypes.put("void", new Integer(Types.NULL));
+        hTypes.put("java.lang.Void", new Integer(Types.NULL));
     }
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
@@ -237,12 +245,28 @@ class Column {
     }
 
     /**
+     *  Set nullable.
+     *
+     */
+    void setNullable(boolean value) {
+        isNullable = value;
+    }
+
+    /**
      *  Is this single column primary key of the table.
      *
      * @return boolean
      */
     boolean isPrimaryKey() {
         return isPrimaryKey;
+    }
+
+    /**
+     *  Set primary key.
+     *
+     */
+    void setPrimaryKey(boolean value) {
+        isPrimaryKey = value;
     }
 
     /**
@@ -958,7 +982,7 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                i = ((ByteArray) a).compareTo((ByteArray) b);
+                i = ByteArray.compareTo((byte[]) a, (byte[]) b);
                 break;
 
             case Types.OTHER :
@@ -1034,7 +1058,13 @@ class Column {
                             throw new java.lang.NumberFormatException();
                         }
 
+                        // fredt@users - no narrowing for Long values
                         return o;
+                    }
+
+                    // fredt@users - direct conversion for JDBC setObject()
+                    if (o instanceof java.lang.Byte) {
+                        return new Integer(((Number) o).intValue());
                     }
                     break;
 
@@ -1052,7 +1082,14 @@ class Column {
                             throw new java.lang.NumberFormatException();
                         }
 
+                        // fredt@users - no narrowing for Long values
                         return o;
+                    }
+
+                    // fredt@users - direct conversion for JDBC setObject()
+                    if (o instanceof java.lang.Byte
+                            || o instanceof java.lang.Short) {
+                        return new Integer(((Number) o).intValue());
                     }
                     break;
 
@@ -1073,6 +1110,7 @@ class Column {
                             throw new java.lang.NumberFormatException();
                         }
 
+                        // fredt@users - narroing is required for library function calls
                         return new Integer(((Number) o).intValue());
                     }
                     break;
@@ -1154,6 +1192,10 @@ class Column {
                     if (o instanceof java.lang.String) {
                         return o;
                     }
+
+                    if (o instanceof byte[]) {
+                        return ByteArray.toString((byte[]) o);
+                    }
                     break;
 
                 case Types.TIME :
@@ -1176,10 +1218,6 @@ class Column {
                 case Types.VARBINARY :
                 case Types.LONGVARBINARY :
                     if (o instanceof byte[]) {
-                        return new ByteArray((byte[]) o);
-                    }
-
-                    if (o instanceof ByteArray) {
                         return o;
                     }
                     break;
@@ -1261,10 +1299,10 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                return new ByteArray(ByteArray.HexToByteArray(s));
+                return ByteArray.hexToByteArray(s);
 
             case Types.OTHER :
-                return ByteArray.deserialize(ByteArray.HexToByteArray(s));
+                return ByteArray.deserialize(ByteArray.hexToByteArray(s));
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -1302,7 +1340,7 @@ class Column {
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
                 return StringConverter.toQuotedString(
-                    ((ByteArray) o).toString(), '\'', false);
+                    ByteArray.toString((byte[]) o), '\'', false);
 
             case Types.OTHER :
                 return StringConverter.toQuotedString(
@@ -1341,15 +1379,15 @@ class Column {
      *  expression.<br>
      *  A type is "wider" than the other if it can represent all its
      *  numeric values.<BR>
-     *  When BIGINT and DOUBLE types are  the
-     *  resulting type is DOUBLE<br>
      *  Types narrower than INTEGER (int) are promoted to
      *  INTEGER. The order is as follows<p>
      *
      *  INTEGER, BIGINT, DOUBLE, DECIMAL<p>
      *
-     *  TINYINT and SMALLINT types are promoted to INTEGER<br>
-     *  BIGINT and INTEGER return BIGINT<br>
+     *  TINYINT and SMALLINT in any combination return INTEGER<br>
+     *  INTEGER and INTEGER return BIGINT<br>
+     *  BIGINT and INTEGER return NUMERIC/DECIMAL<br>
+     *  BIGINT and BIGINT return NUMERIC/DECIMAL<br>
      *  DOUBLE and INTEGER return DOUBLE<br>
      *  DOUBLE and BIGINT return DOUBLE<br>
      *  NUMERIC/DECIMAL and any type returns NUMERIC/DECIMAL<br>

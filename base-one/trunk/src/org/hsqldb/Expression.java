@@ -227,7 +227,7 @@ class Expression {
 
         int len = v.size();
 
-        hList = new Hashtable(len);
+        hList = new Hashtable(len, 1);
 
         for (int i = 0; i < len; i++) {
             Object o = v.elementAt(i);
@@ -762,8 +762,10 @@ class Expression {
         isDistinctAggregate = type;
 
         if (iType == COUNT || iType == DIST_COUNT) {
-            iType = type ? DIST_COUNT
-                         : COUNT;
+            iType     = type ? DIST_COUNT
+                             : COUNT;
+            iDataType = type ? iDataType
+                             : Types.INTEGER;
         }
     }
 

@@ -103,7 +103,7 @@ class StringConverter {
      * @return
      * @throws SQLException
      */
-    public static byte[] hexToByte(String s) throws SQLException {
+    static byte[] hexToByte(String s) throws SQLException {
 
         int  l      = s.length() / 2;
         byte data[] = new byte[l];

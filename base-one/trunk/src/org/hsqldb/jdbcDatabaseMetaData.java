@@ -67,6 +67,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.StringUtil;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -190,7 +191,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not return any rows from
+     * Up to and including 1.7.1, HSQLDB does not return any rows from
      * <code>getProcedures</code>.  However,
      * <code>allProceduresAreCallable</code> always returns <code>true</code>.
      * This is simply meant to indicate that all users can call all stored
@@ -220,14 +221,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB will, by default, throw an exception
+     * Up to and including 1.7.1, HSQLDB will, by default, throw an exception
      * for any non-admin user calling <code>getTables</code>, while any
      * admin user can <CODE>SELECT</CODE> from any table.  As such, this
      * method always returns <code>true</code>.  However, if an admin user
      * grants <CODE>SELECT</CODE> access to <CODE>SYSTEM_TABLES</CODE> to
      * a non-admin user, then it is possible for that user to be denied
      * <CODE>SELECT</CODE> access to tables listed when he/she calls
-     * <code>getTables</code>.  This behaviour will be corrected in 1.7.1. <p>
+     * <code>getTables</code>.  This behaviour will be corrected in 1.7.2. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -292,10 +293,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, this is a synonym for
+     * Up to and including 1.7.1, this is a synonym for
      * {@link jdbcConnection#isReadOnly()} and does not report on
      * the global read-only state of the database.  This behaviour
-     * will be corrected in 1.7.1.
+     * will be corrected in 1.7.2.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -525,8 +526,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, do not rely on this information.
-     * This will be resolved and explained more clearly in 1.7.1.
+     * Up to and including HSQLDB 1.7.1, do not rely on this information.
+     * This will be resolved and explained more clearly in 1.7.2.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -552,7 +553,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB never uses a file for each table.
+     * Up to and including 1.7.1, HSQLDB never uses a file for each table.
      * This method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -819,7 +820,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // InterBase (iscdrv32.dll) returns ""
     }
 
-//fredt@users 20020429 - JavaDoc comment - in 1.7.0 there are keywords such
+//fredt@users 20020429 - JavaDoc comment - in 1.7.1 there are keywords such
 // as TEMP, TEXT, CACHED that are not SQL 92 keywords
 
     /**
@@ -866,7 +867,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return getList(Library.sNumeric);
+        return StringUtil.getList(Library.sNumeric, ",", "");
     }
 
     /**
@@ -882,7 +883,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return getList(Library.sString);
+        return StringUtil.getList(Library.sString, ",", "");
     }
 
     /**
@@ -898,7 +899,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return getList(Library.sSystem);
+        return StringUtil.getList(Library.sSystem, ",", "");
     }
 
     /**
@@ -913,7 +914,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return getList(Library.sTimeDate);
+        return StringUtil.getList(Library.sTimeDate, ",", "");
     }
 
     /**
@@ -930,7 +931,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB uses the "\" character to escape
+     * Up to and including 1.7.1, HSQLDB uses the "\" character to escape
      * wildcard characters.
      * </span>
      * <!-- end release-specific documentation -->
@@ -956,7 +957,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support using any
+     * Up to and including 1.7.1, HSQLDB does not support using any
      * "extra" characters in unquoted identifier names; this method always
      * returns the empty String.
      * </span>
@@ -986,7 +987,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * From 1.7.0, HSQLDB support this
+     * From 1.7.0, HSQLDB support this type of
      * <code>ALTER TABLE</code> statement; this method always
      * returns <code>true</code>.
      * </span>
@@ -1013,7 +1014,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * From 1.7.0, HSQLDB support this
+     * From 1.7.0, HSQLDB support this type of
      * <code>ALTER TABLE</code> statement; this method always
      * returns <code>true</code>.
      * </span>
@@ -1386,7 +1387,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support getting multiple
+     * Up to and including 1.7.1, HSQLDB does not support getting multiple
      * <code>ResultSet</code> objects from a single call to the
      * method <code>execute</code>; this method
      * always returns <code>false</code>. <p>
@@ -1468,7 +1469,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ODBC
+     * up to and including 1.7.1, HSQLDB does not support the ODBC
      * Minimum SQL grammar; this method
      * always returns <code>false</code>.
      * </span>
@@ -1494,7 +1495,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ODBC
+     * up to and including 1.7.1, HSQLDB does not support the ODBC
      * Core SQL grammar; this method
      * always returns <code>false</code>.
      * </span>
@@ -1520,7 +1521,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ODBC
+     * up to and including 1.7.1, HSQLDB does not support the ODBC
      * Extended SQL grammar; this method
      * always returns <code>false</code>.
      * </span>
@@ -1547,7 +1548,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ANSI92 entry
+     * up to and including 1.7.1, HSQLDB does not support the ANSI92 entry
      * level SQL grammar; this method
      * always returns <code>false</code>.
      * </span>
@@ -1574,7 +1575,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ANSI92
+     * up to and including 1.7.1, HSQLDB does not support the ANSI92
      * intermediate SQL grammar; this method always returns
      * <code>false</code>.
      * </span>
@@ -1601,7 +1602,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the ANSI92
+     * up to and including 1.7.1, HSQLDB does not support the ANSI92
      * full SQL grammar; this method always returns
      * <code>false</code>.
      * </span>
@@ -1628,7 +1629,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * up to and including 1.7.0, HSQLDB does not support the SQL
+     * up to and including 1.7.1, HSQLDB does not support the SQL
      * Integrity Enhancement Facility; this method always returns
      * <code>false</code>.
      * </span>
@@ -1680,7 +1681,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB  does not support full nested outer
+     * Up to and including 1.7.1, HSQLDB  does not support full nested outer
      * joins; this method always returns <code>false</code>. <p>
      *
      * This behaviour may change in a future release.
@@ -1709,7 +1710,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB support the LEFT OUTER join syntax;
+     * Up to and including 1.7.1, HSQLDB support the LEFT OUTER join syntax;
      * this method always returns <code>true</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1734,7 +1735,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns the empty String.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1759,7 +1760,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support declaration of
+     * Up to and including 1.7.1, HSQLDB does not support declaration of
      * procedures in SQL; this method always returns the empty String.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1784,7 +1785,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns the empty String.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1810,7 +1811,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1837,7 +1838,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns the empty String.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1863,7 +1864,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1889,7 +1890,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1915,7 +1916,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1941,7 +1942,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1967,7 +1968,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schemas;
+     * Up to and including 1.7.1, HSQLDB does not support schemas;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -1994,7 +1995,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2020,7 +2021,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2046,7 +2047,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2072,7 +2073,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2098,7 +2099,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2125,7 +2126,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2151,7 +2152,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2177,7 +2178,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support explicit locking;
+     * Up to and including 1.7.1, HSQLDB does not support explicit locking;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2203,7 +2204,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports calling public static
+     * Up to and including 1.7.1, HSQLDB supports calling public static
      * Java methods in the context of SQL Stored Procedures; this method
      * always returns <code>true</code>.
      * </span>
@@ -2413,7 +2414,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support keeping
+     * Up to and including 1.7.1, HSQLDB does not support keeping
      * cursors open across commits;
      * this method always returns <code>false</code>.
      * </span>
@@ -2441,7 +2442,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support keeping
+     * Up to and including 1.7.1, HSQLDB does not support keeping
      * cursors open across rollbacks;
      * this method always returns <code>false</code>.
      * </span>
@@ -2862,7 +2863,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support schema names;
+     * Up to and including 1.7.1, HSQLDB does not support schema names;
      * this method always returns <code>0</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2921,7 +2922,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support catalogs;
+     * Up to and including 1.7.1, HSQLDB does not support catalogs;
      * this method always returns <code>0</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2950,7 +2951,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not impose a "known" limit;
+     * Up to and including 1.7.1, HSQLDB does not impose a "known" limit;
      * this method always returns <code>0</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -2974,7 +2975,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * Up to and including 1.7.0, {@link #getMaxRowSize} always returns
+     * Up to and including 1.7.1, {@link #getMaxRowSize} always returns
      * 0, indicating that the maximum row size is unknown or has no limit.
      * This applies to the above types as well, so this method always returns
      * <code>true</code>.
@@ -3373,11 +3374,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an empty result, despite
+     * Up to and including 1.7.1, HSQLDB produces an empty result, despite
      * the fact that stored procedures are available.  Also, the three
      * "reserved for future use" columns in  the result are labeled
      * NUM_INPUT_PARAMS, NUM_OUTPUT_PARAMS, NUM_RESULT_SETS in anticipation
-     * of future improvements (scheduled for 1.7.1).
+     * of future improvements (scheduled for 1.7.2).
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -3454,7 +3455,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an empty result, despite
+     * Up to and including 1.7.1, HSQLDB produces an empty result, despite
      * the fact that stored procedures are available.
      * </span>
      * <!-- end release-specific documentation -->
@@ -3556,7 +3557,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             where = "TABLE_NAME LIKE '" + tableNamePattern + "'";
         }
 
-        // todo: types pattern
+        if (types != null) {
+            if (where == null) {
+                where = "";
+            } else {
+                where += " AND ";
+            }
+
+            where += " TABLE_TYPE IN (";
+            where += StringUtil.getList(types, ",", "'");
+            where += ')';
+        }
+
         return executeSelect(table, where);
     }
 
@@ -3632,8 +3644,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB reports only one type: "TABLE",
-     * although "VIEW" and "LOCAL TEMPORARY" types are supported in 1.7.0.
+     * From 1.7.1, HSQLDB reports: "TABLE", "VIEW" and "GLOBAL TEMPORARY" types.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -3770,7 +3781,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an empty result, despite
+     * Up to and including 1.7.1, HSQLDB produces an empty result, despite
      * the fact that it is possible to specify DML privileges.  However,
      * column-level privileges are not supported.  So, if column privileges
      * were reported, they would be the privileges inherited from each
@@ -3847,7 +3858,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an incomplete and possibly
+     * Up to and including 1.7.1, HSQLDB produces an incomplete and possibly
      * incorrect result: for each table, it lists the user "sa" as the
      * grantor, rather than the grantee, and lists IS_GRANTABLE as YES for
      * each row.  It does not list rights for any other users.  Since the
@@ -3928,7 +3939,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 returns the columns for a user-defined primary key or
+     * HSQLDB 1.7.1 returns the columns for a user-defined primary key or
      * unique index if one exists. Otherwise it returns an empty result.<br>
      * <code>scope</code> and <code>nullable</code> parameters are not
      * taken into account.<p>
@@ -3936,7 +3947,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * quotes, an all-uppercase name must be specified when calling this
      * method. Otherwise, the name must be specified in the exact case of
      * the column definition in the database.
-     * inclomplete result.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -3997,7 +4007,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an empty result.
+     * Up to and including 1.7.1, HSQLDB produces an empty result as no
+     * columns are automatically updated when any value in a row changes.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -4416,7 +4427,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces a usable but partially
+     * Up to and including 1.7.1, HSQLDB produces a usable but partially
      * inclomplete result.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4474,7 +4485,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces a usable but partially
+     * Up to and including 1.7.1, HSQLDB produces a usable but partially
      * inclomplete result.  Cardinality is never listed, and the approximate
      * parameter is always ignored.  No statistics rows are generated.<p>
      *
@@ -4591,7 +4602,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4623,7 +4634,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4655,7 +4666,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4687,7 +4698,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4720,7 +4731,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4753,7 +4764,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4787,7 +4798,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4822,7 +4833,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4855,7 +4866,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * result sets; this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4887,7 +4898,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support batch updates;
+     * Up to and including 1.7.1, HSQLDB does not support batch updates;
      * this method always returns <code>false</code>.
      * </span>
      * <!-- end release-specific documentation -->
@@ -4943,7 +4954,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB produces an empty result.
+     * Up to and including 1.7.1, HSQLDB produces an empty result.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -5005,8 +5016,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Beginning with 1.7.0, this SQL feature is supported. Always returns
-     * true.<p>
+     * Beginning with 1.7.1, this SQL feature is supported. Always returns
+     * false, as savepoint access is not through JDBC.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5029,7 +5040,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // on build variables.  The patch is available on Patch 546431.
         // boucherb@users 20020426
         // return true; // if built with jdbcSavepoint, else false?.
-        return true;
+        // fredt - until we use the savepoint JDBC patch return false as
+        // JDBC specs say so (contrary to the impression given in JavaDoc)
+        return false;
     }
 
 
@@ -5045,7 +5058,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * 1.7.0 always returns false. <p>
+     * 1.7.1 always returns false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5081,7 +5094,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * 1.7.0 always returns false. <p>
+     * 1.7.1 always returns false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5118,7 +5131,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * 1.7.0 always returns false. <p>
+     * 1.7.1 always returns false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5177,7 +5190,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5243,7 +5256,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5339,7 +5352,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5393,7 +5406,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * 1.7.0 always returns false. <p>
+     * 1.7.1 always returns false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5433,7 +5446,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5472,7 +5485,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5510,7 +5523,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5545,7 +5558,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5581,7 +5594,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5616,7 +5629,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, this JDBC feature is not supported. <p>
+     * Up to and including 1.7.1, this JDBC feature is not supported. <p>
      *
      * Calling this method throws a SQLException stating that the function
      * is not supported.
@@ -5652,7 +5665,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB updates the LOB directly. This
+     * Up to and including 1.7.1, HSQLDB updates the LOB directly. This
      * method return false.<p>
      *
      * </span>
@@ -5687,7 +5700,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support statement pooling.
+     * Up to and including 1.7.1, HSQLDB does not support statement pooling.
      * This method returns false. <p>
      *
      * </span>
@@ -5744,34 +5757,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         return cConnection.execute("SELECT * FROM " + table);
-    }
-
-    /**
-     * Builds a CSV list from the specified array of array of String
-     * objects. <p>
-     *
-     * This method is used to build the lists returned by the getXXXFunctions
-     * methods.
-     *
-     * @param s the array of array of String objects from which to build a list
-     * @return a CSV list
-     */
-    private static String getList(String[][] s) {
-
-        StringBuffer b = new StringBuffer(s.length * 16);
-
-        for (int i = 0; i < s.length; i++) {
-            b.append(s[i][0]);
-            b.append(',');
-
-            // fredt@users 20020225 - patch 1.7.0 - don't return Java function names
-            //          b.append(s[i][1]);
-            //          b.append(',');
-        }
-
-        b.setLength(b.length() - 1);
-
-        return b.toString();
     }
 
     /**

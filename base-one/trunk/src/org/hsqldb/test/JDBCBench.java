@@ -69,6 +69,8 @@ class JDBCBench {
 
     /* main program,    creates a 1-tps database:  i.e. 1 branch, 10 tellers,...
      *                    runs one TPC BM B transaction
+     * example command line:
+     * -driver  org.hsqldb.jdbcDriver -url jdbc:hsqldb:/hsql/test33 -user sa -clients 20
      */
     public static void main(String[] Args) {
 
@@ -227,7 +229,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -241,7 +243,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = true;
@@ -253,7 +255,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -267,7 +269,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = false;
@@ -279,7 +281,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -293,7 +295,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
 
             transactions  = true;
@@ -305,7 +307,7 @@ class JDBCBench {
                                           password);
 
                 Client.start();
-                vClient.add(Client);
+                vClient.addElement(Client);
             }
 
             /*
@@ -319,7 +321,7 @@ class JDBCBench {
                 Client.join();
             }
 
-            vClient.clear();
+            vClient.removeAllElements();
             reportDone();
         } catch (Exception E) {
             System.out.println(E.getMessage());

@@ -282,7 +282,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(ba);
     }
 
-    protected void writeBinary(ByteArray o,
+    protected void writeBinary(byte[] o,
                                int t) throws IOException, SQLException {
 
         switch (t) {
@@ -291,7 +291,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
             default :
-                writeByteArray(o.byteValue());
+                writeByteArray(o);
         }
     }
 

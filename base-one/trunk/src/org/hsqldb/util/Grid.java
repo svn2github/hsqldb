@@ -70,15 +70,13 @@ package org.hsqldb.util;
 import java.awt.*;
 import java.util.Vector;
 
+// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
+
 /**
- * Class declaration
- *
  *
  * @version 1.7.0
  */
-
-// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
-public class Grid extends Panel {
+class Grid extends Panel {
 
     // drawing
     private Dimension   dMinimum;

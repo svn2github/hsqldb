@@ -97,6 +97,7 @@ import org.hsqldb.lib.StringInputStream;
 // JDK 1.4, and added JDBC3 methods and docs
 // boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
+// tony_lai@users 20020820 - patch 595073 by tlai@users - duplicated exception msg
 
 /**
  * Implements both the <CODE>java.sql.ResultSet</CODE> and
@@ -449,7 +450,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
  * <CODE>ResultSet</CODE> objects return completely accurate
  * <CODE>ResultSetMetaData</CODE> that fulfills all of the
  * JDBC <CODE>ResultSetMetaData</CODE> contracts under all circumstances.
- * However, up to and including 1.7.0, HSQLDB does not make such guarantees
+ * However, up to and including 1.7.1, HSQLDB does not make such guarantees
  * under all conditions. See the discussion at {@link #getMetaData}.
  * (boucherb@users)<p>
 */
@@ -504,7 +505,20 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * Does {@link #getColumnName(int) getColumnName} return the
      * column name (true) or label (false)?
      */
-    private static boolean get_column_name = true;
+    private boolean getColumnName = true;
+
+    /**
+     * if false, various unsupported ResultSetMetaData methods return the
+     * true/false values they used to return in version 1.61.
+     * if true they throw an SQLException
+     */
+    private boolean strictMetaData = false;
+
+    /**
+     * Properties for the connectin
+     *
+     */
+    private HsqlProperties connProperties;
 
     //------------------------ Package Attributes --------------------------
 
@@ -909,7 +923,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB returns correct values for columns
+     * Up to and including 1.7.1, HSQLDB returns correct values for columns
      * of type <CODE>BINARY</CODE>, <CODE>CHAR</CODE> and their variations.
      * For other types, it returns the <CODE>byte[]</CODE> for the
      * <CODE>String</CODE> representation of the value. <p>
@@ -940,8 +954,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
 
         x = getColumnInType(--columnIndex, Types.BINARY);
 
-        return x == null ? null
-                         : ((ByteArray) x).byteValue();
+        return (byte[]) x;
     }
 
     /**
@@ -1368,7 +1381,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB ignores the scale parameter. <p>
+     * Up to and including 1.7.1, HSQLDB ignores the scale parameter. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1608,7 +1621,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not produce
+     * Up to and including 1.7.1, HSQLDB does not produce
      * <code>SQLWarning</code> objects. This method always returns
      * <code>null</code>. <p>
      *
@@ -1618,7 +1631,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * @return the first <code>SQLWarning</code> object reported or
      *    <code>null</code> if there are none <p>
      *
-     * Up to and including 1.7.0, HSQLDB always returns null. <p>
+     * Up to and including 1.7.1, HSQLDB always returns null. <p>
      * @exception SQLException if a database access error occurs or this
      *    method is called on a closed result set
      */
@@ -1643,7 +1656,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not produce
+     * Up to and including 1.7.1, HSQLDB does not produce
      * <CODE>SQLWarning</CODE> objects, so this method is
      * simply ignored. <p>
      *
@@ -1685,7 +1698,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature.  <p>
+     * HSQLDB 1.7.1 does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1741,7 +1754,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      *
      * <B>Warning:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not generate accurate
+     * Up to and including 1.7.1, HSQLDB does not generate accurate
      * <CODE>ResultSetMetaData</CODE>.  Below are the points to consider: <p>
      *
      * <ol>
@@ -1837,26 +1850,12 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // use checknull because getColumnInType is not used
         checkNull(o);
 
-        if (o == null) {
-            return null;
-        }
-
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // all objects are stored in Result as the original java object,
 // except byte[] which is wrapped in ByteArray to allow comparison.
 // Deserialization of OTHER is now handled in BinaryServerRowInput
 // when reconstructing a Result from a bytestream.
-/*
-        if (rResult.colType[column] == Types.OTHER) {
-            o = ((ByteArray) o).deserialize();
-        } else
-*/
-        if (o instanceof ByteArray) {
-            o = ((ByteArray) o).byteValue();
-        }
-
-        return o == null ? null
-                         : o;
+        return o;
     }
 
     /**
@@ -2640,6 +2639,10 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     //---------------------------------------------------------------------
     // Properties
     //---------------------------------------------------------------------
+// fredt@users - 20020902 - patch 1.7.1 - fetch size and direction
+// We now interpret fetch size and direction as irrelevent to HSQLDB because
+// the result set is built and returned as one whole data structure.
+// Exceptions thrown are adjusted to mimimal and the javadoc updated.
 
     /**
      * <!-- start generic documentation -->
@@ -2655,12 +2658,12 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 supports only <code>FETCH_FORWARD</code> results. <p>
-     *
-     * Calling this method with any value other than
-     * <code>FETCH_FORWARD</code> throws a <CODE>SQLException</CODE>,
-     * stating that the function is not supported. <p>
-     *
+     * HSQLDB 1.7.1 builds and returns result sets as a whole, so this
+     * method does nothing, apart from the case mandated by the JDBC standard
+     * below where
+     * an SQLException is thrown with result sets of TYPE_FORWARD_ONLY and
+     * fetch directions other than FETCH_FORWARD.
+     * <p>
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -2682,7 +2685,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
             Trace.trace(direction);
         }
 
-        if (direction != FETCH_FORWARD) {
+        if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
             throw getNotSupported();
         }
     }
@@ -2697,7 +2700,8 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 supports only <code>FETCH_FORWARD</code> results. <p>
+     * HSQLDB 1.7.1 returns result sets as a whole, so the value returned
+     * by this method has no real meaning. <p>
      *
      * Calling this method always returns <code>FETCH_FORWARD</code>. <p>
      *
@@ -2730,6 +2734,9 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <B>HSQLDB-Specific Information:</B> <p>
+     * This method does nothing in HSQLDB as the result set is
+     * built and returned completely as a whole.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -2757,6 +2764,9 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <B>HSQLDB-Specific Information:</B> <p>
+     * As HSQLDB builds and returns the whole result set as a whole, the
+     * value returned (1) has no significance.
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -2788,7 +2798,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support and thus
+     * Up to and including 1.7.1, HSQLDB does not support and thus
      * never returns <code>ResultSet.TYPE_SCROLL_SENSITIVE</code><p>
      * </span>
      * <!-- end release-specific documentation -->
@@ -2820,7 +2830,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports only and thus always
+     * Up to and including 1.7.1, HSQLDB supports only and thus always
      * returns <code>CONCUR_READ_ONLY</code>.<p>
      *
      * </span>
@@ -2856,7 +2866,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * This method always returns false. <p>
@@ -2891,7 +2901,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * This method always returns false. <p>
@@ -2927,7 +2937,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * This method always returns false. <p>
@@ -2964,7 +2974,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -2999,7 +3009,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3036,7 +3046,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3074,7 +3084,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3110,7 +3120,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3147,7 +3157,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3184,7 +3194,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3221,7 +3231,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3259,7 +3269,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3297,7 +3307,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3334,7 +3344,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3371,7 +3381,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3409,7 +3419,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3448,7 +3458,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3486,7 +3496,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3525,7 +3535,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3564,7 +3574,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3603,7 +3613,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3645,7 +3655,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3682,7 +3692,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3713,7 +3723,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3746,7 +3756,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3778,7 +3788,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3810,7 +3820,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3842,7 +3852,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3874,7 +3884,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3906,7 +3916,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3940,7 +3950,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -3973,7 +3983,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4007,7 +4017,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4039,7 +4049,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4072,7 +4082,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4106,7 +4116,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4139,7 +4149,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4173,7 +4183,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4207,7 +4217,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4243,7 +4253,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4280,7 +4290,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4311,7 +4321,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4347,7 +4357,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4381,7 +4391,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4431,7 +4441,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4470,7 +4480,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4517,7 +4527,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -4551,7 +4561,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support
+     * Up to and including 1.7.1, HSQLDB does not support
      * {@link #moveToInsertRow()} so the current row is never strayed from.
      * Consequentially, this request is simply ignored. <p>
      *
@@ -4615,7 +4625,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4656,7 +4666,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4691,7 +4701,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4726,7 +4736,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4761,7 +4771,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4800,7 +4810,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4838,7 +4848,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4867,7 +4877,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4897,7 +4907,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4927,7 +4937,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4961,7 +4971,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5012,7 +5022,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5059,7 +5069,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5112,7 +5122,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5159,7 +5169,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5208,7 +5218,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5249,7 +5259,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5288,7 +5298,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support this feature.  <p>
+     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -5328,7 +5338,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5367,7 +5377,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5406,7 +5416,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5445,7 +5455,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5484,7 +5494,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5523,7 +5533,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5562,7 +5572,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5601,7 +5611,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support updateable
+     * Up to and including 1.7.1, HSQLDB does not support updateable
      * results or this data type. <p>
      *
      * Calling this method always throws a SQLException, stating that
@@ -5664,8 +5674,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature.  <p>
+     * HSQLDB 1.7.1 does not support this feature.  <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -5704,7 +5717,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // MISSING:
         // checkColumn(column); ?
         // boucherb@users 20020413
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return false;
     }
 
     /**
@@ -5716,8 +5733,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature.  <p>
+     * HSQLDB 1.7.1 does not support this feature.  <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -5739,7 +5759,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // MISSING:
         // checkColumn(column); ?
         // boucherb@users 20020413
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return true;
     }
 
     /**
@@ -5752,8 +5776,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature.  <p>
+     * HSQLDB 1.7.1 does not support this feature.  <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -5784,7 +5811,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // boucherb@users 20020413
 // fredt@users - OTHER can be used in a WHERE clause but we don't know if
 // RS column is a DB column or a computed value
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return true;
     }
 
     /**
@@ -5835,6 +5866,9 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Always returns <code>columnNullableUnknown</code>. <p>
      *
      * See discussion at: {@link #getMetaData} <p>
@@ -5874,7 +5908,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // MISSING:
         // checkColumn(column); ?
         // boucherb@users 20020413
-        return columnNullableUnknown;
+        if (strictMetaData) {
+            return columnNullableUnknown;
+        }
+
+        return columnNullable;
     }
 
     /**
@@ -5887,12 +5925,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature.  <p>
-     *
-     * Calling this method always throws a <CODE>SQLException</CODE>,
-     * stating that the function is not supported. <p>
-     *
-     * See discussion at: {@link #getMetaData} <p>
+     * HSQLDB 1.7.1 adds support for this feature.  <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5907,16 +5940,17 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
             Trace.trace();
         }
 
-        // FIXME:
-        // This is just dead wrong.
-        // We should throw or chech the data type
-        // anything that's a number: true?
-        // anything that's not: false?
-        // boucherb@users 20020413
-        // MISSING:
-        // checkColumn(column); ?
-        // boucherb@users 20020413
-        throw getNotSupported();
+        checkColumn(column);
+
+        int type = rResult.colType[column - 1];
+
+        for (int i = 0; i < Column.numericTypes.length; i++) {
+            if (type == Column.numericTypes[i]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -6036,7 +6070,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
 
         checkColumn(column);
 
-        if (get_column_name) {
+        if (getColumnName) {
             return rResult.sName[--column];
         } else {
             return rResult.sLabel[--column];
@@ -6052,7 +6086,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDD does not support schema names. <p>
+     * Up to and including 1.7.1, HSQLDD does not support schema names. <p>
      *
      * This method always returns an empty <CODE>String</CODE>.<p>
      *
@@ -6178,7 +6212,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDD does not support catalogs. <p>
+     * Up to and including 1.7.1, HSQLDD does not support catalogs. <p>
      *
      * This method always returns an empty <CODE>String</CODE>.<p>
      *
@@ -6279,8 +6313,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -6312,7 +6349,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // checkColumn(column); ?
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return false;
     }
 
     /**
@@ -6325,8 +6366,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -6356,7 +6400,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // checkColumn(column); ?
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return true;
     }
 
     /**
@@ -6369,8 +6417,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
+     * The return value from this method depends on whether the
+     * <code>jdbc.strict_md</code>
+     * connection property is specified as true. When this property is true:
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
      *
@@ -6400,7 +6451,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         // checkColumn(column); ?
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
-        throw getNotSupported();
+        if (strictMetaData) {
+            throw getNotSupported();
+        }
+
+        return true;
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -6418,7 +6473,7 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -6585,14 +6640,24 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * represents
      * @exception SQLException when the supplied Result is of type org.hsqldb.Result.ERROR
      */
-    jdbcResultSet(Result r) throws SQLException {
+    jdbcResultSet(Result r, HsqlProperties props) throws SQLException {
+
+        connProperties = props;
+
+        if (props != null) {
+            getColumnName = props.isPropertyTrue("jdbc.get_column_name",
+                                                 true);
+            strictMetaData = props.isPropertyTrue("jdbc.strict_md", false);
+        }
 
         if (r.iMode == Result.UPDATECOUNT) {
             iUpdateCount = r.iUpdateCount;
         } else if (r.iMode == Result.ERROR) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            throw (Trace.getError(r.errorCode, r.sError));
+// tony_lai@users 20020820 - patch 595073
+//            throw (Trace.getError(r.errorCode, r.sError));
+            throw (Trace.getError(r.sError, r.errorCode));
         } else {
             iUpdateCount = -1;
             rResult      = r;
@@ -6625,16 +6690,5 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     boolean isResult() {
         return rResult == null ? false
                                : true;
-    }
-
-// fredt@users 20020222 - patch 489917 by jytou@users - made optional
-
-    /**
-     * A one-shot static call (latch) to initially set the behaviour of
-     * all result metadata, w.r.t. {@link #getColumnName(int) getColumnName}.
-     * @param value If true, report column name, else columm label
-     */
-    static void setGetColumnName(boolean value) {
-        get_column_name = value;
     }
 }

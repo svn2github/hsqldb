@@ -96,8 +96,10 @@ public class TestCascade {
                 "sa", "");
 
             insertData(con);
+            System.out.println("should print 12");
             printNumberOfCARecords(con);
             deleteXBRecord(con);
+            System.out.println("should print 9");
             printNumberOfCARecords(con);
             con.close();
         } catch (Exception e) {

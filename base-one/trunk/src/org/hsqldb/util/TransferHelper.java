@@ -40,28 +40,31 @@ import java.util.*;
  * @author sqlbob@users
  * @version 1.7.0
  */
-public class TransferHelper {
+class TransferHelper {
 
     protected TransferDb db;
     protected Traceable  tracer;
     protected String     sSchema;
+    protected JDBCTypes  JDBCT;
     private String       quote;
 
-    public TransferHelper() {
+    TransferHelper() {
 
         db     = null;
         tracer = null;
         quote  = "\'";
+        JDBCT  = new JDBCTypes();
     }
 
-    public TransferHelper(TransferDb database, Traceable t, String q) {
+    TransferHelper(TransferDb database, Traceable t, String q) {
 
         db     = database;
         tracer = t;
         quote  = q;
+        JDBCT  = new JDBCTypes();
     }
 
-    public void set(TransferDb database, Traceable t, String q) {
+    void set(TransferDb database, Traceable t, String q) {
 
         db     = database;
         tracer = t;
@@ -112,41 +115,6 @@ public class TransferHelper {
 
     Hashtable getSupportedTypes() {
 
-        Hashtable JDBCtypes = new Hashtable();
-
-//#ifdef JAVA2
-        JDBCtypes.put(new Integer(java.sql.Types.ARRAY), "ARRAY");
-        JDBCtypes.put(new Integer(java.sql.Types.BLOB), "BLOB");
-        JDBCtypes.put(new Integer(java.sql.Types.CLOB), "CLOB");
-        JDBCtypes.put(new Integer(java.sql.Types.DISTINCT), "DISTINCT");
-        JDBCtypes.put(new Integer(java.sql.Types.JAVA_OBJECT), "JAVA_OBJECT");
-        JDBCtypes.put(new Integer(java.sql.Types.REF), "REF");
-        JDBCtypes.put(new Integer(java.sql.Types.STRUCT), "STRUCT");
-
-//#endif JAVA2
-        JDBCtypes.put(new Integer(java.sql.Types.BIGINT), "BIGINT");
-        JDBCtypes.put(new Integer(java.sql.Types.BINARY), "BINARY");
-        JDBCtypes.put(new Integer(java.sql.Types.BIT), "BIT");
-        JDBCtypes.put(new Integer(java.sql.Types.CHAR), "CHAR");
-        JDBCtypes.put(new Integer(java.sql.Types.DATE), "DATE");
-        JDBCtypes.put(new Integer(java.sql.Types.DECIMAL), "DECIMAL");
-        JDBCtypes.put(new Integer(java.sql.Types.DOUBLE), "DOUBLE");
-        JDBCtypes.put(new Integer(java.sql.Types.FLOAT), "FLOAT");
-        JDBCtypes.put(new Integer(java.sql.Types.INTEGER), "INTEGER");
-        JDBCtypes.put(new Integer(java.sql.Types.LONGVARBINARY),
-                      "LONGVARBINARY");
-        JDBCtypes.put(new Integer(java.sql.Types.LONGVARCHAR), "LONGVARCHAR");
-        JDBCtypes.put(new Integer(java.sql.Types.NULL), "NULL");
-        JDBCtypes.put(new Integer(java.sql.Types.NUMERIC), "NUMERIC");
-        JDBCtypes.put(new Integer(java.sql.Types.OTHER), "OTHER");
-        JDBCtypes.put(new Integer(java.sql.Types.REAL), "REAL");
-        JDBCtypes.put(new Integer(java.sql.Types.SMALLINT), "SMALLINT");
-        JDBCtypes.put(new Integer(java.sql.Types.TIME), "TIME");
-        JDBCtypes.put(new Integer(java.sql.Types.TIMESTAMP), "TIMESTAMP");
-        JDBCtypes.put(new Integer(java.sql.Types.TINYINT), "TINYINT");
-        JDBCtypes.put(new Integer(java.sql.Types.VARBINARY), "VARBINARY");
-        JDBCtypes.put(new Integer(java.sql.Types.VARCHAR), "VARCHAR");
-
         Hashtable hTypes = new Hashtable();
 
         if (db != null) {
@@ -157,14 +125,19 @@ public class TransferHelper {
                     Integer intobj = new Integer(result.getShort(2));
 
                     if (hTypes.get(intobj) == null) {
-                        hTypes.put(intobj, JDBCtypes.get(intobj));
+                        try {
+                            hTypes.put(intobj,
+                                       JDBCT.toString(result.getShort(2)));
+                        } catch (Exception e) {}
                     }
                 }
 
                 result.close();
             } catch (SQLException e) {}
-        } else {
-            hTypes = JDBCtypes;
+        }
+
+        if (hTypes.isEmpty()) {
+            hTypes = JDBCT.getHashtable();
         }
 
         return hTypes;

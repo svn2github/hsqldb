@@ -71,31 +71,28 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
 
 /**
- * In-memory representation of a database row object with storage independent
- * methods for serialization and de-serialization.
+ * In-memory representation of a database row object
  *
- * @version 1.7.0
+ * @version 1.7.1
  */
 class Row {
 
-    static final int NO_POS = -1;
-    private Object   oData[];
-    private Table    tTable;
+    protected Object oData[];
+    protected Node   nPrimaryNode;
 
-// only required for cached table
-    static int iCurrentAccess = 0;
+    static Row newRow(Table t, Object o[]) throws SQLException {
 
-// todo: use int iLastChecked;
-    int iLastAccess;
-    Row rLast, rNext;
-    int iPos = NO_POS;
+        if (t.isCached()) {
+            return new CachedRow(t, o);
+        } else {
+            return new Row(t, o);
+        }
+    }
 
-    // fredt - only set for rows stored in cached and text tables
-    int             storageSize;
-    private boolean bChanged;
-    private Node    nPrimaryNode;
+    Row() {}
 
     /**
      *  Constructor declaration
@@ -106,48 +103,18 @@ class Row {
      */
     Row(Table t, Object o[]) throws SQLException {
 
-        tTable = t;
+        int index = t.getIndexCount();
 
-        int index = tTable.getIndexCount();
-
-        nPrimaryNode = new Node(this, 0);
+        nPrimaryNode = Node.newNode(this, 0, t);
 
         Node n = nPrimaryNode;
 
         for (int i = 1; i < index; i++) {
-            n.nNext = new Node(this, i);
+            n.nNext = Node.newNode(this, i, t);
             n       = n.nNext;
         }
 
-        oData       = o;
-        iLastAccess = iCurrentAccess++;
-        storageSize = tTable.putRow(this);
-        bChanged    = true;
-    }
-
-    void setPos(int pos) {
-
-        iPos = pos;
-
-        Node n = nPrimaryNode;
-
-        while (n != null) {
-            n.setKey(pos);
-
-            n = n.nNext;
-        }
-    }
-
-    /**
-     *  Method declaration
-     */
-    void changed() {
-        bChanged    = true;
-        iLastAccess = iCurrentAccess++;
-    }
-
-    boolean hasChanged() {
-        return (bChanged);
+        oData = o;
     }
 
     void setPrimaryNode(Node primary) {
@@ -155,10 +122,10 @@ class Row {
     }
 
     /**
-     *  Method declaration
+     * Get the node for a given index.
      *
      * @param  index
-     * @return
+     * @return the node
      */
     Node getNode(int index) {
 
@@ -167,8 +134,6 @@ class Row {
         while (index-- > 0) {
             n = n.nNext;
         }
-
-        iLastAccess = iCurrentAccess++;
 
         return n;
     }
@@ -187,8 +152,6 @@ class Row {
             n = n.nNext;
         }
 
-        iLastAccess = iCurrentAccess++;
-
         return (n);
     }
 
@@ -198,99 +161,7 @@ class Row {
      * @return
      */
     Object[] getData() {
-
-        iLastAccess = iCurrentAccess++;
-
         return oData;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    Table getTable() {
-        return tTable;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  before
-     */
-    void insert(Row before) {
-
-        Record.memoryRecords++;
-
-        if (before == null) {
-            rNext = this;
-            rLast = this;
-        } else {
-            rNext        = before;
-            rLast        = before.rLast;
-            before.rLast = this;
-            rLast.rNext  = this;
-        }
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// method renamed
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    boolean isRoot() throws SQLException {
-
-        Node n = nPrimaryNode;
-
-        while (n != null) {
-            if (Trace.DOASSERT) {
-                Trace.doAssert(n.getBalance() != -2);
-            }
-
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
-            if (n.isRoot()) {
-                return true;
-            }
-
-            n = n.nNext;
-        }
-
-        return false;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  out            Description of the Parameter
-     * @throws  IOException
-     * @throws  SQLException
-     */
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
-
-        out.writeSize(storageSize);
-
-        if (tTable.isIndexCached()) {
-            Node n = nPrimaryNode;
-
-            while (n != null) {
-                n.write(out);
-
-                n = n.nNext;
-            }
-        }
-
-        out.writeData(oData, tTable);
-        out.writePos(iPos);
-
-        bChanged = false;
     }
 
     /**
@@ -302,77 +173,7 @@ class Row {
 
         Record.memoryRecords++;
 
-        bChanged = false;
-
-        tTable.removeRow(this);
-
         oData        = null;
-        rNext        = null;
-        rLast        = null;
-        tTable       = null;
         nPrimaryNode = null;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
-    void free() throws SQLException {
-
-        rLast.rNext = rNext;
-        rNext.rLast = rLast;
-
-        if (rNext == this) {
-            rNext = rLast = null;
-        }
-    }
-
-    /**
-     *  constructor when read from cache
-     *
-     * @param  t
-     * @param  in
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
-     */
-    Row(Table t,
-            DatabaseRowInputInterface in) throws IOException, SQLException {
-
-        tTable      = t;
-        iPos        = in.getPos();
-        storageSize = in.getSize();
-
-        int index = tTable.getIndexCount();
-
-        if (tTable.isIndexCached()) {
-            nPrimaryNode = new Node(this, in, 0);
-
-            Node n = nPrimaryNode;
-
-            for (int i = 1; i < index; i++) {
-                n.nNext = new Node(this, in, i);
-                n       = n.nNext;
-            }
-
-            oData = in.readData(tTable.getColumnTypes());
-
-            Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
-        } else {
-            nPrimaryNode = new Node(this, 0);
-
-            Node n = nPrimaryNode;
-
-            nPrimaryNode.setNextKey(in.getNextPos());
-
-            for (int i = 1; i < index; i++) {
-                n.nNext = new Node(this, i);
-                n       = n.nNext;
-            }
-
-            oData = in.readData(tTable.getColumnTypes());
-        }
-
-        iLastAccess = iCurrentAccess++;
     }
 }

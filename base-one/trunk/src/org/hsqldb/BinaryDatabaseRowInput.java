@@ -145,25 +145,24 @@ implements org.hsqldb.DatabaseRowInputInterface {
         } else {
 
             // hsql - old format
-            o = ByteArray.HexToByteArray(binarystring);
+            o = ByteArray.hexToByteArray(binarystring);
         }
 
         return ByteArray.deserialize(o);
     }
 
-    protected ByteArray readBinary(int type)
-    throws IOException, SQLException {
+    protected byte[] readBinary(int type) throws IOException, SQLException {
 
         String hexstring = readString();
 
         if (hexstring.equals("**")) {
 
             // hsql - new format
-            return new ByteArray(readByteArray());
+            return readByteArray();
         } else {
 
             // hsql - old format
-            return new ByteArray(ByteArray.HexToByteArray(hexstring));
+            return ByteArray.hexToByteArray(hexstring);
         }
     }
 }

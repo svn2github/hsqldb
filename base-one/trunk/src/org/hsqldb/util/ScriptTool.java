@@ -40,6 +40,7 @@ import java.io.*;
 import java.util.*;
 
 // fredt@users 20011220 - patch 481239 by yfl@users - new class
+// jrmaher@users 20020710 - support for batch mode
 
 /**
  * Script tool - command line tool to read in sql script and execute it.
@@ -52,6 +53,10 @@ public class ScriptTool {
     private static Properties pProperties = new Properties();
     private Connection        cConn;
     private Statement         sStatement;
+    private boolean           BATCH = true;
+    private String            EKW   = new String("go");
+    private boolean           EOF   = false;
+    private int               ln    = 0;
 
     /**
      * Main method
@@ -66,7 +71,20 @@ public class ScriptTool {
 
             if (p.equals("-?")) {
                 printHelp();
+                System.exit(0);
             }
+        }
+
+        ScriptTool tool = new ScriptTool();
+
+        tool.execute(arg);
+        System.exit(0);
+    }    // end main
+
+    public void execute(String arg[]) {
+
+        for (int i = 0; i < arg.length; i++) {
+            String p = arg[i];
 
             if (p.charAt(0) == '-') {
                 pProperties.put(p.substring(1), arg[i + 1]);
@@ -75,31 +93,31 @@ public class ScriptTool {
             }
         }
 
-        ScriptTool tool = new ScriptTool();
+        ln  = 0;
+        EOF = false;
 
-        tool.execute();
-    }
-
-    public void execute() {
-
-        Properties p        = pProperties;
-        String     driver = p.getProperty("driver", "org.hsqldb.jdbcDriver");
-        String     url      = p.getProperty("url", "jdbc:hsqldb:");
-        String     database = p.getProperty("database", "test");
-        String     user     = p.getProperty("user", "sa");
-        String     password = p.getProperty("password", "");
-        String     script   = p.getProperty("script", "import.sql");
+        BufferedReader in       = null;
+        Properties     p        = pProperties;
+        String driver = p.getProperty("driver", "org.hsqldb.jdbcDriver");
+        String         url      = p.getProperty("url", "jdbc:hsqldb:");
+        String         database = p.getProperty("database", "test");
+        String         user     = p.getProperty("user", "sa");
+        String         password = p.getProperty("password", "");
+        String         script   = p.getProperty("script", "st.sql");
         boolean log = p.getProperty("log", "false").equalsIgnoreCase("true");
+
+        BATCH = p.getProperty("batch", "true").equalsIgnoreCase("true");
 
         try {
             if (log) {
-                trace("driver  =" + driver);
-                trace("url     =" + url);
-                trace("database=" + database);
-                trace("user    =" + user);
-                trace("password=" + password);
-                trace("script  =" + script);
-                trace("log     =" + log);
+                trace("driver   = " + driver);
+                trace("url      = " + url);
+                trace("database = " + database);
+                trace("user     = " + user);
+                trace("password = " + password);
+                trace("script   = " + script);
+                trace("log      = " + log);
+                trace("batch    = " + BATCH);
                 jdbcSystem.setLogToSystem(true);
             }
 
@@ -107,40 +125,51 @@ public class ScriptTool {
             // http://java.sun.com/products/jdbc/jdbc-frequent.html;
             // Why doesn't calling class.forName() load my JDBC driver?
             // There is a bug in the JDK 1.1.x that can cause Class.forName() to fail.
-//            new org.hsqldb.jdbcDriver();
+            // new org.hsqldb.jdbcDriver();
             Class.forName(driver).newInstance();
 
             cConn = DriverManager.getConnection(url + database, user,
                                                 password);
+            in = new BufferedReader(new FileReader(script));
         } catch (Exception e) {
-            System.out.println("QueryTool.init: " + e.getMessage());
+            System.out.println("ScriptTool.init error: " + e.getMessage());
             e.printStackTrace();
         }
 
         try {
             sStatement = cConn.createStatement();
 
-            String sql = fileToString(script);
+            String sql;
 
-            if (log) {
-                trace("SQL : " + sql);
-            }
+            while ((sql = fileToString(in)) != null) {
+                if (sql.length() == 1) {
+                    continue;
+                }
 
-            sStatement.execute(sql);
+                if (log) {
+                    trace("SQL (" + ln + ") : "
+                          + sql.substring(0, sql.length() - 2));
+                }
 
-            ResultSet results     = sStatement.getResultSet();
-            int       updateCount = sStatement.getUpdateCount();
+                sStatement.execute(sql);
 
-            if (updateCount == -1) {
-                trace(toString(results));
-            } else {
-                trace("update count " + updateCount);
+                ResultSet results     = sStatement.getResultSet();
+                int       updateCount = sStatement.getUpdateCount();
+
+                if (updateCount == -1) {
+                    trace(toString(results));
+                } else {
+                    trace("update count " + updateCount);
+                }
             }
         } catch (SQLException e) {
-            System.out.println("SQL Error : " + e);
+            System.out.println("SQL Error at line " + ln + ": " + e);
         }
 
-        System.exit(0);
+        try {
+            cConn.close();
+            in.close();
+        } catch (Exception ce) {}
     }
 
     /**
@@ -185,15 +214,36 @@ public class ScriptTool {
     /**
      * Read file and convert it to string.
      */
-    private String fileToString(String filename) {
+    private String fileToString(BufferedReader in) {
+
+        if (EOF) {
+            return null;
+        }
+
+        EOF = true;
 
         StringBuffer a = new StringBuffer();
 
         try {
-            BufferedReader in = new BufferedReader(new FileReader(filename));
-            String         line;
+            String line;
 
             while ((line = in.readLine()) != null) {
+                ln = ln + 1;
+
+                if (BATCH) {
+                    if (line.startsWith("print ")) {
+                        trace("\n" + line.substring(5));
+
+                        continue;
+                    }
+
+                    if (line.equalsIgnoreCase(EKW)) {
+                        EOF = false;
+
+                        break;
+                    }
+                }
+
                 a.append(line);
                 a.append('\n');
             }
@@ -227,13 +277,13 @@ public class ScriptTool {
         System.out.println(
             "Usage: java ScriptTool [-options]\n"
             + "where options include:\n"
-            + "    -driver <classname>  name of the driver class\n"
-            + "    -url <name>          first part of the jdbc url\n"
-            + "    -database <name>     second part of the jdbc url\n"
-            + "    -user <name>         username used for connection\n"
-            + "    -password <name>     password for this user\n"
-            + "    -log <true/false>    write log to system out\n"
+            + "    -driver <classname>     name of the driver class\n"
+            + "    -url <name>             first part of the jdbc url\n"
+            + "    -database <name>        second part of the jdbc url\n"
+            + "    -user <name>            username used for connection\n"
+            + "    -password <name>        password for this user\n"
+            + "    -log <true/false>       write log to system out\n"
+            + "    -batch <true/false>     allow go/print pseudo statements\n"
             + "    -script <script file>   reads from script file\n");
-        System.exit(0);
     }
 }

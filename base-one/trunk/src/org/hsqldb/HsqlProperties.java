@@ -46,15 +46,29 @@ import java.util.Properties;
  */
 public class HsqlProperties {
 
-    protected final String fileName;
-    protected Properties   stringProps = new Properties();
+    protected String           fileName;
+    protected final Properties stringProps;;
 
     public HsqlProperties() {
-        fileName = null;
+        stringProps = new Properties();
+        fileName    = null;
     }
 
     public HsqlProperties(String name) {
+        stringProps = new Properties();
+        fileName    = name;
+    }
+
+    public HsqlProperties(Properties props) {
+        stringProps = props;
+    }
+
+    public void setFileName(String name) {
         fileName = name;
+    }
+
+    public String setProperty(String key, int value) {
+        return (String) stringProps.put(key, Integer.toString(value));
     }
 
     public String setProperty(String key, boolean value) {
@@ -92,12 +106,13 @@ public class HsqlProperties {
     }
 
     public boolean isPropertyTrue(String key) {
-        return isPropertyTrue(key, "false");
+        return isPropertyTrue(key, false);
     }
 
-    public boolean isPropertyTrue(String key, String defaultValue) {
+    public boolean isPropertyTrue(String key, boolean defaultValue) {
 
-        String value = stringProps.getProperty(key, defaultValue);
+        String value = stringProps.getProperty(key, defaultValue ? "true"
+                                                                 : "false");
 
         return Boolean.valueOf(value).booleanValue();
     }
@@ -113,7 +128,7 @@ public class HsqlProperties {
         for (int i = 0; i < arg.length - 1; i++) {
             String p = arg[i];
 
-            if ((p.charAt(0) == '-') &&!p.startsWith("-?")) {
+            if ((p.charAt(0) == '-') && (!p.startsWith("-?"))) {
                 props.setProperty(type + "." + p.substring(1), arg[i + 1]);
 
                 i++;
@@ -135,16 +150,35 @@ public class HsqlProperties {
     }
 
     public boolean checkFileExists() {
+
+        if (fileName == null || fileName.length() == 0) {
+            return false;
+        }
+
         return new File(fileName + ".properties").exists();
     }
 
     public void load() throws Exception {
 
-        File            f   = new File(fileName + ".properties");
-        FileInputStream fis = new FileInputStream(f);
+        if (fileName == null || fileName.length() == 0) {
+            throw new java.io.FileNotFoundException(
+                "properties name is null or empty");
+        }
 
-        stringProps.load(fis);
-        fis.close();
+        FileInputStream fis = null;
+
+        try {
+            File f = new File(fileName + ".properties");
+
+            fis = new FileInputStream(f);
+
+            stringProps.load(fis);
+            fis.close();
+        } finally {
+            if (fis != null) {
+                fis.close();
+            }
+        }
     }
 
     /**
@@ -154,8 +188,9 @@ public class HsqlProperties {
      */
     public void save() throws Exception {
 
-        if (fileName == null) {
-            throw new java.io.FileNotFoundException();
+        if (fileName == null || fileName.length() == 0) {
+            throw new java.io.FileNotFoundException(
+                "properties name is null or empty");
         }
 
         File f = new File(fileName + ".properties");

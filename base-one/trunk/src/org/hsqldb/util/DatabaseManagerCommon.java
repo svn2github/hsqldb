@@ -69,11 +69,13 @@ package org.hsqldb.util;
 
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.util.Vector;
 import java.util.Random;
 import java.io.*;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// nickferguson@users 20021005 - patch 1.7.1 - enhancements
 
 /**
  * Common code in Swing and AWT versions of DatabaseManager
@@ -282,30 +284,28 @@ class DatabaseManagerCommon {
 
     /**
      * Method declaration
-     *
-     *
+     * Redid this file to remove sizing requirements and to make it faster
+     * Speeded it up 10 fold.
      * @param file
-     *
      * @return
      */
     static String readFile(String file) {
 
         try {
-            FileReader   read     = new FileReader(file);
-            char         buffer[] = new char[1024];
-            StringBuffer b        = new StringBuffer();
+            FileReader     reader = new FileReader(file);
+            BufferedReader read   = new BufferedReader(reader);
+            StringBuffer   b      = new StringBuffer();
+            String         s      = null;
+            int            count  = 0;
 
-            while (true) {
-                int i = read.read(buffer, 0, 1024);
+            while ((s = read.readLine()) != null) {
+                count++;
 
-                if (i == -1) {
-                    break;
-                }
-
-                b.append(buffer, 0, i);
+                b.append(s);
             }
 
             read.close();
+            reader.close();
 
             return b.toString();
         } catch (IOException e) {

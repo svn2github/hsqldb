@@ -35,21 +35,21 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * Title:        Database Transfer Tool<br>
- * Description:<br>
- * Copyright:    Copyright (c) 2002<br>
- * Company:      INGENICO
- * @author Nicolas BAZIN
+ * Database Transfer Tool
+ * @author Nicolas BAZIN, INGENICO
  * @version 1.7.0
  */
-public class DataAccessPoint {
+class DataAccessPoint {
 
     Traceable      tracer;
     TransferHelper helper;
+    String         databaseToConvert;
 
     public DataAccessPoint() {
-        tracer = null;
-        helper = HelperFactory.getHelper("");
+
+        tracer            = null;
+        helper            = HelperFactory.getHelper("");
+        databaseToConvert = "";
     }
 
     public DataAccessPoint(Traceable t) {
@@ -58,6 +58,8 @@ public class DataAccessPoint {
         helper = HelperFactory.getHelper("");
 
         helper.set(null, t, "\'");
+
+        databaseToConvert = "";
     }
 
     boolean isConnected() {
@@ -78,11 +80,12 @@ public class DataAccessPoint {
         return false;
     }
 
-    ResultSet getData(String statement) throws DataAccessPointException {
+    TransferResultSet getData(String statement)
+    throws DataAccessPointException {
         return null;
     }
 
-    void putData(String statement, ResultSet r,
+    void putData(String statement, TransferResultSet r,
                  int iMaxRows) throws DataAccessPointException {}
 
     Vector getSchemas() throws DataAccessPointException {
@@ -98,6 +101,12 @@ public class DataAccessPoint {
     Vector getTables(String sCatalog,
                      String sSchemas[]) throws DataAccessPointException {
         return new Vector();
+    }
+
+    void getTableStructure(TransferTable SQLCommands,
+                           DataAccessPoint Dest)
+                           throws DataAccessPointException {
+        throw new DataAccessPointException("Nothing to Parse");
     }
 
     void close() throws DataAccessPointException {}

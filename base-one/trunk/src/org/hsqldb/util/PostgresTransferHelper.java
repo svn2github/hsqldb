@@ -33,23 +33,30 @@ package org.hsqldb.util;
 
 import java.sql.*;
 
+// fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer PostgresSQL
+// sqlbob@users 20020325 - patch 1.7.0 - reengineering
+
 /**
  * Conversions from PostgresSQL databases
  *
  * @author Nichola Bazin
  * @version 1.7.0
  */
+class PostgresTransferHelper extends TransferHelper {
 
-// fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer PostgresSQL
-// sqlbob@users 20020325 - patch 1.7.0 - reengineering
-public class PostgresTransferHelper extends TransferHelper {
+    private final int PostgreSQL = 0;
+    private final int HSQLDB     = 1;
+    String[][]        Funcs      = {
+        {
+            "now()", "\'now\'"
+        }
+    };
 
-    public PostgresTransferHelper() {
+    PostgresTransferHelper() {
         super();
     }
 
-    public PostgresTransferHelper(TransferDb database, Traceable t,
-                                  String q) {
+    PostgresTransferHelper(TransferDb database, Traceable t, String q) {
         super(database, t, q);
     }
 
@@ -71,19 +78,34 @@ public class PostgresTransferHelper extends TransferHelper {
         String SeqName   = new String("_" + columnDesc.getString(4) + "_seq");
         int    spaceleft = 31 - SeqName.length();
 
-        if (t.sDestTable.length() > spaceleft) {
-            SeqName = t.sDestTable.substring(0, spaceleft) + SeqName;
+        if (t.Stmts.sDestTable.length() > spaceleft) {
+            SeqName = t.Stmts.sDestTable.substring(0, spaceleft) + SeqName;
         } else {
-            SeqName = t.sDestTable + SeqName;
+            SeqName = t.Stmts.sDestTable + SeqName;
         }
 
         String CompareString = "nextval(\'\"" + SeqName + "\"\'";
 
-        if (columnType.indexOf(CompareString) > 0) {
+        if (columnType.indexOf(CompareString) >= 0) {
             /*
             ** We just found a increment
             */
             columnType = "SERIAL";
+        }
+
+        for (int Idx = 0; Idx < Funcs.length; Idx++) {
+            String PostgreSQL_func = Funcs[Idx][PostgreSQL];
+            int    iStartPos       = columnType.indexOf(PostgreSQL_func);
+
+            if (iStartPos >= 0) {
+                String NewColumnType = columnType.substring(0, iStartPos);
+
+                NewColumnType += Funcs[Idx][HSQLDB];
+                NewColumnType +=
+                    columnType.substring(iStartPos
+                                         + PostgreSQL_func.length());
+                columnType = NewColumnType;
+            }
         }
 
         return (columnType);
@@ -98,15 +120,30 @@ public class PostgresTransferHelper extends TransferHelper {
                                         + "_seq");
             int spaceleft = 31 - SeqName.length();
 
-            if (t.sDestTable.length() > spaceleft) {
-                SeqName = t.sDestTable.substring(0, spaceleft) + SeqName;
+            if (t.Stmts.sDestTable.length() > spaceleft) {
+                SeqName = t.Stmts.sDestTable.substring(0, spaceleft)
+                          + SeqName;
             } else {
-                SeqName = t.sDestTable + SeqName;
+                SeqName = t.Stmts.sDestTable + SeqName;
             }
 
             String DropSequence = "DROP SEQUENCE " + SeqName + ";";
 
-            t.sDestDrop += DropSequence;
+            t.Stmts.sDestDrop += DropSequence;
+        }
+
+        for (int Idx = 0; Idx < Funcs.length; Idx++) {
+            String HSQLDB_func = Funcs[Idx][HSQLDB];
+            int    iStartPos   = columnType.indexOf(HSQLDB_func);
+
+            if (iStartPos >= 0) {
+                String NewColumnType = columnType.substring(0, iStartPos);
+
+                NewColumnType += Funcs[Idx][PostgreSQL];
+                NewColumnType += columnType.substring(iStartPos
+                                                      + HSQLDB_func.length());
+                columnType = NewColumnType;
+            }
         }
 
         return (columnType);
@@ -123,7 +160,7 @@ public class PostgresTransferHelper extends TransferHelper {
 
         try {
             db.commit();
-            db.execute("VACUUM;");
+            db.execute("VACUUM ANALYZE");
         } catch (Exception e) {}
     }
 }

@@ -69,16 +69,16 @@ package org.hsqldb.util;
 
 import java.sql.*;
 
+// fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer Informix
+// sqlbob@users 20020325 - patch 1.7.0 - reengineering
+
 /**
  * Conversions from Informix databases
  *
  * @author Nichola Bazin
  * @version 1.7.0
  */
-
-// fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer Informix
-// sqlbob@users 20020325 - patch 1.7.0 - reengineering
-public class InformixTransferHelper extends TransferHelper {
+class InformixTransferHelper extends TransferHelper {
 
     public InformixTransferHelper() {
         super();

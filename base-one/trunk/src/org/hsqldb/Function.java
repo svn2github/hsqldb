@@ -68,8 +68,8 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
-import java.util.Vector;
 import java.lang.reflect.Method;
+import java.util.Hashtable;
 
 /**
  * Provides services to evaluate Java methods in the context of
@@ -77,18 +77,23 @@ import java.lang.reflect.Method;
  *
  * @version 1.7.0
  */
+
+// fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
+// fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
 class Function {
 
-    private Session    cSession;
-    private String     sFunction;
-    private Method     mMethod;
-    private int        iReturnType;
-    private int        iArgCount;
-    private int        iArgType[];
-    private boolean    bArgNullable[];
-    private Object     oArg[];
-    private Expression eArg[];
-    private boolean    bConnection;
+    private Session          cSession;
+    private String           sFunction;
+    private Method           mMethod;
+    private int              iReturnType;
+    private int              iArgCount;
+    private int              iArgType[];
+    private boolean          bArgNullable[];
+    private Object           oArg[];
+    private Expression       eArg[];
+    private boolean          bConnection;
+    private boolean          isIdentityFunction;
+    private static Hashtable methodCache = new Hashtable();
 
     /**
      * Constructs a new Function object with the given function call name
@@ -130,6 +135,10 @@ class Function {
         cSession  = session;
         sFunction = function;
 
+        if (function.equals("org.hsqldb.Library.identity")) {
+            isIdentityFunction = true;
+        }
+
         int i = function.lastIndexOf('.');
 
         Trace.check(i != -1, Trace.UNEXPECTED_TOKEN, function);
@@ -138,29 +147,35 @@ class Function {
 
         session.check("CLASS \"" + classname + "\"", UserManager.ALL);
 
-        String methodname    = function.substring(i + 1);
-        Class  classinstance = null;
+        mMethod = (Method) methodCache.get(function);
 
-        try {
-            classinstance = Class.forName(classname);
-        } catch (Exception e) {
-            throw Trace.error(Trace.ERROR_IN_FUNCTION, classname + " " + e);
-        }
+        if (mMethod == null) {
+            String methodname    = function.substring(i + 1);
+            Class  classinstance = null;
 
-        Method method[] = classinstance.getMethods();
-
-        for (i = 0; i < method.length; i++) {
-            Method m = method[i];
-
-            if (m.getName().equals(methodname)) {
-                Trace.check(mMethod == null, Trace.UNKNOWN_FUNCTION,
-                            methodname);
-
-                mMethod = m;
+            try {
+                classinstance = Class.forName(classname);
+            } catch (Exception e) {
+                throw Trace.error(Trace.ERROR_IN_FUNCTION,
+                                  classname + " " + e);
             }
-        }
 
-        Trace.check(mMethod != null, Trace.UNKNOWN_FUNCTION, methodname);
+            Method method[] = classinstance.getMethods();
+
+            for (i = 0; i < method.length; i++) {
+                Method m = method[i];
+
+                if (m.getName().equals(methodname)) {
+                    Trace.check(mMethod == null, Trace.UNKNOWN_FUNCTION,
+                                methodname);
+
+                    mMethod = m;
+                }
+            }
+
+            Trace.check(mMethod != null, Trace.UNKNOWN_FUNCTION, methodname);
+            methodCache.put(function, mMethod);
+        }
 
         Class returnclass = mMethod.getReturnType();
 
@@ -181,10 +196,11 @@ class Function {
                 // only the first parameter can be a Connection
                 bConnection = true;
             } else {
-                if (type.equals("[B")) {
-                    type = "byte[]";
-                }
 
+// fredt@users - byte[] is now supported directly as "[B"
+//                if (type.equals("[B")) {
+//                    type = "byte[]";
+//                }
                 iArgType[i]     = Column.getTypeNr(type);
                 bArgNullable[i] = !a.isPrimitive();
             }
@@ -203,15 +219,20 @@ class Function {
      *
      *
      * @return the value resulting from evaluating this Function
-     * @throws SQLException if an invocation exception is encountered when calling the Java
+     * @throws SQLException if an invocation exception is encountered when
+     * calling the Java
      * method underlying this object
      */
     Object getValue() throws SQLException {
 
         int i = 0;
 
+        if (isIdentityFunction) {
+            return new Integer(cSession.getLastIdentity());
+        }
+
         if (bConnection) {
-            oArg[i] = new jdbcConnection(cSession);
+            oArg[i] = cSession.getInternalConnection();
 
             i++;
         }
@@ -228,7 +249,7 @@ class Function {
 
             if ((o == null) &&!bArgNullable[i]) {
 
-                // null argument for primitive datatype: don't call & return null
+                // null argument for primitive datatype: don't call
                 return null;
             }
 
@@ -255,8 +276,8 @@ class Function {
      * if so.
      *
      *
-     * @return the number of arguments this Function takes, as know to the calling
-     * SQL context
+     * @return the number of arguments this Function takes, as known to the
+     * calling SQL context
      */
     int getArgCount() {
         return iArgCount - (bConnection ? 1
@@ -270,8 +291,8 @@ class Function {
      *
      * @param f the TableFilter against which to resolve this Function
      * object's arguments
-     * @throws SQLException if there is a problem resolving an argument against the specified
-     * TableFilter
+     * @throws SQLException if there is a problem resolving an argument
+     * against the specified TableFilter
      */
     void resolve(TableFilter f) throws SQLException {
 
@@ -303,7 +324,8 @@ class Function {
      * offset in this Function object's paramter list
      *
      *
-     * @param i the offset of the desired argument in this Function object's paramter list
+     * @param i the offset of the desired argument in this Function object's
+     * paramter list
      * @return the specified argument's java.sql.Types type
      */
     int getArgType(int i) {

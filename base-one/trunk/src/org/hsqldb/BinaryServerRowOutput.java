@@ -144,6 +144,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 /*
         BigInteger bigint = o.movePointRight(scale).toBigInteger();
 
+
 */
 
 //#endif JAVA2
@@ -180,9 +181,9 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(ba);
     }
 
-    protected void writeBinary(ByteArray o,
+    protected void writeBinary(byte[] o,
                                int t) throws IOException, SQLException {
-        writeByteArray(o.byteValue());
+        writeByteArray(o);
     }
 
 // fredt@users - comment - helper and conversion methods
@@ -198,7 +199,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @return  size of byte array
      * @exception  SQLException When data is inconsistent
      */
-    public static int getSize(Row row) throws SQLException {
+    public static int getSize(CachedRow row) throws SQLException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
@@ -268,6 +269,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
                         s += bigint.toByteArray().length;
 
+
 */
 
 //#endif JAVA2
@@ -290,7 +292,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.VARBINARY :
                     case Types.LONGVARBINARY :
                         s += 4;
-                        s += ((ByteArray) o).byteValue().length;
+                        s += ((byte[]) o).length;
                         break;
 
                     case Types.OTHER :

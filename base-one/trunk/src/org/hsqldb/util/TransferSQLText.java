@@ -32,46 +32,48 @@
 package org.hsqldb.util;
 
 import java.sql.*;
+import java.util.*;
 import java.io.*;
 
 /**
- * Title:        Database Transfer Tool
- * Description:
- * Copyright:    Copyright (c) 2002
- * Company:      INGENICO
- * @author Nicolas BAZIN
+ * @author Nicolas BAZIN, INGENICO
  * @version 1.7.0
  */
-public class TransferSQLText extends DataAccessPoint {
+class TransferSQLText extends DataAccessPoint {
 
-    String         sFileName = null;
-    BufferedWriter WText     = null;
+    String              sFileName              = null;
+    BufferedWriter      WTextWrite             = null;
+    BufferedReader      WTextRead              = null;
+    protected boolean   StructureAlreadyParsed = false;
+    Hashtable           DbStmts                = null;
+    protected JDBCTypes JDBCT                  = null;
 
-    public TransferSQLText(String _FileName,
-                           Traceable t) throws DataAccessPointException {
+    TransferSQLText(String _FileName,
+                    Traceable t) throws DataAccessPointException {
 
         super(t);
 
         sFileName = _FileName;
+        JDBCT     = new JDBCTypes();
 
         if (sFileName == null) {
             throw new DataAccessPointException("File name not initialized");
-        }
-
-        if (WText == null) {
-            try {
-                WText = new BufferedWriter(new FileWriter(sFileName));
-            } catch (IOException e) {
-                throw new DataAccessPointException(e.getMessage());
-            }
         }
     }
 
     boolean execute(String statement) throws DataAccessPointException {
 
+        if (WTextWrite == null) {
+            try {
+                WTextWrite = new BufferedWriter(new FileWriter(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
+
         try {
-            WText.write(statement + "\n");
-            WText.flush();
+            WTextWrite.write(statement + "\n");
+            WTextWrite.flush();
         } catch (IOException e) {
             throw new DataAccessPointException(e.getMessage());
         }
@@ -79,7 +81,7 @@ public class TransferSQLText extends DataAccessPoint {
         return true;
     }
 
-    void putData(String statement, ResultSet r,
+    void putData(String statement, TransferResultSet r,
                  int iMaxRows) throws DataAccessPointException {
 
         int i = 0;
@@ -88,11 +90,19 @@ public class TransferSQLText extends DataAccessPoint {
             return;
         }
 
+        if (WTextWrite == null) {
+            try {
+                WTextWrite = new BufferedWriter(new FileWriter(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
+
         try {
             while (r.next()) {
                 if (i == 0) {
-                    WText.write(statement + "\n");
-                    WText.flush();
+                    WTextWrite.write(statement + "\n");
+                    WTextWrite.flush();
                 }
 
                 transferRow(r);
@@ -112,8 +122,8 @@ public class TransferSQLText extends DataAccessPoint {
         } finally {
             try {
                 if (i > 0) {
-                    WText.write("\tNumber of Rows=" + i + "\n\n");
-                    WText.flush();
+                    WTextWrite.write("\tNumber of Rows=" + i + "\n\n");
+                    WTextWrite.flush();
                 }
             } catch (IOException e) {
                 throw new DataAccessPointException(e.getMessage());
@@ -123,10 +133,10 @@ public class TransferSQLText extends DataAccessPoint {
 
     void close() throws DataAccessPointException {
 
-        if (WText != null) {
+        if (WTextWrite != null) {
             try {
-                WText.flush();
-                WText.close();
+                WTextWrite.flush();
+                WTextWrite.close();
             } catch (IOException e) {}
         }
     }
@@ -141,16 +151,23 @@ public class TransferSQLText extends DataAccessPoint {
      *
      * @throws SQLException
      */
-    private void transferRow(ResultSet r) throws Exception {
+    private void transferRow(TransferResultSet r) throws Exception {
 
         String sLast = "";
-        int    len   = r.getMetaData().getColumnCount();
+        int    len   = r.getColumnCount();
+
+        if (WTextWrite == null) {
+            try {
+                WTextWrite = new BufferedWriter(new FileWriter(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
 
         for (int i = 0; i < len; i++) {
-            int t = r.getMetaData().getColumnType(i + 1);
+            int t = r.getColumnType(i + 1);
 
-            sLast = "column=" + r.getMetaData().getColumnName(i + 1)
-                    + " datatype="
+            sLast = "column=" + r.getColumnName(i + 1) + " datatype="
                     + (String) helper.getSupportedTypes().get(new Integer(t));
 
             Object o = r.getObject(i + 1);
@@ -158,77 +175,678 @@ public class TransferSQLText extends DataAccessPoint {
             if (o == null) {
                 sLast += " value=<null>";
             } else {
-                o = helper.convertColumnValue(o, i + 1, t);
+                o     = helper.convertColumnValue(o, i + 1, t);
+                sLast += " value=\'" + o.toString() + "\'";
+            }
 
-                switch (t) {
+            WTextWrite.write("\t" + sLast + "\n");
+            WTextWrite.flush();
+        }
 
-//#ifdef JAVA2
-                    case java.sql.Types.ARRAY :
-                    case java.sql.Types.BLOB :
-                    case java.sql.Types.CLOB :
-                    case java.sql.Types.DISTINCT :
-                    case java.sql.Types.JAVA_OBJECT :
-                    case java.sql.Types.REF :
-                    case java.sql.Types.STRUCT :
+        WTextWrite.write("\n");
+        WTextWrite.flush();
 
-//#endif JAVA2
-                    case java.sql.Types.BINARY :
-                    case java.sql.Types.BIT :
-                    case java.sql.Types.LONGVARBINARY :
-                    case java.sql.Types.OTHER :
-                    case java.sql.Types.VARBINARY :
-                        InputStream  Inpstr = r.getAsciiStream(i + 1);
-                        StringBuffer str    = new StringBuffer();
+        sLast = "";
+    }
 
-                        try {
-                            while (Inpstr.available() > 0) {
-                                str.append("\\x");
-                                str.append(
-                                    Integer.toHexString(Inpstr.read()));
-                            }
-                        } catch (Exception e) {}
+    class ColumnDef {
 
-                        sLast += " value=\'" + str.toString() + "\'";
-                        break;
+        String columnName;
+        String columnType;
+        String options;
+        int    start;
+        int    len;
 
-                    case java.sql.Types.BIGINT :
-                    case java.sql.Types.CHAR :
-                    case java.sql.Types.DATE :
-                    case java.sql.Types.DECIMAL :
-                    case java.sql.Types.DOUBLE :
-                    case java.sql.Types.FLOAT :
-                    case java.sql.Types.INTEGER :
-                    case java.sql.Types.LONGVARCHAR :
-                    case java.sql.Types.NUMERIC :
-                    case java.sql.Types.REAL :
-                    case java.sql.Types.SMALLINT :
-                    case java.sql.Types.TIME :
-                    case java.sql.Types.TIMESTAMP :
-                    case java.sql.Types.TINYINT :
-                    case java.sql.Types.VARCHAR :
-                        sLast += " value=\'" + o.toString() + "\'";
-                        break;
+        public ColumnDef() {
 
-                    default :
+            columnName = "";
+            columnType = "";
+            options    = "";
+            start      = 0;
+            len        = 0;
+        }
+    }
 
-                        //java.sql.Types.NULL
-                        sLast += " value=undefined";
+    ColumnDef getColumnDef(String ColumnsDesc, int curPos) {
 
-                        WText.write(sLast);
-                        WText.flush();
+        int       nextPos   = 0;
+        ColumnDef columnDef = new TransferSQLText.ColumnDef();
 
-                        throw new DataAccessPointException(
-                            "Object type unknown for:" + sLast);
+        columnDef.start = curPos;
+
+        if ((ColumnsDesc == null) || (ColumnsDesc.length() == 0)
+                || (curPos >= ColumnsDesc.length())) {
+            return new TransferSQLText.ColumnDef();
+        }
+
+        String stbuff = ColumnsDesc.substring(curPos);
+
+        try {
+            int i = 0;
+
+            for (; i < stbuff.length(); i++) {
+                int c = stbuff.charAt(i);
+
+                if (c == ',' || c == ' ' || c == ')' || c == ';') {
+                    continue;
+                } else {
+                    break;
                 }
             }
 
-            WText.write("\t" + sLast + "\n");
-            WText.flush();
+            if (i == stbuff.length()) {
+                return new TransferSQLText.ColumnDef();
+            }
+
+            columnDef.len += i;
+            stbuff        = stbuff.substring(i);
+
+            while (stbuff.charAt(nextPos) != ' ') {
+                nextPos++;
+            }
+
+            columnDef.columnName = stbuff.substring(0, nextPos);
+            stbuff               = stbuff.substring(nextPos);
+            columnDef.len        += nextPos;
+            nextPos              = 0;
+
+            if (!columnDef.columnName.toUpperCase().equals("CONSTRAINT")) {
+                i = 0;
+
+                for (; i < stbuff.length() && stbuff.charAt(i) == ' '; i++) {}
+
+                stbuff        = stbuff.substring(i);
+                columnDef.len += i;
+
+                while ((stbuff.charAt(nextPos) != '(')
+                        && (stbuff.charAt(nextPos) != ',')
+                        && (stbuff.charAt(nextPos) != ')')
+                        && (stbuff.charAt(nextPos) != ';')
+                        && (stbuff.charAt(nextPos) != ' ')) {
+                    nextPos++;
+                }
+
+                columnDef.columnType = stbuff.substring(0,
+                        nextPos).toUpperCase();
+                stbuff        = stbuff.substring(nextPos);
+                columnDef.len += nextPos;
+                nextPos       = 0;
+            }
+
+            while ((stbuff.charAt(nextPos) != ',')
+                    && (stbuff.charAt(nextPos) != ';')
+                    && (nextPos < stbuff.length())
+                    && (stbuff.charAt(nextPos) != ')')) {
+                if (stbuff.charAt(nextPos) == '(') {
+                    while (stbuff.charAt(nextPos) != ')') {
+                        nextPos++;
+                    }
+                }
+
+                nextPos++;
+            }
+
+            columnDef.options = stbuff.substring(0, nextPos);
+            columnDef.len     += nextPos;
+        } catch (Exception e) {
+            columnDef = new TransferSQLText.ColumnDef();
         }
 
-        WText.write("\n");
-        WText.flush();
+        return columnDef;
+    }
 
-        sLast = "";
+    String translateTypes(String CreateLine, TransferTable TTable,
+                          DataAccessPoint Dest)
+                          throws DataAccessPointException {
+
+        String          translatedLine = "";
+        JDBCTypes       JDBCT          = new JDBCTypes();
+        int             currentPos     = 0;
+        String          columnName     = "";
+        String          columnType     = "";
+        StringTokenizer Tokenizer;
+        int             colnum = 0;
+        ColumnDef       cDef;
+
+        currentPos     = CreateLine.indexOf('(') + 1;
+        translatedLine = CreateLine.substring(0, currentPos);
+
+        do {
+            cDef = getColumnDef(CreateLine, currentPos);
+
+            if (cDef.len == 0) {
+                break;
+            }
+
+            columnName = cDef.columnName;
+            columnType = cDef.columnType;
+
+            if (columnName.toUpperCase().indexOf("CONSTRAINT") >= 0) {
+                translatedLine +=
+                    CreateLine.substring(currentPos, currentPos + cDef.len)
+                    + ",";
+                currentPos += cDef.len + 1;
+
+                colnum++;
+
+                continue;
+            }
+
+            columnName = Dest.helper.formatIdentifier(columnName) + " ";
+
+            try {
+                Integer inttype = new Integer(
+                    Dest.helper.convertToType(JDBCT.toInt(columnType)));
+
+                columnType = (String) TTable.hTypes.get(inttype);
+            } catch (Exception JDBCtypeEx) {}
+
+            if (cDef.options != null) {
+                columnType += cDef.options;
+            }
+
+            try {
+                columnType = Dest.helper.fixupColumnDefWrite(TTable, null,
+                        columnType, null, colnum);
+            } catch (SQLException SQLe) {
+                return CreateLine;
+            }
+
+            translatedLine += columnName + " " + columnType + ",";
+            currentPos     += cDef.len + 1;
+
+            colnum++;
+        } while (true);
+
+        return translatedLine.substring(0, translatedLine.length() - 1)
+               + ");";
+    }
+
+    void parseFileForTables() throws DataAccessPointException {
+
+        StringTokenizer Tokenizer;
+
+        if (WTextRead == null) {
+            try {
+                WTextRead = new BufferedReader(new FileReader(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
+
+        String        currentLine  = "";
+        String        Token        = "";
+        String        name         = "";
+        TransferTable relatedTable = null;
+
+        try {
+            while ((currentLine = WTextRead.readLine()) != null) {
+                currentLine = currentLine.trim() + ";";
+                Tokenizer   = new StringTokenizer(currentLine);
+
+                try {
+                    Token = Tokenizer.nextToken();
+                } catch (NoSuchElementException NSE) {
+                    continue;
+                }
+
+                if (Token == null) {
+                    continue;
+                }
+
+                if (!Token.toUpperCase().equals("CREATE")) {
+                    continue;
+                }
+
+                Token = Tokenizer.nextToken().toUpperCase();
+
+                if (Token.equals("TABLE") || Token.equals("VIEW")) {
+                    try {
+                        name = Tokenizer.nextToken(" (;");
+                        relatedTable = new TransferTable(this, name, "",
+                                                         Token, tracer);
+                        relatedTable.Stmts.bCreate      = false;
+                        relatedTable.Stmts.bDelete      = false;
+                        relatedTable.Stmts.bDrop        = false;
+                        relatedTable.Stmts.bCreateIndex = false;
+                        relatedTable.Stmts.bDropIndex   = false;
+                        relatedTable.Stmts.bInsert      = false;
+                        relatedTable.Stmts.bAlter       = false;
+
+                        DbStmts.put(relatedTable.Stmts.sSourceTable,
+                                    relatedTable);
+                    } catch (NoSuchElementException NSE) {
+                        continue;
+                    }
+                }
+            }
+        } catch (Exception IOe) {
+            throw new DataAccessPointException(IOe.getMessage());
+        }
+    }
+
+    void parseFileForTheRest(TransferTable TTable,
+                             DataAccessPoint Dest)
+                             throws DataAccessPointException {
+
+        StringTokenizer Tokenizer;
+
+        StructureAlreadyParsed = true;
+
+        if (WTextRead == null) {
+            try {
+                WTextRead = new BufferedReader(new FileReader(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
+
+        String        currentLine  = "";
+        String        Token        = "";
+        String        name         = "";
+        TransferTable relatedTable = null;
+
+        try {
+            while ((currentLine = WTextRead.readLine()) != null) {
+                currentLine = currentLine.trim() + ";";
+                Tokenizer   = new StringTokenizer(currentLine);
+
+                try {
+                    Token = Tokenizer.nextToken();
+                } catch (NoSuchElementException NSE) {
+                    continue;
+                }
+
+                if (Token == null) {
+                    continue;
+                }
+
+                if (Token.toUpperCase().equals("INSERT")) {
+                    try {
+                        if (!Tokenizer.nextToken().toUpperCase().equals(
+                                "INTO")) {
+                            throw new DataAccessPointException(
+                                "Error in INSERT statement: no INTO found");
+                        }
+
+                        Token = Tokenizer.nextToken();
+
+                        if ((relatedTable =
+                                (TransferTable) DbStmts.get(Token)) != null) {
+                            relatedTable.Stmts.bDelete     = true;
+                            relatedTable.Stmts.bInsert     = true;
+                            relatedTable.Stmts.sDestInsert = currentLine;
+                            relatedTable.Stmts.sDestDelete =
+                                "DELETE FROM "
+                                + relatedTable.Stmts.sSourceTable + ";";
+                        }
+
+                        continue;
+                    } catch (NoSuchElementException NSE) {
+                        continue;
+                    }
+                } else if (Token.toUpperCase().equals("ALTER")) {
+                    try {
+                        if (!Tokenizer.nextToken().toUpperCase().equals(
+                                "TABLE")) {
+                            continue;
+                        }
+
+                        name  = Tokenizer.nextToken();
+                        Token = Tokenizer.nextToken().toUpperCase();
+
+                        if (!Token.equals("ADD")) {
+                            continue;
+                        }
+
+                        do {
+                            Token = Tokenizer.nextToken().toUpperCase();
+                        } while (!Token.equals("CONSTRAINT"));
+
+                        if ((relatedTable = (TransferTable) DbStmts.get(name))
+                                != null) {
+                            if (relatedTable.Stmts.sDestAlter == null) {
+                                relatedTable.Stmts.sDestAlter = "";
+                            }
+
+                            relatedTable.Stmts.bAlter     = true;
+                            relatedTable.Stmts.sDestAlter += currentLine;
+                        } else {
+                            throw new DataAccessPointException(
+                                "table not found");
+                        }
+
+                        Token = Tokenizer.nextToken();
+
+                        if (relatedTable.Stmts.sDestDrop == null) {
+                            relatedTable.Stmts.sDestDrop = "";
+                        }
+
+                        relatedTable.Stmts.bDrop = true;
+                        relatedTable.Stmts.sDestDrop =
+                            "ALTER TABLE " + name + " DROP CONSTRAINT "
+                            + Token + ";" + relatedTable.Stmts.sDestDrop;
+
+                        continue;
+                    } catch (NoSuchElementException NSE) {
+                        continue;
+                    }
+                } else if (!Token.toUpperCase().equals("CREATE")) {
+                    continue;
+                }
+
+                Token = Tokenizer.nextToken().toUpperCase();
+
+                if (Token.equals("TABLE") || Token.equals("VIEW")) {
+                    try {
+                        name = Tokenizer.nextToken(" (;");
+
+                        if (!DbStmts.containsKey(name)) {
+                            throw new DataAccessPointException(
+                                "error: index is created before the table");
+                        }
+
+                        relatedTable = (TransferTable) DbStmts.get(name);
+                        relatedTable.Stmts.bCreate = true;
+                        relatedTable.Stmts.bDrop   = true;
+
+//                        relatedTable.Stmts.sDestCreate = currentLine;
+                        relatedTable.Stmts.sDestCreate =
+                            translateTypes(currentLine, TTable, Dest);
+                        relatedTable.Stmts.sDestDrop =
+                            "DROP " + relatedTable.Stmts.sType + " " + name
+                            + ";";
+
+                        DbStmts.put(relatedTable.Stmts.sSourceTable,
+                                    relatedTable);
+                    } catch (NoSuchElementException NSE) {
+                        continue;
+                    }
+                }
+
+                if (Token.equals("INDEX") || Token.equals("UNIQUE")) {
+                    try {
+                        while ((Token =
+                                Tokenizer.nextToken()).toUpperCase().equals(
+                                    "INDEX"));
+
+                        String IndexdropCommand = "DROP INDEX " + Token
+                                                  + " ;";
+
+                        while ((Token = Tokenizer.nextToken(
+                                " (")).toUpperCase().equals("ON"));
+
+                        name = Token;
+
+                        if (!DbStmts.containsKey(Token)) {
+                            throw new DataAccessPointException(
+                                "error: index is created before the table");
+                        }
+
+                        relatedTable = (TransferTable) DbStmts.get(Token);
+
+                        if (relatedTable.Stmts.sDestCreateIndex == null) {
+                            relatedTable.Stmts.sDestCreateIndex = "";
+                        }
+
+                        if (relatedTable.Stmts.sDestDropIndex == null) {
+                            relatedTable.Stmts.sDestDropIndex = "";
+                        }
+
+                        relatedTable.Stmts.bCreateIndex     = true;
+                        relatedTable.Stmts.bDropIndex       = true;
+                        relatedTable.Stmts.sDestCreateIndex += currentLine;
+                        relatedTable.Stmts.sDestDropIndex += IndexdropCommand;
+                    } catch (NoSuchElementException NSE) {
+                        continue;
+                    }
+                }
+            }
+        } catch (IOException IOe) {
+            throw new DataAccessPointException(IOe.getMessage());
+        }
+    }
+
+    Vector getTables(String sCatalog,
+                     String sSchemas[]) throws DataAccessPointException {
+
+        Vector AllTables = new Vector();
+
+        if (DbStmts == null) {
+            DbStmts = new Hashtable();
+        }
+
+        if (WTextRead != null) {
+            try {
+                WTextRead.close();
+
+                WTextRead = null;
+            } catch (IOException e) {}
+        }
+
+        this.parseFileForTables();
+
+        StructureAlreadyParsed = false;
+
+        Enumeration e = DbStmts.elements();
+
+        while (e.hasMoreElements()) {
+            AllTables.addElement(e.nextElement());
+        }
+
+        return AllTables;
+    }
+
+    void getTableStructure(TransferTable TTable,
+                           DataAccessPoint Dest)
+                           throws DataAccessPointException {
+
+        if (!StructureAlreadyParsed) {
+            if (WTextRead != null) {
+                try {
+                    WTextRead.close();
+
+                    WTextRead = null;
+                } catch (IOException e) {}
+            }
+
+            this.parseFileForTheRest(TTable, Dest);
+        }
+    }
+
+    TransferResultSet getData(String statement)
+    throws DataAccessPointException {
+
+        StringTokenizer Tokenizer;
+        String          tableName = "";
+
+        try {
+            Tokenizer = new StringTokenizer(statement);
+
+            while (!Tokenizer.nextToken().toUpperCase().equals("FROM"));
+
+            tableName = Tokenizer.nextToken(" ;");
+        } catch (NoSuchElementException NSE) {
+            throw new DataAccessPointException(
+                "Table name not found in statement: " + statement);
+        }
+
+        if (WTextRead != null) {
+            try {
+                WTextRead.close();
+
+                WTextRead = null;
+            } catch (IOException e) {}
+        }
+
+        return (this.parseFileForData(tableName));
+    }
+
+    TransferResultSet parseFileForData(String tableName)
+    throws DataAccessPointException {
+
+        TransferResultSet trsData = new TransferResultSet();
+        StringTokenizer   Tokenizer;
+
+        if (WTextRead == null) {
+            try {
+                WTextRead = new BufferedReader(new FileReader(sFileName));
+            } catch (IOException e) {
+                throw new DataAccessPointException(e.getMessage());
+            }
+        }
+
+        String currentLine = "";
+        String Token;
+
+        try {
+            while ((currentLine = WTextRead.readLine()) != null) {
+                currentLine = currentLine.trim() + ";";
+                Tokenizer   = new StringTokenizer(currentLine);
+
+                try {
+                    Token = Tokenizer.nextToken();
+                } catch (NoSuchElementException NSE) {
+                    continue;
+                }
+
+                if (Token == null) {
+                    continue;
+                }
+
+                if (!Token.toUpperCase().equals("INSERT")) {
+                    continue;
+                }
+
+                try {
+                    if (!Tokenizer.nextToken().toUpperCase().equals("INTO")) {
+                        throw new DataAccessPointException(
+                            "Error in INSERT statement: no INTO found");
+                    }
+
+                    Token = Tokenizer.nextToken();
+
+                    if (!Token.equals(tableName)) {
+                        continue;
+                    }
+
+                    int    iParsedRows   = 0;
+                    Vector vColumnNames  = new Vector();
+                    Vector vColumnValues = new Vector();
+                    Vector vColumnTypes  = new Vector();
+
+                    while ((currentLine = WTextRead.readLine()) != null) {
+                        currentLine = currentLine.trim();
+
+                        boolean newLine = (currentLine.length() == 0);
+
+                        if (newLine) {
+                            int iColumnNb = 0;
+
+                            iParsedRows++;
+
+                            iColumnNb = vColumnNames.size();
+
+                            String[] Names  = new String[iColumnNb + 1];
+                            int[]    Types  = new int[iColumnNb + 1];
+                            Object[] Values = new Object[iColumnNb + 1];
+
+                            for (int Idx = 0; Idx < iColumnNb; Idx++) {
+                                Names[Idx + 1] =
+                                    (String) vColumnNames.elementAt(Idx);
+                                Types[Idx + 1] =
+                                    ((Integer) vColumnTypes.elementAt(
+                                        Idx)).intValue();
+                                Values[Idx + 1] =
+                                    vColumnValues.elementAt(Idx);
+                            }
+
+                            try {
+                                trsData.addRow(Names, Types, Values,
+                                               iColumnNb);
+                            } catch (Exception e) {
+                                throw new DataAccessPointException(
+                                    e.getMessage());
+                            }
+
+                            iColumnNb = 0;
+
+                            vColumnNames.removeAllElements();
+                            vColumnValues.removeAllElements();
+                            vColumnTypes.removeAllElements();
+
+                            continue;
+                        }
+
+                        Tokenizer = new StringTokenizer(currentLine);
+                        Token     = Tokenizer.nextToken("=");
+
+                        if (Token.equals("Number of Rows")) {
+                            int iNbRows =
+                                Integer.parseInt(Tokenizer.nextToken());
+
+                            if (iNbRows != iParsedRows) {
+                                throw new DataAccessPointException(
+                                    "Number of parsed rows (" + iParsedRows
+                                    + ") is different from the expected ("
+                                    + iNbRows + ")");
+                            }
+
+                            return trsData;
+                        }
+
+                        if (Token.equals("column")) {
+                            Token = Tokenizer.nextToken(" =");
+
+                            vColumnNames.addElement(Token);
+                        }
+
+                        Token = Tokenizer.nextToken(" =");
+
+                        if (Token.equals("datatype")) {
+                            int iType;
+
+                            Token = Tokenizer.nextToken(" =");
+
+                            try {
+                                iType = JDBCT.toInt(Token.toUpperCase());
+                            } catch (Exception e) {
+                                throw new DataAccessPointException(
+                                    "Unknown type: " + Token);
+                            }
+
+                            vColumnTypes.addElement(new Integer(iType));
+                        }
+
+                        Token = Tokenizer.nextToken(" =");
+
+                        if (Token.equals("value")) {
+                            int iStart = currentLine.indexOf("value=") + 6;
+                            String sValue =
+                                currentLine.substring(iStart).trim();
+
+                            if (sValue.indexOf("<null>") >= 0) {
+                                vColumnValues.addElement(null);
+                            } else {
+                                int    i       = sValue.indexOf('\'') + 1;
+                                String sbToken = sValue.substring(i);
+
+                                i       = sbToken.lastIndexOf('\'');
+                                sbToken = sbToken.substring(0, i);
+                                Token   = sbToken.toString();
+
+                                vColumnValues.addElement(Token);
+                            }
+                        }
+                    }
+                } catch (IndexOutOfBoundsException IOBe) {
+                    continue;
+                }
+            }
+        } catch (IOException IOe) {
+            throw new DataAccessPointException(IOe.getMessage());
+        }
+
+        return trsData;
     }
 }

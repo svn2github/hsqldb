@@ -203,9 +203,9 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeByteArray(ba);
     }
 
-    protected void writeBinary(ByteArray o,
+    protected void writeBinary(byte[] o,
                                int t) throws IOException, SQLException {
-        writeByteArray(o.byteValue());
+        writeByteArray(o);
     }
 
 // fredt@users - comment - helper and conversion methods
@@ -223,7 +223,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @return  size of byte array
      * @exception  SQLException When data is inconsistent
      */
-    public static int getSize(Row row) throws SQLException {
+    public static int getSize(CachedRow row) throws SQLException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
@@ -267,7 +267,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.LONGVARBINARY :
                         s += getUTFsize("**");    //new format flag
                         s += 4;
-                        s += ((ByteArray) o).byteValue().length;
+                        s += ((byte[]) o).length;
                         break;
 
                     case Types.OTHER :

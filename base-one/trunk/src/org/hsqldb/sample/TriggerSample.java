@@ -113,16 +113,16 @@ public class TriggerSample implements org.hsqldb.Trigger {
  *
  * test SQL
  * CREATE CACHED TABLE trig_test (int_field     integer)
- * CREATE TRIGGER ins_before BEFORE INSERT ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER ins_after  AFTER  INSERT ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER upd_before BEFORE UPDATE ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER upd_after  AFTER  UPDATE ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER upd_before_row BEFORE UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER upd_after_row  AFTER  UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER del_before BEFORE DELETE ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER del_after  AFTER  DELETE ON trig_test CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER del_before_row BEFORE DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.util.TriggerSample"
- * CREATE TRIGGER del_after_row  AFTER  DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.util.TriggerSample"
+ * CREATE TRIGGER ins_before BEFORE INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER ins_after  AFTER  INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER upd_before BEFORE UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER upd_after  AFTER  UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER upd_before_row BEFORE UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER upd_after_row  AFTER  UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER del_before BEFORE DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER del_after  AFTER  DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER del_before_row BEFORE DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+ * CREATE TRIGGER del_after_row  AFTER  DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
  * INSERT INTO trig_test VALUES (1)
  * INSERT INTO trig_test VALUES (2)
  * INSERT INTO trig_test VALUES (3)

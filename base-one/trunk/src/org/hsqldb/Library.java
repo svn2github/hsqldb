@@ -282,7 +282,7 @@ class Library {
      *
      * @return
      */
-// fredt@users 20020220 - patch 489184 by xclay@users - thread safety
+// fredt@users 20020220 - patch 489184 by xclayl@users - thread safety
     public static synchronized double rand(Integer i) {
 
         if (i != null) {
@@ -667,17 +667,19 @@ class Library {
                                                           : s.length()));
     }
 
+// fredt@users - 20020819 - patch 595854 by thomasm@users
+
     /**
-     * Method declaration
+     *  Method declaration
      *
      *
-     * @param s
+     *  @param s
      *
-     * @return
+     *  @return
      */
-    public static int length(String s) {
-        return ((s == null) || (s.length() < 1)) ? 0
-                                                 : s.length();
+    public static Integer length(String s) {
+        return s == null ? null
+                         : new Integer(s.length());
     }
 
     /**
@@ -764,12 +766,13 @@ class Library {
      *
      * @return
      */
-    public static String repeat(String s, int i) {
+    public static String repeat(String s, Integer count) {
 
-        if (s == null) {
+        if (s == null || count == null || count.intValue() < 0) {
             return null;
         }
 
+        int          i = count.intValue();
         StringBuffer b = new StringBuffer(s.length() * i);
 
         while (i-- > 0) {
@@ -778,6 +781,8 @@ class Library {
 
         return b.toString();
     }
+
+// fredt@users - 20020903 - patch 1.7.1 - bug fix to allow multiple replaces
 
     /**
      * Method declaration
@@ -812,7 +817,7 @@ class Library {
                 break;
             }
 
-            b.append(s.substring(start, i - start));
+            b.append(s.substring(start, i));
             b.append(with);
 
             start = i + lenreplace;
@@ -1286,25 +1291,15 @@ class Library {
     }
 
     /**
-     * Method declaration
+     * As of 1.7.1 this is a dummy function. The return value is supplied
+     * by Function.java
      *
-     *
-     * @param conn
-     *
-     * @return
+     * @return 0
      *
      * @throws SQLException
      */
-    public static int identity(Connection conn) throws SQLException {
-
-        Statement stat = conn.createStatement();
-        String s =
-            "SELECT VALUE FROM SYSTEM_CONNECTIONINFO WHERE KEY='IDENTITY'";
-        ResultSet r = stat.executeQuery(s);
-
-        r.next();
-
-        return r.getInt(1);
+    public static int identity() throws SQLException {
+        return 0;
     }
 
     public static boolean getAutoCommit(Connection c) {

@@ -160,8 +160,13 @@ class DatabaseInformation {
     private static final int SYSTEM_CONNECTIONINFO    = 19;
     private static final int SYSTEM_USERS             = 20;
 
+    // supported table types
+    private static final String[] tableTypes = new String[] {
+        "TABLE", "VIEW", "GLOBAL TEMPORARY"
+    };
+
     static {
-        sysTableNames = new Hashtable();
+        sysTableNames = new Hashtable(37);
 
         String sysNames[] = {
             "SYSTEM_PROCEDURES", "SYSTEM_PROCEDURECOLUMNS", "SYSTEM_TABLES",
@@ -276,7 +281,7 @@ class DatabaseInformation {
                                 continue;
                             }
 
-                            o[3] = "LOCAL TEMPORARY";
+                            o[3] = "GLOBAL TEMPORARY";
                             break;
 
                         default :
@@ -329,11 +334,13 @@ class DatabaseInformation {
                 t.addColumn("TABLE_TYPE", Types.VARCHAR);
                 t.createPrimaryKey();
 
-                Object o[] = t.getNewRow();
+                for (int i = 0; i < tableTypes.length; i++) {
+                    Object o[] = t.getNewRow();
 
-                o[0] = "TABLE";
+                    o[0] = tableTypes[i];
 
-                t.insert(o, null);
+                    t.insert(o, null);
+                }
 
                 return t;
             }
@@ -373,6 +380,14 @@ class DatabaseInformation {
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
                     Table table       = (Table) tTable.elementAt(i);
                     int   columnCount = table.getColumnCount();
+
+                    if (table.tableType == Table.TEMP_TABLE
+                            || table.tableType == Table.TEMP_TEXT_TABLE) {
+                        if (dDatabase.findUserTable(
+                                table.getName().name, session) == null) {
+                            continue;
+                        }
+                    }
 
                     for (int j = 0; j < columnCount; j++) {
                         Column column = table.getColumn(j);
@@ -456,8 +471,17 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table  table = (Table) tTable.elementAt(i);
-                    Object o[]   = t.getNewRow();
+                    Table table = (Table) tTable.elementAt(i);
+
+                    if (table.tableType == Table.TEMP_TABLE
+                            || table.tableType == Table.TEMP_TEXT_TABLE) {
+                        if (dDatabase.findUserTable(
+                                table.getName().name, session) == null) {
+                            continue;
+                        }
+                    }
+
+                    Object o[] = t.getNewRow();
 
                     o[0] = o[1] = "";
                     o[2] = table.getName().name;
@@ -471,7 +495,7 @@ class DatabaseInformation {
             }
             case SYSTEM_VERSIONCOLUMNS :
 
-            // return an empty table
+            // return an empty table for SYSTEM_VERSIONCOLUMNS
             case SYSTEM_BESTROWIDENTIFIER :
                 t.addColumn("SCOPE", Types.SMALLINT);
                 t.addColumn("COLUMN_NAME", Types.VARCHAR);
@@ -490,6 +514,19 @@ class DatabaseInformation {
             {
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
                     Table table = (Table) tTable.elementAt(i);
+
+                    if (table.tableType == Table.VIEW) {
+                        continue;
+                    }
+
+                    if (table.tableType == Table.TEMP_TABLE
+                            || table.tableType == Table.TEMP_TEXT_TABLE) {
+                        if (dDatabase.findUserTable(
+                                table.getName().name, session) == null) {
+                            continue;
+                        }
+                    }
+
                     Index index = null;
                     int[] cols  = null;
 
@@ -546,7 +583,20 @@ class DatabaseInformation {
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table  = (Table) tTable.elementAt(i);
+                    Table table = (Table) tTable.elementAt(i);
+
+                    if (table.tableType == Table.VIEW) {
+                        continue;
+                    }
+
+                    if (table.tableType == Table.TEMP_TABLE
+                            || table.tableType == Table.TEMP_TEXT_TABLE) {
+                        if (dDatabase.findUserTable(
+                                table.getName().name, session) == null) {
+                            continue;
+                        }
+                    }
+
                     Index index  = table.getIndex(0);
                     int   cols[] = index.getColumns();
 
@@ -598,26 +648,28 @@ class DatabaseInformation {
                 t.addColumn("NUM_PREC_RADIX", Types.INTEGER);
                 t.createPrimaryKey();
 
-                for (int i = 0; i < Column.TYPES.length; i++) {
-                    Object o[]  = t.getNewRow();
-                    int    type = Column.TYPES[i];
+                for (int h = 0; h < Column.typesArray.length; h++) {
+                    for (int i = 0; i < Column.typesArray[h].length; i++) {
+                        Object o[]  = t.getNewRow();
+                        int    type = Column.typesArray[h][i];
 
-                    o[0] = Column.getTypeString(type);
-                    o[1] = new Integer(type);
-                    o[2] = INTEGER_0;             // precision
-                    o[6] = new Integer(DatabaseMetaData.typeNullable);
-                    o[7] = new Boolean(true);     // case sensitive
-                    o[8] = new Integer(DatabaseMetaData.typeSearchable);
-                    o[9] = new Boolean(false);    // unsigned
-                    o[10] = new Boolean(type == Types.NUMERIC
-                                        || type == Types.DECIMAL);
-                    o[11] = new Boolean(type == Types.INTEGER);
-                    o[12] = o[0];
-                    o[13] = INTEGER_0;
-                    o[14] = INTEGER_0;            // maximum scale
-                    o[17] = new Integer(10);
+                        o[0] = Column.getTypeString(type);
+                        o[1] = new Integer(type);
+                        o[2] = INTEGER_0;             // precision
+                        o[6] = new Integer(DatabaseMetaData.typeNullable);
+                        o[7] = new Boolean(true);     // case sensitive
+                        o[8] = new Integer(DatabaseMetaData.typeSearchable);
+                        o[9] = new Boolean(false);    // unsigned
+                        o[10] = new Boolean(type == Types.NUMERIC
+                                            || type == Types.DECIMAL);
+                        o[11] = new Boolean(type == Types.INTEGER);
+                        o[12] = o[0];
+                        o[13] = INTEGER_0;
+                        o[14] = INTEGER_0;            // maximum scale
+                        o[17] = new Integer(10);
 
-                    t.insert(o, null);
+                        t.insert(o, null);
+                    }
                 }
 
                 return t;
@@ -645,6 +697,10 @@ class DatabaseInformation {
                         Index index  = table.getIndex(j);
                         int   cols[] = index.getColumns();
                         int   len    = index.getVisibleColumns();
+
+                        if (len == 0) {
+                            continue;
+                        }
 
                         for (int k = 0; k < len; k++) {
                             Object o[] = t.getNewRow();
@@ -755,6 +811,8 @@ class DatabaseInformation {
 
     static final Short importedKeyNoActionShort =
         new Short((short) DatabaseMetaData.importedKeyNoAction);
+    static final Short importedKeyCascadeShort =
+        new Short((short) DatabaseMetaData.importedKeyCascade);
     static final Short importedKeyNotDeferrableShort =
         new Short((short) DatabaseMetaData.importedKeyNotDeferrable);
 
@@ -787,7 +845,7 @@ class DatabaseInformation {
             for (int j = 0; j < constVect.size(); j++) {
                 constraint = (Constraint) constVect.elementAt(j);
 
-                if (constraint.getType() != Constraint.MAIN) {
+                if (constraint.getType() != Constraint.FOREIGN_KEY) {
                     continue;
                 }
 
@@ -816,7 +874,8 @@ class DatabaseInformation {
                         fkcols[k]).columnName.name;
                     o[8]  = new Short((short) (k + 1));
                     o[9]  = importedKeyNoActionShort;
-                    o[10] = importedKeyNoActionShort;
+                    o[10] = constraint.isCascade() ? importedKeyCascadeShort
+                                                   : importedKeyNoActionShort;
                     o[11] = constraint.getFkName();
                     o[12] = constraint.getPkName();
                     o[13] = importedKeyNotDeferrableShort;

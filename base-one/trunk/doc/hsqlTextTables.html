@@ -1,9 +1,9 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html>
+<meta http-equiv="Content-Type" content="text/html">
 <title>Text Tables as a Standard Feature</title>
 </head>
-<body link="#0000ff" vlink="#800080">
+<body>
 
 <h2>Text Tables as a Standard Feature of HSQLDB </h2>
 <p>Text Table support for HSQLDB was originally developed by Bob Preston independently from the Project. Subsequently Bob joined the Project and incorporated this feature into version 1.7.0, with a number of enhancements, especially the use of conventional SQL commands for specifying the files used for Text Tables. </p>
@@ -13,7 +13,9 @@
 <ol>
 
 <li>We aimed to finalise the DDL for Text Tables so that future releases of HSQLDB use the same DDL scripts.</li>
-<li>We aimed to support Text Tables as LOCAL TEMPORARY or GLOBAL BASE tables in the SQL domain.</li></ol>
+  <li>We aimed to support Text Tables as GLOBAL TEMPORARY or GLOBAL BASE tables 
+    in the SQL domain.</li>
+</ol>
 
 <h4>The Implementation </h4>
 <ol>
@@ -77,6 +79,7 @@
    <li>
       <h4>Configuration</h4>
    </li>
+</ol>
    <p>The default field separator is a comma (,). A different field separator can be specified in either the &lt;databasename&gt;.properties file or within the SET TABLE SOURCE statement. For example, to change the field separator for the table mytable to a vertical bar, either place the following in the &lt;databasename&gt;.properties file: <br>
       &nbsp; </p>
    <pre>textdb.mytable.fs=|</pre>
@@ -131,9 +134,6 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
    <li>
       <h4>Text File Issues</h4>
    </li>
-</ol>
-
-
 <ul>
 
 <ul>
@@ -170,8 +170,11 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
 
 <ul>
 
-<ul>
-<li>Each text table has a system-defined primary key that refers to the file offset of the row and cannot be changed.&nbsp; Secondary indexes and UNIQUE constraints can be used on any column. </li></ul>
+   <ul>
+      <li>Each text table has a system-defined primary key that refers to the file offset of the row and cannot be changed.&nbsp; This prevents use of IDENTITY columns with text tables, as an IDENTITY column is implicitly defined as a PRIMARY KEY. You can, however, use the UNIQUE constraint with text tables. Hence, to acheive the functional equivalent of an IDENTITY column, you can set up your own counter, using an ordinary table with only one row and one integer column. You can then increment this value each time and read the result value to use in a text table INTEGER column with the UNIQUE constraint. 
+Secondary indexes and UNIQUE constraints can be used on any column of a text table. </li>
+      <li>When a table source file is used with the<code> textdb.mytable.ignore_first=true </code>option, the first, ignored line is deleted after updating the table and replaced with a blank line.</li>
+   </ul>
 </ul>
 
 <dl>

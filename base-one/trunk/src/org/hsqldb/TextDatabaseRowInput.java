@@ -185,7 +185,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             to.append(hex);
         }
 
-        return ByteArray.HexToByteArray(to.toString());
+        return ByteArray.hexToByteArray(to.toString());
     }
 
     public int readIntData() throws IOException {
@@ -341,8 +341,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return ByteArray.deserialize(o);
     }
 
-    protected ByteArray readBinary(int type)
-    throws IOException, SQLException {
+    protected byte[] readBinary(int type) throws IOException, SQLException {
 
         String s;
 
@@ -355,7 +354,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                     return (null);
                 }
 
-                return new ByteArray(readByteArray(s));
+                return readByteArray(s);
 
             case Types.VARBINARY :
                 s = readVarString();
@@ -364,7 +363,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                     return (null);
                 }
 
-                return new ByteArray(readByteArray(s));
+                return readByteArray(s);
 
             case Types.LONGVARBINARY :
             default :
@@ -374,7 +373,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                     return (null);
                 }
 
-                return new ByteArray(readByteArray(s));
+                return readByteArray(s);
         }
     }
 

@@ -69,133 +69,113 @@ package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
 import java.sql.SQLException;
+import java.util.Hashtable;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
 // fredt@users 20020320 - doc 1.7.0 - update
+// tony_lai@users 20020820 - patch 595156 by tlai@users -  violation of Integrity constraint name
 
 /**
  *  Implementation of a table constraint with references to the indexes used
- *  by the contraint.
+ *  by the constraint.
  *
  * @version    1.7.0
  */
 class Constraint {
 
-    static final int FOREIGN_KEY = 0,
-                     MAIN        = 1,
-                     UNIQUE      = 2;
-
-    // fkName and pkName are for foreign keys only
-    private HsqlName constName;
-    private HsqlName fkName;
-    private HsqlName pkName;
-    private int      iType;
-    private int      iLen;
-
-    // Main is the table that is referenced
-    private Table    tMain;
-    private int[]    iColMain;
-    private Index    iMain;
-    private Object[] oMain;
-
-    // Ref is the table that has a reference to the main table
-    private Table    tRef;
-    private int[]    iColRef;
-    private Index    iRef;
-    private Object[] oRef;
-    private Object[] oColRef;
-    private boolean  bCascade;
+    static final int       FOREIGN_KEY = 0,
+                           MAIN        = 1,
+                           UNIQUE      = 2;
+    private ConstraintCore core;
+    private HsqlName       constName;
+    private int            iType;
 
     /**
      *  Constructor declaration
      *
-     * @param  type
+     * @param  name
      * @param  t
-     * @param  col
+     * @param  index
      */
     Constraint(HsqlName name, Table t, Index index) {
 
-        constName = name;
-        iType     = UNIQUE;
-        tMain     = t;
-        iMain     = index;
-        iColMain  = index.getColumns();
-        iLen      = iColMain.length;
+        core       = new ConstraintCore();
+        constName  = name;
+        iType      = UNIQUE;
+        core.tMain = t;
+        core.iMain = index;
+        /* fredt - in unique constraints column list for iColMain is that
+           of iMain
+        */
+        core.iColMain = index.getColumns();
+        core.iLen     = core.iColMain.length;
     }
 
     /**
-     *  Constructor declaration
+     *  Constructor for main constraints (foreign key references in PK table)
      *
-     * @param  type
-     * @param  main
-     * @param  ref
-     * @param  cmain
-     * @param  cref
-     * @exception  SQLException  Description of the Exception
+     * @param  name
+     * @param  t
+     * @param  index
      */
-    Constraint(HsqlName name, HsqlName linkedname, int type, Table main,
-               Table ref, int colmain[], int colref[], Index imain,
-               Index iref, boolean cascade) throws SQLException {
+    Constraint(HsqlName name, Constraint fkconstraint) {
 
         constName = name;
+        iType     = MAIN;
+        core      = fkconstraint.core;
+    }
 
-        if (type == MAIN) {
-            pkName = name;
-            fkName = linkedname;
-        } else if (type == FOREIGN_KEY) {
-            pkName = linkedname;
-            fkName = name;
-        }
+    /**
+     *  Constructor for foreign key constraints
+     *
+     * @param  pkname
+     * @param  fkname
+     * @param  main
+     * @param  ref
+     * @param  colmain
+     * @param  colref
+     * @param  imain
+     * @param  iref
+     * @exception  SQLException  Description of the Exception
+     */
+    Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
+               int colmain[], int colref[], Index imain, Index iref,
+               boolean cascade) throws SQLException {
 
-        iType    = type;
-        tMain    = main;
-        tRef     = ref;
-        iColMain = colmain;
-        iLen     = iColMain.length;
-        iColRef  = colref;
-        oColRef  = new Object[iColRef.length];
-        iMain    = imain;
-        iRef     = iref;
-        bCascade = cascade;
+        core        = new ConstraintCore();
+        core.pkName = pkname;
+        core.fkName = fkname;
+        constName   = fkname;
+        iType       = FOREIGN_KEY;
+        core.tMain  = main;
+        core.tRef   = ref;
+        /* fredt - in FK constraints column lists for iColMain and iColRef have
+           identical sets to visible columns of iMain and iRef respectively
+           but the order of columns can be different and must be maintained
+        */
+        core.iColMain = colmain;
+        core.iLen     = core.iColMain.length;
+        core.iColRef  = colref;
+        core.oColRef  = new Object[core.iColRef.length];
+        core.iMain    = imain;
+        core.iRef     = iref;
+        core.bCascade = cascade;
 
         setTableRows();
     }
 
     private Constraint() {}
 
-    Constraint duplicate() {
-
-        Constraint c = new Constraint();
-
-        c.constName = constName;
-        c.fkName    = fkName;
-        c.pkName    = pkName;
-        c.iType     = iType;
-        c.iLen      = iLen;
-        c.tMain     = tMain;
-        c.iColMain  = iColMain;
-        c.iMain     = iMain;
-        c.oMain     = oMain;
-        c.tRef      = tRef;
-        c.iColRef   = iColRef;
-        c.iRef      = iRef;
-        c.oRef      = oRef;
-        c.oColRef   = oColRef;
-        c.bCascade  = bCascade;
-
-        return c;
-    }
-
     private void setTableRows() throws SQLException {
 
-        oMain = tMain.getNewRow();
+        core.oMain = core.tMain.getNewRow();
 
-        if (tRef != null) {
-            oRef = tRef.getNewRow();
+        if (core.tRef != null) {
+            core.oRef = core.tRef.getNewRow();
         }
 
         if (Trace.DOASSERT) {
-            Trace.doAssert(iColMain.length == iColRef.length);
+            Trace.doAssert(core.iColMain.length == core.iColRef.length);
         }
     }
 
@@ -221,8 +201,8 @@ class Constraint {
      *  @return name of the index refereneced by a foreign key
      */
     String getPkName() {
-        return pkName == null ? null
-                              : pkName.name;
+        return core.pkName == null ? null
+                                   : core.pkName.name;
     }
 
     /**
@@ -233,8 +213,8 @@ class Constraint {
      *  @return name of the index for the referencing foreign key
      */
     String getFkName() {
-        return fkName == null ? null
-                              : fkName.name;
+        return core.fkName == null ? null
+                                   : core.fkName.name;
     }
 
     /**
@@ -252,11 +232,11 @@ class Constraint {
      * @return
      */
     Table getMain() {
-        return tMain;
+        return core.tMain;
     }
 
     Index getMainIndex() {
-        return iMain;
+        return core.iMain;
     }
 
     /**
@@ -265,11 +245,11 @@ class Constraint {
      * @return
      */
     Table getRef() {
-        return tRef;
+        return core.tRef;
     }
 
     Index getRefIndex() {
-        return iRef;
+        return core.iRef;
     }
 
     /**
@@ -278,7 +258,7 @@ class Constraint {
      * @return
      */
     boolean isCascade() {
-        return bCascade;
+        return core.bCascade;
     }
 
     /**
@@ -287,7 +267,7 @@ class Constraint {
      * @return
      */
     int[] getMainColumns() {
-        return iColMain;
+        return core.iColMain;
     }
 
     /**
@@ -296,7 +276,7 @@ class Constraint {
      * @return
      */
     int[] getRefColumns() {
-        return iColRef;
+        return core.iColRef;
     }
 
     /**
@@ -308,7 +288,7 @@ class Constraint {
     boolean isIndexFK(Index index) {
 
         if (iType == FOREIGN_KEY || iType == MAIN) {
-            if (iMain == index || iRef == index) {
+            if (core.iMain == index || core.iRef == index) {
                 return true;
             }
         }
@@ -325,7 +305,7 @@ class Constraint {
      */
     boolean isIndexUnique(Index index) {
 
-        if (iType == UNIQUE && iMain == index) {
+        if (iType == UNIQUE && core.iMain == index) {
             return true;
         }
 
@@ -340,8 +320,8 @@ class Constraint {
      */
     boolean isEquivalent(int col[], int type) {
 
-        if (type == iType && iType == UNIQUE && iLen == col.length) {
-            if (ArrayUtil.haveEqualSets(iColMain, col, iLen)) {
+        if (type == iType && iType == UNIQUE && core.iLen == col.length) {
+            if (ArrayUtil.haveEqualSets(core.iColMain, col, core.iLen)) {
                 return true;
             }
         }
@@ -350,40 +330,42 @@ class Constraint {
     }
 
     /**
-     *  Method declaration
+     *  Used to update constrains to reflect structural changes in a table.
      *
-     * @param  old
-     * @param  n
+     * @param  oldt reference to the old version of the table
+     * @param  newt referenct to the new version of the table
+     * @param  colindex index at which table column is added or removed
+     * @param  adjust -1, 0, +1 to indicate if column is added or removed
      * @throws  SQLException
      */
-    void replaceTable(Table oldt, Table newt, Index oldidx,
-                      Index newidx) throws SQLException {
+    void replaceTable(Table oldt, Table newt, int colindex,
+                      int adjust) throws SQLException {
 
-        if (oldt == tMain) {
-            tMain = newt;
-
-            setTableRows();
-        }
-
-        if (oldidx == iMain) {
-            iMain    = newidx;
-            iColMain = new int[iColMain.length];
-
-            ArrayUtil.copyArray(newidx.getColumns(), iColMain,
-                                iColMain.length);
-        }
-
-        if (oldt == tRef) {
-            tRef = newt;
+        if (oldt == core.tMain) {
+            core.tMain = newt;
 
             setTableRows();
+
+            core.iMain = core.tMain.getIndex(core.iMain.getName().name);
+            core.iColMain = ArrayUtil.getAdjustedColumnArray(core.iColMain,
+                    core.iLen, colindex, adjust);
         }
 
-        if (oldidx == iRef) {
-            iRef    = newidx;
-            iColRef = new int[iColRef.length];
+        if (oldt == core.tRef) {
+            core.tRef = newt;
 
-            ArrayUtil.copyArray(newidx.getColumns(), iColRef, iColRef.length);
+            setTableRows();
+
+            if (core.iRef != null) {
+                core.iRef = core.tRef.getIndex(core.iRef.getName().name);
+
+                if (core.iRef != core.iMain) {
+                    core.iColRef =
+                        ArrayUtil.getAdjustedColumnArray(core.iColRef,
+                                                         core.iLen, colindex,
+                                                         adjust);
+                }
+            }
         }
     }
 
@@ -404,8 +386,8 @@ class Constraint {
         }
 
         // must be called synchronized because of oMain
-        for (int i = 0; i < iLen; i++) {
-            Object o = row[iColRef[i]];
+        for (int i = 0; i < core.iLen; i++) {
+            Object o = row[core.iColRef[i]];
 
             if (o == null) {
 
@@ -413,12 +395,14 @@ class Constraint {
                 return;
             }
 
-            oMain[iColMain[i]] = o;
+            core.oMain[core.iColMain[i]] = o;
         }
 
         // a record must exist in the main table
-        Trace.check(iMain.find(oMain) != null,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION);
+        Trace.check(core.iMain.find(core.oMain) != null,
+                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    core.fkName.name + " table: "
+                    + core.tMain.getName().name);
     }
 
     /**
@@ -433,8 +417,8 @@ class Constraint {
     private void checkDelete(Object row[]) throws SQLException {
 
         // must be called synchronized because of oRef
-        for (int i = 0; i < iLen; i++) {
-            Object o = row[iColMain[i]];
+        for (int i = 0; i < core.iLen; i++) {
+            Object o = row[core.iColMain[i]];
 
             if (o == null) {
 
@@ -442,13 +426,15 @@ class Constraint {
                 return;
             }
 
-            oRef[iColRef[i]] = o;
+            core.oRef[core.iColRef[i]] = o;
         }
 
         // there must be no record in the 'slave' table
-        Node node = iRef.find(oRef);
+        Node node = core.iRef.find(core.oRef);
 
-        Trace.check(node == null, Trace.INTEGRITY_CONSTRAINT_VIOLATION);
+        // tony_lai@users 20020820 - patch 595156
+        Trace.check(node == null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    core.fkName.name + " table: " + core.tRef.getName().name);
     }
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -470,8 +456,8 @@ class Constraint {
     Node findFkRef(Object row[]) throws SQLException {
 
         // must be called synchronized because of oRef
-        for (int i = 0; i < iLen; i++) {
-            Object o = row[iColMain[i]];
+        for (int i = 0; i < core.iLen; i++) {
+            Object o = row[core.iColMain[i]];
 
             if (o == null) {
 
@@ -479,14 +465,16 @@ class Constraint {
                 return null;
             }
 
-            oColRef[i] = o;
+            core.oColRef[i] = o;
         }
 
         // there must be no record in the 'slave' table
-        Node node = iRef.findSimple(oColRef, bCascade);
+        Node node = core.iRef.findSimple(core.oColRef, core.bCascade);
 
-        Trace.check((node == null) || bCascade,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION);
+        // tony_lai@users 20020820 - patch 595156
+        Trace.check((node == null) || core.bCascade,
+                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    core.fkName.name + " table: " + core.tRef.getName().name);
 
         return node;
     }
@@ -510,7 +498,7 @@ class Constraint {
         }
 
         if (iType == MAIN) {
-            if (!ArrayUtil.haveCommonElement(col, iColMain, iLen)) {
+            if (!ArrayUtil.haveCommonElement(col, core.iColMain, core.iLen)) {
                 return;
             }
 
@@ -520,14 +508,14 @@ class Constraint {
             while (r != null) {
 
                 // if an identical record exists we don't have to test
-                if (iMain.find(r.data) == null) {
+                if (core.iMain.find(r.data) == null) {
                     checkDelete(r.data);
                 }
 
                 r = r.next;
             }
         } else if (iType == FOREIGN_KEY) {
-            if (!ArrayUtil.haveCommonElement(col, iColMain, iLen)) {
+            if (!ArrayUtil.haveCommonElement(col, core.iColMain, core.iLen)) {
                 return;
             }
 

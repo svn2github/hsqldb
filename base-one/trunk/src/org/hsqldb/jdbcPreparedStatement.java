@@ -1281,7 +1281,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1364,7 +1364,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1392,7 +1392,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1422,7 +1422,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1452,7 +1452,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1494,7 +1494,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1700,7 +1700,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1735,7 +1735,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1814,7 +1814,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1857,7 +1857,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1890,7 +1890,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1923,7 +1923,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1953,7 +1953,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1982,7 +1982,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2011,7 +2011,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2040,7 +2040,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2069,7 +2069,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2098,7 +2098,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2127,7 +2127,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2157,7 +2157,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2191,7 +2191,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2219,7 +2219,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2247,7 +2247,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2276,7 +2276,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2316,7 +2316,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2348,7 +2348,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2386,7 +2386,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2416,7 +2416,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2447,7 +2447,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2478,7 +2478,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2509,7 +2509,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2545,7 +2545,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2703,7 +2703,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2747,7 +2747,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2796,7 +2796,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2856,7 +2856,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2893,7 +2893,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2933,7 +2933,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2971,7 +2971,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3007,7 +3007,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3044,7 +3044,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3080,7 +3080,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3116,7 +3116,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3152,7 +3152,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3188,7 +3188,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3224,7 +3224,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3262,7 +3262,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3301,7 +3301,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3340,7 +3340,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3376,7 +3376,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3413,7 +3413,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3451,7 +3451,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3496,7 +3496,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3540,7 +3540,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3592,7 +3592,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3635,7 +3635,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3696,7 +3696,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3742,7 +3742,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3787,7 +3787,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3832,7 +3832,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3878,7 +3878,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3933,7 +3933,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -3979,7 +3979,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4014,7 +4014,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4049,7 +4049,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4084,7 +4084,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4119,7 +4119,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4155,7 +4155,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4191,7 +4191,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4226,7 +4226,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4262,7 +4262,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4297,7 +4297,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4333,7 +4333,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4369,7 +4369,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4412,7 +4412,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4448,7 +4448,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4491,7 +4491,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4527,7 +4527,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4563,7 +4563,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4599,7 +4599,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4634,7 +4634,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4676,7 +4676,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4721,7 +4721,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4766,7 +4766,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4806,7 +4806,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -4988,19 +4988,19 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 break;
 
             case Types.TINYINT :
-                setByte(parameterIndex, ((Byte) x).byteValue());
+                setByte(parameterIndex, ((Number) x).byteValue());
                 break;
 
             case Types.SMALLINT :
-                setShort(parameterIndex, ((Short) x).shortValue());
+                setShort(parameterIndex, ((Number) x).shortValue());
                 break;
 
             case Types.INTEGER :
-                setInt(parameterIndex, ((Integer) x).intValue());
+                setInt(parameterIndex, ((Number) x).intValue());
                 break;
 
             case Types.BIGINT :
-                setLong(parameterIndex, ((Long) x).longValue());
+                setLong(parameterIndex, ((Number) x).longValue());
                 break;
 
             case Types.REAL :
@@ -5034,14 +5034,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-
-                // fredt@users 20010707 - patch 425495 by emorning@users
-                // to allow class cast when SQL type is used with setObject()
-                // for prepareStatement()
-                if (x instanceof ByteArray) {
-                    x = ((ByteArray) x).byteValue();
-                }
-
                 setBytes(parameterIndex, (byte[]) x);
                 break;
 

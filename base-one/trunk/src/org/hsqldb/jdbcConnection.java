@@ -91,10 +91,11 @@ import java.util.StringTokenizer;
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 // boucherb@users 20020509 - added "throws SQLException" to all methods where
-// it was missing here but specified in the java.sql.Connection interface, 
-// updated generic documentation to JDK 1.4, and added JDBC3 methods and docs 
-// boucherb@users and fredt@users 20020409/20020505 extensive review and update   
+// it was missing here but specified in the java.sql.Connection interface,
+// updated generic documentation to JDK 1.4, and added JDBC3 methods and docs
+// boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
+// fredt@users 20020830 - patch 487323 by xclayl@users - better synchronization
 
 /**
  * <!-- start generic documentation -->
@@ -112,10 +113,10 @@ import java.util.StringTokenizer;
  * disabled, an explicit commit must be done or database changes will
  * not be saved. <p>
  *
- * <!-- end generic documentation --> <!-- start
- * release-specific documentation --> <span
- * class="ReleaseSpecificDocumentation"> <b>HSQLDB-Specific
- * Information:</b> <p>
+ * <!-- end generic documentation -->
+ * <!-- start release-specific documentation -->
+ * <span class="ReleaseSpecificDocumentation">
+ * <b>HSQLDB-Specific Information:</b> <p>
  *
  * To get a <code>Connection</code> to an HSQLDB database, the
  * following code may be used: <p>
@@ -257,6 +258,12 @@ public class jdbcConnection implements Connection {
      *  database. For in-memory databases, this is always <B>"."</B>
      */
     private String sDatabaseName;
+
+    /**
+     * Properties for the connection
+     *
+     */
+    private HsqlProperties connProperties;
 
     /**
      * One of the possible values for this connection's type. <p>
@@ -449,8 +456,9 @@ public class jdbcConnection implements Connection {
      * object will by default be type <code>TYPE_FORWARD_ONLY</code>
      * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.<p>
      *
-     * <!-- end generic documentation --> <!-- start release-specific
-     * documentation --> <span class="ReleaseSpecificDocumentation">
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
      * The standard java.sql API documentation above suggests that if
@@ -469,7 +477,7 @@ public class jdbcConnection implements Connection {
      * Starting with 1.7.0, HSQLDB also supports
      * <code>TYPE_SCROLL_INSENSITIVE</code> results. <p>
      *
-     * <B>Notes:</B> <p>
+     * <b>Notes:</b> <p>
      *
      * Up to 1.6.1, calling this method returned <code>null</code> if the
      * connection was already closed. This was possibly counter-intuitive
@@ -520,9 +528,10 @@ public class jdbcConnection implements Connection {
      * object will by default be type <code>TYPE_FORWARD_ONLY</code>
      * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.<p>
      *
-     * <!-- end generic documentation --> <!-- start release-specific
-     * documentation --> <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</b> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * The standard java.sql API documentation above suggests that if
      * the same SQL statement is executed many times, it may be more
@@ -542,7 +551,7 @@ public class jdbcConnection implements Connection {
      * Starting with 1.7.0, HSQLDB also supports
      * <code>TYPE_SCROLL_INSENSITIVE</code> results. <p>
      *
-     * <B>Notes:</B> <p>
+     * <b>Notes:</b> <p>
      *
      * Up to 1.6.1, calling this method returned <code>null</code> if the
      * connection was already closed. This was possibly counter-intuitive
@@ -579,7 +588,7 @@ public class jdbcConnection implements Connection {
      * its IN and OUT  parameters, and methods for executing the call to a
      * stored procedure. <p>
      *
-     * <B>Note:</B> This method is optimized for handling stored
+     * <b>Note:</b> This method is optimized for handling stored
      * procedure call statements. Some drivers may send the call
      * statement to the database when the method <code>prepareCall</code>
      * is done; others may wait until the <code>CallableStatement</code>
@@ -594,7 +603,7 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</b> <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * The standard java.sql API documentation above suggests that if
      * the same stored procedure is executed many times, it may be
@@ -607,7 +616,7 @@ public class jdbcConnection implements Connection {
      * procedure execution <I>are</I> a features slated to be part of
      * the 1.7.x series. <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports only the default
+     * Up to and including 1.7.1, HSQLDB supports only the default
      * <code>TYPE_FORWARD_ONLY</code> - <code>CONCUR_READ_ONLY</code> for
      * results obtained from <code>CallableStatement</code> objects. <p>
      *
@@ -619,7 +628,7 @@ public class jdbcConnection implements Connection {
      * closed connections. Starting with 1.7.0. the behaviour is to throw
      * a <code>SQLException</code> if the connection is closed.<p>
      *
-     * Up to and including 1.7.0, each HSQLDB stored procedure returns
+     * Up to and including 1.7.1, each HSQLDB stored procedure returns
      * only a single value wrapped in a <code>ResultSet</code> object. That
      * is, HSQLDB stored procedures act very much like SQL functions
      * and can actually always be used in such a capacity. As such,
@@ -641,7 +650,7 @@ public class jdbcConnection implements Connection {
      * respectiviely.  Previously, calling such Java methods
      * in either context resulted in throwing a <CODE>SQLException</CODE>.
      *
-     * Finally, up to and including 1.7.0, the returned
+     * Finally, up to and including 1.7.1, the returned
      * <code>CallableStatement</code> object does not support any
      * getXXX methods. That is, HSQLDB stored procedures do not
      * support <CODE>OUT</CODE> or <CODE>IN OUT</CODE> parameters. This
@@ -680,12 +689,12 @@ public class jdbcConnection implements Connection {
      * sending it. This method returns the native form of the
      * statement that the driver would have sent. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB converts the JDBC SQL
+     * Up to and including 1.7.1, HSQLDB converts the JDBC SQL
      * grammar into the system's native SQL grammar prior to sending
      * it; this method returns the native form of the statement that
      * the driver would send in place of client-specified JDBC SQL
@@ -810,10 +819,9 @@ public class jdbcConnection implements Connection {
      * the transaction is committed. <p>
      *
      * <!-- end generic documentation -->
-     * <!-- start  release-specific documentation -->
+     * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B>
-     * <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to and including HSQLDB 1.7.0, <p>
      *
@@ -882,10 +890,10 @@ public class jdbcConnection implements Connection {
      * locks currently held by the Connection. This method should be
      * used only when auto-commit mode has been disabled. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * As of HSQLDB 1.7.0, SQL Savepoints are supported.  As such,
      * successfully calling this method now also removes all
@@ -934,10 +942,10 @@ public class jdbcConnection implements Connection {
      * currently held by this Connection. This method should be used
      * only when auto- commit has been disabled. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * As of HSQLDB 1.7.0, SQL Savepoints are supported.  As such,
      * successfully calling this method also removes all Savepoints
@@ -996,7 +1004,7 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * In a future release, <code>INTERNAL</code> <code>Connection</code>
      * objects may not be closable from JDBC client code, and disconnect
@@ -1023,6 +1031,10 @@ public class jdbcConnection implements Connection {
             Trace.trace();
         }
 
+        if (iType == INTERNAL) {
+            return;
+        }
+
         if (bClosed) {
             return;
         }
@@ -1036,7 +1048,8 @@ public class jdbcConnection implements Connection {
         // each Session, and it should be open for the life of
         // its Session
         // boucherb@users 20020409
-        if ((iType == STANDALONE) || (iType == INTERNAL)) {
+// fredt - patch 1.7.1 - implemented the above
+        if (iType == STANDALONE) {
             closeStandalone();
         } else {
             execute("DISCONNECT");
@@ -1071,9 +1084,9 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not provide accurate
+     * Up to and including 1.7.1, HSQLDB does not provide accurate
      * results for the full range of <code>DatabaseMetaData</code>
      * methods returning <code>ResultSet</code>. Some of these
      * methods may always return empty result sets, even though they
@@ -1082,12 +1095,14 @@ public class jdbcConnection implements Connection {
      * Also, some methods may ignore the filters provided as
      * parameters, returning an unfiltered result each time. <p>
      *
-     * As of version 1.7.0, the only completely accurate
+     * As of version 1.7.1, the only completely accurate
      * <code>DatabaseMetaData</code>
      * methods returning <code>ResultSet</code> are {@link
-     * jdbcDatabaseMetaData#getTables getTables}, {@link
-     * jdbcDatabaseMetaData#getColumns getColumns} and {@link
-     * jdbcDatabaseMetaData#getIndexInfo getIndexInfo}. Also, the
+     * jdbcDatabaseMetaData#getTables getTables},
+     * {@link jdbcDatabaseMetaData#getColumns getColumns},
+     * {@link jdbcDatabaseMetaData#getColumns getPrimaryKeys},
+     * and {@link jdbcDatabaseMetaData#getIndexInfo getIndexInfo}.
+     * Also, the
      * majority of methods returning <code>ResultSet</code> throw a
      * <code>SQLException</code> when accessed by a non-admin user.
      * In order to provide non-admin users access to these methods,
@@ -1149,12 +1164,12 @@ public class jdbcConnection implements Connection {
      * <B>Note:</B> This method should not be called while in the
      * middle of a transaction. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB will commit the current
+     * Up to and including 1.7.1, HSQLDB will commit the current
      * transaction automatically when this method is called. <p>
      *
      * Additionally, HSQLDB provides a way to put a whole database in
@@ -1213,7 +1228,7 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB does not yet support catalogs and simply ignores this
      * request. <p>
@@ -1235,10 +1250,10 @@ public class jdbcConnection implements Connection {
      * <!-- start generic documentation -->
      * Returns the Connection's current catalog name. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB does not yet support catalogs and always returns null.
      * <p>
@@ -1271,12 +1286,12 @@ public class jdbcConnection implements Connection {
      * <B>Note:</B> If this method is called during a transaction,
      * the result is implementation-defined. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports only
+     * Up to and including 1.7.1, HSQLDB supports only
      * <code>Connection.TRANSACTION_READ_UNCOMMITTED</code>. <p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1313,10 +1328,10 @@ public class jdbcConnection implements Connection {
      * Retrieves this <code>Connection</code>
      * object's current transaction isolation level. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * HSQLDB always returns
      * <CODE>Connection.TRANSACTION_READ_UNCOMMITED</CODE>. <p>
@@ -1331,7 +1346,7 @@ public class jdbcConnection implements Connection {
      *    <code>Connection.TRANSACTION_SERIALIZABLE</code>, or
      *    <code>Connection.TRANSACTION_NONE</code> <p>
      *
-     *    Up to and including 1.7.0, TRANSACTION_READ_UNCOMMITTED is
+     *    Up to and including 1.7.1, TRANSACTION_READ_UNCOMMITTED is
      *    always returned
      * @exception SQLException if a database access error occurs <p>
      * @see jdbcDatabaseMetaData#supportsTransactionIsolationLevel
@@ -1363,12 +1378,12 @@ public class jdbcConnection implements Connection {
      * <B>Note:</B> Subsequent warnings will be chained to this
      * SQLWarning. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB never produces warnings,
+     * Up to and including 1.7.1, HSQLDB never produces warnings,
      * always returns null.<p>
      *
      * </span> <!-- end release-specific documentation -->
@@ -1429,16 +1444,33 @@ public class jdbcConnection implements Connection {
     }
 
     /**
+     * An internal method for removing a databas that has been shutdown
+     *
+     * @param database path/name of database to remove
+     */
+
+    // bourcherb@users - 20020828 - patch 1.7.1 by boucherb@users
+    static void removeDatabase(Database database) {
+
+        if (database == null) {
+            return;
+        }
+
+        tDatabase.remove(database.getName());
+        iUsageCount.remove(database);
+    }
+
+    /**
      * <!-- start generic documentation -->
      * Clears all warnings reported for this <code>Connection</code>
      * object. After a call to this method, the method
      * <code>getWarnings</code> returns null until
      * a new warning is reported for this Connection. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to and including HSQLDB 1.7.0, <CODE>SQLWarning</CODE> is not
      * supported, and calls to this method are simply ignored. <p>
@@ -1467,10 +1499,10 @@ public class jdbcConnection implements Connection {
      * default result set type and result set concurrency type to be
      * overridden. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to HSQLDB 1.6.1, support was provided only for type
      * <code>TYPE_FORWARD_ONLY</code>
@@ -1536,7 +1568,7 @@ public class jdbcConnection implements Connection {
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to HSQLDB 1.6.1, support was provided only for type
      * <code>TYPE_FORWARD_ONLY</code>
@@ -1602,10 +1634,10 @@ public class jdbcConnection implements Connection {
      * default result set type and result set concurrency type to be
      * overridden. <p>
      *
-     * <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
      * Up to and including HSQLDB 1.7.0, support is provided only for
      * type <code>TYPE_FORWARD_ONLY</code> and concurrency
@@ -1621,7 +1653,7 @@ public class jdbcConnection implements Connection {
      * closed connections. Starting with 1.7.0. the behaviour is to throw
      * a <code>SQLException</code> if the connection is closed.<p>
      *
-     * Up to and including 1.7.0, each HSQLDB stored procedure returns
+     * Up to and including 1.7.1, each HSQLDB stored procedure returns
      * only a single value wrapped in a <code>ResultSet</code> object. That
      * is, HSQLDB stored procedures act very much like SQL functions,
      * and can actually always be used in such a capacity. As such,
@@ -1629,7 +1661,7 @@ public class jdbcConnection implements Connection {
      * <code>TYPE_FORWARD_ONLY</code>, since the result obtained by
      * executing a <code>CallableStatement</code> object has
      * always just one column and one row.  Be aware that this
-     * behaviour will change in HSQLDB 1.7.1, in that support will be
+     * behaviour will change in HSQLDB 1.7., in that support will be
      * added for Java stored procedures that return multi-column,
      * multi-row results. At that point, support will be added for
      * <code>CallableStatement</code> objects that return
@@ -1642,7 +1674,7 @@ public class jdbcConnection implements Connection {
      * Previously, calling such Java methods in either context resulted in
      * throwing a <CODE>SQLException</CODE>.
      *
-     * Finally, up to and including 1.7.0, the returned
+     * Finally, up to and including 1.7.1, the returned
      * <code>CallableStatement</code> object does not support any
      * getXXX methods. That is, HSQLDB stored procedures do not
      * support <CODE>OUT</CODE> or <CODE>IN OUT</CODE> parameters.
@@ -1683,14 +1715,14 @@ public class jdbcConnection implements Connection {
      * <!-- start generic documentation -->
      * Gets the type map object associated with this connection. Unless
      * the application has added an entry to the type map, the map
-     * returned will be empty.</span><p>
+     * returned will be empty.<p>
      *
      * <!-- end generic documentation -->
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. Calling this
+     * HSQLDB 1.7.1 does not support this feature. Calling this
      * method always throws a <CODE>SQLException</CODE>, stating that the
      * function is not supported. <p>
      *
@@ -1708,18 +1740,18 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Installs the given <code>TypeMap</code>
+     * <!-- start generic documentation -->
+     * Installs the given <code>TypeMap</code>
      * object as the type map for this <code>Connection</code>
      * object. The type map will be used for the custom mapping of
      * SQL structured types and distinct types.<p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. Calling this
+     * HSQLDB 1.7.1 does not support this feature. Calling this
      * method always throws a <CODE>SQLException</CODE>, stating that
      * the function is not supported. <p>
      *
@@ -1745,17 +1777,17 @@ public class jdbcConnection implements Connection {
     //--------------------------JDBC 3.0-----------------------------
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Changes the holdability of
+     * <!-- start generic documentation -->
+     * Changes the holdability of
      * <code>ResultSet</code> objects created using this
      * <code>Connection</code> object to the given holdability. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1786,17 +1818,17 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Retrieves the current
+     * <!-- start generic documentation -->
+     * Retrieves the current
      * holdability of <code>ResultSet</code> objects created using
      * this <code>Connection</code> object.<p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1824,17 +1856,17 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates an unnamed savepoint in
+     * <!-- start generic documentation -->
+     * Creates an unnamed savepoint in
      * the current transaction and returns the new <code>Savepoint</code>
      * object that represents it.<p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1863,17 +1895,17 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a savepoint with the
+     * <!-- start generic documentation -->
+     * Creates a savepoint with the
      * given name in the current transaction and returns the new
      * <code>Savepoint</code> object that represents it. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1904,19 +1936,19 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Undoes all changes made after
+     * <!-- start generic documentation -->
+     * Undoes all changes made after
      * the given <code>Savepoint</code> object was set. <p>
      *
      * This method should be used only when auto-commit has been
      * disabled. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1948,18 +1980,17 @@ public class jdbcConnection implements Connection {
 
     /**
      * <!-- start generic documentation -->
-     * <span class="GenericDocumentation">
      * Removes the given <code>Savepoint</code>
      * object from the current transaction. Any reference to the
      * savepoint after it have been removed will cause an
      * <code>SQLException</code> to be thrown. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1990,20 +2021,20 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a <code>Statement</code>
+     * <!-- start generic documentation -->
+     * Creates a <code>Statement</code>
      * object that will generate <code>ResultSet</code> objects with
      * the given type, concurrency, and holdability. This method is
      * the same as the <code>createStatement</code> method above, but
      * it allows the default result set type, concurrency, and
      * holdability to be overridden. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2047,8 +2078,8 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a <code>PreparedStatement</code>
+     * <!-- start generic documentation -->
+     * Creates a <code>PreparedStatement</code>
      * object that will generate <code>ResultSet</code> objects with
      * the given type, concurrency, and holdability. <p>
      *
@@ -2056,12 +2087,12 @@ public class jdbcConnection implements Connection {
      * method above, but it allows the default result set type,
      * concurrency, and holdability to be overridden. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2108,20 +2139,20 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a <code>CallableStatement</code>
+     * <!-- start generic documentation -->
+     * Creates a <code>CallableStatement</code>
      * object that will generate <code>ResultSet</code> objects with
      * the given type and concurrency. This method is the same as the
      * <code>prepareCall</code> method above, but it allows the
      * default result set type, result set concurrency type and
      * holdability to be overridden. <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2169,9 +2200,8 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a default
-     * <code>PreparedStatement</code>
+     * <!-- start generic documentation -->
+     * Creates a default <code>PreparedStatement</code>
      * object that has the capability to retrieve auto-generated
      * keys. The given constant tells the driver whether it should
      * make auto-generated keys available for retrieval. This
@@ -2194,12 +2224,12 @@ public class jdbcConnection implements Connection {
      * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.
      * <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2235,9 +2265,8 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a default
-     * <code>PreparedStatement</code>
+     * <!-- start generic documentation -->
+     * Creates a default <code>PreparedStatement</code>
      * object capable of returning the auto-generated keys designated
      * by the given array. This array contains the indexes of the
      * columns in the target table that contain the auto-generated
@@ -2265,12 +2294,12 @@ public class jdbcConnection implements Connection {
      * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.
      * <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2303,9 +2332,8 @@ public class jdbcConnection implements Connection {
 //#endif JDBC3
 
     /**
-     * <!-- start generic documentation --> <span
-     * class="GenericDocumentation"> Creates a default
-     * <code>PreparedStatement</code>
+     * <!-- start generic documentation -->
+     * Creates a default <code>PreparedStatement</code>
      * object capable of returning the auto-generated keys designated
      * by the given array. This array contains the names of the
      * columns in the target table that contain the auto-generated
@@ -2333,12 +2361,12 @@ public class jdbcConnection implements Connection {
      * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.
      * <p>
      *
-     * </span> <!-- end generic documentation --> <!-- start
-     * release-specific documentation --> <span
-     * class="ReleaseSpecificDocumentation"> <B>HSQLDB-Specific
-     * Information:</B> <p>
+     * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -2403,21 +2431,31 @@ public class jdbcConnection implements Connection {
      *     of reasons, including network problems or the fact that it
      *     may already be in use by another process.
      */
-    jdbcConnection(String s, String user,
-                   String password) throws SQLException {
+    jdbcConnection(String s, Properties props) throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace(s);
         }
 
-//        bAutoCommit   = true;
-        sDatabaseName = s;
+        String user     = (String) props.get("user");
+        String password = (String) props.get("password");
 
-        if (s.toUpperCase().startsWith("HTTP://")) {
+        if (user == null) {
+            user = "";
+        }
+
+        if (password == null) {
+            password = "";
+        }
+
+        sDatabaseName = s;
+        s             = s.toUpperCase();
+
+        if (s.startsWith("HTTP://")) {
             iType = HTTP;
 
             openHTTP(user, password);
-        } else if (s.toUpperCase().startsWith("HSQL://")) {
+        } else if (s.startsWith("HSQL://")) {
             iType = HSQLDB;
 
             openHSQL(user, password);
@@ -2426,6 +2464,8 @@ public class jdbcConnection implements Connection {
 
             openStandalone(user, password);
         }
+
+        connProperties = new HsqlProperties(props);
     }
 
     /**
@@ -2485,7 +2525,7 @@ public class jdbcConnection implements Connection {
         // Internal connections should also know the name of their database
         // Otherwise, our jdbcDatabaseMetaData implementation is broken
         // boucherb@users 20020509
-        // sDatabaseName = dDatabase.getName;
+        sDatabaseName = dDatabase.getName();
     }
 
     /**
@@ -2688,7 +2728,7 @@ public class jdbcConnection implements Connection {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
 
-        return new jdbcResultSet(new Result(result));
+        return new jdbcResultSet(new Result(result), connProperties);
     }
 
     /**
@@ -2814,7 +2854,7 @@ public class jdbcConnection implements Connection {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
 
-        return new jdbcResultSet(new Result(result));
+        return new jdbcResultSet(new Result(result), connProperties);
     }
 
     /**
@@ -2834,26 +2874,29 @@ public class jdbcConnection implements Connection {
      *      combination is invalid or there is a problem opening this
      *      connection's database
      */
-    private synchronized void openStandalone(String user,
-            String password) throws SQLException {
+    private void openStandalone(String user,
+                                String password) throws SQLException {
 
-        dDatabase = (Database) tDatabase.get(sDatabaseName);
+        synchronized (jdbcConnection.class) {
+            dDatabase = (Database) tDatabase.get(sDatabaseName);
 
-        int usage;
+            int usage;
 
-        if (dDatabase == null) {
-            dDatabase = new Database(sDatabaseName);
+            if (dDatabase == null) {
+                dDatabase = new Database(sDatabaseName);
 
-            tDatabase.put(sDatabaseName, dDatabase);
+                tDatabase.put(sDatabaseName, dDatabase);
 
-            usage = 1;
-        } else {
-            usage = 1 + ((Integer) iUsageCount.get(sDatabaseName)).intValue();
+                usage = 1;
+            } else {
+                usage =
+                    1 + ((Integer) iUsageCount.get(sDatabaseName)).intValue();
+            }
+
+            iUsageCount.put(sDatabaseName, new Integer(usage));
+
+            cSession = dDatabase.connect(user, password);
         }
-
-        iUsageCount.put(sDatabaseName, new Integer(usage));
-
-        cSession = dDatabase.connect(user, password);
     }
 
     /**
@@ -2872,45 +2915,56 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     *  A connection-type specific close method. <p>
+     *  Closing a Connection to a standalone database will cause the usage
+     *  count to be decremented and a disconnect SQL command issued to the db.
+     *  If this is the last connection, the db is shut down.<p>
      *
-     *  This method is executed on behalf of {@link #close() close()}
-     *  when it is determined that the type of this Connection is
-     *  {@link #STANDALONE STANDALONE}
      *
      * @throws  SQLException when a database access error occurs
      */
-    private synchronized void closeStandalone() throws SQLException {
+    private void closeStandalone() throws SQLException {
 
-        // FIXME:
-        // Should check first if sDatabase is null and
-        // throw appropraite SQLException?
-        // boucherb@user 20020509
-        Integer i = (Integer) iUsageCount.get(sDatabaseName);
+        synchronized (jdbcConnection.class) {
 
-        if (i == null) {
+            // FIXME:
+            // Should check first if sDatabase is null and
+            // throw appropraite SQLException?
+            // boucherb@user 20020509
+            // fredt - too many different flags are used in all of this
+            // code, it should all be reorganised
+            Integer i = (Integer) iUsageCount.get(sDatabaseName);
 
-            // It was already closed - ignore it.
-            return;
-        }
+            if (i == null) {
 
-        int usage = i.intValue() - 1;
-
-        if (usage == 0) {
-            iUsageCount.remove(sDatabaseName);
-            tDatabase.remove(sDatabaseName);
-
-            /*bad.  What if user is not admin*/
-            if (!dDatabase.isShutdown()) {
-                execute("SHUTDOWN");
+                // It was already closed - ignore it.
+                return;
             }
 
-            /**/
-            dDatabase = null;
-            cSession  = null;
-        } else {
-            iUsageCount.put(sDatabaseName, new Integer(usage));
-            execute("DISCONNECT");
+            int usage = i.intValue() - 1;
+
+            if (usage == 0) {
+                iUsageCount.remove(sDatabaseName);
+                tDatabase.remove(sDatabaseName);
+
+                /*bad.  What if user is not admin*/
+
+                // fredt - because standalone is used only as part of an
+                // application there should not be a need to keep
+                // the database open when the last connection is closed.
+                // alternatively openning and closing the database, as opposed
+                // to connections to it, can be handled by separate, non-JDBC
+                // method call, similar to server modes.
+                if (!dDatabase.isShutdown()) {
+                    execute("SHUTDOWN");
+                }
+
+                /**/
+                dDatabase = null;
+                cSession  = null;
+            } else {
+                iUsageCount.put(sDatabaseName, new Integer(usage));
+                execute("DISCONNECT");
+            }
         }
     }
 
@@ -2944,6 +2998,7 @@ public class jdbcConnection implements Connection {
      * @see  #execute execute
      */
     private jdbcResultSet executeStandalone(String s) throws SQLException {
-        return new jdbcResultSet(dDatabase.execute(s, cSession));
+        return new jdbcResultSet(dDatabase.execute(s, cSession),
+                                 connProperties);
     }
 }

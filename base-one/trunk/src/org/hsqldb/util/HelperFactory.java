@@ -34,19 +34,17 @@ package org.hsqldb.util;
 import java.sql.*;
 
 /**
- * Title:        Database Transfer Tool<br>
- * Description:<br>
- * Copyright:    Copyright (c) 2002<br>
- * Company:      INGENICO<br>
- * @author Nicolas BAZIN
- * @version 1.0
+ * @author Nicolas BAZIN, INGENICO
+ * @version 1.7.0
  */
-public class HelperFactory {
 
-    public HelperFactory() {}
+// brian.porter@siteforce.de 20020703 - added reference to OracleTransferHelper
+class HelperFactory {
+
+    HelperFactory() {}
 
     // TransferHelper factory
-    static public TransferHelper getHelper(String productLowerName) {
+    static TransferHelper getHelper(String productLowerName) {
 
         TransferHelper f = null;
 
@@ -58,6 +56,10 @@ public class HelperFactory {
             f = new McKoiTransferHelper();
         } else if (productLowerName.indexOf("informix") != -1) {
             f = new InformixTransferHelper();
+        } else if (productLowerName.indexOf("oracle") != -1) {
+            System.out.println("using the Oracle helper");
+
+            f = new OracleTransferHelper();
         } else if (productLowerName.equals("access")
                    || (productLowerName.indexOf("microsoft") != -1)) {
             f = new SqlServerTransferHelper();

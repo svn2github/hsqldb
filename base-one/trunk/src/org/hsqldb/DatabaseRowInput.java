@@ -168,7 +168,7 @@ abstract class DatabaseRowInput extends DataInputStream {
 
     protected abstract Object readOther() throws IOException, SQLException;
 
-    protected abstract ByteArray readBinary(int type)
+    protected abstract byte[] readBinary(int type)
     throws IOException, SQLException;
 
     /**

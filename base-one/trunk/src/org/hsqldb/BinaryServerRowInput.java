@@ -148,8 +148,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return ByteArray.deserialize(o);
     }
 
-    protected ByteArray readBinary(int type)
-    throws IOException, SQLException {
-        return new ByteArray(readByteArray());
+    protected byte[] readBinary(int type) throws IOException, SQLException {
+        return readByteArray();
     }
 }

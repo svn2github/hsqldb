@@ -33,6 +33,8 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
+// tony_lai@users 20020820 - patch 595099 by tlai@users use user define PK name
+
 /**
  *  Class declaration
  * @author sqlbob@users (RMP)
@@ -43,6 +45,7 @@ class TextTable extends org.hsqldb.Table {
     private String  readRoots  = "";
     private String  emptyRoots = "";
     private String  dataSource = "";
+    private String  firstLine  = "";
     private boolean isReversed = false;
 
     /**
@@ -98,7 +101,7 @@ class TextTable extends org.hsqldb.Table {
                     openCache(dataSource, isReversed, isReadOnly);
                 } else {
                     if (cCache != null) {
-                        cCache.shutdown();
+                        cCache.closeFile();
                     }
 
                     dataSource = "";
@@ -278,13 +281,14 @@ class TextTable extends org.hsqldb.Table {
         return (super.createIndexPrivate(column, name, unique));
     }
 
-    void createPrimaryKey(int[] columns) throws SQLException {
+// tony_lai@users 20020820 - patch 595099
+    void createPrimaryKey(String pkName, int[] columns) throws SQLException {
 
         if ((columns == null)
                 || ((columns.length == 1)
                     && getColumn(columns[0]).columnName.name.equals(
                         DEFAULT_PK))) {
-            super.createPrimaryKey(columns);
+            super.createPrimaryKey(null, columns);
         } else {
             throw (Trace.error(Trace.SECOND_PRIMARY_KEY));
         }

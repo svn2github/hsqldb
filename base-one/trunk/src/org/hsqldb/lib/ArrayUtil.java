@@ -32,7 +32,7 @@
 package org.hsqldb.lib;
 
 /**
- * Collection of static methods for operations of arrays
+ * Collection of static methods for operations on arrays
  *
  * @author fredt@users
  * @version 1.7.0
@@ -160,10 +160,7 @@ public class ArrayUtil {
     }
 
     public static void copyArray(int[] source, int[] dest, int count) {
-
-        for (int i = 0; i < count; i++) {
-            dest[i] = source[i];
-        }
+        System.arraycopy(source, 0, dest, 0, count);
     }
 
     /**
@@ -224,7 +221,7 @@ public class ArrayUtil {
      * @param  colarr
      * @param  colindex
      * @param  adjust +1 or 0 or -1
-     * return new, adjusted array or null if an element is removed
+     * return new, adjusted array
      */
     public static int[] toAdjustedColumnArray(int[] colarr, int colindex,
             int adjust) {
@@ -266,6 +263,20 @@ public class ArrayUtil {
         }
 
         return intarr;
+    }
+
+    /**
+     * Convenience wrapper for toAdjustedColumnArray() that creates the new
+     * array.
+     */
+    public static int[] getAdjustedColumnArray(int[] colarr, int size,
+            int colindex, int adjust) {
+
+        int[] newarr = new int[size];
+
+        copyArray(colarr, newarr, size);
+
+        return toAdjustedColumnArray(newarr, colindex, adjust);
     }
 
     /**

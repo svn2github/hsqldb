@@ -97,8 +97,9 @@ class DatabaseScript {
                             boolean bInsert, boolean bCached,
                             Session session) throws SQLException {
 
-        Vector tTable    = dDatabase.getTables();
-        Vector forwardFK = new Vector();
+        Vector tTable          = dDatabase.getTables();
+        Vector forwardFK       = new Vector();
+        Vector forwardFKSource = new Vector();
 
         session.checkAdmin();
 
@@ -125,10 +126,10 @@ class DatabaseScript {
 
             a = new StringBuffer(128);
 
-            getTableDDL(dDatabase, t, i, forwardFK, a);
+            getTableDDL(dDatabase, t, i, forwardFK, forwardFKSource, a);
             addRow(r, a.toString());
 
-            for (int j = 0; j < t.getIndexCount(); j++) {
+            for (int j = 1; j < t.getIndexCount(); j++) {
                 Index index = t.getIndex(j);
 
                 if (HsqlName.isReservedName(index.getName().name)) {
@@ -176,14 +177,10 @@ class DatabaseScript {
             }
 
             if (bCached && t.isCached()) {
-                a = new StringBuffer(128);
-
-                a.append("SET TABLE ");
-                a.append(t.getName().statementName);
-                a.append(" INDEX '");
-                a.append(t.getIndexRoots());
-                a.append('\'');
-                addRow(r, a.toString());
+                if (i >= forwardFKSource.size()
+                        || forwardFKSource.elementAt(i) == null) {
+                    addRow(r, getIndexRootsDDL(t));
+                }
             }
 
             // trigger script
@@ -213,32 +210,16 @@ class DatabaseScript {
             addRow(r, a.toString());
         }
 
-// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.elementAt(i);
-
-            if (t.isView()) {
-                View v = (View) tTable.elementAt(i);
-
-                if (bDrop) {
-                    addRow(r, "DROP VIEW " + v.getName().name);
-                }
-
-                a = new StringBuffer(128);
-
-                a.append("CREATE ");
-                a.append("VIEW ");
-                a.append(v.getName().statementName);
-                a.append(" AS ");
-                a.append(v.getStatement());
-                addRow(r, a.toString());
+        for (int i = 0, tSize = forwardFKSource.size(); i < tSize; i++) {
+            if (forwardFKSource.elementAt(i) != null) {
+                addRow(r, getIndexRootsDDL((Table) tTable.elementAt(i)));
             }
         }
 
-        Vector v = dDatabase.getUserManager().getUsers();
+        Vector uv = dDatabase.getUserManager().getUsers();
 
-        for (int i = 0, vSize = v.size(); i < vSize; i++) {
-            User u = (User) v.elementAt(i);
+        for (int i = 0, vSize = uv.size(); i < vSize; i++) {
+            User u = (User) uv.elementAt(i);
 
             // todo: this is not a nice implementation
             if (u == null) {
@@ -312,6 +293,28 @@ class DatabaseScript {
             addRow(r, buffer.toString());
         }
 
+// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
+        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+            Table t = (Table) tTable.elementAt(i);
+
+            if (t.isView()) {
+                View v = (View) tTable.elementAt(i);
+
+                if (bDrop) {
+                    addRow(r, "DROP VIEW " + v.getName().name);
+                }
+
+                a = new StringBuffer(128);
+
+                a.append("CREATE ");
+                a.append("VIEW ");
+                a.append(v.getName().statementName);
+                a.append(" AS ");
+                a.append(v.getStatement());
+                addRow(r, a.toString());
+            }
+        }
+
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.elementAt(i);
 
@@ -358,8 +361,21 @@ class DatabaseScript {
         return r;
     }
 
+    static String getIndexRootsDDL(Table t) throws SQLException {
+
+        StringBuffer a = new StringBuffer(128);
+
+        a.append("SET TABLE ");
+        a.append(t.getName().statementName);
+        a.append(" INDEX '");
+        a.append(t.getIndexRoots());
+        a.append('\'');
+
+        return a.toString();
+    }
+
     static void getTableDDL(Database dDatabase, Table t, int i,
-                            Vector forwardFK,
+                            Vector forwardFK, Vector forwardFKSource,
                             StringBuffer a) throws SQLException {
 
         a.append("CREATE ");
@@ -455,6 +471,11 @@ class DatabaseScript {
                 int   maintableindex = dDatabase.getTableIndex(maintable);
 
                 if (maintableindex > i) {
+                    if (i >= forwardFKSource.size()) {
+                        forwardFKSource.setSize(i + 1);
+                    }
+
+                    forwardFKSource.setElementAt(c, i);
                     forwardFK.addElement(c);
                 } else {
                     a.append(',');

@@ -86,6 +86,7 @@ import java.io.PrintWriter;
 // the system property hsqldb.tracesystemout == true is now used for printing
 // trace message to System.out
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
+// tony_lai@users 20020820 - patch 595073 by tlai@users Duplicated exception msg
 public class Trace extends PrintWriter {
 
     public static boolean       TRACE          = false;
@@ -220,7 +221,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static SQLException getError(int code, String add) {
+    static SQLException getError(int code, Object add) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         code = Math.abs(code);
@@ -228,13 +229,36 @@ public class Trace extends PrintWriter {
         String s = getMessage(code);
 
         if (add != null) {
-            s += ": " + add;
+            s += ": " + add.toString();
         }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         return new SQLException(s.substring(6), s.substring(0, 5), -code);
 
         //return getError(s);
+    }
+
+    /**
+     * Creates a SQLException useing given message and code.  The status is
+     * filled based on the code.
+     * <p>
+     * Note use the given msg as error message, not as "add" argument.
+     *
+     *
+     * @param msg
+     * @param code
+     *
+     * @return a SQLException created from the given message and code.
+     */
+
+// tony_lai@users 20020820 - patch 595073
+    static SQLException getError(String msg, int code) {
+
+        code = Math.abs(code);
+
+        String s = getMessage(code);
+
+        return new SQLException(msg, s.substring(0, 5), -code);
     }
 
     /**
@@ -367,10 +391,10 @@ public class Trace extends PrintWriter {
      * @throws SQLException
      */
     static void check(boolean condition, int code,
-                      String s) throws SQLException {
+                      Object add) throws SQLException {
 
         if (!condition) {
-            throw getError(code, s);
+            throw getError(code, add);
         }
     }
 

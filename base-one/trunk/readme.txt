@@ -1,14 +1,35 @@
 Readme File
 
-2002.07.14
+2002.10.04
 
-HSQLDB 1.7.0
+HSQLDB 1.7.1
 
-HSQLDB 1.7.0 offers major new functionality over version 1.6.1 released
-a year ago and the previous versions of HSQLDB and HypersonicSQL.
+HSQLDB 1.7.1 is a maintenance release, based on 1.7.0. A large
+number of bug fixes and minor feature enhancemnts, together with major
+speed and memory optimisations are included. No new keyword or major new
+capability has been added to 1.7.0.
 
-A very large number of bugs have been fixed, new features added and
-doucumentation improved.
+1.7.1 features major memory usage optimisations, resulting in up to 30%
+savings with memory tables and less with cached tables.
+
+This improvement is due to a rewrite on the internal Row and Index Node
+classes. While maintaining exactly the same orgininal logic, the new
+versions have a smaller memory footprint. This has also resulted in
+a modest improvement in speed.
+
+This release also features major speed improvements to all procedure
+calls and particularly the identity() function.
+
+The Transfer tool features new functionality, such as database
+dump and restore.
+
+Big improvements were made to startup speed where certain types of
+VIEW were defined. Also VIEWS featuring function calls are now
+supported.
+
+Almost all the bugs that were reported since the release of
+1.7.0 have been fixed. Some of these bugs related to data consistency
+after some ALTER TABLE commands were issued.
 
 A JAR file compiled with 1.3.0 is included in the /lib directory.
 
@@ -35,9 +56,6 @@ Javadoc documentation features new, extensive coverage for all
 jdbcXXXX.java files. This documentation covers the interaction between
 application programs and HSQLDB. Javadoc for public classes is
 included.
-
-I would like to thank all our users, contributors and developers who
-have made this release possible.
 
 Fred Toussi (fredt@users)
 http://hsqldb.sourceforge.net

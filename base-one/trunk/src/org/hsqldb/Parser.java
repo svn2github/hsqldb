@@ -205,7 +205,7 @@ class Parser {
 
     /**
      *  Logs the DDL for a table created with INTO.
-     *  Uses two dummy arguments for getTableDDL() as the new table has no
+     *  Uses three dummy arguments for getTableDDL() as the new table has no
      *  FK constraints.
      *
      * @throws  SQLException
@@ -218,7 +218,7 @@ class Parser {
 
         StringBuffer tableDDL = new StringBuffer();
 
-        DatabaseScript.getTableDDL(dDatabase, t, 0, null, tableDDL);
+        DatabaseScript.getTableDDL(dDatabase, t, 0, null, null, tableDDL);
 
         String sourceDDL = DatabaseScript.getDataSource(t);
 
@@ -771,7 +771,7 @@ class Parser {
      * @return
      * @throws  SQLException
      */
-    private Select parseSelect() throws SQLException {
+    Select parseSelect() throws SQLException {
 
         Select select = new Select();
 

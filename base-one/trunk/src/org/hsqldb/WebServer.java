@@ -102,15 +102,12 @@ import java.sql.DriverManager;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // method rorganised to use new HsqlServerProperties class
-public class WebServer {
+public class WebServer extends Server {
 
-    static final String  mServerName = "HSQL/1.7.0";
-    String               mRoot;
-    String               mDefaultFile;
-    char                 mPathSeparatorChar;
-    Database             mDatabase;
-    HsqlServerProperties serverProperties;
-    private boolean      traceMessages;
+    static final String mServerName = "HSQLDB/1.7.1";
+    String              mRoot;
+    String              mDefaultFile;
+    char                mPathSeparatorChar;
 
     /**
      *  Method declaration
@@ -138,9 +135,16 @@ public class WebServer {
 
     void setProperties(HsqlProperties props) {
 
-        serverProperties = new HsqlServerProperties("webserver");
+        serverProperties = new HsqlProperties("webserver");
 
-        serverProperties.load();
+        try {
+            serverProperties.load();
+        } catch (Exception e) {
+            Trace.printSystemOut(
+                "webserver.properties"
+                + " not found, using command line or default properties");
+        }
+
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port", "80");
@@ -155,7 +159,7 @@ public class WebServer {
         }
 
         traceMessages = !serverProperties.isPropertyTrue("server.silent",
-                "true");
+                true);
     }
 
     /**
@@ -164,7 +168,7 @@ public class WebServer {
      */
     private void run() {
 
-        ServerSocket socket = null;
+        socket = null;
 
         try {
             int port = serverProperties.getIntegerProperty("server.port", 80);
@@ -187,7 +191,9 @@ public class WebServer {
                 Socket              s = socket.accept();
                 WebServerConnection c = new WebServerConnection(s, this);
 
-                c.start();
+                thread = new Thread(c);
+
+                thread.start();
             }
         } catch (IOException e) {
             traceError("WebServer.run/loop: " + e.getMessage());
@@ -205,7 +211,6 @@ public class WebServer {
             + "    -silent <true/false>  false means display all queries\n"
             + "    -trace <true/false>   display JDBC trace messages\n"
             + "The command line arguments override the values in the webserver.properties file.");
-        System.exit(0);
     }
 
     void printTraceMessages() {
@@ -222,27 +227,7 @@ public class WebServer {
               + serverProperties.getProperty("server.silent"));
         Trace.printSystemOut("HSQLDB web server " + jdbcDriver.VERSION
                              + " is running");
-        Trace.printSystemOut("Press [Ctrl]+[C] to abort");
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  s
-     */
-    void trace(String s) {
-
-        if (traceMessages) {
-            Trace.printSystemOut(s);
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  s
-     */
-    void traceError(String s) {
-        Trace.printSystemOut(s);
+        Trace.printSystemOut(
+            "Use SHUTDOWN to close normally. Use [Ctrl]+[C] to abort abruptly");
     }
 }

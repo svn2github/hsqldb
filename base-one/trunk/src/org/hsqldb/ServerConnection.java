@@ -79,26 +79,25 @@ import java.util.Observable;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
+// fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
 
 /**
  *  All ServerConnection objects are listed in a Vector in mServer
  *  and removed when closed.<p>
  *
- *  These objects also register themselves with the Server that is linked
- *  to them via the Observable / Observer notification mechanism. When a
- *  connection is dropped or closed this mechanism informs the Server.
- *  When the DB is shutdown, the Server is notified and stops all
+ *  When a connection is dropped or closed the Server.notify() method is
+ *  called. Upon notification, tf the DB is shutdown as a result of SHUTDOWN,
+ *  the server stops all
  *  ServerConnection threads. At this point, only the skeletal Server
  *  object remains and everything else will be garbage collected.
  *  (fredt@users)<p>
  *
- * @version 1.7.0
+ * @version 1.7.1
  */
-class ServerConnection extends Observable implements Runnable {
+class ServerConnection implements Runnable {
 
     private String           user;
     private Session          session;
-    private Database         mDatabase;
     private Socket           mSocket;
     private Server           mServer;
     private DataInputStream  mInput;
@@ -113,13 +112,10 @@ class ServerConnection extends Observable implements Runnable {
      */
     ServerConnection(Socket socket, Server server) {
 
-        mSocket   = socket;
-        mDatabase = server.mDatabase;
-        mServer   = server;
+        mSocket = socket;
+        mServer = server;
 
-        addObserver(server);
-
-        synchronized (this) {
+        synchronized (ServerConnection.class) {
             mThread = mCurrentThread++;
         }
 
@@ -134,8 +130,7 @@ class ServerConnection extends Observable implements Runnable {
         } catch (IOException e) {}
 
         mServer.serverConnList.removeElement(this);
-        setChanged();
-        notifyObservers(Server.CONNECTION_CLOSED);
+        mServer.notify(Server.CONNECTION_CLOSED);
     }
 
     /**
@@ -161,7 +156,7 @@ class ServerConnection extends Observable implements Runnable {
             try {
                 mServer.trace(mThread + ":trying to connect user " + user);
 
-                return mDatabase.connect(user, password);
+                return mServer.mDatabase.connect(user, password);
             } catch (SQLException e) {
                 write(new Result(e.getMessage(),
                                  e.getErrorCode()).getBytes());
@@ -200,9 +195,9 @@ class ServerConnection extends Observable implements Runnable {
                         break;
                     }
 
-                    write(mDatabase.execute(sql, session).getBytes());
+                    write(mServer.mDatabase.execute(sql, session).getBytes());
 
-                    if (mDatabase.isShutdown()) {
+                    if (mServer.mDatabase.isShutdown()) {
                         break;
                     }
                 }
@@ -210,8 +205,10 @@ class ServerConnection extends Observable implements Runnable {
                 mServer.trace(mThread + ":disconnected " + user);
 
 // fredt - todo - after the client abrubtly drops, should perform equivalent
-// of Dabatase.processDisconnect() to clear any TEMP tables
+// of Session.disconnect() to clear any TEMP tables
             } catch (SQLException e) {
+
+                // is thrown by Result.getBytes()
                 String s = e.getMessage();
 
                 e.printStackTrace();

@@ -109,18 +109,18 @@ import java.util.Vector;
 // method rorganised to use new HsqlServerProperties class
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
 // see the comments in ServerConnection.java
-public class Server implements Observer {
+public class Server {
 
     // used to notify this
-    static final Integer CONNECTION_CLOSED = new Integer(0);
-    Vector               serverConnList    = new Vector(16);
-    Database             mDatabase;
-    HsqlServerProperties serverProperties;
-    private ServerSocket socket;
-    private Thread       thread;
-    private boolean      traceMessages;
-    private boolean      restartOnShutdown;
-    private boolean      noSystemExit;
+    static final int       CONNECTION_CLOSED = 0;
+    Vector                 serverConnList    = new Vector(16);
+    Database               mDatabase;
+    HsqlProperties         serverProperties;
+    protected ServerSocket socket;
+    protected Thread       thread;
+    protected boolean      traceMessages;
+    private boolean        restartOnShutdown;
+    private boolean        noSystemExit;
 
     /**
      * Method declaration
@@ -149,9 +149,16 @@ public class Server implements Observer {
 
     void setProperties(HsqlProperties props) {
 
-        serverProperties = new HsqlServerProperties("server");
+        serverProperties = new HsqlProperties("server");
 
-        serverProperties.load();
+        try {
+            serverProperties.load();
+        } catch (Exception e) {
+            Trace.printSystemOut(
+                "server.properties"
+                + " not found, using command line or default properties");
+        }
+
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
         serverProperties.setPropertyIfNotExists("server.port",
@@ -162,7 +169,7 @@ public class Server implements Observer {
         }
 
         traceMessages = !serverProperties.isPropertyTrue("server.silent",
-                "true");
+                true);
         noSystemExit =
             serverProperties.isPropertyTrue("server.no_system_exit");
 
@@ -236,7 +243,6 @@ public class Server implements Observer {
             + "    -trace <true/false>   display JDBC trace messages\n"
             + "    -no_system_exit <true/false>  do not issue System.exit()\n"
             + "The command line arguments override the values in the server.properties file.");
-        System.exit(0);
     }
 
     void printTraceMessages() {
@@ -289,9 +295,9 @@ public class Server implements Observer {
         serverConnList.removeAllElements();
     }
 
-    public void update(Observable o, Object arg) {
+    void notify(int action) {
 
-//      Trace.doAssert(arg.equals(ServerConnection.CONNECTION_CLOSED));
+        // only (action == CONNECTION_CLOSED) is used
         if (mDatabase == null) {
             return;
         }

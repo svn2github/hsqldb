@@ -1,4 +1,6 @@
-HSQLDB version 1.7.0 CHANGELOG
+HSQLDB version 1.7.1 CHANGELOG SINCE VERSION 1.60
+
+Version 1.7.1 improves performance and fixes several bugs that have come to light since the release of 1.7.0. It does not feature any major new functionality in the database engine.
 
 * Enhancements to SQL
 
@@ -174,6 +176,10 @@ Code enhancements to reduce unnecessary method calls in loops.
 
 Enhancements to avoid duplicate indexes (in source code but not activated).
 
+Over ten-fold speedup of function calls in queries intoduced in 1.7.1.
+
+Up to 30% reduction in memory used by indexes and table rows, resulting in smaller overall memory footprint in 1.7.1.
+
 * Reliability Enhancements
 
 Many bugs that existed in 1.43 have been fixed.
@@ -190,11 +196,15 @@ New Script Tool class allows executing an SQL script.
 
 Enhancements to Transfer Tool to allow the user to save the transfer settings and load them in future sessions. Additional enhancements to support different database source and targets in a modular way.
 
-Swing versions of Transfer Tool and Database Manager.
+Swing version of Database Manager.
+
+Linux scripts for starting and shutting down server instances in 1.7.1.
 
 * Build
 
 Better Ant build with automatic detection of JDK version
+
+Linux build scripts in 1.7.1
 
 List of patches and fixes numbered by SourceForge Tracker ID's.
 

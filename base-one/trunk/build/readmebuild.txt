@@ -1,8 +1,10 @@
-HSQLDB can be built in any combination of three different sizes and
+HSQLDB can be built in any combination of four different sizes and
 three JRE (Java Runtime Environment) versions.
 
-The smallest jar size (hsqldbmain.jar) contains only the database
-and JDBC support. The default size (hsqldb.jar) also contains the
+The smallest jar size (hsqldbmin.jar) contains only the database
+and JDBC support for in-process mode databases. The next smallest jar size
+(hsqldbmain.jar) also contains support for server modes.
+The default size (hsqldb.jar) additionally contains the
 utilities. The largest size (hsqldbtest.jar) includes some test
 classes as well. You need the JUnit jar in the /lib directory in
 order to build and run the test classes.
@@ -25,13 +27,13 @@ different sizes of the HSQLDB Jar. The default is built using:
 
 ant jar
 
-The Ant method always builds a Jar that is compatible with the
+The Ant method always builds a jar that is compatible with the
 JDK that is used by Ant and specified in the JAVA_HOME environment
 variable.
 
 Before building the hsqldbtest.jar package, you should download the
 junit.jar and put it in the /lib directory, alongside servlet.jar, 
-which is included in the .zip packabe.
+which is included in the .zip package.
 
 Batch Build
 
@@ -43,6 +45,11 @@ If you are compiling for JDK's other than 1.2.x or 1.3.x, you should
 use the appropriate switchtoJDK11.bat or switchtoJDK14.bat to adapt
 the source files to the target JDK before running the appropriate
 buildJDK11.bat or buildJDK14.bat
+
+Linux build
+
+Linux scripts with the same functionality as the MSDOS batch files
+are provided.
 
 JDK and JRE versions
 

@@ -73,15 +73,15 @@ import java.sql.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+// sqlbob@users 20020325 - patch 1.7.0 - enhancements
+// sqlbob@users 20020407 - patch 1.7.0 - reengineering
+
 /**
  * Opens a connection to a database
  *
  * @version 1.7.0
  */
-
-// sqlbob@users 20020325 - patch 1.7.0 - enhancements
-// sqlbob@users 20020407 - patch 1.7.0 - reengineering
-public class ConnectionDialogSwing extends JDialog
+class ConnectionDialogSwing extends JDialog
 implements ActionListener, ItemListener {
 
     private Connection     mConnection;

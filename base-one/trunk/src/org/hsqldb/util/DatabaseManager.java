@@ -75,15 +75,25 @@ import java.sql.*;
 import java.io.File;
 import java.util.*;
 
-/**
- * Manages a JDBC database
- *
- * @version 1.7.0
- */
-
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020401 - patch 537501 by ulrivo - command line arguments
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// nickferguson@users 20021005 - patch 1.7.1 - enhancements
+
+/**
+ * AWT Tool for manageing a JDBC database.<p>
+ * <pre>
+ *             Usage: java DatabaseManagerSwing [-options]
+ *             where options include:
+ *              -driver <classname>  jdbc driver class
+ *              -url <name>          jdbc url
+ *              -user <name>         username used for connection
+ *              -password <password> password for this user
+ *              -dir <path>          default directory
+ *              -script <file>       reads from script file
+ *</pre>
+ * @version 1.7.0
+ */
 public class DatabaseManager extends Applet
 implements ActionListener, WindowListener, KeyListener {
 
@@ -97,6 +107,7 @@ implements ActionListener, WindowListener, KeyListener {
     int                 iRecent;
     TextArea            txtCommand;
     Button              butExecute;
+    Button              butClear;
     Tree                tTree;
     Panel               pResult;
     long                lTime;
@@ -107,6 +118,7 @@ implements ActionListener, WindowListener, KeyListener {
     Frame               fMain;
     Image               imgEmpty;
     static boolean      bMustExit;
+    String              ifHuge = "";
 
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
@@ -331,9 +343,8 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Options", soptions);
 
-        /* NB - 26052002 Restore is not implemented yet in the transfer tool */
         String stools[] = {
-            "-Dump", /*"-Restore",*/ "-Transfer"
+            "-Dump", "-Restore", "-Transfer"
         };
 
         addMenu(bar, "Tools", stools);
@@ -458,18 +469,16 @@ implements ActionListener, WindowListener, KeyListener {
 
         if (s.equals("Execute")) {
             execute();
+        } else if (s.equals("Clear")) {
+            clear();
         } else if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Transfer")) {
             Transfer.work(null);
         } else if (s.equals("Dump")) {
             Transfer.work(new String[]{ "-d" });
-
-            /* NB - 26052002 Restore is not implemented yet in the transfer tool */
-/*
         } else if (s.equals("Restore")) {
-            Transfer.work(new String[]{"-r"});
-*/
+            Transfer.work(new String[]{ "-r" });
         } else if (s.equals("Logging on")) {
             jdbcSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
@@ -503,8 +512,18 @@ implements ActionListener, WindowListener, KeyListener {
             String file = f.getFile();
 
             if (file != null) {
-                txtCommand.setText(
-                    DatabaseManagerCommon.readFile(f.getDirectory() + file));
+                StringBuffer buf = new StringBuffer();
+
+                ifHuge = DatabaseManagerCommon.readFile(f.getDirectory()
+                        + file);
+
+                if (1024 <= ifHuge.length()) {
+                    buf.append(
+                        "This huge file cannot be edited. Please execute\n");
+                    txtCommand.setText(buf.toString());
+                } else {
+                    txtCommand.setText(ifHuge);
+                }
             }
         } else if (s.equals("Save Script...")) {
             FileDialog f = new FileDialog(fMain, "Save Script",
@@ -719,11 +738,28 @@ implements ActionListener, WindowListener, KeyListener {
 
     /**
      * Method declaration
-     *
+     * Clear SQL Statements.
+     */
+    void clear() {
+
+        ifHuge = "";
+
+        txtCommand.setText(ifHuge);
+    }
+
+    /**
+     * Method declaration
+     * Adjust this method for large strings...ie multi megabtypes.
      */
     void execute() {
 
-        String sCmd = txtCommand.getText();
+        String sCmd = null;
+
+        if (1024 <= ifHuge.length()) {
+            sCmd = ifHuge;
+        } else {
+            sCmd = txtCommand.getText();
+        }
 
         if (sCmd.startsWith("-->>>TEST<<<--")) {
             testPerformance();
@@ -1062,9 +1098,12 @@ implements ActionListener, WindowListener, KeyListener {
         txtResult.setFont(new Font("Courier", Font.PLAIN, 12));
 
         butExecute = new Button("Execute");
+        butClear   = new Button("Clear");
 
         butExecute.addActionListener(this);
+        butClear.addActionListener(this);
         pCommand.add("East", butExecute);
+        pCommand.add("West", butClear);
         pCommand.add("Center", txtCommand);
 
         gResult = new Grid();
@@ -1107,7 +1146,9 @@ implements ActionListener, WindowListener, KeyListener {
 
             tTree.addRow("", dMeta.getURL(), "-", 0);
 
-            String    usertables[] = { "TABLE" };
+            String    usertables[] = {
+                "TABLE", "GLOBAL TEMPORARY", "VIEW"
+            };
             ResultSet result = dMeta.getTables(null, null, null, usertables);
             Vector    tables       = new Vector();
 

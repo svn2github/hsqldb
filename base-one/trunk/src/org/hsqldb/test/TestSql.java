@@ -33,6 +33,7 @@ package org.hsqldb.test;
 
 import java.sql.*;
 import java.io.*;
+import java.util.Properties;
 import junit.framework.*;
 
 /**
@@ -45,8 +46,9 @@ public class TestSql extends TestCase {
     String     url = "jdbc:hsqldb:.";
     String     user;
     String     password;
-    Statement  sStatement;
+    Statement  stmnt;
     Connection cConnection;
+    String     getColumnName;
 
     public TestSql(String name) {
         super(name);
@@ -54,16 +56,24 @@ public class TestSql extends TestCase {
 
     protected void setUp() {
 
-        user        = "sa";
-        password    = "";
-        sStatement  = null;
-        cConnection = null;
+        user          = "sa";
+        password      = "";
+        stmnt         = null;
+        cConnection   = null;
+        getColumnName = "false";
+
+        Properties props = new Properties();
+
+        props.put("user", user);
+        props.put("password", password);
+        props.put("jdbc.strict_md", "false");
+        props.put("jdbc.get_column_name", getColumnName);
 
         try {
             Class.forName("org.hsqldb.jdbcDriver");
 
-            cConnection = DriverManager.getConnection(url, user, password);
-            sStatement  = cConnection.createStatement();
+            cConnection = DriverManager.getConnection(url, props);
+            stmnt       = cConnection.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("TestSql.setUp() error: " + e.getMessage());
@@ -82,11 +92,12 @@ public class TestSql extends TestCase {
         String result2 = "2";
         String result3 = "3";
         String result4 = "4";
+        String result5 = "5";
 
         try {
-            sStatement.execute(ddl1);
-            sStatement.execute(ddl2);
-            sStatement.execute(ddl3);
+            stmnt.execute(ddl1);
+            stmnt.execute(ddl2);
+            stmnt.execute(ddl3);
 
             DatabaseMetaData md = cConnection.getMetaData();
 
@@ -106,6 +117,7 @@ public class TestSql extends TestCase {
                     result0 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result0);
             }
 
@@ -125,6 +137,7 @@ public class TestSql extends TestCase {
                     result0 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result0);
             }
 
@@ -142,6 +155,7 @@ public class TestSql extends TestCase {
                     result1 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result1);
             }
 
@@ -162,6 +176,7 @@ public class TestSql extends TestCase {
                     result2 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result2);
             }
 
@@ -179,6 +194,7 @@ public class TestSql extends TestCase {
                     result3 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result3);
             }
 
@@ -198,7 +214,58 @@ public class TestSql extends TestCase {
                     result4 += "\n";
                 }
 
+                rs.close();
                 System.out.println(result4);
+            }
+
+            {
+                stmnt.executeQuery("CREATE TABLE T (A CHAR, B CHAR);");
+                stmnt.executeQuery(
+                    "INSERT INTO T VALUES ('get_column_name', '"
+                    + getColumnName + "');");
+
+                ResultSet rs = stmnt.executeQuery(
+                    "SELECT A, B, A \"aliasA\", B \"aliasB\" FROM T;");
+                ResultSetMetaData rsmd = rs.getMetaData();
+
+                result5 = "";
+
+                for (; rs.next(); ) {
+                    for (int i = 0; i < rsmd.getColumnCount(); i++) {
+                        result5 += rsmd.getColumnName(i + 1) + ":"
+                                   + rs.getString(i + 1) + ":";
+                    }
+
+                    result5 += "\n";
+                }
+
+                rs.close();
+
+                rs = stmnt.executeQuery(
+                    "SELECT A, B, A \"aliasA\", B \"aliasB\" FROM T;");;
+                rsmd = rs.getMetaData();
+
+                for (; rs.next(); ) {
+                    for (int i = 0; i < rsmd.getColumnCount(); i++) {
+                        result5 += rsmd.getColumnLabel(i + 1) + ":"
+                                   + rs.getString(i + 1) + ":";
+                    }
+
+                    result5 += "\n";
+                }
+
+                // most of these will throw if strict_md is true
+                rsmd.isAutoIncrement(1);
+                rsmd.isCaseSensitive(1);
+                rsmd.isCurrency(1);
+                rsmd.isDefinitelyWritable(1);
+                rsmd.isNullable(1);
+                rsmd.isReadOnly(1);
+                rsmd.isSearchable(1);
+                rsmd.isSigned(1);
+                rsmd.isWritable(1);
+                rs.close();
+                System.out.println(result5);
             }
         } catch (SQLException e) {
             fail(e.getMessage());
@@ -226,50 +293,70 @@ public class TestSql extends TestCase {
         String  message = "DB operation completed";
         String ddl1 =
             "DROP TABLE t1 IF EXISTS;"
-            + "CREATE TABLE t1 ( d DECIMAL, f DOUBLE, i INTEGER, s SMALLINT, t TINYINT );";
+            + "CREATE TABLE t1 ( d DECIMAL, f DOUBLE, l BIGINT, i INTEGER, s SMALLINT, t TINYINT, "
+            + "dt DATE DEFAULT 'CURRENT_DATE', ti TIME DEFAULT 'CURRENT_TIME', ts TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' );";
 
         try {
-            sStatement.execute(ddl1);
+            stmnt.execute(ddl1);
 
             PreparedStatement ps = cConnection.prepareStatement(
-                "INSERT INTO t1 VALUES (?,?,?,?,?)");
+                "INSERT INTO t1 (d,f,l,i,s,t,dt,ti,ts) VALUES (?,?,?,?,?,?,?,?,?)");
 
-            /* some unrelated test stuff
-            ps.setTime(1,new java.sql.Time(1000000));
-
-            ps.setDate(1,new java.sql.Date(1000000));
-
-            ps.setTimestamp(1,new java.sql.Timestamp(1000000));
-            */
             ps.setString(1, "0.2");
             ps.setDouble(2, 0.2);
-            ps.setInt(3, Integer.MAX_VALUE);
-            ps.setInt(4, Short.MAX_VALUE);
-            ps.setInt(5, 0);
+            ps.setLong(3, java.lang.Long.MAX_VALUE);
+            ps.setInt(4, Integer.MAX_VALUE);
+            ps.setInt(5, Short.MAX_VALUE);
+            ps.setInt(6, 0);
+            ps.setDate(7, new java.sql.Date(System.currentTimeMillis()));
+            ps.setTime(8, new java.sql.Time(System.currentTimeMillis()));
+            ps.setTimestamp(
+                9, new java.sql.Timestamp(System.currentTimeMillis()));
             ps.execute();
             ps.setInt(1, 0);
             ps.setDouble(2, java.lang.Double.NaN);
-            ps.setInt(3, Integer.MIN_VALUE);
-            ps.setInt(4, Short.MIN_VALUE);
-            ps.setInt(5, 0);
+            ps.setLong(3, java.lang.Long.MIN_VALUE);
+            ps.setInt(4, Integer.MIN_VALUE);
+            ps.setInt(5, Short.MIN_VALUE);
+            ps.setInt(6, 0);
+
+            // allowed conversions
+            ps.setTimestamp(
+                7, new java.sql.Timestamp(System.currentTimeMillis() + 1));
+            ps.setTime(8, new java.sql.Time(System.currentTimeMillis() + 1));
+            ps.setDate(9, new java.sql.Date(System.currentTimeMillis() + 1));
+            ps.execute();
+            ps.setInt(1, 0);
+            ps.setDouble(2, java.lang.Double.NaN);
+            ps.setInt(4, Integer.MIN_VALUE);
+            ps.setObject(5, new Short((short) 2), Types.SMALLINT);
+            ps.setObject(6, new Integer(2), Types.TINYINT);
+
+            // allowed conversions
+            ps.setObject(7, new java.sql.Date(System.currentTimeMillis()
+                                              + 2));
+            ps.setObject(8, new java.sql.Time(System.currentTimeMillis()
+                                              + 2));
+            ps.setObject(9, new java.sql.Timestamp(System.currentTimeMillis()
+                                                   + 2));
             ps.execute();
 
             ResultSet rs =
-                sStatement.executeQuery("SELECT d, f, i, s*2, t FROM t1");
+                stmnt.executeQuery("SELECT d, f, l, i, s*2, t FROM t1");
             boolean result = rs.next();
 
             value = rs.getDouble(2);
 
 //            int smallintValue = rs.getShort(3);
-            int integerValue = rs.getInt(3);
+            int integerValue = rs.getInt(4);
 
             if (rs.next()) {
                 value        = rs.getDouble(2);
                 wasNull      = rs.wasNull();
-                integerValue = rs.getInt(3);
+                integerValue = rs.getInt(4);
             }
 
-            rs = sStatement.executeQuery("SELECT MAX(i) FROM t1");
+            rs = stmnt.executeQuery("SELECT MAX(i) FROM t1");
 
             if (rs.next()) {
                 int max = rs.getInt(1);
@@ -277,17 +364,34 @@ public class TestSql extends TestCase {
                 System.out.println("Max value for i: " + max);
             }
 
-            rs = sStatement.executeQuery(
-                "CREATE TABLE cdType (ID INTEGER NOT NULL, name VARCHAR(50), PRIMARY KEY(ID))");
-            rs = sStatement.executeQuery("SELECT MAX(ID) FROM cdType");
+            {
 
-            if (rs.next()) {
-                int max = rs.getInt(1);
+                // test for the value MAX(column) in an empty table
+                rs = stmnt.executeQuery(
+                    "CREATE TABLE cdType (ID INTEGER NOT NULL, name VARCHAR(50), PRIMARY KEY(ID))");
+                rs = stmnt.executeQuery("SELECT MAX(ID) FROM cdType");
 
-                System.out.println("Max value for ID: " + max);
+                if (rs.next()) {
+                    int max = rs.getInt(1);
+
+                    System.out.println("Max value for ID: " + max);
+                } else {
+                    System.out.println("Max value for ID not returned");
+                }
+
+                stmnt.executeUpdate(
+                    "INSERT INTO cdType VALUES (10,'Test String');");
+
+                try {
+                    stmnt.executeUpdate(
+                        "INSERT INTO cdType VALUES (10,'Test String');");
+                } catch (SQLException e1) {
+                    stmnt.execute("ROLLBACK");
+                    cConnection.rollback();
+                }
             }
         } catch (SQLException e) {
-            message = e.getMessage();
+            fail(e.getMessage());
         }
 
         // assert new behaviour

@@ -71,12 +71,10 @@ import java.awt.*;
 import java.util.Vector;
 
 /**
- * Class declaration
- *
  *
  * @version 1.7.0
  */
-public class Tree extends Panel {
+class Tree extends Panel {
 
     // static
     private static Font        fFont;
@@ -115,7 +113,7 @@ public class Tree extends Panel {
      * Constructor declaration
      *
      */
-    public Tree() {
+    Tree() {
 
         super();
 

@@ -75,6 +75,8 @@ import java.util.Vector;
 // fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions in different parts to support savepoint transactions
+// fredt@users 20020910 - patch 1.7.1 by fredt - database readonly enforcement
+// fredt@users 20020912 - patch 1.7.1 by fredt - permanent internal connection
 
 /**
  *  Implementation of a user session with the database.
@@ -83,20 +85,21 @@ import java.util.Vector;
  */
 class Session {
 
-    private Database  dDatabase;
-    private User      uUser;
-    private Vector    tTransaction;
-    private boolean   bAutoCommit;
-    private boolean   bNestedTransaction;
-    private boolean   bNestedOldAutoCommit;
-    private int       iNestedOldTransIndex;
-    private boolean   bReadOnly;
-    private int       iMaxRows;
-    private int       iLastIdentity;
-    private boolean   bClosed;
-    private int       iId;
-    private Hashtable hSavepoints;
-    private boolean   script;
+    private Database       dDatabase;
+    private User           uUser;
+    private Vector         tTransaction;
+    private boolean        bAutoCommit;
+    private boolean        bNestedTransaction;
+    private boolean        bNestedOldAutoCommit;
+    private int            iNestedOldTransIndex;
+    private boolean        bReadOnly;
+    private int            iMaxRows;
+    private int            iLastIdentity;
+    private boolean        bClosed;
+    private int            iId;
+    private Hashtable      hSavepoints;
+    private boolean        script;
+    private jdbcConnection intConnection;
 
     /**
      *  closes the session.
@@ -134,7 +137,7 @@ class Session {
         uUser        = user;
         tTransaction = new Vector();
         bAutoCommit  = autocommit;
-        bReadOnly    = readonly;
+        bReadOnly    = db.bReadOnly || readonly;
         hSavepoints  = new Hashtable();
     }
 
@@ -159,12 +162,14 @@ class Session {
         }
 
         rollback();
+        this.dDatabase.dropTempTables(this);
 
-        dDatabase    = null;
-        uUser        = null;
-        tTransaction = null;
-        hSavepoints  = null;
-        bClosed      = true;
+        dDatabase     = null;
+        uUser         = null;
+        tTransaction  = null;
+        hSavepoints   = null;
+        intConnection = null;
+        bClosed       = true;
     }
 
     /**
@@ -424,7 +429,7 @@ class Session {
      * @return
      */
     boolean isReadOnly() {
-        return bReadOnly;
+        return bReadOnly || dDatabase.bReadOnly;
     }
 
     /**
@@ -482,5 +487,17 @@ class Session {
      */
     boolean getScripting() {
         return script;
+    }
+
+    /**
+     * @return  scripting for the last statement.
+     */
+    jdbcConnection getInternalConnection() throws SQLException {
+
+        if (intConnection == null) {
+            intConnection = new jdbcConnection(this);
+        }
+
+        return intConnection;
     }
 }

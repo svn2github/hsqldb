@@ -69,8 +69,10 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.util.Vector;
+import java.util.Hashtable;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
+// tony_lai@users 20020820 - patch 595172 by tlai@users - drop constraint fix
 
 /**
  * The methods in this class perform alterations to the structure of an
@@ -114,21 +116,26 @@ class TableWorks {
      *  Any index, including a user-defined one can be used for forward
      *  referencing FK's.
      *
+     *  Foriegn keys on temp tables can reference other temp tables with the
+     *  same rules above. When they reference other permanent tables, the
+     *  sql.strict_fk is always applied. Foreign keys on permanent tables
+     *  cannot reference temp tables.
+     *
      *  Currently, duplicate foreign keys can be declared, but they do not
      *  create any additional indexes. (fred@users)
      *
      * @param  fkcol
      * @param  expcol
-     * @param  name           foreign key name
+     * @param  fkname           foreign key name
      * @param  expTable
      * @param  cascade        foreign key enforces cascading deletes
      * @throws SQLException
      */
-    void createForeignKey(int fkcol[], int expcol[], HsqlName name,
+    void createForeignKey(int fkcol[], int expcol[], HsqlName fkname,
                           Table expTable,
                           boolean cascade) throws SQLException {
 
-        if (table.getConstraint(name.name) != null) {
+        if (table.getConstraint(fkname.name) != null) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
         }
 
@@ -140,6 +147,8 @@ class TableWorks {
                             : expTable.getIndexForColumns(expcol, true);
         boolean strict =
             table.dDatabase.getProperties().isPropertyTrue("sql.strict_fk");
+
+        strict = strict || (!expTable.isTemp() && table.isTemp());
 
         if (expTable.isTemp() &&!table.isTemp()) {
             throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED,
@@ -162,8 +171,6 @@ class TableWorks {
             fkindex = createIndex(fkcol, iname, false);
         }
 
-// fredt@users 20020225 - comment
-// if sql.strong_fk is set, create a unique index otherwise an ordinary index
         boolean strong =
             table.dDatabase.getProperties().isPropertyTrue("sql.strong_fk");
 
@@ -175,15 +182,13 @@ class TableWorks {
             expTable    = tw.getTable();
         }
 
-        HsqlName cname = HsqlName.makeAutoName("REF", name.name);
+        HsqlName pkname = HsqlName.makeAutoName("REF", fkname.name);
+        Constraint c = new Constraint(pkname, fkname, expTable, table,
+                                      expcol, fkcol, exportindex, fkindex,
+                                      cascade);
 
-        table.addConstraint(new Constraint(name, cname,
-                                           Constraint.FOREIGN_KEY, expTable,
-                                           table, expcol, fkcol, exportindex,
-                                           fkindex, cascade));
-        expTable.addConstraint(new Constraint(cname, name, Constraint.MAIN,
-                                              expTable, table, expcol, fkcol,
-                                              exportindex, fkindex, cascade));
+        table.addConstraint(c);
+        expTable.addConstraint(new Constraint(pkname, c));
     }
 
 // fredt@users 20020315 - patch 1.7.0 - create index bug
@@ -198,8 +203,8 @@ class TableWorks {
      * @param  col
      * @param  name
      * @param  unique
-     * @return                Description of the Return Value
-     * @throws  SQLException
+     * @return  new index
+     * @throws  SQLException normally for lack of resources
      */
     Index createIndex(int col[], HsqlName name,
                       boolean unique) throws SQLException {
@@ -213,6 +218,7 @@ class TableWorks {
         Index newindex = tn.createIndexPrivate(col, name, unique);
 
         tn.moveData(table, table.getColumnCount(), 0);
+        tn.updateConstraints(table, table.getColumnCount(), 0);
 
         int index = table.dDatabase.getTableIndex(table);
 
@@ -279,6 +285,7 @@ class TableWorks {
                                         table.getColumnCount(), 0);
 
         tn.moveData(table, table.getColumnCount(), 0);
+        tn.updateConstraints(table, table.getColumnCount(), 0);
 
         int i = table.dDatabase.getTableIndex(table);
 
@@ -300,6 +307,7 @@ class TableWorks {
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
         tn.moveData(table, colindex, adjust);
+        tn.updateConstraints(table, colindex, adjust);
 
         int i = table.dDatabase.getTableIndex(table);
 
@@ -314,37 +322,82 @@ class TableWorks {
      */
     void dropConstraint(String name) throws SQLException {
 
-        int        j = table.getConstraintIndex(name);
-        Constraint c = table.getConstraint(name);
+        int        j    = table.getConstraintIndex(name);
+        Constraint c    = table.getConstraint(name);
+        Hashtable  cmap = new Hashtable();
+
+        cmap.put(c, c);
 
         if (c == null) {
-            throw Trace.error(Trace.CONSTRAINT_NOT_FOUND);
+            throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
+                              name + " in table: " + table.getName().name);
         }
 
         if (c.getType() == c.MAIN) {
             throw Trace.error(Trace.DROP_SYSTEM_CONSTRAINT);
         }
 
-        // have to delete constraint before indexes
-        table.vConstraint.removeElementAt(j);
-
         if (c.getType() == c.FOREIGN_KEY) {
+            Table mainTable = c.getMain();
+            Constraint mainConstraint =
+                mainTable.getConstraint(c.getPkName());
 
-            // todo - will have problems with duplicate foreign keys
-            table.dDatabase.removeExportedKeys(table, c.getMainIndex());
-            dropIndex(c.getRefIndex().getName().name);
+            cmap.put(mainConstraint, mainConstraint);
+
+            int   k         = mainTable.getConstraintIndex(c.getPkName());
+            Index mainIndex = mainConstraint.getMainIndex();
+
+            // never drop user defined indexes
+            // fredt - todo - use of auto main indexes for FK's will be
+            // deprecated so that there is no need to drop an index on the
+            // main (pk) table
+            if (mainIndex.getName().isReservedName()) {
+                boolean candrop = false;
+
+                try {
+
+                    // check if the index is used by other constraints otherwise drop
+                    mainTable.checkDropIndex(mainIndex.getName().name, cmap);
+
+                    candrop = true;
+
+                    TableWorks tw = new TableWorks(mainTable);
+
+                    tw.dropIndex(mainIndex.getName().name);
+
+                    // update this.table if self referencing FK
+                    if (mainTable == table) {
+                        table = tw.getTable();
+                    }
+                } catch (SQLException e) {
+                    if (candrop) {
+                        throw e;
+                    }
+                }
+            }
+
+            // drop the reference index if automatic and unused elsewhere
+            Index refIndex = c.getRefIndex();
+
+            if (refIndex.getName().isReservedName()) {
+                try {
+
+                    // check if the index is used by other constraints otherwise drop
+                    table.checkDropIndex(refIndex.getName().name, cmap);
+                    dropIndex(refIndex.getName().name);
+                } catch (SQLException e) {}
+            }
+
+            mainTable.vConstraint.removeElementAt(k);
+            table.vConstraint.removeElementAt(j);
         } else if (c.getType() == c.UNIQUE) {
 
             // throw if the index for unique constraint is shared
-            try {
-                table.checkDropIndex(c.getMainIndex().getName().name);
-            } catch (SQLException e) {
-                table.vConstraint.insertElementAt(c, j);
+            table.checkDropIndex(c.getMainIndex().getName().name, cmap);
 
-                throw e;
-            }
-
+            // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
+            table.vConstraint.removeElementAt(j);
         }
     }
 }

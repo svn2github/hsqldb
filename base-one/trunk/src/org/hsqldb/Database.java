@@ -100,6 +100,13 @@ import java.util.Vector;
 // fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
 // fredt@users 20020405 - patch 1.7.0 by fredt - other ALTER TABLE statements
 // boucherb@users - added javadoc comments
+// tony_lai@users 20020820 - patch 595099 by tlai@users - use user define PK name
+// tony_lai@users 20020820 - patch 595073 by tlai@users - duplicated exception msg
+// tony_lai@users 20020820 - patch 595156 by tlai@users - violation of Integrity constraint name
+// tony_lai@users 20020820 - patch 1.7.1 - modification to shutdown compact process to save memory usage
+// boucherb@users 20020828 - patch 1.7.1 - allow reconnect to local db that has shutdown
+// fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
+// fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 class Database {
 
     private String                 sName;
@@ -107,7 +114,7 @@ class Database {
     private Vector                 tTable;
     private DatabaseInformation    dInfo;
     Logger                         logger;
-    private boolean                bReadOnly;
+    boolean                        bReadOnly;
     private boolean                bShutdown;
     private Hashtable              hAlias;
     private boolean                bIgnoreCase;
@@ -176,7 +183,21 @@ class Database {
             Trace.trace();
         }
 
-        sName                 = name;
+        sName = name;
+
+        open();
+    }
+
+    /**
+     * Opens the database.  The database can be opened by the constructor,
+     * or reopened by the close(int closemode) method during a
+     * "shutdown compact".
+     * @see close(int closemode)
+     */
+
+    // tony_lai@users 20020820
+    private void open() throws SQLException {
+
         tTable                = new Vector();
         aAccess               = new UserManager();
         cSession              = new Vector();
@@ -195,12 +216,14 @@ class Database {
 
         registerSession(sysSession);
 
-        databaseProperties = new HsqlDatabaseProperties(name);
+        databaseProperties = new HsqlDatabaseProperties(sName);
 
-        if (name.equals(".")) {
+        if (sName.equals(".")) {
             newdatabase = true;
+
+            databaseProperties.setProperty("sql.strict_fk", true);
         } else {
-            newdatabase = logger.openLog(this, sysSession, name);
+            newdatabase = logger.openLog(this, sysSession, sName);
         }
 
         HsqlName.sysNumber = 0;
@@ -210,14 +233,11 @@ class Database {
             databaseProperties.isPropertyTrue("sql.enforce_size"));
         Column.setCompareInLocal(
             databaseProperties.isPropertyTrue("sql.compare_in_locale"));
-        jdbcResultSet.setGetColumnName(
-            databaseProperties.isPropertyTrue("jdbc.get_column_name"));
 
         Record.gcFrequency =
             databaseProperties.getIntegerProperty("hsqldb.gc_interval", 0);
 
         if (newdatabase) {
-            databaseProperties.setProperty("sql.strict_fk", true);
             execute("CREATE USER SA PASSWORD \"\" ADMIN", sysSession);
         }
 
@@ -515,7 +535,9 @@ class Database {
 
             // e.printStackTrace();
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            rResult = new Result(Trace.getMessage(e) + " in statement ["
+// tony_lai@users 20020820 - patch 595073
+//            rResult = new Result(Trace.getMessage(e) + " in statement ["
+            rResult = new Result(e.getMessage() + " in statement ["
                                  + statement + "]", e.getErrorCode());
         } catch (Exception e) {
             e.printStackTrace();
@@ -1416,6 +1438,9 @@ class Database {
             TempConstraint tempConst = new TempConstraint(null,
                 primarykeycolumn, null, null, Constraint.MAIN, false);
 
+// tony_lai@users 20020820 - patch 595099
+            HsqlName pkName = null;
+
             tempConstraints.addElement(tempConst);
 
             if (constraint) {
@@ -1436,6 +1461,9 @@ class Database {
 
                     if (sToken.equals("PRIMARY")) {
                         c.getThis("KEY");
+
+// tony_lai@users 20020820 - patch 595099
+                        pkName = cname;
 
                         int col[] = processColumnList(c, t);
                         TempConstraint mainConst =
@@ -1508,7 +1536,8 @@ class Database {
 // tables that include them
             tempConst = (TempConstraint) tempConstraints.elementAt(0);
 
-            t.createPrimaryKey(tempConst.localCol);
+// tony_lai@users 20020820 - patch 595099
+            t.createPrimaryKey(pkName, tempConst.localCol);
 
             boolean logDDL = false;
 
@@ -1643,19 +1672,21 @@ class Database {
         c.setPartMarker();
         c.getThis("SELECT");
 
-        Result rResult = new Result();
+        Result rResult;
         Parser p       = new Parser(this, c, session);
         int    maxRows = session.getMaxRows();
 
-        session.setMaxRows(1);
-
         try {
-            rResult = p.processSelect();
+            Select select = p.parseSelect();
 
-            session.setMaxRows(maxRows);
+            if (select.sIntoTable != null) {
+                throw (Trace.error(Trace.TABLE_NOT_FOUND));
+            }
+
+            select.setPreProcess();
+
+            rResult = select.getResult(1);
         } catch (SQLException e) {
-            session.setMaxRows(maxRows);
-
             throw e;
         }
 
@@ -1675,7 +1706,7 @@ class Database {
 
         // this ensures temp table belongs to this session
         if (t == null ||!t.equals(tablename, session)) {
-            Trace.error(Trace.TABLE_NOT_FOUND, tablename);
+            throw Trace.error(Trace.TABLE_NOT_FOUND, tablename);
         }
 
         Table ttemp = findUserTable(newname);
@@ -1732,6 +1763,8 @@ class Database {
         TableWorks tw        = new TableWorks(t);
         String     sToken    = c.getString();
 
+        session.setScripting(!t.isTemp());
+
         if (sToken.equals("RENAME")) {
             c.getThis("TO");
             processRenameTable(c, session, tablename);
@@ -1781,7 +1814,7 @@ class Database {
                 }
 
                 if (column.isIdentity() || column.isPrimaryKey()
-                        || (column.isNullable() == false
+                        || (!t.isEmpty() && column.isNullable() == false
                             && column.getDefaultString() == null)) {
                     throw Trace.error(Trace.BAD_ADD_COLUMN_DEFINITION);
                 }
@@ -1907,12 +1940,12 @@ class Database {
                 throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
             }
 
-            t.checkDropIndex(indexname);
+            t.checkDropIndex(indexname, null);
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
 // see Table.moveDefinition();
             session.commit();
-            session.setScripting(false);
+            session.setScripting(!t.isTemp());
 
             TableWorks tw = new TableWorks(t);
 
@@ -2032,8 +2065,6 @@ class Database {
             session.disconnect();
             cSession.setElementAt(null, session.getId());
         }
-
-        dropTempTables(session);
 
         return new Result();
     }
@@ -2268,7 +2299,19 @@ class Database {
 
         logger.closeLog(closemode);
 
+        // tony_lai@users 20020820
+        // The database re-open and close has been moved from
+        // Log#close(int closemode) for saving memory usage.
+        // Doing so the instances of Log and other objects are no longer
+        // referenced, and therefore can be garbage collected if necessary.
+        if (closemode == 1) {
+            open();
+            logger.closeLog(0);
+        }
+
         bShutdown = true;
+
+        jdbcConnection.removeDatabase(this);
     }
 
     /**
@@ -2289,6 +2332,7 @@ class Database {
         int    closemode = 0;
         String token     = c.getString();
 
+        // fredt - todo - catch misspelt qualifiers here and elsewhere
         if (token.equals("IMMEDIATELY")) {
             closemode = -1;
         } else if (token.equals("COMPACT")) {
@@ -2333,7 +2377,7 @@ class Database {
     /**
      * @param  ownerSession
      */
-    private void dropTempTables(Session ownerSession) {
+    void dropTempTables(Session ownerSession) {
 
         for (int i = 0; i < tTable.size(); i++) {
             Table toDrop = (Table) tTable.elementAt(i);
@@ -2440,9 +2484,11 @@ class Database {
                 }
 
                 if (refererIndex != -1) {
+
+// tony_lai@users 20020820 - patch 595156
                     throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                                      name + " is referenced by "
-                                      + refTable.getName().name);
+                                      currentConstraint.getName().name
+                                      + " table: " + refTable.getName().name);
                 }
             }
         }
@@ -2484,23 +2530,6 @@ class Database {
         }
     }
 
-    void removeExportedKeys(Table t, Index toDrop) {
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Vector constraintvector =
-                ((Table) tTable.elementAt(i)).getConstraints();
-
-            for (int j = constraintvector.size() - 1; j >= 1; j--) {
-                Constraint c = (Constraint) constraintvector.elementAt(j);
-                Table      refTable = c.getRef();
-
-                if (t == refTable && c.getRefIndex() == toDrop) {
-                    constraintvector.removeElementAt(j);
-                }
-            }
-        }
-    }
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**
@@ -2513,6 +2542,8 @@ class Database {
     private void dropTrigger(String name,
                              Session session) throws SQLException {
 
+        boolean found = false;
+
         // look in each trigger list of each type of trigger for each table
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
             Table t        = (Table) tTable.elementAt(i);
@@ -2521,7 +2552,7 @@ class Database {
             for (int tv = 0; tv < numTrigs; tv++) {
                 Vector v = t.vTrigs[tv];
 
-                for (int tr = 0; tr < v.size(); tr++) {
+                for (int tr = v.size() - 1; tr >= 0; tr--) {
                     TriggerDef td = (TriggerDef) v.elementAt(tr);
 
                     if (td.name.equals(name)) {
@@ -2530,17 +2561,17 @@ class Database {
                         session.setScripting(!td.table.isTemp());
                         v.removeElementAt(tr);
 
+                        found = true;
+
                         if (Trace.TRACE) {
                             Trace.trace("Trigger dropped " + name);
                         }
-
-                        return;
                     }
                 }
             }
         }
 
-        throw Trace.error(Trace.TRIGGER_NOT_FOUND, name);
+        Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
     }
 
     /**

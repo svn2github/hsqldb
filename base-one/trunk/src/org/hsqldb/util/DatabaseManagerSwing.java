@@ -76,15 +76,25 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
-/**
- * Manages a JDBC database
- *
- * @version 1.7.0
- */
-
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// nickferguson@users 20021005 - patch 1.7.1 - enhancements
+
+/**
+ * Swing Tool for manageing a JDBC database.<p>
+ * <pre>
+ *             Usage: java DatabaseManagerSwing [-options]
+ *             where options include:
+ *              -driver <classname>  jdbc driver class
+ *              -url <name>          jdbc url
+ *              -user <name>         username used for connection
+ *              -password <password> password for this user
+ *              -dir <path>          default directory
+ *              -script <file>       reads from script file
+ *</pre>
+ * @version 1.7.0
+ */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
 
@@ -115,6 +125,8 @@ implements ActionListener, WindowListener, KeyListener {
     JSplitPane             ewSplitPane;    // Contains tree beside nsSplitPane
     boolean                bHelp;
     JFrame                 fMain;
+    String                 ifHuge = "";
+    JToolBar               jtoolbar;
 
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
@@ -271,6 +283,7 @@ implements ActionListener, WindowListener, KeyListener {
         fMain = new JFrame("HSQL Database Manager");
 
         // (ulrivo): An actual icon.
+        fMain.getContentPane().add(createToolBar(), "North");
         fMain.setIconImage(CommonSwing.getIcon());
         fMain.addWindowListener(this);
 
@@ -311,9 +324,8 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Options", soptions);
 
-        /* NB - 26052002 Restore is not implemented yet in the transfer tool */
         String stools[] = {
-            "-Dump", /*"-Restore",*/ "-Transfer"
+            "-Dump", "-Restore", "-Transfer"
         };
 
         addMenu(bar, "Tools", stools);
@@ -342,7 +354,19 @@ implements ActionListener, WindowListener, KeyListener {
                 defScript = defDirectory + File.separator + defScript;
             }
 
-            txtCommand.setText(DatabaseManagerCommon.readFile(defScript));
+            // if insert stmet is thousands of records...skip showing it
+            // as text.  Too huge.
+            StringBuffer buf = new StringBuffer();
+
+            ifHuge = DatabaseManagerCommon.readFile(defScript);
+
+            if (1024 <= ifHuge.length()) {
+                buf.append(
+                    "This huge file cannot be edited. Please execute\n");
+                txtCommand.setText(buf.toString());
+            } else {
+                txtCommand.setText(ifHuge);
+            }
         }
 
         txtCommand.requestFocus();
@@ -409,20 +433,20 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
+/*
+// button replace by toolbar
         if (s.equals("Execute")) {
             execute();
-        } else if (s.equals("Exit")) {
+        } else
+*/
+        if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Transfer")) {
-            TransferSwing.work(null);
+            Transfer.work(null);
         } else if (s.equals("Dump")) {
-            TransferSwing.work(new String[]{ "-d" });
-
-            /* NB - 26052002 Restore is not implemented yet in the transfer tool */
-/*
+            Transfer.work(new String[]{ "-d" });
         } else if (s.equals("Restore")) {
-            TransferSwing.work(new String[]{ "-r" });
-*/
+            Transfer.work(new String[]{ "-r" });
         } else if (s.equals("Logging on")) {
             jdbcSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
@@ -460,9 +484,18 @@ implements ActionListener, WindowListener, KeyListener {
                 File file = f.getSelectedFile();
 
                 if (file != null) {
-                    txtCommand.setText(
-                        DatabaseManagerCommon.readFile(
-                            file.getAbsolutePath()));
+                    StringBuffer buf = new StringBuffer();
+
+                    ifHuge = DatabaseManagerCommon.readFile(
+                        file.getAbsolutePath());
+
+                    if (1024 <= ifHuge.length()) {
+                        buf.append(
+                            "This huge file cannot be edited. Please execute\n");
+                        txtCommand.setText(buf.toString());
+                    } else {
+                        txtCommand.setText(ifHuge);
+                    }
                 }
             }
         } else if (s.equals("Save Script...")) {
@@ -606,11 +639,24 @@ implements ActionListener, WindowListener, KeyListener {
         System.exit(0);
     }
 
+    private void clear() {
+
+        ifHuge = "";
+
+        txtCommand.setText(ifHuge);
+    }
+
     private void execute() {
 
         gResult.clear();
 
-        String sCmd = txtCommand.getText();
+        String sCmd = null;
+
+        if (1024 <= ifHuge.length()) {
+            sCmd = ifHuge;
+        } else {
+            sCmd = txtCommand.getText();
+        }
 
         if (sCmd.startsWith("-->>>TEST<<<--")) {
             testPerformance();
@@ -930,11 +976,13 @@ implements ActionListener, WindowListener, KeyListener {
 
         txtCommand.setFont(fFont);
         txtResult.setFont(new Font("Courier", Font.PLAIN, 12));
-
+/*
+// button replaced by toolbar
         butExecute = new JButton("Execute");
 
         butExecute.addActionListener(this);
         pCommand.add(butExecute, BorderLayout.EAST);
+*/
         pCommand.add(txtCommandScroll, BorderLayout.CENTER);
 
         gResult      = new GridSwing();
@@ -1007,7 +1055,9 @@ implements ActionListener, WindowListener, KeyListener {
             rootNode.setUserObject(dMeta.getURL());
 
             // get metadata about user tables by building a vector of table names
-            String    usertables[] = { "TABLE" };
+            String    usertables[] = {
+                "TABLE", "GLOBAL TEMPORARY", "VIEW"
+            };
             ResultSet result = dMeta.getTables(null, null, null, usertables);
             Vector    tables       = new Vector();
 
@@ -1099,5 +1149,45 @@ implements ActionListener, WindowListener, KeyListener {
         treeModel.nodeStructureChanged(rootNode);
         treeModel.reload();
         tScrollPane.repaint();
+    }
+
+    protected JToolBar createToolBar() {
+
+        JToolBar jtoolbar = new JToolBar();
+
+        jtoolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+
+        //---------------------------------------
+        JButton jbuttonClear = new JButton("Clear SQL Statement");
+
+        jbuttonClear.setToolTipText("Clear SQL Statement");
+        jbuttonClear.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent actionevent) {
+                clear();
+            }
+        });
+
+        //---------------------------------------
+        JButton jbuttonExecute = new JButton("Execute SQL Statement");
+
+        jbuttonExecute.setToolTipText("Execute SQL Statement");
+        jbuttonExecute.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent actionevent) {
+                execute();
+            }
+        });
+        jtoolbar.addSeparator();
+        jtoolbar.add(jbuttonClear);
+        jtoolbar.addSeparator();
+        jtoolbar.add(jbuttonExecute);
+        jtoolbar.addSeparator();
+        jbuttonClear.setAlignmentY(0.5F);
+        jbuttonClear.setAlignmentX(0.5F);
+        jbuttonExecute.setAlignmentY(0.5F);
+        jbuttonExecute.setAlignmentX(0.5F);
+
+        return jtoolbar;
     }
 }

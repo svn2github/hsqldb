@@ -46,7 +46,6 @@ import junit.framework.TestCase;
  *
  * @author <a href="mailto:david@walend.net">David Walend</a>
  * @author <a href="mailto:jvanzyl@zenplex.com">Jason van Zyl</a>
- * @version $Id: TestQuotes.java,v 1.1 2001/12/09 04:52:04 jvanzyl Exp $
  */
 public class TestQuotes extends TestCase {
 

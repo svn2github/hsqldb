@@ -33,12 +33,13 @@ package org.hsqldb;
 
 import java.io.Serializable;
 import java.io.PrintWriter;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.util.Properties;
 import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
-import java.sql.SQLException;
-import java.sql.Connection;
 import javax.sql.DataSource;
 
 // fredt@users 20020130 - patch 416437 by deforest@users - jdbc DataSource
@@ -93,15 +94,17 @@ implements Serializable, Referenceable, DataSource {
     public Connection getConnection(String user,
                                     String password) throws SQLException {
 
-        if (user == null) {
-            user = "";
+        Properties props = new Properties();
+
+        if (user != null) {
+            props.put("user", user);
         }
 
-        if (password == null) {
-            password = "";
+        if (password != null) {
+            props.put("password", password);
         }
 
-        return new jdbcConnection(database, user, password);
+        return new jdbcConnection(database, props);
     }
 
     /**

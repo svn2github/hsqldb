@@ -89,10 +89,8 @@ public class TestMultipleConnections {
         try {
             Class.forName("org.hsqldb.jdbcDriver");
 
-            synchronized (this) {
-                return DriverManager.getConnection("jdbc:hsqldb:nmdb", "sa",
-                                                   "");
-            }
+            return DriverManager.getConnection(
+                "jdbc:hsqldb:/hsql/testcache/test", "sa", "");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

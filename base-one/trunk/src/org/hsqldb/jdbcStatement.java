@@ -77,9 +77,9 @@ import java.sql.SQLWarning;
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 // SCROLL_INSENSITIVE and FORWARD_ONLY types for ResultSet are now supported
 // boucherb@users 20020509 - added "throws SQLException" to all methods where
-// it was missing here but specified in the java.sql.Statement interface, 
-// updated generic documentation to JDK 1.4, and added JDBC3 methods and docs 
-// boucherb@users and fredt@users 20020409/20020505 extensive review and update   
+// it was missing here but specified in the java.sql.Statement interface,
+// updated generic documentation to JDK 1.4, and added JDBC3 methods and docs
+// boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
 
 /**
@@ -287,7 +287,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB always returns zero, meaning there
+     * Up to and including 1.7.1, HSQLDB always returns zero, meaning there
      * is no limit. <p>
      *
      * </span>
@@ -485,7 +485,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB always returns zero, meaning there
+     * Up to and including 1.7.1, HSQLDB always returns zero, meaning there
      * is no limit. <p>
      *
      * </span>
@@ -518,7 +518,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Calls to this method are simply ignored; up to and including 1.7.0,
+     * Calls to this method are simply ignored; up to and including 1.7.1,
      * HSQLDB waits an unlimited amount of time for statement execution
      * requests to return. <p>
      *
@@ -590,7 +590,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB never produces warnings and
+     * Up to and including 1.7.1, HSQLDB never produces warnings and
      * always returns null.<p>
      *
      * </span>
@@ -665,7 +665,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support named cursors,
+     * Up to and including 1.7.1, HSQLDB does not support named cursors,
      * updateable results or table locking via
      * <code>SELECT FOR UPDATE</code>, so calls to this method are
      * simply ignored. <p>
@@ -818,7 +818,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB does not support multiple results. <p>
+     * Up to and including 1.7.1, HSQLDB does not support multiple results. <p>
      *
      * Calling this method closes the current result (if any) and always
      * returns <code>false</code>.
@@ -867,7 +867,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports only
+     * Up to and including 1.7.1, HSQLDB supports only
      * <code>FETCH_FORWARD</code>. <p>
      *
      * Setting any other value will throw a <CODE>SQLException</CODE>,
@@ -914,7 +914,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</B> <p>
      *
-     * Up to and including 1.7.0, HSQLDB always returns FETCH_FORWARD. <p>
+     * Up to and including 1.7.1, HSQLDB always returns FETCH_FORWARD. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -990,7 +990,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information</b> <p>
      *
-     * Up to and including 1.7.0, this method always returns 0.
+     * Up to and including 1.7.1, this method always returns 0.
      * That is, HSQLDB always decides the fetch size, that being all the
      * rows of a result. <p>
      *
@@ -1032,7 +1032,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.0, HSQLDB supports only
+     * Up to and including 1.7.1, HSQLDB supports only
      * <code>CONCUR_READ_ONLY</code> concurrency. <p>
      *
      * </span>
@@ -1081,7 +1081,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
      * <code>ResultSet.TYPE_SCROLL_SENSITIVE</code> (not supported) <p>
      *
-     * <b>Note:</b> Up to and including 1.7.0, HSQLDB never returns
+     * <b>Note:</b> Up to and including 1.7.1, HSQLDB never returns
      * <code>TYPE_SCROLL_SENSITIVE</code>
      * @exception SQLException if a database access error occurs
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
@@ -1111,7 +1111,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1148,7 +1148,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1216,7 +1216,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1292,7 +1292,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1337,7 +1337,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1373,7 +1373,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1421,7 +1421,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1465,7 +1465,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1520,7 +1520,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1583,7 +1583,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1643,7 +1643,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>
@@ -1687,7 +1687,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.0 does not support this feature. <p>
+     * HSQLDB 1.7.1 does not support this feature. <p>
      *
      * Calling this method always throws a <CODE>SQLException</CODE>,
      * stating that the function is not supported. <p>

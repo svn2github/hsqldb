@@ -33,24 +33,23 @@ package org.hsqldb.util;
 
 import java.sql.*;
 
+// sqlbob@users 20020325 - patch 1.7.0 - reengineering
+
 /**
  * Conversions from SQLServer7 databases
  *
  * @version 1.7.0
  */
-
-// sqlbob@users 20020325 - patch 1.7.0 - reengineering
-public class SqlServerTransferHelper extends TransferHelper {
+class SqlServerTransferHelper extends TransferHelper {
 
     private boolean firstTinyintRow;
     private boolean firstSmallintRow;
 
-    public SqlServerTransferHelper() {
+    SqlServerTransferHelper() {
         super();
     }
 
-    public SqlServerTransferHelper(TransferDb database, Traceable t,
-                                   String q) {
+    SqlServerTransferHelper(TransferDb database, Traceable t, String q) {
         super(database, t, q);
     }
 

@@ -70,15 +70,33 @@ package org.hsqldb.util;
 import java.io.*;
 import java.util.*;
 
-/**
- * changes the source code to support different JDK or profile settings
- *
- * @version 1.7.0
- */
-
 // fredt@users 20020315 - patch 1.7.0 - minor fixes
 // changed line separator to System based value
 // moved the Profile class to org.hsqldb.test package
+
+/**
+ * Modifies the source code to support different JDK or profile settings. <p>
+ * <pre>
+ * Usage: java CodeSwitcher [paths] [labels] [+][-]
+ * If no labels are specified then all used
+ * labels in the source code are shown.
+ * Use +MODE to switch on the things labeld MODE
+ * Use -MODE to switch off the things labeld MODE
+ * Path: Any number of path or files may be
+ * specified. Use . for the current directory
+ * (including sub-directories).
+ * Example: java CodeSwitcher +JAVA2 .
+ * This example switches on code labeled JAVA2
+ * in all *.java files in the current directory
+ * and all subdirectories.
+ * java CodeSwitcher + .
+ * Adds test code to the code.
+ * java CodeSwitcher - .
+ * Removes test code from the code
+ * </pre>
+ *
+ * @version 1.7.0
+ */
 public class CodeSwitcher {
 
     private static final String ls = System.getProperty("line.separator",
@@ -148,23 +166,22 @@ public class CodeSwitcher {
      */
     static void showUsage() {
 
-        System.out.println(
-            "Usage: java CodeSwitcher [paths] [labels] [+][-]");
-        System.out.println("If no labels are specified then all used");
-        System.out.println("labels in the source code are shown.");
-        System.out.println("Use +MODE to switch on the things labeld MODE");
-        System.out.println("Use -MODE to switch off the things labeld MODE");
-        System.out.println("Path: Any number of path or files may be");
-        System.out.println("specified. Use . for the current directory");
-        System.out.println("(including sub-directories).");
-        System.out.println("Example: java CodeSwitcher +JAVA2 .");
-        System.out.println("This example switches on code labeled JAVA2");
-        System.out.println("in all *.java files in the current directory");
-        System.out.println("and all subdirectories.");
-        System.out.println("java CodeSwitcher + .");
-        System.out.println("Adds test code to the code.");
-        System.out.println("java CodeSwitcher - .");
-        System.out.println("Removed test code from the code.");
+        System.out.print("Usage: java CodeSwitcher [paths] [labels] [+][-]\n"
+                         + "If no labels are specified then all used\n"
+                         + "labels in the source code are shown.\n"
+                         + "Use +MODE to switch on the things labeld MODE\n"
+                         + "Use -MODE to switch off the things labeld MODE\n"
+                         + "Path: Any number of path or files may be\n"
+                         + "specified. Use . for the current directory\n"
+                         + "(including sub-directories).\n"
+                         + "Example: java CodeSwitcher +JAVA2 .\n"
+                         + "This example switches on code labeled JAVA2\n"
+                         + "in all *.java files in the current directory\n"
+                         + "and all subdirectories.\n"
+                         + "java CodeSwitcher + .\n"
+                         + "Adds test code to the code.\n"
+                         + "java CodeSwitcher - .\n"
+                         + "Removed test code from the code.\n");
     }
 
     /**

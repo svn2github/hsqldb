@@ -77,14 +77,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.Observable;
 import java.util.StringTokenizer;
 
+// fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
+
 /**
- *  Class declaration
+ *  A web server connection is a transient object that lasts for the duration
+ *  of the SQL call and its result. This class uses the notification
+ *  mechanism in WebServer to allow cleanup after a SHUTDOWN. (fredt@users)
  *
- * @version  1.7.0
+ * @version  1.7.1
  */
-class WebServerConnection extends Thread {
+class WebServerConnection implements Runnable {
 
     static final String      ENCODING = "8859_1";
     private Socket           mSocket;
@@ -172,6 +177,8 @@ class WebServerConnection extends Thread {
             input.close();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            mServer.notify(Server.CONNECTION_CLOSED);
         }
     }
 
@@ -396,13 +403,5 @@ class WebServerConnection extends Thread {
             mServer.traceError("processQuery: " + e.getMessage());
             e.printStackTrace();
         }
-
-        // System.out.print("Queries processed: "+(iQueries++)+"  \n");
-        if (mServer.mDatabase.isShutdown()) {
-            mServer.trace("The database is shutdown");
-            System.exit(0);
-        }
     }
-
-    // static private int iQueries=0;
 }

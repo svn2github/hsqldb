@@ -123,8 +123,8 @@ public class jdbcDriver implements Driver {
     static final String sStartURL = "jdbc:hsqldb:";
     static final int    MAJOR     = 1,
                         MINOR     = 7,
-                        REVISION  = 0;
-    static final String VERSION   = "1.7.0";
+                        REVISION  = 1;
+    static final String VERSION   = "1.7.1";
     static final String PRODUCT   = "HSQL Database Engine";
 
     /**
@@ -162,20 +162,9 @@ public class jdbcDriver implements Driver {
             return null;
         }
 
-        String s    = url.substring(sStartURL.length());
-        String user = info.getProperty("user");
+        String s = url.substring(sStartURL.length());
 
-        if (user == null) {
-            user = "";
-        }
-
-        String password = info.getProperty("password");
-
-        if (password == null) {
-            password = "";
-        }
-
-        return new jdbcConnection(s, user, password);
+        return new jdbcConnection(s, info);
     }
 
     /**
@@ -186,13 +175,15 @@ public class jdbcDriver implements Driver {
      * @param  url the URL of the database
      * @return  true if this driver can connect to the given URL
      */
+
+    // fredt@users - patch 1.70 - allow mixedcase url's when called externally
     public boolean acceptsURL(String url) {
 
         if (Trace.TRACE) {
             Trace.trace(url);
         }
 
-        return url.startsWith(sStartURL);
+        return url.toLowerCase().startsWith(sStartURL);
     }
 
     /**
@@ -204,6 +195,15 @@ public class jdbcDriver implements Driver {
      *  on the values the human has supplied so far, additional values may
      *  become necessary, so it may be necessary to iterate though several
      *  calls to getPropertyInfo.
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
+     *
+     * HSQLDB 1.7.1 uses the values submitted in info to set the value for
+     * each DriverPropertyInfo object returned. It does not use the default
+     * value that it would use for the property if the value is null.
+     *
+     * </span> <!-- end release-specific documentation -->
      *
      * @param  url the URL of the database to which to connect
      * @param  info a proposed list of tag/value pairs that will be sent on
@@ -218,6 +218,9 @@ public class jdbcDriver implements Driver {
             Trace.trace();
         }
 
+        String[]           choices = new String[] {
+            "true", "false"
+        };
         DriverPropertyInfo pinfo[] = new DriverPropertyInfo[2];
         DriverPropertyInfo p;
 
@@ -228,6 +231,16 @@ public class jdbcDriver implements Driver {
         p          = new DriverPropertyInfo("password", null);
         p.value    = info.getProperty("password");
         p.required = true;
+        pinfo[1]   = p;
+        p          = new DriverPropertyInfo("strict_md", null);
+        p.value    = info.getProperty("strict_md");
+        p.required = false;
+        p.choices  = choices;
+        pinfo[1]   = p;
+        p          = new DriverPropertyInfo("get_column_name", null);
+        p.value    = info.getProperty("get_column_name");
+        p.required = false;
+        p.choices  = choices;
         pinfo[1]   = p;
 
         return pinfo;

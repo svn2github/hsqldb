@@ -33,15 +33,15 @@ package org.hsqldb.util;
 
 import java.sql.*;
 
+// sqlbob@users 20020325 - patch 1.7.0 - reengineering
+
 /**
  * Conversions to / from Hsqldb
  *
  * @author sqlbob@users
  * @version 1.7.0
  */
-
-// sqlbob@users 20020325 - patch 1.7.0 - reengineering
-public class HsqldbTransferHelper extends TransferHelper {
+class HsqldbTransferHelper extends TransferHelper {
 
     public HsqldbTransferHelper() {
         super();
@@ -68,7 +68,7 @@ public class HsqldbTransferHelper extends TransferHelper {
 
         String CompareString = "INTEGER IDENTITY";
 
-        if (columnType.indexOf(CompareString) > 0) {
+        if (columnType.indexOf(CompareString) >= 0) {
             /*
             ** We just found a increment
             */
@@ -82,7 +82,7 @@ public class HsqldbTransferHelper extends TransferHelper {
                                String columnType, ResultSet columnDesc,
                                int columnIndex) throws SQLException {
 
-        if (columnType.equals("SERIAL")) {
+        if (columnType.indexOf("SERIAL") >= 0) {
             columnType = " INTEGER IDENTITY ";
         }
 

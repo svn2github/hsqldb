@@ -74,6 +74,9 @@ import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 
 // fredt@users 20020320 - doc 1.7.0 - update
+// fredt@users 20020825 - patch 1.7.1 - converted to static methods only
+// BINARY objest are now represented internally as byte[] and use the static
+// methods in this class to compare or convert the byte[] objects
 
 /**
  *  This class allows HSQLDB to store binary data as an array of bytes. It
@@ -85,9 +88,10 @@ import java.sql.SQLException;
 class ByteArray {
 
     /**
-     * The byte array this object represents.
+     * Private constructor, no instance of this is available.
+     *
      */
-    private byte data[];
+    private ByteArray() {}
 
     /**
      * Converts the specified hexadecimal digit <CODE>String</CODE>
@@ -97,56 +101,38 @@ class ByteArray {
      * @throws SQLException if the specified string contains non-hexadecimal digits.
      * @return a byte array equivalent to the specified string of hexadecimal digits
      */
-    static byte[] HexToByteArray(String hexString) throws SQLException {
+    static byte[] hexToByteArray(String hexString) throws SQLException {
         return StringConverter.hexToByte(hexString);
     }
 
     /**
-     * Constructs a new <CODE>ByteArray</CODE> object from the specified
-     * array of bytes.
+     * Compares a <CODE>byte[]</CODE> with another specified
+     * <CODE>byte[]</CODE> for order.  Returns a negative integer, zero,
+     * or a positive integer as the first object is less than, equal to, or
+     * greater than the specified second <CODE>byte[]</CODE>.<p>
      *
-     * @param a the array of bytes the object represents
-     */
-    ByteArray(byte[] a) {
-        data = a;
-    }
-
-    /**
-     * Give access to this object's data
-     *
-     * @return  The array of bytes representing this objects data.
-     */
-    byte[] byteValue() {
-        return data;
-    }
-
-    /**
-     * Compares this <CODE>ByteArray</CODE> with the specified
-     * <CODE>ByteArray</CODE> for order.  Returns a negative integer, zero,
-     * or a positive integer as this object is less than, equal to, or
-     * greater than the specified <CODE>ByteArray</CODE>.<p>
-     *
-     * @param o the ByteArray to be compared
+     * @param o1 the first byte[] to be compared
+     * @param o2 the second byte[] to be compared
      * @return a negative integer, zero, or a positive integer as this object
      * is less than, equal to, or greater than the specified object.
      */
-    int compareTo(ByteArray o) {
+    static int compareTo(byte[] o1, byte[] o2) {
 
-        int len  = data.length;
-        int lenb = o.data.length;
+        int len  = o1.length;
+        int lenb = o2.length;
 
         for (int i = 0; ; i++) {
             int a = 0;
             int b = 0;
 
             if (i < len) {
-                a = ((int) data[i]) & 0xff;
+                a = ((int) o1[i]) & 0xff;
             } else if (i >= lenb) {
                 return 0;
             }
 
             if (i < lenb) {
-                b = ((int) o.data[i]) & 0xff;
+                b = ((int) o2[i]) & 0xff;
             }
 
             if (a > b) {
@@ -215,22 +201,12 @@ class ByteArray {
     }
 
     /**
-     * Retieves this object's array of bytes as an equivalent
+     * Converts an array of bytes to an equivalent
      * <CODE>String</CODE> of hexadecimal digits.
      *
-     * @return  String representation of the ByteArray.
+     * @return  String representation of the byte[].
      */
-    public String toString() {
-        return StringConverter.byteToHex(data);
-    }
-
-    /**
-     * Retrieves the hash code value for the array of bytes this
-     * object represents.
-     *
-     * @return hashcode
-     */
-    public int hashCode() {
-        return data.hashCode();
+    static public String toString(byte[] o) {
+        return StringConverter.byteToHex(o);
     }
 }

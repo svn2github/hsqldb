@@ -54,7 +54,7 @@ class TriggerDef extends Thread {
     static final int NUM_TRIGGER_OPS = 3;    // ie ins,del,upd
     static final int NUM_TRIGS       = NUM_TRIGGER_OPS * 2 * 2;
 
-    // indexes into the triggers Vector
+    // indexes into the triggers list
     static final int INSERT_AFTER      = 0;
     static final int DELETE_AFTER      = 1;
     static final int UPDATE_AFTER      = 2;

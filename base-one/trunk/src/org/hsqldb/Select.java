@@ -81,6 +81,7 @@ import java.sql.Types;
  */
 class Select {
 
+    boolean          isPreProcess;
     boolean          isDistinctSelect;
     private boolean  isDistinctAggregate;
     private boolean  isAggregated;
@@ -113,6 +114,14 @@ class Select {
 // basic implementation of LIMIT n m
     int limitStart = 0;                  // set only by the LIMIT keyword
     int limitCount = 0;                  // set only by the LIMIT keyword
+
+    /**
+     * Set to preprocess mode
+     *
+     */
+    void setPreProcess() {
+        isPreProcess = true;
+    }
 
     /**
      * Method declaration
@@ -209,7 +218,9 @@ class Select {
     }
 
     /**
-     * Method declaration
+     * maxrow may be 0 to indicate no limit on the number of rows, or -1
+     * to indicate 0 size result (used for pre-processing the selects in
+     * view statements. positive values limit the size of the result set.
      *
      *
      * @param maxrows
@@ -221,6 +232,7 @@ class Select {
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
 // for SELECT LIMIT n m DISTINCT
+// fredt@users 20020804 - patch 580347 by dkkopp - view speedup
     Result getResult(int maxrows) throws SQLException {
 
         resolve();
@@ -451,7 +463,7 @@ class Select {
         boolean addtoaggregate = isAggregated &&!isGrouped
                                  &&!isDistinctAggregate;
 
-        while (level >= 0) {
+        while (level >= 0 &&!isPreProcess) {
             TableFilter t = tFilter[level];
             boolean     found;
 
@@ -488,12 +500,6 @@ class Select {
 // fredt@users 20010701 - patch for bug 416144 416146 430615 by fredt
                 if (addtoaggregate) {
                     updateAggregateRow(aggregateRow, row, len);
-/*
-
-                    if (isGrouped || isDistinctAggregate) {
-                        r.add(row);
-                    }
-*/
                 } else {
                     r.add(row);
 

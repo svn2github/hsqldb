@@ -68,9 +68,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.StringUtil;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Vector;
+import java.util.Hashtable;
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
 // for sql standard quoted identifiers for column and table names and aliases
@@ -82,6 +84,8 @@ import java.util.Vector;
 // fredt@users 20020225 - patch 1.7.0 - named constraints
 // boucherb@users 20020225 - patch 1.7.0 - multi-column primary keys
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// tony_lai@users 20020820 - patch 595099 by tlai@users - user defined PK name
+// tony_lai@users 20020820 - patch 595172 by tlai@users - drop constraint fix
 
 /**
  *  Holds the data structures and methods for creation of a database table.
@@ -92,14 +96,16 @@ import java.util.Vector;
 class Table {
 
     // types of table
-    static final int    SYSTEM_TABLE    = 0;
-    static final int    TEMP_TABLE      = 1;
-    static final int    MEMORY_TABLE    = 2;
-    static final int    CACHED_TABLE    = 3;
-    static final int    TEMP_TEXT_TABLE = 4;
-    static final int    TEXT_TABLE      = 5;
-    static final int    VIEW            = 6;
-    static final String DEFAULT_PK      = "SYSTEM_ID";
+    static final int SYSTEM_TABLE    = 0;
+    static final int TEMP_TABLE      = 1;
+    static final int MEMORY_TABLE    = 2;
+    static final int CACHED_TABLE    = 3;
+    static final int TEMP_TEXT_TABLE = 4;
+    static final int TEXT_TABLE      = 5;
+    static final int VIEW            = 6;
+
+    // name of the column added to tables without primary key
+    static final String DEFAULT_PK = "";
 
     // main properties
     private Vector  vColumn;               // columns in table
@@ -126,6 +132,7 @@ class Table {
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
+    protected int      indexType;          // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -180,7 +187,13 @@ class Table {
             isView = true;
         }
 
-        // type may have changed for CACHED tables
+        if (isText) {
+            indexType = Index.POINTER_INDEX;
+        } else if (isCached) {
+            indexType = Index.DISK_INDEX;
+        }
+
+        // type may have changed above for CACHED tables
         tableType       = type;
         tableName       = name;
         iPrimaryKey     = null;
@@ -218,6 +231,10 @@ class Table {
 
     final boolean isView() {
         return isView;
+    }
+
+    final int getIndexType() {
+        return indexType;
     }
 
     final boolean isDataReadOnly() {
@@ -396,8 +413,12 @@ class Table {
      * @throws  SQLException
      */
     void setName(String name, boolean isquoted) {
+
         tableName.rename(name, isquoted);
-        getPrimaryIndex().getName().rename("SYS_PK", name, isquoted);
+
+        if (HsqlName.isReservedName(getPrimaryIndex().getName().name)) {
+            getPrimaryIndex().getName().rename("SYS_PK", name, isquoted);
+        }
     }
 
     /**
@@ -453,15 +474,14 @@ class Table {
     /**
      * DROP INDEX and CREATE INDEX on non empty tables both recreate the table
      * and the data to reflect the new indexing structure. The new structure
-     * should be reflected in the DDL script immediately, otherwise if a
+     * should be reflected in the DDL script, otherwise if a
      * SHUTDOWN IMMEDIATE occures, the following will happen:<br>
      * If the table is cached, the index roots will be different from what
      * is specified in SET INDEX ROOTS. <br>
      * If the table is memory, the old index will be used until the script
      * reaches drop index etc. and data is recreated again.<b>
      *
-     * The fix avoids scripting the row insert and delete ops or the
-     * DROP INDEX command.
+     * The fix avoids scripting the row insert and delete ops.
      *
      * Constraints that need removing are removed outside this (fredt@users)
      * @param  withoutindex
@@ -510,7 +530,10 @@ class Table {
             }
         }
 
-        tn.createPrimaryKey(primarykey);
+// tony_lai@users - 20020820 - patch 595099 - primary key names
+        tn.createPrimaryKey(getIndex(0).getName(), primarykey);
+
+        tn.vConstraint = vConstraint;
 
         for (int i = 1; i < getIndexCount(); i++) {
             Index idx = getIndex(i);
@@ -527,37 +550,19 @@ class Table {
                 // fredt - todo - better error message
                 throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
             }
-
-            tn.vConstraint = new Vector();
-
-            // fredt - todo - this modifies FK constraints
-            // on other tables which will not revert to their previous state
-            // if an exception is thrown in moveData()
-            for (int j = 0; j < vConstraint.size(); j++) {
-                Constraint oldconst = (Constraint) vConstraint.elementAt(j);
-                Constraint newconst = oldconst.duplicate();
-
-                newconst.replaceTable(this, tn, idx, newidx);
-                tn.vConstraint.addElement(newconst);
-
-                Table target = newconst.getMain();
-
-                if (target == tn) {
-                    target = newconst.getRef();
-                }
-
-                if (target != null && target != tn) {
-                    for (int k = 0; k < target.vConstraint.size(); k++) {
-                        Constraint tempconst =
-                            (Constraint) target.vConstraint.elementAt(k);
-
-                        tempconst.replaceTable(this, tn, idx, newidx);
-                    }
-                }
-            }
         }
 
         return tn;
+    }
+
+    void updateConstraints(Table to, int colindex,
+                           int adjust) throws SQLException {
+
+        for (int j = 0; j < vConstraint.size(); j++) {
+            Constraint c = (Constraint) vConstraint.elementAt(j);
+
+            c.replaceTable(to, this, colindex, adjust);
+        }
     }
 
     /**
@@ -681,6 +686,24 @@ class Table {
     }
 
     /**
+     *  Return the list of file pointers to root nodes for this table's
+     *  indexes.
+     */
+    int[] getIndexRootsArray() throws SQLException {
+
+        int[] roots = new int[iIndexCount];
+
+        for (int i = 0; i < iIndexCount; i++) {
+            Node f = getIndex(i).getRoot();
+
+            roots[i] = (f != null) ? f.getKey()
+                                   : -1;
+        }
+
+        return roots;
+    }
+
+    /**
      *  Method declaration
      *
      * @return
@@ -690,22 +713,41 @@ class Table {
 
         Trace.doAssert(isCached, "Table.getIndexRootData");
 
-        StringBuffer s = new StringBuffer();
+        String roots   = StringUtil.getList(getIndexRootsArray(), " ", "");
+        StringBuffer s = new StringBuffer(roots);
 
-        for (int i = 0; i < iIndexCount; i++) {
-            Node f = getIndex(i).getRoot();
-
-            if (f != null) {
-                s.append(f.getKey());
-                s.append(' ');
-            } else {
-                s.append("-1 ");
-            }
-        }
-
+        s.append(' ');
         s.append(iIdentityId);
 
         return s.toString();
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  s
+     * @throws  SQLException
+     */
+    void setIndexRoots(int[] roots) throws SQLException {
+
+        Trace.check(isCached, Trace.TABLE_NOT_FOUND);
+
+        for (int i = 0; i < iIndexCount; i++) {
+            int p = roots[i];
+            Row r = null;
+
+            if (p != -1) {
+                r = cCache.getRow(p, this);
+            }
+
+            Node f = null;
+
+            if (r != null) {
+                f = r.getNode(i);
+            }
+
+            getIndex(i).setRoot(f);
+        }
     }
 
     /**
@@ -719,25 +761,18 @@ class Table {
         // the user may try to set this; this is not only internal problem
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
-        int j = 0;
+        int[] roots = new int[iIndexCount];
+        int   j     = 0;
 
         for (int i = 0; i < iIndexCount; i++) {
             int n = s.indexOf(' ', j);
             int p = Integer.parseInt(s.substring(j, n));
 
-            if (p != -1) {
-                Row  r = cCache.getRow(p, this);
-                Node f = null;
-
-                if (r != null) {
-                    f = r.getNode(i);
-                }
-
-                getIndex(i).setRoot(f);
-            }
-
-            j = n + 1;
+            roots[i] = p;
+            j        = n + 1;
         }
+
+        setIndexRoots(roots);
 
         iIdentityId = Integer.parseInt(s.substring(j));
     }
@@ -768,12 +803,14 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Shortcut for creating default PK's
      *
      * @throws  SQLException
      */
     void createPrimaryKey() throws SQLException {
-        createPrimaryKey(null);
+
+// tony_lai@users 20020820 - patch 595099
+        createPrimaryKey(null, null);
     }
 
     /**
@@ -784,7 +821,10 @@ class Table {
      * @param columns primary key column(s) or null if no primary key in DDL
      * @throws  SQLException
      */
-    void createPrimaryKey(int[] columns) throws SQLException {
+
+// tony_lai@users 20020820 - patch 595099
+    void createPrimaryKey(HsqlName pkName,
+                          int[] columns) throws SQLException {
 
         Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
@@ -793,16 +833,25 @@ class Table {
         if (columns == null) {
             columns = new int[]{ iColumnCount };
 
-            Column column = new Column(new HsqlName(DEFAULT_PK, false), true,
-                                       Types.INTEGER, 0, 0, true, true, null);
+            Column column = new Column(new HsqlName(DEFAULT_PK, false),
+                                       false, Types.INTEGER, 0, 0, true,
+                                       true, null);
 
             addColumn(column);
+        } else {
+            for (int i = 0; i < columns.length; i++) {
+                getColumn(columns[i]).setNullable(false);
+                getColumn(columns[i]).setPrimaryKey(true);
+            }
         }
 
         iPrimaryKey = columns;
 
-        HsqlName name = new HsqlName("SYS_PK", tableName.name,
-                                     tableName.isNameQuoted);
+// tony_lai@users 20020820 - patch 595099
+        HsqlName name = pkName != null ? pkName
+                                       : new HsqlName("SYS_PK",
+                                           tableName.name,
+                                           tableName.isNameQuoted);
 
         createIndexPrivate(columns, name, true);
 
@@ -814,24 +863,22 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Create new index taking into account removal or addition a column of
+     *  the table.
      *
      * @param  index
      * @param  colindex
      * @param  ajdust -1 or 0 or 1
+     * @return new index or null if a column is removed from index
      * @throws  SQLException
      */
     private Index createAdjustedIndex(Index index, int colindex,
                                       int adjust) throws SQLException {
 
-        int[] oldcol = new int[index.getVisibleColumns()];
+        int[] colarr = ArrayUtil.getAdjustedColumnArray(index.getColumns(),
+            index.getVisibleColumns(), colindex, adjust);
 
-        ArrayUtil.copyArray(index.getColumns(), oldcol, oldcol.length);
-
-        int[] colarr = ArrayUtil.toAdjustedColumnArray(oldcol, colindex,
-            adjust);
-
-        if (colarr.length != oldcol.length) {
+        if (colarr.length != index.getVisibleColumns()) {
             return null;
         }
 
@@ -874,7 +921,12 @@ class Table {
             }
         }
 
-        Index newindex = new Index(name, col, type, unique, s);
+        // fredt - visible columns of index is 0 for system generated PK
+        if (col[0] == iVisibleColumns) {
+            s = 0;
+        }
+
+        Index newindex = new Index(name, this, col, type, unique, s);
 
 // fredt@users 20020225 - comment
 // in future we can avoid duplicate indexes
@@ -893,13 +945,18 @@ class Table {
         return newindex;
     }
 
+// fredt@users 20020315 - patch 1.7.0 - drop index bug
+// don't drop an index used for a foreign key
+
     /**
-     *  Method declaration
+     *  Checks for use of a named index in table constraints
      *
-     * @param  index
-     * @throws  SQLException
+     * @param  indexname
+     * @param ignore null or a set of constraints that should be ignored in checks
+     * @throws  SQLException if index is used in a constraint
      */
-    void checkDropIndex(String indexname) throws SQLException {
+    void checkDropIndex(String indexname,
+                        Hashtable ignore) throws SQLException {
 
         Index index = this.getIndex(indexname);
 
@@ -911,10 +968,12 @@ class Table {
             throw Trace.error(Trace.DROP_PRIMARY_KEY, indexname);
         }
 
-// fredt@users 20020315 - patch 1.7.0 - drop index bug
-// don't drop an index used for a foreign key
         for (int i = 0; i < vConstraint.size(); i++) {
             Constraint c = (Constraint) vConstraint.elementAt(i);
+
+            if (ignore.get(c) != null) {
+                continue;
+            }
 
             if (c.isIndexFK(index)) {
                 throw Trace.error(Trace.DROP_FK_INDEX, indexname);
@@ -956,7 +1015,7 @@ class Table {
      *
      * @param  from
      * @param  colindex index of the column that was added or removed
-     * @throws  SQLException
+     * @throws  SQLException normally for lack of resources
      */
     void moveData(Table from, int colindex, int adjust) throws SQLException {
 
@@ -1112,12 +1171,12 @@ class Table {
             }
         }
 
-        Row r = new Row(this, row);
+        Row r = Row.newRow(this, row);
 
         if (isText) {
 
             //-- Always inserted at end of file.
-            nextId = r.iPos + r.storageSize;
+            nextId = ((CachedRow) r).iPos + ((CachedRow) r).storageSize;
         } else {
             nextId++;
         }
@@ -1398,7 +1457,7 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Return the position of the constraint within the list
      *
      * @param  s
      * @return
@@ -1417,7 +1476,7 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  return the named constriant
      *
      * @param  s
      * @return
@@ -1523,21 +1582,19 @@ class Table {
         return null;
     }
 
-    int putRow(Row r) throws SQLException {
+    void putRow(CachedRow r) throws SQLException {
 
         int size = 0;
 
         if (cCache != null) {
-            size = cCache.add(r);
+            cCache.add(r);
         }
-
-        return (size);
     }
 
-    void removeRow(Row r) throws SQLException {
+    void removeRow(CachedRow r) throws SQLException {
 
         if (cCache != null) {
-            cCache.free(r, r.iPos, r.storageSize);
+            cCache.free(r);
         }
     }
 

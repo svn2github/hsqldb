@@ -36,6 +36,8 @@ package org.hsqldb.lib;
  */
 public class StringUtil {
 
+    private StringUtil() {}
+
 /**
  * Returns a string with non alphanumeric chars converted to the
  * substitute character. A digit first character is also converted.
@@ -65,5 +67,72 @@ public class StringUtil {
         return src.toString();
     }
 
-    private StringUtil() {}
+    /**
+     * Builds a CSV list from the String[].
+     *
+     * @param s  array of String objects
+     * @return a CSV list
+     */
+    public static String getList(String[] s, String separator, String quote) {
+
+        StringBuffer b = new StringBuffer(s.length * 16);
+
+        for (int i = 0; i < s.length; i++) {
+            b.append(quote);
+            b.append(s[i]);
+            b.append(quote);
+            b.append(separator);
+        }
+
+        b.setLength(b.length() - separator.length());
+
+        return b.toString();
+    }
+
+    /**
+     * Builds a CSV list from the int[].
+     *
+     * @param i array of int
+     * @return a CSV list
+     */
+    public static String getList(int[] s, String separator, String quote) {
+
+        StringBuffer b = new StringBuffer(s.length * 8);
+
+        for (int i = 0; i < s.length; i++) {
+            b.append(quote);
+            b.append(s[i]);
+            b.append(quote);
+            b.append(separator);
+        }
+
+        b.setLength(b.length() - separator.length());
+
+        return b.toString();
+    }
+
+    /**
+     * Builds a CSV list from the specified String[][].
+     * Uses only the first element in each subarray.
+     *
+     *
+     * @param s the array of array of String objects
+     * @return a CSV list
+     */
+    public static String getList(String[][] s, String separator,
+                                 String quote) {
+
+        StringBuffer b = new StringBuffer(s.length * 16);
+
+        for (int i = 0; i < s.length; i++) {
+            b.append(quote);
+            b.append(s[i][0]);
+            b.append(quote);
+            b.append(separator);
+        }
+
+        b.setLength(b.length() - separator.length());
+
+        return b.toString();
+    }
 }

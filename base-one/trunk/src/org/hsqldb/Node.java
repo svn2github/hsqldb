@@ -71,419 +71,141 @@ import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
 
 /**
- *  Class declaration
+ *  The parent for all AVL node implementations, features factory methods for
+ *  its subclasses. Subclasses of Node vary in the way they hold
+ *  references to other nodes in the AVL tree.<br>
  *
- * @version    1.7.0
+ *  nNext links the Node objects belonging to different indexes for each
+ *  table row. It is used solely by Row to locate the node belonging to a
+ *  particular index. (fredt@users)
+ *
+ *
+ * @version 1.7.1
  */
-class Node {
+abstract class Node {
 
-    static final int NO_POS = Row.NO_POS;
-    private int      iBalance;    // currently, -2 means 'deleted'
-    int              iLeft   = NO_POS;
-    private int      iRight  = NO_POS;
-    private int      iParent = NO_POS;
-    Node             nLeft;
-    Node             nRight;
-    private Node     nParent;
-    private int      iId;         // id of index this table
+    static final int TYPE_MEMORY  = 0;
+    static final int TYPE_DISK    = 1;
+    static final int TYPE_POINTER = 2;
+    static final int NO_POS       = CachedRow.NO_POS;
+    protected int    iBalance;    // currently, -2 means 'deleted'
+    protected Row    rData;
     Node             nNext;       // node of next index (nNext==null || nNext.iId=iId+1)
-    private Row      rData;
-    private int      iData = NO_POS;
-    private Table    tTable;
+
+    static final Node newNode(Row r, int id, Table t) {
+
+        switch (t.getIndexType()) {
+
+            case Index.MEMORY_INDEX :
+                return new MemoryNode(r);
+
+            case Index.POINTER_INDEX :
+                return new PointerNode((CachedRow) r);
+
+            case Index.DISK_INDEX :
+            default :
+                return new DiskNode((CachedRow) r, id);
+        }
+    }
+
+    static final Node newNode(Row r, DatabaseRowInputInterface in, int id,
+                              Table t) throws IOException, SQLException {
+
+        switch (t.getIndexType()) {
+
+            case Index.MEMORY_INDEX :
+                return new MemoryNode(r);
+
+            case Index.POINTER_INDEX :
+                return new PointerNode((CachedRow) r);
+
+            case Index.DISK_INDEX :
+            default :
+                return new DiskNode((CachedRow) r, in, id);
+        }
+    }
 
     /**
-     *  Constructor declaration
-     *
-     * @param  r
-     * @param  in
-     * @param  id
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
+     *  Method declaration
      */
-    Node(Row r, DatabaseRowInputInterface in,
-            int id) throws IOException, SQLException {
+    abstract void delete();
 
-        iId      = id;
-        tTable   = r.getTable();
-        rData    = r;
-        iData    = r.iPos;
-        iBalance = in.readIntData();
-        iLeft    = in.readIntData();
+    /**
+     *  File offset of Node. Used with CachedRow objects only
+     *
+     * @return file offset
+     */
+    abstract int getKey();
 
-        if (iLeft <= 0) {
-            iLeft = NO_POS;
-        }
+    /**
+     *  Used with CachedRow objects only
+     *
+     * @param  pos file offset of node
+     */
+    abstract void setKey(int pos);
 
-        iRight = in.readIntData();
+    abstract Row getRow() throws SQLException;
 
-        if (iRight <= 0) {
-            iRight = NO_POS;
-        }
+    abstract Node getLeft() throws SQLException;
 
-        iParent = in.readIntData();
+    abstract void setLeft(Node n) throws SQLException;
 
-        if (iParent <= 0) {
-            iParent = NO_POS;
-        }
+    abstract Node getRight() throws SQLException;
+
+    /**
+     *  Used with PointerNode objects only
+     *
+     * @param  pos file offset of node
+     */
+    abstract Node getRightPointer() throws SQLException;
+
+    abstract void setRight(Node n) throws SQLException;
+
+    abstract Node getParent() throws SQLException;
+
+    abstract boolean isRoot();
+
+    abstract void setParent(Node n) throws SQLException;
+
+    final int getBalance() throws SQLException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
-        }
-    }
-
-    /**
-     *  Constructor declaration
-     *
-     * @param  r
-     * @param  id
-     */
-    Node(Row r, int id) {
-
-        iId    = id;
-        tTable = r.getTable();
-
-        if ((r.iPos == Row.NO_POS) ||!tTable.isCached()) {
-            rData = r;
-        } else {
-            iData = r.iPos;
-        }
-    }
-
-    /**
-     *  Method declaration
-     */
-    void delete() {
-
-        iBalance = -2;
-        nLeft    = nRight = nParent = null;
-        iLeft    = iRight = iParent = 0;
-        tTable   = null;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    int getKey() {
-
-        if (rData != null) {
-            return (rData.iPos);
-        }
-
-        return (iData);
-    }
-
-    void setKey(int pos) {
-        iData = pos;
-        rData = null;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @exception  SQLException  Description of the Exception
-     */
-    Row getRow() throws SQLException {
-
-        if (rData != null) {
-            return (rData);
-        }
-
-        if (iData == NO_POS) {
-            return (null);
-        }
-
-        return (tTable.getRow(iData));
-    }
-
-    private Node findNode(int pos, int id) throws SQLException {
-
-        Node ret = null;
-        Row  r   = tTable.getRow(pos);
-
-        if (r != null) {
-            ret = r.getNode(id);
-        }
-
-        return (ret);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Node getLeft() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (nLeft != null) {
-            return (nLeft);
-        }
-
-        if (iLeft == NO_POS) {
-            return (null);
-        }
-
-// rData.iLastAccess=Row.iCurrentAccess++;
-        return (findNode(iLeft, iId));
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @throws  SQLException
-     */
-    void setLeft(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (tTable.isIndexCached()) {
-            getRow().changed();
-        }
-
-        iLeft = NO_POS;
-        nLeft = null;
-
-        if (!tTable.isIndexCached()) {
-            nLeft = n;
-        } else if (n != null) {
-            iLeft = n.getKey();
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Node getRight() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (nRight != null) {
-            return (nRight);
-        }
-
-        if (iRight == NO_POS) {
-            return (null);
-        }
-
-// rData.iLastAccess=Row.iCurrentAccess++;
-        return (findNode(iRight, iId));
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @throws  SQLException
-     */
-    void setRight(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (tTable.isIndexCached()) {
-            getRow().changed();
-        }
-
-        iRight = NO_POS;
-        nRight = null;
-
-        if (!tTable.isIndexCached()) {
-            nRight = n;
-        } else if (n != null) {
-            iRight = n.getKey();
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  i
-     * @throws  SQLException
-     */
-    void setNextKey(int i) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (tTable.isIndexCached()) {
-            getRow().changed();
-        }
-
-        iRight = i;
-        nRight = null;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    Node getParent() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (nParent != null) {
-            return (nParent);
-        }
-
-        if (iParent == NO_POS) {
-            return (null);
-        }
-
-// rData.iLastAccess=Row.iCurrentAccess++;
-        return (findNode(iParent, iId));
-    }
-
-    /** test used by Row.java */
-    boolean isRoot() {
-        return (iParent == Node.NO_POS && nParent == null);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @throws  SQLException
-     */
-    void setParent(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (tTable.isIndexCached()) {
-            getRow().changed();
-        }
-
-        iParent = NO_POS;
-        nParent = null;
-
-        if (!tTable.isIndexCached()) {
-            nParent = n;
-        } else if (n != null) {
-            iParent = n.getKey();
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    int getBalance() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-
-// rData.iLastAccess=Row.iCurrentAccess++;
         }
 
         return iBalance;
     }
 
+    abstract void setBalance(int b) throws SQLException;
+
     /**
-     *  Method declaration
+     * Method declaration
      *
-     * @param  b
-     * @throws  SQLException
-     */
-    void setBalance(int b) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        if (iBalance != b) {
-            if (tTable.isIndexCached()) {
-                getRow().changed();
-            }
-
-            iBalance = b;
-        }
-    }
-
-    /**
-     *  Method declaration
+     *
+     * @param x
      *
      * @return
-     * @throws  SQLException
+     *
+     * @throws SQLException
      */
-    public Object[] getData() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        return (getRow().getData());
-    }
+    abstract boolean from() throws SQLException;
 
     /**
-     *  Method declaration
+     *  Returns the data held in the table Row for this Node
      *
-     * @param  n
-     * @return
-     * @throws  SQLException
      */
-    boolean equals(Node n) throws SQLException {
+    abstract Object[] getData() throws SQLException;
 
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-
-// rData.iLastAccess=Row.iCurrentAccess++;
-            if (n != this) {
-                Trace.doAssert((getKey() == NO_POS) || (n == null)
-                               || (n.getKey() != getKey()));
-            } else {
-                Trace.doAssert(n.getKey() == getKey());
-            }
-        }
-
-        return n == this;
-    }
+    abstract boolean equals(Node n) throws SQLException;
 
     /**
-     *  Method declaration
+     *  Writes out the node in an implementation dependent way.
      *
-     * @param  out
-     * @throws  IOException
-     * @throws  SQLException
+     * @param  out interface providing the different write methods
      */
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        out.writeIntData(iBalance);
-        out.writeIntData((iLeft == NO_POS) ? 0
-                                           : iLeft);
-        out.writeIntData((iRight == NO_POS) ? 0
-                                            : iRight);
-        out.writeIntData((iParent == NO_POS) ? 0
-                                             : iParent);
-    }
+    abstract void write(DatabaseRowOutputInterface out)
+    throws IOException, SQLException;
 }

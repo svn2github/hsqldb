@@ -119,7 +119,7 @@ class Tokenizer {
     private static Hashtable hKeyword;
 
     static {
-        hKeyword = new Hashtable();
+        hKeyword = new Hashtable(67);
 
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
@@ -215,15 +215,12 @@ class Tokenizer {
     boolean wasValue() {
 
         if (iType == STRING || iType == NUMBER || iType == FLOAT
-                || iType == DECIMAL) {
+                || iType == LONG || iType == DECIMAL) {
             return true;
         }
 
-        if (sToken.equals("NULL")) {
-            return true;
-        }
-
-        if (sToken.equals("TRUE") || sToken.equals("FALSE")) {
+        if (sToken.equals("NULL") || sToken.equals("TRUE")
+                || sToken.equals("FALSE")) {
             return true;
         }
 
@@ -394,13 +391,13 @@ class Tokenizer {
                 }
             }
 
-            if (sToken.length() < 20) {
+            if (sToken.length() < 19) {
                 iType = LONG;
 
                 return new Long(sToken);
             }
 
-            if (sToken.length() == 20) {
+            if (sToken.length() == 19) {
                 try {
                     return new Long(sToken);
                 } catch (Exception e2) {
@@ -476,6 +473,8 @@ class Tokenizer {
         return sCommand.substring(beginIndex, iIndex);
     }
 
+// fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - rewrite as switch
+
     /**
      * Method declaration
      *
@@ -515,70 +514,94 @@ class Tokenizer {
 
         if (Character.isJavaIdentifierStart(c)) {
             iType = NAME;
-        } else if ("(),*=;+%".indexOf(c) >= 0) {
-            iType = SPECIAL;
-
-            iIndex++;
-
-            sToken = String.valueOf(c);
-
-            return;
         } else if (Character.isDigit(c)) {
             iType = NUMBER;
             digit = true;
-        } else if ("!<>|/-".indexOf(c) >= 0) {
-            cfirst = c;
-            iType  = SPECIAL;
-        } else if (c == '\"') {
-            iType = QUOTED_IDENTIFIER;
+        } else {
+            switch (c) {
 
-            iIndex++;
+                case '(' :
+                case ')' :
+                case ',' :
+                case '*' :
+                case '=' :
+                case ';' :
+                case '+' :
+                case '%' :
+                    iType = SPECIAL;
 
-            sToken = getString('"');
+                    iIndex++;
 
-            if (iIndex == sCommand.length()) {
-                return;
-            }
+                    sToken = String.valueOf(c);
 
-            c = sCommand.charAt(iIndex);
+                    return;
 
-            if (c == '.') {
-                sLongNameFirst = sToken;
+                case '\"' :
+                    iType = QUOTED_IDENTIFIER;
 
-                iIndex++;
+                    iIndex++;
+
+                    sToken = getString('"');
+
+                    if (iIndex == sCommand.length()) {
+                        return;
+                    }
+
+                    c = sCommand.charAt(iIndex);
+
+                    if (c == '.') {
+                        sLongNameFirst = sToken;
+
+                        iIndex++;
 
 // fredt - todo - avoid recursion - this has problems when there is whitespace
 // after the dot - the same with NAME
-                getToken();
+                        getToken();
 
-                sLongNameLast = sToken;
-                iType         = LONG_NAME;
+                        sLongNameLast = sToken;
+                        iType         = LONG_NAME;
 
-                StringBuffer sb = new StringBuffer(sLongNameFirst.length()
-                                                   + 1
-                                                   + +sLongNameLast.length());
+                        StringBuffer sb =
+                            new StringBuffer(sLongNameFirst.length() + 1
+                                             + sLongNameLast.length());
 
-                sb.append(sLongNameFirst);
-                sb.append('.');
-                sb.append(sLongNameLast);
+                        sb.append(sLongNameFirst);
+                        sb.append('.');
+                        sb.append(sLongNameLast);
 
-                sToken = sb.toString();
+                        sToken = sb.toString();
+                    }
+
+                    return;
+
+                case '\'' :
+                    iType = STRING;
+
+                    iIndex++;
+
+                    sToken = getString('\'');
+
+                    return;
+
+                case '!' :
+                case '<' :
+                case '>' :
+                case '|' :
+                case '/' :
+                case '-' :
+                    cfirst = c;
+                    iType  = SPECIAL;
+                    break;
+
+                case '.' :
+                    iType = DECIMAL;
+                    point = true;
+                    break;
+
+                default :
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                      String.valueOf(c));
             }
-
-            return;
-        } else if (c == '\'') {
-            iType = STRING;
-
-            iIndex++;
-
-            sToken = getString('\'');
-
-            return;
-        } else if (c == '.') {
-            iType = DECIMAL;
-            point = true;
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, String.valueOf(c));
         }
 
         int start = iIndex++;
@@ -675,7 +698,7 @@ class Tokenizer {
                         iType = REMARK;
 
                         break;
-                    } else if (">=|".indexOf(c) >= 0) {
+                    } else if (c == '>' || c == '=' || c == '|') {
                         break;
                     }
 
