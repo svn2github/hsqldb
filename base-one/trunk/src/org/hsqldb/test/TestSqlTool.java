@@ -32,62 +32,102 @@
 package org.hsqldb.test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.StringTokenizer;
 
 public class TestSqlTool extends junit.framework.TestCase {
+    /**
+     * Trivial utility class (for use like x.a dna x.b.
+     * Does not have getters/setters.  No purpose would be served by 
+     * getters and setters, other than over-engineering.
+     */ 
+    private class TestSqlFile {
+        public File file;
+        public String description;
+        public TestSqlFile(String filename, String inDescript)
+        throws IOException {
+            file = new File(filename);
+            if (!file.isFile()) throw new IOException("'" + file
+                    + "' is not a file");
+            description = inDescript;
+        }
+    }
+
+    /**
+     * List of SQL files, with a description of the purpose.
+     */
+    private class SqlFileList extends ArrayList {
+        /**
+         * Loads a list of SQL files and descriptions for the specified 
+         * test * method.
+         */
+        public SqlFileList(String filename) throws IOException {
+            BufferedReader br = new BufferedReader(
+                new FileReader(filename));
+            String s, trimmed;
+            StringTokenizer st;
+            int ctr = 0;
+            while ((s = br.readLine()) != null) {
+                ctr++;
+                trimmed = s.replaceFirst("#.*", "").trim(); // Remove comments.
+                if (trimmed.length() < 1) {
+                    continue;  // Skip blank and comment lines
+                }
+                st = new StringTokenizer(trimmed);
+                if (st.countTokens() < 2) {
+                    throw new IOException ("Bad line no. " + ctr 
+                            + " in list file '" + filename + "'");
+                }
+                add(new TestSqlFile(st.nextToken(), st.nextToken("")));
+            }
+            br.close();
+        }
+        public TestSqlFile getSqlFile(int i) {
+            return (TestSqlFile) get(i);
+        }
+    }
 
     SqlToolHarness harness = new SqlToolHarness();
 
-    public void testHistory() throws Exception {
+    private void runTestsInList(String testList) throws Exception {
+        SqlFileList fileList = new SqlFileList(testList);
+        TestSqlFile sqlFile;
+        for (int i = 0; i < fileList.size(); i++) {
+            sqlFile = fileList.getSqlFile(i);
+            assertTrue(sqlFile.description + " (" + sqlFile.file + ')',
+                    harness.execute(sqlFile.file));
+        }
+    }
 
-        assertTrue("Recall command from SQL History",
-                   harness.execute(new File("hist-recall-19.sql")));
-        assertTrue("Recall and execute a query from SQL History",
-                   harness.execute(new File("hist-recall-runquery.sql")));
+    public void testHistory() throws Exception {
+        runTestsInList("testHistory.list");
     }
 
     public void testEditing() throws Exception {
-
-        assertTrue("s: command, no switches",
-                   harness.execute(new File("edit-s-noswitches.sql")));
-        assertTrue("s: command w/ switches",
-                   harness.execute(new File("edit-s-switches.sql")));
-        assertTrue("a: command", harness.execute(new File("edit-a.sql")));
+        runTestsInList("testEditing.list");
     }
 
     public void testArgs() throws Exception {
-
-        assertTrue("--noinput command-line switch",
-                   harness.execute(new File("args-noinput.sql")));
-        assertTrue("--sql command-line switch",
-                   harness.execute(new File("args-sql.sql")));
-        assertTrue("--sql AND --noinput command-line switches",
-                   harness.execute(new File("args-sqlni.sql")));
+        runTestsInList("testArgs.list");
     }
 
     public void testComments() throws Exception {
-        assertTrue("Comments followed immediately by another command",
-                   harness.execute(new File("comment-midline.sql")));
+        runTestsInList("testComments.list");
     }
 
     public void testPL() throws Exception {
-        assertTrue("PL variable use",
-                   harness.execute(new File("pl-variable.sql")));
+        runTestsInList("testPL.list");
     }
 
     public void testSpecials() throws Exception {
-
-        assertTrue("\\q command w/ no arg",
-                   harness.execute(new File("special-q.sql")));
-        assertTrue("\\q command w/ arg",
-                   harness.execute(new File("special-q-arg.sql")));
+        runTestsInList("testSpecials.list");
     }
 
     public void testSQL() throws Exception {
-
-        assertTrue("Blank line with SQL command, interactive",
-                   harness.execute(new File("sql-blankint.sql")));
-        assertTrue("Blank line with SQL command, file mode",
-                   harness.execute(new File("sql-blankfile.sql")));
+        runTestsInList("testSQL.list");
     }
 
     // public TestSqlTool() { super(); } necessary?
