@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.8 2004/06/16 18:50:59 unsaved Exp $
+$Id: readme.txt,v 1.9 2004/06/16 18:58:13 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -56,6 +56,10 @@ To run the JUnit test suite for SqlTool.
     Non-graphical
 
         java org.hsqldb.test.TestSqlTool
+
+    If a test fails and you want to know exactly which test failed,
+    then run SqlToolHarness with -v, as explained next.  (One
+    JUnit test method may have dozens of specific tests).
 
 
 To run tests of specific SQL files against SqlTool without JUnit.
