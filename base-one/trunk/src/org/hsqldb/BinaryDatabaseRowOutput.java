@@ -201,10 +201,10 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeString(o.toString());
     }
 
-    protected void writeOther(Object o) throws IOException, HsqlException {
+    protected void writeOther(JavaObject o)
+    throws IOException, HsqlException {
 
-        JavaObject jo = (JavaObject) o;
-        byte[]     ba = jo.getBytes();
+        byte[] ba = o.getBytes();
 
         writeByteArray(ba);
     }

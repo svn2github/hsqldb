@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.math.BigDecimal;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.lib.HashMappedList;
 
 /**
  * Base class for writing the data for a database row in different formats.
@@ -98,7 +99,7 @@ implements DatabaseRowOutputInterface {
         super(buffer);
     }
 
-// fredt@users - comment - methods for writing column type, name and data size
+// fredt@users - comment - methods for writing Result column type, name and data size
     public abstract void writePos(int pos) throws IOException;
 
     public abstract void writeSize(int size) throws IOException;
@@ -112,6 +113,8 @@ implements DatabaseRowOutputInterface {
     public abstract void writeString(String s) throws IOException;
 
 // fredt@users - comment - methods used for writing each SQL type
+    protected void writeFieldPrefix() throws IOException {}
+
     protected abstract void writeFieldType(int type) throws IOException;
 
     protected abstract void writeNull(int type) throws IOException;
@@ -146,7 +149,7 @@ implements DatabaseRowOutputInterface {
     protected abstract void writeTimestamp(java.sql.Timestamp o)
     throws IOException, HsqlException;
 
-    protected abstract void writeOther(Object o)
+    protected abstract void writeOther(JavaObject o)
     throws IOException, HsqlException;
 
     protected abstract void writeBinary(Binary o,
@@ -174,7 +177,7 @@ implements DatabaseRowOutputInterface {
             l--;
         }
 
-        writeData(l, types, data);
+        writeData(l, types, data, null, false);
     }
 
     /**
@@ -185,12 +188,25 @@ implements DatabaseRowOutputInterface {
      * @param  data
      * @throws  IOException
      */
-    public void writeData(int l, int types[],
-                          Object data[]) throws IOException, HsqlException {
+    public void writeData(int l, int types[], Object data[],
+                          HashMappedList cols,
+                          boolean primarykeys)
+                          throws IOException, HsqlException {
 
         for (int i = 0; i < l; i++) {
             Object o = data[i];
             int    t = types[i];
+
+            if (cols != null) {
+                Column col = (Column) cols.get(i);
+
+                if (primarykeys &&!col.isPrimaryKey()) {
+                    continue;
+                } else {
+                    writeFieldPrefix();
+                    writeString(col.columnName.statementName);
+                }
+            }
 
             if (o == null) {
                 writeNull(t);
@@ -252,7 +268,7 @@ implements DatabaseRowOutputInterface {
                     break;
 
                 case Types.OTHER :
-                    writeOther(o);
+                    writeOther((JavaObject) o);
                     break;
 
                 case Types.BINARY :

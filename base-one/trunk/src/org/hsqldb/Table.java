@@ -1701,7 +1701,7 @@ class Table {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, getInsertStatement(row));
+            database.logger.writeToLog(c, this, row);
         }
     }
 
@@ -1719,7 +1719,7 @@ class Table {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, getInsertStatement(row));
+            database.logger.writeToLog(c, this, row);
         }
     }
 
@@ -2425,7 +2425,7 @@ class Table {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, getDeleteStatement(row));
+            database.logger.writeDeleteStatement(c, this, row);
         }
     }
 
@@ -2455,7 +2455,7 @@ class Table {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, getDeleteStatement(row));
+            database.logger.writeDeleteStatement(c, this, row);
         }
     }
 
@@ -2481,7 +2481,7 @@ class Table {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, getDeleteStatement(row));
+            database.logger.writeDeleteStatement(c, this, row);
         }
     }
 
@@ -2655,76 +2655,6 @@ class Table {
      */
     protected Index getIndex(int i) {
         return (Index) vIndex.get(i);
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @return
-     * @throws  HsqlException
-     */
-    String getInsertStatement(Object row[]) throws HsqlException {
-
-        HsqlStringBuffer a = new HsqlStringBuffer(128);
-
-        a.append("INSERT INTO ");
-        a.append(tableName.statementName);
-        a.append(" VALUES(");
-
-        for (int i = 0; i < iVisibleColumns; i++) {
-            a.append(Column.createSQLString(row[i], getColumn(i).getType()));
-            a.append(',');
-        }
-
-        a.setCharAt(a.length() - 1, ')');
-
-        return a.toString();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @return
-     * @throws  HsqlException
-     */
-    private String getDeleteStatement(Object row[]) throws HsqlException {
-
-        HsqlStringBuffer a = new HsqlStringBuffer(128);
-
-        a.append("DELETE FROM ");
-        a.append(tableName.statementName);
-        a.append(" WHERE ");
-
-        if (iPrimaryKey[0] == iVisibleColumns) {
-            for (int i = 0; i < iVisibleColumns; i++) {
-                Column c = getColumn(i);
-
-                a.append(c.columnName.statementName);
-                a.append('=');
-                a.append(Column.createSQLString(row[i], c.getType()));
-
-                if (i < iVisibleColumns - 1) {
-                    a.append(" AND ");
-                }
-            }
-        } else {
-            for (int i = 0; i < iPrimaryKey.length; i++) {
-                Column c = getColumn(iPrimaryKey[i]);
-
-                a.append(c.columnName.statementName);
-                a.append('=');
-                a.append(Column.createSQLString(row[iPrimaryKey[i]],
-                                                c.getType()));
-
-                if (i < iPrimaryKey.length - 1) {
-                    a.append(" AND ");
-                }
-            }
-        }
-
-        return a.toString();
     }
 
     /**

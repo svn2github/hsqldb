@@ -213,6 +213,22 @@ class Logger {
         }
     }
 
+    void writeToLog(Session session, Table table,
+                    Object[] row) throws HsqlException {
+
+        if (lLog != null) {
+            lLog.writeRow(session, table, row);
+        }
+    }
+
+    void writeDeleteStatement(Session c, Table t,
+                              Object[] row) throws HsqlException {
+
+        if (lLog != null) {
+            lLog.writeDeleteStatement(c, t, row);
+        }
+    }
+
     /**
      *  Checkpoints the database. <p>
      *

@@ -152,6 +152,9 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   updates or deletes are performed on the cached tables. Changes to the structure 
   of the database, such as dropping or modifying tables or indexes also create 
   large amounts of unused space that can be reclaimed using this command.</p>
+<h3>USING MULTIPLE DATABASES IN ON JVM</h3>
+<p></p>
+<p>In the above examples each server serves only one database and only one in-memory database can be created. However, from version 1.7.2, HSQLDB can serve several databases in multiple server modes and  allow simultanous access to multiple in-process and memory-only databases. These capabilities are covered in  <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html.</a></p>
 <h3>USING THE DATABASE ENGINE</h3>
 <p>Once a connection is established to a database in any mode, JDBC methods are 
   used to interact with the database. The Javadoc for <code><a href="src/org/hsqldb/jdbcConnection.html">jdbcConnection</a></code>, 

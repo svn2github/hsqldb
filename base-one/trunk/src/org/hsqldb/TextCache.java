@@ -341,8 +341,9 @@ class TextCache extends DataFileCache {
     void free(CachedRow r) throws HsqlException {
 
         if (storeOnInsert &&!isIndexingSource) {
-            int pos    = r.iPos;
-            int length = r.storageSize - DatabaseScriptWriter.lineSep.length;
+            int pos = r.iPos;
+            int length = r.storageSize
+                         - DatabaseScriptWriter.BYTES_LINE_SEP.length;
 
             rowOut.reset();
 
@@ -350,7 +351,7 @@ class TextCache extends DataFileCache {
 
             try {
                 out.fill(' ', length);
-                out.write(DatabaseScriptWriter.lineSep);
+                out.write(DatabaseScriptWriter.BYTES_LINE_SEP);
                 rFile.seek(pos);
                 rFile.write(out.getBuffer(), 0, out.size());
             } catch (IOException e) {

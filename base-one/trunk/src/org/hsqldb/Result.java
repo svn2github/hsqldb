@@ -1150,7 +1150,7 @@ class Result {
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(l, metaData.colType, n.data);
+                    out.writeData(l, metaData.colType, n.data, null, false);
 
                     n = n.next;
                 }
@@ -1166,7 +1166,7 @@ class Result {
 
                 while (n != null) {
                     out.writeData(significantColumns, metaData.colType,
-                                  n.data);
+                                  n.data, null, false);
 
                     n = n.next;
                 }

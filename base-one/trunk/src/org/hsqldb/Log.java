@@ -75,6 +75,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
@@ -508,6 +509,47 @@ class Log {
 
         try {
             dbScriptWriter.writeLogStatement(s, id);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
+        }
+
+        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeRow(Session c, Table t, Object[] row) throws HsqlException {
+
+        if (filesReadOnly || bRestoring) {
+            return;
+        }
+
+        int id = (c == null) ? 0
+                             : c.getId();
+
+        try {
+            dbScriptWriter.writeRow(id, t, row);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
+        }
+
+        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeDeleteStatement(Session c, Table t,
+                              Object[] row) throws HsqlException {
+
+        if (filesReadOnly || bRestoring) {
+            return;
+        }
+
+        int id = (c == null) ? 0
+                             : c.getId();
+
+        try {
+            dbScriptWriter.writeDeleteStatement(id, t, row);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }

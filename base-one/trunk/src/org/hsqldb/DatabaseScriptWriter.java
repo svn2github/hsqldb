@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import java.io.*;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.StopWatch;
@@ -78,7 +79,7 @@ class DatabaseScriptWriter {
     String            outFile;
     OutputStream      fileStreamOut;
     FileDescriptor    outDescriptor;
-    DatabaseRowOutput binaryOut = new BinaryServerRowOutput();
+    DatabaseRowOutput rowOut;
     int               tableRowCount;
     StopWatch         sw = new StopWatch();
 
@@ -98,21 +99,24 @@ class DatabaseScriptWriter {
     int sessionId;
 
     // todo - perhaps move this global into a lib utility class
-    static byte[] lineSep;
+    static byte[] BYTES_LINE_SEP;
 
     static {
         String sLineSep = System.getProperty("line.separator", "\n");
 
-        lineSep = new byte[sLineSep.length()];
-
-        for (int i = 0; i < sLineSep.length(); i++) {
-            lineSep[i] = (byte) sLineSep.charAt(i);
-        }
+        BYTES_LINE_SEP = sLineSep.getBytes();
     }
 
-    final static int SCRIPT_TEXT_170          = 0;
-    final static int SCRIPT_BINARY_172        = 1;
-    final static int SCRIPT_ZIPPED_BINARY_172 = 3;
+    final static int    SCRIPT_TEXT_170          = 0;
+    final static int    SCRIPT_BINARY_172        = 1;
+    final static int    SCRIPT_ZIPPED_BINARY_172 = 3;
+    final static byte[] BYTES_INSERT_INTO        = "INSERT INTO ".getBytes();
+    final static byte[] BYTES_VALUES             = " VALUES(".getBytes();
+    final static byte[] BYTES_TERM               = ")".getBytes();
+    final static byte[] BYTES_DELETE_FROM        = "DELETE FROM ".getBytes();
+    final static byte[] BYTES_WHERE              = " WHERE ".getBytes();
+    final static byte[] BYTES_C_ID_INIT          = "/*C".getBytes();
+    final static byte[] BYTES_C_ID_TERM          = "*/".getBytes();
 
     static DatabaseScriptWriter newDatabaseScriptWriter(Database db,
             String file, boolean includeCachedData, boolean newFile,
@@ -133,6 +137,8 @@ class DatabaseScriptWriter {
     DatabaseScriptWriter(Database db, String file, boolean includeCachedData,
                          boolean newFile) throws HsqlException {
 
+        initBuffers();
+
         File newFileFile = new File(file);
 
         if (newFileFile.exists()) {
@@ -148,6 +154,13 @@ class DatabaseScriptWriter {
         outFile                = file;
 
         openFile();
+    }
+
+    protected void initBuffers() {
+
+        rowOut = new TextLogRowOutput();
+
+        rowOut.setSystemId(true);
     }
 
     /**
@@ -271,7 +284,7 @@ class DatabaseScriptWriter {
                 Node  x       = primary.first();
 
                 while (x != null) {
-                    writeRow(x.getData(), t);
+                    writeRow(0, t, x.getData());
 
                     x = primary.next(x);
                 }
@@ -293,7 +306,7 @@ class DatabaseScriptWriter {
 
             a.append(t.getName().statementName);
             a.append(" READONLY TRUE");
-            writeLogStatement(a.toString());
+            writeLogStatement(a.toString(), sessionId);
         }
     }
 
@@ -303,41 +316,94 @@ class DatabaseScriptWriter {
         Record n = r.rRoot;
 
         while (n != null) {
-            writeLogStatement((String) n.data[0]);
+            writeLogStatement((String) n.data[0], sessionId);
 
             n = n.next;
         }
     }
 
-    protected void writeRow(Object[] data,
-                            Table t) throws HsqlException, IOException {
-        writeLogStatement(t.getInsertStatement(data));
+    protected void writeRow(int sid, Table table,
+                            Object[] data) throws HsqlException, IOException {
+
+        busyWriting = true;
+
+        rowOut.reset();
+        ((TextLogRowOutput) rowOut).setMode(TextLogRowOutput.MODE_INSERT);
+        writeSessionId(sid);
+        rowOut.write(BYTES_INSERT_INTO);
+        rowOut.writeString(table.getName().statementName);
+        rowOut.write(BYTES_VALUES);
+        rowOut.writeData(data, table);
+        rowOut.write(BYTES_TERM);
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        byteCount += rowOut.size();
+
+        fileStreamOut.flush();
+
+        needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
+    }
+
+    void writeDeleteStatement(int sid, Table table,
+                              Object[] data)
+                              throws HsqlException, IOException {
+
+        busyWriting = true;
+
+        rowOut.reset();
+        ((TextLogRowOutput) rowOut).setMode(TextLogRowOutput.MODE_DELETE);
+        writeSessionId(sid);
+        rowOut.write(BYTES_DELETE_FROM);
+        rowOut.writeString(table.getName().statementName);
+        rowOut.write(BYTES_WHERE);
+        rowOut.writeData(table.getColumnCount(), table.getColumnTypes(),
+                         data, table.vColumn, table.getPrimaryKey() != null);
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        byteCount += rowOut.size();
+
+        fileStreamOut.flush();
+
+        needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
     }
 
     protected void writeDataTerm() throws IOException {}
 
+    private void writeSessionId(int sid) throws IOException {
+
+        if (sid != sessionId) {
+            rowOut.write(BYTES_C_ID_INIT);
+            rowOut.writeIntData(sid);
+            rowOut.write(BYTES_C_ID_TERM);
+
+            sessionId = sid;
+        }
+    }
+
     void writeLogStatement(String s,
                            int sid) throws IOException, HsqlException {
 
-        if (sid != sessionId) {
-            s         = "/*C" + sid + "*/" + s;
-            sessionId = sid;
-        }
-
-        writeLogStatement(s);
-    }
-
-    private void writeLogStatement(String s)
-    throws IOException, HsqlException {
-
         busyWriting = true;
 
-        binaryOut.reset();
-        StringConverter.unicodeToAscii(binaryOut, s);
-        binaryOut.write(lineSep);
-        fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+        rowOut.reset();
+        writeSessionId(sid);
+        rowOut.writeString(s);
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
-        byteCount += binaryOut.size();
+        byteCount += rowOut.size();
 
         fileStreamOut.flush();
 

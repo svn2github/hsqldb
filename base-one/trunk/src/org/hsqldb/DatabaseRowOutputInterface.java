@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import java.io.IOException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.lib.HashMappedList;
 
 /**
  * Public interface for writing the data for a database row.
@@ -57,11 +58,13 @@ interface DatabaseRowOutputInterface {
 
     public void setSystemId(boolean flag);
 
-    public void writeData(Object data[],
+    public void writeData(Object[] data,
                           Table t) throws IOException, HsqlException;
 
-    public void writeData(int l, int types[],
-                          Object data[]) throws IOException, HsqlException;
+    public void writeData(int l, int[] types, Object[] data,
+                          HashMappedList cols,
+                          boolean primarykeys)
+                          throws IOException, HsqlException;
 
     // independent of the this object, calls only a static method
     public int getSize(CachedRow row) throws HsqlException;

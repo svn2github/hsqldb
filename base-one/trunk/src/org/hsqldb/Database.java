@@ -315,9 +315,7 @@ class Database {
         Session session = sessionManager.newSession(this, user,
             databaseReadOnly);
 
-        logger.writeToLog(session,
-                          "CONNECT USER " + username + " PASSWORD \""
-                          + password + "\"");
+        logger.logConnectUser(session, username, password);
 
         return session;
     }

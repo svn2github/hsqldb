@@ -44,10 +44,17 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
         super(db, file, includeCached, newFile);
     }
 
+    protected void initBuffers() {
+
+        rowOut = new BinaryServerRowOutput();
+
+        rowOut.setSystemId(true);
+    }
+
     protected void writeSingleColumnResult(Result r)
     throws IOException, HsqlException {
 
-        HSQLClientConnection.write(r, binaryOut, fileStreamOut);
+        HSQLClientConnection.write(r, rowOut, fileStreamOut);
 /*
         binaryOut.reset();
         binaryOut.writeSize(0);
@@ -59,14 +66,14 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
 
     // int : row size (0 if no more rows) ,
     // BinaryServerRowInput/Output : row (column values)
-    protected void writeRow(Object[] data,
-                            Table t) throws IOException, HsqlException {
+    protected void writeRow(int sid, Table t,
+                            Object[] data) throws IOException, HsqlException {
 
-        binaryOut.reset();
-        binaryOut.writeSize(0);
-        binaryOut.writeData(data, t);
-        binaryOut.writeIntData(binaryOut.size(), 0);
-        fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+        rowOut.reset();
+        rowOut.writeSize(0);
+        rowOut.writeData(data, t);
+        rowOut.writeIntData(rowOut.size(), 0);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         tableRowCount++;
     }
@@ -76,26 +83,26 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
 
         tableRowCount = 0;
 
-        binaryOut.reset();
-        binaryOut.writeSize(0);
-        binaryOut.writeString(t.getName().name);
-        binaryOut.writeIntData(INSERT);
-        binaryOut.writeIntData(binaryOut.size(), 0);
-        fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+        rowOut.reset();
+        rowOut.writeSize(0);
+        rowOut.writeString(t.getName().name);
+        rowOut.writeIntData(INSERT);
+        rowOut.writeIntData(rowOut.size(), 0);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
 
     protected void writeTableTerm(Table t) throws IOException {
 
-        binaryOut.reset();
-        binaryOut.writeSize(0);
-        binaryOut.writeIntData(this.tableRowCount);
-        fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+        rowOut.reset();
+        rowOut.writeSize(0);
+        rowOut.writeIntData(this.tableRowCount);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
 
     protected void writeDataTerm() throws IOException {
 
-        binaryOut.reset();
-        binaryOut.writeSize(0);
-        fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
+        rowOut.reset();
+        rowOut.writeSize(0);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
 }

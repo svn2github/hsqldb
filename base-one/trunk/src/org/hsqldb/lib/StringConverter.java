@@ -226,8 +226,9 @@ public class StringConverter {
      * @return number of bytes written out
      *
      */
-    public static int unicodeToAscii(OutputStream b,
-                                     String s) throws IOException {
+    public static int unicodeToAscii(OutputStream b, String s,
+                                     boolean doubleSingleQuotes)
+                                     throws IOException {
 
         int count = 0;
 
@@ -259,6 +260,12 @@ public class StringConverter {
                 b.write(c);        // this is 99%
 
                 count++;
+
+                if (c == '\'' && doubleSingleQuotes) {
+                    b.write(c);
+
+                    count++;
+                }
             } else {
                 b.write('\\');
                 b.write('u');
