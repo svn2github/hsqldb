@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.6 2004/04/20 18:35:56 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.7 2004/04/21 18:01:01 unsaved Exp $ -->
 
 <chapter>
     <title>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/04/21 18:01:01 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -62,8 +62,8 @@
                     <link linkend='auth-section' endterm='auth-title'/> section.
                 </para></step><step><para>
                     Set up your CLASSPATH to include the classes
-                    <literal>org.hsqldb.util.SqlTool</literal>,
-                    <literal>org.hsqldb.util.SqlFile</literal>, and the 
+                    <classname>org.hsqldb.util.SqlTool</classname>,
+                    <classname>org.hsqldb.util.SqlFile</classname>, and the 
                     JDBC driver that you want to use.  If you are using a 
                     hsqldb database, this is most easily accomplished by
                     setting (and exporting) CLASSPATH to the path to 
@@ -182,8 +182,8 @@
                 <link linkend='nonint-section' endterm='nonint-title'/>
                 section.
                 You can, alternatively, set this for one SqlTool invocation 
-                by setting the system property <literal>sqltool.charset
-                </literal>.
+                by setting the system property <property>sqltool.charset
+                </property>.
                 Defaults to <literal>US-ASCII</literal>.
             </para></listitem></varlistentry>
             <varlistentry><term>driver</term><listitem><para>
@@ -540,7 +540,7 @@
             <para>
                 SqlTool defaults to the US-ASCII character set (for reading).
                 You can use another character set by setting the system 
-                property <literal>sqltool.charset</literal>, like
+                property <property>sqltool.charset</property>, like
             </para><informalexample><screen>
     java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...</screen>
             </informalexample><para>

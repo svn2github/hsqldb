@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.6 2004/04/21 18:02:28 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.7 2004/04/22 03:06:26 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/21 18:02:28 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -410,7 +410,8 @@
                 an existing database, a connection is nevertheless established 
                 to a new database.
                 For troubleshooting purposes, you can specify a connection 
-                property <literal>ifexists=true</literal> to allow connection 
+                property <property>ifexists</property>=<literal>true</literal> 
+                to allow connection 
                 to an existing database only and avoid creating a new database.
                 In this case, if the database does not exist, the
                 <literal>getConnection()</literal> method will throw an 
