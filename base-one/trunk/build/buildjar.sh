@@ -77,10 +77,7 @@ pre_main
 [ -n "$VERBOSE" ] && set -x
 
 cd $dbhome || Failout "Failed to cd to '$dbhome'"
-echo 'Wiping classes branch...'
-rm -r -f classes
 cd src || Failout "Failed to cd to '$dbhome/src'"
-mkdir $dbhome/classes || Failout "Failed to create directory '$dbhome/classes'"
 
 echo 'Generating source file list...'
 LISTFILE=/tmp/list.$$
@@ -98,14 +95,28 @@ find * -name '*.java' -print | while read file; do case "$file" in
     org/hsqldb/*) echo $file; continue;;
     */*) Failout "File '$file' is at an unexpected location";;
     *) echo $file; continue;;  # This is at top level: src/X.java
-esac; done > $LISTFILE
+esac; done |
+awk '{
+    x = $0; sub(/\.java$/, ".class", x); printf ("%s ../classes/%s\n", $0, x);
+}' | while read src cls; do
+    # cls = The primary class file for each java file
+    [ -f "$src" ] ||
+     Failout "Choked on file '$src' from source file list file '$LISTFILE'"
+    NewerThan "$src" "$cls" && echo "$src"
+done > $LISTFILE
+NUMFILES=`awk 'END { print NR;}' $LISTFILE`
 
 # TODO:  Use NewerThan() on the $LISTFILE records to exclude the java
 #        files that are not newer than the main corresponding class file.
 
 # Main Compile
-echo 'Compiling...'
-"$jdkhome/bin/javac" -target 1.1 -O -nowarn -d ../classes -classpath "$cp:../classes" `cat $LISTFILE`
+if [ "$NUMFILES" = 0 ]; then
+    echo 'Skipping compile because no source files have been modified.'
+else
+    echo "Compiling $NUMFILES source file(s) ..."
+    "$jdkhome/bin/javac" -target 1.1 -O -nowarn -d ../classes  \
+     -classpath "$cp:../classes" `cat $LISTFILE` || exit $?
+fi
 
 # Build jar
 cd ../classes || Failout "Failed to cd to '$dbhome/classes'"
@@ -137,6 +148,8 @@ find * -name '*.class' -print | while read file; do case "$file" in
     */*) Failout "File '$file' is at an unexpected location";;
     *) echo $file; continue;;  # This is at top level: src/X.java
 esac; done > $LISTFILE
+NUMFILES=`awk 'END { print NR;}' $LISTFILE`
 
-echo 'Assembling jar file...'
-exec "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
+echo "Assembling $NUMFILES class files into jar file..."
+"$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
+rm $LISTFILE
