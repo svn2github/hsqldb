@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- $Id: sqltool.xml,v 1.5 2004/04/12 22:04:53 unsaved Exp $ -->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
+    <!ENTITY revision "$Revision: 1.5 $">
+    <!ENTITY date "$Date: 2004/04/12 22:04:53 $">
+    <!ENTITY alts SYSTEM "../formats-section.xml">
+    <!ENTITY docbasename "sqltool">
+    <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
+    <!ENTITY authoraddr "<ulink
+             url='mailto:blaine.simpson@admc.com?subject=&docbasename;'>blaine.simpson@admc.com</ulink>">
+]>
+    
+<book>
+    <title>Hsqldb User Guide</title>
+    <bookinfo>
+        <authorgroup>
+            <corpauthor>the HSQLDB Development Group</corpauthor>
+            <editor>
+                <firstname>Blaine</firstname><surname>Simpson</surname>
+                <email>&authoraddr;</email>
+                <affiliation>
+                    <orgname>HSQLDB Development Group</orgname>
+                </affiliation>
+            </editor>
+            <editor>
+                <firstname>Fred</firstname><surname>Toussi</surname>
+                <email>&authoraddr;</email>
+                <affiliation>
+                    <orgname>HSQLDB Development Group</orgname>
+                </affiliation>
+            </editor>
+        </authorgroup>
+        <edition>&revision;</edition>
+        <pubdate>&date;</pubdate>
+        <keywordset>
+            <keyword>Hsqldb</keyword>
+            <keyword>Hypersonic</keyword>
+            <keyword>Database</keyword>
+            <keyword>JDBC</keyword>
+            <keyword>Java</keyword>
+        </keywordset>
+    </bookinfo>
+    <preface>
+        <title>Introduction</title>
+        <para>
+            If you notice any mistakes in this document, please email me at
+            &authoraddr; so that I can correct them.
+            I've just converted this from Texinfo to Docbook, so there are
+            most likely many mistakes in this revision.
+            You can also email me if you have problems with the procedures
+            explained herein, or if you have questions, comments, suggestions
+            or complaints.
+        </para>
+        &alts;
+    </preface>
+    <chapter><title>Place-holder for Guide</title></chapter>
+    <chapter><title>Place-holder for Beginner's Guide</title></chapter>
+    <chapter><title>Place-holder for SQL Guide</title></chapter>
+    <chapter><title>Place-holder for Advanced Guide</title></chapter>
+    <chapter><title>Place-holder for Text Tables</title></chapter>
+    <chapter><title>Place-holder for SSL</title></chapter>
+    <chapter><title>Place-holder for Syntax</title></chapter>
+    <appendix><title>Place-holder for SqlTool</title></appendix>
+    <appendix><title>Place-holder for Building</title></appendix>
+    <appendix><title>Place-holder for First Example</title></appendix>
+    <appendix><title>Place-holder for Recovery</title></appendix>
+</book>
