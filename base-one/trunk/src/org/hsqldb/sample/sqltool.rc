@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.1 2004/06/02 20:32:05 unsaved Exp $
+# $Id: sqltool.rc,v 1.2 2004/06/06 19:27:24 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -26,9 +26,19 @@ username sa
 password
 
 
-# Template for another urlid definition.
+# Template for a urlid for an Oracle database.
 #urlid cardiff2
 #url jdbc:oracle:thin:@aegir.admc.com:1522:TRAFFIC_SID
 #username blaine
 #password secretpassword
 #driver oracle.jdbc.OracleDriver
+
+# Template for a TLS-encrypted HSQLDB Server.
+# Remember that the hostname in hsqls (and https) JDBC URLs must match the
+# CN of the server certificate (the port and instance alias that follows 
+# are not part of the certificate at all).
+#urlid tls
+#url jdbc:hsqldb:hsqls://db.admc.com:9001/lm2
+#username blaine
+#password asecret
+#truststore /home/blaine/ca/db/db-trust.store
