@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.48 2004/07/05 13:06:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.49 2004/07/06 15:41:35 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.48 $</edition>
-        <pubdate>$Date: 2004/07/05 13:06:23 $</pubdate>
+        <edition>$Revision: 1.49 $</edition>
+        <pubdate>$Date: 2004/07/06 15:41:35 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.37 of SqlTool and
-            1.84 of SqlFile (the latter is the class which does most of the
+            1.86 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
