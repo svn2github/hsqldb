@@ -6,6 +6,11 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.08.26 UPDATED RELEASE 1.7.2.4
+
+Fixed bug in data file enlargement.
+Fixed bug when temp tables were removed after another connection closed.
+
 2004.08.12 UPDATED RELEASE 1.7.2.3
 
 Fixed bug preventing the use of hsqldb.files_read_only property
