@@ -778,6 +778,7 @@ message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
             <param name='navig.graphics' expression='true'/>
             <param name='navig.graphics.path' expression='../'/>
             <param name='navig.graphics.extension' expression='.gif'/>
+            <param name='chunk.section.depth' expression='0'/>
         </style>
     </target>
 
