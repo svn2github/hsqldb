@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.4 2004/04/20 22:42:25 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.5 2004/04/21 18:00:58 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/20 22:42:25 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/21 18:00:58 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -84,11 +84,11 @@
             </literal></para></listitem> <listitem><para><literal>
                 org.hsqldb.util.QueryTool
             </literal></para></listitem> <listitem><para><literal>
-                org.hsqldb.util.ScriptTool
+                org.hsqldb.util.SqlTool
             </literal></para></listitem>
         </itemizedlist>
         <para>
-            Some tools, such as the Database Manager or Script Tool, can use 
+            Some tools, such as the Database Manager or SQL Tool, can use 
             command line arguments or entirely rely on them.
             You can add the command line argument -?  to get a list of 
             available arguments for these tools.
