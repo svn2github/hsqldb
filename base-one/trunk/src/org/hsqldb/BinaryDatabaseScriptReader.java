@@ -70,7 +70,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         while (n != null) {
             s = (String) n.data[0];
 
-            db.execute(s, session);
+            session.sqlExecuteDirect(s);
 
             n = n.next;
         }

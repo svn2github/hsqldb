@@ -59,7 +59,7 @@ interface DatabaseRowInputInterface {
     public Object[] readData(int[] colTypes)
     throws IOException, HsqlException;
 
-    public void resetRow(int pos, int size) throws IOException;
+    public void resetRow(int filePos, int size) throws IOException;
 
     public byte[] getBuffer();
 }

@@ -81,17 +81,23 @@ import java.io.IOException;
  *
  * @version    1.7.0
  */
-class Result implements ResultConstants {
+class Result {
 
+    // record list
+    Record         rRoot;
     private Record rTail;
     private int    iSize;
-    private int    iColumnCount;
+
+    // transient - number of significant columns
+    private int    significantColumns;
+    // type of result
     int            iMode;
-    String         errorString;
-    String         errorState;
-    int            errorCode;
+    // session ID
+    int            sessionID;
+    String         mainString;
+    String         subString;
+    int            idCode;
     int            iUpdateCount;
-    Record         rRoot;
     String         sLabel[];
     String         sTable[];
     String         sName[];
@@ -103,9 +109,8 @@ class Result implements ResultConstants {
     /**
      *  Constructor declaration
      */
-    Result() {
-        iMode        = UPDATECOUNT;
-        iUpdateCount = 0;
+    Result(int type) {
+        iMode = type;
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -118,10 +123,10 @@ class Result implements ResultConstants {
      */
     Result(String error, String state, int code) {
 
-        iMode       = ERROR;
-        errorString = error;
-        errorState  = state;
-        errorCode   = code;
+        iMode      = ResultConstants.ERROR;
+        mainString = error;
+        subString  = state;
+        idCode     = code;
     }
 
     /**
@@ -129,13 +134,19 @@ class Result implements ResultConstants {
      *
      * @param  columns
      */
-    Result(int columns) {
+    Result(int type, int columns) {
 
         prepareData(columns);
-
-        iColumnCount = columns;
+        iMode = type;
+        significantColumns = columns;
     }
 
+    Result(int type, int types[], int id) {
+        iMode = type;
+        colType = types;
+        significantColumns = types.length;
+        idCode = id;
+    }
     /**
      *  Constructor declaration
      *
@@ -145,38 +156,98 @@ class Result implements ResultConstants {
     Result(DatabaseRowInputInterface in) throws HsqlException {
 
         try {
+
             iMode = in.readIntData();
+            sessionID = in.readIntData();
 
-            if (iMode == ERROR) {
+            switch (iMode) {
 
-// tony_lai@users 20020820 - patch 595073
-                int    code   = in.readIntData();
-                String string = in.readString();
+                case ResultConstants.SQLGETSESSIONINFO :
+                case ResultConstants.SQLDISCONNECT :
+                    break;
 
-                throw Trace.getError(string, code);
-            } else if (iMode == UPDATECOUNT) {
-                iUpdateCount = in.readIntData();
-            } else if (iMode == DATA) {
-                int l = in.readIntData();
+                case ResultConstants.SQLPREPARE :
+                    mainString = in.readString();
+                    break;
 
-                prepareData(l);
+                case ResultConstants.SQLEXECDIRECT :
+                    iUpdateCount = in.readIntData();
+                    idCode       = in.readIntData();
+                    mainString   = in.readString();
+                    break;
 
-                iColumnCount = l;
+                case ResultConstants.ERROR :
+                case ResultConstants.SQLCONNECT :
+                    idCode     = in.readIntData();
+                    mainString = in.readString();
+                    subString  = in.readString();
 
-                for (int i = 0; i < l; i++) {
-                    colType[i] = in.readType();
-                    sLabel[i]  = in.readString();
-                    sTable[i]  = in.readString();
-                    sName[i]   = in.readString();
+//                    throw Trace.getError(string, code);
+                    break;
+
+                case ResultConstants.UPDATECOUNT :
+                    iUpdateCount = in.readIntData();
+                    break;
+
+                case ResultConstants.SQLEXECUTE :
+                case ResultConstants.SQLSETENVATTR : {
+                    iUpdateCount = in.readIntData();
+                    idCode     = in.readIntData();
+
+                    int l = in.readIntData();
+
+                    prepareData(l);
+
+                    significantColumns = l;
+
+                    for (int i = 0; i < l; i++) {
+                        colType[i] = in.readType();
+                    }
+
+                    while (in.available() != 0) {
+                        add(in.readData(colType));
+                    }
+
+                    break;
                 }
+                case ResultConstants.DATA : {
+                    int l = in.readIntData();
 
-                while (in.available() != 0) {
-                    add(in.readData(colType));
+                    prepareData(l);
+
+                    significantColumns = l;
+
+                    for (int i = 0; i < l; i++) {
+                        colType[i] = in.readType();
+                        sLabel[i]  = in.readString();
+                        sTable[i]  = in.readString();
+                        sName[i]   = in.readString();
+                    }
+
+                    while (in.available() != 0) {
+                        add(in.readData(colType));
+                    }
+
+                    break;
                 }
+                default :
+                    throw new HsqlException(
+                        "trying to use unsuppoted result mode", null, 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
         }
+    }
+
+    static Result newSingleColumnResult(String colName, int colType) {
+
+        Result result = new Result(ResultConstants.DATA, 1);
+
+        result.sName[0]   = colName;
+        result.sLabel     = result.sName;
+        result.colType[0] = colType;
+
+        return result;
     }
 
     /**
@@ -194,7 +265,7 @@ class Result implements ResultConstants {
      * @param  columns
      */
     void setColumnCount(int columns) {
-        iColumnCount = columns;
+        significantColumns = columns;
     }
 
     /**
@@ -203,7 +274,7 @@ class Result implements ResultConstants {
      * @return
      */
     int getColumnCount() {
-        return iColumnCount;
+        return significantColumns;
     }
 
     /**
@@ -659,43 +730,86 @@ class Result implements ResultConstants {
     void write(DatabaseRowOutputInterface out)
     throws IOException, HsqlException {
 
+        out.writeSize(0);
         out.writeIntData(iMode);
+        out.writeIntData(sessionID);
+        switch (iMode) {
 
-//        switch (iMode) {
-//            case UPDATECOUNT: {
-//
-//            }
-//            case ERROR: {
-//
-//            }
-//            case
-//
-//        }
-        if (iMode == UPDATECOUNT) {
-            out.writeIntData(iUpdateCount);
-        } else if (iMode == ERROR) {
-            out.writeIntData(errorCode);
-            out.writeString(errorString);
-        } else {
-            int l = iColumnCount;
+            case ResultConstants.SQLGETSESSIONINFO :
+    case ResultConstants.SQLDISCONNECT :
+                break;
 
-            out.writeIntData(l);
+            case ResultConstants.SQLPREPARE :
+                out.writeString(mainString);
+                break;
 
-            Record n = rRoot;
+            case ResultConstants.SQLEXECDIRECT :
+                out.writeIntData(iUpdateCount);
+                out.writeIntData(idCode);
+                out.writeString(mainString);
+                break;
 
-            for (int i = 0; i < l; i++) {
-                out.writeType(colType[i]);
-                out.writeString(sLabel[i]);
-                out.writeString(sTable[i]);
-                out.writeString(sName[i]);
+            case ResultConstants.ERROR :
+            case ResultConstants.SQLCONNECT :
+                out.writeIntData(idCode);
+                out.writeString(mainString);
+                out.writeString(subString);
+                break;
+
+            case ResultConstants.UPDATECOUNT :
+                out.writeIntData(iUpdateCount);
+                break;
+
+            case ResultConstants.SQLEXECUTE :
+            case ResultConstants.SQLSETENVATTR : {
+                out.writeIntData(iUpdateCount);
+                out.writeIntData(idCode);
+                int l = significantColumns;
+
+                out.writeIntData(l);
+
+                for (int i = 0; i < l; i++) {
+                    out.writeType(colType[i]);
+                }
+
+                Record n = rRoot;
+
+                while (n != null) {
+                    out.writeData(l, colType, n.data);
+
+                    n = n.next;
+                }
+
+                break;
             }
+            case ResultConstants.DATA : {
+                int l = significantColumns;
 
-            while (n != null) {
-                out.writeData(l, colType, n.data);
+                out.writeIntData(l);
 
-                n = n.next;
+                for (int i = 0; i < l; i++) {
+                    out.writeType(colType[i]);
+                    out.writeString(sLabel[i]);
+                    out.writeString(sTable[i]);
+                    out.writeString(sName[i]);
+                }
+
+                Record n = rRoot;
+
+                while (n != null) {
+                    out.writeData(l, colType, n.data);
+
+                    n = n.next;
+                }
+
+                break;
             }
+            default :
+                throw new HsqlException(
+                    "trying to use unsuppoted result mode", null, 0);
         }
+
+        out.writeIntData(out.size(), 0);
     }
 
     /**
@@ -705,7 +819,6 @@ class Result implements ResultConstants {
      */
     private void prepareData(int columns) {
 
-        iMode         = DATA;
         sLabel        = new String[columns];
         sTable        = new String[columns];
         sName         = new String[columns];
@@ -717,7 +830,8 @@ class Result implements ResultConstants {
 
 // boucerb@users 20030513
 // ------------------- patch 1.7.2 --------------------
-    String getMode() {
+/*
+private    String getMode() {
 
         switch (iMode) {
 
@@ -746,51 +860,64 @@ class Result implements ResultConstants {
                 return "UNKNOWN";
         }
     }
-
+*/
     Result(Throwable t, String statement) {
 
-        iMode = ERROR;
+        iMode = ResultConstants.ERROR;
 
         if (t instanceof HsqlException) {
-            errorString = t.getMessage();
+            subString  = t.getMessage().substring(0, 5);
+            mainString = t.getMessage();
 
             if (statement != null) {
-                errorString += " in statement [" + statement + "]";
+                mainString += " in statement [" + statement + "]";
             }
 
-            errorCode = ((HsqlException) t).code;
+            idCode = ((HsqlException) t).code;
         } else if (t instanceof Exception) {
             t.printStackTrace();
-
-            errorString = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
+            subString = "";
+            mainString = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
 
             if (statement != null) {
-                errorString += " in statement [" + statement + "]";
+                mainString += " in statement [" + statement + "]";
             }
 
-            errorCode = Trace.GENERAL_ERROR;
+            idCode = Trace.GENERAL_ERROR;
         } else if (t instanceof OutOfMemoryError) {
             t.printStackTrace();
-
-            errorString = "out of memory";
-            errorCode   = Trace.GENERAL_ERROR;
+            subString = "";
+            mainString = "out of memory";
+            idCode     = Trace.GENERAL_ERROR;
         }
     }
 
-    int getStatementID() {
-        return errorCode;
+    int getIDCode() {
+        return idCode;
     }
 
-    void setStatementID(int id) {
-        errorCode = id;
+    void setIDCode(int id) {
+        idCode = id;
     }
 
-    String getStatement() {
-        return errorString;
+    String getMainString() {
+        return mainString;
     }
 
-    void setStatement(String sql) {
-        errorString = sql;
+    void setMainString(String sql) {
+        mainString = sql;
+    }
+
+    String getSubString() {
+        return subString;
+    }
+
+    void setMaxRows(int count) {
+        this.iUpdateCount = count;
+    }
+
+    int getUpdateCount() {
+        return iUpdateCount;
     }
 
     Object[] getParameterData() {
@@ -798,12 +925,20 @@ class Result implements ResultConstants {
                                : rRoot.data;
     }
 
+    void setParameterData(Object[] data) {
+
+        if (rRoot == null) {
+            this.add(data);
+        } else {
+            rRoot.data = data;
+        }
+    }
+
     int[] getParameterTypes() {
         return colType;
     }
 
-        void setParameterTypes(int[] types) {
-            colType = types;
+    void setResultType(int type) {
+        iMode = type;
     }
-
 }

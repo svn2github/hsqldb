@@ -95,12 +95,9 @@ class DatabaseScript {
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
         HsqlArrayList forwardFKSource = new HsqlArrayList();
-        Result        r               = new Result(1);
+        Result        r               = Result.newSingleColumnResult("COMMAND",Types.VARCHAR);
 
-        r.colType[0] = Types.VARCHAR;
         r.sTable[0]  = "SYSTEM_SCRIPT";
-        r.sLabel[0]  = "COMMAND";
-        r.sName[0]   = "COMMAND";
 
         HsqlStringBuffer a;
 
@@ -209,7 +206,7 @@ class DatabaseScript {
         }
 
         // aliases
-        HashMap  h       = dDatabase.getAlias();
+        HashMap  h       =dDatabase.getAlias();
         HashMap  builtin = Library.getAliasMap();
         Iterator e       = h.keySet().iterator();
 

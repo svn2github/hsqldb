@@ -43,9 +43,6 @@ import java.util.StringTokenizer;
  */
 public class StringUtil {
 
-    /** External construction disabled - this is a pure utility class. */
-    private StringUtil() {}
-
 /**
  * Returns a string with non alphanumeric chars converted to the
  * substitute character. A digit first character is also converted.

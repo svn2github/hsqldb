@@ -158,7 +158,7 @@ public class Library {
 
 // fredt@users 20010701 - patch 418023 by deforest@users
 // the definition for SUBSTR was added
-    static final String sString[][]   = {
+    static final String    sString[][]     = {
         {
             "ASCII", "org.hsqldb.Library.ascii"
         }, {
@@ -207,7 +207,7 @@ public class Library {
             "UPPER", "org.hsqldb.Library.ucase"
         }
     };
-    static final String sTimeDate[][] = {
+    static final String    sTimeDate[][]   = {
         {
             "CURDATE", "org.hsqldb.Library.curdate"
         }, {
@@ -240,7 +240,7 @@ public class Library {
             "YEAR", "org.hsqldb.Library.year"
         }
     };
-    static final String sSystem[][]   = {
+    static final String    sSystem[][]     = {
         {
             "DATABASE", "org.hsqldb.Library.database"
         }, {
@@ -1166,7 +1166,7 @@ public class Library {
      * @param part an integer code corresponding to the desired date part
      * @return the indicated part of the given <code>java.util.Date</code> object
      */
-    private static int getDateTimePart(java.util.Date d, int part) {
+    static int getDateTimePart(java.util.Date d, int part) {
 
         Calendar c = new GregorianCalendar();
 
@@ -1249,19 +1249,6 @@ public class Library {
         return getDateTimePart(t, Calendar.MINUTE);
     }
 
-// fredt@users 20020130 - patch 418017 by deforest@users - made optional
-    private static int     sql_month     = 0;
-    private static boolean sql_month_set = false;
-
-    static void setSqlMonth(boolean value) {
-
-        if (sql_month_set == false) {
-            sql_month     = value ? 1
-                                  : 0;
-            sql_month_set = true;
-        }
-    }
-
     /**
      * Returns the month from the given date value, as an integer value in the
      * range of 1-12 or 0-11. <p>
@@ -1273,7 +1260,7 @@ public class Library {
      * @return the month value from the given date value
      */
     public static int month(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.MONTH) + sql_month;
+        return 0;
     }
 
     /**
@@ -1351,6 +1338,11 @@ public class Library {
 
     // SYSTEM
 
+    /*
+     * All system functions that return Session dependent information are
+     * dummies here.
+     */
+
     /**
      * Returns the name of the database corresponding to this connection.
      *
@@ -1359,7 +1351,7 @@ public class Library {
      * @throws HsqlException if a database access error occurs
      */
     public static String database(Connection conn) throws HsqlException {
-        return ((jdbcConnection) conn).dDatabase.getName();
+        return null;
     }
 
     /**
@@ -1371,15 +1363,12 @@ public class Library {
      * @throws HsqlException if a database access error occurs
      */
     public static String user(Connection conn) throws HsqlException {
-        return ((jdbcConnection) conn).cSession.getUsername();
+        return null;
     }
 
     /**
      * Retrieves the last auto-generated integer indentity value used
      * by this connection.
-     *
-     * As of 1.7.1 this is a dummy function. The return value is supplied
-     * directly by Function.java
      *
      * @return the connection's the last generated integer identity value
      * @throws HsqlException if a database access error occurs
@@ -1399,7 +1388,7 @@ public class Library {
      * @since HSQLDB 1.7.0
      */
     public static boolean getAutoCommit(Connection conn) {
-        return ((jdbcConnection) conn).cSession.getAutoCommit();
+        return false;
     }
 
     /**
@@ -1452,7 +1441,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static boolean isReadOnlyConnection(Connection conn) {
-        return ((jdbcConnection) conn).cSession.isReadOnly();
+        return false;
     }
 
     /**
@@ -1464,9 +1453,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static boolean isReadOnlyDatabase(Connection c) {
-
-        // REMIND:  What about filesReadOnly?  how to resolve?
-        return ((jdbcConnection) c).dDatabase.databaseReadOnly;
+        return false;
     }
 
     /**
@@ -1478,7 +1465,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static boolean isReadOnlyDatabaseFiles(Connection c) {
-        return ((jdbcConnection) c).dDatabase.filesReadOnly;
+        return false;
     }
 
 // boucherb@users - patch 1.7.2 - ResultSetMetaData
@@ -1572,15 +1559,15 @@ public class Library {
         Trace.doAssert((len & 0x1) == 0,
                        "must be a valid list of table/column name pairs");
 
-        session           = ((jdbcConnection) c).cSession;
-        database          = ((jdbcConnection) c).dDatabase;
+        session           = ((jdbcConnection) c).sessionProxy.getSession();
+        database          = session.getDatabase();
         dInfo             = database.dInfo;
         props             = database.getProperties();
         reportCatalogs    = props.isPropertyTrue("hsqldb.catalogs");
         reportSchemas     = props.isPropertyTrue("hsqldb.schemas");
-        catalog           = reportCatalogs ? database.getName()
+        catalog           = reportCatalogs ? database.getPath()
                                            : "";
-        result            = new Result(5);
+        result            = new Result(ResultConstants.DATA, 5);
         result.colType[0] = Types.VARCHAR;
         result.colType[1] = Types.VARCHAR;
         result.colType[2] = Types.BIT;
@@ -1849,7 +1836,7 @@ public class Library {
                     return curtime();
                 }
                 case database : {
-                    return database((Connection) parms[0]);
+                    return null;
                 }
                 case dayname : {
                     return dayname((Date) parms[0]);
@@ -1868,9 +1855,7 @@ public class Library {
                                                        (String) parms[1]));
                 }
                 case getAutoCommit : {
-                    return getAutoCommit((Connection) parms[0]) ? Boolean.TRUE
-                                                                : Boolean
-                                                                .FALSE;
+                    return null;
                 }
                 case getDatabaseMajorVersion : {
                     return ValuePool.getInt(getDatabaseMajorVersion());
@@ -1900,14 +1885,10 @@ public class Library {
                                   (String) parms[3]);
                 }
                 case isReadOnlyConnection : {
-                    return isReadOnlyConnection((Connection) parms[0])
-                           ? Boolean.TRUE
-                           : Boolean.FALSE;
+                    return null;
                 }
                 case isReadOnlyDatabase : {
-                    return isReadOnlyDatabase((Connection) parms[0])
-                           ? Boolean.TRUE
-                           : Boolean.FALSE;
+                    return null;
                 }
                 case lcase : {
                     return lcase((String) parms[0]);
@@ -2009,7 +1990,7 @@ public class Library {
                     return ucase((String) parms[0]);
                 }
                 case user : {
-                    return user((Connection) parms[0]);
+                    return null;
                 }
                 case week : {
                     return ValuePool.getInt(week((Date) parms[0]));
@@ -2022,9 +2003,7 @@ public class Library {
                                                (String) parms[1]);
                 }
                 case isReadOnlyDatabaseFiles : {
-                    return isReadOnlyDatabaseFiles((Connection) parms[0])
-                           ? Boolean.TRUE
-                           : Boolean.FALSE;
+                    return null;
                 }
                 default : {
                     throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,

@@ -69,52 +69,66 @@ package org.hsqldb;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.StringTokenizer;
-import org.hsqldb.lib.StringConverter;
+import java.net.HttpURLConnection;
 import org.hsqldb.resources.BundleHandler;
-import java.lang.reflect.Method;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.hsqldb.lib.InOutUtil;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20021002 - patch 1.7.1 - changed notification method
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
-// boucherb@users 20030510 - patch 1.7.2 - SSL support => factory interface
+// boucherb@users 20030510 - patch 1.7.2 - SSL support moved to factory interface
 // boucherb@users 20030510 - patch 1.7.2 - general lint removal
 // boucherb@users 20030514 - patch 1.7.2 - localized error responses
+// fredt@users 20030628 - patch 1.7.2 - new protocol, persistent sessions
 
 /**
  *  A web server connection is a transient object that lasts for the duration
  *  of the SQL call and its result. This class uses the notification
- *  mechanism in WebServer to allow cleanup after a SHUTDOWN. (fredt@users)
+ *  mechanism in WebServer to allow cleanup after a SHUTDOWN.<p>
  *
- * @version  1.7.1
+ *  The POST method is used for login  and subsequent remote calls. In 1.7.2
+ *  The initial login establishes a persistent Session and returns its handle
+ *  to the client. Subsequent calls are executed in the context of this
+ *  session.<p>
+ *
+ *  (fredt@users)
+ *
+ * @version  1.7.2
  */
-class WebServerConnection implements Runnable, ServerConstants {
+class WebServerConnection implements Runnable {
 
-    static final String               ENCODING = "8859_1";
-    private Socket                    mSocket;
-    private Server                    mServer;
-    private int                       bhnd;
-    private static final StringBuffer sb          = new StringBuffer();
-    private static final int          GET         = 1;
-    private static final int          HEAD        = 2;
-    private static final int          POST        = 3;
-    private static final int          BAD_REQUEST = 400;
-    private static final int          FORBIDDEN   = 403;
-    private static final int          NOT_FOUND   = 404;
-    private static final String       okh         = "HTTP/1.0 200 OK";
-    private static final String       brh = "HTTP/1.0 400 Bad Request";
-    private static final String       nfh         = "HTTP/1.0 404 Not Found";
-    private static final String       fbh         = "HTTP/1.0 403 Forbidden";
-    private static final String ctaoscl =
-        "Content-Type: application/octet-stream\nContent-Length: ";
+    static final String         ENCODING = "8859_1";
+    private Socket              mSocket;
+    private WebServer           mServer;
+    private static final int    REQUEST_TYPE_BAD  = 0;
+    private static final int    REQUEST_TYPE_GET  = 1;
+    private static final int    REQUEST_TYPE_HEAD = 2;
+    private static final int    REQUEST_TYPE_POST = 3;
+    private static final String HEADER_OK         = "HTTP/1.0 200 OK";
+    private static final String HEADER_BAD_REQUEST =
+        "HTTP/1.0 400 Bad Request";
+    private static final String HEADER_NOT_FOUND = "HTTP/1.0 404 Not Found";
+    private static final String HEADER_FORBIDDEN = "HTTP/1.0 403 Forbidden";
+    static final int            BUFFER_SIZE      = 256;
+    BinaryServerRowOutput rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
+    BinaryServerRowInput        rowIn = new BinaryServerRowInput(rowOut);
+
+    //
+    static final byte[] BYTES_GET        = "GET".getBytes();
+    static final byte[] BYTES_HEAD       = "HEAD".getBytes();
+    static final byte[] BYTES_POST       = "POST".getBytes();
+    static final byte[] BYTES_CONTENT    = "Content-Length: ".getBytes();
+    static final byte[] BYTES_WHITESPACE = new byte[] {
+        ' ', '\t'
+    };
 
     /**
      *  Constructor declaration
@@ -122,31 +136,16 @@ class WebServerConnection implements Runnable, ServerConstants {
      * @param  socket
      * @param  server
      */
-    WebServerConnection(Socket socket, Server server) {
-
-        ClassLoader cl;
-
+    WebServerConnection(Socket socket, WebServer server) {
         mServer = server;
         mSocket = socket;
-        cl      = null;
-
-        try {
-            cl = getClass().getClassLoader();
-        } catch (Exception e) {}
-
-        bhnd = BundleHandler.getBundleHandle("webserver", cl);
     }
 
     /**
      * @throws Exception
      * @return
      */
-    private BufferedReader newInputStreamReader() throws Exception {
-        return new BufferedReader(
-            new InputStreamReader(mSocket.getInputStream(), ENCODING));
-    }
-
-    private String getMimeType(String name) {
+    private String getMimeTypeString(String name) {
 
         int    pos;
         String key;
@@ -167,145 +166,171 @@ class WebServerConnection implements Runnable, ServerConstants {
         if (mimeType == null) {
 
             // CHECKME:  return error response?
-            mimeType = SC_DEFAULT_WEB_MIME;
+            mimeType = ServerConstants.SC_DEFAULT_WEB_MIME;
         }
 
         return mimeType;
     }
 
     /**
-     * Retrieves an HTTP content type / content length line, given
-     * the supplied content name and length arguments.
-     *
-     * @param name the name of the content
-     * @param len the length of the content
-     * @return
-     */
-    private String getCTCL(String name, int len) {
-
-        String out;
-
-        synchronized (sb) {
-            sb.setLength(0);
-            sb.append("Content-Type: ").append(getMimeType(name)).append(
-                "\nContent-Length: ").append(len);
-
-            out = sb.toString();
-        }
-
-        return out;
-    }
-
-    /**
-     * Retrieves a new input stream for reading the file with the specified
-     * name.
-     *
-     * @param name the name of the file
-     * @throws Exception if a file i/o exception occurs
-     * @return a new input stream for reading the named file
-     */
-    private static InputStream newFileInputStream(String name)
-    throws Exception {
-        return new BufferedInputStream(new FileInputStream(new File(name)));
-    }
-
-    /**
-     * Retrieves a new output stream for writing to the connected socket.
-     *
-     * @throws Exception if an i/o or network exception occurs
-     * @return a new output stream
-     */
-    private DataOutputStream newDataOutputStream() throws Exception {
-        return new DataOutputStream(
-            new BufferedOutputStream(mSocket.getOutputStream()));
-    }
-
-    /**
      * Causes this WebServerConnection to process its HTTP request
      * in a blocking fashion until the request is fully processed
      * or an exception occurs internally.
+     *
+     * This method reads the Request line then delegates action to subroutines.
      */
     public void run() {
 
         try {
-            runImpl();
+            DataInputStream input =
+                new DataInputStream(mSocket.getInputStream());
+            int    count;
+            String request;
+            String name   = null;
+            int    method = REQUEST_TYPE_BAD;
+            int    len    = -1;
+
+            // read any blank lines
+            do {
+                count = InOutUtil.readLine(input, rowOut);
+            } while (input.available() > 0 && count < 2);
+
+            byte[] byteArray = rowOut.getBuffer();
+            int    offset    = rowOut.size() - count;
+
+            if (ArrayUtil.startWith(byteArray, offset, BYTES_POST)) {
+                method = REQUEST_TYPE_POST;
+                offset += BYTES_POST.length;
+            } else if (ArrayUtil.startWith(byteArray, offset, BYTES_GET)) {
+                method = REQUEST_TYPE_GET;
+                offset += BYTES_GET.length;
+            } else if (ArrayUtil.startWith(byteArray, offset, BYTES_HEAD)) {
+                method = REQUEST_TYPE_HEAD;
+                offset += BYTES_HEAD.length;
+            } else {
+                throw new Exception();
+            }
+
+            count = ArrayUtil.countStartElements(byteArray, offset,
+                                                 BYTES_WHITESPACE);
+
+            if (count == 0) {
+                throw new Exception();
+            }
+
+            offset += count;
+            count = ArrayUtil.countNonStartElements(byteArray, offset,
+                    BYTES_WHITESPACE);
+            name = new String(byteArray, offset, count, ENCODING);
+
+            switch (method) {
+
+                case REQUEST_TYPE_BAD :
+                    processError(REQUEST_TYPE_BAD);
+                    break;
+
+                case REQUEST_TYPE_GET :
+                    processGet(name, true);
+                    break;
+
+                case REQUEST_TYPE_HEAD :
+                    processGet(name, false);
+                    break;
+
+                case REQUEST_TYPE_POST :
+                    processPost(input, name);
+                    break;
+            }
+
+            input.close();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            mServer.notify(SC_CONNECTION_CLOSED);
         }
     }
 
     /**
-     * Internal run implementation.
-     *
-     * @throws Exception if there is a problem processing this connection's
-     *      HTTP request.
+     * POST is used only for database access. So we can assume the strings
+     * are those generated by HTTPClientConnection
      */
-    protected void runImpl() throws Exception {
+    private void processPost(InputStream input,
+                             String name) throws HsqlException, IOException {
 
-        BufferedReader  input;
-        String          request;
-        String          name;
-        int             method;
-        int             len;
-        StringTokenizer tokenizer;
-        String          first;
+        // fredt - parsing in this block is not actually necessary
+        try {
 
-        input  = newInputStreamReader();
-        name   = null;
-        method = BAD_REQUEST;
-        len    = -1;
+            // read the Content-Type line
+            InOutUtil.readLine(input, rowOut);
 
-        while (true) {
-            request = input.readLine();
+            // read and parse the Content-Length line
+            int count  = InOutUtil.readLine(input, rowOut);
+            int offset = rowOut.size() - count;
 
-            if (request == null) {
-                break;
+            // get buffer always after reading into rowOut, else old buffer may
+            // be returned
+            byte[] byteArray = rowOut.getBuffer();
+
+            if (!ArrayUtil.startWith(byteArray, offset, BYTES_CONTENT)) {
+                throw new Exception();
             }
 
-            tokenizer = new StringTokenizer(request, " ");
+            count  -= BYTES_CONTENT.length;
+            offset += BYTES_CONTENT.length;
 
-            if (!tokenizer.hasMoreTokens()) {
-                break;
-            }
+            // omit the last two characters
+            String lenStr = new String(byteArray, offset, count - 2);
+            int    length = Integer.parseInt(lenStr);
+        } catch (Exception e) {
+            processError(HttpURLConnection.HTTP_BAD_REQUEST);
 
-            first = tokenizer.nextToken();
-
-            if (first.equals("GET")) {
-                method = GET;
-                name   = tokenizer.nextToken();
-            } else if (first.equals("HEAD")) {
-                method = HEAD;
-                name   = tokenizer.nextToken();
-            } else if (first.equals("POST")) {
-                method = POST;
-                name   = tokenizer.nextToken();
-            } else if (request.toUpperCase().startsWith("CONTENT-LENGTH:")) {
-                len = Integer.parseInt(tokenizer.nextToken());
-            }
+            return;
         }
 
-        switch (method) {
+        processQuery(input);
+    }
 
-            case BAD_REQUEST :
-                processError(BAD_REQUEST);
-                break;
+    void processQuery(InputStream input) {
 
-            case GET :
-                processGet(name, true);
-                break;
+        try {
+            Result resultIn = HSQLClientConnection.read(rowIn,
+                new DataInputStream(input));
 
-            case HEAD :
-                processGet(name, false);
-                break;
+            //
+            Session session;
+            Result  resultOut;
 
-            case POST :
-                processPost(input, name, len);
-                break;
+            if (resultIn.iMode == ResultConstants.SQLCONNECT) {
+                session = DatabaseManager.newSession(mServer.dbType,
+                                                     mServer.dbPath,
+                                                     resultIn.getMainString(),
+                                                     resultIn.getSubString());
+                resultOut           = new Result(ResultConstants.UPDATECOUNT);
+                resultOut.sessionID = session.getId();
+            } else {
+                session = DatabaseManager.getSession(mServer.dbType,
+                                                     mServer.dbPath,
+                                                     resultIn.sessionID);
+                resultOut = session.execute(resultIn);
+            }
+
+            rowOut.reset();
+            resultOut.write(rowOut);
+
+//
+            OutputStream outStream = mSocket.getOutputStream();
+            String header = getHead(HEADER_OK, false,
+                                    "application/octet-stream",
+                                    rowOut.size());
+
+            outStream.write(header.getBytes(ENCODING));
+
+//
+            HSQLClientConnection.write(resultOut, rowOut, outStream);
+            outStream.flush();
+            outStream.close();
+            mSocket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        input.close();
     }
 
     /**
@@ -317,160 +342,79 @@ class WebServerConnection implements Runnable, ServerConstants {
     private void processGet(String name, boolean send) {
 
         try {
-            processGetImpl(name, send);
+            String       hdr;
+            OutputStream os;
+            InputStream  is;
+            int          b;
+
+            if (name.endsWith("/")) {
+                name = name + mServer.getDefaultWebPage();
+            }
+
+            // traversing up the directory structure is forbidden.
+            if (name.indexOf("..") != -1) {
+                processError(HttpURLConnection.HTTP_FORBIDDEN);
+
+                return;
+            }
+
+            name = mServer.getWebRoot() + name;
+
+            if (File.separatorChar != '/') {
+                name = name.replace('/', File.separatorChar);
+            }
+
+            is = null;
+
+            try {
+                is = new BufferedInputStream(
+                    new FileInputStream(new File(name)));
+                hdr = getHead(HEADER_OK, true, getMimeTypeString(name),
+                              is.available());
+            } catch (IOException e) {
+                processError(HttpURLConnection.HTTP_NOT_FOUND);
+
+                return;
+            }
+
+            os = new BufferedOutputStream(mSocket.getOutputStream());
+
+            os.write(hdr.getBytes(ENCODING));
+
+            if (send) {
+                while ((b = is.read()) != -1) {
+                    os.write(b);
+                }
+            }
+
+            os.flush();
+            os.close();
         } catch (Exception e) {
             mServer.traceError("processGet: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * Internal get implementation.
-     *
-     * @param  name the name of the content to get
-     * @param  send whether to send the content as well, or just the header
-     * @throws Exception if there is a problem processing the get
-     */
-    private void processGetImpl(String name, boolean send) throws Exception {
+    String getHead(String responseCodeString, boolean addInfo,
+                   String mimeType, int length) {
 
-        String           hdr;
-        DataOutputStream os;
-        InputStream      is;
-        int              b;
+        StringBuffer sb = new StringBuffer(128);
 
-        if (name.endsWith("/")) {
-            name = name + mServer.getDefaultWebPage();
+        sb.append(responseCodeString).append("\r\n");
+
+        if (addInfo) {
+            sb.append("Allow: GET, HEAD, POST\nMIME-Version: 1.0\r\n");
+            sb.append("Server: ").append(mServer.mServerName).append("\r\n");
         }
 
-        // traversing up the directory structure is forbidden.
-        if (name.indexOf("..") != -1) {
-            processError(FORBIDDEN);
-
-            return;
+        if (mimeType != null) {
+            sb.append("Content-Type: ").append(mimeType).append("\r\n");
+            sb.append("Content-Length: ").append(length).append("\r\n");
         }
 
-        name = mServer.getWebRoot() + name;
+        sb.append("\r\n");
 
-        if (mServer.mPathSeparatorChar != '/') {
-            name = name.replace('/', mServer.mPathSeparatorChar);
-        }
-
-        is = null;
-
-        try {
-            is  = newFileInputStream(name);
-            hdr = getHead(okh, getCTCL(name, is.available()));
-        } catch (IOException e) {
-            processError(NOT_FOUND);
-
-            return;
-        }
-
-        os = newDataOutputStream();
-
-        os.write(hdr.getBytes(ENCODING));
-
-        // TODO:
-        // Although we're using buffered input and output streams,
-        // this can still be made more efficient by using our own
-        // byte buffer and getting closer to the native bulk read
-        // and write methods.  Serveral thousand calls to byte read()
-        // and writeByte(b), even when backed by buffers, are always
-        // bound to be less efficient than direct read(byte[]) and
-        // write(byte[]) calls.
-        if (send) {
-            while (-1 != (b = is.read())) {
-                os.writeByte(b);
-            }
-        }
-
-        os.flush();
-        os.close();
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  start
-     * @param  end
-     * @return
-     */
-    private String getHead(String start, String end) {
-
-        String out;
-
-        synchronized (sb) {
-            sb.setLength(0);
-            sb.append(start).append(
-                "\nAllow: GET, HEAD, POST\nMIME-Version: 1.0\nServer: ")
-                    .append(mServer.mServerName).append('\n').append(
-                        end).append("\n\n");
-
-            out = sb.toString();
-        }
-
-        return out;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  input
-     * @param  name
-     * @param  len
-     */
-    private void processPost(BufferedReader input, String name,
-                             int len) throws HsqlException, IOException {
-
-        char   cbuf[];
-        String s;
-        int    p;
-        int    q;
-        String user;
-        String password;
-
-        if (len < 0) {
-            processError(BAD_REQUEST);
-
-            return;
-        }
-
-        cbuf = new char[len];
-
-        try {
-            input.read(cbuf, 0, len);
-        } catch (IOException e) {
-            processError(BAD_REQUEST);
-
-            return;
-        }
-
-        s = new String(cbuf);
-        p = s.indexOf('+');
-        q = s.indexOf('+', p + 1);
-
-        if ((p == -1) || (q == -1)) {
-            processError(BAD_REQUEST);
-
-            return;
-        }
-
-        // TODO:
-        // Base64 encoding and decoding would make more efficient use
-        // of the character set and would reduce network traffic.
-        // Encoding to hexidicimal effectively doubles the size
-        // of a unicode string, while Base64 causes inflation by only
-        // a factor of 1.333... (every six bits becomes one byte).
-        // Use of compressed streams might be nice also.
-        // However, both paths imposes yet another step, more library code
-        // and, for compressed streams, an extra memory buffer allocation,
-        // reducing server-side processing speed and memory efficiency
-        // while possibly improving network load.
-        user     = StringConverter.hexStringToUnicode(s.substring(0, p));
-        password = StringConverter.hexStringToUnicode(s.substring(p + 1, q));
-        s        = StringConverter.hexStringToUnicode(s.substring(q + 1));
-
-        processQuery(user, password, s);
+        return sb.toString();
     }
 
     /**
@@ -480,26 +424,28 @@ class WebServerConnection implements Runnable, ServerConstants {
      */
     private void processError(int code) {
 
-        String           msg;
-        DataOutputStream os;
+        String msg;
 
         mServer.trace("processError " + code);
 
         switch (code) {
 
-            case BAD_REQUEST :
-                msg = getHead(brh, "");
-                msg += BundleHandler.getString(bhnd, "BAD_REQUEST");
+            case HttpURLConnection.HTTP_BAD_REQUEST :
+                msg = getHead(HEADER_BAD_REQUEST, false, null, 0);
+                msg += BundleHandler.getString(mServer.bundleHandle,
+                                               "BAD_REQUEST");
                 break;
 
-            case NOT_FOUND :
-                msg = getHead(nfh, "");
-                msg += BundleHandler.getString(bhnd, "NOT_FOUND");
+            case HttpURLConnection.HTTP_NOT_FOUND :
+                msg = getHead(HEADER_NOT_FOUND, false, null, 0);
+                msg += BundleHandler.getString(mServer.bundleHandle,
+                                               "NOT_FOUND");
                 break;
 
-            case FORBIDDEN :
-                msg = getHead(fbh, "");
-                msg += BundleHandler.getString(bhnd, "FORBIDDEN");
+            case HttpURLConnection.HTTP_FORBIDDEN :
+                msg = getHead(HEADER_FORBIDDEN, false, null, 0);
+                msg += BundleHandler.getString(mServer.bundleHandle,
+                                               "FORBIDDEN");
                 break;
 
             default :
@@ -507,48 +453,14 @@ class WebServerConnection implements Runnable, ServerConstants {
         }
 
         try {
-            os = newDataOutputStream();
+            OutputStream os =
+                new BufferedOutputStream(mSocket.getOutputStream());
 
             os.write(msg.getBytes(ENCODING));
             os.flush();
             os.close();
         } catch (Exception e) {
             mServer.traceError("processError: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  user
-     * @param  password
-     * @param  statement
-     */
-    private void processQuery(String user, String password,
-                              String statement) {
-
-        byte             result[];
-        int              len;
-        String           header;
-        DataOutputStream output;
-
-        try {
-            mServer.trace(statement);
-
-            // TODO:  Stream the underlying result object instead of allocating
-            //        a potentially large intermediate byte-buffer
-            result = mServer.mDatabase.execute(user, password, statement);
-            len    = result.length;
-            header = getHead(okh, ctaoscl + len);
-            output = newDataOutputStream();
-
-            output.write(header.getBytes(ENCODING));
-            output.write(result);
-            output.flush();
-            output.close();
-        } catch (Exception e) {
-            mServer.traceError("processQuery: " + e.getMessage());
             e.printStackTrace();
         }
     }

@@ -220,6 +220,7 @@ implements DatabaseRowOutputInterface {
                     break;
 
                 case Types.BIT :
+                case Types.BOOLEAN :
                     writeBit((Boolean) o);
                     break;
 

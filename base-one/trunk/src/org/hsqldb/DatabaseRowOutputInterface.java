@@ -69,4 +69,7 @@ interface DatabaseRowOutputInterface {
 
     // resets the byte[] buffer, ready for processing new row
     public void reset();
+    // returns the current size
+    public int size();
+
 }

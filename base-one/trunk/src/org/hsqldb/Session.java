@@ -75,7 +75,7 @@ import org.hsqldb.lib.StopWatch;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
-// fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
+// fredt@users 20020315 - patch 1.7.0 - switch for scripting
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions in different parts to support savepoint transactions
 // fredt@users 20020910 - patch 1.7.1 by fredt - database readonly enforcement
@@ -85,13 +85,16 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 20050510 - patch 1.7.2 - generalized Result packet passing
 //                                         based command execution
 //                                       - batch execution handling
+// fredt@users 20030628 - patch 1.7.2 - session proxy support
 
 /**
- *  Implementation of a user session with the database.
+ *  Implementation of a user session with the database. In 1.7.2 Session
+ *  becomes the public interface to an HSQLDB database, accessed locally or
+ *  remotely via SessionInterface.
  *
  * @version  1.7.2
  */
-public class Session {
+class Session implements SessionInterface {
 
     private Database        dDatabase;
     private User            uUser;
@@ -108,6 +111,14 @@ public class Session {
     private IntValueHashMap savepoints;
     private boolean         script;
     private jdbcConnection  intConnection;
+    private static Result emptyUpdateCount =
+        new Result(ResultConstants.UPDATECOUNT);
+
+/** @todo fredt - clarify in which circumstances Session has to disconnet */
+
+    public Session getSession(){
+        return this;
+    }
 
     /**
      *  closes the session.
@@ -138,9 +149,7 @@ public class Session {
         isReadOnly                = readonly;
         dbCommandInterpreter      = new DatabaseCommandInterpreter(this);
         compiledStatementExecutor = new CompiledStatementExecutor(this);
-
-//        cs           = new CompiledStatement();
-        compiledStatementManager = db.compiledStatementManager;
+        compiledStatementManager  = db.compiledStatementManager;
     }
 
     /**
@@ -150,6 +159,13 @@ public class Session {
      */
     int getId() {
         return iId;
+    }
+
+    public void close() {
+
+        if (!isClosed) {
+            dDatabase.sessionManager.processDisconnect(this);
+        }
     }
 
     /**
@@ -180,7 +196,7 @@ public class Session {
      *
      * @return true if this Session is closed
      */
-    boolean isClosed() {
+    public boolean isClosed() {
         return isClosed;
     }
 
@@ -240,6 +256,10 @@ public class Session {
      */
     void setUser(User user) {
         uUser = user;
+    }
+
+    int getMaxRows() {
+        return iMaxRows;
     }
 
     /**
@@ -336,7 +356,7 @@ public class Session {
      * @param  autocommit the new value
      * @throws  HsqlException
      */
-    void setAutoCommit(boolean autocommit) throws HsqlException {
+    public void setAutoCommit(boolean autocommit) {
 
         if (autocommit != isAutoCommit) {
             commit();
@@ -350,7 +370,7 @@ public class Session {
      *
      * @throws  HsqlException
      */
-    void commit() throws HsqlException {
+    public void commit() {
 
         tTransaction.clear();
 
@@ -364,7 +384,7 @@ public class Session {
      *
      * @throws  HsqlException
      */
-    void rollback() {
+    public void rollback() {
 
         int i = tTransaction.size();
 
@@ -487,7 +507,7 @@ public class Session {
      *
      * @param  readonly the new value
      */
-    void setReadOnly(boolean readonly) throws HsqlException {
+    public void setReadOnly(boolean readonly) throws HsqlException {
 
         if (!readonly && dDatabase.databaseReadOnly) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
@@ -501,26 +521,8 @@ public class Session {
      *
      * @return the current value
      */
-    boolean isReadOnly() {
+    public boolean isReadOnly() {
         return isReadOnly;
-    }
-
-    /**
-     *  Setter for maxRows attribute
-     *
-     * @param  max the new value
-     */
-    void setMaxRows(int max) {
-        iMaxRows = max;
-    }
-
-    /**
-     *  Getter for maxRows attribute
-     *
-     * @return the current value
-     */
-    int getMaxRows() {
-        return iMaxRows;
     }
 
     /**
@@ -537,7 +539,7 @@ public class Session {
      *
      * @return the current value
      */
-    boolean getAutoCommit() {
+    public boolean isAutoCommit() {
         return isAutoCommit;
     }
 
@@ -727,38 +729,50 @@ public class Session {
      * @param cmd the command to execute
      * @return the result of executing the command
      */
-    Result executeCommand(Result cmd) {
+    public Result execute(Result cmd) {
 
-        int type;
+        int type = cmd.iMode;
 
-        HsqlRuntime.getHsqlRuntime().gc();
+        iMaxRows = cmd.iUpdateCount;
 
-        type = cmd.iMode;
+        DatabaseManager.gc();
 
         switch (type) {
 
-            case Result.SQLEXECUTE : {
+            case ResultConstants.SQLEXECUTE :
                 if (cmd.getSize() > 1) {
                     return sqlExecuteBatch(cmd);
                 } else {
                     return sqlExecute(cmd);
                 }
-            }
-            case Result.SQLEXECDIRECT : {
-                return sqlExecuteDirect(cmd.getStatement());
-            }
-            case Result.SQLPREPARE : {
-                return sqlPrepare(cmd.getStatement());
-            }
-            case Result.SQLFREESTMT : {
-                return sqlFreeStatement(cmd.getStatementID());
-            }
-            default : {
+            case ResultConstants.SQLEXECDIRECT :
+                return dbCommandInterpreter.execute(cmd.getMainString());
+
+            case ResultConstants.SQLPREPARE :
+                return sqlPrepare(cmd.getMainString());
+
+            case ResultConstants.SQLFREESTMT :
+                return sqlFreeStatement(cmd.getIDCode());
+
+            case ResultConstants.SQLGETSESSIONINFO :
+                return getAttributes();
+
+            case ResultConstants.SQLSETENVATTR :
+
+                return setAttributes(cmd);
+
+            case ResultConstants.SQLENDTRAN :
+                commit();
+                return emptyUpdateCount;
+
+            case ResultConstants.SQLSTARTTRAN :
+                rollback();
+                return emptyUpdateCount;
+            default :
                 String msg = "operation type:" + type;
 
                 return new Result(msg, "s1000",
                                   Trace.OPERATION_NOT_SUPPORTED);
-            }
         }
     }
 
@@ -804,14 +818,10 @@ public class Session {
 
         // ...check valid...
         if (csid > 0 && compiledStatementManager.isValid(csid, iId)) {
-            cs           = compiledStatementManager.getStatement(csid);
-            result       = new Result();
-            result.iMode = Result.SQLPREPARE;
+            cs = compiledStatementManager.getStatement(csid);
 
-            result.setStatementID(csid);
-            result.setParameterTypes(cs.paramTypes);
-
-            return result;
+            return new Result(ResultConstants.SQLEXECUTE, cs.paramTypes,
+                              csid);
         }
 
         // ...compile or (re)validate
@@ -832,13 +842,7 @@ public class Session {
         compiledStatementManager.setValidated(csid, iId,
                                               dDatabase.getDDLSCN());
 
-        result       = new Result();
-        result.iMode = Result.SQLPREPARE;
-
-        result.setParameterTypes(cs.paramTypes);
-        result.setStatementID(csid);
-
-        return result;
+        return new Result(ResultConstants.SQLEXECUTE, cs.paramTypes, csid);
     }
 
     Result sqlExecuteBatch(Result cmd) {
@@ -856,7 +860,7 @@ public class Session {
         int[]             updateCounts;
         int               count;
 
-        csid = cmd.getStatementID();
+        csid = cmd.getIDCode();
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
@@ -868,20 +872,18 @@ public class Session {
         if (!compiledStatementManager.isValid(csid, iId)) {
             out = sqlPrepare(cs.sql);
 
-            if (out.iMode == Result.ERROR) {
+            if (out.iMode == ResultConstants.ERROR) {
                 return out;
             }
         }
 
-        parameters     = cs.parameters;
-        ptypes         = cmd.getParameterTypes();
-        count          = 0;
-        updateCounts   = new int[cmd.getSize()];
-        record         = cmd.rRoot;
-        out            = new Result(1);
-        out.colType[0] = Types.INTEGER;
-        err            = new Result();
-        err.iMode      = Result.ERROR;
+        parameters   = cs.parameters;
+        ptypes       = cmd.getParameterTypes();
+        count        = 0;
+        updateCounts = new int[cmd.getSize()];
+        record       = cmd.rRoot;
+        out          = Result.newSingleColumnResult("", Types.INTEGER);
+        err          = new Result(ResultConstants.ERROR);
 
         while (record != null) {
             pvals = record.data;
@@ -908,12 +910,12 @@ public class Session {
             // -3 is encountered in the result
             switch (in.iMode) {
 
-                case Result.UPDATECOUNT : {
+                case ResultConstants.UPDATECOUNT : {
                     batchStatus = in.iUpdateCount;
 
                     break;
                 }
-                case Result.DATA : {
+                case ResultConstants.DATA : {
 
                     // FIXME:  we don't have what it takes yet
                     // to differentiate between things like
@@ -924,7 +926,7 @@ public class Session {
 
                     break;
                 }
-                case Result.ERROR :
+                case ResultConstants.ERROR :
                 default : {
                     batchStatus = -3;
 
@@ -955,10 +957,11 @@ public class Session {
         CompiledStatement cs;
         Expression[]      parameters;
 
-        csid   = cmd.getStatementID();
-        pvals  = cmd.getParameterData();
-        ptypes = cmd.getParameterTypes();
-        cs     = compiledStatementManager.getStatement(csid);
+        csid  = cmd.getIDCode();
+        pvals = cmd.getParameterData();
+
+//        ptypes = cmd.getParameterTypes();
+        cs = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
@@ -969,7 +972,7 @@ public class Session {
         if (!compiledStatementManager.isValid(csid, iId)) {
             Result r = sqlPrepare(cs.sql);
 
-            if (r.iMode == Result.ERROR) {
+            if (r.iMode == ResultConstants.ERROR) {
                 return r;
             }
         }
@@ -981,7 +984,9 @@ public class Session {
         // as parameters array
         try {
             for (int i = 0; i < parameters.length; i++) {
-                parameters[i].bind(pvals[i], ptypes[i]);
+                parameters[i].bind(pvals[i]);
+
+//                parameters[i].bind(pvals[i], ptypes[i]);
             }
         } catch (Throwable t) {
             return new Result(t, cs.sql);
@@ -1002,7 +1007,7 @@ public class Session {
         Result  result;
 
         existed = compiledStatementManager.freeStatement(csid, iId);
-        result  = new Result();
+        result  = new Result(ResultConstants.UPDATECOUNT);
 
         if (existed) {
             result.iUpdateCount = 1;
@@ -1012,4 +1017,68 @@ public class Session {
     }
 
 //------------------------------------------------------------------------------
+    static final int INFO_DATABASE            = 0;
+    static final int INFO_USER                = 1;
+    static final int INFO_SESSION_ID          = 2;
+    static final int INFO_IDENTITY            = 3;
+    static final int INFO_AUTOCOMMIT          = 4;
+    static final int INFO_DATABASE_READONLY   = 5;
+    static final int INFO_CONNECTION_READONLY = 6;
+
+    Result getAttributes() {
+
+        Result r = new Result(ResultConstants.DATA, 7);
+
+        r.sName   = r.sLabel = r.sTable = new String[] {
+            "", "", "", "", "", "", ""
+        };
+        r.colType = new int[] {
+            Types.VARCHAR, Types.VARCHAR, Types.INTEGER,
+            iLastIdentity instanceof Long ? Types.BIGINT
+                                          : Types.INTEGER, Types.BOOLEAN,
+            Types.BOOLEAN, Types.BOOLEAN
+        };
+
+        Object[] row = new Object[] {
+            dDatabase.getPath(), getUsername(), new Integer(iId),
+            iLastIdentity, ValuePool.getBoolean(isAutoCommit),
+            ValuePool.getBoolean(dDatabase.databaseReadOnly),
+            ValuePool.getBoolean(isReadOnly)
+        };
+
+        r.add(row);
+
+        return r;
+    }
+
+    Result setAttributes(Result r) {
+
+        Object[] row = r.rRoot.data;
+
+        for (int i = 0; i < row.length; i++) {
+            Object value = row[i];
+
+            if (value == null) {
+                continue;
+            }
+
+            try {
+                switch (i) {
+
+                    case INFO_AUTOCOMMIT :
+                        this.setAutoCommit(((Boolean) value).booleanValue());
+                        break;
+
+                    case INFO_CONNECTION_READONLY :
+                        this.setReadOnly(((Boolean) value).booleanValue());
+                        break;
+                }
+            } catch (HsqlException e) {
+                return new Result(e.getMessage(), e.getSQLState(),
+                                  e.getErrorCode());
+            }
+        }
+
+        return emptyUpdateCount;
+    }
 }

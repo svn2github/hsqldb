@@ -88,16 +88,18 @@ import org.hsqldb.lib.StringUtil;
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
-    protected Database    database;
-    protected Session     session;
-    protected HsqlRuntime runtime;
+    protected Database database;
+    protected Session  session;
+
+//    protected HsqlRuntime runtime;
 
     /** Constructs a new DatabaseCommandInterpreter for the given Session */
     DatabaseCommandInterpreter(Session s) {
 
         session  = s;
         database = session.getDatabase();
-        runtime  = HsqlRuntime.getHsqlRuntime();
+
+//        runtime  = HsqlRuntime.getHsqlRuntime();
     }
 
     /**
@@ -114,7 +116,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
         int    cmd;
         Logger logger;
 
-        runtime.gc();
+        DatabaseManager.gc();
 
         if (Trace.TRACE) {
             Trace.trace(sql);
@@ -331,7 +333,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 Trace.trace(sw.elapsedTimeToMessage("text script"));
             }
 
-            return new Result();
+            return new Result(ResultConstants.UPDATECOUNT);
         } else {
             tokenizer.back();
             session.checkAdmin();
@@ -1749,6 +1751,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
+/*
             case Token.MAXROWS : {
                 session.setScripting(false);
 
@@ -1758,6 +1761,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
+*/
             case Token.AUTOCOMMIT : {
                 session.setAutoCommit(processTrueOrFalse());
 
@@ -1960,14 +1964,14 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
             session.checkAdmin();
         }
 
-        closemode = 0;
+        closemode = Database.CLOSEMODE_NORMAL;
         token     = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
         if (token.equals(Token.T_IMMEDIATELY)) {
-            closemode = -1;
+            closemode = Database.CLOSEMODE_IMMEDIATELY;
         } else if (token.equals(Token.T_COMPACT)) {
-            closemode = 1;
+            closemode = Database.CLOSEMODE_COMPACT;
         } else {
             tokenizer.back();
         }
@@ -2529,24 +2533,12 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
                 throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
-        result = newSingleColumnResult("OPERATION", VARCHAR);
+        result = Result.newSingleColumnResult("OPERATION", VARCHAR);
         lnr    = new LineNumberReader(new StringReader(cs.toString()));
 
         while (null != (line = lnr.readLine())) {
             result.add(new Object[]{ line });
         }
-
-        return result;
-    }
-
-    private Result newSingleColumnResult(String colName, int colType) {
-
-        Result result;
-
-        result            = new Result(1);
-        result.sName[0]   = colName;
-        result.sLabel     = result.sName;
-        result.colType[0] = colType;
 
         return result;
     }
@@ -2587,11 +2579,11 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
     }
 
     // -Dorg.hsqldb.Parser.shadow=true|false
-    static final boolean compile     = isCompile();
-    static final Result  emptyResult = new Result();
-    TableWorks           tableWorks  = new TableWorks(null);
-    Tokenizer            tokenizer   = new Tokenizer();
-    CompiledStatement    cs          = new CompiledStatement();
+    static final boolean compile    = isCompile();
+    static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
+    TableWorks           tableWorks = new TableWorks(null);
+    Tokenizer            tokenizer  = new Tokenizer();
+    CompiledStatement    cs         = new CompiledStatement();
 
     private static class TempConstraint {
 
@@ -2696,7 +2688,7 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
             t.insertNoCheck(r, session);
         }
 
-        uc              = new Result();
+        uc              = new Result(ResultConstants.UPDATECOUNT);
         uc.iUpdateCount = r.getSize();
 
         return uc;

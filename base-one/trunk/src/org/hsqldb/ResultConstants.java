@@ -134,11 +134,12 @@ public interface ResultConstants {
 //     */
 //    int SQLCOLUMNS          = SQL_API_BASE + 40;
 //
-//    /**
-//     * Indicates that Result encapsulates a request to establish a connection.
-//     */
-//    int SQLCONNECT          = SQL_API_BASE + 7;
-//
+
+    /**
+     * Indicates that Result encapsulates a request to establish a connection.
+     */
+    int SQLCONNECT = SQL_API_BASE + 7;
+
 //    /**
 //     * Indicates that Result encapsulates a request to copy a CLI descriptor.
 //     */
@@ -156,18 +157,18 @@ public interface ResultConstants {
 //     */
 //    int SQLDESCRIBECOL      = SQL_API_BASE + 8;
 //
-//    /**
-//     * Indicates that Result encapsulates a request to terminate an
-//     * established connection.
-//     */
-//    int SQLDISCONNECT       = SQL_API_BASE + 9;
-//
-//    /**
-//     * Indicates that Result encapsulates a request to terminate an
-//     * SQL-transaction.
-//     */
-//    int SQLENDTRAN          = SQL_API_BASE + 1005;
-//
+    /**
+     * Indicates that Result encapsulates a request to terminate an
+     * established connection.
+     */
+    int SQLDISCONNECT       = SQL_API_BASE + 9;
+
+    /**
+     * Indicates that Result encapsulates a request to terminate an
+     * SQL-transaction.
+     */
+    int SQLENDTRAN          = SQL_API_BASE + 1005;
+
 //    /**
 //     * Indicates that Result encapsulates a request to return diagnostic
 //     * information.
@@ -312,12 +313,13 @@ public interface ResultConstants {
 //     */
 //    int SQLGETPOSITION      = SQL_API_BASE + 1023;
 //
-//    /**
-//     * Indicates that Result encapsulates a request to get information about
-//     * general value specifications supported by the implementation.
-//     */
-//    int SQLGETSESSIONINFO   = SQL_API_BASE + 1028;
-//
+
+    /**
+     * Indicates that Result encapsulates a request to get information about
+     * general value specifications supported by the implementation.
+     */
+    int SQLGETSESSIONINFO = SQL_API_BASE + 1028;
+
 //    /**
 //     * Indicates that Result encapsulates a request to get the value of an
 //     * SQL-statement attribute.
@@ -353,11 +355,11 @@ public interface ResultConstants {
      */
     int SQLNEXTRESULT = SQL_API_BASE + 73;
 
-    /**
-     * Indicates that Result encapsulates a request to get the number of
-     * result columns of a prepared or executed statement.
-     */
-    int SQLNUMRESULTCOLS = SQL_API_BASE + 18;
+//    /**
+//     * Indicates that Result encapsulates a request to get the number of
+//     * result columns of a prepared or executed statement.
+//     */
+//    int SQLNUMRESULTCOLS = SQL_API_BASE + 18;
 
 //    /**
 //     * Indicates that Result encapsulates a request to process a deferred
@@ -413,12 +415,13 @@ public interface ResultConstants {
 //     */
 //    int SQLSETDESCREC       = SQL_API_BASE + 1018;
 //
-//    /**
-//     * Indicates that Result encapsulates a request to set the value of an
-//     * SQL-environment attribute.
-//     */
-//    int SQLSETENVATTR       = SQL_API_BASE + 1019;
-//
+
+    /**
+     * Indicates that Result encapsulates a request to set the value of an
+     * SQL-environment attribute.
+     */
+    int SQLSETENVATTR = SQL_API_BASE + 1019;
+
 //    /** Indicates that Result encapsulates a request to set the value of an
 //     * SQL-statement attribute.
 //     */
@@ -432,12 +435,12 @@ public interface ResultConstants {
 //     */
 //    int SQLSPECIALCOLUMNS   = SQL_API_BASE + 52;
 //
-//    /**
-//     * Indicates that Result encapsulates a request to explicitly start an
-//     * SQL-transaction and set its characteristics.
-//     */
-//    int SQLSTARTTRAN        = SQL_API_BASE + 74;
-//
+    /**
+     * Indicates that Result encapsulates a request to explicitly start an
+     * SQL-transaction and set its characteristics.
+     */
+    int SQLSTARTTRAN        = SQL_API_BASE + 74;
+
 //    /**
 //     * Indicates that Result encapsulates a request to return a result set that
 //     * contains a list of the privileges held on the tables whose names adhere

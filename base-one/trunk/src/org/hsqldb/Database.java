@@ -118,6 +118,7 @@ import org.hsqldb.lib.StopWatch;
  */
 class Database {
 
+    private String        sType;
     private String        sName;
     private String        sPath;
     private UserManager   aAccess;
@@ -139,6 +140,7 @@ class Database {
 // ----------------------------------------------------------------------------
     boolean filesInJar;
     boolean sqlEnforceSize;
+    int     sqlMonth;
     int     firstIdentity;
 
 //    private boolean                bShutdown;
@@ -154,47 +156,35 @@ class Database {
     final static int               DATABASE_CLOSING  = 8;
     final static int               DATABASE_SHUTDOWN = 16;
 
+    final static int               CLOSEMODE_IMMEDIATELY = -1;
+    final static int               CLOSEMODE_NORMAL = 0;
+    final static int               CLOSEMODE_COMPACT = 1;
+
     /**
      *  Constructs a new Database object having the specified canonical name,
      *  using the specified canonical path (if file-based) to access its
      *  database files.
      *
-     * @param name must be the canonical name of the database, as determined
-     *      by HsqlRuntime.canonicalDatabaseName(String)
-     * @param path must be the canonical path to the database files
-     *      this Database uses, as determined by 
-     *      HsqlRuntime.canonicalDatabasePath(String)     
+     * @param name is an identifier for the database, for future use
+     * @param path is the canonical path to the database files
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-    Database(String name, String path) throws HsqlException {
+    Database(String name, String path, String type) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-// PRE This is guaranteed, since HsqlRuntime is now the sole constructor 
-//       of Database instances:
-//
-//        Trace.check(
-//            name != null 
-//                && HsqlRuntime.canonicalDatabaseName(name).equals(name),
-//            Trace.GENERAL_ERROR, 
-//            "bad database name: " + name);
-//        
-//        Trace.check(
-//            HsqlRuntime.canonicalDatabasePath(name).equals(path),
-//            Trace.GENERAL_ERROR, 
-//            "bad database path: " + path); 
-        
-        sName  = name;
-        sPath  = path;
-        
-        if (sName.startsWith("res:")) {
+        sName = name;
+        sType = type;
+        sPath = path;
+
+        if (sType == DatabaseManager.S_RES) {
             setFilesInJar();
         }
-        
+
         logger = new Logger();
 
         // does not need to be done more than once
@@ -208,21 +198,25 @@ class Database {
 
         compiledStatementManager = new CompiledStatementManager(this);
 
-        open();
+        setState(Database.DATABASE_SHUTDOWN);
     }
 
     /**
-     * Opens this database.  The database can be opened by the constructor,
+     * Opens this database.  The database should be opened after construction,
      * or reopened by the close(int closemode) method during a
      * "shutdown compact".
      *
      * @see #close(int closemode)
      * @throws HsqlException if a database access error occurs
      */
-    private void open() throws HsqlException {
+    synchronized void open() throws HsqlException {
 
         boolean newdatabase;
-        User    sysUser; 
+        User    sysUser;
+
+        if (!isShutdown()) {
+            return;
+        }
 
         setState(DATABASE_OPENING);
         compiledStatementManager.reset();
@@ -237,27 +231,21 @@ class Database {
         sysUser               = aAccess.createSysUser(this);
         sessionManager        = new SessionManager(this, sysUser);
         databaseProperties    = new HsqlDatabaseProperties(this);
-        dInfo = DatabaseInformation.newDatabaseInformation(this);        
+        dInfo = DatabaseInformation.newDatabaseInformation(this);
 
-        if (sPath == null) {
+        if (sType == DatabaseManager.S_MEM) {
             newdatabase = true;
-        } else {          
+        } else {
+
             // create properties file if not exits and report if new file
             newdatabase = !databaseProperties.load();
 
             logger.openLog(this);
         }
 
-        // Case of filesInJar:
-        // There could be an accessible script file resource but no
-        // properties file resource in the jar, in which case,
-        // the CREATE USER SA below might throw, even though we
-        // actually have a valid filesInJar database with a
-        // valid "SA" user.
-        // TODO:  This is a kludge; investigate and simplfy
-        if (newdatabase && !aAccess.exists("SA")) {
-            execute("CREATE USER SA PASSWORD \"\" ADMIN",
-                sessionManager.getSysSession());
+        if (newdatabase) {
+            sessionManager.getSysSession().sqlExecuteDirect(
+                "CREATE USER SA PASSWORD \"\" ADMIN");
         }
 
         setState(DATABASE_ONLINE);
@@ -265,15 +253,14 @@ class Database {
     }
 
     /**
-     *  Retrieves this Database object's name, as know to this Database
-     *  object.
+     *  Name is a lowercase identifier.
      *
      * @return  this Database object's name
      */
-    String getName() {
-        return sName;
+    String getType() {
+        return sType;
     }
-    
+
     String getPath() {
         return sPath;
     }
@@ -292,11 +279,8 @@ class Database {
      *
      * @return  the value of this Database object's isShutdown attribute
      */
-    boolean isShutdown() {
-
-        synchronized (dbState_mutex) {
-            return dbState == DATABASE_SHUTDOWN;
-        }
+    synchronized boolean isShutdown() {
+        return dbState == DATABASE_SHUTDOWN;
     }
 
     /**
@@ -332,70 +316,6 @@ class Database {
     }
 
     /**
-     *  A specialized SQL statement executor, tailored for use by {@link
-     *  WebServerConnection}. Calling this method fully connects the specified
-     *  user, executes the specifed statement, and then disconects.
-     *
-     * @param  user the name of the user for which to execute the specified
-     *      statement. The user must already exist in this Database object.
-     * @param  password the password of the specified user. This must match
-     *      the password, as known to this Database object, of the specified
-     *      user
-     * @param  statement the SQL statement to execute
-     * @return  the result of executing the specified statement, in a form
-     *      already suitable for transmitting as part of an HTTP response.
-     */
-    byte[] execute(String user, String password, String statement) {
-
-        Result r = null;
-
-        try {
-            Session session = connect(user, password);
-
-            r = execute(statement, session);
-
-            sessionManager.processDisconnect(session);
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        } catch (HsqlException e) {
-            r = new Result(e.getMessage(), e.getSQLState(), e.getErrorCode());
-        } catch (Exception e) {
-            r = new Result(e.getMessage(), null, Trace.GENERAL_ERROR);
-        }
-
-        try {
-            return r.getBytes();
-        } catch (Exception e) {
-            return new byte[0];
-        }
-    }
-
-    /**
-     *  The main SQL statement executor. <p>
-     *
-     *  All requests to execute SQL statements against this Database object
-     *  eventually go through this method.
-     *
-     * @param  statement the SQL statement to execute
-     * @param  session an object representing a connected user and a
-     *      collection of session state attributes
-     * @return  the result of executing the specified statement, in a form
-     *      suitable for either wrapping in a local ResultSet object or for
-     *      transmitting to a remote client via the native HSQLDB protocol
-     * @deprecated from 1.7.2; Session is now the HSQLDB execution hub
-     */
-    Result execute(String statement, Session session) {
-
-        try {
-            Trace.check(session != null, Trace.ACCESS_IS_DENIED);
-        } catch (HsqlException e) {
-            return new Result(e, statement);
-        }
-
-        return session.sqlExecuteDirect(statement);
-    }
-
-    /**
      *  Puts this Database object in global read-only mode. That is, after
      *  this call, all existing and future sessions are limited to read-only
      *  transactions. Any following attempts to update the state of the
@@ -425,16 +345,15 @@ class Database {
     }
 
 // ----------------------------------------------------------------------------
-
     boolean isFilesInJar() {
         return filesInJar;
     }
+
     /** Setter for fileInJar attribute */
-    void setFilesInJar() {
-        filesInJar = true;
+    private void setFilesInJar() {
+        filesInJar    = true;
         filesReadOnly = true;
     }
-        
 
     /**
      *  Retrieves a HsqlArrayList containing references to all non-system
@@ -741,7 +660,7 @@ class Database {
         }
 
         try {
-            close(-1);
+            close(CLOSEMODE_IMMEDIATELY);
         } catch (HsqlException e) {    // it's too late now
             if (Trace.TRACE) {
                 Trace.trace(e.toString());
@@ -773,41 +692,44 @@ class Database {
     void close(int closemode) throws HsqlException {
 
         HsqlException he;
-        HsqlRuntime   rt;
 
         he = null;
-        rt = HsqlRuntime.getHsqlRuntime();        
 
+//        rt = HsqlRuntime.getHsqlRuntime();
+/*
         synchronized (rt.findOrCreateDatabaseMutex(sName)) {
-            setState(DATABASE_CLOSING);
+*/
+        setState(DATABASE_CLOSING);
 
-            try {
-                logger.closeLog(closemode);
+        try {
+            logger.closeLog(closemode);
 
-                // tony_lai@users 20020820
-                // The database re-open and close has been moved from
-                // Log#close(int closemode) for saving memory usage.
-                // Doing so the instances of Log and other objects are no longer
-                // referenced, and therefore can be garbage collected if necessary.
-                if (closemode == 1) {
-                    open();
-                    logger.closeLog(0);
-                }
-            } catch (Throwable t) {
-                if (t instanceof HsqlException) {
-                    he = (HsqlException) t;
-                } else {
-                    he = Trace.error(Trace.GENERAL_ERROR, t.toString());
-                }
+            // tony_lai@users 20020820
+            // The database re-open and close has been moved from
+            // Log#close(int closemode) for saving memory usage.
+            // Doing so the instances of Log and other objects are no longer
+            // referenced, and therefore can be garbage collected if necessary.
+            if (closemode == CLOSEMODE_COMPACT) {
+                open();
+                logger.closeLog(0);
             }
-
-            classLoader = null;
-
-            logger.releaseLock();
-            rt.removeDatabase(this);
-            this.setState(DATABASE_SHUTDOWN);
+        } catch (Throwable t) {
+            if (t instanceof HsqlException) {
+                he = (HsqlException) t;
+            } else {
+                he = Trace.error(Trace.GENERAL_ERROR, t.toString());
+            }
         }
 
+        classLoader = null;
+
+        logger.releaseLock();
+        DatabaseManager.removeDatabase(this);
+        setState(DATABASE_SHUTDOWN);
+
+/*
+        }
+*/
         if (he != null) {
             throw he;
         }
@@ -1048,7 +970,8 @@ class Database {
     void setMetaDirty(Result r) {
 
         if (r == null
-                || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {
+                || (r.iMode == ResultConstants.UPDATECOUNT
+                    && r.iUpdateCount > 0)) {
             nextDDLSCN();
             dInfo.setDirty();
         }
@@ -1068,81 +991,53 @@ class Database {
 // to be tagged for similar purposes.
 // ---------------------------------
     CompiledStatementManager compiledStatementManager;
-    private final Object     scn_mutex     = new Object();
-    private long             scn           = 0;
-    private final Object     ddl_mutex     = new Object();
-    private long             ddl_scn       = 0;
-    private final Object     dml_mutex     = new Object();
-    private long             dml_scn       = 0;
-    private final Object     dbState_mutex = new Object();
+    private long             scn     = 0;
+    private long             ddl_scn = 0;
+    private long             dml_scn = 0;
 
-    long getSCN() {
-
-        synchronized (scn_mutex) {
-            return scn;
-        }
+    synchronized long getSCN() {
+        return scn;
     }
 
-    private void setSCN(long l) {
-
-        synchronized (scn_mutex) {
-            scn = l;
-        }
+    private synchronized void setSCN(long l) {
+        scn = l;
     }
 
-    private long nextSCN() {
+    private synchronized long nextSCN() {
 
-        synchronized (scn_mutex) {
-            scn++;
+        scn++;
 
-            return scn;
-        }
+        return scn;
     }
 
-    long getDDLSCN() {
-
-        synchronized (ddl_mutex) {
-            return ddl_scn;
-        }
+    synchronized long getDDLSCN() {
+        return ddl_scn;
     }
 
-    long getDMLSCN() {
-
-        synchronized (dml_mutex) {
-            return dml_scn;
-        }
+    synchronized long getDMLSCN() {
+        return dml_scn;
     }
 
-    long nextDDLSCN() {
+    synchronized long nextDDLSCN() {
 
-        synchronized (ddl_mutex) {
-            ddl_scn = nextSCN();
+        ddl_scn = nextSCN();
 
-            return ddl_scn;
-        }
+        return ddl_scn;
     }
 
-    long nextDMLSCN() {
+    synchronized long nextDMLSCN() {
 
-        synchronized (dml_mutex) {
-            dml_scn = nextSCN();
+        dml_scn = nextSCN();
 
-            return dml_scn;
-        }
+        return dml_scn;
     }
 
-    private void setState(int state) {
-
-        synchronized (dbState_mutex) {
-            dbState = state;
-        }
+    private synchronized void setState(int state) {
+        dbState = state;
     }
 
-    int getState() {
-
-        synchronized (dbState_mutex) {
-            return dbState;
-        }
+    synchronized int getState() {
+        return dbState;
     }
 
     String getStateString() {

@@ -358,4 +358,8 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         return l;
     }
+
+    public void ensureRoom(int extra){
+        super.ensureRoom(extra);
+    }
 }

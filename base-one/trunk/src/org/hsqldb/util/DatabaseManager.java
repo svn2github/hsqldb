@@ -770,10 +770,12 @@ implements ActionListener, WindowListener, KeyListener {
 
         String g[] = new String[1];
 
-        try {
-            lTime = System.currentTimeMillis();
+        lTime = System.currentTimeMillis();
 
+        try {
             sStatement.execute(sCmd);
+
+            lTime = System.currentTimeMillis() - lTime;
 
             int r = sStatement.getUpdateCount();
 
@@ -788,8 +790,6 @@ implements ActionListener, WindowListener, KeyListener {
 
                 gResult.addRow(g);
             }
-
-            lTime = System.currentTimeMillis() - lTime;
 
             addToRecent(txtCommand.getText());
         } catch (SQLException e) {

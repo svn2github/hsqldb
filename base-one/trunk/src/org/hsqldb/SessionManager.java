@@ -126,9 +126,10 @@ public class SessionManager {
      */
     Session newSession(Database db, User user, boolean readonly) {
 
-        Session s = new Session(db, user, true, readonly, sessionIdCount++);
+        Session s = new Session(db, user, true, readonly, sessionIdCount);
 
         sessionMap.put(sessionIdCount, s);
+        sessionIdCount++;
 
         return s;
     }
@@ -180,7 +181,7 @@ public class SessionManager {
             session.disconnect();
         }
 
-        return new Result();
+        return new Result(ResultConstants.UPDATECOUNT);
     }
 
     /**

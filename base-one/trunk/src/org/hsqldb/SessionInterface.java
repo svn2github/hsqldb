@@ -31,44 +31,35 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
-// fredt@users 20020215 - patch 461556 by paul-h@users - modified
-// minor changes to support the new HsqlServerProperties class
-// boucherb@users 20030501 - Server now implements HsqlSocketRequestHandler
-
 /**
- * HsqlServerFactory
+ * Interface to Session and its remote proxy objects. Used by the
+ * implementations of JDBC interfaces to communicate with the database at
+ * the session level.
  *
+ * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
-public class HsqlServerFactory {
+interface SessionInterface {
 
-    public static HsqlSocketRequestHandler createHsqlServer(String dbFilePath,
-            boolean debugMessages,
-            boolean silentMode) throws java.sql.SQLException {
+/** @todo fredt - used in Library only - to factor out */
+    Session getSession();
 
-        HsqlProperties props = new HsqlProperties();
+    Result execute(Result r) throws HsqlException;
 
-        props.setProperty("server.database", dbFilePath);
-        props.setProperty("server.trace", debugMessages);
-        props.setProperty("server.silent", silentMode);
+    void close();
 
-        Server server = new Server();
+    boolean isClosed();
 
-        server.setProperties(props);
+    boolean isReadOnly() throws HsqlException;
 
-        try {
-            server.openDB();
-        } catch (HsqlException e) {
-            throw new SQLException(e.getMessage(), e.getSQLState(),
-                                   e.getErrorCode());
-        }
+    void setReadOnly(boolean readonly) throws HsqlException;
 
-        server.setState(ServerConstants.SERVER_STATE_ONLINE);
+    boolean isAutoCommit() throws HsqlException;
 
-        // Server now implementes HsqlSocketRequestHandler,
-        // so there's really no need for HsqlSocketRequestHandlerImpl
-        return (HsqlSocketRequestHandler) server;
-    }
+    void setAutoCommit(boolean autoCommit) throws HsqlException;
+
+    void commit() throws HsqlException;
+
+    void rollback() throws HsqlException;
 }

@@ -588,10 +588,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        // CHECKME:
-        // is this always correct?
-        // boucherb@users 20020426
-        return "jdbc:hsqldb:" + connection.getName();
+        return connection.getURL();
     }
 
     /**
@@ -871,8 +868,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.2, do not rely on this information.
-     * This will be resolved and explained more clearly in a later 1.7.x release.
+     * From HSQLDB 1.7.2 it is assumed that this refers to data being stored
+     * by the JDBC client. This method always returns false.
      * </span>
      * <!-- end release-specific documentation -->
      * @return <code>true</code> if so; <code>false</code> otherwise
@@ -880,13 +877,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean usesLocalFiles() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        // SEE: FIXME at jdbcConnection.usesLocalFiles()
-        // boucherb@users 20020426
-        return connection.usesLocalFiles();
+        return false;
     }
 
     /**

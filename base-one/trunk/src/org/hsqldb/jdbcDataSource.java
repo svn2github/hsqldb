@@ -67,11 +67,6 @@ implements Serializable, Referenceable, DataSource {
     private String user = "";
 
     /**
-     * Signature
-     */
-    private static final String sStartURL = "jdbc:hsqldb:";
-
-    /**
      * Database location
      */
     private String database = "";
@@ -104,7 +99,7 @@ implements Serializable, Referenceable, DataSource {
             props.put("password", password);
         }
 
-        return new jdbcConnection(database, props);
+        return jdbcDriver.getConnection(database, props);
     }
 
     /**

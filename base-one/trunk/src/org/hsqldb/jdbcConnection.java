@@ -103,6 +103,7 @@ import org.hsqldb.lib.StringConverter;
 // fredt@users 20020930 - patch 1.7.1 - support for connection properties
 // kneedeepincode@users 20021110 - patch 635816 - correction to properties
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
+// fredt@users 20030620 - patch 1.7.2 - reworked to use a SessionInterface
 
 /**
  * <!-- start generic documentation -->
@@ -249,230 +250,22 @@ public class jdbcConnection implements Connection {
 // ---------------------------- Common Attributes --------------------------
 
     /**
-     *  Is this connection closed?<p>
-     *
-     *  This attribute is false until the first call to {@link
-     *  #close()}. If the close is successful, then this
-     *  attribute is set to true and stays true until this connection
-     *  is eventually garbage collected.
-     */
-    private boolean bClosed;
-
-    /**
-     *  Whether to use TLS authentication and encryption for the a
-     *  Server connection.  (Intention was for this to apply to both
-     *  Server and WebServer connections, but at this time we are
-     *  using JRE-supplied ProtocolHandlers for WebServer.  Unfortunately
-     *  the https ProtocolHandler is only available for 1.4.0 JRE, so
-     *  we may end up generalizing the Server work to WebServer, and
-     *  isTls will then apply to both connection types).
-     *
-     *  (Currently only 1-way TLS is implemented)
-     */
-    private boolean isTls = false;
-
-    /**
-     *  The name of this connection's {@link Database Database}, as
-     *  known to this connection. <p>
-     *
-     *  <B>Note:</B> Network connections know their database name as
-     *  the network url of that database, without the protocol
-     *  specifier. Connections to in-process database instances know
-     *  their database name as the local path specifier for the
-     *  database. For in-memory databases, this is always <B>"."</B>
-     */
-    private String sDatabaseName;
-
-    /**
      * Properties for the connection
      *
      */
-    private HsqlProperties connProperties;
+    HsqlProperties connProperties;
 
     /**
-     * One of the possible values for this connection's type. <p>
-     *
-     * This value indicates a network <code>Connection</code> to a
-     * {@link org.hsqldb.WebServer WebServer} mode <code>Database</code>,
-     * using http protocol. <p>
+     * This connection's interface to the corresponding Session
+     * object in the database engine.
      */
-    final static int HTTP = 0;
+    SessionInterface sessionProxy;
 
     /**
-     * One of the possible values for this connection's type. <p>
-     *
-     * This value indicates a <code>Connection</code> to an
-     * in-process (Standalone mode) <code>Database</code>. <p>
-     */
-    final static int STANDALONE = 1;
-
-    /**
-     *  One of the possible values for this connection's type. <p>
-     *
-     *  This value indicates a <code>Connection</code> created inside
-     *  the database on behalf of an existing {@link Session Session},
-     *  to be used as the parameter to a SQL function or stored
-     *  procedure that needs to execute in the context of the calling
-     *  <code>Session</code>. <p>
-     *
+     * Is this an internal connection.
      *
      */
-    final static int INTERNAL = 2;
-
-    /**
-     *  One of the possible values for this connection's type. <p>
-     *
-     *  This value indicates a network <code>Connection</code> to a
-     *  {@link org.hsqldb.Server Server} mode <code>Database</code>,
-     *  using native hsqldb protocol. <p>
-     *
-     *
-     */
-    final static int HSQLDB = 3;
-
-    /**
-     * The type of this connection: {@link #STANDALONE STANDALONE},
-     * {@link #HSQLDB HSQLDB}, {@link #HTTP HTTP}, or {@link
-     * #INTERNAL INTERNAL}. <p>
-     */
-    private int iType;
-
-// ----------------- In-process Database Connection Attributes -------------
-
-    /**
-     *  This connection's in-process {@link Database Database}. <p>
-     *
-     *  This attribute is used only for {@link #STANDALONE STANDALONE}
-     *  or {@link #INTERNAL INTERNAL} type connections. <p>
-     *
-     *
-     */
-    Database dDatabase;
-
-    /**
-     * This connection's corresponding in-process {@link
-     * Session Session}.<p>
-     *
-     * This attribute is used only for {@link #STANDALONE STANDALONE}
-     * or {@link #INTERNAL INTERNAL} type connections. <p>
-     */
-    Session cSession;
-
-    /**
-     * A map from database names to open in-process {@link Database
-     * Database} instances. <p>
-     *
-     * This attribute is used to track and close open in-process
-     * <code>Database</code> instances, when it is detected that they
-     * no longer have any open connections. <p>
-     */
-    private static Hashtable tDatabase = new Hashtable();
-
-    /**
-     *  A map from each open in-process {@link Database Database} to a
-     *  count of its open connections. <p>
-     *
-     *  This attribute is used to track and close open in-process
-     *  <code>Database</code> instances, when it is detected that they
-     *  no longer have any open connections. <p>
-     *
-     *
-     */
-    private static Hashtable iUsageCount = new Hashtable();
-
-// ---------------- HSQLDB Protocol Network Connection Attributes ------------
-
-    /**
-     * The network <code>Socket</code> used communicate with this
-     * connection's {@link Database Database}. <p>
-     *
-     * This attribute is used only for {@link #HSQLDB HSQLDB} type
-     * connections. <p>
-     */
-    Socket sSocket;
-
-    /**
-     * The stream used to send requests to this connection's {@link
-     * Database Database}. <p>
-     *
-     * This attribute is used only for {@link #HSQLDB HSQLDB} type
-     * connections. <p>
-     */
-    DataOutputStream dOutput;
-
-    /**
-     * The stream used to receive results from this connection's
-     * {@link Database Database}. <p>
-     *
-     * This attribute is used only for {@link #HSQLDB HSQLDB} type
-     * connections. <p>
-     */
-    DataInputStream dInput;
-
-    /**
-     *  Used when no port is explicitly specified in the url for a
-     *  non-TLS network <code>Connection</code> of type {@link #HSQLDB
-     *  HSQLDB}. <p>
-     *
-     *  This value is used as the port number for non-TLS network connections
-     *  to {@link Server Server} mode databases, when no port number
-     *  is explictly specified in the connection url. <p>
-     *
-     *  In the standard distribution, this will always be <code><b>9001</b>
-     *  </code>.
-     */
-    public final static int DEFAULT_HSQLDB_PORT = 9001;
-
-    /**
-     *  Used when no port is explicitly specified in the url for a TLS
-     *  network <code>Connection</code> of type {@link #HSQLDB
-     *  HSQLDB}. <p>
-     *
-     *  This value is used as the port number for TLS network connections
-     *  to {@link Server Server} mode databases, when no port number
-     *  is explictly specified in the connection url. <p>
-     *
-     *  In the standard distribution, this will always be <code><b>554</b>
-     *  </code>.  (One could remember this as the SSL HTTP port 443 + 111).
-     *  This is a privileged port (< 1024) on purpose.
-     */
-    public final static int DEFAULT_HSQLSDB_PORT = 554;
-
-// ---------------- HTTP Protocol Network Connection Attributes -------------
-
-    /**
-     *  The http url of this connection's {@link WebServer WebServer}
-     *  mode {@link Database Database}, when this connection is of
-     *  type {@link #HTTP HTTP}. <p>
-     */
-    private String sConnect;
-
-    /**
-     *  The logon name for a connection to a {@link WebServer
-     *  WebServer} mode <code>Database</code>. <p>
-     *
-     *  This is the user name that this connection uses to log on to
-     *  its <code>Database</code>, when this connection is of type
-     *  {@link #HTTP HTTP}. <p>
-     */
-    private String sUser;
-
-    /**
-     *  The password this connection uses to log on to its {@link
-     *  WebServer WebServer} mode <code>Database</code>, when this
-     *  connection is of type {@link #HTTP HTTP}. <p>
-     */
-    private String sPassword;
-
-    /**
-     *  The encoding used to communicate with a {@link WebServer
-     *  WebServer} mode {@link Database Database}, when this
-     *  connection is of type {@link #HTTP HTTP}. <p>
-     *
-     *  In the standard distribution, this will always be
-     *  <code class="JavaStringLiteral">"8859_1"</code>
-     */
-    final static String ENCODING = "8859_1";
+    boolean isInternal;
 
 // ----------------------------------- JDBC 1 -------------------------------
 
@@ -527,13 +320,9 @@ public class jdbcConnection implements Connection {
      */
     public Statement createStatement() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
-        return new jdbcStatement(this);
+        return new jdbcStatement(this, jdbcResultSet.TYPE_FORWARD_ONLY);
     }
 
     /**
@@ -604,13 +393,14 @@ public class jdbcConnection implements Connection {
     public PreparedStatement prepareStatement(String sql)
     throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(sql);
-        }
-
         checkClosed();
 
-        return new jdbcPreparedStatement(this, sql);
+        try {
+            return new jdbcPreparedStatement(this, sql,
+                                             jdbcResultSet.TYPE_FORWARD_ONLY);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -705,13 +495,14 @@ public class jdbcConnection implements Connection {
      */
     public CallableStatement prepareCall(String sql) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(sql);
-        }
-
         checkClosed();
 
-        return new jdbcPreparedStatement(this, sql);
+        try {
+            return new jdbcPreparedStatement(this, sql,
+                                             jdbcResultSet.TYPE_FORWARD_ONLY);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -883,10 +674,10 @@ public class jdbcConnection implements Connection {
      */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
 
-        if (autoCommit) {
-            execute("SET AUTOCOMMIT TRUE");
-        } else {
-            execute("SET AUTOCOMMIT FALSE");
+        try {
+            sessionProxy.setAutoCommit(autoCommit);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
     }
 
@@ -899,28 +690,10 @@ public class jdbcConnection implements Connection {
      */
     public boolean getAutoCommit() throws SQLException {
 
-        // comment
-        // Test properly if new code works correctly
-        // fredt@users 20020510
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        if (iType == INTERNAL || iType == STANDALONE) {
-            return cSession.getAutoCommit();
-        } else {
-            try {
-                ResultSet rs =
-                    execute("call \"org.hsqldb.Library.getAutoCommit\"()");
-
-                rs.next();
-
-                return rs.getBoolean(1);
-            } catch (SQLException e) {
-                this.close();
-
-                throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN);
-            }
+        try {
+            return sessionProxy.isAutoCommit();
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
     }
 
@@ -973,7 +746,12 @@ public class jdbcConnection implements Connection {
      * @see #setAutoCommit
      */
     public void commit() throws SQLException {
-        execute("COMMIT");
+
+        try {
+            sessionProxy.commit();
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -1026,7 +804,12 @@ public class jdbcConnection implements Connection {
      * @see #setAutoCommit
      */
     public void rollback() throws SQLException {
-        execute("ROLLBACK");
+
+        try {
+            sessionProxy.rollback();
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -1047,20 +830,10 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * In a future release, <code>INTERNAL</code> <code>Connection</code>
-     * objects may not be closable from JDBC client code, and disconnect
+     * In 1.7.2, <code>INTERNAL</code> <code>Connection</code>
+     * objects are not closable from JDBC client code, and disconnect
      * statements issued on <code>INTERNAL</code> <code>Connection</code>
-     * objects may be ignored. <p>
-     *
-     * For HSQLDB developers not involved with writing database
-     * internals, this change will only apply to connections obtained
-     * automatically from the database as the first parameter to
-     * stored procedures and SQL functions. This is mainly an issue
-     * to developers writing custom SQL function and stored procedure
-     * libraries for HSQLDB. As we anticipate this change, it is
-     * recommended that SQL function and stored procedure code avoid
-     * depending on closing or issuing a disconnect on a connection
-     * obtained in this manner. <p>
+     * objects will be ignored. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1068,39 +841,13 @@ public class jdbcConnection implements Connection {
      */
     public void close() throws SQLException {
 
-        SQLException se;
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        if (iType == INTERNAL) {
+        if (isInternal) {
             return;
         }
 
-        if (bClosed) {
-            return;
-        }
+        sessionProxy.close();
 
-        se = null;
-
-        if (iType == STANDALONE) {
-            closeStandalone();
-        } else {
-            try {
-                execute("DISCONNECT");
-            } catch (SQLException e) {
-                se = e;
-            }
-
-            closeSocket();
-        }
-
-        bClosed = true;
-
-        if (se != null) {
-            throw se;
-        }
+        sessionProxy = null;
     }
 
     /**
@@ -1111,11 +858,11 @@ public class jdbcConnection implements Connection {
      */
     public boolean isClosed() {
 
-        if (Trace.TRACE) {
-            Trace.trace();
+        if (sessionProxy == null || sessionProxy.isClosed()) {
+            return true;
         }
 
-        return bClosed;
+        return false;
     }
 
     /**
@@ -1172,8 +919,7 @@ public class jdbcConnection implements Connection {
      *
      * <hr>
      *
-     * Starting with HSQLDB 1.7.2, an option is provided to
-     * plug in alternate meta-data implementations. <p>
+     * Starting with HSQLDB 1.7.2, full metadate is supported. <p>
      *
      * For discussion in greater detail, please follow the link to the
      * overview for jdbcDatabaseMetaData, below.
@@ -1188,11 +934,6 @@ public class jdbcConnection implements Connection {
      * @see DatabaseInformationFull
      */
     public DatabaseMetaData getMetaData() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return new jdbcDatabaseMetaData(this);
     }
 
@@ -1239,8 +980,12 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      */
     public void setReadOnly(boolean readonly) throws SQLException {
-        execute("SET READONLY " + (readonly ? "TRUE"
-                                            : "FALSE"));
+
+        try {
+            sessionProxy.setReadOnly(readonly);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -1251,25 +996,10 @@ public class jdbcConnection implements Connection {
      */
     public boolean isReadOnly() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        if (iType == INTERNAL || iType == STANDALONE) {
-            return cSession.isReadOnly();
-        } else {
-            try {
-                ResultSet rs = execute(
-                    "call \"org.hsqldb.Library.isReadOnlyConnection\"()");
-
-                rs.next();
-
-                return rs.getBoolean(1);
-            } catch (SQLException e) {
-                this.close();
-
-                throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN);
-            }
+        try {
+            return sessionProxy.isReadOnly();
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
     }
 
@@ -1293,12 +1023,7 @@ public class jdbcConnection implements Connection {
      *     Connection object's database) in which to work (Ignored)
      * @throws SQLException if a database access error occurs <p>
      */
-    public void setCatalog(String catalog) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(catalog);
-        }
-    }
+    public void setCatalog(String catalog) throws SQLException {}
 
     /**
      * <!-- start generic documentation -->
@@ -1320,10 +1045,6 @@ public class jdbcConnection implements Connection {
      * @exception SQLException Description of the Exception
      */
     public String getCatalog() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -1366,10 +1087,6 @@ public class jdbcConnection implements Connection {
      */
     public void setTransactionIsolation(int level) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(level);
-        }
-
         if (level != Connection.TRANSACTION_READ_UNCOMMITTED) {
             throw jdbcDriver.notSupported;
         }
@@ -1407,10 +1124,6 @@ public class jdbcConnection implements Connection {
      * @see #setTransactionIsolation setTransactionIsolation
      */
     public int getTransactionIsolation() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -1450,10 +1163,6 @@ public class jdbcConnection implements Connection {
      */
     public SQLWarning getWarnings() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
         return null;
@@ -1492,27 +1201,10 @@ public class jdbcConnection implements Connection {
      */
     void checkClosed() throws SQLException {
 
-        if (bClosed) {
+        if (sessionProxy == null || sessionProxy.isClosed()) {
             throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
         }
     }
-
-    /**
-     * An internal method for removing a database that has been shutdown
-     *
-     * @param database path/name of database to remove
-     */
-
-    // bourcherb@users - 20020828 - patch 1.7.1 by boucherb@users
-//    static void removeDatabase(Database database) {
-//
-//        if (database == null) {
-//            return;
-//        }
-//
-//        tDatabase.remove(database.getName());
-//        iUsageCount.remove(database);
-//    }
 
     /**
      * <!-- start generic documentation -->
@@ -1534,11 +1226,6 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs <p>
      */
     public void clearWarnings() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -1599,10 +1286,6 @@ public class jdbcConnection implements Connection {
      */
     public Statement createStatement(int type,
                                      int concurrency) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
         checkTypeConcurrency(type, concurrency);
@@ -1669,14 +1352,14 @@ public class jdbcConnection implements Connection {
     public PreparedStatement prepareStatement(String sql, int type,
             int concurrency) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace(sql);
-        }
-
         checkTypeConcurrency(type, concurrency);
         checkClosed();
 
-        return new jdbcPreparedStatement(this, sql, type);
+        try {
+            return new jdbcPreparedStatement(this, sql, type);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
@@ -2443,45 +2126,37 @@ public class jdbcConnection implements Connection {
      *     of reasons, including network problems or the fact that it
      *     may already be in use by another process.
      */
-    jdbcConnection(String s, Properties props) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(s);
-        }
+    jdbcConnection(HsqlProperties props) throws SQLException {
 
         String user     = (String) props.getProperty("user");
         String password = (String) props.getProperty("password");
+        String connType = (String) props.getProperty("connection_type");
+        String dbString = (String) props.getProperty("database");
+        String host     = props.getProperty("host");
+        int    port     = props.getIntegerProperty("port", 0);
+        boolean isTLS = (connType == DatabaseManager.S_HSQLS
+                         || connType == DatabaseManager.S_HTTPS);
 
-        if (user == null) {
-            user = "";
+        try {
+            if (connType == DatabaseManager.S_FILE
+                    || connType == DatabaseManager.S_MEM
+                    || connType == DatabaseManager.S_RES) {
+                sessionProxy = DatabaseManager.newSession(connType, dbString,
+                        user, password);
+            } else if (connType == DatabaseManager.S_HSQL
+                       || connType == DatabaseManager.S_HSQLS) {
+                sessionProxy = new HSQLClientConnection(host, port, dbString,
+                        isTLS, user, password);
+            } else if (connType == DatabaseManager.S_HTTP
+                       || connType == DatabaseManager.S_HTTPS) {
+                sessionProxy = new HTTPClientConnection(host, port, dbString,
+                        isTLS, user, password);
+            }
+
+            connProperties = props;
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
-
-        if (password == null) {
-            password = "";
-        }
-
-        sDatabaseName = s;
-        s             = s.toUpperCase();
-
-        if (s.startsWith("HTTP://") || s.startsWith("HTTPS://")) {
-            iType = HTTP;
-
-            openHTTP(user, password);
-        } else if (s.startsWith("HSQLS://")) {
-            iType = HSQLDB;
-
-            openHSQL(user, password, true);
-        } else if (s.startsWith("HSQL://")) {
-            iType = HSQLDB;
-
-            openHSQL(user, password);
-        } else {
-            iType = STANDALONE;
-
-            openStandalone(user, password);
-        }
-
-        connProperties = new HsqlProperties(props);
     }
 
     /**
@@ -2530,18 +2205,8 @@ public class jdbcConnection implements Connection {
      * @see Function
      */
     jdbcConnection(Session c) throws HsqlException {
-
-        Trace.doAssert(c != null, "The specified Session is null");
-
-        iType     = INTERNAL;
-        cSession  = c;
-        dDatabase = c.getDatabase();
-
-        //FIXME:
-        // Internal connections should also know the name of their database
-        // Otherwise, our jdbcDatabaseMetaData implementation is broken
-        // boucherb@users 20020509
-        sDatabaseName = dDatabase.getName();
+        isInternal   = true;
+        sessionProxy = c;
     }
 
     /**
@@ -2577,393 +2242,6 @@ public class jdbcConnection implements Connection {
      * @see  #executeHTTP executeHTTP
      * @see  #executeStandalone executeStandalone
      */
-    jdbcResultSet execute(String s) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace(s);
-        }
-
-        checkClosed();
-
-        switch (iType) {
-
-            case HTTP :
-                return executeHTTP(s);
-
-            case HSQLDB :
-                return executeHSQL(s);
-
-            default :
-
-                // internal and standalone
-                return executeStandalone(s);
-        }
-    }
-
-    /**
-     * Does the database store tables in a local file? <p>
-     *
-     * This is the internal version of {@link
-     * jdbcDatabaseMetaData#usesLocalFiles()
-     * jdbcDatabaseMetaData.usesLocalFiles()} <p>
-     *
-     * This method exists because the answer depends on private
-     * attributes of this class, and there is no need to provide
-     * jdbcDatabaseMetaData direct access to them.  The answer provided
-     * by this method is still not completely accurate.  For more
-     * information, see the FIXME tag in the source.
-     *
-     * @return true if the database stores tables in a local file,
-     *     else false
-     */
-    boolean usesLocalFiles() {
-
-        // FIXME.  This is wrong. Both HTTP and HSQLDB connections may or
-        // may not be using local files from the prespective of the client,
-        // depending on whether the server is running on the same
-        // machine as the client, as well as whether the server is using
-        // files on a network file server or local to the machine hosting the
-        // Server.  For instance, the server could be across the network on
-        // another machine but using files local to the client machine via
-        // a network file server installed on the client machine.  Huh?
-        // How to resolve?
-        // First, the semantics are unclear.  What does
-        // usesLocalFiles really mean?  What was the intent of specifying
-        // this method as part of the DatabaseMetaData interface?
-        // Second, if this really means "is the database across the network,
-        // then does that mean across the local loopback, or "really" across
-        // the netowrk. Check if client ip == host ip?
-        //
-        // return iType != HTTP && iType != HSQLDB ?
-        //
-        // Standalone connections do, HTTP connections not
-        return iType != HTTP;
-    }
-
-    /**
-     *  Get the name of this connection's {@link Database Database},
-     *  as known to this connection. <p>
-     *
-     *  <B>Note:</B> Network connections know their database name as
-     *  the network url of that database, without the protocol
-     *  specifier. Connections to in-process database instances know
-     *  their database name as the local path specifier for the
-     *  database. For in-memory databases, this is always <B>"."</B>
-     *
-     * @return  the name of this connection's datase, as it is known
-     *      to this connection.
-     */
-    String getName() {
-        return sDatabaseName;
-    }
-
-    /**
-     *  A connection-type specific open method. <p>
-     *
-     *  This method opens a connection to a {@link WebServer
-     *  WebServer} mode {@link Database Database} instance, when it is
-     *  determined that the type of this connection is {@link #HTTP
-     *  HTTP}. <p>
-     *
-     *  This method is called from the standard {@link
-     *  #jdbcConnection(String,String,String) jdbcConnection}
-     *  constructor.
-     *
-     * @param  user the user's name, as known to the database
-     * @param  password the user's password
-     * @throws  SQLException when the user/password combination is
-     *      invalid or a network communication error occurs
-     */
-    private void openHTTP(String user, String password) throws SQLException {
-
-        sConnect  = sDatabaseName;
-        sUser     = user;
-        sPassword = password;
-
-        executeHTTP(" ");
-    }
-
-    /**
-     *  A connection-type specific SQL statement executor. <p>
-     *
-     *  This method executes SQL statements on behalf of {@link
-     *  #execute(String) execute}, when it is detected that the type of
-     *  this connection is {@link #HTTP HTTP}.
-     *
-     * @param  s the SQL statement to execute
-     * @return  the Result of executing the specified SQL statement
-     * @throws  SQLException when executing the statement cannot be
-     *      executerd or there is a network communication failure <p>
-     *
-     *      The typical reasons a statement cannot be executed are:<p>
-     *
-     *
-     *      <OL>
-     *        <LI> The statement cannot be parsed</LI>
-     *        <LI> The statement refers to invalid or non-existent
-     *        database objects</LI>
-     *        <LI> The statement violates database integrity</LI>
-     *        <LI> A security violation occurs</LI>
-     *        <LI> The database is shut down</LI>
-     *        <LI> The session has been disconnected</LI>
-     *        <LI> The connection is closed</LI>
-     *      </OL>
-     *
-     * @see  #execute
-     */
-    private synchronized jdbcResultSet executeHTTP(String s)
-    throws SQLException {
-
-        byte byteArray[];
-
-        try {
-            URL url = new URL(sConnect);
-            String p = StringConverter.unicodeToHexString(sUser) + "+"
-                       + StringConverter.unicodeToHexString(sPassword) + "+"
-                       + StringConverter.unicodeToHexString(s);
-            URLConnection c = url.openConnection();
-
-            c.setDoOutput(true);
-
-            OutputStream os = c.getOutputStream();
-
-            os.write(p.getBytes(ENCODING));
-            os.close();
-            c.connect();
-
-            InputStream         is  = (InputStream) c.getContent();
-            BufferedInputStream in  = new BufferedInputStream(is);
-            int                 len = c.getContentLength();
-
-            byteArray = new byte[len];
-
-            for (int i = 0; i < len; i++) {
-                int r = in.read();
-
-                byteArray[i] = (byte) r;
-            }
-        } catch (MalformedURLException mue) {
-            int iEndOfProt = sConnect.indexOf(':');
-
-            if (iEndOfProt < 1) {
-                throw jdbcDriver.sqlException(
-                    Trace.CONNECTION_IS_BROKEN,
-                    "jdbcResultSet() somehow got a "
-                    + "connect string with no protocol specification");
-            }
-
-            throw new SQLException("Protocol '"
-                                   + sConnect.substring(0, iEndOfProt)
-                                   + "' is not supported by your JRE.");
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
-                                          e.getMessage());
-        }
-
-        BinaryServerRowInput rowin = new BinaryServerRowInput(byteArray);
-        Result               result;
-
-        try {
-            result = new Result(rowin);
-        } catch (HsqlException e) {
-            throw new SQLException("connection is broken");
-        }
-
-        return new jdbcResultSet(result, connProperties);
-    }
-
-    /**
-     *  A connection-type specific open method. <p>
-     *
-     *  This method opens a connection to a {@link Server Server} mode
-     *  {@link Database Database} instance, when it is determined that
-     *  the type of this connection is {@link #HSQLDB HSQLDB}. <p>
-     *
-     *  This method is called from the standard {@link
-     *  #jdbcConnection(String,String,String) jdbcConnection}
-     *  constructor.
-     *
-     * @param  user the user's name, as known to the database
-     * @param  password the user's password
-     * @throws  SQLException when the supplied user/password
-     *      combination is invalid or the network or database are
-     *      unavailable, or (if TLS mode was requested) if there are
-     *      SSL resource, authentication, or handshaking problems.
-     */
-    private void openHSQL(String user, String password) throws SQLException {
-        openHSQL(user, password, false);
-    }
-
-    /**
-     *  A connection-type specific open method. <p>
-     *
-     *  This method opens a connection to a {@link Server Server} mode
-     *  {@link Database Database} instance, when it is determined that
-     *  the type of this connection is {@link #HSQLDB HSQLDB}. <p>
-     *
-     * @param  user the user's name, as known to the database
-     * @param  password the user's password
-     * @param bTlsIn Whether to use TLS mode
-     * @throws  SQLException when the supplied user/password
-     *      combination is invalid or the network or database are
-     *      unavailable, or (if TLS mode was requested) if there are
-     *      TLS resource, authentication, or handshaking problems.
-     */
-    private void openHSQL(String user, String password,
-                          boolean bTlsIn) throws SQLException {
-
-        sConnect  = sDatabaseName.substring(sDatabaseName.indexOf("://") + 3);
-        sUser     = user;
-        sPassword = password;
-        isTls     = bTlsIn;
-
-        reconnectHSQL();
-    }
-
-    /**
-     *  Makes the initial network connection to a {@link Server
-     *  Server} mode {@link Database Database}
-     *
-     * @throws  SQLException when the network or database are
-     *      unavailable, or when this connection's user/password
-     *      combination is invalid
-     */
-    private void reconnectHSQL() throws SQLException {
-
-        HsqlSocketFactory factory;
-
-        try {
-            StringTokenizer st   = new StringTokenizer(sConnect, ":");
-            String          host = st.hasMoreTokens() ? st.nextToken()
-                                                      : "";
-            int port = st.hasMoreTokens() ? Integer.parseInt(st.nextToken())
-                                          : (isTls ? DEFAULT_HSQLSDB_PORT
-                                                   : DEFAULT_HSQLDB_PORT);
-
-            sSocket = newSocket(host, port, isTls);
-
-            //sSocket.setTcpNoDelay(true);
-            dOutput = new DataOutputStream(
-                new BufferedOutputStream(sSocket.getOutputStream()));
-            dInput = new DataInputStream(
-                new BufferedInputStream(sSocket.getInputStream()));
-
-            dOutput.writeUTF(sUser);
-            dOutput.writeUTF(sPassword);
-            dOutput.flush();
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
-                                          e.getMessage());
-        }
-    }
-
-    /**
-     *  A connection-type specific SQL statement executor. <p>
-     *
-     *  This method executes SQL statements on behalf of {@link
-     *  #execute(String) execute()}, when it is determined that the
-     *  type of this <code>Connection</code> is {@link #HSQLDB
-     *  HSQLDB}.
-     *
-     * @param  s the SQL statement to execute
-     * @return  the result of executing the specified SQL statement
-     * @throws  SQLException when the specified statement cannot be
-     *      executed or there is a network communication failure <p>
-     *
-     *      The typical reasons a statement cannot be executed are:<p>
-     *
-     *
-     *      <OL>
-     *        <LI> The statement cannot be parsed</LI>
-     *        <LI> The statement refers to invalid or non-existent
-     *        database objects</LI>
-     *        <LI> The statement violates database integrity</LI>
-     *        <LI> A security violation occurs</LI>
-     *        <LI> The database is shut down</LI>
-     *        <LI> The session has been disconnected</LI>
-     *        <LI> The connection is closed</LI>
-     *      </OL>
-     *
-     * @see  #execute execute
-     */
-    private synchronized jdbcResultSet executeHSQL(String s)
-    throws SQLException {
-
-        byte byteArray[];
-
-        try {
-
-// fredt@users 20011220 - patch 448121 by sma@users - large binary values
-            byte[] bytes = s.getBytes("utf-8");
-
-            dOutput.writeInt(bytes.length);
-            dOutput.write(bytes);
-            dOutput.flush();
-
-            int len = dInput.readInt();
-
-            byteArray = new byte[len];
-
-            int p = 0;
-
-            while (true) {
-                int l = dInput.read(byteArray, p, len);
-
-                if (l == len) {
-                    break;
-                } else {
-                    len -= l;
-                    p   += l;
-                }
-            }
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
-                                          e.getMessage());
-        }
-
-        BinaryServerRowInput rowin = new BinaryServerRowInput(byteArray);
-        Result               result;
-
-        try {
-            result = new Result(rowin);
-        } catch (HsqlException e) {
-            throw new SQLException("connection is broken");
-        }
-
-        return new jdbcResultSet(result, connProperties);
-    }
-
-    /**
-     *  A connection-type specific open method. <p>
-     *
-     *  This method opens a connection to an in-process <code>Database</code>
-     *  instance, when it is determined that the type of this
-     *  connection is {@link #STANDALONE STANDALONE}. <p>
-     *
-     *  This method is called from the standard {@link
-     *  #jdbcConnection(String,String,String) jdbcConnection}
-     *  constructor.
-     *
-     * @param  user the name of the user
-     * @param  password the user's password
-     * @throws  SQLException when the supplied user/password
-     *      combination is invalid or there is a problem opening this
-     *      connection's database
-     */
-    private void openStandalone(String user,
-                                String password) throws SQLException {
-
-        try {
-            dDatabase = runtime.getDatabase(sDatabaseName, this);
-            cSession  = dDatabase.connect(user, password);
-        } catch (HsqlException se) {
-            try {
-                close();
-            } catch (Exception e) {}
-
-            throw jdbcDriver.sqlException(se);
-        }
-    }
 
     /**
      *  The default implementation simply attempts to silently {@link
@@ -2980,93 +2258,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-    /**
-     *  Closing a Connection to a standalone database will cause the usage
-     *  count to be decremented and a disconnect SQL command issued to the db.
-     *  If this is the last connection, the db is shut down.<p>
-     *
-     *
-     * @throws  SQLException when a database access error occurs
-     */
-    private void closeStandalone() throws SQLException {
-
-        runtime.releaseDatabase(dDatabase, this);
-
-        dDatabase = null;
-        cSession  = null;
+    String getURL() {
+        return connProperties.getProperty("url");
     }
-
-    /**
-     *  A connection-type specific SQL statement executor. <p>
-     *
-     *  This method executes SQL statements on behalf of {@link
-     *  #execute(String) execute()}, when it is determined that the
-     *  type of this <code>Connection</code> is {@link #STANDALONE
-     *  STANDALONE}.
-     *
-     * @param  s the SQL statement to execute
-     * @return  the result of executing the specified SQL statement
-     * @throws  SQLException when the specified statement cannot be
-     *      executed <p>
-     *
-     *      The typical reasons a statement cannot be executed are:<p>
-     *
-     *
-     *      <OL>
-     *        <LI> The statement cannot be parsed</LI>
-     *        <LI> The statement refers to invalid or non-existent
-     *        database objects</LI>
-     *        <LI> The statement violates database integrity</LI>
-     *        <LI> A security violation occurs</LI>
-     *        <LI> The database is shut down</LI>
-     *        <LI> The session has been disconnected</LI>
-     *        <LI> The connection is closed</LI>
-     *      </OL>
-     *
-     * @see  #execute execute
-     */
-    private jdbcResultSet executeStandalone(String s) throws SQLException {
-        return new jdbcResultSet(dDatabase.execute(s, cSession),
-                                 connProperties);
-    }
-
-    /**
-     *  Convenience method to clean up the socket which may still be open
-     */
-    private void closeSocket() {
-
-        if (sSocket != null) {
-            try {
-                sSocket.close();
-            } catch (Exception e) {
-                if (Trace.TRACE) {
-                    Trace.trace(e.toString());
-                }
-            }
-
-            sSocket = null;
-        }
-    }
-
-    /** Retrieves a new Socket object */
-    private static synchronized Socket newSocket(String host, int port,
-            boolean isTLS) throws SQLException {
-
-        try {
-            return HsqlSocketFactory.getInstance(isTLS).createSocket(host,
-                                                 port);
-        } catch (Exception e) {
-
-            // TODO:  wrap this better; we have lots of Trace codes we could
-            // use for TLS and maybe a few better than GENERAL_ERROR
-            // for plain sockets.
-            throw jdbcDriver.sqlException(isTLS
-                                          ? Trace.error(Trace.TLS_ERROR,
-                                              e.toString())
-                                          : Trace.error(Trace.GENERAL_ERROR,
-                                          e.toString()));
-        }
-    }
-
-    private static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
 }

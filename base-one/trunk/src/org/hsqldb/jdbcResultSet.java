@@ -95,6 +95,7 @@ import org.hsqldb.lib.StringInputStream;
 // boucherb@users and fredt@users 20020505 extensive review and update
 // of docs and behaviour to comply with java.sql specification
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
+// fredt@users 20030622 - patch 1.7.2 - columns and labels are case sensitive
 
 /**
  * <!-- start generic documentation -->
@@ -428,43 +429,15 @@ public class jdbcResultSet implements ResultSet {
 // see setGetColumnName in package private internal implementation
 // methods section
 
-    /**
-     * Does {@link jdbcResultSetMetaData#getColumnName(int)
-     * jdbcResultSetMetaData.getColumnName()} return the column name (true) or
-     * column label (false)?
-     */
-    boolean getColumnName = true;
-
-    /**
-     * Determines how strictly ResultSetMetaData reporting is handled. <p>
-     *
-     * If false, various unsupported jdbcResultSetMetaData methods behave as
-     * they did in version 1.61, else they typically either throw an
-     * SQLException or return a more strictly correct but possibly less
-     * usable value.
-     */
-    boolean strictMetaData = false;
-
     /** Properties of this ResultSet's parent Connection. */
     private HsqlProperties connProperties;
 
-    //------------------------ Package Attributes --------------------------
-
     /**
      * The Statement that generated this result. <p>
-     *
-     * It should be noted that, although 1.7.2 represents some cleanup
-     * work to ensure that every jdbcResultSet has a non-null Statement object,
-     * this still cannot be guaranteed in all cases.  <p>
-     *
-     * For example, a jdbcResultSet obtained directly from any of the internal
-     * jdbcConnection.executeXXX() methods does not have a non-null
-     * jdbcStatement member.  Indeed, in the current code base, the only time
-     * a jdbcResultSet object does have a non-null jdbcStatement member is
-     * when it has been generated from a jdbcStatement object and does not
-     * represent an ERROR mode Result.
      */
     Statement sqlStatement;
+
+    //------------------------ Package Attributes --------------------------
 
     /**
      * The direction of this result.
@@ -1719,11 +1692,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public ResultSetMetaData getMetaData() throws SQLException {
 
-        if (sqlStatement == null) {
-            throw new SQLException("Statement is null");
-        }
-
-        return new jdbcResultSetMetaData(this);
+        return new jdbcResultSetMetaData(this, connProperties);
     }
 
     /**
@@ -1844,7 +1813,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         for (int i = 0; i < iColumnCount; i++) {
-            if (columnName.equalsIgnoreCase(rResult.sLabel[i])) {
+            if (columnName.equals(rResult.sLabel[i])) {
                 return i + 1;
             }
         }
@@ -4517,12 +4486,8 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public Statement getStatement() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return sqlStatement;
+
     }
 
     /**
@@ -5632,24 +5597,18 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
      */
-    jdbcResultSet(Result r, HsqlProperties props) throws SQLException {
-
+    jdbcResultSet(Statement s, Result r, HsqlProperties props) throws SQLException {
+        sqlStatement = s;
         connProperties = props;
 
-        if (props != null) {
-            getColumnName = props.isPropertyTrue("jdbc.get_column_name",
-                                                 true);
-            strictMetaData = props.isPropertyTrue("jdbc.strict_md", false);
-        }
-
-        if (r.iMode == Result.UPDATECOUNT) {
+        if (r.iMode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.iUpdateCount;
-        } else if (r.iMode == Result.ERROR) {
+        } else if (r.iMode == ResultConstants.ERROR) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            throw (Trace.getError(r.errorCode, r.sError));
-            throw new SQLException(r.errorString, null, r.errorCode);
+            throw new SQLException(r.mainString, null, r.idCode);
         } else {
             iUpdateCount = -1;
             rResult      = r;

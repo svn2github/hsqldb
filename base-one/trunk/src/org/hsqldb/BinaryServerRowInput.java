@@ -46,12 +46,24 @@ import org.hsqldb.lib.StringConverter;
 class BinaryServerRowInput extends org.hsqldb.DatabaseRowInput
 implements org.hsqldb.DatabaseRowInputInterface {
 
+    BinaryServerRowOutput out;
+
     public BinaryServerRowInput() {
         super();
     }
 
     public BinaryServerRowInput(byte buf[]) {
         super(buf);
+    }
+
+    /**
+     * uses the byte[] buffer from out. At each reset, the buffer is set
+     * to the current one for out.
+     */
+
+    public BinaryServerRowInput(BinaryServerRowOutput out) {
+        super(out.getBuffer());
+        this.out = out;
     }
 
     byte[] readByteArray() throws IOException {
@@ -169,4 +181,20 @@ implements org.hsqldb.DatabaseRowInputInterface {
     protected byte[] readBinary(int type) throws IOException, HsqlException {
         return readByteArray();
     }
+
+        /**
+     *  Used to reset the row, ready for a new row to be written into the
+     *  byte[] buffer by an external routine.
+     *
+     */
+    public void resetRow(int filepos, int rowsize) throws IOException {
+
+        if (out != null ){
+            out.reset();
+            out.ensureRoom(rowsize);
+        }
+        super.resetRow(filepos,rowsize);
+    }
+
+
 }

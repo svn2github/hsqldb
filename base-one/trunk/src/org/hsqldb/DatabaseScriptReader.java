@@ -92,12 +92,12 @@ class DatabaseScriptReader {
                 break;
             }
 
-            Result result = db.execute(lastLine, session);
+            Result result = session.sqlExecuteDirect(lastLine);
 
-            if (result != null && result.iMode == Result.ERROR) {
+            if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   " line: " + lineCount + " "
-                                  + result.errorString);
+                                  + result.mainString);
             }
         }
     }
@@ -117,12 +117,12 @@ class DatabaseScriptReader {
                 break;
             }
 
-            Result result = db.execute(lastLine, session);
+            Result result = session.sqlExecuteDirect(lastLine);
 
-            if (result != null && result.iMode == Result.ERROR) {
+            if (result != null && result.iMode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   " line: " + lineCount + " "
-                                  + result.errorString);
+                                  + result.mainString);
             }
 
             lastLine = readLoggedStatement();
@@ -135,12 +135,12 @@ class DatabaseScriptReader {
         return lineCount;
     }
 
-    protected void openFile() throws IOException {       
-   
+    protected void openFile() throws IOException {
+
         // canonical path for "res:" type databases always starts with "/"
         // so we don't need to use getClassLoader.getResourceAsStream here
         // or anywhere else.
-        // In fact, getClass().getResourceAsStream() is preferred, as 
+        // In fact, getClass().getResourceAsStream() is preferred, as
         // it is not subject to the same security restrictions
         dataStreamIn = db.isFilesInJar()
             ? getClass().getResourceAsStream(fileName)

@@ -267,6 +267,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
                     break;
 
                 case Types.BIT :
+                case Types.BOOLEAN :
                     o = readBit();
                     break;
 

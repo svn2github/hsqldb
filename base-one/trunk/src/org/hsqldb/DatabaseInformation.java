@@ -81,7 +81,7 @@ class DatabaseInformation {
     protected static final int SYSTEM_BYTECODE        = 21;
     protected static final int SYSTEM_CACHEINFO       = 22;
     protected static final int SYSTEM_CLASSPRIVILEGES = 23;
-    protected static final int SYSTEM_CONNECTIONINFO  = 24;
+    protected static final int SYSTEM_SESSIONINFO     = 24;
     protected static final int SYSTEM_PROPERTIES      = 25;
     protected static final int SYSTEM_SESSIONS        = 26;
     protected static final int SYSTEM_TRIGGERCOLUMNS  = 27;
@@ -122,7 +122,7 @@ class DatabaseInformation {
         "SYSTEM_BYTECODE",             //
         "SYSTEM_CACHEINFO",            //
         "SYSTEM_CLASSPRIVILEGES",      //
-        "SYSTEM_CONNECTIONINFO",       //
+        "SYSTEM_SESSIONINFO",          //
         "SYSTEM_PROPERTIES",           //
         "SYSTEM_SESSIONS",             //
         "SYSTEM_TRIGGERCOLUMNS",       //

@@ -113,7 +113,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         }
 
         sDatabase = getInitParameter("hsqldb.server.database");
-
+        String type = DatabaseManager.S_MEM;
         if (sDatabase == null) {
             sDatabase = ".";
         }
@@ -121,7 +121,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         log("Database filename = " + sDatabase);
 
         try {
-            dDatabase = HsqlRuntime.getHsqlRuntime().getDatabase(sDatabase,this);
+            dDatabase = DatabaseManager.getDatabase(DatabaseManager.S_MEM,sDatabase);
         } catch (HsqlException e) {
             sError = e.getMessage();
 
@@ -243,10 +243,11 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         } catch (IOException e) {
             throw new ServletException();
         }
-
+/*
         response.setContentType("application/octet-stream");
 
         ServletOutputStream out      = response.getOutputStream();
+
         byte                result[] = dDatabase.execute(user, password, s);
 
         response.setContentLength(result.length);
@@ -255,7 +256,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         out.close();
 
         iQueries++;
-
+*/
         // System.out.print("Queries processed: "+iQueries+"  \n");
     }
 

@@ -41,11 +41,11 @@ package org.hsqldb;
  */
 interface ServerConstants {
 
-    int     SERVER_ONLINE                 = 1;
-    int     SERVER_OPENING                = 4;
-    int     SERVER_CLOSING                = 8;
-    int     SERVER_SHUTDOWN               = 16;
-    int     SC_CONNECTION_CLOSED          = 0;
+    int     SERVER_STATE_ONLINE           = 1;
+    int     SERVER_STATE_OPENING          = 4;
+    int     SERVER_STATE_CLOSING          = 8;
+    int     SERVER_STATE_SHUTDOWN         = 16;
+    int     SC_DATABASE_SHUTDOWN          = 0;
     String  SC_DEFAULT_ADDRESS            = "any";
     boolean SC_DEFAULT_SERVER_AUTORESTART = false;
     String  SC_DEFAULT_DATABASE           = "test";

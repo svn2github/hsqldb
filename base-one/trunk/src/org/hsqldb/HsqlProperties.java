@@ -54,9 +54,17 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
-    private static final Method storeMethod = 
-        HsqlRuntime.getMethod(Properties.class, "store", 
-                              new Class[] {OutputStream.class, String.class});
+    private static Method    savePropsMethod = null;
+
+    static {
+        try {
+            savePropsMethod = java.util.Properties.class.getMethod("store",
+                    new Class[] {
+                OutputStream.class, String.class
+            });
+        } catch (NoSuchMethodException e) {}
+        catch (SecurityException e) {}
+    }
 
     public static int    NO_VALUE_FOR_KEY = 1;
     protected String     fileName;
@@ -74,12 +82,12 @@ public class HsqlProperties {
         stringProps = new Properties();
         fileName    = name;
     }
-    
+
     public HsqlProperties(String name, boolean b) {
         stringProps = new Properties();
         fileName    = name;
         resource    = b;
-    }    
+    }
 
     public HsqlProperties(Properties props) {
         stringProps = props;
@@ -194,11 +202,11 @@ public class HsqlProperties {
 
     public boolean checkFileExists() {
         String      propFilename;
-        
+
         if (fileName == null || fileName.length() == 0) {
             return false;
         }
-        
+
         propFilename = fileName + ".properties";
 
         return resource
@@ -269,11 +277,11 @@ public class HsqlProperties {
 
         FileOutputStream fos = new FileOutputStream(f);
 
-        if (storeMethod == null) {
+        if (savePropsMethod == null) {
             stringProps.save(fos, "HSQL database");
         } else {
             try {
-                storeMethod.invoke(stringProps, new Object[] {
+                savePropsMethod.invoke(stringProps, new Object[] {
                     fos, "HSQL database"
                 });
             } catch (java.lang.reflect.InvocationTargetException e) {}
@@ -364,7 +372,7 @@ public class HsqlProperties {
 
             if (valindex == -1) {
                 props.addError(NO_VALUE_FOR_KEY,
-                               s.substring(currentpair, nextpair));
+                               s.substring(currentpair, nextpair).trim());
             } else {
                 String key = s.substring(currentpair, valindex).trim();
                 String value = s.substring(valindex + pairsep.length(),

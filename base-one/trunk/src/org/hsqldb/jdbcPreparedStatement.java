@@ -83,6 +83,7 @@ import java.util.*;    // for Map
 import java.util.Calendar;
 import java.util.Vector;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -92,6 +93,8 @@ import org.hsqldb.lib.StringConverter;
 // JDK 1.4, and added JDBC3 methods and docs
 // boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
+// fredt@users 20030620 - patch 1.7.2 - core rewritten to support real
+// prepared statements
 
 /**
  * <!-- start Release-specific documentation -->
@@ -312,15 +315,14 @@ public class jdbcPreparedStatement extends org.hsqldb.jdbcStatement
 implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
     /**
-     * The SQL query this object represents.
+     * The parameters for the next call
      */
-    private String sSql;
+    private final Object[] parameters;
 
     /**
-     * The list of values used to replace the parameters of the SQL statement
-     * this object represents
+     * The types of parameters
      */
-    private Vector vParameter;
+    private final int[] types;
 
 // fredt@users 20020215 - patch 517028 by peterhudson@users - method defined
 // fredt@users 20020215 - patch 517028 by peterhudson@users - method defined
@@ -356,14 +358,64 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20020428 - patch 1.7.0 - method orerrides the one in jdbcStatement
     public void setEscapeProcessing(boolean enable) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        checkClosed();
+    }
+
+    /**
+     * <!-- start generic documentation -->
+     * Executes the SQL statement in this <code>PreparedStatement</code>
+     * object, which may be any kind of SQL statement.
+     * Some prepared statements return multiple results; the
+     * <code>execute</code> method handles these complex statements as well
+     * as the simpler form of statements handled by the methods
+     * <code>executeQuery</code>and <code>executeUpdate</code>. <p>
+     *
+     * The <code>execute</code> method returns a <code>boolean</code> to
+     * indicate the form of the first result.  You must call either the method
+     * <code>getResultSet</code> or <code>getUpdateCount</code>
+     * to retrieve the result; you must call <code>getMoreResults</code> to
+     * move to any subsequent result(s). <p>
+     * <!-- end generic documentation -->
+     *
+     * <!-- start release-specific documentation -->
+     * <span class="ReleaseSpecificDocumentation">
+     * <b>HSQLDB-Specific Information:</b> <p>
+     *
+     * Up to and including HSQLDB 1.7.0, statements never return multiple
+     * result sets.  However, be aware that this behaviour <i>may</i>
+     * change in a future release.
+     * </span>
+     *
+     * @return <code>true</code> if the first result is a <code>ResultSet</code>
+     *    object; <code>false</code> if the first result is an update
+     *    count or there is no result
+     * @exception SQLException if a database access error occurs or an argument
+     *       is supplied to this method
+     * @see jdbcStatement#execute
+     * @see jdbcStatement#getResultSet
+     * @see jdbcStatement#getUpdateCount
+     * @see jdbcStatement#getMoreResults
+     */
+    public synchronized boolean execute() throws SQLException {
 
         checkClosed();
+        resultIn = null;
 
-        // do not change the bEscapeProcessing
-        // bEscapeProcessing = enable;
+        try {
+            convertParameterTypes();
+
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
+
+        if (resultIn.iMode == ResultConstants.ERROR) {
+            throw new SQLException(resultIn.mainString, resultIn.subString,
+                                   resultIn.idCode);
+        }
+
+        return resultIn.iMode == ResultConstants.DATA ? true
+                                                      : false;
     }
 
     /**
@@ -381,13 +433,21 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs or the SQL
      *       statement does not return a <code>ResultSet</code> object
      */
-    public ResultSet executeQuery() throws SQLException {
+    public synchronized ResultSet executeQuery() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
+        checkClosed();
+
+        resultIn = null;
+
+        try {
+            convertParameterTypes();
+
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
 
-        return super.executeQuery(build());
+        return new jdbcResultSet(this, resultIn, connection.connProperties);
     }
 
     /**
@@ -409,13 +469,39 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs or the SQL
      *        statement returns a <code>ResultSet</code> object
      */
-    public int executeUpdate() throws SQLException {
+    public synchronized int executeUpdate() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
+        checkClosed();
+
+        resultIn = null;
+
+        try {
+            convertParameterTypes();
+
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
 
-        return super.executeUpdate(build());
+        if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
+            throw new SQLException(
+                "executeUpdate() cannot be used with this statement");
+        } else if (resultIn.iMode == ResultConstants.ERROR) {
+            throw new SQLException(resultIn.mainString, resultIn.subString,
+                                   resultIn.idCode);
+        }
+
+        return resultIn.getUpdateCount();
+    }
+
+    /**
+     * called just before binding call
+     */
+    private void convertParameterTypes() throws HsqlException {
+
+        for (int i = 0; i < types.length; i++) {
+            parameters[i] = Column.convertObject(parameters[i], types[i]);
+        }
     }
 
     /**
@@ -434,10 +520,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         setNull(parameterIndex);
     }
@@ -460,12 +542,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setBoolean(int parameterIndex,
                            boolean x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, x ? "TRUE"
-                                       : "FALSE");
+        setParameter(parameterIndex, x ? Boolean.TRUE
+                                       : Boolean.FALSE);
     }
 
     /**
@@ -485,11 +563,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setByte(int parameterIndex, byte x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, String.valueOf(x));
+        setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
     /**
@@ -509,11 +583,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setShort(int parameterIndex, short x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, String.valueOf(x));
+        setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
     /**
@@ -533,11 +603,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setInt(int parameterIndex, int x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, String.valueOf(x));
+        setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
     /**
@@ -557,11 +623,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setLong(int parameterIndex, long x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, String.valueOf(x));
+        setParameter(parameterIndex, ValuePool.getLong(x));
     }
 
     /**
@@ -590,11 +652,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setFloat(int parameterIndex, float x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, Column.createSQLString(x));
+        setParameter(parameterIndex, new Double(x));
 /*
         if (Float.isInfinite(x) || Float.isNaN(x)) {
             setNull(parameterIndex);
@@ -637,11 +695,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setDouble(int parameterIndex, double x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, Column.createSQLString(x));
+        setParameter(parameterIndex, new Double(x));
 /*
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             setNull(parameterIndex);
@@ -677,16 +731,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setBigDecimal(int parameterIndex,
                               BigDecimal x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-            setParameter(parameterIndex,
-                         Column.createSQLString(x, Types.DECIMAL));
-        } catch (HsqlException e) {
-            jdbcDriver.throwError(e);
-        }
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -709,11 +754,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setString(int parameterIndex, String x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        setParameter(parameterIndex, Column.createSQLString(x));
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -735,16 +776,10 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setBytes(int parameterIndex, byte x[]) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            setParameter(
-                parameterIndex,
-                Column.createSQLString(StringConverter.byteToHex(x)));
+            setParameter(parameterIndex, x);
         }
     }
 
@@ -766,16 +801,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setDate(int parameterIndex,
                         java.sql.Date x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-            setParameter(parameterIndex,
-                         Column.createSQLString(x, Types.DATE));
-        } catch (HsqlException e) {
-            jdbcDriver.throwError(e);
-        }
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -796,16 +822,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setTime(int parameterIndex,
                         java.sql.Time x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-            setParameter(parameterIndex,
-                         Column.createSQLString(x, Types.TIME));
-        } catch (HsqlException e) {
-            jdbcDriver.throwError(e);
-        }
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -827,16 +844,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setTimestamp(int parameterIndex,
                              java.sql.Timestamp x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-            setParameter(parameterIndex,
-                         Column.createSQLString(x, Types.TIMESTAMP));
-        } catch (HsqlException e) {
-            jdbcDriver.throwError(e);
-        }
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -872,10 +880,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setAsciiStream(int parameterIndex, java.io.InputStream x,
                                int length) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         try {
             if (x == null) {
@@ -923,10 +927,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setUnicodeStream(int parameterIndex, java.io.InputStream x,
                                  int length) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         StringBuffer sb = new StringBuffer(length / 2);
 
@@ -1013,10 +1013,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setBinaryStream(int parameterIndex, java.io.InputStream x,
                                 int length) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         // todo: is this correct?
         // what if length=0?
         // fredt@users - that seems to be fine, zero length value
@@ -1052,11 +1048,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void clearParameters() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        vParameter.removeAllElements();
+        org.hsqldb.lib.ArrayUtil.arrayFill(parameters, null);
     }
 
     //----------------------------------------------------------------------
@@ -1111,10 +1103,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setObject(int parameterIndex, Object x, int targetSqlType,
                           int scale) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         setObject(parameterIndex, x, targetSqlType);
     }
 
@@ -1144,10 +1132,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setObject(int parameterIndex, Object x,
                           int targetSqlType) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (x == null) {
             setNull(parameterIndex);
@@ -1219,10 +1203,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setObject(int parameterIndex, Object x) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (x == null) {
             setNull(parameterIndex);
 
@@ -1260,50 +1240,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         }
 
         setObjectInType(parameterIndex, x, type);
-    }
-
-    /**
-     * <!-- start generic documentation -->
-     * Executes the SQL statement in this <code>PreparedStatement</code>
-     * object, which may be any kind of SQL statement.
-     * Some prepared statements return multiple results; the
-     * <code>execute</code> method handles these complex statements as well
-     * as the simpler form of statements handled by the methods
-     * <code>executeQuery</code>and <code>executeUpdate</code>. <p>
-     *
-     * The <code>execute</code> method returns a <code>boolean</code> to
-     * indicate the form of the first result.  You must call either the method
-     * <code>getResultSet</code> or <code>getUpdateCount</code>
-     * to retrieve the result; you must call <code>getMoreResults</code> to
-     * move to any subsequent result(s). <p>
-     * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * Up to and including HSQLDB 1.7.0, statements never return multiple
-     * result sets.  However, be aware that this behaviour <i>may</i>
-     * change in a future release.
-     * </span>
-     *
-     * @return <code>true</code> if the first result is a <code>ResultSet</code>
-     *    object; <code>false</code> if the first result is an update
-     *    count or there is no result
-     * @exception SQLException if a database access error occurs or an argument
-     *       is supplied to this method
-     * @see jdbcStatement#execute
-     * @see jdbcStatement#getResultSet
-     * @see jdbcStatement#getUpdateCount
-     * @see jdbcStatement#getMoreResults
-     */
-    public boolean execute() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        return super.execute(build());
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -1582,18 +1518,13 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setDate(int parameterIndex, java.sql.Date x,
                         Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (x == null) {
             setNull(parameterIndex);
         } else {
             try {
                 String dateString = HsqlDateTime.getDateString(x, cal);
 
-                setParameter(parameterIndex,
-                             Column.createSQLString(dateString));
+                setParameter(parameterIndex, dateString);
             } catch (Exception e) {
                 throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
                                               e.getMessage());
@@ -1632,10 +1563,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // changes by fredt - moved conversion to HsqlDateTime
     public void setTime(int parameterIndex, java.sql.Time x,
                         Calendar cal) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (x == null) {
             setNull(parameterIndex);
@@ -1682,18 +1609,13 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x,
                              Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         if (x == null) {
             setNull(parameterIndex);
         } else {
             try {
                 String dateString = HsqlDateTime.getTimestampString(x, cal);
 
-                setParameter(parameterIndex,
-                             Column.createSQLString(dateString));
+                setParameter(parameterIndex, dateString);
             } catch (Exception e) {
                 throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
                                               e.getMessage());
@@ -2614,9 +2536,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public java.sql.Date getDate(int parameterIndex,
                                  Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        checkClosed();
 
         try {
             String dateString = getParameter(parameterIndex);
@@ -2663,9 +2583,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public java.sql.Time getTime(int parameterIndex,
                                  Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        checkClosed();
 
         try {
             String timeString = getParameter(parameterIndex);
@@ -2713,9 +2631,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public java.sql.Timestamp getTimestamp(int parameterIndex,
                                            Calendar cal) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
+        checkClosed();
 
         try {
             String dateString = getParameter(parameterIndex);
@@ -4791,21 +4707,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     //-------------------- Internal Implementation -----------------------------
 
     /**
-     * Constructs a statement that produces results of the default
-     * <code>type</code>.
-     *
-     * @param c the Connection used execute this statement
-     * @param s the SQL statement this object represents
-     */
-    jdbcPreparedStatement(jdbcConnection c, String s) {
-
-        super(c);
-
-        sSql       = s;
-        vParameter = new Vector();
-    }
-
-    /**
      * Constructs a statement that produces results of the requested
      * <code>type</code>.
      *
@@ -4813,50 +4714,19 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @param s the SQL statement this object represents
      * @param type the type of result this statement will produce
      */
-    jdbcPreparedStatement(jdbcConnection c, String s, int type) {
+    jdbcPreparedStatement(jdbcConnection c, String sql,
+                          int type) throws HsqlException {
 
         super(c, type);
 
-        sSql       = s;
-        vParameter = new Vector();
-    }
+        resultOut.setResultType(ResultConstants.SQLPREPARE);
+        resultOut.setMainString(sql);
 
-    /**
-     * Builds SQL from the combination of the statement string supplied
-     * in the constructor and any parameter values currently in effect
-     * via the use of setXXX methods.
-     *
-     * @return the SQL representing this statement, including parameter values
-     */
-    private String build() {
+        resultOut  = connection.sessionProxy.execute(resultOut);
+        types      = resultOut.getParameterTypes();
+        parameters = new Object[types.length];
 
-        if (vParameter.isEmpty()) {
-            return sSql;
-        }
-
-        StringBuffer s      = new StringBuffer();
-        int          i      = 0;
-        int          l      = sSql.length();
-        boolean      bSkip  = false;
-        boolean      bSkip2 = false;
-
-        for (int j = 0; j < l; j++) {
-            char c = sSql.charAt(j);
-
-            if (c == '?' &&!bSkip &&!bSkip2) {
-                s.append(getParameter(i++));
-            } else {
-                if (c == '\'' &&!bSkip2) {
-                    bSkip = !bSkip;
-                } else if (c == '"' &&!bSkip) {
-                    bSkip2 = !bSkip2;
-                }
-
-                s.append(c);
-            }
-        }
-
-        return s.toString();
+        resultOut.setParameterData(parameters);
     }
 
     /**
@@ -4870,25 +4740,11 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     private String getParameter(int i) {
 
-        if (i >= vParameter.size()) {
+        if (i >= parameters.length) {
             return null;
         }
 
-        return (String) vParameter.elementAt(i);
-    }
-
-    /**
-     * An unused convenience method that might either be used or deleted later.
-     *
-     * @return a SQLException stating that an invalid value has been encounted
-     */
-    private SQLException invalidValue() {
-
-        // CHECKME: (boucuerb@users)
-        // This method is never called.  Why is it here?
-        // fredt@users - might be used or deleted later
-        // @return a SQLException stating that an invalid value has been encounted
-        return jdbcDriver.sqlException(Trace.UNEXPECTED_TOKEN);
+        return parameters[i].toString();
     }
 
     /**
@@ -4899,8 +4755,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *
      * @param parameterIndex of parameter to be set null
      */
-    private void setNull(int parameterIndex) {
-        setParameter(parameterIndex, "NULL");
+    private void setNull(int parameterIndex) throws SQLException {
+        setParameter(parameterIndex, null);
     }
 
     /**
@@ -4914,10 +4770,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     private void setObjectInType(int parameterIndex, Object x,
                                  int type) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         if (x == null) {
             setNull(parameterIndex);
@@ -4982,13 +4834,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 break;
 
             case Types.OTHER :
-                try {
-                    setParameter(
-                        parameterIndex,
-                        Column.createSQLString(Column.serializeToString(x)));
-                } catch (HsqlException e) {
-                    jdbcDriver.throwError(e);
-                }
+                setParameter(parameterIndex, x);
                 break;
 
             default :
@@ -5004,17 +4850,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @param s the parameter value, which must be already compiled to a
      *     Java String representing the SQL value for the parameter
      */
-    private void setParameter(int i, String s) {
+    private void setParameter(int i, Object s) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
+        if (i > 0 && i <= parameters.length) {
+            parameters[--i] = s;
+
+            return;
         }
 
-        if (vParameter.size() < i) {
-            vParameter.setSize(i);
-        }
-
-        vParameter.setElementAt(s, --i);
+        throw new SQLException("out of range");
     }
 
     /**
@@ -5045,7 +4889,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         throw jdbcDriver.notSupported;
     }
 
+/** @todo  fredt - implement*/
     public String toString() {
-        return this.build();
+        return null;
     }
 }

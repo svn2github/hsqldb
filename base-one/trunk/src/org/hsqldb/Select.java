@@ -246,7 +246,7 @@ class Select {
         }
 
         int    len          = eColumn.length;
-        Result r            = new Result(len);
+        Result r            = new Result(ResultConstants.DATA,len);
         int    groupByStart = iResultLen;
         int    groupByEnd   = groupByStart + iGroupLen;
 

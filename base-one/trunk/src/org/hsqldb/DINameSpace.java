@@ -215,7 +215,7 @@ final class DINameSpace {
      * @throws HsqlException never (reserved for future use)
      */
     Iterator enumCatalogNames() throws HsqlException {
-        return isReportCatalogs() ? new WrapperIterator(database.getName())
+        return isReportCatalogs() ? new WrapperIterator(database.getPath())
                                   : new WrapperIterator();
     }
 
@@ -364,7 +364,7 @@ final class DINameSpace {
      */
     String getCatalogName(Object o) {
         return (!isReportCatalogs() || o == null) ? null
-                                                  : database.getName();
+                                                  : database.getPath();
     }
 
     /**

@@ -188,7 +188,7 @@ public class LockFile {
      * heartbeat task.
      */
     protected static final HsqlTimer timer =
-        HsqlRuntime.getHsqlRuntime().getTimer();
+        DatabaseManager.getTimer();
 
     /**
      * And opaque reference to this object's heatbeat task.
@@ -659,19 +659,19 @@ public class LockFile {
     public boolean isLocked() {
         return locked;
     }
-    
+
     /**
      * Retrieves whether there is potentially already a cooperative lock,
      * operating system lock or some other situation preventing
      * a cooperative lock condition from being aquired, relative to the
      * specified path.
      *
-     * @param path the path to test 
-     */    
+     * @param path the path to test
+     */
     public static boolean isLocked(String path) {
         LockFile        lf;
-        FileInputStream fis;                
-        
+        FileInputStream fis;
+
         try {
             lf = LockFile.newLockFile(path);
             lf.checkHeartbeat();
@@ -685,7 +685,7 @@ public class LockFile {
         }
 
         return false;
-    }    
+    }
 
     /**
      * Retrieves whether this object holds a valid lock on its lock file. <p>

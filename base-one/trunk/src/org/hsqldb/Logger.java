@@ -79,12 +79,12 @@ class Logger {
      */
     void openLog(Database db) throws HsqlException {
         String path;
-        
+
         // NOTE:
         // this method never gets called unless path is non-null
         // so no check here
         path = db.getPath();
-        
+
         if (db.isFilesInJar()) {
             checkFilesInJar(path);
         } else {
@@ -128,15 +128,15 @@ class Logger {
 
         switch (closemode) {
 
-            case -1 :
+            case Database.CLOSEMODE_IMMEDIATELY:
                 lLog.shutdown();
                 break;
 
-            case 0 :
+            case Database.CLOSEMODE_NORMAL :
                 lLog.close(false);
                 break;
 
-            case 1 :
+            case Database.CLOSEMODE_COMPACT :
                 lLog.close(true);
                 break;
 
@@ -336,22 +336,22 @@ class Logger {
 
         lf = null;
     }
-    
+
     private void checkFilesInJar(String path) throws HsqlException {
         URL    url;
         String sScript;
-        
+
         Trace.check(path != null, Trace.FILE_IO_ERROR, "path is null");
-        
+
         sScript = path + ".script";
         url     = getClass().getResource(sScript);
-        
-        Trace.check(url != null, Trace.FILE_IO_ERROR, 
-                "non-existent resource: " + sScript);        
-        
+
+        Trace.check(url != null, Trace.FILE_IO_ERROR,
+                "non-existent resource: " + sScript);
+
         Trace.check(
-            "jar".equalsIgnoreCase(url.getProtocol()), 
-            Trace.ACCESS_IS_DENIED, 
+            "jar".equalsIgnoreCase(url.getProtocol()),
+            Trace.ACCESS_IS_DENIED,
             "wrong resource protocol: " + url);
     }
 }

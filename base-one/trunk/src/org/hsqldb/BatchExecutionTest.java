@@ -63,14 +63,14 @@ public class BatchExecutionTest implements Types {
     static final String      def_db_path   = ".";
     static final int         def_runs      = 3;
     static final int         rows          = 10000;
-    static final HsqlRuntime runtime       = HsqlRuntime.getHsqlRuntime();
+//    static final HsqlRuntime runtime       = HsqlRuntime.getHsqlRuntime();
     static Database          database;
     static Session           session;
 
     static void checkResult(Result r) throws Exception {
 
-        if (r.iMode == Result.ERROR) {
-            throw Trace.error(r.errorCode, r.errorString);
+        if (r.iMode == ResultConstants.ERROR) {
+            throw Trace.error(r.idCode, r.mainString);
         }
     }
 
@@ -89,14 +89,14 @@ public class BatchExecutionTest implements Types {
         print(sw.elapsedTimeToMessage(rows + " " + cmd));
         println(" " + ((1000 * rows) / et) + " rows/s.");
     }
-
+/*
     static void printMemoryStats() {
 
         System.gc();
         println("used memory      : " + runtime.usedMemory());
         println("available memory : " + runtime.availableMemory());
     }
-
+*/
     static Result prepareStatement(Session session, String sql,
                                    int[] types) throws Exception {
 
@@ -104,20 +104,18 @@ public class BatchExecutionTest implements Types {
         Result r;
         Result o;
 
-        p       = new Result();
-        p.iMode = Result.SQLPREPARE;
+        p       = new Result(ResultConstants.SQLPREPARE);
 
-        p.setStatement(sql);
+        p.setMainString(sql);
 
-        r = session.executeCommand(p);
+        r = session.execute(p);
 
         checkResult(r);
 
-        o         = new Result();
-        o.iMode   = Result.SQLEXECUTE;
+        o         = new Result(ResultConstants.SQLEXECUTE);
         o.colType = types;
 
-        o.setStatementID(r.getStatementID());
+        o.setIDCode(r.getIDCode());
         println("prepared: " + sql);
 
         return o;
@@ -140,7 +138,7 @@ public class BatchExecutionTest implements Types {
         } catch (Exception e) {}
 
         // get the database and its sys session
-        database = runtime.getDatabase(db_path, null);
+        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE, db_path);
         session  = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
@@ -163,7 +161,7 @@ public class BatchExecutionTest implements Types {
         println("---------------------------------------");
 
         // get the database and its sys session
-        database = runtime.getDatabase(db_path, null);
+        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE,db_path);
         session  = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
@@ -185,7 +183,7 @@ public class BatchExecutionTest implements Types {
         println("---------------------------------------");
 
         // get the database and its sys session
-        database = runtime.getDatabase(db_path, null);
+        database = DatabaseManager.getDatabase( DatabaseManager.S_FILE,db_path);
         session  = database.sessionManager.getSysSession();
 
         println("---------------------------------------");
@@ -258,26 +256,27 @@ public class BatchExecutionTest implements Types {
 
             // inserts
             sw.zero();
-            session.executeCommand(insertStmnt);
+            session.execute(insertStmnt);
             printCommandStats(sw, "inserts");
 
             // updates
             sw.zero();
-            session.executeCommand(updateStmnt);
+            session.execute(updateStmnt);
             printCommandStats(sw, "updates");
 
             // selects
             sw.zero();
-            session.executeCommand(selectStmnt);
+            session.execute(selectStmnt);
             printCommandStats(sw, "selects");
 
             // deletes
             sw.zero();
-            session.executeCommand(deleteStmnt);
+            session.execute(deleteStmnt);
             printCommandStats(sw, "deletes");
-
+/*
             // memory stats
             printMemoryStats();
+*/
         }
     }
 }

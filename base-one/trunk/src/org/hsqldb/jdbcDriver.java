@@ -121,13 +121,11 @@ import java.util.Properties;
  */
 public class jdbcDriver implements Driver {
 
-    static final String sStartURL = "jdbc:hsqldb:";
-    static final int    MAJOR     = 1,
-                        MINOR     = 7,
-                        REVISION  = 2;
-    static final String VERSION   = "1.7.2";
-    static final String PRODUCT   = "HSQL Database Engine";
-    static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
+    static final int    MAJOR    = 1,
+                        MINOR    = 7,
+                        REVISION = 2;
+    static final String VERSION  = "1.7.2";
+    static final String PRODUCT  = "HSQL Database Engine";
 
     static final void throwError(HsqlException e) throws SQLException {
         throw new SQLException(e.message, e.state, e.code);
@@ -188,41 +186,21 @@ public class jdbcDriver implements Driver {
      */
     public Connection connect(String url,
                               Properties info) throws SQLException {
+        return getConnection(url, info);
+    }
 
-        String         canonicalUrl;
-        String         spec;
-        String         specProps;
-        int            pos;
-        HsqlProperties props;
-                
+/** @todo  error message*/
+    static Connection getConnection(String url,
+                                    Properties info) throws SQLException {
 
-        if (!acceptsURL(url)) {
-            return null;
-        }
-        
-        canonicalUrl = runtime.canonicalConnectionURL(url);
-        
-        if (canonicalUrl == null) {
-            throw new SQLException("no canonical form for url: " + url); 
-        }
-        
-        url = canonicalUrl;
-
-        spec = url.substring(sStartURL.length());
-        pos  = spec.indexOf(';');
-
-        if ( pos > -1) {
-            specProps = spec.substring(pos, spec.length());
-            spec      = spec.substring(0, pos);
-            props     = HsqlProperties
-                .delimitedArgPairsToProps(specProps, "=", ";", null);
-
-            props.addProperties(info);
-
-            info = props.getProperties();
+        HsqlProperties props = DatabaseManager.parseURL(url, true);
+        if (props == null) {
+            throw new SQLException(Trace.getMessage(Trace.INVALID_JDBC_ARGUMENT));
         }
 
-        return new jdbcConnection(spec, info);
+        props.addProperties(info);
+
+        return new jdbcConnection(props);
     }
 
     /**
@@ -237,12 +215,9 @@ public class jdbcDriver implements Driver {
     // fredt@users - patch 1.7.0 - allow mixedcase url's
     public boolean acceptsURL(String url) {
 
-        if (Trace.TRACE) {
-            Trace.trace(url);
-        }
-
-        return url != null 
-            &&url.regionMatches(true, 0, sStartURL, 0, sStartURL.length());
+        return url != null
+               && url.regionMatches(true, 0, DatabaseManager.S_URL_PREFIX, 0,
+                                    DatabaseManager.S_URL_PREFIX.length());
     }
 
     /**
@@ -272,10 +247,6 @@ public class jdbcDriver implements Driver {
      *      are required.
      */
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         String[]           choices = new String[] {
             "true", "false"
@@ -312,10 +283,6 @@ public class jdbcDriver implements Driver {
      */
     public int getMajorVersion() {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         return MAJOR;
     }
 
@@ -325,10 +292,6 @@ public class jdbcDriver implements Driver {
      * @return  this driver's minor version number
      */
     public int getMinorVersion() {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         return MINOR;
     }
@@ -359,22 +322,14 @@ public class jdbcDriver implements Driver {
      */
     public boolean jdbcCompliant() {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-
-            // todo: not all required features are implemented yet
-        }
-
+/** @todo fredt - we may be able to report true */
         return false;
     }
 
-    static {        
+    static {
         try {
             DriverManager.registerDriver(new jdbcDriver());
 
-            if (Trace.TRACE) {
-                Trace.trace(PRODUCT + " " + VERSION);
-            }
         } catch (Exception e) {
             if (Trace.TRACE) {
                 Trace.trace(e.getMessage());

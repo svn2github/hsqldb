@@ -84,6 +84,7 @@ import org.hsqldb.lib.IntValueHashMap;
 // strings and quoted identifiers
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
+// fredt@users 20030610 - patch 1.7.2 - yet fewer StringBuffers
 
 /**
  * Tokenizer class declaration

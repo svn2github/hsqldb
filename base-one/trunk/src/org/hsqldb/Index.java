@@ -91,14 +91,13 @@ class Index {
     static final int POINTER_INDEX = 2;
 
     // fields
-    private HsqlName indexName;
-    private int      iFields;
-    private int      iColumn[];
-    private int      iType[];
-    private boolean  bUnique;               // DDL uniqueness
-    private int      visibleColumns;
-    private Node     root;
-    private int      iColumn_0, iType_0;    // just for tuning
+    private final HsqlName indexName;
+    private final int      colIndex[];
+    private final int      colType[];
+    private final boolean  isUnique;                 // DDL uniqueness
+    private final int      visibleColumns;
+    private final int      colIndex_0, colType_0;    // just for tuning
+    private Node           root;
 
     /**
      * Constructor declaration
@@ -113,12 +112,11 @@ class Index {
             boolean unique, int visibleColumns) {
 
         indexName           = name;
-        iFields             = column.length;
-        iColumn             = column;
-        iType               = type;
-        bUnique             = unique;
-        iColumn_0           = iColumn[0];
-        iType_0             = iType[0];
+        colIndex            = column;
+        colType             = type;
+        isUnique            = unique;
+        colIndex_0          = colIndex[0];
+        colType_0           = colType[0];
         this.visibleColumns = visibleColumns;
     }
 
@@ -179,7 +177,7 @@ class Index {
      * @return
      */
     boolean isUnique() {
-        return bUnique;
+        return isUnique;
     }
 
     /**
@@ -189,7 +187,7 @@ class Index {
      * @return
      */
     int[] getColumns() {
-        return iColumn;    // todo: this gives back also primary key field!
+        return colIndex;    // todo: this gives back also primary key field!
     }
 
     /**
@@ -204,10 +202,10 @@ class Index {
 // fredt@users 20020225 - patch 1.7.0 - compare two indexes
     boolean isEquivalent(Index index) {
 
-        if (bUnique == index.bUnique
-                && iColumn.length == index.iColumn.length) {
-            for (int j = 0; j < iColumn.length; j++) {
-                if (iColumn[j] != index.iColumn[j]) {
+        if (isUnique == index.isUnique
+                && colIndex.length == index.colIndex.length) {
+            for (int j = 0; j < colIndex.length; j++) {
+                if (colIndex[j] != index.colIndex[j]) {
                     return false;
                 }
             }
@@ -628,7 +626,7 @@ class Index {
                 Trace.stop();
             }
 
-            boolean t = compareValue(value, x.getData()[iColumn_0]) >= iTest;
+            boolean t = compareValue(value, x.getData()[colIndex_0]) >= iTest;
 
             if (t) {
                 Node r = x.getRight();
@@ -650,7 +648,7 @@ class Index {
         }
 
         while (x != null
-                && compareValue(value, x.getData()[iColumn_0]) >= iTest) {
+                && compareValue(value, x.getData()[colIndex_0]) >= iTest) {
             if (Trace.STOP) {
                 Trace.stop();
             }
@@ -852,7 +850,7 @@ class Index {
     int comparePartialRowNonUnique(Object a[],
                                    Object b[]) throws HsqlException {
 
-        int i = Column.compare(a[0], b[iColumn_0], iType_0);
+        int i = Column.compare(a[0], b[colIndex_0], colType_0);
 
         if (i != 0) {
             return i;
@@ -867,7 +865,7 @@ class Index {
                 continue;
             }
 
-            i = Column.compare(o, b[iColumn[j]], iType[j]);
+            i = Column.compare(o, b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;
@@ -893,7 +891,7 @@ class Index {
     private int compareRowNonUnique(Object a[],
                                     Object b[]) throws HsqlException {
 
-        int i = Column.compare(a[iColumn_0], b[iColumn_0], iType_0);
+        int i = Column.compare(a[colIndex_0], b[colIndex_0], colType_0);
 
         if (i != 0) {
             return i;
@@ -902,7 +900,7 @@ class Index {
         int fieldcount = visibleColumns;
 
         for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(a[iColumn[j]], b[iColumn[j]], iType[j]);
+            i = Column.compare(a[colIndex[j]], b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;
@@ -925,14 +923,16 @@ class Index {
      */
     private int compareRow(Object a[], Object b[]) throws HsqlException {
 
-        int i = Column.compare(a[iColumn_0], b[iColumn_0], iType_0);
+        int i = Column.compare(a[colIndex_0], b[colIndex_0], colType_0);
 
         if (i != 0) {
             return i;
         }
 
-        for (int j = 1; j < iFields; j++) {
-            i = Column.compare(a[iColumn[j]], b[iColumn[j]], iType[j]);
+        int fieldcount = colIndex.length;
+
+        for (int j = 1; j < fieldcount; j++) {
+            i = Column.compare(a[colIndex[j]], b[colIndex[j]], colType[j]);
 
             if (i != 0) {
                 return i;
@@ -954,6 +954,6 @@ class Index {
      * @throws HsqlException
      */
     private int compareValue(Object a, Object b) throws HsqlException {
-        return Column.compare(a, b, iType_0);
+        return Column.compare(a, b, colType_0);
     }
 }

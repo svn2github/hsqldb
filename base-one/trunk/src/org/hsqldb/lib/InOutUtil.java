@@ -29,46 +29,45 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.lib;
 
-import java.sql.SQLException;
-
-// fredt@users 20020215 - patch 461556 by paul-h@users - modified
-// minor changes to support the new HsqlServerProperties class
-// boucherb@users 20030501 - Server now implements HsqlSocketRequestHandler
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 
 /**
- * HsqlServerFactory
+ * Input / Output utility
  *
+ * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
-public class HsqlServerFactory {
+public class InOutUtil {
 
-    public static HsqlSocketRequestHandler createHsqlServer(String dbFilePath,
-            boolean debugMessages,
-            boolean silentMode) throws java.sql.SQLException {
+/**
+ * Implementation only supports unix line-end format.
+ */
+    public static int readLine(
+                               InputStream in,OutputStream out) throws IOException {
 
-        HsqlProperties props = new HsqlProperties();
+        int count = 0;
 
-        props.setProperty("server.database", dbFilePath);
-        props.setProperty("server.trace", debugMessages);
-        props.setProperty("server.silent", silentMode);
+        for (;;) {
+            int b = in.read();
 
-        Server server = new Server();
+            if (b == -1) {
+                break;
+            }
 
-        server.setProperties(props);
+            count++;
 
-        try {
-            server.openDB();
-        } catch (HsqlException e) {
-            throw new SQLException(e.getMessage(), e.getSQLState(),
-                                   e.getErrorCode());
+            out.write(b);
+
+            if (b == '\n') {
+                break;
+            }
         }
 
-        server.setState(ServerConstants.SERVER_STATE_ONLINE);
-
-        // Server now implementes HsqlSocketRequestHandler,
-        // so there's really no need for HsqlSocketRequestHandlerImpl
-        return (HsqlSocketRequestHandler) server;
+        return count;
     }
 }

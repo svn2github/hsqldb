@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import java.io.File;
 import java.net.Socket;
+import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // method rorganised to use new HsqlServerProperties class
@@ -78,12 +79,32 @@ import java.net.Socket;
 // boucherb@users 20030510 - patch 1.7.2 - general lint removal
 
 /**
- *  WebServer acts as an HTTP server and is one way of
- *  using the client / server mode of HSQL Database Engine. This server can
- *  deliver static files and can also process database queries. An applet
- *  will need only the JDBC classes to access the database. The WebServer
- *  can be configured with the file 'webserver.properties'. This is an
- *  example of the file:
+ *  WebServer has two distinct functions:<p>
+ *
+ *  The primary function is to allow client/server access to HSQLDB databases
+ *  via the HTTP protocol. This protocol is less efficient than the HSQL
+ *  protocol used by the Server class and should be used only in situations
+ *  where sandboxes or firewalls between the client and the server do not
+ *  allow the use of the HSQL protocol. One example is client/server access by
+ *  an applet running in browsers on remote hosts and accessing the database
+ *  engine on the HTTP server from which the applet originated. From version
+ *  1.7.2 HTTP database connections are persistent and support transactions.
+ *  Similar to HSQL connections, they should be explicitly closed to free the
+ *  server resources.<p>
+ *
+ *  The secondary function of WebServer is to act as a simple general purpose
+ *  HTTP server. It is aimed to support the minimum requirements set out by
+ *  the HTTP/1.0 standard. The HEAD and GET method can be used to query and
+ *  retreive static files from the HTTP server.<p>
+ *
+ *  Both the database server and HTTP server functions of WebServer are
+ *  configured with the webserver.properties file. It contains entries for the
+ *  database server similar to those for the HSQL protocol Server class. In
+ *  addition, a list mapping different file endings to their mime types is
+ *  included in this file. (fredt@users) <p>
+ *
+ *
+ *  Example of the webserver.properties file:
  *
  * <pre>
  * server.port=80
@@ -102,18 +123,31 @@ import java.net.Socket;
  * .zip=application/x-zip-compressed
  * </pre>
  *
- *  Root: use / as separator even for DOS/Windows, it will be replaced<BR>
- *  Mime-types: file ending must be lowercase<BR>
+ *  Forr server.root use / as separator even for DOS/Windows.<br>
+ *  file extensions for mime types  must be lowercase<br>
  *
- * @since 1.x
  * @version 1.7.2
  */
 public class WebServer extends Server {
 
-    protected int serverProtocol = SC_PROTOCOL_HTTP;
+    int           bundleHandle;
+    protected int serverProtocol = ServerConstants.SC_PROTOCOL_HTTP;
 
     public WebServer() {
-        super(SC_PROTOCOL_HTTP);
+
+        super(ServerConstants.SC_PROTOCOL_HTTP);
+
+        ClassLoader cl = null;
+
+        try {
+            cl = getClass().getClassLoader();
+        } catch (Exception e) {}
+
+        bundleHandle = BundleHandler.getBundleHandle("webserver", cl);
+    }
+
+    protected Runnable newConnectionHandler(Socket socket) {
+        return new WebServerConnection(socket, this);
     }
 
     /**
@@ -139,12 +173,14 @@ public class WebServer extends Server {
             }
         }
 
-        props = HsqlProperties.argArrayToProps(args, SC_KEY_PREFIX);
+        props = HsqlProperties.argArrayToProps(args,
+                                               ServerConstants.SC_KEY_PREFIX);
 
         // Standard behaviour when started from the command line
-        // is to halt the VM when the server exits.  This may, of 
+        // is to halt the VM when the server exits.  This may, of
         // course, be partially overridden with a security policy
-        props.setPropertyIfNotExists(SC_KEY_NO_SYSTEM_EXIT, "false");
+        props.setPropertyIfNotExists(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
+                                     "false");
 
         server    = new WebServer();
         propsPath = server.getDefaultPropertiesPath();

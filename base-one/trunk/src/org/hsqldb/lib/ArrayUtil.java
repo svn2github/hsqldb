@@ -64,7 +64,9 @@ public class ArrayUtil {
     }
 
     /**
-     * Returns true if a and be contain the same set of integers.
+     * Returns true if a and be contain the same set of integers, not
+     * necessarily in the same order. This implies the arrays are of the same
+     * length.
      */
     public static boolean areEqualSets(int[] a, int[] b) {
         return a.length == b.length
@@ -72,13 +74,13 @@ public class ArrayUtil {
     }
 
     /**
-     * For sets == true returns true if a and b are the same length and
-     * contain the same integers.
+     * For sets == true returns true if a and b are identical (have the
+     * same length and contain the same integers in the same sequence).
      *
-     * For strict == false returns the result
+     * For sets == false returns the result
      * of haveEqualArrays(a,b,count)
      *
-     * For strict == true, the array lengths should be the same as count
+     * For sets == true, the array lengths must be the same as count
      *
      */
     public static boolean haveEquality(int[] a, int[] b, int count,
@@ -97,7 +99,7 @@ public class ArrayUtil {
 
     /**
      * Returns true if the first count elements of a and b are identical sets
-     * of integers.
+     * of integers (not necessarily in the same order).
      *
      */
     public static boolean haveEqualSets(int[] a, int[] b, int count) {
@@ -146,15 +148,16 @@ public class ArrayUtil {
     }
 
     /**
-     *  Checks for any overlap between two arrays of column indexes.
-     *  Limit check to lenb elements of b
+     * Returns true if a and the first bcount elements of b share any element.
+     *
+     * Used for checks for any overlap between two arrays of column indexes.
      */
-    public static boolean haveCommonElement(int[] a, int[] b, int lenb) {
+    public static boolean haveCommonElement(int[] a, int[] b, int bcount) {
 
         for (int i = 0; i < a.length; i++) {
             int c = a[i];
 
-            for (int j = 0; j < lenb; j++) {
+            for (int j = 0; j < bcount; j++) {
                 if (c == b[j]) {
                     return true;
                 }
@@ -165,9 +168,12 @@ public class ArrayUtil {
     }
 
     /**
-     * Return the overlap between two arrays of column indexes.
+     * Returns an int[] containing elements shared between the two arrays
+     * a and b. The arrays contain sets (no value is repeated).
+     *
+     * Used to find the overlap between two arrays of column indexes.
      * Ordering of the result arrays will be the same as in array
-     * a. The method silently assumes that each index is only listed
+     * a. The method assumes that each index is only listed
      * once in the two input arrays.
      * <p>
      * e.g.
@@ -212,10 +218,14 @@ public class ArrayUtil {
     }
 
     /**
+     * Returns the number of elements shared between the two arrays containing
+     * sets.<p>
+     *
      * Return the number of elements shared by two column index arrays.
-     * This method silently assumes that each element index is only listed
-     * once in each index array. Otherwise the returned number will NOT
-     * represent the number of unique indexes shared by both index array.
+     * This method assumes that each of these arrays contains a set (each
+     * element index is listed only once in each index array). Otherwise the
+     * returned number will NOT represent the number of unique indexes
+     * shared by both index array.
      *
      * @param a int[]; first array of column indexes.
      *
@@ -238,6 +248,85 @@ public class ArrayUtil {
         return k;
     }
 
+    /**
+     * Returns the count of elements in a from position start that are
+     * sequentially equal to the elements of b.
+     */
+    public static int countSameElements(byte[] a, int start, byte[] b) {
+
+        int k     = 0;
+        int limit = a.length - start;
+
+        if (limit > b.length) {
+            limit = b.length;
+        }
+
+        for (int i = 0; i < limit; i++) {
+            if (a[i + start] == b[i]) {
+                k++;
+            } else {
+                break;
+            }
+        }
+
+        return k;
+    }
+
+    /**
+     * Returns true if a contains all elements of b in sequential order from
+     * position start.
+     */
+
+    public static boolean startWith(byte[] a, int start, byte b[]) {
+        return countSameElements(a,start,b) == b.length;
+    }
+
+    /**
+     * Returns the count of elements in a from position start that are
+     * among the the elements of b.
+     *
+     */
+    public static int countStartElements(byte[] a, int start, byte b[]) {
+
+        int k = 0;
+
+        mainloop:
+        for (int i = start; i < a.length; i++) {
+            for (int j = 0; j < b.length; j++) {
+                if (a[i] == b[j]) {
+                    k++;
+
+                    continue mainloop;
+                }
+            }
+            break;
+        }
+
+        return k;
+    }
+
+    /**
+     * Returns the count of elements in a from position start that are not
+     * among the the elements of b.
+     *
+     */
+    public static int countNonStartElements(byte[] a, int start, byte b[]) {
+
+        int k = 0;
+
+        mainloop:
+        for (int i = start; i < a.length; i++) {
+            for (int j = 0; j < b.length; j++) {
+                if (a[i] == b[j]) {
+                    break mainloop;
+                }
+
+            }
+            k++;
+        }
+
+        return k;
+    }
     /**
      * Convenience wrapper for System.arraycopy()
      */

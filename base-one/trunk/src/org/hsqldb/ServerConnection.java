@@ -70,13 +70,14 @@ package org.hsqldb;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
 // fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
+// fredt@users 20030618 - patch 1.7.2 by fredt - changed read -write
 
 /**
  *  All ServerConnection objects are listed in a Vector in mServer
@@ -91,16 +92,19 @@ import java.net.Socket;
  *
  * @version 1.7.2
  */
-class ServerConnection implements Runnable, ServerConstants {
+class ServerConnection implements Runnable {
 
-    private String           user;
-    private Session          session;
-    private Socket           mSocket;
-    private Server           mServer;
-    private DataInputStream  mInput;
-    private DataOutputStream mOutput;
-    private static int       mCurrentThread = 0;
-    private int              mThread;
+    private String          user;
+    private Session         session;
+    private Socket          mSocket;
+    private Server          mServer;
+    private DataInputStream dataInput;
+    private OutputStream    dataOutput;
+    private static int      mCurrentThread = 0;
+    private int             mThread;
+    static final int        bufferSize = 256;
+    BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(bufferSize);
+    BinaryServerRowInput    rowIn      = new BinaryServerRowInput(rowOut);
 
     /**
      *
@@ -115,19 +119,26 @@ class ServerConnection implements Runnable, ServerConstants {
         synchronized (ServerConnection.class) {
             mThread = mCurrentThread++;
         }
-
-        mServer.serverConnList.addElement(this);
+        synchronized(mServer.serverConnSet){
+            mServer.serverConnSet.add(this);
+        }
     }
 
     void close() {
+
+        if (session != null) {
+            session.disconnect();
+        }
 
         // fredt@user - closing the socket is to stop this thread
         try {
             mSocket.close();
         } catch (IOException e) {}
 
-        mServer.serverConnList.removeElement(this);
-        mServer.notify(SC_CONNECTION_CLOSED);
+        synchronized(mServer.serverConnSet){
+            mServer.serverConnSet.remove(this);
+        }
+        mServer.notify(ServerConstants.SC_CONNECTION_CLOSED);
     }
 
     /**
@@ -138,28 +149,37 @@ class ServerConnection implements Runnable, ServerConstants {
      */
     private Session init() {
 
+        Session c = null;
+
         try {
             mSocket.setTcpNoDelay(true);
 
-            mInput = new DataInputStream(
+            dataInput = new DataInputStream(
                 new BufferedInputStream(mSocket.getInputStream()));
-            mOutput = new DataOutputStream(
-                new BufferedOutputStream(mSocket.getOutputStream()));
-            user = mInput.readUTF();
+            dataOutput = new BufferedOutputStream(mSocket.getOutputStream());
 
-            String  password = mInput.readUTF();
-            Session c;
+            Result resultIn = HSQLClientConnection.read(rowIn, dataInput);
+            Result resultOut;
 
             try {
                 mServer.trace(mThread + ":trying to connect user " + user);
-
-                return mServer.mDatabase.connect(user, password);
+                c = DatabaseManager.newSession(mServer.dbType, mServer.dbPath, resultIn.getMainString(),
+                                              resultIn.getSubString());
+                resultOut = new Result(ResultConstants.UPDATECOUNT);
             } catch (HsqlException e) {
-                write(new Result(e.getMessage(),
-                                 e.getSQLState(), e.getErrorCode()).getBytes());
+                resultOut = new Result(e.getMessage(), e.getSQLState(),
+                                       e.getErrorCode());
             }
+
+            HSQLClientConnection.write(resultOut, rowOut, dataOutput);
+
+            return c;
         } catch (Exception e) {
             mServer.trace(mThread + ":couldn't connect " + user);
+
+            if (c != null) {
+                c.disconnect();
+            }
         }
 
         close();
@@ -178,35 +198,27 @@ class ServerConnection implements Runnable, ServerConstants {
         if (session != null) {
             try {
                 while (true) {
+                    Result resultIn = HSQLClientConnection.read(rowIn,
+                        dataInput);
 
-// fredt@users 20011220 - patch 448121 by sma@users - large binary values
-                    byte[] bytes = new byte[mInput.readInt()];
+                    mServer.trace(mThread + ":" + resultIn.getMainString());
 
-                    mInput.readFully(bytes);
+                    Result resultOut = session.execute(resultIn);
 
-                    String sql = new String(bytes, "utf-8");
-
-                    mServer.trace(mThread + ":" + sql);
-
-                    if (sql == null) {
-                        break;
-                    }
-
-                    // fredt - to optimise by reusing a BinaryServerRowOutput object
-                    write(mServer.mDatabase.execute(sql, session).getBytes());
-
+                    HSQLClientConnection.write(resultOut, rowOut, dataOutput);
+/*
                     if (mServer.mDatabase.isShutdown()) {
                         break;
                     }
+*/
                 }
             } catch (IOException e) {
-                mServer.trace(mThread + ":disconnected " + user);
 
-                // fredt - after the client abrubtly drops clear the session
-                session.disconnect();
+                // fredt - is thrown when connection drops
+                mServer.trace(mThread + ":disconnected " + user);
             } catch (HsqlException e) {
 
-                // is thrown by Result.getBytes()
+                // fredt - is thrown while constructing the result
                 String s = e.getMessage();
 
                 e.printStackTrace();
@@ -214,30 +226,5 @@ class ServerConnection implements Runnable, ServerConstants {
 
             close();
         }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param b
-     *
-     * @throws IOException
-     */
-
-    // fredt - todo - rewrite for reusing the output buffer
-    void write(DatabaseRowOutputInterface binImage) throws IOException {
-
-        mOutput.writeInt(binImage.getOutputStream().size());
-        mOutput.write(binImage.getOutputStream().getBuffer(), 0,
-                      binImage.getOutputStream().size());
-        mOutput.flush();
-    }
-
-    void write(byte b[]) throws IOException {
-
-        mOutput.writeInt(b.length);
-        mOutput.write(b);
-        mOutput.flush();
     }
 }

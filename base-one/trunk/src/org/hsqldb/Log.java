@@ -157,7 +157,7 @@ class Log {
     // used for tracing
     private StopWatch defaultTimer = new StopWatch();
     private static final HsqlTimer timer =
-        HsqlRuntime.getHsqlRuntime().getTimer();
+        DatabaseManager.getTimer();
 
     /**
      *  Constructor declaration
@@ -632,7 +632,7 @@ class Log {
             for (; it.hasNext(); ) {
                 Session session = (Session) it.next();
 
-                if (session.getAutoCommit() == false) {
+                if (session.isAutoCommit() == false) {
                     dbScriptWriter.writeLogStatement(
                         session.getAutoCommitStatement(false),
                         session.getId());

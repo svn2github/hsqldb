@@ -1873,7 +1873,7 @@ class Table {
 
             // -- result set for records to be inserted if this is
             // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
-            Result   ri          = new Result();
+            Result   ri          = new Result(ResultConstants.DATA);
             Index    refindex    = c.getRefIndex();
             int      m_columns[] = c.getMainColumns();
             int      r_columns[] = c.getRefColumns();
@@ -2086,7 +2086,7 @@ class Table {
                 ArrayUtil.copyColumnValues(nrow, r_columns, refobjects);
 
                 // -- walk the index for all the nodes that reference update node
-                Result ri = new Result();
+                Result ri = new Result(ResultConstants.DATA);
 
                 for (Node n = refnode;
                         refindex.comparePartialRowNonUnique(

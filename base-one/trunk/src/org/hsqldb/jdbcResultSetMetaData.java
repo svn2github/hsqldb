@@ -386,7 +386,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * An array of objects, each of which represents the reported attributes
      * for  a single column of this object's parent ResultSet.
      */
-    private jdbcColumnMetaData[] acmd;
+    private jdbcColumnMetaData[] columnMetaData;
 
     /** The number of columns in this object's parent ResultSet. */
     private int columnCount;
@@ -441,23 +441,20 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *        jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
      */
-    jdbcResultSetMetaData(jdbcResultSet rs) throws SQLException {
+    jdbcResultSetMetaData(jdbcResultSet rs, HsqlProperties props) throws SQLException {
 
         Statement          stmnt;
         jdbcColumnMetaData cmd;
-
-        if (TRACE) {
-            sw = new StopWatch();
-        }
 
         if (rs == null) {
             throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
                                           "result set is null");
         }
 
+        useColumnName = props.isPropertyTrue("get_column_name");
         rResult = rs.rResult;
 
-        if (rResult != null && rResult.iMode != Result.DATA) {
+        if (rResult != null && rResult.iMode != ResultConstants.DATA) {
 
             // Not a DATA mode result; it has no columns
             // No further init required, as setting columnCount to
@@ -516,12 +513,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                           "connection is closed");
         }
 
-        acmd = new jdbcColumnMetaData[columnCount];
+        columnMetaData = new jdbcColumnMetaData[columnCount];
 
 // TODO: maybe some of this could be moved to the jdbcColumnMetaData.<init>?
         for (int i = 0; i < columnCount; i++) {
             cmd             = new jdbcColumnMetaData();
-            acmd[i]         = cmd;
+            columnMetaData[i]         = cmd;
             cmd.catalogName = "";
             cmd.schemaName  = "";
 
@@ -687,7 +684,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw cDependentException;
         }
 
-        return acmd[column].isAutoIncrement;
+        return columnMetaData[column].isAutoIncrement;
     }
 
     /**
@@ -723,7 +720,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].isCaseSensitive;
+        return columnMetaData[--column].isCaseSensitive;
     }
 
     /**
@@ -761,7 +758,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].isSearchable;
+        return columnMetaData[--column].isSearchable;
     }
 
     /**
@@ -796,7 +793,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        return acmd[--column].isCurrency;
+        return columnMetaData[--column].isCurrency;
     }
 
     /**
@@ -865,7 +862,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw cDependentException;
         }
 
-        return acmd[column].isNullable;
+        return columnMetaData[column].isNullable;
     }
 
     /**
@@ -898,7 +895,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].isSigned;
+        return columnMetaData[--column].isSigned;
     }
 
     /**
@@ -970,7 +967,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].columnDisplaySize;
+        return columnMetaData[--column].columnDisplaySize;
     }
 
     /**
@@ -1008,7 +1005,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        return acmd[--column].columnLabel;
+        return columnMetaData[--column].columnLabel;
     }
 
     /**
@@ -1051,8 +1048,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         column--;
 
-        return useColumnName ? acmd[column].columnName
-                             : acmd[column].columnLabel;
+        return useColumnName ? columnMetaData[column].columnName
+                             : columnMetaData[column].columnLabel;
     }
 
     /**
@@ -1111,7 +1108,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 //        if (!reportCDependent && isTableColumn(column)) {
 //            throw cDependentException;
 //        }
-        return acmd[--column].schemaName;
+        return columnMetaData[--column].schemaName;
     }
 
     /**
@@ -1164,7 +1161,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].precision;
+        return columnMetaData[--column].precision;
     }
 
     /**
@@ -1205,7 +1202,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        return acmd[--column].scale;
+        return columnMetaData[--column].scale;
     }
 
     /**
@@ -1224,7 +1221,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        return acmd[--column].tableName;
+        return columnMetaData[--column].tableName;
     }
 
     /**
@@ -1277,7 +1274,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 //        if (!reportCDependent && isTableColumn(column)) {
 //            throw cDependentException;
 //        }
-        return acmd[--column].catalogName;
+        return columnMetaData[--column].catalogName;
     }
 
     /**
@@ -1310,7 +1307,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        int type = acmd[--column].columnType;
+        int type = columnMetaData[--column].columnType;
 
         // TODO:
         // we're trying to get away from reporting non-standard type codes
@@ -1356,7 +1353,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         checkColumn(column);
 
-        return acmd[--column].columnTypeName;
+        return columnMetaData[--column].columnTypeName;
     }
 
     /**
@@ -1406,7 +1403,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw cDependentException;
         }
 
-        return acmd[column].isReadOnly;
+        return columnMetaData[column].isReadOnly;
     }
 
     /**
@@ -1462,7 +1459,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             throw cDependentException;
         }
 
-        return acmd[column].isWritable;
+        return columnMetaData[column].isWritable;
     }
 
     /**
@@ -1516,7 +1513,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 // that a write may succeed (as indicated by a true value of isWritable()),
 // it also might fail (as indicated by a false returned here).
         // as of 1.7.2, always false
-        return acmd[--column].isDefinitelyWritable;
+        return columnMetaData[--column].isDefinitelyWritable;
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -1564,7 +1561,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         checkColumn(column);
         initDerived();
 
-        return acmd[--column].columnClassName;
+        return columnMetaData[--column].columnClassName;
     }
 
 // ------------------------- Internal Implementation ---------------------------
@@ -1656,7 +1653,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         ti = new DITypeInfo();
 
         for (int i = 0; i < columnCount; i++) {
-            cmd = acmd[i];
+            cmd = columnMetaData[i];
 
             int ditype     = cmd.columnType;
             int ditype_sub = Types.TYPE_SUB_DEFAULT;
@@ -1707,7 +1704,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                 max = MIN_DISPLAY_SIZE;
 
                 try {
-                    rs = new jdbcResultSet(rResult, null);
+                    rs = new jdbcResultSet(null, rResult, null);
 
                     while (rs.next() && rc < MAX_SCAN) {
                         val = rs.getString(i + 1);
@@ -1778,7 +1775,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
                 tcn.add(ValuePool.getInt(i));
 
-                cmd = acmd[i];
+                cmd = columnMetaData[i];
 
                 sb.append(Column.createSQLString(cmd.tableName));
                 sb.append(',');
@@ -1796,7 +1793,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             i  = 0;
 
             while (rs.next() && i < size) {
-                cmd = acmd[((Integer) tcn.get(i++)).intValue()];
+                cmd = columnMetaData[((Integer) tcn.get(i++)).intValue()];
                 cmd.catalogName     = rs.getString(1);
                 cmd.schemaName      = rs.getString(2);
                 cmd.isAutoIncrement = rs.getBoolean(3);
@@ -1834,7 +1831,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *      column in the query that genrated the result
      */
     boolean isTableColumn(int column) {
-        return acmd[column].tableName.length() > 0
-               && acmd[column].columnName.length() > 0;
+        return columnMetaData[column].tableName.length() > 0
+               && columnMetaData[column].columnName.length() > 0;
     }
 }

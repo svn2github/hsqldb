@@ -180,6 +180,7 @@ public class Trace extends PrintWriter {
                                   BAD_IDENTITY_VALUE                  = 77,
                                   ERROR_IN_SCRIPT_FILE                = 78,
                                   NULL_IN_VALUE_LIST                  = 79,
+                                  SOCKET_ERROR                        = 80,
                                   INVALID_CHARACTER_ENCODING          = 81,
                                   NO_CLASSLOADER_FOR_TLS              = 82,
                                   NO_JSSE                             = 83,
@@ -251,7 +252,7 @@ public class Trace extends PrintWriter {
         "S1000 error in script file", "37000 NULL in value list",
 
         //
-        "",
+        "08000 socket creation error",
 
         //
         "37000 invalid character encoding",

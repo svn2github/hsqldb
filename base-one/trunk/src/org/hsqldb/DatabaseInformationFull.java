@@ -115,8 +115,8 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             case SYSTEM_CLASSPRIVILEGES :
                 return SYSTEM_CLASSPRIVILEGES();
 
-            case SYSTEM_CONNECTIONINFO :
-                return SYSTEM_CONNECTIONINFO();
+            case SYSTEM_SESSIONINFO :
+                return SYSTEM_SESSIONINFO();
 
             case SYSTEM_PROPERTIES :
                 return SYSTEM_PROPERTIES();
@@ -636,12 +636,12 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *        with the current execution context
      * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_CONNECTIONINFO() throws HsqlException {
+    Table SYSTEM_SESSIONINFO() throws HsqlException {
 
-        Table t = sysTables[SYSTEM_CONNECTIONINFO];
+        Table t = sysTables[SYSTEM_SESSIONINFO];
 
         if (t == null) {
-            t = createBlankTable(sysTableHsqlNames[SYSTEM_CONNECTIONINFO]);
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_SESSIONINFO]);
 
             addColumn(t, "KEY", VARCHAR, false);      // not null
             addColumn(t, "VALUE", VARCHAR, false);    // not null
@@ -660,7 +660,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         row    = t.getNewRow();
         row[0] = "AUTOCOMMIT";
-        row[1] = session.getAutoCommit() ? "TRUE"
+        row[1] = session.isAutoCommit() ? "TRUE"
                                          : "FALSE";
 
         t.insert(row, null);
@@ -684,16 +684,17 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                            : "FALSE";
 
         t.insert(row, null);
-
+/*
+fredt - this is a statement sepecific property
         row    = t.getNewRow();
         row[0] = "MAXROWS";
         row[1] = String.valueOf(session.getMaxRows());
 
         t.insert(row, null);
-
+*/
         row    = t.getNewRow();
         row[0] = "DATABASE";
-        row[1] = String.valueOf(database.getName());
+        row[1] = String.valueOf(database.getPath());
 
         t.insert(row, null);
 
@@ -1051,7 +1052,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "IS_ADMIN", BIT, false);
             addColumn(t, "AUTOCOMMIT", BIT, false);
             addColumn(t, "READONLY", BIT, false);
-            addColumn(t, "MAXROWS", INTEGER, false);
+//            addColumn(t, "MAXROWS", INTEGER, false);
 
             // Note: some sessions may have a NULL LAST_IDENTITY value
             addColumn(t, "LAST_IDENTITY", BIGINT);
@@ -1076,9 +1077,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         final int iis_admin = 3;
         final int iautocmt  = 4;
         final int ireadonly = 5;
-        final int imaxrows  = 6;
-        final int ilast_id  = 7;
-        final int it_size   = 8;
+//        final int imaxrows  = 6;
+        final int ilast_id  = 6;
+        final int it_size   = 7;
 
         // Initialisation
         sessions = ns.listVisibleSessions(session);
@@ -1091,9 +1092,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[ict]       = new Timestamp(s.getConnectTime());
             row[iuname]    = s.getUsername();
             row[iis_admin] = ValuePool.getBoolean(s.isAdmin());
-            row[iautocmt]  = ValuePool.getBoolean(s.getAutoCommit());
+            row[iautocmt]  = ValuePool.getBoolean(s.isAutoCommit());
             row[ireadonly] = ValuePool.getBoolean(s.isReadOnly());
-            row[imaxrows]  = ValuePool.getInt(s.getMaxRows());
+//            row[imaxrows]  = ValuePool.getInt(s.getMaxRows());
             row[ilast_id] =
                 ValuePool.getLong(s.getLastIdentity().longValue());
             row[it_size] = ValuePool.getInt(s.getTransactionSize());

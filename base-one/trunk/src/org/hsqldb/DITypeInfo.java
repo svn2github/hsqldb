@@ -706,15 +706,12 @@ final class DITypeInfo implements Types {
      */
     Long getPrecisionAct() {
 
-        switch (type) {
+        Integer temp = getPrecision();
 
-            case ARRAY :
-            case BLOB :
-            case CLOB :
-                return ValuePool.getLong(Long.MAX_VALUE);
-
-            default :
-                return ValuePool.getLong(getPrecision().longValue());
+        if (temp == null) {
+            return ValuePool.getLong(Long.MAX_VALUE);
+        } else {
+            return ValuePool.getLong(temp.longValue());
         }
     }
 

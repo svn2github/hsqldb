@@ -55,7 +55,6 @@ public class CompiledStatementExecutor {
     Database    database;
     Result      updateResult;
     Result      emptyResult;
-    HsqlRuntime runtime;
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -66,9 +65,9 @@ public class CompiledStatementExecutor {
 
         this.session = session;
         database     = session.getDatabase();
-        updateResult = new Result();
-        emptyResult  = new Result();
-        runtime      = HsqlRuntime.getHsqlRuntime();
+        updateResult = new Result(ResultConstants.UPDATECOUNT);
+        emptyResult  = new Result(ResultConstants.UPDATECOUNT);
+//        runtime      = HsqlRuntime.getHsqlRuntime();
     }
 
     /**
@@ -79,7 +78,7 @@ public class CompiledStatementExecutor {
      */
     Result execute(CompiledStatement cs) {
 
-        runtime.gc();
+        DatabaseManager.gc();
 
         // can be made more granular later, e.g. table-level locking
         synchronized (database) {
@@ -169,11 +168,8 @@ public class CompiledStatementExecutor {
 //        if (o instanceof Statement) {
 //            return Result.newResult(((Statement)o).getResultSet());
 //        }
-        r            = new Result(1);
+        r            = Result.newSingleColumnResult("",e.getDataType());
         r.sTable[0]  = "";
-        r.colType[0] = e.getDataType();
-        r.sLabel[0]  = "";
-        r.sName[0]   = "";
         row          = new Object[1];
         row[0]       = o;
 
@@ -420,7 +416,7 @@ public class CompiledStatementExecutor {
 
         if (f.findFirst()) {
             del  = new HsqlLinkedList();
-            ins  = new Result();
+            ins  = new Result(ResultConstants.UPDATECOUNT);
             size = t.getColumnCount();
             len  = cm.length;
             ct   = t.getColumnTypes();

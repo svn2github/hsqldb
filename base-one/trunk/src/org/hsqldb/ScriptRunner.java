@@ -129,13 +129,13 @@ class ScriptRunner {
                 }
 
                 if (s.length() != 0) {
-                    Result result = database.execute(s, current);
+                    Result result = current.sqlExecuteDirect(s);
 
-                    if (result != null && result.iMode == Result.ERROR) {
+                    if (result != null && result.iMode == ResultConstants.ERROR) {
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());
-                        Trace.printSystemOut(result.errorString);
+                        Trace.printSystemOut(result.mainString);
                     }
                 }
             }

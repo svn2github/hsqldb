@@ -71,11 +71,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Hashtable;
+import java.util.Date;
+import java.util.Calendar;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
 // fredt@users 20021013 - patch 1.7.1 - ignore non-static methods
 // boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
+// fredt@users 20030621 - patch 1.7.2 - shortcut treatment of session calls
 
 /**
  * Provides services to evaluate and invoke Java methods in the context of
@@ -95,7 +98,6 @@ class Function {
     private Object           oArg[];
     private Expression       eArg[];
     private boolean          bConnection;
-    private boolean          isIdentityFunction;
     private static Hashtable methodCache = new Hashtable();
     private int              fID;
     private String           fname;
@@ -141,10 +143,6 @@ class Function {
         sFunction = function;
         fname     = function;
         fID       = Library.functionID(function);
-
-        if (function.equals("org.hsqldb.Library.identity")) {
-            isIdentityFunction = true;
-        }
 
         int i = function.lastIndexOf('.');
 
@@ -234,8 +232,33 @@ class Function {
 
         int i = 0;
 
-        if (isIdentityFunction) {
-            return cSession.getLastIdentity();
+        switch (fID) {
+
+            case Library.identity :
+                return cSession.getLastIdentity();
+
+            case Library.database :
+                return cSession.getDatabase().getPath();
+
+            case Library.user :
+                return cSession.getUser().getName();
+
+            case Library.isReadOnlyConnection :
+                return cSession.isReadOnly() ? Boolean.TRUE
+                                             : Boolean.FALSE;
+
+            case Library.getAutoCommit :
+                return cSession.isAutoCommit() ? Boolean.TRUE
+                                               : Boolean.FALSE;
+
+            case Library.isReadOnlyDatabase :
+                return cSession.getDatabase().databaseReadOnly ? Boolean.TRUE
+                                                               : Boolean
+                                                               .FALSE;
+
+            case Library.isReadOnlyDatabaseFiles :
+                return cSession.getDatabase().filesReadOnly ? Boolean.TRUE
+                                                            : Boolean.FALSE;
         }
 
         if (bConnection) {
@@ -264,6 +287,12 @@ class Function {
         }
 
         try {
+            if (fID == Library.month) {
+                return new Integer(
+                    Library.getDateTimePart((Date) oArg[0], Calendar.MONTH)
+                    + cSession.getDatabase().sqlMonth);
+            }
+
             return (fID >= 0) ? Library.invoke(fID, oArg)
                               : mMethod.invoke(null, oArg);
 

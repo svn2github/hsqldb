@@ -81,6 +81,7 @@ import java.sql.SQLWarning;
 // updated generic documentation to JDK 1.4, and added JDBC3 methods and docs
 // boucherb@users and fredt@users - 20020505 extensive review and update
 // of docs and behaviour to comply with java.sql specification
+// fredt@users 20030620 - patch 1.7.2 - rewritten and simplified
 
 /**
  * <!-- start generic documentation -->
@@ -107,15 +108,14 @@ import java.sql.SQLWarning;
  * versions of JDBC depends on the JDK version used for compiling and building
  * HSQLDB.<p>
  *
- * Since 1.7.0, it is possible to build the product so that
+ * Since 1.7.0,
  * all JDBC 2 methods can be called while executing under the version 1.1.x
  * <em>Java Runtime Environment</em><sup><font size="-2">TM</font></sup>.
  * However, some of these method calls require <code>int</code> values that
  * are defined only in the JDBC 2 or greater version of
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <code>ResultSet</code></a> interface.  For this reason, when the
- * product is compiled under JDK 1.1.x, these values are defined in
- * {@link jdbcResultSet jdbcResultSet}.<p>
+ * <code>ResultSet</code></a> interface.  For this reason these values are
+ * defined in {@link jdbcResultSet jdbcResultSet}.<p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
  * JDBC2-only <code>ResultSet</code> values can be achieved by referring
@@ -151,27 +151,32 @@ public class jdbcStatement implements java.sql.Statement {
     /**
      * Is escape processing enabled?
      */
-    private boolean bEscapeProcessing = true;
+    private boolean isEscapeProcessing = true;
 
     /**
      * The connection used to execute this statement.
      */
-    private jdbcConnection cConnection;
+    protected jdbcConnection connection;
 
     /**
      * The maximum number of rows to generate when executing this statement.
      */
-    private int iMaxRows;
+    protected int iMaxRows;
 
     /**
      * The result of executing this statement.
      */
-    private jdbcResultSet rSet;
+    protected Result resultIn;
 
     /**
      * The result type obtained by executing this statement.
      */
-    private int rsType = jdbcResultSet.TYPE_FORWARD_ONLY;
+    protected int rsType = jdbcResultSet.TYPE_FORWARD_ONLY;
+
+    /**
+     * The result type used by this statement.
+     */
+    Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
 
     /**
      * <!-- start generic documentation -->
@@ -198,7 +203,7 @@ public class jdbcStatement implements java.sql.Statement {
         checkClosed();
         fetchResult(sql);
 
-        return rSet;
+        return new jdbcResultSet(this, resultIn, connection.connProperties);
     }
 
     /**
@@ -226,11 +231,15 @@ public class jdbcStatement implements java.sql.Statement {
         checkClosed();
         fetchResult(sql);
 
-        if (rSet == null) {
-            return -1;
+        if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
+            throw new SQLException(
+                "executeUpdate() cannot be used with this statement");
+        } else if (resultIn.iMode == ResultConstants.ERROR) {
+            throw new SQLException(resultIn.mainString, resultIn.subString,
+                                   resultIn.idCode);
         }
 
-        return rSet.getUpdateCount();
+        return resultIn.getUpdateCount();
     }
 
     /**
@@ -259,14 +268,8 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      */
     public void close() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        closeOldResult();
-
-        rSet = null;
+        resultOut = null;
+        resultIn  = null;
     }
 
     //----------------------------------------------------------------------
@@ -299,10 +302,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #setMaxFieldSize
      */
     public int getMaxFieldSize() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -342,11 +341,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getMaxFieldSize
      */
     public void setMaxFieldSize(int max) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -370,10 +364,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #setMaxRows
      */
     public int getMaxRows() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -399,10 +389,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getMaxRows
      */
     public void setMaxRows(int max) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -438,10 +424,6 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public void setEscapeProcessing(boolean enable) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
         // fredt - this is a no-brainer - we just override this method in
@@ -471,7 +453,7 @@ public class jdbcStatement implements java.sql.Statement {
         // engine side, rather than here in client-side code).
         //
         // boucherb@users 20020425
-        bEscapeProcessing = enable;
+        isEscapeProcessing = enable;
     }
 
     /**
@@ -497,10 +479,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #setQueryTimeout
      */
     public int getQueryTimeout() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -532,11 +510,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getQueryTimeout
      */
     public void setQueryTimeout(int seconds) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -561,11 +534,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      */
     public void cancel() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -603,10 +571,6 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public SQLWarning getWarnings() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
         return null;
@@ -634,11 +598,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      */
     public void clearWarnings() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -678,11 +637,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @exception SQLException if a database access error occurs
      */
     public void setCursorName(String name) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -720,18 +674,10 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public boolean execute(String sql) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
         fetchResult(sql);
 
-        if (rSet == null) {
-            return false;
-        }
-
-        return rSet.isResult();
+        return resultIn.iMode == ResultConstants.DATA;
     }
 
     /**
@@ -756,17 +702,11 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public ResultSet getResultSet() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
-        if ((rSet != null) && rSet.isResult()) {
-            return rSet;
-        }
-
-        return null;
+        return resultIn.iMode == ResultConstants.DATA
+               ? new jdbcResultSet(this, resultIn, connection.connProperties)
+               : null;
     }
 
     /**
@@ -788,17 +728,14 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public int getUpdateCount() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        checkClosed();
-
-        if (rSet == null) {
+// fredt - omit checkClosed() in order to be able to handle the result of a
+// SHUTDOWN query
+//        checkClosed();
+        if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
             return -1;
         }
 
-        return rSet.getUpdateCount();
+        return resultIn.getUpdateCount();
     }
 
     /**
@@ -816,13 +753,6 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * <b>HSQLDB-Specific Information:</b> <p>
-     *
-     * Up to and including 1.7.1, HSQLDB does not support multiple results. <p>
-     *
-     * Calling this method closes the current result (if any) and always
-     * returns <code>false</code>.
-     * </span>
      * <!-- end release-specific documentation -->
      *
      * @return <code>true</code> if the next result is a <code>ResultSet</code>
@@ -833,18 +763,7 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public boolean getMoreResults() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        checkClosed();
-
-        if (rSet != null) {
-            rSet.close();
-
-            rSet = null;
-        }
-
+/** @todo fredt */
         return false;
     }
 
@@ -889,10 +808,6 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public void setFetchDirection(int direction) throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
         if (direction != jdbcResultSet.FETCH_FORWARD) {
@@ -927,10 +842,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #setFetchDirection
      */
     public int getFetchDirection() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -968,11 +879,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getFetchSize
      */
     public void setFetchSize(int rows) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
     }
 
@@ -1005,10 +911,6 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #setFetchSize
      */
     public int getFetchSize() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -1045,10 +947,6 @@ public class jdbcStatement implements java.sql.Statement {
      *  for jdbcStatement)
      */
     public int getResultSetConcurrency() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
 
         checkClosed();
 
@@ -1089,12 +987,9 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public int getResultSetType() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        checkClosed();
-
+// fredt - omit checkClosed() in order to be able to handle the result of a
+// SHUTDOWN query
+//        checkClosed();
         return rsType;
     }
 
@@ -1128,11 +1023,6 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public void addBatch(String sql) throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -1163,11 +1053,6 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public void clearBatch() throws SQLException {
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         throw jdbcDriver.notSupported;
     }
 
@@ -1238,10 +1123,6 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public int[] executeBatch() throws SQLException {
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
         checkClosed();
 
         throw jdbcDriver.notSupported;
@@ -1266,11 +1147,7 @@ public class jdbcStatement implements java.sql.Statement {
 
         checkClosed();
 
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        return cConnection;
+        return connection;
     }
 
     //--------------------------JDBC 3.0-----------------------------
@@ -1695,24 +1572,6 @@ public class jdbcStatement implements java.sql.Statement {
     // -------------------- Internal Implementation ----------------------------
 
     /**
-     * Constructs a new jdbcStatement using the specified connection.
-     *
-     * @param c the connection on which this statement will execute
-     */
-    jdbcStatement(jdbcConnection c) {
-
-        // FIXME: fredt - no it is checkd in Connection.getStatement
-        // uhh.. check for null?  Yes: package private does not mean
-        // carte blanche.  We are only human too, so why not use
-        // the standard best practices?  This must never be null,
-        // so why let it pass here. Perhaps this constructor s
-        // hould really throw a SQLException
-        // boucherb@users 20020425
-        cConnection = c;
-        rsType      = jdbcResultSet.TYPE_FORWARD_ONLY;
-    }
-
-    /**
      * Constructs a new jdbcStatement with the specified connection and
      * result type.
      *
@@ -1720,22 +1579,8 @@ public class jdbcStatement implements java.sql.Statement {
      * @param  type the kind of results this will return
      */
     jdbcStatement(jdbcConnection c, int type) {
-
-        // FIXME:
-        // better form is:
-        //
-        this(c);
-
-        rsType = type;
-
-        //
-        // that way, code changes need not be duplicated in both constructors
-        // boucherb@users 20020425
-//                cConnection       = c;
-        // FIXME: fredt - no it is checked and in Connection.getStatement()
-        // check this is correct first.  Perhaps this constructor
-        // should really throw a SQLException?
-        // boucherb@users 20020425
+        connection = c;
+        rsType     = type;
     }
 
     /**
@@ -1743,22 +1588,15 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * @throws SQLException when the connection is closed
      */
+
+/** @todo fredt - message */
     void checkClosed() throws SQLException {
-        cConnection.checkClosed();
-    }
 
-    /**
-     * Closes the current result, if any.
-     * @throws SQLException when a database access error occurs
-     */
-    private void closeOldResult() throws SQLException {
-
-        // this is necessary to conform the JDBC standard
-        if (rSet != null) {
-            rSet.close();
-
-            rSet = null;
+        if (resultOut == null) {
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
         }
+
+        connection.checkClosed();
     }
 
     /**
@@ -1774,32 +1612,27 @@ public class jdbcStatement implements java.sql.Statement {
      * @param sql the SQL to be executed
      * @throws SQLException when a database access error occurs
      */
-    private void fetchResult(String sql) throws SQLException {
+    private synchronized void fetchResult(String sql) throws SQLException {
 
-        if (bEscapeProcessing) {
-            sql = cConnection.nativeSQL(sql);
+        if (isEscapeProcessing) {
+            sql = connection.nativeSQL(sql);
         }
 
-        closeOldResult();
+        resultIn = null;
 
-        if (iMaxRows == 0) {
-            rSet = cConnection.execute(sql);
-        } else {
-            try {
-                sql  = "SET MAXROWS " + iMaxRows + ";" + sql;
-                rSet = cConnection.execute(sql);
+        resultOut.setMainString(sql);
+        resultOut.setMaxRows(iMaxRows);
 
-                cConnection.execute("SET MAXROWS 0");
-            } catch (SQLException e) {
-                cConnection.execute("SET MAXROWS 0");
+        try {
+            resultIn = connection.sessionProxy.execute(resultOut);
 
-                throw e;
+            if (resultIn.iMode == ResultConstants.ERROR) {
+                throw new HsqlException(resultIn.getMainString(),
+                                        resultIn.getSubString(),
+                                        resultIn.getIDCode());
             }
-        }
-
-        if (rSet != null) {
-            rSet.sqlStatement = this;
-            rSet.rsType       = rsType;
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
         }
     }
 }

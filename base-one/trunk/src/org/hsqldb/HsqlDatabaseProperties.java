@@ -195,7 +195,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     private void setSystemVariables() {
 
-        Library.setSqlMonth(isPropertyTrue("sql.month"));
         Column.setCompareInLocal(isPropertyTrue("sql.compare_in_locale"));
 
         Record.gcFrequency = getIntegerProperty("hsqldb.gc_interval", 0);
@@ -241,6 +240,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     }
 
     private void setDatabaseVariables() {
+
+        if (isPropertyTrue("sql.month")) {
+            database.sqlMonth = 1;
+        }
 
         if (isPropertyTrue("readonly")) {
             database.setReadOnly();
