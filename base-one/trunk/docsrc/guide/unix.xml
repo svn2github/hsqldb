@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.14 2004/05/13 22:50:38 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.15 2004/05/14 20:48:58 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.14 $</edition>
-        <pubdate>$Date: 2004/05/13 22:50:38 $</pubdate>
+        <edition>$Revision: 1.15 $</edition>
+        <pubdate>$Date: 2004/05/14 20:48:58 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -488,7 +488,7 @@
                 For good UNIXes that use System V style init, you must set up 
                 hard links or soft links either manually or with management 
                 tools (such as <literal>chkconfig</literal> or
-                <literal>insserver</literal>) or Gui's (like run level editors).
+                <literal>insserv</literal>) or Gui's (like run level editors).
             </para></step>
         </procedure>
         </section>
