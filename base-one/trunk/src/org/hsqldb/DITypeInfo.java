@@ -257,6 +257,77 @@ final class DITypeInfo implements DITypes {
                 return null;
         }
     }
+    
+    /** 
+     * Retrieves the maximum length that a String representation of
+     * the type may have.  For character and datetime types, this is the
+     * same as the maximum length/precision, repectively. For numeric
+     * types, this is the precision, plus the length of the negation
+     * character (1), plus the maximum number of characters that may occupy
+     * the exponent character sequence.  For bit/boolean types, it is the
+     * length of the character sequence "false", the longer of the two
+     * boolean value String representations.  For any other types, the
+     * value is the result of whatever calculation must be performed to
+     * determine the maximum length of its String representation. If
+     * the size is unknown, unknowable or inapplicable, zero is returned. <p>
+     *
+     * @return the maximum length that a String representation of
+     *      the type may have
+     */
+    int getMaxDisplaySize() {
+        switch (type) {
+
+            case BINARY :
+            case CHAR :
+            case LONGVARBINARY :
+            case LONGVARCHAR :
+            case OTHER :
+            case VARBINARY :
+            case VARCHAR :
+            case XML :
+                return Integer.MAX_VALUE; // same as precision
+
+            case BIGINT :
+                return 20; // precision + "-".length();
+
+            case BIT :
+            case BOOLEAN :
+                return 5; // Math.max("true".length(),"false".length);
+
+            case DATALINK :
+                return 2004; // same as precision
+
+            case DECIMAL :
+            case NUMERIC :
+                return 646456995; // precision + "-.".length()
+
+            case DATE :
+                return 10; // same as precision
+                
+            case INTEGER :
+                return 11; // precision + "-".length();
+
+            case FLOAT :
+            case REAL :
+            case DOUBLE :
+                return 23; // String.valueOf(-Double.MAX_VALUE).length();
+
+            case TIME :
+                return 8; // same as precision
+
+            case SMALLINT :
+                return 6; // precision + "-".length();
+
+            case TIMESTAMP :
+                return 29; // same as precision
+
+            case TINYINT :
+                return 4; // precision + "-".length();
+
+            default :
+                return 0; // unknown
+        }        
+    }
 
     /** 
      * Retrieves the data type, as an Integer. <p>

@@ -96,7 +96,10 @@ import org.hsqldb.lib.HsqlHashMap;
 class User {
 
     /** true if this user has database administrator role. */
-    private boolean bAdministrator;
+    private boolean isAdministrator;
+
+    /** true if this user is the sys user. */
+    private boolean isSys;
 
     /** map with database object identifier keys and access privileges values */
     private HsqlHashMap rightsMap;
@@ -135,8 +138,9 @@ class User {
 
         setPassword(password);
 
-        bAdministrator = admin;
-        uPublic        = pub;
+        isAdministrator = admin;
+        isSys = name.equals(UserManager.SYS_USER_NAME);
+        uPublic         = pub;
     }
 
     String getName() {
@@ -258,7 +262,7 @@ class User {
 
         rightsMap.clear();
 
-        bAdministrator = false;
+        isAdministrator = false;
     }
 
     /**
@@ -290,7 +294,7 @@ class User {
         Integer n;
 
 //        Trace.doAssert(dbobject != null, "dbobject is null");
-        if (bAdministrator) {
+        if (isAdministrator) {
             return true;
         }
 
@@ -325,7 +329,15 @@ class User {
      * database administrator role.
      */
     boolean isAdmin() {
-        return bAdministrator;
+        return isAdministrator;
+    }
+
+    /**
+     * Returns true if this User object is for a user with the
+     * database administrator role.
+     */
+    boolean isSys() {
+        return isSys;
     }
 
     /**

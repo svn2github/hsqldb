@@ -80,9 +80,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     private static HsqlHashSet protectedProperties      = new HsqlHashSet();
     private static String[]    protectedPropertiesNames = {
         "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-        "hsqldb.original_version", "hsqldb.log_type","hsqldb.files_readonly",
-        "hsqldb.files_in_jar", "readonly", "modified",
-        "sql.compare_in_locale"
+        "hsqldb.original_version", "hsqldb.log_type", "hsqldb.files_readonly",
+        "hsqldb.files_in_jar", "readonly", "modified", "sql.compare_in_locale"
     };
 
     static {
@@ -234,16 +233,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // overwrite properties if wrongly set in props file
         if (JARFILE) {
+            setProperty("hsqldb.files_in_jar", true);
             setProperty("hsqldb.files_readonly", true);
             database.setFilesInJar();
-        }
-
-        if (isPropertyTrue("readonly")) {
-            database.setReadOnly();
-        }
-
-        if (isPropertyTrue("hsqldb.files_readonly")) {
-            database.setFilesReadOnly();
         }
 
         String version = getProperty("hsqldb.compatible_version");
@@ -257,10 +249,23 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("hsqldb.version", jdbcDriver.VERSION);
         setSystemVariables();
         setDatabaseVariables();
+
         return true;
     }
 
     private void setDatabaseVariables() {
+
+        if (JARFILE) {
+            database.setFilesInJar();
+        }
+
+        if (isPropertyTrue("readonly")) {
+            database.setReadOnly();
+        }
+
+        if (isPropertyTrue("hsqldb.files_readonly")) {
+            database.setFilesReadOnly();
+        }
 
         database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
         database.firstIdentity = getIntegerProperty("hsqldb.first_identity",

@@ -260,8 +260,8 @@ class Session {
      * @throws  SQLException
      */
     void checkDDLWrite() throws SQLException {
-        Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
-        Trace.check(!dDatabase.filesReadOnly, Trace.DATABASE_IS_READONLY);
+        boolean condition = uUser.isSys() || !dDatabase.filesReadOnly ;
+        Trace.check(condition, Trace.DATABASE_IS_READONLY);
     }
 
     /**

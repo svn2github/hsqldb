@@ -305,6 +305,7 @@ class Database {
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
+        isOpening = true;
 
         boolean newdatabase = false;
 
