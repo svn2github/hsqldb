@@ -11,12 +11,14 @@ span.term        {
     font-weight: bold;
     background: black;
     color: white;
+    padding: 1px;
 }
 
+div.caption      { font-size: 80%; }
 div.important    { background: yellow; }
 div.warning      { background: red; }
 
-pre.programlisting { background-color: silver; }
+pre.programlisting { background-color: silver; padding: 5px; }
 
 h1.title { font-size: 300%; }
 div.chapter h2.title {
@@ -36,7 +38,7 @@ div.section h2.title {
     border: 2px solid #083194;
 }
 </STYLE>
-<meta content="DocBook XSL Stylesheets V1.61.3" name="generator"><meta name="keywords" content="HSQLDB, HOWTO, SQL, JDBC"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="N10002"></a>SqlTool Manual and HOWTO</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Blaine</span> <span class="surname">Simpson</span></h3><div class="affiliation"><span class="orgname">HSQLDB Development Group<br></span></div></div></div><div><p class="pubdate">$Date: 2004/03/27 21:33:07 $</p></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt>1. <a href="#N10020">Introduction</a></dt><dd><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></dd><dt>2. <a href="#N10073">The Bare Minimum You Need to Know to Run SqlTool</a></dt><dt>3. <a href="#auth-chapter">Authentication Setup</a></dt><dt>4. <a href="#N10119">Interactive</a></dt><dd><dl><dt><a href="#N101A3">Raw mode</a></dt></dl></dd><dt>5. <a href="#nonint-chapter">Non-Interactive</a></dt><dd><dl><dt><a href="#N101B8">Giving SQL on the Command Line</a></dt><dt><a href="#N101D6">SQL Files</a></dt><dt><a href="#N101EE">Comments</a></dt><dt><a href="#N10207">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N10229">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
+<meta content="DocBook XSL Stylesheets V1.61.3" name="generator"><meta name="keywords" content="HSQLDB, HOWTO, SQL, JDBC"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="N10002"></a>SqlTool Manual and HOWTO</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Blaine</span> <span class="surname">Simpson</span></h3><div class="affiliation"><span class="orgname">HSQLDB Development Group<br></span></div></div></div><div><p class="pubdate">$Date: 2004/04/02 04:58:50 $</p></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt>1. <a href="#N10020">Introduction</a></dt><dd><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></dd><dt>2. <a href="#N10073">The Bare Minimum You Need to Know to Run SqlTool</a></dt><dt>3. <a href="#auth-chapter">Authentication Setup</a></dt><dt>4. <a href="#N10119">Interactive</a></dt><dd><dl><dt><a href="#N101A3">Raw mode</a></dt></dl></dd><dt>5. <a href="#nonint-chapter">Non-Interactive</a></dt><dd><dl><dt><a href="#N101B8">Giving SQL on the Command Line</a></dt><dt><a href="#N101D6">SQL Files</a></dt><dt><a href="#N101EE">Comments</a></dt><dt><a href="#N10207">Special Commands and Buffer Commands in SQL Files</a></dt><dt><a href="#N10229">Getting Interactive Functionality with SQL Files</a></dt><dt><a href="#charencoding-section">
             Character Encoding</a></dt></dl></dd><dt>6. <a href="#N1024D">Web Application</a></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>1.1. <a href="#N1003E">Alternate formats of this document</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="N10020"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#N1002B">Available formats for this document</a></dt><dt><a href="#N1006C">Purpose</a></dt></dl></div><p>
             If you notice any mistakes in this document, please email me at
             <a href="mailto:blaine.simpson@admc.com?subject=sqltool" target="_top">blaine.simpson@admc.com</a> so that I can correct them.
@@ -399,8 +401,7 @@ div.section h2.title {
     }
     echo "There are $USERCOUNT users registered in the database."
     [ "$USECOUNT" -gt 3 ] &amp;&amp; {   # If there are more than 3 users registered
-        # Some conditional shell scripting
-        </pre></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101D6"></a>SQL Files</h2></div></div><div></div></div><p>
+        # Some conditional shell scripting</pre></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="N101D6"></a>SQL Files</h2></div></div><div></div></div><p>
             Just give paths to sql text file(s) on the command line after 
             the <span class="emphasis"><em>urlid</em></span>.
         </p><p>
