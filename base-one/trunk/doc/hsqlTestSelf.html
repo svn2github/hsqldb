@@ -5,28 +5,41 @@
 </head>
 <body bgcolor=#FFFFFF lang=EN-GB class="Normal">
 <h2>HSQLDB Test Utility</h2>
-<p>One of the test classes in HSQLDB tests various queries and operations on the 
-  database. Part of this is a speed test, which can be used to get a rough estimate 
-  of the speed of inserts, deletes and updates with ordinary (memory based) tables 
-  and cached tables.</p>
-<p>You should compile the hsqldbtest.jar with Ant to run this utility.</p>
-<p>A batch file is provided in the demo directory. To start the application on 
-  Windows, type: </p>
+<p>The org.hsqldb.test package contains a number of tests for various functions 
+  of the database engine. Among these, the TestSelf class performs the tests that 
+  are based on scripts. To run the tests, you should compile the hsqldbtest.jar 
+  target with Ant.</p>
+<p>For TestSelf, a batch file is provided in the demo directory. To start the 
+  application in Windows, type: </p>
 <p><code><span style='font-size:10.0pt;font-family:"Courier New"'>runtest TestSelf</span></code> 
 </p>
-<p>To test speed by inserting 30000 rows into one table, type: </p>
-<p><code><span style='font-size:10.0pt;font-family:"Courier New"'>runtest TestSelf 
-  30000</span></code> </p>
-<p>To test inserting 10000 rows in the In-Memory-mode type only: </p>
-<p><code><span style='font-size:10.0pt;font-family:"Courier New"'>runtest TestSelf 
-  10000 -m</span></code> </p>
-<p>TestSelf will first try to insert the rows into a cached table, and then into 
-  an in-memory table. The first part may work and the second part (in-memory table) 
-  may run out of memory if there is not enough memory available. You may experience 
-  a delay between updating and deleting records. This is by design: the recovery 
-  mechanism is tested here. </p>
-<h3>SQL TESTS</h3>
-<p>The new version of TestSelf runs multiple SQL test files to test different operations of the database. All files in the working directory with names matching <code>TestSelf*.txt</code>  are processed in alphabetical order. This makes it easy to add new tests to the framework.</p>
-<p><font size="-1">This text is based on HypersonicSQL documentation, updated to reflect the latest version 1.7.2 of HSQLDB</font></p>
+<p>The new version of TestSelf runs multiple SQL test files to test different 
+  SQL operations of the database. All files in the working directory with names 
+  matching <code>TestSelf*.txt</code> are processed in alphabetical order.</p>
+<p>You can add your own scripts to test different series of SQL queries. The format 
+  of the TestSelf*.txt file is simple text, with some indentation and prefixes 
+  in the form of Java-style comments. These prefixes indicate what the expected 
+  result should be.</p>
+<p> Comment lines must start with -- and are ignored<br>
+  Lines starting with spaces are the continuation of the previous line<br>
+  Line prefixes indicate:<br>
+  /*c&lt;rows&gt;*/ ResultSet is expected with &lt;rows&gt; column count<br>
+  /*u &lt;count&gt;*/ An update count, &lt;count&gt; is expected<br>
+  /*e*/ An erro should occur when executing the statement<br>
+  /* r &lt;string1&gt;,&lt;string2&gt;*/ Single-row ResultSet is expected with 
+  &lt;string1&gt;,&lt;string2&gt; results in the single row<br>
+  /*r<br>
+  &nbsp; &lt;string1&gt;,&lt;string2&gt;<br>
+  &nbsp; &lt;string1&gt;,&lt;string2&gt;<br>
+  &nbsp; &lt;string1&gt;,&lt;string2&gt;<br>
+  */Multiple row ResultSet is expected with the specified values (note the indentation)<br>
+  SQL statements with no prefix are simply executed.</p>
+<p>See the TestSelf*.txt files for actual examples.</p>
+<p></p>
+<p>&nbsp; </p>
+<p></p>
+<p>&nbsp; </p>
+<p> <br>
+</p>
 </body>
 </html>

@@ -616,16 +616,20 @@
   by paths defined in the properties file. All files belonging to a database should 
   reside in the same directory.</i></p>
 <h3>JDBC STREAM BASED METHODS</h3>
-<p>The <code>ResultSet</code> interface methods, <code>getAsciiStream()</code>, 
-  <code>getUnicodeStream()</code> and <code>getCharacterStream()</code> are now 
-  supported to return byte or char values from CHARACTER columns and its variants. 
-  Complementary methods in <code>PreparedStatemen</code>t, <code>setAsciiStream()</code>, <code>setUnicodeStream()</code> 
+<p>The JDBC interface has been significantly improved in 1.7.2. There is almost 
+  full support for JDBC2. Under JDK 1.4, there is also some support for JDBC3 
+  methods. ResultSetMetaData methods are now fully supported, as are ParameterMetaData 
+  and Savepoint (JDBC3). When upgrading from previous versions, certain issues 
+  may arise as several JDBC methods that previously returned incorrect values 
+  or were not supported now return correct values. All changes have been documented 
+  in the Javadoc for the jdbcXXX classes.</p>
+<p>Since 1.7.0, the <code>ResultSet</code> interface methods, <code>getAsciiStream()</code>, 
+  <code>getUnicodeStream()</code> and <code>getCharacterStream()</code> are supported 
+  to return byte or char values from CHARACTER columns and its variants. Complementary 
+  methods in <code>PreparedStatemen</code>t, <code>setAsciiStream()</code>, <code>setUnicodeStream()</code> 
   and <code>setCharacterStream()</code> are also supported. Unlike most other 
   databases, the <code>getString()</code> methods can be used to retrieve very 
-  long character strings and is faster than the stream based methods. </p>
-<p><em>Upgrading: Several JDBC methods that previously returned incorrect values 
-    or were not supported now return correct values.  All  changes have been documented in the Javadoc 
-    for the jdbcXXX classes.</em></p> 
+  long character strings and is faster than the stream based methods.</p>
 <h3>MANAGING DATABASE CONNECTIONS</h3>
 <p>In all running modes (server or in-process) multiple connections to the database engine are supported. In-process (standalone) mode supports connections from the client in the same Java Virtual Machine, while server modes support connections over the network from several different clients.</p>
 <p>Connection pooling software can be used to connect to the database but it is not generally necessary. With other database engines, connection pools are used for reasons that may not apply to HSQLDB.</p>
@@ -698,7 +702,7 @@
 <p></p>
 <h3>UPGRADING AND MANAGING DATABASES</h3>
 <p>Any database not produced with the release version of HSQLDB 1.7.2 must be upgraded to this version. This includes databases created with the ALPHA versions of 1.7.2. The instructions under UPGRADING USING THE SCRIPT COMMAND should be followed when possible. The DIRECT UPGRADE instructions may or may not work depending on the structure of the database.</p>
-<h4>DIRECT UPGRADE</h4>
+<h4>Direct Upgrade</h4>
 <p>Databases created with Hypersonic version 1.43 and HSQLDB 1.6x can sometimes  be seamlessly 
   upgraded to the new version. However, in many cases 
   the upgrade is not so simple. The following procedure MAY work. If it doesn't, try the alternative upgrade procedure using the SCRIPT command.</p>
@@ -711,14 +715,18 @@
   <li>Issue the SHUTDOWN COMPACT command.</li>
   <li>Start using the database.</li>
 </ol>
-<p>Once a database is upgraded to 1.7.2, it can no longer be used with Hypersonic or HSQLDB 
-  1.6.x, 1.7.0 or 1.7.1.</p>
-<h4>Some Potential Problems </h4>
-<p>Version 1.7.2 does not accept duplicate names for indexes.<br>
-  Version 1.7.2 does not accept duplicate names for table columns. <br>
-  Version 1.7.2 does not create the same type of index for foreign keys as previous 
-  versions.</p>
-<h4>UPGRADING USING THE  SCRIPT COMMAND</h4>
+<p>Once a database is upgraded to 1.7.2, it can no longer be used with Hypersonic 
+  or HSQLDB 1.6.x, 1.7.0 or 1.7.1.</p>
+<p>There may be some potential problems:</p>
+<ul>
+  <li>Version 1.7.2 does not accept duplicate names for indexes.</li>
+  <li>Version 1.7.2 does not accept duplicate names for table columns.</li>
+  <li>Version 1.7.2 does not create the same type of index for foreign keys as 
+    previous versions.</li>
+</ul>
+<p><br>
+</p>
+<h4>Upgrading Using the SCRIPT Command</h4>
 <p>In all versions of HSQLDB and Hypersonic 1.43, the <code>SCRIPT 'filename'</code> 
   command (used as an SQL query) allows you to save a full record of your database, 
   including database object definitions and data, to a file of your choice. If 
@@ -759,7 +767,7 @@
 <h4>Backing Up Databases</h4>
 <p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log (a file with the *.lck ending is used for controlling access to the database and should not be backed up). These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup immediately follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.data and *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
-<p>Author: Fred Toussi - 14 July 2002 - updated 11 April 2004</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 15 April 2004</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 
