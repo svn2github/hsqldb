@@ -35,6 +35,7 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * HSQLDB TestBug778213 Junit test case. <p>
@@ -91,13 +92,20 @@ public class TestBug778213 extends TestBase {
 
         conn = newConnection();
 
+        boolean exception = true;
+
         try {
             pstmt = conn.prepareStatement("drop table test");
 
             pstmt.executeQuery();
-            assertTrue("no exception thrown for executeQuery(DDL)", false);
+        } catch (SQLException e) {
+            exception = false;
         } finally {
             conn.close();
+        }
+
+        if (exception) {
+            assertTrue("no exception thrown for executeQuery(DDL)", false);
         }
 
         conn = newConnection();
@@ -112,15 +120,21 @@ public class TestBug778213 extends TestBase {
             conn.close();
         }
 
-        conn = newConnection();
+        exception = true;
+        conn      = newConnection();
 
         try {
             pstmt = conn.prepareStatement("create table test(id int)");
 
             pstmt.addBatch();
-            assertTrue("expected exception batching prepared DDL", false);
+        } catch (SQLException e) {
+            exception = false;
         } finally {
             conn.close();
+        }
+
+        if (exception) {
+            assertTrue("expected exception batching prepared DDL", false);
         }
 
         conn = newConnection();

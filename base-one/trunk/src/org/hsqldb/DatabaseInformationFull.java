@@ -1929,10 +1929,10 @@ extends org.hsqldb.DatabaseInformationMain {
                 tokenizer.getThis("SELECT");
 
                 parser = new Parser(database, tokenizer, sys);
-                select = parser.parseSelect();
+                select = parser.parseSelect(false);
 
                 select.resolve();
-                select.checkResolved(null);
+                select.checkResolved();
 
                 row[ivalid] = Boolean.TRUE;
             } catch (Exception e) {

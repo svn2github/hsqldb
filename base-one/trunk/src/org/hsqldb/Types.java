@@ -692,93 +692,7 @@ class Types {
         return type;
     }
 
-    /**
-     * Retrieves the SQL data type corrsponding to the
-     * Class of the "widest" (least restrictive) internal
-     * represention in which the specified object can fit
-     * without a non-trivial conversion via
-     * Column.convertObject(Object,int). <p>
-     *
-     * By trivial, it is meant converting an Object, o,
-     * to a JavaObject holder for o. <p>
-     *
-     * An optimization is added that narrows the output value
-     * if the input object is Integer and its value would fit
-     * in the range of either TINYINT or SMALLINT, both of which
-     * are also represented interally as Integer objects.
-     *
-     */
-    static int getWidestTypeNrNoConvert(Object o) {
-
-        int type;
-
-        if (o == null) {
-            return NULL;
-        }
-
-        type = getWidestTypeNrNoConvert(o.getClass());
-
-        // To optimize result of promotesWithoutConversion(t1,t2)
-        if (type == INTEGER) {
-            int val = ((Number) o).intValue();
-
-            if (val >= Byte.MIN_VALUE && val <= Byte.MAX_VALUE) {
-                type = TINYINT;
-            } else if (val >= Short.MIN_VALUE && val <= Short.MAX_VALUE) {
-                type = SMALLINT;
-            }
-        }
-
-        return type;
-    }
-
-    /**
-     * Retrieves the SQL data type corrsponding to the
-     * Class of the "widest" internal represention in
-     * which instances of the specified Class can fit
-     * without a non-trivial conversion via
-     * Column.convertObject(Object,int). <p>
-     *
-     * By trivial, it is meant converting an Object, o,
-     * to a JavaObject holder for o.
-     */
-    static int getWidestTypeNrNoConvert(Class c) {
-
-        if (c == null || Void.TYPE.equals(c)) {
-            return NULL;
-        }
-
-        if (Boolean.class.equals(c)) {
-            return BIT;
-        } else if (String.class.equals(c)) {
-            return LONGVARCHAR;
-        } else if (Binary.class.equals(c)) {
-            return LONGVARBINARY;
-        } else if (Integer.class.equals(c)) {
-            return INTEGER;
-        } else if (Long.class.equals(c)) {
-            return BIGINT;
-        } else if (Double.class.equals(c)) {
-            return DOUBLE;
-        } else if (java.sql.Date.class.isAssignableFrom(c)) {
-            return DATE;
-        } else if (java.sql.Time.class.isAssignableFrom(c)) {
-            return TIME;
-        } else if (java.sql.Timestamp.class.isAssignableFrom(c)) {
-            return TIMESTAMP;
-        } else if (java.math.BigDecimal.class.equals(c)) {
-            return DECIMAL;
-        }
-
-        // Others, including JavaObject, must be converted.
-        // We could check for Serializable.class.isAssignableFrom(c)
-        // here and throw if not, but that will be picked up in the
-        // conversion, so it's redundant here.
-        // In other words, please note the NoConvert suffix
-        // of the method name.  It's there for a reason.
-        return OTHER;
-    }
-
+/*
     static boolean areSimilar(int t1, int t2) {
 
         if (t1 == t2) {
@@ -865,112 +779,6 @@ class Types {
         }
     }
 
-    static boolean promotesWithoutConversion(int t1, int t2) {
-
-        if (t1 == t2) {
-
-            // Probably should be: return t1 != OTHER,
-            // but internally t1 == t2 is ok, so the
-            // JDBC PreparedStatement implementation
-            // extends the test to cover things from
-            // the external viewpoint
-            return true;
-        }
-
-        if (isCharacterType(t1)) {
-            return isCharacterType(t2);
-        }
-
-        if (isBinaryType(t1)) {
-            return isBinaryType(t2);
-        }
-
-        switch (t1) {
-
-            case TINYINT : {
-                switch (t2) {
-
-                    case SMALLINT :
-                    case INTEGER :
-                        return true;
-
-                    default :
-                        return false;
-                }
-            }
-            case SMALLINT : {
-                switch (t2) {
-
-                    case INTEGER :
-                        return true;
-
-                    default :
-                        return false;
-                }
-            }
-
-// covered by t2 == t2 condition above
-//          case INTEGER :
-//          case BIGINT : {
-//              return t2 == t1;
-//          }
-// semi-redundant, but simpler than writing out individual cases to
-// avoid it
-            case FLOAT :
-            case REAL :
-            case DOUBLE : {
-                switch (t2) {
-
-                    case FLOAT :
-                    case REAL :
-                    case DOUBLE :
-                        return true;
-
-                    default :
-                        return false;
-                }
-            }
-
-// semi-redundant, but simpler than writing out individual cases to
-// avoid it
-            case DECIMAL :
-            case NUMERIC : {
-                switch (t2) {
-
-                    case DECIMAL :
-                    case NUMERIC :
-                        return true;
-
-                    default :
-                        return false;
-                }
-            }
-            default : {
-                return false;
-            }
-        }
-    }
-
-    static boolean isNumberType(int type) {
-
-        switch (type) {
-
-            case BIGINT :
-            case DECIMAL :
-            case DOUBLE :
-            case FLOAT :
-            case INTEGER :
-            case NUMERIC :
-            case REAL :
-            case SMALLINT :
-            case TINYINT :
-                return true;
-
-            default :
-                return false;
-        }
-    }
-
     static boolean isExactNumberType(int type) {
 
         switch (type) {
@@ -1017,34 +825,13 @@ class Types {
         }
     }
 
-    static boolean isCharacterType(int type) {
-
-        switch (type) {
-
-            case CHAR :
-
-// Not supported yet & would break:
-// promotesWithoutConversion & haveSameInternalRepresentation
-//          case CLOB :
-            case LONGVARCHAR :
-            case VARCHAR :
-            case VARCHAR_IGNORECASE :
-                return true;
-
-            default :
-                return false;
-        }
-    }
-
     static boolean isBinaryType(int type) {
 
         switch (type) {
 
             case BINARY :
 
-// Not supported yet & would break:
-// promotesWithoutConversion & haveSameInternalRepresentation
-//          case BLOB :
+            case BLOB :
             case LONGVARBINARY :
             case VARBINARY :
                 return true;
@@ -1053,6 +840,7 @@ class Types {
                 return false;
         }
     }
+
 
     static boolean isDatetimeType(int type) {
 
@@ -1067,22 +855,26 @@ class Types {
                 return false;
         }
     }
+*/
 
+    /**
+     * Types that accept precition params in column definition or casts.
+     * We ignore the parameter in many cases but accept it for compatibility
+     * with other engines. CHAR, VARCHAR and VARCHAR_IGNORECASE params
+     * are used when the sql.enforce_strict_types is true.
+     *
+     */
     static boolean acceptsPrecisionCreateParam(int type) {
 
         switch (type) {
 
-// fredt - we don't support these
             case BINARY :
             case BLOB :
             case CHAR :
             case CLOB :
 
-// CHECKME:
-// I suppose we do/could, but, typically, other systems do not?
-// fredt - we don't support these
-//            case LONGVARBINARY :
-//            case LONGVARCHAR :
+            //            case LONGVARBINARY :
+            //            case LONGVARCHAR :
             case VARBINARY :
             case VARCHAR :
             case VARCHAR_IGNORECASE :
@@ -1120,6 +912,42 @@ class Types {
 
             case Types.DECIMAL :
             case Types.NUMERIC :
+                return true;
+
+            default :
+                return false;
+        }
+    }
+
+    static boolean isNumberType(int type) {
+
+        switch (type) {
+
+            case BIGINT :
+            case DECIMAL :
+            case DOUBLE :
+            case FLOAT :
+            case INTEGER :
+            case NUMERIC :
+            case REAL :
+            case SMALLINT :
+            case TINYINT :
+                return true;
+
+            default :
+                return false;
+        }
+    }
+
+    static boolean isCharacterType(int type) {
+
+        switch (type) {
+
+            case CHAR :
+            case CLOB :
+            case LONGVARCHAR :
+            case VARCHAR :
+            case VARCHAR_IGNORECASE :
                 return true;
 
             default :

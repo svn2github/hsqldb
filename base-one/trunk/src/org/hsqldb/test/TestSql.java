@@ -40,14 +40,9 @@ import junit.framework.*;
  * Test sql statements via jdbc against in-memory database
  * @author fredt@users
  */
-public class TestSql extends TestCase {
+public class TestSql extends TestBase {
 
-    String           path = "test3";
-    protected String url  = "jdbc:hsqldb:hsql://localhost/yourtest";
-
-//    protected String     url = "jdbc:hsqldb:test3";
-    String     user;
-    String     password;
+    String     path = "test3";
     Statement  stmnt;
     Connection cConnection;
     String     getColumnName;
@@ -61,10 +56,8 @@ public class TestSql extends TestCase {
 
     protected void setUp() {
 
-        user          = "sa";
-        password      = "";
-        stmnt         = null;
-        cConnection   = null;
+        super.setUp();
+
         getColumnName = "false";
 
         Properties props = new Properties();

@@ -82,6 +82,9 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 200307?? - patch 1.7.2 - resolve param nodes
 // boucherb@users 200307?? - patch 1.7.2 - compress constant expr during resolve
 // boucherb@users 200307?? - patch 1.7.2 - eager pmd and rsmd
+// boucherb@users 20031005 - patch 1.7.2 - optimised LIKE
+// boucherb@users 20031005 - patch 1.7.2 - improved IN value lists
+// fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
 
 /**
  * Expression class declaration
@@ -98,11 +101,12 @@ class Expression {
                      FALSE     = -4,    // arbitrary
                      VALUELIST = 5,
                      ASTERIX   = 6,
-                     FUNCTION  = 7;
+                     FUNCTION  = 7,
+                     LIMIT     = 8;
 
 // boucherb@users 20020410 - parametric compiled statements
     // new leaf type
-    static final int PARAM = 8;
+    static final int PARAM = 9;
 
 // --
     // operations
@@ -225,27 +229,27 @@ class Expression {
     private Function function;
 
     // LIKE
-    private Like    likeObject;
-    private char    likeEscapeChar;
-    private boolean likeOptimized;
+    private Like likeObject;
 
     // COLUMN
     private String      catalog;
     private String      schema;
     private String      tableName;
     private String      columnName;
-    private TableFilter tableFilter;    // null if not yet resolved
+    private TableFilter tableFilter;     // null if not yet resolved
+    TableFilter         outerFilter;     // defined if this is part of an OUTER JOIN condiiton tree
 
     //
     private int     columnIndex;
     private boolean columnQuoted;
     private int     columnSize;
     private int     columnScale;
-    private String  columnAlias;        // if it is a column of a select column list
+    private String  columnAlias;         // if it is a column of a select column list
     private boolean aliasQuoted;
 
     //
-    private boolean isDescending;       // if it is a column in a order by
+    private boolean isDescending;        // if it is a column in a order by
+    int             orderColumnIndex;    // when it is a column index in an order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -255,7 +259,7 @@ class Expression {
     private boolean isParam;
 
     // does Expression stem from a JOIN <table> ON <expression>
-    private boolean isInJoin;
+    boolean isInJoin;
 
     //
     static final Integer INTEGER_0 = ValuePool.getInt(0);
@@ -283,10 +287,9 @@ class Expression {
         isInJoin = e.isInJoin;
 
         //
-        likeObject     = e.likeObject;
-        likeEscapeChar = e.likeEscapeChar;
-        subSelect      = e.subSelect;
-        function       = e.function;
+        likeObject = e.likeObject;
+        subSelect  = e.subSelect;
+        function   = e.function;
 
         checkAggregate();
     }
@@ -332,12 +335,12 @@ class Expression {
      * @param e operand 1
      * @param e2 operand 2
      */
-    Expression(Expression e, Expression e2, char escape) {
+    Expression(Expression e, Expression e2, Character escape) {
 
-        exprType       = LIKE;
-        eArg           = e;
-        eArg2          = e2;
-        likeEscapeChar = escape;
+        exprType   = LIKE;
+        eArg       = e;
+        eArg2      = e2;
+        likeObject = new Like(escape);
 
         checkAggregate();
     }
@@ -671,7 +674,12 @@ class Expression {
 
     /**
      * Check if the given expression defines similar operation as this
-     * expression.
+     * expression. This method is used for ensuring an expression in
+     * the ORDER BY clause has a matching column in the SELECT list. This check
+     * is necessary with a SELECT DISTINCT query.<br>
+     *
+     * In the future we may perform the test when evaluating the search
+     * condition to get a more accurate match.
      */
     public boolean similarTo(Expression exp) {
 
@@ -690,7 +698,6 @@ class Expression {
                && dataType == exp.dataType
                && equals(subSelect, exp.subSelect)
                && equals(function, exp.function)
-               && likeEscapeChar == exp.likeEscapeChar
                && equals(tableName, exp.tableName)
                && equals(columnName, exp.columnName)
                && dataType == exp.dataType;
@@ -1086,56 +1093,124 @@ class Expression {
     }
 
     /**
-     * Method declaration
-     *
+     * Final check for all expressions.
      *
      * @throws HsqlException
      */
-    Expression checkResolved(HashMap aliases) throws HsqlException {
-
-        if (exprType == COLUMN && tableFilter == null) {
-            if (aliases != null) {
-                Expression expr = (Expression) aliases.get(columnName);
-
-                if (expr != null) {
-                    return expr;
-                }
-            }
-
-            Trace.throwerror(Trace.COLUMN_NOT_FOUND, columnName);
-        }
+    Expression checkResolved() throws HsqlException {
 
         if (eArg != null) {
-            Expression result = eArg.checkResolved(aliases);
-
-            if (result != null) {
-                eArg = result;
-            }
+            eArg.checkResolved();
         }
 
         if (eArg2 != null) {
-            Expression result = eArg2.checkResolved(aliases);
-
-            if (result != null) {
-                eArg2 = result;
-            }
+            eArg2.checkResolved();
         }
 
         if (subSelect != null) {
-            subSelect.checkResolved(aliases);
+            subSelect.checkResolved();
         }
 
         if (function != null) {
-            function.checkResolved(aliases);
+            function.checkResolved();
         }
 
         if (valueList != null) {
             for (int i = 0; i < valueList.length; i++) {
-                valueList[i].checkResolved(aliases);
+                valueList[i].checkResolved();
             }
         }
 
+        if (exprType == COLUMN && tableFilter == null) {
+            String err = tableName == null ? columnName
+                                           : tableName + "." + columnName;
+
+            throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
+        }
+
         return null;
+    }
+
+    /**
+     * Resolve the table names for columns
+     *
+     *
+     * @param f
+     *
+     * @throws HsqlException
+     */
+    void checkTables(HsqlArrayList fa) throws HsqlException {
+
+        if (fa == null || exprType == Expression.VALUE) {
+            return;
+        }
+
+        if (eArg != null) {
+            eArg.checkTables(fa);
+        }
+
+        if (eArg2 != null) {
+            eArg2.checkTables(fa);
+        }
+
+        switch (exprType) {
+
+            case COLUMN :
+                boolean found = false;
+                int     len   = fa.size();
+
+                for (int j = 0; j < len; j++) {
+                    TableFilter filter     = (TableFilter) fa.get(j);
+                    String      filterName = filter.getName();
+
+                    if (tableName == null || filterName.equals(tableName)) {
+                        Table table = filter.getTable();
+                        int   i     = table.searchColumn(columnName);
+
+                        if (i != -1) {
+                            if (tableName == null) {
+                                if (found) {
+                                    throw Trace.error(
+                                        Trace.AMBIGUOUS_COLUMN_REFERENCE,
+                                        columnName);
+                                }
+
+                                found = true;
+                            } else {
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                if (found) {
+                    return;
+                }
+
+                throw Trace.error(Trace.COLUMN_NOT_FOUND, columnName);
+            case QUERY :
+
+                // fredt - subquery in join condition !
+                break;
+
+            case FUNCTION :
+                if (function != null) {
+                    function.checkTables(fa);
+                }
+                break;
+
+            case IN :
+                if (eArg2.exprType != QUERY) {
+                    Expression[] vl = eArg2.valueList;
+
+                    for (int i = 0; i < vl.length; i++) {
+                        vl[i].checkTables(fa);
+                    }
+                }
+                break;
+
+            default :
+        }
     }
 
     /**
@@ -1163,22 +1238,24 @@ class Expression {
         switch (exprType) {
 
             case COLUMN :
+                if (tableFilter != null) {
+                    break;
+                }
+
                 String filterName = f.getName();
 
-                if (tableFilter == null
-                        && (tableName == null
-                            || filterName.equals(tableName))) {
+                if (tableName == null || filterName.equals(tableName)) {
                     Table table = f.getTable();
                     int   i     = table.searchColumn(columnName);
 
                     if (i != -1) {
-                        /*
+/*
 // fredt@users 20011110 - fix for 471711 - subselects
-                                            boolean repeat = tableFilter != null && !tableFilter.getName().equals(filterName);
-                                            if ( repeat){
+                        boolean repeat = tableFilter != null && !tableFilter.getName().equals(filterName);
+                        if ( repeat){
                              throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE, columnName);
-                                            }
-                         */
+                        }
+*/
                         tableFilter = f;
                         columnIndex = i;
                         tableName   = filterName;
@@ -1195,7 +1272,7 @@ class Expression {
 
                 // fredt - subselects are resolved once when they are created
                 // the subselect condition gets resolved here
-                // we now resolve independently first, then
+                // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
                 if (subSelect != null) {
                     subSelect.resolve();
@@ -1567,7 +1644,7 @@ class Expression {
 // NOTE:
 //
 // For the old behaviour, simply comment out the block below
-        if (likeOptimized) {
+        if (likeObject.optimised) {
             return;
         }
 
@@ -1575,73 +1652,58 @@ class Expression {
                          ? (String) eArg2.getValue(Types.VARCHAR)
                          : null;
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE;
-        Like    like       = new Like(likeStr, likeEscapeChar, ignoreCase);
+
+        likeObject.setParams(likeStr, ignoreCase);
 
         if (eArg2.isFixedConstant()) {
-            if (like.isEquivalentToFalsePredicate()) {
-                exprType = FALSE;
-                eArg     = null;
-                eArg2    = null;
-            } else if (like.isEquivalentToEqualsPredicate()) {
-                exprType      = EQUAL;
-                likeOptimized = true;
-                eArg2 = new Expression(Types.VARCHAR, like.getRangeLow());
-            } else if (like.isEquivalentToNotNullPredicate()) {
+            if (likeObject.isEquivalentToFalsePredicate()) {
+                exprType   = FALSE;
+                eArg       = null;
+                eArg2      = null;
+                likeObject = null;
+            } else if (likeObject.isEquivalentToEqualsPredicate()) {
+                exprType = EQUAL;
+                eArg2 = new Expression(Types.VARCHAR,
+                                       likeObject.getRangeLow());
+                likeObject = null;
+            } else if (likeObject.isEquivalentToNotNullPredicate()) {
 
                 // X LIKE '%' <=>  X IS NOT NULL
-                exprType = NOT_EQUAL;
-                eArg2    = new Expression(Types.NULL, null);
-            } else if (like.isEquivalentToBetweenPredicate()) {
+                exprType   = NOT_EQUAL;
+                eArg2      = new Expression(Types.NULL, null);
+                likeObject = null;
+            } else if (likeObject.isEquivalentToBetweenPredicate()) {
 
                 // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abd'
                 Expression eArgOld = eArg;
                 Expression eFirst = new Expression(Types.VARCHAR,
-                                                   like.getRangeLow());
+                                                   likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                                                  like.getRangeHigh());
+                                                  likeObject.getRangeHigh());
 
                 eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
                 eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
                 exprType = AND;
 
                 //
-                eFirst.likeOptimized = true;
-                eLast.likeOptimized  = true;
-                eArg.likeOptimized   = true;
-                eArg2.likeOptimized  = true;
-                likeOptimized        = true;
-            } else if (like
+                likeObject = null;
+            } else if (likeObject
                     .isEquivalentToBetweenPredicateAugmentedWithLike()) {
 
                 // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abd' AND X LIKE 'abc%...'
-                eArg.likeOptimized = true;
-
                 Expression eFirst = new Expression(Types.VARCHAR,
-                                                   like.getRangeLow());
+                                                   likeObject.getRangeLow());
                 Expression eLast = new Expression(Types.VARCHAR,
-                                                  like.getRangeHigh());
+                                                  likeObject.getRangeHigh());
                 Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
                 Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
 
-                eArg2            = new Expression(LIKE, eArg, eArg2);
-                eArg2.likeObject = like;
+                eArg2 = new Expression(eArg, eArg2, likeObject.escapeChar);
+                eArg2.likeObject = likeObject;
                 eArg             = new Expression(AND, gte, lte);
                 exprType         = AND;
-
-                //
-                eFirst.likeOptimized = true;
-                eLast.likeOptimized  = true;
-                lte.likeOptimized    = true;
-                eArg.likeOptimized   = true;
-                eArg2.likeOptimized  = true;
-                likeOptimized        = true;
-            } else {
-                likeObject    = like;
-                likeOptimized = true;
+                likeObject       = null;
             }
-        } else {
-            likeObject    = like;
-            likeOptimized = true;
         }
     }
 
@@ -2326,8 +2388,11 @@ class Expression {
 
         Trace.check(eArg != null, Trace.GENERAL_ERROR);
 
+/*
         int    type = eArg2.likeOptimized ? Types.VARCHAR
                                           : eArg.dataType;
+*/
+        int    type = eArg.dataType;
         Object o    = eArg.getValue(type);
 
         Trace.check(eArg2 != null, Trace.GENERAL_ERROR);
@@ -2335,11 +2400,13 @@ class Expression {
         Object o2 = eArg2.getValue(type);
 
         if (o == null || o2 == null) {
-
-// TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the column expression for the table on the right hand side
-// fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
-            if (exprType == EQUAL && eArg.tableFilter != null
-                    && eArg2.tableFilter != null
+/*
+ TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
+ column expression for the table on the right hand side.
+ We do not join tables on nulls apart from outer joins
+ Any comparison operator can exist in WHERE or JOIN conditions
+*/
+            if (eArg.tableFilter != null && eArg2.tableFilter != null
                     &&!eArg.tableFilter.isOuterJoin) {
 
                 // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
@@ -2347,18 +2414,14 @@ class Expression {
             }
 
             if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
-                if (eArg.tableFilter.isCurrentOuter) {
-                    if (isInJoin) {
+                if (isInJoin) {
+                    if (eArg.tableFilter.isCurrentOuter || o == null) {
                         return true;
                     }
                 } else {
-                    if (isInJoin && o == null) {
-                        return true;
-                    }
 
                     // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
-                    eArg.tableFilter.nonJoinIsNull =
-                        !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
+                    eArg.tableFilter.nonJoinIsNull = o2 == null;
                 }
             }
 
@@ -2458,6 +2521,10 @@ class Expression {
     private boolean testValueList(Object o,
                                   int datatype) throws HsqlException {
 
+        if (o == null) {
+            return false;
+        }
+
         if (exprType == VALUELIST) {
             if (datatype != this.dataType) {
                 o = Column.convertObject(o, this.dataType);
@@ -2538,31 +2605,47 @@ class Expression {
     }
 
     /**
-     * Mark all the expressions in the tree for a search condition that is part
-     * of a JONI .. ON ... clause.
-     * Also tests the expression tree (that has been built by parsing
-     * the query) for the existence of any OR clause which is not permitted
-     * in OUTER joins in HSQLDB.<p>
+     * Marks all the expressions in the tree for a condition that is part
+     * of a JOIN .. ON ....<br>
      *
-     * Sets isInJoin for all expressions in the tree.(fredt@users)
+     * For LEFT OUTER joins, also tests the expression tree for the join
+     * condition to ensure only permitted expression types are there.
+     *
+     * If we want to exapand the expressions to include arithmetic operations
+     * or functions ...
+     *
+     * (fredt@users)
      */
-    boolean setForJoin(boolean outer) {
+    boolean setForJoin(TableFilter tf, boolean outer) {
 
         isInJoin = outer;
 
+        if (outer) {
+            outerFilter = tf;
+        }
+
         if (eArg != null) {
-            if (eArg.setForJoin(outer) == false) {
+            if (eArg.setForJoin(tf, outer) == false) {
                 return false;
             }
         }
 
         if (eArg2 != null) {
-            if (eArg2.setForJoin(outer) == false) {
+            if (eArg2.setForJoin(tf, outer) == false) {
                 return false;
             }
         }
 
-        return !outer || exprType != Expression.OR;
+        return !outer
+               || (exprType == Expression.AND || exprType == Expression.OR
+                   || exprType == Expression.COLUMN
+                   || exprType == Expression.VALUE
+                   || exprType == Expression.EQUAL
+                   || exprType == Expression.NOT_EQUAL
+                   || exprType == Expression.BIGGER
+                   || exprType == Expression.BIGGER_EQUAL
+                   || exprType == Expression.SMALLER
+                   || exprType == Expression.SMALLER_EQUAL);
     }
 
     /**

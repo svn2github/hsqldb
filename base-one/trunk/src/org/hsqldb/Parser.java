@@ -75,14 +75,13 @@ import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
-// fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
-// support for sql standard quoted identifiers for column and table names
+// fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
+// fredt@users 20020215 - patch 1.7.0 by fredt - SQL standard quoted identifiers
 // fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
-// support for default values for table columns
 // fredt@users 20020221 - patch 513005 by sqlbob@users - SELECT INTO types
 // fredt@users 20020425 - patch 548182 by skitt@users - DEFAULT enhancement
 // thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
-// fredt@users 20021229 - patch 473613 by fredt - new solution for above
+// fredt@users 20021229 - patch 1.7.2 by fredt - new solution for above
 // fredt@users 20020420 - patch 523880 by leptipre@users - VIEW support
 // fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
@@ -90,8 +89,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
-// fredt@users 20021228 - patch 1.7.2 - refactoring
-// boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
+// boucherb@users 20030705 - patch 1.7.2 - prepared statement support
 // fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
 // fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTH(string)
 // fredt@users 20030820 - patch 1.7.2 - POSITION(string IN string)
@@ -99,6 +97,8 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20030820 - patch 1.7.2 - TRIM({LEADING | TRAILING | BOTH} FROM <string expression>)
 // fredt@users 20030820 - patch 1.7.2 - CASE ... WHEN ... THEN ... [ELSE ...] END and its variants
 // fredt@users 20030820 - patch 1.7.2 - NULLIF(expr,expr)
+// fredt@users 20030820 - patch 1.7.2 - COALESCE(expr,expr,...)
+// fredt@users 20031012 - patch 1.7.2 - improved scoping for column names in all areas
 
 /**
  *  This class is responsible for parsing non-DDL statements.
@@ -206,7 +206,7 @@ class Parser {
         subQueryStack.push(sq);
 
         try {
-            s = parseSelect();
+            s = parseSelect(false);
         } catch (HsqlException e) {
             se = e;
         }
@@ -232,48 +232,15 @@ class Parser {
      * @return
      * @throws  HsqlException
      */
-    Select parseSelect() throws HsqlException {
+    Select parseSelect(boolean isUnion) throws HsqlException {
 
         Select select = new Select();
 
-// fredt@users 20011010 - patch 471710 by fredt - LIMIT rewritten
-// SELECT LIMIT n m DISTINCT ... queries and error message
-// "SELECT LIMIT n m ..." creates the result set for the SELECT statement then
-// discards the first n rows and returns m rows of the remaining result set
-// "SELECT LIMIT 0 m" is equivalent to "SELECT TOP m" or "SELECT FIRST m"
-// in other RDBMS's
-// "SELECT LIMIT n 0" discards the first n rows and returns the remaining rows
-// fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
-        String token = tokenizer.getString();
-
-        if (token.equals(Token.T_LIMIT)) {
-            String limStart = tokenizer.getString();
-            String limEnd   = tokenizer.getString();
-
-            try {
-                select.limitStart = Integer.parseInt(limStart);
-                select.limitCount = Integer.parseInt(limEnd);
-            } catch (NumberFormatException ex) {
-
-                // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE, "LIMIT n m");
-            }
-
-            token = tokenizer.getString();
-        } else if (token.equals(Token.T_TOP)) {
-            String limEnd = tokenizer.getString();
-
-            try {
-                select.limitStart = 0;
-                select.limitCount = Integer.parseInt(limEnd);
-            } catch (NumberFormatException ex) {
-
-                // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE, "TOP m");
-            }
-
-            token = tokenizer.getString();
+        if (!isUnion) {
+            parseLimit(select);
         }
+
+        String token = tokenizer.getString();
 
         if (token.equals(Token.T_DISTINCT)) {
             select.isDistinctSelect = true;
@@ -360,6 +327,10 @@ class Parser {
         while (true) {
             token = tokenizer.getString();
 
+            if (token.equals(Token.T_INNER)) {
+                token = tokenizer.getThis(Token.T_JOIN);
+            }
+
             if (token.equals(Token.T_LEFT)) {
                 token = tokenizer.getString();
 
@@ -369,46 +340,52 @@ class Parser {
 
                 Trace.check(token.equals(Token.T_JOIN),
                             Trace.UNEXPECTED_TOKEN, token);
-                vfilter.add(parseTableFilter(true));
+
+                TableFilter tf = parseTableFilter(true);
+
+                vfilter.add(tf);
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addJoinCondition(condition, parseExpression(),
+                Expression newcondition = parseExpression();
+
+                newcondition.checkTables(vfilter);
+
+                condition = addJoinCondition(condition, newcondition, tf,
                                              true);
-            } else if (token.equals(Token.T_INNER)) {
-                tokenizer.getThis(Token.T_JOIN);
-                vfilter.add(parseTableFilter(false));
-                tokenizer.getThis(Token.T_ON);
-
-                condition = addJoinCondition(condition, parseExpression(),
-                                             false);
             } else if (token.equals(Token.T_JOIN)) {
                 vfilter.add(parseTableFilter(false));
                 tokenizer.getThis(Token.T_ON);
 
-                condition = addJoinCondition(condition, parseExpression(),
+                Expression newcondition = parseExpression();
+
+                newcondition.checkTables(vfilter);
+
+                condition = addJoinCondition(condition, newcondition, null,
                                              false);
             } else if (token.equals(Token.T_COMMA)) {
                 vfilter.add(parseTableFilter(false));
             } else {
+                tokenizer.back();
+
                 break;
             }
         }
 
-        tokenizer.back();
         resolveSelectTableFilter(select, vcolumn, vfilter);
 
         // where
         token = tokenizer.getString();
 
         if (token.equals(Token.T_WHERE)) {
-            condition = addCondition(condition, parseExpression());
-            token     = tokenizer.getString();
+            Expression newcondition = parseExpression();
+
+            newcondition = resolveWhereColumnAliases(newcondition, vcolumn);
+            condition    = addCondition(condition, newcondition);
+            token        = tokenizer.getString();
         }
 
         select.eCondition = condition;
 
-// fredt@users 20020215 - patch 1.7.0 by fredt
-// to support GROUP BY with more than one column
         if (token.equals(Token.T_GROUP)) {
             tokenizer.getThis(Token.T_BY);
 
@@ -448,6 +425,8 @@ class Parser {
 
                 if (token.equals(Token.T_ALL)) {
                     select.iUnionType = Select.UNIONALL;
+                } else if (token.equals(Token.T_DISTINCT)) {
+                    select.iUnionType = Select.UNION;
                 } else {
                     select.iUnionType = Select.UNION;
 
@@ -456,22 +435,36 @@ class Parser {
 
                 tokenizer.getThis(Token.T_SELECT);
 
-                select.sUnion = parseSelect();
+                select.sUnion = parseSelect(true);
                 break;
 
             case Token.INTERSECT :
+                token = tokenizer.getString();
+
+                if (token.equals(Token.T_DISTINCT)) {}
+                else {
+                    tokenizer.back();
+                }
+
                 tokenizer.getThis(Token.T_SELECT);
 
                 select.iUnionType = Select.INTERSECT;
-                select.sUnion     = parseSelect();
+                select.sUnion     = parseSelect(true);
                 break;
 
             case Token.EXCEPT :
             case Token.MINUS :
+                token = tokenizer.getString();
+
+                if (token.equals(Token.T_DISTINCT)) {}
+                else {
+                    tokenizer.back();
+                }
+
                 tokenizer.getThis(Token.T_SELECT);
 
                 select.iUnionType = Select.EXCEPT;
-                select.sUnion     = parseSelect();
+                select.sUnion     = parseSelect(true);
                 break;
 
             default :
@@ -479,17 +472,15 @@ class Parser {
                 break;
         }
 
-        if (select.sUnion != null && select.sUnion.iOrderLen != 0) {
-            throw Trace.error(Trace.ORDER_BY_POSITION);
-        }
+        if (!isUnion) {
+            token = tokenizer.getString();
 
-        token = tokenizer.getString();
-
-        if (token.equals(Token.T_ORDER)) {
-            tokenizer.getThis(Token.T_BY);
-            parseOrderBy(select, vcolumn);
-        } else {
-            tokenizer.back();
+            if (token.equals(Token.T_ORDER)) {
+                tokenizer.getThis(Token.T_BY);
+                parseOrderBy(select, vcolumn);
+            } else {
+                tokenizer.back();
+            }
         }
 
         int len = vcolumn.size();
@@ -499,6 +490,46 @@ class Parser {
         vcolumn.toArray(select.eColumn);
 
         return select;
+    }
+
+// fredt@users 20011010 - patch 471710 by fredt - LIMIT rewritten
+// SELECT LIMIT n m DISTINCT ... queries and error message
+// "SELECT LIMIT n m ..." creates the result set for the SELECT statement then
+// discards the first n rows and returns m rows of the remaining result set
+// "SELECT LIMIT 0 m" is equivalent to "SELECT TOP m" or "SELECT FIRST m"
+// in other RDBMS's
+// "SELECT LIMIT n 0" discards the first n rows and returns the remaining rows
+// fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
+    private void parseLimit(Select select) throws HsqlException {
+
+        String token = tokenizer.getString();
+
+        if (token.equals(Token.T_LIMIT)) {
+            String limStart = tokenizer.getString();
+            String limEnd   = tokenizer.getString();
+
+            try {
+                select.limitStart = Integer.parseInt(limStart);
+                select.limitCount = Integer.parseInt(limEnd);
+            } catch (NumberFormatException ex) {
+
+                // todo: add appropriate error type and message to Trace.java
+                throw Trace.error(Trace.WRONG_DATA_TYPE, "LIMIT n m");
+            }
+        } else if (token.equals(Token.T_TOP)) {
+            String limEnd = tokenizer.getString();
+
+            try {
+                select.limitStart = 0;
+                select.limitCount = Integer.parseInt(limEnd);
+            } catch (NumberFormatException ex) {
+
+                // todo: add appropriate error type and message to Trace.java
+                throw Trace.error(Trace.WRONG_DATA_TYPE, "TOP m");
+            }
+        } else {
+            tokenizer.back();
+        }
     }
 
     private void parseOrderBy(Select select,
@@ -512,7 +543,7 @@ class Parser {
 
             checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
 
-            e     = checkOrderByColumns(e, vcolumn);
+            e = resolveOrderByColumnAlias(e, vcolumn, select.sUnion != null);
             token = tokenizer.getString();
 
             if (token.equals(Token.T_DESC)) {
@@ -528,20 +559,20 @@ class Parser {
             len++;
         } while (token.equals(Token.T_COMMA));
 
+        tokenizer.back();
+
         select.iOrderLen = len;
     }
 
-    private void resolveSelectTableFilter(Select select,
-                                          HsqlArrayList vcolumn,
-                                          HsqlArrayList vfilter)
-                                          throws HsqlException {
+    private static void resolveSelectTableFilter(Select select,
+            HsqlArrayList vcolumn,
+            HsqlArrayList vfilter) throws HsqlException {
 
         int         len       = vfilter.size();
         TableFilter filters[] = new TableFilter[len];
 
         vfilter.toArray(filters);
 
-//
         select.tFilter = filters;
 
         // expand [table.]* columns
@@ -588,11 +619,8 @@ class Parser {
                 vcolumn.remove(current);
             } else if (e.getType() == Expression.COLUMN) {
                 if (e.getTableName() == null) {
-                    for (int filterIndex = 0; filterIndex < filters.length;
-                            filterIndex++) {
-
-//                        e.resolve(filters[filterIndex]);
-                        e.resolveTables(filters[filterIndex]);
+                    for (int f = 0; f < filters.length; f++) {
+                        e.resolveTables(filters[f]);
                     }
                 }
             }
@@ -608,16 +636,39 @@ class Parser {
     }
 
     /**
-     * Checks Order By columns, and substitutes order by columns that is
-     * refering to select columns by alias or column index.
+     * Checks an Expression in the WHERE clause and if it contains an alias or
+     * column index returns the column expression it refers to.
+     *
+     * todo
      *
      * @param  e                          Description of the Parameter
      * @param  vcolumn                    Description of the Parameter
      * @return                            Description of the Return Value
      * @exception  java.sql.HsqlException  Description of the Exception
      */
-    private static Expression checkOrderByColumns(Expression e,
+    private static Expression resolveWhereColumnAliases(Expression e,
             HsqlArrayList vcolumn) throws HsqlException {
+        return e;
+    }
+
+    /**
+     * Checks an ORDER BY Expression and if it is an alias or column index
+     * returns the column expression it refers to.<b>
+     *
+     * Ambiguous reference to an alias and non-integer column index throw an
+     * exception.
+     *
+     * If select is a SET QUERY then only column indexes are allowed and the
+     * rest throw an exception.
+     *
+     * @param  e                          search column expression
+     * @param  vcolumn                    list of columns
+     * @param  union                      is select a union
+     * @return                            new or the same expression
+     * @exception  java.sql.HsqlException  when invalid search specification
+     */
+    private static Expression resolveOrderByColumnAlias(Expression e,
+            HsqlArrayList vcolumn, boolean union) throws HsqlException {
 
         if (e.getType() == Expression.VALUE) {
 
@@ -625,27 +676,48 @@ class Parser {
             if (e.getDataType() == Types.INTEGER) {
                 int i = ((Integer) e.getValue()).intValue();
 
-                e = (Expression) vcolumn.get(i - 1);
+                if (i <= vcolumn.size()) {
+                    Expression colexpr = (Expression) vcolumn.get(i - 1);
+
+                    colexpr.orderColumnIndex = i - 1;
+
+                    return colexpr;
+                }
             }
+
+            throw Trace.error(Trace.INVALID_ORDER_BY);
         } else if (e.getType() == Expression.COLUMN
                    && e.getTableName() == null) {
+            if (union) {
+                throw Trace.error(Trace.INVALID_ORDER_BY);
+            }
 
             // this could be an alias column
-            String s = e.getColumnName();
+            String     s     = e.getColumnName();
+            Expression found = e;
 
             for (int i = 0, size = vcolumn.size(); i < size; i++) {
                 Expression ec = (Expression) vcolumn.get(i);
 
-                // We can only substitute alias defined in the select clause,
+                // We can only substitute alias explicitly defined in the select clause,
                 // since there may be more that one result column with the
                 // same column name.  For example:
                 //   "select 500-column1, column1 from table 1 order by column2"
                 if (s.equals(ec.getDefinedAlias())) {
-                    e = ec;
+                    if (found != e) {
+                        throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
+                                          s);
+                    }
 
-                    break;
+                    found = ec;
                 }
             }
+
+            e = found;
+        }
+
+        if (union) {
+            throw Trace.error(Trace.INVALID_ORDER_BY);
         }
 
         return e;
@@ -676,6 +748,7 @@ class Parser {
 
             s = sq.select;
 
+            // fredt - not correlated - a joined subquery table must resolve fully
             s.resolveAll();
 
             // it's not a problem that this table has not a unique name
@@ -686,13 +759,6 @@ class Parser {
             sq.table = t;
 
             t.addColumns(s);
-
-            // TODO:
-            // We lose / do not exploit index info here.
-            // Look at what, if any, indexes the query might benefit from
-            // and create or carry them across here if it might speed up
-            // subsequent access.
-            // fredt - you often can't as the subquery column involved in join does not have unique values
             t.createPrimaryKey();
         } else {
             tokenizer.checkUnexpectedParam("parametric table identifier");
@@ -747,6 +813,7 @@ class Parser {
 
                 s = sq.select;
 
+                // fredt - not correlated
                 s.resolveAll();
 
                 // it's not a problem that this table has not a unique name
@@ -757,23 +824,17 @@ class Parser {
                 sq.table = t;
 
                 t.addColumns(s);
-
-                // TODO:
-                // We lose / do not exploit index info here.
-                // Look at what, if any, indexes the query might benefit from
-                // and create or carry them across here if it might speed up
-                // subsequent access.
                 t.createPrimaryKey();
             }
         }
 
         String sAlias = null;
 
-// TODO:  maybe check for unexpected param as alias?
-// Not very important, but there still is a distinction
-// i.e. "?" is a valid alias, but ? is, in essence, a reserved word
         token = tokenizer.getString();
 
+        // fredt - we removed LEFT from the list of reserved words in Tokenizer
+        // to allow LEFT() to work. Thus wasName() will return true for LEFT
+        // and we check separately for this token
         if (token.equals(Token.T_LEFT)) {
             tokenizer.back();
         } else if (token.equals(Token.T_AS)) {
@@ -784,24 +845,19 @@ class Parser {
             tokenizer.back();
         }
 
-        // table filter, underlying table, six of one, ... of the other
-        // SYSTEM_SUBQUERY seems so generic, but is never used anyway
-        // This might be of some use in debugging, though?
-        // t.getName().name = t.getName().name + "[" + sAlias + "]";
-        tf         = new TableFilter(t, sAlias, outerjoin);
-        tf.sSelect = s;
+        tf = new TableFilter(t, sAlias, outerjoin);
 
         return tf;
     }
 
     /**
-     *  Method declaration
+     *  Add a condition from the WHERE clause.
      *
      * @param  e1
      * @param  e2
      * @return
      */
-    private Expression addCondition(Expression e1, Expression e2) {
+    private static Expression addCondition(Expression e1, Expression e2) {
 
         if (e1 == null) {
             return e2;
@@ -812,10 +868,19 @@ class Parser {
         }
     }
 
-    private Expression addJoinCondition(Expression e1, Expression e2,
-                                        boolean outer) throws HsqlException {
+    /**
+     *  Add a condition from the JOIN table ON clause.
+     *
+     * @param  e1
+     * @param  e2
+     * @param tf
+     * @param outer
+     * @return
+     */
+    private static Expression addJoinCondition(Expression e1, Expression e2,
+            TableFilter tf, boolean outer) throws HsqlException {
 
-        if (!e2.setForJoin(outer)) {
+        if (!e2.setForJoin(tf, outer)) {
             throw Trace.error(Trace.OUTER_JOIN_CONDITION);
         }
 
@@ -934,7 +999,7 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                Select     select = parseSelect();
+                Select     select = parseSelect(false);
                 Expression s      = new Expression(select);
 
                 read();
@@ -1002,7 +1067,8 @@ class Parser {
         // boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
         // correct default like escape characters (i.e. the one
         // we report from jdbcDatabaseMetaData)
-        char escape = '\\';    // was 0
+        // fredt@users - both 0 and '\\' are wrong - there shouldn't be any escape character if none is specified in the SQL
+        Character escape = null;
 
         if (sToken.equals(Token.T_ESCAPE)) {
             read();
@@ -1025,7 +1091,7 @@ class Parser {
                 throw Trace.error(Trace.INVALID_ESCAPE, s);
             }
 
-            escape = s.charAt(0);
+            escape = new Character(s.charAt(0));
         }
 
         a = new Expression(a, b, escape);
@@ -1065,7 +1131,7 @@ class Parser {
         Expression b = null;
 
         if (iToken == Expression.SELECT) {
-            Select select = parseSelect();
+            Select select = parseSelect(false);
 
             select.resolve();
 
@@ -1302,7 +1368,7 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-                Select select = parseSelect();
+                Select select = parseSelect(false);
 
                 select.resolve();
 
@@ -1868,6 +1934,8 @@ class Parser {
     }
 
     // destructive get, but that's OK (preferred, actually)
+
+    /** @todo fredt - replace this stuff and the subquery stack with a simpler structure */
     SubQuery[] getSubqueries() {
 
         SubQuery[] subqueries;
@@ -2009,10 +2077,6 @@ class Parser {
         for (; i < len; i++) {
             cve = parseExpression();
 
-// boucherb@users 20030705
-// CHECKME:  Is it always correct / desirable to resolve the expressions
-// here?  Or are there some cases where resolution should be delayed.
-// See, for instance, CompiledStatement.setAsUpdate().
 //            cve.resolve(null);
             cve.resolveTables(null);
             cve.resolveTypes();
@@ -2106,7 +2170,7 @@ class Parser {
 
             return cs;
         } else if (token.equals(Token.T_SELECT)) {
-            select = parseSelect();
+            select = parseSelect(false);
 
             if (cs == null) {
                 cs = new CompiledStatement();
@@ -2132,7 +2196,7 @@ class Parser {
 
         clearParameters();
 
-        select = parseSelect();
+        select = parseSelect(false);
 
         if (cs == null) {
             cs = new CompiledStatement();

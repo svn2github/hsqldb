@@ -814,7 +814,7 @@ class Column {
 // String.compareToIngnorCase() comparison involves calling
 // Character.toLowerCase(Character.toUpperCase()) on compared characters,
 // to correctly handle some caveats concering using only the one operation or
-// the other outside the ascii character range.                
+// the other outside the ascii character range.
             case Types.VARCHAR_IGNORECASE :
                 if (sql_compare_in_locale) {
                     i = i18nCollator.compare(((String) a).toUpperCase(),
@@ -930,19 +930,24 @@ class Column {
 
     /**
      *  Convert an object into a Java object that represents its SQL type.<p>
-     *  All type conversion operations start with
+     *  All internal type conversion operations start with
      *  this method. If a direct conversion doesn't take place, the object
      *  is converted into a string first and an attempt is made to convert
      *  the string into the target type.<br>
      *
      *  One objective of this mehod is to ensure the Object can be converted
-     *  to the given SQL type. For example, a number that has decimal points
-     *  cannot be converted into an integral type, or a very large BIGINT
+     *  to the given SQL type. For example, a very large BIGINT
      *  value cannot be narrowed down to an INTEGER or SMALLINT.<br>
      *
-     *  Integral types may be represented by either Integer or Long. This
-     *  works because in the rest of the methods, the java.lang.Number
-     *  interface is used to retrieve the values from the object.
+     *  Type conversion performed by this method has gradually evolved in 1.7.2
+     *  to allow narrowing of numeric types in all cases according to the SQL
+     *  standard.<br>
+     *
+     *  Another new objective is to normalize DATETIME values.<br>
+     *
+     *  Objects set via JDBC PreparedStatement use this method to convert
+     *  the data to the Java type that is required for custom serialization
+     *  by the engine. <br>
      *
      * @param  o
      * @param  type
@@ -968,24 +973,23 @@ class Column {
                         o = ValuePool.getInt(val);
                     }
 
-                    if (o instanceof java.lang.Integer
-                            || o instanceof java.lang.Long) {
-                        long temp = ((Number) o).longValue();
+                    if (o instanceof java.lang.Integer) {
+                        int temp = ((Number) o).intValue();
 
                         if (Byte.MAX_VALUE < temp || temp < Byte.MIN_VALUE) {
                             throw Trace.error(
                                 Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
-                        // fredt@users - no narrowing for Long values
                         return o;
                     }
 
-                    // fredt@users - direct conversion for JDBC setObject()
+                    // fredt@users - direct conversion to optimise JDBC setObject(Byte)
                     if (o instanceof java.lang.Byte) {
                         return ValuePool.getInt(((Number) o).intValue());
                     }
 
+                    // fredt@users - returns to this method for range checking
                     if (o instanceof java.lang.Number) {
                         return convertObject(convertToInt(o), type);
                     }
@@ -998,9 +1002,8 @@ class Column {
                         o = ValuePool.getInt(val);
                     }
 
-                    if (o instanceof java.lang.Integer
-                            || o instanceof java.lang.Long) {
-                        long temp = ((Number) o).longValue();
+                    if (o instanceof java.lang.Integer) {
+                        int temp = ((Number) o).intValue();
 
                         if (Short.MAX_VALUE < temp
                                 || temp < Short.MIN_VALUE) {
@@ -1008,30 +1011,30 @@ class Column {
                                 Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
-                        // fredt@users - no narrowing for Long values
                         return o;
                     }
 
-                    // fredt@users - direct conversion for JDBC setObject()
+                    // fredt@users - direct conversion for JDBC setObject(Short), etc.
                     if (o instanceof java.lang.Byte
                             || o instanceof java.lang.Short) {
                         return ValuePool.getInt(((Number) o).intValue());
                     }
 
+                    // fredt@users - returns to this method for range checking
                     if (o instanceof java.lang.Number) {
                         return convertObject(convertToInt(o), type);
                     }
                     break;
 
                 case Types.INTEGER :
+                    if (o instanceof java.lang.Integer) {
+                        return o;
+                    }
+
                     if (o instanceof java.lang.String) {
                         int val = Integer.parseInt((String) o);
 
                         return ValuePool.getInt(val);
-                    }
-
-                    if (o instanceof java.lang.Integer) {
-                        return o;
                     }
 
                     if (o instanceof java.lang.Long) {
@@ -1043,7 +1046,6 @@ class Column {
                                 Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
 
-                        // fredt@users - narrowing needed for function calls
                         return ValuePool.getInt(((Number) o).intValue());
                     }
 
@@ -1064,7 +1066,9 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
-                        return ValuePool.getLong(Long.parseLong((String) o));
+                        long val = Long.parseLong((String) o);
+
+                        return ValuePool.getLong(val);
                     }
 
                     if (o instanceof java.lang.Integer) {
@@ -1150,18 +1154,46 @@ class Column {
                     break;
 
                 case Types.TIME :
+                    if (o instanceof java.sql.Time) {
+                        return HsqlDateTime.getNormalisedTime((Time) o);
+                    }
+
                     if (o instanceof java.sql.Timestamp) {
-                        return new Time(((Timestamp) o).getTime());
+                        return HsqlDateTime.getNormalisedTime((Timestamp) o);
                     }
 
                     if (o instanceof java.sql.Date) {
-                        return new Time(0);
+                        throw Trace.error(Trace.INVALID_CONVERSION, type);
+                    }
+                    break;
+
+                case Types.TIMESTAMP :
+                    if (o instanceof java.sql.Timestamp) {
+                        return o;
+                    }
+
+                    if (o instanceof java.sql.Time) {
+                        return HsqlDateTime.getNormalisedTimestamp((Time) o);
+                    }
+
+                    if (o instanceof java.sql.Date) {
+                        return HsqlDateTime.getNormalisedTimestamp(
+                            (java.sql.Date) o);
                     }
                     break;
 
                 case Types.DATE :
+                    if (o instanceof java.sql.Date) {
+                        return HsqlDateTime.getNormalisedDate(
+                            (java.sql.Date) o);
+                    }
+
                     if (o instanceof java.sql.Timestamp) {
-                        return new java.sql.Date(((Timestamp) o).getTime());
+                        return HsqlDateTime.getNormalisedDate((Timestamp) o);
+                    }
+
+                    if (o instanceof java.sql.Time) {
+                        throw Trace.error(Trace.INVALID_CONVERSION, type);
                     }
                     break;
 
@@ -1172,25 +1204,31 @@ class Column {
                         return o;
                     } else if (o instanceof byte[]) {
                         return new Binary((byte[]) o);
-                    } else if (o instanceof JavaObject) {
-                        o = ((JavaObject) o).getObject();
-
-                        if (o instanceof byte[]) {
-                            return new Binary((byte[]) o);
-                        }
                     } else if (o instanceof String) {
+
+                        /**
+                         * @todo fredt - we need this for script processing only
+                         *  handle the script separately and process normal
+                         *  conversion according to rules in SQL
+                         *  standard
+                         */
                         return new Binary(
                             StringConverter.hexToByte((String) o));
                     }
 
                     throw Trace.error(Trace.INVALID_CONVERSION, type);
 
-// fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
                 case Types.OTHER :
                     if (o instanceof JavaObject) {
                         return o;
                     } else if (o instanceof String) {
+
+                        /**
+                         * @todo fredt - we need this for script processing only
+                         *  handle the script separately and allow normal Sting
+                         *  objects to be stored as JavaObject
+                         */
                         return new JavaObject(
                             StringConverter.hexToByte((String) o), true);
                     }
@@ -1386,11 +1424,17 @@ class Column {
         return StringConverter.toQuotedString(s, '\'', true);
     }
 
-// fredt@users 20030715 - patch 1.7.2 by fredt - type narrowing
+// fredt@users 20030715 - patch 1.7.2 - type narrowing for numeric values
 
     /**
-     * Type narrowing from DECIMAL/NUMERIC to BIGINT / INT / SMALLINT / TINYINT
-     * following the SQL rules
+     * Type narrowing from DOUBLE/DECIMAL/NUMERIC to BIGINT / INT / SMALLINT / TINYINT
+     * following the SQL rules. When conversion is from a non-integral type,
+     * digits to the right of the decimal point are lost.
+     */
+
+    /**
+     * Converter from a numeric object to Integer. Input is checked to be
+     * within range represented by Integer.
      */
     static Integer convertToInt(Object o) throws HsqlException {
 
@@ -1420,6 +1464,10 @@ class Column {
         throw Trace.error(Trace.INVALID_CONVERSION);
     }
 
+    /**
+     * Converter from a numeric object to Long. Input is checked to be
+     * within range represented by Long.
+     */
     static Long convertToLong(Object o) throws HsqlException {
 
         long val = ((Number) o).longValue();
@@ -1448,6 +1496,10 @@ class Column {
         throw Trace.error(Trace.INVALID_CONVERSION);
     }
 
+    /**
+     * Converter from a numeric object to Double. Input is checked to be
+     * within range represented by Double
+     */
     static Double convertToDouble(Object o) throws HsqlException {
 
         double val = ((Number) o).doubleValue();

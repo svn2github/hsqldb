@@ -76,9 +76,8 @@ import org.hsqldb.lib.Iterator;
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
 // methods for set operations moved here from Select.java
-// fredt@users 20020130 - patch 1.7.0 by fredt
-// rewrite of LIMIT n m to apply to each select statement separately
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
+// fredt@users 20030801 - patch 1.7.2 - separate metadata and polymophic serialisation
 
 /**
  *  Class declaration
@@ -1120,34 +1119,6 @@ class Result {
         }
 
         return 0;
-    }
-
-    // fredt - todo can allow reuse of the byte[] via changes in Server.java
-    // WebServer.java etc.
-    void getBytes(DatabaseRowOutputInterface out) {
-
-        // to be implmented and called from Server.java etc.
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  HsqlException
-     */
-    byte[] getBytes() throws HsqlException {
-
-        try {
-            DatabaseRowOutputInterface out = new BinaryServerRowOutput();
-
-            write(out);
-
-            return out.getOutputStream().toByteArray();
-        } catch (IOException e) {
-            throw Trace.error(Trace.TRANSFER_CORRUPTED);
-        }
     }
 
     void write(DatabaseRowOutputInterface out)

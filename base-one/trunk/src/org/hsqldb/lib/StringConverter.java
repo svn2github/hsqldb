@@ -92,6 +92,25 @@ public class StringConverter {
     private static final String HEXINDEX = "0123456789abcdef0123456789ABCDEF";
 
     /**
+     * Converts a String into a byte array by using a big-endian two byte
+     * representation of each char value in the string.
+     */
+    byte[] stringToFullByteArray(String s) {
+
+        int    length = s.length();
+        byte[] buffer = new byte[length * 2];
+        int    c;
+
+        for (int i = 0; i < length; i++) {
+            c                 = s.charAt(i);
+            buffer[i * 2]     = (byte) ((c & 0x0000ff00) >> 8);
+            buffer[i * 2 + 1] = (byte) (c & 0x000000ff);
+        }
+
+        return buffer;
+    }
+
+    /**
      * Compacts a hexadecimal string into a byte array
      *
      *

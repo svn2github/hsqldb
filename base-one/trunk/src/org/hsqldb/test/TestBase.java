@@ -95,6 +95,4 @@ abstract public class TestBase extends TestCase {
     Connection newConnection() throws Exception {
         return DriverManager.getConnection(url, user, password);
     }
-
-    abstract public void test() throws Exception;
 }

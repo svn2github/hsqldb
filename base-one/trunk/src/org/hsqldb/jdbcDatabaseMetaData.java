@@ -5460,7 +5460,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // TODO: fredt@users we don't really. Need to review the codes.
         // Which do we support, if any? Probably X/OPEN, if any. Must check.
         // boucherb@users 20020426
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5614,7 +5614,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
 // Obsolete: this is now optimized away at the engine for all
 //           non-parametric LIKE statements.
-//                         
+//
 //        if (isStr && "LIKE".equalsIgnoreCase(op)
 //            && !(new Like(v, '\\', false)).hasWildcards()) {
 //            op = "=";

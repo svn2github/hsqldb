@@ -4862,7 +4862,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int columnIndex) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -4896,7 +4896,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(String columnName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -4931,7 +4931,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -4966,7 +4966,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5001,7 +5001,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5036,7 +5036,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5071,7 +5071,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5106,7 +5106,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5141,7 +5141,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -5176,7 +5176,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3

@@ -91,6 +91,16 @@ insert into credits values(4,2,200);
  left outer join credits cred on cred.accountid = ac.id
  group by own.name,ac.accountnr,ac.accountname
 
+--ERROR when a condition column has not been defined in the join so far
+/*e*/select own.*, ac.*, cred.* from owners own
+ left outer join accounts ac on own.id = ac.ownerid and cred.accountid = 1
+ left outer join credits cred on cred.accountid = ac.id
+
+--ERROR - join like above but using a functions
+/*e*/select ac.accountname,ac.accountnr, cred.amount from accounts ac
+ left outer join credits cred on cred.accountid=ac.id and abs(amount) = 200
+
+
 --MULTIPLE OUTER
 --STUDENTS contains id's for students
 --TEACHERS contains id's for teachers

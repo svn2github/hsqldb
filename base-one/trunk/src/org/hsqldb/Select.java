@@ -77,10 +77,13 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // basic implementation of LIMIT n m
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // type and logging attributes of sIntotable
+// fredt@users 20020230 - patch 495938 by johnhobs@users - GROUP BY order
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
-// boucherb@users 20030811 - patch 1.7.2 - 200% speedup for compiled statement
+// boucherb@users 20030811 - patch 1.7.2 - prepared statement support
+// fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
+// fredt@users 20031012 - patch 1.7.2 - SQL standard ORDER BY with UNION and other set queries
 
 /**
  * Class declaration
@@ -126,12 +129,18 @@ class Select {
         isPreProcess = true;
     }
 
+    /**
+     * Experimental.
+     *
+     * Map the column aliases to expressions in order to resolve alias names
+     * in WHERE clauses
+     *
+     */
     HashMap getColumnAliases() {
 
         HashMap aliasMap = new HashMap();
-        int     len      = eColumn.length;
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < iResultLen; i++) {
             String alias = eColumn[i].getAlias();
 
             if (alias != null) {
@@ -198,16 +207,16 @@ class Select {
      *
      * @throws HsqlException
      */
-    void checkResolved(HashMap aliases) throws HsqlException {
+    void checkResolved() throws HsqlException {
 
         int len = eColumn.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].checkResolved(null);
+            eColumn[i].checkResolved();
         }
 
         if (eCondition != null) {
-            eCondition.checkResolved(getColumnAliases());
+            eCondition.checkResolved();
         }
     }
 
@@ -402,27 +411,38 @@ class Select {
             }
         }
 
-        if (iOrderLen != 0) {
-            int order[] = new int[iOrderLen];
-            int way[]   = new int[iOrderLen];
-
-// fredt@users 20020230 - patch 495938 by johnhobs@users - GROUP BY order
-            for (int i = iResultLen + (isGrouped ? iGroupLen
-                                                 : 0), j = 0; j < iOrderLen;
-                    i++, j++) {
-                order[j] = i;
-                way[j]   = eColumn[i].isDescending() ? -1
-                                                     : 1;
-            }
-
-            r.sortResult(order, way);
-        }
+        sortResult(r);
 
         // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
         r.trimResult(limitStart, limitCount);
 
         return r;
+    }
+
+    private void sortResult(Result r) throws HsqlException {
+
+        if (iOrderLen != 0) {
+            int order[] = new int[iOrderLen];
+            int way[]   = new int[iOrderLen];
+
+            for (int i = iResultLen + (isGrouped ? iGroupLen
+                                                 : 0), j = 0; j < iOrderLen;
+                    i++, j++) {
+                int colindex = i;
+
+                // fredt - when a union, use the visible select columns for sort comparison
+                if (sUnion != null) {
+                    colindex = eColumn[i].orderColumnIndex;
+                }
+
+                order[j] = colindex;
+                way[j]   = eColumn[i].isDescending() ? -1
+                                                     : 1;
+            }
+
+            r.sortResult(order, way);
+        }
     }
 
     /**
@@ -639,7 +659,7 @@ class Select {
         }
 
         resolve();
-        checkResolved(null);
+        checkResolved();
 
         if (sUnion != null) {
             if (sUnion.iResultLen != iResultLen) {

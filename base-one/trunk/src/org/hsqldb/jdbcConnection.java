@@ -1751,7 +1751,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -2227,7 +2227,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -2292,7 +2292,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3
@@ -2357,7 +2357,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
 //#endif JDBC3

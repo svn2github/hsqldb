@@ -337,7 +337,7 @@ public class Trace extends PrintWriter {
         "S0011 Constraint not found",                                         //
         "SOO10 Invalid argument in JDBC call",                                //
         "S1000 Database is memory only",
-        "37000 only AND allowed in OUTER JOIN conditions",
+        "37000 not allowed in OUTER JOIN condition",
         "22003 Numeric value out of range",
         "37000 Software module not installed",
         "37000 Not contained in aggregate function or group by clause",
@@ -431,7 +431,7 @@ public class Trace extends PrintWriter {
         "00000 ORDER BY must be at the end of the statement",
         "00000 Statement does not generate a row count",
         "00000 Statement does not generate a result set",
-        "S0022 amgiguous Column reference",                                   //
+        "S0022 ambiguous Column reference",                                   //
     };
 
     /** Used during tests. */

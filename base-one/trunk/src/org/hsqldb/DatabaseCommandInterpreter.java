@@ -1367,7 +1367,7 @@ class DatabaseCommandInterpreter {
         parser = new Parser(database, tokenizer, session);
 
         try {
-            select = parser.parseSelect();
+            select = parser.parseSelect(false);
 
             if (select.sIntoTable != null) {
                 throw (Trace.error(Trace.TABLE_NOT_FOUND));

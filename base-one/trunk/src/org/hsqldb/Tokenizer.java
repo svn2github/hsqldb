@@ -218,13 +218,15 @@ class Tokenizer {
      *
      * @throws HsqlException
      */
-    void getThis(String match) throws HsqlException {
+    String getThis(String match) throws HsqlException {
 
         getToken();
 
         if (!sToken.equals(match)) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
+
+        return sToken;
     }
 
     /**

@@ -83,24 +83,29 @@ class Like {
     private boolean  isIgnoreCase;
     private int      iFirstWildCard;
     private boolean  isNull;
-    private char     escapeChar;
+    Character        escapeChar;
+    boolean          optimised;
     static final int UNDERSCORE_CHAR = 1;
     static final int PERCENT_CHAR    = 2;
 
+    Like(Character escape) {
+        escapeChar = escape;
+    }
+
     /**
-     * Constructor declaration
-     *
+     * param setter
      *
      * @param s
      * @param escape
      * @param ignorecase
      */
-    Like(String s, char escape, boolean ignorecase) {
+    void setParams(String s, boolean ignorecase) {
 
-        escapeChar   = escape;
         isIgnoreCase = ignorecase;
 
         normalize(s, true);
+
+        optimised = true;
     }
 
     /**
@@ -234,7 +239,8 @@ class Like {
             char c = pattern.charAt(i);
 
             if (bEscaping == false) {
-                if (b && (c == escapeChar)) {
+                if (b && (escapeChar != null
+                          && escapeChar.charValue() == c)) {
                     bEscaping = true;
 
                     continue;

@@ -61,7 +61,7 @@ import java.sql.SQLException;
  */
 public class jdbcSavepoint implements java.sql.Savepoint {
 
-    String             name;
+    String         name;
     jdbcConnection connection;
 
     jdbcSavepoint(String name, jdbcConnection conn) throws SQLException {
@@ -84,7 +84,7 @@ public class jdbcSavepoint implements java.sql.Savepoint {
      * @since 1.4
      */
     public int getSavepointId() throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        throw jdbcDriver.notSupported;
     }
 
     /**

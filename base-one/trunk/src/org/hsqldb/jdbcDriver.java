@@ -154,8 +154,6 @@ public class jdbcDriver implements Driver {
 
     static final SQLException notSupported =
         sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
-    static final SQLException notSupportedJDBC3 =
-        sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3"));
 
     /**
      *  Attempts to make a database connection to the given URL. The driver

@@ -322,6 +322,49 @@ class HsqlDateTime {
 
         today = new Date(c.getTime().getTime());
     }
+
+    /** @todo fredt - write the methods using Calendar */
+    static long getTimePart(Timestamp ts) {
+        return ts.getTime();
+    }
+
+    static long getDatePart(Timestamp ts) {
+        return ts.getTime();
+    }
+
+    static Time getNormalisedTime(Time t) {
+        return t;
+    }
+
+    static Time getNormalisedTime(Timestamp ts) {
+        return new Time(ts.getTime());
+    }
+
+    static Date getNormalisedDate(Timestamp ts) {
+        return new Date(ts.getTime());
+    }
+
+    static Date getNormalisedDate(Date d) {
+        return d;
+    }
+
+    /**
+     * use CURRENT_DATE plus the elapsed time.
+     */
+    static Timestamp getNormalisedTimestamp(Time t) {
+
+        long value = getToday().getTime() + t.getTime();
+
+        return new Timestamp(value);
+    }
+
+    static Timestamp getNormalisedTimestamp(Date d) {
+
+        // fredt - todo normalise d to DATE part only
+        long value = d.getTime();
+
+        return new Timestamp(value);
+    }
     /*
     public static void main(String[] args) {
         String tests[] = { "2000-1-1", "2000-1-1 12:13", "2000-1-1 12:13:14",

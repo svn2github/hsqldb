@@ -72,6 +72,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.Calendar;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
 
@@ -391,9 +392,30 @@ class Function {
     }
 
     /**
+     * Checks the arguments supplied to this Function object against the
+     * set of TableFilter.
+     *
+     * @param fa the array of TableFilter against which to resolve this Function
+     * object's arguments
+     * @throws HsqlException if there is a problem resolving an argument
+     * against the specified TableFilter
+     */
+    void checkTables(HsqlArrayList fa) throws HsqlException {
+
+        Expression e;
+
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
+            e = eArg[i];
+
+            if (e != null) {
+                e.checkTables(fa);
+            }
+        }
+    }
+
+    /**
      * Resolves the arguments supplied to this Function object against the
      * specified TableFilter.
-     *
      *
      * @param f the TableFilter against which to resolve this Function
      * object's arguments
@@ -414,13 +436,10 @@ class Function {
     }
 
     /**
-     * Resolves the arguments supplied to this Function object against the
-     * specified TableFilter.
+     * Resolves the type of this expression and performs certain
+     * transformations and optimisations of the expression tree.
      *
-     *
-     * @param f the TableFilter against which to resolve this Function
-     * object's arguments
-     * @throws HsqlException if there is a problem resolving an argument
+     * @throws HsqlException if there is a problem resolving the expression
      */
     void resolveType() throws HsqlException {
 
@@ -448,11 +467,11 @@ class Function {
      *
      * @throws HsqlException if any arguments have not yet been resolved
      */
-    void checkResolved(HashMap aliases) throws HsqlException {
+    void checkResolved() throws HsqlException {
 
         for (int i = iSqlArgStart; i < iArgCount; i++) {
             if (eArg[i] != null) {
-                eArg[i].checkResolved(aliases);
+                eArg[i].checkResolved();
             }
         }
     }

@@ -1,5 +1,44 @@
 Readme File
 
+2003.10.12
+
+HSQLDB 1.7.2 ALPHA_R
+
+This release features full support for prepared statements with parameters, including
+those in IN lists.
+
+Query processing has been extensively enhanced in this release and better standards
+complience has been achieved. Major implications of the recent changes are as follows:
+
+- Columns in correlated subqueries are resolved independently first. If there is an
+unresolved column, then the surrounding context is used to resolve it. This is 
+opposite the resolution order previously enforced in the engine.
+
+- Some ambiguities and errors in ORDER BY clauses are now caught.
+
+- UNION and other set queries accept only one ORDER BY clause at the end. In this
+clause, only column indexes are allowed as sort specification e.g.:
+
+SELECT .. UNION SELECT .. ORDER BY 1 DESC, 5, 3
+
+- Outer join conditions can now include most comparison operators, as well as OR
+logical operators , e.g
+
+LEFT OUTER JOIN atable ON a=b AND c>d OR a=2 ...
+
+Illegal forward table references are no longer allowed in join conditions.
+
+There are many other small improvements and fixes, including:
+
+- IN value lists can now contain column values or expressions. See TestSelfQueries.txt
+for an example.
+
+- LIKE has been optimesed when possible.
+
+- COALESCE() can now take several arguments
+
+
+
 2003.09.24
 
 HSQLDB 1.7.2 ALPHA_Q

@@ -67,12 +67,12 @@
 
 package org.hsqldb;
 
-// fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
+// fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
 
 /**
- * This class iterates over table elements to perform a join between two
- * tables, or a self-join, using indexes if they are availabe.
+ * This class iterates over table rows to select the rows that fulfil join
+ * or other conditions. It uses indexes if they are availabe.
  *
  * @version 1.7.2
  */
@@ -83,8 +83,8 @@ class TableFilter {
     static final int   CONDITION_START_END = 1;    // candidate for eStart and eEnd
     static final int   CONDITION_START     = 2;    // candidate for eStart
     static final int   CONDITION_END       = 3;    // candidate for eEnd
+    static final int   CONDITION_OUTER     = 4;    // add to this
     private Table      tTable;
-    Select             sSelect;
     private String     sAlias;
     private Index      iIndex;
     private Node       nCurrent;
@@ -142,8 +142,8 @@ class TableFilter {
     }
 
     /**
-     * Retrieves a CONDITION_XXX code indicating the possible use for an
-     * expression of the given type, relative to a TableFilter.
+     * Retrieves a CONDITION_XXX code indicating how a condition
+     * expression can be used for a TableFilter.
      *
      * @param exprType an expression type code
      * @return
@@ -153,7 +153,7 @@ class TableFilter {
         switch (exprType) {
 
             case Expression.NOT_EQUAL :
-            case Expression.LIKE :    // todo: maybe use index
+            case Expression.LIKE :
             case Expression.IN : {
                 return CONDITION_UNORDERED;
             }
@@ -296,7 +296,9 @@ class TableFilter {
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
         if (e1.getFilter() == this && e2.getFilter() == this) {
             conditionType = CONDITION_UNORDERED;
-        } else if (e1.getFilter() == this) {    // ok include this
+        } else if (e1.getFilter() == this) {
+
+            // ok include this
         } else if ((e2.getFilter() == this)
                    && (conditionType != CONDITION_UNORDERED)) {
 
@@ -305,20 +307,35 @@ class TableFilter {
             setCondition(e);
 
             return;
+        } else if (e1.outerFilter == this) {
+
+            // fredt - this test is last to allow swapping the terms above
+            conditionType = CONDITION_OUTER;
         } else {
 
             // unrelated: don't include
             return;
         }
 
-        Trace.doAssert(e1.getFilter() == this, "setCondition");
-
+//        Trace.doAssert(e1.getFilter() == this, "setCondition");
         if (!e2.isResolved()) {
+            return;
+        }
+
+        // fredt - condition defined in outer but not this one
+        if (e1.outerFilter != null && e1.outerFilter != this) {
             return;
         }
 
         if (conditionType == CONDITION_UNORDERED) {
             addAndCondition(e);
+
+            return;
+        }
+
+        if (conditionType == CONDITION_OUTER) {
+            addAndCondition(e);
+            e.setTrue();
 
             return;
         }
@@ -469,7 +486,8 @@ class TableFilter {
         oCurrentData   = oEmptyData;
         currentRow     = null;
 
-        return eAnd == null || eAnd.test();
+        return eAnd == null || (eAnd.getFilter() != this && eAnd.isInJoin)
+               || eAnd.test();
     }
 
     /**
@@ -529,11 +547,10 @@ class TableFilter {
                                 : index.getName().name);
         sb.append(hidden ? "[HIDDEN]]\n"
                          : "]\n");
-        sb.append("bOuterJoin=[").append(isOuterJoin).append("]\n");
+        sb.append("isOuterJoin=[").append(isOuterJoin).append("]\n");
         sb.append("eStart=[").append(eStart).append("]\n");
         sb.append("eEnd=[").append(eEnd).append("]\n");
-        sb.append("eAnd=[").append(eAnd).append("]\n");
-        sb.append("sSelect=[").append(sSelect).append("]");
+        sb.append("eAnd=[").append(eAnd).append("]");
 
         return sb.toString();
     }

@@ -36,9 +36,9 @@ import java.sql.*;
 public class TestScript extends TestBase {
 
 //    String path = "TestSelfCasewhen.txt";
-    String path = "TestSelfQueries.txt";
+//    String path = "TestSelfQueries.txt";
+    String path = "TestSelfLeftJoin.txt";
 
-//    String path = "TestSelfLeftJoin.txt";
     public TestScript(String name) {
         super(name);
     }
