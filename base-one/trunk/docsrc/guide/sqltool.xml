@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.29 2004/06/08 23:27:37 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.30 2004/06/09 14:22:09 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.29 $</edition>
-        <pubdate>$Date: 2004/06/08 23:27:37 $</pubdate>
+        <edition>$Revision: 1.30 $</edition>
+        <pubdate>$Date: 2004/06/09 14:22:09 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.36 of SqlTool and
-            1.75 of SqlFile (the latter is the class which does most of the
+            1.76 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both version when you run SqlTool
             interactively.
@@ -526,8 +526,9 @@
                 <example id='alias-example'>
                     <title>Defining and using an alias (PL variable)</title>
                     <screen>
-    * q = select count(*) from mytable
-    *q;</screen>
+    * q = SELECT COUNT(*) FROM mytable
+    *q;
+    *q WHERE mass > 200;</screen>
                 </example>
         </para></listitem></varlistentry>
         </variablelist>
@@ -625,8 +626,14 @@
             </informalexample></para><simpara>
                 (Skip the "2>&amp;1" if you're on Windows).
             </simpara><simpara>
-                You can also execute SQL files from an interacrtive session with
-                the "\i"' Special Command.
+                You can also execute SQL files from an interactive session with
+                the "\i"' Special Command,
+                but be aware that the default behavior in an interactive 
+                session is to continue upon errors, so if you want the SQL
+                file to abort upon error you need to give a \* command
+                before the \i command.
+                (You can also use \i in SQL files, resulting in nested SQL
+                files).
             </simpara><simpara>
                 You can use the following SQL file,
                 <filename>sample.sql</filename>, which resides in the
@@ -668,6 +675,8 @@
                             (malformatted commands, SQL command failures, 
                             empty SQL commands), but SqlTool will continue to
                             run.
+                            Errors will not cause rollbacks (but that won't
+                            matter because of the following setting).
                         </simpara>
                     </listitem>
                     <listitem><simpara>--autoCommit</simpara></listitem>
@@ -760,6 +769,9 @@
                     For database installation scripts I often have a master
                     SQL file which includes all of the other SQL files in the
                     correct sequence.
+                    Be aware that the current continue-upon-error behavior
+                    will apply to the included file, so you may want to
+                    give a \* command before your \i command.
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>\H</term><listitem><para>
                     Toggle HTML output mode.
@@ -784,6 +796,10 @@
                 <varlistentry><term>\* [true|false]</term><listitem><simpara>
                     A "true" setting tells SqlTool to continue when errors are 
                     encountered.
+                    The current transaction will not be rolled back upon SQL
+                    errors, so if \* is true, then run the
+                    <literal>ROLLCACK;</literal> command yourself if that's 
+                    what you want to happen.
                     The default for interactive use is to continue upon error, 
                     but the default for non-interactive use is to abort upon 
                     error.
@@ -929,7 +945,39 @@
             variable expansion.
             People who don't use PL don't have to worry about strings getting
             accidentally expanded.
-        </simpara>
+        </simpara> <simpara>
+            For all PL commands (other than plain "*") the leading "*" must
+            be followed by whitespace.
+            The only reason for this requirement is to provide for
+            aliases, i.e., the ability to short-cut
+            <literal>*VARNAME</literal> for <literal>*{VARNAME}</literal> at
+            the beginning of a command.
+            Therefore, "*X" is an aliaswhereas "* X" is a PL command.
+        </simpara> <simpara>
+            The command "*" is an exception to this rule.
+            it doesn't matter whether you put white space after it.
+            All other PL commands imply the "*" command, so you only need to 
+            turn on PL variable expansion if your script uses PL variables
+            with it is possible that no variables may be set before-hand (and
+            no PL commands have been run previously).
+            In this case, without "*", your script would silently use a
+            literal value like "*{x}" instead of trying to expand it.
+            With a preceding "*" command, PL will notice that the variable
+            <literal>x</literal> has not been set and will generate an error.
+            (If x had been setthere will be no issue because setting a
+            variable automatically turns on PL variable expansion).
+        </simpara> <para>
+            Aliasing may only be used for SQL statements.
+            You can define variables for everything in a Special or PL Command,
+            except for the very first character ("\" or "*").
+            Therefore, you can use variables but not aliasing in Special and
+            PL Commands.
+            Example.
+            <programlisting>
+        sql> * qq = p Hello Butch
+        sql> \*{qq} done now
+        Hello Butch done now</programlisting>
+        </para>
         <section>
             <title>Variables</title>
             <itemizedlist>
@@ -947,6 +995,7 @@
                     Variables are always expanded in SQL, Special, and PL
                     commands if they are written like
                     <literal>*{VARNAME}</literal>
+                    (assuming that a PL command has been run previously).
                     Your SQL scripts can give good feedback by echoing the
                     value of variables with the "\p" special command.
                 </simpara></listitem> <listitem><simpara>
@@ -956,7 +1005,7 @@
                     (They must also be followed by whitespace or terminate the
                     Statement).
                     I usually refer to this use of PL variables as
-                    <emphasis>aliases</emphasis>.
+                    <emphasis>aliasing</emphasis>.
                     If the value of a variable is an entire SQL command, you
                     generally do not want to include the terminating ";" in
                     the value.
@@ -967,12 +1016,16 @@
                     <literal>*VARNAME</literal> in logical expressions to
                     prevent them from being evaluated too early.
                     See below about logical expressions.
-                </simpara></listitem> <listitem><simpara>
-                    You can continuously modify variable values, like
-                    <literal>@ x = @{x}/@{addeddir}</literal>.
-                    This is useful in conjunctionj with conditional flow
-                    control.
-                </simpara></listitem>
+                </simpara></listitem> <listitem><para>
+                    You can't do math with expression variables, but you
+                    can get functionality like the traditional
+                    <literal>for (i = 0; i &lt; x; i++)</literal> by appending
+                    to a variable and testing the string length, like
+                    <programlisting>
+    * while (*i &lt; ${x})
+        * i = *{i}.</programlisting>
+                    <literal>i</literal> will be a growing line of dots.
+                </para></listitem>
             </itemizedlist>
             <simpara>
                 Here is a short SQL file that gives the specified user write
@@ -986,7 +1039,11 @@
        Run SqlTool like this:
            java -jar path/to/hsqldb.jar -setvar USER=debbie grantwrite.sql
      */
-    * INIT =
+
+    /* Explicitly turn on PL variable expansion, in case no variables have
+       been set yet.  (Only the case if user did not set USER).
+    */
+    *
 
     GRANT all ON book TO *{USER};
     GRANT all ON category TO *{USER};</programlisting>
@@ -1011,20 +1068,35 @@
         <section>
             <title>Logical Expressions</title>
             <simpara>
-                Logical expressions occur only inside of parentheses and only
-                in PL statements.
+                Logical expressions occur only inside of logical expression
+                parentheses in PL statements.
                 For example, <literal>if (*var1 > astring)</literal> and
                 <literal>while (*checkvar)</literal>.
+                (The parentheses after "foreach" do not enclose a logical
+                expression, they just enclose a list).
             </simpara> <simpara>
-                The <literal>*VARNAME</literal> occurrences are expanded late
-                so that, for example, the result of 
-                <literal>while *LOOPVAR</literal> will change depending on the 
-                current value of LOOPVAR.
+                There is a critical difference between 
+                <literal>*{VARNAME}</literal> and <literal>*VARNAME</literal>
+                inside logical expressions.
+                <literal>*{VARNAME}</literal> is expanded one time when the
+                parser first encounters the logical expression.
+                <literal>*VARNAME</literal> is re-expanded every time that the
+                expression is evaluated.
+                So, you would never want to code
+                <literal>* while (*{X} &lt; 5)</literal> because the statement
+                will always be true or always be false.
+                (I.e. the following block will loop infinitely or will never
+                run).
             </simpara> <simpara>
-                This does not work with quoting of any type, nor with values
-                containing white space.
-                If you're using variables in logical expressions, stick to
-                simple tokens with normal characters.
+                Don't use quotes or whitespace of any kind in
+                <literal>*{VARNAME}</literal> variables in expressions.
+                (They would expand and then the expression would most likely
+                no longer be a valid expression as listed in the table below).
+                Quotes and whitespace are fine in <literal>*VARNAME</literal>
+                variables, but it is the entire value that will used in
+                evaluations, regardless of whether quotes match up, etc.
+                I.e. quotes and whitespace are not <emphasis>special</emphasis>
+                to the token evaluator.
             </simpara>
             <variablelist>
                 <title>Logical Operators</title>
@@ -1058,8 +1130,17 @@
                 </simpara></listitem></varlistentry>
             </variablelist>
             <simpara>
-                For the binary operations, unset variables are expanded to the
-                empty string.
+                *VARNAMEs in logical expressions, where the VARNAME variable
+                is not set, evaluate to an empty string.
+                Therefore <literal>(*UNSETVAR = 0)</literal> would be false,
+                even though <literal>(*UNSETVAR)</literal> by itself is false
+                and <literal>(0)</literal> by itself is false.
+            </simpara> <simpara>
+                When developing scripts, you definitely use SqlTool 
+                interactively to verify that SqlTool evaluates logical 
+                expressions as you expect.
+                Just run <literal>* if</literal> commands that print something
+                (i.e. \p) if the test expression is true.
             </simpara>
         </section>
         <section>
@@ -1075,17 +1156,16 @@
                 statement (like <literal>* foreach, *while, * if</literal>)
                 and a corresponding <literal>* end</literal> PL Command
                 (like <literal>* end foreach</literal>).
-            </simpara> <simpara>
-                You can nest flow control statements, just like you can nest
-                SQL files, but be aware that the PL block reader is pretty
-                ignorant about SQL statements and comments-- is just looks
-                for lines beginning with "* end BLOCK-TYPE".
-                Therefore, if you put a comment line in front of such an
-                end statement, or if a line of a multi-line SQL statement
-                begins with "* end BLOCK-TYPE", things will not work.
+            </simpara> <caution><simpara>
+                Be aware that the PL block reader is ignorant about SQL 
+                statements and comments-- is just looks
+                for lines beginning with some PL commands.
+                Therefore, if you put a comment line before a PL statement, 
+                or if a line of a multi-line SQL statement has a line beginning
+                with a PL command, things may break.
                 (This limitation will very likely be removed in a future 
                 version of SqlTool).
-            </simpara> <simpara>
+            </simpara></caution> <simpara>
                 The values of control variables for foreach and while PL
                 blocks will change as expected.
             </simpara> <simpara>
@@ -1101,12 +1181,16 @@
                 the command-line).
             </simpara>
         </section>
-        <simpara>
-            Here is an example that shows how to use most PL features.
+        <para>
+            Below is an example SQL File that shows how to use most PL 
+            features.  If you don't have a question about how to use a
+            particular PL feature, check this example before asking for help.
             This file resides in the
             <filename>src/org/hsqldb/sample</filename> directory with the
             name <filename>pl.sql</filename>.
-        </simpara>
+            Definitely give it a run, like <screen>
+java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/orǥ/hsqldb/sample/pl.jar</screen>
+        </para>
         <example><title>SQL File showing use of most PL features</title>
             <programlisting>&pl.sql-cdata;</programlisting>
         </example>
