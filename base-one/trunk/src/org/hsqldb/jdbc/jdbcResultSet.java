@@ -417,6 +417,9 @@ public class jdbcResultSet implements ResultSet {
     /** Properties of this ResultSet's parent Connection. */
     private HsqlProperties connProperties;
 
+    /** is the connection via network */
+    private boolean isNetConn;
+
     /**
      * The Statement that generated this result. Null if the result is
      * from DatabaseMetaData<p>
@@ -1701,7 +1704,9 @@ public class jdbcResultSet implements ResultSet {
         }
 
         // use checknull because getColumnInType is not used
-        checkNull(o);
+        if (checkNull(o)) {
+            return null;
+        }
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
@@ -1713,7 +1718,16 @@ public class jdbcResultSet implements ResultSet {
                     Trace.error(Trace.SERIALIZATION_FAILURE));
             }
         } else if (o instanceof Binary) {
-            return ((Binary) o).getBytes();
+            return isNetConn ? ((Binary) o).getBytes()
+                             : ((Binary) o).getClonedBytes();
+        } else if (o instanceof java.sql.Date) {
+            return ((java.sql.Date) o).clone();
+        } else if (o instanceof java.sql.Time) {
+            return isNetConn ? o
+                             : ((java.sql.Time) o).clone();
+        } else if (o instanceof java.sql.Timestamp) {
+            return isNetConn ? o
+                             : ((java.sql.Timestamp) o).clone();
         } else {
             return o;
         }
@@ -4368,9 +4382,10 @@ public class jdbcResultSet implements ResultSet {
      * @return a <code>Blob</code> object representing the SQL
      *  <code>BLOB</code> value in the specified column
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
-     * jdbcResultSet)
+     * @since JDK 1.2
      */
+
+//#ifdef JAVA2
     public Blob getBlob(int i) throws SQLException {
 
         byte[] b = getBytes(i);
@@ -4378,6 +4393,8 @@ public class jdbcResultSet implements ResultSet {
         return b == null ? null
                          : new jdbcBlob(b);
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4402,9 +4419,9 @@ public class jdbcResultSet implements ResultSet {
      * @return a <code>Clob</code> object representing the SQL
      *   <code>CLOB</code> value in the specified column
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
-     *  jdbcResultSet)
+     * @since JDK 1.2
      */
+//#ifdef JAVA2
     public Clob getClob(int i) throws SQLException {
 
         String s = getString(i);
@@ -4412,6 +4429,8 @@ public class jdbcResultSet implements ResultSet {
         return s == null ? null
                          : new jdbcClob(s);
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4537,12 +4556,15 @@ public class jdbcResultSet implements ResultSet {
      * @return a <code>Blob</code> object representing the
      *   SQL <code>BLOB</code> value in the specified column
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
-     *  jdbcResultSet)
+     * @since JDK 1.2
      */
+
+//#ifdef JAVA2
     public Blob getBlob(String colName) throws SQLException {
         return getBlob(findColumn(colName));
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4567,12 +4589,14 @@ public class jdbcResultSet implements ResultSet {
      * @return a <code>Clob</code> object representing the SQL
      *   <code>CLOB</code> value in the specified column
      * @exception SQLException if a database access error occurs
-     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
-     *  jdbcResultSet)
+     * @since JDK 1.2
      */
+//#ifdef JAVA2
     public Clob getClob(String colName) throws SQLException {
         return getClob(findColumn(colName));
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -5285,12 +5309,16 @@ public class jdbcResultSet implements ResultSet {
      *
      * @param  o the Object to track
      */
-    private void checkNull(Object o) {
+    private boolean checkNull(Object o) {
 
         if (o == null) {
             bWasNull = true;
+
+            return true;
         } else {
             bWasNull = false;
+
+            return false;
         }
     }
 
@@ -5325,10 +5353,20 @@ public class jdbcResultSet implements ResultSet {
                                         String.valueOf(++columnIndex));
         }
 
-        checkNull(o);
+        if (checkNull(o)) {
+            return null;
+        }
 
         // no conversion necessary
         if (type == t) {
+            if (type == Types.DATE) {
+                o = ((java.sql.Date) o).clone();
+            } else if (type == Types.TIME) {
+                o = ((java.sql.Time) o).clone();
+            } else if (type == Types.TIMESTAMP) {
+                o = ((java.sql.Timestamp) o).clone();
+            }
+
             return o;
         }
 
@@ -5361,11 +5399,12 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
      */
-    jdbcResultSet(jdbcStatement s, Result r,
-                  HsqlProperties props) throws SQLException {
+    jdbcResultSet(jdbcStatement s, Result r, HsqlProperties props,
+                  boolean isNetConnection) throws SQLException {
 
         sqlStatement   = s;
         connProperties = props;
+        this.isNetConn = isNetConnection;
 
         if (r.iMode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.getUpdateCount();

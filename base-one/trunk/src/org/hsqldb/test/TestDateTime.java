@@ -96,7 +96,8 @@ public class TestDateTime extends TestBase {
         // Set date of my birthday ;-)
         calGenerate.set(1995, 9, 15, 1, 2, 3);
 
-        insertDate      = new java.sql.Date(calGenerate.getTimeInMillis());
+        insertDate = new java.sql.Date(
+            org.hsqldb.HsqlDateTime.getTimeInMillis(calGenerate));
         insertStatement = connection.prepareStatement(INSERT_DATE);
 
         insertStatement.setDate(1, insertDate);
@@ -120,8 +121,8 @@ public class TestDateTime extends TestBase {
         // shouldn't matter
         calGenerate.set(1995, 9, 15, 2, 3, 4);
 
-        java.sql.Date selectDate =
-            new java.sql.Date(calGenerate.getTimeInMillis());
+        java.sql.Date selectDate = new java.sql.Date(
+            org.hsqldb.HsqlDateTime.getTimeInMillis(calGenerate));
 
         selectStatement = connection.prepareStatement(SELECT_DATE);
 
@@ -186,7 +187,8 @@ public class TestDateTime extends TestBase {
         // Set date of my birthday ;-)
         calGenerate.set(1995, 9, 15, 1, 2, 3);
 
-        insertTime      = new java.sql.Time(calGenerate.getTimeInMillis());
+        insertTime = new java.sql.Time(
+            org.hsqldb.HsqlDateTime.getTimeInMillis(calGenerate));
         insertStatement = connection.prepareStatement(INSERT_TIME);
 
         insertStatement.setTime(1, insertTime);
@@ -213,7 +215,8 @@ public class TestDateTime extends TestBase {
         // fredt - but make sure the date is in the same daylight saving range as today !
         calGenerate.set(1975, 4, 16, 1, 2, 3);
 
-        selectTime = new java.sql.Time(calGenerate.getTimeInMillis());
+        selectTime = new java.sql.Time(
+            org.hsqldb.HsqlDateTime.getTimeInMillis(calGenerate));
 
         selectStatement.setTime(1, selectTime);
 

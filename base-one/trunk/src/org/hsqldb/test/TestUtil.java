@@ -33,7 +33,8 @@ package org.hsqldb.test;
 
 import java.sql.*;
 import java.io.*;
-import java.util.Vector;
+
+import org.hsqldb.lib.*;
 
 /**
  * Utility class providing methodes for submitting test statements or
@@ -64,7 +65,7 @@ public class TestUtil {
             File      testfile  = new File(aPath);
             LineNumberReader reader =
                 new LineNumberReader(new FileReader(testfile));
-            Vector section = null;
+            HsqlArrayList section = null;
 
             print("Opened test script file: " + testfile.getAbsolutePath());
 
@@ -86,7 +87,7 @@ public class TestUtil {
                 }
 
                 line = line.substring(
-                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));
+                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));;
 
                 //if the line is blank or a comment, then ignore it
                 if ((line.length() == 0) || line.startsWith("--")) {
@@ -110,7 +111,7 @@ public class TestUtil {
                     }
 
                     //...and then start a new section...
-                    section   = new Vector();
+                    section   = new HsqlArrayList();
                     startLine = reader.getLineNumber();
                 }
 
@@ -140,7 +141,7 @@ public class TestUtil {
     static void test(Statement stat, String s, int line) {
 
         //maintain the interface for this method
-        Vector section = new Vector();
+        HsqlArrayList section = new HsqlArrayList();
 
         section.add(s);
         testSection(stat, section, line);
@@ -167,13 +168,16 @@ public class TestUtil {
      * SQL for the statement).
      * @param line line of the script file where this section started
      */
-    private static void testSection(Statement stat, Vector section,
+    private static void testSection(Statement stat, HsqlArrayList section,
                                     int line) {
 
         //create an appropriate instance of ParsedSection
         ParsedSection pSection = parsedSectionFactory(section);
 
-        if (!pSection.test(stat)) {
+        if (pSection == null) {    //it was not possible to sucessfully parse the section
+            print("The section starting at line " + line
+                  + " could not be parsed, " + "and so was not processed.\n");
+        } else if (!pSection.test(stat)) {
             print("section starting at line " + line);
             print("returned an unexpected result:");
             print(pSection.toString());
@@ -183,8 +187,10 @@ public class TestUtil {
     /**
      * Factory method to create appropriate parsed section class for the section
      * @param aSection Vector containing the section of script
+     * @return a ParesedSection object
      */
-    private static ParsedSection parsedSectionFactory(Vector aSection) {
+    private static ParsedSection parsedSectionFactory(
+            HsqlArrayList aSection) {
 
         //type of the section
         char type = ' ';
@@ -279,7 +285,6 @@ abstract class ParsedSection {
     /**
      * Common constructor functions for this family.
      * @param aLines Array of the script lines containing the section of script.
-     * @param aStatement Statement for this section to use to execute against the
      * database
      */
     protected ParsedSection(String[] aLines) {
@@ -332,8 +337,10 @@ abstract class ParsedSection {
         b.append("contents of lines array:\n");
 
         for (int i = 0; i < lines.length; i++) {
-            b.append("line ").append(i).append(": ").append(lines[i]).append(
-                "\n");
+            if (lines[i].trim().length() > 0) {
+                b.append("line ").append(i).append(": ").append(
+                    lines[i]).append("\n");
+            }
         }
 
         b.append("Type: ");
@@ -359,7 +366,11 @@ abstract class ParsedSection {
      */
     abstract protected String getResultString();
 
-    /** returns the error message for the section */
+    /**
+     *  returns the error message for the section
+     *
+     * @return message
+     */
     protected String getMessage() {
         return message;
     }
@@ -382,6 +393,7 @@ abstract class ParsedSection {
 
     /**
      * performs the test contained in the section against the database.
+     * @param aStatement Statement object
      * @return true if the result(s) are as expected, otherwise false
      */
     protected boolean test(Statement aStatement) {
@@ -407,6 +419,7 @@ class ResultSetParsedSection extends ParsedSection {
     /**
      * constructs a new instance of ResultSetParsedSection, interpreting
      * the supplied results as one or more lines of delimited field values
+     * @param lines String[]
      */
     protected ResultSetParsedSection(String[] lines) {
 
@@ -436,9 +449,15 @@ class ResultSetParsedSection extends ParsedSection {
     protected boolean test(Statement aStatement) {
 
         try {
+            try {
 
-            //execute the SQL
-            aStatement.execute(getSql());
+                //execute the SQL
+                aStatement.execute(getSql());
+            } catch (SQLException s) {
+                throw new Exception(
+                    "Expected a ResultSet, but got the error: "
+                    + s.getMessage());
+            }
 
             //check that update count != -1
             if (aStatement.getUpdateCount() != -1) {
@@ -453,8 +472,10 @@ class ResultSetParsedSection extends ParsedSection {
 
             while (results.next()) {
                 if (count < getExpectedRows().length) {
+
+//                    String[] expectedFields = getExpectedRows()[count].split(delim);
                     String[] expectedFields =
-                        getExpectedRows()[count].split(delim);
+                        StringUtil.split(getExpectedRows()[count], delim);
 
                     //check that we have the number of columns expected...
                     if (results.getMetaData().getColumnCount()
@@ -484,7 +505,7 @@ class ResultSetParsedSection extends ParsedSection {
 
                                 //then the results are different
                                 throw new Exception(
-                                    "Expected row " + count
+                                    "Expected row " + (count + 1)
                                     + " of the ResultSet to contain:\n"
                                     + getExpectedRows()[count]
                                     + "\nbut field " + j + " contained "
@@ -518,8 +539,6 @@ class ResultSetParsedSection extends ParsedSection {
         } catch (Exception x) {
             message = x.getMessage();
 
-            x.printStackTrace();
-
             return false;
         }
 
@@ -552,6 +571,35 @@ class UpdateParsedSection extends ParsedSection {
     private int getCountWeWant() {
         return countWeWant;
     }
+
+    protected boolean test(Statement aStatement) {
+
+        try {
+            try {
+
+                //execute the SQL
+                aStatement.execute(getSql());
+            } catch (SQLException s) {
+                throw new Exception("Expected an update count of "
+                                    + getCountWeWant()
+                                    + ", but got the error: "
+                                    + s.getMessage());
+            }
+
+            if (aStatement.getUpdateCount() != getCountWeWant()) {
+                throw new Exception("Expected an update count of "
+                                    + getCountWeWant()
+                                    + ", but got an update count of "
+                                    + aStatement.getUpdateCount() + ".");
+            }
+        } catch (Exception x) {
+            message = x.getMessage();
+
+            return false;
+        }
+
+        return true;
+    }
 }
 
 /** Represents a ParsedSection for a count test */
@@ -581,7 +629,14 @@ class CountParsedSection extends ParsedSection {
         try {
 
             //execute the SQL
-            aStatement.execute(getSql());
+            try {
+                aStatement.execute(getSql());
+            } catch (SQLException s) {
+                throw new Exception("Expected a ResultSet containing "
+                                    + getCountWeWant()
+                                    + " rows, but got the error: "
+                                    + s.getMessage());
+            }
 
             //check that update count != -1
             if (aStatement.getUpdateCount() != -1) {

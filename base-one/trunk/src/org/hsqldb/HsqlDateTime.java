@@ -382,7 +382,7 @@ public class HsqlDateTime {
      * @param       cal                             the Calendar
      * @return      the time value in milliseconds
      */
-    static long getTimeInMillis(Calendar cal) {
+    public static long getTimeInMillis(Calendar cal) {
 
 //#ifdef JDBC3
         // Use method directly

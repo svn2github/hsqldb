@@ -84,8 +84,9 @@ public class TestSql extends TestBase {
             DatabaseMetaData md = connection.getMetaData();
 
             {
-                System.out.println(md.getDatabaseMajorVersion());
-                System.out.println(md.getDatabaseMinorVersion());
+
+//                System.out.println(md.getDatabaseMajorVersion());
+//                System.out.println(md.getDatabaseMinorVersion());
                 System.out.println(md.getDatabaseProductName());
                 System.out.println(md.getDatabaseProductVersion());
                 System.out.println(md.getDefaultTransactionIsolation());
@@ -95,8 +96,9 @@ public class TestSql extends TestBase {
                 System.out.println(md.getDriverVersion());
                 System.out.println(md.getExtraNameCharacters());
                 System.out.println(md.getIdentifierQuoteString());
-                System.out.println(md.getJDBCMajorVersion());
-                System.out.println(md.getJDBCMinorVersion());
+
+//                System.out.println(md.getJDBCMajorVersion());
+//                System.out.println(md.getJDBCMinorVersion());
                 System.out.println(md.getMaxBinaryLiteralLength());
                 System.out.println(md.getMaxCatalogNameLength());
                 System.out.println(md.getMaxColumnsInGroupBy());
@@ -116,11 +118,13 @@ public class TestSql extends TestBase {
                 System.out.println(md.getMaxUserNameLength());
                 System.out.println(md.getNumericFunctions());
                 System.out.println(md.getProcedureTerm());
-                System.out.println(md.getResultSetHoldability());
+
+//                System.out.println(md.getResultSetHoldability());
                 System.out.println(md.getSchemaTerm());
                 System.out.println(md.getSearchStringEscape());
                 System.out.println(md.getSQLKeywords());
-                System.out.println(md.getSQLStateType());
+
+//                System.out.println(md.getSQLStateType());
                 System.out.println(md.getStringFunctions());
                 System.out.println(md.getSystemFunctions());
                 System.out.println(md.getTimeDateFunctions());

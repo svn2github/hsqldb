@@ -123,16 +123,6 @@ public class FileUtil {
     }
 
     /**
-     * Retrieves the absolute File, given some path specification.
-     *
-     * @param path the path for which to retrieve the absolute File
-     * @return the absolute File
-     */
-    public static File absoluteFile(String path) {
-        return (new File(path)).getAbsoluteFile();
-    }
-
-    /**
      * Retrieves the canonical file for the given file, in a
      * JDK 1.1 complaint way.
      *

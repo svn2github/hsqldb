@@ -43,14 +43,14 @@ import java.lang.reflect.Array;
  */
 public class StringUtil {
 
-/**
- * Returns a string with non alphanumeric chars converted to the
- * substitute character. A digit first character is also converted.
- * By sqlbob@users
- * @param source string to convert
- * @param substitute character to use
- * @return converted string
- */
+    /**
+     * Returns a string with non alphanumeric chars converted to the
+     * substitute character. A digit first character is also converted.
+     * By sqlbob@users
+     * @param source string to convert
+     * @param substitute character to use
+     * @return converted string
+     */
     public static String toLowerSubset(String source, char substitute) {
 
         int          len = source.length();
@@ -72,6 +72,11 @@ public class StringUtil {
         return src.toString();
     }
 
+    /**
+     * Builds a bracketed CSV list from the array
+     * @param array an array of Objects
+     * @return string
+     */
     public static String arrayToString(Object array) {
 
         int          len  = Array.getLength(array);
@@ -201,6 +206,15 @@ public class StringUtil {
         return b.toString();
     }
 
+    /**
+     * Appends a pair of string to the string buffer, using the separator between
+     * and terminator at the end
+     * @param b the buffer
+     * @param s1 first string
+     * @param s2 second string
+     * @param separator separator string
+     * @param terminator terminator string
+     */
     public static void appendPair(StringBuffer b, String s1, String s2,
                                   String separator, String terminator) {
 
@@ -210,12 +224,12 @@ public class StringUtil {
         b.append(terminator);
     }
 
-/**
- * Checks if text is empty (characters <= space)
- * @author: Nitin Chauhan
- * @return boolean true if text is null or empty, false otherwise
- * @param s java.lang.String
- */
+    /**
+     * Checks if text is empty (characters <= space)
+     * @author: Nitin Chauhan
+     * @return boolean true if text is null or empty, false otherwise
+     * @param s java.lang.String
+     */
     public static boolean isEmpty(String s) {
 
         int i = s == null ? 0
@@ -230,6 +244,11 @@ public class StringUtil {
         return true;
     }
 
+    /**
+     * Returns the size of substring that does not contain ane trailing spaces
+     * @param s the string
+     * @return trimmed size
+     */
     public static int rTrimSize(String s) {
 
         int i = s.length();
@@ -248,6 +267,9 @@ public class StringUtil {
     /**
      * Skips any spaces at or after start and returns the index of first
      * non-space character;
+     * @param s the string
+     * @param start index to start
+     * @return index of first non-space
      */
     public static int skipSpaces(String s, int start) {
 
@@ -261,5 +283,34 @@ public class StringUtil {
         }
 
         return i;
+    }
+
+    /**
+     * Splits the string into an array, using the separator. If separator is
+     * not found in the string, the whole string is returned in the array.
+     *
+     * @param s the string
+     * @param separator the separator
+     * @return array of strings
+     */
+    public static String[] split(String s, String separator) {
+
+        HsqlArrayList list      = new HsqlArrayList();
+        int           currindex = 0;
+
+        for (boolean more = true; more; ) {
+            int nextindex = s.indexOf(separator, currindex);
+
+            if (nextindex == -1) {
+                nextindex = s.length();
+                more      = false;
+            }
+
+            list.add(s.substring(currindex, nextindex));
+
+            currindex = nextindex + separator.length();
+        }
+
+        return (String[]) list.toArray(new String[list.size()]);
     }
 }

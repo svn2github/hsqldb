@@ -186,7 +186,8 @@ public class jdbcStatement implements java.sql.Statement {
         connection.clearWarningsNoCheck();
         fetchResult(sql);
 
-        return new jdbcResultSet(this, resultIn, connection.connProperties);
+        return new jdbcResultSet(this, resultIn, connection.connProperties,
+                                 connection.isNetConn);
     }
 
     /**
@@ -685,7 +686,8 @@ public class jdbcStatement implements java.sql.Statement {
 
         return resultIn == null || resultIn.iMode != ResultConstants.DATA
                ? null
-               : new jdbcResultSet(this, resultIn, connection.connProperties);
+               : new jdbcResultSet(this, resultIn, connection.connProperties,
+                                   connection.isNetConn);
     }
 
     /**

@@ -201,8 +201,8 @@ class ConnectionDialogCommon {
 
             // reached end of file -- this is not clean but it works
         } catch (ClassNotFoundException cnfe) {
-            throw (IOException) new IOException(
-                "Unrecognized class type.").initCause(cnfe);
+            throw (IOException) new IOException("Unrecognized class type "
+                                                + cnfe.getMessage());
         } finally {
             if (objStream != null) {
                 objStream.close();

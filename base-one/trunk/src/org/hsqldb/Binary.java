@@ -71,6 +71,10 @@ public class Binary {
         return data;
     }
 
+    public byte[] getClonedBytes() {
+        return (byte[]) ArrayUtil.duplicateArray(data);
+    }
+
     public int getBytesLength() {
         return data.length;
     }

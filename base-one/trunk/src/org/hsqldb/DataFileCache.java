@@ -213,6 +213,10 @@ public class DataFileCache extends Cache {
                 File oldfile = new File(sName + ".old");
 
                 oldfile.delete();
+
+                // delete() may not succeed
+                // this line can be deleted to compile with 1.1
+                // the block will not be reached if run under 1.1
                 oldfile.deleteOnExit();
             }
 

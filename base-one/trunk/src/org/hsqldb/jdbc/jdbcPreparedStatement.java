@@ -344,7 +344,8 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
         }
 
-        return new jdbcResultSet(this, resultIn, connection.connProperties);
+        return new jdbcResultSet(this, resultIn, connection.connProperties,
+                                 connection.isNetConn);
     }
 
     /**
@@ -1844,22 +1845,24 @@ implements java.sql.PreparedStatement {
                 }
 
                 o = new Binary((byte[]) o, !connection.isNetConn);
-            } else if (!connection.isNetConn) {
+            } else {
                 Object oldobject = o;
 
                 o = Column.convertObject(o, outType);
 
+                // this ensures duplicate objects are stored as internal or ValuePool objects
+                // in order to avoid possible subsequent modifications
                 if (o == oldobject) {
                     if (outType == Types.DATE) {
                         o = HsqlDateTime.getNormalisedDate((java.sql.Date) o);
-                    } else if (outType == Types.TIME) {
+                    } else if (outType == Types.TIME
+                               &&!connection.isNetConn) {
                         o = HsqlDateTime.getNormalisedTime((java.sql.Time) o);
-                    } else if (outType == Types.TIMESTAMP) {
+                    } else if (outType == Types.TIMESTAMP
+                               &&!connection.isNetConn) {
                         o = ((java.sql.Timestamp) o).clone();
                     }
                 }
-            } else {
-                o = Column.convertObject(o, outType);
             }
         } catch (HsqlException e) {
             jdbcUtil.throwError(e);
