@@ -34,6 +34,7 @@ package org.hsqldb.util;
 import java.sql.*;
 
 // brian.porter@siteforce.de 20020703 - make sure date is loaded in the required format
+// Stephan Frind 20040508 - improvements
 
 /**
  * Conversions from Oracle databases

@@ -72,7 +72,6 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.applet.*;
 import java.util.*;
-import java.sql.*;
 
 // fredt@users 20011220 - patch 481239 by xponsard@users - enhancements
 // enhancements to support saving and loading of transfer settings,
@@ -83,6 +82,7 @@ import java.sql.*;
 // nicolas BAZIN 20020430 - add Catalog selection, correct a bug preventing table
 //    edition, change double quotes to simple quotes for default values of CHAR type
 // lonbinder@users 20030426 - correct bug in prefs load/save
+// fredt@users 20040508 - patch 1.7.2 - bug fixes
 
 /**
  *  Utility program (or applet) for transferring tables between different
@@ -577,14 +577,23 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
         t.Stmts.sDestDelete      = tDestDelete.getText();
         t.Stmts.sSourceSelect    = tSourceSelect.getText();
         t.Stmts.sDestInsert      = tDestInsert.getText();
-        t.Stmts.bTransfer        = cTransfer.getState();
-        t.Stmts.bDrop            = cDrop.getState();
-        t.Stmts.bCreate          = cCreate.getState();
-        t.Stmts.bDelete          = cDelete.getState();
-        t.Stmts.bInsert          = cInsert.getState();
-        t.Stmts.bAlter           = cAlter.getState();
-        t.Stmts.bCreateIndex     = cCreateIndex.getState();
-        t.Stmts.bDropIndex       = cDropIndex.getState();
+        t.Stmts.sDestAlter       = tDestAlter.getText();
+
+        //
+        t.Stmts.bTransfer    = cTransfer.getState();
+        t.Stmts.bDrop        = cDrop.getState();
+        t.Stmts.bCreate      = cCreate.getState();
+        t.Stmts.bDelete      = cDelete.getState();
+        t.Stmts.bInsert      = cInsert.getState();
+        t.Stmts.bAlter       = cAlter.getState();
+        t.Stmts.bCreateIndex = cCreateIndex.getState();
+        t.Stmts.bDropIndex   = cDropIndex.getState();
+
+        if (!t.Stmts.bTransfer) {
+            t.Stmts.bInsert = false;
+
+            cInsert.setState(false);
+        }
 
         boolean reparsetable = ((t.Stmts.bFKForced != cFKForced.getState())
                                 || (t.Stmts.bIdxForced

@@ -77,11 +77,12 @@ import java.io.Serializable;
 // changes by fredt to allow saving and loading of transfer settings
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - enhancements
 // sqlbob@users 20020325 - patch 1.7.0 - reengineering
+// fredt@users 20040508 - patch 1.7.2 - bug fixes
 
 /**
  * Transfers data from one database to another
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class TransferTable implements Serializable {
 

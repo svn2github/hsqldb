@@ -37,6 +37,7 @@ import java.util.*;
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - enhancements
 // sqlbob@users 20020401 - patch 1.7.0 - reengineering
 // nicolas BAZIN 20020430 - add support of Catalog and mckoi db helper
+// Stephan Frind 20040508 - speed improvements
 
 /**
  * Conversions between different databases
