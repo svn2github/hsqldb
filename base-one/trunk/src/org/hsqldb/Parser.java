@@ -96,6 +96,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
 // fredt@users 20021228 - patch 1.7.2 - refactoring
 // boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
+// fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
 
 /**
  *  This class is responsible for parsing non-DDL statements.
@@ -106,8 +107,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 /** @todo fredt - implement numeric value functions (SQL92 6.6)
  *
  * POSITION(string IN string)
- * {CHAR_LENGTH | CHARACTER_LENGTH | OCTET_LENGTH | BIT_LENGTH} (string)
- * EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
+ * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
  *
  *
  *  */
@@ -1335,7 +1335,7 @@ class Parser {
 
                 // For now, parse but ignore precision and scale
                 // TODO: definitely validate values (e.g. check non-neg) and
-                //       maybe even enforce in Expression.getValue(), incl. 
+                //       maybe even enforce in Expression.getValue(), incl.
                 //       trim, pad, throw on overflow, etc.
                 int p = 0;
                 int s = 0;
@@ -1378,8 +1378,8 @@ class Parser {
 
                 // For now, parse but ignore precision and scale
                 // TODO: definitely validate values (e.g. check non-neg) and
-                //       maybe even enforce in Expression.getValue(), incl. 
-                //       trim, pad, throw on overflow, etc.              
+                //       maybe even enforce in Expression.getValue(), incl.
+                //       trim, pad, throw on overflow, etc.
                 int p = 0;
                 int s = 0;
 
@@ -1404,6 +1404,31 @@ class Parser {
                 r.setDataType(t);
                 read();
                 readThis(Expression.CLOSE);
+
+                break;
+            }
+            case Expression.EXTRACT : {
+
+                // should be just one of accepted identifiers
+                read();
+                readThis(Expression.OPEN);
+
+                String name = sToken;
+
+                if (!Expression.extractFunctionNames.contains(name)) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                }
+
+                tokenizer.getThis(Token.T_FROM);
+
+                Function f = new Function(database.getAlias(name), session,
+                                          false);
+
+                read();
+                f.setArgument(0, readOr());
+                readThis(Expression.CLOSE);
+
+                r = new Expression(f);
 
                 break;
             }
@@ -1491,6 +1516,7 @@ class Parser {
                 case Expression.CAST :
                 case Expression.CASEWHEN :
                 case Expression.CONCAT :
+                case Expression.EXTRACT :
                 case Expression.END :
                 case Expression.PARAM :
                     break;            // nothing else required, iToken initialized properly
@@ -1553,6 +1579,7 @@ class Parser {
         tokenSet.put("CAST", Expression.CAST);
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
         tokenSet.put("CONCATE", Expression.CONCAT);
+        tokenSet.put("EXTRACT", Expression.EXTRACT);
         tokenSet.put("IS", Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }

@@ -165,6 +165,10 @@ public class Library {
         }, {
             "CHAR", "org.hsqldb.Library.character"
         }, {
+            "CHAR_LENGTH", "org.hsqldb.Library.length"
+        }, {
+            "CHARACTER_LENGTH", "org.hsqldb.Library.length"
+        }, {
             "CONCAT", "org.hsqldb.Library.concat"
         }, {
             "DIFFERENCE", "org.hsqldb.Library.difference"
@@ -182,6 +186,8 @@ public class Library {
             "LOCATE", "org.hsqldb.Library.locate"
         }, {
             "LTRIM", "org.hsqldb.Library.ltrim"
+        }, {
+            "OCTECT_LENGTH", "org.hsqldb.Library.octetLength"
         }, {
             "RAWTOHEX", "org.hsqldb.Library.rawToHex"
         }, {
@@ -215,6 +221,8 @@ public class Library {
             "CURTIME", "org.hsqldb.Library.curtime"
         }, {
             "DAYNAME", "org.hsqldb.Library.dayname"
+        }, {
+            "DAY", "org.hsqldb.Library.dayofmonth"
         }, {
             "DAYOFMONTH", "org.hsqldb.Library.dayofmonth"
         }, {
@@ -760,6 +768,18 @@ public class Library {
     public static Integer length(String s) {
         return s == null ? null
                          : ValuePool.getInt(s.length());
+    }
+
+    /**
+     * Returns the number of bytes in the given <code>String</code>.
+     * This includes trailing blanks.
+     *
+     * @param s the <code>String</code> for which to determine length
+     * @return the length of <code>s</code>, including trailing blanks
+     */
+    public static Integer octetLength(String s) {
+        return s == null ? null
+                         : ValuePool.getInt(s.length() * 2);
     }
 
     /**
@@ -1469,7 +1489,7 @@ public class Library {
     }
 
 // Now obsolete:
-//    
+//
 // boucherb@users - patch 1.7.2 - ResultSetMetaData
 // TODO: encode data type subcode and table column nullability in
 // Result.colType array values in order to avoid database
@@ -1711,32 +1731,35 @@ public class Library {
     static final int month                     = 34;
     static final int monthname                 = 35;
     static final int now                       = 36;
-    static final int pi                        = 37;
-    static final int quarter                   = 38;
-    static final int rand                      = 39;
-    static final int rawToHex                  = 40;
-    static final int repeat                    = 41;
-    static final int replace                   = 42;
-    static final int right                     = 43;
-    static final int round                     = 44;
-    static final int roundMagic                = 45;
-    static final int rtrim                     = 46;
-    static final int second                    = 47;
-    static final int sign                      = 48;
-    static final int soundex                   = 49;
-    static final int space                     = 50;
-    static final int substring                 = 51;
-    static final int truncate                  = 52;
-    static final int ucase                     = 53;
-    static final int user                      = 54;
-    static final int week                      = 55;
-    static final int year                      = 56;
+    static final int octetLength               = 37;
+    static final int pi                        = 38;
+    static final int quarter                   = 39;
+    static final int rand                      = 40;
+    static final int rawToHex                  = 41;
+    static final int repeat                    = 42;
+    static final int replace                   = 43;
+    static final int right                     = 44;
+    static final int round                     = 45;
+    static final int roundMagic                = 46;
+    static final int rtrim                     = 47;
+    static final int second                    = 48;
+    static final int sign                      = 49;
+    static final int soundex                   = 50;
+    static final int space                     = 51;
+    static final int substring                 = 52;
+    static final int truncate                  = 53;
+    static final int ucase                     = 54;
+    static final int user                      = 55;
+    static final int week                      = 56;
+    static final int year                      = 57;
 
-// obsolete     
-//    static final int getCDColumnMetaData       = 57;
-    static final int isReadOnlyDatabaseFiles = 57;    // 58;
+    //
+    static final int isReadOnlyDatabaseFiles = 58;
+    static final int day                     = 59;
+
+    //
     private static final IntValueHashMap functionMap =
-        new IntValueHashMap(117);
+        new IntValueHashMap(67);
     static final Double piValue = new Double(Library.pi());
 
     static {
@@ -1751,6 +1774,7 @@ public class Library {
         functionMap.put("curtime", curtime);
         functionMap.put("database", database);
         functionMap.put("dayname", dayname);
+        functionMap.put("day", day);
         functionMap.put("dayofmonth", dayofmonth);
         functionMap.put("dayofweek", dayofweek);
         functionMap.put("dayofyear", dayofyear);
@@ -1778,6 +1802,7 @@ public class Library {
         functionMap.put("month", month);
         functionMap.put("monthname", monthname);
         functionMap.put("now", now);
+        functionMap.put("octetLength", octetLength);
         functionMap.put("pi", pi);
         functionMap.put("quarter", quarter);
         functionMap.put("rand", rand);
@@ -1798,9 +1823,6 @@ public class Library {
         functionMap.put("user", user);
         functionMap.put("week", week);
         functionMap.put("year", year);
-
-// obsolete         
-//        functionMap.put("getCDColumnMetaData", getCDColumnMetaData);
         functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
     }
 
@@ -1847,7 +1869,8 @@ public class Library {
                 case dayname : {
                     return dayname((Date) parms[0]);
                 }
-                case dayofmonth : {
+                case dayofmonth :
+                case day : {
                     return ValuePool.getInt(dayofmonth((Date) parms[0]));
                 }
                 case dayofweek : {
@@ -1936,6 +1959,9 @@ public class Library {
                 case now : {
                     return now();
                 }
+                case octetLength : {
+                    return octetLength((String) parms[0]);
+                }
                 case pi : {
                     return piValue;
                 }
@@ -2006,12 +2032,6 @@ public class Library {
                 case year : {
                     return ValuePool.getInt(year((Date) parms[0]));
                 }
-
-// obsolete                
-//                case getCDColumnMetaData : {
-//                    return getCDColumnMetaData((Connection) parms[0],
-//                                               (String) parms[1]);
-//                }
                 case isReadOnlyDatabaseFiles : {
                     return null;
                 }

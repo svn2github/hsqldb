@@ -139,19 +139,29 @@ class Expression {
     // system functions
     static final int IFNULL   = 60,
                      CONVERT  = 61,
-                     CASEWHEN = 62;
+                     CASEWHEN = 62,
+                     EXTRACT  = 63;
 
     // temporary used during paring
-    static final int         PLUS            = 100,
-                             OPEN            = 101,
-                             CLOSE           = 102,
-                             SELECT          = 103,
-                             COMMA           = 104,
-                             STRINGCONCAT    = 105,
-                             BETWEEN         = 106,
-                             CAST            = 107,
-                             END             = 108,
-                             IS              = 109;
+    static final int     PLUS                 = 100,
+                         OPEN                 = 101,
+                         CLOSE                = 102,
+                         SELECT               = 103,
+                         COMMA                = 104,
+                         STRINGCONCAT         = 105,
+                         BETWEEN              = 106,
+                         CAST                 = 107,
+                         END                  = 108,
+                         IS                   = 109;
+    static final HashSet extractFunctionNames = new HashSet();
+
+    static {
+        extractFunctionNames.addAll(new Object[] {
+            "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND",
+            "TIMEZONE_HOUR", "TIMEZONE_MINUTE"
+        });
+    }
+
     private static final int AGGREGATE_SELF  = -1;
     private static final int AGGREGATE_NONE  = 0;
     private static final int AGGREGATE_LEFT  = 1;
