@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.52 2004/07/09 15:30:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.53 2004/07/09 16:20:39 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.52 $</edition>
-        <pubdate>$Date: 2004/07/09 15:30:23 $</pubdate>
+        <edition>$Revision: 1.53 $</edition>
+        <pubdate>$Date: 2004/07/09 16:20:39 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -128,6 +128,8 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</scre
                     you make to this database).
                     The sample sqltool.rc file also defines the urlid
                     "localhost-sa" for a local HSQLDB Server.
+                    At the end of this section, I explain how you can load
+                    some sample data to play with, if you want to.
                 </simpara></step>
             </procedure>
         <important><simpara>
@@ -174,6 +176,21 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             with others you use a menu system where you can enter the number
             of columns).
         </simpara></tip>
+        <para>
+            If you want some sample database objects and data to play with,
+            execute the <filename>sampledata.sql</filename> SQL file.
+            <filename>sampledata.sql</filename> resides in the
+            <filename>src/org/hsqldb/sample</filename> directory of your
+            HSQLDB distribution.
+            Run it like this from an SqlTool session
+    <programlisting>\i HSQLDB_HOME/src/org/hsqldb/sample/sampledata.sql</programlisting>
+            where <emphasis role='bold'>HSQLDB_HOME</emphasis> is the
+            base directory of your HSQLDB software installation.
+        </para>
+            For memory-only databases, you'll need to run this every time that
+            you run SqlTool.
+            For other (persistent) databases, the data will reside in your
+            database until you drop the tables.
     </section>
 
     <section id='auth-section'>
@@ -931,9 +948,12 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                     <literal>--abortOnErr</literal> command-line switch.
                     </simpara><simpara>
                     With database setup scripts, I usually find it convenient 
-                    to set "true" before deleting tables (so that things will 
+                    to set "true" before dropping tables (so that things will 
                     continue if the tables aren't there), then set it back to 
                     false so that real errors are caught.
+                    <literal>DROP TABLE tablename IF EXISTS;</literal>
+                    is a more elegant, but less portable, way to accomplish
+                    the same thing.
                     </simpara>
                     <tip><simpara>
                         It depends on what you want your SQL files to do, of
