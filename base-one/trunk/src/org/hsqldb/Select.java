@@ -257,9 +257,9 @@ class Select {
                                              : groupByEnd;
         int orderByEnd   = orderByStart + iOrderLen;
 
-        if (iGroupLen > 0) {    // has been set in Parser
+        if (iGroupLen > 0) {                         // has been set in Parser
             isGrouped        = true;
-            groupColumnNames = new HsqlHashMap();
+            groupColumnNames = new HsqlHashMap();    // TODO size !!
 
             for (int i = groupByStart; i < groupByEnd; i++) {
                 eColumn[i].collectColumnName(groupColumnNames);
@@ -376,15 +376,24 @@ class Select {
         if (sUnion != null) {
             Result x = sUnion.getResult(0);
 
-            if (iUnionType == UNION) {
-                r.append(x);
-                r.removeDuplicates();
-            } else if (iUnionType == UNIONALL) {
-                r.append(x);
-            } else if (iUnionType == INTERSECT) {
-                r.removeDifferent(x);
-            } else if (iUnionType == EXCEPT) {
-                r.removeSecond(x);
+            switch (iUnionType) {
+
+                case UNION :
+                    r.append(x);
+                    r.removeDuplicates();
+                    break;
+
+                case UNIONALL :
+                    r.append(x);
+                    break;
+
+                case INTERSECT :
+                    r.removeDifferent(x);
+                    break;
+
+                case EXCEPT :
+                    r.removeSecond(x);
+                    break;
             }
         }
 
@@ -406,7 +415,7 @@ class Select {
             eColumn[i].collectInGroupByExpressions(colExps);
         }
 
-        for (int i = 0, vLen = colExps.size(); i < vLen; i++) {
+        for (int i = 0, size = colExps.size(); i < size; i++) {
             Expression exp = (Expression) colExps.get(i);
 
             Trace.check(inAggregateOrGroupByClause(exp),
@@ -462,7 +471,7 @@ class Select {
     boolean allColumnsAreDefinedIn(Expression exp,
                                    HsqlHashMap definedColumns) {
 
-        HsqlHashMap colNames = new HsqlHashMap();
+        HsqlHashMap colNames = new HsqlHashMap();    // TODO size !!
 
         exp.collectAllColumnNames(colNames);
 
@@ -470,7 +479,9 @@ class Select {
             return false;
         }
 
-        for (Enumeration e = colNames.keys(); e.hasMoreElements(); ) {
+        Enumeration e = colNames.keys();
+
+        while (e.hasMoreElements()) {
             if (!definedColumns.containsValue(e.nextElement())) {
                 return false;
             }
@@ -545,8 +556,9 @@ class Select {
             gResult.addRow(new Object[len]);
         }
 
-        for (Enumeration e =
-                gResult.results.elements(); e.hasMoreElements(); ) {
+        Enumeration e = gResult.results.elements();
+
+        while (e.hasMoreElements()) {
             Object[] row = (Object[]) e.nextElement();
 
             if (isAggregated) {

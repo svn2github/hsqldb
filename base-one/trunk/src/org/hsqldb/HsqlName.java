@@ -190,13 +190,8 @@ class HsqlName {
      *
      */
     static boolean isReservedName(String name) {
-
-        if (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
-                || name.startsWith("SYS_REF_")) {
-            return true;
-        } else {
-            return false;
-        }
+        return (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
+                || name.startsWith("SYS_REF_"));
     }
 
     boolean isReservedName() {

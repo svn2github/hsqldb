@@ -65,7 +65,7 @@ class TextTable extends org.hsqldb.Table {
                            boolean isRdOnly) throws SQLException {
 
         // Close old cache:
-        if (!dataSource.equals("")) {
+        if (dataSource.length() > 0) {
             dDatabase.logger.closeTextCache(tableName.name);
         }
 
@@ -78,7 +78,7 @@ class TextTable extends org.hsqldb.Table {
         }
 
         // Open new cache:
-        if ((source != null) &&!source.equals("")) {
+        if ((source != null) && source.length() > 0) {
             try {
                 cCache = dDatabase.logger.openTextCache(tableName.name,
                         source, isRdOnly, isDesc);
@@ -117,7 +117,7 @@ class TextTable extends org.hsqldb.Table {
         }
 
         dataSource = source;
-        isReversed = (isDesc &&!source.equals(""));
+        isReversed = (isDesc && source.length() > 0);
     }
 
     boolean equals(String other, Session c) {
@@ -249,17 +249,17 @@ class TextTable extends org.hsqldb.Table {
 
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws SQLException {
-        Trace.check(!dataSource.equals(""), Trace.UNKNOWN_DATA_SOURCE);
+        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
         super.checkUpdate(col, deleted, inserted);
     }
 
     void insert(Object row[], Session c) throws SQLException {
-        Trace.check(!dataSource.equals(""), Trace.UNKNOWN_DATA_SOURCE);
+        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
         super.insert(row, c);
     }
 
     void delete(Object row[], Session c) throws SQLException {
-        Trace.check(!dataSource.equals(""), Trace.UNKNOWN_DATA_SOURCE);
+        Trace.check(dataSource.length() > 0, Trace.UNKNOWN_DATA_SOURCE);
         super.delete(row, c);
     }
 

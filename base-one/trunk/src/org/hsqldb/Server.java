@@ -81,6 +81,12 @@ import java.io.File;
 import java.security.Security;
 import java.security.Provider;
 
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// method rorganised to use new HsqlServerProperties class
+// fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
+// see the comments in ServerConnection.java
+// unsaved@users 20021113 - patch 1.7.2 - SSL support
+
 /**
  * Server acts as a database server and is one way of using
  * the client-server mode of HSQL Database Engine. This server
@@ -109,11 +115,6 @@ import java.security.Provider;
 
  * @version 1.7.0
  */
-
-// fredt@users 20020215 - patch 1.7.0 by fredt
-// method rorganised to use new HsqlServerProperties class
-// fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
-// see the comments in ServerConnection.java
 public class Server {
 
     // used to notify this
@@ -127,7 +128,7 @@ public class Server {
     private boolean        restartOnShutdown;
     private boolean        noSystemExit;
     boolean                bTls = false;
-    public int             _int_;  // Trick to get a Class for a primitive
+    public int             _int_;    // Trick to get a Class for a primitive
 
     /**
      * Method declaration
@@ -155,6 +156,7 @@ public class Server {
     }
 
     void setProperties(HsqlProperties props) {
+
         serverProperties = new HsqlProperties("server");
 
         try {
@@ -164,13 +166,14 @@ public class Server {
                 "server.properties"
                 + " not found, using command line or default properties");
         }
-	bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
+
+        bTls = (System.getProperty("javax.net.ssl.keyStore") != null);
 
         serverProperties.addProperties(props);
         serverProperties.setPropertyIfNotExists("server.database", "test");
-        serverProperties.setPropertyIfNotExists("server.port", String.valueOf(
-          bTls ?  jdbcConnection.DEFAULT_HSQLSDB_PORT :
-	   jdbcConnection.DEFAULT_HSQLDB_PORT));
+        serverProperties.setPropertyIfNotExists("server.port",
+                String.valueOf(bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
+                                    : jdbcConnection.DEFAULT_HSQLDB_PORT));
 
         if (serverProperties.isPropertyTrue("server.trace")) {
             jdbcSystem.setLogToSystem(true);
@@ -202,76 +205,106 @@ public class Server {
     private void run() {
 
         try {
-            int    port     =
-                serverProperties.getIntegerProperty("server.port",
-                 bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT :
-                    jdbcConnection.DEFAULT_HSQLDB_PORT
-		);
+            int port = serverProperties.getIntegerProperty("server.port",
+                bTls ? jdbcConnection.DEFAULT_HSQLSDB_PORT
+                     : jdbcConnection.DEFAULT_HSQLDB_PORT);
             String database = serverProperties.getProperty("server.database");
 
             Trace.printSystemOut("Opening database: " + database);
             printTraceMessages();
             openDB();
 
-	    if (bTls) try {
-	    	// We can not get here unless the property is non-null
-	    	File fil = new File(
-		 System.getProperty("javax.net.ssl.keyStore"));
-		if (!(fil.isFile()))
-		 throw new FileNotFoundException("Keystore '" + fil +
-		  "' not found");
-		if (!(fil.canRead()))
-		 throw new IOException("Failed to read keystore '" + fil + "'");
-	    	ClassLoader loader = getClass().getClassLoader();
-		if (loader == null)
-		 throw new IncompatibleClassChangeError(
-		"Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
-		try {
-		Security.addProvider((Provider) 
-		 loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
-		 newInstance());
-		 // User may have some other Provider loaded.
-		 // If not, error will be caught later
-		} catch(Exception e) { }
-		Class[] caInt = { getClass().getField("_int_").getType() };
-		Object[] oaInt = { new Integer(port) };
-		Class clsSSF =
-		 loader.loadClass("javax.net.ServerSocketFactory");
-		socket = (ServerSocket)
-		clsSSF.getMethod("createServerSocket", caInt).invoke(
-		 loader.loadClass("javax.net.ssl.SSLServerSocketFactory").
-		  getMethod("getDefault", null).invoke(null, null), oaInt);
-            	Trace.printSystemOut(
-                 new java.util.Date(System.currentTimeMillis())
-                 + " Running with TLS/SSL-encrypted JDBC");
-	    } catch(SecurityException se) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    } catch (IllegalAccessException iae) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    } catch (ClassNotFoundException cnfe) {
-	    	throw new ClassNotFoundException("JSSE not installed");
-	    } catch (NoSuchMethodException nsme) {
-	    	throw new Exception(
-	  	 "Failed to find an SSL method even though JSSE " +
-		 "is installed:\n" + nsme);
-	    // Need to unwrap the following exceptions
-	    } catch (InvocationTargetException ite) {
-	    	Throwable t = ite.getTargetException();
-		if (t.toString().endsWith("no SSL Server Sockets"))
-		 throw new Exception(t.toString() +
-		 "\n(If you are running Java 1.2 or 1.3, keystore could be " +
-		 "invalid or password wrong)");
-		else throw((t instanceof Exception) ? ((Exception) t) : ite);
-	    } catch (ExceptionInInitializerError eiie) {
-	    	Throwable t = eiie.getException();
-		if (t instanceof Exception) throw (Exception) t;
-		else throw eiie;
-	    // Any remaining exception will fall through to the outer "try"
-	    // IllegalArgumentException, NullPointerException, Instantiaion
-	    // should not get thrown if this compiles correctly.
-	    } else socket = new ServerSocket(port);
+            if (bTls) {
+                try {
+
+                    // We can not get here unless the property is non-null
+                    File fil = new File(
+                        System.getProperty("javax.net.ssl.keyStore"));
+
+                    if (!(fil.isFile())) {
+                        throw new FileNotFoundException("Keystore '" + fil
+                                                        + "' not found");
+                    }
+
+                    if (!(fil.canRead())) {
+                        throw new IOException("Failed to read keystore '"
+                                              + fil + "'");
+                    }
+
+                    ClassLoader loader = getClass().getClassLoader();
+
+                    if (loader == null) {
+                        throw new IncompatibleClassChangeError(
+                            "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
+                    }
+
+                    try {
+                        Security.addProvider(
+                            (Provider) loader.loadClass(
+                                "com.sun.net.ssl.internal.ssl.Provider")
+                                    .newInstance());
+
+                        // User may have some other Provider loaded.
+                        // If not, error will be caught later
+                    } catch (Exception e) {}
+
+                    Class[] caInt = {
+                        getClass().getField("_int_").getType() };
+                    Object[] oaInt = { new Integer(port) };
+                    Class clsSSF =
+                        loader.loadClass("javax.net.ServerSocketFactory");
+
+                    socket = (ServerSocket) clsSSF.getMethod(
+                        "createServerSocket", caInt).invoke(
+                        loader.loadClass(
+                            "javax.net.ssl.SSLServerSocketFactory").getMethod(
+                            "getDefault", null).invoke(null, null), oaInt);
+
+                    Trace.printSystemOut(
+                        new java.util.Date(System.currentTimeMillis())
+                        + " Running with TLS/SSL-encrypted JDBC");
+                } catch (SecurityException se) {
+                    throw new Exception(
+                        "You do not have permission to use the needed SSL resources");
+                } catch (IllegalAccessException iae) {
+                    throw new Exception(
+                        "You do not have permission to use the needed SSL resources");
+                } catch (ClassNotFoundException cnfe) {
+                    throw new ClassNotFoundException("JSSE not installed");
+                } catch (NoSuchMethodException nsme) {
+                    throw new Exception(
+                        "Failed to find an SSL method even though JSSE "
+                        + "is installed:\n" + nsme);
+
+                    // Need to unwrap the following exceptions
+                } catch (InvocationTargetException ite) {
+                    Throwable t = ite.getTargetException();
+
+                    if (t.toString().endsWith("no SSL Server Sockets")) {
+                        throw new Exception(
+                            t.toString()
+                            + "\n(If you are running Java 1.2 or 1.3, keystore could be "
+                            + "invalid or password wrong)");
+                    } else {
+                        throw ((t instanceof Exception) ? ((Exception) t)
+                                                        : ite);
+                    }
+                } catch (ExceptionInInitializerError eiie) {
+                    Throwable t = eiie.getException();
+
+                    if (t instanceof Exception) {
+                        throw (Exception) t;
+                    } else {
+                        throw eiie;
+                    }
+
+                    // Any remaining exception will fall through to the outer "try"
+                    // IllegalArgumentException, NullPointerException, Instantiaion
+                    // should not get thrown if this compiles correctly.
+                }
+            } else {
+                socket = new ServerSocket(port);
+            }
 
             Trace.printSystemOut(
                 new java.util.Date(System.currentTimeMillis())

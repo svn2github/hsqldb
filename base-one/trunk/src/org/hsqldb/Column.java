@@ -1356,8 +1356,8 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                return StringConverter.toQuotedString(StringConverter.byteToHex((byte[]) o),
-                                                      '\'', false);
+                return StringConverter.toQuotedString(
+                    StringConverter.byteToHex((byte[]) o), '\'', false);
 
             case Types.OTHER :
                 return StringConverter.toQuotedString(serializeToString(o),

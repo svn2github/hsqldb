@@ -433,7 +433,7 @@ public class Trace extends PrintWriter {
         throw getError(code, add);
     }
 
-    // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // for the PrinterWriter interface
 
     /**
@@ -446,7 +446,7 @@ public class Trace extends PrintWriter {
 
         String s = new String(c);
 
-        if (sTrace.equals("") && (s.indexOf("hsqldb.Trace") == -1)
+        if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
                 && (s.indexOf("hsqldb") != -1)) {
             int i = s.indexOf('.');
 
@@ -467,7 +467,7 @@ public class Trace extends PrintWriter {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
     public void println(String s) {
 
-        if (sTrace.equals("") && (s.indexOf("hsqldb.Trace") == -1)
+        if (sTrace.length() > 0 && (s.indexOf("hsqldb.Trace") == -1)
                 && (s.indexOf("hsqldb") != -1)) {
             int i = s.indexOf('.');
 

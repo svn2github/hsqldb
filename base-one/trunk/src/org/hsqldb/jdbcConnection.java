@@ -93,8 +93,8 @@ import java.security.Provider;
 import java.security.Principal;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-
 import org.hsqldb.lib.StringConverter;
+
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 // boucherb@users 20020509 - added "throws SQLException" to all methods where
@@ -103,6 +103,7 @@ import org.hsqldb.lib.StringConverter;
 // boucherb@users and fredt@users 20020409/20020505 extensive review and update
 // of docs and behaviour to comply with previous and latest java.sql specification
 // fredt@users 20020830 - patch 487323 by xclayl@users - better synchronization
+// unsaved@users 20021113 - patch 1.7.2 - SSL support
 
 /**
  * <!-- start generic documentation -->
@@ -2572,8 +2573,9 @@ public class jdbcConnection implements Connection {
 
         sDatabaseName = s;
         s             = s.toUpperCase();
-        if (s.toUpperCase().startsWith("HTTP://") ||
-         s.toUpperCase().startsWith("HTTPS://")) {
+
+        if (s.toUpperCase().startsWith("HTTP://")
+                || s.toUpperCase().startsWith("HTTPS://")) {
             iType = HTTP;
 
             openHTTP(user, password);
@@ -2695,14 +2697,18 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        if (iType == HTTP) {
-            return executeHTTP(s);
-        } else if (iType == HSQLDB) {
-            return executeHSQL(s);
-        } else {
+        switch (iType) {
 
-            // internal and standalone
-            return executeStandalone(s);
+            case HTTP :
+                return executeHTTP(s);
+
+            case HSQLDB :
+                return executeHSQL(s);
+
+            default :
+
+                // internal and standalone
+                return executeStandalone(s);
         }
     }
 
@@ -2851,14 +2857,18 @@ public class jdbcConnection implements Connection {
                 result[i] = (byte) r;
             }
         } catch (MalformedURLException mue) {
-	    int iEndOfProt = sConnect.indexOf(':');
-	    if (iEndOfProt < 1) 
-             throw Trace.error(Trace.CONNECTION_IS_BROKEN,
-	     "jdbcResultSet() somehow got a " +
-	     "connect string with no protocol specification");
-	    throw new SQLException(
-	     "Protocol '" + sConnect.substring(0, iEndOfProt) + 
-	     "' is not supported by your JRE.");
+            int iEndOfProt = sConnect.indexOf(':');
+
+            if (iEndOfProt < 1) {
+                throw Trace.error(
+                    Trace.CONNECTION_IS_BROKEN,
+                    "jdbcResultSet() somehow got a "
+                    + "connect string with no protocol specification");
+            }
+
+            throw new SQLException("Protocol '"
+                                   + sConnect.substring(0, iEndOfProt)
+                                   + "' is not supported by your JRE.");
         } catch (Exception e) {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
@@ -2885,7 +2895,7 @@ public class jdbcConnection implements Connection {
      *      SSL resource, authentication, or handshaking problems.
      */
     private void openHSQL(String user, String password) throws SQLException {
-    	openHSQL(user, password, false);
+        openHSQL(user, password, false);
     }
 
     /**
@@ -2903,13 +2913,13 @@ public class jdbcConnection implements Connection {
      *      unavailable, or (if TLS mode was requested) if there are
      *      TLS resource, authentication, or handshaking problems.
      */
-    private void openHSQL(String user, String password, boolean bTlsIn)
-     throws SQLException {
+    private void openHSQL(String user, String password,
+                          boolean bTlsIn) throws SQLException {
 
         sConnect  = sDatabaseName.substring(sDatabaseName.indexOf("://") + 3);
         sUser     = user;
         sPassword = password;
-	bTls = bTlsIn;
+        bTls      = bTlsIn;
 
         reconnectHSQL();
     }
@@ -2928,22 +2938,19 @@ public class jdbcConnection implements Connection {
             StringTokenizer st   = new StringTokenizer(sConnect, ":");
             String          host = st.hasMoreTokens() ? st.nextToken()
                                                       : "";
-            int             port = st.hasMoreTokens()
-                                   ? Integer.parseInt(st.nextToken())
-                                   : (bTls ? DEFAULT_HSQLSDB_PORT :
-				     DEFAULT_HSQLDB_PORT);
+            int port = st.hasMoreTokens() ? Integer.parseInt(st.nextToken())
+                                          : (bTls ? DEFAULT_HSQLSDB_PORT
+                                                  : DEFAULT_HSQLDB_PORT);
 
-	    sSocket = (bTls ? newSslSocket(host, port) : 
-	     (new Socket(host, port)));
+            sSocket = (bTls ? newSslSocket(host, port)
+                            : (new Socket(host, port)));
 
             sSocket.setTcpNoDelay(true);
 
-            dOutput =
-                new DataOutputStream(new BufferedOutputStream(sSocket
-                    .getOutputStream()));
-            dInput  =
-                new DataInputStream(new BufferedInputStream(sSocket
-                    .getInputStream()));
+            dOutput = new DataOutputStream(
+                new BufferedOutputStream(sSocket.getOutputStream()));
+            dInput = new DataInputStream(
+                new BufferedInputStream(sSocket.getInputStream()));
 
             dOutput.writeUTF(sUser);
             dOutput.writeUTF(sPassword);
@@ -3171,8 +3178,14 @@ public class jdbcConnection implements Connection {
      *
      */
     static private void condClose(Socket s) {
-	if (s == null) return;
-	try { s.close(); } catch (Exception e) {}
+
+        if (s == null) {
+            return;
+        }
+
+        try {
+            s.close();
+        } catch (Exception e) {}
     }
 
     /**
@@ -3190,196 +3203,280 @@ public class jdbcConnection implements Connection {
      * @throws  SQLException for any TLS/resource/network error
      *
      */
-    static synchronized private Socket newSslSocket(String strHost, int intPort)
-     throws SQLException {
-    	Socket ssls = null;
-	if (loader == null) loader = jdbcConnection.class.getClassLoader();
-	if (loader == null)
-	 throw new SQLException(
-	  "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
-	if (!bTlsProvided) try {
-	    // Providers may be added to the JSSE config file too
-	    // http://java.sun.com/j2se/1.4/docs/guide/security/ +
-	    //  jsse/JSSERefGuide.html#ProviderCust
-	    bTlsProvided = true;
-   	    Security.addProvider((Provider)
-	     loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
-	      newInstance());  // Throws nothing
-	// No big deal if Sun's provider not found.  User might have a
-	// different provider.  Error will be caught later on if none.
-	} catch (Exception e) { }
-	try {
-	    if (clsFactory == null)
-	    	clsFactory = loader.loadClass("javax.net.ssl.SSLSocketFactory");
-	    if (sslFactory == null) {
-	    	Method methGetDefault =
-		 clsFactory.getMethod("getDefault", null);
-		sslFactory = methGetDefault.invoke(null, null);
-	    }
-	    if (clsSSLSocket == null)
-	    	clsSSLSocket = loader.loadClass("javax.net.ssl.SSLSocket");
-	    if (clsX509 == null)
-	     clsX509 = loader.loadClass("javax.security.cert.X509Certificate");
-	    if (clsSession == null)
-	     clsSession = loader.loadClass("javax.net.ssl.SSLSession");
-	} catch (ClassNotFoundException cnfe) {
-	    throw new SQLException("JSSE not installed:  " + cnfe);
-	} catch (NoSuchMethodException nsme) {
-	    throw new SQLException(
-	     "Failed to find method SSLSocketFactory.getDefault()");
-	// Need to unwrap the following exceptions
-	} catch (InvocationTargetException ite) {
-	    // JSSE classes are available, but the JSSE methods threw Excepts
-	    // I don't think that getDefault() throws any.  Should not get here.
-	    throw new SQLException(ite.getTargetException().toString());
-	} catch (IllegalAccessException iae) {
+    static synchronized private Socket newSslSocket(String strHost,
+            int intPort) throws SQLException {
+
+        Socket ssls = null;
+
+        if (loader == null) {
+            loader = jdbcConnection.class.getClassLoader();
+        }
+
+        if (loader == null) {
             throw new SQLException(
-	     "You do not have permission to use the needed SSL resources");
-	} catch (Exception e) {
-	    // Just pass through remaing, including IllegalArgExcept, 
-	    // which should not be possible if we compiled successfully.
-	    throw new SQLException(e.toString());
-	}
- 	try {
-	    if (methCreateSocket == null) {
-	    	Class carray[] = { String.class, clsInt };
-	    	methCreateSocket = clsFactory.getMethod("createSocket", carray);
-	    }
-	    if (methShake == null)
-	    	methShake = clsSSLSocket.getMethod("startHandshake", null);
-	    if (methGetSes == null)
-	    	methGetSes = clsSSLSocket.getMethod("getSession", null);
-	    if (methChain == null)
-	    	methChain =
-		 clsSession.getMethod("getPeerCertificateChain", null);
-	    if (methGetSubjDN == null)
-	    	methGetSubjDN =
-		 clsX509.getMethod("getSubjectDN", null);
-	// These first ones are not going to occur.  From the forNames.
-	} catch(ExceptionInInitializerError eiie) {
-	    Throwable t = eiie.getException();
-	    throw new SQLException((t instanceof Exception) ?
-	     t.toString() : eiie.toString());
-	} catch(LinkageError le) { throw new SQLException(le.toString());
-	} catch (NoSuchMethodException nsme) {
-	    throw new SQLException(
-	     "Failed to find an SSL method: " + nsme);
-	} catch (SecurityException se) {
-	    throw new SQLException(se.toString());
-	}
-	Object csObjectArray[] = { strHost, new Integer(intPort) };
-	try {
-	    ssls = (Socket) methCreateSocket.invoke(sslFactory, csObjectArray);
-	    /* N.b.  BEWARE:  The following handshake will hang for a long
-	     * time if you try to connect to a valid TCP socket
-	     * that is not running TLS.  In that case, this thread
-	     * is WAITING for the other side to send TLS info.
-	     * TODO:  Start up another thread to interrupt this thread if
-	     * a MAX_HANDSHAKE_TIME is exceeded
-	     */
-	    methShake.invoke(ssls, null);
-	// Need to unwrap the following exceptions
-	} catch (InvocationTargetException ite) {
-	    condClose(ssls);
-	    /* JSSE classes are available, but the JSSE methods threw Excepts
-	     * Could be one of...
-	     * javax.net.ssl.SSLException sslee) {
-	     * java.net.ConnectException ce) {
-	     * SecurityException se) {
-	     * java.net.UnknownHostException uhe) {
-	     * java.io.IOException ioe) {
-	     */
-	     throw new SQLException(ite.getTargetException().toString());
-	} catch (IllegalAccessException iae) {
-	    condClose(ssls);
-	    throw new SQLException(
-	     "You don't have permissions for SSLSocketFactory.createSocket() "+
-	      "or SSLSocket.startHandshake()");
-	} catch (Exception e) {
-	    // incl. IllegalArgumentException which should not get at runtime
-	    condClose(ssls);
-	    throw new SQLException(e.toString());
-	}
-	Principal p = null;
-	try {
-	    Object ses = methGetSes.invoke(ssls, null);  // Throws nothing
-	    if (ses == null) {
-	    	condClose(ssls);
-	    	throw new SQLException(
-	    	 "Failed to obtain session data from TLS connection");
-	    }
-	    // throws javax.net.ssl.SSLPeerUnverifiedException
-	    Object captr = methChain.invoke(ses, null);
-	    if (captr == null || (!captr.getClass().isArray()) ||
-	    !(captr.getClass().getComponentType().isAssignableFrom(clsX509))){
-	    	condClose(ssls);
-		throw new SQLException(
-	    	 "Failed to obtain session data from TLS connection");
-	    }
-	    Object caarray[] = (Object[]) captr;
-	    if (caarray.length < 0) {
-	    	condClose(ssls);
-		throw new SQLException(
-	    	 "Failed to obtain session data from TLS connection");
-	    }
-	    p =
-	     (Principal) methGetSubjDN.invoke(caarray[0], null);
-	// Need to unwrap the following exceptions
-	} catch (InvocationTargetException ite) {
-	    condClose(ssls);
-	    /* JSSE classes are available, but the JSSE methods threw Excepts
-	     * Could be one of...
-	     * javax.net.ssl.SSLPeerUnverifiedException
-	     */
-	     throw new SQLException(ite.getTargetException().toString());
-	} catch (IllegalAccessException iae) {
-	    condClose(ssls);
-	    throw new SQLException(
-	     "You don't have permissions for a TLS socket operation");
-	} catch (Exception e) {
-	    // Include IllegalArgumentException
-	    condClose(ssls);
-	    throw new SQLException(e.toString());
-	}
-	// It would be a hell of a lot easier to pull out the CN with
-	// Java 1.4 Regexes.
-	if (p == null) {
-	    condClose(ssls);
-	    throw new SQLException(
-	     "Somehow failed to retrieve Principal from Server");
-	}
-	String Dn = p.toString();
-	if (Dn == null) {
-	    condClose(ssls);
-	    throw new SQLException(
-	    "Failed to obtain 'Distinguished Name' from Server certificate");
-	}
-	int istart = Dn.indexOf("CN=");
-	if (istart < 0) {
-	    condClose(ssls);
-	    throw new SQLException(
-	     "Failed to obtain 'Common Name' from Server certificate");
-	}
-	istart += 3;
-	int istop = Dn.indexOf(',', istart);
-	String CN = Dn.substring(istart,
-	 (istop > -1) ? istop : Dn.length());
-	if (CN.length() < 1) {
-	    condClose(ssls);
-	    throw new SQLException("Server returned a null Common Name");
-	}
-	// DEBUG Code.
-	// System.err.println("Hostname vs. CommonName: (" +
-	//  strHost + ") vs (" + CN + ')');
-	// For https protocol, the protocol handler should do this verification
-	// (Sun's implementation does), but if we change this class to not
-	// use the Protocol handler (only available in Java >= 1.4), and
-	// for hsqls now, we need to do the validation: hostname == cert CN
-	if (!CN.equalsIgnoreCase(strHost)) {
-	 throw new SQLException(
-	  "Server cert Common Name '" + CN + "' does not match given " +
-	  "network node name '" + strHost + "'");
-	}
-	return ssls;
+                "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS.");
+        }
+
+        if (!bTlsProvided) {
+            try {
+
+                // Providers may be added to the JSSE config file too
+                // http://java.sun.com/j2se/1.4/docs/guide/security/ +
+                //  jsse/JSSERefGuide.html#ProviderCust
+                bTlsProvided = true;
+
+                Security
+                    .addProvider((Provider) loader
+                        .loadClass("com.sun.net.ssl.internal.ssl.Provider")
+                        .newInstance());    // Throws nothing
+
+                // No big deal if Sun's provider not found.  User might have a
+                // different provider.  Error will be caught later on if none.
+            } catch (Exception e) {}
+        }
+
+        try {
+            if (clsFactory == null) {
+                clsFactory =
+                    loader.loadClass("javax.net.ssl.SSLSocketFactory");
+            }
+
+            if (sslFactory == null) {
+                Method methGetDefault = clsFactory.getMethod("getDefault",
+                    null);
+
+                sslFactory = methGetDefault.invoke(null, null);
+            }
+
+            if (clsSSLSocket == null) {
+                clsSSLSocket = loader.loadClass("javax.net.ssl.SSLSocket");
+            }
+
+            if (clsX509 == null) {
+                clsX509 =
+                    loader.loadClass("javax.security.cert.X509Certificate");
+            }
+
+            if (clsSession == null) {
+                clsSession = loader.loadClass("javax.net.ssl.SSLSession");
+            }
+        } catch (ClassNotFoundException cnfe) {
+            throw new SQLException("JSSE not installed:  " + cnfe);
+        } catch (NoSuchMethodException nsme) {
+            throw new SQLException(
+                "Failed to find method SSLSocketFactory.getDefault()");
+
+            // Need to unwrap the following exceptions
+        } catch (InvocationTargetException ite) {
+
+            // JSSE classes are available, but the JSSE methods threw Excepts
+            // I don't think that getDefault() throws any.  Should not get here.
+            throw new SQLException(ite.getTargetException().toString());
+        } catch (IllegalAccessException iae) {
+            throw new SQLException(
+                "You do not have permission to use the needed SSL resources");
+        } catch (Exception e) {
+
+            // Just pass through remaing, including IllegalArgExcept,
+            // which should not be possible if we compiled successfully.
+            throw new SQLException(e.toString());
+        }
+
+        try {
+            if (methCreateSocket == null) {
+                Class carray[] = {
+                    String.class, clsInt
+                };
+
+                methCreateSocket = clsFactory.getMethod("createSocket",
+                        carray);
+            }
+
+            if (methShake == null) {
+                methShake = clsSSLSocket.getMethod("startHandshake", null);
+            }
+
+            if (methGetSes == null) {
+                methGetSes = clsSSLSocket.getMethod("getSession", null);
+            }
+
+            if (methChain == null) {
+                methChain = clsSession.getMethod("getPeerCertificateChain",
+                                                 null);
+            }
+
+            if (methGetSubjDN == null) {
+                methGetSubjDN = clsX509.getMethod("getSubjectDN", null);
+            }
+
+            // These first ones are not going to occur.  From the forNames.
+        } catch (ExceptionInInitializerError eiie) {
+            Throwable t = eiie.getException();
+
+            throw new SQLException((t instanceof Exception) ? t.toString()
+                                                            : eiie
+                                                            .toString());
+        } catch (LinkageError le) {
+            throw new SQLException(le.toString());
+        } catch (NoSuchMethodException nsme) {
+            throw new SQLException("Failed to find an SSL method: " + nsme);
+        } catch (SecurityException se) {
+            throw new SQLException(se.toString());
+        }
+
+        Object csObjectArray[] = {
+            strHost, new Integer(intPort)
+        };
+
+        try {
+            ssls = (Socket) methCreateSocket.invoke(sslFactory,
+                    csObjectArray);
+
+            /* N.b.  BEWARE:  The following handshake will hang for a long
+             * time if you try to connect to a valid TCP socket
+             * that is not running TLS.  In that case, this thread
+             * is WAITING for the other side to send TLS info.
+             * TODO:  Start up another thread to interrupt this thread if
+             * a MAX_HANDSHAKE_TIME is exceeded
+             */
+            methShake.invoke(ssls, null);
+
+            // Need to unwrap the following exceptions
+        } catch (InvocationTargetException ite) {
+            condClose(ssls);
+
+            /* JSSE classes are available, but the JSSE methods threw Excepts
+             * Could be one of...
+             * javax.net.ssl.SSLException sslee) {
+             * java.net.ConnectException ce) {
+             * SecurityException se) {
+             * java.net.UnknownHostException uhe) {
+             * java.io.IOException ioe) {
+             */
+            throw new SQLException(ite.getTargetException().toString());
+        } catch (IllegalAccessException iae) {
+            condClose(ssls);
+
+            throw new SQLException(
+                "You don't have permissions for SSLSocketFactory.createSocket() "
+                + "or SSLSocket.startHandshake()");
+        } catch (Exception e) {
+
+            // incl. IllegalArgumentException which should not get at runtime
+            condClose(ssls);
+
+            throw new SQLException(e.toString());
+        }
+
+        Principal p = null;
+
+        try {
+            Object ses = methGetSes.invoke(ssls, null);    // Throws nothing
+
+            if (ses == null) {
+                condClose(ssls);
+
+                throw new SQLException(
+                    "Failed to obtain session data from TLS connection");
+            }
+
+            // throws javax.net.ssl.SSLPeerUnverifiedException
+            Object captr = methChain.invoke(ses, null);
+
+            if (captr == null || (!captr.getClass().isArray())
+                    ||!(captr.getClass().getComponentType().isAssignableFrom(
+                        clsX509))) {
+                condClose(ssls);
+
+                throw new SQLException(
+                    "Failed to obtain session data from TLS connection");
+            }
+
+            Object caarray[] = (Object[]) captr;
+
+            if (caarray.length < 0) {
+                condClose(ssls);
+
+                throw new SQLException(
+                    "Failed to obtain session data from TLS connection");
+            }
+
+            p = (Principal) methGetSubjDN.invoke(caarray[0], null);
+
+            // Need to unwrap the following exceptions
+        } catch (InvocationTargetException ite) {
+            condClose(ssls);
+
+            /* JSSE classes are available, but the JSSE methods threw Excepts
+             * Could be one of...
+             * javax.net.ssl.SSLPeerUnverifiedException
+             */
+            throw new SQLException(ite.getTargetException().toString());
+        } catch (IllegalAccessException iae) {
+            condClose(ssls);
+
+            throw new SQLException(
+                "You don't have permissions for a TLS socket operation");
+        } catch (Exception e) {
+
+            // Include IllegalArgumentException
+            condClose(ssls);
+
+            throw new SQLException(e.toString());
+        }
+
+        // It would be a hell of a lot easier to pull out the CN with
+        // Java 1.4 Regexes.
+        if (p == null) {
+            condClose(ssls);
+
+            throw new SQLException(
+                "Somehow failed to retrieve Principal from Server");
+        }
+
+        String Dn = p.toString();
+
+        if (Dn == null) {
+            condClose(ssls);
+
+            throw new SQLException(
+                "Failed to obtain 'Distinguished Name' from Server certificate");
+        }
+
+        int istart = Dn.indexOf("CN=");
+
+        if (istart < 0) {
+            condClose(ssls);
+
+            throw new SQLException(
+                "Failed to obtain 'Common Name' from Server certificate");
+        }
+
+        istart += 3;
+
+        int    istop = Dn.indexOf(',', istart);
+        String CN    = Dn.substring(istart, (istop > -1) ? istop
+                                                         : Dn.length());
+
+        if (CN.length() < 1) {
+            condClose(ssls);
+
+            throw new SQLException("Server returned a null Common Name");
+        }
+
+        // DEBUG Code.
+        // System.err.println("Hostname vs. CommonName: (" +
+        //  strHost + ") vs (" + CN + ')');
+        // For https protocol, the protocol handler should do this verification
+        // (Sun's implementation does), but if we change this class to not
+        // use the Protocol handler (only available in Java >= 1.4), and
+        // for hsqls now, we need to do the validation: hostname == cert CN
+        if (!CN.equalsIgnoreCase(strHost)) {
+            throw new SQLException("Server cert Common Name '" + CN
+                                   + "' does not match given "
+                                   + "network node name '" + strHost + "'");
+        }
+
+        return ssls;
     }
 }

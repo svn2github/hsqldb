@@ -193,14 +193,18 @@ class Tokenizer {
 
         getToken();
 
-        if (iType == STRING) {
+        switch (iType) {
 
-// fred - no longer including first quote in sToken
-            return sToken.toUpperCase();
-        } else if (iType == NAME) {
-            return sToken;
-        } else if (iType == QUOTED_IDENTIFIER) {
-            return sToken.toUpperCase();
+            case STRING :
+
+                // fred - no longer including first quote in sToken
+                return sToken.toUpperCase();
+
+            case NAME :
+                return sToken;
+
+            case QUOTED_IDENTIFIER :
+                return sToken.toUpperCase();
         }
 
         throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -214,17 +218,18 @@ class Tokenizer {
      */
     boolean wasValue() {
 
-        if (iType == STRING || iType == NUMBER || iType == FLOAT
-                || iType == LONG || iType == DECIMAL) {
-            return true;
+        switch (iType) {
+
+            case STRING :
+            case NUMBER :
+            case LONG :
+            case FLOAT :
+            case DECIMAL :
+                return true;
         }
 
-        if (sToken.equals("NULL") || sToken.equals("TRUE")
-                || sToken.equals("FALSE")) {
-            return true;
-        }
-
-        return false;
+        return (sToken.equals("SYSDATE") || sToken.equals("NULL")
+                || sToken.equals("TRUE") || sToken.equals("FALSE"));
     }
 
     boolean wasQuotedIdentifier() {
@@ -360,60 +365,65 @@ class Tokenizer {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
-        if (iType == STRING) {
+        switch (iType) {
 
-            //fredt - no longer returning string with a singlequote as last char
-            return sToken;
-        }
+            case STRING : {
 
-        // convert NULL to null String if not a String
-        // todo: make this more straightforward
-        if (sToken.equals("NULL")) {
-            return null;
-        }
-
-        if (iType == NUMBER) {
-
-            // fredt - this returns unsigned values which are later negated.
-            // as a result Integer.MIN_VALUE or Long.MIN_VALUE are promoted
-            // to a wider type.
-            if (sToken.length() < 10) {
-                return new Integer(sToken);
+                //fredt - no longer returning string with a singlequote as last char
+                return sToken;
             }
+            case NUMBER : {
 
-            if (sToken.length() == 10) {
-                try {
+                // fredt - this returns unsigned values which are later negated.
+                // as a result Integer.MIN_VALUE or Long.MIN_VALUE are promoted
+                // to a wider type.
+                if (sToken.length() < 10) {
                     return new Integer(sToken);
-                } catch (Exception e1) {
+                }
+
+                if (sToken.length() == 10) {
+                    try {
+                        return new Integer(sToken);
+                    } catch (Exception e1) {
+                        iType = LONG;
+
+                        return new Long(sToken);
+                    }
+                }
+
+                if (sToken.length() < 19) {
                     iType = LONG;
 
                     return new Long(sToken);
                 }
-            }
 
-            if (sToken.length() < 19) {
-                iType = LONG;
+                if (sToken.length() == 19) {
+                    try {
+                        return new Long(sToken);
+                    } catch (Exception e2) {
+                        iType = DECIMAL;
 
-                return new Long(sToken);
-            }
-
-            if (sToken.length() == 19) {
-                try {
-                    return new Long(sToken);
-                } catch (Exception e2) {
-                    iType = DECIMAL;
-
-                    return new BigDecimal(sToken);
+                        return new BigDecimal(sToken);
+                    }
                 }
+
+                iType = DECIMAL;
+
+                return new BigDecimal(sToken);
             }
+            case FLOAT : {
+                return new Double(sToken);
+            }
+            case DECIMAL : {
+                return new BigDecimal(sToken);
+            }
+        }
 
-            iType = DECIMAL;
+        if (sToken.equals("NULL")) {
 
-            return new BigDecimal(sToken);
-        } else if (iType == FLOAT) {
-            return new Double(sToken);
-        } else if (iType == DECIMAL) {
-            return new BigDecimal(sToken);
+            // convert NULL to null String if not a String
+            // todo: make this more straightforward
+            return null;
         }
 
         return sToken;

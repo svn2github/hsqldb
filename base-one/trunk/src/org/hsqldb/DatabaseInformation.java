@@ -649,8 +649,10 @@ class DatabaseInformation {
                 t.addColumn("NUM_PREC_RADIX", Types.INTEGER);
                 t.createPrimaryKey();
 
-                for (int h = 0; h < Column.typesArray.length; h++) {
-                    for (int i = 0; i < Column.typesArray[h].length; i++) {
+                for (int h = 0, hSize = Column.typesArray.length; h < hSize;
+                        h++) {
+                    for (int i = 0, iSize = Column.typesArray[h].length;
+                            i < iSize; i++) {
                         Object o[]  = t.getNewRow();
                         int    type = Column.typesArray[h][i];
 
@@ -847,7 +849,7 @@ class DatabaseInformation {
             HsqlArrayList constVect = table.getConstraints();
             Constraint    constraint;
 
-            for (int j = 0; j < constVect.size(); j++) {
+            for (int j = 0, cSize = constVect.size(); j < cSize; j++) {
                 constraint = (Constraint) constVect.get(j);
 
                 if (constraint.getType() != Constraint.FOREIGN_KEY) {

@@ -547,9 +547,8 @@ public class CodeSwitcher {
                     }
                 }
 
-                if (!line.startsWith("//#")) {
-
-                } else {
+                if (!line.startsWith("//#")) {}
+                else {
                     if (line.startsWith("//#ifdef ")) {
                         if (state != 0) {
                             printError(
@@ -568,7 +567,7 @@ public class CodeSwitcher {
                         } else if (vSwitchOff.indexOf(s) != -1) {
                             working = true;
 
-                            v.insertElementAt("/*",++i);
+                            v.insertElementAt("/*", ++i);
 
                             switchoff = true;
                         }
@@ -585,21 +584,19 @@ public class CodeSwitcher {
 
                         state = 2;
 
-                        if (!working) {
-
-                        } else if (switchoff) {
+                        if (!working) {}
+                        else if (switchoff) {
                             if (v.elementAt(i - 1).equals("")) {
-                                v.insertElementAt("*/",i - 1);
+                                v.insertElementAt("*/", i - 1);
 
                                 i++;
                             } else {
-                                v.insertElementAt( "*/",i++);
+                                v.insertElementAt("*/", i++);
                             }
 
                             switchoff = false;
                         } else {
-
-                            v.insertElementAt("/*",++i);
+                            v.insertElementAt("/*", ++i);
 
                             switchoff = true;
                         }
@@ -614,18 +611,16 @@ public class CodeSwitcher {
 
                         if (working && switchoff) {
                             if (v.elementAt(i - 1).equals("")) {
-                                v.insertElementAt( "*/", i - 1);
+                                v.insertElementAt("*/", i - 1);
 
                                 i++;
                             } else {
-                                v.insertElementAt("*/",i++ );
+                                v.insertElementAt("*/", i++);
                             }
                         }
 
                         working = false;
-                    } else {
-
-                    }
+                    } else {}
                 }
             }
 

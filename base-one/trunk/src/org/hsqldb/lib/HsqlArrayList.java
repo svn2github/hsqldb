@@ -272,17 +272,27 @@ public class HsqlArrayList implements HsqlList {
     /** Returns a string representation */
     public String toString() {
 
-        String str = "{";
+        StringBuffer sb = new StringBuffer(32);
 
-        for (Enumeration enum = elements(); enum.hasMoreElements(); ) {
-            str = str + enum.nextElement().toString()
-                  + (enum.hasMoreElements() ? ", "
-                                            : "");
+        sb.append("HsqlArrayList : size=");
+        sb.append(elementCount);
+        sb.append(' ');
+        sb.append('[');
+
+        Enumeration enum = elements();
+
+        while (enum.hasMoreElements()) {
+            sb.append(enum.nextElement());
+
+            if (enum.hasMoreElements()) {
+                sb.append(',');
+                sb.append(' ');
+            }
         }
 
-        str = str + "}";
+        sb.append(']');
 
-        return str;
+        return sb.toString();
     }
 
     // fredt@users - no tests etc.

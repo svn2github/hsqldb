@@ -35,8 +35,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
-
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+
 /**
  * Base class for writing the data for a database row in different formats.
  * Defines the methods that are independent of storage format and declares

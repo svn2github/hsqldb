@@ -90,7 +90,6 @@ class Row {
     /**
      *  Factory method instantiates a Row based on table type.
      */
-
     static Row newRow(Table t, Object o[]) throws SQLException {
 
         if (t.isCached()) {

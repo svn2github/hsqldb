@@ -244,12 +244,16 @@ public class Library {
         }
     };
 
-    static void register(HsqlHashMap h) {
+    static HsqlHashMap getAliasMap() {
+
+        HsqlHashMap h = new HsqlHashMap(83, 1);
 
         register(h, sNumeric);
         register(h, sString);
         register(h, sTimeDate);
         register(h, sSystem);
+
+        return h;
     }
 
     private static void register(HsqlHashMap h, String s[][]) {

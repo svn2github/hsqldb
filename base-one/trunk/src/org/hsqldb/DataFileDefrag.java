@@ -51,14 +51,16 @@ import org.hsqldb.lib.StopWatch;
  * @author     frest@users
  */
 class DataFileDefrag {
+
     StopWatch stopw = new StopWatch();
+
     HsqlArrayList defrag(Database db, DatabaseFile sourcenotused,
-                     String filename) throws IOException, SQLException {
+                         String filename) throws IOException, SQLException {
 
         System.out.println("Transfer begins");
 
-        HsqlArrayList                    rootsList = new HsqlArrayList();
-        org.hsqldb.lib.HsqlArrayList tTable    = db.getTables();
+        HsqlArrayList    rootsList = new HsqlArrayList();
+        HsqlArrayList    tTable    = db.getTables();
         RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
 
         dest.seek(Cache.INITIAL_FREE_POS);
@@ -83,7 +85,7 @@ class DataFileDefrag {
         dest.writeInt(pos);
         dest.close();
 
-        for (int i = 0; i < rootsList.size(); i++) {
+        for (int i = 0, size = rootsList.size(); i < size; i++) {
             int[] roots = (int[]) rootsList.get(i);
 
             if (roots != null) {
@@ -101,7 +103,7 @@ class DataFileDefrag {
                                       HsqlArrayList rootsList)
                                       throws SQLException {
 
-        for (int i = 0; i < tTable.size(); i++) {
+        for (int i = 0, size = tTable.size(); i < size; i++) {
             Table t = (Table) tTable.get(i);
 
             if (t.tableType == Table.CACHED_TABLE) {
@@ -182,12 +184,10 @@ class DataFileDefrag {
                 System.out.println("MISMATCH AT " + count);
             }
 */
-            if ( (count + 1) % 50000 == 0) {
+            if ((count + 1) % 50000 == 0) {
 
 //                System.gc();
-                System.out.println(
-                    count + " rows "
-                    + stopw.elapsedTime());
+                System.out.println(count + " rows " + stopw.elapsedTime());
             }
 
             n = index.next(n);

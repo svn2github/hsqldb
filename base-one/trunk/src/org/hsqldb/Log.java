@@ -162,7 +162,7 @@ class Log implements Runnable {
         sysSession  = system;
         sName       = name;
         pProperties = db.getProperties();
-        tRunner     = new Thread(this);
+        tRunner     = new Thread(this, "HSQLDB " + jdbcDriver.VERSION);
 
         tRunner.start();
     }
@@ -759,8 +759,8 @@ class Log implements Runnable {
 
             DatabaseScriptReader scr;
 
-            scr = DatabaseScriptReader.newDatabaseScriptReader(this.dDatabase, sFileScript,
-                                          logType);
+            scr = DatabaseScriptReader.newDatabaseScriptReader(this.dDatabase,
+                    sFileScript, logType);
 
             scr.readAll(sysSession);
 
@@ -926,8 +926,9 @@ class Log implements Runnable {
 
     void closeAllTextCaches(boolean compact) throws SQLException {
 
-        for (Enumeration e =
-                textCacheList.elements(); e.hasMoreElements(); ) {
+        Enumeration e = textCacheList.elements();
+
+        while (e.hasMoreElements()) {
             if (compact) {
                 ((TextCache) e.nextElement()).purge();
             } else {
@@ -938,16 +939,18 @@ class Log implements Runnable {
 
     void reopenAllTextCaches() throws SQLException {
 
-        for (Enumeration e =
-                textCacheList.elements(); e.hasMoreElements(); ) {
+        Enumeration e = textCacheList.elements();
+
+        while (e.hasMoreElements()) {
             ((TextCache) e.nextElement()).reopen();
         }
     }
 
     void shutdownAllTextCaches() throws SQLException {
 
-        for (Enumeration e =
-                textCacheList.elements(); e.hasMoreElements(); ) {
+        Enumeration e = textCacheList.elements();
+
+        while (e.hasMoreElements()) {
             ((TextCache) e.nextElement()).closeFile();
         }
 

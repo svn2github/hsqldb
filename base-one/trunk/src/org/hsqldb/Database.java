@@ -110,40 +110,70 @@ import java.util.Enumeration;
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 class Database {
 
-    private String                   sName;
-    private UserManager              aAccess;
-    private HsqlArrayList            tTable;
-    private DatabaseInformation      dInfo;
-    Logger                           logger;
-    boolean                          bReadOnly;
-    private boolean                  bShutdown;
-    private HsqlHashMap              hAlias;
-    private boolean                  bIgnoreCase;
-    private boolean                  bReferentialIntegrity;
-    private HsqlArrayList            cSession;
-    private HsqlDatabaseProperties   databaseProperties;
-    private Session                  sysSession;
-    private static final int         CALL       = 1;
-    private static final int         CHECKPOINT = 2;
-    private static final int         COMMIT     = 3;
-    private static final int         CONNECT    = 4;
-    private static final int         CREATE     = 5;
-    private static final int         DELETE     = 6;
-    private static final int         DISCONNECT = 7;
-    private static final int         DROP       = 8;
-    private static final int         GRANT      = 9;
-    private static final int         INSERT     = 10;
-    private static final int         REVOKE     = 11;
-    private static final int         ROLLBACK   = 12;
-    private static final int         SAVEPOINT  = 13;
-    private static final int         SCRIPT     = 14;
-    private static final int         SELECT     = 15;
-    private static final int         SET        = 16;
-    private static final int         SHUTDOWN   = 17;
-    private static final int         UPDATE     = 18;
-    private static final int         SEMICOLON  = 19;
-    private static final int         ALTER      = 20;
-    private static final HsqlHashMap hCommands  = new HsqlHashMap(37);
+    private String                 sName;
+    private UserManager            aAccess;
+    private HsqlArrayList          tTable;
+    private DatabaseInformation    dInfo;
+    Logger                         logger;
+    boolean                        bReadOnly;
+    private boolean                bShutdown;
+    private HsqlHashMap            hAlias;
+    private boolean                bIgnoreCase;
+    private boolean                bReferentialIntegrity;
+    private HsqlArrayList          cSession;
+    private HsqlDatabaseProperties databaseProperties;
+    private Session                sysSession;
+
+    //for execute()
+    private static final int CALL                  = 1;
+    private static final int CHECKPOINT            = 2;
+    private static final int COMMIT                = 3;
+    private static final int CONNECT               = 4;
+    private static final int CREATE                = 5;
+    private static final int DELETE                = 6;
+    private static final int DISCONNECT            = 7;
+    private static final int DROP                  = 8;
+    private static final int GRANT                 = 9;
+    private static final int INSERT                = 10;
+    private static final int REVOKE                = 11;
+    private static final int ROLLBACK              = 12;
+    private static final int SAVEPOINT             = 13;
+    private static final int SCRIPT                = 14;
+    private static final int SELECT                = 15;
+    private static final int SET                   = 16;
+    private static final int SHUTDOWN              = 17;
+    private static final int UPDATE                = 18;
+    private static final int SEMICOLON             = 19;
+    private static final int ALTER                 = 20;
+    private static final int ADD                   = 24;
+    private static final int ALIAS                 = 35;
+    private static final int AUTOCOMMIT            = 43;
+    private static final int CACHED                = 31;
+    private static final int COLUMN                = 27;
+    private static final int CONSTRAINT            = 25;
+    private static final int FOREIGN               = 26;
+    private static final int IGNORECASE            = 41;
+    private static final int INDEX                 = 22;
+    private static final int LOGSIZE               = 39;
+    private static final int LOGTYPE               = 40;
+    private static final int MAXROWS               = 42;
+    private static final int MEMORY                = 30;
+    private static final int PASSWORD              = 37;
+    private static final int PRIMARY               = 36;
+    private static final int READONLY              = 38;
+    private static final int REFERENTIAL_INTEGRITY = 46;
+    private static final int RENAME                = 23;
+    private static final int SOURCE                = 44;
+
+    //for process*()
+    private static final int         TABLE       = 21;
+    private static final int         TEXT        = 29;
+    private static final int         TRIGGER     = 33;
+    private static final int         UNIQUE      = 28;
+    private static final int         USER        = 34;
+    private static final int         VIEW        = 32;
+    private static final int         WRITE_DELAY = 45;
+    private static final HsqlHashMap hCommands   = new HsqlHashMap(67, 1);
 
     static {
         hCommands.put("ALTER", new Integer(ALTER));
@@ -166,6 +196,35 @@ class Database {
         hCommands.put("SHUTDOWN", new Integer(SHUTDOWN));
         hCommands.put("UPDATE", new Integer(UPDATE));
         hCommands.put(";", new Integer(SEMICOLON));
+
+        //
+        hCommands.put("TABLE", new Integer(TABLE));
+        hCommands.put("INDEX", new Integer(INDEX));
+        hCommands.put("RENAME", new Integer(RENAME));
+        hCommands.put("ADD", new Integer(ADD));
+        hCommands.put("CONSTRAINT", new Integer(CONSTRAINT));
+        hCommands.put("FOREIGN", new Integer(FOREIGN));
+        hCommands.put("COLUMN", new Integer(COLUMN));
+        hCommands.put("UNIQUE", new Integer(UNIQUE));
+        hCommands.put("TEXT", new Integer(TEXT));
+        hCommands.put("MEMORY", new Integer(MEMORY));
+        hCommands.put("CACHED", new Integer(CACHED));
+        hCommands.put("VIEW", new Integer(VIEW));
+        hCommands.put("TRIGGER", new Integer(TRIGGER));
+        hCommands.put("USER", new Integer(USER));
+        hCommands.put("ALIAS", new Integer(ALIAS));
+        hCommands.put("PRIMARY", new Integer(PRIMARY));
+        hCommands.put("PASSWORD", new Integer(PASSWORD));
+        hCommands.put("READONLY", new Integer(READONLY));
+        hCommands.put("LOGSIZE", new Integer(LOGSIZE));
+        hCommands.put("LOGTYPE", new Integer(LOGTYPE));
+        hCommands.put("IGNORECASE", new Integer(IGNORECASE));
+        hCommands.put("MAXROWS", new Integer(MAXROWS));
+        hCommands.put("AUTOCOMMIT", new Integer(AUTOCOMMIT));
+        hCommands.put("SOURCE", new Integer(SOURCE));
+        hCommands.put("WRITE_DELAY", new Integer(WRITE_DELAY));
+        hCommands.put("REFERENTIAL_INTEGRITY",
+                      new Integer(REFERENTIAL_INTEGRITY));
     }
 
     /**
@@ -202,12 +261,9 @@ class Database {
         tTable                = new HsqlArrayList();
         aAccess               = new UserManager();
         cSession              = new HsqlArrayList();
-        hAlias                = new HsqlHashMap();
+        hAlias                = Library.getAliasMap();
         logger                = new Logger();
         bReferentialIntegrity = true;
-
-        Library.register(hAlias);
-
         dInfo = new DatabaseInformation(this, tTable, aAccess);
 
         boolean newdatabase = false;
@@ -840,10 +896,22 @@ class Database {
             isTemp = true;
             sToken = c.getString();
 
-            Trace.check(sToken.equals("TABLE") || sToken.equals("MEMORY")
-                        || sToken.equals("TEXT"), Trace.UNEXPECTED_TOKEN,
-                                                  sToken);
-            session.setScripting(false);
+            int     cmd     = -1;
+            Integer command = (Integer) hCommands.get(sToken);
+
+            if (command != null) {
+                cmd = command.intValue();
+            }
+
+            switch (cmd) {
+
+                case TABLE :
+                case TEXT :
+                case MEMORY :
+                    session.setScripting(false);
+                default :
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            }
         } else {
             session.checkReadWrite();
             session.checkAdmin();
@@ -851,87 +919,110 @@ class Database {
         }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        if (sToken.equals("TABLE")) {
-            int tableType = isTemp ? Table.TEMP_TABLE
+        int     cmd     = -1;
+        Integer command = (Integer) hCommands.get(sToken);
+
+        if (command != null) {
+            cmd = command.intValue();
+        }
+
+        boolean unique    = false;
+        int     tableType = 0;
+
+        switch (cmd) {
+
+            case TABLE :
+                tableType = isTemp ? Table.TEMP_TABLE
                                    : Table.MEMORY_TABLE;
 
-            processCreateTable(c, session, tableType);
-        } else if (sToken.equals("MEMORY")) {
-            c.getThis("TABLE");
+                processCreateTable(c, session, tableType);
+                break;
 
-            int tableType = isTemp ? Table.TEMP_TABLE
+            case MEMORY :
+                c.getThis("TABLE");
+
+                tableType = isTemp ? Table.TEMP_TABLE
                                    : Table.MEMORY_TABLE;
 
-            processCreateTable(c, session, tableType);
-        } else if (sToken.equals("CACHED")) {
-            c.getThis("TABLE");
-            processCreateTable(c, session, Table.CACHED_TABLE);
-        } else if (sToken.equals("TEXT")) {
-            c.getThis("TABLE");
+                processCreateTable(c, session, tableType);
+                break;
 
-            int tableType = isTemp ? Table.TEMP_TEXT_TABLE
+            case CACHED :
+                c.getThis("TABLE");
+                processCreateTable(c, session, Table.CACHED_TABLE);
+                break;
+
+            case TEXT :
+                c.getThis("TABLE");
+
+                tableType = isTemp ? Table.TEMP_TEXT_TABLE
                                    : Table.TEXT_TABLE;
 
-            processCreateTable(c, session, tableType);
-        } else if (sToken.equals("VIEW")) {
-            processCreateView(c, session);
-        } else if (sToken.equals("TRIGGER")) {
-            processCreateTrigger(c, session);
-        } else if (sToken.equals("USER")) {
-            String u = c.getStringToken();
+                processCreateTable(c, session, tableType);
+                break;
 
-            c.getThis("PASSWORD");
+            case VIEW :
+                processCreateView(c, session);
+                break;
 
-            String  p = c.getStringToken();
-            boolean admin;
+            case TRIGGER :
+                processCreateTrigger(c, session);
+                break;
 
-            if (c.getString().equals("ADMIN")) {
-                admin = true;
-            } else {
-                admin = false;
-            }
+            case USER :
+                String u = c.getStringToken();
 
-            aAccess.createUser(u, p, admin);
-        } else if (sToken.equals("ALIAS")) {
-            String name = c.getString();
+                c.getThis("PASSWORD");
 
-            sToken = c.getString();
+                String  p     = c.getStringToken();
+                boolean admin = c.getString().equals("ADMIN");
 
-            Trace.check(sToken.equals("FOR"), Trace.UNEXPECTED_TOKEN, sToken);
+                aAccess.createUser(u, p, admin);
+                break;
 
-            sToken = c.getString();
+            case ALIAS :
+                String aName = c.getString();
+
+                sToken = c.getString();
+
+                Trace.check(sToken.equals("FOR"), Trace.UNEXPECTED_TOKEN,
+                            sToken);
+
+                sToken = c.getString();
 
 // fredt@users 20010701 - patch 1.6.1 by fredt - open <1.60 db files
 // convert org.hsql.Library aliases from versions < 1.60 to org.hsqldb
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - ABS function
-            if (sToken.startsWith("org.hsql.Library.")) {
-                sToken = "org.hsqldb.Library."
-                         + sToken.substring("org.hsql.Library.".length());
-            } else if (sToken.equals("java.lang.Math.abs")) {
-                sToken = "org.hsqldb.Library.abs";
-            }
+                if (sToken.startsWith("org.hsql.Library.")) {
+                    sToken = "org.hsqldb.Library."
+                             + sToken.substring("org.hsql.Library.".length());
+                } else if (sToken.equals("java.lang.Math.abs")) {
+                    sToken = "org.hsqldb.Library.abs";
+                }
 
-            hAlias.put(name, sToken);
-        } else {
-            boolean unique = false;
+                hAlias.put(aName, sToken);
+                break;
 
-            if (sToken.equals("UNIQUE")) {
+            case UNIQUE :
                 unique = true;
-                sToken = c.getString();
-            }
 
-            if (!sToken.equals("INDEX")) {
+                c.getThis("INDEX");
+
+            //fall thru
+            case INDEX :
+                String  name         = c.getName();
+                boolean isnamequoted = c.wasQuotedIdentifier();
+
+                c.getThis("ON");
+
+                Table t = getTable(c.getName(), session);
+
+                addIndexOn(c, session, name, isnamequoted, t, unique);
+                break;
+
+            default : {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
             }
-
-            String  name         = c.getName();
-            boolean isnamequoted = c.wasQuotedIdentifier();
-
-            c.getThis("ON");
-
-            Table t = getTable(c.getName(), session);
-
-            addIndexOn(c, session, name, isnamequoted, t, unique);
         }
 
         return new Result();
@@ -963,13 +1054,15 @@ class Database {
 
             String sToken = c.getString();
 
+            if (sToken.equals(",")) {
+                continue;
+            }
+
             if (sToken.equals(")")) {
                 break;
             }
 
-            if (!sToken.equals(",")) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
         int s = v.size();
@@ -1236,13 +1329,15 @@ class Database {
         if (sToken.equals("(")) {
 
             // read length
-            do {
+            while (true) {
                 sToken = c.getString();
 
-                if (!sToken.equals(")")) {
-                    sLen += sToken;
+                if (sToken.equals(")")) {
+                    break;
                 }
-            } while (!sToken.equals(")"));
+
+                sLen += sToken;
+            }
 
             sToken = c.getString();
         }
@@ -1416,16 +1511,27 @@ class Database {
 
 // fredt@users 20020225 - comment
 // we can check here for reserved words used with quotes as column names
-            if (sToken.equals("CONSTRAINT") || sToken.equals("PRIMARY")
-                    || sToken.equals("FOREIGN") || sToken.equals("UNIQUE")) {
-                c.back();
+            int     cmd     = -1;
+            Integer command = (Integer) hCommands.get(sToken);
 
-                constraint = true;
+            if (command != null) {
+                cmd = command.intValue();
+            }
 
-                break;
+            switch (cmd) {
+
+                case CONSTRAINT :
+                case PRIMARY :
+                case FOREIGN :
+                case UNIQUE :
+                    constraint = true;
             }
 
             c.back();
+
+            if (constraint) {
+                break;
+            }
 
             Column newcolumn = processCreateColumn(c, t);
 
@@ -1440,15 +1546,17 @@ class Database {
 
             sToken = c.getString();
 
+            if (sToken.equals(",")) {
+                column++;
+
+                continue;
+            }
+
             if (sToken.equals(")")) {
                 break;
             }
 
-            if (!sToken.equals(",")) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            }
-
-            column++;
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
         try {
@@ -1483,83 +1591,102 @@ class Database {
                         sToken = c.getString();
                     }
 
-                    if (sToken.equals("PRIMARY")) {
-                        c.getThis("KEY");
+                    int     cmd     = -1;
+                    Integer command = (Integer) hCommands.get(sToken);
+
+                    if (command != null) {
+                        cmd = command.intValue();
+                    }
+
+                    switch (cmd) {
+
+                        case PRIMARY : {
+                            c.getThis("KEY");
 
 // tony_lai@users 20020820 - patch 595099
-                        pkName = cname;
+                            pkName = cname;
 
-                        int col[] = processColumnList(c, t);
-                        TempConstraint mainConst =
-                            (TempConstraint) tempConstraints.get(0);
-
-                        Trace.check(mainConst.localCol == null,
-                                    Trace.SECOND_PRIMARY_KEY);
-
-                        mainConst.localCol = col;
-                    } else if (sToken.equals("UNIQUE")) {
-                        int col[] = processColumnList(c, t);
-
-                        if (cname == null) {
-                            cname = HsqlName.makeAutoName("CT");
-                        }
-
-                        tempConst = new TempConstraint(cname, col, null,
-                                                       null,
-                                                       Constraint.UNIQUE,
-                                                       Constraint.NO_ACTION,
-                                                       Constraint.NO_ACTION);
-
-                        tempConstraints.add(tempConst);
-                    } else if (sToken.equals("FOREIGN")) {
-                        c.getThis("KEY");
-
-                        tempConst = processCreateFK(c, session, t, cname);
-
-                        if (tempConst.expCol == null) {
+                            int col[] = processColumnList(c, t);
                             TempConstraint mainConst =
                                 (TempConstraint) tempConstraints.get(0);
 
-                            tempConst.expCol = mainConst.localCol;
+                            Trace.check(mainConst.localCol == null,
+                                        Trace.SECOND_PRIMARY_KEY);
+
+                            mainConst.localCol = col;
+
+                            break;
+                        }
+                        case UNIQUE : {
+                            int col[] = processColumnList(c, t);
+
+                            if (cname == null) {
+                                cname = HsqlName.makeAutoName("CT");
+                            }
+
+                            tempConst =
+                                new TempConstraint(cname, col, null, null,
+                                                   Constraint.UNIQUE,
+                                                   Constraint.NO_ACTION,
+                                                   Constraint.NO_ACTION);
+
+                            tempConstraints.add(tempConst);
+
+                            break;
+                        }
+                        case FOREIGN : {
+                            c.getThis("KEY");
+
+                            tempConst = processCreateFK(c, session, t, cname);
 
                             if (tempConst.expCol == null) {
-                                throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                                  "table has no primary key");
-                            }
-                        }
+                                TempConstraint mainConst =
+                                    (TempConstraint) tempConstraints.get(0);
 
-                        if (tempConst.updateAction == Constraint.SET_DEFAULT
-                                || tempConst.deleteAction
-                                   == Constraint.SET_DEFAULT) {
-                            for (int j = 0; j < tempConst.localCol.length;
-                                    j++) {
-                                if (t.getColumn(tempConst.localCol[j])
-                                        .getDefaultString() == null) {
+                                tempConst.expCol = mainConst.localCol;
+
+                                if (tempConst.expCol == null) {
                                     throw Trace.error(
-                                        Trace.COLUMN_TYPE_MISMATCH,
-                                        "missing DEFAULT value on column '"
-                                        + t.getColumn(
-                                            tempConst.localCol[j]).columnName
-                                                .name + "'");
+                                        Trace.INDEX_NOT_FOUND,
+                                        "table has no primary key");
                                 }
                             }
-                        }
 
-                        t.checkColumnsMatch(tempConst.localCol,
-                                            tempConst.expTable,
-                                            tempConst.expCol);
-                        tempConstraints.add(tempConst);
+                            if (tempConst.updateAction == Constraint
+                                    .SET_DEFAULT || tempConst
+                                    .deleteAction == Constraint.SET_DEFAULT) {
+                                for (int j = 0; j < tempConst.localCol.length;
+                                        j++) {
+                                    if (t.getColumn(tempConst.localCol[j])
+                                            .getDefaultString() == null) {
+                                        throw Trace.error(
+                                            Trace.COLUMN_TYPE_MISMATCH,
+                                            "missing DEFAULT value on column '"
+                                            + t.getColumn(
+                                                tempConst.localCol[j])
+                                                    .columnName.name + "'");
+                                    }
+                                }
+                            }
+
+                            t.checkColumnsMatch(tempConst.localCol,
+                                                tempConst.expTable,
+                                                tempConst.expCol);
+                            tempConstraints.add(tempConst);
+                        }
                     }
 
                     sToken = c.getString();
+
+                    if (sToken.equals(",")) {
+                        continue;
+                    }
 
                     if (sToken.equals(")")) {
                         break;
                     }
 
-                    if (!sToken.equals(",")) {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    }
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
                 }
             }
 
@@ -1829,14 +1956,26 @@ class Database {
         session.checkAdmin();
         session.setScripting(true);
 
-        String sToken = c.getString();
+        String  sToken  = c.getString();
+        int     cmd     = -1;
+        Integer command = (Integer) hCommands.get(sToken);
 
-        if (sToken.equals("TABLE")) {
-            processAlterTable(c, session);
-        } else if (sToken.equals("INDEX")) {
-            processAlterIndex(c, session);
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+        if (command != null) {
+            cmd = command.intValue();
+        }
+
+        switch (cmd) {
+
+            case TABLE :
+                processAlterTable(c, session);
+                break;
+
+            case INDEX :
+                processAlterIndex(c, session);
+                break;
+
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
         return new Result();
@@ -1852,90 +1991,140 @@ class Database {
 
         session.setScripting(!t.isTemp());
 
-        if (sToken.equals("RENAME")) {
-            c.getThis("TO");
-            processRenameTable(c, session, tablename);
+        int     cmd     = -1;
+        Integer command = (Integer) hCommands.get(sToken);
 
-            return;
-        } else if (sToken.equals("ADD")) {
-            sToken = c.getString();
+        if (command != null) {
+            cmd = command.intValue();
+        }
 
-            if (sToken.equals("CONSTRAINT")) {
-                HsqlName cname = new HsqlName(c.getName(),
-                                              c.wasQuotedIdentifier());
+        switch (cmd) {
 
-                sToken = c.getString();
-
-                if (sToken.equals("FOREIGN")) {
-                    c.getThis("KEY");
-
-                    TempConstraint tc = processCreateFK(c, session, t, cname);
-
-                    t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
-                    session.commit();
-                    tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                        tc.expTable, tc.deleteAction,
-                                        tc.updateAction);
-
-                    return;
-                } else if (sToken.equals("UNIQUE")) {
-                    int col[] = processColumnList(c, t);
-
-                    session.commit();
-                    tw.createUniqueConstraint(col, cname);
-
-                    return;
-                } else {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-            } else if (sToken.equals("COLUMN")) {
-                int    colindex = t.getColumnCount();
-                Column column   = processCreateColumn(c, t);
-
-                sToken = c.getString();
-
-                if (sToken.equals("BEFORE")) {
-                    sToken   = c.getName();
-                    colindex = t.getColumnNr(sToken);
-                } else {
-                    c.back();
-                }
-
-                if (column.isIdentity() || column.isPrimaryKey()
-                        || (!t.isEmpty() && column.isNullable() == false
-                            && column.getDefaultString() == null)) {
-                    throw Trace.error(Trace.BAD_ADD_COLUMN_DEFINITION);
-                }
-
-                session.commit();
-                tw.addOrDropColumn(column, colindex, 1);
-
-                return;
-            }
-        } else if (sToken.equals("DROP")) {
-            sToken = c.getString();
-
-            if (sToken.equals("CONSTRAINT")) {
-                String cname = c.getName();
-
-                session.commit();
-                tw.dropConstraint(cname);
-
-                return;
-            } else if (sToken.equals("COLUMN")) {
-                sToken = c.getName();
-
-                int colindex = t.getColumnNr(sToken);
-
-                session.commit();
-                tw.addOrDropColumn(null, colindex, -1);
-
-                return;
-            } else {
+            default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            case RENAME :
+                c.getThis("TO");
+                processRenameTable(c, session, tablename);
+
+                return;
+
+            case ADD : {
+                sToken = c.getString();
+
+                int     subcmd     = -1;
+                Integer subCommand = (Integer) hCommands.get(sToken);
+
+                if (subCommand != null) {
+                    subcmd = subCommand.intValue();
+                }
+
+                switch (subcmd) {
+
+                    default :
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    case CONSTRAINT :
+                        HsqlName cname =
+                            new HsqlName(c.getName(),
+                                         c.wasQuotedIdentifier());
+
+                        sToken = c.getString();
+
+                        int     ssubcmd     = -1;
+                        Integer ssubCommand = (Integer) hCommands.get(sToken);
+
+                        if (ssubCommand != null) {
+                            ssubcmd = ssubCommand.intValue();
+                        }
+
+                        switch (ssubcmd) {
+
+                            default :
+                                throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                                  sToken);
+                            case FOREIGN :
+                                c.getThis("KEY");
+
+                                TempConstraint tc =
+                                    processCreateFK(c, session, t, cname);
+
+                                t.checkColumnsMatch(tc.localCol, tc.expTable,
+                                                    tc.expCol);
+                                session.commit();
+                                tw.createForeignKey(tc.localCol, tc.expCol,
+                                                    tc.name, tc.expTable,
+                                                    tc.deleteAction,
+                                                    tc.updateAction);
+
+                                return;
+
+                            case UNIQUE :
+                                int col[] = processColumnList(c, t);
+
+                                session.commit();
+                                tw.createUniqueConstraint(col, cname);
+
+                                return;
+                        }
+                    case COLUMN :
+                        int    colindex = t.getColumnCount();
+                        Column column   = processCreateColumn(c, t);
+
+                        sToken = c.getString();
+
+                        if (sToken.equals("BEFORE")) {
+                            sToken   = c.getName();
+                            colindex = t.getColumnNr(sToken);
+                        } else {
+                            c.back();
+                        }
+
+                        if (column.isIdentity() || column.isPrimaryKey()
+                                || (!t.isEmpty()
+                                    && column.isNullable() == false
+                                    && column.getDefaultString() == null)) {
+                            throw Trace.error(
+                                Trace.BAD_ADD_COLUMN_DEFINITION);
+                        }
+
+                        session.commit();
+                        tw.addOrDropColumn(column, colindex, 1);
+
+                        return;
+                }
             }
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            case DROP : {
+                sToken = c.getString();
+
+                int     subcmd     = -1;
+                Integer subCommand = (Integer) hCommands.get(sToken);
+
+                if (subCommand != null) {
+                    subcmd = subCommand.intValue();
+                }
+
+                switch (subcmd) {
+
+                    default :
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    case CONSTRAINT :
+                        String cname = c.getName();
+
+                        session.commit();
+                        tw.dropConstraint(cname);
+
+                        return;
+
+                    case COLUMN :
+                        sToken = c.getName();
+
+                        int colindex = t.getColumnNr(sToken);
+
+                        session.commit();
+                        tw.addOrDropColumn(null, colindex, -1);
+
+                        return;
+                }
+            }
         }
     }
 
@@ -1993,53 +2182,74 @@ class Database {
         session.checkAdmin();
         session.setScripting(true);
 
-        String sToken = c.getString();
+        String  sToken  = c.getString();
+        int     cmd     = -1;
+        Integer command = (Integer) hCommands.get(sToken);
 
-        if (sToken.equals("TABLE") || sToken.equals("VIEW")) {
-            boolean isview    = sToken.equals("VIEW");
-            String  tablename = c.getString();
-            boolean dropmode  = false;
+        if (command != null) {
+            cmd = command.intValue();
+        }
 
-            sToken = c.getString();
+        boolean isview = false;
 
-            if (sToken.equals("IF")) {
-                c.getThis("EXISTS");
+        switch (cmd) {
 
-                dropmode = true;
-            } else {
-                c.back();
+            case VIEW :
+                isview = true;
 
-                Table t = getTable(tablename, session);
+            //fall thru
+            case TABLE :
+                String  tablename = c.getString();
+                boolean dropmode  = false;
 
-                session.setScripting(!t.isTemp());
-            }
+                sToken = c.getString();
 
-            dropTable(tablename, dropmode, isview, session);
-            session.commit();
-        } else if (sToken.equals("USER")) {
-            aAccess.dropUser(c.getStringToken());
-        } else if (sToken.equals("TRIGGER")) {
-            dropTrigger(c.getString(), session);
-        } else if (sToken.equals("INDEX")) {
-            String indexname = c.getName();
-            Table  t         = findTableForIndex(indexname);
+                if (sToken.equals("IF")) {
+                    c.getThis("EXISTS");
 
-            if (t == null ||!t.equals(t.getName().name, session)) {
-                throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
-            }
+                    dropmode = true;
+                } else {
+                    c.back();
 
-            t.checkDropIndex(indexname, null);
+                    Table t = getTable(tablename, session);
+
+                    session.setScripting(!t.isTemp());
+                }
+
+                dropTable(tablename, dropmode, isview, session);
+                session.commit();
+                break;
+
+            case USER :
+                aAccess.dropUser(c.getStringToken());
+                break;
+
+            case TRIGGER :
+                dropTrigger(c.getString(), session);
+                break;
+
+            case INDEX :
+                String indexname = c.getName();
+                Table  t         = findTableForIndex(indexname);
+
+                if (t == null ||!t.equals(t.getName().name, session)) {
+                    throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
+                }
+
+                t.checkDropIndex(indexname, null);
 
 // fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
 // see Table.moveDefinition();
-            session.commit();
-            session.setScripting(!t.isTemp());
+                session.commit();
+                session.setScripting(!t.isTemp());
 
-            TableWorks tw = new TableWorks(t);
+                TableWorks tw = new TableWorks(t);
 
-            tw.dropIndex(indexname);
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                tw.dropIndex(indexname);
+                break;
+
+            default :
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
         return new Result();
@@ -2171,98 +2381,156 @@ class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         session.setScripting(true);
 
-        String sToken = c.getString();
+        String  sToken  = c.getString();
+        int     cmd     = -1;
+        Integer command = (Integer) hCommands.get(sToken);
 
-        if (sToken.equals("PASSWORD")) {
-            session.checkReadWrite();
-            session.setPassword(c.getStringToken());
-        } else if (sToken.equals("READONLY")) {
-            session.commit();
-            session.setReadOnly(processTrueOrFalse(c));
-        } else if (sToken.equals("LOGSIZE")) {
-            session.checkAdmin();
+        if (command != null) {
+            cmd = command.intValue();
+        }
 
-            int i = Integer.parseInt(c.getString());
+        switch (cmd) {
 
-            logger.setLogSize(i);
-        } else if (sToken.equals("LOGTYPE")) {
-            session.checkAdmin();
-            session.setScripting(false);
+            case PASSWORD : {
+                session.checkReadWrite();
+                session.setPassword(c.getStringToken());
 
-            int i = Integer.parseInt(c.getString());
-
-            if (i == 0 || i == 1) {
-                logger.setLogType(i);
+                break;
             }
-        } else if (sToken.equals("IGNORECASE")) {
-            session.checkAdmin();
+            case READONLY : {
+                session.commit();
+                session.setReadOnly(processTrueOrFalse(c));
 
-            bIgnoreCase = processTrueOrFalse(c);
-        } else if (sToken.equals("MAXROWS")) {
-            int i = Integer.parseInt(c.getString());
+                break;
+            }
+            case LOGSIZE : {
+                session.checkAdmin();
 
-            session.setMaxRows(i);
-        } else if (sToken.equals("AUTOCOMMIT")) {
-            session.setAutoCommit(processTrueOrFalse(c));
-        } else if (sToken.equals("TABLE")) {
+                int i = Integer.parseInt(c.getString());
+
+                logger.setLogSize(i);
+
+                break;
+            }
+            case LOGTYPE : {
+                session.checkAdmin();
+                session.setScripting(false);
+
+                int i = Integer.parseInt(c.getString());
+
+                if (i == 0 || i == 1) {
+                    logger.setLogType(i);
+                }
+
+                break;
+            }
+            case IGNORECASE : {
+                session.checkAdmin();
+
+                bIgnoreCase = processTrueOrFalse(c);
+
+                break;
+            }
+            case MAXROWS : {
+                int i = Integer.parseInt(c.getString());
+
+                session.setMaxRows(i);
+
+                break;
+            }
+            case AUTOCOMMIT : {
+                session.setAutoCommit(processTrueOrFalse(c));
+
+                break;
+            }
+            case TABLE : {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // support for SET TABLE <table> READONLY [TRUE|FALSE]
 // sqlbob@users 20020427 support for SET TABLE <table> SOURCE "file" [DESC]
-            session.checkReadWrite();
+                session.checkReadWrite();
 
-            Table t = getTable(c.getString(), session);
-
-            sToken = c.getString();
-
-            session.setScripting(!t.isTemp());
-
-            if (sToken.equals("SOURCE")) {
-                if (!t.isTemp()) {
-                    session.checkAdmin();
-                }
+                Table t = getTable(c.getString(), session);
 
                 sToken = c.getString();
 
-                if (!c.wasQuotedIdentifier()) {
+                session.setScripting(!t.isTemp());
 
-                    //fredt - can replace with a better message
-                    throw Trace.error(Trace.INVALID_ESCAPE);
+                int     subcmd     = -1;
+                Integer subCommand = (Integer) hCommands.get(sToken);
+
+                if (subCommand != null) {
+                    subcmd = subCommand.intValue();
                 }
 
-                boolean isDesc = false;
+                switch (subcmd) {
 
-                if (c.getString().equals("DESC")) {
-                    isDesc = true;
-                } else {
-                    c.back();
+                    case SOURCE : {
+                        if (!t.isTemp()) {
+                            session.checkAdmin();
+                        }
+
+                        sToken = c.getString();
+
+                        if (!c.wasQuotedIdentifier()) {
+
+                            //fredt - can replace with a better message
+                            throw Trace.error(Trace.INVALID_ESCAPE);
+                        }
+
+                        boolean isDesc = false;
+
+                        if (c.getString().equals("DESC")) {
+                            isDesc = true;
+                        } else {
+                            c.back();
+                        }
+
+                        t.setDataSource(sToken, isDesc, session);
+
+                        break;
+                    }
+                    case READONLY : {
+                        session.checkAdmin();
+                        t.setDataReadOnly(processTrueOrFalse(c));
+
+                        break;
+                    }
+                    case INDEX : {
+                        session.checkAdmin();
+                        c.getString();
+                        t.setIndexRoots((String) c.getAsValue());
+
+                        break;
+                    }
+                    default : {
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                    }
                 }
 
-                t.setDataSource(sToken, isDesc, session);
-            } else if (sToken.equals("READONLY")) {
+                break;
+            }
+            case REFERENTIAL_INTEGRITY : {
+
+                // fredt - no longer checking for misspelt form
                 session.checkAdmin();
-                t.setDataReadOnly(processTrueOrFalse(c));
-            } else if (sToken.equals("INDEX")) {
+
+                bReferentialIntegrity = processTrueOrFalse(c);
+
+                break;
+            }
+            case WRITE_DELAY : {
                 session.checkAdmin();
-                c.getString();
-                t.setIndexRoots((String) c.getAsValue());
-            } else {
+
+                boolean delay = processTrueOrFalse(c);
+
+                logger.setWriteDelay(delay);
+
+                break;
+            }
+            default : {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
             }
-        } else if (sToken.equals("REFERENTIAL_INTEGRITY")) {
-
-            // fredt - no longer checking for misspelt form
-            session.checkAdmin();
-
-            bReferentialIntegrity = processTrueOrFalse(c);
-        } else if (sToken.equals("WRITE_DELAY")) {
-            session.checkAdmin();
-
-            boolean delay = processTrueOrFalse(c);
-
-            logger.setWriteDelay(delay);
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
         return new Result();

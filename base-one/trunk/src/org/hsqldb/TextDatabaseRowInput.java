@@ -145,7 +145,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             s    = text.substring(start, next);
             next += sepLen;
 
-            if (emptyIsNull && s.equals("")) {
+            if (emptyIsNull && s.length() == 0) {
                 s = null;
             }
         } catch (Exception e) {

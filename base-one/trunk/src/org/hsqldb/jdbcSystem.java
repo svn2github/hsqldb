@@ -73,9 +73,7 @@ class jdbcSystem {
     }
 }
 
-
 //#ifdef JAVA2
-
 //#else
 /*
 // surrogate for java.util.Map interface

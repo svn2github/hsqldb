@@ -32,7 +32,6 @@
 /*
  * StopWatch.java
  */
-
 package org.hsqldb.lib;
 
 /**
@@ -44,7 +43,7 @@ public class StopWatch {
 
     private long startTime;
     private long total;
-    boolean running = false;
+    boolean      running = false;
 
     /** Creates, zeros, and starts a new StopWatch */
     public StopWatch() {
@@ -52,26 +51,30 @@ public class StopWatch {
     }
 
     public long elapsedTime() {
+
         if (running) {
-            return  total + System.currentTimeMillis() - startTime;
+            return total + System.currentTimeMillis() - startTime;
         } else {
             return total;
         }
     }
 
     public void zero() {
+
         total = 0;
+
         start();
     }
 
     public void start() {
         startTime = System.currentTimeMillis();
-        running = true;
+        running   = true;
     }
 
     public void stop() {
+
         if (running) {
-            total += System.currentTimeMillis() - startTime;
+            total   += System.currentTimeMillis() - startTime;
             running = false;
         }
     }

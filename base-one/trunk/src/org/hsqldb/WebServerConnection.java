@@ -85,7 +85,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
-// fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
+// fredt@users 20021002 - patch 1.7.1 - changed notification method
+// unsaved@users 20021113 - patch 1.7.1 - SSL support
 
 /**
  *  A web server connection is a transient object that lasts for the duration
@@ -99,16 +100,16 @@ class WebServerConnection implements Runnable {
     static final String      ENCODING = "8859_1";
     private Socket           mSocket;
     private WebServer        mServer;
-    private boolean	     bTls;
-    private ClassLoader	     loader = null;
-    private Method	     methSSLSgetInputStream = null,
-			     methSSLSgetOutputStream = null;
-    private static final int GET         = 1,
-                             HEAD        = 2,
-                             POST        = 3,
-                             BAD_REQUEST = 400,
-                             FORBIDDEN   = 403,
-                             NOT_FOUND   = 404;
+    private boolean          bTls;
+    private ClassLoader      loader                  = null;
+    private Method           methSSLSgetInputStream  = null,
+                             methSSLSgetOutputStream = null;
+    private static final int GET                     = 1,
+                             HEAD                    = 2,
+                             POST                    = 3,
+                             BAD_REQUEST             = 400,
+                             FORBIDDEN               = 403,
+                             NOT_FOUND               = 404;
 
     /**
      *  Constructor declaration
@@ -117,9 +118,10 @@ class WebServerConnection implements Runnable {
      * @param  server
      */
     WebServerConnection(Socket socket, WebServer server, boolean bIn) {
+
         mServer = server;
         mSocket = socket;
-	bTls = bIn;
+        bTls    = bIn;
     }
 
     /**
@@ -128,53 +130,74 @@ class WebServerConnection implements Runnable {
     public void run() {
 
         try {
-	    if (bTls) try {
-		if (loader == null) loader = getClass().getClassLoader();
-		if (loader == null)
-		 throw new IncompatibleClassChangeError(
-		"Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
-		if (methSSLSgetInputStream == null)
-		    methSSLSgetInputStream =
-		     loader.loadClass("javax.net.ssl.SSLSocket").
-		     getMethod("getInputStream", null);
-		if (methSSLSgetOutputStream == null)
-		    methSSLSgetOutputStream =
-		     loader.loadClass("javax.net.ssl.SSLSocket").
-		     getMethod("getOutputStream", null);
-	    } catch(SecurityException se) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    } catch (ClassNotFoundException cnfe) {
-	    	throw new ClassNotFoundException("JSSE not installed");
-	    } catch (NoSuchMethodException nsme) {
-	    	throw new Exception(
-	  	 "Failed to find an SSL method even though JSSE " +
-		 "is installed:\n" + nsme);
-	    }
-	    // Assertion (would use "assert" if Java 1.4):
-	    if (bTls && (methSSLSgetInputStream == null ||
-	     methSSLSgetOutputStream == null))
-	      throw new VerifyError("Unexpected SSL error encountered");
-	    // At this point, if mode is SSL, then methSSL
-	    BufferedReader input = null;
-	    try {
-                input = new BufferedReader(
-                 new InputStreamReader((bTls ?
-		  (InputStream) methSSLSgetInputStream.invoke(mSocket, null) :
-		 mSocket.getInputStream())
-	        , ENCODING));
-	    } catch (IllegalAccessException iae) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    // Need to unwrap the following exceptions
-	    } catch (InvocationTargetException ite) {
-	    	Throwable t = ite.getTargetException();
-		throw((t instanceof Exception) ? ((Exception) t) : ite);
-	    } catch (ExceptionInInitializerError eiie) {
-	    	Throwable t = eiie.getException();
-		if (t instanceof Exception) throw (Exception) t;
-		else throw eiie;
-	    }
+            if (bTls) {
+                try {
+                    if (loader == null) {
+                        loader = getClass().getClassLoader();
+                    }
+
+                    if (loader == null) {
+                        throw new IncompatibleClassChangeError(
+                            "Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
+                    }
+
+                    if (methSSLSgetInputStream == null) {
+                        methSSLSgetInputStream = loader.loadClass(
+                            "javax.net.ssl.SSLSocket").getMethod(
+                            "getInputStream", null);
+                    }
+
+                    if (methSSLSgetOutputStream == null) {
+                        methSSLSgetOutputStream = loader.loadClass(
+                            "javax.net.ssl.SSLSocket").getMethod(
+                            "getOutputStream", null);
+                    }
+                } catch (SecurityException se) {
+                    throw new Exception(
+                        "You do not have permission to use the needed SSL resources");
+                } catch (ClassNotFoundException cnfe) {
+                    throw new ClassNotFoundException("JSSE not installed");
+                } catch (NoSuchMethodException nsme) {
+                    throw new Exception(
+                        "Failed to find an SSL method even though JSSE "
+                        + "is installed:\n" + nsme);
+                }
+            }
+
+            // Assertion (would use "assert" if Java 1.4):
+            if (bTls && (methSSLSgetInputStream == null
+                         || methSSLSgetOutputStream == null)) {
+                throw new VerifyError("Unexpected SSL error encountered");
+            }
+
+            // At this point, if mode is SSL, then methSSL
+            BufferedReader input = null;
+
+            try {
+                input = new BufferedReader(new InputStreamReader((bTls
+                        ? (InputStream) methSSLSgetInputStream.invoke(mSocket,
+                            null)
+                        : mSocket.getInputStream()), ENCODING));
+            } catch (IllegalAccessException iae) {
+                throw new Exception(
+                    "You do not have permission to use the needed SSL resources");
+
+                // Need to unwrap the following exceptions
+            } catch (InvocationTargetException ite) {
+                Throwable t = ite.getTargetException();
+
+                throw ((t instanceof Exception) ? ((Exception) t)
+                                                : ite);
+            } catch (ExceptionInInitializerError eiie) {
+                Throwable t = eiie.getException();
+
+                if (t instanceof Exception) {
+                    throw (Exception) t;
+                } else {
+                    throw eiie;
+                }
+            }
+
             String request;
             String name   = null;
             int    method = BAD_REQUEST;
@@ -294,29 +317,38 @@ class WebServerConnection implements Runnable {
             }
 
             DataOutputStream output = null;
-	    // Assertion (would use "assert" if Java 1.4):
-	    if (bTls && methSSLSgetOutputStream == null)
-	      throw new VerifyError("Unexpected SSL error encountered");
-	    try {
-            	output = new DataOutputStream(
-                 new BufferedOutputStream(
-		  bTls ? (OutputStream)
-		  methSSLSgetOutputStream.invoke(mSocket, null) :
-		  mSocket.getOutputStream()
-		 )
-	        );
-	    } catch (IllegalAccessException iae) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    // Need to unwrap the following exceptions
-	    } catch (InvocationTargetException ite) {
-	    	Throwable t = ite.getTargetException();
-		throw((t instanceof Exception) ? ((Exception) t) : ite);
-	    } catch (ExceptionInInitializerError eiie) {
-	    	Throwable t = eiie.getException();
-		if (t instanceof Exception) throw (Exception) t;
-		else throw eiie;
-	    }
+
+            // Assertion (would use "assert" if Java 1.4):
+            if (bTls && methSSLSgetOutputStream == null) {
+                throw new VerifyError("Unexpected SSL error encountered");
+            }
+
+            try {
+                output = new DataOutputStream(
+                    new BufferedOutputStream(
+                        bTls
+                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                            mSocket, null)
+                        : mSocket.getOutputStream()));
+            } catch (IllegalAccessException iae) {
+                throw new Exception(
+                    "You do not have permission to use the needed SSL resources");
+
+                // Need to unwrap the following exceptions
+            } catch (InvocationTargetException ite) {
+                Throwable t = ite.getTargetException();
+
+                throw ((t instanceof Exception) ? ((Exception) t)
+                                                : ite);
+            } catch (ExceptionInInitializerError eiie) {
+                Throwable t = eiie.getException();
+
+                if (t instanceof Exception) {
+                    throw (Exception) t;
+                } else {
+                    throw eiie;
+                }
+            }
 
             output.write(header.getBytes(ENCODING));
 
@@ -437,21 +469,23 @@ class WebServerConnection implements Runnable {
                 break;
         }
 
-	// No point in trying to write if SSL handshaking can't succeed
-	if (!bTls || methSSLSgetOutputStream != null) try {
-            DataOutputStream output = new DataOutputStream(
-                new BufferedOutputStream(bTls ?
-		 (OutputStream) methSSLSgetOutputStream.invoke(mSocket, null) :
-		 mSocket.getOutputStream()
-		)
-	    );
+        // No point in trying to write if SSL handshaking can't succeed
+        if (!bTls || methSSLSgetOutputStream != null) {
+            try {
+                DataOutputStream output = new DataOutputStream(
+                    new BufferedOutputStream(
+                        bTls
+                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                            mSocket, null)
+                        : mSocket.getOutputStream()));
 
-            output.write(message.getBytes(ENCODING));
-            output.flush();
-            output.close();
-        } catch (Exception e) {
-            mServer.traceError("processError: " + e.getMessage());
-            e.printStackTrace();
+                output.write(message.getBytes(ENCODING));
+                output.flush();
+                output.close();
+            } catch (Exception e) {
+                mServer.traceError("processError: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -475,26 +509,37 @@ class WebServerConnection implements Runnable {
                                     "Content-Type: application/octet-stream\n"
                                     + "Content-Length: " + len);
             DataOutputStream output = null;
-	    if (bTls && methSSLSgetOutputStream == null)
-	      throw new VerifyError("Unexpected SSL error encountered");
-	    try {
-		output = new DataOutputStream(new BufferedOutputStream(bTls ?
-		  (OutputStream) methSSLSgetOutputStream.invoke(mSocket, null) :
-		  mSocket.getOutputStream()
-	    	 )
-		);
-	    } catch (IllegalAccessException iae) {
-            	throw new Exception(
-	    	 "You do not have permission to use the needed SSL resources");
-	    // Need to unwrap the following exceptions
-	    } catch (InvocationTargetException ite) {
-	    	Throwable t = ite.getTargetException();
-		throw((t instanceof Exception) ? ((Exception) t) : ite);
-	    } catch (ExceptionInInitializerError eiie) {
-	    	Throwable t = eiie.getException();
-		if (t instanceof Exception) throw (Exception) t;
-		else throw eiie;
-	    }
+
+            if (bTls && methSSLSgetOutputStream == null) {
+                throw new VerifyError("Unexpected SSL error encountered");
+            }
+
+            try {
+                output = new DataOutputStream(
+                    new BufferedOutputStream(
+                        bTls
+                        ? (OutputStream) methSSLSgetOutputStream.invoke(
+                            mSocket, null)
+                        : mSocket.getOutputStream()));
+            } catch (IllegalAccessException iae) {
+                throw new Exception(
+                    "You do not have permission to use the needed SSL resources");
+
+                // Need to unwrap the following exceptions
+            } catch (InvocationTargetException ite) {
+                Throwable t = ite.getTargetException();
+
+                throw ((t instanceof Exception) ? ((Exception) t)
+                                                : ite);
+            } catch (ExceptionInInitializerError eiie) {
+                Throwable t = eiie.getException();
+
+                if (t instanceof Exception) {
+                    throw (Exception) t;
+                } else {
+                    throw eiie;
+                }
+            }
 
             output.write(header.getBytes(ENCODING));
             output.write(result);

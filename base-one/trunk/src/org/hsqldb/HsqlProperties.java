@@ -46,7 +46,7 @@ import java.util.Properties;
  */
 public class HsqlProperties {
 
-    protected String           fileName;
+    protected String     fileName;
     protected Properties stringProps;;
 
     public HsqlProperties() {
@@ -142,7 +142,7 @@ public class HsqlProperties {
 
         Enumeration keys = props.stringProps.propertyNames();
 
-        for (; keys.hasMoreElements(); ) {
+        while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
 
             this.stringProps.put(key, props.stringProps.get(key));

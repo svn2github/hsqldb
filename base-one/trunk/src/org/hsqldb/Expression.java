@@ -127,53 +127,16 @@ class Expression {
                      CASEWHEN = 62;
 
     // temporary used during paring
-    static final int         PLUS         = 100,
-                             OPEN         = 101,
-                             CLOSE        = 102,
-                             SELECT       = 103,
-                             COMMA        = 104,
-                             STRINGCONCAT = 105,
-                             BETWEEN      = 106,
-                             CAST         = 107,
-                             END          = 108;
-    static final HsqlHashMap typeNames    = new HsqlHashMap();
-
-    static {
-        typeNames.put(new Integer(VALUE), "VALUE");
-        typeNames.put(new Integer(COLUMN), "COLUMN");
-        typeNames.put(new Integer(QUERY), "QUERY");
-        typeNames.put(new Integer(TRUE), "TRUE");
-        typeNames.put(new Integer(VALUELIST), "VALUELIST");
-        typeNames.put(new Integer(ASTERIX), "*");
-        typeNames.put(new Integer(FUNCTION), "FUNCTION");
-        typeNames.put(new Integer(NEGATE), "NEGATE");
-        typeNames.put(new Integer(ADD), "ADD");
-        typeNames.put(new Integer(SUBTRACT), "SUBTRACT");
-        typeNames.put(new Integer(MULTIPLY), "MULTIPLY");
-        typeNames.put(new Integer(DIVIDE), "DIVIDE");
-        typeNames.put(new Integer(CONCAT), "CONCAT");
-        typeNames.put(new Integer(NOT), "NOT");
-        typeNames.put(new Integer(EQUAL), "EQUAL");
-        typeNames.put(new Integer(BIGGER_EQUAL), "BIGGER_EQUAL");
-        typeNames.put(new Integer(BIGGER), "BIGGER");
-        typeNames.put(new Integer(SMALLER), "SMALLER");
-        typeNames.put(new Integer(SMALLER_EQUAL), "SMALLER_EQUAL");
-        typeNames.put(new Integer(NOT_EQUAL), "NOT_EQUAL");
-        typeNames.put(new Integer(LIKE), "LIKE");
-        typeNames.put(new Integer(AND), "AND");
-        typeNames.put(new Integer(OR), "OR");
-        typeNames.put(new Integer(IN), "IN");
-        typeNames.put(new Integer(EXISTS), "EXISTS");
-        typeNames.put(new Integer(COUNT), "COUNT");
-        typeNames.put(new Integer(SUM), "SUM");
-        typeNames.put(new Integer(MIN), "MIN");
-        typeNames.put(new Integer(MAX), "MAX");
-        typeNames.put(new Integer(AVG), "AVG");
-        typeNames.put(new Integer(IFNULL), "IFNULL");
-        typeNames.put(new Integer(CONVERT), "CONVERT");
-        typeNames.put(new Integer(CASEWHEN), "CASEWHEN");
-    }
-
+    static final int         PLUS            = 100,
+                             OPEN            = 101,
+                             CLOSE           = 102,
+                             SELECT          = 103,
+                             COMMA           = 104,
+                             STRINGCONCAT    = 105,
+                             BETWEEN         = 106,
+                             CAST            = 107,
+                             END             = 108,
+                             IS              = 109;
     private static final int AGGREGATE_SELF  = -1;
     private static final int AGGREGATE_NONE  = 0;
     private static final int AGGREGATE_LEFT  = 1;
@@ -270,11 +233,11 @@ class Expression {
         iType     = VALUELIST;
         iDataType = Types.VARCHAR;
 
-        int len = v.size();
+        int size = v.size();
 
-        hList = new HsqlHashMap(len);
+        hList = new HsqlHashMap(size);
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < size; i++) {
             Object o = v.get(i);
 
             if (o != null) {
@@ -367,35 +330,161 @@ class Expression {
 
     public String toString() {
 
-        StringBuffer buf = new StringBuffer(typeNames.get(new Integer(iType))
-                                            + " ");
+        StringBuffer buf = new StringBuffer(32);
 
         switch (iType) {
 
             case FUNCTION :
+                buf.append("FUNCTION ");
                 buf.append(fFunction);
-                break;
+
+                return buf.toString();
 
             case VALUE :
-                buf.append("=" + oData);
-                break;
+                buf.append("VALUE =");
+                buf.append(oData);
 
-            case QUERY :
-                buf.append(sSelect);
-                break;
+                return buf.toString();
 
             case COLUMN :
+                buf.append("COLUMN ");
                 buf.append(sColumn);
+
+                return buf.toString();
+
+            case QUERY :
+                buf.append("QUERY ");
+                buf.append(sSelect);
+
+                return buf.toString();
+
+            case TRUE :
+                buf.append("TRUE ");
                 break;
 
-            default :
-                if (eArg != null) {
-                    buf.append(" arg1=[" + eArg + "]");
-                }
+            case VALUELIST :
+                buf.append("VALUELIST ");
+                break;
 
-                if (eArg2 != null) {
-                    buf.append(" arg2=[" + eArg2 + "]");
-                }
+            case ASTERIX :
+                buf.append("* ");
+                break;
+
+            case NEGATE :
+                buf.append("NEGATE ");
+                break;
+
+            case ADD :
+                buf.append("ADD ");
+                break;
+
+            case SUBTRACT :
+                buf.append("SUBTRACT ");
+                break;
+
+            case MULTIPLY :
+                buf.append("MULTIPLY ");
+                break;
+
+            case DIVIDE :
+                buf.append("DIVIDE ");
+                break;
+
+            case CONCAT :
+                buf.append("CONCAT ");
+                break;
+
+            case NOT :
+                buf.append("NOT ");
+                break;
+
+            case EQUAL :
+                buf.append("EQUAL ");
+                break;
+
+            case BIGGER_EQUAL :
+                buf.append("BIGGER_EQUAL ");
+                break;
+
+            case BIGGER :
+                buf.append("BIGGER ");
+                break;
+
+            case SMALLER :
+                buf.append("SMALLER ");
+                break;
+
+            case SMALLER_EQUAL :
+                buf.append("SMALLER_EQUAL ");
+                break;
+
+            case NOT_EQUAL :
+                buf.append("NOT_EQUAL ");
+                break;
+
+            case LIKE :
+                buf.append("LIKE ");
+                break;
+
+            case AND :
+                buf.append("AND ");
+                break;
+
+            case OR :
+                buf.append("OR ");
+                break;
+
+            case IN :
+                buf.append("IN ");
+                break;
+
+            case EXISTS :
+                buf.append("EXISTS ");
+                break;
+
+            case COUNT :
+                buf.append("COUNT ");
+                break;
+
+            case SUM :
+                buf.append("SUM ");
+                break;
+
+            case MIN :
+                buf.append("MIN ");
+                break;
+
+            case MAX :
+                buf.append("MAX ");
+                break;
+
+            case AVG :
+                buf.append("AVG ");
+                break;
+
+            case IFNULL :
+                buf.append("IFNULL ");
+                break;
+
+            case CONVERT :
+                buf.append("CONVERT ");
+                break;
+
+            case CASEWHEN :
+                buf.append("CASEWHEN ");
+                break;
+        }
+
+        if (eArg != null) {
+            buf.append(" arg1=[");
+            buf.append(eArg);
+            buf.append(']');
+        }
+
+        if (eArg2 != null) {
+            buf.append(" arg2=[");
+            buf.append(eArg2);
+            buf.append(']');
         }
 
         return buf.toString();
@@ -599,9 +688,14 @@ class Expression {
 
     static boolean isAggregate(int type) {
 
-        if ((type == COUNT) || (type == MAX) || (type == MIN)
-                || (type == SUM) || (type == AVG)) {
-            return true;
+        switch (type) {
+
+            case COUNT :
+            case MAX :
+            case MIN :
+            case SUM :
+            case AVG :
+                return true;
         }
 
         return false;
@@ -654,11 +748,11 @@ class Expression {
                 colExps.add(this);
             } else {
                 if (eArg != null) {
-                    eArg.collectInGroupByExpressions(colExps);
+                    eArg.collectInGroupByExpressions(colExps);     // TODO use loop instead
                 }
 
                 if (eArg2 != null) {
-                    eArg2.collectInGroupByExpressions(colExps);
+                    eArg2.collectInGroupByExpressions(colExps);    // TODO use loop instead
                 }
             }
         }
@@ -722,7 +816,7 @@ class Expression {
         if (eArg != null) {
             String name = eArg.getColumnName();
 
-            if (!"".equals(name)) {
+            if (name.length() > 0) {
                 return name;
             }
         }
@@ -750,7 +844,7 @@ class Expression {
         if (eArg != null) {
             String name = eArg.getColumnName();
 
-            if (!"".equals(name)) {
+            if (name.length() > 0) {
                 return eArg.columnQuoted;
             }
         }
@@ -838,8 +932,11 @@ class Expression {
     void resolve(TableFilter f) throws SQLException {
 
         if ((f != null) && (iType == COLUMN)) {
-            if ((sTable == null) || f.getName().equals(sTable)) {
-                int i = f.getTable().searchColumn(sColumn);
+            String tableName = f.getName();
+
+            if ((sTable == null) || tableName.equals(sTable)) {
+                Table table = f.getTable();
+                int   i     = table.searchColumn(sColumn);
 
                 if (i != -1) {
 
@@ -848,14 +945,16 @@ class Expression {
                     Trace.check(
                         tFilter == null
                         || tFilter.getName().equals(
-                            f.getName()), Trace.COLUMN_NOT_FOUND, sColumn);
+                            tableName), Trace.COLUMN_NOT_FOUND, sColumn);
+
+                    Column col = table.getColumn(i);
 
                     tFilter      = f;
                     iColumn      = i;
-                    sTable       = f.getName();
-                    iDataType    = f.getTable().getColumn(i).getType();
-                    iColumnSize  = f.getTable().getColumn(i).getSize();
-                    iColumnScale = f.getTable().getColumn(i).getScale();
+                    sTable       = tableName;
+                    iDataType    = col.getType();
+                    iColumnSize  = col.getSize();
+                    iColumnScale = col.getScale();
                 }
             }
         }
@@ -957,12 +1056,14 @@ class Expression {
      */
     boolean isResolved() {
 
-        if (iType == VALUE || iType == NEGATE) {
-            return true;
-        }
+        switch (iType) {
 
-        if (iType == COLUMN) {
-            return tFilter != null;
+            case VALUE :
+            case NEGATE :
+                return true;
+
+            case COLUMN :
+                return tFilter != null;
         }
 
         // todo: could recurse here, but never miss a 'false'!

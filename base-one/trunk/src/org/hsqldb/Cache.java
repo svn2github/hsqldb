@@ -96,7 +96,7 @@ class Cache {
     // post openning constant fields
     boolean           cacheReadonly;
     private int       cacheScale;
-    private int   cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
+    private int       cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
     private int       cacheLength;
     private int       writerLength;
     private int       maxCacheSize;
@@ -154,8 +154,8 @@ class Cache {
     }
 
     private void initBuffers() throws SQLException {
-         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
-         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
+        rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
+        rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
     }
 
     Cache(String name, Database db) throws SQLException {

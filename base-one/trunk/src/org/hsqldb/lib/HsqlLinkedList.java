@@ -220,21 +220,27 @@ public class HsqlLinkedList implements HsqlList {
 
     public String toString() {
 
-        HsqlStringBuffer buffer =
-            new HsqlStringBuffer("[org.hsqldb.HsqlLinkedList |  size = ");
+        StringBuffer sb = new StringBuffer(32);
 
-        buffer.append(elementCount);
-        buffer.append(", elements:  ");
+        sb.append("HsqlLinkedList : size=");
+        sb.append(elementCount);
+        sb.append(' ');
+        sb.append('[');
 
-        for (Enumeration enum = elements(); enum.hasMoreElements(); ) {
-            buffer.append(enum.nextElement().toString());
-            buffer.append(enum.hasMoreElements() ? ", "
-                                                 : "");
+        Enumeration enum = elements();
+
+        while (enum.hasMoreElements()) {
+            sb.append(enum.nextElement());
+
+            if (enum.hasMoreElements()) {
+                sb.append(',');
+                sb.append(' ');
+            }
         }
 
-        buffer.append(']');
+        sb.append(']');
 
-        return buffer.toString();
+        return sb.toString();
     }
 
     /**

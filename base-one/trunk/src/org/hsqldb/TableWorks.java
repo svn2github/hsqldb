@@ -250,7 +250,7 @@ class TableWorks {
 
         HsqlArrayList constraints = table.getConstraints();
 
-        for (int i = 0; i < constraints.size(); i++) {
+        for (int i = 0, size = constraints.size(); i < size; i++) {
             Constraint c = (Constraint) constraints.get(i);
 
             if (c.isEquivalent(col, Constraint.UNIQUE)

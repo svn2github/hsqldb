@@ -154,7 +154,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // type of logging (0 : text , 1 : binary)
         setProperty("hsqldb.log_type", "0");
-
         setProperty("readonly", false);
         setProperty("modified", "no");
 

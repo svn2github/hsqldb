@@ -3554,19 +3554,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         String where = null;
 
         if (tableNamePattern != null) {
-            where = "TABLE_NAME LIKE '" + tableNamePattern + "'";
+            where = "TABLE_NAME LIKE '" + tableNamePattern + '\'';
         }
 
         if (types != null) {
-            if (where == null) {
-                where = "";
-            } else {
-                where += " AND ";
-            }
+            String sTypes = "TABLE_TYPE IN ("
+                            + StringUtil.getList(types, ",", "'") + ')';
 
-            where += " TABLE_TYPE IN (";
-            where += StringUtil.getList(types, ",", "'");
-            where += ')';
+            if (where == null) {
+                where = sTypes;
+            } else {
+                where = where + " AND " + sTypes;
+            }
         }
 
         return executeSelect(table, where);

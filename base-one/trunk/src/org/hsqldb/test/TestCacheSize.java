@@ -269,6 +269,7 @@ public class TestCacheSize {
 
         try {
             long startTime = System.currentTimeMillis();
+
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
             sStatement = cConnection.createStatement();

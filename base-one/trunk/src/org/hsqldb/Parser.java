@@ -269,11 +269,13 @@ class Parser {
     Result processUpdate() throws SQLException {
 
         cSession.checkReadWrite();
-        String token = tTokenizer.getString();
-        Table       table  = dDatabase.getTable(token, cSession);
-        cSession.check(table.getName(), UserManager.UPDATE);
-        TableFilter filter = new TableFilter(table, null, false);
 
+        String token = tTokenizer.getString();
+        Table  table = dDatabase.getTable(token, cSession);
+
+        cSession.check(table.getName(), UserManager.UPDATE);
+
+        TableFilter filter = new TableFilter(table, null, false);
 
         if (table.isView()) {
             throw Trace.error(Trace.NOT_A_TABLE, token);
@@ -465,11 +467,11 @@ class Parser {
         tTokenizer.getThis("FROM");
 
         String token = tTokenizer.getString();
+        Table  table = dDatabase.getTable(token, cSession);
 
-        Table       table  = dDatabase.getTable(token, cSession);
         cSession.check(table.getName(), UserManager.DELETE);
-        TableFilter filter = new TableFilter(table, null, false);
 
+        TableFilter filter = new TableFilter(table, null, false);
 
         if (table.isView()) {
             throw Trace.error(Trace.NOT_A_TABLE, token);
@@ -535,9 +537,8 @@ class Parser {
         tTokenizer.getThis("INTO");
 
         String token = tTokenizer.getString();
+        Table  t     = dDatabase.getTable(token, cSession);
 
-
-        Table t = dDatabase.getTable(token, cSession);
         cSession.check(t.getName(), UserManager.INSERT);
 
         if (t.isView()) {
@@ -560,13 +561,15 @@ class Parser {
 
                 token = tTokenizer.getString();
 
+                if (token.equals(",")) {
+                    continue;
+                }
+
                 if (token.equals(")")) {
                     break;
                 }
 
-                if (!token.equals(",")) {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                }
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
 
             token = tTokenizer.getString();
@@ -621,13 +624,15 @@ class Parser {
 
                 token = tTokenizer.getString();
 
+                if (token.equals(",")) {
+                    continue;
+                }
+
                 if (token.equals(")")) {
                     break;
                 }
 
-                if (!token.equals(",")) {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                }
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
 
             Trace.check(len == i, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
@@ -1137,7 +1142,7 @@ class Parser {
             // this could be an alias column
             String s = e.getColumnName();
 
-            for (int i = 0, vSize = vcolumn.size(); i < vSize; i++) {
+            for (int i = 0, size = vcolumn.size(); i < size; i++) {
                 Expression ec = (Expression) vcolumn.get(i);
 
                 // We can only substitute alias defined in the select clause,
@@ -1185,8 +1190,8 @@ class Parser {
             // subquery creation can't fail because constraint violation
             t.insert(r, cSession);
         } else {
-
             t = dDatabase.getTable(token, cSession);
+
             cSession.check(t.getName(), UserManager.SELECT);
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
@@ -1431,124 +1436,143 @@ class Parser {
      */
     private Expression readCondition() throws SQLException {
 
-        if (iToken == Expression.NOT) {
-            int type = iToken;
+        switch (iToken) {
 
-            read();
-
-            return new Expression(type, readCondition(), null);
-        } else if (iToken == Expression.EXISTS) {
-            int type = iToken;
-
-            read();
-            readThis(Expression.OPEN);
-            Trace.check(iToken == Expression.SELECT, Trace.UNEXPECTED_TOKEN);
-
-            Expression s = new Expression(parseSelect());
-
-            read();
-            readThis(Expression.CLOSE);
-
-            return new Expression(type, s, null);
-        } else {
-            Expression a   = readConcat();
-            boolean    not = false;
-
-            if (iToken == Expression.NOT) {
-                not = true;
+            case Expression.NOT : {
+                int type = iToken;
 
                 read();
+
+                return new Expression(type, readCondition(), null);
             }
-
-            if (iToken == Expression.LIKE) {
-                read();
-
-                Expression b      = readConcat();
-                char       escape = 0;
-
-                if (sToken.equals("ESCAPE")) {
-                    read();
-
-                    Expression c = readTerm();
-
-                    Trace.check(c.getType() == Expression.VALUE,
-                                Trace.INVALID_ESCAPE);
-
-                    String s = (String) c.getValue(Types.VARCHAR);
-
-                    if (s == null || s.length() < 1) {
-                        throw Trace.error(Trace.INVALID_ESCAPE, s);
-                    }
-
-                    escape = s.charAt(0);
-                }
-
-                a = new Expression(Expression.LIKE, a, b);
-
-                a.setLikeEscape(escape);
-            } else if (iToken == Expression.BETWEEN) {
-                read();
-
-                Expression l = new Expression(Expression.BIGGER_EQUAL, a,
-                                              readConcat());
-
-                readThis(Expression.AND);
-
-                Expression h = new Expression(Expression.SMALLER_EQUAL, a,
-                                              readConcat());
-
-                a = new Expression(Expression.AND, l, h);
-            } else if (iToken == Expression.IN) {
+            case Expression.EXISTS : {
                 int type = iToken;
 
                 read();
                 readThis(Expression.OPEN);
+                Trace.check(iToken == Expression.SELECT,
+                            Trace.UNEXPECTED_TOKEN);
 
-                Expression b = null;
+                Expression s = new Expression(parseSelect());
 
-                if (iToken == Expression.SELECT) {
-                    b = new Expression(parseSelect());
-
-                    read();
-                } else {
-                    tTokenizer.back();
-
-                    HsqlArrayList v = new HsqlArrayList();
-
-                    while (true) {
-                        v.add(getValue(Types.VARCHAR));
-                        read();
-
-                        if (iToken != Expression.COMMA) {
-                            break;
-                        }
-                    }
-
-                    b = new Expression(v);
-                }
-
+                read();
                 readThis(Expression.CLOSE);
 
-                a = new Expression(type, a, b);
-            } else {
-                Trace.check(!not, Trace.UNEXPECTED_TOKEN);
+                return new Expression(type, s, null);
+            }
+            default : {
+                Expression a   = readConcat();
+                boolean    not = false;
 
-                if (Expression.isCompare(iToken)) {
-                    int type = iToken;
+                if (iToken == Expression.NOT) {
+                    not = true;
 
                     read();
+                }
 
-                    return new Expression(type, a, readConcat());
+                switch (iToken) {
+
+                    case Expression.LIKE : {
+                        read();
+
+                        Expression b      = readConcat();
+                        char       escape = 0;
+
+                        if (sToken.equals("ESCAPE")) {
+                            read();
+
+                            Expression c = readTerm();
+
+                            Trace.check(c.getType() == Expression.VALUE,
+                                        Trace.INVALID_ESCAPE);
+
+                            String s = (String) c.getValue(Types.VARCHAR);
+
+                            if (s == null || s.length() < 1) {
+                                throw Trace.error(Trace.INVALID_ESCAPE, s);
+                            }
+
+                            escape = s.charAt(0);
+                        }
+
+                        a = new Expression(Expression.LIKE, a, b);
+
+                        a.setLikeEscape(escape);
+
+                        break;
+                    }
+                    case Expression.BETWEEN : {
+                        read();
+
+                        Expression l = new Expression(Expression.BIGGER_EQUAL,
+                                                      a, readConcat());
+
+                        readThis(Expression.AND);
+
+                        Expression h =
+                            new Expression(Expression.SMALLER_EQUAL, a,
+                                           readConcat());
+
+                        a = new Expression(Expression.AND, l, h);
+
+                        break;
+                    }
+                    case Expression.IN : {
+                        int type = iToken;
+
+                        read();
+                        readThis(Expression.OPEN);
+
+                        Expression b = null;
+
+                        if (iToken == Expression.SELECT) {
+                            b = new Expression(parseSelect());
+
+                            read();
+                        } else {
+                            tTokenizer.back();
+
+                            HsqlArrayList v = new HsqlArrayList();
+
+                            while (true) {
+                                v.add(getValue(Types.VARCHAR));
+                                read();
+
+                                if (iToken != Expression.COMMA) {
+                                    break;
+                                }
+                            }
+
+                            b = new Expression(v);
+                        }
+
+                        readThis(Expression.CLOSE);
+
+                        a = new Expression(type, a, b);
+
+                        break;
+                    }
+                    default : {
+                        Trace.check(!not, Trace.UNEXPECTED_TOKEN);
+
+                        if (Expression.isCompare(iToken)) {
+                            int type = iToken;
+
+                            read();
+
+                            return new Expression(type, a, readConcat());
+                        }
+
+                        return a;
+                    }
+                }
+
+                if (not) {
+                    a = new Expression(Expression.NOT, a, null);
                 }
 
                 return a;
             }
-
-            if (not) {
-                a = new Expression(Expression.NOT, a, null);
-            }
-
-            return a;
         }
     }
 
@@ -1648,138 +1672,180 @@ class Parser {
 
         Expression r = null;
 
-        if (iToken == Expression.COLUMN) {
-            String name = sToken;
+        switch (iToken) {
 
-            r = new Expression(sTable, sToken);
+            case Expression.COLUMN : {
+                String name = sToken;
 
-            read();
-
-            if (iToken == Expression.OPEN) {
-                Function f = new Function(dDatabase.getAlias(name), cSession);
-                int      len = f.getArgCount();
-                int      i   = 0;
+                r = new Expression(sTable, sToken);
 
                 read();
 
-                if (iToken != Expression.CLOSE) {
-                    while (true) {
-                        f.setArgument(i++, readOr());
+                if (iToken == Expression.OPEN) {
+                    Function f = new Function(dDatabase.getAlias(name),
+                                              cSession);
+                    int len = f.getArgCount();
+                    int i   = 0;
 
-                        if (iToken != Expression.COMMA) {
-                            break;
+                    read();
+
+                    if (iToken != Expression.CLOSE) {
+                        while (true) {
+                            f.setArgument(i++, readOr());
+
+                            if (iToken != Expression.COMMA) {
+                                break;
+                            }
+
+                            read();
                         }
-
-                        read();
                     }
+
+                    readThis(Expression.CLOSE);
+
+                    r = new Expression(f);
                 }
+
+                break;
+            }
+            case Expression.NEGATE : {
+                int type = iToken;
+
+                read();
+
+                r = new Expression(type, readTerm(), null);
+
+                break;
+            }
+            case Expression.PLUS : {
+                read();
+
+                r = readTerm();
+
+                break;
+            }
+            case Expression.OPEN : {
+                read();
+
+                r = readOr();
+
+                if (iToken != Expression.CLOSE) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                }
+
+                read();
+
+                break;
+            }
+            case Expression.VALUE : {
+                r = new Expression(iType, oData);
+
+                read();
+
+                break;
+            }
+            case Expression.SELECT : {
+                r = new Expression(parseSelect());
+
+                read();
+
+                break;
+            }
+            case Expression.MULTIPLY : {
+                r = new Expression(sTable, null);
+
+                read();
+
+                break;
+            }
+            case Expression.IFNULL :
+            case Expression.CONCAT : {
+                int type = iToken;
+
+                read();
+                readThis(Expression.OPEN);
+
+                r = readOr();
+
+                readThis(Expression.COMMA);
+
+                r = new Expression(type, r, readOr());
 
                 readThis(Expression.CLOSE);
 
-                r = new Expression(f);
+                break;
             }
-        } else if (iToken == Expression.NEGATE) {
-            int type = iToken;
+            case Expression.CASEWHEN : {
+                int type = iToken;
 
-            read();
+                read();
+                readThis(Expression.OPEN);
 
-            r = new Expression(type, readTerm(), null);
-        } else if (iToken == Expression.PLUS) {
-            read();
+                r = readOr();
 
-            r = readTerm();
-        } else if (iToken == Expression.OPEN) {
-            read();
+                readThis(Expression.COMMA);
 
-            r = readOr();
+                Expression thenelse = readOr();
 
-            if (iToken != Expression.CLOSE) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                readThis(Expression.COMMA);
+
+                // thenelse part is never evaluated; only init
+                thenelse = new Expression(type, thenelse, readOr());
+                r        = new Expression(type, r, thenelse);
+
+                readThis(Expression.CLOSE);
+
+                break;
             }
+            case Expression.CONVERT : {
+                int type = iToken;
 
-            read();
-        } else if (iToken == Expression.VALUE) {
-            r = new Expression(iType, oData);
+                read();
+                readThis(Expression.OPEN);
 
-            read();
-        } else if (iToken == Expression.SELECT) {
-            r = new Expression(parseSelect());
+                r = readOr();
 
-            read();
-        } else if (iToken == Expression.MULTIPLY) {
-            r = new Expression(sTable, null);
+                readThis(Expression.COMMA);
 
-            read();
-        } else if (iToken == Expression.IFNULL
-                   || iToken == Expression.CONCAT) {
-            int type = iToken;
+                int t = Column.getTypeNr(sToken);
 
-            read();
-            readThis(Expression.OPEN);
+                r = new Expression(type, r, null);
 
-            r = readOr();
+                r.setDataType(t);
+                read();
+                readThis(Expression.CLOSE);
 
-            readThis(Expression.COMMA);
+                break;
+            }
+            case Expression.CAST : {
+                read();
+                readThis(Expression.OPEN);
 
-            r = new Expression(type, r, readOr());
+                r = readOr();
 
-            readThis(Expression.CLOSE);
-        } else if (iToken == Expression.CASEWHEN) {
-            int type = iToken;
+                Trace.check(sToken.equals("AS"), Trace.UNEXPECTED_TOKEN,
+                            sToken);
+                read();
 
-            read();
-            readThis(Expression.OPEN);
+                int t = Column.getTypeNr(sToken);
 
-            r = readOr();
+                r = new Expression(Expression.CONVERT, r, null);
 
-            readThis(Expression.COMMA);
+                r.setDataType(t);
+                read();
+                readThis(Expression.CLOSE);
 
-            Expression thenelse = readOr();
+                break;
+            }
+            default : {
+                if (Expression.isAggregate(iToken)) {
+                    r = readAggregate();
+                } else {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                }
 
-            readThis(Expression.COMMA);
-
-            // thenelse part is never evaluated; only init
-            thenelse = new Expression(type, thenelse, readOr());
-            r        = new Expression(type, r, thenelse);
-
-            readThis(Expression.CLOSE);
-        } else if (iToken == Expression.CONVERT) {
-            int type = iToken;
-
-            read();
-            readThis(Expression.OPEN);
-
-            r = readOr();
-
-            readThis(Expression.COMMA);
-
-            int t = Column.getTypeNr(sToken);
-
-            r = new Expression(type, r, null);
-
-            r.setDataType(t);
-            read();
-            readThis(Expression.CLOSE);
-        } else if (iToken == Expression.CAST) {
-            read();
-            readThis(Expression.OPEN);
-
-            r = readOr();
-
-            Trace.check(sToken.equals("AS"), Trace.UNEXPECTED_TOKEN, sToken);
-            read();
-
-            int t = Column.getTypeNr(sToken);
-
-            r = new Expression(Expression.CONVERT, r, null);
-
-            r.setDataType(t);
-            read();
-            readThis(Expression.CLOSE);
-        } else if (Expression.isAggregate(iToken)) {
-            r = readAggregate();
-        } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                break;
+            }
         }
 
         return r;
@@ -1815,85 +1881,110 @@ class Parser {
             }
         } else if (sToken.length() == 0) {
             iToken = Expression.END;
-        } else if (sToken.equals(",")) {
-            iToken = Expression.COMMA;
-        } else if (sToken.equals("=")) {
-            iToken = Expression.EQUAL;
-        } else if (sToken.equals("<>") || sToken.equals("!=")) {
-            iToken = Expression.NOT_EQUAL;
-        } else if (sToken.equals("<")) {
-            iToken = Expression.SMALLER;
-        } else if (sToken.equals(">")) {
-            iToken = Expression.BIGGER;
-        } else if (sToken.equals("<=")) {
-            iToken = Expression.SMALLER_EQUAL;
-        } else if (sToken.equals(">=")) {
-            iToken = Expression.BIGGER_EQUAL;
-        } else if (sToken.equals("AND")) {
-            iToken = Expression.AND;
-        } else if (sToken.equals("OR")) {
-            iToken = Expression.OR;
-        } else if (sToken.equals("NOT")) {
-            iToken = Expression.NOT;
-        } else if (sToken.equals("IN")) {
-            iToken = Expression.IN;
-        } else if (sToken.equals("EXISTS")) {
-            iToken = Expression.EXISTS;
-        } else if (sToken.equals("BETWEEN")) {
-            iToken = Expression.BETWEEN;
-        } else if (sToken.equals("+")) {
-            iToken = Expression.PLUS;
-        } else if (sToken.equals("-")) {
-            iToken = Expression.NEGATE;
-        } else if (sToken.equals("*")) {
-            iToken = Expression.MULTIPLY;
-            sTable = null;    // in case of ASTERIX
-        } else if (sToken.equals("/")) {
-            iToken = Expression.DIVIDE;
-        } else if (sToken.equals("||")) {
-            iToken = Expression.STRINGCONCAT;
-        } else if (sToken.equals("(")) {
-            iToken = Expression.OPEN;
-        } else if (sToken.equals(")")) {
-            iToken = Expression.CLOSE;
-        } else if (sToken.equals("SELECT")) {
-            iToken = Expression.SELECT;
-        } else if (sToken.equals("IS")) {
-            sToken = tTokenizer.getString();
-
-            if (sToken.equals("NOT")) {
-                iToken = Expression.NOT_EQUAL;
-            } else {
-                iToken = Expression.EQUAL;
-
-                tTokenizer.back();
-            }
-        } else if (sToken.equals("LIKE")) {
-            iToken = Expression.LIKE;
-        } else if (sToken.equals("COUNT")) {
-            iToken = Expression.COUNT;
-        } else if (sToken.equals("SUM")) {
-            iToken = Expression.SUM;
-        } else if (sToken.equals("MIN")) {
-            iToken = Expression.MIN;
-        } else if (sToken.equals("MAX")) {
-            iToken = Expression.MAX;
-        } else if (sToken.equals("AVG")) {
-            iToken = Expression.AVG;
-        } else if (sToken.equals("IFNULL")) {
-            iToken = Expression.IFNULL;
-        } else if (sToken.equals("CONVERT")) {
-            iToken = Expression.CONVERT;
-        } else if (sToken.equals("CAST")) {
-            iToken = Expression.CAST;
-        } else if (sToken.equals("CASEWHEN")) {
-            iToken = Expression.CASEWHEN;
-
-// fredt@users 20020215 - patch 514111 by fredt
-        } else if (sToken.equals("CONCAT")) {
-            iToken = Expression.CONCAT;
         } else {
-            iToken = Expression.END;
+            Integer n = (Integer) tokenTable.get(sToken);
+
+            if (n != null) {
+                iToken = n.intValue();
+            } else {
+                iToken = Expression.END;
+            }
+
+            switch (iToken) {
+
+                case Expression.COMMA :
+                case Expression.EQUAL :
+                case Expression.NOT_EQUAL :
+                case Expression.SMALLER :
+                case Expression.BIGGER :
+                case Expression.SMALLER_EQUAL :
+                case Expression.BIGGER_EQUAL :
+                case Expression.AND :
+                case Expression.OR :
+                case Expression.NOT :
+                case Expression.IN :
+                case Expression.EXISTS :
+                case Expression.BETWEEN :
+                case Expression.PLUS :
+                case Expression.NEGATE :
+                case Expression.DIVIDE :
+                case Expression.STRINGCONCAT :
+                case Expression.OPEN :
+                case Expression.CLOSE :
+                case Expression.SELECT :
+                case Expression.LIKE :
+                case Expression.COUNT :
+                case Expression.SUM :
+                case Expression.MIN :
+                case Expression.MAX :
+                case Expression.AVG :
+                case Expression.IFNULL :
+                case Expression.CONVERT :
+                case Expression.CAST :
+                case Expression.CASEWHEN :
+                case Expression.CONCAT :
+                case Expression.END :
+                    break;            // nothing else required, iToken initialized properly
+
+                case Expression.MULTIPLY :
+                    sTable = null;    // in case of ASTERIX
+                    break;
+
+                case Expression.IS :
+                    sToken = tTokenizer.getString();
+
+                    if (sToken.equals("NOT")) {
+                        iToken = Expression.NOT_EQUAL;
+                    } else {
+                        iToken = Expression.EQUAL;
+
+                        tTokenizer.back();
+                    }
+                    break;
+
+                default :
+                    iToken = Expression.END;
+            }
         }
+    }
+
+    private static java.util.Hashtable tokenTable =
+        new java.util.Hashtable(37);
+
+    static {
+        tokenTable.put(",", new Integer(Expression.COMMA));
+        tokenTable.put("=", new Integer(Expression.EQUAL));
+        tokenTable.put("!=", new Integer(Expression.NOT_EQUAL));
+        tokenTable.put("<>", new Integer(Expression.NOT_EQUAL));
+        tokenTable.put("<", new Integer(Expression.SMALLER));
+        tokenTable.put(">", new Integer(Expression.BIGGER));
+        tokenTable.put("<=", new Integer(Expression.SMALLER_EQUAL));
+        tokenTable.put(">=", new Integer(Expression.BIGGER_EQUAL));
+        tokenTable.put("AND", new Integer(Expression.AND));
+        tokenTable.put("NOT", new Integer(Expression.NOT));
+        tokenTable.put("OR", new Integer(Expression.OR));
+        tokenTable.put("IN", new Integer(Expression.IN));
+        tokenTable.put("EXISTS", new Integer(Expression.EXISTS));
+        tokenTable.put("BETWEEN", new Integer(Expression.BETWEEN));
+        tokenTable.put("+", new Integer(Expression.PLUS));
+        tokenTable.put("-", new Integer(Expression.NEGATE));
+        tokenTable.put("*", new Integer(Expression.MULTIPLY));
+        tokenTable.put("/", new Integer(Expression.DIVIDE));
+        tokenTable.put("||", new Integer(Expression.STRINGCONCAT));
+        tokenTable.put("(", new Integer(Expression.OPEN));
+        tokenTable.put(")", new Integer(Expression.CLOSE));
+        tokenTable.put("SELECT", new Integer(Expression.SELECT));
+        tokenTable.put("LIKE", new Integer(Expression.LIKE));
+        tokenTable.put("COUNT", new Integer(Expression.COUNT));
+        tokenTable.put("SUM", new Integer(Expression.SUM));
+        tokenTable.put("MIN", new Integer(Expression.MIN));
+        tokenTable.put("MAX", new Integer(Expression.MAX));
+        tokenTable.put("AVG", new Integer(Expression.AVG));
+        tokenTable.put("IFNULL", new Integer(Expression.IFNULL));
+        tokenTable.put("CONVERT", new Integer(Expression.CONVERT));
+        tokenTable.put("CAST", new Integer(Expression.CAST));
+        tokenTable.put("CASEWHEN", new Integer(Expression.CASEWHEN));
+        tokenTable.put("CONCATE", new Integer(Expression.CONCAT));
+        tokenTable.put("IS", new Integer(Expression.IS));
     }
 }

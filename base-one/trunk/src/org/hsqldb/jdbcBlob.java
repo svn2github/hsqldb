@@ -137,7 +137,7 @@ public class jdbcBlob implements Blob {
     }
 
     public int setBytes(long pos, byte[] bytes, int offset,
-                        int len) throws SQLException{
+                        int len) throws SQLException {
         throw new SQLException("Not implemented");
     }
 

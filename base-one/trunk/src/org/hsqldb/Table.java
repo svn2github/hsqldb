@@ -151,42 +151,55 @@ class Table {
 
         dDatabase = db;
 
-        if (type == SYSTEM_TABLE) {
-            isTemp = true;
-        } else if (type == TEMP_TABLE) {
-            Trace.doAssert(session != null);
+        switch (type) {
 
-            isTemp       = true;
-            ownerSession = session;
-        } else if (type == CACHED_TABLE) {
-            cCache = db.logger.getCache();
+            case SYSTEM_TABLE :
+                isTemp = true;
+                break;
 
-            if (cCache != null) {
+            case TEMP_TABLE :
+                Trace.doAssert(session != null);
+
+                isTemp       = true;
+                ownerSession = session;
+                break;
+
+            case CACHED_TABLE :
+                cCache = db.logger.getCache();
+
+                if (cCache != null) {
+                    isCached = true;
+                } else {
+                    type = MEMORY_TABLE;
+                }
+                break;
+
+            case TEMP_TEXT_TABLE :
+                Trace.doAssert(session != null);
+
+                if (!db.logger.hasLog()) {
+                    throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
+                }
+
+                isTemp       = true;
+                isText       = true;
+                isReadOnly   = true;
+                isCached     = true;
+                ownerSession = session;
+                break;
+
+            case TEXT_TABLE :
+                if (!db.logger.hasLog()) {
+                    throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
+                }
+
+                isText   = true;
                 isCached = true;
-            } else {
-                type = MEMORY_TABLE;
-            }
-        } else if (type == TEMP_TEXT_TABLE) {
-            Trace.doAssert(session != null);
+                break;
 
-            if (!db.logger.hasLog()) {
-                throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
-            }
-
-            isTemp       = true;
-            isText       = true;
-            isReadOnly   = true;
-            isCached     = true;
-            ownerSession = session;
-        } else if (type == TEXT_TABLE) {
-            if (!db.logger.hasLog()) {
-                throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
-            }
-
-            isText   = true;
-            isCached = true;
-        } else if (type == VIEW) {
-            isView = true;
+            case VIEW :
+                isView = true;
+                break;
         }
 
         if (isText) {
@@ -203,10 +216,10 @@ class Table {
         vColumn         = new HsqlArrayList();
         vIndex          = new HsqlArrayList();
         vConstraint     = new HsqlArrayList();
-        vTrigs          = new HsqlArrayList[TriggerDef.numTrigs()];
+        vTrigs          = new HsqlArrayList[TriggerDef.numTrigs()];    // defer init...should be "pay to use"
 
         for (int vi = 0; vi < TriggerDef.numTrigs(); vi++) {
-            vTrigs[vi] = new HsqlArrayList();
+            vTrigs[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
         }
     }
 
@@ -301,7 +314,7 @@ class Table {
             return currentIndex;
         }
 
-        for (int i = 0; i < vConstraint.size(); i++) {
+        for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
             currentIndex = c.getMainIndex();
@@ -324,7 +337,7 @@ class Table {
      */
     int getNextConstraintIndex(int from, int type) {
 
-        for (int i = from; i < vConstraint.size(); i++) {
+        for (int i = from, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
             if (c.getType() == type) {
@@ -388,7 +401,9 @@ class Table {
      */
     void addColumns(Result result) throws SQLException {
 
-        for (int i = 0; i < result.getColumnCount(); i++) {
+        int colCount = result.getColumnCount();
+
+        for (int i = 0; i < colCount; i++) {
             Column column = new Column(
                 new HsqlName(result.sLabel[i], result.isLabelQuoted[i]),
                 true, result.colType[i], result.colSize[i],
@@ -562,7 +577,7 @@ class Table {
     void updateConstraints(Table to, int colindex,
                            int adjust) throws SQLException {
 
-        for (int j = 0; j < vConstraint.size(); j++) {
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
             Constraint c = (Constraint) vConstraint.get(j);
 
             c.replaceTable(to, this, colindex, adjust);
@@ -972,7 +987,7 @@ class Table {
             throw Trace.error(Trace.DROP_PRIMARY_KEY, indexname);
         }
 
-        for (int i = 0; i < vConstraint.size(); i++) {
+        for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
             if (ignore.get(c) != null) {
@@ -1080,7 +1095,7 @@ class Table {
         Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
 
         if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0; i < vConstraint.size(); i++) {
+            for (int i = 0, size = vConstraint.size(); i < size; i++) {
                 Constraint v = (Constraint) vConstraint.get(i);
 
                 v.checkUpdate(col, deleted, inserted);
@@ -1128,7 +1143,7 @@ class Table {
         fireAll(TriggerDef.INSERT_BEFORE, row);
 
         if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0; i < vConstraint.size(); i++) {
+            for (int i = 0, size = vConstraint.size(); i < size; i++) {
                 ((Constraint) vConstraint.get(i)).checkInsert(row);
             }
         }
@@ -1214,9 +1229,8 @@ class Table {
         }
 
         HsqlArrayList trigVec = vTrigs[trigVecIndx];
-        int           trCount = trigVec.size();
 
-        for (int i = 0; i < trCount; i++) {
+        for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
 
             td.push(row);    // tell the trigger thread to fire with this row
@@ -1354,6 +1368,7 @@ class Table {
                         ri.add(rnd);
                     }
                 } else if (hasref) {
+
                     // fredt - todo - to avoid infinite recursion on same table
                     // check here if n refers to same row ??
                     reftable.checkCascadeDelete(n.getData(), session, doIt);
@@ -1706,7 +1721,7 @@ class Table {
      */
     int getConstraintIndex(String s) {
 
-        for (int j = 0; j < vConstraint.size(); j++) {
+        for (int j = 0, size = vConstraint.size(); j < size; j++) {
             Constraint tempc = (Constraint) vConstraint.get(j);
 
             if (tempc.getName().name.equals(s)) {

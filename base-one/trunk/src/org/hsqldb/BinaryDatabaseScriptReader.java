@@ -48,7 +48,9 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
     BinaryDatabaseScriptReader(Database db,
                                String file) throws SQLException, IOException {
+
         super(db, file);
+
         rowIn = new BinaryServerRowInput();
     }
 
@@ -61,7 +63,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         readSingleColumnResult(session);
     }
 
-    protected void readSingleColumnResult(Session session) throws IOException, SQLException {
+    protected void readSingleColumnResult(Session session)
+    throws IOException, SQLException {
 
         byte[] bytes = new byte[dataStreamIn.readInt()];
 
@@ -80,7 +83,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         }
     }
 
-    protected void readExistingData(Session session) throws IOException, SQLException {
+    protected void readExistingData(Session session)
+    throws IOException, SQLException {
 
         for (int i = 0; ; i++) {
             String s = readTableInit();

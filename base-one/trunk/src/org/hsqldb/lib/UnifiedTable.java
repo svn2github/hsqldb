@@ -36,7 +36,7 @@ import java.util.Hashtable;
 
 public class UnifiedTable {
 
-    private static Hashtable classCodeMap = new Hashtable();
+    private static Hashtable classCodeMap = new Hashtable(37, 1);
 
     // Define primitive class code using current hash code, for fast
     // searching for corresponding class comparator using a switch statement.
@@ -872,13 +872,13 @@ public class UnifiedTable {
 
         int size = table.size();
 /*
-        for(int i=0; i<size; i++) {
+                for(int i=0; i<size; i++) {
 //            outputRow(i, (int[])table.getRow(i));
-            System.out.println("Row: "+i+
-                " column 1="+table.getIntCell(i, 0)+
-                " column 2="+table.getCell(i, 1));
+                        System.out.println("Row: "+i+
+                                " column 1="+table.getIntCell(i, 0)+
+                                " column 2="+table.getCell(i, 1));
 //                " column 2="+table.getCell(i, 1)+" class="+table.getCell(i, 1).getClass());
-        }
+                }
 */
         long start = System.currentTimeMillis();
 

@@ -85,7 +85,7 @@ implements ActionListener, ItemListener {
     protected Connection mConnection;
     protected TextField  mDriver, mURL, mUser, mPassword;
     protected Label      mError;
-    private String     connTypes[][];
+    private String       connTypes[][];
 
     /**
      * Method declaration

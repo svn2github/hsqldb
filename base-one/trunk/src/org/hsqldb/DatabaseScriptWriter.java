@@ -33,10 +33,10 @@ package org.hsqldb;
 
 import java.io.*;
 import java.sql.SQLException;
-
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
+
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
  *
@@ -184,7 +184,7 @@ class DatabaseScriptWriter {
         boolean       wroteTable = false;
         HsqlArrayList tables     = db.getTables();
 
-        for (int i = 0; i < tables.size(); i++) {
+        for (int i = 0, size = tables.size(); i < size; i++) {
             Table t = (Table) tables.get(i);
 
             // write all memory table data

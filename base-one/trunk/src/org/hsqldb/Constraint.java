@@ -416,8 +416,8 @@ class Constraint {
         // a record must exist in the main table
         if (core.iMain.find(core.oMain) == null) {
             Trace.throwerror(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                        core.fkName.name + " table: "
-                        + core.tMain.getName().name);
+                             core.fkName.name + " table: "
+                             + core.tMain.getName().name);
         }
     }
 
@@ -487,25 +487,24 @@ class Constraint {
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
-        boolean findfirst = forDelete ? core.deleteAction != NO_ACTION :
-                                        core.updateAction != NO_ACTION;
-        Node node = core.iRef.findSimple(core.oColRef, findfirst);
+        boolean findfirst = forDelete ? core.deleteAction != NO_ACTION
+                                      : core.updateAction != NO_ACTION;
+        Node    node      = core.iRef.findSimple(core.oColRef, findfirst);
 
         // tony_lai@users 20020820 - patch 595156
         // sebastian@scienion -- check wether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
         Trace.check(node == null || findfirst,
-                        Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                        core.fkName.name + " table: "
-                        + core.tRef.getName().name);
+                    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    core.fkName.name + " table: " + core.tRef.getName().name);
 
         return node;
     }
- 
-    /** 
+
+    /**
      * Method to find any referring node in the main table. This is used
      * to check referential integrity when updating a node. We have to make
      * sure that the main table still holds a valid main record. If a valid
-     * row is found the corresponding <code>Node</code> is returned. 
+     * row is found the corresponding <code>Node</code> is returned.
      * Otherwise a 'INTEGRITY VIOLATION' Exception gets thrown.
      *
      * @param row Obaject[]; the row containing the key columns which have to be
@@ -515,28 +514,26 @@ class Constraint {
      *
      * @throws SQLException
      */
-
     Node findMainRef(Object row[]) throws SQLException {
 
         for (int i = 0; i < core.iLen; i++) {
             Object o = row[core.iColRef[i]];
+
             if (o == null) {
+
                 // if one column is null then integrity is not checked
                 return null;
             }
+
             core.oColRef[i] = o;
         }
 
+        Node node = core.iMain.findSimple(core.oColRef, true);
 
-        Node node = core.iMain.findSimple(core.oColRef,true);
-
-	// -- there has to be a valid node in the main table
-	// --
-
-        Trace.check(node != null,
-		    Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-		    core.fkName.name + " table: "
-		    + core.tRef.getName().name);
+        // -- there has to be a valid node in the main table
+        // --
+        Trace.check(node != null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                    core.fkName.name + " table: " + core.tRef.getName().name);
 
         return node;
     }

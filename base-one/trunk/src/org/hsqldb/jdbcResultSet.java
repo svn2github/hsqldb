@@ -5943,8 +5943,9 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
         checkColumn(column);
 
         int type = rResult.colType[column - 1];
+        int size = Column.numericTypes.length;
 
-        for (int i = 0; i < Column.numericTypes.length; i++) {
+        for (int i = 0; i < size; i++) {
             if (type == Column.numericTypes[i]) {
                 return true;
             }

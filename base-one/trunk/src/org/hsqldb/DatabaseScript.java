@@ -260,7 +260,9 @@ class DatabaseScript {
                 a.append(" ON ");
 
                 if (object instanceof String) {
-                    a.append("CLASS \"" + object + "\"");
+                    a.append("CLASS \"");
+                    a.append(object);
+                    a.append('\"');
                 } else {
                     a.append(((HsqlName) object).statementName);
                 }

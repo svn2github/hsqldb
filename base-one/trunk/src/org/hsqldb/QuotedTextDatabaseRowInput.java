@@ -141,7 +141,7 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
 
             s = ret.toString();
 
-            if (emptyIsNull && s.equals("")) {
+            if (emptyIsNull && s.length() == 0) {
                 s = null;
             }
         } catch (Exception e) {
