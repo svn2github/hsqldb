@@ -1,8 +1,8 @@
 BASEDIR=/usr
-PKG=HSQLhsqldb
+PKG=HSQLDBhsqldb
 NAME=Hsqldb Database
 DESC=The hsqldb pure Java database
-ARCH=sparc
+ARCH=sparc,i386,ppc
 VERSION=1.7.1
 CATEGORY=application
 VENDOR=Hsqldb development team, http://sourceforge.net/projects/hsqldb
