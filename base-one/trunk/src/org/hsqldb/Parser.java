@@ -67,70 +67,132 @@
 
 package org.hsqldb;
 
-import java.util.*;
-import java.sql.*;
+import org.hsqldb.lib.StringUtil;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Vector;
+
+// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
+// changes applied to different parts of this method
+// fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
+// support for sql standard quoted identifiers for column and table names
+// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
+// support for default values for table columns
+// fredt@users 20020425 - patch 548182 by skitt@users - DEFAULT enhancement
+// thertz@users 20020320 - patch 473613 by thertz - outer join condition bug
+// fredt@users 20020420 - patch 523880 by leptipre@users - VIEW support
+// fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
 
 /**
- * Class declaration
+ *  Class declaration
  *
- *
- * @version 1.0.0.1
+ * @version    1.7.0
  */
 class Parser {
 
-    private Database  dDatabase;
-    private Tokenizer tTokenizer;
-    private Channel   cChannel;
-    private String    sTable;
-    private String    sToken;
-    private Object    oData;
-    private int       iType;
-    private int       iToken;
+    private Database       dDatabase;
+    private Tokenizer      tTokenizer;
+    private Session        cSession;
+    private String         sTable;
+    private String         sToken;
+    private Object         oData;
+    private int            iType;
+    private int            iToken;
+    private static boolean sql_enforce_size;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param db
-     * @param t
-     * @param channel
+     * @param  db
+     * @param  t
+     * @param  session
      */
-    Parser(Database db, Tokenizer t, Channel channel) {
+    Parser(Database db, Tokenizer t, Session session) {
 
         dDatabase  = db;
         tTokenizer = t;
-        cChannel   = channel;
+        cSession   = session;
     }
 
     /**
-     * Method declaration
+     *  Sets the enforceSize attribute of the Parser class
      *
+     * @param  value  The new enforceSize value
+     */
+    static void setEnforceSize(boolean value) {
+        sql_enforce_size = value;
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Result processSelect() throws SQLException {
 
         Select select = parseSelect();
 
         if (select.sIntoTable == null) {
-
-// fredt@users - begin changes from 1.50
-//         return select.getResult(cChannel.getMaxRows());
-            return select.getResult(select.limitStart, select.limitCount);
-
-// fredt@users - end changes from 1.50
+            return select.getResult(cSession.getMaxRows());
         } else {
+
+// fredt@users 20020215 - patch 497872 by Nitin Chauhan
+// to require column labels in SELECT INTO TABLE
+            for (int i = 0; i < select.eColumn.length; i++) {
+                if (select.eColumn[i].getAlias().length() == 0) {
+                    throw Trace.error(Trace.LABEL_REQUIRED);
+                }
+            }
+
+            if (dDatabase.findUserTable(select.sIntoTable.name, cSession)
+                    != null) {
+                throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
+                                  select.sIntoTable.name);
+            }
+
             Result r = select.getResult(0);
-            Table  t = new Table(dDatabase, true, select.sIntoTable, false);
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+            Table t;
+
+            if (select.intoType == Table.TEXT_TABLE) {
+                t = new TextTable(dDatabase, select.sIntoTable,
+                                  select.intoType, cSession);
+            } else {
+                t = new Table(dDatabase, select.sIntoTable, select.intoType,
+                              cSession);
+            }
 
             t.addColumns(r);
             t.createPrimaryKey();
-
-            // SELECT .. INTO can't fail because of violation of primary key
-            t.insert(r, cChannel);
             dDatabase.linkTable(t);
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+            if (select.intoType == Table.TEXT_TABLE) {
+                try {
+
+                    // Use default lowercase name "<table>.csv" (with invalid
+                    // char's converted to underscores):
+                    String src =
+                        StringUtil.toLowerSubset(select.sIntoTable.name, '_')
+                        + ".csv";
+
+                    t.setDataSource(src, false, cSession);
+                    logTableDDL(t);
+                    t.insert(r, cSession);
+                } catch (SQLException e) {
+                    dDatabase.dropTable(select.sIntoTable.name, false, false,
+                                        cSession);
+
+                    throw (e);
+                }
+            } else {
+                logTableDDL(t);
+
+                // SELECT .. INTO can't fail because of constraint violation
+                t.insert(r, cSession);
+            }
 
             int i = r.getSize();
 
@@ -142,12 +204,36 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Logs the DDL for a table created with INTO.
+     *  Uses two dummy arguments for getTableDDL() as the new table has no
+     *  FK constraints.
      *
+     * @throws  SQLException
+     */
+    void logTableDDL(Table t) throws SQLException {
+
+        if (t.isTemp()) {
+            return;
+        }
+
+        StringBuffer tableDDL = new StringBuffer();
+
+        DatabaseScript.getTableDDL(dDatabase, t, 0, null, tableDDL);
+
+        String sourceDDL = DatabaseScript.getDataSource(t);
+
+        dDatabase.logger.writeToLog(cSession, tableDDL.toString());
+
+        if (sourceDDL != null) {
+            dDatabase.logger.writeToLog(cSession, sourceDDL);
+        }
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Result processCall() throws SQLException {
 
@@ -159,10 +245,10 @@ class Parser {
         Object o    = e.getValue();
         Result r    = new Result(1);
 
-        r.sTable[0] = "";
-        r.iType[0]  = type;
-        r.sLabel[0] = "";
-        r.sName[0]  = "";
+        r.sTable[0]  = "";
+        r.colType[0] = type;
+        r.sLabel[0]  = "";
+        r.sName[0]   = "";
 
         Object row[] = new Object[1];
 
@@ -174,22 +260,24 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Result processUpdate() throws SQLException {
 
         String token = tTokenizer.getString();
 
-        cChannel.checkReadWrite();
-        cChannel.check(token, Access.UPDATE);
+        cSession.checkReadWrite();
+        cSession.check(token, UserManager.UPDATE);
 
-        Table       table  = dDatabase.getTable(token, cChannel);
+        Table       table  = dDatabase.getTable(token, cSession);
         TableFilter filter = new TableFilter(table, null, false);
+
+        if (table.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE, token);
+        }
 
         tTokenizer.getThis("SET");
 
@@ -233,12 +321,17 @@ class Parser {
 
         eColumn.copyInto(exp);
 
-        int col[]  = new int[len];
-        int type[] = new int[len];
+        int col[]   = new int[len];
+        int type[]  = new int[len];
+        int csize[] = new int[len];
 
         for (int i = 0; i < len; i++) {
-            col[i]  = ((Integer) vColumn.elementAt(i)).intValue();
-            type[i] = table.getType(col[i]);
+            col[i] = ((Integer) vColumn.elementAt(i)).intValue();
+
+            Column column = table.getColumn(col[i]);
+
+            type[i]  = column.getType();
+            csize[i] = column.getSize();
         }
 
         int count = 0;
@@ -256,26 +349,39 @@ class Parser {
 
                     Object ni[] = table.getNewRow();
 
-                    for (int i = 0; i < size; i++) {
-                        ni[i] = nd[i];
-                    }
+// fredt@users 20020130 - patch 1.7.0 by fredt
+                    System.arraycopy(nd, 0, ni, 0, size);
 
-                    for (int i = 0; i < len; i++) {
-                        ni[col[i]] = exp[i].getValue(type[i]);
+                    /*
+                     for (int i = 0; i < size; i++) {
+                     ni[i] = nd[i];
+                     }
+                     */
+
+// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
+                    if (sql_enforce_size) {
+                        for (int i = 0; i < len; i++) {
+                            ni[col[i]] = enforceSize(exp[i].getValue(type[i]),
+                                                     type[i], csize[i], true);
+                        }
+                    } else {
+                        for (int i = 0; i < len; i++) {
+                            ni[col[i]] = exp[i].getValue(type[i]);
+                        }
                     }
 
                     ins.add(ni);
                 }
             } while (filter.next());
 
-            cChannel.beginNestedTransaction();
+            cSession.beginNestedTransaction();
 
             try {
                 Record nd = del.rRoot;
 
                 while (nd != null) {
                     table.fireAll(TriggerDef.UPDATE_BEFORE_ROW, nd.data);
-                    table.deleteNoCheck(nd.data, cChannel);
+                    table.deleteNoCheck(nd.data, cSession, true);
 
                     nd = nd.next;
                 }
@@ -283,7 +389,7 @@ class Parser {
                 Record ni = ins.rRoot;
 
                 while (ni != null) {
-                    table.insertNoCheck(ni.data, cChannel);
+                    table.insertNoCheck(ni.data, cSession, true);
 
                     ni = ni.next;
 
@@ -294,17 +400,19 @@ class Parser {
 
                 ni = ins.rRoot;
 
-                while (ni != null) {       // fire triggers now that update has been checked
+                while (ni != null) {
+
+                    // fire triggers now that update has been checked
                     table.fireAll(TriggerDef.UPDATE_AFTER_ROW, ni.data);
 
                     ni = ni.next;
                 }
 
-                cChannel.endNestedTransaction(false);
+                cSession.endNestedTransaction(false);
             } catch (SQLException e) {
 
-                // update failed (violation of primary key / referential integrity)
-                cChannel.endNestedTransaction(true);
+                // update failed (constraint violation)
+                cSession.endNestedTransaction(true);
 
                 throw e;
             }
@@ -320,12 +428,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Result processDelete() throws SQLException {
 
@@ -333,11 +439,15 @@ class Parser {
 
         String token = tTokenizer.getString();
 
-        cChannel.checkReadWrite();
-        cChannel.check(token, Access.DELETE);
+        cSession.checkReadWrite();
+        cSession.check(token, UserManager.DELETE);
 
-        Table       table  = dDatabase.getTable(token, cChannel);
+        Table       table  = dDatabase.getTable(token, cSession);
         TableFilter filter = new TableFilter(table, null, false);
+
+        if (table.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE, token);
+        }
 
         token = tTokenizer.getString();
 
@@ -352,6 +462,8 @@ class Parser {
             tTokenizer.back();
         }
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        Trace.check(!table.isDataReadOnly(), Trace.DATA_IS_READONLY);
         table.fireAll(TriggerDef.DELETE_BEFORE);
 
         int count = 0;
@@ -368,7 +480,7 @@ class Parser {
             Record n = del.rRoot;
 
             while (n != null) {
-                table.delete(n.data, cChannel);
+                table.delete(n.data, cSession);
 
                 count++;
 
@@ -386,12 +498,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Result processInsert() throws SQLException {
 
@@ -399,10 +509,14 @@ class Parser {
 
         String token = tTokenizer.getString();
 
-        cChannel.checkReadWrite();
-        cChannel.check(token, Access.INSERT);
+        cSession.checkReadWrite();
+        cSession.check(token, UserManager.INSERT);
 
-        Table t = dDatabase.getTable(token, cChannel);
+        Table t = dDatabase.getTable(token, cSession);
+
+        if (t.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE, token);
+        }
 
         token = tTokenizer.getString();
 
@@ -441,26 +555,41 @@ class Parser {
             len = vcolumns.size();
         }
 
+// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
         if (token.equals("VALUES")) {
             tTokenizer.getThis("(");
 
-            Object row[] = t.getNewRow();
-            int    i     = 0;
+            Object  row[]   = t.getNewRow();
+            boolean check[] = (vcolumns == null) ? null
+                                                 : new boolean[row.length];
+            int     i       = 0;
 
             while (true) {
-                int column;
+                int colindex;
 
                 if (vcolumns == null) {
-                    column = i;
+                    colindex = i;
 
-                    if (i > len) {
-                        throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+                    if (i == len) {
+
+                        // fredt will be caught in Trace.check below
+                        break;
                     }
                 } else {
-                    column = t.getColumnNr((String) vcolumns.elementAt(i));
+                    colindex = t.getColumnNr((String) vcolumns.elementAt(i));
+                    check[colindex] = true;
                 }
 
-                row[column] = getValue(t.getType(column));
+                Column column = t.getColumn(colindex);
+
+// fredt@users 20020130 - patch 491987 by jimbag@users - made optional
+                if (sql_enforce_size) {
+                    row[colindex] = enforceSize(getValue(column.getType()),
+                                                column.getType(),
+                                                column.getSize(), true);
+                } else {
+                    row[colindex] = getValue(column.getType());
+                }
 
                 i++;
 
@@ -475,7 +604,22 @@ class Parser {
                 }
             }
 
-            t.insert(row, cChannel);
+            Trace.check(len == i, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+
+            if (vcolumns != null) {
+                for (i = 0; i < check.length; i++) {
+                    if (check[i] == false) {
+                        String def = t.getColumn(i).getDefaultString();
+
+                        if (def != null) {
+                            row[i] = Column.convertObject(
+                                def, t.getColumn(i).getType());
+                        }
+                    }
+                }
+            }
+
+            t.insert(row, cSession);
 
             count = 1;
         } else if (token.equals("SELECT")) {
@@ -498,32 +642,52 @@ class Parser {
                 }
 
                 col[i]  = j;
-                type[i] = t.getType(j);
+                type[i] = t.getColumn(j).getType();
             }
 
-            cChannel.beginNestedTransaction();
+            cSession.beginNestedTransaction();
 
             try {
                 while (r != null) {
-                    Object row[] = t.getNewRow();
+                    Object  row[]   = t.getNewRow();
+                    boolean check[] = new boolean[row.length];
 
                     for (int i = 0; i < len; i++) {
-                        row[col[i]] = Column.convertObject(r.data[i],
-                                                           type[i]);
+                        check[col[i]] = true;
+
+                        if (type[i] != result.colType[i]) {
+                            row[col[i]] = Column.convertObject(r.data[i],
+                                                               type[i]);
+                        } else {
+                            row[col[i]] = r.data[i];
+                        }
                     }
 
-                    t.insert(row, cChannel);
+                    // skitt@users - this is exactly the same loop as the
+                    // above - it probably should be in a separate method
+                    for (int i = 0; i < check.length; i++) {
+                        if (check[i] == false) {
+                            String def = t.getColumn(i).getDefaultString();
+
+                            if (def != null) {
+                                row[i] = Column.convertObject(
+                                    def, t.getColumn(i).getType());
+                            }
+                        }
+                    }
+
+                    t.insert(row, cSession);
 
                     count++;
 
                     r = r.next;
                 }
 
-                cChannel.endNestedTransaction(false);
+                cSession.endNestedTransaction(false);
             } catch (SQLException e) {
 
                 // insert failed (violation of primary key)
-                cChannel.endNestedTransaction(true);
+                cSession.endNestedTransaction(true);
 
                 throw e;
             }
@@ -538,38 +702,120 @@ class Parser {
         return r;
     }
 
+// fredt@users 20020130 - patch 491987 by jimbag@users - modified
+
     /**
-     * Method declaration
+     *  Check an object for type CHAR and VARCHAR and truncate/pad based on
+     *  the  size
      *
+     * @param  obj   object to check
+     * @param  type  the object type
+     * @param  size  size to enforce
+     * @param  pad   pad strings
+     * @return       the altered object if the right type, else the object
+     *      passed in unaltered
+     */
+    static Object enforceSize(Object obj, int type, int size, boolean pad) {
+
+        // todo: need to handle BINARY like this as well
+        if (size == 0 || obj == null) {
+            return obj;
+        }
+
+        switch (type) {
+
+            case Types.CHAR :
+                return padOrTrunc((String) obj, size, pad);
+
+            case Types.VARCHAR :
+                if (((String) obj).length() > size) {
+
+                    // Just truncate for VARCHAR type
+                    return ((String) obj).substring(0, size);
+                }
+            default :
+                return obj;
+        }
+    }
+
+    /**
+     *  Pad or truncate a string to len size
+     *
+     * @param  s    the string to pad to truncate
+     * @param  len  the len to make the string
+     * @param pad   pad the string
+     * @return      the string of size len
+     */
+    static String padOrTrunc(String s, int len, boolean pad) {
+
+        if (s.length() >= len) {
+            return s.substring(0, len);
+        }
+
+        StringBuffer b = new StringBuffer(len);
+
+        b.append(s);
+
+        if (pad) {
+            for (int i = s.length(); i < len; i++) {
+                b.append(' ');
+            }
+        }
+
+        return b.toString();
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Select parseSelect() throws SQLException {
 
         Select select = new Select();
 
-// fredt@users - begin changes from 1.50
-        select.limitStart = 0;
-        select.limitCount = cChannel.getMaxRows();
-
-// fredt@users - end changes from 1.50
+// fredt@users 20011010 - patch 471710 by fredt - LIMIT rewritten
+// SELECT LIMIT n m DISTINCT ... queries and error message
+// "SELECT LIMIT n m ..." creates the result set for the SELECT statement then
+// discards the first n rows and returns m rows of the remaining result set
+// "SELECT LIMIT 0 m" is equivalent to "SELECT TOP m" or "SELECT FIRST m"
+// in other RDBMS's
+// "SELECT LIMIT n 0" discards the first n rows and returns the remaining rows
+// fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
         String token = tTokenizer.getString();
 
-        if (token.equals("DISTINCT")) {
-            select.bDistinct = true;
-
-// fredt@users - begin changes from 1.50
-        } else if (token.equals("LIMIT")) {
+        if (token.equals("LIMIT")) {
             String limStart = tTokenizer.getString();
             String limEnd   = tTokenizer.getString();
 
-            //System.out.println( "LIMIT used from "+limStart+","+limEnd);
-            select.limitStart = new Integer(limStart).intValue();
-            select.limitCount = new Integer(limEnd).intValue();
+            try {
+                select.limitStart = new Integer(limStart).intValue();
+                select.limitCount = new Integer(limEnd).intValue();
+            } catch (NumberFormatException ex) {
 
-// fredt@users - end changes from 1.50
+                // todo: add appropriate error type and message to Trace.java
+                throw Trace.error(Trace.WRONG_DATA_TYPE, "LIMIT n m");
+            }
+
+            token = tTokenizer.getString();
+        } else if (token.equals("TOP")) {
+            String limEnd = tTokenizer.getString();
+
+            try {
+                select.limitStart = 0;
+                select.limitCount = new Integer(limEnd).intValue();
+            } catch (NumberFormatException ex) {
+
+                // todo: add appropriate error type and message to Trace.java
+                throw Trace.error(Trace.WRONG_DATA_TYPE, "TOP m");
+            }
+
+            token = tTokenizer.getString();
+        }
+
+        if (token.equals("DISTINCT")) {
+            select.isDistinctSelect = true;
         } else {
             tTokenizer.back();
         }
@@ -583,11 +829,12 @@ class Parser {
             token = tTokenizer.getString();
 
             if (token.equals("AS")) {
-                e.setAlias(tTokenizer.getName());
+                e.setAlias(tTokenizer.getName(),
+                           tTokenizer.wasQuotedIdentifier());
 
                 token = tTokenizer.getString();
             } else if (tTokenizer.wasName()) {
-                e.setAlias(token);
+                e.setAlias(token, tTokenizer.wasQuotedIdentifier());
 
                 token = tTokenizer.getString();
             }
@@ -596,8 +843,31 @@ class Parser {
         } while (token.equals(","));
 
         if (token.equals("INTO")) {
-            select.sIntoTable = tTokenizer.getString();
-            token             = tTokenizer.getString();
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+            token = tTokenizer.getString();
+
+            if (token.equals("CACHED")) {
+                select.intoType = Table.CACHED_TABLE;
+                select.sIntoTable =
+                    new HsqlName(tTokenizer.getString(),
+                                 tTokenizer.wasQuotedIdentifier());
+            } else if (token.equals("TEMP")) {
+                select.intoType = Table.TEMP_TABLE;
+                select.sIntoTable =
+                    new HsqlName(tTokenizer.getString(),
+                                 tTokenizer.wasQuotedIdentifier());
+            } else if (token.equals("TEXT")) {
+                select.intoType = Table.TEXT_TABLE;
+                select.sIntoTable =
+                    new HsqlName(tTokenizer.getString(),
+                                 tTokenizer.wasQuotedIdentifier());
+            } else {
+                select.sIntoTable =
+                    new HsqlName(token, tTokenizer.wasQuotedIdentifier());
+            }
+
+            token = tTokenizer.getString();
         }
 
         if (!token.equals("FROM")) {
@@ -626,7 +896,13 @@ class Parser {
                 vfilter.addElement(parseTableFilter(true));
                 tTokenizer.getThis("ON");
 
-                condition = addCondition(condition, parseExpression());
+// thertz@users 20020320 - patch 473613 - outer join condition bug
+// we now call parseJoinCondition() because a limitation of HSQLDB results
+// in incorrect results for OUTER JOINS that have anything other than
+// tableA.colA=tableB.colB type expressions
+                //condition = addCondition(condition, parseExpression());
+                condition = addCondition(condition,
+                                         parseOuterJoinCondition());
             } else if (token.equals("INNER")) {
                 tTokenizer.getThis("JOIN");
                 vfilter.addElement(parseTableFilter(false));
@@ -674,9 +950,9 @@ class Parser {
                     int col = table.getColumnCount();
 
                     for (int c = 0; c < col; c++) {
-                        Expression ins =
-                            new Expression(f.getName(),
-                                           table.getColumnName(c));
+                        Expression ins = new Expression(
+                            f.getName(), table.getColumn(c).columnName.name,
+                            table.getColumn(c).columnName.isNameQuoted);
 
                         vcolumn.insertElementAt(ins, current++);
 
@@ -713,13 +989,19 @@ class Parser {
 
         select.eCondition = condition;
 
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// to support GROUP BY with more than one column
         if (token.equals("GROUP")) {
             tTokenizer.getThis("BY");
 
             len = 0;
 
             do {
-                vcolumn.addElement(parseExpression());
+                Expression e = parseExpression();
+
+                e = doOrderGroup(e, vcolumn);
+
+                vcolumn.addElement(e);
 
                 token = tTokenizer.getString();
 
@@ -727,6 +1009,19 @@ class Parser {
             } while (token.equals(","));
 
             select.iGroupLen = len;
+        }
+
+        if (token.equals("HAVING")) {
+
+            //fredt - not yet!
+            Expression hcondition = null;
+
+            addCondition(hcondition, parseExpression());
+
+            select.havingCondition = hcondition;
+            token                  = tTokenizer.getString();
+
+            throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
         }
 
         if (token.equals("ORDER")) {
@@ -737,31 +1032,7 @@ class Parser {
             do {
                 Expression e = parseExpression();
 
-                if (e.getType() == Expression.VALUE) {
-
-                    // order by 1,2,3
-                    if (e.getDataType() == Column.INTEGER) {
-                        int i = ((Integer) e.getValue()).intValue();
-
-                        e = (Expression) vcolumn.elementAt(i - 1);
-                    }
-                } else if (e.getType() == Expression.COLUMN
-                           && e.getTableName() == null) {
-
-                    // this could be an alias column
-                    String s = e.getColumnName();
-
-                    for (int i = 0; i < vcolumn.size(); i++) {
-                        Expression ec = (Expression) vcolumn.elementAt(i);
-
-                        if (s.equals(ec.getAlias())) {
-                            e = ec;
-
-                            break;
-                        }
-                    }
-                }
-
+                e     = doOrderGroup(e, vcolumn);
                 token = tTokenizer.getString();
 
                 if (token.equals("DESC")) {
@@ -817,14 +1088,51 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Description of the Method
      *
+     * @param  e                          Description of the Parameter
+     * @param  vcolumn                    Description of the Parameter
+     * @return                            Description of the Return Value
+     * @exception  java.sql.SQLException  Description of the Exception
+     */
+    private Expression doOrderGroup(Expression e,
+                                    Vector vcolumn)
+                                    throws java.sql.SQLException {
+
+        if (e.getType() == Expression.VALUE) {
+
+            // order by 1,2,3
+            if (e.getDataType() == Types.INTEGER) {
+                int i = ((Integer) e.getValue()).intValue();
+
+                e = (Expression) vcolumn.elementAt(i - 1);
+            }
+        } else if (e.getType() == Expression.COLUMN
+                   && e.getTableName() == null) {
+
+            // this could be an alias column
+            String s = e.getColumnName();
+
+            for (int i = 0, vSize = vcolumn.size(); i < vSize; i++) {
+                Expression ec = (Expression) vcolumn.elementAt(i);
+
+                if (s.equals(ec.getAlias())) {
+                    e = ec;
+
+                    break;
+                }
+            }
+        }
+
+        return e;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @param outerjoin
-     *
+     * @param  outerjoin
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private TableFilter parseTableFilter(boolean outerjoin)
     throws SQLException {
@@ -839,18 +1147,72 @@ class Parser {
             Result r = s.getResult(0);
 
             // it's not a problem that this table has not a unique name
-            t = new Table(dDatabase, false, "SYSTEM_SUBQUERY", false);
+            t = new Table(dDatabase, new HsqlName("SYSTEM_SUBQUERY", false),
+                          Table.SYSTEM_TABLE, null);
 
             tTokenizer.getThis(")");
             t.addColumns(r);
             t.createPrimaryKey();
 
-            // subquery creation can't fail because of violation of primary key
-            t.insert(r, cChannel);
+            // subquery creation can't fail because constraint violation
+            t.insert(r, cSession);
         } else {
-            cChannel.check(token, Access.SELECT);
+            cSession.check(token, UserManager.SELECT);
 
-            t = dDatabase.getTable(token, cChannel);
+            t = dDatabase.getTable(token, cSession);
+
+// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
+            if (t.isView()) {
+                String Viewname    = token;
+                int    CurrentPos  = tTokenizer.getPosition();
+                int    sLength     = tTokenizer.getLength();
+                int    TokenLength = token.length();
+                int    NewCurPos   = CurrentPos;
+
+                token = tTokenizer.getString();
+
+                if (token.equals("AS")) {
+                    Viewname  = tTokenizer.getName();
+                    NewCurPos = tTokenizer.getPosition();
+                } else if (tTokenizer.wasName()) {
+                    Viewname  = token;
+                    NewCurPos = tTokenizer.getPosition();
+                } else {
+                    tTokenizer.back();
+                }
+
+                String sLeft = tTokenizer.getPart(0, CurrentPos
+                                                  - TokenLength);
+                String       sRight = tTokenizer.getPart(NewCurPos, sLength);
+                View         v         = (View) t;
+                String       sView     = v.getStatement();
+                StringBuffer sFromView = new StringBuffer(128);
+
+                sFromView.append(sLeft);
+                sFromView.append('(');
+                sFromView.append(sView);
+                sFromView.append(") ");
+                sFromView.append(Viewname);
+                sFromView.append(sRight);
+                tTokenizer.setString(sFromView.toString(),
+                                     CurrentPos - TokenLength + 1);
+                tTokenizer.getThis("SELECT");
+
+                Select s = parseSelect();
+                Result r = s.getResult(0);
+
+                // it's not a problem that this table has not a unique name
+                t = new Table(dDatabase,
+                              new HsqlName("SYSTEM_SUBQUERY", false),
+                              Table.SYSTEM_TABLE, null);
+
+                tTokenizer.getThis(")");
+                t.addColumns(r);
+                t.createPrimaryKey();
+
+                // subquery creation can't fail because constraint violation
+                t.insert(r, cSession);
+            }
         }
 
         String sAlias = null;
@@ -869,12 +1231,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param e1
-     * @param e2
-     *
+     * @param  e1
+     * @param  e2
      * @return
      */
     private Expression addCondition(Expression e1, Expression e2) {
@@ -889,14 +1249,11 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param type
-     *
+     * @param  type
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Object getValue(int type) throws SQLException {
 
@@ -907,13 +1264,55 @@ class Parser {
         return r.getValue(type);
     }
 
+// thertz@users 20020320 - patch 473613 - outer join condition bug
+
     /**
-     * Method declaration
+     * parses the expression that can be used behind a
+     * [..] JOIN table ON (exp).
+     * This expression should always be in the form "tab.col=tab2.col"
+     * with optional brackets (to support automated query tools).<br>
+     * this method is used from the parseSelect method
      *
+     * @return the expression
+     * @throws  SQLException if the syntax was not correct
+     */
+    private Expression parseOuterJoinCondition() throws SQLException {
+
+        boolean parens = false;
+
+        read();
+
+        if (iToken == Expression.OPEN) {
+            parens = true;
+
+            read();
+        }
+
+        Trace.check(iToken == Expression.COLUMN, Trace.OUTER_JOIN_CONDITION);
+
+        Expression left = new Expression(sTable, sToken);
+
+        read();
+        Trace.check(iToken == Expression.EQUAL, Trace.OUTER_JOIN_CONDITION);
+        read();
+        Trace.check(iToken == Expression.COLUMN, Trace.OUTER_JOIN_CONDITION);
+
+        Expression right = new Expression(sTable, sToken);
+
+        if (parens) {
+            read();
+            Trace.check(iToken == Expression.CLOSE,
+                        Trace.OUTER_JOIN_CONDITION);
+        }
+
+        return new Expression(Expression.EQUAL, left, right);
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression parseExpression() throws SQLException {
 
@@ -921,15 +1320,21 @@ class Parser {
 
         // todo: really this should be in readTerm
         // but then grouping is much more complex
-        if (iToken == Expression.MIN || iToken == Expression.MAX
-                || iToken == Expression.COUNT || iToken == Expression.SUM
-                || iToken == Expression.AVG) {
-            int type = iToken;
+        if (Expression.isAggregate(iToken)) {
+            boolean distinct = false;
+            int     type     = iToken;
 
             read();
 
+            if (tTokenizer.getString().equals("DISTINCT")) {
+                distinct = true;
+            } else {
+                tTokenizer.back();
+            }
+
             Expression r = new Expression(type, readOr(), null);
 
+            r.setDistinctAggregate(distinct);
             tTokenizer.back();
 
             return r;
@@ -943,12 +1348,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readOr() throws SQLException {
 
@@ -967,12 +1370,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readAnd() throws SQLException {
 
@@ -991,12 +1392,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readCondition() throws SQLException {
 
@@ -1043,7 +1442,7 @@ class Parser {
                     Trace.check(c.getType() == Expression.VALUE,
                                 Trace.INVALID_ESCAPE);
 
-                    String s = (String) c.getValue(Column.VARCHAR);
+                    String s = (String) c.getValue(Types.VARCHAR);
 
                     if (s == null || s.length() < 1) {
                         throw Trace.error(Trace.INVALID_ESCAPE, s);
@@ -1085,7 +1484,7 @@ class Parser {
                     Vector v = new Vector();
 
                     while (true) {
-                        v.addElement(getValue(Column.VARCHAR));
+                        v.addElement(getValue(Types.VARCHAR));
                         read();
 
                         if (iToken != Expression.COMMA) {
@@ -1122,12 +1521,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param type
-     *
-     * @throws SQLException
+     * @param  type
+     * @throws  SQLException
      */
     private void readThis(int type) throws SQLException {
         Trace.check(iToken == type, Trace.UNEXPECTED_TOKEN);
@@ -1135,12 +1532,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readConcat() throws SQLException {
 
@@ -1159,12 +1554,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readSum() throws SQLException {
 
@@ -1192,12 +1585,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readFactor() throws SQLException {
 
@@ -1216,12 +1607,10 @@ class Parser {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private Expression readTerm() throws SQLException {
 
@@ -1235,7 +1624,7 @@ class Parser {
             read();
 
             if (iToken == Expression.OPEN) {
-                Function f = new Function(dDatabase.getAlias(name), cChannel);
+                Function f = new Function(dDatabase.getAlias(name), cSession);
                 int      len = f.getArgCount();
                 int      i   = 0;
 
@@ -1363,11 +1752,13 @@ class Parser {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
+
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan
+// reordering for speed
     private void read() throws SQLException {
 
         sToken = tTokenizer.getString();
@@ -1388,8 +1779,22 @@ class Parser {
             } else {
                 iToken = Expression.COLUMN;
             }
-        } else if (sToken.equals("")) {
+        } else if (sToken.length() == 0) {
             iToken = Expression.END;
+        } else if (sToken.equals(",")) {
+            iToken = Expression.COMMA;
+        } else if (sToken.equals("=")) {
+            iToken = Expression.EQUAL;
+        } else if (sToken.equals("<>") || sToken.equals("!=")) {
+            iToken = Expression.NOT_EQUAL;
+        } else if (sToken.equals("<")) {
+            iToken = Expression.SMALLER;
+        } else if (sToken.equals(">")) {
+            iToken = Expression.BIGGER;
+        } else if (sToken.equals("<=")) {
+            iToken = Expression.SMALLER_EQUAL;
+        } else if (sToken.equals(">=")) {
+            iToken = Expression.BIGGER_EQUAL;
         } else if (sToken.equals("AND")) {
             iToken = Expression.AND;
         } else if (sToken.equals("OR")) {
@@ -1419,16 +1824,6 @@ class Parser {
             iToken = Expression.CLOSE;
         } else if (sToken.equals("SELECT")) {
             iToken = Expression.SELECT;
-        } else if (sToken.equals("<")) {
-            iToken = Expression.SMALLER;
-        } else if (sToken.equals("<=")) {
-            iToken = Expression.SMALLER_EQUAL;
-        } else if (sToken.equals(">=")) {
-            iToken = Expression.BIGGER_EQUAL;
-        } else if (sToken.equals(">")) {
-            iToken = Expression.BIGGER;
-        } else if (sToken.equals("=")) {
-            iToken = Expression.EQUAL;
         } else if (sToken.equals("IS")) {
             sToken = tTokenizer.getString();
 
@@ -1439,8 +1834,6 @@ class Parser {
 
                 tTokenizer.back();
             }
-        } else if (sToken.equals("<>") || sToken.equals("!=")) {
-            iToken = Expression.NOT_EQUAL;
         } else if (sToken.equals("LIKE")) {
             iToken = Expression.LIKE;
         } else if (sToken.equals("COUNT")) {
@@ -1461,8 +1854,10 @@ class Parser {
             iToken = Expression.CAST;
         } else if (sToken.equals("CASEWHEN")) {
             iToken = Expression.CASEWHEN;
-        } else if (sToken.equals(",")) {
-            iToken = Expression.COMMA;
+
+// fredt@users 20020215 - patch 514111 by fredt
+        } else if (sToken.equals("CONCAT")) {
+            iToken = Expression.CONCAT;
         } else {
             iToken = Expression.END;
         }

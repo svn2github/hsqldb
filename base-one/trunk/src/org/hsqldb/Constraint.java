@@ -67,93 +67,187 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.ArrayUtil;
 import java.sql.SQLException;
 
+// fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
+// fredt@users 20020320 - doc 1.7.0 - update
+
 /**
- * Class declaration
+ *  Implementation of a table constraint with references to the indexes used
+ *  by the contraint.
  *
- *
- * @version 1.0.0.1
+ * @version    1.7.0
  */
 class Constraint {
 
-    final static int FOREIGN_KEY = 0,
+    static final int FOREIGN_KEY = 0,
                      MAIN        = 1,
                      UNIQUE      = 2;
+
+    // fkName and pkName are for foreign keys only
+    private HsqlName constName;
+    private HsqlName fkName;
+    private HsqlName pkName;
     private int      iType;
     private int      iLen;
 
     // Main is the table that is referenced
-    private Table  tMain;
-    private int    iColMain[];
-    private Index  iMain;
-    private Object oMain[];
+    private Table    tMain;
+    private int[]    iColMain;
+    private Index    iMain;
+    private Object[] oMain;
 
     // Ref is the table that has a reference to the main table
-    private Table  tRef;
-    private int    iColRef[];
-    private Index  iRef;
-    private Object oRef[];
+    private Table    tRef;
+    private int[]    iColRef;
+    private Index    iRef;
+    private Object[] oRef;
+    private Object[] oColRef;
+    private boolean  bCascade;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param type
-     * @param t
-     * @param col
+     * @param  type
+     * @param  t
+     * @param  col
      */
-    Constraint(int type, Table t, int col[]) {
+    Constraint(HsqlName name, Table t, Index index) {
 
-        iType    = type;
-        tMain    = t;
-        iColMain = col;
-        iLen     = col.length;
+        constName = name;
+        iType     = UNIQUE;
+        tMain     = t;
+        iMain     = index;
+        iColMain  = index.getColumns();
+        iLen      = iColMain.length;
     }
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param type
-     * @param main
-     * @param ref
-     * @param cmain
-     * @param cref
+     * @param  type
+     * @param  main
+     * @param  ref
+     * @param  cmain
+     * @param  cref
+     * @exception  SQLException  Description of the Exception
      */
-    Constraint(int type, Table main, Table ref, int cmain[],
-               int cref[]) throws SQLException {
+    Constraint(HsqlName name, HsqlName linkedname, int type, Table main,
+               Table ref, int colmain[], int colref[], Index imain,
+               Index iref, boolean cascade) throws SQLException {
+
+        constName = name;
+
+        if (type == MAIN) {
+            pkName = name;
+            fkName = linkedname;
+        } else if (type == FOREIGN_KEY) {
+            pkName = linkedname;
+            fkName = name;
+        }
 
         iType    = type;
         tMain    = main;
         tRef     = ref;
-        iColMain = cmain;
-        iColRef  = cref;
-        iLen     = cmain.length;
+        iColMain = colmain;
+        iLen     = iColMain.length;
+        iColRef  = colref;
+        oColRef  = new Object[iColRef.length];
+        iMain    = imain;
+        iRef     = iref;
+        bCascade = cascade;
 
-        if (Trace.ASSERT) {
-            Trace.assert(cmain.length == cref.length);
-        }
+        setTableRows();
+    }
+
+    private Constraint() {}
+
+    Constraint duplicate() {
+
+        Constraint c = new Constraint();
+
+        c.constName = constName;
+        c.fkName    = fkName;
+        c.pkName    = pkName;
+        c.iType     = iType;
+        c.iLen      = iLen;
+        c.tMain     = tMain;
+        c.iColMain  = iColMain;
+        c.iMain     = iMain;
+        c.oMain     = oMain;
+        c.tRef      = tRef;
+        c.iColRef   = iColRef;
+        c.iRef      = iRef;
+        c.oRef      = oRef;
+        c.oColRef   = oColRef;
+        c.bCascade  = bCascade;
+
+        return c;
+    }
+
+    private void setTableRows() throws SQLException {
 
         oMain = tMain.getNewRow();
-        oRef  = tRef.getNewRow();
-        iMain = tMain.getIndexForColumns(cmain);
-        iRef  = tRef.getIndexForColumns(cref);
+
+        if (tRef != null) {
+            oRef = tRef.getNewRow();
+        }
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iColMain.length == iColRef.length);
+        }
+    }
+
+    HsqlName getName() {
+        return constName;
     }
 
     /**
-     * Method declaration
+     * Changes constraint name.
      *
+     * @param name
+     * @param isquoted
+     */
+    private void setName(String name, boolean isquoted) {
+        constName.rename(name, isquoted);
+    }
+
+    /**
+     *  probably a misnomer, but DatabaseMetaData.getCrossReference specifies
+     *  it this way (I suppose because most FKs are declared against the PK of
+     *  another table)
      *
-     * @return
+     *  @return name of the index refereneced by a foreign key
+     */
+    String getPkName() {
+        return pkName == null ? null
+                              : pkName.name;
+    }
+
+    /**
+     *  probably a misnomer, but DatabaseMetaData.getCrossReference specifies
+     *  it this way (I suppose because most FKs are declared against the PK of
+     *  another table)
+     *
+     *  @return name of the index for the referencing foreign key
+     */
+    String getFkName() {
+        return fkName == null ? null
+                              : fkName.name;
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @return name of the index for the foreign key column (child)
      */
     int getType() {
         return iType;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -161,9 +255,12 @@ class Constraint {
         return tMain;
     }
 
+    Index getMainIndex() {
+        return iMain;
+    }
+
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -171,9 +268,21 @@ class Constraint {
         return tRef;
     }
 
+    Index getRefIndex() {
+        return iRef;
+    }
+
     /**
-     * Method declaration
+     *  Does (foreign key) constraint cascade on delete
      *
+     * @return
+     */
+    boolean isCascade() {
+        return bCascade;
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
@@ -182,8 +291,7 @@ class Constraint {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -192,36 +300,103 @@ class Constraint {
     }
 
     /**
-     * Method declaration
+     *  See if an index is part this constraint and the constraint is set for
+     *  a foreign key. Used for tests before dropping an index. (fredt@users)
      *
-     *
-     * @param old
-     * @param n
-     *
-     * @throws SQLException
+     * @return
      */
-    void replaceTable(Table old, Table n) throws SQLException {
+    boolean isIndexFK(Index index) {
 
-        if (old == tMain) {
-            tMain = n;
-        } else if (old == tRef) {
-            tRef = n;
-        } else {
-            Trace.assert(false, "could not replace");
+        if (iType == FOREIGN_KEY || iType == MAIN) {
+            if (iMain == index || iRef == index) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     *  See if an index is part this constraint and the constraint is set for
+     *  a unique constraint. Used for tests before dropping an index.
+     *  (fredt@users)
+     *
+     * @return
+     */
+    boolean isIndexUnique(Index index) {
+
+        if (iType == UNIQUE && iMain == index) {
+            return true;
+        }
+
+        return false;
+    }
+
+// fredt@users 20020225 - patch 1.7.0 by fredt - duplicate constraints
+
+    /**
+     * Compares this with another constraint column set. This implementation
+     * only checks UNIQUE constraints.
+     */
+    boolean isEquivalent(int col[], int type) {
+
+        if (type == iType && iType == UNIQUE && iLen == col.length) {
+            if (ArrayUtil.haveEqualSets(iColMain, col, iLen)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  old
+     * @param  n
+     * @throws  SQLException
+     */
+    void replaceTable(Table oldt, Table newt, Index oldidx,
+                      Index newidx) throws SQLException {
+
+        if (oldt == tMain) {
+            tMain = newt;
+
+            setTableRows();
+        }
+
+        if (oldidx == iMain) {
+            iMain    = newidx;
+            iColMain = new int[iColMain.length];
+
+            ArrayUtil.copyArray(newidx.getColumns(), iColMain,
+                                iColMain.length);
+        }
+
+        if (oldt == tRef) {
+            tRef = newt;
+
+            setTableRows();
+        }
+
+        if (oldidx == iRef) {
+            iRef    = newidx;
+            iColRef = new int[iColRef.length];
+
+            ArrayUtil.copyArray(newidx.getColumns(), iColRef, iColRef.length);
         }
     }
 
     /**
-     * Method declaration
+     *  Checks for foreign key violation when inserting a row in the child
+     *  table.
      *
-     *
-     * @param row
-     *
-     * @throws SQLException
+     * @param  row
+     * @throws  SQLException
      */
     void checkInsert(Object row[]) throws SQLException {
 
-        if (iType == MAIN || iType == UNIQUE) {
+        if ((iType == MAIN) || (iType == UNIQUE)) {
 
             // inserts in the main table are never a problem
             // unique constraints are checked by the unique index
@@ -247,21 +422,15 @@ class Constraint {
     }
 
     /**
-     * Method declaration
+     *  Check if a row in the referenced (parent) table can be deleted. Used
+     *  only for UPDATE table statements. Checks for DELETE FROM table
+     *  statements are now handled by findFkRef() to support ON DELETE
+     *  CASCADE.
      *
-     *
-     * @param row
-     *
-     * @throws SQLException
+     * @param  row
+     * @throws  SQLException
      */
-    void checkDelete(Object row[]) throws SQLException {
-
-        if (iType == FOREIGN_KEY || iType == UNIQUE) {
-
-            // deleting references are never a problem
-            // unique constraints are checked by the unique index
-            return;
-        }
+    private void checkDelete(Object row[]) throws SQLException {
 
         // must be called synchronized because of oRef
         for (int i = 0; i < iLen; i++) {
@@ -277,19 +446,59 @@ class Constraint {
         }
 
         // there must be no record in the 'slave' table
-        Trace.check(iRef.find(oRef) == null,
+        Node node = iRef.find(oRef);
+
+        Trace.check(node == null, Trace.INTEGRITY_CONSTRAINT_VIOLATION);
+    }
+
+// fredt@users 20020225 - patch 1.7.0 - cascading deletes
+
+    /**
+     * New method to find any referencing node (containing the row) for a
+     * foreign key (finds row in child table). If ON DELETE CASCADE is
+     * supported by this constraint, then the method finds the first row
+     * among the rows of the table ordered by the index and doesn't throw.
+     * Without ON DELETE CASCADE, the method attempts to finds any row that
+     * exists, in which case it throws an exception. If no row is found,
+     * null is returned.
+     * (fredt@users)
+     *
+     * @param  array of objects for a database row
+     * @return Node object or null
+     * @throws  SQLException
+     */
+    Node findFkRef(Object row[]) throws SQLException {
+
+        // must be called synchronized because of oRef
+        for (int i = 0; i < iLen; i++) {
+            Object o = row[iColMain[i]];
+
+            if (o == null) {
+
+                // if one column is null then integrity is not checked
+                return null;
+            }
+
+            oColRef[i] = o;
+        }
+
+        // there must be no record in the 'slave' table
+        Node node = iRef.findSimple(oColRef, bCascade);
+
+        Trace.check((node == null) || bCascade,
                     Trace.INTEGRITY_CONSTRAINT_VIOLATION);
+
+        return node;
     }
 
     /**
-     * Method declaration
+     *  Checks if updating a set of columns in a table row breaks the
+     *  referential integrity constraint.
      *
-     *
-     * @param col
-     * @param deleted
-     * @param inserted
-     *
-     * @throws SQLException
+     * @param  col array of column indexes for columns to check
+     * @param  deleted  rows to delete
+     * @param  inserted rows to insert
+     * @throws  SQLException
      */
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws SQLException {
@@ -301,7 +510,7 @@ class Constraint {
         }
 
         if (iType == MAIN) {
-            if (!isAffected(col, iColMain, iLen)) {
+            if (!ArrayUtil.haveCommonElement(col, iColMain, iLen)) {
                 return;
             }
 
@@ -310,7 +519,7 @@ class Constraint {
 
             while (r != null) {
 
-                // if a identical record exists we don't have to test
+                // if an identical record exists we don't have to test
                 if (iMain.find(r.data) == null) {
                     checkDelete(r.data);
                 }
@@ -318,7 +527,7 @@ class Constraint {
                 r = r.next;
             }
         } else if (iType == FOREIGN_KEY) {
-            if (!isAffected(col, iColMain, iLen)) {
+            if (!ArrayUtil.haveCommonElement(col, iColMain, iLen)) {
                 return;
             }
 
@@ -331,36 +540,5 @@ class Constraint {
                 r = r.next;
             }
         }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param col
-     * @param col2
-     * @param len
-     *
-     * @return
-     */
-    private boolean isAffected(int col[], int col2[], int len) {
-
-        if (iType == UNIQUE) {
-
-            // unique constraints are checked by the unique index
-            return false;
-        }
-
-        for (int i = 0; i < col.length; i++) {
-            int c = col[i];
-
-            for (int j = 0; j < len; j++) {
-                if (c == col2[j]) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }

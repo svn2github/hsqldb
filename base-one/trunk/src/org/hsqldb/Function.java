@@ -67,19 +67,19 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
-import java.lang.reflect.*;
+import java.sql.SQLException;
+import java.util.Vector;
+import java.lang.reflect.Method;
 
 /**
- * Function class declaration
+ * Provides services to evaluate Java methods in the context of
+ * SQL function and stored procedure calls.
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Function {
 
-    private Channel    cChannel;
+    private Session    cSession;
     private String     sFunction;
     private Method     mMethod;
     private int        iReturnType;
@@ -91,15 +91,43 @@ class Function {
     private boolean    bConnection;
 
     /**
-     * Constructor declaration
+     * Constructs a new Function object with the given function call name
+     * and using the specified Session context. <p>
+     *
+     * The call name is the fully qualified name of a Java method, as
+     * opposed to the method's canonical signature.  That is, the name
+     * is of the form "package.class.method."  This implies that Java
+     * methods with the same fully qualified name but different signatures
+     * cannot be used properly as HSQLDB SQL functions or stored procedures.
+     * For instance, it is impossible to call both System.getProperty(String)
+     * and System.getProperty(String,String) under this arrangement, because
+     * the HSQLDB Function object is unable to differentiate between the two;
+     * it simply chooses the first method matching the FQN in the array of
+     * methods obtained from calling getMethods() on an instance of the
+     * Class indicated in the FQN, hiding all other methods with the same
+     * FQN. <p>
+     *
+     * The function FQN must match at least one Java method FQN in the
+     * specified class or construction cannot procede and a SQLException is
+     * thrown. <p>
+     *
+     * The Session paramter is the connected context in which this
+     * Function object will evaluate.  If it is determined that the
+     * connected user does not have the right to evaluate this Function,
+     * construction cannot proceed and a SQLException is thrown.
      *
      *
-     * @param function
-     * @param channel
+     * @param function the fully qualified name of a Java method
+     * @param session the connected context in which this Function object will
+     *                evaluate
+     * @throws SQLException if the specified function FQN corresponds to no
+     *                      Java method or the session user at the time of
+     *                      construction does not have the right to evaluate
+     *                      this Function.
      */
-    Function(String function, Channel channel) throws SQLException {
+    Function(String function, Session session) throws SQLException {
 
-        cChannel  = channel;
+        cSession  = session;
         sFunction = function;
 
         int i = function.lastIndexOf('.');
@@ -108,7 +136,7 @@ class Function {
 
         String classname = function.substring(0, i);
 
-        channel.check("CLASS \"" + classname + "\"", Access.ALL);
+        session.check("CLASS \"" + classname + "\"", UserManager.ALL);
 
         String methodname    = function.substring(i + 1);
         Class  classinstance = null;
@@ -148,7 +176,7 @@ class Function {
             Class  a    = arg[i];
             String type = a.getName();
 
-            if (i == 0 && type.equals("java.sql.Connection")) {
+            if ((i == 0) && type.equals("java.sql.Connection")) {
 
                 // only the first parameter can be a Connection
                 bConnection = true;
@@ -167,19 +195,23 @@ class Function {
     }
 
     /**
-     * Method declaration
+     * Retrieves the value this Function evaluates to, given the current
+     * state of this object's {@link #resolve(TableFilter) resolved}
+     * TableFilter, if any, and any mapping of expressions to this
+     * Function's parameter list that has been performed via
+     * {link #setArgument(int,Expression) setArgument}.
      *
      *
-     * @return
-     *
-     * @throws SQLException
+     * @return the value resulting from evaluating this Function
+     * @throws SQLException if an invocation exception is encountered when calling the Java
+     * method underlying this object
      */
     Object getValue() throws SQLException {
 
         int i = 0;
 
         if (bConnection) {
-            oArg[i] = new jdbcConnection(cChannel);
+            oArg[i] = new jdbcConnection(cSession);
 
             i++;
         }
@@ -194,7 +226,7 @@ class Function {
                 o = e.getValue(iArgType[i]);
             }
 
-            if (o == null &&!bArgNullable[i]) {
+            if ((o == null) &&!bArgNullable[i]) {
 
                 // null argument for primitive datatype: don't call & return null
                 return null;
@@ -213,10 +245,18 @@ class Function {
     }
 
     /**
-     * Method declaration
+     * Retrieves the number of parameters that must be supplied to evaluate
+     * this Function object from SQL.  <p>
+     *
+     * This value may be different than the number of parameters of the
+     * underlying Java method.  This is because HSQLDB automatically detects
+     * if the first parameter is of type java.sql.Connection, and supplies a
+     * live Connection object constructed from the evaluating session context
+     * if so.
      *
      *
-     * @return
+     * @return the number of arguments this Function takes, as know to the calling
+     * SQL context
      */
     int getArgCount() {
         return iArgCount - (bConnection ? 1
@@ -224,12 +264,14 @@ class Function {
     }
 
     /**
-     * Method declaration
+     * Resolves the arguments supplied to this Function object against the
+     * specified TableFilter.
      *
      *
-     * @param f
-     *
-     * @throws SQLException
+     * @param f the TableFilter against which to resolve this Function
+     * object's arguments
+     * @throws SQLException if there is a problem resolving an argument against the specified
+     * TableFilter
      */
     void resolve(TableFilter f) throws SQLException {
 
@@ -241,10 +283,11 @@ class Function {
     }
 
     /**
-     * Method declaration
+     * Checks each of this object's arguments for resolution, throwing a
+     * SQLException if any arguments have not yet been resolved.
      *
      *
-     * @throws SQLException
+     * @throws SQLException if any arguments have not yet been resolved
      */
     void checkResolved() throws SQLException {
 
@@ -256,33 +299,35 @@ class Function {
     }
 
     /**
-     * Method declaration
+     * Retrieves the java.sql.Types type of the argument at the specified
+     * offset in this Function object's paramter list
      *
      *
-     * @param i
-     *
-     * @return
+     * @param i the offset of the desired argument in this Function object's paramter list
+     * @return the specified argument's java.sql.Types type
      */
     int getArgType(int i) {
         return iArgType[i];
     }
 
     /**
-     * Method declaration
+     * Retrieves the java.sql.Types type of this Function
+     * object's return type
      *
      *
-     * @return
+     * @return this Function object's java.sql.Types return type
      */
     int getReturnType() {
         return iReturnType;
     }
 
     /**
-     * Method declaration
+     * Binds the specified expression to the specified argument in this
+     * Function object's paramter list.
      *
      *
-     * @param i
-     * @param e
+     * @param i the position of the agument to bind to
+     * @param e the expression to bind
      */
     void setArgument(int i, Expression e) {
 

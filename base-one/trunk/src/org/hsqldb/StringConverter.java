@@ -67,32 +67,43 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.io.IOException;
+import java.sql.SQLException;
 
 /**
- * Class declaration
+ * Collection of static methods for converting strings between different
+ * formats and to and from byte arrays
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 class StringConverter {
 
     private static final char HEXCHAR[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
         'e', 'f'
     };
-    private static final String HEXINDEX = "0123456789abcdef          ABCDEF";
+    private static final String HEXINDEX = "0123456789abcdef0123456789ABCDEF";
 
     /**
-     * Method declaration
+     * Compacts a hexadecimal string into a byte array
      *
      *
      * @param s
      *
      * @return
+     * @throws SQLException
      */
-    public static byte[] hexToByte(String s) {
+    public static byte[] hexToByte(String s) throws SQLException {
 
         int  l      = s.length() / 2;
         byte data[] = new byte[l];
@@ -102,7 +113,14 @@ class StringConverter {
             char c = s.charAt(j++);
             int  n, b;
 
-            n       = HEXINDEX.indexOf(c);
+            n = HEXINDEX.indexOf(c);
+
+            if (n == -1) {
+                throw Trace.error(
+                    Trace.INVALID_ESCAPE,
+                    "hexadecimal string contains non hex character");
+            }
+
             b       = (n & 0xf) << 4;
             c       = s.charAt(j++);
             n       = HEXINDEX.indexOf(c);
@@ -124,7 +142,7 @@ class StringConverter {
     static String byteToHex(byte b[]) {
 
         int          len = b.length;
-        StringBuffer s   = new StringBuffer();
+        StringBuffer s   = new StringBuffer(len * 2);
 
         for (int i = 0; i < len; i++) {
             int c = ((int) b[i]) & 0xff;
@@ -167,8 +185,9 @@ class StringConverter {
      * @param s
      *
      * @return
+     * @throws SQLException
      */
-    public static String hexStringToUnicode(String s) {
+    public static String hexStringToUnicode(String s) throws SQLException {
 
         byte[]               b   = hexToByte(s);
         ByteArrayInputStream bin = new ByteArrayInputStream(b);
@@ -181,30 +200,44 @@ class StringConverter {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
-     */
-    public static String unicodeToAscii(String s) {
+// fredt@users 20011120 - patch 450455 by kibu@users - modified
+// method return type changed to StringBuffer with spare
+// space for end-of-line characters -- to reduce String concatenation
 
-        if (s == null || s.equals("")) {
-            return s;
+    /**
+     * Hsqldb specific encoding used only for log files.
+     *
+     * The SQL statements that go into the log file (input) are Unicode
+     * strings. input is converted into an ASCII string (output) with the
+     * following transformations.
+     * All characters outside the 0x20-7f range are converted to Java Unicode
+     * escape sequence and added to output.
+     * If a backslash character is immdediately followed by 'u', the
+     * backslash character is converted to Java Unicode escape sequence and
+     * added to output.
+     * All the remaining characters in input are added to output without
+     * conversion. (fredt@users)
+     *
+     * @param s Java Unicode string
+     *
+     * @return encoded string in the StringBuffer
+     */
+    public static StringBuffer unicodeToAscii(String s) {
+
+        if ((s == null) || (s.length() == 0)) {
+            return new StringBuffer();
         }
 
         int          len = s.length();
-        StringBuffer b   = new StringBuffer(len);
+        StringBuffer b   = new StringBuffer(len + 16);
 
         for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
 
             if (c == '\\') {
-                if (i < len - 1 && s.charAt(i + 1) == 'u') {
+                if ((i < len - 1) && (s.charAt(i + 1) == 'u')) {
                     b.append(c);          // encode the \ as unicode, so 'u' is ignored
-                    b.append("u005c");    // splited so the source code is not changed...
+                    b.append("u005c");    // split so the source code is not changed...
                 } else {
                     b.append(c);
                 }
@@ -219,20 +252,27 @@ class StringConverter {
             }
         }
 
-        return b.toString();
+        return b;
     }
 
+// fredt@users 20020522 - fix for 557510 - backslash bug
+// this legacy bug resulted from forward reading the input when a backslash
+// was present and manifested itself when a backslash was followed
+// immdediately by a character outside the 0x20-7f range in a database field.
+
     /**
-     * Method declaration
+     * Hsqldb specific decoding used only for log files.
      *
+     * This method converts the ASCII strings in a log file back into
+     * Java Unicode strings. See unicodeToAccii() above,
      *
-     * @param s
+     * @param s logged ASCII string
      *
-     * @return
+     * @return Java Unicode string
      */
     public static String asciiToUnicode(String s) {
 
-        if (s == null || s.indexOf("\\u") == -1) {
+        if ((s == null) || (s.indexOf("\\u") == -1)) {
             return s;
         }
 
@@ -243,22 +283,24 @@ class StringConverter {
         for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
 
-            if (c != '\\' || i == len - 1) {
-                b[j++] = c;
-            } else {
-                c = s.charAt(++i);
+            if (c == '\\' && i < len - 5) {
+                char c1 = s.charAt(i + 1);
 
-                if (c != 'u' || i == len - 1) {
-                    b[j++] = '\\';
-                    b[j++] = c;
-                } else {
-                    int k = (HEXINDEX.indexOf(s.charAt(++i)) & 0xf) << 12;
+                if (c1 == 'u') {
+                    i++;
 
-                    k      += (HEXINDEX.indexOf(s.charAt(++i)) & 0xf) << 8;
-                    k      += (HEXINDEX.indexOf(s.charAt(++i)) & 0xf) << 4;
-                    k      += (HEXINDEX.indexOf(s.charAt(++i)) & 0xf);
+                    // characters read from the should always return 0-15
+                    int k = HEXINDEX.indexOf(s.charAt(++i)) << 12;
+
+                    k      += HEXINDEX.indexOf(s.charAt(++i)) << 8;
+                    k      += HEXINDEX.indexOf(s.charAt(++i)) << 4;
+                    k      += HEXINDEX.indexOf(s.charAt(++i));
                     b[j++] = (char) k;
+                } else {
+                    b[j++] = c;
                 }
+            } else {
+                b[j++] = c;
             }
         }
 
@@ -275,7 +317,7 @@ class StringConverter {
      *
      * @throws SQLException
      */
-    public static String InputStreamToString(InputStream x)
+    public static String inputStreamToString(InputStream x)
     throws SQLException {
 
         InputStreamReader in        = new InputStreamReader(x);
@@ -301,5 +343,40 @@ class StringConverter {
         }
 
         return write.toString();
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param name
+     *
+     * @return
+     *
+     */
+
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
+// use of string buffer of ample size
+    static String toQuotedString(String s, char quotechar,
+                                 boolean doublequote) {
+
+        if (s == null) {
+            return "NULL";
+        }
+
+        int          l = s.length();
+        StringBuffer b = new StringBuffer(l + 16).append(quotechar);
+
+        for (int i = 0; i < l; i++) {
+            char c = s.charAt(i);
+
+            if (doublequote && c == quotechar) {
+                b.append(c);
+            }
+
+            b.append(c);
+        }
+
+        return b.append(quotechar).toString();
     }
 }

@@ -67,94 +67,115 @@
 
 package org.hsqldb;
 
-import java.sql.*;
+import org.hsqldb.lib.HsqlDateTime;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.math.BigDecimal;
-import java.io.*;
-import java.util.*;
+import java.util.Hashtable;
+import java.text.Collator;
+
+// fredt@users 20020320 - doc 1.7.0 - update
+// fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions
+// to allow mixed type arithmetic expressions beginning with a narrower type
+// changes applied to several lines of code and not marked separately
+// consists of changes to arithmatic functions to allow promotion of
+// java.lang.Number values and new functions to choose type for promotion
+// fredt@users 20020401 - patch 455757 by galena@users (Michiel de Roo)
+// interpretation of TINYINT as Byte instead of Short
+// fredt@users 20020130 - patch 505356 by daniel_fiser@users
+// use of the current locale for string comparison (instead of posix)
+// turned off by default but can be applied accross the database by defining
+// sql.compare_in_locale=true in database.properties file
+// changes marked separately
+// fredt@users 20020130 - patch 491987 by jimbag@users
+// support for sql standard char and varchar. size is maintained as
+// defined in the DDL and trimming and padding takes place accordingly
+// modified by fredt - trimming and padding are turned off by default but
+// can be applied accross the database by defining sql.enforce_size=true in
+// database.properties file
+// fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
+// applied to different parts to support the sql standard for
+// naming of columns and tables (use of quoted identifiers as names)
+// fredt@users 20020328 - patch 1.7.0 by fredt - change REAL to Double
+// fredt@users 20020402 - patch 1.7.0 by fredt - type conversions
+// frequently used type conversions are done without creating temporary
+// Strings to reduce execution time and garbage collection
 
 /**
- * Class declaration
+ *  Implementation of SQL table columns as defined in DDL statements with
+ *  static methods to process their values.
  *
- *
- * @version 1.0.0.1
+ * @version    1.7.0
  */
 class Column {
 
-    private static Hashtable hTypes;
-    final static int         BIT                = Types.BIT;              // -7
-    final static int         TINYINT            = Types.TINYINT;          // -6
-    final static int         BIGINT             = Types.BIGINT;           // -5
-    final static int         LONGVARBINARY      = Types.LONGVARBINARY;    // -4
-    final static int         VARBINARY          = Types.VARBINARY;        // -3
-    final static int         BINARY             = Types.BINARY;           // -2
-    final static int         LONGVARCHAR        = Types.LONGVARCHAR;      // -1
-    final static int         CHAR               = Types.CHAR;             // 1
-    final static int         NUMERIC            = Types.NUMERIC;          // 2
-    final static int         DECIMAL            = Types.DECIMAL;          // 3
-    final static int         INTEGER            = Types.INTEGER;          // 4
-    final static int         SMALLINT           = Types.SMALLINT;         // 5
-    final static int         FLOAT              = Types.FLOAT;            // 6
-    final static int         REAL               = Types.REAL;             // 7
-    final static int         DOUBLE             = Types.DOUBLE;           // 8
-    final static int         VARCHAR            = Types.VARCHAR;          // 12
-    final static int         DATE               = Types.DATE;             // 91
-    final static int         TIME               = Types.TIME;             // 92
-    final static int         TIMESTAMP          = Types.TIMESTAMP;        // 93
-    final static int         OTHER              = Types.OTHER;            // 1111
-    final static int         NULL               = Types.NULL;             // 0
-    final static int         VARCHAR_IGNORECASE = 100;                    // this is the only non-standard type
+    // non-standard type not in JDBC
+    static final int VARCHAR_IGNORECASE = 100;
 
-    // NULL and VARCHAR_IGNORECASE is not part of TYPES
-    final static int TYPES[] = {
-        BIT, TINYINT, BIGINT, LONGVARBINARY, VARBINARY, BINARY, LONGVARCHAR,
-        CHAR, NUMERIC, DECIMAL, INTEGER, SMALLINT, FLOAT, REAL, DOUBLE,
-        VARCHAR, DATE, TIME, TIMESTAMP, OTHER
+    // lookup for types
+    private static Hashtable hTypes;
+
+    // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
+    static final int TYPES[] = {
+        Types.BIT, Types.TINYINT, Types.BIGINT, Types.LONGVARBINARY,
+        Types.VARBINARY, Types.BINARY, Types.LONGVARCHAR, Types.CHAR,
+        Types.NUMERIC, Types.DECIMAL, Types.INTEGER, Types.SMALLINT,
+        Types.FLOAT, Types.REAL, Types.DOUBLE, Types.VARCHAR, Types.DATE,
+        Types.TIME, Types.TIMESTAMP, Types.OTHER
     };
-    String          sName;
-    int             iType;
-    private boolean bNullable;
-    private boolean bIdentity;
+
+    // DDL name, size, scale, null, identity and default values
+    // all variables are final but not declared so because of a bug in
+    // JDK 1.1.8 compiler
+    HsqlName        columnName;
+    private int     colType;
+    private int     colSize;
+    private int     colScale;
+    private boolean isNullable;
+    private boolean isIdentity;
+    private boolean isPrimaryKey;
+    private String  defaultString;
+
+    // helper values
+    private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
 
     static {
         hTypes = new Hashtable();
 
-        addTypes(INTEGER, "INTEGER", "int", "java.lang.Integer");
-        addType(INTEGER, "INT");
-        addTypes(DOUBLE, "DOUBLE", "double", "java.lang.Double");
-        addType(FLOAT, "FLOAT");                       // this is a Double
-        addTypes(VARCHAR, "VARCHAR", "java.lang.String", null);
-        addTypes(CHAR, "CHAR", "CHARACTER", null);
-        addType(LONGVARCHAR, "LONGVARCHAR");
+        addTypes(Types.INTEGER, "INTEGER", "int", "java.lang.Integer");
+        addTypes(Types.INTEGER, "INT", "IDENTITY", null);
+        addTypes(Types.DOUBLE, "DOUBLE", "double", "java.lang.Double");
+        addType(Types.FLOAT, "FLOAT");                       // this is a Double
+        addType(Types.REAL, "REAL");                         // fredt - this is a Double as of 1.7.0
+        addTypes(Types.VARCHAR, "VARCHAR", "java.lang.String", null);
+        addTypes(Types.CHAR, "CHAR", "CHARACTER", null);
+        addType(Types.LONGVARCHAR, "LONGVARCHAR");
 
         // for ignorecase data types, the 'original' type name is lost
         addType(VARCHAR_IGNORECASE, "VARCHAR_IGNORECASE");
-        addTypes(DATE, "DATE", "java.sql.Date", null);
-        addTypes(TIME, "TIME", "java.sql.Time", null);
+        addTypes(Types.DATE, "DATE", "java.sql.Date", null);
+        addTypes(Types.TIME, "TIME", "java.sql.Time", null);
 
         // DATETIME is for compatibility with MS SQL 7
-        addTypes(TIMESTAMP, "TIMESTAMP", "java.sql.Timestamp", "DATETIME");
-        addTypes(DECIMAL, "DECIMAL", "java.math.BigDecimal", null);
-        addType(NUMERIC, "NUMERIC");
-        addTypes(BIT, "BIT", "java.lang.Boolean", "boolean");
-        addTypes(TINYINT, "TINYINT", "java.lang.Short", "short");
-        addType(SMALLINT, "SMALLINT");
-        addTypes(BIGINT, "BIGINT", "java.lang.Long", "long");
-        addTypes(REAL, "REAL", "java.lang.Float", "float");
-        addTypes(BINARY, "BINARY", "byte[]", null);    // maybe better "[B"
-        addType(VARBINARY, "VARBINARY");
-        addType(LONGVARBINARY, "LONGVARBINARY");
-        addTypes(OTHER, "OTHER", "java.lang.Object", "OBJECT");
+        addTypes(Types.TIMESTAMP, "TIMESTAMP", "java.sql.Timestamp",
+                 "DATETIME");
+        addTypes(Types.DECIMAL, "DECIMAL", "java.math.BigDecimal", null);
+        addType(Types.NUMERIC, "NUMERIC");
+        addTypes(Types.BIT, "BIT", "java.lang.Boolean", "boolean");
+        addTypes(Types.TINYINT, "TINYINT", "java.lang.Byte", "byte");
+        addTypes(Types.SMALLINT, "SMALLINT", "java.lang.Short", "short");
+        addTypes(Types.BIGINT, "BIGINT", "java.lang.Long", "long");
+        addTypes(Types.BINARY, "BINARY", "byte[]", null);    // maybe better "[B"
+        addType(Types.VARBINARY, "VARBINARY");
+        addType(Types.LONGVARBINARY, "LONGVARBINARY");
+        addTypes(Types.OTHER, "OTHER", "java.lang.Object", "OBJECT");
+
+// boucherb@users 20020306 - handle calling void methods
+        addTypes(Types.NULL, "NULL", "java.lang.Void", "void");
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param type
-     * @param name
-     * @param n2
-     * @param n3
-     */
     private static void addTypes(int type, String name, String n2,
                                  String n3) {
 
@@ -163,13 +184,6 @@ class Column {
         addType(type, n3);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param type
-     * @param name
-     */
     private static void addType(int type, String name) {
 
         if (name != null) {
@@ -177,42 +191,101 @@ class Column {
         }
     }
 
-    /**
-     * Constructor declaration
-     *
-     *
-     * @param name
-     * @param nullable
-     * @param type
-     * @param identity
-     */
-    Column(String name, boolean nullable, int type, boolean identity) {
+// fredt@users 20020130 - patch 491987 by jimbag@users
 
-        sName     = name;
-        bNullable = nullable;
-        iType     = type;
-        bIdentity = identity;
+    /**
+     *  Creates a column defined in DDL statement.
+     *
+     * @param  name
+     * @param  nullable
+     * @param  type
+     * @param  identity
+     * @param  namequoted  Description of the Parameter
+     * @param  size        Description of the Parameter
+     * @param  scale       Description of the Parameter
+     * @param  defvalue    Description of the Parameter
+     */
+    Column(HsqlName name, boolean nullable, int type, int size, int scale,
+            boolean identity, boolean primarykey, String defstring) {
+
+        columnName    = name;
+        isNullable    = nullable;
+        colType       = type;
+        colSize       = size;
+        colScale      = scale;
+        isIdentity    = identity;
+        isPrimaryKey  = primarykey;
+        defaultString = defstring;
     }
 
     /**
-     * Method declaration
+     *  Is this the identity column in the table.
      *
-     *
-     * @return
+     * @return boolean
      */
     boolean isIdentity() {
-        return bIdentity;
+        return isIdentity;
     }
 
     /**
-     * Method declaration
+     *  Is column nullable.
      *
+     * @return boolean
+     */
+    boolean isNullable() {
+        return isNullable;
+    }
+
+    /**
+     *  Is this single column primary key of the table.
      *
-     * @param type
+     * @return boolean
+     */
+    boolean isPrimaryKey() {
+        return isPrimaryKey;
+    }
+
+    /**
+     *  The default value for the column.
      *
-     * @return
+     * @return default value string as defined in DDL
+     */
+    String getDefaultString() {
+        return defaultString;
+    }
+
+    /**
+     *  Type of the column.
      *
-     * @throws SQLException
+     * @return java.sql.Types int value for the column
+     */
+    int getType() {
+        return colType;
+    }
+
+    /**
+     *  Size of the column in DDL (0 if not defined).
+     *
+     * @return DDL size of column
+     */
+    int getSize() {
+        return colSize;
+    }
+
+    /**
+     *  Scale of the column in DDL (0 if not defined).
+     *
+     * @return DDL scale of column
+     */
+    int getScale() {
+        return colScale;
+    }
+
+    /**
+     *
+     * @param  SQL type string
+     * @return java.sql.Types int value
+     * @throws  SQLException
      */
     static int getTypeNr(String type) throws SQLException {
 
@@ -224,83 +297,79 @@ class Column {
     }
 
     /**
-     * Method declaration
      *
-     *
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  type
+     * @return SQL type string for a java.sql.Types int value
+     * @throws  SQLException
      */
-    static String getType(int type) throws SQLException {
+    static String getTypeString(int type) throws SQLException {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return "NULL";
 
-            case INTEGER :
+            case Types.INTEGER :
                 return "INTEGER";
 
-            case DOUBLE :
+            case Types.DOUBLE :
                 return "DOUBLE";
 
             case VARCHAR_IGNORECASE :
                 return "VARCHAR_IGNORECASE";
 
-            case VARCHAR :
+            case Types.VARCHAR :
                 return "VARCHAR";
 
-            case CHAR :
+            case Types.CHAR :
                 return "CHAR";
 
-            case LONGVARCHAR :
+            case Types.LONGVARCHAR :
                 return "LONGVARCHAR";
 
-            case DATE :
+            case Types.DATE :
                 return "DATE";
 
-            case TIME :
+            case Types.TIME :
                 return "TIME";
 
-            case DECIMAL :
+            case Types.DECIMAL :
                 return "DECIMAL";
 
-            case BIT :
+            case Types.BIT :
                 return "BIT";
 
-            case TINYINT :
+            case Types.TINYINT :
                 return "TINYINT";
 
-            case SMALLINT :
+            case Types.SMALLINT :
                 return "SMALLINT";
 
-            case BIGINT :
+            case Types.BIGINT :
                 return "BIGINT";
 
-            case REAL :
+            case Types.REAL :
                 return "REAL";
 
-            case FLOAT :
+            case Types.FLOAT :
                 return "FLOAT";
 
-            case NUMERIC :
+            case Types.NUMERIC :
                 return "NUMERIC";
 
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 return "TIMESTAMP";
 
-            case BINARY :
+            case Types.BINARY :
                 return "BINARY";
 
-            case VARBINARY :
+            case Types.VARBINARY :
                 return "VARBINARY";
 
-            case LONGVARBINARY :
+            case Types.LONGVARBINARY :
                 return "LONGVARBINARY";
 
-            case OTHER :
+            case Types.OTHER :
                 return "OBJECT";
 
             default :
@@ -309,26 +378,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Add two object of a given type
      *
-     *
-     * @return
-     */
-    boolean isNullable() {
-        return bNullable;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object add(Object a, Object b, int type) throws SQLException {
 
@@ -338,53 +394,43 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                int ai = ((Integer) a).intValue();
-                int bi = ((Integer) b).intValue();
-
-                return new Integer(ai + bi);
-
-            case FLOAT :
-            case DOUBLE :
-                double ad = ((Double) a).doubleValue();
-                double bd = ((Double) b).doubleValue();
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
 
                 return new Double(ad + bd);
 
-            case VARCHAR :
-            case CHAR :
-            case LONGVARCHAR :
+            case Types.VARCHAR :
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
             case VARCHAR_IGNORECASE :
                 return (String) a + (String) b;
 
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.add(bbd);
 
-            case TINYINT :
-            case SMALLINT :
-                short shorta = ((Short) a).shortValue();
-                short shortb = ((Short) b).shortValue();
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                int ai = ((Number) a).intValue();
+                int bi = ((Number) b).intValue();
 
-                return new Short((short) (shorta + shortb));
+                return new Integer(ai + bi);
 
-            case BIGINT :
-                long longa = ((Long) a).longValue();
-                long longb = ((Long) b).longValue();
+            case Types.BIGINT :
+                long longa = ((Number) a).longValue();
+                long longb = ((Number) b).longValue();
 
                 return new Long(longa + longb);
-
-            case REAL :
-                float floata = ((Float) a).floatValue();
-                float floatb = ((Float) b).floatValue();
-
-                return new Float(floata + floatb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -392,15 +438,12 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Concat two objects by turning them into strings first.
      *
-     *
-     * @param a
-     * @param b
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @return result
+     * @throws  SQLException
      */
     static Object concat(Object a, Object b) throws SQLException {
 
@@ -414,15 +457,12 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Negate a numeric object.
      *
-     *
-     * @param a
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object negate(Object a, int type) throws SQLException {
 
@@ -432,29 +472,25 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                return new Integer(-((Integer) a).intValue());
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                return new Double(-((Number) a).doubleValue());
 
-            case FLOAT :
-            case DOUBLE :
-                return new Double(-((Double) a).doubleValue());
-
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 return ((BigDecimal) a).negate();
 
-            case TINYINT :
-            case SMALLINT :
-                return new Short((short) -((Short) a).shortValue());
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                return new Integer(-((Number) a).intValue());
 
-            case BIGINT :
-                return new Long(-((Long) a).longValue());
-
-            case REAL :
-                return new Float(-((Float) a).floatValue());
+            case Types.BIGINT :
+                return new Long(-((Number) a).longValue());
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -462,16 +498,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Multiply two numeric objects.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object multiply(Object a, Object b, int type) throws SQLException {
 
@@ -481,47 +514,37 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                int ai = ((Integer) a).intValue();
-                int bi = ((Integer) b).intValue();
-
-                return new Integer(ai * bi);
-
-            case FLOAT :
-            case DOUBLE :
-                double ad = ((Double) a).doubleValue();
-                double bd = ((Double) b).doubleValue();
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
 
                 return new Double(ad * bd);
 
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.multiply(bbd);
 
-            case TINYINT :
-            case SMALLINT :
-                short shorta = ((Short) a).shortValue();
-                short shortb = ((Short) b).shortValue();
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                int ai = ((Number) a).intValue();
+                int bi = ((Number) b).intValue();
 
-                return new Short((short) (shorta * shortb));
+                return new Integer(ai * bi);
 
-            case BIGINT :
-                long longa = ((Long) a).longValue();
-                long longb = ((Long) b).longValue();
+            case Types.BIGINT :
+                long longa = ((Number) a).longValue();
+                long longb = ((Number) b).longValue();
 
                 return new Long(longa * longb);
-
-            case REAL :
-                float floata = ((Float) a).floatValue();
-                float floatb = ((Float) b).floatValue();
-
-                return new Float(floata * floatb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -529,16 +552,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Divide numeric object a by object b.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object divide(Object a, Object b, int type) throws SQLException {
 
@@ -548,55 +568,45 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                int ai = ((Integer) a).intValue();
-                int bi = ((Integer) b).intValue();
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
+
+                return (bd == 0) ? null
+                                 : new Double(ad / bd);
+
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                BigDecimal abd   = (BigDecimal) a;
+                BigDecimal bbd   = (BigDecimal) b;
+                int        scale = abd.scale() > bbd.scale() ? abd.scale()
+                                                             : bbd.scale();
+
+                return (bbd.signum() == 0) ? null
+                                           : abd.divide(bbd, scale,
+                                           BigDecimal.ROUND_HALF_DOWN);
+
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                int ai = ((Number) a).intValue();
+                int bi = ((Number) b).intValue();
 
                 Trace.check(bi != 0, Trace.DIVISION_BY_ZERO);
 
                 return new Integer(ai / bi);
 
-            case FLOAT :
-            case DOUBLE :
-                double ad = ((Double) a).doubleValue();
-                double bd = ((Double) b).doubleValue();
+            case Types.BIGINT :
+                long longa = ((Number) a).longValue();
+                long longb = ((Number) b).longValue();
 
-                return bd == 0 ? null
-                               : new Double(ad / bd);
-
-            case NUMERIC :
-            case DECIMAL :
-                BigDecimal abd = (BigDecimal) a;
-                BigDecimal bbd = (BigDecimal) b;
-
-                return bbd.signum() == 0 ? null
-                                         : abd.divide(
-                                             bbd, BigDecimal.ROUND_HALF_DOWN);
-
-            case TINYINT :
-            case SMALLINT :
-                short shorta = ((Short) a).shortValue();
-                short shortb = ((Short) b).shortValue();
-
-                return shortb == 0 ? null
-                                   : new Short((short) (shorta / shortb));
-
-            case BIGINT :
-                long longa = ((Long) a).longValue();
-                long longb = ((Long) b).longValue();
-
-                return longb == 0 ? null
-                                  : new Long(longa / longb);
-
-            case REAL :
-                float floata = ((Float) a).floatValue();
-                float floatb = ((Float) b).floatValue();
-
-                return floatb == 0 ? null
-                                   : new Float(floata / floatb);
+                return (longb == 0) ? null
+                                    : new Long(longa / longb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -604,16 +614,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Subtract numeric object b from object a.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object subtract(Object a, Object b, int type) throws SQLException {
 
@@ -623,47 +630,37 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                int ai = ((Integer) a).intValue();
-                int bi = ((Integer) b).intValue();
-
-                return new Integer(ai - bi);
-
-            case FLOAT :
-            case DOUBLE :
-                double ad = ((Double) a).doubleValue();
-                double bd = ((Double) b).doubleValue();
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
 
                 return new Double(ad - bd);
 
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 BigDecimal abd = (BigDecimal) a;
                 BigDecimal bbd = (BigDecimal) b;
 
                 return abd.subtract(bbd);
 
-            case TINYINT :
-            case SMALLINT :
-                short shorta = ((Short) a).shortValue();
-                short shortb = ((Short) b).shortValue();
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                int ai = ((Number) a).intValue();
+                int bi = ((Number) b).intValue();
 
-                return new Short((short) (shorta - shortb));
+                return new Integer(ai - bi);
 
-            case BIGINT :
-                long longa = ((Long) a).longValue();
-                long longb = ((Long) b).longValue();
+            case Types.BIGINT :
+                long longa = ((Number) a).longValue();
+                long longb = ((Number) b).longValue();
 
                 return new Long(longa - longb);
-
-            case REAL :
-                float floata = ((Float) a).floatValue();
-                float floatb = ((Float) b).floatValue();
-
-                return new Float(floata - floatb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -671,16 +668,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Add two numeric objects.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object sum(Object a, Object b, int type) throws SQLException {
 
@@ -694,53 +688,44 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                return new Integer(((Integer) a).intValue()
-                                   + ((Integer) b).intValue());
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                return new Double(((Number) a).doubleValue()
+                                  + ((Number) b).doubleValue());
 
-            case FLOAT :
-            case DOUBLE :
-                return new Double(((Double) a).doubleValue()
-                                  + ((Double) b).doubleValue());
-
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 return ((BigDecimal) a).add((BigDecimal) b);
 
-            case TINYINT :
-            case SMALLINT :
-                return new Short((short) (((Short) a).shortValue()
-                                          + ((Short) b).shortValue()));
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                return new Integer(((Number) a).intValue()
+                                   + ((Number) b).intValue());
 
-            case BIGINT :
-                return new Long(((Long) a).longValue()
-                                + ((Long) b).longValue());
-
-            case REAL :
-                return new Float(((Float) a).floatValue()
-                                 + ((Float) b).floatValue());
+            case Types.BIGINT :
+                return new Long(((Number) a).longValue()
+                                + ((Number) b).longValue());
 
             default :
-                Trace.error(Trace.SUM_OF_NON_NUMERIC);
+                throw Trace.error(Trace.SUM_OF_NON_NUMERIC);
         }
-
-        return null;
     }
 
     /**
-     * Method declaration
+     *  Divide numeric object a by int count. Adding all of these values in
+     *  a column of the result of a SELECT statement gives the average for
+     *  that column.
      *
-     *
-     * @param a
-     * @param type
-     * @param count
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  type
+     * @param  count
+     * @return result
+     * @throws  SQLException
      */
     static Object avg(Object a, int type, int count) throws SQLException {
 
@@ -750,49 +735,40 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return null;
 
-            case INTEGER :
-                return new Integer(((Integer) a).intValue() / count);
-
-            case FLOAT :
-            case DOUBLE :
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
                 return new Double(((Double) a).doubleValue() / count);
 
-            case NUMERIC :
-            case DECIMAL :
+            case Types.NUMERIC :
+            case Types.DECIMAL :
                 return ((BigDecimal) a).divide(new BigDecimal(count),
                                                BigDecimal.ROUND_HALF_DOWN);
 
-            case TINYINT :
-            case SMALLINT :
-                return new Short((short) (((Short) a).shortValue() / count));
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                return new Integer(((Number) a).intValue() / count);
 
-            case BIGINT :
+            case Types.BIGINT :
                 return new Long(((Long) a).longValue() / count);
 
-            case REAL :
-                return new Float(((Float) a).floatValue() / count);
-
             default :
-                Trace.error(Trace.SUM_OF_NON_NUMERIC);
+                throw Trace.error(Trace.SUM_OF_NON_NUMERIC);
         }
-
-        return null;
     }
 
     /**
-     * Method declaration
+     *  Return the smaller of two objects.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object min(Object a, Object b, int type) throws SQLException {
 
@@ -812,16 +788,13 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Return the larger of two objects.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object max(Object a, Object b, int type) throws SQLException {
 
@@ -840,21 +813,31 @@ class Column {
         return b;
     }
 
+// fredt@users 20020130 - patch 505356 by daniel_fiser@users
+// modified for performance and made optional
+    private static Collator i18nCollator          = Collator.getInstance();
+    private static boolean  sql_compare_in_locale = false;
+
+    static void setCompareInLocal(boolean value) {
+        sql_compare_in_locale = value;
+    }
+
     /**
-     * Method declaration
+     *  Compare a with b and return int value as result.
      *
-     *
-     * @param a
-     * @param b
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  a
+     * @param  b
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static int compare(Object a, Object b, int type) throws SQLException {
 
         int i = 0;
+
+        if (a == b) {
+            return 0;
+        }
 
         // null handling: null==null and smaller any value
         // todo: implement standard SQL null handling
@@ -873,45 +856,74 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return 0;
 
-            case INTEGER :
-                int ai = ((Integer) a).intValue();
-                int bi = ((Integer) b).intValue();
+            case Types.VARCHAR :
+            case Types.LONGVARCHAR :
+                if (sql_compare_in_locale) {
+                    i = i18nCollator.compare((String) a, (String) b);
+                } else {
+                    i = ((String) a).compareTo((String) b);
+                }
+                break;
+
+// fredt@users 20020130 - patch 418022 by deforest@users
+// use of rtrim() to mimic SQL92 behaviour
+            case Types.CHAR :
+                if (sql_compare_in_locale) {
+                    i = i18nCollator.compare(Library.rtrim((String) a),
+                                             Library.rtrim((String) b));
+                } else {
+                    i = (Library.rtrim((String) a)).compareTo(
+                        Library.rtrim((String) b));
+                }
+                break;
+
+            case VARCHAR_IGNORECASE :
+                if (sql_compare_in_locale) {
+                    i = i18nCollator.compare(((String) a).toUpperCase(),
+                                             ((String) b).toUpperCase());
+                } else {
+                    i = ((String) a).toUpperCase().compareTo(
+                        ((String) b).toUpperCase());
+                }
+                break;
+
+            case Types.TINYINT :
+            case Types.SMALLINT :
+            case Types.INTEGER :
+                int ai = ((Number) a).intValue();
+                int bi = ((Number) b).intValue();
 
                 return (ai > bi) ? 1
                                  : (bi > ai ? -1
                                             : 0);
 
-            case FLOAT :
-            case DOUBLE :
-                double ad = ((Double) a).doubleValue();
-                double bd = ((Double) b).doubleValue();
+            case Types.BIGINT :
+                long longa = ((Number) a).longValue();
+                long longb = ((Number) b).longValue();
+
+                return (longa > longb) ? 1
+                                       : (longb > longa ? -1
+                                                        : 0);
+
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
 
                 return (ad > bd) ? 1
                                  : (bd > ad ? -1
                                             : 0);
 
-            case VARCHAR :
-            case LONGVARCHAR :
-                i = ((String) a).compareTo((String) b);
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                i = ((BigDecimal) a).compareTo((BigDecimal) b);
                 break;
 
-// fredt@users 20010707 - patch 418022 by deforest@users - to mimic SQL92 behaviour
-            case CHAR :
-                i = Library.rtrim((String) a).compareTo(
-                    Library.rtrim((String) b));
-                break;
-
-            case VARCHAR_IGNORECASE :
-
-                // for jdk 1.1 compatibility; jdk 1.2 could use compareToIgnoreCase
-                i = ((String) a).toUpperCase().compareTo(
-                    ((String) b).toUpperCase());
-                break;
-
-            case DATE :
+            case Types.DATE :
                 if (((java.sql.Date) a).after((java.sql.Date) b)) {
                     return 1;
                 } else if (((java.sql.Date) a).before((java.sql.Date) b)) {
@@ -919,7 +931,7 @@ class Column {
                 } else {
                     return 0;
                 }
-            case TIME :
+            case Types.TIME :
                 if (((Time) a).after((Time) b)) {
                     return 1;
                 } else if (((Time) a).before((Time) b)) {
@@ -927,7 +939,7 @@ class Column {
                 } else {
                     return 0;
                 }
-            case TIMESTAMP :
+            case Types.TIMESTAMP :
                 if (((Timestamp) a).after((Timestamp) b)) {
                     return 1;
                 } else if (((Timestamp) a).before((Timestamp) b)) {
@@ -935,12 +947,7 @@ class Column {
                 } else {
                     return 0;
                 }
-            case NUMERIC :
-            case DECIMAL :
-                i = ((BigDecimal) a).compareTo((BigDecimal) b);
-                break;
-
-            case BIT :
+            case Types.BIT :
                 boolean boola = ((Boolean) a).booleanValue();
                 boolean boolb = ((Boolean) b).booleanValue();
 
@@ -948,37 +955,14 @@ class Column {
                                         : (boolb ? -1
                                                  : 1);
 
-            case TINYINT :
-            case SMALLINT :
-                short shorta = ((Short) a).shortValue();
-                short shortb = ((Short) b).shortValue();
-
-                return (shorta > shortb) ? 1
-                                         : (shortb > shorta ? -1
-                                                            : 0);
-
-            case BIGINT :
-                long longa = ((Long) a).longValue();
-                long longb = ((Long) b).longValue();
-
-                return (longa > longb) ? 1
-                                       : (longb > longa ? -1
-                                                        : 0);
-
-            case REAL :
-                float floata = ((Float) a).floatValue();
-                float floatb = ((Float) b).floatValue();
-
-                return (floata > floatb) ? 1
-                                         : (floatb > floata ? -1
-                                                            : 0);
-
-            case BINARY :
-            case VARBINARY :
-            case LONGVARBINARY :
-            case OTHER :
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
                 i = ((ByteArray) a).compareTo((ByteArray) b);
                 break;
+
+            case Types.OTHER :
+                return 0;
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -990,87 +974,12 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Return a java string representation of a java object.
      *
-     *
-     * @param s
-     * @param type
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param  o
+     * @return result (null value for null object)
      */
-    static Object convertString(String s, int type) throws SQLException {
-
-        if (s == null) {
-            return null;
-        }
-
-        switch (type) {
-
-            case NULL :
-                return null;
-
-            case INTEGER :
-                return new Integer(s);
-
-            case FLOAT :
-            case DOUBLE :
-                return new Double(s);
-
-            case VARCHAR_IGNORECASE :
-            case VARCHAR :
-            case CHAR :
-            case LONGVARCHAR :
-                return s;
-
-            case DATE :
-                return java.sql.Date.valueOf(s);
-
-            case TIME :
-                return Time.valueOf(s);
-
-// fredt@users 20010701 - patch 418019 by deforest@users
-            case TIMESTAMP :
-                return HsqlTimestamp.valueOf(s);
-
-            case NUMERIC :
-            case DECIMAL :
-                return new BigDecimal(s.trim());
-
-            case BIT :
-                return new Boolean(s);
-
-            case TINYINT :
-            case SMALLINT :
-                return new Short(s);
-
-            case BIGINT :
-                return new Long(s);
-
-            case REAL :
-                return new Float(s);
-
-            case BINARY :
-            case VARBINARY :
-            case LONGVARBINARY :
-            case OTHER :
-                return new ByteArray(s);
-
-            default :
-                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param o
-     *
-     * @return
-     */
-    static String convertObject(Object o) {
+    private static String convertObject(Object o) {
 
         if (o == null) {
             return null;
@@ -1080,49 +989,299 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Convert an object into a Java object that represents its SQL type.<p>
+     *  All type conversion operations start with
+     *  this method. If a direct conversion doesn't take place, the object
+     *  is converted into a string first and an attempt is made to convert
+     *  the string into the target type.<br>
      *
+     *  One objective of this mehod is to ensure the Object can be converted
+     *  to the given SQL type. For example, a number that has decimal points
+     *  cannot be converted into an integral type, or a very large BIGINT
+     *  value cannot be narrowed down to an INTEGER or SMALLINT.<br>
      *
-     * @param o
-     * @param type
+     *  Integral types may be represented by either Integer or Long. This
+     *  works because in the rest of the methods, the java.lang.Number
+     *  interface is used to retrieve the values from the object.
      *
-     * @return
-     *
-     * @throws SQLException
+     * @param  o
+     * @param  type
+     * @return result
+     * @throws  SQLException
      */
     static Object convertObject(Object o, int type) throws SQLException {
 
-        if (o == null) {
-            return null;
-        }
+        try {
+            if (o == null) {
+                return null;
+            }
 
-        switch (type) {
+            switch (type) {
 
-            case BINARY :
-            case VARBINARY :
-            case LONGVARBINARY :
-                if (o instanceof byte[]) {
-                    return new ByteArray((byte[]) o);
-                } else {
-                    return convertString(o.toString(), type);
-                }
-            default :
-                return convertString(o.toString(), type);
+                case Types.NULL :
+                    return null;
+
+                case Types.TINYINT :
+                    if (o instanceof java.lang.String) {
+                        o = new Integer((String) o);
+                    }
+
+                    if (o instanceof java.lang.Integer
+                            || o instanceof java.lang.Long) {
+                        int temp = ((Number) o).intValue();
+
+                        if (Byte.MAX_VALUE < temp || temp < Byte.MIN_VALUE) {
+                            throw new java.lang.NumberFormatException();
+                        }
+
+                        return o;
+                    }
+                    break;
+
+                case Types.SMALLINT :
+                    if (o instanceof java.lang.String) {
+                        o = new Integer((String) o);
+                    }
+
+                    if (o instanceof java.lang.Integer
+                            || o instanceof java.lang.Long) {
+                        int temp = ((Number) o).intValue();
+
+                        if (Short.MAX_VALUE < temp
+                                || temp < Short.MIN_VALUE) {
+                            throw new java.lang.NumberFormatException();
+                        }
+
+                        return o;
+                    }
+                    break;
+
+                case Types.INTEGER :
+                    if (o instanceof java.lang.String) {
+                        return new Integer((String) o);
+                    }
+
+                    if (o instanceof java.lang.Integer) {
+                        return o;
+                    }
+
+                    if (o instanceof java.lang.Long) {
+                        long temp = ((Number) o).longValue();
+
+                        if (Integer.MAX_VALUE < temp
+                                || temp < Integer.MIN_VALUE) {
+                            throw new java.lang.NumberFormatException();
+                        }
+
+                        return new Integer(((Number) o).intValue());
+                    }
+                    break;
+
+                case Types.BIGINT :
+                    if (o instanceof java.lang.Long) {
+                        return o;
+                    }
+
+                    if (o instanceof java.lang.String) {
+                        return new Long((String) o);
+                    }
+
+                    if (o instanceof java.lang.Integer) {
+                        return new Long(((Integer) o).longValue());
+                    }
+                    break;
+
+                case Types.REAL :
+                case Types.FLOAT :
+                case Types.DOUBLE :
+                    if (o instanceof java.lang.Double) {
+                        return o;
+                    }
+
+                    if (o instanceof java.lang.String) {
+                        return new Double((String) o);
+                    }
+
+                    if (o instanceof java.lang.Number) {
+                        return new Double(((Number) o).doubleValue());
+                    }
+                    break;
+
+                case Types.NUMERIC :
+                case Types.DECIMAL :
+                    if (o instanceof java.math.BigDecimal) {
+                        return o;
+                    }
+                    break;
+
+                case Types.BIT :
+                    if (o instanceof java.lang.Boolean) {
+                        return o;
+                    }
+
+                    if (o instanceof java.lang.String) {
+                        return new Boolean((String) o);
+                    }
+
+                    if (o instanceof Integer || o instanceof Long) {
+                        boolean bit = ((Number) o).longValue() == 0L ? false
+                                                                     : true;
+
+                        return new Boolean(bit);
+                    }
+
+                    if (o instanceof java.lang.Double) {
+                        boolean bit = ((Double) o).doubleValue() == 0.0
+                                      ? false
+                                      : true;
+
+                        return new Boolean(bit);
+                    }
+
+                    if (o instanceof java.math.BigDecimal) {
+                        boolean bit = ((BigDecimal) o).compareTo(BIGDECIMAL_0)
+                                      == 0 ? false
+                                           : true;
+
+                        return new Boolean(bit);
+                    }
+                    break;
+
+                case VARCHAR_IGNORECASE :
+                case Types.VARCHAR :
+                case Types.CHAR :
+                case Types.LONGVARCHAR :
+                    if (o instanceof java.lang.String) {
+                        return o;
+                    }
+                    break;
+
+                case Types.TIME :
+                    if (o instanceof java.sql.Timestamp) {
+                        return new Time(((Timestamp) o).getTime());
+                    }
+
+                    if (o instanceof java.sql.Date) {
+                        return new Time(0);
+                    }
+                    break;
+
+                case Types.DATE :
+                    if (o instanceof java.sql.Timestamp) {
+                        return new java.sql.Date(((Timestamp) o).getTime());
+                    }
+                    break;
+
+                case Types.BINARY :
+                case Types.VARBINARY :
+                case Types.LONGVARBINARY :
+                    if (o instanceof byte[]) {
+                        return new ByteArray((byte[]) o);
+                    }
+
+                    if (o instanceof ByteArray) {
+                        return o;
+                    }
+                    break;
+
+// fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
+// currently String objects cannot be stored directly in OTHER columns
+// all strings are treated as a hex representation of a serialized Object
+// a new escape pattern needs to be established to differentiate between
+// SQL strings that are normal strings and those that represent a hex version
+// of the BINARY or OTHER data
+                case Types.OTHER :
+                    if (o instanceof String == false) {
+                        return o;
+                    }
+                default :
+            }
+
+            return convertString(o.toString(), type);
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE, e.getMessage());
         }
     }
 
     /**
-     * Method declaration
+     *  Return a java object based on a SQL string. This is called from
+     *  convertObject(Object o, int type).
      *
-     *
-     * @param o
-     * @param type
-     *
+     * @param  s
+     * @param  type
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
-    static String createString(Object o, int type) throws SQLException {
+    private static Object convertString(String s,
+                                        int type) throws SQLException {
+
+        switch (type) {
+
+            case Types.TINYINT :
+            case Types.SMALLINT :
+
+                // fredt - do maximumm / minimum checks on each type
+                return convertObject(s, type);
+
+            case Types.INTEGER :
+                return new Integer(s);
+
+            case Types.BIGINT :
+                return new Long(s);
+
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                return new Double(s);
+
+            case VARCHAR_IGNORECASE :
+            case Types.VARCHAR :
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+                return s;
+
+            case Types.DATE :
+                return HsqlDateTime.dateValue(s);
+
+            case Types.TIME :
+                return HsqlDateTime.timeValue(s);
+
+            case Types.TIMESTAMP :
+                return HsqlDateTime.timestampValue(s);
+
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                return new BigDecimal(s.trim());
+
+            case Types.BIT :
+                return new Boolean(s);
+
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
+                return new ByteArray(ByteArray.HexToByteArray(s));
+
+            case Types.OTHER :
+                return ByteArray.deserialize(ByteArray.HexToByteArray(s));
+
+            default :
+                throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
+        }
+    }
+
+    /**
+     *  Return an SQL representation of an object. Strings will be quoted
+     *  with single quotes, other objects will represented as in a SQL
+     *  statement.
+     *
+     * @param  o
+     * @param  type
+     * @return result
+     * @throws  SQLException
+     */
+    static String createSQLString(Object o, int type) throws SQLException {
 
         if (o == null) {
             return "NULL";
@@ -1130,23 +1289,30 @@ class Column {
 
         switch (type) {
 
-            case NULL :
+            case Types.NULL :
                 return "NULL";
 
-            case BINARY :
-            case VARBINARY :
-            case LONGVARBINARY :
-            case DATE :
-            case TIME :
-            case TIMESTAMP :
-            case OTHER :
-                return "'" + o.toString() + "'";
+            case Types.DATE :
+            case Types.TIME :
+            case Types.TIMESTAMP :
+                return StringConverter.toQuotedString(o.toString(), '\'',
+                                                      false);
+
+            case Types.BINARY :
+            case Types.VARBINARY :
+            case Types.LONGVARBINARY :
+                return StringConverter.toQuotedString(
+                    ((ByteArray) o).toString(), '\'', false);
+
+            case Types.OTHER :
+                return StringConverter.toQuotedString(
+                    ByteArray.serializeToString(o), '\'', false);
 
             case VARCHAR_IGNORECASE :
-            case VARCHAR :
-            case CHAR :
-            case LONGVARCHAR :
-                return createString((String) o);
+            case Types.VARCHAR :
+            case Types.CHAR :
+            case Types.LONGVARCHAR :
+                return createSQLString((String) o);
 
             default :
                 return o.toString();
@@ -1154,327 +1320,103 @@ class Column {
     }
 
     /**
-     * Method declaration
+     *  Turns a java string into a quoted SQL string
      *
-     *
-     * @param s
-     *
-     * @return
+     * @param  java string
+     * @return quoted SQL string
      */
-    static String createString(String s) {
+    static String createSQLString(String s) {
+        return StringConverter.toQuotedString(s, '\'', true);
+    }
 
-        StringBuffer b = new StringBuffer().append('\'');
+// fredt@users 20020408 - patch 442993 by fredt - arithmetic expressions
 
-        if (s != null) {
-            for (int i = 0, len = s.length(); i < len; i++) {
-                char c = s.charAt(i);
+    /**
+     *  Arithmetic expressions terms are promoted to a type that can
+     *  represent the resulting values and avoid incorrect results.<p>
+     *  When the result or the expression is converted to the
+     *  type of the target column for storage, an exception is thrown if the
+     *  resulting value cannot be stored in the column<p>
+     *  Returns a SQL type "wide" enough to represent the result of the
+     *  expression.<br>
+     *  A type is "wider" than the other if it can represent all its
+     *  numeric values.<BR>
+     *  When BIGINT and DOUBLE types are  the
+     *  resulting type is DOUBLE<br>
+     *  Types narrower than INTEGER (int) are promoted to
+     *  INTEGER. The order is as follows<p>
+     *
+     *  INTEGER, BIGINT, DOUBLE, DECIMAL<p>
+     *
+     *  TINYINT and SMALLINT types are promoted to INTEGER<br>
+     *  BIGINT and INTEGER return BIGINT<br>
+     *  DOUBLE and INTEGER return DOUBLE<br>
+     *  DOUBLE and BIGINT return DOUBLE<br>
+     *  NUMERIC/DECIMAL and any type returns NUMERIC/DECIMAL<br>
+     *
+     * @author fredt@users
+     * @param  type1  java.sql.Types value for the first numeric type
+     * @param  type2  java.sql.Types value for the second numeric type
+     * @return        either type1 or type2 on the basis of the above order
+     */
+    static int getCombinedNumberType(int type1, int type2, int expType) {
 
-                if (c == '\'') {
-                    b.append(c);
-                }
+        int typeWidth1 = getNumTypeWidth(type1);
+        int typeWidth2 = getNumTypeWidth(type2);
 
-                b.append(c);
+        if (typeWidth1 == 16 || typeWidth2 == 16) {
+            return Types.DOUBLE;
+        }
+
+        if (expType != Expression.DIVIDE) {
+            if (typeWidth1 + typeWidth2 <= 4) {
+                return Types.INTEGER;
+            }
+
+            if (typeWidth1 + typeWidth2 <= 8) {
+                return Types.BIGINT;
+            }
+
+            if (typeWidth1 + typeWidth2 <= 16) {
+                return Types.NUMERIC;
             }
         }
 
-        return b.append('\'').toString();
+        return (typeWidth1 > typeWidth2) ? type1
+                                         : type2;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param in
-     * @param l
-     *
-     * @return
-     *
-     * @throws IOException
-     * @throws SQLException
+     * @param  java.sql.Types int for a numeric type
+     * @return relative width
      */
-    static Object[] readData(DataInput in,
-                             int l) throws IOException, SQLException {
+    private static int getNumTypeWidth(int type) {
 
-        Object data[] = new Object[l];
+        switch (type) {
 
-        for (int i = 0; i < l; i++) {
-            int    type = in.readInt();
-            Object o    = null;
+            case Types.TINYINT :
+                return 1;
 
-            switch (type) {
+            case Types.SMALLINT :
+                return 2;
 
-                case NULL :
-                    o = null;
-                    break;
+            case Types.INTEGER :
+                return 4;
 
-                case INTEGER :
-                    o = new Integer(in.readInt());
-                    break;
+            case Types.BIGINT :
+                return 8;
 
-                case FLOAT :
-                case DOUBLE :
-                    o = new Double(Double.longBitsToDouble(in.readLong()));
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                return 16;
 
-                    // some JDKs have a problem with this:
-                    // o=new Double(in.readDouble());
-                    break;
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                return 32;
 
-                case VARCHAR_IGNORECASE :
-                case VARCHAR :
-                case CHAR :
-                case LONGVARCHAR :
-                    o = in.readUTF();
-                    break;
-
-                case DATE :
-                    o = java.sql.Date.valueOf(in.readUTF());
-                    break;
-
-                case TIME :
-                    o = Time.valueOf(in.readUTF());
-                    break;
-
-                case TIMESTAMP :
-                    o = Timestamp.valueOf(in.readUTF());
-                    break;
-
-                case NUMERIC :
-                case DECIMAL :
-                    o = new BigDecimal(in.readUTF());
-                    break;
-
-                case BIT :
-                    o = new Boolean(in.readUTF());
-                    break;
-
-                case TINYINT :
-                case SMALLINT :
-                    o = new Short(in.readUTF());
-                    break;
-
-                case BIGINT :
-                    o = new Long(in.readUTF());
-                    break;
-
-                case REAL :
-                    o = new Float(in.readUTF());
-                    break;
-
-                case BINARY :
-                case VARBINARY :
-                case LONGVARBINARY :
-                case OTHER :
-                    String str = in.readUTF();
-
-                    if (str.equals("**")) {
-
-                        //new format
-                        int    len = in.readInt();
-                        byte[] b   = new byte[len];
-
-                        in.readFully(b);
-
-                        o = new ByteArray(b);
-                    } else {
-
-                        // old format
-                        o = new ByteArray(str);
-                    }
-                    break;
-
-                default :
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
-            }
-
-            data[i] = o;
+            default :
+                return 32;
         }
-
-        return data;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param out
-     * @param data
-     * @param t
-     *
-     * @throws IOException
-     */
-    static void writeData(DataOutput out, Object data[],
-                          Table t) throws IOException {
-
-        int len    = t.getInternalColumnCount();
-        int type[] = new int[len];
-
-        for (int i = 0; i < len; i++) {
-            type[i] = t.getType(i);
-        }
-
-        writeData(out, len, type, data);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param out
-     * @param l
-     * @param type
-     * @param data
-     *
-     * @throws IOException
-     */
-    static void writeData(DataOutput out, int l, int type[],
-                          Object data[]) throws IOException {
-
-        for (int i = 0; i < l; i++) {
-            Object o = data[i];
-
-            if (o == null) {
-                out.writeInt(NULL);
-            } else {
-                int t = type[i];
-
-                out.writeInt(t);
-
-                switch (t) {
-
-                    case INTEGER :
-                        out.writeInt(((Integer) o).intValue());
-                        break;
-
-                    case FLOAT :
-                    case DOUBLE :
-                        out.writeLong(
-                            Double.doubleToLongBits(
-                                ((Double) o).doubleValue()));
-
-                        // some JDKs have a problem with this:
-                        // out.writeDouble(((Double)o).doubleValue());
-                        break;
-
-                    case BINARY :
-                    case VARBINARY :
-                    case LONGVARBINARY :
-                    case OTHER :
-                        out.writeUTF("**");    //new format flag
-
-                        byte[] b = ((ByteArray) o).byteValue();
-
-                        out.writeInt(b.length);
-                        out.write(b, 0, b.length);
-                        break;
-
-                    default :
-                        out.writeUTF(o.toString());
-                        break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param data
-     * @param t
-     *
-     * @return
-     */
-    static int getSize(Object data[], Table t) {
-
-        int l      = data.length;
-        int type[] = new int[l];
-
-        for (int i = 0; i < l; i++) {
-            type[i] = t.getType(i);
-        }
-
-        return getSize(data, l, type);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param data
-     * @param l
-     * @param type
-     *
-     * @return
-     */
-    private static int getSize(Object data[], int l, int type[]) {
-
-        int s = 0;
-
-        for (int i = 0; i < l; i++) {
-            Object o = data[i];
-
-            s += 4;                               // type
-
-            if (o != null) {
-                switch (type[i]) {
-
-                    case INTEGER :
-                        s += 4;
-                        break;
-
-                    case FLOAT :
-                    case DOUBLE :
-                        s += 8;
-                        break;
-
-                    case BINARY :
-                    case VARBINARY :
-                    case LONGVARBINARY :
-                    case OTHER :
-                        s += getUTFsize("**");    //new format flag
-                        s += 4;
-                        s += ((ByteArray) o).byteValue().length;
-                        break;
-
-                    default :
-                        s += getUTFsize(o.toString());
-                }
-            }
-        }
-
-        return s;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
-     */
-    private static int getUTFsize(String s) {
-
-        // a bit bigger is not really a problem, but never smaller!
-        if (s == null) {
-            s = "";
-        }
-
-        int len = s.length();
-        int l   = 2;
-
-        for (int i = 0; i < len; i++) {
-            int c = s.charAt(i);
-
-            if ((c >= 0x0001) && (c <= 0x007F)) {
-                l++;
-            } else if (c > 0x07FF) {
-                l += 3;
-            } else {
-                l += 2;
-            }
-        }
-
-        return l;
     }
 }

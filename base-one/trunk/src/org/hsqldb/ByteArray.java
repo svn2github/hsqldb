@@ -67,58 +67,68 @@
 
 package org.hsqldb;
 
-import java.io.*;
-import java.sql.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.sql.SQLException;
+
+// fredt@users 20020320 - doc 1.7.0 - update
 
 /**
- * ByteArray class declaration
- * <P> This class allows HSQL to store binary data as an array of bytes.
- * It contains methods to create and access the data, perform comparisons, etc.
+ *  This class allows HSQLDB to store binary data as an array of bytes. It
+ *  contains methods to create and access the data, perform comparisons,
+ *  etc.
  *
- * @version 1.0.0.1
+ * @version  1.7.0
  */
 class ByteArray {
 
+    /**
+     * The byte array this object represents.
+     */
     private byte data[];
 
     /**
-     * ByteArray Constructor declaration
-     * <P>Converts a string parameter to the array of bytes the ByteArray object
-     * will contain.
+     * Converts the specified hexadecimal digit <CODE>String</CODE>
+     * to an equivalent array of bytes.
      *
-     * @param s
+     * @param hexString a <CODE>String</CODE> of hexadecimal digits
+     * @throws SQLException if the specified string contains non-hexadecimal digits.
+     * @return a byte array equivalent to the specified string of hexadecimal digits
      */
-    ByteArray(String s) {
-        data = StringConverter.hexToByte(s);
+    static byte[] HexToByteArray(String hexString) throws SQLException {
+        return StringConverter.hexToByte(hexString);
     }
 
     /**
-     * ByteArray Constructor declaration
-     * <P>Creates a ByteArray object from an array of bytes.
+     * Constructs a new <CODE>ByteArray</CODE> object from the specified
+     * array of bytes.
      *
-     * @param s
+     * @param a the array of bytes the object represents
      */
     ByteArray(byte[] a) {
         data = a;
     }
 
     /**
-     * byteVake method declaration
-     * <P>Give access to the object's data
+     * Give access to this object's data
      *
-     * @return The array of bytes representing this objects data.
+     * @return  The array of bytes representing this objects data.
      */
     byte[] byteValue() {
         return data;
     }
 
     /**
-     * compareTo method declaration
-     * <P>This method compares the object to another ByteArray object.
+     * Compares this <CODE>ByteArray</CODE> with the specified
+     * <CODE>ByteArray</CODE> for order.  Returns a negative integer, zero,
+     * or a positive integer as this object is less than, equal to, or
+     * greater than the specified <CODE>ByteArray</CODE>.<p>
      *
-     * @param ByteArray object we are comparing against.
-     *
-     * @return 0 if objects are the same, non-zero otherwise.
+     * @param o the ByteArray to be compared
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
      */
     int compareTo(ByteArray o) {
 
@@ -126,8 +136,8 @@ class ByteArray {
         int lenb = o.data.length;
 
         for (int i = 0; ; i++) {
-            int a = 0,
-                b = 0;
+            int a = 0;
+            int b = 0;
 
             if (i < len) {
                 a = ((int) data[i]) & 0xff;
@@ -150,14 +160,12 @@ class ByteArray {
     }
 
     /**
-     * serialize method declaration
-     * <P>This method serializes an Object into an array of bytes.
+     * Retrieves the serialized form of the specified <CODE>Object</CODE>
+     * as an array of bytes.
      *
-     * @param The Object to serialize
-     *
-     * @return a static byte array representing the passed Object
-     *
-     * @throws SQLException
+     * @param s the Object to serialize
+     * @return  a static byte array representing the passed Object
+     * @throws SQLException if a serialization failure occurs
      */
     static byte[] serialize(Object s) throws SQLException {
 
@@ -175,32 +183,29 @@ class ByteArray {
     }
 
     /**
-     * serializeToString method declaration
-     * <P>This method serializes an Object into a String.
+     * Retrieves the serialized form of the specified <CODE>Object</CODE>
+     * as an equivalent <CODE>String</CODE> of hexadecimal digits.
      *
-     * @param The Object to serialize
-     *
-     * @return A String representing the passed Object
-     *
-     * @throws SQLException
+     * @param s the Object to serialize
+     * @return  A String representing the passed Object
+     * @throws SQLException if a serialization failure occurs
      */
     static String serializeToString(Object s) throws SQLException {
-        return createString(serialize(s));
+        return StringConverter.byteToHex(serialize(s));
     }
 
     /**
-     * deserialize method declaration
-     * <P>This method returns the array of bytes stored in the instance of
-     * ByteArray class as an Object instance.
+     * Deserializes the specified byte array to an
+     * <CODE>Object</CODE> instance.
      *
-     * @return deserialized Object
-     *
-     * @throws SQLException
+     * @return the Object resulting from deserializing the specified array of bytes
+     * @param ba the byte array to deserialize to an Object
+     * @throws SQLException if a serialization failure occurs
      */
-    Object deserialize() throws SQLException {
+    static Object deserialize(byte[] ba) throws SQLException {
 
         try {
-            ByteArrayInputStream bi = new ByteArrayInputStream(data);
+            ByteArrayInputStream bi = new ByteArrayInputStream(ba);
             ObjectInputStream    is = new ObjectInputStream(bi);
 
             return is.readObject();
@@ -210,34 +215,20 @@ class ByteArray {
     }
 
     /**
-     * createString method declaration
-     * <P>This method creates a String from the passed array of bytes.
+     * Retieves this object's array of bytes as an equivalent
+     * <CODE>String</CODE> of hexadecimal digits.
      *
-     * @param byte array to convert.
-     *
-     * @return String representation of the byte array.
-     */
-    static String createString(byte b[]) {
-        return StringConverter.byteToHex(b);
-    }
-
-    /**
-     * toString method declaration
-     * <P>This method creates a String from the passed array of bytes stored in
-     * this instance of the ByteArray class.
-     *
-     * @return String representation of the ByteArray.
+     * @return  String representation of the ByteArray.
      */
     public String toString() {
-        return createString(data);
+        return StringConverter.byteToHex(data);
     }
 
     /**
-     * hashcode method declaration
-     * <P>This method returns the hashcode for the data stored in this instance of
-     * the ByteArray class.
+     * Retrieves the hash code value for the array of bytes this
+     * object represents.
      *
-     * @return
+     * @return hashcode
      */
     public int hashCode() {
         return data.hashCode();

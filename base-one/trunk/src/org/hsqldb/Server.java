@@ -67,30 +67,60 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Vector;
 
 /**
- * <font color="#009900">
  * Server acts as a database server and is one way of using
- * the client / server mode of HSQL Database Engine. This server
- * can only process database queries.
- * An applet will need only the JDBC classes to access the database.
+ * the client-server mode of HSQL Database Engine. This server
+ * can only process database queries.<p>
+ * An applet or application will use only the JDBC classes to access
+ * the database.<p>
  *
- * The Server can be configured with the file 'Server.properties'.
+ * The Server can be configured with the file 'server.properties'.
  * This is an example of the file:
  * <pre>
- * port=9001
- * database=test
- * silent=true
- * </font>
- */
-public class Server {
+ * server.port=9001<p>
+ * server.database=test<p>
+ * server.silent=true<p>
+ * </pre>
+ *
+ *  If the server is embedded in an application server, such as when
+ *  DataSource or HsqlServerFactory classes are used, it is necessary
+ *  to avoid calling System.exit() when the HSQLDB is shutdown with
+ *  an SQL command.<br>
+ *  For this, the server.no_system_exit property can be
+ *  set either on the command line or in server.properties file.
+ *  This ensures that System.exit() is not called at the end.
+ *  All that is left for the embedder application server is to release
+ *  the "empty" Server object and create another one to reopen the
+ *  database (fredt@users).
 
-    boolean  mSilent;
-    Database mDatabase;
+ * @version 1.7.0
+ */
+
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// method rorganised to use new HsqlServerProperties class
+// fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
+// see the comments in ServerConnection.java
+public class Server implements Observer {
+
+    // used to notify this
+    static final Integer CONNECTION_CLOSED = new Integer(0);
+    Vector               serverConnList    = new Vector(16);
+    Database             mDatabase;
+    HsqlServerProperties serverProperties;
+    private ServerSocket socket;
+    private Thread       thread;
+    private boolean      traceMessages;
+    private boolean      restartOnShutdown;
+    private boolean      noSystemExit;
 
     /**
      * Method declaration
@@ -100,9 +130,52 @@ public class Server {
      */
     public static void main(String arg[]) {
 
-        Server server = new Server();
+        if (arg.length > 0) {
+            String p = arg[0];
 
-        server.run(arg);
+            if ((p != null) && p.startsWith("-?")) {
+                printHelp();
+
+                return;
+            }
+        }
+
+        HsqlProperties props  = HsqlProperties.argArrayToProps(arg, "server");
+        Server         server = new Server();
+
+        server.setProperties(props);
+        server.run();
+    }
+
+    void setProperties(HsqlProperties props) {
+
+        serverProperties = new HsqlServerProperties("server");
+
+        serverProperties.load();
+        serverProperties.addProperties(props);
+        serverProperties.setPropertyIfNotExists("server.database", "test");
+        serverProperties.setPropertyIfNotExists("server.port",
+                String.valueOf(jdbcConnection.DEFAULT_HSQLDB_PORT));
+
+        if (serverProperties.isPropertyTrue("server.trace")) {
+            jdbcSystem.setLogToSystem(true);
+        }
+
+        traceMessages = !serverProperties.isPropertyTrue("server.silent",
+                "true");
+        noSystemExit =
+            serverProperties.isPropertyTrue("server.no_system_exit");
+
+        // fredt - not used yet
+        restartOnShutdown =
+            serverProperties.isPropertyTrue("server.restart_on_shutdown");
+    }
+
+    void openDB() throws SQLException {
+
+        String database = serverProperties.getProperty("server.database");
+
+        mDatabase = new Database(database);
     }
 
     /**
@@ -111,62 +184,22 @@ public class Server {
      *
      * @param arg
      */
-    private void run(String arg[]) {
-
-        ServerSocket socket = null;
+    private void run() {
 
         try {
-            Properties prop = new Properties();
+            int port = serverProperties.getIntegerProperty("server.port",
+                jdbcConnection.DEFAULT_HSQLDB_PORT);
+            String database = serverProperties.getProperty("server.database");
 
-            // load parameters from properties file
-            File f = new File("Server.properties");
-
-            if (f.exists()) {
-                FileInputStream fi = new FileInputStream(f);
-
-                prop.load(fi);
-                fi.close();
-            }
-
-            // overwrite parameters with command line parameters
-            for (int i = 0; i < arg.length; i++) {
-                String p = arg[i];
-
-                if (p.equals("-?")) {
-                    printHelp();
-                }
-
-                if (p.charAt(0) == '-') {
-                    prop.put(p.substring(1), arg[i + 1]);
-
-                    i++;
-                }
-            }
-
-            int port = jdbcConnection.DEFAULT_HSQL_PORT;
-
-            port = Integer.parseInt(prop.getProperty("port", "" + port));
-
-            String database = prop.getProperty("database", "test");
-
-            mSilent = prop.getProperty("silent",
-                                       "true").equalsIgnoreCase("true");
-
-            if (prop.getProperty("trace", "false").equalsIgnoreCase("true")) {
-                DriverManager.setLogStream(System.out);
-            }
+            Trace.printSystemOut("Opening database: " + database);
+            printTraceMessages();
+            openDB();
 
             socket = new ServerSocket(port);
 
-            trace("port    =" + port);
-            trace("database=" + database);
-            trace("silent  =" + mSilent);
-
-            mDatabase = new Database(database);
-
-            System.out.println("Server " + jdbcDriver.VERSION
-                               + " is running");
-            System.out.println("Press [Ctrl]+[C] to abort");
+            Trace.printSystemOut(
+                new java.util.Date(System.currentTimeMillis())
+                + " Listening for connections ...");
         } catch (Exception e) {
             traceError("Server.run/init: " + e);
             e.printStackTrace();
@@ -179,28 +212,45 @@ public class Server {
                 Socket           s = socket.accept();
                 ServerConnection c = new ServerConnection(s, this);
 
-                c.start();
+                thread = new Thread(c);
+
+                thread.start();
             }
         } catch (IOException e) {
-            traceError("Server.run/loop: " + e.getMessage());
-            e.printStackTrace();
+            if (mDatabase != null) {
+                traceError("Server.run/loop: " + e.getMessage());
+                e.printStackTrace();
+            } else {
+                trace("");
+            }
         }
     }
 
-    /**
-     * Method declaration
-     *
-     */
-    void printHelp() {
+    static void printHelp() {
 
-        System.out.println(
+        Trace.printSystemOut(
             "Usage: java Server [-options]\n" + "where options include:\n"
             + "    -port <nr>            port where the server is listening\n"
             + "    -database <name>      name of the database\n"
             + "    -silent <true/false>  false means display all queries\n"
-            + "    -trace <true/false>   display print JDBC trace messages\n"
-            + "The command line arguments override the values in the properties file.");
+            + "    -trace <true/false>   display JDBC trace messages\n"
+            + "    -no_system_exit <true/false>  do not issue System.exit()\n"
+            + "The command line arguments override the values in the server.properties file.");
         System.exit(0);
+    }
+
+    void printTraceMessages() {
+
+        trace("server.port    ="
+              + serverProperties.getProperty("server.port"));
+        trace("server.database="
+              + serverProperties.getProperty("server.database"));
+        trace("server.silent  ="
+              + serverProperties.getProperty("server.silent"));
+        Trace.printSystemOut("HSQLDB server " + jdbcDriver.VERSION
+                             + " is running");
+        Trace.printSystemOut(
+            "Use SHUTDOWN to close normally. Use [Ctrl]+[C] to abort abruptly");
     }
 
     /**
@@ -211,8 +261,8 @@ public class Server {
      */
     void trace(String s) {
 
-        if (!mSilent) {
-            System.out.println(s);
+        if (traceMessages) {
+            Trace.printSystemOut(s);
         }
     }
 
@@ -223,6 +273,56 @@ public class Server {
      * @param s
      */
     void traceError(String s) {
-        System.out.println(s);
+        Trace.printSystemOut(s);
+    }
+
+    void closeAllServerConnections() {
+
+        for (int i = serverConnList.size() - 1; i >= 0; i--) {
+            ServerConnection sc =
+                (ServerConnection) serverConnList.elementAt(i);
+
+            sc.close();
+        }
+
+        //fredt@users - when we implement restart on shutdown add resize to 16
+        serverConnList.removeAllElements();
+    }
+
+    public void update(Observable o, Object arg) {
+
+//      Trace.doAssert(arg.equals(ServerConnection.CONNECTION_CLOSED));
+        if (mDatabase == null) {
+            return;
+        }
+
+        if (!mDatabase.isShutdown()) {
+            return;
+        }
+
+        mDatabase = null;
+
+        closeAllServerConnections();
+
+        // fredt@users - this is used to exit the loop in this.run()
+        try {
+            socket.close();
+        } catch (IOException e) {
+            traceError("Exception when closing the main socket");
+        }
+
+        serverProperties = null;
+        socket           = null;
+        thread           = null;
+
+        if (!noSystemExit) {
+            Trace.printSystemOut(
+                new java.util.Date(System.currentTimeMillis())
+                + " SHUTDOWN : System.exit() is called next");
+            System.exit(0);
+        }
+
+        Trace.printSystemOut(new java.util.Date(System.currentTimeMillis())
+                             + " SHUTDOWN : System.exit() was not called");
     }
 }

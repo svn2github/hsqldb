@@ -74,7 +74,7 @@ import java.util.Vector;
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 public class Tree extends Panel {
 
@@ -151,17 +151,20 @@ public class Tree extends Panel {
      * @param w
      * @param h
      */
-    public void reshape(int x, int y, int w, int h) {
 
-        super.reshape(x, y, w, h);
+// fredt@users 20011210 - patch 450412 by elise@users
+// with additional replacement of deprecated methods
+    public void setBounds(int x, int y, int w, int h) {
+
+        super.setBounds(x, y, w, h);
 
         iSbHeight = sbHoriz.getPreferredSize().height;
         iSbWidth  = sbVert.getPreferredSize().width;
         iHeight   = h - iSbHeight;
         iWidth    = w - iSbWidth;
 
-        sbHoriz.reshape(0, iHeight, iWidth, iSbHeight);
-        sbVert.reshape(iWidth, 0, iSbWidth, iHeight);
+        sbHoriz.setBounds(0, iHeight, iWidth, iSbHeight);
+        sbVert.setBounds(iWidth, 0, iSbWidth, iHeight);
         adjustScroll();
 
         iImage = null;
@@ -205,7 +208,7 @@ public class Tree extends Panel {
         row[0] = key;
         row[1] = value;
         row[2] = state;    // null / "-" / "+"
-        row[3] = "" + color;
+        row[3] = String.valueOf(color);
 
         vData.addElement(row);
 
@@ -268,6 +271,10 @@ public class Tree extends Panel {
      *
      * @return
      */
+
+// fredt@users 20020130 - comment by fredt
+// to remove this deprecated method we need to rewrite the Tree class as a
+// ScrollPane component
     public boolean handleEvent(Event e) {
 
         switch (e.id) {
@@ -408,7 +415,7 @@ public class Tree extends Panel {
      * @return
      */
     public Dimension preferredSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**
@@ -418,7 +425,7 @@ public class Tree extends Panel {
      * @return
      */
     public Dimension getPreferredSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**
@@ -428,7 +435,7 @@ public class Tree extends Panel {
      * @return
      */
     public Dimension getMinimumSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**

@@ -74,8 +74,10 @@ import java.util.Vector;
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 public class Grid extends Panel {
 
     // drawing
@@ -92,8 +94,8 @@ public class Grid extends Panel {
     private int iX, iY;
 
     // data
-    private String sColHead[];
-    private Vector vData;
+    private String sColHead[] = new String[0];
+    private Vector vData      = new Vector();
     private int    iColWidth[];
     private int    iColCount, iRowCount;
 
@@ -163,17 +165,18 @@ public class Grid extends Panel {
      * @param w
      * @param h
      */
-    public void reshape(int x, int y, int w, int h) {
+    public void setBounds(int x, int y, int w, int h) {
 
-        super.reshape(x, y, w, h);
+        // fredt@users 20011210 - patch 450412 by elise@users
+        super.setBounds(x, y, w, h);
 
         iSbHeight = sbHoriz.getPreferredSize().height;
         iSbWidth  = sbVert.getPreferredSize().width;
         iHeight   = h - iSbHeight;
         iWidth    = w - iSbWidth;
 
-        sbHoriz.reshape(0, iHeight, iWidth, iSbHeight);
-        sbVert.reshape(iWidth, 0, iSbWidth, iHeight);
+        sbHoriz.setBounds(0, iHeight, iWidth, iSbHeight);
+        sbVert.setBounds(iWidth, 0, iSbWidth, iHeight);
         adjustScroll();
 
         iImage = null;
@@ -189,7 +192,6 @@ public class Grid extends Panel {
      */
     public void setHead(String head[]) {
 
-        vData     = new Vector();
         iColCount = head.length;
         sColHead  = new String[iColCount];
         iColWidth = new int[iColCount];
@@ -201,6 +203,7 @@ public class Grid extends Panel {
 
         iRowCount  = 0;
         iRowHeight = 0;
+        vData      = new Vector();
     }
 
     /**
@@ -219,6 +222,10 @@ public class Grid extends Panel {
 
         for (int i = 0; i < iColCount; i++) {
             row[i] = data[i];
+
+            if (row[i] == null) {
+                row[i] = "(null)";
+            }
         }
 
         vData.addElement(row);
@@ -273,6 +280,12 @@ public class Grid extends Panel {
      *
      * @return
      */
+
+    // fredt@users 20020130 - comment by fredt
+    // to remove this deprecated method we need to rewrite the Grid class as a
+    // ScrollPane component
+    // sqlbob:  I believe that changing to the JDK1.1 event handler
+    // would require browsers to use the Java plugin.
     public boolean handleEvent(Event e) {
 
         switch (e.id) {
@@ -302,6 +315,12 @@ public class Grid extends Panel {
     public void paint(Graphics g) {
 
         if (g == null) {
+            return;
+        }
+
+        if (sColHead.length == 0) {
+            super.paint(g);
+
             return;
         }
 
@@ -509,7 +528,7 @@ public class Grid extends Panel {
      * @return
      */
     public Dimension preferredSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**
@@ -519,7 +538,7 @@ public class Grid extends Panel {
      * @return
      */
     public Dimension getPreferredSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**
@@ -529,7 +548,7 @@ public class Grid extends Panel {
      * @return
      */
     public Dimension getMinimumSize() {
-        return minimumSize();
+        return dMinimum;
     }
 
     /**

@@ -72,38 +72,49 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.applet.*;
 import java.sql.*;
-import java.net.*;
-import java.io.*;
+import java.io.File;
 import java.util.*;
 
 /**
- * Class declaration
+ * Manages a JDBC database
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
+// sqlbob@users 20020401 - patch 537501 by ulrivo - command line arguments
+// sqlbob@users 20020407 - patch 1.7.0 - reengineering
 public class DatabaseManager extends Applet
 implements ActionListener, WindowListener, KeyListener {
 
-    final static int iMaxRecent = 24;
-    Connection       cConn;
-    DatabaseMetaData dMeta;
-    Statement        sStatement;
-    Menu             mRecent;
-    String           sRecent[];
-    int              iRecent;
-    TextArea         txtCommand;
-    Button           butExecute;
-    Tree             tTree;
-    Panel            pResult;
-    long             lTime;
-    int              iResult;    // 0: grid; 1: text
-    Grid             gResult;
-    TextArea         txtResult;
-    boolean          bHelp;
-    Frame            fMain;
-    Image            imgEmpty;
-    static boolean   bMustExit;
+    final static String NL         = System.getProperty("line.separator");
+    final static int    iMaxRecent = 24;
+    Connection          cConn;
+    DatabaseMetaData    dMeta;
+    Statement           sStatement;
+    Menu                mRecent;
+    String              sRecent[];
+    int                 iRecent;
+    TextArea            txtCommand;
+    Button              butExecute;
+    Tree                tTree;
+    Panel               pResult;
+    long                lTime;
+    int                 iResult;    // 0: grid; 1: text
+    Grid                gResult;
+    TextArea            txtResult;
+    boolean             bHelp;
+    Frame               fMain;
+    Image               imgEmpty;
+    static boolean      bMustExit;
+
+    // (ulrivo): variables set by arguments from the commandline
+    static String defDriver   = "org.hsqldb.jdbcDriver";
+    static String defURL      = "jdbc:hsqldb:.";
+    static String defUser     = "sa";
+    static String defPassword = "";
+    static String defScript;
+    static String defDirectory;
 
     /**
      * Method declaration
@@ -128,11 +139,11 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             dMeta      = cConn.getMetaData();
             sStatement = cConn.createStatement();
+
+            refreshTree();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        refreshTree();
     }
 
     /**
@@ -146,9 +157,8 @@ implements ActionListener, WindowListener, KeyListener {
         m.main();
 
         try {
-            m.connect(
-                ConnectionDialog.createConnection(
-                    "org.hsqldb.jdbcDriver", "jdbc:hsqldb:.", "sa", ""));
+            m.connect(ConnectionDialog.createConnection(defDriver, defURL,
+                    defUser, defPassword));
             m.insertTestData();
             m.refreshTree();
         } catch (Exception e) {
@@ -164,13 +174,64 @@ implements ActionListener, WindowListener, KeyListener {
      */
     public static void main(String arg[]) {
 
+        System.getProperties().put("sun.java2d.noddraw", "true");
+
+        // (ulrivo): read all arguments from the command line
+        String  lowerArg;
+        boolean autoConnect = false;
+
+        for (int i = 0; i < arg.length; i++) {
+            lowerArg = arg[i].toLowerCase();
+
+            i++;
+
+            if (i == arg.length) {
+                showUsage();
+
+                return;
+            }
+
+            if (lowerArg.equals("-driver")) {
+                defDriver   = arg[i];
+                autoConnect = true;
+            } else if (lowerArg.equals("-url")) {
+                defURL      = arg[i];
+                autoConnect = true;
+            } else if (lowerArg.equals("-user")) {
+                defUser     = arg[i];
+                autoConnect = true;
+            } else if (lowerArg.equals("-password")) {
+                defPassword = arg[i];
+                autoConnect = true;
+            } else if (lowerArg.equals("-dir")) {
+                defDirectory = arg[i];
+            } else if (lowerArg.equals("-script")) {
+                defScript = arg[i];
+            } else {
+                showUsage();
+
+                return;
+            }
+        }
+
         bMustExit = true;
 
         DatabaseManager m = new DatabaseManager();
 
         m.main();
 
-        Connection c = ConnectionDialog.createConnection(m.fMain, "Connect");
+        Connection c = null;
+
+        try {
+            if (autoConnect) {
+                c = ConnectionDialog.createConnection(defDriver, defURL,
+                                                      defUser, defPassword);
+            } else {
+                c = ConnectionDialog.createConnection(m.fMain, "Connect");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         if (c == null) {
             return;
@@ -179,135 +240,41 @@ implements ActionListener, WindowListener, KeyListener {
         m.connect(c);
     }
 
+    private static void showUsage() {
+
+        System.out.println(
+            "Usage: java DatabaseManager [-options]\n"
+            + "where options include:\n"
+            + "    -driver <classname>  jdbc driver class\n"
+            + "    -url <name>          jdbc url\n"
+            + "    -user <name>         username used for connection\n"
+            + "    -password <password> password for this user\n"
+            + "    -dir <path>          default directory\n"
+            + "    -script <file>       reads from script file\n");
+    }
+
     /**
      * Method declaration
      *
      */
     void insertTestData() {
 
-        String demo[] = {
-            "DROP TABLE Address", "DROP TABLE Product", "DROP TABLE Document",
-            "DROP TABLE Position",
-            "CREATE TABLE Address(ID INTEGER PRIMARY KEY,FirstName VARCHAR(255),"
-            + "LastName VARCHAR(255),Street VARCHAR(255),City VARCHAR(255))",
-            "CREATE TABLE Product(ID INTEGER PRIMARY KEY,Name VARCHAR(255),"
-            + "Cost DECIMAL)",
-            "CREATE TABLE Document(ID INTEGER PRIMARY KEY,AddressID INTEGER,"
-            + "Total DECIMAL)",
-            "CREATE TABLE Position(DocumentID INTEGER,Position INTEGER,"
-            + "ProductID INTEGER,Quantity INTEGER,Price DECIMAL,"
-            + "PRIMARY KEY(DocumentID,Position))"
-        };
-        String name[] = {
-            "White", "Karsen", "Smith", "Ringer", "May", "King", "Fuller",
-            "Miller", "Ott", "Sommer", "Schneider", "Steel", "Peterson",
-            "Heiniger", "Clancy"
-        };
-        String firstname[] = {
-            "Mary", "James", "Anne", "George", "Sylvia", "Robert", "Janet",
-            "Michael", "Andrew", "Bill", "Susanne", "Laura", "Bob", "Julia",
-            "John"
-        };
-        String street[] = {
-            "Upland Pl.", "College Av.", "- 20th Ave.", "Seventh Av."
-        };
-        String city[]   = {
-            "New York", "Dallas", "Boston", "Chicago", "Seattle",
-            "San Francisco", "Berne", "Oslo", "Paris", "Lyon", "Palo Alto",
-            "Olten"
-        };
-        String product[] = {
-            "Iron", "Ice Tea", "Clock", "Chair", "Telephone", "Shoe"
-        };
-
         try {
-            for (int i = 0; i < demo.length; i++) {
-
-                // drop table may fail
-                try {
-                    sStatement.execute(demo[i]);
-                } catch (SQLException e) {}
-            }
-
+            DatabaseManagerCommon.createTestTables(sStatement);
+            refreshTree();
+            txtCommand.setText(
+                DatabaseManagerCommon.createTestData(sStatement));
             refreshTree();
 
-            int max = 50;
-
-            for (int i = 0; i < max; i++) {
-                sStatement.execute("INSERT INTO Address VALUES(" + i + ",'"
-                                   + random(firstname) + "','" + random(name)
-                                   + "','" + random(554) + " "
-                                   + random(street) + "','" + random(city)
-                                   + "')");
-                sStatement.execute("INSERT INTO Product VALUES(" + i + ",'"
-                                   + random(product) + " " + random(product)
-                                   + "'," + (20 + 2 * random(120)) + ")");
-                sStatement.execute("INSERT INTO Document VALUES(" + i + ","
-                                   + random(max) + ",0.0)");
-
-                for (int j = random(20) + 2; j >= 0; j--) {
-                    sStatement.execute("INSERT INTO Position VALUES(" + i
-                                       + "," + j + "," + random(max) + ","
-                                       + (1 + random(24)) + ",1.5)");
-                }
+            for (int i = 0; i < DatabaseManagerCommon.testDataSql.length;
+                    i++) {
+                addToRecent(DatabaseManagerCommon.testDataSql[i]);
             }
 
-            sStatement.execute("UPDATE Product SET Cost=ROUND(Cost*.1,2)");
-            sStatement.execute(
-                "UPDATE Position SET Price=Price*"
-                + "SELECT Cost FROM Product prod WHERE ProductID=prod.ID");
-            sStatement.execute(
-                "UPDATE Document SET Total=SELECT SUM(Price*"
-                + "Quantity) FROM Position WHERE DocumentID=Document.ID");
-
-            String recent[] = {
-                "SELECT * FROM Product", "SELECT * FROM Document",
-                "SELECT * FROM Position",
-                "SELECT * FROM Address a\nINNER JOIN Document d ON a.ID=d.AddressID",
-                "SELECT * FROM Document d\nINNER JOIN Position p ON d.ID=p.DocumentID",
-                "SELECT * FROM Address WHERE Street LIKE '1%' ORDER BY Lastname"
-            };
-
-            for (int i = 0; i < recent.length; i++) {
-                addToRecent(recent[i]);
-            }
-
-            refreshTree();
-            txtCommand.setText("SELECT * FROM Address");
             execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    static Random rRandom = new Random(100);
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
-     */
-    public static String random(String s[]) {
-        return s[random(s.length)];
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param i
-     *
-     * @return
-     */
-    public static int random(int i) {
-
-        i = rRandom.nextInt() % i;
-
-        return i < 0 ? -i
-                     : i;
     }
 
     /**
@@ -343,8 +310,9 @@ implements ActionListener, WindowListener, KeyListener {
 
         String sitems[] = {
             "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "--", "-CREATE TABLE",
-            "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX", "--", "-SCRIPT",
-            "-SHUTDOWN", "--", "-Test Script"
+            "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX", "--",
+            "-CHECKPOINT", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
+            "-Test Script"
         };
 
         addMenu(bar, "Command", sitems);
@@ -358,10 +326,17 @@ implements ActionListener, WindowListener, KeyListener {
         String soptions[] = {
             "-AutoCommit on", "-AutoCommit off", "OCommit", "LRollback", "--",
             "-Disable MaxRows", "-Set MaxRows to 100", "--", "-Logging on",
-            "-Logging off", "--", "-Insert test data", "-Transfer"
+            "-Logging off", "--", "-Insert test data"
         };
 
         addMenu(bar, "Options", soptions);
+
+        /* NB - 26052002 Restore is not implemented yet in the transfer tool */
+        String stools[] = {
+            "-Dump", /*"-Restore",*/ "-Transfer"
+        };
+
+        addMenu(bar, "Tools", stools);
         fMain.setMenuBar(bar);
         fMain.setSize(640, 480);
         fMain.add("Center", this);
@@ -372,9 +347,26 @@ implements ActionListener, WindowListener, KeyListener {
         Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = fMain.getSize();
 
-        fMain.setLocation((d.width - size.width) / 2,
-                          (d.height - size.height) / 2);
+        // (ulrivo): full size on screen with less than 640 width
+        if (d.width >= 640) {
+            fMain.setLocation((d.width - size.width) / 2,
+                              (d.height - size.height) / 2);
+        } else {
+            fMain.setLocation(0, 0);
+            fMain.setSize(d);
+        }
+
         fMain.show();
+
+        // (ulrivo): load query from command line
+        if (defScript != null) {
+            if (defDirectory != null) {
+                defScript = defDirectory + File.separator + defScript;
+            }
+
+            txtCommand.setText(DatabaseManagerCommon.readFile(defScript));
+        }
+
         txtCommand.requestFocus();
     }
 
@@ -469,11 +461,19 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Transfer")) {
-            Transfer.work();
+            Transfer.work(null);
+        } else if (s.equals("Dump")) {
+            Transfer.work(new String[]{ "-d" });
+
+            /* NB - 26052002 Restore is not implemented yet in the transfer tool */
+/*
+        } else if (s.equals("Restore")) {
+            Transfer.work(new String[]{"-r"});
+*/
         } else if (s.equals("Logging on")) {
-            DriverManager.setLogStream(System.out);
+            jdbcSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
-            DriverManager.setLogStream(null);
+            jdbcSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {
@@ -493,27 +493,44 @@ implements ActionListener, WindowListener, KeyListener {
             FileDialog f = new FileDialog(fMain, "Open Script",
                                           FileDialog.LOAD);
 
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
+
             f.show();
 
             String file = f.getFile();
 
             if (file != null) {
-                txtCommand.setText(readFile(f.getDirectory() + file));
+                txtCommand.setText(
+                    DatabaseManagerCommon.readFile(f.getDirectory() + file));
             }
         } else if (s.equals("Save Script...")) {
             FileDialog f = new FileDialog(fMain, "Save Script",
                                           FileDialog.SAVE);
 
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
+
             f.show();
 
             String file = f.getFile();
 
             if (file != null) {
-                writeFile(f.getDirectory() + file, txtCommand.getText());
+                DatabaseManagerCommon.writeFile(f.getDirectory() + file,
+                                                txtCommand.getText());
             }
         } else if (s.equals("Save Result...")) {
             FileDialog f = new FileDialog(fMain, "Save Result",
                                           FileDialog.SAVE);
+
+            // (ulrivo): set default directory if set from command line
+            if (defDirectory != null) {
+                f.setDirectory(defDirectory);
+            }
 
             f.show();
 
@@ -521,7 +538,8 @@ implements ActionListener, WindowListener, KeyListener {
 
             if (file != null) {
                 showResultInText();
-                writeFile(f.getDirectory() + file, txtResult.getText());
+                DatabaseManagerCommon.writeFile(f.getDirectory() + file,
+                                                txtResult.getText());
             }
         } else if (s.equals("Results in Text")) {
             iResult = 1;
@@ -583,116 +601,31 @@ implements ActionListener, WindowListener, KeyListener {
                 sStatement.setMaxRows(100);
             } catch (SQLException e) {}
         } else if (s.equals("SELECT")) {
-            showHelp(
-                "SELECT * FROM ",
-                "SELECT [DISTINCT] \n"
-                + "{ selectExpression | table.* | * } [, ... ] \n"
-                + "[INTO newTable] \n" + "FROM tableList \n"
-                + "[WHERE Expression] \n"
-                + "[ORDER BY selectExpression [{ASC | DESC}] [, ...] ] \n"
-                + "[GROUP BY Expression [, ...] ] \n"
-                + "[UNION [ALL] selectStatement]");
+            showHelp(DatabaseManagerCommon.selectHelp);
         } else if (s.equals("INSERT")) {
-            showHelp("INSERT INTO ",
-                     "INSERT INTO table [ (column [,...] ) ] \n"
-                     + "{ VALUES(Expression [,...]) | SelectStatement }");
+            showHelp(DatabaseManagerCommon.insertHelp);
         } else if (s.equals("UPDATE")) {
-            showHelp("UPDATE ",
-                     "UPDATE table SET column = Expression [, ...] \n"
-                     + "[WHERE Expression]");
+            showHelp(DatabaseManagerCommon.updateHelp);
         } else if (s.equals("DELETE")) {
-            showHelp("DELETE FROM ", "DELETE FROM table [WHERE Expression]");
+            showHelp(DatabaseManagerCommon.deleteHelp);
         } else if (s.equals("CREATE TABLE")) {
-            showHelp("CREATE TABLE ",
-                     "CREATE TABLE name \n"
-                     + "( columnDefinition [, ...] ) \n\n"
-                     + "columnDefinition: \n"
-                     + "column DataType [ [NOT] NULL] [PRIMARY KEY] \n"
-                     + "DataType: \n"
-                     + "{ INTEGER | DOUBLE | VARCHAR | DATE | TIME |... }");
+            showHelp(DatabaseManagerCommon.createTableHelp);
         } else if (s.equals("DROP TABLE")) {
-            showHelp("DROP TABLE ", "DROP TABLE table");
+            showHelp(DatabaseManagerCommon.dropTableHelp);
         } else if (s.equals("CREATE INDEX")) {
-            showHelp("CREATE INDEX ",
-                     "CREATE [UNIQUE] INDEX index ON \n"
-                     + "table (column [, ...])");
+            showHelp(DatabaseManagerCommon.createIndexHelp);
         } else if (s.equals("DROP INDEX")) {
-            showHelp("DROP INDEX ", "DROP INDEX table.index");
+            showHelp(DatabaseManagerCommon.dropIndexHelp);
+        } else if (s.equals("CHECKPOINT")) {
+            showHelp(DatabaseManagerCommon.checkpointHelp);
         } else if (s.equals("SCRIPT")) {
-            showHelp("SCRIPT",
-                     "SCRIPT ['file']\n\n" + "(HSQL Database Engine only)");
+            showHelp(DatabaseManagerCommon.scriptHelp);
         } else if (s.equals("SHUTDOWN")) {
-            showHelp("SHUTDOWN",
-                     "SHUTDOWN [IMMEDIATELY]\n\n"
-                     + "(HSQL Database Engine only)");
+            showHelp(DatabaseManagerCommon.shutdownHelp);
+        } else if (s.equals("SET")) {
+            showHelp(DatabaseManagerCommon.setHelp);
         } else if (s.equals("Test Script")) {
-            showHelp(
-                "-->>>TEST<<<-- ;\n" + "--#1000;\n" + "DROP TABLE Test ;\n"
-                + "CREATE TABLE Test(\n" + "  Id INTEGER PRIMARY KEY,\n"
-                + "  FirstName VARCHAR(20),\n" + "  Name VARCHAR(50),\n"
-                + "  ZIP INTEGER) ;\n" + "INSERT INTO Test \n"
-                + "  VALUES(#,'Julia','Peterson-Clancy',#) ;\n"
-                + "UPDATE Test SET Name='Hans' WHERE Id=# ;\n"
-                + "SELECT * FROM Test WHERE Id=# ;\n"
-                + "DELETE FROM Test WHERE Id=# ;\n"
-                + "DROP TABLE Test", "This test script is parsed by the DatabaseManager\n"
-                                     + "It may be changed manually. Rules:\n"
-                                     + "- it must start with -->>>TEST<<<--.\n"
-                                     + "- each line must end with ';' (no spaces after)\n"
-                                     + "- lines starting with -- are comments\n"
-                                     + "- lines starting with --#<count> means set new count\n");
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param file
-     *
-     * @return
-     */
-    String readFile(String file) {
-
-        try {
-            FileReader   read     = new FileReader(file);
-            char         buffer[] = new char[1024];
-            StringBuffer b        = new StringBuffer();
-
-            while (true) {
-                int i = read.read(buffer, 0, 1024);
-
-                if (i == -1) {
-                    break;
-                }
-
-                b.append(buffer, 0, i);
-            }
-
-            read.close();
-
-            return b.toString();
-        } catch (IOException e) {
-            return e.getMessage();
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param file
-     * @param text
-     */
-    void writeFile(String file, String text) {
-
-        try {
-            FileWriter write = new FileWriter(file);
-
-            write.write(text.toCharArray());
-            write.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            showHelp(DatabaseManagerCommon.testHelp);
         }
     }
 
@@ -703,10 +636,10 @@ implements ActionListener, WindowListener, KeyListener {
      * @param s
      * @param help
      */
-    void showHelp(String s, String help) {
+    void showHelp(String help[]) {
 
-        txtCommand.setText(s);
-        txtResult.setText(help);
+        txtCommand.setText(help[0]);
+        txtResult.setText(help[1]);
 
         bHelp = true;
 
@@ -714,7 +647,7 @@ implements ActionListener, WindowListener, KeyListener {
         pResult.add("Center", txtResult);
         pResult.doLayout();
         txtCommand.requestFocus();
-        txtCommand.setCaretPosition(s.length());
+        txtCommand.setCaretPosition(help[0].length());
     }
 
     /**
@@ -787,16 +720,6 @@ implements ActionListener, WindowListener, KeyListener {
     /**
      * Method declaration
      *
-     *
-     * @param s
-     */
-    void trace(String s) {
-        System.out.println(s);
-    }
-
-    /**
-     * Method declaration
-     *
      */
     void execute() {
 
@@ -824,7 +747,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                 gResult.setHead(g);
 
-                g[0] = "" + r;
+                g[0] = String.valueOf(r);
 
                 gResult.addRow(g);
             }
@@ -848,6 +771,7 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         updateResult();
+        System.gc();
     }
 
     /**
@@ -929,55 +853,6 @@ implements ActionListener, WindowListener, KeyListener {
     /**
      * Method declaration
      *
-     *
-     * @param sql
-     * @param max
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    long testStatement(String sql, int max) throws SQLException {
-
-        long start = System.currentTimeMillis();
-
-        if (sql.indexOf('#') == -1) {
-            max = 1;
-        }
-
-        for (int i = 0; i < max; i++) {
-            String s = sql;
-
-            while (true) {
-                int j = s.indexOf("#r#");
-
-                if (j == -1) {
-                    break;
-                }
-
-                s = s.substring(0, j) + ((int) (Math.random() * i))
-                    + s.substring(j + 3);
-            }
-
-            while (true) {
-                int j = s.indexOf('#');
-
-                if (j == -1) {
-                    break;
-                }
-
-                s = s.substring(0, j) + i + s.substring(j + 1);
-            }
-
-            sStatement.execute(s);
-        }
-
-        return (System.currentTimeMillis() - start);
-    }
-
-    /**
-     * Method declaration
-     *
      */
     void testPerformance() {
 
@@ -1033,10 +908,10 @@ implements ActionListener, WindowListener, KeyListener {
             long l = 0;
 
             try {
-                l     = testStatement(sql, max);
+                l = DatabaseManagerCommon.testStatement(sStatement, sql, max);
                 total += l;
-                g[0]  = "" + l;
-                g[1]  = "" + max;
+                g[0]  = String.valueOf(l);
+                g[1]  = String.valueOf(max);
                 g[3]  = "";
             } catch (SQLException e) {
                 g[0] = g[1] = "n/a";
@@ -1064,18 +939,18 @@ implements ActionListener, WindowListener, KeyListener {
      */
     void showResultInText() {
 
-        String row[]  = gResult.getHead();
-        int    width  = row.length;
-        Vector data   = gResult.getData();
+        String col[]  = gResult.getHead();
+        int    width  = col.length;
         int    size[] = new int[width];
+        Vector data   = gResult.getData();
+        String row[];
+        int    height = data.size();
 
         for (int i = 0; i < width; i++) {
-            size[i] = row[i].length();
+            size[i] = col[i].length();
         }
 
-        int len = data.size();
-
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < height; i++) {
             row = (String[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
@@ -1089,17 +964,15 @@ implements ActionListener, WindowListener, KeyListener {
 
         StringBuffer b = new StringBuffer();
 
-        row = gResult.getHead();
-
         for (int i = 0; i < width; i++) {
-            b.append(row[i]);
+            b.append(col[i]);
 
-            for (int l = row[i].length(); l <= size[i]; l++) {
+            for (int l = col[i].length(); l <= size[i]; l++) {
                 b.append(' ');
             }
         }
 
-        b.append('\n');
+        b.append(NL);
 
         for (int i = 0; i < width; i++) {
             for (int l = 0; l < size[i]; l++) {
@@ -1109,9 +982,9 @@ implements ActionListener, WindowListener, KeyListener {
             b.append(' ');
         }
 
-        b.append('\n');
+        b.append(NL);
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < height; i++) {
             row = (String[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
@@ -1122,10 +995,10 @@ implements ActionListener, WindowListener, KeyListener {
                 }
             }
 
-            b.append('\n');
+            b.append(NL);
         }
 
-        b.append("\n" + len + " row(s) in " + lTime + " ms");
+        b.append(NL + height + " row(s) in " + lTime + " ms");
         txtResult.setText(b.toString());
     }
 
@@ -1204,7 +1077,15 @@ implements ActionListener, WindowListener, KeyListener {
 
         tTree = new Tree();
 
-        tTree.setMinimumSize(new Dimension(200, 100));
+        // (ulrivo): screen with less than 640 width
+        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+
+        if (d.width >= 640) {
+            tTree.setMinimumSize(new Dimension(200, 100));
+        } else {
+            tTree.setMinimumSize(new Dimension(80, 100));
+        }
+
         gResult.setMinimumSize(new Dimension(200, 300));
         fMain.add("West", tTree);
         doLayout();
@@ -1230,8 +1111,12 @@ implements ActionListener, WindowListener, KeyListener {
             ResultSet result = dMeta.getTables(null, null, null, usertables);
             Vector    tables       = new Vector();
 
+            // sqlbob@users Added remarks.
+            Vector remarks = new Vector();
+
             while (result.next()) {
                 tables.addElement(result.getString(3));
+                remarks.addElement(result.getString(5));
             }
 
             result.close();
@@ -1241,6 +1126,13 @@ implements ActionListener, WindowListener, KeyListener {
                 String key  = "tab-" + name + "-";
 
                 tTree.addRow(key, name, "+", color_table);
+
+                // sqlbob@users Added remarks.
+                String remark = (String) remarks.elementAt(i);
+
+                if ((remark != null) &&!remark.trim().equals("")) {
+                    tTree.addRow(key + "r", " " + remark);
+                }
 
                 ResultSet col = dMeta.getColumns(null, null, name, null);
 

@@ -68,11 +68,10 @@
 package org.hsqldb;
 
 /**
- * CacheFree Class declaration
- * <P>This class is essetially an object used to create a singly linked list of
- * the free space available in a HSQL database file.
+ *  This class is essetially an object used to create a singly linked list
+ *  of the free space available in a HSQL database file.
  *
- * @version 1.0.0.1
+ * @version  1.7.0
  */
 class CacheFree {
 

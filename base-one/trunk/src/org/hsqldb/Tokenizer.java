@@ -67,36 +67,54 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Types;
+import java.sql.SQLException;
+import java.math.BigDecimal;
+import java.util.Hashtable;
+
+// fredt@users 20020218 - patch 455785 by hjbusch@users - large DECIMAL inserts
+// also Long.MIM_VALUE (bug 473388) inserts - applied to different parts
+// fredt@users 20020408 - patch 1.7.0 by fredt - exact integral types
+// integral values are cast into the smallest type that can hold them
+// fredt@users 20020501 - patch 550970 by boucherb@users - fewer StringBuffers
+// fredt@users 20020611 - patch 1.7.0 by fredt - correct statement logging
+// changes to the working of getLastPart() to return the correct statement for
+// logging in the .script file.
+// also restructuring to reduce use of objects and speed up tokenising of
+// strings and quoted identifiers
 
 /**
  * Tokenizer class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Tokenizer {
 
-    private final static int NAME      = 1,
+    private static final int NAME      = 1,
                              LONG_NAME = 2,
                              SPECIAL   = 3,
                              NUMBER    = 4,
                              FLOAT     = 5,
                              STRING    = 6,
-                             LONG      = 7;
+                             LONG      = 7,
+                             DECIMAL   = 8;
 
     // used only internally
-    private final static int QUOTED_IDENTIFIER = 9,
+    private static final int QUOTED_IDENTIFIER = 9,
                              REMARK_LINE       = 10,
                              REMARK            = 11;
     private String           sCommand;
-    private char             cCommand[];
     private int              iLength;
     private Object           oValue;
     private int              iIndex;
+    private int              tokenIndex;
+    private int              nextTokenIndex;
+    private int              beginIndex;
     private int              iType;
-    private String           sToken, sLongNameFirst, sLongNameLast;
+    private String           sToken;
+    private String           sLongNameFirst;
+    private String           sLongNameLast;
     private boolean          bWait;
     private static Hashtable hKeyword;
 
@@ -105,12 +123,12 @@ class Tokenizer {
 
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
-            "DISTINCT", "DISTINCT", "EXISTS", "EXCEPT", "FALSE", "FROM",
-            "GROUP", "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",
-            "LEFT", "LIKE", "MAX", "MIN", "NULL", "NOT", "ON", "ORDER", "OR",
-            "OUTER", "PRIMARY", "SELECT", "SET", "SUM", "TO", "TRUE",
-            "UNIQUE", "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT",
-            "MINUS", "CALL"
+            "DISTINCT", "EXISTS", "EXCEPT", "FALSE", "FROM", "GROUP", "IF",
+            "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER", "LEFT",
+            "LIKE", "MAX", "MIN", "NULL", "NOT", "ON", "ORDER", "OR", "OUTER",
+            "PRIMARY", "SELECT", "SET", "SUM", "TO", "TRUE", "UNIQUE",
+            "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS",
+            "CALL"
         };
 
         for (int i = 0; i < keyword.length; i++) {
@@ -127,8 +145,7 @@ class Tokenizer {
     Tokenizer(String s) {
 
         sCommand = s;
-        cCommand = s.toCharArray();
-        iLength  = cCommand.length;
+        iLength  = s.length();
         iIndex   = 0;
     }
 
@@ -140,9 +157,11 @@ class Tokenizer {
      */
     void back() throws SQLException {
 
-        Trace.assert(!bWait, "back");
+        Trace.doAssert(!bWait, "back");
 
-        bWait = true;
+        nextTokenIndex = iIndex;
+        iIndex         = tokenIndex;
+        bWait          = true;
     }
 
     /**
@@ -174,9 +193,10 @@ class Tokenizer {
 
         getToken();
 
-        // todo: this is just compatibility for old style USER 'sa'
         if (iType == STRING) {
-            return sToken.substring(1).toUpperCase();
+
+// fred - no longer including first quote in sToken
+            return sToken.toUpperCase();
         } else if (iType == NAME) {
             return sToken;
         } else if (iType == QUOTED_IDENTIFIER) {
@@ -194,7 +214,8 @@ class Tokenizer {
      */
     boolean wasValue() {
 
-        if (iType == STRING || iType == NUMBER || iType == FLOAT) {
+        if (iType == STRING || iType == NUMBER || iType == FLOAT
+                || iType == DECIMAL) {
             return true;
         }
 
@@ -207,6 +228,10 @@ class Tokenizer {
         }
 
         return false;
+    }
+
+    boolean wasQuotedIdentifier() {
+        return iType == QUOTED_IDENTIFIER;
     }
 
     /**
@@ -305,19 +330,23 @@ class Tokenizer {
         switch (iType) {
 
             case STRING :
-                return Column.VARCHAR;
+                return Types.VARCHAR;
 
             case NUMBER :
-                return Column.INTEGER;
-
-            case FLOAT :
-                return Column.DOUBLE;
+                return Types.INTEGER;
 
             case LONG :
-                return Column.BIGINT;
-        }
+                return Types.BIGINT;
 
-        return Column.NULL;
+            case FLOAT :
+                return Types.DOUBLE;
+
+            case DECIMAL :
+                return Types.DECIMAL;
+
+            default :
+                return Types.NULL;
+        }
     }
 
     /**
@@ -335,7 +364,9 @@ class Tokenizer {
         }
 
         if (iType == STRING) {
-            return sToken.substring(1);    // todo: this is a bad solution: remove '
+
+            //fredt - no longer returning string with a singlequote as last char
+            return sToken;
         }
 
         // convert NULL to null String if not a String
@@ -345,26 +376,54 @@ class Tokenizer {
         }
 
         if (iType == NUMBER) {
-            if (sToken.length() > 9) {
 
-                // 2147483647 is the biggest Integer value, so more than
-                // 9 digits are better returend as a long
+            // fredt - this returns unsigned values which are later negated.
+            // as a result Integer.MIN_VALUE or Long.MIN_VALUE are promoted
+            // to a wider type.
+            if (sToken.length() < 10) {
+                return new Integer(sToken);
+            }
+
+            if (sToken.length() == 10) {
+                try {
+                    return new Integer(sToken);
+                } catch (Exception e1) {
+                    iType = LONG;
+
+                    return new Long(sToken);
+                }
+            }
+
+            if (sToken.length() < 20) {
                 iType = LONG;
 
                 return new Long(sToken);
             }
 
-            return new Integer(sToken);
+            if (sToken.length() == 20) {
+                try {
+                    return new Long(sToken);
+                } catch (Exception e2) {
+                    iType = DECIMAL;
+
+                    return new BigDecimal(sToken);
+                }
+            }
+
+            iType = DECIMAL;
+
+            return new BigDecimal(sToken);
         } else if (iType == FLOAT) {
             return new Double(sToken);
+        } else if (iType == DECIMAL) {
+            return new BigDecimal(sToken);
         }
 
         return sToken;
     }
 
     /**
-     * Method declaration
-     *
+     * return the current position to be used for VIEW processing
      *
      * @return
      */
@@ -373,16 +432,48 @@ class Tokenizer {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param begin
-     * @param end
+     * mark the current position to be used for future getLastPart() calls
      *
      * @return
      */
     String getPart(int begin, int end) {
         return sCommand.substring(begin, end);
+    }
+
+    /**
+     * mark the current position to be used for future getLastPart() calls
+     *
+     * @return
+     */
+    int getPartMarker() {
+        return beginIndex;
+    }
+
+    /**
+     * mark the current position to be used for future getLastPart() calls
+     *
+     * @return
+     */
+    void setPartMarker() {
+        beginIndex = iIndex;
+    }
+
+    /**
+     * mark the position to be used for future getLastPart() calls
+     *
+     * @return
+     */
+    void setPartMarker(int position) {
+        beginIndex = position;
+    }
+
+    /**
+     * return part of the command string from the last marked position
+     *
+     * @return
+     */
+    String getLastPart() {
+        return sCommand.substring(beginIndex, iIndex);
     }
 
     /**
@@ -394,16 +485,19 @@ class Tokenizer {
     private void getToken() throws SQLException {
 
         if (bWait) {
-            bWait = false;
+            bWait  = false;
+            iIndex = nextTokenIndex;
 
             return;
         }
 
-        while (iIndex < iLength && Character.isWhitespace(cCommand[iIndex])) {
+        while (iIndex < iLength
+                && Character.isWhitespace(sCommand.charAt(iIndex))) {
             iIndex++;
         }
 
-        sToken = "";
+        sToken     = "";
+        tokenIndex = iIndex;
 
         if (iIndex >= iLength) {
             iType = 0;
@@ -411,14 +505,13 @@ class Tokenizer {
             return;
         }
 
-        boolean      point    = false,
-                     digit    = false,
-                     exp      = false,
-                     afterexp = false;
-        boolean      end      = false;
-        char         c        = cCommand[iIndex];
-        char         cfirst   = 0;
-        StringBuffer name     = new StringBuffer();
+        char    c        = sCommand.charAt(iIndex);
+        boolean point    = false,
+                digit    = false,
+                exp      = false,
+                afterexp = false;
+        boolean end      = false;
+        char    cfirst   = 0;
 
         if (Character.isJavaIdentifierStart(c)) {
             iType = NAME;
@@ -427,7 +520,7 @@ class Tokenizer {
 
             iIndex++;
 
-            sToken = "" + c;
+            sToken = String.valueOf(c);
 
             return;
         } else if (Character.isDigit(c)) {
@@ -438,15 +531,54 @@ class Tokenizer {
             iType  = SPECIAL;
         } else if (c == '\"') {
             iType = QUOTED_IDENTIFIER;
+
+            iIndex++;
+
+            sToken = getString('"');
+
+            if (iIndex == sCommand.length()) {
+                return;
+            }
+
+            c = sCommand.charAt(iIndex);
+
+            if (c == '.') {
+                sLongNameFirst = sToken;
+
+                iIndex++;
+
+// fredt - todo - avoid recursion - this has problems when there is whitespace
+// after the dot - the same with NAME
+                getToken();
+
+                sLongNameLast = sToken;
+                iType         = LONG_NAME;
+
+                StringBuffer sb = new StringBuffer(sLongNameFirst.length()
+                                                   + 1
+                                                   + +sLongNameLast.length());
+
+                sb.append(sLongNameFirst);
+                sb.append('.');
+                sb.append(sLongNameLast);
+
+                sToken = sb.toString();
+            }
+
+            return;
         } else if (c == '\'') {
             iType = STRING;
 
-            name.append('\'');
+            iIndex++;
+
+            sToken = getString('\'');
+
+            return;
         } else if (c == '.') {
-            iType = FLOAT;
+            iType = DECIMAL;
             point = true;
         } else {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, "" + c);
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, String.valueOf(c));
         }
 
         int start = iIndex++;
@@ -459,7 +591,7 @@ class Tokenizer {
                 Trace.check(iType != STRING && iType != QUOTED_IDENTIFIER,
                             Trace.UNEXPECTED_END_OF_COMMAND);
             } else {
-                c = cCommand[iIndex];
+                c = sCommand.charAt(iIndex);
             }
 
             switch (iType) {
@@ -469,6 +601,7 @@ class Tokenizer {
                         break;
                     }
 
+                    // fredt - new char[] will back sToken
                     sToken = sCommand.substring(start, iIndex).toUpperCase();
 
                     if (c == '.') {
@@ -476,7 +609,7 @@ class Tokenizer {
 
                         iIndex++;
 
-                        getToken();         // todo: eliminate recursion
+                        getToken();    // todo: eliminate recursion
 
                         sLongNameLast = sToken;
                         iType         = LONG_NAME;
@@ -486,53 +619,9 @@ class Tokenizer {
                     return;
 
                 case QUOTED_IDENTIFIER :
-                    if (c == '\"') {
-                        iIndex++;
-
-                        if (iIndex >= iLength) {
-                            sToken = name.toString();
-
-                            return;
-                        }
-
-                        c = cCommand[iIndex];
-
-                        if (c == '.') {
-                            sLongNameFirst = name.toString();
-
-                            iIndex++;
-
-                            getToken();     // todo: eliminate recursion
-
-                            sLongNameLast = sToken;
-                            iType         = LONG_NAME;
-                            sToken = sLongNameFirst + "." + sLongNameLast;
-
-                            return;
-                        }
-
-                        if (c != '\"') {
-                            sToken = name.toString();
-
-                            return;
-                        }
-                    }
-
-                    name.append(c);
-                    break;
-
                 case STRING :
-                    if (c == '\'') {
-                        iIndex++;
 
-                        if (iIndex >= iLength || cCommand[iIndex] != '\'') {
-                            sToken = name.toString();
-
-                            return;
-                        }
-                    }
-
-                    name.append(c);
+                    // shouldn't get here
                     break;
 
                 case REMARK :
@@ -546,7 +635,8 @@ class Tokenizer {
                     } else if (c == '*') {
                         iIndex++;
 
-                        if (iIndex < iLength && cCommand[iIndex] == '/') {
+                        if (iIndex < iLength
+                                && sCommand.charAt(iIndex) == '/') {
 
                             // using recursion here
                             iIndex++;
@@ -593,12 +683,13 @@ class Tokenizer {
 
                     return;
 
-                case FLOAT :
                 case NUMBER :
+                case FLOAT :
+                case DECIMAL :
                     if (Character.isDigit(c)) {
                         digit = true;
                     } else if (c == '.') {
-                        iType = FLOAT;
+                        iType = DECIMAL;
 
                         if (point) {
                             throw Trace.error(Trace.UNEXPECTED_TOKEN, ".");
@@ -610,9 +701,13 @@ class Tokenizer {
                             throw Trace.error(Trace.UNEXPECTED_TOKEN, "E");
                         }
 
-                        afterexp = true;    // first character after exp may be + or -
-                        point = true;
-                        exp   = true;
+                        // HJB-2001-08-2001 - now we are sure it's a float
+                        iType = FLOAT;
+
+                        // first character after exp may be + or -
+                        afterexp = true;
+                        point    = true;
+                        exp      = true;
                     } else if (c == '-' && afterexp) {
                         afterexp = false;
                     } else if (c == '+' && afterexp) {
@@ -628,7 +723,8 @@ class Tokenizer {
                                 return;
                             }
 
-                            throw Trace.error(Trace.UNEXPECTED_TOKEN, "" + c);
+                            throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                              String.valueOf(c));
                         }
 
                         sToken = sCommand.substring(start, iIndex);
@@ -639,5 +735,90 @@ class Tokenizer {
 
             iIndex++;
         }
+    }
+
+// fredt - strings are constructed from new char[] objects to avoid slack
+// because these strings might end up as part of internal data structures
+// or table elements.
+// we may consider using pools to avoid recreating the strings
+    private String getString(char quoteChar) throws SQLException {
+
+        try {
+            int     nextIndex   = iIndex;
+            boolean quoteInside = false;
+
+            for (;;) {
+                nextIndex = sCommand.indexOf(quoteChar, nextIndex);
+
+                if (nextIndex < 0) {
+                    throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND);
+                }
+
+                if (nextIndex < iLength - 1
+                        && sCommand.charAt(nextIndex + 1) == quoteChar) {
+                    quoteInside = true;
+                    nextIndex   += 2;
+
+                    continue;
+                }
+
+                break;
+            }
+
+            char[] chBuffer = new char[nextIndex - iIndex];
+
+            sCommand.getChars(iIndex, nextIndex, chBuffer, 0);
+
+            int j = chBuffer.length;
+
+            if (quoteInside) {
+                j = 0;
+
+                // fredt - loop assumes all occurences of quoteChar are paired
+                for (int i = 0; i < chBuffer.length; i++, j++) {
+                    if (chBuffer[i] == quoteChar) {
+                        i++;
+                    }
+
+                    chBuffer[j] = chBuffer[i];
+                }
+            }
+
+            iIndex = ++nextIndex;
+
+            return new String(chBuffer, 0, j);
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            e.getMessage();
+        }
+
+        return null;
+    }
+
+// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param s
+     */
+    void setString(String s, int pos) {
+
+        sCommand = s;
+        iLength  = s.length();
+        bWait    = false;
+        iIndex   = pos;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getLength() {
+        return iLength;
     }
 }

@@ -67,37 +67,42 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.io.*;
+import java.io.IOException;
+import java.sql.SQLException;
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
 /**
- * Class declaration
+ * In-memory representation of a database row object with storage independent
+ * methods for serialization and de-serialization.
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Row {
 
-    private Object oData[];
-    private Table  tTable;    // null: memory row; otherwise: cached table
+    static final int NO_POS = -1;
+    private Object   oData[];
+    private Table    tTable;
 
-    // only required for cached table
+// only required for cached table
     static int iCurrentAccess = 0;
 
-    // todo: use int iLastChecked;
-    int          iLastAccess;
-    Row          rLast, rNext;
-    int          iPos;
-    int          iSize;
-    boolean      bChanged;
-    private Node nFirstIndex;
+// todo: use int iLastChecked;
+    int iLastAccess;
+    Row rLast, rNext;
+    int iPos = NO_POS;
+
+    // fredt - only set for rows stored in cached and text tables
+    int             storageSize;
+    private boolean bChanged;
+    private Node    nPrimaryNode;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param t
-     * @param o
+     * @param  t
+     * @param  o
+     * @exception  SQLException  Description of the Exception
      */
     Row(Table t, Object o[]) throws SQLException {
 
@@ -105,114 +110,90 @@ class Row {
 
         int index = tTable.getIndexCount();
 
-        nFirstIndex = new Node(this, 0);
+        nPrimaryNode = new Node(this, 0);
 
-        Node n = nFirstIndex;
+        Node n = nPrimaryNode;
 
         for (int i = 1; i < index; i++) {
             n.nNext = new Node(this, i);
             n       = n.nNext;
         }
 
-        oData = o;
-
-        if (tTable != null && tTable.cCache != null) {
-            iLastAccess = iCurrentAccess++;
-
-            // todo: 32 bytes overhead for each index + iSize, iPos
-            iSize = 8 + Column.getSize(o, tTable)
-                    + 32 * tTable.getIndexCount();
-            iSize = ((iSize + 7) / 8) * 8;    // align to 8 byte blocks
-
-            tTable.cCache.add(this);
-        }
-
-        bChanged = true;
+        oData       = o;
+        iLastAccess = iCurrentAccess++;
+        storageSize = tTable.putRow(this);
+        bChanged    = true;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
-     */
-    void cleanUpCache() throws SQLException {
+    void setPos(int pos) {
 
-        if (tTable != null && tTable.cCache != null) {
+        iPos = pos;
 
-            // so that this row is not cleaned
-            iLastAccess = iCurrentAccess++;
+        Node n = nPrimaryNode;
 
-            tTable.cCache.cleanUp();
+        while (n != null) {
+            n.setKey(pos);
+
+            n = n.nNext;
         }
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      */
     void changed() {
         bChanged    = true;
         iLastAccess = iCurrentAccess++;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param pos
-     * @param index
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    Node getNode(int pos, int index) throws SQLException {
+    boolean hasChanged() {
+        return (bChanged);
+    }
 
-        // return getRow(pos).getNode(index);
-        Row r = tTable.cCache.getRow(pos, tTable);
-
-        r.iLastAccess = iCurrentAccess++;
-
-        return r.getNode(index);
+    void setPrimaryNode(Node primary) {
+        nPrimaryNode = primary;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param pos
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private Row getRow(int pos) throws SQLException {
-        return tTable.cCache.getRow(pos, tTable);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param index
-     *
+     * @param  index
      * @return
      */
     Node getNode(int index) {
 
-        Node n = nFirstIndex;
+        Node n = nPrimaryNode;
 
         while (index-- > 0) {
             n = n.nNext;
         }
 
+        iLastAccess = iCurrentAccess++;
+
         return n;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @param  n
+     * @return
+     */
+    Node getNextNode(Node n) {
+
+        if (n == null) {
+            n = nPrimaryNode;
+        } else {
+            n = n.nNext;
+        }
+
+        iLastAccess = iCurrentAccess++;
+
+        return (n);
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
@@ -223,51 +204,23 @@ class Row {
         return oData;
     }
 
-    // if read from cache
-
     /**
-     * Constructor declaration
+     *  Method declaration
      *
-     *
-     * @param t
-     * @param in
-     * @param pos
-     * @param before
+     * @return
      */
-    Row(Table t, DataInput in, int pos,
-            Row before) throws IOException, SQLException {
-
-        tTable = t;
-
-        int index = tTable.getIndexCount();
-
-        iPos        = pos;
-        nFirstIndex = new Node(this, in, 0);
-
-        Node n = nFirstIndex;
-
-        for (int i = 1; i < index; i++) {
-            n.nNext = new Node(this, in, i);
-            n       = n.nNext;
-        }
-
-        int l = tTable.getInternalColumnCount();
-
-        oData = Column.readData(in, l);
-
-        Trace.check(in.readInt() == iPos, Trace.INPUTSTREAM_ERROR);
-        insert(before);
-
-        iLastAccess = iCurrentAccess++;
+    Table getTable() {
+        return tTable;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param before
+     * @param  before
      */
     void insert(Row before) {
+
+        Record.memoryRecords++;
 
         if (before == null) {
             rNext = this;
@@ -280,28 +233,29 @@ class Row {
         }
     }
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// method renamed
+
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
-    boolean canRemove() throws SQLException {
+    boolean isRoot() throws SQLException {
 
-        Node n = nFirstIndex;
+        Node n = nPrimaryNode;
 
         while (n != null) {
-            if (Trace.ASSERT) {
-                Trace.assert(n.iBalance != -2);
+            if (Trace.DOASSERT) {
+                Trace.doAssert(n.getBalance() != -2);
             }
 
             if (Trace.STOP) {
                 Trace.stop();
             }
 
-            if (n.iParent == 0 && n.nParent == null) {
+            if (n.isRoot()) {
                 return true;
             }
 
@@ -312,49 +266,57 @@ class Row {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @return
-     *
-     * @throws IOException
-     * @throws SQLException
+     * @param  out            Description of the Parameter
+     * @throws  IOException
+     * @throws  SQLException
      */
-    byte[] write() throws IOException, SQLException {
+    void write(DatabaseRowOutputInterface out)
+    throws IOException, SQLException {
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream(iSize);
-        DataOutputStream      out  = new DataOutputStream(bout);
+        out.writeSize(storageSize);
 
-        out.writeInt(iSize);
-        nFirstIndex.write(out);
-        Column.writeData(out, oData, tTable);
-        out.writeInt(iPos);
+        if (tTable.isIndexCached()) {
+            Node n = nPrimaryNode;
+
+            while (n != null) {
+                n.write(out);
+
+                n = n.nNext;
+            }
+        }
+
+        out.writeData(oData, tTable);
+        out.writePos(iPos);
 
         bChanged = false;
-
-        return bout.toByteArray();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void delete() throws SQLException {
 
-        if (tTable != null && tTable.cCache != null) {
-            bChanged = false;
+        Record.memoryRecords++;
 
-            tTable.cCache.free(this, iPos, iSize);
-        }
+        bChanged = false;
+
+        tTable.removeRow(this);
+
+        oData        = null;
+        rNext        = null;
+        rLast        = null;
+        tTable       = null;
+        nPrimaryNode = null;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void free() throws SQLException {
 
@@ -364,5 +326,53 @@ class Row {
         if (rNext == this) {
             rNext = rLast = null;
         }
+    }
+
+    /**
+     *  constructor when read from cache
+     *
+     * @param  t
+     * @param  in
+     * @exception  IOException   Description of the Exception
+     * @exception  SQLException  Description of the Exception
+     */
+    Row(Table t,
+            DatabaseRowInputInterface in) throws IOException, SQLException {
+
+        tTable      = t;
+        iPos        = in.getPos();
+        storageSize = in.getSize();
+
+        int index = tTable.getIndexCount();
+
+        if (tTable.isIndexCached()) {
+            nPrimaryNode = new Node(this, in, 0);
+
+            Node n = nPrimaryNode;
+
+            for (int i = 1; i < index; i++) {
+                n.nNext = new Node(this, in, i);
+                n       = n.nNext;
+            }
+
+            oData = in.readData(tTable.getColumnTypes());
+
+            Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+        } else {
+            nPrimaryNode = new Node(this, 0);
+
+            Node n = nPrimaryNode;
+
+            nPrimaryNode.setNextKey(in.getNextPos());
+
+            for (int i = 1; i < index; i++) {
+                n.nNext = new Node(this, i);
+                n       = n.nNext;
+            }
+
+            oData = in.readData(tTable.getColumnTypes());
+        }
+
+        iLastAccess = iCurrentAccess++;
     }
 }

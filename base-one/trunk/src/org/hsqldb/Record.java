@@ -71,9 +71,19 @@ package org.hsqldb;
  * Record class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Record {
+
+    // variables to track rough count on object creation, to use in gc
+    public static int gcFrequency;
+    public static int memoryRecords;
+
+    // structure member
     public Object data[];
     public Record next;
+
+    Record() {
+        memoryRecords++;
+    }
 }

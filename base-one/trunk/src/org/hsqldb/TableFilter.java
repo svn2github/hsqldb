@@ -67,14 +67,13 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.Vector;
+import java.sql.SQLException;
 
 /**
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class TableFilter {
 
@@ -106,8 +105,8 @@ class TableFilter {
 
         tTable     = t;
         iIndex     = null;
-        sAlias     = alias != null ? alias
-                                   : t.getName();
+        sAlias     = (alias != null) ? alias
+                                     : t.getName().name;
         bOuterJoin = outerjoin;
         oEmptyData = tTable.getNewRow();
     }
@@ -183,10 +182,8 @@ class TableFilter {
                 return;
         }
 
-        if (e1.getFilter() == this) {
-
-            // ok include this
-        } else if (e2.getFilter() == this && candidate != 0) {
+        if (e1.getFilter() == this) {    // ok include this
+        } else if ((e2.getFilter() == this) && (candidate != 0)) {
 
             // swap and try again to allow index usage
             e.swapCondition();
@@ -199,7 +196,7 @@ class TableFilter {
             return;
         }
 
-        Trace.assert(e1.getFilter() == this, "setCondition");
+        Trace.doAssert(e1.getFilter() == this, "setCondition");
 
         if (!e2.isResolved()) {
             return;
@@ -214,7 +211,7 @@ class TableFilter {
         int   i     = e1.getColumnNr();
         Index index = tTable.getIndexForColumn(i);
 
-        if (index == null || (iIndex != index && iIndex != null)) {
+        if ((index == null) || ((iIndex != index) && (iIndex != null))) {
 
             // no index or already another index is used
             addAndCondition(e);
@@ -222,12 +219,26 @@ class TableFilter {
             return;
         }
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt - comment - this is for text tables only
+        if (tTable.isText()) {
+            Index primary = tTable.getPrimaryIndex();
+
+            if (index != primary) {
+                Node readAll = primary.getRoot();
+
+                while (readAll != null) {
+                    readAll = readAll.getRight();
+                }
+            }
+        }
+
         iIndex = index;
 
         if (candidate == 1) {
 
             // candidate for both start & end
-            if (eStart != null || eEnd != null) {
+            if ((eStart != null) || (eEnd != null)) {
                 addAndCondition(e);
 
                 return;
@@ -316,7 +327,7 @@ class TableFilter {
      */
     boolean next() throws SQLException {
 
-        if (bOuterJoin && nCurrent == null) {
+        if (bOuterJoin && (nCurrent == null)) {
             return false;
         }
 

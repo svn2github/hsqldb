@@ -67,62 +67,66 @@
 
 package org.hsqldb;
 
-import java.sql.*;
+import java.sql.SQLException;
+import java.util.Hashtable;
 import java.util.Vector;
 
-/**
- * Class declaration
- *
- *
- * @version 1.0.0.1
- */
-class Channel {
+// fredt@users 20020320 - doc 1.7.0 - update
+// fredt@users 20020315 - patch 1.7.0 by fredt - switch for scripting
+// fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
+// additions in different parts to support savepoint transactions
 
-    private Database dDatabase;
-    private User     uUser;
-    private Vector   tTransaction;
-    private boolean  bAutoCommit;
-    private boolean  bNestedTransaction;
-    private boolean  bNestedOldAutoCommit;
-    private int      iNestedOldTransIndex;
-    private boolean  bReadOnly;
-    private int      iMaxRows;
-    private int      iLastIdentity;
-    private boolean  bClosed;
-    private int      iId;
+/**
+ *  Implementation of a user session with the database.
+ *
+ * @version  1.7.0
+ */
+class Session {
+
+    private Database  dDatabase;
+    private User      uUser;
+    private Vector    tTransaction;
+    private boolean   bAutoCommit;
+    private boolean   bNestedTransaction;
+    private boolean   bNestedOldAutoCommit;
+    private int       iNestedOldTransIndex;
+    private boolean   bReadOnly;
+    private int       iMaxRows;
+    private int       iLastIdentity;
+    private boolean   bClosed;
+    private int       iId;
+    private Hashtable hSavepoints;
+    private boolean   script;
 
     /**
-     * Method declaration
+     *  closes the session.
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     public void finalize() throws SQLException {
         disconnect();
     }
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param c
-     * @param id
+     * @param  c
+     * @param  id
      */
-    Channel(Channel c, int id) {
+    Session(Session c, int id) {
         this(c.dDatabase, c.uUser, true, c.bReadOnly, id);
     }
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param db
-     * @param user
-     * @param autocommit
-     * @param readonly
-     * @param id
+     * @param  db
+     * @param  user
+     * @param  autocommit
+     * @param  readonly
+     * @param  id
      */
-    Channel(Database db, User user, boolean autocommit, boolean readonly,
+    Session(Database db, User user, boolean autocommit, boolean readonly,
             int id) {
 
         iId          = id;
@@ -131,11 +135,11 @@ class Channel {
         tTransaction = new Vector();
         bAutoCommit  = autocommit;
         bReadOnly    = readonly;
+        hSavepoints  = new Hashtable();
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -144,10 +148,9 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void disconnect() throws SQLException {
 
@@ -160,12 +163,12 @@ class Channel {
         dDatabase    = null;
         uUser        = null;
         tTransaction = null;
+        hSavepoints  = null;
         bClosed      = true;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -174,18 +177,16 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param i
+     * @param  i
      */
     void setLastIdentity(int i) {
         iLastIdentity = i;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -194,8 +195,7 @@ class Channel {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -204,8 +204,7 @@ class Channel {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -214,66 +213,58 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param user
+     * @param  user
      */
     void setUser(User user) {
         uUser = user;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void checkAdmin() throws SQLException {
         uUser.checkAdmin();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param object
-     * @param right
-     *
-     * @throws SQLException
+     * @param  object
+     * @param  right
+     * @throws  SQLException
      */
     void check(String object, int right) throws SQLException {
         uUser.check(object, right);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void checkReadWrite() throws SQLException {
         Trace.check(!bReadOnly, Trace.DATABASE_IS_READONLY);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param s
+     * @param  s
      */
     void setPassword(String s) {
         uUser.setPassword(s);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param table
-     * @param row
-     *
-     * @throws SQLException
+     * @param  table
+     * @param  row
+     * @throws  SQLException
      */
     void addTransactionDelete(Table table, Object row[]) throws SQLException {
 
@@ -285,13 +276,11 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param table
-     * @param row
-     *
-     * @throws SQLException
+     * @param  table
+     * @param  row
+     * @throws  SQLException
      */
     void addTransactionInsert(Table table, Object row[]) throws SQLException {
 
@@ -303,12 +292,10 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param autocommit
-     *
-     * @throws SQLException
+     * @param  autocommit
+     * @throws  SQLException
      */
     void setAutoCommit(boolean autocommit) throws SQLException {
 
@@ -318,45 +305,74 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void commit() throws SQLException {
         tTransaction.removeAllElements();
+        hSavepoints.clear();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void rollback() throws SQLException {
 
-        int i = tTransaction.size() - 1;
-
-        while (i >= 0) {
+        for (int i = tTransaction.size() - 1; i >= 0; i--) {
             Transaction t = (Transaction) tTransaction.elementAt(i);
 
             t.rollback();
-
-            i--;
         }
 
         tTransaction.removeAllElements();
+        hSavepoints.clear();
     }
 
     /**
-     * Method declaration
+     *  Implements a transaction SAVEPOIINT. Application may do a partial
+     *  rollback by calling rollbackToSavepoint()
      *
+     * @param  name Name of savepoint
+     * @throws  SQLException
+     */
+    void savepoint(String name) throws SQLException {
+        hSavepoints.put(name, new Integer(tTransaction.size()));
+    }
+
+    /**
+     *  Implements a partial transaction ROLLBACK.
      *
-     * @throws SQLException
+     * @param  name Name of savepoint that was marked before by savepoint()
+     * call
+     * @throws  SQLException
+     */
+    void rollbackToSavepoint(String name) throws SQLException {
+
+        Integer idx = (Integer) hSavepoints.get(name);
+
+        Trace.check(idx != null, Trace.SAVEPOINT_NOT_FOUND, name);
+
+        for (int i = tTransaction.size() - 1; i >= idx.intValue(); i--) {
+            Transaction t = (Transaction) tTransaction.elementAt(i);
+
+            t.rollback();
+            tTransaction.removeElementAt(i);
+        }
+
+        hSavepoints.remove(name);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @throws  SQLException
      */
     void beginNestedTransaction() throws SQLException {
 
-        Trace.assert(!bNestedTransaction, "beginNestedTransaction");
+        Trace.doAssert(!bNestedTransaction, "beginNestedTransaction");
 
         bNestedOldAutoCommit = bAutoCommit;
 
@@ -367,26 +383,21 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param rollback
-     *
-     * @throws SQLException
+     * @param  rollback
+     * @throws  SQLException
      */
     void endNestedTransaction(boolean rollback) throws SQLException {
 
-        Trace.assert(bNestedTransaction, "endNestedTransaction");
-
-        int i = tTransaction.size() - 1;
+        Trace.doAssert(bNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            while (i >= iNestedOldTransIndex) {
+            for (int i = tTransaction.size() - 1; i >= iNestedOldTransIndex;
+                    i--) {
                 Transaction t = (Transaction) tTransaction.elementAt(i);
 
                 t.rollback();
-
-                i--;
             }
         }
 
@@ -399,18 +410,16 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param readonly
+     * @param  readonly
      */
     void setReadOnly(boolean readonly) {
         bReadOnly = readonly;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -419,18 +428,16 @@ class Channel {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param max
+     * @param  max
      */
     void setMaxRows(int max) {
         iMaxRows = max;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -439,12 +446,41 @@ class Channel {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
     boolean isNestedTransaction() {
         return bNestedTransaction;
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @return
+     */
+    boolean getAutoCommit() {
+        return bAutoCommit;
+    }
+
+    /**
+     *  A switch to set scripting on the basis of type of statement executed.
+     *  A method in Database.jave sets this value to false before other
+     *  methods are called to act on an SQL statement, which may set this to
+     *  true. Afterwards the method reponsible for logging uses
+     *  getScripting() to determine if logging is required for the executed
+     *  statement. (fredt@users)
+     *
+     * @param  script The new scripting value
+     */
+    void setScripting(boolean script) {
+        this.script = script;
+    }
+
+    /**
+     * @return  scripting for the last statement.
+     */
+    boolean getScripting() {
+        return script;
     }
 }

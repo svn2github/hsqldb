@@ -79,7 +79,7 @@ import java.util.*;
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 public class QueryTool extends Applet
 implements WindowListener, ActionListener {
@@ -164,7 +164,7 @@ implements WindowListener, ActionListener {
 
         String  driver   = p.getProperty("driver", "org.hsqldb.jdbcDriver");
         String  url      = p.getProperty("url", "jdbc:hsqldb:");
-        String  database = p.getProperty("database", "test");
+        String  database = p.getProperty("database", ".");
         String  user     = p.getProperty("user", "sa");
         String  password = p.getProperty("password", "");
         boolean test = p.getProperty("test", "true").equalsIgnoreCase("true");
@@ -179,14 +179,14 @@ implements WindowListener, ActionListener {
                 trace("password=" + password);
                 trace("test    =" + test);
                 trace("log     =" + log);
-                DriverManager.setLogStream(System.out);
+                jdbcSystem.setLogToSystem(true);
             }
 
             // As described in the JDBC FAQ:
             // http://java.sun.com/products/jdbc/jdbc-frequent.html;
             // Why doesn't calling class.forName() load my JDBC driver?
             // There is a bug in the JDK 1.1.x that can cause Class.forName() to fail.
-            new org.hsqldb.jdbcDriver();
+//            new org.hsqldb.jdbcDriver();
             Class.forName(driver).newInstance();
 
             cConn = DriverManager.getConnection(url + database, user,
@@ -249,7 +249,7 @@ implements WindowListener, ActionListener {
 
                     gResult.setHead(g);
 
-                    g[0] = "" + r;
+                    g[0] = String.valueOf(r);
 
                     gResult.addRow(g);
                 }
@@ -476,10 +476,13 @@ implements WindowListener, ActionListener {
         add("West", pBorderWest);
         add("East", pBorderEast);
         add("South", pBorderSouth);
-        layout();
+
+        // fredt@users 20011210 - patch 450412 by elise@users
+        doLayout();
     }
 
     static String sTestData[] = {
+        "drop table Place if exists",
         "create table Place (Code integer,Name varchar(255))",
         "create index iCode on Place (Code)", "delete from place",
         "insert into Place values (4900,'Langenthal')",
@@ -487,6 +490,7 @@ implements WindowListener, ActionListener {
         "insert into Place values (3000,'Berne')",
         "insert into Place values (1200,'Geneva')",
         "insert into Place values (6900,'Lugano')",
+        "drop table Customer if exists",
         "create table Customer (Nr integer,Name varchar(255),Place integer)",
         "create index iNr on Customer (Nr)", "delete from Customer",
         "insert into Customer values (1,'Meier',3000)",

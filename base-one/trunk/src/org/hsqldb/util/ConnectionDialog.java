@@ -69,56 +69,23 @@ package org.hsqldb.util;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
-import java.applet.*;
 import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
 
 /**
- * Class declaration
+ * Opens a connection to a database
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// sqlbob@users 20020325 - patch 1.7.0 - enhancements
+// sqlbob@users 20020407 - patch 1.7.0 - reengineering
 public class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
-    final static String sJDBCTypes[][] = {
-        {
-            "HSQL Database Engine In-Memory", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:."
-        }, {
-            "HSQL Database Engine Standalone", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:test"
-        }, {
-            "HSQL Database Engine Server", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:hsql://localhost"
-        }, {
-            "HSQL Database Engine WebServer", "org.hsqldb.jdbcDriver",
-            "jdbc:hsqldb:http://localhost"
-        }, {
-            "JDBC-ODBC Brigde from Sun", "sun.jdbc.odbc.JdbcOdbcDriver",
-            "jdbc:odbc:test"
-        }, {
-            "Oracle", "oracle.jdbc.driver.OracleDriver", "jdbc:oracle:oci8:@"
-        }, {
-            "IBM DB2", "COM.ibm.db2.jdbc.app.DB2Driver", "jdbc:db2:test"
-        }, {
-            "Cloudscape RMI", "RmiJdbc.RJDriver",
-            "jdbc:rmi://localhost:1099/jdbc:cloudscape:test;create=true"
-        }, {
-            "InstantDb", "jdbc.idbDriver", "jdbc:idb:sample.prp"
-        },
-        {
-            "PointBase", "com.pointbase.jdbc.jdbcUniversalDriver",
-            "jdbc:pointbase://localhost/sample"
-        },    // PUBLIC / public
-    };
-    Connection mConnection;
-    TextField  mDriver, mURL, mUser, mPassword;
-    Label      mError;
+    private Connection mConnection;
+    private TextField  mDriver, mURL, mUser, mPassword;
+    private Label      mError;
+    private String     connTypes[][];
 
     /**
      * Method declaration
@@ -156,45 +123,73 @@ implements ActionListener, ItemListener {
      * Method declaration
      *
      */
-    void create() {
+    private void create() {
+
+        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 
         setLayout(new BorderLayout());
 
-        Panel p = new Panel(new GridLayout(6, 2, 10, 10));
+        Panel p = new Panel(new BorderLayout());
+        Panel pLabel;
+        Panel pText;
+        Panel pButton;
 
+        // (ulrivo): full size on screen with less than 640 width
+        if (d.width >= 640) {
+            pLabel  = new Panel(new GridLayout(6, 1, 10, 10));
+            pText   = new Panel(new GridLayout(6, 1, 10, 10));
+            pButton = new Panel(new GridLayout(1, 2, 10, 10));
+        } else {
+            pLabel  = new Panel(new GridLayout(6, 1));
+            pText   = new Panel(new GridLayout(6, 1));
+            pButton = new Panel(new GridLayout(1, 2));
+        }
+
+        p.add("West", pLabel);
+        p.add("Center", pText);
+        p.add("South", pButton);
+        p.add("North", createLabel(""));
+        p.add("East", createLabel(""));
         p.setBackground(SystemColor.control);
-        p.add(createLabel("Type:"));
+        pText.setBackground(SystemColor.control);
+        pLabel.setBackground(SystemColor.control);
+        pButton.setBackground(SystemColor.control);
+        pLabel.add(createLabel("Type:"));
 
         Choice types = new Choice();
 
-        types.addItemListener(this);
+        connTypes = ConnectionDialogCommon.getTypes();
 
-        for (int i = 0; i < sJDBCTypes.length; i++) {
-            types.add(sJDBCTypes[i][0]);
+        for (int i = 0; i < connTypes.length; i++) {
+            types.add(connTypes[i][0]);
         }
 
-        p.add(types);
-        p.add(createLabel("Driver:"));
+        types.addItemListener(this);
+        pText.add(types);
+        pLabel.add(createLabel("Driver:"));
 
-        mDriver = new TextField("org.hsqldb.jdbcDriver");
+        mDriver = new TextField(connTypes[0][1]);
 
-        p.add(mDriver);
-        p.add(createLabel("URL:"));
+        pText.add(mDriver);
+        pLabel.add(createLabel("URL:"));
 
-        mURL = new TextField("jdbc:hsqldb:.");
+        mURL = new TextField(connTypes[0][2]);
 
-        p.add(mURL);
-        p.add(createLabel("User:"));
+        mURL.addActionListener(this);
+        pText.add(mURL);
+        pLabel.add(createLabel("User:"));
 
         mUser = new TextField("sa");
 
-        p.add(mUser);
-        p.add(createLabel("Password:"));
+        mUser.addActionListener(this);
+        pText.add(mUser);
+        pLabel.add(createLabel("Password:"));
 
         mPassword = new TextField("");
 
+        mPassword.addActionListener(this);
         mPassword.setEchoChar('*');
-        p.add(mPassword);
+        pText.add(mPassword);
 
         Button b;
 
@@ -202,14 +197,13 @@ implements ActionListener, ItemListener {
 
         b.setActionCommand("ConnectOk");
         b.addActionListener(this);
-        p.add(b);
+        pButton.add(b);
 
         b = new Button("Cancel");
 
         b.setActionCommand("ConnectCancel");
         b.addActionListener(this);
-        p.add(b);
-        setLayout(new BorderLayout());
+        pButton.add(b);
         add("East", createLabel(""));
         add("West", createLabel(""));
 
@@ -223,22 +217,18 @@ implements ActionListener, ItemListener {
         doLayout();
         pack();
 
-        Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = getSize();
 
-        setLocation((d.width - size.width) / 2, (d.height - size.height) / 2);
-        show();
-    }
+        // (ulrivo): full size on screen with less than 640 width
+        if (d.width >= 640) {
+            setLocation((d.width - size.width) / 2,
+                        (d.height - size.height) / 2);
+        } else {
+            setLocation(0, 0);
+            setSize(d);
+        }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     */
-    void trace(String s) {
-        mError.setText(s);
-        System.out.println(s);
+        show();
     }
 
     /**
@@ -267,7 +257,7 @@ implements ActionListener, ItemListener {
      *
      * @return
      */
-    public static Label createLabel(String s) {
+    private static Label createLabel(String s) {
 
         Label l = new Label(s);
 
@@ -284,7 +274,7 @@ implements ActionListener, ItemListener {
      *
      * @return
      */
-    public static Panel createBorderPanel(Component center) {
+    private static Panel createBorderPanel(Component center) {
 
         Panel p = new Panel();
 
@@ -310,7 +300,7 @@ implements ActionListener, ItemListener {
 
         String s = ev.getActionCommand();
 
-        if (s.equals("ConnectOk")) {
+        if (s.equals("ConnectOk") || (ev.getSource() instanceof TextField)) {
             try {
                 mConnection = createConnection(mDriver.getText(),
                                                mURL.getText(),
@@ -337,10 +327,10 @@ implements ActionListener, ItemListener {
 
         String s = (String) e.getItem();
 
-        for (int i = 0; i < sJDBCTypes.length; i++) {
-            if (s.equals(sJDBCTypes[i][0])) {
-                mDriver.setText(sJDBCTypes[i][1]);
-                mURL.setText(sJDBCTypes[i][2]);
+        for (int i = 0; i < connTypes.length; i++) {
+            if (s.equals(connTypes[i][0])) {
+                mDriver.setText(connTypes[i][1]);
+                mURL.setText(connTypes[i][2]);
             }
         }
     }

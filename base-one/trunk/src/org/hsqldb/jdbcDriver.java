@@ -67,66 +67,93 @@
 
 package org.hsqldb;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
 import java.util.Properties;
-import java.io.*;
+
+// fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
+// JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 
 /**
- * <P>Each JDBC driver must supply a class that implements
- * the Driver interface.
+ *  Each JDBC driver must supply a class that implements the Driver
+ *  interface. <p>
  *
- * <P>The Java SQL framework allows for multiple database drivers.
+ *  The Java SQL framework allows for multiple database drivers. <p>
  *
- * <P>The DriverManager will try to load as many drivers as it can
- * find and then for any given connection request, it will ask each
- * driver in turn to try to connect to the target URL.
- * <P><font color="#009900">
- * The application developer will normally not need to call any function of
- * the Driver directly. All required calls are made by the DriverManager.
- * <P>
- * When the HSQL Database Engine Driver class is loaded, it creates an
- * instance of itself and register it with the DriverManager. This means
- * that a user can load and register the HSQL Database Engine driver by calling
- * <pre>
- * <code>Class.forName("org.hsqldb.jdbcDriver")</code>
- * </pre>
- * For more information about how to connect to a HSQL Database Engine database,
- * please see jdbcConnection.
- * </font><P>
- * @see jdbcConnection
+ *  The DriverManager will try to load as many drivers as it can find and
+ *  then for any given connection request, it will ask each driver in turn
+ *  to try to connect to the target URL. <p>
+ *
+ *  <font color="#009900"> The application developer will normally not need
+ *  to call any function of the Driver directly. All required calls are made
+ *  by the DriverManager. <p>
+ *
+ *  When the HSQL Database Engine Driver class is loaded, it creates an
+ *  instance of itself and register it with the DriverManager. This means
+ *  that a user can load and register the HSQL Database Engine driver by
+ *  calling <pre>
+ * <code>Class.forName("org.hsqldb.jdbcDriver")</code> </pre> For more
+ *  information about how to connect to a HSQL Database Engine database,
+ *  please see jdbcConnection. </font><p>
+ *
+ * <font color="#009900"> As of version 1.7.0 all JDBC 2 methods can be
+ *  called with jdk 1.1.x. Some of these method calls require int values
+ *  that are defined in JDBC 2 version of ResultSet. These values are
+ *  defined in the jdbcResultSet class when it is compiled with jdk 1.1.x.
+ *  When using the JDBC 2 methods that require those values as parameters or
+ *  return one of those values, refer to them as follows: (The code will not
+ *  be compatible with other JDBC 2 driver, which require ResultSet to be
+ *  used instead of jdbcResultSet) (fredt@users)</font> <p>
+ * <font color="#009900">
+ *  jdbcResultSet.FETCH_FORWARD<br>
+ *  jdbcResultSet.TYPE_FORWARD_ONLY<br>
+ *  jdbcResultSet TYPE_SCROLL_INSENSITIVE<br>
+ *  jdbcResultSet.CONCUR_READ_ONLY</font><p>
+ *
+ *
+ * @see  jdbcConnection
  */
+// fredt@users 20011220 - patch 1.7.0 by fredt
+// new version numbering scheme
 public class jdbcDriver implements Driver {
 
-    private final static String sStartURL = "jdbc:hsqldb:";
-    final static int            MAJOR     = 1,
-                                MINOR     = 6;
-    final static String         VERSION   = MAJOR + "." + MINOR;
-    final static String         PRODUCT   = "HSQL Database Engine";
+    static final String sStartURL = "jdbc:hsqldb:";
+    static final int    MAJOR     = 1,
+                        MINOR     = 7,
+                        REVISION  = 0;
+    static final String VERSION   = "1.7.0";
+    static final String PRODUCT   = "HSQL Database Engine";
 
     /**
-     * Attempts to make a database connection to the given URL.
-     * The driver returns "null" if it realizes it is the wrong kind
-     * of driver to connect to the given URL.  This will be common, as when
-     * the JDBC driver manager is asked to connect to a given URL it passes
-     * the URL to each loaded driver in turn.
+     *  Attempts to make a database connection to the given URL. The driver
+     *  returns "null" if it realizes it is the wrong kind of driver to
+     *  connect to the given URL. This will be common, as when the JDBC
+     *  driver manager is asked to connect to a given URL it passes the URL
+     *  to each loaded driver in turn. <p>
      *
-     * <P>The driver raises a SQLException if it is the right
-     * driver to connect to the given URL, but has trouble connecting to
-     * the database.
+     *  The driver raises a SQLException if it is the right driver to
+     *  connect to the given URL, but has trouble connecting to the
+     *  database. <p>
      *
-     * <P>The java.util.Properties argument can be used to passed arbitrary
-     * string tag/value pairs as connection arguments.
-     * <P><font color="#009900">
-     * For HSQL Database Engine, at least "user" and "password" properties must be
-     * included in the Properties.
-     * </font><P>
-     * @param url the URL of the database to which to connect
-     * @param info a list of arbitrary string tag/value pairs as
-     * connection arguments. Normally at least a "user" and
-     * "password" property should be included.
-     * @return a <code>Connection</code> object that represents a
-     * connection to the URL
-     * @exception SQLException if a database access error occurs
+     *  The java.util.Properties argument can be used to passed arbitrary
+     *  string tag/value pairs as connection arguments. <p>
+     *
+     *  <font color="#009900"> For HSQL Database Engine, at least "user" and
+     *  "password" properties must be included in the Properties. </font>
+     *  <p>
+     *
+     *
+     *
+     * @param  url the URL of the database to which to connect
+     * @param  info a list of arbitrary string tag/value pairs as connection
+     *      arguments. Normally at least a "user" and "password" property
+     *      should be included.
+     * @return  a <code>Connection</code> object that represents a
+     *      connection to the URL
+     * @exception  SQLException if a database access error occurs
      */
     public Connection connect(String url,
                               Properties info) throws SQLException {
@@ -152,13 +179,12 @@ public class jdbcDriver implements Driver {
     }
 
     /**
-     * Returns true if the driver thinks that it can open a connection
-     * to the given URL.  Typically drivers will return true if they
-     * understand the subprotocol specified in the URL and false if
-     * they don't.
+     *  Returns true if the driver thinks that it can open a connection to
+     *  the given URL. Typically drivers will return true if they understand
+     *  the subprotocol specified in the URL and false if they don't.
      *
-     * @param url the URL of the database
-     * @return true if this driver can connect to the given URL
+     * @param  url the URL of the database
+     * @return  true if this driver can connect to the given URL
      */
     public boolean acceptsURL(String url) {
 
@@ -170,20 +196,21 @@ public class jdbcDriver implements Driver {
     }
 
     /**
-     * Gets information about the possible properties for this driver.
-     * <p>The getPropertyInfo method is intended to allow a generic GUI tool to
-     * discover what properties it should prompt a human for in order to get
-     * enough information to connect to a database.  Note that depending on
-     * the values the human has supplied so far, additional values may become
-     * necessary, so it may be necessary to iterate though several calls
-     * to getPropertyInfo.
+     *  Gets information about the possible properties for this driver. <p>
      *
-     * @param url the URL of the database to which to connect
-     * @param info a proposed list of tag/value pairs that will be sent on
-     * connect open
-     * @return an array of DriverPropertyInfo objects describing possible
-     * properties.  This array may be an empty array if no properties
-     * are required.
+     *  The getPropertyInfo method is intended to allow a generic GUI tool
+     *  to discover what properties it should prompt a human for in order to
+     *  get enough information to connect to a database. Note that depending
+     *  on the values the human has supplied so far, additional values may
+     *  become necessary, so it may be necessary to iterate though several
+     *  calls to getPropertyInfo.
+     *
+     * @param  url the URL of the database to which to connect
+     * @param  info a proposed list of tag/value pairs that will be sent on
+     *      connect open
+     * @return  an array of DriverPropertyInfo objects describing possible
+     *      properties. This array may be an empty array if no properties
+     *      are required.
      */
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
 
@@ -207,8 +234,9 @@ public class jdbcDriver implements Driver {
     }
 
     /**
-     * Gets the driver's major version number.
-     * @return this driver's major version number
+     *  Gets the driver's major version number.
+     *
+     * @return  this driver's major version number
      */
     public int getMajorVersion() {
 
@@ -220,8 +248,9 @@ public class jdbcDriver implements Driver {
     }
 
     /**
-     * Gets the driver's minor version number.
-     * @return this driver's minor version number
+     *  Gets the driver's minor version number.
+     *
+     * @return  this driver's minor version number
      */
     public int getMinorVersion() {
 
@@ -233,26 +262,28 @@ public class jdbcDriver implements Driver {
     }
 
     /**
-     * Reports whether this driver is a genuine JDBC
-     * COMPLIANT<sup><font size=-2>TM</font></sup> driver.
-     * A driver may only report true here if it passes the JDBC compliance
-     * tests; otherwise it is required to return false.
+     *  Reports whether this driver is a genuine JDBC COMPLIANT<sup><font
+     *  size=-2>TM</font> </sup> driver. A driver may only report true here
+     *  if it passes the JDBC compliance tests; otherwise it is required to
+     *  return false. JDBC compliance requires full support for the JDBC API
+     *  and full support for SQL 92 Entry Level. It is expected that JDBC
+     *  compliant drivers will be available for all the major commercial
+     *  databases. <p>
      *
-     * JDBC compliance requires full support for the JDBC API and full support
-     * for SQL 92 Entry Level.  It is expected that JDBC compliant drivers will
-     * be available for all the major commercial databases.
-     * <P><font color="#009900">
-     * HSQL Database Engine currently does not yet support all required SQL 92
-     * Entry Level functionality and thus returns false. The features that
-     * are missing are currently 'HAVING', views and referential integrity.
-     * It looks like other drivers returns true but do not support all features.
-     * </font><P>
-     * This method is not intended to encourage the development of non-JDBC
-     * compliant drivers, but is a recognition of the fact that some vendors
-     * are interested in using the JDBC API and framework for lightweight
-     * databases that do not support full database functionality, or for
-     * special databases such as document information retrieval where a SQL
-     * implementation may not be feasible.
+     *  <font color="#009900"> HSQL Database Engine currently does not yet
+     *  support all required SQL 92 Entry Level functionality and thus
+     *  returns false. The features that are missing are currently 'HAVING'
+     *  and views. It looks like other drivers return true but do not
+     *  support all features. </font> <p>
+     *
+     *  This method is not intended to encourage the development of non-JDBC
+     *  compliant drivers, but is a recognition of the fact that some
+     *  vendors are interested in using the JDBC API and framework for
+     *  lightweight databases that do not support full database
+     *  functionality, or for special databases such as document information
+     *  retrieval where a SQL implementation may not be feasible.
+     *
+     * @return  Description of the Return Value
      */
     public boolean jdbcCompliant() {
 
@@ -270,7 +301,7 @@ public class jdbcDriver implements Driver {
             DriverManager.registerDriver(new jdbcDriver());
 
             if (Trace.TRACE) {
-                Trace.trace(PRODUCT + " " + MAJOR + "." + MINOR);
+                Trace.trace(PRODUCT + " " + VERSION);
             }
         } catch (Exception e) {
             if (Trace.TRACE) {

@@ -67,14 +67,14 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.SQLException;
+import java.util.Hashtable;
 
 /**
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class User {
 
@@ -220,7 +220,7 @@ class User {
         if (n == null) {
             n = new Integer(right);
         } else {
-            n = new Integer(n.intValue() & (Access.ALL - right));
+            n = new Integer(n.intValue() & (UserManager.ALL - right));
         }
 
         hRight.put(object, n);
@@ -254,14 +254,14 @@ class User {
 
         n = (Integer) hRight.get(object);
 
-        if (n != null && (n.intValue() & right) != 0) {
+        if ((n != null) && (n.intValue() & right) != 0) {
             return;
         }
 
         if (uPublic != null) {
             n = (Integer) (uPublic.hRight).get(object);
 
-            if (n != null && (n.intValue() & right) != 0) {
+            if ((n != null) && (n.intValue() & right) != 0) {
                 return;
             }
         }

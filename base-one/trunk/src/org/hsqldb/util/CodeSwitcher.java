@@ -71,19 +71,24 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Class declaration
+ * changes the source code to support different JDK or profile settings
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// fredt@users 20020315 - patch 1.7.0 - minor fixes
+// changed line separator to System based value
+// moved the Profile class to org.hsqldb.test package
 public class CodeSwitcher {
 
+    private static final String ls = System.getProperty("line.separator",
+        "\n");
     private Vector           vList;
     private Vector           vSwitchOn;
     private Vector           vSwitchOff;
     private Vector           vSwitches;
     private boolean          bAdd, bRemove;
-    private final static int MAX_LINELENGTH = 82;
+    private static final int MAX_LINELENGTH = 82;
 
     /**
      * Method declaration
@@ -267,7 +272,7 @@ public class CodeSwitcher {
                     line = line.substring(s + 1);
                 }
 
-                write.write(line + "\r\n");
+                write.write(line + ls);
             }
 
             read.close();
@@ -326,8 +331,8 @@ public class CodeSwitcher {
                     }
 
                     if (spaces > 3 && testLine(line) &&!longline) {
-                        line = "Profile.visit(\"" + key + "\"," + l + ","
-                               + maxline + ");" + line;
+                        line = "org.hsqldb.test.Profile.visit(\"" + key
+                               + "\"," + l + "," + maxline + ");" + line;
 
                         l++;
                     } else if (isLongline(line)) {
@@ -337,7 +342,7 @@ public class CodeSwitcher {
                     }
                 }
 
-                write.write(line + "\r\n");
+                write.write(line + ls);
             }
 
             read.close();
@@ -384,7 +389,7 @@ public class CodeSwitcher {
                 }
 
                 if (line.length() > MAX_LINELENGTH
-                        &&!line.startsWith("Profile.")) {
+                        &&!line.startsWith("org.hsqldb.test.Profile.")) {
                     System.out.println("long line in " + name + " at line "
                                        + l);
                 }
@@ -523,7 +528,7 @@ public class CodeSwitcher {
                 }
 
                 if (!line.startsWith("//#")) {
-                    write.write(line + "\r\n");
+                    write.write(line + ls);
                 } else {
                     if (line.startsWith("//#ifdef ")) {
                         if (state != 0) {
@@ -533,7 +538,7 @@ public class CodeSwitcher {
                             return false;
                         }
 
-                        write.write(line + "\r\n");
+                        write.write(line + ls);
 
                         state = 1;
 
@@ -545,7 +550,7 @@ public class CodeSwitcher {
                         } else if (vSwitchOff.indexOf(s) != -1) {
                             working = true;
 
-                            write.write("/*\r\n");
+                            write.write("/*" + ls);
 
                             switchoff = true;
                         }
@@ -563,15 +568,15 @@ public class CodeSwitcher {
                         state = 2;
 
                         if (!working) {
-                            write.write(line + "\r\n");
+                            write.write(line + ls);
                         } else if (switchoff) {
-                            write.write("*/\r\n");
-                            write.write(line + "\r\n");
+                            write.write("*/" + ls);
+                            write.write(line + ls);
 
                             switchoff = false;
                         } else {
-                            write.write(line + "\r\n");
-                            write.write("/*\r\n");
+                            write.write(line + ls);
+                            write.write("/*" + ls);
 
                             switchoff = true;
                         }
@@ -585,14 +590,14 @@ public class CodeSwitcher {
                         state = 0;
 
                         if (working && switchoff) {
-                            write.write("*/\r\n");
+                            write.write("*/" + ls);
                         }
 
-                        write.write(line + "\r\n");
+                        write.write(line + ls);
 
                         working = false;
                     } else {
-                        write.write(line + "\r\n");
+                        write.write(line + ls);
                     }
                 }
             }

@@ -67,22 +67,42 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.sql.DatabaseMetaData;
+import java.util.Hashtable;
+import java.util.Vector;
+
+// fredt@users 20020130 - patch 491987 by jimbag@users
+// applied to different parts
+// fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
+// applied to different parts to support the sql standard for
+// naming of columns and tables (use of quoted identifiers as names)
+// written for universal support of quoted names including the quote character
+// and speed improvements to avoid repetitive string comparisons
+// thanks to suggestions by boucherb@users
+// instigated by patch 489864 by jytou@users
+// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
+// support for default values for table columns
+// fredt@users 20020225 - patch 489777 by fredt
+// restructuring for error trapping
+// fredt@users 20020225 - patch 1.7.0 - named constraints
+// fredt@users 20020225 - patch 1.7.0 - multi-column primary keys
+// fredt@users 20020523 - patch 1.7.0 - JDBC reporting of forgin keys
+// fredt@users 20020526 - patch 1.7.0 - JDBC reporting of best row identifier
 
 /**
- * DatabaseInformation class declaration
+ * Provides information about the database.
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class DatabaseInformation {
 
-    private Database dDatabase;
-    private Access   aAccess;
-    private Vector   tTable;
+    private Database             dDatabase;
+    private UserManager          aAccess;
+    private Vector               tTable;
+    private static final Integer INTEGER_0 = new Integer(0);
 
     /**
      * Constructor declaration
@@ -92,7 +112,7 @@ class DatabaseInformation {
      * @param tables
      * @param access
      */
-    DatabaseInformation(Database db, Vector tables, Access access) {
+    DatabaseInformation(Database db, Vector tables, UserManager access) {
 
         dDatabase = db;
         tTable    = tables;
@@ -107,832 +127,706 @@ class DatabaseInformation {
     // static final String META_DECIMAL_DIGITS="SCALE";
     // static final String META_NUM_PREC_RADIX="RADIX";
     // static final String META_FIXED_PREC_SCALE="MONEY";
-    // static final String META_ORDINAL_POSITON="SEQ_IN_INDEX";
+    // static final String META_ORDINAL_POSITION="SEQ_IN_INDEX";
     // static final String META_ASC_OR_DESC="COLLATION";
-    static final String META_SCHEM            = "SCHEM";
-    static final String META_CAT              = "CAT";
-    static final String META_COLUMN_SIZE      = "COLUMN_SIZE";
-    static final String META_BUFFER_LENGTH    = "BUFFER_LENGTH";
-    static final String META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
-    static final String META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
-    static final String META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
-    static final String META_ORDINAL_POSITON  = "ORDINAL_POSITON";
-    static final String META_ASC_OR_DESC      = "ASC_OR_DESC";
+    static final String      META_SCHEM            = "SCHEM";
+    static final String      META_CAT              = "CAT";
+    static final String      META_COLUMN_SIZE      = "COLUMN_SIZE";
+    static final String      META_BUFFER_LENGTH    = "BUFFER_LENGTH";
+    static final String      META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
+    static final String      META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
+    static final String      META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
+    static final String      META_ORDINAL_POSITION = "ORDINAL_POSITION";
+    static final String      META_ASC_OR_DESC      = "ASC_OR_DESC";
+    private static Hashtable sysTableNames;
+    private static final int SYSTEM_PROCEDURES        = 1;
+    private static final int SYSTEM_PROCEDURECOLUMNS  = 2;
+    private static final int SYSTEM_TABLES            = 3;
+    private static final int SYSTEM_SCHEMAS           = 4;
+    private static final int SYSTEM_CATALOGS          = 5;
+    private static final int SYSTEM_TABLETYPES        = 6;
+    private static final int SYSTEM_COLUMNS           = 7;
+    private static final int SYSTEM_COLUMNPRIVILEGES  = 8;
+    private static final int SYSTEM_TABLEPRIVILEGES   = 9;
+    private static final int SYSTEM_BESTROWIDENTIFIER = 10;
+    private static final int SYSTEM_VERSIONCOLUMNS    = 11;
+    private static final int SYSTEM_PRIMARYKEYS       = 12;
+    private static final int SYSTEM_IMPORTEDKEYS      = 13;
+    private static final int SYSTEM_EXPORTEDKEYS      = 14;
+    private static final int SYSTEM_CROSSREFERENCE    = 15;
+    private static final int SYSTEM_TYPEINFO          = 16;
+    private static final int SYSTEM_INDEXINFO         = 17;
+    private static final int SYSTEM_UDTS              = 18;
+    private static final int SYSTEM_CONNECTIONINFO    = 19;
+    private static final int SYSTEM_USERS             = 20;
+
+    static {
+        sysTableNames = new Hashtable();
+
+        String sysNames[] = {
+            "SYSTEM_PROCEDURES", "SYSTEM_PROCEDURECOLUMNS", "SYSTEM_TABLES",
+            "SYSTEM_SCHEMAS", "SYSTEM_CATALOGS", "SYSTEM_TABLETYPES",
+            "SYSTEM_COLUMNS", "SYSTEM_COLUMNPRIVILEGES",
+            "SYSTEM_TABLEPRIVILEGES", "SYSTEM_BESTROWIDENTIFIER",
+            "SYSTEM_VERSIONCOLUMNS", "SYSTEM_PRIMARYKEYS",
+            "SYSTEM_IMPORTEDKEYS", "SYSTEM_EXPORTEDKEYS",
+            "SYSTEM_CROSSREFERENCE", "SYSTEM_TYPEINFO", "SYSTEM_INDEXINFO",
+            "SYSTEM_UDTS", "SYSTEM_CONNECTIONINFO", "SYSTEM_USERS"
+        };
+
+        for (int i = 0; i < sysNames.length; i++) {
+            sysTableNames.put(sysNames[i], new Integer(i + 1));
+        }
+    }
+
+    static boolean isSystemTable(String name) {
+        return sysTableNames.get(name) == null ? false
+                                               : true;
+    }
 
     /**
      * Method declaration
      *
      *
      * @param name
-     * @param channel
+     * @param session
      *
      * @return
      *
      * @throws SQLException
      */
-    Table getSystemTable(String name, Channel channel) throws SQLException {
+    Table getSystemTable(String tablename,
+                         Session session) throws SQLException {
 
-        if (name.equals("SYSTEM_PROCEDURES")) {
-            Table t = createTable(name);
+        HsqlName name    = new HsqlName(tablename, false);
+        Integer  tableId = (Integer) sysTableNames.get(tablename);
 
-            t.addColumn("PROCEDURE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("PROCEDURE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("PROCEDURE_NAME", Column.VARCHAR);
-            t.addColumn("NUM_INPUT_PARAMS", Column.INTEGER);
-            t.addColumn("NUM_OUTPUT_PARAMS", Column.INTEGER);
-            t.addColumn("NUM_RESULT_SETS", Column.INTEGER);
-            t.addColumn("REMARKS", Column.VARCHAR);
-            t.addColumn("PROCEDURE_TYPE", Column.SMALLINT);
-            t.createPrimaryKey();
+        if (tableId == null) {
+            return null;
+        }
 
-            return t;
-        } else if (name.equals("SYSTEM_PROCEDURECOLUMNS")) {
-            Table t = createTable(name);
+        int   tableIdValue = tableId.intValue();
+        Table t            = createTable(name);
 
-            t.addColumn("PROCEDURE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("PROCEDURE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("PROCEDURE_NAME", Column.VARCHAR);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("COLUMN_TYPE", Column.SMALLINT);
-            t.addColumn("DATA_TYPE", Column.SMALLINT);
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn("PRECISION", Column.INTEGER);
-            t.addColumn("LENGTH", Column.INTEGER);
-            t.addColumn("SCALE", Column.SMALLINT);
-            t.addColumn("RADIX", Column.SMALLINT);
-            t.addColumn("NULLABLE", Column.SMALLINT);
-            t.addColumn("REMARKS", Column.VARCHAR);
-            t.createPrimaryKey();
+        switch (tableIdValue) {
 
-            return t;
-        } else if (name.equals("SYSTEM_TABLES")) {
-            Table t = createTable(name);
+            case SYSTEM_PROCEDURES : {
+                t.addColumn("PROCEDURE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("PROCEDURE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("PROCEDURE_NAME", Types.VARCHAR);
+                t.addColumn("NUM_INPUT_PARAMS", Types.INTEGER);
+                t.addColumn("NUM_OUTPUT_PARAMS", Types.INTEGER);
+                t.addColumn("NUM_RESULT_SETS", Types.INTEGER);
+                t.addColumn("REMARKS", Types.VARCHAR);
+                t.addColumn("PROCEDURE_TYPE", Types.SMALLINT);
+                t.createPrimaryKey();
 
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("TABLE_TYPE", Column.VARCHAR);
-            t.addColumn("REMARKS", Column.VARCHAR);
-            t.createPrimaryKey();
-
-            for (int i = 0; i < tTable.size(); i++) {
-                Table  table = (Table) tTable.elementAt(i);
-                Object o[]   = t.getNewRow();
-
-                o[2] = table.getName();
-                o[3] = "TABLE";
-
-                t.insert(o, null);
+                return t;
             }
+            case SYSTEM_PROCEDURECOLUMNS : {
+                t.addColumn("PROCEDURE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("PROCEDURE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("PROCEDURE_NAME", Types.VARCHAR);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn("COLUMN_TYPE", Types.SMALLINT);
+                t.addColumn("DATA_TYPE", Types.SMALLINT);
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn("PRECISION", Types.INTEGER);
+                t.addColumn("LENGTH", Types.INTEGER);
+                t.addColumn("SCALE", Types.SMALLINT);
+                t.addColumn("RADIX", Types.SMALLINT);
+                t.addColumn("NULLABLE", Types.SMALLINT);
+                t.addColumn("REMARKS", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            return t;
-        } else if (name.equals("SYSTEM_SCHEMAS")) {
-            Table t = createTable(name);
+                return t;
+            }
+            case SYSTEM_TABLES : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("TABLE_TYPE", Types.VARCHAR);
+                t.addColumn("REMARKS", Types.VARCHAR);
 
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.createPrimaryKey();
+// boucherb@users 20020415 added for JDBC 3 clients
+                t.addColumn("TYPE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TYPE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn("SELF_REFERENCING_COL_NAME", Types.VARCHAR);
+                t.addColumn("REF_GENERATION", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            return t;
-        } else if (name.equals("SYSTEM_CATALOGS")) {
-            Table t = createTable(name);
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table  table = (Table) tTable.elementAt(i);
+                    Object o[]   = t.getNewRow();
 
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.createPrimaryKey();
+                    o[0] = o[1] = "";
+                    o[2] = table.getName().name;
 
-            return t;
-        } else if (name.equals("SYSTEM_TABLETYPES")) {
-            Table t = createTable(name);
+                    switch (table.tableType) {
 
-            t.addColumn("TABLE_TYPE", Column.VARCHAR);
-            t.createPrimaryKey();
+                        case Table.VIEW :
+                            o[3] = "VIEW";
+                            break;
 
-            Object o[] = t.getNewRow();
+                        case Table.TEMP_TABLE :
+                        case Table.TEMP_TEXT_TABLE :
+                            if (dDatabase.findUserTable(
+                                    table.getName().name, session) == null) {
+                                continue;
+                            }
 
-            o[0] = "TABLE";
+                            o[3] = "LOCAL TEMPORARY";
+                            break;
 
-            t.insert(o, null);
-
-            return t;
-        } else if (name.equals("SYSTEM_COLUMNS")) {
-            Table t = createTable(name);
-
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("DATA_TYPE", Column.SMALLINT);
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn(META_COLUMN_SIZE, Column.INTEGER);
-            t.addColumn(META_BUFFER_LENGTH, Column.INTEGER);
-            t.addColumn(META_DECIMAL_DIGITS, Column.INTEGER);
-            t.addColumn(META_NUM_PREC_RADIX, Column.INTEGER);
-            t.addColumn("NULLABLE", Column.INTEGER);
-            t.addColumn("REMARKS", Column.VARCHAR);
-
-            // Access and Intersolv do not return this fields
-            t.addColumn("COLUMN_DEF", Column.VARCHAR);
-            t.addColumn("SQL_DATA_TYPE", Column.VARCHAR);
-            t.addColumn("SQL_DATETIME_SUB", Column.INTEGER);
-            t.addColumn("CHAR_OCTET_LENGTH", Column.INTEGER);
-            t.addColumn("ORDINAL_POSITION", Column.VARCHAR);
-            t.addColumn("IS_NULLABLE", Column.VARCHAR);
-            t.createPrimaryKey();
-
-            for (int i = 0; i < tTable.size(); i++) {
-                Table table   = (Table) tTable.elementAt(i);
-                int   columns = table.getColumnCount();
-
-                for (int j = 0; j < columns; j++) {
-                    Object o[] = t.getNewRow();
-
-                    o[2] = table.getName();
-                    o[3] = table.getColumnName(j);
-                    o[4] = new Short((short) table.getColumnType(j));
-                    o[5] = Column.getType(table.getColumnType(j));
-
-                    int nullable;
-
-                    if (table.getColumnIsNullable(j)) {
-                        nullable = DatabaseMetaData.columnNullable;
-                    } else {
-                        nullable = DatabaseMetaData.columnNoNulls;
+                        default :
+                            o[3] = "TABLE";
                     }
 
-                    o[10] = new Integer(nullable);
+                    // sqlbob@users Set remarks to readonly status.
+                    if (table.isDataReadOnly()) {
+                        o[4] = "ReadOnlyData=true";
+                    }
 
-                    if (table.getIdentityColumn() == j) {
-                        o[11] = "IDENTITY";
+                    // sqlbob@users Add data source to remarks
+                    String dataSource = table.getDataSource();
+
+                    if (dataSource != null) {
+                        if (o[4] == null) {
+                            o[4] = "";
+                        } else {
+                            o[4] = o[4] + "; ";
+                        }
+
+                        o[4] = o[4] + "DataSource=\"" + dataSource + "\"";
+
+                        if (table.isDescDataSource()) {
+                            o[4] = o[4] + " DESC";
+                        }
                     }
 
                     t.insert(o, null);
                 }
+
+                return t;
             }
+            case SYSTEM_SCHEMAS : {
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
 
-            return t;
-        } else if (name.equals("SYSTEM_COLUMNPRIVILEGES")) {
-            Table t = createTable(name);
+// boucherb@users 20020415 added for JDBC 3 clients
+                t.addColumn("TABLE_CATALOG", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("GRANTOR", Column.VARCHAR);
-            t.addColumn("GRANTEE", Column.VARCHAR);
-            t.addColumn("PRIVILEGE", Column.VARCHAR);
-            t.addColumn("IS_GRANTABLE", Column.VARCHAR);
-            t.createPrimaryKey();
+                return t;
+            }
+            case SYSTEM_CATALOGS : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.createPrimaryKey();
 
-            /*
-             * // todo: get correct info
-             * for(int i=0;i<tTable.size();i++) {
-             * Table table=(Table)tTable.elementAt(i);
-             * int columns=table.getColumnCount();
-             * for(int j=0;j<columns;j++) {
-             * Object o[]=t.getNewRow();
-             * o[2]=table.getName();
-             * o[3]=table.getColumnName(j);
-             * o[4]="sa";
-             * o[6]="FULL";
-             * o[7]="NO";
-             * t.insert(o,null);
-             * }
-             * }
-             */
-            return t;
-        } else if (name.equals("SYSTEM_TABLEPRIVILEGES")) {
-            Table t = createTable(name);
+                return t;
+            }
+            case SYSTEM_TABLETYPES : {
+                t.addColumn("TABLE_TYPE", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("GRANTOR", Column.VARCHAR);
-            t.addColumn("GRANTEE", Column.VARCHAR);
-            t.addColumn("PRIVILEGE", Column.VARCHAR);
-            t.addColumn("IS_GRANTABLE", Column.VARCHAR);
-            t.createPrimaryKey();
+                Object o[] = t.getNewRow();
 
-            for (int i = 0; i < tTable.size(); i++) {
-                Table  table = (Table) tTable.elementAt(i);
-                Object o[]   = t.getNewRow();
-
-                o[2] = table.getName();
-                o[3] = "sa";
-                o[5] = "FULL";
+                o[0] = "TABLE";
 
                 t.insert(o, null);
+
+                return t;
             }
+            case SYSTEM_COLUMNS : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn("DATA_TYPE", Types.SMALLINT);
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn(META_COLUMN_SIZE, Types.INTEGER);
+                t.addColumn(META_BUFFER_LENGTH, Types.INTEGER);
+                t.addColumn(META_DECIMAL_DIGITS, Types.INTEGER);
+                t.addColumn(META_NUM_PREC_RADIX, Types.INTEGER);
+                t.addColumn("NULLABLE", Types.INTEGER);
+                t.addColumn("REMARKS", Types.VARCHAR);
+                t.addColumn("COLUMN_DEF", Types.VARCHAR);
 
-            return t;
-        } else if (name.equals("SYSTEM_BESTROWIDENTIFIER")) {
-            Table t = createTable(name);
+// fredt@users 20020407 - patch 1.7.0 by sqlbob@users - fixed incorrect type
+                t.addColumn("SQL_DATA_TYPE", Types.INTEGER);
+                t.addColumn("SQL_DATETIME_SUB", Types.INTEGER);
+                t.addColumn("CHAR_OCTET_LENGTH", Types.INTEGER);
 
-            t.addColumn("SCOPE", Column.SMALLINT);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("DATA_TYPE", Column.SMALLINT);
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn(META_COLUMN_SIZE, Column.INTEGER);
-            t.addColumn(META_BUFFER_LENGTH, Column.INTEGER);
-            t.addColumn(META_DECIMAL_DIGITS, Column.SMALLINT);
-            t.addColumn("PSEUDO_COLUMN", Column.SMALLINT);
-            t.createPrimaryKey();
+// fredt@users 20020407 - patch 1.7.0 - fixed incorrect type
+                t.addColumn("ORDINAL_POSITION", Types.INTEGER);
+                t.addColumn("IS_NULLABLE", Types.VARCHAR);
 
-            return t;
-        } else if (name.equals("SYSTEM_VERSIONCOLUMNS")) {
-            Table t = createTable(name);
+// boucherb@users 20020415 added for JDBC 3 clients
+// fredt - spelling of SCOPE_CATLOG is according to JDBC specs
+                t.addColumn("SCOPE_CATLOG", Types.VARCHAR);
+                t.addColumn("SCOPE_SCHEMA", Types.VARCHAR);
+                t.addColumn("SCOPE_TABLE", Types.VARCHAR);
+                t.addColumn("SOURCE_DATA_TYPE", Types.VARCHAR);
+                t.addColumn("SCOPE_CATLOG ", Types.SMALLINT);
+                t.createPrimaryKey();
 
-            t.addColumn("SCOPE", Column.INTEGER);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("DATA_TYPE", Column.SMALLINT);
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn(META_COLUMN_SIZE, Column.SMALLINT);
-            t.addColumn(META_BUFFER_LENGTH, Column.INTEGER);
-            t.addColumn(META_DECIMAL_DIGITS, Column.SMALLINT);
-            t.addColumn("PSEUDO_COLUMN", Column.SMALLINT);
-            t.createPrimaryKey();
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table table       = (Table) tTable.elementAt(i);
+                    int   columnCount = table.getColumnCount();
 
-            return t;
-        } else if (name.equals("SYSTEM_PRIMARYKEYS")) {
-            Table t = createTable(name);
+                    for (int j = 0; j < columnCount; j++) {
+                        Column column = table.getColumn(j);
+                        Object o[]    = t.getNewRow();
 
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn("KEY_SEQ", Column.SMALLINT);
-            t.addColumn("PK_NAME", Column.VARCHAR);
-            t.createPrimaryKey();
+                        o[0] = o[1] = "";
+                        o[2] = table.getName().name;
+                        o[3] = column.columnName.name;
+                        o[4] = new Integer(column.getType());
+                        o[5] = Column.getTypeString(column.getType());
 
-            for (int i = 0; i < tTable.size(); i++) {
-                Table table  = (Table) tTable.elementAt(i);
-                Index index  = table.getIndex("SYSTEM_PK");
-                int   cols[] = index.getColumns();
-                int   len    = cols.length;
+// fredt@users 20020130 - patch 491987 by jimbag@users
+                        o[6] = new Integer(column.getSize());
+                        o[8] = new Integer(column.getScale());
+                        o[9] = new Integer(10);
 
-                for (int j = 0; j < len; j++) {
-                    Object o[] = t.getNewRow();
+                        int nullable;
 
-                    o[2] = table.getName();
-                    o[3] = table.getColumnName(cols[j]);
-                    o[4] = new Short((short) (j + 1));
-                    o[5] = "SYSTEM_PK";
+                        if (column.isNullable()) {
+                            nullable = DatabaseMetaData.columnNullable;
+                            o[17]    = new String("YES");
+                        } else {
+                            nullable = DatabaseMetaData.columnNoNulls;
+                            o[17]    = new String("NO");
+                        }
+
+                        o[10] = new Integer(nullable);
+
+                        if (table.getIdentityColumn() == j) {
+                            o[11] = "IDENTITY";
+                        }
+
+                        o[12] = column.getDefaultString();
+
+                        // ordinal position
+                        o[16] = new Integer(j + 1);
+
+                        t.insert(o, null);
+                    }
+                }
+
+                return t;
+            }
+            case SYSTEM_COLUMNPRIVILEGES : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn("GRANTOR", Types.VARCHAR);
+                t.addColumn("GRANTEE", Types.VARCHAR);
+                t.addColumn("PRIVILEGE", Types.VARCHAR);
+                t.addColumn("IS_GRANTABLE", Types.VARCHAR);
+                t.createPrimaryKey();
+
+                /*
+                 * // todo: get correct info
+                 * for(int i=0;i<tTable.size();i++) {
+                 * table=(Table)tTable.elementAt(i);
+                 * int columns=table.getColumnCount();
+                 * for(int j=0;j<columns;j++) {
+                 * Object o[]=t.getNewRow();
+                 * o[2]=table.getName();
+                 * o[3]=table.getColumnName(j);
+                 * o[4]="sa";
+                 * o[6]="FULL";
+                 * o[7]="NO";
+                 * t.insert(o,null);
+                 * }
+                 * }
+                 */
+                return t;
+            }
+            case SYSTEM_TABLEPRIVILEGES : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("GRANTOR", Types.VARCHAR);
+                t.addColumn("GRANTEE", Types.VARCHAR);
+                t.addColumn("PRIVILEGE", Types.VARCHAR);
+                t.addColumn("IS_GRANTABLE", Types.VARCHAR);
+                t.createPrimaryKey();
+
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table  table = (Table) tTable.elementAt(i);
+                    Object o[]   = t.getNewRow();
+
+                    o[0] = o[1] = "";
+                    o[2] = table.getName().name;
+                    o[3] = "sa";
+                    o[5] = "FULL";
 
                     t.insert(o, null);
                 }
+
+                return t;
             }
+            case SYSTEM_VERSIONCOLUMNS :
 
-            return t;
-        } else if (name.equals("SYSTEM_IMPORTEDKEYS")) {
-            Table t = createTable(name);
+            // return an empty table
+            case SYSTEM_BESTROWIDENTIFIER :
+                t.addColumn("SCOPE", Types.SMALLINT);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn("DATA_TYPE", Types.SMALLINT);
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn(META_COLUMN_SIZE, Types.INTEGER);
+                t.addColumn(META_BUFFER_LENGTH, Types.INTEGER);
+                t.addColumn(META_DECIMAL_DIGITS, Types.SMALLINT);
+                t.addColumn("PSEUDO_COLUMN", Types.SMALLINT);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            t.addColumn("PKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("PKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("PKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("PKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("FKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("FKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("KEY_SEQ", Column.SMALLINT);
-            t.addColumn("UPDATE_RULE", Column.SMALLINT);
-            t.addColumn("DELETE_RULE", Column.SMALLINT);
-            t.addColumn("FK_NAME", Column.VARCHAR);
-            t.addColumn("PK_NAME", Column.VARCHAR);
-            t.addColumn("DEFERRABILITY", Column.SMALLINT);
-            t.createPrimaryKey();
+                if (tableIdValue == SYSTEM_VERSIONCOLUMNS) {
+                    return t;
+                }
+            {
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table table = (Table) tTable.elementAt(i);
+                    Index index = null;
+                    int[] cols  = null;
 
-            return t;
-        } else if (name.equals("SYSTEM_EXPORTEDKEYS")) {
-            Table t = createTable(name);
+                    // fredt - don't report primary key on hidden column
+                    for (int j = 0; j < table.getIndexCount(); j++) {
+                        index = table.getIndex(j);
 
-            t.addColumn("PKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("PKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("PKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("PKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("FKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("FKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("KEY_SEQ", Column.SMALLINT);
-            t.addColumn("UPDATE_RULE", Column.SMALLINT);
-            t.addColumn("DELETE_RULE", Column.SMALLINT);
-            t.addColumn("FK_NAME", Column.VARCHAR);
-            t.addColumn("PK_NAME", Column.VARCHAR);
-            t.addColumn("DEFERRABILITY", Column.SMALLINT);
-            t.createPrimaryKey();
+                        if (index.isUnique()) {
+                            cols = index.getColumns();
 
-            return t;
-        } else if (name.equals("SYSTEM_CROSSREFERENCE")) {
-            Table t = createTable(name);
-
-            t.addColumn("PKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("PKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("PKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("PKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("FKTABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("FKTABLE_NAME", Column.VARCHAR);
-            t.addColumn("FKCOLUMN_NAME", Column.VARCHAR);
-            t.addColumn("KEY_SEQ", Column.INTEGER);
-            t.addColumn("UPDATE_RULE", Column.SMALLINT);
-            t.addColumn("DELETE_RULE", Column.SMALLINT);
-            t.addColumn("FK_NAME", Column.VARCHAR);
-            t.addColumn("PK_NAME", Column.VARCHAR);
-            t.addColumn("DEFERRABILITY", Column.SMALLINT);
-            t.createPrimaryKey();
-
-            return t;
-        } else if (name.equals("SYSTEM_TYPEINFO")) {
-            Table t = createTable(name);
-
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn("DATA_TYPE", Column.SMALLINT);
-            t.addColumn("PRECISION", Column.INTEGER);
-            t.addColumn("LITERAL_PREFIX", Column.VARCHAR);
-            t.addColumn("LITERAL_SUFFIX", Column.VARCHAR);
-            t.addColumn("CREATE_PARAMS", Column.VARCHAR);
-            t.addColumn("NULLABLE", Column.SMALLINT);
-            t.addColumn("CASE_SENSITIVE", Column.VARCHAR);
-            t.addColumn("SEARCHABLE", Column.SMALLINT);
-            t.addColumn("UNSIGNED_ATTRIBUTE", Column.BIT);
-            t.addColumn(META_FIXED_PREC_SCALE, Column.BIT);
-            t.addColumn("AUTO_INCREMENT", Column.BIT);
-            t.addColumn("LOCAL_TYPE_NAME", Column.VARCHAR);
-            t.addColumn("MINIMUM_SCALE", Column.SMALLINT);
-            t.addColumn("MAXIMUM_SCALE", Column.SMALLINT);
-
-            // this columns are not supported by Access and Intersolv
-            t.addColumn("SQL_DATE_TYPE", Column.INTEGER);
-            t.addColumn("SQL_DATETIME_SUB", Column.INTEGER);
-            t.addColumn("NUM_PREC_RADIX", Column.INTEGER);
-            t.createPrimaryKey();
-
-            for (int i = 0; i < Column.TYPES.length; i++) {
-                Object o[]  = t.getNewRow();
-                int    type = Column.TYPES[i];
-
-                o[0] = Column.getType(type);
-                o[1] = new Short((short) type);
-                o[2] = new Integer(0);           // precision
-                o[6] = new Short((short) DatabaseMetaData.typeNullable);
-                o[7] = new Boolean(true);        // case sensitive
-                o[8] = new Short((short) DatabaseMetaData.typeSearchable);
-                o[9] = new Boolean(false);       // unsigned
-                o[10] = new Boolean(type == Column.NUMERIC
-                                    || type == Column.DECIMAL);
-                o[11] = new Boolean(type == Column.INTEGER);
-                o[12] = o[0];
-                o[13] = new Short((short) 0);
-                o[14] = new Short((short) 0);    // maximum scale
-                o[15] = new Integer((short) 0);
-                o[16] = o[15];
-                o[17] = new Integer(10);
-
-                t.insert(o, null);
-            }
-
-            return t;
-        } else if (name.equals("SYSTEM_INDEXINFO")) {
-            Table t = createTable(name);
-
-            t.addColumn("TABLE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TABLE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TABLE_NAME", Column.VARCHAR);
-            t.addColumn("NON_UNIQUE", Column.BIT);
-            t.addColumn("INDEX_QUALIFIER", Column.VARCHAR);
-            t.addColumn("INDEX_NAME", Column.VARCHAR);
-            t.addColumn("TYPE", Column.SMALLINT);
-            t.addColumn(META_ORDINAL_POSITON, Column.SMALLINT);
-            t.addColumn("COLUMN_NAME", Column.VARCHAR);
-            t.addColumn(META_ASC_OR_DESC, Column.VARCHAR);
-            t.addColumn("CARDINALITY", Column.INTEGER);
-            t.addColumn("PAGES", Column.INTEGER);
-            t.addColumn("FILTER_CONDITION", Column.VARCHAR);
-            t.createPrimaryKey();
-
-            for (int i = 0; i < tTable.size(); i++) {
-                Table table = (Table) tTable.elementAt(i);
-                Index index = null;
-
-                while (true) {
-                    index = table.getNextIndex(index);
-
-                    if (index == null) {
-                        break;
+                            if (cols[0] == table.getColumnCount()) {
+                                cols = null;
+                            } else {
+                                break;
+                            }
+                        }
                     }
 
-                    int cols[] = index.getColumns();
-                    int len    = cols.length;
-
-                    // this removes the column that makes every index unique
-                    if (!index.isUnique()) {
-                        len--;
+                    if (cols == null) {
+                        continue;
                     }
+
+                    int len = cols.length;
 
                     for (int j = 0; j < len; j++) {
-                        Object o[] = t.getNewRow();
+                        Column column = table.getColumn(cols[j]);
+                        Object o[]    = t.getNewRow();
 
-                        o[2] = table.getName();
-                        o[3] = new Boolean(!index.isUnique());
-                        o[5] = index.getName();
-                        o[6] = new Short(DatabaseMetaData.tableIndexOther);
-                        o[7] = new Short((short) (j + 1));
-                        o[8] = table.getColumnName(cols[j]);
-                        o[9] = "A";
+                        o[0] = new Short(
+                            (short) DatabaseMetaData.bestRowTemporary);
+                        o[1] = column.columnName.name;
+                        o[2] = new Short((short) column.getType());
+                        o[3] = Column.getTypeString(column.getType());
+                        o[4] = new Integer(column.getSize());
+                        o[6] = new Integer(column.getScale());
+                        o[7] = new Short(
+                            (short) DatabaseMetaData.bestRowNotPseudo);
+                        o[8] = table.getName().name;
 
                         t.insert(o, null);
                     }
                 }
             }
 
-            return t;
-        } else if (name.equals("SYSTEM_UDTS")) {
-            Table t = createTable(name);
+                return t;
 
-            t.addColumn("TYPE_" + META_CAT, Column.VARCHAR);
-            t.addColumn("TYPE_" + META_SCHEM, Column.VARCHAR);
-            t.addColumn("TYPE_NAME", Column.VARCHAR);
-            t.addColumn("CLASS_NAME", Column.BIT);
-            t.addColumn("DATA_TYPE", Column.VARCHAR);
-            t.addColumn("REMARKS", Column.VARCHAR);
-            t.createPrimaryKey();
+            case SYSTEM_PRIMARYKEYS : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn("KEY_SEQ", Types.SMALLINT);
+                t.addColumn("PK_NAME", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            return t;
-        } else if (name.equals("SYSTEM_CONNECTIONINFO")) {
-            Table t = createTable(name);
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table table  = (Table) tTable.elementAt(i);
+                    Index index  = table.getIndex(0);
+                    int   cols[] = index.getColumns();
 
-            t.addColumn("KEY", Column.VARCHAR);
-            t.addColumn("VALUE", Column.VARCHAR);
-            t.createPrimaryKey();
+                    // fredt - don't report primary key on hidden column
+                    if (cols[0] == table.getColumnCount()) {
+                        continue;
+                    }
 
-            Object o[] = t.getNewRow();
+                    int len = cols.length;
 
-            o[0] = "USER";
-            o[1] = channel.getUsername();
+                    for (int j = 0; j < len; j++) {
+                        Object o[] = t.getNewRow();
 
-            t.insert(o, null);
+                        o[0] = o[1] = "";
+                        o[2] = table.getName().name;
+                        o[3] = table.getColumn(cols[j]).columnName.name;
+                        o[4] = new Integer((j + 1));
+                        o[5] = index.getName().name;
 
-            o    = t.getNewRow();
-            o[0] = "READONLY";
-            o[1] = channel.isReadOnly() ? "TRUE"
-                                        : "FALSE";
+                        t.insert(o, null);
+                    }
+                }
 
-            t.insert(o, null);
+                return t;
+            }
+            case SYSTEM_IMPORTEDKEYS :
+            case SYSTEM_EXPORTEDKEYS :
+            case SYSTEM_CROSSREFERENCE :
+                return getCrossReference(name, session);
 
-            o    = t.getNewRow();
-            o[0] = "MAXROWS";
-            o[1] = "" + channel.getMaxRows();
+            case SYSTEM_TYPEINFO : {
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn("DATA_TYPE", Types.SMALLINT);
+                t.addColumn("PRECISION", Types.INTEGER);
+                t.addColumn("LITERAL_PREFIX", Types.VARCHAR);
+                t.addColumn("LITERAL_SUFFIX", Types.VARCHAR);
+                t.addColumn("CREATE_PARAMS", Types.VARCHAR);
+                t.addColumn("NULLABLE", Types.SMALLINT);
+                t.addColumn("CASE_SENSITIVE", Types.BIT);
+                t.addColumn("SEARCHABLE", Types.SMALLINT);
+                t.addColumn("UNSIGNED_ATTRIBUTE", Types.BIT);
+                t.addColumn(META_FIXED_PREC_SCALE, Types.BIT);
+                t.addColumn("AUTO_INCREMENT", Types.BIT);
+                t.addColumn("LOCAL_TYPE_NAME", Types.VARCHAR);
+                t.addColumn("MINIMUM_SCALE", Types.SMALLINT);
+                t.addColumn("MAXIMUM_SCALE", Types.SMALLINT);
+                t.addColumn("SQL_DATE_TYPE", Types.INTEGER);
+                t.addColumn("SQL_DATETIME_SUB", Types.INTEGER);
+                t.addColumn("NUM_PREC_RADIX", Types.INTEGER);
+                t.createPrimaryKey();
 
-            t.insert(o, null);
+                for (int i = 0; i < Column.TYPES.length; i++) {
+                    Object o[]  = t.getNewRow();
+                    int    type = Column.TYPES[i];
 
-            o    = t.getNewRow();
-            o[0] = "DATABASE";
-            o[1] = "" + channel.getDatabase().getName();
+                    o[0] = Column.getTypeString(type);
+                    o[1] = new Integer(type);
+                    o[2] = INTEGER_0;             // precision
+                    o[6] = new Integer(DatabaseMetaData.typeNullable);
+                    o[7] = new Boolean(true);     // case sensitive
+                    o[8] = new Integer(DatabaseMetaData.typeSearchable);
+                    o[9] = new Boolean(false);    // unsigned
+                    o[10] = new Boolean(type == Types.NUMERIC
+                                        || type == Types.DECIMAL);
+                    o[11] = new Boolean(type == Types.INTEGER);
+                    o[12] = o[0];
+                    o[13] = INTEGER_0;
+                    o[14] = INTEGER_0;            // maximum scale
+                    o[17] = new Integer(10);
 
-            t.insert(o, null);
+                    t.insert(o, null);
+                }
 
-            o    = t.getNewRow();
-            o[0] = "IDENTITY";
-            o[1] = "" + channel.getLastIdentity();
+                return t;
+            }
+            case SYSTEM_INDEXINFO : {
+                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TABLE_NAME", Types.VARCHAR);
+                t.addColumn("NON_UNIQUE", Types.BIT);
+                t.addColumn("INDEX_QUALIFIER", Types.VARCHAR);
+                t.addColumn("INDEX_NAME", Types.VARCHAR);
+                t.addColumn("TYPE", Types.SMALLINT);
+                t.addColumn(META_ORDINAL_POSITION, Types.SMALLINT);
+                t.addColumn("COLUMN_NAME", Types.VARCHAR);
+                t.addColumn(META_ASC_OR_DESC, Types.VARCHAR);
+                t.addColumn("CARDINALITY", Types.INTEGER);
+                t.addColumn("PAGES", Types.INTEGER);
+                t.addColumn("FILTER_CONDITION", Types.VARCHAR);
+                t.createPrimaryKey();
 
-            t.insert(o, null);
+                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                    Table table = (Table) tTable.elementAt(i);
 
-            return t;
-        } else if (name.equals("SYSTEM_USERS")) {
-            Table t = createTable(name);
+                    for (int j = 0; j < table.getIndexCount(); j++) {
+                        Index index  = table.getIndex(j);
+                        int   cols[] = index.getColumns();
+                        int   len    = index.getVisibleColumns();
 
-            t.addColumn("USER", Column.VARCHAR);
-            t.addColumn("ADMIN", Column.BIT);
-            t.createPrimaryKey();
+                        for (int k = 0; k < len; k++) {
+                            Object o[] = t.getNewRow();
 
-            Vector v = aAccess.getUsers();
+                            o[0] = o[1] = "";
+                            o[2] = table.getName().name;
+                            o[3] = new Boolean(!index.isUnique());
+                            o[5] = index.getName().name;
+                            o[6] = new Integer(
+                                DatabaseMetaData.tableIndexOther);
+                            o[7] = new Integer(k + 1);
+                            o[8] = table.getColumn(cols[k]).columnName.name;
+                            o[9] = "A";
 
-            for (int i = 0; i < v.size(); i++) {
-                User u = (User) v.elementAt(i);
+                            t.insert(o, null);
+                        }
+                    }
+                }
 
-                // todo: this is not a nice implementation
-                if (u == null) {
+                return t;
+            }
+            case SYSTEM_UDTS : {
+                t.addColumn("TYPE_" + META_CAT, Types.VARCHAR);
+                t.addColumn("TYPE_" + META_SCHEM, Types.VARCHAR);
+                t.addColumn("TYPE_NAME", Types.VARCHAR);
+                t.addColumn("CLASS_NAME", Types.BIT);
+                t.addColumn("DATA_TYPE", Types.VARCHAR);
+                t.addColumn("REMARKS", Types.VARCHAR);
+
+// boucherb@users 20020415 added for JDBC 3 clients
+                t.addColumn("BASE_TYPE ", Types.SMALLINT);
+                t.createPrimaryKey();
+
+                return t;
+            }
+            case SYSTEM_CONNECTIONINFO : {
+                t.addColumn("KEY", Types.VARCHAR);
+                t.addColumn("VALUE", Types.VARCHAR);
+                t.createPrimaryKey();
+
+                Object o[] = t.getNewRow();
+
+                o[0] = "USER";
+                o[1] = session.getUsername();
+
+                t.insert(o, null);
+
+                o    = t.getNewRow();
+                o[0] = "READONLY";
+                o[1] = session.isReadOnly() ? "TRUE"
+                                            : "FALSE";
+
+                t.insert(o, null);
+
+                o    = t.getNewRow();
+                o[0] = "MAXROWS";
+                o[1] = String.valueOf(session.getMaxRows());
+
+                t.insert(o, null);
+
+                o    = t.getNewRow();
+                o[0] = "DATABASE";
+                o[1] = session.getDatabase().getName();
+
+                t.insert(o, null);
+
+                o    = t.getNewRow();
+                o[0] = "IDENTITY";
+                o[1] = String.valueOf(session.getLastIdentity());
+
+                t.insert(o, null);
+
+                return t;
+            }
+            case SYSTEM_USERS : {
+                t.addColumn("USER", Types.VARCHAR);
+                t.addColumn("ADMIN", Types.BIT);
+                t.createPrimaryKey();
+
+                Vector v = aAccess.getUsers();
+
+                for (int i = 0, vSize = v.size(); i < vSize; i++) {
+                    User u = (User) v.elementAt(i);
+
+                    // todo: this is not a nice implementation
+                    if (u == null) {
+                        continue;
+                    }
+
+                    String user = u.getName();
+
+                    if (!user.equals("PUBLIC")) {
+                        Object o[] = t.getNewRow();
+
+                        o[0] = user;
+                        o[1] = new Boolean(u.isAdmin());
+
+                        t.insert(o, null);
+                    }
+                }
+
+                return t;
+            }
+            default :
+                return null;
+        }
+    }
+
+    static final Short importedKeyNoActionShort =
+        new Short((short) DatabaseMetaData.importedKeyNoAction);
+    static final Short importedKeyNotDeferrableShort =
+        new Short((short) DatabaseMetaData.importedKeyNotDeferrable);
+
+    Table getCrossReference(HsqlName name,
+                            Session session) throws SQLException {
+
+        Table t = createTable(name);
+
+        t.addColumn("PKTABLE_" + META_CAT, Types.VARCHAR);
+        t.addColumn("PKTABLE_" + META_SCHEM, Types.VARCHAR);
+        t.addColumn("PKTABLE_NAME", Types.VARCHAR);
+        t.addColumn("PKCOLUMN_NAME", Types.VARCHAR);
+        t.addColumn("FKTABLE_" + META_CAT, Types.VARCHAR);
+        t.addColumn("FKTABLE_" + META_SCHEM, Types.VARCHAR);
+        t.addColumn("FKTABLE_NAME", Types.VARCHAR);
+        t.addColumn("FKCOLUMN_NAME", Types.VARCHAR);
+        t.addColumn("KEY_SEQ", Types.SMALLINT);
+        t.addColumn("UPDATE_RULE", Types.SMALLINT);
+        t.addColumn("DELETE_RULE", Types.SMALLINT);
+        t.addColumn("FK_NAME", Types.VARCHAR);
+        t.addColumn("PK_NAME", Types.VARCHAR);
+        t.addColumn("DEFERRABILITY", Types.SMALLINT);
+        t.createPrimaryKey();
+
+        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+            Table      table     = (Table) tTable.elementAt(i);
+            Vector     constVect = table.getConstraints();
+            Constraint constraint;
+
+            for (int j = 0; j < constVect.size(); j++) {
+                constraint = (Constraint) constVect.elementAt(j);
+
+                if (constraint.getType() != Constraint.MAIN) {
                     continue;
                 }
 
-                String user = u.getName();
+                String mainTableName = constraint.getMain().tableName.name;
+                String refTableName  = constraint.getRef().tableName.name;
 
-                if (!user.equals("PUBLIC")) {
+                if (dDatabase.findUserTable(mainTableName) == null
+                        || dDatabase.findUserTable(refTableName) == null) {
+                    continue;
+                }
+
+                int pkcols[] = constraint.getMainColumns();
+                int fkcols[] = constraint.getRefColumns();
+                int len      = pkcols.length;
+
+                for (int k = 0; k < len; k++) {
                     Object o[] = t.getNewRow();
 
-                    o[0] = user;
-                    o[1] = new Boolean(u.isAdmin());
+                    o[0] = o[1] = "";
+                    o[2] = mainTableName;
+                    o[3] = constraint.getMain().getColumn(
+                        pkcols[k]).columnName.name;
+                    o[4] = o[5] = "";
+                    o[6] = refTableName;
+                    o[7] = constraint.getRef().getColumn(
+                        fkcols[k]).columnName.name;
+                    o[8]  = new Short((short) (k + 1));
+                    o[9]  = importedKeyNoActionShort;
+                    o[10] = importedKeyNoActionShort;
+                    o[11] = constraint.getFkName();
+                    o[12] = constraint.getPkName();
+                    o[13] = importedKeyNotDeferrableShort;
 
                     t.insert(o, null);
                 }
             }
-
-            return t;
         }
 
-        return null;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param bDrop
-     * @param bInsert
-     * @param bCached
-     * @param channel
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    Result getScript(boolean bDrop, boolean bInsert, boolean bCached,
-                     Channel channel) throws SQLException {
-
-        channel.checkAdmin();
-
-        Result r = new Result(1);
-
-        r.iType[0]  = Column.VARCHAR;
-        r.sTable[0] = "SYSTEM_SCRIPT";
-        r.sLabel[0] = "COMMAND";
-        r.sName[0]  = "COMMAND";
-
-        StringBuffer a;
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Table t = (Table) tTable.elementAt(i);
-
-            if (bDrop) {
-                addRow(r, "DROP TABLE " + t.getName());
-            }
-
-            a = new StringBuffer("CREATE ");
-
-            if (t.isCached()) {
-                a.append("CACHED ");
-            }
-
-            a.append("TABLE ");
-            a.append(t.getName());
-            a.append('(');
-
-            int   columns = t.getColumnCount();
-            Index pki     = t.getIndex("SYSTEM_PK");
-            int   pk      = (pki == null) ? -1
-                                          : pki.getColumns()[0];
-
-            for (int j = 0; j < columns; j++) {
-                a.append(t.getColumnName(j));
-                a.append(' ');
-                a.append(Column.getType(t.getType(j)));
-
-                if (!t.getColumnIsNullable(j)) {
-                    a.append(" NOT NULL");
-                }
-
-                if (j == t.getIdentityColumn()) {
-                    a.append(" IDENTITY");
-                }
-
-                if (j == pk) {
-                    a.append(" PRIMARY KEY");
-                }
-
-                if (j < columns - 1) {
-                    a.append(',');
-                }
-            }
-
-            Vector v = t.getConstraints();
-
-            for (int j = 0; j < v.size(); j++) {
-                Constraint c = (Constraint) v.elementAt(j);
-
-                if (c.getType() == Constraint.FOREIGN_KEY) {
-                    a.append(",FOREIGN KEY");
-
-                    int col[] = c.getRefColumns();
-
-                    a.append(getColumnList(c.getRef(), col, col.length));
-                    a.append("REFERENCES ");
-                    a.append(c.getMain().getName());
-
-                    col = c.getMainColumns();
-
-                    a.append(getColumnList(c.getMain(), col, col.length));
-                } else if (c.getType() == Constraint.UNIQUE) {
-                    a.append(",UNIQUE");
-
-                    int col[] = c.getMainColumns();
-
-                    a.append(getColumnList(c.getMain(), col, col.length));
-                }
-            }
-
-            a.append(')');
-            addRow(r, a.toString());
-
-            Index index = null;
-
-            while (true) {
-                index = t.getNextIndex(index);
-
-                if (index == null) {
-                    break;
-                }
-
-                String indexname = index.getName();
-
-                if (indexname.equals("SYSTEM_PK")) {
-                    continue;
-                } else if (indexname.startsWith("SYSTEM_FOREIGN_KEY")) {
-
-                    // foreign keys where created in the 'create table'
-                    continue;
-                } else if (indexname.startsWith("SYSTEM_CONSTRAINT")) {
-
-                    // constraints where created in the 'create table'
-                    continue;
-                }
-
-                a = new StringBuffer("CREATE ");
-
-                if (index.isUnique()) {
-                    a.append("UNIQUE ");
-                }
-
-                a.append("INDEX ");
-                a.append(indexname);
-                a.append(" ON ");
-                a.append(t.getName());
-
-                int col[] = index.getColumns();
-                int len   = col.length;
-
-                if (!index.isUnique()) {
-                    len--;
-                }
-
-                a.append(getColumnList(t, col, len));
-                addRow(r, a.toString());
-            }
-
-            if (bInsert) {
-                Index   primary   = t.getPrimaryIndex();
-                Node    x         = primary.first();
-                boolean integrity = true;
-
-                if (x != null) {
-                    integrity = false;
-
-                    addRow(r, "SET REFERENTIAL_INTEGRITY FALSE");
-                }
-
-                while (x != null) {
-                    addRow(r, t.getInsertStatement(x.getData()));
-
-                    x = primary.next(x);
-                }
-
-                if (!integrity) {
-                    addRow(r, "SET REFERENTIAL_INTEGRITY TRUE");
-                }
-            }
-
-            if (bCached && t.isCached()) {
-                a = new StringBuffer("SET TABLE ");
-
-                a.append(t.getName());
-                a.append(" INDEX '");
-                a.append(t.getIndexRoots());
-                a.append("'");
-                addRow(r, a.toString());
-            }
-
-            // trigger script
-            int numTrigs = TriggerDef.numTrigs();
-
-            for (int tv = 0; tv < numTrigs; tv++) {
-                Vector trigVec = t.vTrigs[tv];
-                int    trCount = trigVec.size();
-
-                for (int k = 0; k < trCount; k++) {
-                    a = ((TriggerDef) trigVec.elementAt(k)).toBuf();
-
-                    addRow(r, a.toString());
-                }
-            }
-        }
-
-        Vector v = aAccess.getUsers();
-
-        for (int i = 0; i < v.size(); i++) {
-            User u = (User) v.elementAt(i);
-
-            // todo: this is not a nice implementation
-            if (u == null) {
-                continue;
-            }
-
-            String name = u.getName();
-
-            if (!name.equals("PUBLIC")) {
-                a = new StringBuffer("CREATE USER ");
-
-                a.append(name);
-                a.append(" PASSWORD ");
-                a.append("\"" + u.getPassword() + "\"");
-
-                if (u.isAdmin()) {
-                    a.append(" ADMIN");
-                }
-
-                addRow(r, a.toString());
-            }
-
-            Hashtable rights = u.getRights();
-
-            if (rights == null) {
-                continue;
-            }
-
-            Enumeration e = rights.keys();
-
-            while (e.hasMoreElements()) {
-                String object = (String) e.nextElement();
-                int    right  = ((Integer) (rights.get(object))).intValue();
-
-                if (right == 0) {
-                    continue;
-                }
-
-                a = new StringBuffer("GRANT ");
-
-                a.append(Access.getRight(right));
-                a.append(" ON ");
-                a.append(object);
-                a.append(" TO ");
-                a.append(u.getName());
-                addRow(r, a.toString());
-            }
-        }
-
-        if (dDatabase.isIgnoreCase()) {
-            addRow(r, "SET IGNORECASE TRUE");
-        }
-
-        Hashtable   h = dDatabase.getAlias();
-        Enumeration e = h.keys();
-
-        while (e.hasMoreElements()) {
-            String alias = (String) e.nextElement();
-            String java  = (String) h.get(alias);
-
-            addRow(r, "CREATE ALIAS " + alias + " FOR \"" + java + "\"");
-        }
-
-        return r;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param t
-     * @param col
-     * @param len
-     *
-     * @return
-     */
-    private String getColumnList(Table t, int col[], int len) {
-
-        StringBuffer a = new StringBuffer("(");
-
-        for (int i = 0; i < len; i++) {
-            a.append(t.getColumnName(col[i]));
-
-            if (i < len - 1) {
-                a.append(',');
-            }
-        }
-
-        return a.append(')').toString();
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param sql
-     */
-    private void addRow(Result r, String sql) {
-
-        String s[] = new String[1];
-
-        s[0] = sql;
-
-        r.add(s);
+        return t;
     }
 
     /**
@@ -943,7 +837,7 @@ class DatabaseInformation {
      *
      * @return
      */
-    private Table createTable(String name) {
-        return new Table(dDatabase, false, name, false);
+    private Table createTable(HsqlName name) throws SQLException {
+        return new Table(dDatabase, name, Table.SYSTEM_TABLE, null);
     }
 }

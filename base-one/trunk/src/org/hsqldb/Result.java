@@ -67,57 +67,68 @@
 
 package org.hsqldb;
 
+import java.io.IOException;
 import java.sql.SQLException;
-import java.io.*;
+
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// to ensure consistency of r.rTail r.iSize in all operations
+// methods for set operations moved here from Select.java
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// rewrite of LIMIT n m to apply to each select statement separately
 
 /**
- * Class declaration
+ *  Class declaration
  *
- *
- * @version 1.0.0.1
+ * @version    1.7.0
  */
 class Result {
 
     private Record   rTail;
     private int      iSize;
     private int      iColumnCount;
-    final static int UPDATECOUNT = 0,
-                     ERROR       = 1,
-                     DATA        = 2;
+    static final int UPDATECOUNT = 0;
+    static final int ERROR       = 1;
+    static final int DATA        = 2;
     int              iMode;
     String           sError;
+    int              errorCode;
     int              iUpdateCount;
     Record           rRoot;
     String           sLabel[];
     String           sTable[];
     String           sName[];
-    int              iType[];
+    boolean          isLabelQuoted[];
+    int              colType[];
+    int              colSize[];
+    int              colScale[];
 
     /**
-     * Constructor declaration
-     *
+     *  Constructor declaration
      */
     Result() {
         iMode        = UPDATECOUNT;
         iUpdateCount = 0;
     }
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param error
+     * @param  error
+     * @param  code   Description of the Parameter
      */
-    Result(String error) {
-        iMode  = ERROR;
-        sError = error;
+    Result(String error, int code) {
+
+        iMode     = ERROR;
+        sError    = error;
+        errorCode = code;
     }
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param columns
+     * @param  columns
      */
     Result(int columns) {
 
@@ -127,8 +138,47 @@ class Result {
     }
 
     /**
-     * Method declaration
+     *  Constructor declaration
      *
+     * @param  b
+     * @exception  SQLException  Description of the Exception
+     */
+    Result(byte b[]) throws SQLException {
+
+        try {
+            DatabaseRowInputInterface in = new BinaryServerRowInput(b);
+
+            iMode = in.readIntData();
+
+            if (iMode == ERROR) {
+                throw Trace.getError(in.readIntData(), in.readString());
+            } else if (iMode == UPDATECOUNT) {
+                iUpdateCount = in.readIntData();
+            } else if (iMode == DATA) {
+                int l = in.readIntData();
+
+                prepareData(l);
+
+                iColumnCount = l;
+
+                for (int i = 0; i < l; i++) {
+                    colType[i] = in.readType();
+                    sLabel[i]  = in.readString();
+                    sTable[i]  = in.readString();
+                    sName[i]   = in.readString();
+                }
+
+                while (in.available() != 0) {
+                    add(in.readData(colType));
+                }
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.TRANSFER_CORRUPTED);
+        }
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
@@ -137,18 +187,16 @@ class Result {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param columns
+     * @param  columns
      */
     void setColumnCount(int columns) {
         iColumnCount = columns;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -157,10 +205,9 @@ class Result {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param a
+     * @param  a
      */
     void append(Result a) {
 
@@ -175,10 +222,21 @@ class Result {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @param  a
+     */
+    void setRows(Result a) {
+
+        rRoot = a.rRoot;
+        rTail = a.rTail;
+        iSize = a.iSize;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @param d
+     * @param  d
      */
     void add(Object d[]) {
 
@@ -198,105 +256,421 @@ class Result {
     }
 
     /**
-     * Constructor declaration
+     *  Method declaration
      *
-     *
-     * @param b
+     * @param  limitstart  number of records to discard at the head
+     * @param  limitcount  number of records to keep, all the rest if 0
      */
-    Result(byte b[]) throws SQLException {
 
-        ByteArrayInputStream bin = new ByteArrayInputStream(b);
-        DataInputStream      in  = new DataInputStream(bin);
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// rewritten and moved from Select.java
+    void trimResult(int limitstart, int limitcount) {
 
-        try {
-            iMode = in.readInt();
+        Record n = rRoot;
 
-            if (iMode == ERROR) {
-                throw Trace.getError(in.readUTF());
-            } else if (iMode == UPDATECOUNT) {
-                iUpdateCount = in.readInt();
-            } else if (iMode == DATA) {
-                int l = in.readInt();
-
-                prepareData(l);
-
-                iColumnCount = l;
-
-                for (int i = 0; i < l; i++) {
-                    iType[i]  = in.readInt();
-                    sLabel[i] = in.readUTF();
-                    sTable[i] = in.readUTF();
-                    sName[i]  = in.readUTF();
-                }
-
-                while (in.available() != 0) {
-                    add(Column.readData(in, l));
-                }
-            }
-        } catch (IOException e) {
-            Trace.error(Trace.TRANSFER_CORRUPTED);
+        if (n == null) {
+            return;
         }
+
+        if (limitstart >= iSize) {
+            iSize = 0;
+            rRoot = rTail = null;
+
+            return;
+        }
+
+        iSize -= limitstart;
+
+        for (int i = 0; i < limitstart; i++) {
+            n = n.next;
+
+            if (n == null) {
+
+                // if iSize is consistent this block will never be reached
+                iSize = 0;
+                rRoot = rTail = n;
+
+                return;
+            }
+        }
+
+        rRoot = n;
+
+        if (limitcount == 0 || limitcount >= iSize) {
+            return;
+        }
+
+        for (int i = 1; i < limitcount; i++) {
+            n = n.next;
+
+            if (n == null) {
+
+                // if iSize is consistent this block will never be reached
+                return;
+            }
+        }
+
+        n.next = null;
+        rTail  = n;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @throws  SQLException
+     */
+
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// to ensure consistency of r.rTail r.iSize in all set operations
+    void removeDuplicates() throws SQLException {
+
+        if (rRoot == null) {
+            return;
+        }
+
+        int len     = getColumnCount();
+        int order[] = new int[len];
+        int way[]   = new int[len];
+
+        for (int i = 0; i < len; i++) {
+            order[i] = i;
+            way[i]   = 1;
+        }
+
+        sortResult(order, way);
+
+        Record n = rRoot;
+
+        for (;;) {
+            Record next = n.next;
+
+            if (next == null) {
+                break;
+            }
+
+            if (compareRecord(n.data, next.data, len) == 0) {
+                n.next = next.next;
+
+                iSize--;
+            } else {
+                n = next;
+            }
+        }
+
+        rTail = n;
+
+        Trace.doAssert(rTail.next == null,
+                       "rTail not correct in Result.removeDuplicates iSise ="
+                       + iSize);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  minus
+     * @throws  SQLException
+     */
+    void removeSecond(Result minus) throws SQLException {
+
+        removeDuplicates();
+        minus.removeDuplicates();
+
+        int     len   = getColumnCount();
+        Record  n     = rRoot;
+        Record  last  = rRoot;
+        boolean rootr = true;    // checking rootrecord
+        Record  n2    = minus.rRoot;
+        int     i     = 0;
+
+        while (n != null && n2 != null) {
+            i = compareRecord(n.data, n2.data, len);
+
+            if (i == 0) {
+                if (rootr) {
+                    rRoot = last = n.next;
+                } else {
+                    last.next = n.next;
+                }
+
+                n = n.next;
+
+                iSize--;
+            } else if (i > 0) {    // r > minus
+                n2 = n2.next;
+            } else {               // r < minus
+                last  = n;
+                rootr = false;
+                n     = n.next;
+            }
+        }
+
+        for (; n != null; ) {
+            last = n;
+            n    = n.next;
+        }
+
+        rTail = last;
+
+        Trace.doAssert(
+            (rRoot == null && rTail == null) || rTail.next == null,
+            "rTail not correct in Result.removeSecond iSise =" + iSize);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  r2
+     * @throws  SQLException
+     */
+    void removeDifferent(Result r2) throws SQLException {
+
+        removeDuplicates();
+        r2.removeDuplicates();
+
+        int     len   = getColumnCount();
+        Record  n     = rRoot;
+        Record  last  = rRoot;
+        boolean rootr = true;    // checking rootrecord
+        Record  n2    = r2.rRoot;
+        int     i     = 0;
+
+        iSize = 0;
+
+        while (n != null && n2 != null) {
+            i = compareRecord(n.data, n2.data, len);
+
+            if (i == 0) {             // same rows
+                if (rootr) {
+                    rRoot = n;        // make this the first record
+                } else {
+                    last.next = n;    // this is next record in resultset
+                }
+
+                rootr = false;
+                last  = n;            // this is last record in resultset
+                n     = n.next;
+                n2    = n2.next;
+
+                iSize++;
+            } else if (i > 0) {       // r > r2
+                n2 = n2.next;
+            } else {                  // r < r2
+                n = n.next;
+            }
+        }
+
+        if (rootr) {             // if no lines in resultset
+            rRoot = null;        // then return null
+            last  = null;
+        } else {
+            last.next = null;    // else end resultset
+        }
+
+        rTail = last;
+
+        Trace.doAssert(
+            (rRoot == null && rTail == null) || rTail.next == null,
+            "rTail not correct in Result.removeDifference iSise =" + iSize);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  order
+     * @param  way
+     * @throws  SQLException
+     */
+    void sortResult(int order[], int way[]) throws SQLException {
+
+        if (rRoot == null || rRoot.next == null) {
+            return;
+        }
+
+        Record source0, source1;
+        Record target[]     = new Record[2];
+        Record targetlast[] = new Record[2];
+        int    dest         = 0;
+        Record n            = rRoot;
+
+        while (n != null) {
+            Record next = n.next;
+
+            n.next       = target[dest];
+            target[dest] = n;
+            n            = next;
+            dest         ^= 1;
+        }
+
+        for (int blocksize = 1; target[1] != null; blocksize <<= 1) {
+            source0   = target[0];
+            source1   = target[1];
+            target[0] = target[1] = targetlast[0] = targetlast[1] = null;
+
+            for (dest = 0; source0 != null; dest ^= 1) {
+                int n0 = blocksize,
+                    n1 = blocksize;
+
+                while (true) {
+                    if (n0 == 0 || source0 == null) {
+                        if (n1 == 0 || source1 == null) {
+                            break;
+                        }
+
+                        n       = source1;
+                        source1 = source1.next;
+
+                        n1--;
+                    } else if (n1 == 0 || source1 == null) {
+                        n       = source0;
+                        source0 = source0.next;
+
+                        n0--;
+                    } else if (compareRecord(
+                            source0.data, source1.data, order, way) > 0) {
+                        n       = source1;
+                        source1 = source1.next;
+
+                        n1--;
+                    } else {
+                        n       = source0;
+                        source0 = source0.next;
+
+                        n0--;
+                    }
+
+                    if (target[dest] == null) {
+                        target[dest] = n;
+                    } else {
+                        targetlast[dest].next = n;
+                    }
+
+                    targetlast[dest] = n;
+                    n.next           = null;
+                }
+            }
+        }
+
+        rRoot = target[0];
+        rTail = targetlast[0];
+
+        Trace.doAssert(rTail.next == null,
+                       "rTail not correct in Result.sortResult iSise ="
+                       + iSize);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  a
+     * @param  b
+     * @param  order
+     * @param  way
+     * @return
+     * @throws  SQLException
+     */
+    private int compareRecord(Object a[], Object b[], int order[],
+                              int way[]) throws SQLException {
+
+        int i = Column.compare(a[order[0]], b[order[0]], colType[order[0]]);
+
+        if (i == 0) {
+            for (int j = 1; j < order.length; j++) {
+                i = Column.compare(a[order[j]], b[order[j]],
+                                   colType[order[j]]);
+
+                if (i != 0) {
+                    return i * way[j];
+                }
+            }
+        }
+
+        return i * way[0];
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  a
+     * @param  b
+     * @param  len
+     * @return
+     * @throws  SQLException
+     */
+    private int compareRecord(Object a[], Object b[],
+                              int len) throws SQLException {
+
+        for (int j = 0; j < len; j++) {
+            int i = Column.compare(a[j], b[j], colType[j]);
+
+            if (i != 0) {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+
+    /**
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     byte[] getBytes() throws SQLException {
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        DataOutputStream      out  = new DataOutputStream(bout);
-
         try {
-            out.writeInt(iMode);
+            DatabaseRowOutputInterface out = new BinaryServerRowOutput();
+
+            out.writeIntData(iMode);
 
             if (iMode == UPDATECOUNT) {
-                out.writeInt(iUpdateCount);
+                out.writeIntData(iUpdateCount);
             } else if (iMode == ERROR) {
-                out.writeUTF(sError);
+                out.writeIntData(errorCode);
+                out.writeString(sError);
             } else {
                 int l = iColumnCount;
 
-                out.writeInt(l);
+                out.writeIntData(l);
 
                 Record n = rRoot;
 
                 for (int i = 0; i < l; i++) {
-                    out.writeInt(iType[i]);
-                    out.writeUTF(sLabel[i]);
-                    out.writeUTF(sTable[i]);
-                    out.writeUTF(sName[i]);
+                    out.writeType(colType[i]);
+                    out.writeString(sLabel[i]);
+                    out.writeString(sTable[i]);
+                    out.writeString(sName[i]);
                 }
 
                 while (n != null) {
-                    Column.writeData(out, l, iType, n.data);
+                    out.writeData(l, colType, n.data);
 
                     n = n.next;
                 }
             }
 
-            return bout.toByteArray();
+            return out.toByteArray();
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param columns
+     * @param  columns
      */
     private void prepareData(int columns) {
 
-        iMode  = DATA;
-        sLabel = new String[columns];
-        sTable = new String[columns];
-        sName  = new String[columns];
-        iType  = new int[columns];
+        iMode         = DATA;
+        sLabel        = new String[columns];
+        sTable        = new String[columns];
+        sName         = new String[columns];
+        isLabelQuoted = new boolean[columns];
+        colType       = new int[columns];
+        colSize       = new int[columns];
+        colScale      = new int[columns];
     }
 }

@@ -71,7 +71,7 @@ package org.hsqldb;
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Like {
 
@@ -107,18 +107,18 @@ class Like {
      */
     String getStartsWith() {
 
-        String s = "";
-        int    i = 0;
+        StringBuffer s = new StringBuffer();
+        int          i = 0;
 
-        for (; i < iLen && iType[i] == 0; i++) {
-            s = s + cLike[i];
+        for (; (i < iLen) && (iType[i] == 0); i++) {
+            s.append(cLike[i]);
         }
 
         if (i == 0) {
             return null;
         }
 
-        return s;
+        return s.toString();
     }
 
     /**
@@ -161,7 +161,7 @@ class Like {
             switch (iType[i]) {
 
                 case 0 :    // general character
-                    if (j >= jLen || cLike[i] != s.charAt(j++)) {
+                    if ((j >= jLen) || (cLike[i] != s.charAt(j++))) {
                         return false;
                     }
                     break;
@@ -178,7 +178,7 @@ class Like {
                     }
 
                     while (j < jLen) {
-                        if (cLike[i] == s.charAt(j)
+                        if ((cLike[i] == s.charAt(j))
                                 && compareAt(s, i, j, jLen)) {
                             return true;
                         }
@@ -225,7 +225,7 @@ class Like {
             char c = s.charAt(i);
 
             if (bEscaping == false) {
-                if (b && c == e) {
+                if (b && (c == e)) {
                     bEscaping = true;
 
                     continue;
@@ -250,7 +250,7 @@ class Like {
         }
 
         for (int i = 0; i < iLen - 1; i++) {
-            if (iType[i] == 2 && iType[i + 1] == 1) {
+            if ((iType[i] == 2) && (iType[i + 1] == 1)) {
                 iType[i]     = 1;
                 iType[i + 1] = 2;
             }

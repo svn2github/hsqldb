@@ -36,7 +36,7 @@ package org.hsqldb;
  *
  *
  * @author Peter Hudson
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 public interface Trigger {
 

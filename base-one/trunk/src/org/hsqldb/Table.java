@@ -67,56 +67,123 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.ArrayUtil;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Vector;
 
+// fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
+// for sql standard quoted identifiers for column and table names and aliases
+// applied to different places
+// fredt@users 20020225 - patch 1.7.0 - restructuring
+// some methods moved from Database.java, some rewritten
+// changes to several methods
+// fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
+// fredt@users 20020225 - patch 1.7.0 - named constraints
+// boucherb@users 20020225 - patch 1.7.0 - multi-column primary keys
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+
 /**
- * Class declaration
+ *  Holds the data structures and methods for creation of a database table.
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Table {
 
-    private String   sName;
-    private Vector   vColumn;
-    private Vector   vIndex;             // vIndex(0) is always the primary key index
-    private int      iVisibleColumns;    // table may contain a hidden primary key
-    private int      iColumnCount;       // inclusive the (maybe hidden) primary key
-    private int      iPrimaryKey;
-    private boolean  bCached;
-    private Database dDatabase;
-    private Log      lLog;
-    private int      iIndexCount;
-    private int      iIdentityColumn;    // -1 means no such row
-    private int      iIdentityId;
-    private Vector   vConstraint;
-    private int      iConstraintCount;
-    Cache            cCache;
-    Vector           vTrigs[];
+    // types of table
+    static final int    SYSTEM_TABLE    = 0;
+    static final int    TEMP_TABLE      = 1;
+    static final int    MEMORY_TABLE    = 2;
+    static final int    CACHED_TABLE    = 3;
+    static final int    TEMP_TEXT_TABLE = 4;
+    static final int    TEXT_TABLE      = 5;
+    static final int    VIEW            = 6;
+    static final String DEFAULT_PK      = "SYSTEM_ID";
+
+    // main properties
+    private Vector  vColumn;               // columns in table
+    private Vector  vIndex;                // vIndex(0) is the primary key index
+    private int[]   iPrimaryKey;           // column numbers for primary key
+    private int     iIndexCount;           // size of vIndex
+    private int     iIdentityColumn;       // -1 means no such row
+    private int     iIdentityId;           // next value of identity column
+    Vector          vConstraint;           // constrainst for the table
+    Vector          vTrigs[];              // array of trigger Vectors
+    private int[]   colTypes;              // fredt - types of columns
+    private boolean isSystem;
+    private boolean isText;
+    private boolean isView;
+
+    // properties for subclasses
+    protected int      iColumnCount;       // inclusive the hidden primary key
+    protected int      iVisibleColumns;    // exclusive of hidden primary key
+    protected Database dDatabase;
+    protected Cache    cCache;
+    protected HsqlName tableName;          // SQL name
+    protected int      tableType;
+    protected Session  ownerSession;       // fredt - set for temp tables only
+    protected boolean  isReadOnly;
+    protected boolean  isTemp;
+    protected boolean  isCached;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param db
-     * @param log
-     * @param name
-     * @param cached
+     * @param  db
+     * @param  isTemp
+     * @param  name
+     * @param  cached
+     * @param  nameQuoted        Description of the Parameter
+     * @exception  SQLException  Description of the Exception
      */
-    Table(Database db, boolean log, String name, boolean cached) {
+    Table(Database db, HsqlName name, int type,
+            Session session) throws SQLException {
 
         dDatabase = db;
-        lLog      = log ? db.getLog()
-                        : null;
 
-        if (cached) {
-            cCache  = lLog.cCache;
-            bCached = true;
+        if (type == SYSTEM_TABLE) {
+            isTemp = true;
+        } else if (type == TEMP_TABLE) {
+            Trace.doAssert(session != null);
+
+            isTemp       = true;
+            ownerSession = session;
+        } else if (type == CACHED_TABLE) {
+            cCache = db.logger.getCache();
+
+            if (cCache != null) {
+                isCached = true;
+            } else {
+                type = MEMORY_TABLE;
+            }
+        } else if (type == TEMP_TEXT_TABLE) {
+            Trace.doAssert(session != null);
+
+            if (!db.logger.hasLog()) {
+                throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
+            }
+
+            isTemp       = true;
+            isText       = true;
+            isReadOnly   = true;
+            isCached     = true;
+            ownerSession = session;
+        } else if (type == TEXT_TABLE) {
+            if (!db.logger.hasLog()) {
+                throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
+            }
+
+            isText   = true;
+            isCached = true;
+        } else if (type == VIEW) {
+            isView = true;
         }
 
-        sName           = name;
-        iPrimaryKey     = -1;
+        // type may have changed for CACHED tables
+        tableType       = type;
+        tableName       = name;
+        iPrimaryKey     = null;
         iIdentityColumn = -1;
         vColumn         = new Vector();
         vIndex          = new Vector();
@@ -128,22 +195,69 @@ class Table {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param c
-     */
-    void addConstraint(Constraint c) {
+    boolean equals(String other, Session c) {
 
-        vConstraint.addElement(c);
+        if (isTemp && c.getId() != ownerSession.getId()) {
+            return false;
+        }
 
-        iConstraintCount++;
+        return (tableName.name.equals(other));
+    }
+
+    boolean equals(String other) {
+        return (tableName.name.equals(other));
+    }
+
+    final boolean isText() {
+        return isText;
+    }
+
+    final boolean isTemp() {
+        return isTemp;
+    }
+
+    final boolean isView() {
+        return isView;
+    }
+
+    final boolean isDataReadOnly() {
+        return isReadOnly;
+    }
+
+    void setDataReadOnly(boolean value) throws SQLException {
+        isReadOnly = value;
+    }
+
+    Session getOwnerSession() {
+        return ownerSession;
+    }
+
+    protected void setDataSource(String source, boolean isDesc,
+                                 Session s) throws SQLException {
+
+        // Same exception as setIndexRoots.
+        throw (Trace.error(Trace.TABLE_NOT_FOUND));
+    }
+
+    protected String getDataSource() throws SQLException {
+        return null;
+    }
+
+    protected boolean isDescDataSource() throws SQLException {
+        return (false);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @param  c
+     */
+    void addConstraint(Constraint c) {
+        vConstraint.addElement(c);
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
@@ -152,86 +266,142 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Get the index supporting a constraint that can be used as an index
+     *  of the given type and index column signature.
      *
+     * @param  col column list array
+     * @param  unique for the index
+     * @return
+     */
+    Index getConstraintIndexForColumns(int[] col, boolean unique) {
+
+        Index currentIndex = getPrimaryIndex();
+
+        if (ArrayUtil.haveEquality(currentIndex.getColumns(), col,
+                                   col.length, unique)) {
+            return currentIndex;
+        }
+
+        for (int i = 0; i < vConstraint.size(); i++) {
+            Constraint c = (Constraint) vConstraint.elementAt(i);
+
+            currentIndex = c.getMainIndex();
+
+            if (ArrayUtil.haveEquality(currentIndex.getColumns(), col,
+                                       col.length, unique)) {
+                return currentIndex;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @param name
-     * @param type
+     * @param  from
+     * @param  type
+     * @return
+     */
+    int getNextConstraintIndex(int from, int type) {
+
+        for (int i = from; i < vConstraint.size(); i++) {
+            Constraint c = (Constraint) vConstraint.elementAt(i);
+
+            if (c.getType() == type) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @throws SQLException
+     * @param  name
+     * @param  type
+     * @throws  SQLException
      */
     void addColumn(String name, int type) throws SQLException {
-        addColumn(name, type, true, false);
+
+        Column column = new Column(new HsqlName(name, false), true, type, 0,
+                                   0, false, false, null);
+
+        addColumn(column);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param c
-     *
-     * @throws SQLException
-     */
-    void addColumn(Column c) throws SQLException {
-        addColumn(c.sName, c.iType, c.isNullable(), c.isIdentity());
-    }
+// fredt@users 20020220 - patch 475199 - duplicate column
 
     /**
-     * Method declaration
+     *  Performs the table level checks and adds a column to the table at the
+     *  DDL level.
      *
-     *
-     * @param name
-     * @param type
-     * @param nullable
-     * @param identity
-     *
-     * @throws SQLException
+     * @param  column new column to add
+     * @throws  SQLException when table level checks fail
      */
-    void addColumn(String name, int type, boolean nullable,
-                   boolean identity) throws SQLException {
+    void addColumn(Column column) throws SQLException {
 
-        if (identity) {
-            Trace.check(type == Column.INTEGER, Trace.WRONG_DATA_TYPE, name);
+        if (searchColumn(column.columnName.name) >= 0) {
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
+        }
+
+        if (column.isIdentity()) {
+            Trace.check(column.getType() == Types.INTEGER,
+                        Trace.WRONG_DATA_TYPE, column.columnName.name);
             Trace.check(iIdentityColumn == -1, Trace.SECOND_PRIMARY_KEY,
-                        name);
+                        column.columnName.name);
 
             iIdentityColumn = iColumnCount;
         }
 
-        Trace.assert(iPrimaryKey == -1, "Table.addColumn");
-        vColumn.addElement(new Column(name, nullable, type, identity));
+        Trace.doAssert(iPrimaryKey == null, "Table.addColumn");
+        vColumn.addElement(column);
 
         iColumnCount++;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param result
-     *
-     * @throws SQLException
+     * @param  result
+     * @throws  SQLException
      */
     void addColumns(Result result) throws SQLException {
 
         for (int i = 0; i < result.getColumnCount(); i++) {
-            addColumn(result.sLabel[i], result.iType[i], true, false);
+            Column column = new Column(
+                new HsqlName(result.sLabel[i], result.isLabelQuoted[i]),
+                true, result.colType[i], result.colSize[i],
+                result.colScale[i], false, false, null);
+
+            addColumn(column);
         }
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
-    String getName() {
-        return sName;
+    HsqlName getName() {
+        return tableName;
     }
 
     /**
-     * Method declaration
+     * Changes table name. Used by 'alter table rename to'
      *
+     * @param name
+     * @param isquoted
+     * @throws  SQLException
+     */
+    void setName(String name, boolean isquoted) {
+        tableName.rename(name, isquoted);
+        getPrimaryIndex().getName().rename("SYS_PK", name, isquoted);
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
@@ -242,65 +412,156 @@ class Table {
         return iColumnCount;
     }
 
+    protected Table duplicate() throws SQLException {
+
+        Table t = (new Table(dDatabase, tableName, tableType, ownerSession));
+
+        return t;
+    }
+
     /**
-     * Method declaration
+     * Match two columns arrays for length and type of coluns
      *
-     *
-     * @param withoutindex
-     *
-     * @return
-     *
-     * @throws SQLException
+     * @param col column array from this Table
+     * @param other the other Table object
+     * @param othercol column array from the other Table
+     * @throws SQLException if there is a mismatch
      */
-    Table moveDefinition(String withoutindex) throws SQLException {
+    void checkColumnsMatch(int[] col, Table other,
+                           int[] othercol) throws SQLException {
 
-        Table tn = new Table(dDatabase, true, getName(), isCached());
-
-        for (int i = 0; i < getColumnCount(); i++) {
-            tn.addColumn(getColumn(i));
+        if (col.length != othercol.length) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
 
-        // todo: there should be nothing special with the primary key!
-        if (iVisibleColumns < iColumnCount) {
-            tn.createPrimaryKey();
-        } else {
-            tn.createPrimaryKey(getPrimaryIndex().getColumns()[0]);
+        for (int i = 0; i < col.length; i++) {
+
+            // integrity check - should not throw in normal operation
+            if (col[i] >= iColumnCount || othercol[i] >= other.iColumnCount) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+
+            if (getColumn(col[i]).getType()
+                    != other.getColumn(othercol[i]).getType()) {
+                throw Trace.error(Trace.COLUMN_TYPE_MISMATCH);
+            }
         }
+    }
 
-        Index idx = null;
+// fredt@users 20020405 - patch 1.7.0 by fredt - DROP and CREATE INDEX bug
 
-        while (true) {
-            idx = getNextIndex(idx);
+    /**
+     * DROP INDEX and CREATE INDEX on non empty tables both recreate the table
+     * and the data to reflect the new indexing structure. The new structure
+     * should be reflected in the DDL script immediately, otherwise if a
+     * SHUTDOWN IMMEDIATE occures, the following will happen:<br>
+     * If the table is cached, the index roots will be different from what
+     * is specified in SET INDEX ROOTS. <br>
+     * If the table is memory, the old index will be used until the script
+     * reaches drop index etc. and data is recreated again.<b>
+     *
+     * The fix avoids scripting the row insert and delete ops or the
+     * DROP INDEX command.
+     *
+     * Constraints that need removing are removed outside this (fredt@users)
+     * @param  withoutindex
+     * @param  newcolumn
+     * @param  colindex
+     * @param  adjust -1 or 0 or +1
+     * @return
+     * @throws  SQLException
+     */
+    Table moveDefinition(String withoutindex, Column newcolumn, int colindex,
+                         int adjust) throws SQLException {
 
-            if (idx == null) {
+        Table tn = duplicate();
+
+        for (int i = 0; i < iVisibleColumns + 1; i++) {
+            if (i == colindex) {
+                if (adjust > 0) {
+                    tn.addColumn(newcolumn);
+                } else if (adjust < 0) {
+                    continue;
+                }
+            }
+
+            if (i == iVisibleColumns) {
                 break;
             }
 
-            if (withoutindex != null && idx.getName().equals(withoutindex)) {
+            tn.addColumn(getColumn(i));
+        }
+
+        // treat it the same as new table creation and
+        // take account of the a hidden column
+        int[] primarykey = (iPrimaryKey[0] == iVisibleColumns) ? null
+                                                               : iPrimaryKey;
+
+        if (primarykey != null) {
+            int[] newpk = ArrayUtil.toAdjustedColumnArray(primarykey,
+                colindex, adjust);
+
+            // fredt - we don't drop pk column
+            // in future we can drop signle column pk wih no fk reference
+            if (primarykey.length != newpk.length) {
+                throw Trace.error(Trace.DROP_PRIMARY_KEY);
+            } else {
+                primarykey = newpk;
+            }
+        }
+
+        tn.createPrimaryKey(primarykey);
+
+        for (int i = 1; i < getIndexCount(); i++) {
+            Index idx = getIndex(i);
+
+            if (withoutindex != null
+                    && idx.getName().name.equals(withoutindex)) {
                 continue;
             }
 
-            if (idx == getPrimaryIndex()) {
-                continue;
+            Index newidx = tn.createAdjustedIndex(idx, colindex, adjust);
+
+            if (newidx == null) {
+
+                // fredt - todo - better error message
+                throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
             }
 
-            tn.createIndex(idx);
+            tn.vConstraint = new Vector();
+
+            // fredt - todo - this modifies FK constraints
+            // on other tables which will not revert to their previous state
+            // if an exception is thrown in moveData()
+            for (int j = 0; j < vConstraint.size(); j++) {
+                Constraint oldconst = (Constraint) vConstraint.elementAt(j);
+                Constraint newconst = oldconst.duplicate();
+
+                newconst.replaceTable(this, tn, idx, newidx);
+                tn.vConstraint.addElement(newconst);
+
+                Table target = newconst.getMain();
+
+                if (target == tn) {
+                    target = newconst.getRef();
+                }
+
+                if (target != null && target != tn) {
+                    for (int k = 0; k < target.vConstraint.size(); k++) {
+                        Constraint tempconst =
+                            (Constraint) target.vConstraint.elementAt(k);
+
+                        tempconst.replaceTable(this, tn, idx, newidx);
+                    }
+                }
+            }
         }
-
-        for (int i = 0; i < iConstraintCount; i++) {
-            Constraint c = (Constraint) vConstraint.elementAt(i);
-
-            c.replaceTable(this, tn);
-        }
-
-        tn.vConstraint = vConstraint;
 
         return tn;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -309,8 +570,7 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -319,8 +579,7 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -329,14 +588,11 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param c
-     *
+     * @param  c
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     int getColumnNr(String c) throws SQLException {
 
@@ -350,17 +606,15 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param c
-     *
+     * @param  c
      * @return
      */
     int searchColumn(String c) {
 
         for (int i = 0; i < iColumnCount; i++) {
-            if (c.equals(((Column) vColumn.elementAt(i)).sName)) {
+            if (c.equals(((Column) vColumn.elementAt(i)).columnName.name)) {
                 return i;
             }
         }
@@ -369,52 +623,14 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param i
+     *  Method declaration
      *
      * @return
+     * @throws  SQLException
      */
-    String getColumnName(int i) {
-        return getColumn(i).sName;
-    }
+    Index getPrimaryIndex() {
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param i
-     *
-     * @return
-     */
-    int getColumnType(int i) {
-        return getColumn(i).iType;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param i
-     *
-     * @return
-     */
-    boolean getColumnIsNullable(int i) {
-        return getColumn(i).isNullable();
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    Index getPrimaryIndex() throws SQLException {
-
-        if (iPrimaryKey == -1) {
+        if (iPrimaryKey == null) {
             return null;
         }
 
@@ -422,14 +638,11 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param column
-     *
+     * @param  column
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     Index getIndexForColumn(int column) throws SQLException {
 
@@ -445,34 +658,22 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Finds an existing index for a foreign key column group
      *
-     *
-     * @param col
-     *
+     * @param  col
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
-    Index getIndexForColumns(int col[]) throws SQLException {
+    Index getIndexForColumns(int col[], boolean unique) throws SQLException {
 
         for (int i = 0; i < iIndexCount; i++) {
-            Index h      = getIndex(i);
-            int   icol[] = h.getColumns();
-            int   j      = 0;
+            Index currentindex = getIndex(i);
+            int   indexcol[]   = currentindex.getColumns();
 
-            for (; j < col.length; j++) {
-                if (j >= icol.length) {
-                    break;
+            if (ArrayUtil.haveEquality(indexcol, col, col.length, unique)) {
+                if (!unique || currentindex.isUnique()) {
+                    return currentindex;
                 }
-
-                if (icol[j] != col[j]) {
-                    break;
-                }
-            }
-
-            if (j == col.length) {
-                return h;
             }
         }
 
@@ -480,46 +681,43 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     String getIndexRoots() throws SQLException {
 
-        Trace.assert(bCached, "Table.getIndexRootData");
+        Trace.doAssert(isCached, "Table.getIndexRootData");
 
-        String s = "";
+        StringBuffer s = new StringBuffer();
 
         for (int i = 0; i < iIndexCount; i++) {
             Node f = getIndex(i).getRoot();
 
             if (f != null) {
-                s = s + f.getKey() + " ";
+                s.append(f.getKey());
+                s.append(' ');
             } else {
-                s = s + "-1 ";
+                s.append("-1 ");
             }
         }
 
-        s += iIdentityId;
+        s.append(iIdentityId);
 
-        return s;
+        return s.toString();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param s
-     *
-     * @throws SQLException
+     * @param  s
+     * @throws  SQLException
      */
     void setIndexRoots(String s) throws SQLException {
 
         // the user may try to set this; this is not only internal problem
-        Trace.check(bCached, Trace.TABLE_NOT_FOUND);
+        Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
         int j = 0;
 
@@ -529,7 +727,11 @@ class Table {
 
             if (p != -1) {
                 Row  r = cCache.getRow(p, this);
-                Node f = r.getNode(i);
+                Node f = null;
+
+                if (r != null) {
+                    f = r.getNode(i);
+                }
 
                 getIndex(i).setRoot(f);
             }
@@ -541,11 +743,9 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param index
-     *
+     * @param  index
      * @return
      */
     Index getNextIndex(Index index) {
@@ -553,7 +753,9 @@ class Table {
         int i = 0;
 
         if (index != null) {
-            for (; i < iIndexCount && getIndex(i) != index; i++);
+            for (; i < iIndexCount && getIndex(i) != index; i++) {
+                ;
+            }
 
             i++;
         }
@@ -566,151 +768,182 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param i
-     *
-     * @return
-     */
-    int getType(int i) {
-        return getColumn(i).iType;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param column
-     *
-     * @throws SQLException
-     */
-    void createPrimaryKey(int column) throws SQLException {
-
-        Trace.assert(iPrimaryKey == -1, "Table.createPrimaryKey(column)");
-
-        iVisibleColumns = iColumnCount;
-        iPrimaryKey     = column;
-
-        int col[] = { column };
-
-        createIndex(col, "SYSTEM_PK", true);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void createPrimaryKey() throws SQLException {
-
-        Trace.assert(iPrimaryKey == -1, "Table.createPrimaryKey");
-        addColumn("SYSTEM_ID", Column.INTEGER, true, true);
-        createPrimaryKey(iColumnCount - 1);
-
-        iVisibleColumns = iColumnCount - 1;
+        createPrimaryKey(null);
     }
 
     /**
-     * Method declaration
+     *  Adds the SYSTEM_ID column if no primary key is specified in DDL.
+     *  Creates a single or multi-column primary key and index. sets the
+     *  colTypes array. Finalises the creation of the table. (fredt@users)
      *
-     *
-     * @param index
-     *
-     * @throws SQLException
+     * @param columns primary key column(s) or null if no primary key in DDL
+     * @throws  SQLException
      */
-    void createIndex(Index index) throws SQLException {
-        createIndex(index.getColumns(), index.getName(), index.isUnique());
-    }
+    void createPrimaryKey(int[] columns) throws SQLException {
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param column
-     * @param name
-     * @param unique
-     *
-     * @throws SQLException
-     */
-    void createIndex(int column[], String name,
-                     boolean unique) throws SQLException {
+        Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
-        Trace.assert(iPrimaryKey != -1, "createIndex");
+        iVisibleColumns = iColumnCount;
 
-        for (int i = 0; i < iIndexCount; i++) {
-            Index index = getIndex(i);
+        if (columns == null) {
+            columns = new int[]{ iColumnCount };
 
-            if (name.equals(index.getName())) {
-                throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
-            }
+            Column column = new Column(new HsqlName(DEFAULT_PK, false), true,
+                                       Types.INTEGER, 0, 0, true, true, null);
+
+            addColumn(column);
         }
 
+        iPrimaryKey = columns;
+
+        HsqlName name = new HsqlName("SYS_PK", tableName.name,
+                                     tableName.isNameQuoted);
+
+        createIndexPrivate(columns, name, true);
+
+        colTypes = new int[iColumnCount];
+
+        for (int i = 0; i < iColumnCount; i++) {
+            colTypes[i] = getColumn(i).getType();
+        }
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  index
+     * @param  colindex
+     * @param  ajdust -1 or 0 or 1
+     * @throws  SQLException
+     */
+    private Index createAdjustedIndex(Index index, int colindex,
+                                      int adjust) throws SQLException {
+
+        int[] oldcol = new int[index.getVisibleColumns()];
+
+        ArrayUtil.copyArray(index.getColumns(), oldcol, oldcol.length);
+
+        int[] colarr = ArrayUtil.toAdjustedColumnArray(oldcol, colindex,
+            adjust);
+
+        if (colarr.length != oldcol.length) {
+            return null;
+        }
+
+        return createIndexPrivate(colarr, index.getName(), index.isUnique());
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  column
+     * @param  name
+     * @param  unique
+     * @return                Description of the Return Value
+     * @throws  SQLException
+     */
+    Index createIndexPrivate(int column[], HsqlName name,
+                             boolean unique) throws SQLException {
+
+        Trace.doAssert(iPrimaryKey != null, "createIndex");
+
         int s = column.length;
+        int t = iPrimaryKey.length;
 
         // The primary key field is added for non-unique indexes
         // making all indexes unique
         int col[]  = new int[unique ? s
-                                    : s + 1];
+                                    : s + t];
         int type[] = new int[unique ? s
-                                    : s + 1];
+                                    : s + t];
 
         for (int j = 0; j < s; j++) {
             col[j]  = column[j];
-            type[j] = getColumn(col[j]).iType;
+            type[j] = getColumn(col[j]).getType();
         }
 
         if (!unique) {
-            col[s]  = iPrimaryKey;
-            type[s] = getColumn(iPrimaryKey).iType;
-        }
-
-        Index index = new Index(name, col, type, unique);
-
-        if (iIndexCount != 0) {
-            Trace.assert(isEmpty(), "createIndex");
-        }
-
-        vIndex.addElement(index);
-
-        iIndexCount++;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param index
-     *
-     * @throws SQLException
-     */
-    void checkDropIndex(String index) throws SQLException {
-
-        for (int i = 0; i < iIndexCount; i++) {
-            if (index.equals(getIndex(i).getName())) {
-                Trace.check(i != 0, Trace.DROP_PRIMARY_KEY);
-
-                return;
+            for (int j = 0; j < t; j++) {
+                col[s + j]  = iPrimaryKey[j];
+                type[s + j] = getColumn(iPrimaryKey[j]).getType();
             }
         }
 
-        throw Trace.error(Trace.INDEX_NOT_FOUND, index);
+        Index newindex = new Index(name, col, type, unique, s);
+
+// fredt@users 20020225 - comment
+// in future we can avoid duplicate indexes
+/*
+        for (int i = 0; i < iIndexCount; i++) {
+            if ( newindex.isEquivalent(getIndex(i))){
+                return;
+            }
+        }
+*/
+        Trace.doAssert(isEmpty(), "createIndex");
+        vIndex.addElement(newindex);
+
+        iIndexCount++;
+
+        return newindex;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @param  index
+     * @throws  SQLException
+     */
+    void checkDropIndex(String indexname) throws SQLException {
+
+        Index index = this.getIndex(indexname);
+
+        if (index == null) {
+            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
+        }
+
+        if (index.equals(getIndex(0))) {
+            throw Trace.error(Trace.DROP_PRIMARY_KEY, indexname);
+        }
+
+// fredt@users 20020315 - patch 1.7.0 - drop index bug
+// don't drop an index used for a foreign key
+        for (int i = 0; i < vConstraint.size(); i++) {
+            Constraint c = (Constraint) vConstraint.elementAt(i);
+
+            if (c.isIndexFK(index)) {
+                throw Trace.error(Trace.DROP_FK_INDEX, indexname);
+            }
+
+            if (c.isIndexUnique(index)) {
+                throw Trace.error(Trace.SYSTEM_INDEX, indexname);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     *  Method declaration
      *
      * @return
      */
     boolean isEmpty() {
+
+        if (iIndexCount == 0) {
+            return true;
+        }
+
         return getIndex(0).getRoot() == null;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
@@ -719,14 +952,22 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param from
-     *
-     * @throws SQLException
+     * @param  from
+     * @param  colindex index of the column that was added or removed
+     * @throws  SQLException
      */
-    void moveData(Table from) throws SQLException {
+    void moveData(Table from, int colindex, int adjust) throws SQLException {
+
+        Object colvalue = null;
+
+        if (adjust > 0) {
+            Column column = getColumn(colindex);
+
+            colvalue = Column.convertObject(column.getDefaultString(),
+                                            column.getType());
+        }
 
         Index index = from.getPrimaryIndex();
         Node  n     = index.first();
@@ -736,14 +977,16 @@ class Table {
                 Trace.stop();
             }
 
-            Object o[] = n.getData();
+            Object o[]      = n.getData();
+            Object newrow[] = this.getNewRow();
 
-            insertNoCheck(o, null);
+            ArrayUtil.copyAdjustArray(o, newrow, colvalue, colindex, adjust);
+            insertNoCheck(newrow, null, false);
 
             n = index.next(n);
         }
 
-        index = getPrimaryIndex();
+        index = from.getPrimaryIndex();
         n     = index.first();
 
         while (n != null) {
@@ -751,29 +994,30 @@ class Table {
                 Trace.stop();
             }
 
-            Object o[] = n.getData();
+            Node   nextnode = index.next(n);
+            Object o[]      = n.getData();
 
-            from.deleteNoCheck(o, null);
+            from.deleteNoCheck(o, null, false);
 
-            n = index.next(n);
+            n = nextnode;
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param col
-     * @param deleted
-     * @param inserted
-     *
-     * @throws SQLException
+     * @param  col
+     * @param  deleted
+     * @param  inserted
+     * @throws  SQLException
      */
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws SQLException {
 
+        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
+
         if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0; i < iConstraintCount; i++) {
+            for (int i = 0; i < vConstraint.size(); i++) {
                 Constraint v = (Constraint) vConstraint.elementAt(i);
 
                 v.checkUpdate(col, deleted, inserted);
@@ -782,15 +1026,13 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param result
-     * @param c
-     *
-     * @throws SQLException
+     * @param  result
+     * @param  c
+     * @throws  SQLException
      */
-    void insert(Result result, Channel c) throws SQLException {
+    void insert(Result result, Session c) throws SQLException {
 
         // if violation of constraints can occur, insert must be rolled back
         // outside of this function!
@@ -811,115 +1053,94 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     * @param c
-     *
-     * @throws SQLException
+     * @param  row
+     * @param  c
+     * @throws  SQLException
      */
-    void insert(Object row[], Channel c) throws SQLException {
+    void insert(Object row[], Session c) throws SQLException {
 
+        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
         fireAll(TriggerDef.INSERT_BEFORE, row);
 
         if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0; i < iConstraintCount; i++) {
+            for (int i = 0; i < vConstraint.size(); i++) {
                 ((Constraint) vConstraint.elementAt(i)).checkInsert(row);
             }
         }
 
-        insertNoCheck(row, c);
+        insertNoCheck(row, c, true);
         fireAll(TriggerDef.INSERT_AFTER, row);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     * @param c
-     *
-     * @throws SQLException
+     * @param  row
+     * @param  c
+     * @param  log
+     * @throws  SQLException
      */
-    void insertNoCheck(Object row[], Channel c) throws SQLException {
-        insertNoCheck(row, c, true);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param row
-     * @param c
-     * @param log
-     *
-     * @throws SQLException
-     */
-    void insertNoCheck(Object row[], Channel c,
+    void insertNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
 
+        for (int i = 0; i < iColumnCount; i++) {
+            if (row[i] == null) {
+                Column  col    = getColumn(i);
+                boolean nullOK = col.isNullable() || col.isIdentity();
+
+                if (!nullOK) {
+                    throw Trace.error(Trace.TRY_TO_INSERT_NULL);
+                }
+            }
+        }
+
+        int nextId = iIdentityId;
+
         if (iIdentityColumn != -1) {
-            Integer id = (Integer) row[iIdentityColumn];
+            Number id = (Number) row[iIdentityColumn];
 
             if (id == null) {
-                if (c != null) {
-                    c.setLastIdentity(iIdentityId);
-                }
-
-                row[iIdentityColumn] = new Integer(iIdentityId++);
+                row[iIdentityColumn] = new Integer(iIdentityId);
             } else {
-                int i = id.intValue();
+                int columnId = id.intValue();
 
-                if (iIdentityId <= i) {
-                    if (c != null) {
-                        c.setLastIdentity(i);
-                    }
-
-                    iIdentityId = i + 1;
+                if (iIdentityId < columnId) {
+                    iIdentityId = nextId = columnId;
                 }
             }
         }
 
-        for (int i = 0; i < iColumnCount; i++) {
-            if (row[i] == null &&!getColumn(i).isNullable()) {
-                throw Trace.error(Trace.TRY_TO_INSERT_NULL);
-            }
+        Row r = new Row(this, row);
+
+        if (isText) {
+
+            //-- Always inserted at end of file.
+            nextId = r.iPos + r.storageSize;
+        } else {
+            nextId++;
         }
 
-        int i = 0;
-
-        try {
-            Row r = new Row(this, row);
-
-            for (; i < iIndexCount; i++) {
-                Node n = r.getNode(i);
-
-                getIndex(i).insert(n);
-            }
-        } catch (SQLException e) {    // rollback insert
-            for (--i; i >= 0; i--) {
-                getIndex(i).delete(row, i == 0);
-            }
-
-            throw e;                  // and throw error again
-        }
+        indexRow(r, true);
 
         if (c != null) {
+            c.setLastIdentity(iIdentityId);
             c.addTransactionInsert(this, row);
         }
 
-        if (lLog != null) {
-            lLog.write(c, getInsertStatement(row));
+        iIdentityId = nextId;
+
+        if (log &&!isTemp &&!isReadOnly && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getInsertStatement(row));
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param trigVecIndx
-     * @param row
+     * @param  trigVecIndx
+     * @param  row
      */
     void fireAll(int trigVecIndx, Object row[]) {
 
@@ -937,13 +1158,12 @@ class Table {
         }
     }
 
-    // statement-level triggers
+// statement-level triggers
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param trigVecIndx
+     * @param  trigVecIndx
      */
     void fireAll(int trigVecIndx) {
 
@@ -955,10 +1175,9 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param trigDef
+     * @param  trigDef
      */
     void addTrigger(TriggerDef trigDef) {
 
@@ -970,55 +1189,133 @@ class Table {
         vTrigs[trigDef.vectorIndx].addElement(trigDef);
     }
 
+// fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
+
     /**
-     * Method declaration
+     *  Method is called recursively on a tree of tables from the current one
+     *  until no referring foreign-key table is left. In the process, if a
+     *  non-cascading foreign-key referring table contains data, an exception
+     *  is thrown. Parameter delete indicates whether to delete refering rows.
+     *  The method is called first to check if the row can be deleted, then to
+     *  delete the row and all the refering rows. (fredt@users)
      *
-     *
-     * @param row
-     * @param c
-     *
-     * @throws SQLException
+     * @param  row
+     * @param  session
+     * @param  delete
+     * @throws  SQLException
      */
-    void delete(Object row[], Channel c) throws SQLException {
+    void checkCascadeDelete(Object[] row, Session session,
+                            boolean delete) throws SQLException {
+
+        for (int i = 0; i < vConstraint.size(); i++) {
+            Constraint c = (Constraint) vConstraint.elementAt(i);
+
+            if (c.getType() != Constraint.MAIN || c.getRef() == null) {
+                continue;
+            }
+
+            Node refnode = c.findFkRef(row);
+
+            if (refnode == null) {
+
+                // no referencing row found
+                continue;
+            }
+
+            Table reftable = c.getRef();
+
+            // shortcut when deltable has no imported constraint
+            boolean hasref =
+                reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
+
+            if (delete == false && hasref == false) {
+                return;
+            }
+
+            Index    refindex      = c.getRefIndex();
+            int      maincolumns[] = c.getMainColumns();
+            Object[] mainobjects   = new Object[maincolumns.length];
+
+            ArrayUtil.copyColumnValues(row, maincolumns, mainobjects);
+
+            // walk the index for all the nodes that reference delnode
+            for (Node n = refnode;
+                    refindex.comparePartialRowNonUnique(
+                        mainobjects, n.getData()) == 0; ) {
+
+                // get the next node before n is deleted
+                Node nextn = refindex.next(n);
+
+                if (hasref) {
+                    reftable.checkCascadeDelete(n.getData(), session, delete);
+                }
+
+                if (delete) {
+                    reftable.deleteNoRefCheck(n.getData(), session);
+
+                    //  foreign key referencing own table
+                    if (reftable == this) {
+                        nextn = c.findFkRef(row);
+                    }
+                }
+
+                if (nextn == null) {
+                    break;
+                }
+
+                n = nextn;
+            }
+        }
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  row
+     * @param  session        Description of the Parameter
+     * @throws  SQLException
+     */
+    void delete(Object row[], Session session) throws SQLException {
 
         fireAll(TriggerDef.DELETE_BEFORE_ROW, row);
 
         if (dDatabase.isReferentialIntegrity()) {
-            for (int i = 0; i < iConstraintCount; i++) {
-                ((Constraint) vConstraint.elementAt(i)).checkDelete(row);
-            }
+            checkCascadeDelete(row, session, false);
+            checkCascadeDelete(row, session, true);
         }
 
-        deleteNoCheck(row, c);
+        deleteNoCheck(row, session, true);
 
         // fire the delete after statement trigger
         fireAll(TriggerDef.DELETE_AFTER_ROW, row);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     * @param c
-     *
-     * @throws SQLException
+     * @param  row
+     * @param  session        Description of the Parameter
+     * @throws  SQLException
      */
-    void deleteNoCheck(Object row[], Channel c) throws SQLException {
-        deleteNoCheck(row, c, true);
+    private void deleteNoRefCheck(Object row[],
+                                  Session session) throws SQLException {
+
+        fireAll(TriggerDef.DELETE_BEFORE_ROW, row);
+        deleteNoCheck(row, session, true);
+
+        // fire the delete after statement trigger
+        fireAll(TriggerDef.DELETE_AFTER_ROW, row);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     * @param c
-     * @param log
-     *
-     * @throws SQLException
+     * @param  row
+     * @param  c
+     * @param  log
+     * @throws  SQLException
      */
-    void deleteNoCheck(Object row[], Channel c,
+    void deleteNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
 
         for (int i = 1; i < iIndexCount; i++) {
@@ -1032,30 +1329,28 @@ class Table {
             c.addTransactionDelete(this, row);
         }
 
-        if (lLog != null) {
-            lLog.write(c, getDeleteStatement(row));
+        if (log &&!isTemp &&!isReadOnly && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     *
+     * @param  row
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     String getInsertStatement(Object row[]) throws SQLException {
 
-        StringBuffer a = new StringBuffer("INSERT INTO ");
+        StringBuffer a = new StringBuffer(128);
 
-        a.append(getName());
+        a.append("INSERT INTO ");
+        a.append(tableName.statementName);
         a.append(" VALUES(");
 
         for (int i = 0; i < iVisibleColumns; i++) {
-            a.append(Column.createString(row[i], getColumn(i).iType));
+            a.append(Column.createSQLString(row[i], getColumn(i).getType()));
             a.append(',');
         }
 
@@ -1065,21 +1360,27 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
     boolean isCached() {
-        return bCached;
+        return isCached;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @return
+     */
+    boolean isIndexCached() {
+        return isCached;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @param s
-     *
+     * @param  s
      * @return
      */
     Index getIndex(String s) {
@@ -1087,7 +1388,7 @@ class Table {
         for (int i = 0; i < iIndexCount; i++) {
             Index h = getIndex(i);
 
-            if (s.equals(h.getName())) {
+            if (s.equals(h.getName().name)) {
                 return h;
             }
         }
@@ -1097,11 +1398,45 @@ class Table {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
+     * @param  s
+     * @return
+     */
+    int getConstraintIndex(String s) {
+
+        for (int j = 0; j < vConstraint.size(); j++) {
+            Constraint tempc = (Constraint) vConstraint.elementAt(j);
+
+            if (tempc.getName().name.equals(s)) {
+                return j;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     *  Method declaration
      *
-     * @param i
+     * @param  s
+     * @return
+     */
+    Constraint getConstraint(String s) {
+
+        int j = getConstraintIndex(s);
+
+        if (j >= 0) {
+            return (Constraint) vConstraint.elementAt(j);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *  Method declaration
      *
+     * @param  i
      * @return
      */
     Column getColumn(int i) {
@@ -1109,51 +1444,130 @@ class Table {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param i
+     *  Method declaration
      *
      * @return
      */
-    private Index getIndex(int i) {
+    int[] getColumnTypes() {
+        return colTypes;
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  i
+     * @return
+     */
+    protected Index getIndex(int i) {
         return (Index) vIndex.elementAt(i);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param row
-     *
+     * @param  row
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private String getDeleteStatement(Object row[]) throws SQLException {
 
-        StringBuffer a = new StringBuffer("DELETE FROM ");
+        StringBuffer a = new StringBuffer(128);
 
-        a.append(sName);
+        a.append("DELETE FROM ");
+        a.append(tableName.statementName);
         a.append(" WHERE ");
 
         if (iVisibleColumns < iColumnCount) {
             for (int i = 0; i < iVisibleColumns; i++) {
-                a.append(getColumn(i).sName);
+                Column c = getColumn(i);
+
+                a.append(c.columnName.statementName);
                 a.append('=');
-                a.append(Column.createString(row[i], getColumn(i).iType));
+                a.append(Column.createSQLString(row[i], c.getType()));
 
                 if (i < iVisibleColumns - 1) {
                     a.append(" AND ");
                 }
             }
         } else {
-            a.append(getColumn(iPrimaryKey).sName);
-            a.append("=");
-            a.append(Column.createString(row[iPrimaryKey],
-                                         getColumn(iPrimaryKey).iType));
+            for (int i = 0; i < iPrimaryKey.length; i++) {
+                Column c = getColumn(iPrimaryKey[i]);
+
+                a.append(c.columnName.statementName);
+                a.append('=');
+                a.append(Column.createSQLString(row[iPrimaryKey[i]],
+                                                c.getType()));
+
+                if (i < iPrimaryKey.length - 1) {
+                    a.append(" AND ");
+                }
+            }
         }
 
         return a.toString();
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  pos
+     * @return
+     * @throws  SQLException
+     */
+    Row getRow(int pos) throws SQLException {
+
+        if (isCached) {
+            return (cCache.getRow(pos, this));
+        }
+
+        return null;
+    }
+
+    int putRow(Row r) throws SQLException {
+
+        int size = 0;
+
+        if (cCache != null) {
+            size = cCache.add(r);
+        }
+
+        return (size);
+    }
+
+    void removeRow(Row r) throws SQLException {
+
+        if (cCache != null) {
+            cCache.free(r, r.iPos, r.storageSize);
+        }
+    }
+
+    void cleanUp() throws SQLException {
+
+        if (cCache != null) {
+            cCache.cleanUp();
+        }
+    }
+
+    void indexRow(Row r, boolean inserted) throws SQLException {
+
+        if (inserted) {
+            int i = 0;
+
+            try {
+                Node n = null;
+
+                for (; i < iIndexCount; i++) {
+                    n = r.getNextNode(n);
+
+                    getIndex(i).insert(n);
+                }
+            } catch (SQLException e) {    // rollback insert
+                for (--i; i >= 0; i--) {
+                    getIndex(i).delete(r.getData(), i == 0);
+                }
+
+                throw e;                  // and throw error again
+            }
+        }
     }
 }

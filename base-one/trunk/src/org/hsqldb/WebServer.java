@@ -67,26 +67,24 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.sql.DriverManager;
 
 /**
- * <font color="#009900">
- * WebServer acts as a HTTP server and is one way of using
- * the client / server mode of HSQL Database Engine. This server
- * can deliver static files and can also process database queries.
- * An applet will need only the JDBC classes to access the database.
- *
- * The WebServer can be configured with the file 'WebServer.properties'.
- * This is an example of the file:
- * <pre>
- * port=80
- * database=test
- * root=./
- * default=index.html
- * silent=true
+ *  WebServer acts as an HTTP server and is one way of
+ *  using the client / server mode of HSQL Database Engine. This server can
+ *  deliver static files and can also process database queries. An applet
+ *  will need only the JDBC classes to access the database. The WebServer
+ *  can be configured with the file 'webserver.properties'. This is an
+ *  example of the file: <pre>
+ * server.port=80
+ * server.database=test
+ * server.root=./
+ * server.default_page=index.html
+ * server.silent=true
  *
  * .htm=text/html
  * .html=text/html
@@ -96,99 +94,88 @@ import java.util.*;
  * .jpg=image/jpeg
  * .jgep=image/jpeg
  * .zip=application/x-zip-compressed</pre>
- * Root: use / as separator even for DOS/Windows, it will be replaced<BR>
- * Mime-types: file ending must be lowercase<BR>
- * </font>
+ *  Root: use / as separator even for DOS/Windows, it will be replaced<BR>
+ *  Mime-types: file ending must be lowercase<BR>
+ *
+ * @version 1.7.0
  */
+
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// method rorganised to use new HsqlServerProperties class
 public class WebServer {
 
-    static final String mServerName = "HypersonicSQL/1.0";
-    String              mRoot;
-    String              mDefaultFile;
-    char                mPathSeparatorChar;
-    boolean             mSilent;
-    Database            mDatabase;
-    Properties          mProperties;
+    static final String  mServerName = "HSQL/1.7.0";
+    String               mRoot;
+    String               mDefaultFile;
+    char                 mPathSeparatorChar;
+    Database             mDatabase;
+    HsqlServerProperties serverProperties;
+    private boolean      traceMessages;
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param arg
+     * @param  arg
      */
     public static void main(String arg[]) {
 
-        WebServer w = new WebServer();
+        if (arg.length > 0) {
+            String p = arg[0];
 
-        w.run(arg);
+            if ((p != null) && p.startsWith("-?")) {
+                printHelp();
+
+                return;
+            }
+        }
+
+        WebServer      server = new WebServer();
+        HsqlProperties props  = HsqlProperties.argArrayToProps(arg, "server");
+
+        server.setProperties(props);
+        server.run();
+    }
+
+    void setProperties(HsqlProperties props) {
+
+        serverProperties = new HsqlServerProperties("webserver");
+
+        serverProperties.load();
+        serverProperties.addProperties(props);
+        serverProperties.setPropertyIfNotExists("server.database", "test");
+        serverProperties.setPropertyIfNotExists("server.port", "80");
+
+        mRoot = serverProperties.setPropertyIfNotExists("server.root", "./");
+        mDefaultFile =
+            serverProperties.setPropertyIfNotExists("server.default_page",
+                "index.html");
+
+        if (serverProperties.isPropertyTrue("server.trace")) {
+            jdbcSystem.setLogToSystem(true);
+        }
+
+        traceMessages = !serverProperties.isPropertyTrue("server.silent",
+                "true");
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param arg
      */
-    private void run(String arg[]) {
+    private void run() {
 
         ServerSocket socket = null;
 
         try {
-            Properties prop = new Properties();
+            int port = serverProperties.getIntegerProperty("server.port", 80);
+            String database = serverProperties.getProperty("server.database");
 
-            mProperties = prop;
+            Trace.printSystemOut("Opening database: " + database);
+            printTraceMessages();
 
-            // load parameters from properties file
-            File f = new File("WebServer.properties");
-
-            if (f.exists()) {
-                FileInputStream fi = new FileInputStream(f);
-
-                prop.load(fi);
-                fi.close();
-            }
-
-            // overwrite parameters with command line parameters
-            for (int i = 0; i < arg.length; i++) {
-                String p = arg[i];
-
-                if (p.equals("-?")) {
-                    printHelp();
-                }
-
-                if (p.charAt(0) == '-') {
-                    prop.put(p.substring(1), arg[i + 1]);
-
-                    i++;
-                }
-            }
-
-            int    port = Integer.parseInt(prop.getProperty("port", "80"));
-            String database = prop.getProperty("database", "test");
-
-            mRoot        = prop.getProperty("root", "./");
-            mDefaultFile = prop.getProperty("default", "index.html");
-            mSilent = prop.getProperty("silent",
-                                       "true").equalsIgnoreCase("true");
-
-            if (prop.getProperty("trace", "false").equalsIgnoreCase("true")) {
-                DriverManager.setLogStream(System.out);
-            }
-
-            socket             = new ServerSocket(port);
             mPathSeparatorChar = File.separatorChar;
-
-            trace("port    =" + port);
-            trace("database=" + database);
-            trace("root    =" + mRoot);
-            trace("default =" + mDefaultFile);
-            trace("silent  =" + mSilent);
-
-            mDatabase = new Database(database);
-
-            System.out.println("WebServer " + jdbcDriver.VERSION
-                               + " is running");
-            System.out.println("Press [Ctrl]+[C] to abort");
+            mDatabase          = new Database(database);
+            socket             = new ServerSocket(port);
         } catch (Exception e) {
             traceError("WebServer.run/init: " + e);
 
@@ -207,44 +194,55 @@ public class WebServer {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     */
-    void printHelp() {
+    static void printHelp() {
 
-        System.out.println(
+        Trace.printSystemOut(
             "Usage: java WebServer [-options]\n" + "where options include:\n"
             + "    -port <nr>            port where the server is listening\n"
             + "    -database <name>      name of the database\n"
             + "    -root <path>          root path for sending files\n"
-            + "    -default <file>       default file when filename is missing\n"
+            + "    -default_page <file>  default page when page name is missing\n"
             + "    -silent <true/false>  false means display all queries\n"
-            + "    -trace <true/false>   display print JDBC trace messages\n"
-            + "The command line arguments override the values in the properties file.");
+            + "    -trace <true/false>   display JDBC trace messages\n"
+            + "The command line arguments override the values in the webserver.properties file.");
         System.exit(0);
     }
 
+    void printTraceMessages() {
+
+        trace("server.port        ="
+              + serverProperties.getProperty("server.port"));
+        trace("server.database    ="
+              + serverProperties.getProperty("server.database"));
+        trace("server.root        ="
+              + serverProperties.getProperty("server.root"));
+        trace("server.default_page="
+              + serverProperties.getProperty("server.default_page"));
+        trace("server.silent      ="
+              + serverProperties.getProperty("server.silent"));
+        Trace.printSystemOut("HSQLDB web server " + jdbcDriver.VERSION
+                             + " is running");
+        Trace.printSystemOut("Press [Ctrl]+[C] to abort");
+    }
+
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param s
+     * @param  s
      */
     void trace(String s) {
 
-        if (!mSilent) {
-            System.out.println(s);
+        if (traceMessages) {
+            Trace.printSystemOut(s);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param s
+     * @param  s
      */
     void traceError(String s) {
-        System.out.println(s);
+        Trace.printSystemOut(s);
     }
 }

@@ -67,22 +67,29 @@
 
 package org.hsqldb;
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
+import java.sql.SQLException;
+import java.util.StringTokenizer;
 
 /**
- * Class declaration
+ *  Class declaration
  *
- *
- * @version 1.0.0.1
+ * @version  1.7.0
  */
 class WebServerConnection extends Thread {
 
-    final static String      ENCODING = "8859_1";
+    static final String      ENCODING = "8859_1";
     private Socket           mSocket;
     private WebServer        mServer;
-    private final static int GET         = 1,
+    private static final int GET         = 1,
                              HEAD        = 2,
                              POST        = 3,
                              BAD_REQUEST = 400,
@@ -90,11 +97,10 @@ class WebServerConnection extends Thread {
                              NOT_FOUND   = 404;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param socket
-     * @param server
+     * @param  socket
+     * @param  server
      */
     WebServerConnection(Socket socket, WebServer server) {
         mServer = server;
@@ -102,16 +108,15 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      */
     public void run() {
 
         try {
             BufferedReader input = new BufferedReader(
                 new InputStreamReader(mSocket.getInputStream(), ENCODING));
-            String request,
-                   name   = null;
+            String request;
+            String name   = null;
             int    method = BAD_REQUEST;
             int    len    = -1;
 
@@ -171,11 +176,10 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param name
-     * @param send
+     * @param  name
+     * @param  send
      */
     private void processGet(String name, boolean send) {
 
@@ -202,7 +206,7 @@ class WebServerConnection extends Thread {
             if (i != -1) {
                 String ending = name.substring(i).toLowerCase();
 
-                mime = (String) mServer.mProperties.getProperty(ending);
+                mime = mServer.serverProperties.getProperty(ending);
             }
 
             if (mime == null) {
@@ -255,12 +259,10 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param start
-     * @param end
-     *
+     * @param  start
+     * @param  end
      * @return
      */
     private String getHead(String start, String end) {
@@ -269,14 +271,14 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param input
-     * @param name
-     * @param len
+     * @param  input
+     * @param  name
+     * @param  len
      */
-    private void processPost(BufferedReader input, String name, int len) {
+    private void processPost(BufferedReader input, String name,
+                             int len) throws SQLException {
 
         if (len < 0) {
             processError(BAD_REQUEST);
@@ -298,7 +300,7 @@ class WebServerConnection extends Thread {
         int    p = s.indexOf('+');
         int    q = s.indexOf('+', p + 1);
 
-        if (p == -1 || q == -1) {
+        if ((p == -1) || (q == -1)) {
             processError(BAD_REQUEST);
 
             return;
@@ -318,10 +320,9 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param code
+     * @param  code
      */
     private void processError(int code) {
 
@@ -332,10 +333,10 @@ class WebServerConnection extends Thread {
         switch (code) {
 
             case BAD_REQUEST :
-                message =
-                    getHead("HTTP/1.0 400 Bad Request", "")
-                    + "<HTML><BODY><H1>Bad Request</H1>"
-                    + "The server could not understand this request.<P></BODY></HTML>";
+                message = getHead("HTTP/1.0 400 Bad Request", "")
+                          + "<HTML><BODY><H1>Bad Request</H1>"
+                          + "The server could not understand this request."
+                          + "<P></BODY></HTML>";
                 break;
 
             case NOT_FOUND :
@@ -366,12 +367,11 @@ class WebServerConnection extends Thread {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param user
-     * @param password
-     * @param statement
+     * @param  user
+     * @param  password
+     * @param  statement
      */
     private void processQuery(String user, String password,
                               String statement) {
@@ -397,7 +397,7 @@ class WebServerConnection extends Thread {
             e.printStackTrace();
         }
 
-        // System.out.print("Queries processed: "+(iQueries++)+"  \r");
+        // System.out.print("Queries processed: "+(iQueries++)+"  \n");
         if (mServer.mDatabase.isShutdown()) {
             mServer.trace("The database is shutdown");
             System.exit(0);

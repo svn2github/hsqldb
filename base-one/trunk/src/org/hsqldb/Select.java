@@ -67,37 +67,52 @@
 
 package org.hsqldb;
 
-import java.util.*;
-import java.sql.*;
+import java.sql.SQLException;
+import java.sql.Types;
+
+// fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
+// rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
 
 /**
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Select {
 
-    boolean          bDistinct;
+    boolean          isDistinctSelect;
+    private boolean  isDistinctAggregate;
+    private boolean  isAggregated;
+    private boolean  isGrouped;
+    private Object[] aggregateRow;
+    private int      aggregateCount;
     TableFilter      tFilter[];
-    Expression       eCondition;    // null means no condition
-    Expression       eColumn[];     // 'result', 'group' and 'order' columns
-    int              iResultLen;    // number of columns that are 'result'
-    int              iGroupLen;     // number of columns that are 'group'
-    int              iOrderLen;     // number of columns that are 'order'
-    Select           sUnion;        // null means no union select
-    String           sIntoTable;    // null means not select..into
+    Expression       eCondition;         // null means no condition
+    Expression       havingCondition;    // null means none
+    Expression       eColumn[];          // 'result', 'group' and 'order' columns
+    int              iResultLen;         // number of columns that are 'result'
+    int              iGroupLen;          // number of columns that are 'group'
+    int              iOrderLen;          // number of columns that are 'order'
+    Select           sUnion;             // null means no union select
+    HsqlName         sIntoTable;         // null means not select..into
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// type and logging attributes of sIntotable
+    int intoType = Table.MEMORY_TABLE;
+
+//    boolean          intoTemp;
+    boolean          isIntoTableQuoted;
     int              iUnionType;
-    final static int UNION     = 1,
+    static final int UNION     = 1,
                      UNIONALL  = 2,
                      INTERSECT = 3,
                      EXCEPT    = 4;
 
-// fredt@users - begin changes from 1.50
-    int limitStart = 0;
-    int limitCount = -1;
-
-// fredt@users - end changes from 1.50
+// fredt@users 20010701 - patch 1.6.1 by hybris
+// basic implementation of LIMIT n m
+    int limitStart = 0;                  // set only by the LIMIT keyword
+    int limitCount = 0;                  // set only by the LIMIT keyword
 
     /**
      * Method declaration
@@ -132,8 +147,8 @@ class Select {
 
             if (f != null && ownfilter) {
 
-                // the table filter tries to get as many conditions as possible
-                // but only if the table filter belongs to this query
+                // the table filter tries to get as many conditions as
+                // possible but only if it belongs to this query
                 f.setCondition(eCondition);
             }
         }
@@ -186,13 +201,11 @@ class Select {
 
         Object o = r.rRoot.data[0];
 
-        if (r.iType[0] == type) {
+        if (r.colType[0] == type) {
             return o;
         }
 
-        String s = Column.convertObject(o);
-
-        return Column.convertString(s, type);
+        return Column.convertObject(o, type);
     }
 
     /**
@@ -205,19 +218,11 @@ class Select {
      *
      * @throws SQLException
      */
+
+// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
+// for SELECT LIMIT n m DISTINCT
     Result getResult(int maxrows) throws SQLException {
 
-// fredt@users - begin changes from 1.50
-        return getResult(0, maxrows);
-    }
-
-// fredt@users - end changes from 1.50
-// fredt@users - begin changes from 1.50
-    Result getResult(int start, int cnt) throws SQLException {
-
-        int maxrows = start + cnt;    //<-new, cut definitly
-
-// fredt@users - end changes from 1.50
         resolve();
         checkResolved();
 
@@ -225,206 +230,137 @@ class Select {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
         }
 
-        int     len        = eColumn.length;
-        Result  r          = new Result(len);
-        boolean aggregated = false;
-        boolean grouped    = false;
+        if (iGroupLen > 0) {    // has been set in Parser
+            isGrouped = true;
+        }
+
+        int    len = eColumn.length;
+        Result r   = new Result(len);
 
         for (int i = 0; i < len; i++) {
             Expression e = eColumn[i];
 
-            r.iType[i] = e.getDataType();
+            r.colType[i]  = e.getDataType();
+            r.colSize[i]  = e.getColumnSize();
+            r.colScale[i] = e.getColumnScale();
 
             if (e.isAggregate()) {
-                aggregated = true;
+                isAggregated = true;
+
+                if (!isGrouped && e.isDistinctAggregate()) {
+                    isDistinctAggregate = true;
+                }
             }
         }
 
-        Object agg[] = null;
-
-        if (aggregated) {
-            agg = new Object[len];
+//        Object aggregateRow[] = null;
+        if (isAggregated) {
+            aggregateRow = new Object[len];
         }
 
-        if (iGroupLen > 0) {    // has been set in Parser
-            grouped = true;
-        }
-
-        boolean simple_maxrows = false;
-
-        if (maxrows != 0 && grouped == false && sUnion == null
-                && iOrderLen == 0) {
-            simple_maxrows = true;
+// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
+// for SELECT LIMIT n m DISTINCT
+// find cases where the result does not have to be fully built and
+// set issimplemaxrows and adjust maxrows with LIMIT params
+// chnages made to apply LIMIT only to the containing SELECT
+// so they can be used as part of UNION and other set operations
+        if (maxrows == 0) {
+            maxrows = limitCount;
+        } else if (limitCount == 0) {
+            limitCount = maxrows;
         } else {
-            simple_maxrows = false;
+            maxrows = limitCount = (maxrows > limitCount) ? limitCount
+                                                          : maxrows;
         }
 
-        int     count   = 0;
-        int     filter  = tFilter.length;
-        boolean first[] = new boolean[filter];
-        int     level   = 0;
+        boolean issimplemaxrows = false;
 
-        while (level >= 0) {
-            TableFilter t = tFilter[level];
-            boolean     found;
-
-            if (!first[level]) {
-                found        = t.findFirst();
-                first[level] = found;
-            } else {
-                found        = t.next();
-                first[level] = found;
-            }
-
-            if (!found) {
-                level--;
-
-                continue;
-            }
-
-            if (level < filter - 1) {
-                level++;
-
-                continue;
-            }
-
-            if (eCondition == null || eCondition.test()) {
-                Object row[] = new Object[len];
-
-                for (int i = 0; i < len; i++) {
-                    row[i] = eColumn[i].getValue();
-                }
-
-                count++;
-
-                if (aggregated) {
-                    updateAggregateRow(agg, row, len);
-
-// fredt@users 20010701- bug fix for 416144 416146 430615 by fredt
-                    if (grouped) {
-                        r.add(row);
-                    }
-                } else {
-                    r.add(row);
-
-                    if (simple_maxrows && count >= maxrows) {
-                        break;
-                    }
-                }
-            }
+        if (maxrows != 0 && isDistinctSelect == false
+                && isDistinctAggregate == false && isGrouped == false
+                && sUnion == null && iOrderLen == 0) {
+            issimplemaxrows = true;
         }
 
-        if (aggregated &&!grouped) {
-            addAggregateRow(r, agg, len, count);
-        } else if (grouped) {
-            int order[] = new int[iGroupLen];
-            int way[]   = new int[iGroupLen];
+        int limitcount = issimplemaxrows ? limitStart + maxrows
+                                         : Integer.MAX_VALUE;
 
-            for (int i = iResultLen, j = 0; j < iGroupLen; i++, j++) {
-                order[j] = i;
-                way[j]   = 1;
-            }
+        buildResult(r, limitcount);
 
-            r = sortResult(r, order, way);
-
-            Record n = r.rRoot;
-            Result x = new Result(len);
+        if (isAggregated &&!isGrouped &&!isDistinctAggregate) {
+            addAggregateRow(r, aggregateRow, len, aggregateCount);
+        } else if (isGrouped) {
+            groupResult(r);
+        } else if (isDistinctAggregate) {
+            r.removeDuplicates();
+            buildDistinctAggregates(r);
 
             for (int i = 0; i < len; i++) {
-                x.iType[i] = r.iType[i];
+                Expression e = eColumn[i];
+
+                e.setDistinctAggregate(false);
+
+                r.colType[i]  = e.getDataType();
+                r.colSize[i]  = e.getColumnSize();
+                r.colScale[i] = e.getColumnScale();
             }
+        }
 
-            do {
-                Object row[] = new Object[len];
+        // the result is maybe bigger (due to group and order by)
+        // but don't tell this anybody else
+        if (isDistinctSelect) {
+            int fullColumnCount = r.getColumnCount();
 
-                count = 0;
-
-                boolean newgroup = false;
-
-                while (n != null && newgroup == false) {
-                    count++;
-
-                    for (int i = 0; i < iGroupLen; i++) {
-                        if (n.next == null) {
-                            newgroup = true;
-                        } else if (Column.compare(
-                                n.data[i], n.next.data[i], r.iType[i]) != 0) {
-
-                            // can't use .equals because 'null' is also one group
-                            newgroup = true;
-                        }
-                    }
-
-                    updateAggregateRow(row, n.data, len);
-
-                    n = n.next;
-                }
-
-                addAggregateRow(x, row, len, count);
-            } while (n != null);
-
-            r = x;
+            r.setColumnCount(iResultLen);
+            r.removeDuplicates();
+            r.setColumnCount(fullColumnCount);
         }
 
         if (iOrderLen != 0) {
             int order[] = new int[iOrderLen];
             int way[]   = new int[iOrderLen];
 
-            for (int i = iResultLen, j = 0; j < iOrderLen; i++, j++) {
+// fredt@users 20020230 - patch 495938 by johnhobs@users - GROUP BY order
+            for (int i = iResultLen + (isGrouped ? iGroupLen
+                                                 : 0), j = 0; j < iOrderLen;
+                    i++, j++) {
                 order[j] = i;
                 way[j]   = eColumn[i].isDescending() ? -1
                                                      : 1;
             }
 
-            r = sortResult(r, order, way);
+            r.sortResult(order, way);
         }
 
-        // the result is maybe bigger (due to group and order by)
-        // but don't tell this anybody else
+        // fredt - now there is no need for the sort and group columns
         r.setColumnCount(iResultLen);
-
-        if (bDistinct) {
-            r = removeDuplicates(r);
-        }
 
         for (int i = 0; i < iResultLen; i++) {
             Expression e = eColumn[i];
 
-            r.sLabel[i] = e.getAlias();
-            r.sTable[i] = e.getTableName();
-            r.sName[i]  = e.getColumnName();
+            r.sLabel[i]        = e.getAlias();
+            r.isLabelQuoted[i] = e.isAliasQuoted();
+            r.sTable[i]        = e.getTableName();
+            r.sName[i]         = e.getColumnName();
         }
+
+// fredt@users 20020130 - patch 471710 - LIMIT rewritten
+        r.trimResult(limitStart, limitCount);
 
         if (sUnion != null) {
             Result x = sUnion.getResult(0);
 
             if (iUnionType == UNION) {
                 r.append(x);
-
-                r = removeDuplicates(r);
+                r.removeDuplicates();
             } else if (iUnionType == UNIONALL) {
                 r.append(x);
             } else if (iUnionType == INTERSECT) {
-                r = removeDuplicates(r);
-                x = removeDuplicates(x);
-                r = removeDifferent(r, x);
+                r.removeDifferent(x);
             } else if (iUnionType == EXCEPT) {
-                r = removeDuplicates(r);
-                x = removeDuplicates(x);
-                r = removeSecond(r, x);
+                r.removeSecond(x);
             }
         }
 
-        if (maxrows > 0 &&!simple_maxrows) {
-            trimResult(r, maxrows);
-        }
-
-// fredt@users - begin changes from 1.50
-        if (start > 0) {    //then cut the first 'start' elements
-            trimResultFront(r, start);
-        }
-
-// fredt@users - end changes from 1.50
         return r;
     }
 
@@ -446,9 +382,16 @@ class Select {
 
             switch (eColumn[i].getType()) {
 
+                case Expression.DIST_COUNT :
+                    Integer increment = (n[i] == null) ? Expression.INTEGER_0
+                                                       : Expression.INTEGER_1;
+
+                    row[i] = Column.sum(row[i], increment, Types.INTEGER);
+                    break;
+
+                case Expression.COUNT :
                 case Expression.AVG :
                 case Expression.SUM :
-                case Expression.COUNT :
                     row[i] = Column.sum(row[i], n[i], type);
                     break;
 
@@ -490,7 +433,7 @@ class Select {
 
                 // this fixes the problem with count(*) on a empty table
                 if (row[i] == null) {
-                    row[i] = new Integer(0);
+                    row[i] = Expression.INTEGER_0;
                 }
             }
         }
@@ -498,345 +441,149 @@ class Select {
         x.add(row);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static Result removeDuplicates(Result r) throws SQLException {
+    private void buildResult(Result r, int limitcount) throws SQLException {
 
-        int len     = r.getColumnCount();
-        int order[] = new int[len];
-        int way[]   = new int[len];
+        int     len     = eColumn.length;
+        int     count   = 0;
+        int     filter  = tFilter.length;
+        boolean first[] = new boolean[filter];
+        int     level   = 0;
+        boolean addtoaggregate = isAggregated &&!isGrouped
+                                 &&!isDistinctAggregate;
 
-        for (int i = 0; i < len; i++) {
-            order[i] = i;
-            way[i]   = 1;
-        }
+        while (level >= 0) {
+            TableFilter t = tFilter[level];
+            boolean     found;
 
-        r = sortResult(r, order, way);
-
-        Record n = r.rRoot;
-
-        while (n != null) {
-            Record next = n.next;
-
-            if (next == null) {
-                break;
-            }
-
-            if (compareRecord(n.data, next.data, r, len) == 0) {
-                n.next = next.next;
+            if (!first[level]) {
+                found        = t.findFirst();
+                first[level] = found;
             } else {
-                n = n.next;
+                found        = t.next();
+                first[level] = found;
             }
-        }
 
-        return r;
-    }
+            if (!found) {
+                level--;
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param minus
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static Result removeSecond(Result r,
-                                       Result minus) throws SQLException {
+                continue;
+            }
 
-        int     len   = r.getColumnCount();
-        Record  n     = r.rRoot;
-        Record  last  = r.rRoot;
-        boolean rootr = true;    // checking rootrecord
-        Record  n2    = minus.rRoot;
-        int     i     = 0;
+            if (level < filter - 1) {
+                level++;
 
-        while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, r, len);
+                continue;
+            }
 
-            if (i == 0) {
-                if (rootr) {
-                    r.rRoot = n.next;
-                } else {
-                    last.next = n.next;
+            // apply condition
+            if (eCondition == null || eCondition.test()) {
+                Object row[] = new Object[len];
+
+                for (int i = 0; i < len; i++) {
+                    row[i] = eColumn[i].getValue();
                 }
 
-                n = n.next;
-            } else if (i > 0) {    // r > minus
-                n2 = n2.next;
-            } else {               // r < minus
-                last  = n;
-                rootr = false;
-                n     = n.next;
+                count++;
+
+// fredt@users 20010701 - patch for bug 416144 416146 430615 by fredt
+                if (addtoaggregate) {
+                    updateAggregateRow(aggregateRow, row, len);
+/*
+
+                    if (isGrouped || isDistinctAggregate) {
+                        r.add(row);
+                    }
+*/
+                } else {
+                    r.add(row);
+
+                    if (count >= limitcount) {
+                        break;
+                    }
+                }
             }
         }
 
-        return r;
+        if (addtoaggregate) {
+            aggregateCount = count;
+        }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param r2
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static Result removeDifferent(Result r,
-                                          Result r2) throws SQLException {
+    private void groupResult(Result r) throws SQLException {
 
-        int     len   = r.getColumnCount();
-        Record  n     = r.rRoot;
-        Record  last  = r.rRoot;
-        boolean rootr = true;    // checking rootrecord
-        Record  n2    = r2.rRoot;
-        int     i     = 0;
+        int len     = eColumn.length;
+        int count   = 0;
+        int order[] = new int[iGroupLen];
+        int way[]   = new int[iGroupLen];
 
-        while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, r, len);
+        for (int i = iResultLen, j = 0; j < iGroupLen; i++, j++) {
+            order[j] = i;
+            way[j]   = 1;
+        }
 
-            if (i == 0) {             // same rows
-                if (rootr) {
-                    r.rRoot = n;      // make this the first record
-                } else {
-                    last.next = n;    // this is next record in resultset
+        r.sortResult(order, way);
+
+        Record n = r.rRoot;
+        Result x = new Result(len);
+
+        do {
+            Object row[] = new Object[len];
+
+            count = 0;
+
+            boolean newgroup = false;
+
+            while (n != null && newgroup == false) {
+                count++;
+
+// fredt@users 20020215 - patch 476650 by johnhobs@users - GROUP BY aggregates
+                for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
+                    if (n.next == null) {
+                        newgroup = true;
+                    } else if (Column.compare(
+                            n.data[i], n.next.data[i], r.colType[i]) != 0) {
+
+                        // can't use .equals because 'null' is also one group
+                        newgroup = true;
+                    }
                 }
 
-                rootr = false;
-                last  = n;            // this is last record in resultset
-                n     = n.next;
-                n2    = n2.next;
-            } else if (i > 0) {       // r > r2
-                n2 = n2.next;
-            } else {                  // r < r2
+                updateAggregateRow(row, n.data, len);
+
                 n = n.next;
             }
-        }
 
-        if (rootr) {             // if no lines in resultset
-            r.rRoot = null;      // then return null
-        } else {
-            last.next = null;    // else end resultset
-        }
+// fredt@users 20020320 - patch 476650 by fredt - empty GROUP BY
+            if (isAggregated || count > 0) {
+                addAggregateRow(x, row, len, count);
+            }
+        } while (n != null);
 
-        return r;
+        r.setRows(x);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param order
-     * @param way
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static Result sortResult(Result r, int order[],
-                                     int way[]) throws SQLException {
+    private void buildDistinctAggregates(Result r) throws SQLException {
 
-        if (r.rRoot == null || r.rRoot.next == null) {
-            return r;
-        }
+        int    len   = eColumn.length;
+        int    count = 0;
+        Record n     = r.rRoot;
+        Result x     = new Result(len);
+        Object row[] = new Object[len];
 
-        Record source0, source1;
-        Record target[]     = new Record[2];
-        Record targetlast[] = new Record[2];
-        int    dest         = 0;
-        Record n            = r.rRoot;
+        count = 0;
 
         while (n != null) {
-            Record next = n.next;
+            count++;
 
-            n.next       = target[dest];
-            target[dest] = n;
-            n            = next;
-            dest         ^= 1;
-        }
+            updateAggregateRow(row, n.data, len);
 
-        for (int blocksize = 1; target[1] != null; blocksize <<= 1) {
-            source0   = target[0];
-            source1   = target[1];
-            target[0] = target[1] = targetlast[0] = targetlast[1] = null;
-
-            for (dest = 0; source0 != null; dest ^= 1) {
-                int n0 = blocksize,
-                    n1 = blocksize;
-
-                while (true) {
-                    if (n0 == 0 || source0 == null) {
-                        if (n1 == 0 || source1 == null) {
-                            break;
-                        }
-
-                        n       = source1;
-                        source1 = source1.next;
-
-                        n1--;
-                    } else if (n1 == 0 || source1 == null) {
-                        n       = source0;
-                        source0 = source0.next;
-
-                        n0--;
-                    } else if (compareRecord(
-                            source0.data, source1.data, r, order, way) > 0) {
-                        n       = source1;
-                        source1 = source1.next;
-
-                        n1--;
-                    } else {
-                        n       = source0;
-                        source0 = source0.next;
-
-                        n0--;
-                    }
-
-                    if (target[dest] == null) {
-                        target[dest] = n;
-                    } else {
-                        targetlast[dest].next = n;
-                    }
-
-                    targetlast[dest] = n;
-                    n.next           = null;
-                }
-            }
-        }
-
-        r.rRoot = target[0];
-
-        return r;
-    }
-
-// fredt@users - begin changes from 1.50
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param start
-     */
-    private static void trimResultFront(Result r, int start) {
-
-        Record n = r.rRoot;
-
-        if (n == null) {
-            return;
-        }
-
-        while (--start >= 0) {
             n = n.next;
-
-            if (n == null) {
-                return;
-            }
         }
 
-        r.rRoot = n;
-    }
-
-// fredt@users - end changes from 1.50
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     * @param maxrows
-     */
-    private static void trimResult(Result r, int maxrows) {
-
-        Record n = r.rRoot;
-
-        if (n == null) {
-            return;
+        if (isAggregated || count > 0) {
+            addAggregateRow(x, row, len, count);
         }
 
-        while (--maxrows > 0) {
-            n = n.next;
-
-            if (n == null) {
-                return;
-            }
-        }
-
-        n.next = null;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param a
-     * @param b
-     * @param r
-     * @param order
-     * @param way
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static int compareRecord(Object a[], Object b[], Result r,
-                                     int order[],
-                                     int way[]) throws SQLException {
-
-        int i = Column.compare(a[order[0]], b[order[0]], r.iType[order[0]]);
-
-        if (i == 0) {
-            for (int j = 1; j < order.length; j++) {
-                i = Column.compare(a[order[j]], b[order[j]],
-                                   r.iType[order[j]]);
-
-                if (i != 0) {
-                    return i * way[j];
-                }
-            }
-        }
-
-        return i * way[0];
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param a
-     * @param b
-     * @param r
-     * @param len
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private static int compareRecord(Object a[], Object b[], Result r,
-                                     int len) throws SQLException {
-
-        for (int j = 0; j < len; j++) {
-            int i = Column.compare(a[j], b[j], r.iType[j]);
-
-            if (i != 0) {
-                return i;
-            }
-        }
-
-        return 0;
+        r.setRows(x);
     }
 }

@@ -67,57 +67,98 @@
 
 package org.hsqldb;
 
-import java.io.*;
-import java.sql.*;
+import java.io.IOException;
+import java.io.File;
+import java.sql.SQLException;
+
+// fredt@users 20020320 - doc 1.7.0 by - update
+// fredt@users 20011220 - patch 437174 by hjb@users - cache update
+// most changes and comments by HSB are kept unchanged
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - cache update
 
 /**
- * Cache class declaration
- * <P>The cache class implements the handling of cached tables.
  *
- * @version 1.0.0.1
- * @see Row
- * @see CacheFree
+ * Handles cached tables through a .data file and memory cache.
+ *
+ * @version    1.7.0
+ * @see        Row
+ * @see        CacheFree
  */
 class Cache {
 
-    private RandomAccessFile rFile;
-    private final static int LENGTH         = 1 << 14;
-    private final static int MAX_CACHE_SIZE = LENGTH * 3 / 4;
-    private Row              rData[];
-    private Row              rWriter[];
-    private Row              rFirst;                   // must point to one of rData[]
-    private Row              rLastChecked;             // can be any row
-    private String           sName;
-    private final static int MASK = (LENGTH) - 1;
-    private int              iFreePos;
-    private final static int FREE_POS_POS     = 16;    // where iFreePos is saved
-    private final static int INITIAL_FREE_POS = 32;
-    private final static int MAX_FREE_COUNT   = 1024;
+    private HsqlDatabaseProperties props;
+    private boolean                newCacheType;
+    private final int              cacheLength;
+    private final int              writerLength;
+    private final int              maxCacheSize;
+    private final int              multiplierMask;
+    private Row                    rData[];
+    private Row                    rWriter[];
+    private Row                    rFirst;             // must point to one of rData[]
+    private Row                    rLastChecked;       // can be any row
+
+    // sqlbob@users - changed visibility for children.
+    protected String         sName;
+    protected int            iFreePos;
+    protected DatabaseFile   rFile;
+    private static final int FREE_POS_POS     = 16;    // where iFreePos is saved
+    private static final int INITIAL_FREE_POS = 32;
+    private static final int MAX_FREE_COUNT   = 1024;
     private CacheFree        fRoot;
     private int              iFreeCount;
     private int              iCacheSize;
 
     /**
-     * Cache constructor declaration
-     * <P>The cache constructor sets up the initial parameters of the cache
-     * object, setting the name used for the file, etc.
+     *  Construct a new Cache object with the given database path name and
+     *  the properties object to get the initial settings from.
      *
-     * @param name of database file
+     * @param  name              file path name of database file
+     * @param  props             properties object
      */
-    Cache(String name) {
+    Cache(String name, HsqlDatabaseProperties props) {
 
-        sName   = name;
-        rData   = new Row[LENGTH];
-        rWriter = new Row[LENGTH];
+        this.props = props;
+
+        int cacheScale = 0;
+
+        try {
+            cacheScale = props.getIntegerProperty("hsqldb.cache_scale", 0);
+        } catch (NumberFormatException e) {
+            Trace.printSystemOut(
+                "bad value for hsqldb.cache_scale in properties file");
+        }
+
+        if (cacheScale == 0) {
+
+            // HJB-2001-06-21: use larger cache size
+            cacheScale = 15;
+        } else if (cacheScale < 8) {
+            cacheScale = 8;
+        } else if (cacheScale > 16) {
+            cacheScale = 16;
+        }
+
+        cacheLength = 1 << cacheScale;
+
+        // HJB-2001-06-21: use different smaller size for the writer
+        writerLength = cacheLength - 3;
+
+        // HJB-2001-06-21: let the cache be larger than the array
+        maxCacheSize   = cacheLength * 3;
+        multiplierMask = cacheLength - 1;
+        sName          = name;
+        rData          = new Row[cacheLength];
+        rWriter        = new Row[writerLength];    // HJB-2001-06-21
     }
 
     /**
-     * open method declaration
-     * <P>The open method creates or opens a database file.
      *
-     * @param flag that indicates if this cache is readonly
+     * Opens this object's database file.
      *
-     * @throws SQLException
+     * @param  readonly specifies if the file is opened as readonly or
+     *  read / write
+     * @throws  SQLException if there is a problem opening this object's
+     *                       database file
      */
     void open(boolean readonly) throws SQLException {
 
@@ -129,15 +170,24 @@ class Cache {
                 exists = true;
             }
 
-            rFile = new RandomAccessFile(sName, readonly ? "r"
-                                                         : "rw");
+            rFile = new DatabaseFile(sName, readonly ? "r"
+                                                     : "rw", 2048);
 
             if (exists) {
-                rFile.seek(FREE_POS_POS);
+                rFile.readSeek(FREE_POS_POS);
 
-                iFreePos = rFile.readInt();
+                iFreePos = rFile.readInteger();
             } else {
                 iFreePos = INITIAL_FREE_POS;
+
+                props.setProperty("hsqldb.cache_version", "1.7.0");
+            }
+
+            String cacheVersion = props.getProperty("hsqldb.cache_version",
+                "1.6.0");
+
+            if (cacheVersion.equals("1.7.0")) {
+                newCacheType = true;
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
@@ -146,19 +196,32 @@ class Cache {
     }
 
     /**
-     * flush method declaration
-     * <P>The flush method saves all cached data to the file, saves the free position
-     * and closes the file.
+     *  Writes out all cached data and the free position to this
+     *  object's database file and then closes the file.
      *
-     * @throws SQLException
+     * @throws  SQLException if there is a problem writing or closing
+     *                       this object's database file
      */
     void flush() throws SQLException {
 
+        if (rFile == null) {
+            return;
+        }
+
         try {
             rFile.seek(FREE_POS_POS);
-            rFile.writeInt(iFreePos);
+            rFile.writeInteger(iFreePos);
             saveAll();
+
+            boolean empty = (rFile.length() < INITIAL_FREE_POS);
+
             rFile.close();
+
+            rFile = null;
+
+            if (empty) {
+                new File(sName).delete();
+            }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               "error " + e + " closing " + sName);
@@ -166,15 +229,21 @@ class Cache {
     }
 
     /**
-     * shutdown method declaration
-     * <P>the shutdown method closes the cache file.  It does not flush pending writes.
+     *  Closes this object's database file without flushing pending writes.
      *
-     * @throws SQLException
+     * @throws  SQLException if there is a problem closing this object's
+     *                       database file
      */
     void shutdown() throws SQLException {
 
+        if (rFile == null) {
+            return;
+        }
+
         try {
             rFile.close();
+
+            rFile = null;
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               "error " + e + " in shutdown " + sName);
@@ -182,17 +251,17 @@ class Cache {
     }
 
     /**
-     * free method declaration
-     * <P>This method marks space in the database file as free.
-     *     <P><B>Note: </B>If more than MAX_FREE_COUNT free positios then
-     *     they are probably all are too small anyway; so we start a new list
-     *     <P>todo: This is wrong when deleting lots of records
+     * Marks space in this object's cache file as free. <p>
      *
-     * @param r (Row object to be marked free)
-     * @param pos (Offset in the file this Row was stored at)
-     * @param length (Size of the Row object to free)
+     * <B>Note:</B> If there exists more than MAX_FREE_COUNT free positions,
+     * then they are probably all too small, so we start a new list. <p>
      *
-     * @throws SQLException
+     *  todo: This is wrong when deleting lots of records
+     *
+     * @param  r              (Row object to be marked free)
+     * @param  pos            (Offset in the file this Row was stored at)
+     * @param  length         (Size of the Row object to free)
+     * @throws SQLException if there is a problem freeing the specified Row
      */
     void free(Row r, int pos, int length) throws SQLException {
 
@@ -216,22 +285,52 @@ class Cache {
     }
 
     /**
-     * add method declaration
-     * <P>This method adds a Row to the Cache.  It walks the
-     * list of CacheFree objects to see if there is available space
-     * to store the new Row, reusing space if it exists, otherwise
-     * we grow the file.
+     * Calculates the number of bytes required to store a Row in this object's
+     * database file.
      *
-     * @param r (Row to be added to Cache)
-     *
-     * @throws SQLException
+     * @param r the Row who's size (in this objects's database file) is
+     *          to be calculated
+     * @return the nuber of bytes required to store the specified Row in this
+     *         object's database file
+     * @throws SQLException if there is a problem calculating the specified
+     *                      Row's storage size
      */
-    void add(Row r) throws SQLException {
+    protected int getStorageSize(Row r) throws SQLException {
 
-        int       size = r.iSize;
-        CacheFree f    = fRoot;
-        CacheFree last = null;
-        int       i    = iFreePos;
+        // todo: 32 bytes overhead for each index + iSize, iPos
+        Table t    = r.getTable();
+        int   size = 8 + 32 * t.getIndexCount();
+
+        if (newCacheType) {
+            size += BinaryServerRowOutput.getSize(r);
+        } else {
+            size += BinaryDatabaseRowOutput.getSize(r);
+        }
+
+        size = ((size + 7) / 8) * 8;    // align to 8 byte blocks
+
+        return (size);
+    }
+
+    /**
+     * Adds a Row to the Cache. <p>
+     *
+     * A Row is added by walking the list of CacheFree
+     * objects to see if there is available space to store it,
+     * reusing space if it exists.  Otherwise , this object's cache
+     * file is grown to accomadate it.
+     *
+     * @param  r              (Row to be added to Cache)
+     * @throws SQLException if there is a problem adding the specified Row
+     * @return the size of the newly added row in this object's database file
+     */
+    int add(Row r) throws SQLException {
+
+        int       size    = getStorageSize(r);
+        int       rowSize = size;
+        CacheFree f       = fRoot;
+        CacheFree last    = null;
+        int       i       = iFreePos;
 
         while (f != null) {
             if (Trace.TRACE) {
@@ -255,7 +354,7 @@ class Cache {
                     iFreeCount--;
                 } else {
                     f.iLength = size;
-                    f.iPos    += r.iSize;
+                    f.iPos    += rowSize;
                 }
 
                 break;
@@ -265,13 +364,14 @@ class Cache {
             f    = f.fNext;
         }
 
-        r.iPos = i;
+        r.setPos(i);
 
         if (i == iFreePos) {
             iFreePos += size;
         }
 
-        int k      = i & MASK;
+        // HJB-2001-06-21
+        int k      = (i >> 3) & multiplierMask;
         Row before = rData[k];
 
         if (before == null) {
@@ -284,35 +384,72 @@ class Cache {
 
         rData[k] = r;
         rFirst   = r;
+
+        return (rowSize);
     }
 
     /**
-     * getRow method declaration
-     * <P>This method reads a Row object from the cache.
-     *
+     * Constructs a new Row for the specified table, using row data read
+     * at the specified position in this object's database file.
      * @param pos (offset of the requested Row in the cache)
      * @param t (Table this Row belongs to)
+     * @throws SQLException if there is a problem reading in the
+     *         Row specified by pos and t
+     * @return The Row Object as read from this cache.
+     */
+    protected Row makeRow(int pos, Table t) throws SQLException {
+
+        Row r = null;
+
+        try {
+            rFile.readSeek(pos);
+
+            int  size     = rFile.readInteger();
+            byte buffer[] = new byte[size];
+
+            rFile.read(buffer);
+
+            DatabaseRowInputInterface in;
+
+            if (newCacheType) {
+                in = new BinaryServerRowInput(buffer, pos);
+            } else {
+                in = new BinaryDatabaseRowInput(buffer, pos);
+            }
+
+            r = new Row(t, in);
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            throw Trace.error(Trace.FILE_IO_ERROR, "reading: " + e);
+        }
+
+        return (r);
+    }
+
+    /**
+     * Reads a Row object from this Cache object.
      *
-     * @return The Row Object as read from the cache.
-     *
-     * @throws SQLException
+     * @param  pos            (offset of the requested Row in the cache)
+     * @param  t              (Table this Row belongs to)
+     * @return The Row Object as read from this cache.
+     * @throws SQLException if there is a problem reading in the Row
+     *                      specified by pos and t
      */
     Row getRow(int pos, Table t) throws SQLException {
 
-        int k     = pos & MASK;
+        // HJB-2001-06-21
+        int k     = (pos >> 3) & multiplierMask;
         Row r     = rData[k];
         Row start = r;
+        int p     = 0;
 
         while (r != null) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
-            int p = r.iPos;
+            p = r.iPos;
 
             if (p == pos) {
                 return r;
-            } else if ((p & MASK) != k) {
+            } else if (((p >> 3) & multiplierMask) != k) {    // HJB-2001-06-21
                 break;
             }
 
@@ -329,69 +466,68 @@ class Cache {
             before = rFirst;
         }
 
-        try {
-            rFile.seek(pos);
+        r = makeRow(pos, t);
 
-            int  size     = rFile.readInt();
-            byte buffer[] = new byte[size];
+        if (r != null) {
+            r.insert(before);
 
-            rFile.read(buffer);
+            iCacheSize++;
 
-            ByteArrayInputStream bin = new ByteArrayInputStream(buffer);
-            DataInputStream      in  = new DataInputStream(bin);
+            //-- iPos may have changed (blank lines).
+            rData[(r.iPos >> 3) & multiplierMask] = r;
+            rFirst                                = r;
 
-            r       = new Row(t, in, pos, before);
-            r.iSize = size;
-        } catch (IOException e) {
-            e.printStackTrace();
-
-            throw Trace.error(Trace.FILE_IO_ERROR, "reading: " + e);
+            t.indexRow(r, false);
         }
-
-        // todo: copy & paste here
-        iCacheSize++;
-
-        rData[k] = r;
-        rFirst   = r;
 
         return r;
     }
 
     /**
-     * cleanUp method declaration
-     * <P>This method cleans up the cache when it grows too large. It works by
-     * checking Rows in held in the Cache's iLastAccess member and removing
-     * Rows that haven't been accessed in the longest time.
+     * Cleans up this Cache object. <p>
      *
-     * @throws SQLException
+     * This method is called when this Cache object grows too large. <p>
+     *
+     * Cleanup is done by checking the iLastAccess member of this
+     * object's in-memory Rows and removing those that have
+     * been least recently accessed (classic LRU algoritm).
+     *
+     * @throws SQLException if there is a problem cleaning up this Cache object
      */
     void cleanUp() throws SQLException {
 
-        if (iCacheSize < MAX_CACHE_SIZE) {
+        if (iCacheSize < maxCacheSize) {
             return;
         }
 
-        int count = 0,
-            j     = 0;
+        int count = 0;
+        int j     = 0;
 
-        while (j++ < LENGTH && iCacheSize + LENGTH > MAX_CACHE_SIZE
-                && (count * 16) < LENGTH) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
+        // HJB-2001-06-21
+        while ((j++ < cacheLength) && (iCacheSize > maxCacheSize / 2)
+                && (count < writerLength)) {
             Row r = getWorst();
 
             if (r == null) {
                 return;
             }
 
-            if (r.bChanged) {
+            if (r.hasChanged()) {
+
+                // HJB-2001-06-21
+                // make sure that the row will not be added twice
+                // getWorst() in some cases returns the same row many times
+
+                /**
+                 *  for (int i=0;i<count;i++) { if (rWriter[i]==r) { r=null;
+                 *  break; } } if (r!=null) { rWriter[count++] = r; }
+                 */
+                r.iLastAccess    = Row.iCurrentAccess;
                 rWriter[count++] = r;
             } else {
 
                 // here we can't remove roots
-                if (!r.canRemove()) {
+                if (!r.isRoot()) {
                     remove(r);
                 }
             }
@@ -406,7 +542,7 @@ class Cache {
             // here we can't remove roots
             Row r = rWriter[i];
 
-            if (!r.canRemove()) {
+            if (!r.isRoot()) {
                 remove(r);
             }
 
@@ -415,22 +551,22 @@ class Cache {
     }
 
     /**
-     * remove method declaration
-     * <P>This method is used to remove Rows from the Cache. It is called
-     * by the cleanUp method.
+     * Removes a Row from this Cache object.
      *
-     * @param r (Row to be removed)
+     * <b>Note:</b> This method is called by the cleanUp method.
      *
-     * @throws SQLException
+     * @param  r              (Row to be removed)
+     * @throws SQLException if there is a problem removing the specified Row
      */
-    private void remove(Row r) throws SQLException {
+    protected void remove(Row r) throws SQLException {
 
-        if (Trace.ASSERT) {
-            Trace.assert(!r.bChanged);
-
-            // make sure rLastChecked does not point to r
+/*
+        if (Trace.DOASSERT) {
+            Trace.doAssert(!r.bChanged);
         }
+*/
 
+        // make sure rLastChecked does not point to r
         if (r == rLastChecked) {
             rLastChecked = rLastChecked.rNext;
 
@@ -440,14 +576,15 @@ class Cache {
         }
 
         // make sure rData[k] does not point here
-        int k = r.iPos & MASK;
+        // HJB-2001-06-21
+        int k = (r.iPos >> 3) & multiplierMask;
 
         if (rData[k] == r) {
             Row n = r.rNext;
 
             rFirst = n;
 
-            if (n == r || (n.iPos & MASK) != k) {
+            if (n == r || ((n.iPos >> 3) & multiplierMask) != k) {    // HJB-2001-06-21
                 n = null;
             }
 
@@ -469,13 +606,12 @@ class Cache {
     }
 
     /**
-     * getWorst method declaration
-     * <P>This method finds the Row with the smallest (oldest) iLastAccess member.
-     * Called by the cleanup method.
+     * Finds the Row with the smallest (oldest) iLastAccess member (LRU). <p>
      *
-     * @return The selected Row Object
+     * <b>Note:</b> This method is called by the cleanup method.
      *
-     * @throws SQLException
+     * @return the Row Object with the smallest (oldest) iLastAccess member
+     * @throws SQLException if there is a problem finding the LRU Row
      */
     private Row getWorst() throws SQLException {
 
@@ -510,12 +646,11 @@ class Cache {
     }
 
     /**
-     * Method declaration
+     * Writes out all cached Rows.
      *
-     *
-     * @throws SQLException
+     * @throws SQLException if there is a problem writing out the rows
      */
-    private void saveAll() throws SQLException {
+    protected void saveAll() throws SQLException {
 
         if (rFirst == null) {
             return;
@@ -532,12 +667,12 @@ class Cache {
                     Trace.stop();
                 }
 
-                if (r.bChanged) {
+                if (r.hasChanged()) {
                     rWriter[count++] = r;
                 }
 
                 r = r.rNext;
-            } while (r != begin && count < LENGTH);
+            } while (r != begin && count < writerLength);    // HJB-2001-06-21
 
             if (count == 0) {
                 return;
@@ -552,12 +687,33 @@ class Cache {
     }
 
     /**
-     * Method declaration
+     * Writes out the specified Row.
+     * @param r the Row to write out
+     * @throws IOException if a FILE IO ERROR occurs
+     * @throws SQLException if there is a problem writing out the specified Row
+     */
+    protected void saveRow(Row r) throws IOException, SQLException {
+
+        rFile.seek(r.iPos);
+
+        DatabaseRowOutputInterface out;
+
+        if (newCacheType) {
+            out = new BinaryServerRowOutput(r.storageSize);
+        } else {
+            out = new BinaryDatabaseRowOutput(r.storageSize);
+        }
+
+        r.write(out);
+        rFile.write(out.toByteArray());
+    }
+
+    /**
+     * Writes out the first <code>count</code> rWriter Rows in iPos
+     * sorted order.
      *
-     *
-     * @param count
-     *
-     * @throws SQLException
+     * @param count the first n rWriter rows to write out
+     * @throws SQLException if there is a problem writing the Rows
      */
     private void saveSorted(int count) throws SQLException {
 
@@ -565,8 +721,7 @@ class Cache {
 
         try {
             for (int i = 0; i < count; i++) {
-                rFile.seek(rWriter[i].iPos);
-                rFile.write(rWriter[i].write());
+                saveRow(rWriter[i]);
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, "saveSorted " + e);
@@ -574,19 +729,20 @@ class Cache {
     }
 
     /**
-     * Method declaration
+     * FastQSorts the [l,r] partition of the specfied array of Rows, based on
+     * the contained Row objects' iPos attribute values.
      *
-     *
-     * @param w
-     * @param l
-     * @param r
-     *
-     * @throws SQLException
+     * @param w the array of Row objects to sort
+     * @param l the left boundary of the array partition
+     * @param r the right boundary of the array partition
+     * @throws SQLException if there is a problem sorting the specified partition
      */
     private static final void sort(Row w[], int l,
                                    int r) throws SQLException {
 
-        int i, j, p;
+        int i;
+        int j;
+        int p;
 
         while (r - l > 10) {
             i = (r + l) >> 1;
@@ -613,9 +769,13 @@ class Cache {
                     Trace.stop();
                 }
 
-                while (w[++i].iPos < p);
+                while (w[++i].iPos < p) {
+                    ;
+                }
 
-                while (w[--j].iPos > p);
+                while (w[--j].iPos > p) {
+                    ;
+                }
 
                 if (i >= j) {
                     break;
@@ -646,12 +806,11 @@ class Cache {
     }
 
     /**
-     * Method declaration
+     * Swaps the a'th and b'th elements of the specified Row array.
      *
-     *
-     * @param w
-     * @param a
-     * @param b
+     * @param w the array of Rows in which to swap elements
+     * @param a the a'th element to swap
+     * @param b the b'th element to swap
      */
     private static void swap(Row w[], int a, int b) {
 
@@ -659,5 +818,13 @@ class Cache {
 
         w[a] = w[b];
         w[b] = t;
+    }
+
+    /**
+     * Getter for iFreePos member
+     * @return value of iFreePos
+     */
+    int getFreePos() {
+        return (iFreePos);
     }
 }

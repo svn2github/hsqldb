@@ -31,74 +31,98 @@
 
 package org.hsqldb;
 
+// peterhudson@users 20020130 - patch 478657 by peterhudson - triggers support
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// added new class as jdk 1.1 does not allow use of LinkedList
+import org.hsqldb.lib.HsqlDeque;
+
 /**
- * TriggerDef class declaration
+ *  TriggerDef class declaration Definition and execution of triggers
+ *  Development of the trigger implementation sponsored by Logicscope
+ *  Realisations Ltd
  *
- * Definition and execution of triggers
- * Development of the trigger implementation sponsored by Logicscope Realisations Ltd
- *
- * @author Logicscope Realisations Ltd
- * @version 1.0.0.1
+ * @author  Logicscope Realisations Ltd
+ * @version  1.7.0 (1.0.0.3) Revision History: 1.0.0.1 First release in hsqldb 1.61
+ *      1.0.0.2 'nowait' support to prevent deadlock 1.0.0.3 multiple row
+ *      queue for each trigger
  */
 class TriggerDef extends Thread {
 
     /**
-     * member variables
+     *  member variables
      */
     static final int NUM_TRIGGER_OPS = 3;    // ie ins,del,upd
     static final int NUM_TRIGS       = NUM_TRIGGER_OPS * 2 * 2;
 
     // indexes into the triggers Vector
-    static final int  INSERT_AFTER      = 0;
-    static final int  DELETE_AFTER      = 1;
-    static final int  UPDATE_AFTER      = 2;
-    static final int  INSERT_BEFORE     = INSERT_AFTER + NUM_TRIGGER_OPS;
-    static final int  DELETE_BEFORE     = DELETE_AFTER + NUM_TRIGGER_OPS;
-    static final int  UPDATE_BEFORE     = UPDATE_AFTER + NUM_TRIGGER_OPS;
-    static final int  INSERT_AFTER_ROW  = INSERT_AFTER + 2 * NUM_TRIGGER_OPS;
-    static final int  DELETE_AFTER_ROW  = DELETE_AFTER + 2 * NUM_TRIGGER_OPS;
-    static final int  UPDATE_AFTER_ROW  = UPDATE_AFTER + 2 * NUM_TRIGGER_OPS;
-    static final int  INSERT_BEFORE_ROW = INSERT_BEFORE + 2 * NUM_TRIGGER_OPS;
-    static final int  DELETE_BEFORE_ROW = DELETE_BEFORE + 2 * NUM_TRIGGER_OPS;
-    static final int  UPDATE_BEFORE_ROW = UPDATE_BEFORE + 2 * NUM_TRIGGER_OPS;
-    String            name;
-    String            when;
-    String            operation;
-    boolean           forEachRow;
-    Table             table;
-    Trigger           trig;
-    String            fire;
-    int               vectorIndx;            // index into Vector[]
-    Object            rowForTrigger[];       // for firing thread to fire to pass to JSP
-    protected boolean busy;                  // firing trigger in progress
-    protected boolean valid;                 // parsing valid
+    static final int INSERT_AFTER      = 0;
+    static final int DELETE_AFTER      = 1;
+    static final int UPDATE_AFTER      = 2;
+    static final int INSERT_BEFORE     = INSERT_AFTER + NUM_TRIGGER_OPS;
+    static final int DELETE_BEFORE     = DELETE_AFTER + NUM_TRIGGER_OPS;
+    static final int UPDATE_BEFORE     = UPDATE_AFTER + NUM_TRIGGER_OPS;
+    static final int INSERT_AFTER_ROW  = INSERT_AFTER + 2 * NUM_TRIGGER_OPS;
+    static final int DELETE_AFTER_ROW  = DELETE_AFTER + 2 * NUM_TRIGGER_OPS;
+    static final int UPDATE_AFTER_ROW  = UPDATE_AFTER + 2 * NUM_TRIGGER_OPS;
+    static final int INSERT_BEFORE_ROW = INSERT_BEFORE + 2 * NUM_TRIGGER_OPS;
+    static final int DELETE_BEFORE_ROW = DELETE_BEFORE + 2 * NUM_TRIGGER_OPS;
+    static final int UPDATE_BEFORE_ROW = UPDATE_BEFORE + 2 * NUM_TRIGGER_OPS;
+
+    // other variables
+    String  name;
+    String  when;
+    String  operation;
+    boolean forEachRow;
+    boolean nowait;                          // block or overwrite if queue full
+    int     maxRowsQueued;                   // max size of queue of pending triggers
+
+    public static int getDefaultQueueSize() {
+        return defaultQueueSize;
+    }
+
+    protected static int defaultQueueSize = 1024;
+    Table                table;
+    Trigger              trig;
+    String               fire;
+    int                  vectorIndx;     // index into Vector[]
+
+    //protected boolean busy;               // firing trigger in progress
+    protected HsqlDeque pendingQueue;    // row triggers pending
+    protected int       rowsQueued;      // rows in pendingQueue
+    protected boolean   valid;           // parsing valid
 
     /**
-     * Constructor declaration
+     *  Constructor declaration create an object from the components of an
+     *  SQL CREATE TRIGGER statement
      *
-     * create an object from the components of an SQL CREATE TRIGGER statement
-     *
-     * @param sName
-     * @param sWhen
-     * @param sOper
-     * @param bForEach
-     * @param pTab
-     * @param pTrig
-     * @param sFire
+     * @param  sName
+     * @param  sWhen
+     * @param  sOper
+     * @param  bForEach
+     * @param  pTab
+     * @param  pTrig
+     * @param  sFire
+     * @param  bNowait Description of the Parameter
+     * @param  nQueueSize Description of the Parameter
      */
     public TriggerDef(String sName, String sWhen, String sOper,
                       boolean bForEach, Table pTab, Trigger pTrig,
-                      String sFire) {
+                      String sFire, boolean bNowait, int nQueueSize) {
 
-        name       = sName.toUpperCase();
-        when       = sWhen.toUpperCase();
-        operation  = sOper.toUpperCase();
-        forEachRow = bForEach;
-        table      = pTab;
-        trig       = pTrig;
-        fire       = sFire;
-        vectorIndx = SqlToIndex();
-        busy       = false;
+        name          = sName.toUpperCase();
+        when          = sWhen.toUpperCase();
+        operation     = sOper.toUpperCase();
+        forEachRow    = bForEach;
+        nowait        = bNowait;
+        maxRowsQueued = nQueueSize;
+        table         = pTab;
+        trig          = pTrig;
+        fire          = sFire;
+        vectorIndx    = SqlToIndex();
+
+        //busy = false;
+        rowsQueued   = 0;
+        pendingQueue = new HsqlDeque();
 
         if (vectorIndx < 0) {
             valid = false;
@@ -108,25 +132,34 @@ class TriggerDef extends Thread {
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
     public StringBuffer toBuf() {
 
-        StringBuffer a = new StringBuffer("CREATE TRIGGER ");
+        StringBuffer a = new StringBuffer(256);
 
+        a.append("CREATE TRIGGER ");
         a.append(name);
         a.append(" ");
         a.append(when);
         a.append(" ");
         a.append(operation);
         a.append(" ON ");
-        a.append(table.getName());
+        a.append(table.getName().statementName);
 
         if (forEachRow) {
             a.append(" FOR EACH ROW ");
+        }
+
+        if (nowait) {
+            a.append(" NOWAIT ");
+        }
+
+        if (maxRowsQueued != getDefaultQueueSize()) {
+            a.append(" QUEUE ");
+            a.append(maxRowsQueued);    // no need for trailing space
         }
 
         a.append(" CALL ");
@@ -136,11 +169,12 @@ class TriggerDef extends Thread {
     }
 
     /**
-     * SqlToIndex method declaration
-     * <P>Given the SQL creating the trigger, say what the index to the Vector[] is
+     *  SqlToIndex method declaration <P>
      *
+     *  Given the SQL creating the trigger, say what the index to the
+     *  Vector[] is
      *
-     * @return index to the Vector[]
+     * @return  index to the Vector[]
      */
     public int SqlToIndex() {
 
@@ -170,87 +204,101 @@ class TriggerDef extends Thread {
     }
 
     /**
-     * run method declaration
-     * <P>the trigger JSP is run in its own thread here. Its job
-     * is simply to wait until it is told by the main thread that
-     * it should fire the trigger.
+     *  run method declaration <P>
      *
+     *  the trigger JSP is run in its own thread here. Its job is simply to
+     *  wait until it is told by the main thread that it should fire the
+     *  trigger.
      */
     public void run() {
 
         boolean keepGoing = true;
 
         while (keepGoing) {
-            pop();
+            Object trigRow[] = pop();
+
+            trig.fire(name, table.getName().name, trigRow);
         }
     }
 
     /**
-     * pop method declaration
-     * <P>The consumer (trigger) thread waits for an event to be queued
-     * <P><B>Note: </B>This push/pop pairing assumes a single produced thread
-     * and a single consumer thread _only_.
+     *  pop method declaration <P>
+     *
+     *  The consumer (trigger) thread waits for an event to be queued <P>
+     *
+     *  <B>Note: </B> This push/pop pairing assumes a single producer thread
+     *  and a single consumer thread _only_.
+     *
+     * @return  Description of the Return Value
      */
-    public synchronized void pop() {
+    synchronized Object[] pop() {
 
-        if (!busy) {
+        if (rowsQueued == 0) {
             try {
-                wait();                           // this releases the lock monitor
-            } catch (InterruptedException e) {    /* ignore and resume */
+                wait();    // this releases the lock monitor
+            } catch (InterruptedException e) {
+
+                /* ignore and resume */
             }
         }
 
-        trig.fire(name, table.getName(), rowForTrigger);
-
-        busy = false;
+        rowsQueued--;
 
         notify();    // notify push's wait
+
+        return (Object[]) pendingQueue.removeFirst();
     }
 
     /**
-     * push method declaration
-     * <P>The main thread tells the trigger thread to fire by this call
+     *  push method declaration <P>
      *
-     * @param row[]
+     *  The main thread tells the trigger thread to fire by this call
+     *
+     * @param  row Description of the Parameter
      */
-    public synchronized void push(Object row[]) {
+    synchronized void push(Object row[]) {
 
-        if (busy) {
-            try {
-                wait();
-            } catch (InterruptedException e) {    /* ignore and resume */
+        if (rowsQueued >= maxRowsQueued) {
+            if (nowait) {
+                pendingQueue.removeLast();    // overwrite last
+            } else {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+
+                    /* ignore and resume */
+                }
+
+                rowsQueued++;
             }
+        } else {
+            rowsQueued++;
         }
 
-        busy          = true;
-        rowForTrigger = row;
-
+        pendingQueue.add(row);
         notify();    // notify pop's wait
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
-    static public int numTrigs() {
+    public static int numTrigs() {
         return NUM_TRIGS;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */
     public boolean isBusy() {
-        return busy;
+        return rowsQueued != 0;
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
      */

@@ -67,22 +67,23 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.SQLException;
+import java.util.Vector;
+
+// fredt@users 20020320 - doc 1.7.0 - update
 
 /**
- * Access Class
- * <P>The collection (Vector) of User object instances within a specific
- * database.  Methods are provided for creating, modifying and deleting users,
- * as well as manipulating their access rights to the database objects.
+ *  The collection (Vector) of User object instances within a specific
+ *  database. Methods are provided for creating, modifying and deleting
+ *  users, as well as manipulating their access rights to the database
+ *  objects.
  *
- *
- * @version 1.0.0.1
- * @see User
+ * @version  1.7.0
+ * @see  User
  */
-class Access {
+class UserManager {
 
-    final static int SELECT = 1,
+    static final int SELECT = 1,
                      DELETE = 2,
                      INSERT = 4,
                      UPDATE = 8,
@@ -91,26 +92,22 @@ class Access {
     private User     uPublic;
 
     /**
-     * Access Class constructor
-     * <P>Creates a new Vector to contain the User object instances, as well
-     * as creating an initial PUBLIC user, with no password.
+     *  Creates a new Vector to contain the User object instances, as well
+     *  as creating an initial PUBLIC user, with no password.
      *
-     * @throws SQLException
+     * @throws  SQLException
      */
-    Access() throws SQLException {
+    UserManager() throws SQLException {
         uUser   = new Vector();
         uPublic = createUser("PUBLIC", null, false);
     }
 
     /**
-     * getRight method declaration
-     * <P>This getRight method takes a String argument of the name of the access right.
+     *  Returns int value for the string argument
      *
-     * @param A String representation of the right.
-     *
-     * @return A static int representing the String right passed in.
-     *
-     * @throws SQLException
+     * @param  right one of ALL SELECT UPDATE DELETE INSERT
+     * @return  A static int representing the String right passed in.
+     * @throws  SQLException
      */
     static int getRight(String right) throws SQLException {
 
@@ -130,14 +127,10 @@ class Access {
     }
 
     /**
-     * getRight method declaration
-     * <P>This getRight method takes a int argument of the access right.
-     *
-     * @param A static int representing the right passed in.
-     *
-     * @return A String representation of the right or rights associated with the argument.
-     *
-     * @throws SQLException
+     * Returns comma separated list of String arguments based on int mask
+     * @param  right Description of the Parameter
+     * @return  A String representation of the right or rights associated
+     *      with the argument.
      */
     static String getRight(int right) {
 
@@ -165,32 +158,31 @@ class Access {
             b.append("INSERT,");
         }
 
-        String s = b.toString();
+        b.setLength(b.length() - 1);
 
-        return s.substring(0, s.length() - 1);
+        return b.toString();
     }
 
     /**
-     * createUser method declaration
-     * <P>This method is used to create a new user.  The collection of users
-     * is first checked for a duplicate name, and an exception will be thrown
-     * if a user of the same name already exists.
+     *  This method is used to create a new user. The collection of users is
+     *  first checked for a duplicate name, and an exception will be thrown
+     *  if a user of the same name already exists.
      *
-     * @param name (User login)
-     * @param password (Plaintext password)
-     * @param admin (Is this a database admin user?)
-     *
-     * @return An instance of the newly created User object
-     *
-     * @throws SQLException
+     * @param  name (User login)
+     * @param  password (Plaintext password)
+     * @param  admin (Is this a database admin user?)
+     * @return  An instance of the newly created User object
+     * @throws  SQLException
      */
     User createUser(String name, String password,
                     boolean admin) throws SQLException {
 
-        for (int i = 0; i < uUser.size(); i++) {
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan
+// changes to loops for speed, also applied to similar loops below
+        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
             User u = (User) uUser.elementAt(i);
 
-            if (u != null && u.getName().equals(name)) {
+            if ((u != null) && u.getName().equals(name)) {
                 throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
             }
         }
@@ -203,26 +195,25 @@ class Access {
     }
 
     /**
-     * dropUser method declaration
-     * <P>This method is used to drop a user.  Since we are using a vector
-     * to hold the User objects, we must iterate through the Vector looking
-     * for the name.  The user object is currently set to null, and all access
-     * rights revoked.
-     * <P><B>Note:</B>An ACCESS_IS_DENIED exception will be thrown if an attempt
-     * is made to drop the PUBLIC user.
+     *  This method is used to drop a user. Since we are using a vector to
+     *  hold the User objects, we must iterate through the Vector looking
+     *  for the name. The user object is currently set to null, and all
+     *  access rights revoked. <P>
      *
-     * @param name of the user to be dropped
+     *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
+     *  attempt is made to drop the PUBLIC user.
      *
-     * @throws SQLException
+     * @param  name of the user to be dropped
+     * @throws  SQLException
      */
     void dropUser(String name) throws SQLException {
 
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
-        for (int i = 0; i < uUser.size(); i++) {
+        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
             User u = (User) uUser.elementAt(i);
 
-            if (u != null && u.getName().equals(name)) {
+            if ((u != null) && u.getName().equals(name)) {
 
                 // todo: find a better way. Problem: removeElementAt would not
                 // work correctly while others are connected
@@ -237,19 +228,16 @@ class Access {
     }
 
     /**
-     * getUser method declaration
-     * <P>This method is used to return an instance of a particular User object,
-     * given the user name and password.
+     *  This method is used to return an instance of a particular User
+     *  object, given the user name and password. <P>
      *
-     * <P><B>Note:</B>An ACCESS_IS_DENIED exception will be thrown if an attempt
-     * is made to get the PUBLIC user.
+     *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
+     *  attempt is made to get the PUBLIC user.
      *
-     * @param user name
-     * @param user password
-     *
-     * @return The requested User object
-     *
-     * @throws SQLException
+     * @param  name Description of the Parameter
+     * @param  password Description of the Parameter
+     * @return  The requested User object
+     * @throws  SQLException
      */
     User getUser(String name, String password) throws SQLException {
 
@@ -271,53 +259,53 @@ class Access {
     }
 
     /**
-     * getUsers method declaration
-     * <P>This method is used to access the entire Vector of User objects for this database.
+     *  This method is used to access the entire Vector of User objects for
+     *  this database.
      *
-     * @return The Vector of our User objects
+     * @return  The Vector of our User objects
      */
     Vector getUsers() {
         return uUser;
     }
 
     /**
-     * grant method declaration
-     * <P>This method is used to grant a user rights to database objects.
+     *  This method is used to grant a user rights to database objects.
      *
-     * @param name of the user
-     * @param object in the database
-     * @param right to grant to the user
-     *
-     * @throws SQLException
+     * @param  name of the user
+     * @param  object in the database
+     * @param  right to grant to the user
+     * @throws  SQLException
      */
     void grant(String name, String object, int right) throws SQLException {
         get(name).grant(object, right);
     }
 
     /**
-     * revoke method declaration
-     * <P>This method is used to revoke a user's rights to database objects.
+     *  This method is used to revoke a user's rights to database objects.
      *
-     * @param name of the user
-     * @param object in the database
-     * @param right to grant to the user
-     *
-     * @throws SQLException
+     * @param  name of the user
+     * @param  object in the database
+     * @param  right to grant to the user
+     * @throws  SQLException
      */
     void revoke(String name, String object, int right) throws SQLException {
         get(name).revoke(object, right);
     }
 
-    /*
-     * This private method is used to access the User objects in the collection
-     * and perform operations on them.
+    /**
+     *  This private method is used to access the User objects in the
+     *  collection and perform operations on them.
+     *
+     * @param  name Description of the Parameter
+     * @return  Description of the Return Value
+     * @exception  SQLException Description of the Exception
      */
     private User get(String name) throws SQLException {
 
-        for (int i = 0; i < uUser.size(); i++) {
+        for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
             User u = (User) uUser.elementAt(i);
 
-            if (u != null && u.getName().equals(name)) {
+            if ((u != null) && u.getName().equals(name)) {
                 return u;
             }
         }

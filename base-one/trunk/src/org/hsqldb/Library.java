@@ -67,71 +67,179 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
-import java.text.*;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Hashtable;
+import java.util.Random;
+import java.text.SimpleDateFormat;
 
 /**
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
+
+// fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
+// fredt@users 20020305 - patch 1.7.0 - change to 2D string arrays
+// sqlbob@users 20020420- patch 1.7.0 - added HEXTORAW and RAWTOHEX.
 class Library {
 
-    final static String sNumeric[] = {
-        "ABS", "java.lang.Math.abs", "ACOS", "java.lang.Math.acos", "ASIN",
-        "java.lang.Math.asin", "ATAN", "java.lang.Math.atan", "ATAN2",
-        "java.lang.Math.atan2", "CEILING", "java.lang.Math.ceil", "COS",
-        "java.lang.Math.cos", "COT", "org.hsqldb.Library.cot", "DEGREES",
-        "java.lang.Math.toDegrees", "EXP", "java.lang.Math.exp", "FLOOR",
-        "java.lang.Math.floor", "LOG", "java.lang.Math.log", "LOG10",
-        "org.hsqldb.Library.log10", "MOD", "org.hsqldb.Library.mod", "PI",
-        "org.hsqldb.Library.pi", "POWER", "java.lang.Math.pow", "RADIANS",
-        "java.lang.Math.toRadians", "RAND", "java.lang.Math.random", "ROUND",
-        "org.hsqldb.Library.round", "SIGN", "org.hsqldb.Library.sign", "SIN",
-        "java.lang.Math.sin", "SQRT", "java.lang.Math.sqrt", "TAN",
-        "java.lang.Math.tan", "TRUNCATE", "org.hsqldb.Library.truncate",
-        "BITAND", "org.hsqldb.Library.bitand", "BITOR",
-        "org.hsqldb.Library.bitor", "ROUNDMAGIC",
-        "org.hsqldb.Library.roundMagic",
+    static final String sNumeric[][] = {
+        {
+            "ABS", "org.hsqldb.Library.abs"
+        }, {
+            "ACOS", "java.lang.Math.acos"
+        }, {
+            "ASIN", "java.lang.Math.asin"
+        }, {
+            "ATAN", "java.lang.Math.atan"
+        }, {
+            "ATAN2", "java.lang.Math.atan2"
+        }, {
+            "CEILING", "java.lang.Math.ceil"
+        }, {
+            "COS", "java.lang.Math.cos"
+        }, {
+            "COT", "org.hsqldb.Library.cot"
+        }, {
+            "DEGREES", "java.lang.Math.toDegrees"
+        }, {
+            "EXP", "java.lang.Math.exp"
+        }, {
+            "FLOOR", "java.lang.Math.floor"
+        }, {
+            "LOG", "java.lang.Math.log"
+        }, {
+            "LOG10", "org.hsqldb.Library.log10"
+        }, {
+            "MOD", "org.hsqldb.Library.mod"
+        }, {
+            "PI", "org.hsqldb.Library.pi"
+        }, {
+            "POWER", "java.lang.Math.pow"
+        }, {
+            "RADIANS", "java.lang.Math.toRadians"
+        }, {
+            "RAND", "java.lang.Math.random"
+        }, {
+            "ROUND", "org.hsqldb.Library.round"
+        }, {
+            "SIGN", "org.hsqldb.Library.sign"
+        }, {
+            "SIN", "java.lang.Math.sin"
+        }, {
+            "SQRT", "java.lang.Math.sqrt"
+        }, {
+            "TAN", "java.lang.Math.tan"
+        }, {
+            "TRUNCATE", "org.hsqldb.Library.truncate"
+        }, {
+            "BITAND", "org.hsqldb.Library.bitand"
+        }, {
+            "BITOR", "org.hsqldb.Library.bitor"
+        }, {
+            "ROUNDMAGIC", "org.hsqldb.Library.roundMagic"
+        }
     };
 
 // fredt@users 20010701 - patch 418023 by deforest@users
 // the definition for SUBSTR was added
-    final static String sString[] = {
-        "ASCII", "org.hsqldb.Library.ascii", "CHAR",
-        "org.hsqldb.Library.character", "CONCAT", "org.hsqldb.Library.concat",
-        "DIFFERENCE", "org.hsqldb.Library.difference", "INSERT",
-        "org.hsqldb.Library.insert", "LCASE", "org.hsqldb.Library.lcase",
-        "LEFT", "org.hsqldb.Library.left", "LENGTH",
-        "org.hsqldb.Library.length", "LOCATE", "org.hsqldb.Library.locate",
-        "LTRIM", "org.hsqldb.Library.ltrim", "REPEAT",
-        "org.hsqldb.Library.repeat", "REPLACE", "org.hsqldb.Library.replace",
-        "RIGHT", "org.hsqldb.Library.right", "RTRIM",
-        "org.hsqldb.Library.rtrim", "SOUNDEX", "org.hsqldb.Library.soundex",
-        "SPACE", "org.hsqldb.Library.space", "SUBSTR",
-        "org.hsql.Library.substring", "SUBSTRING",
-        "org.hsqldb.Library.substring", "UCASE", "org.hsqldb.Library.ucase",
-        "LOWER", "org.hsqldb.Library.lcase", "UPPER",
-        "org.hsqldb.Library.ucase"
+    static final String sString[][]   = {
+        {
+            "ASCII", "org.hsqldb.Library.ascii"
+        }, {
+            "CHAR", "org.hsqldb.Library.character"
+        }, {
+            "CONCAT", "org.hsqldb.Library.concat"
+        }, {
+            "DIFFERENCE", "org.hsqldb.Library.difference"
+        }, {
+            "HEXTORAW", "org.hsqldb.Library.hexToRaw"
+        }, {
+            "INSERT", "org.hsqldb.Library.insert"
+        }, {
+            "LCASE", "org.hsqldb.Library.lcase"
+        }, {
+            "LEFT", "org.hsqldb.Library.left"
+        }, {
+            "LENGTH", "org.hsqldb.Library.length"
+        }, {
+            "LOCATE", "org.hsqldb.Library.locate"
+        }, {
+            "LTRIM", "org.hsqldb.Library.ltrim"
+        }, {
+            "RAWTOHEX", "org.hsqldb.Library.rawToHex"
+        }, {
+            "REPEAT", "org.hsqldb.Library.repeat"
+        }, {
+            "REPLACE", "org.hsqldb.Library.replace"
+        }, {
+            "RIGHT", "org.hsqldb.Library.right"
+        }, {
+            "RTRIM", "org.hsqldb.Library.rtrim"
+        }, {
+            "SOUNDEX", "org.hsqldb.Library.soundex"
+        }, {
+            "SPACE", "org.hsqldb.Library.space"
+        }, {
+            "SUBSTR", "org.hsqldb.Library.substring"
+        }, {
+            "SUBSTRING", "org.hsqldb.Library.substring"
+        }, {
+            "UCASE", "org.hsqldb.Library.ucase"
+        }, {
+            "LOWER", "org.hsqldb.Library.lcase"
+        }, {
+            "UPPER", "org.hsqldb.Library.ucase"
+        }
     };
-    final static String sTimeDate[] = {
-        "CURDATE", "org.hsqldb.Library.curdate", "CURTIME",
-        "org.hsqldb.Library.curtime", "DAYNAME", "org.hsqldb.Library.dayname",
-        "DAYOFMONTH", "org.hsqldb.Library.dayofmonth", "DAYOFWEEK",
-        "org.hsqldb.Library.dayofweek", "DAYOFYEAR",
-        "org.hsqldb.Library.dayofyear", "HOUR", "org.hsqldb.Library.hour",
-        "MINUTE", "org.hsqldb.Library.minute", "MONTH",
-        "org.hsqldb.Library.month", "MONTHNAME",
-        "org.hsqldb.Library.monthname", "NOW", "org.hsqldb.Library.now",
-        "QUARTER", "org.hsqldb.Library.quarter", "SECOND",
-        "org.hsqldb.Library.second", "WEEK", "org.hsqldb.Library.week",
-        "YEAR", "org.hsqldb.Library.year",
+    static final String sTimeDate[][] = {
+        {
+            "CURDATE", "org.hsqldb.Library.curdate"
+        }, {
+            "CURTIME", "org.hsqldb.Library.curtime"
+        }, {
+            "DAYNAME", "org.hsqldb.Library.dayname"
+        }, {
+            "DAYOFMONTH", "org.hsqldb.Library.dayofmonth"
+        }, {
+            "DAYOFWEEK", "org.hsqldb.Library.dayofweek"
+        }, {
+            "DAYOFYEAR", "org.hsqldb.Library.dayofyear"
+        }, {
+            "HOUR", "org.hsqldb.Library.hour"
+        }, {
+            "MINUTE", "org.hsqldb.Library.minute"
+        }, {
+            "MONTH", "org.hsqldb.Library.month"
+        }, {
+            "MONTHNAME", "org.hsqldb.Library.monthname"
+        }, {
+            "NOW", "org.hsqldb.Library.now"
+        }, {
+            "QUARTER", "org.hsqldb.Library.quarter"
+        }, {
+            "SECOND", "org.hsqldb.Library.second"
+        }, {
+            "WEEK", "org.hsqldb.Library.week"
+        }, {
+            "YEAR", "org.hsqldb.Library.year"
+        }
     };
-    final static String sSystem[] = {
-        "DATABASE", "org.hsqldb.Library.database", "USER",
-        "org.hsqldb.Library.user", "IDENTITY", "org.hsqldb.Library.identity"
+    static final String sSystem[][]   = {
+        {
+            "DATABASE", "org.hsqldb.Library.database"
+        }, {
+            "USER", "org.hsqldb.Library.user"
+        }, {
+            "IDENTITY", "org.hsqldb.Library.identity"
+        }
     };
 
     /**
@@ -155,14 +263,14 @@ class Library {
      * @param h
      * @param s
      */
-    private static void register(Hashtable h, String s[]) {
+    private static void register(Hashtable h, String s[][]) {
 
-        for (int i = 0; i < s.length; i += 2) {
-            h.put(s[i], s[i + 1]);
+        for (int i = 0; i < s.length; i++) {
+            h.put(s[i][0], s[i][1]);
         }
     }
 
-    static Random rRandom = new Random();
+    private static final Random rRandom = new Random();
 
     // NUMERIC
 
@@ -174,7 +282,8 @@ class Library {
      *
      * @return
      */
-    public static double rand(Integer i) {
+// fredt@users 20020220 - patch 489184 by xclay@users - thread safety
+    public static synchronized double rand(Integer i) {
 
         if (i != null) {
             rRandom.setSeed(i.intValue());
@@ -183,8 +292,21 @@ class Library {
         return rRandom.nextDouble();
     }
 
+    /**
+     * Method declaration
+     *
+     *
+     * @param d
+     * @param p
+     *
+     * @return
+     */
+    public static double abs(double d) {
+        return Math.abs(d);
+    }
+
     // this magic number works for 100000000000000; but not for 0.1 and 0.01
-    static double LOG10_FACTOR = 0.43429448190325183;
+    private static final double LOG10_FACTOR = 0.43429448190325183;
 
     /**
      * Method declaration
@@ -215,11 +337,11 @@ class Library {
         // - check the last 4 characters:
         // '000x' becomes '0000'
         // '999x' becomes '999999' (this is rounded automatically)
-        if (d < 0.0000000000001 && d > -0.0000000000001) {
+        if ((d < 0.0000000000001) && (d > -0.0000000000001)) {
             return 0.0;
         }
 
-        if (d > 1000000000000. || d < -1000000000000.) {
+        if ((d > 1000000000000.) || (d < -1000000000000.)) {
             return d;
         }
 
@@ -238,15 +360,15 @@ class Library {
         char c2 = s.charAt(len - 3);
         char c3 = s.charAt(len - 4);
 
-        if (c1 == '0' && c2 == '0' && c3 == '0' && cx != '.') {
+        if ((c1 == '0') && (c2 == '0') && (c3 == '0') && (cx != '.')) {
             s.setCharAt(len - 1, '0');
-        } else if (c1 == '9' && c2 == '9' && c3 == '9' && cx != '.') {
+        } else if ((c1 == '9') && (c2 == '9') && (c3 == '9') && (cx != '.')) {
             s.setCharAt(len - 1, '9');
             s.append('9');
             s.append('9');
         }
 
-        return new Double(s.toString()).doubleValue();
+        return Double.valueOf(s.toString()).doubleValue();
     }
 
     /**
@@ -310,9 +432,9 @@ class Library {
      */
     public static int sign(double d) {
 
-        return d < 0 ? -1
-                     : (d > 0 ? 1
-                              : 0);
+        return (d < 0) ? -1
+                       : ((d > 0) ? 1
+                                  : 0);
     }
 
     /**
@@ -371,7 +493,7 @@ class Library {
      */
     public static Integer ascii(String s) {
 
-        if (s == null || s.length() == 0) {
+        if ((s == null) || (s.length() == 0)) {
             return null;
         }
 
@@ -387,7 +509,7 @@ class Library {
      * @return
      */
     public static String character(int code) {
-        return "" + (char) code;
+        return String.valueOf((char) code);
     }
 
     /**
@@ -425,27 +547,54 @@ class Library {
      *
      * @return
      */
+
+// fredt@users 20020305 - patch 460907 by fredt - soundex
     public static int difference(String s1, String s2) {
 
         // todo: check if this is the standard algorithm
-        if (s1 == null || s2 == null) {
+        if ((s1 == null) || (s2 == null)) {
             return 0;
         }
 
         s1 = soundex(s1);
         s2 = soundex(s2);
 
-        int len1 = s1.length(),
-            len2 = s2.length();
-        int e    = 0;
+        int e = 0;
 
         for (int i = 0; i < 4; i++) {
-            if (i >= len1 || i >= len2 || s1.charAt(i) != s2.charAt(i)) {
+            if (s1.charAt(i) != s2.charAt(i)) {
                 e++;
             }
         }
 
         return e;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param s
+     *
+     * @return
+     */
+    public static String hexToRaw(String s) {
+
+        char         raw;
+        StringBuffer to  = new StringBuffer();
+        int          len = s.length();
+
+        if (len % 4 != 0) {
+            return null;
+        }
+
+        for (int i = 0; i < len; i += 4) {
+            raw = (char) Integer.parseInt(s.substring(i, i + 4), 16);
+
+            to.append(raw);
+        }
+
+        return (to.toString());
     }
 
     /**
@@ -494,8 +643,8 @@ class Library {
      * @return
      */
     public static String lcase(String s) {
-        return s == null ? null
-                         : s.toLowerCase();
+        return (s == null) ? null
+                           : s.toLowerCase();
     }
 
     /**
@@ -509,10 +658,13 @@ class Library {
      */
     public static String left(String s, int i) {
 
-        return s == null ? null
-                         : s.substring(0, (i < 0 ? 0
-                                                 : i < s.length() ? i
-                                                                  : s.length()));
+        if (s == null) {
+            return null;
+        }
+
+        return s.substring(0, ((i < 0) ? 0
+                                       : (i < s.length()) ? i
+                                                          : s.length()));
     }
 
     /**
@@ -524,8 +676,8 @@ class Library {
      * @return
      */
     public static int length(String s) {
-        return (s == null || s.length() < 1) ? 0
-                                             : s.length();
+        return ((s == null) || (s.length() < 1)) ? 0
+                                                 : s.length();
     }
 
     /**
@@ -544,11 +696,11 @@ class Library {
             return 0;
         }
 
-        int i = start == null ? 0
-                              : start.intValue() - 1;
+        int i = (start == null) ? 0
+                                : start.intValue() - 1;
 
-        return s.indexOf(search, i < 0 ? 0
-                                       : i) + 1;
+        return s.indexOf(search, (i < 0) ? 0
+                                         : i) + 1;
     }
 
     /**
@@ -572,8 +724,35 @@ class Library {
             i++;
         }
 
-        return i == 0 ? s
-                      : s.substring(i);
+        return (i == 0) ? s
+                        : s.substring(i);
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param s
+     *
+     * @return
+     */
+    public static String rawToHex(String s) {
+
+        char         from[] = s.toCharArray();
+        String       hex;
+        StringBuffer to = new StringBuffer();
+
+        for (int i = 0; i < from.length; i++) {
+            hex = Integer.toHexString(from[i] & 0xffff);
+
+            for (int j = hex.length(); j < 4; j++) {
+                to.append('0');
+            }
+
+            to.append(hex);
+        }
+
+        return (to.toString());
     }
 
     /**
@@ -591,7 +770,7 @@ class Library {
             return null;
         }
 
-        StringBuffer b = new StringBuffer();
+        StringBuffer b = new StringBuffer(s.length() * i);
 
         while (i-- > 0) {
             b.append(s);
@@ -659,10 +838,12 @@ class Library {
 
         i = s.length() - i;
 
-        return s.substring(i < 0 ? 0
-                                 : i < s.length() ? i
-                                                  : s.length());
+        return s.substring((i < 0) ? 0
+                                   : (i < s.length()) ? i
+                                                      : s.length());
     }
+
+// fredt@users 20020530 - patch 1.7.0 fredt - trim only the space character
 
     /**
      * Method declaration
@@ -678,19 +859,21 @@ class Library {
             return s;
         }
 
-        int i = s.length() - 1;
+        int endindex = s.length() - 1;
+        int i        = endindex;
 
-        while (i >= 0 && s.charAt(i) <= ' ') {
-            i--;
-        }
+        for (; i >= 0 && s.charAt(i) == ' '; i--) {}
 
-        return i == s.length() ? s
-                               : s.substring(0, i + 1);
+        return i == endindex ? s
+                             : s.substring(0, i + 1);
     }
 
+// fredt@users 20011010 - patch 460907 by fredt - soundex
+
     /**
-     * Method declaration
-     *
+     * code was rewritten by fredt@users to comply with description at
+     * http://www.nara.gov/genealogy/coding.html
+     * non ASCCI characters in string are ignored
      *
      * @param s
      *
@@ -704,32 +887,50 @@ class Library {
 
         s = s.toUpperCase();
 
-        int  len = s.length();
-        char b[] = new char[4];
+        int  len       = s.length();
+        char b[]       = new char[] {
+            '0', '0', '0', '0'
+        };
+        char lastdigit = '0';
 
-        b[0] = s.charAt(0);
-
-        int j = 1;
-
-        for (int i = 1; i < len && j < 4; i++) {
+        for (int i = 0, j = 0; i < len && j < 4; i++) {
             char c = s.charAt(i);
+            char newdigit;
 
-            if ("BFPV".indexOf(c) != -1) {
-                b[j++] = '1';
+            if ("AEIOUY".indexOf(c) != -1) {
+                newdigit = '7';
+            } else if (c == 'H' || c == 'W') {
+                newdigit = '8';
+            } else if ("BFPV".indexOf(c) != -1) {
+                newdigit = '1';
             } else if ("CGJKQSXZ".indexOf(c) != -1) {
-                b[j++] = '2';
+                newdigit = '2';
             } else if (c == 'D' || c == 'T') {
-                b[j++] = '3';
+                newdigit = '3';
             } else if (c == 'L') {
-                b[j++] = '4';
+                newdigit = '4';
             } else if (c == 'M' || c == 'N') {
-                b[j++] = '5';
+                newdigit = '5';
             } else if (c == 'R') {
-                b[j++] = '6';
+                newdigit = '6';
+            } else {
+                continue;
+            }
+
+            if (j == 0) {
+                b[j++]    = c;
+                lastdigit = newdigit;
+            } else if (newdigit <= '6') {
+                if (newdigit != lastdigit) {
+                    b[j++]    = newdigit;
+                    lastdigit = newdigit;
+                }
+            } else if (newdigit == '7') {
+                lastdigit = newdigit;
             }
         }
 
-        return new String(b, 0, j);
+        return new String(b, 0, 4);
     }
 
     /**
@@ -765,6 +966,8 @@ class Library {
      *
      * @return
      */
+
+// fredt@users 20020210 - patch 500767 by adjbirch@users - modified
     public static String substring(String s, int start, Integer length) {
 
         if (s == null) {
@@ -775,17 +978,20 @@ class Library {
 
         start--;
 
-        start = start > len ? len
-                            : start;
+        start = (start > len) ? len
+                              : start;
 
-        if (length == null) {
-            return s.substring(start);
-        } else {
-            int l = length.intValue();
+        int l = len;
 
-            return s.substring(start, start + l > len ? len
-                                                      : l);
+        if (length != null) {
+            l = length.intValue();
         }
+
+        if (start + l > len) {
+            l = len - start;
+        }
+
+        return s.substring(start, start + l);
     }
 
     /**
@@ -797,8 +1003,8 @@ class Library {
      * @return
      */
     public static String ucase(String s) {
-        return s == null ? null
-                         : s.toUpperCase();
+        return (s == null) ? null
+                           : s.toUpperCase();
     }
 
     // TIME AND DATE
@@ -918,8 +1124,10 @@ class Library {
      *
      * @return
      */
+
+// fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - hour
     public static int hour(java.sql.Time t) {
-        return getDateTimePart(t, Calendar.HOUR);
+        return getDateTimePart(t, Calendar.HOUR_OF_DAY);
     }
 
     /**
@@ -934,6 +1142,19 @@ class Library {
         return getDateTimePart(t, Calendar.MINUTE);
     }
 
+// fredt@users 20020130 - patch 418017 by deforest@users - made optional
+    private static int     sql_month     = 0;
+    private static boolean sql_month_set = false;
+
+    static void setSqlMonth(boolean value) {
+
+        if (sql_month_set == false) {
+            sql_month     = value ? 1
+                                  : 0;
+            sql_month_set = true;
+        }
+    }
+
     /**
      * Method declaration
      *
@@ -943,7 +1164,7 @@ class Library {
      * @return
      */
     public static int month(java.sql.Date d) {
-        return getDateTimePart(d, Calendar.MONTH);
+        return getDateTimePart(d, Calendar.MONTH) + sql_month;
     }
 
     /**
@@ -991,7 +1212,7 @@ class Library {
      *
      * @return
      */
-    public static int second(java.sql.Date d) {
+    public static int second(java.sql.Time d) {
         return getDateTimePart(d, Calendar.SECOND);
     }
 
@@ -1085,4 +1306,26 @@ class Library {
 
         return r.getInt(1);
     }
+
+    public static boolean getAutoCommit(Connection c) {
+
+        // hsql always creates an INTERNAL connection for
+        // such calls to Library, so this is garanteed
+        // to return the value contained by the
+        // connection's Session, for local or remote connections
+        try {
+            return c.getAutoCommit();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+/*
+// test for soundex
+    public static void main (String argv[]){
+        String [] names = {"Yyhiokkk","Washington","Lee","Gutierrez","Pfister","Jackson","Tymczak","Ashcraft","VanDeusen","Deusen","Van Deusen"};
+        for (int i = 0 ; i < names.length; i++ ){
+            System.out.print( names[i] + " : " + soundex(names[i] + "\n"));
+        }
+    }
+*/
 }

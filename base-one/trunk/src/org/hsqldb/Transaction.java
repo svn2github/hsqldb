@@ -73,7 +73,7 @@ import java.sql.SQLException;
  * Class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Transaction {
 

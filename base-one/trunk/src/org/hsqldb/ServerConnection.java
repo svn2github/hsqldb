@@ -67,19 +67,37 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.sql.SQLException;
+import java.util.Observable;
+
+// fredt@users 20020215 - patch 461556 by paul-h@users - server factory
+// fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
 
 /**
- * Class declaration
+ *  All ServerConnection objects are listed in a Vector in mServer
+ *  and removed when closed.<p>
  *
+ *  These objects also register themselves with the Server that is linked
+ *  to them via the Observable / Observer notification mechanism. When a
+ *  connection is dropped or closed this mechanism informs the Server.
+ *  When the DB is shutdown, the Server is notified and stops all
+ *  ServerConnection threads. At this point, only the skeletal Server
+ *  object remains and everything else will be garbage collected.
+ *  (fredt@users)<p>
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
-class ServerConnection extends Thread {
+class ServerConnection extends Observable implements Runnable {
 
+    private String           user;
+    private Session          session;
     private Database         mDatabase;
     private Socket           mSocket;
     private Server           mServer;
@@ -89,8 +107,6 @@ class ServerConnection extends Thread {
     private int              mThread;
 
     /**
-     * Constructor declaration
-     *
      *
      * @param socket
      * @param server
@@ -101,9 +117,25 @@ class ServerConnection extends Thread {
         mDatabase = server.mDatabase;
         mServer   = server;
 
+        addObserver(server);
+
         synchronized (this) {
             mThread = mCurrentThread++;
         }
+
+        mServer.serverConnList.addElement(this);
+    }
+
+    void close() {
+
+        // fredt@user - closing the socket is to stop this thread
+        try {
+            mSocket.close();
+        } catch (IOException e) {}
+
+        mServer.serverConnList.removeElement(this);
+        setChanged();
+        notifyObservers(Server.CONNECTION_CLOSED);
     }
 
     /**
@@ -112,7 +144,7 @@ class ServerConnection extends Thread {
      *
      * @return
      */
-    private Channel init() {
+    private Session init() {
 
         try {
             mSocket.setTcpNoDelay(true);
@@ -121,19 +153,24 @@ class ServerConnection extends Thread {
                 new BufferedInputStream(mSocket.getInputStream()));
             mOutput = new DataOutputStream(
                 new BufferedOutputStream(mSocket.getOutputStream()));
+            user = mInput.readUTF();
 
-            String  user     = mInput.readUTF();
             String  password = mInput.readUTF();
-            Channel c;
+            Session c;
 
             try {
                 mServer.trace(mThread + ":trying to connect user " + user);
 
                 return mDatabase.connect(user, password);
             } catch (SQLException e) {
-                write(new Result(e.getMessage()).getBytes());
+                write(new Result(e.getMessage(),
+                                 e.getErrorCode()).getBytes());
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            mServer.trace(mThread + ":couldn't connect " + user);
+        }
+
+        close();
 
         return null;
     }
@@ -144,12 +181,18 @@ class ServerConnection extends Thread {
      */
     public void run() {
 
-        Channel c = init();
+        session = init();
 
-        if (c != null) {
+        if (session != null) {
             try {
                 while (true) {
-                    String sql = mInput.readUTF();
+
+// fredt@users 20011220 - patch 448121 by sma@users - large binary values
+                    byte[] bytes = new byte[mInput.readInt()];
+
+                    mInput.readFully(bytes);
+
+                    String sql = new String(bytes, "utf-8");
 
                     mServer.trace(mThread + ":" + sql);
 
@@ -157,18 +200,24 @@ class ServerConnection extends Thread {
                         break;
                     }
 
-                    write(mDatabase.execute(sql, c).getBytes());
+                    write(mDatabase.execute(sql, session).getBytes());
+
+                    if (mDatabase.isShutdown()) {
+                        break;
+                    }
                 }
-            } catch (Exception e) {}
-        }
+            } catch (IOException e) {
+                mServer.trace(mThread + ":disconnected " + user);
 
-        try {
-            mSocket.close();
-        } catch (IOException e) {}
+// fredt - todo - after the client abrubtly drops, should perform equivalent
+// of Dabatase.processDisconnect() to clear any TEMP tables
+            } catch (SQLException e) {
+                String s = e.getMessage();
 
-        if (mDatabase.isShutdown()) {
-            System.out.println("The database is shutdown");
-            System.exit(0);
+                e.printStackTrace();
+            }
+
+            close();
         }
     }
 

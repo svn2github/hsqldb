@@ -67,19 +67,24 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Hashtable;
+import java.util.Vector;
+
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// to preserve column size etc. when SELECT INTO TABLE is used
 
 /**
  * Expression class declaration
  *
  *
- * @version 1.0.0.1
+ * @version    1.7.0
  */
 class Expression {
 
     // leaf types
-    final static int VALUE     = 1,
+    static final int VALUE     = 1,
                      COLUMN    = 2,
                      QUERY     = 3,
                      TRUE      = 4,
@@ -88,7 +93,7 @@ class Expression {
                      FUNCTION  = 7;
 
     // operations
-    final static int NEGATE   = 9,
+    static final int NEGATE   = 9,
                      ADD      = 10,
                      SUBTRACT = 11,
                      MULTIPLY = 12,
@@ -96,7 +101,7 @@ class Expression {
                      CONCAT   = 15;
 
     // logical operations
-    final static int NOT           = 20,
+    static final int NOT           = 20,
                      EQUAL         = 21,
                      BIGGER_EQUAL  = 22,
                      BIGGER        = 23,
@@ -110,19 +115,20 @@ class Expression {
                      EXISTS        = 31;
 
     // aggregate functions
-    final static int COUNT = 40,
-                     SUM   = 41,
-                     MIN   = 42,
-                     MAX   = 43,
-                     AVG   = 44;
+    static final int COUNT      = 40,
+                     SUM        = 41,
+                     MIN        = 42,
+                     MAX        = 43,
+                     AVG        = 44,
+                     DIST_COUNT = 45;
 
     // system functions
-    final static int IFNULL   = 60,
+    static final int IFNULL   = 60,
                      CONVERT  = 61,
                      CASEWHEN = 62;
 
     // temporary used during paring
-    final static int PLUS         = 100,
+    static final int PLUS         = 100,
                      OPEN         = 101,
                      CLOSE        = 102,
                      SELECT       = 103,
@@ -139,6 +145,7 @@ class Expression {
     // VALUE, VALUELIST
     private Object    oData;
     private Hashtable hList;
+    private boolean   hListHasNull;
     private int       iDataType;
 
     // QUERY (correlated subquery)
@@ -151,11 +158,22 @@ class Expression {
     private char cLikeEscape;
 
     // COLUMN
-    private String      sTable, sColumn;
+    private String      sTable;
+    private String      sColumn;
     private TableFilter tFilter;        // null if not yet resolved
     private int         iColumn;
+    private boolean     columnQuoted;
+    private int         iColumnSize;
+    private int         iColumnScale;
     private String      sAlias;         // if it is a column of a select column list
+    private boolean     aliasQuoted;
     private boolean     bDescending;    // if it is a column in a order by
+
+// rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
+    // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
+    private boolean      isDistinctAggregate;
+    static final Integer INTEGER_0 = new Integer(0);
+    static final Integer INTEGER_1 = new Integer(1);
 
     /**
      * Constructor declaration
@@ -205,7 +223,7 @@ class Expression {
     Expression(Vector v) {
 
         iType     = VALUELIST;
-        iDataType = Column.VARCHAR;
+        iDataType = Types.VARCHAR;
 
         int len = v.size();
 
@@ -215,7 +233,9 @@ class Expression {
             Object o = v.elementAt(i);
 
             if (o != null) {
-                hList.put(o, this);    // todo: don't use such dummy objects
+                hList.put(o, this.INTEGER_1);
+            } else {
+                this.hListHasNull = true;
             }
         }
     }
@@ -251,6 +271,19 @@ class Expression {
         } else {
             iType   = COLUMN;
             sColumn = column;
+        }
+    }
+
+    Expression(String table, String column, boolean isquoted) {
+
+        sTable = table;
+
+        if (column == null) {
+            iType = ASTERIX;
+        } else {
+            iType        = COLUMN;
+            sColumn      = column;
+            columnQuoted = isquoted;
         }
     }
 
@@ -303,9 +336,13 @@ class Expression {
      * @return
      */
     boolean isAggregate() {
+        return isAggregate(iType);
+    }
 
-        if (iType == COUNT || iType == MAX || iType == MIN || iType == SUM
-                || iType == AVG) {
+    static boolean isAggregate(int type) {
+
+        if ((type == COUNT) || (type == MAX) || (type == MIN)
+                || (type == SUM) || (type == AVG) || (type == DIST_COUNT)) {
             return true;
         }
 
@@ -338,8 +375,9 @@ class Expression {
      *
      * @param s
      */
-    void setAlias(String s) {
-        sAlias = s;
+    void setAlias(String s, boolean isquoted) {
+        sAlias      = s;
+        aliasQuoted = isquoted;
     }
 
     /**
@@ -362,8 +400,36 @@ class Expression {
             return sColumn;
         }
 
-        // todo
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
+// return column name for aggregates without alias
+        if (isAggregate()) {
+            return eArg.getColumnName();
+        }
+
         return "";
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    boolean isAliasQuoted() {
+
+        if (sAlias != null) {
+            return aliasQuoted;
+        }
+
+        if (iType == COLUMN) {
+            return columnQuoted;
+        }
+
+        if (isAggregate()) {
+            return eArg.columnQuoted;
+        }
+
+        return false;
     }
 
     /**
@@ -374,16 +440,6 @@ class Expression {
      */
     int getType() {
         return iType;
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @return
-     */
-    int getColumnNr() {
-        return iColumn;
     }
 
     /**
@@ -424,7 +480,7 @@ class Expression {
      */
     void checkResolved() throws SQLException {
 
-        Trace.check(iType != COLUMN || tFilter != null,
+        Trace.check((iType != COLUMN) || (tFilter != null),
                     Trace.COLUMN_NOT_FOUND, sColumn);
 
         if (eArg != null) {
@@ -454,20 +510,25 @@ class Expression {
      */
     void resolve(TableFilter f) throws SQLException {
 
-        if (f != null && iType == COLUMN) {
-            if (sTable == null || f.getName().equals(sTable)) {
+        if ((f != null) && (iType == COLUMN)) {
+            if ((sTable == null) || f.getName().equals(sTable)) {
                 int i = f.getTable().searchColumn(sColumn);
 
                 if (i != -1) {
 
+// fredt@users 20011110 - fix for 471711 - subselects
                     // todo: other error message: multiple tables are possible
-                    Trace.check(tFilter == null || tFilter == f,
-                                Trace.COLUMN_NOT_FOUND, sColumn);
+                    Trace.check(
+                        tFilter == null
+                        || tFilter.getName().equals(
+                            f.getName()), Trace.COLUMN_NOT_FOUND, sColumn);
 
-                    tFilter   = f;
-                    iColumn   = i;
-                    sTable    = f.getName();
-                    iDataType = f.getTable().getColumnType(i);
+                    tFilter      = f;
+                    iColumn      = i;
+                    sTable       = f.getName();
+                    iDataType    = f.getTable().getColumn(i).getType();
+                    iColumnSize  = f.getTable().getColumn(i).getSize();
+                    iColumnScale = f.getTable().getColumn(i).getScale();
                 }
             }
         }
@@ -513,11 +574,14 @@ class Expression {
             case SUBTRACT :
             case MULTIPLY :
             case DIVIDE :
-                iDataType = eArg.iDataType;
+
+// fredt@users 20011010 - patch 442993 by fredt
+                iDataType = Column.getCombinedNumberType(eArg.iDataType,
+                        eArg2.iDataType, iType);
                 break;
 
             case CONCAT :
-                iDataType = Column.VARCHAR;
+                iDataType = Types.VARCHAR;
                 break;
 
             case NOT :
@@ -532,13 +596,17 @@ class Expression {
             case OR :
             case IN :
             case EXISTS :
-                iDataType = Column.BIT;
+                iDataType = Types.BIT;
                 break;
 
             case COUNT :
-                iDataType = Column.INTEGER;
+                iDataType = Types.INTEGER;
                 break;
 
+            case DIST_COUNT :
+                if (eArg.iType == ASTERIX) {
+                    iDataType = Types.INTEGER;
+                }
             case MAX :
             case MIN :
             case SUM :
@@ -618,7 +686,7 @@ class Expression {
             if (tFilter == null) {
                 return sTable;
             } else {
-                return tFilter.getTable().getName();
+                return tFilter.getTable().getName().name;
             }
         }
 
@@ -638,11 +706,65 @@ class Expression {
             if (tFilter == null) {
                 return sColumn;
             } else {
-                return tFilter.getTable().getColumnName(iColumn);
+                return tFilter.getTable().getColumn(iColumn).columnName.name;
             }
         }
 
         return getAlias();
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getColumnNr() {
+        return iColumn;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getColumnSize() {
+        return iColumnSize;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getColumnScale() {
+        return iColumnScale;
+    }
+
+    /**
+     * Method declaration
+     *
+     * @return
+     */
+    boolean isDistinctAggregate() {
+        return isDistinctAggregate;
+    }
+
+    /**
+     * Method declaration
+     *
+     * @param type
+     */
+    void setDistinctAggregate(boolean type) {
+
+        isDistinctAggregate = type;
+
+        if (iType == COUNT || iType == DIST_COUNT) {
+            iType = type ? DIST_COUNT
+                         : COUNT;
+        }
     }
 
     /**
@@ -677,7 +799,7 @@ class Expression {
                 break;
 
             default :
-                Trace.assert(false, "Expression.swapCondition");
+                Trace.doAssert(false, "Expression.swapCondition");
         }
 
         iType = i;
@@ -686,6 +808,16 @@ class Expression {
 
         eArg  = eArg2;
         eArg2 = e;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getDataType() {
+        return iDataType;
     }
 
     /**
@@ -702,23 +834,11 @@ class Expression {
 
         Object o = getValue();
 
-        if (o == null || iDataType == type) {
+        if ((o == null) || (iDataType == type)) {
             return o;
         }
 
-        String s = Column.convertObject(o);
-
-        return Column.convertString(s, type);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @return
-     */
-    int getDataType() {
-        return iDataType;
+        return Column.convertObject(o, type);
     }
 
     /**
@@ -754,12 +874,19 @@ class Expression {
             case COUNT :
 
                 // count(*): sum(1); count(col): sum(col<>null)
-                if (eArg.iType == ASTERIX || eArg.getValue() != null) {
-                    return new Integer(1);
+                if (eArg.iType == ASTERIX) {
+                    return INTEGER_1;
                 }
 
-                return new Integer(0);
-
+                if (eArg.getValue() == null) {
+                    return INTEGER_0;
+                } else {
+                    return INTEGER_1;
+                }
+            case DIST_COUNT :
+                if (eArg.iType == ASTERIX) {
+                    return INTEGER_1;
+                }
             case MAX :
             case MIN :
             case SUM :
@@ -810,8 +937,8 @@ class Expression {
                 return Column.concat(a, b);
 
             case IFNULL :
-                return a == null ? b
-                                 : a;
+                return (a == null) ? b
+                                   : a;
 
             default :
 
@@ -819,53 +946,6 @@ class Expression {
                 // todo: make sure it is
                 return new Boolean(test());
         }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param o
-     * @param datatype
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    private boolean testValueList(Object o,
-                                  int datatype) throws SQLException {
-
-        if (iType == VALUELIST) {
-            if (datatype != iDataType) {
-                o = Column.convertObject(o, iDataType);
-            }
-
-            return hList.containsKey(o);
-        } else if (iType == QUERY) {
-
-            // todo: convert to valuelist before if everything is resolvable
-            Result r    = sSelect.getResult(0);
-            Record n    = r.rRoot;
-            int    type = r.iType[0];
-
-            if (datatype != type) {
-                o = Column.convertObject(o, type);
-            }
-
-            while (n != null) {
-                Object o2 = n.data[0];
-
-                if (o2 != null && o2.equals(o)) {
-                    return true;
-                }
-
-                n = n.next;
-            }
-
-            return false;
-        }
-
-        throw Trace.error(Trace.WRONG_DATA_TYPE);
     }
 
     /**
@@ -884,7 +964,7 @@ class Expression {
                 return true;
 
             case NOT :
-                Trace.assert(eArg2 == null, "Expression.test");
+                Trace.doAssert(eArg2 == null, "Expression.test");
 
                 return !eArg.test();
 
@@ -897,11 +977,11 @@ class Expression {
             case LIKE :
 
                 // todo: now for all tests a new 'like' object required!
-                String s    = (String) eArg2.getValue(Column.VARCHAR);
+                String s    = (String) eArg2.getValue(Types.VARCHAR);
                 int    type = eArg.iDataType;
                 Like l = new Like(s, cLikeEscape,
                                   type == Column.VARCHAR_IGNORECASE);
-                String c = (String) eArg.getValue(Column.VARCHAR);
+                String c = (String) eArg.getValue(Types.VARCHAR);
 
                 return l.compare(c);
 
@@ -945,8 +1025,59 @@ class Expression {
                 return result != 0;
         }
 
-        Trace.assert(false, "Expression.test2");
+        Trace.doAssert(false, "Expression.test2");
 
         return false;
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param o
+     * @param datatype
+     *
+     * @return
+     *
+     * @throws SQLException
+     */
+    private boolean testValueList(Object o,
+                                  int datatype) throws SQLException {
+
+        if (iType == VALUELIST) {
+            if (datatype != iDataType) {
+                o = Column.convertObject(o, iDataType);
+            }
+
+            if (o == null) {
+                return hListHasNull;
+            } else {
+                return hList.containsKey(o);
+            }
+        } else if (iType == QUERY) {
+
+            // todo: convert to valuelist before if everything is resolvable
+            Result r    = sSelect.getResult(0);
+            Record n    = r.rRoot;
+            int    type = r.colType[0];
+
+            if (datatype != type) {
+                o = Column.convertObject(o, type);
+            }
+
+            while (n != null) {
+                Object o2 = n.data[0];
+
+                if ((o2 != null) && o2.equals(o)) {
+                    return true;
+                }
+
+                n = n.next;
+            }
+
+            return false;
+        }
+
+        throw Trace.error(Trace.WRONG_DATA_TYPE);
     }
 }

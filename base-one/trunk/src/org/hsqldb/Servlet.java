@@ -71,6 +71,10 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.*;
 import java.util.*;
+import java.sql.SQLException;
+
+// fredt@users 20020130 - patch 475586 by wreissen@users
+// fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 
 /**
  * <font color="#009900">
@@ -78,35 +82,22 @@ import java.util.*;
  * the client / server mode of HSQL Database Engine. It is not required if
  * the included HSQL Database Engine WebServer is used, but if another
  * HTTP server is used. The HTTP Server must support the Servlet API.
- * <P>
+ * <br>
  * This class should not be used directly by the application. It will be
  * called by the HTTP Server. The applet / application should use the
  * jdbc* classes.
+ * <br>
+ * The database name is taken from the servlet engine (extranal webserver)
+ * property hsqldb.server.database (fredt@users)
+ * <br>
  * </font>
+ * @version 1.7.0
  */
-public class Servlet extends HttpServlet {
+public class Servlet extends javax.servlet.http.HttpServlet {
 
     private String   sError;
     private Database dDatabase;
     private String   sDatabase;
-
-    /**
-     * Constructor declaration
-     *
-     */
-    public Servlet() {
-        init("test");
-    }
-
-    /**
-     * Constructor declaration
-     *
-     *
-     * @param database
-     */
-    public Servlet(String database) {
-        init(database);
-    }
 
     /**
      * Method declaration
@@ -114,14 +105,31 @@ public class Servlet extends HttpServlet {
      *
      * @param database
      */
-    void init(String database) {
+    public void init(ServletConfig config) {
 
         try {
-            sDatabase = database;
-            dDatabase = new Database(database);
-        } catch (Exception e) {
-            sError = e.getMessage();
+            super.init(config);
+        } catch (ServletException exp) {
+            log(exp.getMessage());
         }
+
+        sDatabase = getInitParameter("hsqldb.server.database");
+
+        if (sDatabase == null) {
+            sDatabase = ".";
+        }
+
+        log("Database filename = " + sDatabase);
+
+        try {
+            dDatabase = new Database(sDatabase);
+        } catch (SQLException e) {
+            sError = e.getMessage();
+
+            log(sError);
+        }
+
+        log("Initialization completed.");
     }
 
     private static long lModified = 0;
@@ -157,8 +165,12 @@ public class Servlet extends HttpServlet {
 
         String query = request.getQueryString();
 
-        if (query == "" || query == null) {
+        if ((query == null) || (query.length() == 0)) {
             response.setContentType("text/html");
+
+// fredt@users 20020130 - patch 1.7.0 by fredt
+// to avoid caching on the browser
+            response.setHeader("Pragma", "no-cache");
 
             PrintWriter out = response.getWriter();
 
@@ -205,19 +217,22 @@ public class Servlet extends HttpServlet {
         int    p = s.indexOf('+');
         int    q = s.indexOf('+', p + 1);
 
-        if (p == -1 || q == -1) {
+        if ((p == -1) || (q == -1)) {
             doGet(request, response);
         }
 
-        String user = s.substring(0, p);
-
-        user = StringConverter.hexStringToUnicode(user);
-
+        String user     = s.substring(0, p);
         String password = s.substring(p + 1, q);
 
-        password = StringConverter.hexStringToUnicode(password);
-        s        = s.substring(q + 1);
-        s        = StringConverter.hexStringToUnicode(s);
+        s = s.substring(q + 1);
+
+        try {
+            user     = StringConverter.hexStringToUnicode(user);
+            password = StringConverter.hexStringToUnicode(password);
+            s        = StringConverter.hexStringToUnicode(s);
+        } catch (SQLException e) {
+            throw new ServletException();
+        }
 
         response.setContentType("application/octet-stream");
 
@@ -231,7 +246,7 @@ public class Servlet extends HttpServlet {
 
         iQueries++;
 
-        // System.out.print("Queries processed: "+iQueries+"  \r");
+        // System.out.print("Queries processed: "+iQueries+"  \n");
     }
 
     static private int iQueries;

@@ -67,86 +67,135 @@
 
 package org.hsqldb;
 
-import java.sql.*;
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
+import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.LineNumberReader;
+import java.io.Writer;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+
+//import java.util.zip.
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+
+// fredt@users 20020215 - patch 1.7.0 by fredt
+// to move operations on the database.properties files to new
+// class HsqlDatabaseProperties
+// fredt@users 20020220 - patch 488200 by xclay@users - throw exception
+// throw addded to all methods relying on file io
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// fredt@users 20020405 - patch 1.7.0 by fredt - no change in db location
+// because important information about the database is now stored in the
+// *.properties file, all database files should be in the same folder as the
+// *.properties file
 
 /**
- * <P>This class is responsible for most file handling.
- * A HSQL database consists of a .properties file, a
- * .script file (contains a SQL script), a
- * .data file (contains data of cached tables) and a
- * .backup file (contains the compressed .data file)
+ *  This class is responsible for most file handling. A HSQL database
+ *  consists of a .properties file, a .script file (contains a SQL script),
+ *  a .data file (contains data of cached tables) and a .backup file
+ *  (contains the compressed .data file) <P>
  *
- * <P>This is an example of the .properties file. The version and the
- * modified properties are automatically created by the database and
- * should not be changed manually:
- * <pre>
+ *  This is an example of the .properties file. The version and the modified
+ *  properties are automatically created by the database and should not be
+ *  changed manually: <pre>
  * modified=no
- * version=1.3
- * </pre>
- * The following lines are optional, this means they are not
- * created automatically by the database, but they are interpreted
- * if they exist in the .script file. They have to be created
- * manually if required. If they don't exist the default is used.
- * This are the defaults of the database 'test':
- * <pre>
- * script=test.script
- * data=test.data
- * backup=test.backup
+ * version=1.43
+ * </pre> The following lines are optional, this means they are not created
+ *  automatically by the database, but they are interpreted if they exist in
+ *  the .script file. They have to be created manually if required. If they
+ *  don't exist the default is used. This are the defaults of the database
+ *  'test': <pre>
  * readonly=false
  * </pre>
+ *
+ * @version 1.7.0
  */
 class Log implements Runnable {
 
-    private final static int COPY_BLOCK_SIZE = 1 << 16;    // block size for copying data
-    private FileInputStream  fProperties;                  // kept open until closed
-    private Properties       pProperties;
-    private String           sName;
-    private Database         dDatabase;
-    private Channel          cSystem;
-    private Writer           wScript;
-    private String           sFileProperties;
-    private String           sFileScript;
-    private String           sFileCache;
-    private String           sFileBackup;
-    private boolean          bRestoring;
-    private boolean          bReadOnly;
-    private int              iLogSize = 200;               // default: .script file is max 200 MB big
+    // block size for copying data
+    private static final int       COPY_BLOCK_SIZE = 1 << 16;
+    private HsqlDatabaseProperties pProperties;
+    private String                 sName;
+    private Database               dDatabase;
+    private Session                sysSession;
+    private Writer                 wScript;
+    private String                 sFileScript;
+    private String                 sFileCache;
+    private String                 sFileBackup;
+    private boolean                bRestoring;
+    private boolean                bReadOnly;
+
+    // default: .script file is max 200 MB big
+    private int              iLogSize = 200;
     private int              iLogCount;
     private Thread           tRunner;
     private volatile boolean bNeedFlush;
     private volatile boolean bWriteDelay;
     private int              mLastId;
-    Cache                    cCache;
+    private Cache            cCache;
+
+// boucherb@users - comment - FIXME
+//  boolean                  stopped;
 
     /**
-     * Constructor declaration
+     *  Constructor declaration
      *
-     *
-     * @param db
-     * @param system
-     * @param name
+     * @param  db
+     * @param  system
+     * @param  name
+     * @exception  SQLException  Description of the Exception
      */
-    Log(Database db, Channel system, String name) throws SQLException {
+    Log(Database db, Session system, String name) throws SQLException {
 
-        dDatabase       = db;
-        cSystem         = system;
-        sName           = name;
-        sFileProperties = sName + ".properties";
-        pProperties     = new Properties();
-        tRunner         = new Thread(this);
+        dDatabase   = db;
+        sysSession  = system;
+        sName       = name;
+        pProperties = db.getProperties();
+        tRunner     = new Thread(this);
 
+        // boucherb@users - FIXME:
+        // standard VM behaviour is to shut down only after all
+        // non-daemon threads exit.  Therefor, tRunner shuld be
+        // daemon.  Consider the case of:
+        /*
+         public void main(String[] args) {
+         ...
+         try {
+         // fails due to bad user/password...must then connect with valid combo
+         // again to *really* shutdown database, or explicitly call System.exit(...)
+         DriverManager.getConnection("jdbc:hsqldb:filespec,"user","password");
+         ...
+         } catch (...) {
+         }
+         ...
+         }
+         */
+
+        // the VM will not exit, since tRunner is still running and
+        // no shutdown is issued to close the database.
+        //
+        //  - setDaemon(false) may require flush in finalization
+        // CB
+        // tRunner.setDaemon(false);
         tRunner.start();
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      */
     public void run() {
 
+        // boucherb@users - FIXME
+        // while (!stopped) {
         while (tRunner != null) {
             try {
                 tRunner.sleep(1000);
@@ -166,22 +215,22 @@ class Log implements Runnable {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param delay
+     * @param  delay
      */
     void setWriteDelay(boolean delay) {
         bWriteDelay = delay;
     }
 
     /**
-     * Method declaration
-     *
+     * When opening a database, the hsqldb.compatible_version property is
+     * used to determine if this version of the engine is equal to or greater
+     * than the earliest version of the engine capable of opening that
+     * database.<p>
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     boolean open() throws SQLException {
 
@@ -189,7 +238,7 @@ class Log implements Runnable {
             Trace.trace();
         }
 
-        if (!(new File(sFileProperties)).exists()) {
+        if (!pProperties.checkFileExists()) {
             create();
             open();
 
@@ -198,43 +247,39 @@ class Log implements Runnable {
         }
 
         // todo: some parts are not necessary for ready-only access
-        loadProperties();
+        pProperties.load();
 
-        sFileScript = pProperties.getProperty("script", sName + ".script");
-        sFileCache  = pProperties.getProperty("data", sName + ".data");
-        sFileBackup = pProperties.getProperty("backup", sName + ".backup");
+        sFileScript = sName + ".script";
+        sFileCache  = sName + ".data";
+        sFileBackup = sName + ".backup";
 
-        String version = pProperties.getProperty("version", "1.0");
+        String version = pProperties.getProperty("hsqldb.compatible_version");
 
-// fredt@users - begin changes for 1.61
-// enable opening older version databases, disable opening newer version
-// the first three characters are compared so that version 1.60 can open
-// version 1.62 databases but not version 1.72 databases
-//      boolean check = version.equals(jdbcDriver.VERSION);
-        boolean check = version.substring(0, 3).compareTo(jdbcDriver.VERSION)
-                        <= 0;
+// fredt@users 20020428 - patch 1.7.0 by fredt
+        int check = version.substring(0, 5).compareTo(jdbcDriver.VERSION);
 
-        // save as the current version
-        pProperties.setProperty("version", jdbcDriver.VERSION);
+        Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
 
-// fredt@users - end changes for 1.61
-        Trace.check(check, Trace.WRONG_DATABASE_FILE_VERSION);
+        // save the current version
+        pProperties.setProperty("hsqldb.version", jdbcDriver.VERSION);
 
-        if (pProperties.getProperty("readonly", "false").equals("true")) {
+        if (pProperties.isPropertyTrue("readonly")) {
             bReadOnly = true;
 
             dDatabase.setReadOnly();
 
-            cCache = new Cache(sFileCache);
+            if (cCache != null) {
+                cCache.open(true);
+            }
 
-            cCache.open(true);
+            reopenAllTextCaches();
             runScript();
 
             return false;
         }
 
         boolean needbackup = false;
-        String  state      = pProperties.getProperty("modified", "no");
+        String  state      = pProperties.getProperty("modified");
 
         if (state.equals("yes-new-files")) {
             renameNewToCurrent(sFileScript);
@@ -250,42 +295,66 @@ class Log implements Runnable {
             needbackup = true;
         }
 
-        pProperties.put("modified", "yes");
-        saveProperties();
+        pProperties.setProperty("modified", "yes");
+        pProperties.save();
 
-        cCache = new Cache(sFileCache);
+        if (cCache != null) {
+            cCache.open(false);
+        }
 
-        cCache.open(false);
+        reopenAllTextCaches();
         runScript();
 
         if (needbackup) {
             close(false);
-            pProperties.put("modified", "yes");
-            saveProperties();
-            cCache.open(false);
+            pProperties.setProperty("modified", "yes");
+            pProperties.save();
+
+            if (cCache != null) {
+                cCache.open(false);
+            }
+
+            reopenAllTextCaches();
         }
 
         openScript();
 
-        // this is a existing database
+        // this is an existing database
         return false;
     }
 
+    Cache getCache() throws SQLException {
+
+        if (cCache == null) {
+            cCache = new Cache(sFileCache, pProperties);
+
+            cCache.open(bReadOnly);
+        }
+
+        return (cCache);
+    }
+
     /**
-     * Method declaration
-     *
+     *  Method declaration
      */
-    void stop() {
+    void /* synchronized */ stop() {
+
+        //boucherb@users - FIXME:
+        /*
+         if (!stopped)
+         stopped = true;
+         tRunner.interrupt();
+         tRunner = null;
+         }
+         */
         tRunner = null;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param compact
-     *
-     * @throws SQLException
+     * @param  compact
+     * @throws  SQLException
      */
     void close(boolean compact) throws SQLException {
 
@@ -304,23 +373,29 @@ class Log implements Runnable {
         writeScript(compact);
 
         // flush the cache (important: after writing the script)
-        cCache.flush();
+        if (cCache != null) {
+            cCache.flush();
+        }
+
+        closeAllTextCaches(compact);
 
         // create '.backup.new' using the '.data'
         backup();
 
         // we have the new files
-        pProperties.put("modified", "yes-new-files");
-        saveProperties();
+        pProperties.setProperty("modified", "yes-new-files");
+        pProperties.save();
 
         // old files can be removed and new files renamed
         renameNewToCurrent(sFileScript);
         renameNewToCurrent(sFileBackup);
 
         // now its done completely
-        pProperties.put("modified", "no");
-        saveProperties();
-        closeProperties();
+        pProperties.setProperty("modified", "no");
+        pProperties.setProperty("version", jdbcDriver.VERSION);
+        pProperties.setProperty("hsqldb.compatible_version", "1.7.0");
+        pProperties.save();
+        pProperties.close();
 
         if (compact) {
 
@@ -334,47 +409,48 @@ class Log implements Runnable {
             // all files are closed now; simply open & close this database
             Database db = new Database(sName);
 
-            db.getLog().close(false);
+            db.logger.closeLog(0);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void checkpoint() throws SQLException {
 
         close(false);
-        pProperties.put("modified", "yes");
-        saveProperties();
-        cCache.open(false);
+        pProperties.setProperty("modified", "yes");
+        pProperties.save();
+
+        if (cCache != null) {
+            cCache.open(false);
+        }
+
+        reopenAllTextCaches();
         openScript();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param mb
+     * @param  mb
      */
     void setLogSize(int mb) {
         iLogSize = mb;
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param c
-     * @param s
-     *
-     * @throws SQLException
+     * @param  c
+     * @param  s
+     * @throws  SQLException
      */
-    void write(Channel c, String s) throws SQLException {
+    void write(Session c, String s) throws SQLException {
 
-        if (bRestoring || s == null || s.equals("")) {
+        if (bRestoring || s == null || s.length() == 0) {
             return;
         }
 
@@ -399,7 +475,7 @@ class Log implements Runnable {
                     wScript.flush();
                 }
             } catch (IOException e) {
-                Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+                throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
             }
 
             if (iLogSize > 0 && iLogCount++ > 100) {
@@ -414,33 +490,36 @@ class Log implements Runnable {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     void shutdown() throws SQLException {
 
         tRunner = null;
 
-        cCache.shutdown();
+        if (cCache != null) {
+            cCache.shutdown();
+
+            cCache = null;
+        }
+
+        shutdownAllTextCaches();
         closeScript();
-        closeProperties();
+        pProperties.close();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param db
-     * @param file
-     * @param full
-     * @param channel
-     *
-     * @throws SQLException
+     * @param  db
+     * @param  file
+     * @param  full
+     * @param  session
+     * @throws  SQLException
      */
     static void scriptToFile(Database db, String file, boolean full,
-                             Channel channel) throws SQLException {
+                             Session session) throws SQLException {
 
         if ((new File(file)).exists()) {
 
@@ -457,11 +536,11 @@ class Log implements Runnable {
             if (full) {
 
                 // no drop, no insert, and no positions for cached tables
-                r = db.getScript(false, false, false, channel);
+                r = db.getScript(false, false, false, session);
             } else {
 
                 // no drop, no insert, but positions for cached tables
-                r = db.getScript(false, false, true, channel);
+                r = db.getScript(false, false, true, session);
             }
 
             Record     n = r.rRoot;
@@ -479,8 +558,9 @@ class Log implements Runnable {
             for (int i = 0; i < tables.size(); i++) {
                 Table t = (Table) tables.elementAt(i);
 
-                // cached tables have the index roots set in the ddl script
-                if (full ||!t.isCached()) {
+// cached tables have the index roots set in the ddl script
+                if ((full ||!t.isCached()) &&!t.isTemp() &&!t.isView()
+                        && (!t.isText() ||!t.isDataReadOnly())) {
                     Index primary = t.getPrimaryIndex();
                     Node  x       = primary.first();
 
@@ -489,6 +569,15 @@ class Log implements Runnable {
 
                         x = primary.next(x);
                     }
+                }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+                if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
+                    StringBuffer a = new StringBuffer("SET TABLE ");
+
+                    a.append(t.getName().statementName);
+                    a.append(" READONLY TRUE");
+                    writeLine(w, a.toString());
                 }
             }
 
@@ -500,15 +589,14 @@ class Log implements Runnable {
                 Trace.trace(time);
             }
         } catch (IOException e) {
-            Trace.error(Trace.FILE_IO_ERROR, file + " " + e);
+            throw Trace.error(Trace.FILE_IO_ERROR, file + " " + e);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param file
+     * @param  file
      */
     private void renameNewToCurrent(String file) {
 
@@ -524,53 +612,22 @@ class Log implements Runnable {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
-     */
-    private void closeProperties() throws SQLException {
-
-        try {
-            if (fProperties != null) {
-                if (Trace.TRACE) {
-                    Trace.trace();
-                }
-
-                fProperties.close();
-
-                fProperties = null;
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileProperties + " " + e);
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
-     */
     private void create() throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace(sName);
         }
 
-        pProperties.put("modified", "no");
-        pProperties.put("version", jdbcDriver.VERSION);
-        saveProperties();
+        pProperties.setProperty("modified", "no");
+        pProperties.setProperty("version", jdbcDriver.VERSION);
+        pProperties.save();
     }
 
     /**
-     * Method declaration
-     *
+     *  Method declaration
      *
      * @return
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private boolean isAlreadyOpen() throws SQLException {
 
@@ -594,95 +651,13 @@ class Log implements Runnable {
             return true;
         }
 
-        // check by trying to delete the properties file
-        // this will not work if some application has the file open
-        // this is why the properties file is kept open when running ;-)
-        // todo: check if this works in all operating systems
-        closeProperties();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        if ((new File(sFileProperties)).delete() == false) {
-            return true;
-        }
-
-        // the file was deleted, so recreate it now
-        saveProperties();
-
-        return false;
+        return pProperties.isFileOpen();
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
-     */
-    private void loadProperties() throws SQLException {
-
-        File f = new File(sFileProperties);
-
-        closeProperties();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-
-            // the file is closed only when the database is closed
-            fProperties = new FileInputStream(f);
-
-            pProperties.load(fProperties);
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileProperties);
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
-     */
-    private void saveProperties() throws SQLException {
-
-        File f = new File(sFileProperties);
-
-        closeProperties();
-
-        if (Trace.TRACE) {
-            Trace.trace();
-        }
-
-        try {
-            FileOutputStream out = new FileOutputStream(f);
-
-//#ifdef JAVA2
-            pProperties.store(out, "HSQL database");
-
-//#else
-/*
-            pProperties.save(out,"HSQL database");
-*/
-
-//#endif
-            out.close();
-
-            // after saving, open the file again
-            loadProperties();
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileProperties);
-        }
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private void backup() throws SQLException {
 
@@ -730,10 +705,9 @@ class Log implements Runnable {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private void restoreBackup() throws SQLException {
 
@@ -782,10 +756,9 @@ class Log implements Runnable {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private void openScript() throws SQLException {
 
@@ -799,15 +772,14 @@ class Log implements Runnable {
             wScript = new BufferedWriter(new FileWriter(sFileScript, true),
                                          4096);
         } catch (Exception e) {
-            Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private void closeScript() throws SQLException {
 
@@ -822,15 +794,14 @@ class Log implements Runnable {
                 wScript = null;
             }
         } catch (Exception e) {
-            Trace.error(Trace.FILE_IO_ERROR, sFileScript);
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @throws SQLException
+     * @throws  SQLException
      */
     private void runScript() throws SQLException {
 
@@ -846,12 +817,11 @@ class Log implements Runnable {
 
         dDatabase.setReferentialIntegrity(false);
 
-        Vector channel = new Vector();
+        Vector session = new Vector();
 
-        channel.addElement(cSystem);
+        session.addElement(sysSession);
 
-        Channel current = cSystem;
-        int     size    = 1;
+        Session current = sysSession;
 
         try {
             long time = System.currentTimeMillis();
@@ -869,39 +839,44 @@ class Log implements Runnable {
                     int id = Integer.parseInt(s.substring(3, s.indexOf('*',
                         4)));
 
-                    if (id >= size) {
-                        channel.setSize(id + 1);
+                    if (id >= session.size()) {
+                        session.setSize(id + 1);
                     }
 
-                    current = (Channel) channel.elementAt(id);
+                    current = (Session) session.elementAt(id);
 
                     if (current == null) {
-                        current = new Channel(cSystem, id);
+                        current = new Session(sysSession, id);
 
-                        channel.setElementAt(current, id);
-                        dDatabase.registerChannel(current);
+                        session.setElementAt(current, id);
+                        dDatabase.registerSession(current);
                     }
 
                     s = s.substring(s.indexOf('/', 1) + 1);
                 }
 
-                if (!s.equals("")) {
-                    dDatabase.execute(s, current);
+                if (s.length() != 0) {
+                    Result result = dDatabase.execute(s, current);
+
+                    if ((result != null) && (result.iMode == Result.ERROR)) {
+                        throw (Trace.getError(result.errorCode,
+                                              result.sError));
+                    }
                 }
 
                 if (s.equals("DISCONNECT")) {
                     int id = current.getId();
 
-                    current = new Channel(cSystem, id);
+                    current = new Session(sysSession, id);
 
-                    channel.setElementAt(current, id);
+                    session.setElementAt(current, id);
                 }
             }
 
             r.close();
 
-            for (int i = 0; i < size; i++) {
-                current = (Channel) channel.elementAt(i);
+            for (int i = 0; i < session.size(); i++) {
+                current = (Session) session.elementAt(i);
 
                 if (current != null) {
                     current.rollback();
@@ -923,12 +898,10 @@ class Log implements Runnable {
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param full
-     *
-     * @throws SQLException
+     * @param  full
+     * @throws  SQLException
      */
     private void writeScript(boolean full) throws SQLException {
 
@@ -941,36 +914,121 @@ class Log implements Runnable {
         (new File(sFileScript + ".new")).delete();
 
         // script; but only positions of cached tables, not full
-        scriptToFile(dDatabase, sFileScript + ".new", full, cSystem);
+        scriptToFile(dDatabase, sFileScript + ".new", full, sysSession);
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param w
-     * @param s
-     *
-     * @throws IOException
+     * @param  w
+     * @param  s
+     * @throws  IOException
      */
+
+// fredt@users 20011120 - patch 450455 by kibu@users - optimised
+    private static final String lineSep = System.getProperty("line.separator",
+        "\n");
+
     private static void writeLine(Writer w, String s) throws IOException {
-        w.write(StringConverter.unicodeToAscii(s) + "\r\n");
+        w.write(StringConverter.unicodeToAscii(s).append(lineSep).toString());
     }
 
     /**
-     * Method declaration
+     *  Method declaration
      *
-     *
-     * @param r
-     *
+     * @param  r
      * @return
-     *
-     * @throws IOException
+     * @throws  IOException
      */
     private static String readLine(LineNumberReader r) throws IOException {
 
         String s = r.readLine();
 
         return StringConverter.asciiToUnicode(s);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @return
+     */
+    HsqlDatabaseProperties getProperties() {
+        return pProperties;
+    }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
+    private Hashtable textCacheList = new Hashtable();
+
+    Cache openTextCache(String table, String source, boolean readOnlyData,
+                        boolean reversed) throws SQLException {
+
+        closeTextCache(table);
+
+        if (pProperties.getProperty("textdb.allow_full_path",
+                                    "false").equals("false")) {
+            if (source.indexOf("..") != -1) {
+                throw (Trace.error(Trace.ACCESS_IS_DENIED, source));
+            }
+
+            String path =
+                new File(new File(sName).getAbsolutePath()).getParent();
+
+            if (path != null) {
+                source = path + File.separator + source;
+            }
+        }
+
+        String    prefix = "textdb." + table.toLowerCase() + ".";
+        TextCache c;
+
+        if (reversed) {
+            c = new ReverseTextCache(source, prefix, pProperties);
+        } else {
+            c = new TextCache(source, prefix, pProperties);
+        }
+
+        c.open(readOnlyData || bReadOnly);
+        textCacheList.put(table, c);
+
+        return (c);
+    }
+
+    void closeTextCache(String table) throws SQLException {
+
+        TextCache c = (TextCache) textCacheList.remove(table);
+
+        if (c != null) {
+            c.flush();
+        }
+    }
+
+    void closeAllTextCaches(boolean compact) throws SQLException {
+
+        for (Enumeration e =
+                textCacheList.elements(); e.hasMoreElements(); ) {
+            if (compact) {
+                ((TextCache) e.nextElement()).purge();
+            } else {
+                ((TextCache) e.nextElement()).flush();
+            }
+        }
+    }
+
+    void reopenAllTextCaches() throws SQLException {
+
+        for (Enumeration e =
+                textCacheList.elements(); e.hasMoreElements(); ) {
+            ((TextCache) e.nextElement()).reopen();
+        }
+    }
+
+    void shutdownAllTextCaches() throws SQLException {
+
+        for (Enumeration e =
+                textCacheList.elements(); e.hasMoreElements(); ) {
+            ((TextCache) e.nextElement()).shutdown();
+        }
+
+        textCacheList = new Hashtable();
     }
 }

@@ -71,35 +71,74 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.applet.*;
-import java.sql.*;
 import java.util.*;
+import java.sql.*;
 
 /**
- * Class declaration
+ *  Utility program (or applet) for transferring tables between different
+ *  databases via JDBC. Understands HSQLDB database particularly well.
  *
- *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
-public class Transfer extends Applet
-implements WindowListener, ActionListener, ItemListener {
 
-    Connection       cSource, cTarget;
-    DatabaseMetaData dSourceMeta, dTargetMeta;
-    Statement        sSourceStatement, sTargetStatement;
+// fredt@users 20011220 - patch 481239 by xponsard@users - enhancements
+// enhancements to support saving and loading of transfer settings,
+// transfer of blobs, and catalog and schema names in source db
+// changes by fredt to allow saving and loading of transfer settings
+// fredt@users 20020215 - patch 516309 by Nicolas Bazin - enhancements
+// sqlbob@users 20020401 - patch 1.7.0 - reengineering
+// nicolas BAZIN 20020430 - add Catalog selection, correct a bug preventing table
+//    edition, change double quotes to simple quotes for default values of CHAR type
+public class Transfer extends Applet
+implements WindowListener, ActionListener, ItemListener, Traceable {
+
     Frame            fMain;
     Image            imgEmpty;
-    Table            tCurrent;
+    DataAccessPoint  sourceDb;
+    DataAccessPoint  targetDb;
+    TransferTable    tCurrent;
     int              iMaxRows;
+    int              iSelectionStep;
     Vector           tTable;
     java.awt.List    lTable;
-    TextField        tSourceTable, tDestTable;
-    TextField        tDestDrop, tDestCreate, tDestDelete;
+    String           sSourceSchemas[];
+    String           sSourceCatalog, sDestSchema, sDestCatalog;
+    TextField tSourceTable, tDestTable, tDestDropIndex, tDestCreateIndex;
+    TextField        tDestDrop, tDestCreate, tDestDelete, tDestAlter;
     TextField        tSourceSelect, tDestInsert;
-    Checkbox         cTransfer, cDrop, cCreate, cDelete, cInsert;
-    Button           bStart;
-    Hashtable        hTypes;
+    Checkbox         cTransfer, cDrop, cCreate, cDelete, cInsert, cAlter;
+    Checkbox         cCreateIndex, cDropIndex;
+    Checkbox         cFKForced, cIdxForced;
+    Button           bStart, bContinue;
     TextField        tMessage;
+    int              iTransferMode;
     static boolean   bMustExit;
+    int              CurrentTransfer, CurrentAlter;
+    final static int SELECT_SOURCE_CATALOG = 1;
+    final static int SELECT_SOURCE_SCHEMA  = 2;
+    final static int SELECT_DEST_CATALOG   = 3;
+    final static int SELECT_DEST_SCHEMA    = 4;
+    final static int SELECT_SOURCE_TABLES  = 5;
+    final static int TRFM_TRANSFER         = 1;
+    final static int TRFM_DUMP             = 2;
+    final static int TRFM_RESTORE          = 3;
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param s
+     */
+    public void trace(String s) {
+
+        if ((s != null) &&!s.equals("")) {
+            tMessage.setText(s);
+
+            if (TRACE) {
+                System.out.println(s);
+            }
+        }
+    }
 
     /**
      * Method declaration
@@ -109,18 +148,18 @@ implements WindowListener, ActionListener, ItemListener {
 
         Transfer m = new Transfer();
 
-        m.main();
+        m._main(null);
     }
 
     /**
      * Method declaration
      *
      */
-    public static void work() {
+    public static void work(String arg[]) {
 
         Transfer m = new Transfer();
 
-        m.main();
+        m._main(arg);
     }
 
     /**
@@ -131,18 +170,211 @@ implements WindowListener, ActionListener, ItemListener {
      */
     public static void main(String arg[]) {
 
+        System.getProperties().put("sun.java2d.noddraw", "true");
+
         bMustExit = true;
 
-        work();
+        work(arg);
+    }
+
+    private boolean CatalogToSelect() {
+
+        Vector result = null;
+
+        try {
+            lTable.removeAll();
+
+            if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                result = sourceDb.getCatalog();
+            } else if (iSelectionStep == this.SELECT_DEST_CATALOG) {
+                result = targetDb.getCatalog();
+            } else {
+                Exit();
+            }
+
+            if (result.size() > 1) {
+                lTable.setMultipleMode(true);
+
+                if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                    bStart.setLabel("Select Catalog: Source");
+                } else {
+                    bStart.setLabel("Select Catalog: Destination");
+                }
+
+                bStart.invalidate();
+                bStart.setEnabled(true);
+
+                for (Enumeration e =
+                        result.elements(); e.hasMoreElements(); ) {
+                    lTable.add(e.nextElement().toString());
+                }
+
+                lTable.repaint();
+                trace("Select correct Catalog");
+            } else {
+                if (result.size() == 1) {
+                    if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                        sSourceCatalog = (String) result.firstElement();
+                        sSourceSchemas = null;
+                    } else {
+                        sDestCatalog = (String) result.firstElement();
+                        sDestSchema  = null;
+                    }
+                } else {
+                    if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                        sSourceCatalog = null;
+                        sSourceSchemas = null;
+                    } else {
+                        sDestCatalog = null;
+                        sDestSchema  = null;
+                    }
+                }
+
+                if ((iSelectionStep == this.SELECT_DEST_CATALOG)
+                        && (sDestCatalog != null)) {
+                    try {
+                        targetDb.setCatalog(sDestCatalog);
+                    } catch (Exception ex) {
+                        trace("Catalog " + sSourceCatalog
+                              + " could not be selected in the target database");
+
+                        sSourceCatalog = null;
+                    }
+                }
+
+                iSelectionStep++;
+
+                ProcessNextStep();
+
+/*
+                if (SchemaToSelect()) {
+                    fMain.show();
+
+                    return false;
+                }
+*/
+                return false;
+            }
+        } catch (Exception exp) {
+            lTable.removeAll();
+            trace("Exception reading catalog: " + exp);
+            exp.printStackTrace();
+        }
+
+        return (lTable.getItemCount() > 0);
+    }
+
+    private boolean SchemaToSelect() {
+
+        Vector result = null;
+
+        try {
+            lTable.removeAll();
+
+            if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                result = sourceDb.getSchemas();
+            } else if (iSelectionStep == this.SELECT_DEST_SCHEMA) {
+                result = targetDb.getSchemas();
+            } else {
+                Exit();
+            }
+
+            if (result.size() > 1) {
+                lTable.setMultipleMode(true);
+
+                if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                    bStart.setLabel("Select Schema: Source");
+                } else {
+                    bStart.setLabel("Select Schema: Destination");
+                }
+
+                bStart.invalidate();
+                bStart.setEnabled(true);
+
+                for (Enumeration e =
+                        result.elements(); e.hasMoreElements(); ) {
+                    lTable.add(e.nextElement().toString());
+                }
+
+                lTable.repaint();
+                trace("Select correct Schema or load Settings file");
+            } else {
+                if (result.size() == 1) {
+                    if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                        sSourceSchemas    = new String[1];
+                        sSourceSchemas[0] = (String) result.firstElement();
+                    } else {
+                        sDestSchema = (String) result.firstElement();
+                    }
+                } else {
+                    if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                        sSourceSchemas = null;
+                    } else {
+                        sDestSchema = null;
+                    }
+                }
+
+                if (iTransferMode == TRFM_DUMP) {
+                    iSelectionStep = this.SELECT_SOURCE_TABLES;
+                } else {
+                    iSelectionStep++;
+                }
+
+                ProcessNextStep();
+
+/*
+                if (iSelectionStep == this.SELECT_SOURCE_TABLES) {
+                    if (iTransferMode == TRFM_TRANSFER) {
+                        bStart.setLabel("Start Transfer");
+                    } else {
+                        bStart.setLabel("Start Dump");
+                    }
+
+                    bStart.invalidate();
+                    bStart.setEnabled(false);
+                    lTable.setMultipleMode(false);
+                    RefreshMainDisplay();
+                } else {
+                    if (CatalogToSelect()) {
+                        fMain.show();
+
+                        return false;
+                    }
+                }
+*/
+                return false;
+            }
+        } catch (Exception exp) {
+            lTable.removeAll();
+            trace("Exception reading schemas: " + exp);
+            exp.printStackTrace();
+        }
+
+        return (lTable.getItemCount() > 0);
     }
 
     /**
      * Method declaration
      *
      */
-    void main() {
+    void _main(String arg[]) {
 
-        fMain = new Frame("Hypersonic Transfer Tool");
+        /*
+        ** What function is asked from the transfer tool?
+        */
+        iTransferMode = TRFM_TRANSFER;
+
+        if ((arg != null) && (arg.length > 0)) {
+            if ((arg[0].toLowerCase().equals("-r"))
+                    || (arg[0].toLowerCase().equals("--restore"))) {
+                iTransferMode = TRFM_RESTORE;
+            } else if ((arg[0].toLowerCase().equals("-d"))
+                       || (arg[0].toLowerCase().equals("--dump"))) {
+                iTransferMode = TRFM_DUMP;
+            }
+        }
+
+        fMain = new Frame("HSQL Transfer Tool");
         imgEmpty = createImage(new MemoryImageSource(2, 2, new int[4 * 4], 2,
                 2));
 
@@ -153,9 +385,10 @@ implements WindowListener, ActionListener, ItemListener {
 
         MenuBar bar      = new MenuBar();
         String  extras[] = {
-            "Insert 10 rows only", "Insert 1000 rows only", "Insert all rows"
+            "Insert 10 rows only", "Insert 1000 rows only", "Insert all rows",
+            "-", "Load Settings...", "Save Settings...", "-", "Exit"
         };
-        Menu    menu     = new Menu("Options");
+        Menu menu = new Menu("Options");
 
         addMenuItems(menu, extras);
         bar.add(menu);
@@ -165,165 +398,117 @@ implements WindowListener, ActionListener, ItemListener {
         Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = fMain.getSize();
 
-        fMain.setLocation((d.width - size.width) / 2,
-                          (d.height - size.height) / 2);
+        // (ulrivo): full size on screen with less than 640 width
+        if (d.width >= 640) {
+            fMain.setLocation((d.width - size.width) / 2,
+                              (d.height - size.height) / 2);
+        } else {
+            fMain.setLocation(0, 0);
+            fMain.setSize(d);
+        }
+
         fMain.setVisible(true);
 
-        cSource = ConnectionDialog.createConnection(fMain, "Source Database");
+        CurrentTransfer = CurrentAlter = 0;
 
-        if (cSource == null) {
+        try {
+            if ((iTransferMode == TRFM_DUMP)
+                    || (iTransferMode == TRFM_TRANSFER)) {
+                sourceDb = new TransferDb(
+                    ConnectionDialog.createConnection(
+                        fMain, "Source Database"), this);
+
+                if (!sourceDb.isConnected()) {
+                    Exit();
+
+                    return;
+                }
+            }
+
+            if ((iTransferMode == TRFM_RESTORE)
+                    || (iTransferMode == TRFM_TRANSFER)) {
+                targetDb = new TransferDb(
+                    ConnectionDialog.createConnection(
+                        fMain, "Target Database"), this);
+
+                if (!targetDb.isConnected()) {
+                    Exit();
+
+                    return;
+                }
+            } else {
+                FileDialog f = new FileDialog(fMain, "Dump FileName",
+                                              FileDialog.SAVE);
+
+                f.show();
+
+                String sFileName = f.getFile();
+                String Path      = f.getDirectory();
+
+                if ((sFileName == null) || (sFileName.equals(""))) {
+                    Exit();
+
+                    return;
+                } else {
+                    targetDb = new TransferSQLText(Path + sFileName, this);
+                }
+            }
+        } catch (Exception e) {
+            Exit();
+            e.printStackTrace();
+
             return;
         }
 
-        try {
-            dSourceMeta      = cSource.getMetaData();
-            sSourceStatement = cSource.createStatement();
-        } catch (Exception e) {
-            trace(e.toString());
-            e.printStackTrace();
+        if ((iTransferMode == TRFM_DUMP)
+                || (iTransferMode == TRFM_TRANSFER)) {
+            iSelectionStep = SELECT_SOURCE_CATALOG;
+            sSourceCatalog = null;
+
+            ProcessNextStep();
+/*
+            CatalogToSelect();
+*/
         }
 
-        cTarget = ConnectionDialog.createConnection(fMain, "Target Database");
-
-        if (cTarget == null) {
-            return;
+/*
+        if (lTable.getItemCount()>0) {
+            lTable.select(0);
+            displayTable((TransferTable) tTable.elementAt(0));
         }
+*/
+        fMain.show();
 
-        try {
-            dTargetMeta      = cTarget.getMetaData();
-            sTargetStatement = cTarget.createStatement();
-        } catch (Exception e) {
-            trace(e.toString());
-            e.printStackTrace();
-        }
+        return;
+    }
 
-        String usertables[] = { "TABLE" };
+    private void RefreshMainDisplay() {
 
         lTable.removeAll();
-
-        tTable = new Vector();
+        lTable.repaint();
 
         try {
-            hTypes = new Hashtable();
-
-            trace("Building target type info");
-
-            ResultSet result = dTargetMeta.getTypeInfo();
-
-            while (result.next()) {
-                hTypes.put(new Integer(result.getShort(2)),
-                           result.getString(1));
-
-                // todo: most database need parameters, for example VARCHAR(size)
-            }
-
-            result.close();
-            trace("Reading source tables");
-
-            result = dSourceMeta.getTables(null, null, null, usertables);
-
-            int index = 0;
-
-            while (result.next()) {
-                Table t = new Table();
-
-                t.iTableIndex = index++;
-
-                String name = result.getString(3);
-
-                t.bTransfer     = true;
-                t.sSourceTable  = name;
-                t.sDestTable    = name;
-                t.sDestDrop     = "DROP TABLE " + name;
-                t.sSourceSelect = "SELECT * FROM " + name;
-                t.sDestDelete   = "DELETE FROM " + name;
-                t.bCreate       = true;
-                t.bDelete       = true;
-                t.bDrop         = true;
-                t.bInsert       = true;
-
-                tTable.addElement(t);
-                lTable.add(name);
-            }
-
-            result.close();
+            tTable = sourceDb.getTables(sSourceCatalog, sSourceSchemas);
 
             for (int i = 0; i < tTable.size(); i++) {
-                Table t = (Table) tTable.elementAt(i);
+                TransferTable t = (TransferTable) tTable.elementAt(i);
 
-                trace("Reading source columns for table " + t.sSourceTable);
-
-                ResultSet col = dSourceMeta.getColumns(null, null,
-                                                       t.sSourceTable, null);
-                String create = "CREATE TABLE " + t.sSourceTable + "(";
-                String insert = "INSERT INTO " + t.sSourceTable + " VALUES(";
-                Vector v      = new Vector();
-
-                while (col.next()) {
-                    String name   = col.getString(4);
-                    int    type   = col.getShort(5);
-                    String source = col.getString(6);
-
-                    // MS SQL 7 specific problems (Northwind database)
-                    if (type == 11
-                            && source.toUpperCase().equals("DATETIME")) {
-                        trace("Converted DATETIME (type 11) to TIMESTAMP");
-
-                        type = Types.TIMESTAMP;
-                    } else if (type == -9
-                               && source.toUpperCase().equals("NVARCHAR")) {
-                        trace("Converted NVARCHAR (type -9) to VARCHAR");
-
-                        type = Types.VARCHAR;
-                    } else if (type == -8
-                               && source.toUpperCase().equals("NCHAR")) {
-                        trace("Converted NCHAR (type -8) to VARCHAR");
-
-                        type = Types.VARCHAR;
-                    } else if (type == -10
-                               && source.toUpperCase().equals("NTEXT")) {
-                        trace("Converted NTEXT (type -10) to VARCHAR");
-
-                        type = Types.VARCHAR;
-                    } else if (type == -1
-                               && source.toUpperCase().equals("LONGTEXT")) {
-                        trace("Converted LONGTEXT (type -1) to LONGVARCHAR");
-
-                        type = Types.LONGVARCHAR;
-                    }
-
-                    Integer inttype  = new Integer(type);
-                    String  datatype = (String) hTypes.get(inttype);
-
-                    if (datatype == null) {
-                        datatype = source;
-
-                        trace("No mapping for type: " + inttype
-                              + " source type is " + datatype);
-                    }
-
-                    v.addElement(inttype);
-
-                    create += name + " " + datatype + ",";
-                    insert += "?,";
-                }
-
-                col.close();
-
-                create = create.substring(0, create.length() - 1) + ")";
-                insert = insert.substring(0, insert.length() - 1) + ")";
-                t.sDestCreate = create;
-                t.sDestInsert = insert;
-                t.iColumnType = new int[v.size()];
-
-                for (int j = 0; j < v.size(); j++) {
-                    t.iColumnType[j] = ((Integer) v.elementAt(j)).intValue();
-                }
+                t.setDest(sDestSchema, targetDb);
+                t.getTableStructure();
+                lTable.add(t.sSourceTable);
+                lTable.select(i);
+                displayTable(t);
             }
 
-            trace("Edit definitions and press [Start Transfer]");
-        } catch (SQLException e) {
-            trace("SQL Exception reading Metadata: " + e.getMessage());
+            bStart.setEnabled(true);
+
+            if (iTransferMode == TRFM_TRANSFER) {
+                trace("Edit definitions and press [Start Transfer]");
+            } else if (iTransferMode == TRFM_DUMP) {
+                trace("Edit definitions and press [Start Dump]");
+            }
+        } catch (Exception e) {
+            trace("Exception reading source tables: " + e);
             e.printStackTrace();
         }
 
@@ -337,13 +522,17 @@ implements WindowListener, ActionListener, ItemListener {
      * @param f
      * @param m
      */
-    void addMenuItems(Menu f, String m[]) {
+    private void addMenuItems(Menu f, String m[]) {
 
         for (int i = 0; i < m.length; i++) {
-            MenuItem item = new MenuItem(m[i]);
+            if (m[i].equals("-")) {
+                f.addSeparator();
+            } else {
+                MenuItem item = new MenuItem(m[i]);
 
-            item.addActionListener(this);
-            f.add(item);
+                item.addActionListener(this);
+                f.add(item);
+            }
         }
     }
 
@@ -358,20 +547,28 @@ implements WindowListener, ActionListener, ItemListener {
         ItemSelectable item = e.getItemSelectable();
 
         if (item == lTable) {
-            String table = lTable.getSelectedItem();
+            if (iSelectionStep == SELECT_SOURCE_TABLES) {
+                String table    = lTable.getSelectedItem();
+                int    selected = ((Integer) e.getItem()).intValue();
 
-            for (int i = 0; i < tTable.size(); i++) {
-                Table t = (Table) tTable.elementAt(i);
+                for (int i = 0; i < tTable.size(); i++) {
+                    TransferTable t = (TransferTable) tTable.elementAt(i);
 
-                if (t != null && t.sSourceTable.equals(table)) {
-                    saveTable();
-                    displayTable(t);
-                    updateEnabled(true);
+                    if (t == null) {
+                        continue;
+                    }
+
+                    if (i == selected) {
+                        saveTable();
+                        displayTable(t);
+                        updateEnabled(true);
+                    }
                 }
             }
         } else {
 
             // it must be a checkbox
+            saveTable();
             updateEnabled(true);
         }
     }
@@ -380,26 +577,46 @@ implements WindowListener, ActionListener, ItemListener {
      * Method declaration
      *
      */
-    void saveTable() {
+    private void saveTable() {
 
         if (tCurrent == null) {
             return;
         }
 
-        Table t = tCurrent;
+        TransferTable t = tCurrent;
 
-        t.sSourceTable  = tSourceTable.getText();
-        t.sDestTable    = tDestTable.getText();
-        t.sDestDrop     = tDestDrop.getText();
-        t.sDestCreate   = tDestCreate.getText();
-        t.sDestDelete   = tDestDelete.getText();
-        t.sSourceSelect = tSourceSelect.getText();
-        t.sDestInsert   = tDestInsert.getText();
-        t.bTransfer     = cTransfer.getState();
-        t.bDrop         = cDrop.getState();
-        t.bCreate       = cCreate.getState();
-        t.bDelete       = cDelete.getState();
-        t.bInsert       = cInsert.getState();
+        t.sSourceTable     = tSourceTable.getText();
+        t.sDestTable       = tDestTable.getText();
+        t.sDestDrop        = tDestDrop.getText();
+        t.sDestCreateIndex = tDestCreateIndex.getText();
+        t.sDestDropIndex   = tDestDropIndex.getText();
+        t.sDestCreate      = tDestCreate.getText();
+        t.sDestDelete      = tDestDelete.getText();
+        t.sSourceSelect    = tSourceSelect.getText();
+        t.sDestInsert      = tDestInsert.getText();
+        t.bTransfer        = cTransfer.getState();
+        t.bDrop            = cDrop.getState();
+        t.bCreate          = cCreate.getState();
+        t.bDelete          = cDelete.getState();
+        t.bInsert          = cInsert.getState();
+        t.bAlter           = cAlter.getState();
+        t.bCreateIndex     = cCreateIndex.getState();
+        t.bDropIndex       = cDropIndex.getState();
+
+        boolean reparsetable = ((t.bFKForced != cFKForced.getState())
+                                || (t.bIdxForced != cIdxForced.getState()));
+
+        t.bFKForced  = cFKForced.getState();
+        t.bIdxForced = cIdxForced.getState();
+
+        if (reparsetable) {
+            try {
+                t.getTableStructure();
+            } catch (Exception e) {
+                trace("Exception reading source tables: " + e);
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -408,7 +625,7 @@ implements WindowListener, ActionListener, ItemListener {
      *
      * @param t
      */
-    void displayTable(Table t) {
+    private void displayTable(TransferTable t) {
 
         tCurrent = t;
 
@@ -419,15 +636,23 @@ implements WindowListener, ActionListener, ItemListener {
         tSourceTable.setText(t.sSourceTable);
         tDestTable.setText(t.sDestTable);
         tDestDrop.setText(t.sDestDrop);
+        tDestCreateIndex.setText(t.sDestCreateIndex);
+        tDestDropIndex.setText(t.sDestDropIndex);
         tDestCreate.setText(t.sDestCreate);
         tDestDelete.setText(t.sDestDelete);
         tSourceSelect.setText(t.sSourceSelect);
         tDestInsert.setText(t.sDestInsert);
+        tDestAlter.setText(t.sDestAlter);
         cTransfer.setState(t.bTransfer);
         cDrop.setState(t.bDrop);
         cCreate.setState(t.bCreate);
+        cDropIndex.setState(t.bDropIndex);
+        cCreateIndex.setState(t.bCreateIndex);
         cDelete.setState(t.bDelete);
         cInsert.setState(t.bInsert);
+        cAlter.setState(t.bAlter);
+        cFKForced.setState(t.bFKForced);
+        cIdxForced.setState(t.bIdxForced);
     }
 
     /**
@@ -436,7 +661,7 @@ implements WindowListener, ActionListener, ItemListener {
      *
      * @param and
      */
-    void updateEnabled(boolean and) {
+    private void updateEnabled(boolean and) {
 
         boolean b = cTransfer.getState();
 
@@ -444,13 +669,68 @@ implements WindowListener, ActionListener, ItemListener {
         tDestDrop.setEnabled(and && b && cDrop.getState());
         tDestCreate.setEnabled(and && b && cCreate.getState());
         tDestDelete.setEnabled(and && b && cDelete.getState());
+        tDestCreateIndex.setEnabled(and && b && cCreateIndex.getState());
+        tDestDropIndex.setEnabled(and && b && cDropIndex.getState());
         tSourceSelect.setEnabled(and && b);
         tDestInsert.setEnabled(and && b && cInsert.getState());
+        tDestAlter.setEnabled(and && b && cAlter.getState());
         cDrop.setEnabled(and && b);
         cCreate.setEnabled(and && b);
         cDelete.setEnabled(and && b);
+        cCreateIndex.setEnabled(and && b);
+        cDropIndex.setEnabled(and && b);
         cInsert.setEnabled(and && b);
+        cAlter.setEnabled(and && b);
+        cFKForced.setEnabled(cAlter.getState());
+        cIdxForced.setEnabled(cCreateIndex.getState());
         bStart.setEnabled(and);
+
+        if (iTransferMode == TRFM_TRANSFER) {
+            bContinue.setEnabled(and);
+        }
+    }
+
+    /**
+     * Method ProcessNextStep
+     */
+    private void ProcessNextStep() {
+
+        switch (iSelectionStep) {
+
+            case SELECT_SOURCE_CATALOG :
+            case SELECT_DEST_CATALOG :
+                if (CatalogToSelect()) {
+                    fMain.show();
+
+                    return;
+                }
+                break;
+
+            case SELECT_DEST_SCHEMA :
+            case SELECT_SOURCE_SCHEMA :
+                if (SchemaToSelect()) {
+                    fMain.show();
+
+                    return;
+                }
+                break;
+
+            case SELECT_SOURCE_TABLES :
+                if (iTransferMode == TRFM_TRANSFER) {
+                    bStart.setLabel("Start Transfer");
+                } else if (iTransferMode == TRFM_DUMP) {
+                    bStart.setLabel("Start Dump");
+                }
+
+                bStart.invalidate();
+                bStart.setEnabled(false);
+                lTable.setMultipleMode(false);
+                RefreshMainDisplay();
+                break;
+
+            default :
+                break;
+        }
     }
 
     /**
@@ -461,24 +741,136 @@ implements WindowListener, ActionListener, ItemListener {
      */
     public void actionPerformed(ActionEvent ev) {
 
-        String s = ev.getActionCommand();
+        if (ev.getSource() instanceof TextField) {
+            saveTable();
+
+            return;
+        }
+
+        String   s = ev.getActionCommand();
+        MenuItem i = new MenuItem();
 
         if (s == null) {
             if (ev.getSource() instanceof MenuItem) {
-                MenuItem i;
-
-                s = ((MenuItem) ev.getSource()).getLabel();
+                i = (MenuItem) ev.getSource();
+                s = i.getLabel();
             }
         }
 
-        if (s.equals("Start Transfer")) {
+        if (s.equals("Start Transfer") || s.equals("ReStart Transfer")) {
+            bStart.setLabel("ReStart Transfer");
+            bStart.invalidate();
+
+            CurrentTransfer = 0;
+            CurrentAlter    = 0;
+
             transfer();
+        } else if (s.equals("Continue Transfer")) {
+            transfer();
+        } else if (s.equals("Start Dump")) {
+            CurrentTransfer = 0;
+            CurrentAlter    = 0;
+
+            transfer();
+        } else if (s.equals("Quit")) {
+            Exit();
+        } else if (s.indexOf("Select Schema") >= 0) {
+            String[] selection = lTable.getSelectedItems();
+
+            if ((selection == null) || (selection.length == 0)) {
+                return;
+            }
+
+            if (iSelectionStep == this.SELECT_SOURCE_SCHEMA) {
+                sSourceSchemas = selection;
+            } else {
+                sDestSchema = selection[0];
+            }
+
+            if (iTransferMode == TRFM_DUMP) {
+                iSelectionStep = this.SELECT_SOURCE_TABLES;
+            } else {
+                iSelectionStep++;
+            }
+
+            ProcessNextStep();
+        } else if (s.indexOf("Select Catalog") >= 0) {
+            String selection = lTable.getSelectedItem();
+
+            if ((selection == null) || (selection.equals(""))) {
+                return;
+            }
+
+            if (iSelectionStep == this.SELECT_SOURCE_CATALOG) {
+                sSourceCatalog = selection;
+                sSourceSchemas = null;
+            } else {
+                sDestCatalog = selection;
+                sDestSchema  = null;
+
+                try {
+                    targetDb.setCatalog(sDestCatalog);
+                } catch (Exception ex) {
+                    trace("Catalog " + sDestCatalog
+                          + " could not be selected in the target database");
+
+                    sDestCatalog = null;
+                }
+            }
+
+            iSelectionStep++;
+
+            ProcessNextStep();
+/*
+            if (SchemaToSelect()) {
+                fMain.show();
+
+                return;
+            }
+
+            if (iSelectionStep == this.SELECT_SOURCE_TABLES) {
+                lTable.removeAll();
+                lTable.repaint();
+                RefreshMainDisplay();
+            } else if (iSelectionStep == this.SELECT_DEST_CATALOG) {
+                if (CatalogToSelect()) {
+                    fMain.show();
+
+                    return;
+                }
+            }
+*/
         } else if (s.equals("Insert 10 rows only")) {
             iMaxRows = 10;
         } else if (s.equals("Insert 1000 rows only")) {
             iMaxRows = 1000;
         } else if (s.equals("Insert all rows")) {
             iMaxRows = 0;
+        } else if (s.equals("Load Settings...")) {
+            FileDialog f = new FileDialog(fMain, "Load Settings",
+                                          FileDialog.LOAD);
+
+            f.show();
+
+            String file = f.getFile();
+
+            if (file != null) {
+                LoadPrefs(file);
+                displayTable(tCurrent);
+            }
+        } else if (s.equals("Save Settings...")) {
+            FileDialog f = new FileDialog(fMain, "Save Settings",
+                                          FileDialog.SAVE);
+
+            f.show();
+
+            String file = f.getFile();
+
+            if (file != null) {
+                SavePrefs(file);
+            }
+        } else if (s.equals("Exit")) {
+            windowClosing(null);
         }
     }
 
@@ -506,6 +898,19 @@ implements WindowListener, ActionListener, ItemListener {
      */
     public void windowClosed(WindowEvent e) {}
 
+    private void cleanup() {
+
+        try {
+            if (sourceDb != null) {
+                sourceDb.close();
+            }
+
+            if (targetDb != null) {
+                targetDb.close();
+            }
+        } catch (Exception e) {}
+    }
+
     /**
      * Method declaration
      *
@@ -513,16 +918,6 @@ implements WindowListener, ActionListener, ItemListener {
      * @param ev
      */
     public void windowClosing(WindowEvent ev) {
-
-        try {
-            if (cSource != null) {
-                cSource.close();
-            }
-
-            if (cTarget != null) {
-                cTarget.close();
-            }
-        } catch (Exception e) {}
 
         fMain.dispose();
 
@@ -556,27 +951,10 @@ implements WindowListener, ActionListener, ItemListener {
     public void windowOpened(WindowEvent e) {}
 
     /**
-     * Class declaration
-     *
-     *
-     * @author
-     * @version %I%, %G%
-     */
-    class Table {
-
-        int     iTableIndex;
-        String  sSourceTable, sDestTable;
-        String  sDestDrop, sDestCreate, sDestDelete;
-        String  sSourceSelect, sDestInsert;
-        boolean bTransfer, bDrop, bCreate, bDelete, bInsert;
-        int     iColumnType[];
-    }
-
-    /**
      * Method declaration
      *
      */
-    void initGUI() {
+    private void initGUI() {
 
         Font fFont = new Font("Dialog", Font.PLAIN, 12);
 
@@ -591,13 +969,43 @@ implements WindowListener, ActionListener, ItemListener {
 
         tSourceTable.setEnabled(false);
 
-        tDestTable    = new TextField();
-        tDestDrop     = new TextField();
-        tDestCreate   = new TextField();
-        tDestDelete   = new TextField();
+        tDestTable = new TextField();
+
+        tDestTable.addActionListener(this);
+
+        tDestDrop = new TextField();
+
+        tDestDrop.addActionListener(this);
+
+        tDestCreate = new TextField();
+
+        tDestCreate.addActionListener(this);
+
+        tDestDelete = new TextField();
+
+        tDestDelete.addActionListener(this);
+
+        tDestCreateIndex = new TextField();
+
+        tDestCreateIndex.addActionListener(this);
+
+        tDestDropIndex = new TextField();
+
+        tDestDropIndex.addActionListener(this);
+
         tSourceSelect = new TextField();
-        tDestInsert   = new TextField();
-        cTransfer     = new Checkbox("Transfer to destination table", true);
+
+        tSourceSelect.addActionListener(this);
+
+        tDestInsert = new TextField();
+
+        tDestInsert.addActionListener(this);
+
+        tDestAlter = new TextField();
+
+        tDestAlter.addActionListener(this);
+
+        cTransfer = new Checkbox("Transfer to destination table", true);
 
         cTransfer.addItemListener(this);
 
@@ -609,6 +1017,20 @@ implements WindowListener, ActionListener, ItemListener {
 
         cCreate.addItemListener(this);
 
+        cDropIndex = new Checkbox("Drop destination index (ignore error)",
+                                  true);
+
+        cDropIndex.addItemListener(this);
+
+        cIdxForced = new Checkbox("force Idx_ prefix for indexes names",
+                                  false);
+
+        cIdxForced.addItemListener(this);
+
+        cCreateIndex = new Checkbox("Create destination index", true);
+
+        cCreateIndex.addItemListener(this);
+
         cDelete = new Checkbox("Delete rows in destination table", true);
 
         cDelete.addItemListener(this);
@@ -616,6 +1038,15 @@ implements WindowListener, ActionListener, ItemListener {
         cInsert = new Checkbox("Insert into destination", true);
 
         cInsert.addItemListener(this);
+
+        cFKForced = new Checkbox("force FK_ prefix for foreign key names",
+                                 false);
+
+        cFKForced.addItemListener(this);
+
+        cAlter = new Checkbox("Alter destination table", true);
+
+        cAlter.addItemListener(this);
         p.add(createLabel("Source table"));
         p.add(tSourceTable);
         p.add(cTransfer);
@@ -624,18 +1055,43 @@ implements WindowListener, ActionListener, ItemListener {
         p.add(tDestDrop);
         p.add(cCreate);
         p.add(tDestCreate);
+        p.add(cDropIndex);
+        p.add(tDestDropIndex);
+        p.add(cCreateIndex);
+        p.add(tDestCreateIndex);
         p.add(cDelete);
         p.add(tDestDelete);
+        p.add(cAlter);
+        p.add(tDestAlter);
         p.add(createLabel("Select source records"));
         p.add(tSourceSelect);
         p.add(cInsert);
         p.add(tDestInsert);
         p.add(createLabel(""));
+        p.add(createLabel(""));
+        p.add(cIdxForced);
+        p.add(cFKForced);
+        p.add(createLabel(""));
+        p.add(createLabel(""));
 
-        bStart = new Button("Start Transfer");
+        if (iTransferMode == TRFM_TRANSFER) {
+            bStart    = new Button("Start Transfer");
+            bContinue = new Button("Continue Transfer");
+
+            bContinue.setEnabled(false);
+        } else {
+            bStart = new Button("Start Dump");
+        }
 
         bStart.addActionListener(this);
         p.add(bStart);
+
+        if (iTransferMode == TRFM_TRANSFER) {
+            bContinue.addActionListener(this);
+            p.add(bContinue);
+        }
+
+        bStart.setEnabled(false);
         fMain.add("Center", createBorderPanel(p));
 
         lTable = new java.awt.List(10);
@@ -658,7 +1114,7 @@ implements WindowListener, ActionListener, ItemListener {
      *
      * @return
      */
-    Panel createBorderPanel(Component center) {
+    private Panel createBorderPanel(Component center) {
 
         Panel p = new Panel();
 
@@ -681,7 +1137,7 @@ implements WindowListener, ActionListener, ItemListener {
      *
      * @return
      */
-    Label createLabel(String s) {
+    private Label createLabel(String s) {
 
         Label l = new Label(s);
 
@@ -690,177 +1146,129 @@ implements WindowListener, ActionListener, ItemListener {
         return l;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     */
-    void trace(String s) {
-        tMessage.setText(s);
-        System.out.println(s);
+    private void SavePrefs(String f) {
+        saveTable();
+        TransferCommon.savePrefs(f, sourceDb, targetDb, this, tTable);
+    }
+
+    private void LoadPrefs(String f) {
+
+        TransferTable t;
+
+        trace("Parsing Settings file");
+        bStart.setEnabled(false);
+
+        if (iTransferMode == TRFM_TRANSFER) {
+            bContinue.setEnabled(false);
+        }
+
+        tTable = TransferCommon.loadPrefs(f, sourceDb, targetDb, this);
+        iSelectionStep = SELECT_SOURCE_TABLES;
+
+        lTable.removeAll();
+
+        for (int i = 0; i < tTable.size(); i++) {
+            t = (TransferTable) tTable.elementAt(i);
+
+            lTable.add(t.sSourceTable);
+        }
+
+        t = (TransferTable) tTable.elementAt(0);
+
+        displayTable(t);
+        lTable.select(0);
+        updateEnabled(true);
+        lTable.invalidate();
+
+        if (iTransferMode == TRFM_TRANSFER) {
+            bStart.setLabel("Start Transfer");
+            trace("Edit definitions and press [Start Transfer]");
+        } else if (iTransferMode == TRFM_DUMP) {
+            bStart.setLabel("Start Dump");
+            trace("Edit definitions and press [Start Dump]");
+        }
+
+        bStart.invalidate();
+
+        if (iTransferMode == TRFM_TRANSFER) {
+            bContinue.setEnabled(false);
+        }
     }
 
     /**
      * Method declaration
      *
      */
-    void transfer() {
+    private void transfer() {
 
         saveTable();
         updateEnabled(false);
         trace("Start Transfer");
 
+        int           TransferIndex = CurrentTransfer;
+        int           AlterIndex    = CurrentAlter;
+        TransferTable t             = null;
+        long          startTime, stopTime;
+
+        startTime = System.currentTimeMillis();
+
         try {
-            for (int i = 0; i < tTable.size(); i++) {
-                transfer((Table) tTable.elementAt(i));
+            for (int i = TransferIndex; i < tTable.size(); i++) {
+                CurrentTransfer = i;
+                t               = (TransferTable) tTable.elementAt(i);
+
+                lTable.select(i);
+                displayTable(t);
+                t.transferStructure();
+                t.transferData(iMaxRows);
             }
 
-            trace("Transfer finished successfully");
-        } catch (SQLException e) {
-            String last = tMessage.getText();
+            for (int i = AlterIndex; i < tTable.size(); i++) {
+                CurrentAlter = i;
+                t            = (TransferTable) tTable.elementAt(i);
 
-            trace("Transfer stopped - " + last + " / " + sLast + " / Error: "
-                  + e.getMessage());
-            e.printStackTrace();
+                lTable.select(i);
+                displayTable(t);
+                t.transferAlter();
+            }
+
+            stopTime = System.currentTimeMillis();
+
+            trace("Transfer finished successfully in: "
+                  + (stopTime - startTime) / 1000.00 + " sec");
+
+            if (iTransferMode == TRFM_TRANSFER) {
+                bContinue.setLabel("Quit");
+                bContinue.setEnabled(true);
+                bContinue.invalidate();
+            } else {
+                bStart.setLabel("Quit");
+                bStart.setEnabled(true);
+                bStart.invalidate();
+            }
         } catch (Exception e) {
             String last = tMessage.getText();
 
-            trace("Transfer stopped - " + last + " / " + sLast + " / Error: "
+            trace("Transfer stopped - " + last + " /  / Error: "
                   + e.getMessage());
             e.printStackTrace();
         }
 
+        if (iTransferMode == TRFM_TRANSFER) {
+            bContinue.setEnabled((CurrentAlter < tTable.size()));
+        }
+
         updateEnabled(true);
+        System.gc();
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param t
-     *
-     * @throws SQLException
-     */
-    void transfer(Table t) throws SQLException {
+    protected void Exit() {
 
-        lTable.select(t.iTableIndex);
-        displayTable(t);
+        cleanup();
+        fMain.dispose();
 
-        if (t.bTransfer == false) {
-            trace("Table " + t.sSourceSelect + " not transfered");
-
-            return;
+        if (bMustExit) {
+            System.exit(0);
         }
-
-        trace("Table " + t.sSourceSelect + ": start transfer");
-
-        if (t.bDelete) {
-            try {
-                trace("Executing " + t.sDestDrop);
-                sTargetStatement.execute(t.sDestDrop);
-            } catch (SQLException e) {
-                trace("Ignoring error " + e.getMessage());
-            }
-        }
-
-        if (t.bCreate) {
-            trace("Executing " + t.sDestCreate);
-            sTargetStatement.execute(t.sDestCreate);
-        }
-
-        if (t.bDelete) {
-            trace("Executing " + t.sDestDelete);
-            sTargetStatement.execute(t.sDestDelete);
-        }
-
-        if (t.bInsert) {
-            trace("Executing " + t.sDestInsert);
-
-            PreparedStatement p = cTarget.prepareStatement(t.sDestInsert);
-
-            trace("Executing " + t.sSourceSelect);
-
-            ResultSet r = sSourceStatement.executeQuery(t.sSourceSelect);
-            int               i      = 0;
-            ResultSetMetaData m      = r.getMetaData();
-            int               type[] = new int[m.getColumnCount()];
-
-            for (int j = 0; j < m.getColumnCount(); j++) {
-                type[j] = m.getColumnType(j + 1);
-            }
-
-            trace("Start transfering data...");
-
-            while (r.next()) {
-                transferRow(type, r, p);
-
-                if (iMaxRows != 0 && i == iMaxRows) {
-                    break;
-                }
-
-                i++;
-
-                if (iMaxRows != 0 || i % 100 == 0) {
-                    trace("Transfered " + i + " rows");
-                }
-            }
-
-            trace("Finished");
-        }
-    }
-
-    String sLast;
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param type
-     * @param r
-     * @param p
-     *
-     * @throws SQLException
-     */
-    void transferRow(int type[], ResultSet r,
-                     PreparedStatement p) throws SQLException {
-
-        sLast = null;
-
-        p.clearParameters();
-
-        int len = type.length;
-
-        for (int i = 0; i < len; i++) {
-            int t = type[i];
-
-            sLast = "column=" + (i + 1) + " datatype=" + t;
-
-            Object o = r.getObject(i + 1);
-
-            if (o == null) {
-                sLast += " value=" + o;
-
-                p.setNull(i + 1, type[i]);
-            } else {
-
-                // solves a problem for MS SQL 7
-                if (t == Types.SMALLINT && o instanceof Integer) {
-                    sLast += " SMALLINT: Converted Integer to Short";
-                    o     = new Short((short) ((Integer) o).intValue());
-                } else if (t == Types.TINYINT && o instanceof Integer) {
-                    sLast += " TINYINT: Converted Integer to Byte";
-                    o     = new Byte((byte) ((Integer) o).intValue());
-                }
-
-                sLast += " value=" + o;
-
-                p.setObject(i + 1, o, type[i]);
-            }
-        }
-
-        p.execute();
-
-        sLast = null;
     }
 }

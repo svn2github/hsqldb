@@ -69,19 +69,23 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
+// fredt@users 20020225 - patch 1.7.0 - cascading deletes
+// a number of changes to support this feature
+
 /**
  * Index class declaration
  *
  *
- * @version 1.0.0.1
+ * @version 1.7.0
  */
 class Index {
 
-    private String     sName;
+    private HsqlName   indexName;
     private int        iFields;
     private int        iColumn[];
     private int        iType[];
-    private boolean    bUnique;               // just for scripting; all indexes are made unique
+    private boolean    bUnique;               // DDL uniqueness
+    private int        visibleColumns;
     private Node       root;
     private int        iColumn_0, iType_0;    // just for tuning
     private static int iNeedCleanUp;
@@ -95,15 +99,17 @@ class Index {
      * @param type
      * @param unique
      */
-    Index(String name, int column[], int type[], boolean unique) {
+    Index(HsqlName name, int column[], int type[], boolean unique,
+            int visibleColumns) {
 
-        sName     = name;
-        iFields   = column.length;
-        iColumn   = column;
-        iType     = type;
-        bUnique   = unique;
-        iColumn_0 = iColumn[0];
-        iType_0   = iType[0];
+        indexName           = name;
+        iFields             = column.length;
+        iColumn             = column;
+        iType               = type;
+        bUnique             = unique;
+        iColumn_0           = iColumn[0];
+        iType_0             = iType[0];
+        this.visibleColumns = visibleColumns;
     }
 
     /**
@@ -132,8 +138,28 @@ class Index {
      *
      * @return
      */
-    String getName() {
-        return sName;
+    HsqlName getName() {
+        return indexName;
+    }
+
+    /**
+     * Changes index name. Used by 'alter index rename to'
+     *
+     * @param name
+     * @param isquoted
+     */
+    void setName(String name, boolean isquoted) {
+        indexName.rename(name, isquoted);
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @return
+     */
+    int getVisibleColumns() {
+        return visibleColumns;
     }
 
     /**
@@ -154,6 +180,32 @@ class Index {
      */
     int[] getColumns() {
         return iColumn;    // todo: this gives back also primary key field!
+    }
+
+    /**
+     * Method declaration
+     *
+     *
+     * @param c
+     *
+     * @return
+     */
+
+// fredt@users 20020225 - patch 1.7.0 - compare two indexes
+    boolean isEquivalent(Index index) {
+
+        if (bUnique == index.bUnique
+                && iColumn.length == index.iColumn.length) {
+            for (int j = 0; j < iColumn.length; j++) {
+                if (iColumn[j] != index.iColumn[j]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -189,14 +241,72 @@ class Index {
                 break;
             }
 
-            x       = n;
-            compare = compareRow(data, x.getData());
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+            Object nData[] = n.getData();
+
+            if (data == nData) {
+                set(x, way, i);
+
+                break;
+            }
+
+            compare = compareRow(data, nData);
 
             Trace.check(compare != 0, Trace.VIOLATION_OF_UNIQUE_INDEX);
 
             way = compare < 0;
+            x   = n;
             n   = child(x, way);
         }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        balance(x, way);
+    }
+
+    Node insertUncached(Node i) throws SQLException {
+
+        Object  data[]  = i.getData();
+        Node    n       = root,
+                x       = n;
+        boolean way     = true;
+        int     compare = -1;
+
+        while (true) {
+            if (Trace.STOP) {
+                Trace.stop();
+            }
+
+            if (n == null) {
+                if (x == null) {
+                    root = i;
+
+                    return (i);
+                }
+
+                set(x, way, i);
+
+                break;
+            }
+
+            x       = n;
+            compare = compareRow(data, x.getData());
+
+            if (compare == 0) {
+                return (n);
+            }
+
+            way = (compare < 0);
+            n   = (way) ? x.nLeft
+                        : x.nRight;
+        }
+
+        balance(x, way);
+
+        return (i);
+    }
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+    private void balance(Node x, boolean way) throws SQLException {
 
         while (true) {
             if (Trace.STOP) {
@@ -361,11 +471,13 @@ class Index {
 
         n = x.getParent();
 
-        x.delete();
-
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        //x.delete();
         if (datatoo) {
-            x.rData.delete();
+            x.getRow().delete();
         }
+
+        x.delete();
 
         while (n != null) {
             if (Trace.STOP) {
@@ -435,6 +547,61 @@ class Index {
     }
 
     /**
+     * for finding foreign key referencing rows (in child table)
+     *
+     *
+     * @param data
+     *
+     * @return
+     *
+     * @throws SQLException
+     */
+    Node findSimple(Object indexcoldata[],
+                    boolean first) throws SQLException {
+
+        Node x      = root, n;
+        Node result = null;
+
+        if (indexcoldata[0] == null) {
+            return null;
+        }
+
+        while (x != null) {
+            if (Trace.STOP) {
+                Trace.stop();
+            }
+
+            int i = this.comparePartialRowNonUnique(indexcoldata,
+                x.getData());
+
+            if (i == 0) {
+                if (first == false) {
+                    result = x;
+
+                    break;
+                } else if (result == x) {
+                    break;
+                }
+
+                result = x;
+                n      = x.getLeft();
+            } else if (i > 0) {
+                n = x.getRight();
+            } else {
+                n = x.getLeft();
+            }
+
+            if (n == null) {
+                break;
+            }
+
+            x = n;
+        }
+
+        return result;
+    }
+
+    /**
      * Method declaration
      *
      *
@@ -486,10 +653,10 @@ class Index {
      */
     Node findFirst(Object value, int compare) throws SQLException {
 
-        Trace.assert(compare == Expression.BIGGER
-                     || compare == Expression.EQUAL
-                     || compare
-                        == Expression.BIGGER_EQUAL, "Index.findFirst");
+        Trace.doAssert(compare == Expression.BIGGER
+                       || compare == Expression.EQUAL
+                       || compare
+                          == Expression.BIGGER_EQUAL, "Index.findFirst");
 
         Node x     = root;
         int  iTest = 1;
@@ -577,7 +744,10 @@ class Index {
         // return null;
         // }
         if ((++iNeedCleanUp & 127) == 0) {
-            x.rData.cleanUpCache();
+
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+            //x.rData.cleanUpCache();
+            x.getRow().getTable().cleanUp();
         }
 
         Node r = x.getRight();
@@ -692,11 +862,18 @@ class Index {
             return true;
         }
 
-        if (Trace.ASSERT) {
-            Trace.assert(x.getParent() != null);
+        if (Trace.DOASSERT) {
+            Trace.doAssert(x.getParent() != null);
         }
 
-        return x.equals(x.getParent().getLeft());
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        Node parent = x.getParent();
+
+        if (parent.iLeft != Node.NO_POS) {
+            return (x.getKey() == parent.iLeft);
+        } else {
+            return x.equals(parent.getLeft());
+        }
     }
 
     /**
@@ -732,14 +909,60 @@ class Index {
         return null;
     }
 
+    /**
+     * This method is used for finding foreign key references.
+     *
+     * If finds a row by comparing the values set in a[] and mapping to b[].
+     * a[] contains only the column values which correspond to the columns
+     * of the index. It does not necessarily cover
+     * all the columns of the index, only the first a.length columns.
+     *
+     * b[] contains all the visible columns in a row of the table.
+     *
+     *
+     * @param a a set of column values
+     * @param b a full row
+     *
+     * @return
+     *
+     * @throws SQLException
+     */
+    int comparePartialRowNonUnique(Object a[],
+                                   Object b[]) throws SQLException {
+
+        int i = Column.compare(a[0], b[iColumn_0], iType_0);
+
+        if (i != 0) {
+            return i;
+        }
+
+        int fieldcount = visibleColumns;
+
+        for (int j = 1; j < a.length && j < fieldcount; j++) {
+            Object o = a[j];
+
+            if (o == null) {
+                continue;
+            }
+
+            i = Column.compare(o, b[iColumn[j]], iType[j]);
+
+            if (i != 0) {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
     // todo: this is a hack
 
     /**
-     * Method declaration
+     * compares two full table rows based on the columns of the index
      *
      *
-     * @param a
-     * @param b
+     * @param a a full row
+     * @param b a full row
      *
      * @return
      *
@@ -754,8 +977,9 @@ class Index {
             return i;
         }
 
-        for (int j = 1; j < iFields - (bUnique ? 0
-                                               : 1); j++) {
+        int fieldcount = visibleColumns;
+
+        for (int j = 1; j < fieldcount; j++) {
             i = Column.compare(a[iColumn[j]], b[iColumn[j]], iType[j]);
 
             if (i != 0) {
