@@ -1,4 +1,4 @@
-# $Id$
+# $Id: hsqldb.cfg.sample,v 1.1 2004/02/19 23:25:27 unsaved Exp $
 
 # Sample configuration file for hsqldb database server.
 
@@ -24,6 +24,8 @@ SHUTDOWN_URLIDS='sa mygms'
 
 # What UNIX user the server will run as.
 # (The shutdown client is always run as root or the invoker of the init script).
+# Runs as root by default, but you should take the time to set database file
+# ownerships to another user and set that user name here.
 HSQLDB_OWNER=blaine
 
 # SqlTool authentication file used only for shutdown.
