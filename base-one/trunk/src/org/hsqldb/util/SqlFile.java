@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.64 2004/06/05 16:29:05 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.65 2004/06/05 16:33:34 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.64 $
+ * @version $Revision: 1.65 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.64 $".substring("$Revision: ".length(),
-                "$Revision: 1.64 $".length() - 2);
+        revnum = "$Revision: 1.65 $".substring("$Revision: ".length(),
+                "$Revision: 1.65 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -539,8 +539,8 @@ public class SqlFile {
                     if (to.equals(delim)) {
                         to = "";
                     } else {
-                        if (toker.countTokens() < 1
-                                ||!toker.nextToken().equals(delim)) {
+                        if (toker.countTokens() > 0
+                                && !toker.nextToken().equals(delim)) {
                             throw new BadSwitch(3);
                         }
                     }
