@@ -443,6 +443,26 @@ public class Table extends BaseTable {
     }
 
     /**
+     *  Get any unique Constraint using this index
+     *
+     * @param  index
+     * @return
+     */
+    Constraint getConstraintForIndex(Index index) {
+
+        for (int i = 0, size = constraintList.size(); i < size; i++) {
+            Constraint c = (Constraint) constraintList.get(i);
+
+            if (c.getMainIndex() == index
+                    && c.getType() == Constraint.UNIQUE) {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      *  Returns the next constraint of a given type
      *
      * @param  from
@@ -2993,6 +3013,8 @@ public class Table extends BaseTable {
                 getIndex(i).insert(n);
             }
         } catch (HsqlException e) {
+            Index   index        = getIndex(i);
+            boolean isconstraint = index.isConstraint;
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
@@ -3005,7 +3027,15 @@ public class Table extends BaseTable {
 
             r.delete();
 
-            throw e;    // and throw error again
+            if (isconstraint) {
+                Constraint c    = getConstraintForIndex(index);
+                String     name = c == null ? ""
+                                            : c.getName().name;
+
+                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT, name);
+            }
+
+            throw e;
         }
     }
 

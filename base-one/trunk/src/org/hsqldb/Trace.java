@@ -205,7 +205,7 @@ public class Trace {
                             Database_dropTable                        = 101,
                             ERROR_IN_CONSTRAINT_COLUMN_LIST           = 102,
                             TABLE_HAS_NO_PRIMARY_KEY                  = 103,
-                            unused104                                 = 104,
+                            VIOLATION_OF_UNIQUE_CONSTRAINT            = 104,
                             NO_DEFAULT_VALUE_FOR_COLUMN               = 105,
                             unused106                                 = 106,
                             DatabaseManager_getDatabase               = 107,
@@ -437,7 +437,7 @@ public class Trace {
         " $$ table: $$",                                                // 101 Database_dropTable
         "duplicate column in list",                                     // DatabaseCommandInterpreter_processColumnList
         "table has no primary key",                                     // DatabaseCommandInterpreter_processCreateConstraints
-        "",                                                             //
+        "23000 Unique constraint violation",                            //
         "missing DEFAULT value on column '$$'",                         // DatabaseCommandInterpreter_checkFKColumnDefaults
         "only ON UPDATE NO ACTION and ON DELETE CASCADE possible",      // DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint
         "attempt to connect while db opening /closing",                 // DatabaseManager_getDatabase
