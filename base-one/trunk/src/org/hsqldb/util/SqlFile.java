@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.66 2004/06/05 16:41:50 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.67 2004/06/06 01:36:55 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.66 $
+ * @version $Revision: 1.67 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.66 $".substring("$Revision: ".length(),
-                "$Revision: 1.66 $".length() - 2);
+        revnum = "$Revision: 1.67 $".substring("$Revision: ".length(),
+                "$Revision: 1.67 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -152,6 +152,7 @@ public class SqlFile {
         + "    \\i file/path.sql     Include/execute commands from external file\n"
         + "    \\dt                  List tables\n"
         + "    \\d TABLENAME         Describe table\n"
+        + "    \\o [file/path.html]  Tee (or stop teeing) query output to specd. file\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
@@ -236,6 +237,7 @@ public class SqlFile {
     private int         curHist      = -1;
     private PrintStream psStd        = null;
     private PrintStream psErr        = null;
+    private PrintWriter pwQuery      = null;
     StringBuffer        stringBuffer = new StringBuffer();
     /*
      * This is reset upon each execute() invocation (to true if interactive,
@@ -448,6 +450,7 @@ public class SqlFile {
             }
             gracefulExit = true;
         } finally {
+            closeQueryOutputStream();
             if (br != null) {
                 br.close();
             }
@@ -620,7 +623,7 @@ public class SqlFile {
                 throw new QuitNow();
             case 'H':
                 htmlMode = !htmlMode;
-                stdprintln(htmlMode ? "<HTML>" : "</HTML>");
+                stdprintln("HTML Mode is now set to: " + htmlMode);
                 return;
             case 'd':
                 if (arg1.length() > 1 && arg1.charAt(1) == 't') {
@@ -632,6 +635,37 @@ public class SqlFile {
                     return;
                 }
                 break;
+            case 'o':
+                if (other == null) {
+                    if (pwQuery == null) {
+                        throw new BadSpecial(
+                                "There is no query output file to close");
+                    }
+                    closeQueryOutputStream();
+                    return;
+                }
+                if (pwQuery != null) {
+                    stdprintln("Closing current query output file and opening "
+                            + "new one");
+                    closeQueryOutputStream();
+                }
+                try {
+                    pwQuery = new PrintWriter(
+                            new OutputStreamWriter(
+                                    new FileOutputStream(other, true)));
+                    /* Opening in append mode, so it's possible that we will
+                     * be adding superfluous <HTML> and <BODY> tages.
+                     * I think that browsers can handle that */
+                    pwQuery.println((htmlMode ? "<HTML>\n<!--" : "#")
+                            + " " + (new java.util.Date())
+                            + ".  Query output from " + getClass().getName()
+                            + (htmlMode ? ". -->\n\n<BODY>" : ".\n"));
+                    pwQuery.flush();
+                } catch (Exception e) {
+                    throw new BadSpecial("Failed to write to file '"
+                            + other + "':  " + e);
+                }
+                return;
             case 'w':
                 if (other == null) {
                     throw new BadSpecial(
@@ -667,9 +701,9 @@ public class SqlFile {
                 return;
             case 'p':
                 if (other == null) {
-                    stdprintln();
+                    stdprintln(true);
                 } else {
-                    stdprintln(other);
+                    stdprintln(other, true);
                 }
                 return;
             case 'a':
@@ -1000,15 +1034,30 @@ public class SqlFile {
     }
 
     /**
+     * Wrapper methods so don't need to call x(..., false) in most cases.
+     */
+    private void stdprintln() { stdprintln(false); }
+    private void stdprint(String s) { stdprint(s, false); }
+    private void stdprintln(String s) { stdprintln(s, false); }
+
+    /**
      * Encapsulates normal output.
      *
      * Conditionally HTML-ifies output.
      */
-    private void stdprintln() {
+    private void stdprintln(boolean queryOutput) {
         if (htmlMode) {
             psStd.println("<BR>");
         } else {
             psStd.println();
+        }
+        if (queryOutput && pwQuery != null) {
+            if (htmlMode) {
+                pwQuery.println("<BR>");
+            } else {
+                pwQuery.println();
+            }
+            pwQuery.flush();
         }
     }
 
@@ -1041,8 +1090,12 @@ public class SqlFile {
      *
      * Conditionally HTML-ifies output.
      */
-    private void stdprint(String s) {
+    private void stdprint(String s, boolean queryOutput) {
         psStd.print(htmlMode ? ("<P>" + s + "</P>") : s);
+        if (queryOutput && pwQuery != null) {
+            pwQuery.print(htmlMode ? ("<P>" + s + "</P>") : s);
+            pwQuery.flush();
+        }
     }
 
     /**
@@ -1050,8 +1103,12 @@ public class SqlFile {
      *
      * Conditionally HTML-ifies output.
      */
-    private void stdprintln(String s) {
+    private void stdprintln(String s, boolean queryOutput) {
         psStd.println(htmlMode ? ("<P>" + s + "</P>") : s);
+        if (queryOutput && pwQuery != null) {
+            pwQuery.println(htmlMode ? ("<P>" + s + "</P>") : s);
+            pwQuery.flush();
+        }
     }
 
     static private final int DEFAULT_ELEMENT = 0,
@@ -1154,8 +1211,7 @@ public class SqlFile {
         switch (updateCount) {
             case -1 :
                 if (r == null) {
-                    stdprintln("No result");
-
+                    stdprintln("No result", true);
                     break;
                 }
                 ResultSetMetaData m        = r.getMetaData();
@@ -1260,51 +1316,44 @@ public class SqlFile {
                     rows.add(fieldArray);
                 }
                 // STEP 2: DISPLAY DATA
-                if (htmlMode) {
-                    psStd.println("<TABLE border='1'>");
-                }
+                condlPrintln("<TABLE border='1'>", true);
                 if (headerArray != null) {
-                    if (htmlMode) {
-                        psStd.print(htmlRow(COL_HEAD) + '\n' + PRE_TD);
-                    }
+                    condlPrint(htmlRow(COL_HEAD) + '\n' + PRE_TD, true);
                     for (int i = 0; i < headerArray.length; i++) {
-                        psStd.print(htmlMode
-                                    ? ("<TD>" + headerArray[i] + "</TD>")
-                                    : (((i > 0) ? spaces(2) : "")
-                                            + pad(headerArray[i], maxWidth[i],
-                                            rightJust[i])));
+                        condlPrint("<TD>" + headerArray[i] + "</TD>", true);
+                        condlPrint(((i > 0) ? spaces(2) : "")
+                                + pad(headerArray[i], maxWidth[i],
+                                rightJust[i]), false);
                     }
-                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+                    condlPrintln("\n" + PRE_TR + "</TR>", true);
+                    condlPrintln("", false);
                     if (!htmlMode) {
                         for (int i = 0; i < headerArray.length; i++) {
-                            psStd.print(((i > 0) ? spaces(2)
-                                                 : "") + divider( maxWidth[i]));
+                            condlPrint(((i > 0) ? spaces(2)
+                                   : "") + divider( maxWidth[i]), false);
                         }
-                        psStd.println();
+                        condlPrintln("", false);
                     }
                 }
                 for (int i = 0; i < rows.size(); i++) {
-                    if (htmlMode) {
-                        psStd.print(htmlRow(((i % 2) == 0)
-                                ? COL_EVEN
-                                : COL_ODD) + '\n' + PRE_TD);
-                    }
+                    condlPrint(htmlRow(((i % 2) == 0)
+                            ? COL_EVEN
+                            : COL_ODD) + '\n' + PRE_TD, true);
                     fieldArray = (String[]) rows.get(i);
                     for (int j = 0; j < fieldArray.length; j++) {
-                        psStd.print(htmlMode
-                                    ? ("<TD>" + fieldArray[j] + "</TD>")
-                                    : (((j > 0) ? spaces(2) : "")
+                        condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
+                        condlPrint(((j > 0) ? spaces(2) : "")
                                             + pad(fieldArray[j], maxWidth[j],
-                                            rightJust[j])));
+                                            rightJust[j]), false);
                     }
-                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+                    condlPrintln("\n" + PRE_TR + "</TR>", true);
+                    condlPrintln("", false);
                 }
-                if (htmlMode) {
-                    psStd.println("</TABLE>");
-                }
+                condlPrintln("</TABLE>", true);
                 if (rows.size() != 1) {
-                    stdprintln("\n" + rows.size() + " rows");
+                    stdprintln("\n" + rows.size() + " rows", true);
                 }
+                condlPrintln("<HR>", true);
                 break;
             default :
                 if (updateCount != 0) {
@@ -1497,43 +1546,36 @@ public class SqlFile {
             }
         }
         // STEP 2: DISPLAY DATA
-        if (htmlMode) {
-            psStd.println("<TABLE border='1'>");
-        }
-        if (htmlMode) {
-            psStd.print(htmlRow(COL_HEAD) + '\n' + PRE_TD);
-        }
+        condlPrint("<TABLE border='1'>\n" + htmlRow(COL_HEAD) + '\n' + PRE_TD,
+                true);
         for (int i = 0; i < headerArray.length; i++) {
-            psStd.print(htmlMode ? ("<TD>" + headerArray[i] + "</TD>")
-                    : (((i > 0) ? spaces(2) : "")
-                            + pad(headerArray[i], maxWidth[i], rightJust[i])));
+            condlPrint("<TD>" + headerArray[i] + "</TD>", true);
+            condlPrint(((i > 0) ? spaces(2) : "")
+                    + pad(headerArray[i], maxWidth[i], rightJust[i]), false);
         }
-        psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+        condlPrintln("\n" + PRE_TR + "</TR>", true);
+        condlPrintln("", false);
         if (!htmlMode) {
             for (int i = 0; i < headerArray.length; i++) {
-                psStd.print(((i > 0) ? spaces(2)
-                                     : "") + divider(maxWidth[i]));
+                condlPrint(((i > 0) ? spaces(2)
+                                     : "") + divider(maxWidth[i]), false);
             }
-            psStd.println();
+            condlPrintln("", false);
         }
         for (int i = 0; i < rows.size(); i++) {
-            if (htmlMode) {
-                psStd.print(htmlRow(((i % 2) == 0) ? COL_EVEN
-                                                   : COL_ODD) + '\n'
-                                                   + PRE_TD);
-            }
+            condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
+                                               : COL_ODD) + '\n'
+                                               + PRE_TD, true);
             fieldArray = (String[]) rows.get(i);
             for (int j = 0; j < fieldArray.length; j++) {
-                psStd.print(htmlMode
-                    ? ("<TD>" + fieldArray[j] + "</TD>")
-                    : (((j > 0) ? spaces(2) : "")
-                            + pad(fieldArray[j], maxWidth[j], rightJust[j])));
+                condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
+                condlPrint(((j > 0) ? spaces(2) : "")
+                        + pad(fieldArray[j], maxWidth[j], rightJust[j]), false);
             }
-            psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
+            condlPrintln("\n" + PRE_TR + "</TR>", true);
+            condlPrintln("", false);
         }
-        if (htmlMode) {
-            stdprintln("\n</TABLE>");
-        }
+        condlPrintln("\n</TABLE>\n<HR>", true);
     }
 
     static public String[] getTokenArray(String inString) {
@@ -1593,5 +1635,47 @@ public class SqlFile {
             }
         }
         throw new BadSpecial("Unrecognized logical operation");
+    }
+
+    private void closeQueryOutputStream() {
+        if (pwQuery == null) {
+            return;
+        }
+        if (htmlMode) {
+            pwQuery.println("</BODY></HTML>");
+            pwQuery.flush();
+        }
+        pwQuery.close();
+        pwQuery = null;
+    }
+
+    /**
+     * Print to psStd and possibly pwQuery iff current HTML mode matches
+     * supplied printHtml.
+     */
+    private void condlPrintln(String s, boolean printHtml) {
+        if ((printHtml && !htmlMode) || (htmlMode && !printHtml)) {
+            return;
+        }
+        psStd.println(s);
+        if (pwQuery != null) {
+            pwQuery.println(s);
+            pwQuery.flush();
+        }
+    }
+
+    /**
+     * Print to psStd and possibly pwQuery iff current HTML mode matches
+     * supplied printHtml.
+     */
+    private void condlPrint(String s, boolean printHtml) {
+        if ((printHtml && !htmlMode) || (htmlMode && !printHtml)) {
+            return;
+        }
+        psStd.print(s);
+        if (pwQuery != null) {
+            pwQuery.print(s);
+            pwQuery.flush();
+        }
     }
 }
