@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.4 2004/04/13 03:55:59 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.5 2004/04/14 22:36:00 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.4 $">
-    <!ENTITY date "$Date: 2004/04/13 03:55:59 $">
+    <!ENTITY revision "$Revision: 1.5 $">
+    <!ENTITY date "$Date: 2004/04/14 22:36:00 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -15,8 +15,9 @@
              url='mailto:ft@cludedup.com?subject=&docbasename;'>ft@cludedup.com</ulink>">
 
     <!-- Component chapters and appendices -->
-    <!ENTITY sqltool-appendix.xml SYSTEM "sqltool.xml">
+    <!ENTITY running-chapter.xml SYSTEM "running.xml">
     <!ENTITY texttables-chapter.xml SYSTEM "texttables.xml">
+    <!ENTITY sqltool-appendix.xml SYSTEM "sqltool.xml">
 ]>
     
 <book>
@@ -67,7 +68,7 @@
         </para>
         &alts;
     </preface>
-    <chapter><title>Place-holder for Guide</title></chapter>
+    &running-chapter.xml;
     <chapter><title>Place-holder for Beginner's Guide</title></chapter>
     <chapter><title>Place-holder for SQL Guide</title></chapter>
     <chapter><title>Place-holder for Advanced Guide</title></chapter>
