@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
+// fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 
 /**
  * This class iterates over table elements to perform a join between two
@@ -117,7 +118,7 @@ class TableFilter {
         sAlias      = (alias != null) ? alias
                                       : t.getName().name;
         isOuterJoin = outerjoin;
-        oCurrentData = oEmptyData  = tTable.getNewRow();
+        oEmptyData  = tTable.getNewRow();
     }
 
     /**
@@ -292,7 +293,10 @@ class TableFilter {
             return;
         }
 
-        if (e1.getFilter() == this) {    // ok include this
+// fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
+        if (e1.getFilter() == this && e1.getFilter() == e2.getFilter()) {
+            conditionType = CONDITION_UNORDERED;
+        } else if (e1.getFilter() == this) {    // ok include this
         } else if ((e2.getFilter() == this)
                    && (conditionType != CONDITION_UNORDERED)) {
 

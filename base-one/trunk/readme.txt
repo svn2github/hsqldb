@@ -84,9 +84,9 @@ FILES IN JAR
 
 This option allows database files to be distributed
 in the application jar. We have changed the original contribution so
-that a special URL is used this mode is in the form of:
+that a special URL is used for this mode in the form of:
 
-jdbc:hsqldb:hsql:res:<path in jar>
+jdbc:hsqldb:res:<path in jar>
 
 The URL type 'res' determines that the path that follows is a path
 into the JAR.
