@@ -1,3 +1,5 @@
+<!-- $Id$ -->
+
 <chapter>
     <title>SqlTool</title>
     <subtitle>SqlTool Manual and HOWTO</subtitle>
@@ -9,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/13 04:01:25 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/13 17:46:11 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
