@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.15 2004/06/06 02:42:19 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.16 2004/06/06 04:30:37 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.15 $</edition>
-        <pubdate>$Date: 2004/06/06 02:42:19 $</pubdate>
+        <edition>$Revision: 1.16 $</edition>
+        <pubdate>$Date: 2004/06/06 04:30:37 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -749,8 +749,11 @@
                     Statement).
                     I usually refer to this use of PL variables as
                     <emphasis>aliases</emphasis>.
+                    If the value of a variable is an entire SQL command, you
+                    generally do not want to include the terminating ";" in
+                    the value.
                     There is an example of this in the
-                    <link linkend='auth-section' endterm='auth-title'/> section
+                    <link linkend='int-section' endterm='int-title'/> section
                     above.
                 </simpara></listitem> <listitem><simpara>
                     Variables are normally written like 
