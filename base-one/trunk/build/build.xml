@@ -25,11 +25,12 @@
            description="List description of jars that you can build">
      <echo>
 hsqldb.jar     : default distribution jar
-hsqljdbc.jar   : JDBC client only (no memory-only nor in-mem mode)
+hsqljdbc.jar   : JDBC client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
 hsqldbmain.jar : no utility programs
 hsqldbmin.jar  : no utility or server programs
 hsqldbtest.jar : all including test classes
 hsqldbz.jar    : min jar plus necessary util classes for Zaurus
+hsqlsqltool.jar: SqlTool client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
 
 jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.
 
@@ -456,8 +457,8 @@ examples:
         </jar>
     </target>
     <target name="jarsqltool" depends="classes14"
-            description="Build the sqltool.jar">
-        <jar jarfile="lib/sqltool.jar">
+            description="Build the hsqlsqltool.jar">
+        <jar jarfile="lib/hsqlsqltool.jar">
             <manifest>
                 <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
             </manifest>
