@@ -32,8 +32,8 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.Iterator;
 
 /**
  * This class is used for grouping select results, especially for select
@@ -66,20 +66,22 @@ import org.hsqldb.lib.HashSet;
 // fredt@users - patch 1.7.2 - minor mods to use new HashSet class
 class GroupedResult {
 
-    private Select        select;
-    HsqlArrayList         results = new HsqlArrayList();
+/** @todo fredt - initialise results on first use */
+    private Result        result;
     int                   groupBegin;
     int                   groupEnd;
     private final boolean isGrouped;
+    private final boolean isAggregated;
     private HashSet       groups;
     private ResultGroup   currGroup;
 
-    GroupedResult(Select select) {
+    GroupedResult(Select select, Result result) {
 
-        this.select = select;
-        groupBegin  = select.iResultLen;
-        groupEnd    = groupBegin + select.iGroupLen;
-        isGrouped   = groupBegin != groupEnd;
+        this.result  = result;
+        groupBegin   = select.iResultLen;
+        groupEnd     = groupBegin + select.iGroupLen;
+        isGrouped    = groupBegin != groupEnd;
+        isAggregated = select.isAggregated;
 
         if (isGrouped) {
             groups = new HashSet();
@@ -97,19 +99,27 @@ class GroupedResult {
                 currGroup = newGroup;
 
                 groups.add(currGroup);
-                results.add(row);
+                result.add(row);
             }
         } else if (currGroup == null) {
             currGroup = new ResultGroup(row);
 
-            results.add(row);
-        } else if (!select.isAggregated) {
-            results.add(row);
+            result.add(row);
+        } else if (!isAggregated) {
+            result.add(row);
 
             currGroup.row = row;
         }
 
         return currGroup.row;
+    }
+
+    int size() {
+        return result.getSize();
+    }
+
+    Iterator iterator() {
+        return result.iterator();
     }
 
     class ResultGroup {

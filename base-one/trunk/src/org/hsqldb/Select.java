@@ -107,7 +107,8 @@ class Select {
     int              intoType = Table.MEMORY_TABLE;
     boolean          isIntoTableQuoted;
     int              iUnionType;
-    static final int UNION      = 1,
+    static final int NOUNION    = 0,
+                     UNION      = 1,
                      UNIONALL   = 2,
                      INTERSECT  = 3,
                      EXCEPT     = 4;
@@ -171,7 +172,6 @@ class Select {
     /**
      * Method declaration
      *
-     *
      * @throws HsqlException
      */
     void checkResolved() throws HsqlException {
@@ -189,12 +189,8 @@ class Select {
 
     /**
      * Method declaration
-     *
-     *
      * @param type
-     *
      * @return
-     *
      * @throws HsqlException
      */
     Object getValue(int type) throws HsqlException {
@@ -217,55 +213,19 @@ class Select {
     }
 
     /**
-     * maxrow may be 0 to indicate no limit on the number of rows, or -1
-     * to indicate 0 size result (used for pre-processing the selects in
-     * view statements. positive values limit the size of the result set.
-     *
-     *
-     * @param maxrows
-     *
-     * @return
-     *
-     * @throws HsqlException
+     * Returns an empty result set to contain the rows returned from select
      */
+    private Result getEmptyResult() throws HsqlException {
 
-// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
-// for SELECT LIMIT n m DISTINCT
-// fredt@users 20020804 - patch 580347 by dkkopp - view speedup
-    Result getResult(int maxrows) throws HsqlException {
-
-        if (!isResolved) {
-            resolve();
-            checkResolved();
-
-            isResolved = true;
-        }
-
-// -------------------------------Start Prefix ---------------------------------
-// TODO: Clean up the whole approach to setting up Select state variables,
-// (re)resoving expression trees, (re) parameterizing expression trees
-        if (sUnion != null && sUnion.iResultLen != iResultLen) {
-            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-        }
-
-        int    len          = eColumn.length;
-        Result r            = new Result(ResultConstants.DATA, len);
-        int    groupByStart = iResultLen;
-        int    groupByEnd   = groupByStart + iGroupLen;
+        int    len = eColumn.length;
+        Result r   = new Result(ResultConstants.DATA, len);
 
         // tony_lai@users having
+        int groupByStart = iResultLen;
+        int groupByEnd   = groupByStart + iGroupLen;
         int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
                                              : groupByEnd;
         int orderByEnd   = orderByStart + iOrderLen;
-
-        if (iGroupLen > 0) {    // has been set in Parser
-            isGrouped        = true;
-            groupColumnNames = new HashSet();
-
-            for (int i = groupByStart; i < groupByEnd; i++) {
-                eColumn[i].collectColumnName(groupColumnNames);
-            }
-        }
 
         for (int i = 0; i < len; i++) {
             Expression e = eColumn[i];
@@ -306,12 +266,20 @@ class Select {
             }
         }
 
+        return r;
+    }
+
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
-// for SELECT LIMIT n m DISTINCT
-// find cases where the result does not have to be fully built and
-// set issimplemaxrows and adjust maxrows with LIMIT params
-// chnages made to apply LIMIT only to the containing SELECT
-// so they can be used as part of UNION and other set operations
+
+/**
+ * For SELECT LIMIT n m ....
+ * find cases where the result does not have to be fully built and
+ * set issimplemaxrows and adjust maxrows with LIMIT params.
+ * Chnages made to apply LIMIT only to the containing SELECT
+ * so they can be used as part of UNION and other set operations
+ */
+    private int getLimitCount(int maxrows) {
+
         if (maxrows == 0) {
             maxrows = limitCount;
         } else if (limitCount == 0) {
@@ -328,20 +296,55 @@ class Select {
             issimplemaxrows = true;
         }
 
-        int limitcount = issimplemaxrows ? limitStart + maxrows
-                                         : Integer.MAX_VALUE;
+        return issimplemaxrows ? limitStart + maxrows
+                               : Integer.MAX_VALUE;
+    }
 
-//------------------------------- End Prefix -----------------------------------
-        buildResult(r, limitcount);
+// TODO: Clean up the whole approach to setting up Select state variables,
+// (re)resoving expression trees, (re) parameterizing expression trees
 
-        // the result is maybe bigger (due to group and order by)
+    /**
+     * maxrow may be 0 to indicate no limit on the number of rows, or -1
+     * to indicate 0 size result (used for pre-processing the selects in
+     * view statements. positive values limit the size of the result set.
+     *
+     * @param maxrows
+     * @return
+     * @throws HsqlException
+     */
+// fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
+// for SELECT LIMIT n m DISTINCT
+// fredt@users 20020804 - patch 580347 by dkkopp - view speedup
+    Result getResult(int maxrows) throws HsqlException {
+
+        if (!isResolved) {
+            resolve();
+            checkResolved();
+
+            isResolved = true;
+        }
+
+        if (sUnion != null && sUnion.iResultLen != iResultLen) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        }
+
+        if (iGroupLen > 0) {    // has been set in Parser
+            isGrouped        = true;
+            groupColumnNames = new HashSet();
+
+            for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
+                eColumn[i].collectColumnName(groupColumnNames);
+            }
+        }
+
+        Result r = getEmptyResult();
+
+        buildResult(r, getLimitCount(maxrows));
+
+        // the result is perhaps wider (due to group and order by)
         // but don't tell this anybody else
         if (isDistinctSelect) {
-            int fullColumnCount = r.getColumnCount();
-
-            r.setColumnCount(iResultLen);
-            r.removeDuplicates();
-            r.setColumnCount(fullColumnCount);
+            r.removeDuplicates(iResultLen);
         }
 
         if (iOrderLen != 0) {
@@ -495,7 +498,7 @@ class Select {
 
     private void buildResult(Result r, int limitcount) throws HsqlException {
 
-        GroupedResult gResult = new GroupedResult(this);
+        GroupedResult gResult = new GroupedResult(this, r);
         int           len     = eColumn.length;
         int           filter  = tFilter.length;
         boolean       first[] = new boolean[filter];
@@ -549,17 +552,17 @@ class Select {
                              : eColumn[i].getValue();
                 }
 
-                if (gResult.results.size() >= limitcount) {
+                if (gResult.size() >= limitcount) {
                     break;
                 }
             }
         }
 
-        if (isAggregated &&!isGrouped && gResult.results.size() == 0) {
+        if (isAggregated &&!isGrouped && gResult.size() == 0) {
             gResult.addRow(new Object[len]);
         }
 
-        Iterator it = gResult.results.iterator();
+        Iterator it = gResult.iterator();
 
         while (it.hasNext()) {
             Object[] row = (Object[]) it.next();
@@ -575,14 +578,12 @@ class Select {
             if (iHavingIndex >= 0) {
 
                 // The test value, either aggregate or not, is set already.
-                // Does not add the row that does not satisfy the HAVING
+                // Removes the row that does not satisfy the HAVING
                 // condition.
                 if (!((Boolean) row[iHavingIndex]).booleanValue()) {
-                    continue;
+                    it.remove();
                 }
             }
-
-            r.add(row);
         }
     }
 

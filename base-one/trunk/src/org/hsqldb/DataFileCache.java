@@ -317,6 +317,7 @@ public class DataFileCache extends Cache {
     protected CachedRow makeRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = null;
+
         makeRowCount++;
 
         try {

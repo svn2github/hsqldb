@@ -68,6 +68,8 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import org.hsqldb.lib.Iterator;
+import java.util.NoSuchElementException;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
@@ -437,24 +439,34 @@ class Result {
     }
 
     /**
-     *  Method declaration
+     * Removes duplicate rows on the basis of comparing the singificant
+     * columns of the rows in the result.
+     *
+     * @throws  HsqlException
+     */
+    void removeDuplicates() throws HsqlException {
+        removeDuplicates(significantColumns);
+    }
+
+    /**
+     * Removes duplicate rows on the basis of comparing the first columnCount
+     * columns of rows in the result.
      *
      * @throws  HsqlException
      */
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all set operations
-    void removeDuplicates() throws HsqlException {
+    void removeDuplicates(int columnCount) throws HsqlException {
 
         if (rRoot == null) {
             return;
         }
 
-        int len     = getColumnCount();
-        int order[] = new int[len];
-        int way[]   = new int[len];
+        int order[] = new int[columnCount];
+        int way[]   = new int[columnCount];
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < columnCount; i++) {
             order[i] = i;
             way[i]   = 1;
         }
@@ -470,7 +482,7 @@ class Result {
                 break;
             }
 
-            if (compareRecord(n.data, next.data, len) == 0) {
+            if (compareRecord(n.data, next.data, columnCount) == 0) {
                 n.next = next.next;
 
                 iSize--;
@@ -482,22 +494,26 @@ class Result {
         rTail = n;
 
         Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.removeDuplicates iSise ="
+                       "rTail not correct in Result.removeDuplicates iSize ="
                        + iSize);
     }
 
+    void removeSecond(Result minus) throws HsqlException {
+        removeSecond(minus, significantColumns);
+    }
+
     /**
-     *  Method declaration
+     *  Removes duplicates then removes the contents of the second result
+     *  from this one base on first columnCount of the rows in each result.
      *
      * @param  minus
      * @throws  HsqlException
      */
-    void removeSecond(Result minus) throws HsqlException {
+    void removeSecond(Result minus, int columnCount) throws HsqlException {
 
-        removeDuplicates();
-        minus.removeDuplicates();
+        removeDuplicates(columnCount);
+        minus.removeDuplicates(columnCount);
 
-        int     len   = getColumnCount();
         Record  n     = rRoot;
         Record  last  = rRoot;
         boolean rootr = true;    // checking rootrecord
@@ -505,7 +521,7 @@ class Result {
         int     i     = 0;
 
         while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, len);
+            i = compareRecord(n.data, n2.data, columnCount);
 
             if (i == 0) {
                 if (rootr) {
@@ -535,21 +551,26 @@ class Result {
 
         Trace.doAssert(
             (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeSecond iSise =" + iSize);
+            "rTail not correct in Result.removeSecond iSize =" + iSize);
+    }
+
+    void removeDifferent(Result r2) throws HsqlException {
+        removeDifferent(r2, significantColumns);
     }
 
     /**
-     *  Method declaration
+     * Removes all duplicate rows then removes all rows that are not shared
+     * between this and the other result, based on comparing the first
+     * columnCount columns of each result.
      *
      * @param  r2
      * @throws  HsqlException
      */
-    void removeDifferent(Result r2) throws HsqlException {
+    void removeDifferent(Result r2, int columnCount) throws HsqlException {
 
-        removeDuplicates();
-        r2.removeDuplicates();
+        removeDuplicates(columnCount);
+        r2.removeDuplicates(columnCount);
 
-        int     len   = getColumnCount();
         Record  n     = rRoot;
         Record  last  = rRoot;
         boolean rootr = true;    // checking rootrecord
@@ -559,7 +580,7 @@ class Result {
         iSize = 0;
 
         while (n != null && n2 != null) {
-            i = compareRecord(n.data, n2.data, len);
+            i = compareRecord(n.data, n2.data, columnCount);
 
             if (i == 0) {             // same rows
                 if (rootr) {
@@ -592,7 +613,7 @@ class Result {
 
         Trace.doAssert(
             (rRoot == null && rTail == null) || rTail.next == null,
-            "rTail not correct in Result.removeDifference iSise =" + iSize);
+            "rTail not correct in Result.removeDifference iSize =" + iSize);
     }
 
     /**
@@ -676,7 +697,7 @@ class Result {
         rTail = targetlast[0];
 
         Trace.doAssert(rTail.next == null,
-                       "rTail not correct in Result.sortResult iSise ="
+                       "rTail not correct in Result.sortResult iSize ="
                        + iSize);
     }
 
@@ -1040,5 +1061,73 @@ private    String getMode() {
 
     void setResultType(int type) {
         iMode = type;
+    }
+
+    Iterator iterator() {
+        return new ResultIterator();
+    }
+
+    private class ResultIterator implements Iterator {
+
+        boolean removed;
+        int     counter;
+        Record  current = rRoot;
+        Record  last;
+
+        public boolean hasNext() {
+            return counter < iSize;
+        }
+
+        public Object next() {
+
+            if (hasNext()) {
+                removed = false;
+
+                if (counter != 0) {
+                    last    = current;
+                    current = current.next;
+                }
+
+                counter++;
+
+                return current.data;
+            }
+
+            throw new NoSuchElementException();
+        }
+
+        public int nextInt() {
+            throw new NoSuchElementException();
+        }
+
+        public long nextLong() {
+            throw new NoSuchElementException();
+        }
+
+        public void remove() {
+
+            if (counter <= iSize && counter != 0 &&!removed) {
+                removed = true;
+
+                if (current == rTail) {
+                    rTail = last;
+                }
+
+                if (current == rRoot) {
+                    current = rRoot = rRoot.next;
+                } else {
+                    current      = last;
+                    last         = null;
+                    current.next = current.next.next;
+                }
+
+                iSize--;
+                counter--;
+
+                return;
+            }
+
+            throw new NoSuchElementException();
+        }
     }
 }

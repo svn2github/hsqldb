@@ -444,6 +444,7 @@ abstract class Cache {
                                           currentAccessCount, 10);
 
         firstAccessCount = minAccess;
+
         // put all low rows in the array
         int removecount = 0;
 
@@ -668,7 +669,7 @@ abstract class Cache {
         }
 
         currentAccessCount >>= 8;
-        firstAccessCount >>= 8;
+        firstAccessCount   >>= 8;
 
         int i = iCacheSize;
 
@@ -712,6 +713,8 @@ abstract class Cache {
             try {
                 saveRow(r);
 
+                saveRowCount++;
+
                 rowTable[i] = null;
             } catch (Exception e) {
                 throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_saveAll,
@@ -722,14 +725,16 @@ abstract class Cache {
         saveAllTimer.stop();
         System.out.println(
             saveAllTimer.elapsedTimeToMessage(
-                "Cache.saveAll total row save time"));
+                "Cache.saveRow() total row save time"));
+        System.out.println("Cache.saveRow() total row save count = "
+                           + saveRowCount);
         System.out.println(
             makeRowTimer.elapsedTimeToMessage(
-                "Cache.makeRow total row load time"));
-        System.out.println("Cache.makeRow total row load count = "
+                "Cache.makeRow() total row load time"));
+        System.out.println("Cache.makeRow() total row load count = "
                            + makeRowCount);
         System.out.println(
-            sortTimer.elapsedTimeToMessage("Cache.sort total time"));
+            sortTimer.elapsedTimeToMessage("Cache.sort() total time"));
     }
 
     abstract protected void saveRow(CachedRow r)

@@ -445,18 +445,19 @@ extends org.hsqldb.DatabaseInformationMain {
                 lSmallestFreeItem = 0;
             }
 
-            row[icache_class]   = cache.getClass().getName();
-            row[icache_hash]    = ValuePool.getInt(cache.hashCode());
-            row[icache_file]    = (new File(cache.sName)).getAbsolutePath();
-            row[icache_length]  = ValuePool.getInt(cache.cacheLength);
-            row[icache_size]    = ValuePool.getInt(cache.iCacheSize);
-            row[ifree_bytes]    = ValuePool.getInt(iFreeBytes);
-            row[is_free_item]   = ValuePool.getInt((int) lSmallestFreeItem);
-            row[il_free_item]   = ValuePool.getInt(iLargestFreeItem);
-            row[ifree_count]    = ValuePool.getInt(cache.iFreeCount);
-            row[ifree_pos]      = ValuePool.getInt(cache.iFreePos);
-            row[imax_cache_sz]  = ValuePool.getInt(cache.maxCacheSize);
-            row[imult_mask]     = Integer.toHexString(cache.multiplierMask);
+            row[icache_class]  = cache.getClass().getName();
+            row[icache_hash]   = ValuePool.getInt(cache.hashCode());
+            row[icache_file]   = (new File(cache.sName)).getAbsolutePath();
+            row[icache_length] = ValuePool.getInt(cache.cacheLength);
+            row[icache_size]   = ValuePool.getInt(cache.iCacheSize);
+            row[ifree_bytes]   = ValuePool.getInt(iFreeBytes);
+            row[is_free_item]  = ValuePool.getInt((int) lSmallestFreeItem);
+            row[il_free_item]  = ValuePool.getInt(iLargestFreeItem);
+            row[ifree_count]   = ValuePool.getInt(cache.iFreeCount);
+            row[ifree_pos]     = ValuePool.getInt(cache.iFreePos);
+            row[imax_cache_sz] = ValuePool.getInt(cache.maxCacheSize);
+            row[imult_mask]    = Integer.toHexString(cache.multiplierMask);
+
 // now obsolete
             row[iwriter_length] = ValuePool.getInt(0);
 
