@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.26 2004/05/27 15:49:20 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.27 2004/06/05 05:44:38 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.26 $
+ * @version $Revision: 1.27 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -484,11 +484,13 @@ public class SqlTool {
             try {
                 conn.close();
             } catch (Exception e) {}
-            if (tmpFile != null &&!tmpFile.delete()) {
-                System.err.println(
-                    "Error occurred while trying to remove temp file '" 
-                    + tmpFile + "'");
-            }
+        }
+        // Taking file removal out of final block because this is good debug
+        // info to keep around if the program aborts.
+        if (tmpFile != null && !tmpFile.delete()) {
+            System.err.println(
+                "Error occurred while trying to remove temp file '" 
+                + tmpFile + "'");
         }
         exitMain(retval);
         return;
