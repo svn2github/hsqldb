@@ -105,7 +105,7 @@ esac; done > $LISTFILE
 
 # Main Compile
 echo 'Compiling...'
-"$jdkhome/bin/javac" -O -nowarn -d ../classes -classpath "$cp:../classes" `cat $LISTFILE`
+"$jdkhome/bin/javac" -target 1.1 -O -nowarn -d ../classes -classpath "$cp:../classes" `cat $LISTFILE`
 
 # Build jar
 cd ../classes || Failout "Failed to cd to '$dbhome/classes'"
