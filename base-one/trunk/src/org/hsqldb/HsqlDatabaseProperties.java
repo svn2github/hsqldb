@@ -82,9 +82,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // user defined integral properties
         String[] integralPropertiesNames = {
-            "runtime.gc_interval", "hsqldb.cache_file_scale",
-            "hsqldb.cache_scale", "hsqldb.first_identity", "hsqldb.log_size",
-            "textdb.cache_scale"
+            "runtime.gc_interval", "hsqldb.max_nio_scale",
+            "hsqldb.cache_file_scale", "hsqldb.cache_scale",
+            "hsqldb.first_identity", "hsqldb.log_size", "textdb.cache_scale"
         };
 
         integralProperties.addAll(integralPropertiesNames);

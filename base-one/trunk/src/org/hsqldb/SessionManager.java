@@ -127,7 +127,7 @@ public class SessionManager {
 
             if (s != sysSession) {
                 it.remove();
-                s.disconnect();
+                s.close();
             }
         }
     }
@@ -137,9 +137,8 @@ public class SessionManager {
      *
      * @param  session to disconnect
      */
-    void processDisconnect(Session session) {
+    void removeSession(Session session) {
         sessionMap.remove(session.getId());
-        session.disconnect();
     }
 
     /**

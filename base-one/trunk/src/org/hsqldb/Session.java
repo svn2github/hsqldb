@@ -166,29 +166,22 @@ public class Session implements SessionInterface {
      */
     public void close() {
 
-        if (!isClosed) {
-            synchronized (database) {
-                try {
-                    database.logger.writeToLog(this, Token.T_DISCONNECT);
-                } catch (HsqlException e) {}
-
-                database.sessionManager.processDisconnect(this);
-            }
-        }
-    }
-
-    /**
-     * Closes this Session, freeing any resources associated with it
-     * and rolling back any uncommited transaction it may have open.
-     */
-    void disconnect() {
-
-        // PRE:  disconnect() is called _only_ from SessionManager
         if (isClosed) {
             return;
         }
 
         synchronized (database) {
+
+            // test again inside block
+            if (isClosed) {
+                return;
+            }
+
+            try {
+                database.logger.writeToLog(this, Token.T_DISCONNECT);
+            } catch (HsqlException e) {}
+
+            database.sessionManager.removeSession(this);
             rollback();
             database.dropTempTables(this);
             compiledStatementManager.removeSession(sessionId);
@@ -413,6 +406,10 @@ public class Session implements SessionInterface {
      */
     public void commit() {
 
+        if (isClosed) {
+            return;
+        }
+
         synchronized (database) {
             if (!transactionList.isEmpty()) {
                 try {
@@ -431,6 +428,10 @@ public class Session implements SessionInterface {
      * @throws  HsqlException
      */
     public void rollback() {
+
+        if (isClosed) {
+            return;
+        }
 
         synchronized (database) {
             int i = transactionList.size();

@@ -308,26 +308,27 @@ class DiskNode extends Node {
                                || (n.getKey() != getKey());
 
                 if (test == false) {
-                    int aA = ((CachedRow) getRow()).iLastAccess;
-                    int bA = ((CachedRow) n.getRow()).iLastAccess;
+                    test = iParent == ((DiskNode) n).iParent
+                           && iLeft == ((DiskNode) n).iLeft
+                           && iRight == ((DiskNode) n).iRight;
 
-                    Trace.doAssert(test,
-                                   "a: " + aA + ", " + iParent + ", " + iLeft
-                                   + ", " + iRight + " b: " + bA + ", "
-                                   + ((DiskNode) n).iParent + ", "
-                                   + ((DiskNode) n).iLeft + ", "
-                                   + ((DiskNode) n).iRight);
+                    if (test == false) {
+                        int aA = ((CachedRow) getRow()).iLastAccess;
+                        int bA = ((CachedRow) n.getRow()).iLastAccess;
+
+                        Trace.doAssert(test,
+                                       "a: " + aA + ", " + iParent + ", "
+                                       + iLeft + ", " + iRight + " b: " + bA
+                                       + ", " + ((DiskNode) n).iParent + ", "
+                                       + ((DiskNode) n).iLeft + ", "
+                                       + ((DiskNode) n).iRight);
+                    }
                 }
             }
-/*
-            tautology
-            else {
-                Trace.doAssert(n.getKey() == getKey());
-            }
-*/
         }
 
-        return n == this;
+        return this == n
+               || (n != null && getKey() == ((DiskNode) n).getKey());
     }
 
     void write(RowOutputInterface out) throws IOException, HsqlException {

@@ -173,7 +173,7 @@ abstract class Cache {
     // this flag is used externally to determine if a backup is required
     boolean fileModified;
 
-    // outside access to all below allowed only for metadata
+    // package access to all below allowed only for metadata
     int                         cacheScale;
     int                         cacheSizeScale;
     int                         cacheFileScale;

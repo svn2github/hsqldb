@@ -64,7 +64,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
-        if (super.length() > (1 << 28)) {
+        if (super.length() > (1 << 29)) {
             return;
         }
 
@@ -83,7 +83,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         long bufsize;
 
-        for (int scale = 22; ; scale++) {
+        for (int scale = 20; ; scale++) {
             bufsize = 1 << scale;
 
             if (bufsize > Integer.MAX_VALUE) {
