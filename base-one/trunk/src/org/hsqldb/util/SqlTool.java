@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.12 2004/02/17 01:56:37 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.13 2004/02/19 16:23:10 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -176,6 +176,7 @@ public class SqlTool {
         + "urlid [file1.sql...]\n" + "where arguments are:\n"
         + "    --help                   Prints this message\n"
         + "    --list                   List urlids in the rcfile\n"
++ "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
         + "    --debug                  Print Debug info to stderr\n"
     + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
 + "                             where \"SQL;\" consists of SQL command(s) like\n"
@@ -215,10 +216,11 @@ public class SqlTool {
         String  driver      = DEFAULT_JDBC_DRIVER;
         String  targetDb    = null;
         boolean debug       = false;
-        File[]  scriptFiles = { null };
+        File[]  scriptFiles = null;
         int     i           = -1;
         boolean listMode    = false;
         boolean interactive = false;
+        boolean noinput     = false;
 
         try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
@@ -252,6 +254,10 @@ public class SqlTool {
                     debug = true;
                     continue;
                 }
+                if (arg[i].substring(2).equals("noinput")) {
+                    noinput = true;
+                    continue;
+                }
                 if (arg[i].substring(2).equals("driver")) {
                     if (++i == arg.length) {
                         throw bcl;
@@ -283,6 +289,9 @@ public class SqlTool {
             interactive = (arg.length <= i + 1);
             if ((arg.length > i + 1) &&
                     (arg.length != i + 2 || !arg[i + 1].equals("-"))) {
+
+                // I.e., if there are any SQL files specified.
+                noinput = true;
                 scriptFiles = new File[arg.length - i - 1];
                 if (debug) {
                     System.err.println("scriptFiles has "
@@ -328,6 +337,14 @@ public class SqlTool {
             //e.printStackTrace();
             // Let's not continuing as if nothing is wrong.
             throw new RuntimeException(e.getMessage());
+        }
+        File[] emptyFileArray = {};
+        File[] singleNullFileArray = { null };
+        if (scriptFiles == null) {
+            // I.e., if no SQL files given on command-line.
+            // Input file list is either nothing or {null} to read stdin.
+
+            scriptFiles = (noinput ? emptyFileArray : singleNullFileArray);
         }
         SqlFile[] sqlFiles = new SqlFile[scriptFiles.length
                 + ((tmpFile == null) ? 0 : 1)];
