@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.7 2004/05/17 13:14:46 fredt Exp $ -->
+<!-- $Id: building.xml,v 1.8 2004/06/04 11:26:33 fredt Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building Hsqldb version 1.7.2</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/05/17 13:14:46 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -85,7 +85,8 @@
 			</para></listitem> </varlistentry>
 			<varlistentry><term>jarclient</term> <listitem><para> to build an
 			extremely small jar containing only the client-side JDBC driver
-			(does not support memory-only or in-memory mode) 
+            (does not support direct connection to HSQLDB URLs of the form
+            jdbc:hsldb:mem:*, jdbc:hsqldb:file:*, nor jdbc:hsqldb:res:*).
 			</para></listitem> </varlistentry> 
 			<varlistentry><term>jarmin</term>
 			<listitem>
@@ -107,7 +108,13 @@
 			applications. The default size (<filename>hsqldb.jar</filename>)
 			also contains server mode support and the utilities. The largest
 			size (<filename>hsqldbtest.jar</filename>)includes some test 
-			classes as well. </para> <para> In order to build and run the 
+            classes as well.
+            (You can also build hsqlsqltool.jar.
+            If you use SqlTool, see the
+            <link linkend='sqltool-chapter' endterm='sqltool-title'/> chapter
+            about that.)
+            </para>
+            <para> In order to build and run the 
 			test classes, you need the JUnit jar in the 
 			<filename>/lib</filename> directory. This is available from
 			<ulink url="http://www.junit.org"/>. </para> <para> The preferred 
