@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.Iterator;
 
@@ -43,8 +44,9 @@ import org.hsqldb.lib.Iterator;
  * When a group by clause is defined, a <b>ResultGroup</b> is used to hold
  * all column values and <b>AggregatingValue</b>s for each group.  When a group
  * by clause is not defined, one <b>ResultGroup</b> is used to hold all the
- * results.
- * All <b>ResultGroup</b>s are placed in a <b>Hashtable</b>.  Adding a new row
+ * results.<p>
+ *
+ * All <b>ResultGroup</b>s are placed in a <b>HashSet</b>.  Adding a new row
  * will first retrieve the corresponding group from the table, based on the
  * values in the group by columns.  If a group is found, then the row
  * associated with the group will be returned.  Otherwise a new group is
@@ -62,7 +64,7 @@ import org.hsqldb.lib.Iterator;
  * @since   1.7.2
  */
 
-// fredt@users - patch 1.7.2 - minor mods to use new HashSet class
+// fredt@users - patch 1.7.2 - mods to use new HashSet class and to separate addRow and getRow operations
 class GroupedResult {
 
 /** @todo fredt - initialise results on first use */
@@ -74,9 +76,9 @@ class GroupedResult {
     private HashSet       groups;
     private ResultGroup   currGroup;
 
-    GroupedResult(Select select, Result result) {
+    GroupedResult(Select select, Result.ResultMetaData meta) {
 
-        this.result  = result;
+        result       = new Result(meta);
         groupBegin   = select.iResultLen;
         groupEnd     = groupBegin + select.iGroupLen;
         isGrouped    = groupBegin != groupEnd;
@@ -87,7 +89,25 @@ class GroupedResult {
         }
     }
 
-    Object[] addRow(Object[] row) {
+    Object[] getRow(Object[] row) {
+
+        if (isGrouped) {
+            ResultGroup newGroup = new ResultGroup(row);
+            ResultGroup group    = (ResultGroup) groups.get(newGroup);
+
+            if (group != null) {
+                ArrayUtil.copyArray(group.row, row, row.length);
+            }
+        } else if (isAggregated) {
+            if (currGroup != null) {
+                ArrayUtil.copyArray(currGroup.row, row, row.length);
+            }
+        }
+
+        return row;
+    }
+
+    void addRow(Object[] row) {
 
         if (isGrouped) {
             ResultGroup newGroup = new ResultGroup(row);
@@ -99,18 +119,20 @@ class GroupedResult {
 
                 groups.add(currGroup);
                 result.add(row);
+            } else {
+                ArrayUtil.copyArray(row, currGroup.row, row.length);
             }
-        } else if (currGroup == null) {
+        } else if (isAggregated) {
+            if (currGroup == null) {
             currGroup = new ResultGroup(row);
 
             result.add(row);
-        } else if (!isAggregated) {
+            } else {
+                ArrayUtil.copyArray(row, currGroup.row, row.length);
+            }
+        } else {
             result.add(row);
-
-            currGroup.row = row;
         }
-
-        return currGroup.row;
     }
 
     int size() {
@@ -119,6 +141,10 @@ class GroupedResult {
 
     Iterator iterator() {
         return result.iterator();
+    }
+
+    Result getResult() {
+        return result;
     }
 
     class ResultGroup {

@@ -2,6 +2,7 @@ Readme File
 
 2004.02.22
 
+Added support for table aliases in UPDATE
 Fixed issue with single value selects in UPDATE and SELECT statements.
 Fixed issue with Turkish Locale.
 Fixed issue with compiled statements.

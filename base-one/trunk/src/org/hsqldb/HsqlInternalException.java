@@ -41,7 +41,8 @@ package org.hsqldb;
  * @since 1.7.2
  */
 class HsqlInternalException extends HsqlException {
+
     HsqlInternalException(HsqlException e) {
-        super(e.message,e.state,e.code);
+        super(e.message, e.state, e.code);
     }
 }

@@ -342,29 +342,25 @@ final class CompiledStatementExecutor {
             HsqlArrayList del  = new HsqlArrayList();
             Result        ins  = new Result(ResultConstants.UPDATECOUNT);
             int           size = table.getColumnCount();
-
             int[] coltypes = table.getColumnTypes();
 
                 do {
                 if (condition == null || condition.test()) {
                     try {
                     Row row = filter.currentRow;
-
                         Object[] ni = table.getNewRow();
 
                     System.arraycopy(row.getData(), 0, ni, 0, size);
 
                     for (int i = 0; i < len; i++) {
                             int ci = colmap[i];
+
                         ni[ci] = colvalues[i].getValue(coltypes[ci]);
                     }
 
                         del.add(row);
-
                         ins.add(ni);
-                    } catch (HsqlInternalException e){
-
-                        }
+                    } catch (HsqlInternalException e) {}
                     }
                 } while (filter.next());
 

@@ -2208,6 +2208,7 @@ class Parser {
 
         String token;
         Table  table;
+        String alias = null;
 
 // todo: this would be more efficient as either a primitive list or
 // an IntKeyIntValueHashMap
@@ -2225,7 +2226,12 @@ class Parser {
         table = database.getTable(token, session);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
+
+        if (!tokenizer.isGetThis(Token.T_SET)) {
+            alias = tokenizer.getIdentifier();
+
         tokenizer.getThis(Token.T_SET);
+        }
 
         ciList  = new HsqlArrayList();
         cveList = new HsqlArrayList();
@@ -2263,7 +2269,7 @@ class Parser {
             acve[i] = (Expression) cveList.get(i);
         }
 
-        CompiledStatement cs = new CompiledStatement(table, cm, acve,
+        CompiledStatement cs = new CompiledStatement(table, alias, cm, acve,
             condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();

@@ -166,7 +166,10 @@ class DatabaseManagerCommon {
         "SELECT * FROM Customer a INNER JOIN Invoice i ON a.ID=i.CustomerID",
         "SELECT * FROM Customer a LEFT OUTER JOIN Invoice i ON a.ID=i.CustomerID",
         "SELECT * FROM Invoice d INNER JOIN Item i ON d.ID=i.InvoiceID",
-        "SELECT * FROM Customer WHERE Street LIKE '1%' ORDER BY Lastname"
+        "SELECT * FROM Customer WHERE Street LIKE '1%' ORDER BY Lastname",
+        "SELECT a.id, a.firstname, a.lastname, count(i.Total) \"COUNT\", "
+        + "COALESCE(sum(i.Total), 0) \"TOTAL\", COALESCE(AVG(i.Total),0) \"AVG\" FROM Customer a "
+        + "LEFT OUTER JOIN Invoice i ON a.ID=i.CustomerID GROUP BY a.id, a.firstname, a.lastname"
     };
 
     /**

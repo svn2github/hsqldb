@@ -276,21 +276,21 @@ class Select {
         int    size = r.getSize();
         int    len  = r.getColumnCount();
 
-        if ( size == 1 && len == 1){
+        if (size == 1 && len == 1) {
         Object o = r.rRoot.data[0];
 
         return r.metaData.colType[0] == type ? o
-                                             : Column.convertObject(o, type);
+                                                 : Column.convertObject(o,
+                                                 type);
     }
 
         HsqlException e = Trace.error(Trace.SINGLE_VALUE_EXPECTED);
 
-        if ( size == 0 && len == 1){
+        if (size == 0 && len == 1) {
             throw new HsqlInternalException(e);
         }
 
         throw  e;
-
     }
 
     /**
@@ -597,8 +597,7 @@ class Select {
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
     private Result buildResult(int limitcount) throws HsqlException {
 
-        Result        r           = new Result(resultMetaData);
-        GroupedResult gResult     = new GroupedResult(this, r);
+        GroupedResult gResult     = new GroupedResult(this, resultMetaData);
         final int     len         = exprColumns.length;
         final int     filter      = tFilter.length;
         boolean       first[]     = new boolean[filter];
@@ -654,29 +653,34 @@ class Select {
                 Object row[] = new Object[len];
 
                 // gets the group by column values first.
-                for (int i = gResult.groupBegin; i < gResult.groupEnd; i++) {
+                    for (int i = gResult.groupBegin; i < gResult.groupEnd;
+                            i++) {
                     row[i] = exprColumns[i].getValue();
                 }
 
+                    row = gResult.getRow(row);
+
                 // Get all other values
                 for (int i = 0; i < gResult.groupBegin; i++) {
-                    row[i] = isAggregated && exprColumns[i].isAggregate()
+                        row[i] =
+                            isAggregated && exprColumns[i].isAggregate()
                              ? exprColumns[i].updateAggregatingValue(row[i])
                              : exprColumns[i].getValue();
                 }
 
                 for (int i = gResult.groupEnd; i < len; i++) {
-                    row[i] = isAggregated && exprColumns[i].isAggregate()
+                        row[i] =
+                            isAggregated && exprColumns[i].isAggregate()
                              ? exprColumns[i].updateAggregatingValue(row[i])
                              : exprColumns[i].getValue();
                 }
 
-                    row = gResult.addRow(row);
+                    gResult.addRow(row);
 
                 if (gResult.size() >= limitcount) {
                     break;
                     }
-                } catch (HsqlInternalException e){
+                } catch (HsqlInternalException e) {
                     continue;
                 }
             }
@@ -718,7 +722,7 @@ class Select {
             }
         }
 
-        return r;
+        return gResult.getResult();
     }
 
     /**

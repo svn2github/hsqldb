@@ -188,14 +188,14 @@ final class CompiledStatement {
      * @param updateCondition
      * @param parameters
      */
-    CompiledStatement(Table targetTable, int[] columnMap,
+    CompiledStatement(Table targetTable, String alias, int[] columnMap,
                       Expression[] columnValues, Expression updateCondition,
                       Expression[] parameters) throws HsqlException {
 
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
-        tf                = new TableFilter(targetTable, null, false);
+        tf                = new TableFilter(targetTable, alias, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
