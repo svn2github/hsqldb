@@ -548,7 +548,7 @@ public class StringConverter {
 
         InputStreamReader in        = new InputStreamReader(x);
         StringWriter      write     = new StringWriter();
-        int               blocksize = 8 * 1024;    // todo: is this a good value?
+        int               blocksize = 8 * 1024;
         char              buffer[]  = new char[blocksize];
 
         while (true) {

@@ -6,7 +6,7 @@
 --
 -- Comment lines must start with -- and are ignored
 -- Lines starting with spaces belongs to last line
--- Checked lines start with /*<tag>*/ where <tag> is:
+-- Checked lines start with comments containing <tag> where <tag> is:
 --   c <rows>     ResultSet expects a with <row> columns
 --   r <string>   ResultSet expected with <string> result in first row/column
 --   u <count>    Update count <count> expected
@@ -206,8 +206,10 @@ DROP TABLE HLO
 /*r4*/ update test set nr=2*(1- -1);select nr from test
 /*r4*/ select sum(nr) from test where nr in(select t2.nr from test t2)
 /*e*/ update test set nr=1/0
-/*r*/ update test set nr=null;select nr from test
-/*r*/ update test set nr=8/(1+(null*3)-1);select nr from test
+update test set nr=null;
+/*rNULL*/ select nr from test
+update test set nr=8/(1+(null*3)-1);
+/*rNULL*/ select nr from test
 /*r2*/ update test set nr=4/2;select "TEST"."NR" from test
 /*r34*/ update test set name='3' || '4';select distinct name from test
 /*rx*/ update test set name=null || 'x' || null;select name from "TEST"
@@ -255,7 +257,7 @@ insert into test_ic values('Hello')
 insert into test_ic values('World')
 /*c0*/select * from test_ic where name like 'HALLO'
 /*c1*/select * from test_ic where name like 'HELLO'
-/*c0*/select * from test_ic where 'HELLO' like name  // TODO: is this correct?
+/*c1*/select * from test_ic where 'HELLO' like name
 /*c1*/select * from test_ic where name = 'world'
 drop table test_ic
 
@@ -268,7 +270,11 @@ insert into test_maxrows select id+4 from test_maxrows;
 set maxrows 3
 /*c3*/select * from test_maxrows
 /*c3*/select id from test_maxrows order by id desc
-/*r7*/select id from test_maxrows order by id desc
+/*r
+ 7
+ 6
+ 5
+*/select id from test_maxrows order by id desc
 /*r8*/select count(*) from test_maxrows
 /*r7*/select max(id) from test_maxrows
 /*c0*/select id from test_maxrows minus select id from test_maxrows

@@ -3728,9 +3728,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default :
-                throw jdbcUtil.sqlException(
-                    Trace.ASSERT_FAILED,
-                    Trace.jdbcDatabaseMetaData_getBestRowIdentifier, null);
+                throw jdbcUtil.sqlException(Trace.ASSERT_FAILED,
+                                            Trace.JDBC_INVALID_BRI_SCOPE,
+                                            null);
         }
 
         if (wantsIsNull(table)) {
@@ -4866,11 +4866,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
 //#ifdef JDBC3
     public boolean supportsNamedParameters() throws SQLException {
-
-        // TODO: fredt@users - sure
-        // we should probably return false here for now, instead of throwing
-        // boucherb@users 20020426
-        // return false;
         return false;
     }
 
@@ -4899,12 +4894,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
 //#ifdef JDBC3
     public boolean supportsMultipleOpenResults() throws SQLException {
-
-        // TODO: fredt@users  - agreed on both
-        // we could support true quite easily
-        // we should probably return false here for now, instead of throwing
-        // boucherb@users 20020426
-        // return false;
         return false;
     }
 
@@ -4932,10 +4921,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
 //#ifdef JDBC3
     public boolean supportsGetGeneratedKeys() throws SQLException {
-
-        // TODO: fredt@users - agreed
-        // we should probably return false here for now, instead of throwing
-        // boucherb@users 20020426
         return false;
     }
 
@@ -5459,12 +5444,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
 //#ifdef JDBC3
     public boolean locatorsUpdateCopy() throws SQLException {
-
-        // TODO: fredt@users - agreed
-        // we should probably return false here for now, instead of throwing;
-        // we update LONGBINARY and LONGVARCHAR directly.
-        // boucherb@users 20020426
-        // return false;
         return false;
     }
 
@@ -5489,12 +5468,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
 //#ifdef JDBC3
     public boolean supportsStatementPooling() throws SQLException {
-
-        // TODO:
-        // we should probably return false here
-        // for now, instead of throwing.
-        // boucherb@users 20020426
-        // return false;
         return false;
     }
 

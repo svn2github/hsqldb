@@ -2073,7 +2073,8 @@ public class Expression {
         String likeStr = isRightArgFixedConstant
                          ? (String) eArg2.getValue(Types.VARCHAR)
                          : null;
-        boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE;
+        boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE
+                             || eArg2.dataType == Types.VARCHAR_IGNORECASE;
 
         likeObject.setParams(likeStr, ignoreCase);
 
@@ -2093,7 +2094,7 @@ public class Expression {
             likeObject = null;
         } else if (likeObject.isEquivalentToEqualsPredicate()) {
             exprType   = EQUAL;
-            eArg2      = new Expression(Types.VARCHAR, likeStr);
+            eArg2 = new Expression(Types.VARCHAR, likeObject.getRangeLow());
             likeObject = null;
         } else if (likeObject.isEquivalentToNotNullPredicate()) {
 
@@ -3213,25 +3214,10 @@ public class Expression {
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
-//-------------------------------------------------------------------
-//    void bind(Object o, int type) throws HsqlException {
-//
-//        oData = o;
-//
-//        // TODO:  now that PARAM expressions are resolved to their
-//        // correct data type, this stuff needs to be cleaned up
-//        // depends on client and protocol, so I leave the first stages
-//        // to you, Fred.  Basically, we either do not need this sig
-//        // any more, of the semantics should change
-//        //iDataType = type;
-//    }
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
     void bind(Object o) throws HsqlException {
         valueData = o;
     }
 
-//-------------------------------------------------------------------
     boolean isParam() {
         return isParam;
     }

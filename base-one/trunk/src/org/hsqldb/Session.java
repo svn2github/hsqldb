@@ -322,9 +322,11 @@ public class Session implements SessionInterface {
      */
     void checkDDLWrite() throws HsqlException {
 
-        boolean condition = user.isSys() ||!database.filesReadOnly;
+        if (user.isSys() ||!database.filesReadOnly) {
+            return;
+        }
 
-        Trace.check(condition, Trace.DATABASE_IS_READONLY);
+        Trace.check(false, Trace.DATABASE_IS_READONLY);
     }
 
     /**

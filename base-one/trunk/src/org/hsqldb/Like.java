@@ -116,6 +116,10 @@ class Like {
 
     private String getStartsWith() {
 
+        if (iLen == 0) {
+            return "";
+        }
+
         StringBuffer s = new StringBuffer();
         int          i = 0;
 

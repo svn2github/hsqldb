@@ -70,6 +70,7 @@ package org.hsqldb;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
@@ -2254,19 +2255,14 @@ class Parser {
      */
     CompiledStatement compileUpdateStatement() throws HsqlException {
 
-        String token;
-        Table  table;
-        String alias = null;
-
-// todo: this would be more efficient as either a primitive list or
-// an IntKeyIntValueHashMap
-        HsqlArrayList ciList;
-        HsqlArrayList cveList;
-        int           len;
-        Expression    cve;
-        Expression    condition;
-        int[]         cm;
-        Expression[]  acve;
+        String       token;
+        Table        table;
+        String       alias = null;
+        int[]        colList;
+        Expression[] exprList;
+        int          len;
+        Expression   cve;
+        Expression   condition;
 
         clearParameters();
 
@@ -2281,24 +2277,29 @@ class Parser {
             tokenizer.getThis(Token.T_SET);
         }
 
-        ciList  = new HsqlArrayList();
-        cveList = new HsqlArrayList();
-        len     = 0;
-        token   = null;
+        colList  = table.getNewColumnMap();
+        exprList = new Expression[colList.length];
+        len      = 0;
+        token    = null;
 
         do {
-            len++;
-
             int ci = table.getColumnNr(tokenizer.getString());
 
-            ciList.add(ValuePool.getInt(ci));
             tokenizer.getThis(Token.T_EQUALS);
 
             cve = parseExpression();
 
-            cveList.add(cve);
+            if (len == colList.length) {
 
-            token = tokenizer.getString();
+                // too many (repeat) assignments
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+
+            colList[len]  = ci;
+            exprList[len] = cve;
+            token         = tokenizer.getString();
+
+            len++;
         } while (token.equals(Token.T_COMMA));
 
         condition = null;
@@ -2309,16 +2310,11 @@ class Parser {
             tokenizer.back();
         }
 
-        cm   = new int[len];
-        acve = new Expression[len];
+        colList  = (int[]) ArrayUtil.resizeArray(colList, len);
+        exprList = (Expression[]) ArrayUtil.resizeArray(exprList, len);
 
-        for (int i = 0; i < len; i++) {
-            cm[i]   = ((Integer) ciList.get(i)).intValue();
-            acve[i] = (Expression) cveList.get(i);
-        }
-
-        CompiledStatement cs = new CompiledStatement(table, alias, cm, acve,
-            condition, getParameters());
+        CompiledStatement cs = new CompiledStatement(table, alias, colList,
+            exprList, condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();
 

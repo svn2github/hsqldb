@@ -873,6 +873,10 @@ public class Database {
             }
         }
 
+        if (!toDrop.isTemp()) {
+            session.checkDDLWrite();
+        }
+
         checkTableIsReferenced(toDrop);
         checkTableIsInView(toDrop.tableName.name);
         tTable.remove(dropIndex);

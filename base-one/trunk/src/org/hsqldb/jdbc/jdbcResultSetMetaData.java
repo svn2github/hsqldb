@@ -175,9 +175,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     void init(jdbcResultSet rs, HsqlProperties props) throws SQLException {
 
         if (rs == null) {
-            throw jdbcUtil.sqlException(
-                Trace.GENERAL_ERROR,
-                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData, null);
+            throw jdbcUtil.sqlException(Trace.GENERAL_ERROR,
+                                        Trace.JDBC_NO_RESULT_SET_METADATA,
+                                        null);
         }
 
         init(rs.rResult, props);
@@ -200,9 +200,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         Result.ResultMetaData rmd;
 
         if (r == null) {
-            throw jdbcUtil.sqlException(
-                Trace.GENERAL_ERROR,
-                Trace.jdbcResultSetMetaData_jdbcResultSetMetaData_2, null);
+            throw jdbcUtil.sqlException(Trace.GENERAL_ERROR,
+                                        Trace.JDBC_NO_RESULT_SET, null);
         }
 
         if (r.iMode != ResultConstants.DATA) {

@@ -113,10 +113,9 @@ class ScriptReaderBinary extends ScriptReaderBase {
             int checkCount = readTableTerm();
 
             if (j != checkCount) {
-                throw Trace.error(
-                    Trace.ERROR_IN_SCRIPT_FILE,
-                    Trace.BinaryDatabaseScriptReader_readExistingData,
-                    new Object[] {
+                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                                  Trace.ERROR_IN_BINARY_SCRIPT_1,
+                                  new Object[] {
                     s, new Integer(j), new Integer(checkCount)
                 });
             }
@@ -176,7 +175,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
         if (checkOp != ScriptWriterBase.INSERT) {
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                              Trace.BinaryDatabaseScriptReader_readTableInit);
+                              Trace.ERROR_IN_BINARY_SCRIPT_2);
         }
 
         return s;

@@ -63,8 +63,7 @@ public class RowOutputTextQuoted extends RowOutputText {
 
         if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
             throw new IOException(
-                Trace.getMessage(
-                    Trace.QuotedTextDatabaseRowOutput_checkConvertString));
+                Trace.getMessage(Trace.TEXT_STRING_HAS_NEWLINE));
         }
 
         if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1

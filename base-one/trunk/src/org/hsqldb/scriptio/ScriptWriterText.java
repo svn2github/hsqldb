@@ -55,9 +55,6 @@ import org.hsqldb.rowio.RowOutputTextLog;
  * @version 1.7.2
  * @since 1.7.2
  */
-
-// todo - can lock the database engine as readonly in a wrapper for this when
-// used at checkpoint
 public class ScriptWriterText extends ScriptWriterBase {
 
     RowOutputTextLog rowOut;

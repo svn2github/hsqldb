@@ -530,9 +530,8 @@ class DatabaseCommandInterpreter {
             set.add(token);
 
             if (list.size() != set.size()) {
-                throw Trace.error(
-                    Trace.COLUMN_ALREADY_EXISTS,
-                    Trace.DatabaseCommandInterpreter_processColumnList);
+                throw Trace.error(Trace.COLUMN_ALREADY_EXISTS,
+                                  Trace.ERROR_IN_CONSTRAINT_COLUMN_LIST);
             }
 
             token = tokenizer.getString();
@@ -709,15 +708,12 @@ class DatabaseCommandInterpreter {
                 // start the trigger thread
                 td.start();
             } else {
-                throw Trace.error(
-                    Trace.UNEXPECTED_TOKEN,
-                    Trace.DatabaseCommandInterpreter_processCreateTrigger1);
+                throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                  Trace.CREATE_TRIGGER_COMMAND_1);
             }
         } catch (Exception e) {
-            throw Trace.error(
-                Trace.UNKNOWN_FUNCTION,
-                Trace.DatabaseCommandInterpreter_processCreateTrigger2,
-                e.getMessage());
+            throw Trace.error(Trace.UNKNOWN_FUNCTION,
+                              Trace.CREATE_TRIGGER_COMMAND_2, e.getMessage());
         }
 
 // boucherb@users 20021128 - enforce unique trigger names
@@ -1086,9 +1082,8 @@ class DatabaseCommandInterpreter {
                             mainConst.core.mainColArray;
 
                         if (tempConst.core.refColArray == null) {
-                            throw Trace
-                                .error(Trace.INDEX_NOT_FOUND, Trace
-                                    .DatabaseCommandInterpreter_processCreateConstraints);
+                            throw Trace.error(Trace.INDEX_NOT_FOUND,
+                                              Trace.TABLE_HAS_NO_PRIMARY_KEY);
                         }
                     }
 
@@ -1350,10 +1345,9 @@ class DatabaseCommandInterpreter {
                 expcol = expIndex.getColumns();
 
                 if (expcol[0] == expTable.getColumnCount()) {
-                    throw Trace.error(
-                        Trace.INDEX_NOT_FOUND,
-                        Trace.DatabaseCommandInterpreter_processCreateFK,
-                        new Object[]{ expTableName });
+                    throw Trace.error(Trace.INDEX_NOT_FOUND,
+                                      Trace.TABLE_HAS_NO_PRIMARY_KEY,
+                                      new Object[]{ expTableName });
                 }
             }
 
@@ -2148,9 +2142,8 @@ class DatabaseCommandInterpreter {
 
         if (toSavepoint) {
             if (token.length() == 0) {
-                throw Trace.error(
-                    Trace.UNEXPECTED_TOKEN,
-                    Trace.DatabaseCommandInterpreter_processSavepoint);
+                throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                  Trace.BAD_SAVEPOINT_NAME);
             }
 
             session.rollbackToSavepoint(token);
@@ -2171,9 +2164,8 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            throw Trace.error(
-                Trace.UNEXPECTED_TOKEN,
-                Trace.DatabaseCommandInterpreter_processSavepoint);
+            throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                              Trace.BAD_SAVEPOINT_NAME);
         }
 
         session.savepoint(token);
@@ -2433,10 +2425,9 @@ class DatabaseCommandInterpreter {
                 if (defStr == null) {
                     columnName = column.columnName.name;
 
-                    throw Trace.error(
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        Trace.DatabaseCommandInterpreter_checkFKColumnDefaults,
-                        new Object[]{ columnName });
+                    throw Trace.error(Trace.COLUMN_TYPE_MISMATCH,
+                                      Trace.NO_DEFAULT_VALUE_FOR_COLUMN,
+                                      new Object[]{ columnName });
                 }
             }
         }
@@ -2718,11 +2709,6 @@ class DatabaseCommandInterpreter {
         }
 
         Table t = database.findUserTable(tableName, session);
-
-        // TODO:  better if encapsulated by database.dropTable?
-        if (t != null &&!t.isTemp()) {
-            session.checkDDLWrite();
-        }
 
         database.dropTable(tableName, ifExists, isView, session);
     }
@@ -3024,9 +3010,8 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.length() == 0) {
-            throw Trace.error(
-                Trace.UNEXPECTED_TOKEN,
-                Trace.DatabaseCommandInterpreter_processSavepoint);
+            throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                              Trace.BAD_SAVEPOINT_NAME);
         }
 
         session.releaseSavepoint(token);
