@@ -233,9 +233,13 @@ class Parser {
     }
 
     /**
-     * The SubQuery objects are added to the end of subquery list
+     * The SubQuery objects are added to the end of subquery list.
+     *
+     * When parsing the SELECT for a view, optional HsqlName[] array ise used
+     * for view column aliases.
+     *
      */
-    SubQuery parseSubquery(View v, boolean resolveAll,
+    SubQuery parseSubquery(View v, HsqlName[] colNames, boolean resolveAll,
                            int predicateType) throws HsqlException {
 
         SubQuery sq;
@@ -266,6 +270,17 @@ class Parser {
                 database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
                 Table.SYSTEM_SUBQUERY, 0);
 
+            if (colNames != null) {
+                if (colNames.length != s.iResultLen) {
+                    throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+                }
+
+                for (int i = 0; i < s.iResultLen; i++) {
+                    HsqlName name = colNames[i];
+
+                    s.exprColumns[i].setAlias(name.name, name.isNameQuoted);
+                }
+            } else {
             for (int i = 0; i < s.iResultLen; i++) {
                 String colname = s.exprColumns[i].getAlias();
 
@@ -277,6 +292,7 @@ class Parser {
 
                     s.exprColumns[i].setAlias(colname, false);
                 }
+            }
             }
 
             table.addColumns(s);
@@ -877,7 +893,7 @@ class Parser {
             tokenizer.getThis(Token.T_SELECT);
 
             // fredt - not correlated - a joined subquery table must resolve fully
-            sq = parseSubquery(null, true, Expression.QUERY);
+            sq = parseSubquery(null, null, true, Expression.QUERY);
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
 
@@ -888,7 +904,7 @@ class Parser {
             session.check(t.getName(), UserManager.SELECT);
 
             if (t.isView()) {
-                sq        = parseSubquery((View) t, true, Expression.QUERY);
+                sq = parseSubquery((View) t, null, true, Expression.QUERY);
                 sq.select = ((View) t).viewSelect;
                 t         = sq.table;
                 sAlias    = token;
@@ -1068,7 +1084,8 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                SubQuery sq = parseSubquery(null, false, Expression.EXISTS);
+                SubQuery sq = parseSubquery(null, null, false,
+                                            Expression.EXISTS);
                 Select   select = sq.select;
                 Expression s = new Expression(select, sq.table,
                                               !sq.isResolved);
@@ -1201,7 +1218,7 @@ class Parser {
         Expression b = null;
 
         if (iToken == Expression.SELECT) {
-            SubQuery sq     = parseSubquery(null, false, Expression.IN);
+            SubQuery sq     = parseSubquery(null, null, false, Expression.IN);
             Select   select = sq.select;
 
             // until we support rows in IN predicates

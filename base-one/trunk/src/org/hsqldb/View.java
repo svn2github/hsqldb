@@ -113,7 +113,7 @@ class View extends Table {
         Parser p = new Parser(this.database, tokenizer,
                               database.sessionManager.getSysSession());
 
-        viewSubQuery = p.parseSubquery(null, true, Expression.QUERY);
+        viewSubQuery = p.parseSubquery(null, colList, true, Expression.QUERY);
 
         p.setAsView(this);
 
@@ -126,25 +126,9 @@ class View extends Table {
         Result.ResultMetaData metadata = viewSelect.resultMetaData;
         int                   columns  = viewSelect.iResultLen;
 
-        if (colList != null) {
-            if (colList.length != columns) {
-                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-            }
-
-            for (int i = 0; i < columns; i++) {
-                HsqlName name = colList[i];
-
-                metadata.sLabel[i]        = name.name;
-                metadata.isLabelQuoted[i] = name.isNameQuoted;
-
-                viewSelect.exprColumns[i].setAlias(name.name,
-                                                   name.isNameQuoted);
-                workingTable.renameColumn(workingTable.getColumn(i),
-                                          name.name, name.isNameQuoted);
-            }
-        }
-
         if (super.columnCount == 0) {
+
+            // do not add columns at recompile time
             super.addColumns(metadata, columns);
         }
     }
