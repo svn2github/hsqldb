@@ -375,6 +375,7 @@ public class TestSql extends TestBase {
             }
 
             {
+                stmnt.execute("drop table CDTYPE if exists");
 
                 // test for the value MAX(column) in an empty table
                 rs = stmnt.executeQuery(

@@ -89,9 +89,11 @@ abstract public class TestBase extends TestCase {
 
     protected void tearDown() {
 
-        server.stop();
+        if (isNetwork) {
+            server.stop();
 
-        server = null;
+            server = null;
+        }
     }
 
     Connection newConnection() throws Exception {

@@ -163,14 +163,16 @@ implements org.hsqldb.rowio.RowInputInterface {
 
 /** @todo fredt - get time and data longs then normalise before fetching value */
     protected java.sql.Time readTime() throws IOException, HsqlException {
-        return new java.sql.Time(readLong());
+        return HsqlDateTime.getNormalisedTime(readLong());
     }
 
     protected java.sql.Date readDate() throws IOException, HsqlException {
 
 // fredt - memory opt tests
 //        return new java.sql.Date(readLong());
-        return ValuePool.getDate(readLong());
+        long date = HsqlDateTime.getNormalisedDate(readLong());
+
+        return ValuePool.getDate(date);
     }
 
     protected java.sql.Timestamp readTimestamp()

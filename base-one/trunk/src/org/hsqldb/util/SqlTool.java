@@ -95,7 +95,7 @@ public class SqlTool {
 
             if (!file.canRead()) {
                 throw new IOException("Please set up authentication file '"
-                        + file + "'");
+                                      + file + "'");
             }
 
             // System.err.println("Using RC file '" + file + "'");
@@ -199,7 +199,7 @@ public class SqlTool {
         + "    --list                   List urlids in the rcfile\n"
         + "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
         + "    --debug                  Print Debug info to stderr\n"
-    + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
+        + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
         + "                             where \"SQL;\" consists of SQL command(s) like\n"
         + "                             in an SQL file, and may contain line breaks\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
@@ -320,19 +320,19 @@ public class SqlTool {
 
             if (sqlText != null) {
                 try {
-                tmpFile = File.createTempFile("sqltool-", ".sql");
+                    tmpFile = File.createTempFile("sqltool-", ".sql");
 
-                //(new java.io.FileWriter(tmpFile)).write(sqlText);
-                java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
+                    //(new java.io.FileWriter(tmpFile)).write(sqlText);
+                    java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
 
-                fw.write(sqlText);
-                fw.flush();
-                fw.close();
-            } catch (IOException ioe) {
+                    fw.write(sqlText);
+                    fw.flush();
+                    fw.close();
+                } catch (IOException ioe) {
                     System.err.println(
                         "Failed to write given sql to temp file: " + ioe);
-                System.exit(4);
-            }
+                    System.exit(4);
+                }
             }
 
             interactive = (arg.length <= i + 1);
@@ -341,7 +341,7 @@ public class SqlTool {
                     && (arg.length != i + 2 ||!arg[i + 1].equals("-"))) {
 
                 // I.e., if there are any SQL files specified.
-                noinput = true;
+                noinput     = true;
                 scriptFiles = new File[arg.length - i - 1];
 
                 if (debug) {
@@ -381,7 +381,7 @@ public class SqlTool {
 
             // If user didn't set driver on command-line.
             driver = ((conData.driver == null) ? DEFAULT_JDBC_DRIVER
-                    : conData.driver);
+                                               : conData.driver);
         }
 
         if (System.getProperty("sqlfile.charset") == null
@@ -409,7 +409,7 @@ public class SqlTool {
             throw new RuntimeException(e.getMessage());
         }
 
-        File[] emptyFileArray = {};
+        File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
 
         if (scriptFiles == null) {

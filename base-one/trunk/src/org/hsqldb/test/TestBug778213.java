@@ -64,6 +64,10 @@ public class TestBug778213 extends TestBase {
         int               updateCount;
 
         try {
+            pstmt = conn.prepareStatement("drop table test if exists");
+
+            pstmt.executeUpdate();
+
             pstmt       = conn.prepareStatement("create table test(id int)");
             updateCount = pstmt.executeUpdate();
 

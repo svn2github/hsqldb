@@ -165,6 +165,8 @@ public class TestLikePredicateOptimizations extends TestBase {
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
 // --
+        stmt.execute("drop table test1 if exists");
+
         sql   = "CREATE TABLE test1 (col VARCHAR(30))";
         pstmt = conn.prepareStatement(sql);
 

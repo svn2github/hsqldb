@@ -68,7 +68,6 @@ import java.util.TimeZone;
  * @version 1.7.2
  * @since 1.7.0
  */
-
 public class HsqlDateTime {
 
     /**
@@ -79,7 +78,7 @@ public class HsqlDateTime {
     private static Calendar tempCalDefault = new GregorianCalendar();
     private static Calendar tempCalGMT =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-    private static Date     tempDate = new Date(0);
+    private static Date tempDate = new Date(0);
 
     static {
         resetToday();
@@ -315,9 +314,9 @@ public class HsqlDateTime {
 
     public static void resetToTime(Calendar cal) {
 
-        cal.set(Calendar.YEAR, 0);
+        cal.set(Calendar.YEAR, 1970);
         cal.set(Calendar.MONTH, 0);
-        cal.set(Calendar.DATE, 0);
+        cal.set(Calendar.DATE, 1);
         cal.set(Calendar.MILLISECOND, 0);
     }
 
@@ -386,13 +385,11 @@ public class HsqlDateTime {
 //#endif JDBC3
     }
 
-    static Time getNormalisedTime(long t) {
+    public static Time getNormalisedTime(long t) {
 
         synchronized (tempCalGMT) {
             setTimeInMillis(tempCalGMT, t);
-            tempCalGMT.clear(Calendar.YEAR);
-            tempCalGMT.clear(Calendar.MONTH);
-            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
+            resetToTime(tempCalGMT);
 
             long value = getTimeInMillis(tempCalGMT);
 
@@ -400,91 +397,67 @@ public class HsqlDateTime {
         }
     }
 
-    static Time getNormalisedTime(Time t) {
+    public static Time getNormalisedTime(Time t) {
+        return getNormalisedTime(t.getTime());
+    }
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, t.getTime());
-            tempCalGMT.clear(Calendar.YEAR);
-            tempCalGMT.clear(Calendar.MONTH);
-            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
+    public static Time getNormalisedTime(Timestamp ts) {
+        return getNormalisedTime(ts.getTime());
+    }
 
-            long value = getTimeInMillis(tempCalGMT);
+    public static long getNormalisedDate(long d) {
 
-            return new Time(value);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, d);
+            resetToDate(tempCalDefault);
+
+            return getTimeInMillis(tempCalDefault);
         }
     }
 
-    static Time getNormalisedTime(Timestamp ts) {
+    public static Date getNormalisedDate(Timestamp ts) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, ts.getTime());
-            tempCalGMT.clear(Calendar.YEAR);
-            tempCalGMT.clear(Calendar.MONTH);
-            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, ts.getTime());
+            resetToDate(tempCalDefault);
 
-            long value = getTimeInMillis(tempCalGMT);
-
-            return new Time(value);
-        }
-    }
-
-// clear(Calendar.HOUR_OF_DAY) won't work : http://developer.java.sun.com/developer/bugParade/bugs/4414844.html.
-    static Date getNormalisedDate(Timestamp ts) {
-
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, ts.getTime());
-            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
-            tempCalGMT.clear(Calendar.MINUTE);
-            tempCalGMT.clear(Calendar.SECOND);
-            tempCalGMT.clear(Calendar.MILLISECOND);
-
-            long value = getTimeInMillis(tempCalGMT);
+            long value = getTimeInMillis(tempCalDefault);
 
             return new Date(value);
         }
     }
 
-    static Date getNormalisedDate(Date d) {
+    public static Date getNormalisedDate(Date d) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, d.getTime());
-            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
-            tempCalGMT.clear(Calendar.MINUTE);
-            tempCalGMT.clear(Calendar.SECOND);
-            tempCalGMT.clear(Calendar.MILLISECOND);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, d.getTime());
+            resetToDate(tempCalDefault);
 
-            long value = getTimeInMillis(tempCalGMT);
+            long value = getTimeInMillis(tempCalDefault);
 
             return new Date(value);
         }
     }
 
-    static Timestamp getNormalisedTimestamp(Time t) {
+    public static Timestamp getNormalisedTimestamp(Time t) {
 
         synchronized (tempCalGMT) {
-            long value = getToday().getTimeInMillis();
+            setTimeInMillis(tempCalGMT,System.currentTimeMillis());
+            resetToDate(tempCalGMT);
 
-            setTimeInMillis(tempCalGMT, t.getTime());
-            tempCalGMT.clear(Calendar.YEAR);
-            tempCalGMT.clear(Calendar.MONTH);
-            tempCalGMT.clear(Calendar.DAY_OF_MONTH);
-
-            value += getTimeInMillis(tempCalGMT);
+            long value = tempCalGMT.getTimeInMillis() + t.getTime();
 
             return new Timestamp(value);
         }
     }
 
-    static Timestamp getNormalisedTimestamp(Date d) {
+    public static Timestamp getNormalisedTimestamp(Date d) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, d.getTime());
-            tempCalGMT.set(Calendar.HOUR_OF_DAY, 0);
-            tempCalGMT.clear(Calendar.MINUTE);
-            tempCalGMT.clear(Calendar.SECOND);
-            tempCalGMT.clear(Calendar.MILLISECOND);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, d.getTime());
+            resetToDate(tempCalDefault);
 
-            long value = getTimeInMillis(tempCalGMT);
+            long value = getTimeInMillis(tempCalDefault);
 
             return new Timestamp(value);
         }
@@ -498,10 +471,10 @@ public class HsqlDateTime {
      */
     static int getDateTimePart(java.util.Date d, int part) {
 
-        synchronized (tempCalGMT) {
-            tempCalGMT.setTime(d);
+        synchronized (tempCalDefault) {
+            tempCalDefault.setTime(d);
 
-            return tempCalGMT.get(part);
+            return tempCalDefault.get(part);
+        }
     }
-            }
 }

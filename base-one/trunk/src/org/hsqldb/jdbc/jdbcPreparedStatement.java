@@ -1851,9 +1851,9 @@ implements java.sql.PreparedStatement {
 
                 if (o == oldobject) {
                     if (outType == Types.DATE) {
-                        o = ((java.sql.Date) o).clone();
+                        o = HsqlDateTime.getNormalisedDate((java.sql.Date) o);
                     } else if (outType == Types.TIME) {
-                        o = ((java.sql.Time) o).clone();
+                        o = HsqlDateTime.getNormalisedTime((java.sql.Time) o);
                     } else if (outType == Types.TIMESTAMP) {
                         o = ((java.sql.Timestamp) o).clone();
                     }
