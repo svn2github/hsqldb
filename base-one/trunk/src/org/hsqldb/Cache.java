@@ -215,12 +215,12 @@ abstract class Cache {
     protected RowOutputInterface rowOut;
 
     // for testing
-    StopWatch saveAllTimer = new StopWatch(false);
-    StopWatch makeRowTimer = new StopWatch(false);
-    StopWatch sortTimer    = new StopWatch(false);
-    StopWatch rankTimer    = new StopWatch(false);
-    int       makeRowCount = 0;
-    int       saveRowCount = 0;
+//    StopWatch saveAllTimer = new StopWatch(false);
+//    StopWatch makeRowTimer = new StopWatch(false);
+//    StopWatch sortTimer    = new StopWatch(false);
+//    StopWatch rankTimer    = new StopWatch(false);
+    int makeRowCount = 0;
+    int saveRowCount = 0;
 
     Cache(String name, Database db) throws HsqlException {
 
@@ -377,14 +377,12 @@ abstract class Cache {
             cleanUp();
         }
 
-        makeRowTimer.start();
-
+//        makeRowTimer.start();
         //-- makeRow in text tables may change iPos because of blank lines
         //-- row can be null at the end of csv file
         r = makeRow(pos, t);
 
-        makeRowTimer.stop();
-
+//        makeRowTimer.stop();
         if (r == null) {
             return r;
         }
@@ -456,16 +454,13 @@ abstract class Cache {
      */
     private void cleanUp() throws HsqlException {
 
-        int tempfirstaccess = firstAccessCount;
-
         // put access count in the array
         for (int i = 0; i < iCacheSize; i++) {
             accessCount[i] = rFirst.iLastAccess;
             rFirst         = rFirst.rNext;
         }
 
-        rankTimer.start();
-
+//        rankTimer.start();
         // It is possible the target access count is shared
         // by many elements due to resetting of all access counts. So remove
         // the next access count to account for this condition.
@@ -474,8 +469,7 @@ abstract class Cache {
                 accessCount, iCacheSize / 8, firstAccessCount,
                 currentAccessCount, iCacheSize / 512) + 1;
 
-        rankTimer.stop();
-
+//        rankTimer.stop();
         // put all low rows in the array
         int removecount = 0;
 
@@ -488,11 +482,12 @@ abstract class Cache {
         }
 
         rowComparator.setType(rowComparator.COMPARE_POSITION);
-        sortTimer.start();
-        Sort.sort(rowTable, rowComparator, 0, removecount - 1);
-        sortTimer.stop();
-        saveAllTimer.start();
 
+//        sortTimer.start();
+        Sort.sort(rowTable, rowComparator, 0, removecount - 1);
+
+//        sortTimer.stop();
+//        saveAllTimer.start();
         int removedRows = 0;
 
         for (int i = 0; i < removecount; i++) {
@@ -519,8 +514,7 @@ abstract class Cache {
             rowTable[i] = null;
         }
 
-        saveAllTimer.stop();
-
+//        saveAllTimer.stop();
         // Trace.printSystemOut("cache.cleanup() min access: ", tempfirstaccess);
         // Trace.printSystemOut("cache.cleanup() current access: ", currentAccessCount);
         // Trace.printSystemOut("cache.cleanup() total saveRowCount: ", saveRowCount);
@@ -612,8 +606,7 @@ abstract class Cache {
      */
     protected void saveAll() throws HsqlException {
 
-        saveAllTimer.start();
-
+//        saveAllTimer.start();
         if (rFirst == null) {
             return;
         }
@@ -650,7 +643,8 @@ abstract class Cache {
             }
         }
 
-        saveAllTimer.stop();
+//        saveAllTimer.stop();
+/*
         Trace.printSystemOut(
             saveAllTimer.elapsedTimeToMessage(
                 "Cache.saveRow() total row save time"));
@@ -665,6 +659,7 @@ abstract class Cache {
             sortTimer.elapsedTimeToMessage("Cache.sort() total time"));
         Trace.printSystemOut(
             rankTimer.elapsedTimeToMessage("Cache.rank() total time"));
+ */
     }
 
     abstract protected void saveRow(CachedRow r)

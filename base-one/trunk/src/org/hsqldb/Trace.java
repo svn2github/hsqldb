@@ -99,7 +99,7 @@ public class Trace {
     public static boolean       TRACE          = false;
     public static boolean       TRACESYSTEMOUT = false;
     public static final boolean STOP           = false;
-    public static final boolean DOASSERT       = true;
+    public static final boolean DOASSERT       = false;
 
     //
     public static final int DATABASE_ALREADY_IN_USE                   = 1,

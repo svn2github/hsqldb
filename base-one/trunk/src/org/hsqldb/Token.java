@@ -39,6 +39,7 @@ import org.hsqldb.lib.HashSet;
  * keywords. <p>
  *
  * @author  Nitin Chauhan
+ * @author  fredt@users
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
@@ -757,7 +758,6 @@ public class Token {
 
     static {
 
-        // both maps are used as sets only
         // literals not allowed as table / column names
         keywords = new HashSet(67);
 
