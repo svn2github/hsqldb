@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.46 2004/07/01 18:05:25 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.47 2004/07/05 12:54:19 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.46 $</edition>
-        <pubdate>$Date: 2004/07/01 18:05:25 $</pubdate>
+        <edition>$Revision: 1.47 $</edition>
+        <pubdate>$Date: 2004/07/05 12:54:19 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.37 of SqlTool and
-            1.83 of SqlFile (the latter is the class which does most of the
+            1.84 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -382,14 +382,22 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             <varlistentry><term>\q</term><listitem><simpara>
                 quit
             </simpara></listitem></varlistentry>
-            <varlistentry><term>\dt</term><listitem><simpara>
-                Lists available database tables.
-                Works well for HSQLDB and for Oracle.
-                Need user feedback about compatibility with other database 
-                vendors.
-            </simpara></listitem></varlistentry>
-            <varlistentry><term>\d tablename</term><listitem><simpara>
-                Lists names of all columns in the specified table.
+            <varlistentry><term>\dt</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\dv</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\d*</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\ds</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\da</term><listitem><para>
+                Lists available table-like objects of the given type.
+                <itemizedlist>
+                    <listitem><simpara>t: non-system Tableѕ</simpara></listitem>
+                    <listitem><simpara>v: Views</simpara></listitem>
+                    <listitem><simpara>*: all table-like objects</simpara></listitem>
+                    <listitem><simpara>s: System tableѕ</simpara></listitem>
+                    <listitem><simpara>a: database SQL Aliases</simpara></listitem>
+                </itemizedlist>
+            </para></listitem></varlistentry>
+            <varlistentry><term>\d objectname</term><listitem><simpara>
+                Lists names of all columns in the specified table or view.
                 </simpara><tip><simpara>
                 When working with real data (as opposed to learning or playing),
                 I often find it useful to run two SqlTool sessions in two
@@ -1022,7 +1030,8 @@ java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
                 <listitem><simpara>
                     Output of SELECT statements.
                 </simpara></listitem> <listitem><simpara>
-                    Output of "\dt" and "\d TABLENAME" Special Commands.
+                    Output of all "\d" Special Commands.
+                    (I.e., "\dt", "\dv", etc., and "\d OBJECTNAME").
                 </simpara></listitem> <listitem><simpara>
                     Output of "\p" Special Commands.
                     You will want to use this to add titles, and perhaps
