@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.36 2004/02/17 02:18:37 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.37 2004/02/17 12:26:16 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.36 $
+ * @version $Revision: 1.37 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -103,7 +103,7 @@ public class SqlFile {
     final private static String BANNER =
         "SqlFile processor.  Enter \"\\q\" to quit,\n"
         + "    \"\\?\" to list Special Commands, "
-        + "\"/?\" to list Buffer/Editing commands\n\n"
+        + "\":?\" to list Buffer/Editing commands\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "An empty line within an SQL Statement moves it into the buffer.\n"
@@ -121,6 +121,8 @@ public class SqlFile {
         + "    :s/from/to/ Substitute \"to\" for all occurrences of \"from\"\n"
         + "                ('$'s in \"from\" and \"to\" represent line breaks)\n"
         + "                (use \":s/from//\" to delete 'from' strings)\n"
+        + "                ('/' can actually be any char which occurs in\n"
+        + "                 neither \"to\" nor \"from\")\n"
         + "    :;          Execute current buffer as an SQL Statement\n"
         ;
     final private static String HELP_TEXT =
@@ -447,22 +449,23 @@ public class SqlFile {
                 try {
                     StringBuffer sb = new StringBuffer(commandFromHistory(0));
                     if (other == null) throw new BadSwitch(0);
+                    String delim = other.substring(0, 1);
                     StringTokenizer toker =
-                        new StringTokenizer(other, "/", true);
+                        new StringTokenizer(other, delim, true);
                     if (toker.countTokens() < 4
-                            || !toker.nextToken().equals("/")) {
+                            || !toker.nextToken().equals(delim)) {
                         throw new BadSwitch(1);
                             }
                     String from = toker.nextToken().replace('$', '\n');
-                    if (!toker.nextToken().equals("/")) {
+                    if (!toker.nextToken().equals(delim)) {
                         throw new BadSwitch(2);
                     }
                     String to = toker.nextToken().replace('$', '\n');
-                    if (to.equals("/")) {
+                    if (to.equals(delim)) {
                         to = "";
                     } else {
                         if (toker.countTokens() < 1
-                         || !toker.nextToken().equals("/")) {
+                         || !toker.nextToken().equals(delim)) {
                             throw new BadSwitch(3);
                          }
                     }
@@ -566,7 +569,7 @@ public class SqlFile {
                     }
                 }
                 setBuf(commandFromHistory(commandsAgo));
-                stdprint("RESTORED following command to buffer.  Enter \"/?\" "
+                stdprint("RESTORED following command to buffer.  Enter \":?\" "
                         + "to see buffer commands:\n" + commandFromHistory(0));
                 return;
             case '?' :
