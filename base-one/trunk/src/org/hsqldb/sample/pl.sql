@@ -1,13 +1,10 @@
 /*
-    $Id$
+    $Id: pl.sql,v 1.1 2004/06/08 22:34:32 unsaved Exp $
     SQL File to illustrate the use of SqlTool PL features.
     Invoke like
         java -jar .../hsqldb.jar .../pl.sql mem
                                                          -- blaine
 */
-
-/* Have to run any PL command so that we can use PL var in next line */
-* VAR =
 
 * if (! *MYTABLE)
     \p MYTABLE variable not set!
