@@ -198,6 +198,23 @@ class Index {
     }
 
     /**
+     * Returns the node count.
+     */
+    int size() throws HsqlException {
+
+        int  count = 0;
+        Node n     = first();
+
+        while (n != null) {
+            n = next(n);
+
+            count++;
+        }
+
+        return count;
+    }
+
+    /**
      * Insert a node into the index
      */
     void insert(Node i) throws HsqlException {
@@ -703,7 +720,7 @@ class Index {
     }
 
     /**
-     * Finds the first node that is not null
+     * Finds the first node where the data is not null.
      *
      * @return matching node
      *
@@ -750,7 +767,7 @@ class Index {
     }
 
     /**
-     * Return the first node of the index
+     * Returns the first node of the index
      *
      * @return first node
      *
@@ -774,7 +791,7 @@ class Index {
     }
 
     /**
-     * Return the node after the given one
+     * Returns the node after the given one
      *
      * @param x node
      *

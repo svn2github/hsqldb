@@ -3000,4 +3000,8 @@ public class Table extends BaseTable {
             }
         }
     }
+
+    public int getRowCount() throws HsqlException {
+        return getPrimaryIndex().size();
+    }
 }
