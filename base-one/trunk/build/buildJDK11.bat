@@ -1,4 +1,4 @@
-@echo HSQLDB build file for jdk 1.1.x and above
+@echo HSQLDB build file for jdk 1.1.x
 @echo *** we recommend the use of the ANT build.xml instead of this method
 @echo for all jdk's include the path to jdk1.x.x\bin in your system path statement
 @echo for jdk1.1.x also set the system classpath to include the path to

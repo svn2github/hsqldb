@@ -1,8 +1,8 @@
 Readme Linux
 
-v1.0 08/29/2002
-v1.1 09/10/2002
-v1.2 10/01/2002
+v1.0 2002-08-29
+v1.1 2002-10-09
+v1.2 2002-10-01
 
 It is recommended to run the shell scripts(from /bin and /demo) from the console,
 as you will not to be able see any messages from the desktop.

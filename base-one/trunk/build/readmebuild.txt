@@ -2,8 +2,8 @@ HSQLDB can be built in any combination of four different sizes and
 three JRE (Java Runtime Environment) versions.
 
 The smallest jar size (hsqldbmin.jar) contains only the database
-and JDBC support for in-process mode databases. The next smallest jar size
-(hsqldbmain.jar) also contains support for server modes.
+and JDBC support for in-process mode databases. The next smallest
+jar size (hsqldbmain.jar) also contains support for server modes.
 The default size (hsqldb.jar) additionally contains the
 utilities. The largest size (hsqldbtest.jar) includes some test
 classes as well. You need the JUnit jar in the /lib directory in
@@ -27,10 +27,11 @@ different sizes of the HSQLDB Jar. The default is built using:
 
 ant jar
 
-The Ant method always builds a jar that is compatible with the
+The Ant method always builds a jar with the
 JDK that is used by Ant and specified in the JAVA_HOME environment
 variable. It is recommended not to use JDK 1.1.x for building the
-jar, as this version produces much larger jar sizes. Use JDK 1.3.x
+jar, as this version produces much larger jar sizes and the result
+is not upward compatible with newer JDK'S / JRE's. Use JDK 1.3.x
 instead.
 
 Before building the hsqldbtest.jar package, you should download the
@@ -39,9 +40,8 @@ which is included in the .zip package.
 
 Batch Build
 
-Note: Batch an Linux builds are not in synch with the Ant build as
-of 18 Nov 2002. These scripts will be rewritten once the file list
-for the next release is finalised.
+The Unix / Linux builds have been written by Blaine Simpson and
+support a wide range of JDK's.
 
 A set of MSDOS batch files is also provided. These produce only
 the default jar size. The path and classpath variables for the JDK
@@ -59,8 +59,8 @@ are provided.
 
 JDK and JRE versions
 
-You can use any recent JDK for building the jar. Use of JDK 1.3.x or
-1.4.x is recommended.
+You can use any recent JDK for building the jar. Use of JDK 1.3.x is
+recommended for the widest compatibility.
 
 Javadoc can be built with Ant and batch files.
 

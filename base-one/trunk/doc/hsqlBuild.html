@@ -5,14 +5,11 @@
 </head>
 <body bgcolor=#FFFFFF>
 <h3>Building hsqldb version 1.7.1 and 1.7.2</h3>
-In most cases, you do not need to build hsqldb at all, since the supplied
-hsqldb.jar file was built with Java 1.3 and will run with any JRE.
+From 1.7.2, in most cases you do not need to build hsqldb at all, since the supplied
+hsqldb.jar file was built with Java 1.3.1 and will run with any JRE.
 <h4>Building with ANT, from the Apache Jakarta Project</h4>
-<p>ANT (<u>A</u>nother <u>N</u>eat <u>T</u>ool), from the <a
-href="http://jakarta.apache.org">Jakarta project</a>, is used for building hsqldb. 
-  Thanks go out to the Apache/Jakarta and ANT teams for giving the world such 
-  a wonderful tool. Additional links to ANT info can be found on the <a
-href="internet\hSqlLinks.html">Links Page</a>.</p>
+<p>ANT (Another Neat Tool), from the <a
+href="http://jakarta.apache.org">Jakarta project</a>, is used for building hsqldb. The version currently used to test the build script is 1.5.1.</p>
 <h4>Obtaining ANT</h4>
 <p>Ant is a part of the Jakarta/Apache Project. </p>
 <ul type=disc>
@@ -26,101 +23,104 @@ font-family:Symbol'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nb
 href="http://jakarta.apache.org/ant/manual/">Installing ANT page</a> and follow 
   the dirctions for your platform </strong></p>
 <h4><strong>Building with ANT</strong> </h4>
-<p>In <code><span style='font-size:10.0pt;font-family:"Courier New"'>/build</span></code> 
+<p>Under the <code>/hsqldb </code>folder, in <code><span style='font-size:10.0pt;font-family:"Courier New"'>/build</span></code> 
   there is an Ant <code><span style='font-size:10.0pt;font-family:"Courier New"'>build.xml</span></code> 
   that builds the hsqldb.jar. (Ant must be already installed). To use it, change to <code><span style='font-size:10.0pt;
 font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
 <p>ant</p>
 <p>This displays the command line options which include</p>
-<table border=1 cellpadding=0 width="75%">
-  <tr> 
-    <td class="Normal"> 
-      <p>ant jar </p>
-    </td>
-    <td class="Normal"> 
-      <p>to make the hsqldb.jar</p>
-    </td>
-  </tr>
-  <tr> 
-    <td class="Normal"> 
-      <p>ant clean</p>
-    </td>
-    <td class="Normal"> 
-      <p>to clean up the /classes directory that is created</p>
-    </td>
-  </tr>
-  <tr> 
-    <td class="Normal"> 
-      <p>ant cleanall</p>
-    </td>
-    <td class="Normal"> 
-      <p>to remove the old jar as well</p>
-    </td>
-  </tr>
-  <tr> 
-    <td class="Normal"> 
-      <p>ant javadoc</p>
-    </td>
-    <td class="Normal"> 
-      <p>to build javadoc</p>
-    </td>
-  </tr>
-  <tr> 
-    <td class="Normal"> 
-      <p>ant jarmain</p>
-    </td>
-    <td class="Normal"> 
-      <p>to build a smaller jar for hsqldb that does not contain utilities</p>
-    </td>
-  </tr>
-  <tr> 
-    <td class="Normal"> 
-      <p>ant jartest</p>
-    </td>
-    <td class="Normal"> 
-      <p>to build a larger jar for hsqldb that contains tests</p>
-    </td>
-  </tr>
+<table border=1 cellpadding=2 width="75%" cellspacing="0">
+   <tr> 
+      <td class="Normal"> 
+         <p>ant jar </p>
+      </td>
+      <td class="Normal"> 
+         <p>to make the hsqldb.jar</p>
+      </td>
+   </tr>
+   <tr> 
+      <td class="Normal"> 
+         <p>ant clean</p>
+      </td>
+      <td class="Normal"> 
+         <p>to clean up the /classes directory that is created</p>
+      </td>
+   </tr>
+   <tr> 
+      <td class="Normal"> 
+         <p>ant cleanall</p>
+      </td>
+      <td class="Normal"> 
+         <p>to remove the old jar as well</p>
+      </td>
+   </tr>
+   <tr> 
+      <td class="Normal"> 
+         <p>ant javadoc</p>
+      </td>
+      <td class="Normal"> 
+         <p>to build javadoc</p>
+      </td>
+   </tr>
+   <tr> 
+      <td class="Normal"> 
+         <p>ant jarmain</p>
+      </td>
+      <td class="Normal"> 
+         <p>to build a smaller jar for hsqldb that does not contain utilities</p>
+      </td>
+   </tr>
+   <tr> 
+      <td class="Normal"> 
+         <p>ant jartest</p>
+      </td>
+      <td class="Normal"> 
+         <p>to build a larger jar for hsqldb that contains tests</p>
+      </td>
+   </tr>
+   <tr>
+      <td class="Normal" colspan="2">... and more options</td>
+   </tr>
 </table>
 <p><br>
   HSQLDB can be built in any combination of four different sizes and three JRE 
   (Java Runtime Environment) versions. The smallest jar size (hsqldbmin.jar) 
-  contains only the standalone database and JDBC support. The default size (hsqldb.jar) also 
+  contains only the standalone database (no servers) and JDBC support and is suitable for embedded applications. The default size (hsqldb.jar) also 
   contains server mode support and the utilities. The largest size (hsqldbtest.jar) includes some test 
   classes as well. </p>
 <p>You need the JUnit jar in the /lib directory in order to build and run the 
   test classes.</p>
 <p>A Jar file for HSQLDB is provided in the .zip package. This jar contains both 
-  the database and the utilities and has been built with JDK 1.3.1. If you want 
-  to run HSQLDB with JRE version 1.1.x you should rebuild the jar.</p>
+  the database and the utilities and has been built with JDK 1.3.1. From version 1.7.2, this jar is compatible with all JDK / JRE versions from 1.1.x to 1.4.</p>
 <p>The preferred method of rebuilding the jar is with Ant. After installing Ant 
   on your system use the following command from the /build directory: ant The 
   command displays a list of different options for building different sizes of 
   the HSQLDB Jar. The default is built using:</p>
 <p>ant jar</p>
-<p>The Ant method always builds a Jar that is compatible with the JDK that is 
-  used by Ant and specified in the JAVA_HOME environment variable. Before building 
-  the hsqldbtest.jar package, you should download the junit.jar and put it in 
+<p>The Ant method always builds a jar with the JDK that is 
+  used by Ant and specified in the JAVA_HOME environment variable. From version 1.7.2, Use of JDK 1.1.x is not recommended for building the JAR, even for running under JDK 1.1.x -- use JDK 1.3.1 for compatibility with 1.1.x - 1.4.x. Building with JDK 1.4.x will result in a jar that is not backward compatible.</p>
+<p>Before building 
+  the hsqldbtest.jar package, you should download the junit jar from <a href="http://www.junit.org">www.junit.org</a>  and put it in 
   the /lib directory, alongside servlet.jar, which is included in the .zip package.</p>
 <h4>Building with Batch Files</h4>
 <p>A set of MSDOS batch files is also provided. These produce only the default 
   jar size. The path and classpath variables for the JDK should of course be set 
   before running any of the batch files.</p>
 <p>If you are compiling for JDK's other than 1.2.x or 1.3.x, you should use the 
-  appropriate switchtoJDK11.bat or switchtoJDK14.bat to adapt the source files 
+  appropriate switchToJDK11.bat or switchToJDK14.bat to adapt the source files 
   to the target JDK before running the appropriate buildJDK11.bat or buildJDK14.bat 
   JDK and JRE versions.</p>
-<p>The JDK used for building the jar should generally be the same series as the 
+<p>From version 1.7.2, Use of JDK 1.1.x is not recommended for building the JAR, even for running under JDK 1.1.x. For earlier verisons, the JDK used for building the jar should generally be the same series as the 
   target. This is because the java.sql package in each version (1.1.x 1.2.x 1.3.x 
   1.4.x) has a different set of methods in its public interfaces. Javadoc can 
   be built with Ant and batch files.</p>
 
 <h4>Building on UNIX without Ant  (hsqldb 1.7.2)</h4>
-The script <SPAN style="italic">buildjar.sh</SPAN> builds a new hsqldb.jar
+The script <span style="italic">buildjar.sh</span> builds a new hsqldb.jar
 appropriate for your JDK (the one at $JAVA_HOME).
 The script does not use Ant or Make, but you do need a JDK at $JAVA_HOME.
-<P>
-Just run <SPAN style="italic">buildjar.sh</SPAN> and the script will tell you
+<p>
+Just run <span style="italic">buildjar.sh</span> and the script will tell you
 what JRE(s) the resultant jar file is good for.
 You are not given a choice of what your target JRE is because, at this time,
 it is entirely dependent on the version of your JDK.

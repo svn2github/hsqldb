@@ -1,9 +1,19 @@
 Readme File
 
-2002.11.04
-CVS hsqldb-dev module tag: HEAD data: 2002.10.04
+HSQLDB 1.7.2 ALPHA_G
 
-Bug fixes to User.java and UserManager.java
+2002.12.11
+
+CVS hsqldb-dev module tag: HSQLDB_1_7_2_ALPHA_H
+
+Reduction in JDK / JRE dependencies (see readmebuild.txt)
+Extensive refactoring of some of the larger classes.
+More changes to core classes Node, Row, Index, Cache, Log ...
+Some minor bug fixes and enhancements.
+Enhancements to text table support, including binary columns.
+Bug fixes to User.java and UserManager.java.
+Support for ON UPDATE / DELETE SET NULL / SET DEFAULT
+SSL support for Server mode operation.
 
 2002.10.30
 
