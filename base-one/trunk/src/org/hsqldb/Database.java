@@ -1778,7 +1778,7 @@ class Database {
                 (TempConstraint) tempConstraints.get(0);
 
 // tony_lai@users 20020820 - patch 595099
-            t.createPrimaryKey(tempConst.name, tempConst.localCol);
+            t.createPrimaryKey(tempConst.name, tempConst.localCol, true);
 
             boolean logDDL = false;
 

@@ -1342,15 +1342,12 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *    primary key constraint
      * @throws SQLException if there is a problem creating the constraint
      */
+/*
     private static void _createPk(Table t, int[] cols) throws SQLException {
 
-        if (cols == null) {
-            t.createPrimaryKey();
-        } else {
-            t.createPrimaryKey(null, cols);
-        }
+       t.createPrimaryKey(cols);
     }
-
+*/
     /**
      * Retrieves a new <code>Result</code> object whose metadata matches that
      * of the specified table.
@@ -4816,7 +4813,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         boolean access = _session.isAccessible(table.getName());
         if (access == false )
             return access;
-        if (table.isTemp())
+        if (table.isTemp() && table.tableType != Table.SYSTEM_TABLE)
             return (table.getOwnerSessionId() == _session.getId());
 
         return true;
@@ -5239,7 +5236,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "ALIAS_CAT", Types.VARCHAR);
             _addColumn(t, "ALIAS_SCHEM", Types.VARCHAR);
             _addColumn(t, "ALIAS", Types.VARCHAR, false);          // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -5499,7 +5496,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
             _addColumn(t, "NULLABLE", Types.SMALLINT, false);         // not null
             _addColumn(t, "IN_KEY", Types.BIT, false);                // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -5663,7 +5660,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         _addColumn(t,"OPERANDS_DESCRIPTION", Types.VARCHAR);
         _addColumn(t,"INSTRUCTION_DESCRIPTION", Types.VARCHAR);
 
-        _createPk(t, null);
+        t.createPrimaryKey(null);
         _addIndex(t, null, new int[]{4},false);
 
         if (!isWithContent()) {
@@ -5865,7 +5862,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "MAX_CACHE_SIZE", Types.INTEGER, false);        // not null
             _addColumn(t, "MULTIPLIER_MASK", Types.VARCHAR, false);       // not null
             _addColumn(t, "WRITER_LENGTH", Types.INTEGER, false);         // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -5994,7 +5991,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             t = createBlankTable(sysTableHsqlNames[tableIndex]);
 
             _addColumn(t, "TABLE_CAT", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6045,7 +6042,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
             _addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
             _addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6180,7 +6177,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
             _addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
             _addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6345,7 +6342,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "SCOPE_SCHEMA", Types.VARCHAR);
             _addColumn(t, "SCOPE_TABLE", Types.VARCHAR);
             _addColumn(t, "SOURCE_DATA_TYPE", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6481,7 +6478,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
             _addColumn(t, "KEY", Types.VARCHAR, false);      // not null
             _addColumn(t, "VALUE", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6596,7 +6593,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "FK_NAME", Types.VARCHAR);
             _addColumn(t, "PK_NAME", Types.VARCHAR);
             _addColumn(t, "DEFERRABILITY", Types.SMALLINT, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6831,7 +6828,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "CARDINALITY", Types.INTEGER);
             _addColumn(t, "PAGES", Types.INTEGER);
             _addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -6989,7 +6986,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "COLUMN_NAME", Types.VARCHAR, false);    // not null
             _addColumn(t, "KEY_SEQ", Types.SMALLINT, false);       // not null
             _addColumn(t, "PK_NAME", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7131,7 +7128,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "SEQ", Types.INTEGER);
 
             // ----------------------------------------------------------------
-            _createPk(t, null);
+            t.createPrimaryKey(null);
             _addIndex(t, null, new int[]{ 13 }, false);
 
             return t;
@@ -7338,7 +7335,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "SIGNATURE", Types.VARCHAR);
 
             // ----------------------------------------------------------------
-            _createPk(t, null);
+            t.createPrimaryKey(null);
             _addIndex(t, null, new int[]{ 9 }, false);
 
             return t;
@@ -7477,7 +7474,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "PROPERTY_NAME", Types.VARCHAR, false);
             _addColumn(t, "PROPERTY_VALUE", Types.VARCHAR);
             _addColumn(t, "PROPERTY_CLASS", Types.VARCHAR, false);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7714,7 +7711,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
             _addColumn(t, "TABLE_SCHEM", Types.VARCHAR, false);    // not null
             _addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7792,7 +7789,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "LAST_IDENTITY", Types.BIGINT);
             _addColumn(t, "TRANSACTION_SIZE", Types.INTEGER, false);
             _addColumn(t, "TRANSACTION_NESTED", Types.BIT, false);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7873,7 +7870,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
             _addColumn(t, "TABLE_NAME", Types.VARCHAR, false);         // not null
             _addColumn(t, "SUPERTABLE_NAME", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7905,7 +7902,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "SUPERTYPE_CAT", Types.VARCHAR);
             _addColumn(t, "SUPERTYPE_SCHEM", Types.VARCHAR);
             _addColumn(t, "SUPERTYPE_NAME", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -7958,7 +7955,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
             _addColumn(t, "PRIVILEGE", Types.VARCHAR, false);       // not null
             _addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8092,7 +8089,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "IS_DESC", Types.BIT);
 
             // ------------------------------------------------------------
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8211,7 +8208,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             t = createBlankTable(sysTableHsqlNames[tableIndex]);
 
             _addColumn(t, "TABLE_TYPE", Types.VARCHAR, false);    // not null
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8286,7 +8283,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "COLUMN_NAME", Types.VARCHAR);
             _addColumn(t, "COLUMN_LIST", Types.VARCHAR);
             _addColumn(t, "COLUMN_USAGE", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8486,7 +8483,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "DESCRIPTION", Types.VARCHAR, false);
             _addColumn(t, "ACTION_TYPE", Types.VARCHAR, false);
             _addColumn(t, "TRIGGER_BODY", Types.VARCHAR, false);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8672,7 +8669,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             // for JDBC sort contract:
             //-------------------------------------------
             _addColumn(t, "SEQ", Types.FLOAT);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -8849,7 +8846,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             // required for JDBC sort contract:
             //-------------------------------------------
             _addColumn(t, "SEQ", Types.FLOAT);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -9040,7 +9037,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "SCOPE_SCHEMA", Types.VARCHAR);
             _addColumn(t, "SCOPE_TABLE", Types.VARCHAR);
             _addColumn(t, "SOURCE_DATA_TYPE", Types.SMALLINT);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -9099,7 +9096,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "DATA_TYPE", Types.VARCHAR, false);     // not null
             _addColumn(t, "REMARKS", Types.VARCHAR);
             _addColumn(t, "BASE_TYPE ", Types.SMALLINT);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -9125,7 +9122,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
             _addColumn(t, "USER", Types.VARCHAR, false);
             _addColumn(t, "ADMIN", Types.BIT, false);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -9221,7 +9218,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "TABLE_NAME", Types.VARCHAR, false);        // not null
 
             // -----------------------------------------------------------------
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }
@@ -9251,7 +9248,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "VIEW_SCHEM", Types.VARCHAR);
             _addColumn(t, "VIEW_NAME", Types.VARCHAR);
             _addColumn(t, "VIEW_SQL", Types.VARCHAR);
-            _createPk(t, null);
+            t.createPrimaryKey(null);
 
             return t;
         }

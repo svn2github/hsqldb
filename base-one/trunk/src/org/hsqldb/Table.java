@@ -149,7 +149,7 @@ class Table {
     protected Cache    cCache;
     protected HsqlName tableName;               // SQL name
     protected int      tableType;
-    protected int  ownerSessionId;              // fredt - set for temp tables only
+    protected int      ownerSessionId;          // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
@@ -178,8 +178,7 @@ class Table {
                 break;
 
             case TEMP_TABLE :
-
-                isTemp       = true;
+                isTemp         = true;
                 ownerSessionId = sessionid;
                 break;
 
@@ -194,15 +193,14 @@ class Table {
                 break;
 
             case TEMP_TEXT_TABLE :
-
                 if (!db.logger.hasLog()) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 
-                isTemp       = true;
-                isText       = true;
-                isReadOnly   = true;
-                isCached     = true;
+                isTemp         = true;
+                isText         = true;
+                isReadOnly     = true;
+                isCached       = true;
                 ownerSessionId = sessionid;
                 break;
 
@@ -486,7 +484,8 @@ class Table {
 
     protected Table duplicate() throws SQLException {
 
-        Table t = (new Table(dDatabase, tableName, tableType, ownerSessionId));
+        Table t = (new Table(dDatabase, tableName, tableType,
+                             ownerSessionId));
 
         return t;
     }
@@ -582,7 +581,7 @@ class Table {
         }
 
 // tony_lai@users - 20020820 - patch 595099 - primary key names
-        tn.createPrimaryKey(getIndex(0).getName(), primarykey);
+        tn.createPrimaryKey(getIndex(0).getName(), primarykey, false);
 
         tn.vConstraint = vConstraint;
 
@@ -871,14 +870,21 @@ class Table {
     }
 
     /**
+     *  Shortcut for creating system table PK's
+     *
+     * @throws  SQLException
+     */
+    void createPrimaryKey(int[] cols) throws SQLException {
+        createPrimaryKey(null, cols, false);
+    }
+
+    /**
      *  Shortcut for creating default PK's
      *
      * @throws  SQLException
      */
     void createPrimaryKey() throws SQLException {
-
-// tony_lai@users 20020820 - patch 595099
-        createPrimaryKey(null, null);
+        createPrimaryKey(null, null, false);
     }
 
     /**
@@ -891,8 +897,8 @@ class Table {
      */
 
 // tony_lai@users 20020820 - patch 595099
-    void createPrimaryKey(HsqlName pkName,
-                          int[] columns) throws SQLException {
+    void createPrimaryKey(HsqlName pkName, int[] columns,
+                          boolean columnsNotNull) throws SQLException {
 
         Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
@@ -908,7 +914,10 @@ class Table {
             iVisibleColumns--;
         } else {
             for (int i = 0; i < columns.length; i++) {
-                getColumn(columns[i]).setNullable(false);
+                if (columnsNotNull) {
+                    getColumn(columns[i]).setNullable(false);
+                }
+
                 getColumn(columns[i]).setPrimaryKey(true);
             }
         }
@@ -1445,7 +1454,7 @@ class Table {
      *  add the row to the indexes.
      */
     void insertNoCheckRollback(Object row[], Session c,
-                       boolean log) throws SQLException {
+                               boolean log) throws SQLException {
 
         Row r = Row.newRow(this, row);
 
@@ -2216,7 +2225,7 @@ class Table {
      * from the Cache.
      */
     void deleteNoCheckRollback(Object row[], Session c,
-                       boolean log) throws SQLException {
+                               boolean log) throws SQLException {
 
         Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
@@ -2283,7 +2292,6 @@ class Table {
      *  constraint checks. Parameter doit indicates whether only to check
      *  integrity or to perform the update.
      */
-
     private void update(Row oldr, Object[] newrow, int[] col, Session c,
                         boolean doit) throws SQLException {
 
@@ -2309,6 +2317,7 @@ class Table {
         fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow);
     }
 */
+
     /**
      * Mid level row update method. Fires triggers.
      */
@@ -2330,6 +2339,7 @@ class Table {
         insertNoCheck(newrow, c, log);
     }
 */
+
     /**
      * Low level row update method. Updates the row and the indexes.
      */
@@ -2596,9 +2606,7 @@ class Table {
      * Currently only for temp system tables.
      */
     void clearAllRows() throws SQLException {
-
         Trace.check(isTemp, Trace.OPERATION_NOT_SUPPORTED);
-
         setIndexRootsNull();
     }
 
