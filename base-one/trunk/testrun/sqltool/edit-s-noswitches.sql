@@ -1,13 +1,14 @@
 /*
-    $Id: hist-recall-19.sql,v 1.2 2004/06/16 19:37:10 unsaved Exp $
+    $Id: edit-s-noswitches.sql,v 1.1 2004/06/16 19:53:33 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
     Tests:  Command-line editing with switch command.  No subst. switches.
 
     HARNESS_METADATA        BEGIN         
-    requireStdoutRegex  (?m)\sMARK A\n.*Current Buffer:\nalphREPLbeta gamma delta$
-    requireStdoutRegex  (?m)\sMARK B\n.*Current Buffer:\nalphREPLbeta g delta$
+    requireStdoutRegex  (?m)\sMARK A\n.*Current Buffer:\nalpha beta gamma delta$
+    requireStdoutRegex  (?m)\sMARK B\n.*Current Buffer:\nalphREPLbeta gamma delta$
+    requireStdoutRegex  (?m)\sMARK C\n.*Current Buffer:\nalphREPLbeta g delta$
     arg mem 
     HARNESS_METADATA        END       
 */
@@ -17,7 +18,13 @@
 
 alpha beta gamma delta
 
+/* Should change nothing because case doesn't match */
 \p MARK A
-:s/a /REPL/
+:s/A /REPL/
+
+/* Should work */
 \p MARK B
+:s/a /REPL/
+
+\p MARK C
 :s/amma//
