@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.13 2004/02/19 16:23:10 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.14 2004/02/19 17:00:20 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -148,6 +148,10 @@ public class SqlTool {
                         url = value;
                     } else if (keyword.equals("username")) {
                         username = value;
+                    } else if (keyword.equals("driver")) {
+                        driver = value;
+                    } else if (keyword.equals("charset")) {
+                        charset = value;
                     } else if (keyword.equals("password")) {
                         password = value;
                     } else {
@@ -169,11 +173,13 @@ public class SqlTool {
         String url      = null;
         String username = null;
         String password = null;
+        String driver   = null;
+        String charset  = null;
     }
 
     static final private String SYNTAX_MESSAGE =
-        "Usage: java org.hsqldb.util.SqlTool [--optname [optval...]] "
-        + "urlid [file1.sql...]\n" + "where arguments are:\n"
+        "Usage: java [-Dsqlfile.charset=x.y.z*] org.hsqldb.util.SqlTool \\\n"
+        + "    [--optname [optval...]] urlid [file1.sql...]\n" + "where arguments are:\n"
         + "    --help                   Prints this message\n"
         + "    --list                   List urlids in the rcfile\n"
 + "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
@@ -182,12 +188,13 @@ public class SqlTool {
 + "                             where \"SQL;\" consists of SQL command(s) like\n"
 + "                             in an SQL file, and may contain line breaks\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
-        + "    --driver a.b.c.Driver    JDBC driver class ["
+        + "    --driver a.b.c.Driver*   JDBC driver class ["
         + DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
         + "    file1.sql...             SQL files to be executed [stdin]\n"
         + "                             "
-        + "(Use '-' for non-interactively stdin)";
+        + "(Use '-' for non-interactively stdin)\n"
+        + "* items may, alternatively, be set per-urlid in the rc file.";
 
     /** Utility nested class for internal use. */
     private static class BadCmdline extends Exception {};
@@ -213,7 +220,7 @@ public class SqlTool {
         String  rcFile      = null;
         File    tmpFile     = null;
         String  sqlText     = null;
-        String  driver      = DEFAULT_JDBC_DRIVER;
+        String  driver      = null;
         String  targetDb    = null;
         boolean debug       = false;
         File[]  scriptFiles = null;
@@ -320,6 +327,17 @@ public class SqlTool {
         }
         if (debug) {
             conData.report();
+        }
+        if (driver == null) {
+
+            // If user didn't set driver on command-line.
+            driver = ((conData.driver == null)
+                    ? DEFAULT_JDBC_DRIVER
+                    : conData.driver);
+        }
+        if (System.getProperty("sqlfile.charset") == null
+                && conData.charset != null) {
+            System.setProperty("sqlfile.charset", conData.charset);
         }
         try {
 
