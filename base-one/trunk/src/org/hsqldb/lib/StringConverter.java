@@ -193,10 +193,9 @@ public class StringConverter {
      */
     public static String hexStringToUnicode(String s) throws IOException {
 
-        byte[]                   b   = hexToByte(s);
-        HsqlByteArrayInputStream bin = new HsqlByteArrayInputStream(b);
+        byte[] b = hexToByte(s);
 
-        return bin.readUTF();
+        return readUTF(b, 0, b.length);
     }
 
 // fredt@users 20011120 - patch 450455 by kibu@users - modified

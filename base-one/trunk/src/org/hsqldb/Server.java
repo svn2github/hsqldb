@@ -410,7 +410,9 @@ public class Server {
 
         // fredt@users - this is used to exit the loop in this.run()
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             traceError("Exception when closing the main socket");
         }

@@ -53,7 +53,11 @@ public class ValuePool {
     }
     
     public static Long getLong(Number n) {
-        return n == null ? null : getLong(n.longValue());
+        return n == null 
+            ? null 
+            : (n instanceof Long)
+                ? (Long) n
+                : getLong(n.longValue());
     }
 
     public static Float getFloat(float val) {

@@ -80,7 +80,7 @@ public class UnifiedTable {
 */
 
 // fredt
-    static final int OBJ_CLASS_CODE_OBJECT = Object.class.hashCode();
+    static final int OBJ_CLASS_CODE_OBJECT = (new Object()).getClass().hashCode();
 
     static {
         classCodeMap.put(byte.class, new Integer(PRIM_CLASS_CODE_BYTE));

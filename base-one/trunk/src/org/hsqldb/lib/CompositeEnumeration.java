@@ -39,7 +39,9 @@ import java.util.NoSuchElementException;
  * two specified enumerations into a single enumeration of the specified
  * enumerations' elements. <p>
  *
- * @author Campbell Boucher-Burnet
+ * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since HSQLDB 1.7.2
  */
 public final class CompositeEnumeration implements Enumeration {
 

@@ -73,7 +73,6 @@ public final class HsqlStringBuffer {
                                + toStringCounter);
         }
     }
-    ;
 
 //    private int traceUpdated = 0;
 /*

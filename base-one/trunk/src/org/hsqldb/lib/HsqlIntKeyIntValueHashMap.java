@@ -47,8 +47,11 @@ import java.util.NoSuchElementException;
  * This implementation does not include the ability to retrieve Enumations
  * over its keys and values, but may include the ability to retrieve
  * its keys and values as primitive int arrays in a future release, if
- * there is a demand for such functionality.
+ * there is a demand for such functionality. <p>
+ *
  * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public final class HsqlIntKeyIntValueHashMap {
 

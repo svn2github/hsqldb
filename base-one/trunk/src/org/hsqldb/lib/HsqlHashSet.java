@@ -53,10 +53,11 @@ import java.util.NoSuchElementException;
  * access a set concurrently, and at least one of the threads modifies the
  * set, it must be synchronized externally if consistent and predicatble
  * results are required. This is typically accomplished by synchronizing
- * on some object that naturally encapsulates the set.
- * @author Campbell Boucher-Burnet, Camco & Associates Consulting
+ * on some object that naturally encapsulates the set. <p>
+ *
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public final class HsqlHashSet implements HsqlSet {
 

@@ -97,10 +97,10 @@ class HsqlName {
 
     String             name;
     boolean            isNameQuoted;
-    String             statementName;
-    private final int  hashCode     = serialNumber++;
+    String             statementName;    
     private static int sysNumber    = 0;
     private static int serialNumber = 0;
+    private final int  hashCode     = serialNumber++;
 
     HsqlName(String name, boolean isquoted) throws SQLException {
         rename(name, isquoted);

@@ -63,10 +63,11 @@ import java.util.Enumeration;
  * exhibit the latter. More generally, attempting an operation on an ineligible
  * element whose completion would not result in the insertion of an ineligible
  * element into the set may throw an exception or it may succeed, at the
- * option of the implementation.
- * @author Campbell Boucher-Burnet, Camco & Associates Consulting
- * @version 1.0
- * @since HSQLDB 1.7.2
+ * option of the implementation. <p>
+ *
+ * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public interface HsqlSet {
 

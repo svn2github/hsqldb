@@ -88,7 +88,6 @@ public class HsqlHashMap implements HsqlMap {
             System.out.println("HsqlHashMap update count: " + updateCounter);
         }
     }
-    ;
 
     private static final int   DEFAULT_INITIAL_CAPACITY = 11;
     private static final float DEFAULT_LOAD_FACTOR      = 0.75f;

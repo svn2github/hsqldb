@@ -34,8 +34,12 @@ package org.hsqldb.lib;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-/** An <code>HsqlMap</code> implementation that uses a primitive
+/** An <code>HsqlMap</code> implementation that uses primitive
  * <code>int</code> values as the keys.
+ *
+ * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2 
  */
 public final class HsqlIntKeyHashMap implements HsqlMap, Cloneable {
 

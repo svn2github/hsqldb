@@ -40,8 +40,9 @@ package org.hsqldb.lib;
  * elapsed running time.  The watch accumulates elapsed time over starts
  * and stops such that only the time actually spent running is recorded.
  * If the watch is zeroed, then the accumulated time is discarded and
- * the watch starts again with zero acumulated time.
- * @author  Campbell Boucher-Burnet, Camco & Associates Consulting
+ * the watch starts again with zero acumulated time. <p>
+ *
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */

@@ -64,7 +64,7 @@ public class HsqlProperties {
 
     public static int    NO_VALUE_FOR_KEY = 1;
     protected String     fileName;
-    protected Properties stringProps;;
+    protected Properties stringProps;
     protected int[]      errorCodes = new int[0];
     protected String[]   errorKeys  = new String[0];
 

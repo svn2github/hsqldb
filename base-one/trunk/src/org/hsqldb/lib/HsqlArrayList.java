@@ -65,7 +65,6 @@ public class HsqlArrayList implements HsqlList {
                                + updateCounter);
         }
     }
-    ;
 
     private static final int   DEFAULT_INITIAL_CAPACITY = 10;
     private static final float DEFAULT_RESIZE_FACTOR    = 2.0f;
