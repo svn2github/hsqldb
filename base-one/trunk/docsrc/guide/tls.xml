@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.6 2004/04/22 18:51:58 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.7 2004/05/16 22:36:57 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/22 18:51:58 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/05/16 22:36:57 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -111,7 +111,7 @@
                 What you need is the file <filename>server.cer</filename>.
                 Now, you need to add this cert to one of the system trust 
                 keystores or to a keystore of your own.
-                See <ulink url="http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html#CustomizingStores">
+                See <ulink url="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#CustomizingStores">
                 the Customizing Stores section in JSSERefGuide.html</ulink> to 
                 see where your system trust keystores are.
                 You can put private keystores anywhere you want to.
@@ -150,7 +150,7 @@
                 connect to it.
             </para> <para>
                 If you want more details on anything, see JSSERefGuide.html on
-                <ulink url= "http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html">
+                <ulink url= "http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html">
                 Sun's site</ulink>, or in the subdirectory 
                 <filename>docs/guide/security/jsse</filename> of your Java SE 
                 docs.
@@ -264,7 +264,7 @@
             <title>Non-CA-Signed Cert</title>
             <para>
                 Run <literal>man keytool</literal> or see
-                <ulink url="http://java.sun.com/j2se/1.4.1/docs/guide/security/jsse/JSSERefGuide.html#CreateKeystore">
+                <ulink url="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#CreateKeystore">
                 the Creating a Keystore section of JSSERefGuide.html</ulink>.
             </para>
         </section>

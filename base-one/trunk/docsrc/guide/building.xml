@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.4 2004/04/22 03:06:26 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.5 2004/04/23 00:47:09 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building Hsqldb version 1.7.2</title>
@@ -13,32 +13,23 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2004/04/23 00:47:09 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
             <keyword>Ant</keyword>
         </keywordset>
-        <legalnotice><para>
-            Some text in this document is based on original HypersonicSQL 
-            documentation.
-        </para></legalnotice>
     </appendixinfo>
 
    <section>
         <title>Purpose</title>
-        <para>
-            From 1.7.2, in most cases you do not need to build hsqldb at all,
-            since the supplied <filename>hsqldb.jar</filename> file was built 
-            with Java 1.3.1 and will run with any JRE.
-            If you want to run the engine under JDK1.4 and use the new JDBC 
-            features supported with this JDK, you should rebuild the jar with 
-            Ant (or with the supplied batch files if you are on Window).
-        </para>
-   </section>
-   <section>
-        <title>Building with Ant, from the Apache Jakarta Project</title>
+		<para> From 1.7.2, the supplied <filename>hsqldb.jar</filename> file is
+		built with Java 1.4.2. If you want to run the engine under JDK1.3 or
+		earlier, you should rebuild the jar with Ant. </para>
+   </section> 
+   <section> 
+		<title>Building with Ant, from the Apache Jakarta Project</title>
         <titleabbrev>Building with Ant</titleabbrev>
         <para>
             Ant (Another Neat Tool) is used for building hsqldb.
@@ -66,107 +57,79 @@
         </section>
         <section>
             <title>Building Hsqldb with Ant</title>
-            <para>
-                Once you have unpacked the zip package for hsqldb, under the 
-                <filename>/hsqldb</filename> folder, in
-                <filename>/build</filename> there is a
-                <filename>build.xml</filename> file that builds the 
-                <filename>hsqldb.jar</filename> with Ant (Ant must be already 
-                installed).  To use it, change to <filename>/build</filename>
-                then type:
-            </para>
-            <informalexample><screen>
-    ant -projecthelp</screen>
-            </informalexample>
-            <para>
-                This displays the available ant targets, which you can supply 
-                as command line arguments to ant.  These include
-            </para>
-            <variablelist>
-                <varlistentry><term>jar</term> <listitem><para>
-                    to make the <filename>hsqldb.jar</filename>
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>clean</term> <listitem><para>
-                    to clean up the /classes directory that is created
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>cleanall</term> <listitem><para>
-                    to remove the old jar as well
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>javadoc</term> <listitem><para>
-                    to build javadoc
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>jarmain</term> <listitem><para>
-                    to build a smaller jar for hsqldb that does not contain 
-                    utilities
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>jarclient</term> <listitem><para>
-                        to build an extremely small jar containing only the 
-                        client-side JDBC driver (does not support memory-only 
-                        or in-memory mode) 
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>jarmin</term> <listitem><para>
-                    to build a very small jar with no support for servers
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>jartest</term> <listitem><para>
-                    to build a larger jar for hsqldb that contains tests
-                    </para></listitem>
-                </varlistentry>
-                <varlistentry><term>...</term> <listitem><para>
-                      Many more targets are available
-                    </para></listitem>
-                </varlistentry>
-            </variablelist>
-            <para>
-                HSQLDB can be built in any combination of five different sizes 
-                and three JRE (Java Runtime Environment) versions.
-                The smallest jar size (<filename>hsqljdbc.jar</filename>) 
-                contains only the HSQLDB JDBC Driver client.
-                The next smallest jar size (<filename>hsqldbmin.jar</filename>)
-                contains only the standalone database (no servers) and JDBC 
-                support and is suitable for embedded applications.
-                The default size (<filename>hsqldb.jar</filename>) also 
-                contains server mode support and the utilities.
-                The largest size (<filename>hsqldbtest.jar</filename>) includes 
-                some test classes as well.
-            </para> <para>
-                In order to build and run the test classes, you need the JUnit 
-                jar in the <filename>/lib</filename> directory.
-                This is available from <ulink url="http://www.junit.org"/>.
-            </para> <para>
-                A jar file for HSQLDB is provided in the .zip package.
-                This jar contains both the database and the utilities and has 
-                been built with JDK 1.3.1.
-                From version 1.7.2, this jar is compatible with all JDK / JRE 
-                runtime versions from 1.1.x to 1.4.
-            </para> <para>
-                The preferred method of rebuilding the jar is with Ant.
-                After installing Ant on your system use the following command 
-                from the <filename>/build</filename> directory:
-            </para><informalexample><screen>
-    ant explainjars</screen></informalexample>
-            <para>
-                The command displays a list of different options for building 
-                different sizes of the HSQLDB Jar. The default is built using:
-            </para><example>
-                <title>Buiding the standard Hsqldb jar file with Ant</title>
-                <screen>
-    ant jar</screen>
+			<para> Once you have unpacked the zip package for hsqldb, under the
+			<filename>/hsqldb</filename> folder, in <filename>/build</filename>
+			there is a <filename>build.xml</filename> file that builds the 
+			<filename>hsqldb.jar</filename> with Ant (Ant must be already 
+			installed). To use it, change to <filename>/build</filename> 
+			then type: </para> 
+			<informalexample>
+			<screen> ant -projecthelp</screen> </informalexample>
+			<para>This displays the available ant targets, which you can supply
+			as command line arguments to ant. These include </para>
+			<variablelist> <varlistentry><term>jar</term> 
+			<listitem>
+			<para> to make the <filename>hsqldb.jar</filename> </para>
+			</listitem> </varlistentry><varlistentry>
+			<term>clean</term>
+			<listitem>
+			<para> to clean up the /classes directory that is created </para>
+			</listitem> </varlistentry> 
+			<varlistentry>
+			<term>cleanall</term> 
+			<listitem><para> to remove the old jar as well </para></listitem>
+			</varlistentry><varlistentry><term>javadoc</term> <listitem><para>
+			to build javadoc </para></listitem></varlistentry>
+			<varlistentry><term>jarmain</term> <listitem><para> to build a 
+			smaller jar for hsqldb that does not contain utilities
+			</para></listitem> </varlistentry>
+			<varlistentry><term>jarclient</term> <listitem><para> to build an
+			extremely small jar containing only the client-side JDBC driver
+			(does not support memory-only or in-memory mode) 
+			</para></listitem> </varlistentry> 
+			<varlistentry><term>jarmin</term>
+			<listitem>
+			<para> to build a very small jar with no support for servers </para>
+			</listitem> 
+			</varlistentry><varlistentry><term>jartest</term>
+			<listitem><para> to build a larger jar for hsqldb that contains
+			tests </para></listitem> </varlistentry>
+			<varlistentry><term>...</term> 
+			<listitem><para> Many more targets are available </para></listitem>
+			</varlistentry> 
+			</variablelist>
+			<para> HSQLDB can be built in any combination of five different 
+			sizes and three JRE (Java Runtime Environment) versions. The
+			smallest jar size(<filename>hsqljdbc.jar</filename>) contains only
+			the HSQLDB JDBC Driver client. The next smallest jar size
+			(<filename>hsqldbmin.jar</filename>) contains only the standalone
+			database (no servers) and JDBC support and is suitable for embedded 
+			applications. The default size (<filename>hsqldb.jar</filename>)
+			also contains server mode support and the utilities. The largest
+			size (<filename>hsqldbtest.jar</filename>)includes some test 
+			classes as well. </para> <para> In order to build and run the 
+			test classes, you need the JUnit jar in the 
+			<filename>/lib</filename> directory. This is available from
+			<ulink url="http://www.junit.org"/>. </para> <para> The preferred 
+			method of rebuilding the jar is with Ant. After installing Ant on
+			your system use the following command from the 
+			<filename>/build</filename> directory: </para>
+			<informalexample><screen>ant explainjars</screen></informalexample>
+			<para> The command displays a list 
+			of different options for building different sizes of the HSQLDB Jar.
+			The default is built using: </para>
+			<example> 
+			<title>Buiding the standard Hsqldb jar file with Ant</title>
+            <screen>    ant jar</screen>
             </example>
             <para>
                 The Ant method always builds a jar with the JDK that is used by 
                 Ant and specified in the JAVA_HOME environment variable.
-                From version 1.7.2, Use of JDK 1.1.x is not recommended for 
-                building the JAR, even for running under JDK 1.1.x -- use 
-                JDK 1.3.1 for compatibility with 1.1.x - 1.4.x.
                 Building with JDK 1.4.x will result in a jar that is not 
                 backward compatible.
+                From version 1.7.2, use of JDK 1.1.x is not recommended for 
+                building the JAR, even for running under JDK 1.1.x -- use 
+                JDK 1.3.1 for compatibility with 1.1.x.
             </para> <para>
                 Before building the <filename>hsqldbtest.jar</filename> 
                 package, you should download the junit jar from 
@@ -189,20 +152,17 @@
             The path and classpath variables for the JDK should of course be 
             set before running any of the batch files.
         </para> <para>
-            If you are compiling for JDK's other than 1.2.x or 1.3.x, you 
+            If you are compiling for JDK's other than 1.4.x, you 
             should use the appropriate <filename>switchToJDK11.bat</filename>
-            or <filename>switchToJDK14.bat</filename> to adapt the source files 
+            or <filename>switchToJDK12.bat</filename> to adapt the source files 
             to the target JDK before running the appropriate 
             <filename>buildJDK11.bat</filename> or
-            <filename>buildJDK14.bat</filename> JDK and JRE versions.
-        </para> <para>
+            <filename>buildJDK12.bat</filename> JDK and JRE versions.
+        </para> 
+		<para>
             From version 1.7.2, Use of JDK 1.1.x is not recommended for 
-            building the JAR, even for running under JDK 1.1.x.
-            For earlier versions, the JDK used for building the jar should 
-            generally be the same series as the target.
-            This is because the <literal>java.sql</literal> package in each 
-            version (1.1.x 1.2.x 1.3.x 1.4.x) has a different set of methods in 
-            its public interfaces.
+            building the JAR, even for running under JDK 1.1.x --
+            use JDK1.3 for running under 1.1.x.
             Javadoc can be built with Ant and batch files.
         </para>
     </section>
