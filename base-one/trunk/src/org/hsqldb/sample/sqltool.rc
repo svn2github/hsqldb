@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.8 2004/07/18 13:57:20 unsaved Exp $
+# $Id: sqltool.rc,v 1.9 2004/07/18 14:03:33 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -62,6 +62,8 @@ password
 # I recommend the latest production version for your JDBC version.  The 
 # later JDBC drivers work better even with older Postgresql servers.
 # (E.g. \dt won't list owners with an older driver).
+# N.b.: Suse Linux 9.1 users should download a new driver from the PG site,
+# since Suse distributes the 7.3 drivers with Postgresql 7.4 (why???).
 # Since you need to add to the classpath, you can't invoke SqlTool with
 # the jar switch, like "java -jar .../hsqldb.jar..." or 
 # "java -jar .../hsqlsqltool.jar...".
