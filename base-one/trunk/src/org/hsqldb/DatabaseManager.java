@@ -164,25 +164,60 @@ class DatabaseManager {
     static Database getDatabase(String type, String path,
                                 boolean ifexists) throws HsqlException {
 
+        // If the (type, path) pair does not correspond to a registed
+        // instance and ifexists is false, then getDatabaseObject() guarantees
+        // that, upon return, the db variable is a freshly constructed
+        // Database instance and that it has been registed.  However,
+        // this means that the database state will be DATABASE_SHUTDOWN,
+        // which in turn means that the switch below will attempt to
+        // open the database instance.
         Database db = getDatabaseObject(type, path, ifexists);
 
-        /** @todo  set the size of value pool */
-        if (databaseAccessMap.size() == 1
-                && databaseAccessMap.get(db, Integer.MIN_VALUE) == 1) {
-            ValuePool.resetPool();
-        }
-
         synchronized (db) {
+
+            /** @todo  set the size of value pool */
+            if (databaseAccessMap.size() == 1
+                    && databaseAccessMap.get(db, Integer.MIN_VALUE) == 1) {
+                ValuePool.resetPool();
+            }
+
             switch (db.getState()) {
 
                 case Database.DATABASE_ONLINE :
                     break;
 
                 case Database.DATABASE_SHUTDOWN :
-                    db.open();
+                    try {
+                        db.open();
+                    } catch (HsqlException e) {
+                        removeDatabase(db);
+
+                        throw e;
+                    }
                     break;
 
+                // Database.close is invoked external to Database only from
+                // DatabaseCommandInterpreter.processShutdown(), which is
+                // private.  In turn, processShutdown() can only be invoked
+                // indirectly from Session.execute() (which is synchronized on
+                // the database instance) or from Session.sqlExecuteDirectXXX.
+                // The sqlExecuteDirect() form is also synchronized on
+                // the database, while the sqlExecuteDirectNoPreChecks is not
+                // but is reserved for use only internal to Session and by the
+                // Log when executing REDO statements.  Since execution of REDO
+                // takes place only inside Database.open() (which is
+                // synchronized) or Database.close() (which is what we're
+                // talking about anyway). Finally, Database.getState() is
+                // also synchronized.  Hence, it is currently impossible for
+                // a thread executing outside a database instance to the
+                // Database.DATABASE_CLOSING state.
                 case Database.DATABASE_CLOSING :
+
+                // Database.open is synchronized and so is Database.getState()
+                // so unless Database.open throws without cleaning up and
+                // switching out of DATABASE_OPENING state, this case simply
+                // cannot happen here, inside a block synchronized on db and
+                // a switch on db.getState().
                 case Database.DATABASE_OPENING :
                     throw Trace.error(Trace.DATABASE_ALREADY_IN_USE,
                                       Trace.DatabaseManager_getDatabase,
@@ -240,6 +275,10 @@ class DatabaseManager {
         return db;
     }
 
+    /**
+     * Looks up database of a given type and path in the registry. Returns
+     * null if there is none.
+     */
     static synchronized Database lookupDatabaseObject(String type,
             String path) throws HsqlException {
 
@@ -259,7 +298,10 @@ class DatabaseManager {
         return (Database) databaseMap.get(key);
     }
 
-    static synchronized void releaseSession(Database database)
+    /**
+     * Reduces the accessCount of a database
+     */
+    static synchronized void releaseAccessCount(Database database)
     throws HsqlException {
 
         int accessCount = databaseAccessMap.get(database, Integer.MIN_VALUE);
@@ -272,6 +314,9 @@ class DatabaseManager {
         databaseAccessMap.put(database, --accessCount);
     }
 
+    /**
+     * Decrements the access count for the database.
+     */
     static synchronized void releaseDatabase(String type,
             String path) throws HsqlException {
 
@@ -291,6 +336,9 @@ class DatabaseManager {
         databaseAccessMap.put(database, --accessCount);
     }
 
+    /**
+     * Removes the database from registry.
+     */
     static void removeDatabase(Database database) {
 
         int     dbID = database.databaseID;
@@ -328,10 +376,16 @@ class DatabaseManager {
      */
     private static HashMap serverMap = new HashMap();
 
+    /**
+     * Deregisters a server completely.
+     */
     static void deRegisterServer(Server server) {
         serverMap.remove(server);
     }
 
+    /**
+     * Deregisters a server as serving a given database.
+     */
     static void deRegisterServer(Server server, Database db) {
 
         Iterator it = serverMap.values().iterator();
@@ -347,6 +401,9 @@ class DatabaseManager {
         }
     }
 
+    /**
+     * Registers a server as serving a given database.
+     */
     private static void registerServer(Server server, Database db) {
 
         if (!serverMap.containsKey(server)) {
@@ -358,6 +415,10 @@ class DatabaseManager {
         databases.add(db);
     }
 
+    /**
+     * Notifies all servers that serve the database that the database has been
+     * shutdown.
+     */
     private static void notifyServers(Database db) {
 
         Iterator it = serverMap.keySet().iterator();

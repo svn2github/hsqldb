@@ -116,6 +116,8 @@ class DatabaseCommandInterpreter {
      */
     Result execute(String sql) {
 
+        // PRE: This method is never invoked outside a block
+        //      synchronized on database (and _must_ not be).
         Parser parser;
         Result result;
         String token;

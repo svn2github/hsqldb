@@ -132,7 +132,7 @@
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ALTER COLUMN </font></b><font size="2">&lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | ADD DEFAULT &lt;defaultvalue&gt;};</font></font></p>
 <p><font face="Arial" size="2">Changes column name. Or adds or drops the default value.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;</font><b><font size="2"> UNIQUE (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">);</font></b></font></p>
-<p><font face="Arial" size="2">Adds a unique constraint to the table. This will not work if there is already  a unique constraints covering exactly the same &lt;column list&gt;.</font></p>
+<p><font face="Arial" size="2">Adds a unique constraint to the table. This will not work if there is already  a unique constraint covering exactly the same &lt;column list&gt;.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;</font><b><font size="2"> FOREIGN KEY (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">) REFERENCES </font></b><font size="2">&lt;exptablename&gt;</font><b><font size="2"> (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">)</font></b><font size="2"> [ON DELETE CASCADE];</font></font></p>
 <p><font face="Arial" size="2">Adds a foreign key constraint to the table, using the same constraint syntax as when the foreign key is specified in a table definition.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> DROP CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;;</font></font></p>
@@ -311,7 +311,7 @@ if necessary.
 </font>
 <p><font face="Arial">Creates a new user or new administrator in this database. Empty password can 
   be made using "". <br>
-  Only an administrator do this. 
+  Only an administrator can do this. 
 </font>
 <p><font face="Arial">See also: <a href="#CONNECT">CONNECT</a>, <a href="#GRANT">GRANT</a>, <a href="#REVOKE">REVOKE</a> 
 </font>
@@ -365,7 +365,7 @@ You can then reference mealsjv in statements in the same way you would reference
       FROM mealsjv
 </pre>
 </big>
-A view can reference another view. For example, mealsjv presents information that is useful for long discriptions that contain identifers, but a short list might be all a web page display needs. A view can be built that selects only specific mealsjv columns:
+A view can reference another view. For example, mealsjv presents information that is useful for long descriptions that contain identifiers, but a short list might be all a web page display needs. A view can be built that selects only specific mealsjv columns:
 <br>
 <br>
 <big>
@@ -727,7 +727,7 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
   (like an external poweroff); this command is used internally to test the recovery 
   mechanism.
 This command should not be used as the routine method of closing the database.</font>
-<p><font face="Arial">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operations shrinks all files 
+<p><font face="Arial">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operation shrinks all files 
   to the minimum size. <br>
   Only an administrator may do this. 
 

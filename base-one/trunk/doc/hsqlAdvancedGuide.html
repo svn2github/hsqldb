@@ -51,7 +51,7 @@
     <td width="45%" valign="top"><code>/adirectory/dbname</code></td>
   </tr>
   <tr>
-    <td colspan="3" valign="top">Database files can be loaded from one of the jars specified as part of the<code>  Java</code>command the same way as resource files are accessed in Java programs. The <code>/adirectory</code> above stands for a directory in one of the jars.</td>
+    <td colspan="3" valign="top">Database files can be loaded from one of the jars specified as part of the<code>  Java </code>command the same way as resource files are accessed in Java programs. The <code>/adirectory</code> above stands for a directory in one of the jars.</td>
   </tr>
    
   <tr>
@@ -628,7 +628,7 @@
       
     <td width="99%" valign="TOP" colspan="3">
          
-      <p>The value is the size in megabytes that the <tt>.script</tt> file can reach before an automatice checkpoint occurs to rewrite the file. The value can be changed via the<tt> SET LOGSIZE nnn </tt>SQL command.</p>
+      <p>The value is the size in megabytes that the <tt>.script</tt> file can reach before an automatic checkpoint occurs to rewrite the file. The value can be changed via the<tt> SET LOGSIZE nnn </tt>SQL command.</p>
     </td>
   </tr>
    
@@ -917,7 +917,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   <li>If there is any inconsistency in the data, the script line number is reported on the console and the opening process is aborted. Edit and correct any problems in the script before attempting to open again.</li>
 </ol>
 <h3>Backing Up Databases</h3>
-<p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immdediatedly after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
+<p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
 <p>Author: Fred Toussi - 14 July 2002 - updated 23 Aug 2003</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 

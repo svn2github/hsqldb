@@ -94,7 +94,10 @@ public class TestDataStructures extends TestCase {
     private Vector           listCommandsCalled;
 
     /** Creates a new instance of TestDataStructures */
-    public TestDataStructures() {
+    public TestDataStructures(String s) {
+
+        super(s);
+
         randomGenerator    = new Random(System.currentTimeMillis());
         listCommandsCalled = new Vector(NUMBER_OF_ITERATIONS_PER_RUN);
     }
@@ -415,7 +418,7 @@ public class TestDataStructures extends TestCase {
 
     public static void main(String[] args) {
 
-        TestDataStructures test = new TestDataStructures();
+        TestDataStructures test = new TestDataStructures("testLists");
 
         for (int i = 0; i < NUMBER_OF_TEST_RUNS; i++) {
             test.testLists();

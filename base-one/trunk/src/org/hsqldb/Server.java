@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.File;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -87,46 +88,141 @@ import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0
-// methods rorganised to use new HsqlServerProperties class
+// methods reorganised to use new HsqlServerProperties class
 // fredt@users 20020424 - patch 1.7.0 - shutdown without exit
 // see the comments in ServerConnection.java
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
 // boucherb@users 20030510-14 - 1.7.2 - SSL support moved to factory interface
 // boucherb@users 20030510-14 - 1.7.2 - general rewite for thread safety
-// non-blocking start()/stop(), service control etc.
+// non-blocking start()/stop(), service control, JavaBean API, etc.
 
 /**
- * Server acts as a network database server and is one way of using
- * the client-server mode of HSQLDB Database Engine. This server
- * can only process database queries.<p>
- * An applet or application will use only the JDBC classes to access
- * the database.<p>
+ * The HSQLDB HSQL protocol network database server. <p>
  *
- * The Server can be configured with the file 'server.properties'.
- * This is an example of the file:
+ * A Server object acts as a network database server and is one way of using
+ * the client-server mode of HSQLDB Database Engine. Instances of this
+ * class handle native HSQL protocol connections exclusively, allowing database
+ * queries to be performed efficienly across the network.  Server's direct
+ * descendent, WebServer, handles HTTP protocol connections exclusively,
+ * allowing HSQL protocol to be tunneled over HTTP to avoid sandbox and
+ * firewall issues, albeit less efficiently. <p>
+ *
+ * There are a number of ways to configure and start a Server instance. <p>
+ *
+ * When started from the command line or programatically via the main(String[])
+ * method, configuration occurs in three phases, with later phases overriding
+ * properties set by previous phases:
+ *
+ * <ol>
+ *   <li>Upon construction, a Server object is assigned a set of default
+ *       properties. <p>
+ *
+ *   <li>If it exists, properties are loaded from a file named
+ *       'server.properties' in the present working directory. <p>
+ *
+ *   <li>The command line arguments (alternatively, the String[] passed to
+ *       main()) are parsed and used to further configure the Server's
+ *       properties. <p>
+ *
+ * </ol> <p>
+ *
+ * From the command line, the options are as follows: <p>
  * <pre>
- * server.port=9001<p>
- * server.database=test<p>
+ * +----------------+-------------+----------+------------------------------+
+ * |    OPTION      |    TYPE     | DEFAULT  |         DESCRIPTION          |
+ * +----------------+-------------+----------+------------------------------|
+ * | -?             | --          | --       | prints this message          |
+ * | -address       | name|number | any      | server inet address          |
+ * | -port          | number      | 9001/544 | port at which server listens |
+ * | -database.i    | [type]spec  | 0=test   | name of database i           |
+ * | -dbname.i      | alias       | --       | url alias for database i     |
+ * | -silent        | true|false  | true     | false => display all queries |
+ * | -trace         | true|false  | false    | display JDBC trace messages  |
+ * | -tls           | true|false  | false    | TLS/SSL (secure) sockets     |
+ * | -no_system_exit| true|false  | false    | do not issue System.exit()   |
+ * +----------------+-------------+----------+------------------------------+
+ * </pre>
+ *
+ * The <em>database.i</em> and <em>dbname.i</em> options need further
+ * explanation:
+ *
+ * <ul>
+ *   <li>The value of <em>i</em> is currently limited to the range 0..9. <p>
+ *
+ *   <li>The value assigned to <em>database.i</em> is interpreted using the
+ *       format <b>'[type]spec'</b>, where the optional <em>type</em> component
+ *       is one of <b>'file:'</b>, <b>'res:'</b> or <b>'mem:'</b> and the
+ *       <em>spec</em> component is interpreted in the context of the
+ *       <em>type</em> component.  <p>
+ *
+ *       If omitted, the <em>type</em> component is taken to be
+ *       <b>'file:'</b>.  <p>
+ *
+ *        A full description of how
+ *       <b>'[type]spec'</b> values are interpreted appears in the overview for
+ *       {@link org.hsqldb.jdbcConnection jdbcConnection}. <p>
+ *
+ *   <li>The value assigned to <em>dbname.i</em> is taken to be the key used to
+ *       look up the desired database instance and thus corresponds to the
+ *       <b>&lt;alias&gt;</b> component of the HSQLDB HSQL protocol database
+ *       connection url:
+ *       'jdbc:hsqldb:hsql[s]://host[port][/<b>&lt;alias&gt;</b>]'. <p>
+ *
+ *   <li>The value of <em>database.0</em> is special in that the corresponding
+ *       database instance is the one to which a connection is made when
+ *       the <b>&lt;alias&gt;<b> component of an HSQLDB HSQL protocol database
+ *       connection url is omitted. <p>
+ *
+ *       This behaviour allows the previous
+ *       database connection url format to work with essentially unchanged
+ *       semantics.
+ * </ul> <p>
+ *
+ * From the 'server.properties' file, options can be set similarly, using a
+ * slightly different format. <p>
+ *
+ * Here is an example 'server.properties' file:
+ *
+ * <pre>
+ * server.port=9001
+ * server.database.0=test
+ * server.dbname.0=...
+ * ...
+ * server.database.n=...
+ * server.dbname.n=...
  * server.silent=true<p>
  * </pre>
  *
- *  If the server is embedded in an application server, such as when
- *  DataSource or HsqlServerFactory classes are used, it is necessary
- *  to avoid calling System.exit() when the HSQLDB is shutdown with
- *  an SQL command.<br>
- *  For this, the server.no_system_exit property can be
- *  set either on the command line or in server.properties file.
- *  This ensures that System.exit() is not called at the end.
- *  All that is left for the embedded application server is to release
- *  the "empty" Server object and create another one to reopen the
- *  database (fredt@users). <p>
+ * Starting with 1.7.2, Server has been refactored to become a simple JavaBean
+ * with non-blocking start() and stop() service methods.  It is possible to
+ * configure a Server instance through the JavaBean API as well, but this
+ * part of the public interface is still under review and will not be finalized
+ * or documented fully until the final 1.7.2 release. <p>
  *
- *  <b>1.7.2 Notes:</b> start() and stop() methods added and Server always
- *  runs in its own thread.  Default is now to set server.no_system_exit=true
- *  when calling start() directly, while setting server.no_system_exit=false
- *  by default when server is started by calling main(String[] args).
- *  main(String[] args) no longer blocks, because server runs in its own
- * thread. (boucherb@users)
+ * <b>Note:</b> <p>
+ *
+ * The 'no_system_exit' property is of particular interest. <p>
+ *
+ * If a Server instance is to run embedded in, say, an application server,
+ * such as when the jdbcDataSource or HsqlServerFactory classes are used, it
+ * is typically necessary to avoid calling System.exit() when the Server
+ * instance shuts down. <p>
+ *
+ * By default, 'no_system_exit' is set: <p>
+ *
+ * <ol>
+ *    <li><b>true</b> when a Server is started directly from the start()
+ *        method. <p>
+ *
+ *    <li><b>false</b> when a Server is started from the main(String[])
+ *         method.
+ * </ol> <p>
+ *
+ * These values natural to their context because the first case allows
+ * the JVM to exit by default on Server shutdown when a Server instance is
+ * started from a command line environment, while the second case prevents
+ * a typically unwanted JVM exit on Server shutdown when a Server intance
+ * is started as part of a larger framework. <p>
  *
  * @version 1.7.2
  *
@@ -137,7 +233,7 @@ public class Server implements HsqlSocketRequestHandler {
 
 //
     static final String serverName = "HSQLDB/1.7.2";
-    private static final int bhnd =
+    private static final int hnd_messages =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
 //
@@ -148,8 +244,10 @@ public class Server implements HsqlSocketRequestHandler {
     int[]          dbID    = new int[1];
     HsqlProperties serverProperties;
 
-//
-    private int                 maxConnections;
+//  Currently unused
+    private int maxConnections;
+
+//    
     protected String            serverId;
     protected int               serverProtocol;
     protected ThreadGroup       serverThreadGroup;
@@ -161,11 +259,13 @@ public class Server implements HsqlSocketRequestHandler {
     private volatile Thread serverThread;
     private int             serverState;
     private Throwable       serverError;
+    private PrintWriter     logWriter;
     private final Object    mDatabase_mutex    = new Object();
     private final Object    serverState_mutex  = new Object();
     private final Object    serverThread_mutex = new Object();
     private final Object    status_monitor     = new Object();
     private final Object    socket_mutex       = new Object();
+    private final Object    logWriter_mutex    = new Object();
 
 //
 
@@ -195,13 +295,7 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         public String toString() {
-
-            String dbname = "";
-
-            // fredt - was wrong with multiple dbs
-//            dbname = dbType[0] + dbPath[0];
-            return super.toString() + "[Database[" + dbname + "]," + socket
-                   + "]";
+            return super.toString() + "[" + socket + "]";
         }
     }
 
@@ -216,7 +310,7 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Creates and starts a new Server.  <p>
      *
-     * Allows starting a Server via the command line interface.
+     * Allows starting a Server via the command line interface. <p>
      *
      * @param args the command line arguments for the Server instance
      */
@@ -328,7 +422,16 @@ public class Server implements HsqlSocketRequestHandler {
         trace("closeAllServerConnections() exited");
     }
 
-    protected void finalize() throws Throwable {}
+    protected void finalize() throws Throwable {
+
+        // Same as stop() but without the reporting 
+        synchronized (serverThread_mutex) {
+            if (serverThread != null) {
+                releaseServerSocket();
+                waitForStatus();
+            }
+        }
+    }
 
     /**
      * Retrieves, in string form, this server's host address.
@@ -452,7 +555,14 @@ public class Server implements HsqlSocketRequestHandler {
                 key = "server.help";
         }
 
-        return BundleHandler.getString(bhnd, key);
+        return BundleHandler.getString(hnd_messages, key);
+    }
+
+    public PrintWriter getLogWriter() {
+
+        synchronized (logWriter_mutex) {
+            return logWriter;
+        }
     }
 
     /**
@@ -934,6 +1044,18 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * Sets the stream to which server messages are logged.
+     *
+     * @param ps the stream to which server messages are logged
+     */
+    public void setLogWriter(PrintWriter pw) {
+
+        synchronized (logWriter_mutex) {
+            logWriter = pw;
+        }
+    }
+
+    /**
      * Sets whether the server calls System.exit() when shutdown.
      *
      * @param noExit if true, System.exit() will not be called.
@@ -1171,6 +1293,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     protected void init(int protocol) {
 
+        // PRE:  This method is only called from the constructor
         serverState      = ServerConstants.SERVER_STATE_SHUTDOWN;
         serverConnSet    = new HashSet();
         serverId         = toString();
@@ -1180,6 +1303,7 @@ public class Server implements HsqlSocketRequestHandler {
             new ThreadGroup(protocol == ServerConstants.SC_PROTOCOL_HSQL
                             ? "hsqldb-hsql-servers"
                             : "hsqldb-http-servers");
+        logWriter = new PrintWriter(System.out);
 
         javaSystem.setLogToSystem(isTrace());
     }
@@ -1241,6 +1365,8 @@ public class Server implements HsqlSocketRequestHandler {
 
             if (sc.dbID == id) {
                 sc.signalClose();
+
+                // why? sc.signalClose() already does this
                 serverConnSet.remove(sc);
             }
         }
@@ -1255,7 +1381,12 @@ public class Server implements HsqlSocketRequestHandler {
      * @param msg The message to print
      */
     final void print(String msg) {
-        Trace.printSystemOut("[" + serverId + "]: " + msg);
+
+        synchronized (logWriter_mutex) {
+            if (logWriter != null) {
+                logWriter.println("[" + serverId + "]: " + msg);
+            }
+        }
     }
 
     /**
@@ -1270,11 +1401,11 @@ public class Server implements HsqlSocketRequestHandler {
         String          resource;
         StringTokenizer st;
 
-        if (bhnd < 0) {
+        if (hnd_messages < 0) {
             return;
         }
 
-        resource = BundleHandler.getString(bhnd, key);
+        resource = BundleHandler.getString(hnd_messages, key);
 
         if (resource == null) {
             return;
@@ -1717,7 +1848,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param key for message
      */
     protected static void printHelp(String key) {
-        Trace.printSystemOut(BundleHandler.getString(bhnd, key));
+        Trace.printSystemOut(BundleHandler.getString(hnd_messages, key));
     }
 
     /**

@@ -111,7 +111,17 @@ example:
        </java>
     </target>
 
-    <target name="lib" depends="switchtojdk11,switchtojdk12,switchtojdk14">
+    <target name="store" depends="switchtojdk11,switchtojdk12,switchtojdk14">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+      >
+         <include name="org/hsqldb/store/**"/>
+      </javac>
+    </target>
+
+    <target name="lib" depends="store">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -119,7 +129,6 @@ example:
       >
          <include name="org/hsqldb/lib/**"/>
          <include name="org/hsqldb/lib/java/**"/>
-         <include name="org/hsqldb/lib/enum/**"/>
       </javac>
     </target>
 

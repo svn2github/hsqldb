@@ -65,12 +65,22 @@ public class IntValueHashMap extends BaseHashMap {
         return super.getInt(key, value);
     }
 
-    public void put(Object key, int value) {
+    public boolean put(Object key, int value) {
+
+        int oldSize = size();
+
         super.addOrRemove(0, value, key, null, false);
+
+        return oldSize != size();
     }
 
-    public void remove(Object key) {
+    public boolean remove(Object key) {
+
+        int oldSize = size();
+
         super.addOrRemove(0, 0, key, null, true);
+
+        return oldSize != size();
     }
 
     public boolean containsKey(Object key) {

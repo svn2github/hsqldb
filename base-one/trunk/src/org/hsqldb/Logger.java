@@ -117,37 +117,45 @@ class Logger {
      *        which in turn creates a new, compact *.data file.
      *      </OL>
      *
-     * @throws  HsqlException if there is a problem closing the Log and
-     *        its dependent files.
+     * @return  true if closed with no problems or false if a problem was
+     *        encountered.
      */
-    void closeLog(int closemode) throws HsqlException {
+    boolean closeLog(int closemode) {
 
         if (lLog == null) {
-            return;
+            return true;
         }
 
-        lLog.stop();
+        try {
+            lLog.stop();
 
-        switch (closemode) {
+            switch (closemode) {
 
-            case Database.CLOSEMODE_IMMEDIATELY :
-                lLog.shutdown();
-                break;
+                case Database.CLOSEMODE_IMMEDIATELY :
+                    lLog.shutdown();
+                    break;
 
-            case Database.CLOSEMODE_NORMAL :
-                lLog.close(false, true);
-                break;
+                case Database.CLOSEMODE_NORMAL :
+                    lLog.close(false, true);
+                    break;
 
-            case Database.CLOSEMODE_COMPACT :
-                lLog.close(true, true);
-                break;
+                case Database.CLOSEMODE_COMPACT :
+                    lLog.close(true, true);
+                    break;
 
-            case 2 :
-                lLog.close(false, true);
-                break;
+                case 2 :
+                    lLog.close(false, true);
+                    break;
+            }
+        } catch (Throwable e) {
+            lLog = null;
+
+            return false;
         }
 
         lLog = null;
+
+        return true;
     }
 
     /**

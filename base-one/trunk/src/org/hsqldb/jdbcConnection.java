@@ -428,14 +428,20 @@ public class jdbcConnection implements Connection {
     boolean isClosed;
 
     /** The first warning in the chain. Null if there are no warnings. */
-    SQLWarning rootWarning;
-    Object     rootWarning_mutex = new Object();
+    private SQLWarning rootWarning;
+
+    /** Synchronizes concurrent modification of the warning chain */
+    private Object rootWarning_mutex = new Object();
 
     /**
      * The set of open Statement objects returned by this Connection from
      * calls to createStatement, prepareCall and prepareStatement.
      */
-    org.hsqldb.lib.HashSet statementSet = new org.hsqldb.lib.HashSet();
+    private org.hsqldb.lib.HashSet statementSet =
+        new org.hsqldb.lib.HashSet();
+
+    /** Synchronizes concurrent modification of the statement set */
+    private Object statementSet_mutex = new Object();
 
 // ----------------------------------- JDBC 1 -------------------------------
 
@@ -493,7 +499,7 @@ public class jdbcConnection implements Connection {
         Statement stmt = new jdbcStatement(this,
                                            jdbcResultSet.TYPE_FORWARD_ONLY);
 
-        statementSet.add(stmt);
+        addStatement(stmt);
 
         return stmt;
     }
@@ -557,7 +563,7 @@ public class jdbcConnection implements Connection {
             stmt = new jdbcPreparedStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -617,12 +623,10 @@ public class jdbcConnection implements Connection {
             stmt = new jdbcCallableStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
-
-            //e.printStackTrace();
             throw jdbcDriver.sqlException(e);
         }
     }
@@ -895,12 +899,12 @@ public class jdbcConnection implements Connection {
      *
      * Up to and including HSQLDB 1.7.0, <p>
      *
-     *
      * <ol>
      *   <li> All rows of a result set are retrieved internally <em>
      *   before</em> the first row can actually be fetched.<br>
      *   Therefore, a statement can be considered complete as soon as
      *   any XXXStatement.executeXXX method returns. </li>
+     *
      *   <li> Multiple result sets and output parameters are not yet
      *   supported. </li>
      * </ol>
@@ -1079,8 +1083,12 @@ public class jdbcConnection implements Connection {
      *
      * @exception SQLException if a database access error occurs
      */
-    public void close() throws SQLException {
+    public synchronized void close() throws SQLException {
 
+        // Changed to synchronized above because 
+        // we would not want a sessionProxy.close()
+        // operation to occur concurrently with a
+        // statementXXX.executeXXX operation.
         if (isInternal || isClosed) {
             return;
         }
@@ -1100,7 +1108,7 @@ public class jdbcConnection implements Connection {
      * @return  true if the connection is closed; false if it's still
      *      open
      */
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
 
         // There is no point to checking if the session proxy is null or
         // closed every time.  It's a waste.  The session proxy does not
@@ -1183,6 +1191,9 @@ public class jdbcConnection implements Connection {
      * @see DatabaseInformationFull
      */
     public DatabaseMetaData getMetaData() throws SQLException {
+
+        checkClosed();
+
         return new jdbcDatabaseMetaData(this);
     }
 
@@ -1226,7 +1237,7 @@ public class jdbcConnection implements Connection {
      * Starting with 1.7.2, an alternate approach to opimizing the
      * .data file before creating a CDROM-based readonly is to issue
      * the CHECKPOINT DEFRAG command before taking the database offline
-     * in preparation to burn the database files to CDROM. <p>
+     * in preparation to burn the database files to CD. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1531,7 +1542,7 @@ public class jdbcConnection implements Connection {
         concurrency = xlateRSConcurrency(concurrency);
         stmt        = new jdbcStatement(this, type);
 
-        statementSet.add(stmt);
+        addStatement(stmt);
 
         return stmt;
     }
@@ -1596,7 +1607,7 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcPreparedStatement(this, sql, type);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -1662,7 +1673,7 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcCallableStatement(this, sql, resultSetType);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -2042,7 +2053,7 @@ public class jdbcConnection implements Connection {
         resultSetHoldability = xlateRSHoldability(resultSetHoldability);
         stmt                 = new jdbcStatement(this, resultSetType);
 
-        statementSet.add(stmt);
+        addStatement(stmt);
 
         return stmt;
     }
@@ -2121,7 +2132,7 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcPreparedStatement(this, sql, resultSetType);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -2202,7 +2213,7 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcCallableStatement(this, sql, resultSetType);
 
-            statementSet.add(stmt);
+            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -2577,7 +2588,7 @@ public class jdbcConnection implements Connection {
      *
      * @throws SQLException when the connection is closed
      */
-    void checkClosed() throws SQLException {
+    synchronized void checkClosed() throws SQLException {
 
         if (isClosed) {
             throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
@@ -2591,11 +2602,9 @@ public class jdbcConnection implements Connection {
      */
     void addWarning(SQLWarning w) {
 
+        // PRE:  w is never null
         synchronized (rootWarning_mutex) {
-            if (w == null) {
-
-                // don't bother adding null warnings
-            } else if (rootWarning == null) {
+            if (rootWarning == null) {
                 rootWarning = w;
             } else {
                 rootWarning.setNextWarning(w);
@@ -2737,6 +2746,20 @@ public class jdbcConnection implements Connection {
                 throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                               msg);
             }
+        }
+    }
+
+    void addStatement(Statement stmt) {
+
+        synchronized (statementSet_mutex) {
+            statementSet.add(stmt);
+        }
+    }
+
+    void removeStatement(Statement stmt) {
+
+        synchronized (statementSet_mutex) {
+            statementSet.remove(stmt);
         }
     }
 }

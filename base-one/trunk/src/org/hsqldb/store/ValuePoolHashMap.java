@@ -282,7 +282,7 @@ public class ValuePoolHashMap extends BaseHashMap {
 
         return key;
     }
-
+/*
     public static void main(String[] argv) {
 
         int                      BIGRANGE   = 100000;
@@ -336,4 +336,5 @@ public class ValuePoolHashMap extends BaseHashMap {
             e.printStackTrace();
         }
     }
+*/
 }

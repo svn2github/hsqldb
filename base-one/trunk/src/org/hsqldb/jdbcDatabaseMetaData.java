@@ -6233,10 +6233,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     jdbcDatabaseMetaData(jdbcConnection c) throws SQLException {
 
-        if (c.isClosed()) {
-            throw new SQLException("connection is closed");
-        }
-
+        // PRE: is non-null and not closed
         connection = c;
     }
 

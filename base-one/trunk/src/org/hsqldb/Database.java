@@ -220,43 +220,55 @@ class Database {
 
         setState(DATABASE_OPENING);
         reopen();
+        setState(DATABASE_ONLINE);
     }
 
     /**
      * Opens this database.  The database should be opened after construction.
      * or reopened by the close(int closemode) method during a
-     * "shutdown compact".
+     * "shutdown compact". Closes the log if there is an error.
      *
      * @throws HsqlException if a database access error occurs
      */
     void reopen() throws HsqlException {
 
-        User sysUser;
+        boolean error = false;
 
-        compiledStatementManager.reset();
+        try {
+            User sysUser;
 
-        tTable                = new HsqlArrayList();
-        userManager           = new UserManager();
-        hAlias                = Library.getAliasMap();
-        nameManager           = new HsqlNameManager();
-        triggerNameList       = new DatabaseObjectNames();
-        indexNameList         = new DatabaseObjectNames();
-        bReferentialIntegrity = true;
-        sysUser               = userManager.createSysUser(this);
-        sessionManager        = new SessionManager(this, sysUser);
-        dInfo = DatabaseInformation.newDatabaseInformation(this);
+            compiledStatementManager.reset();
 
-        if (sType != DatabaseManager.S_MEM) {
-            logger.openLog(this);
+            tTable                = new HsqlArrayList();
+            userManager           = new UserManager();
+            hAlias                = Library.getAliasMap();
+            nameManager           = new HsqlNameManager();
+            triggerNameList       = new DatabaseObjectNames();
+            indexNameList         = new DatabaseObjectNames();
+            bReferentialIntegrity = true;
+            sysUser               = userManager.createSysUser(this);
+            sessionManager        = new SessionManager(this, sysUser);
+            dInfo = DatabaseInformation.newDatabaseInformation(this);
+
+            if (sType != DatabaseManager.S_MEM) {
+                logger.openLog(this);
+            }
+
+            if (isNew) {
+                sessionManager.getSysSession().sqlExecuteDirectNoPreChecks(
+                    "CREATE USER SA PASSWORD \"\" ADMIN");
+            }
+
+            dInfo.setWithContent(true);
+        } catch (HsqlException e) {
+            logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
+
+            throw e;
+        } catch (Throwable e) {
+            logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
+
+            throw Trace.error(Trace.GENERAL_ERROR, e.toString());
         }
-
-        if (isNew) {
-            sessionManager.getSysSession().sqlExecuteDirectNoPreChecks(
-                "CREATE USER SA PASSWORD \"\" ADMIN");
-        }
-
-        dInfo.setWithContent(true);
-        setState(DATABASE_ONLINE);
     }
 
     /**
@@ -714,7 +726,7 @@ class Database {
             // referenced, and therefore can be garbage collected if necessary.
             if (closemode == CLOSEMODE_COMPACT) {
                 reopen();
-                logger.closeLog(0);
+                logger.closeLog(CLOSEMODE_NORMAL);
             }
         } catch (Throwable t) {
             if (t instanceof HsqlException) {

@@ -72,6 +72,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -2039,20 +2040,20 @@ class Table {
                         }
                     }
 
-                    if (hasref) {
+                    if (hasref && path.add(c)) {
 
-                        // fredt - avoid infinite recursion on same table
-                        if (path.add(c)) {
-                            reftable.checkCascadeUpdate(n.getRow(), rnd,
-                                                        session, r_columns,
-                                                        null, doIt, path);
-                            path.remove(c);
+                        // fredt - avoid infinite recursion on circular references
+                        // these can be rings of two or more mutually dependent tables
+                        // so only one visit per constraint is allowed
+                        reftable.checkCascadeUpdate(n.getRow(), rnd, session,
+                                                    r_columns, null, doIt,
+                                                    path);
+                        path.remove(c);
 
-                            // get updated node in case they moved out of cache
-                            n     = n.getUpdatedNode();
-                            nextn = nextn == null ? null
-                                                  : nextn.getUpdatedNode();
-                        }
+                        // get updated node in case they moved out of cache
+                        n     = n.getUpdatedNode();
+                        nextn = nextn == null ? null
+                                              : nextn.getUpdatedNode();
                     }
 
                     if (doIt) {
@@ -2064,17 +2065,30 @@ class Table {
                         }
                     }
                 } else if (hasref) {
+                    if (reftable != this) {
+                        if (path.add(c)) {
+                            reftable.checkCascadeDelete(n.getRow(), session,
+                                                        doIt, path);
+                            path.remove(c);
 
-                    // fredt - avoid infinite recursion on same table
-                    if (path.add(c)) {
-                        reftable.checkCascadeDelete(n.getRow(), session,
-                                                    doIt, path);
-                        path.remove(c);
+                            // get updated node in case they moved out of cache
+                            n     = n.getUpdatedNode();
+                            nextn = nextn == null ? null
+                                                  : nextn.getUpdatedNode();
+                        }
+                    } else {
 
-                        // get updated node in case they moved out of cache
-                        n     = n.getUpdatedNode();
-                        nextn = nextn == null ? null
-                                              : nextn.getUpdatedNode();
+                        // fredt - we avoid infinite recursion on the fk's referencing the same table
+                        // but chained rows can result in very deep recursion and StackOverflowError
+                        if (n.getRow() != row.getUpdatedRow()) {
+                            reftable.checkCascadeDelete(n.getRow(), session,
+                                                        doIt, path);
+
+                            // get updated node in case they moved out of cache
+                            n     = n.getUpdatedNode();
+                            nextn = nextn == null ? null
+                                                  : nextn.getUpdatedNode();
+                        }
                     }
                 }
 
@@ -2082,13 +2096,6 @@ class Table {
                     if (!n.isDeleted()) {
                         reftable.deleteNoRefCheck(n.getRow(), session);
                     }
-
-                    //  foreign key referencing own table
-/*
-                    if (reftable == this) {
-                        nextn = c.findFkRef(row.getData(), true);
-                    }
-*/
                 }
 
                 if (nextn == null) {
@@ -2276,6 +2283,7 @@ class Table {
                             reftable.checkCascadeUpdate(n.getRow(), rnd,
                                                         session, r_columns,
                                                         null, update, path);
+                            path.remove(c);
                         }
                     } else {
 
@@ -2289,6 +2297,7 @@ class Table {
                             reftable.checkCascadeUpdate(n.getRow(), rnd,
                                                         session, common,
                                                         this, update, path);
+                            path.remove(c);
                         }
                     }
 

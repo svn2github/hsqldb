@@ -1714,7 +1714,7 @@ public class jdbcStatement implements java.sql.Statement {
         }
 
         if (!isDisconnect) {
-            connection.statementSet.remove(this);
+            connection.removeStatement(this);
         }
 
         batch = null;

@@ -79,6 +79,8 @@ import org.hsqldb.resources.BundleHandler;
 // boucherb@users 20030510 - patch 1.7.2 - general lint removal
 
 /**
+ *  The HSQLDB HTTP protocol network database server. <p>
+ *
  *  WebServer has two distinct functions:<p>
  *
  *  The primary function is to allow client/server access to HSQLDB databases
@@ -88,30 +90,32 @@ import org.hsqldb.resources.BundleHandler;
  *  allow the use of the HSQL protocol. One example is client/server access by
  *  an applet running in browsers on remote hosts and accessing the database
  *  engine on the HTTP server from which the applet originated. From version
- *  1.7.2 HTTP database connections are persistent and support transactions.
+ *  1.7.2, HTTP database connections are persistent and support transactions.
  *  Similar to HSQL connections, they should be explicitly closed to free the
- *  server resources.<p>
+ *  server resources. <p>
  *
  *  The secondary function of WebServer is to act as a simple general purpose
  *  HTTP server. It is aimed to support the minimum requirements set out by
- *  the HTTP/1.0 standard. The HEAD and GET method can be used to query and
+ *  the HTTP/1.0 standard. The HEAD and GET methods can be used to query and
  *  retreive static files from the HTTP server.<p>
  *
- *  Both the database server and HTTP server functions of WebServer are
+ *  Both the database server and HTTP server functions of WebServer can be
  *  configured with the webserver.properties file. It contains entries for the
  *  database server similar to those for the HSQL protocol Server class. In
- *  addition, a list mapping different file endings to their mime types is
+ *  addition, a list mapping different file endings to their mime types may be
  *  included in this file. (fredt@users) <p>
- *
  *
  *  Example of the webserver.properties file:
  *
  * <pre>
  * server.port=80
- * server.database=test
- * server.root=./
- * server.default_page=index.html
- * server.silent=true
+ * server.database.0=test
+ * server.dbname.0=...
+ * ...
+ * server.database.n=...
+ * server.dbname.n=...
+ * server.silent=true<p>
+ * </pre>
  *
  * .htm=text/html
  * .html=text/html
@@ -123,15 +127,18 @@ import org.hsqldb.resources.BundleHandler;
  * .zip=application/x-zip-compressed
  * </pre>
  *
- *  Forr server.root use / as separator even for DOS/Windows.<br>
- *  file extensions for mime types  must be lowercase<br>
+ *  For server.root, use '/'  as the separator, even for DOS/Windows.<br>
+ *  File extensions for mime types must be lowercase and start with '.'<br>
  *
  * @version 1.7.2
  */
 public class WebServer extends Server {
 
-    int           bundleHandle;
-    protected int serverProtocol = ServerConstants.SC_PROTOCOL_HTTP;
+    /**
+     * Handle to resource bundle providing i18n for things like
+     * HTTP error pages.
+     */
+    int bundleHandle;
 
     public WebServer() {
 
@@ -141,7 +148,12 @@ public class WebServer extends Server {
 
         try {
             cl = getClass().getClassLoader();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+
+            // resource bundle search will be limited to
+            // BundleHandler class loader and / or 
+            // system class loader.
+        }
 
         bundleHandle = BundleHandler.getBundleHandle("webserver", cl);
     }

@@ -64,11 +64,21 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
         return super.getInt(key, value);
     }
 
-    public void put(int key, int value) {
+    public boolean put(int key, int value) {
+
+        int oldSize = size();
+
         super.addOrRemove(key, value, null, null, false);
+
+        return oldSize != size();
     }
 
-    public Object remove(int key) {
-        return super.addOrRemove(key, 0, null, null, true);
+    public boolean remove(int key) {
+
+        int oldSize = size();
+
+        super.addOrRemove(key, 0, null, null, true);
+
+        return oldSize != size();
     }
 }

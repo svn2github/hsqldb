@@ -130,6 +130,10 @@ class WebServerConnection implements Runnable {
         ' ', '\t'
     };
 
+    // default mime type mappings
+    private static final int hnd_content_types =
+        BundleHandler.getBundleHandle("content_types", null);
+
     /**
      *  Constructor declaration
      *
@@ -151,25 +155,28 @@ class WebServerConnection implements Runnable {
         String key;
         String mimeType;
 
-        pos      = pos = name == null ? -1
-                                      : name.lastIndexOf(".");
+        if (name == null) {
+            return ServerConstants.SC_DEFAULT_WEB_MIME;
+        }
+
+        pos      = name.lastIndexOf('.');
+        key      = null;
         mimeType = null;
 
-        if (pos < 0) {
-
-            // do nothing
-        } else {
+        // first search user-specified mapping
+        if (pos >= 0) {
             key      = name.substring(pos).toLowerCase();
             mimeType = server.serverProperties.getProperty(key);
         }
 
-        if (mimeType == null) {
-
-            // CHECKME:  return error response?
-            mimeType = ServerConstants.SC_DEFAULT_WEB_MIME;
+        // if not found, search default mapping
+        if (mimeType == null && key.length() > 1) {
+            mimeType = BundleHandler.getString(hnd_content_types,
+                                               key.substring(1));
         }
 
-        return mimeType;
+        return mimeType == null ? ServerConstants.SC_DEFAULT_WEB_MIME
+                                : mimeType;
     }
 
     /**

@@ -121,15 +121,6 @@ class Session implements SessionInterface {
     }
 
     /**
-     *  closes the session.
-     *
-     * @throws  HsqlException
-     */
-    public void finalize() throws HsqlException {
-        disconnect();
-    }
-
-    /**
      * Constructs a new Session object.
      *
      * @param  db the database to which this represents a connection
@@ -178,6 +169,7 @@ class Session implements SessionInterface {
      */
     void disconnect() {
 
+        // PRE:  disconnect() is called _only_ from SessionManager
         if (isClosed) {
             return;
         }
@@ -559,7 +551,7 @@ class Session implements SessionInterface {
     }
 
     /**
-     *  Getter for autoCommite attribute.
+     *  Getter for autoCommit attribute.
      *
      * @return the current value
      */
@@ -774,10 +766,6 @@ class Session implements SessionInterface {
 
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
                         "Session is closed");
-
-            // CHECKME:  Can this ever happen?  I don't think so, as a shutdown
-            // will close the session and that test is covered above
-            Trace.check(!dDatabase.isShutdown(), Trace.DATABASE_IS_SHUTDOWN);
         } catch (Throwable t) {
             return new Result(t, null);
         }
