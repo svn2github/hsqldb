@@ -15,6 +15,11 @@
     line and the "HARNESS_METADATA END" lines below.  This is because only
     harness metadata name/value pairs are permitted between those lines.
 
+    In general, you are best off using urlid of "mem", which we assume that 
+    the user has configured as a memory-only database (as documented in the 
+    readme.txt file).  You specify the urlid to be used by this file by
+    using the 'arg' setting as described below.
+
     Harness metadata settings:
         arg:                An argument for SqlTool.
                             Unless you are testing bad command-line args, you

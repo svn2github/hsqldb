@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.3 2004/06/16 17:31:12 unsaved Exp $
+$Id: readme.txt,v 1.4 2004/06/16 17:38:42 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -25,6 +25,18 @@ To do anything at all with SqlTool unit testing, you need
     "classes" subdirectory).  The tests will not work if you supply a
     java classpath switch, for the exact same reason described for the
     previous item.
+
+    Set up a urlid named "mem" in your sqltool.rc file, as documented in
+    the SqlTool chapter of the HSQLDB User Guide.  If you started with
+    the sample sqltool.rc file then you are all set (because that defines
+    a "mem" urlid).
+
+    I expect at some point I or somebody else will make unit tests which
+    really need meaty data in the database.  In that case, it may make
+    sense to set up another urlid and supply a (non-test) SQL file in
+    this directory which will populate that database.  I don't have time
+    right now to figure out how to document these dependencies,so just
+    set up the "mem" urlid for now.
 
     Run the tests from this directory.  This is just so that simple
     relative paths can be used for the various files that live in this
@@ -66,3 +78,5 @@ To make a new SQL test file.
     verbose.  We don't want the same information duplicated in a 
     zillion files (what if we need to update an explanation!), plus,
     I like the real test files to be nice and concise.
+
+    In general, 
